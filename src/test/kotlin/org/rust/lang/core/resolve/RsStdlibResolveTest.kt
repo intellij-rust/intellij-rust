@@ -23,7 +23,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun testResolveCollections() = stubOnlyResolve("""
     //- main.rs
         use std::collections::Bound;
-                             //^ ...libcollections/lib.rs
+                             //^ ...lib.rs
 
         fn main() {}
     """)
@@ -41,7 +41,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             let _ = String::new();
-                    //^  ...libcollections/string.rs
+                    //^  ...string.rs
         }
     """)
 
@@ -50,7 +50,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         mod tests {
             fn test() {
                 let _ = String::new();
-                        //^  ...libcollections/string.rs
+                        //^  ...string.rs
             }
         }
     """)
@@ -117,7 +117,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
     //- main.rs
         fn main() { "test".lines(); }
-                            //^ ...libcollections/str.rs
+                            //^ ...str.rs
     """)
 
     fun `test slice resolve`() = stubOnlyResolve("""
@@ -125,7 +125,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let x : [i32];
             x.iter()
-             //^ ...libcollections/slice.rs
+             //^ ...slice.rs
         }
     """)
 
@@ -146,14 +146,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test inherent impl str 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() { "Z".to_uppercase(); }
-                      //^ ...libcollections/str.rs
+                      //^ ...str.rs
     """)
 
     fun `test inherent impl str 2`() = expect<IllegalStateException> {
         stubOnlyResolve("""
     //- main.rs
         fn main() { str::to_uppercase("Z"); }
-                       //^ ...libcollections/str.rs
+                       //^ ...str.rs
     """)
     }
 
@@ -281,7 +281,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn foo(xs: Vec<String>) {
             xs[0].capacity();
-                 //^ ...libcollections/string.rs
+                 //^ ...string.rs
         }
     """)
 
@@ -289,7 +289,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn foo(xs: Vec<i32>) {
             xs[0..3].len();
-                     //^ ...libcollections/slice.rs
+                     //^ ...slice.rs
         }
     """)
 
@@ -314,7 +314,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             (String::new() + "foo").capacity();
-                                     //^ ...libcollections/string.rs
+                                     //^ ...string.rs
         }
     """)
 
@@ -346,7 +346,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             if let Some(x) = maybe() {
                 x.capacity();
-                   //^ ...libcollections/string.rs
+                   //^ ...string.rs
             }
         }
     """)
