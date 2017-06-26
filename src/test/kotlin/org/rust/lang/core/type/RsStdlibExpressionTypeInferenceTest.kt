@@ -216,7 +216,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test infer lamba expr`() = testExpr("""
+    fun `test infer lambda expr`() = testExpr("""
         fn main() {
             let test: Vec<String> = Vec::new();
             test.into_iter().map(|a| a.to_string());

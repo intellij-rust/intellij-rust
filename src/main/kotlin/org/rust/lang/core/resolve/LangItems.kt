@@ -6,6 +6,7 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -96,6 +97,21 @@ private val RsTraitItem.langAttribute: String? get() {
 
 private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
 private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
+val RsTraitItem.isAnyFnTrait: Boolean get() = langAttribute == "fn"
+    || langAttribute == "fn_once"
+    || langAttribute == "fn_mut"
+
+val RsTraitItem.fnTypeArgsParam: TyTypeParameter? get() {
+    if (!isAnyFnTrait) return null
+    val param = typeParameterList?.typeParameterList?.singleOrNull() ?: return null
+    return TyTypeParameter(param)
+}
+
+val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
+    val param = element.fnTypeArgsParam ?: return null
+    val argumentTypes = ((typeArguments[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
+    return TyFunction(argumentTypes, TyUnknown)
+}
 
 private fun lookupAssociatedType(impl: RsImplItem, name: String): Ty =
     impl.typeAliasList.find { it.name == name }?.typeReference?.type

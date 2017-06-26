@@ -1,5 +1,6 @@
 package org.rust.lang.core.resolve
 
+import org.rust.ide.formatter.impl.FLAT_BRACE_BLOCKS
 import org.rust.lang.core.psi.ext.ArithmeticOp
 
 class RsTypeAwareResolveTest : RsResolveTestBase() {
@@ -772,6 +773,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun `test simple method resolve for closure`() = checkByCode("""
+        $FN_LANG_ITEMS
         struct T;
         impl T {
             fn bar(&self) {}
@@ -799,6 +801,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun `test simple method resolve with where for closure`() = checkByCode("""
+        $FN_LANG_ITEMS
         struct T;
         impl T {
             fn bar(&self) {}
@@ -830,6 +833,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun `test simple self resolve for closure`() = checkByCode("""
+        $FN_LANG_ITEMS
         struct T;
         impl T {
             fn bar(&self) {}
@@ -844,21 +848,23 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     """)
 
     fun `test multi self resolve for closure`() = checkByCode("""
+        $FN_LANG_ITEMS
+
         struct T;
-        struct S;
-        impl S {
-            fn bar(&self) -> T {T}
-        }
         impl T {
             fn bar(&self) {}
               //X
             fn foo<F: Fn(&T) -> ()>(&self, f: F) {}
         }
 
+        struct S;
+        impl S { fn bar(&self) -> T { T } }
+
         fn main() {
-            let t = S;
-            t.bar().foo(|e| { e.bar(); })
-        }                      //^
+            S.bar().foo(|t| t.bar());
+
+            T.foo(|t| t.bar());
+        }              //^
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/1269
@@ -1018,17 +1024,21 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
     }
 
     fun `test associated type resolve for closure`() = checkByCode("""
-        trait A {
+        $FN_LANG_ITEMS
+        trait Iter {
             type Item;
             fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {}
         }
-        struct S;
-        impl S {
+
+        struct Foo;
+        impl Foo {
             fn bar(&self) {}
               //X
         }
-        impl A for S {
-            type Item = S;
+
+        struct S;
+        impl Iter for S {
+            type Item = Foo;
         }
 
         fn main() {

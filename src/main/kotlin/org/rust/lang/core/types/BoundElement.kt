@@ -16,5 +16,8 @@ data class BoundElement<out E : RsCompositeElement>(
 ) : ResolveResult {
     override fun getElement(): PsiElement = element
     override fun isValidResult(): Boolean = true
+
+    inline fun <reified T : RsCompositeElement> downcast(): BoundElement<T>? =
+        if (element is T) BoundElement(element, typeArguments) else null
 }
 

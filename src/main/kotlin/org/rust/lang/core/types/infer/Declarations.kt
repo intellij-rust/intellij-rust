@@ -68,7 +68,7 @@ fun inferTypeForLambdaParameter(parameter: RsValueParameter): Ty {
     val lambda = parameter.parentOfType<RsLambdaExpr>() ?: return TyUnknown
     val parameterPos = lambda.valueParameterList.valueParameterList.indexOf(parameter)
     val bounds = lambda.type as? TyFunction ?: return TyUnknown
-    return bounds.paramTypes[parameterPos]
+    return bounds.paramTypes.getOrNull(parameterPos) ?: TyUnknown
 }
 
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {

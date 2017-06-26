@@ -4,6 +4,7 @@ import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -50,12 +51,10 @@ fun inferExpressionType(expr: RsExpr): Ty {
 
             val returnType = (method.retType?.typeReference?.type ?: TyUnit)
                 .substitute(boundMethod.typeArguments)
-
-            val retType = inferDefaultType(returnType, method, expr.expr)
-            val methodType = method.type as? TyFunction ?: return retType
+            val methodType = method.type as? TyFunction ?: return returnType
             // drop first element of paramTypes because it's `self` param
             // and it doesn't have value in `expr.valueArgumentList.exprList`
-            retType.substitute(mapTypeParameters(methodType.paramTypes.drop(1), expr.valueArgumentList.exprList))
+            returnType.substitute(mapTypeParameters(methodType.paramTypes.drop(1), expr.valueArgumentList.exprList))
         }
 
         is RsFieldExpr -> {
@@ -119,7 +118,6 @@ fun inferExpressionType(expr: RsExpr): Ty {
                 is BoolOp -> TyBool
                 is ArithmeticOp -> inferArithmeticBinaryExprType(expr, op)
                 is AssignmentOp -> TyUnit
-                else -> TyUnknown
             }
         }
 
@@ -240,72 +238,33 @@ private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
 
 }
 
-fun inferDefaultType(ty: Ty, method: RsFunction, expr: RsExpr): Ty {
-    when (ty) {
-        is TyTypeParameter -> {
-            val baseType = expr.type as? TyStructOrEnumBase ?: return ty
-            val traitRef = method.parentOfType<RsTraitItem>() ?: return ty
-            val impls = findImplsAndTraits(expr.project, baseType).first
-            val implItem = impls.filter { it.element.traitRef?.path?.referenceName == traitRef.name }
-                .mapNotNull { it.element }
-                .firstOrNull() ?: return ty
-            val implType = implItem.typeReference?.type as? TyStructOrEnumBase ?: return ty
-            val typeParameterValues = implType.typeArguments
-                .mapNotNull { it as? TyTypeParameter }
-                .zip(baseType.typeArguments)
-                .mapNotNull { (param, arg) ->
-                    param to arg
-                }.toMap()
-            return implItem.typeAliasList.find { it.name == ty.toString() }
-                ?.typeReference?.type?.substitute(typeParameterValues) ?: return ty
-        }
-        is TyReference -> {
-            val innerType = inferDefaultType(ty.referenced, method, expr)
-            return TyReference(innerType, ty.mutable)
-        }
-        else -> return ty
-    }
-}
+private val RsCallExpr.declaration: BoundElement<RsFunction>?
+    get() = (expr as? RsPathExpr)?.path?.reference?.advancedResolve()?.downcast()
 
-private val RsCallExpr.declaration: RsFunction?
-    get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
-
-private val RsMethodCallExpr.declaration: RsFunction?
-    get() = reference.resolve() as? RsFunction
-
-private val RsPath.isFn: Boolean get() = referenceName == "Fn" || referenceName == "FnMut" || referenceName == "FnOnce"
+private val RsMethodCallExpr.declaration: BoundElement<RsFunction>?
+    get() = reference.advancedResolve()?.downcast()
 
 private fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Ty {
-    val parent = lambdaExpr.parent as? RsValueArgumentList ?: return TyUnknown
+    val fallback = TyFunction(emptyList(), TyUnknown)
+    val parent = lambdaExpr.parent as? RsValueArgumentList ?: return fallback
     val callExpr = parent.parent
     val (method, pos) = when (callExpr) {
         is RsCallExpr -> (callExpr.declaration to parent.exprList.indexOf(lambdaExpr))
         is RsMethodCallExpr -> (callExpr.declaration to parent.exprList.indexOf(lambdaExpr) + 1)
-        else -> return TyUnknown
+        else -> return fallback
     }
-    if (method == null) {
-        return TyUnknown
-    }
-    val function = method.type as? TyFunction
-    val typeParameter = function?.paramTypes?.getOrNull(pos) as? TyTypeParameter ?: return TyUnknown
-    val result = typeParameter.getTraitRefs()
-    val fn = result
-        .map { it.path }
-        .filter { it.isFn }
-        .firstOrNull() ?: return TyUnknown
-    val expr = when (callExpr) {
-        is RsCallExpr -> callExpr.expr
-        is RsMethodCallExpr -> callExpr.expr
-        else -> return TyUnknown
-    }
-    val parameters = fn.valueParameterList
-        ?.valueParameterList
-        ?.mapNotNull { it.typeReference }
-        ?.map { inferDefaultType(it.type, method, expr) }
-        ?.toList() ?: emptyList()
-    val retType = fn.retType
-        ?.typeReference ?: return TyFunction(parameters, TyUnit)
-    return TyFunction(parameters, retType.type)
+
+    if (method == null) return fallback
+
+    val function = method.element.type as? TyFunction
+    val typeParameter = function?.paramTypes?.getOrNull(pos) as? TyTypeParameter ?: return fallback
+
+    val fnTrait = typeParameter.getTraitBoundsTransitively()
+        .find { it.element.isAnyFnTrait }
+        ?: return fallback
+
+    return fnTrait.asFunctionType?.substitute(method.typeArguments)
+        ?: fallback
 }
 
 private fun inferArrayType(expr: RsArrayExpr): Ty {
@@ -406,8 +365,8 @@ private fun addTypeMapping(argsMapping: TypeMapping, fieldType: Ty?, expr: RsExp
  */
 fun RsImplItem.remapTypeParameters(
     map: Map<TyTypeParameter, Ty>
-): Map<TyTypeParameter, Ty> =
-    typeReference?.type?.typeParameterValues.orEmpty()
+): Map<TyTypeParameter, Ty> {
+    val positional = typeReference?.type?.typeParameterValues.orEmpty()
         .mapNotNull {
             val (structParam, structType) = it
             if (structType is TyTypeParameter) {
@@ -417,3 +376,16 @@ fun RsImplItem.remapTypeParameters(
                 null
             }
         }.toMap()
+
+    val associated = run {
+        val trait = traitRef?.resolveToTrait
+        if (trait == null) {
+            emptyMap()
+        } else {
+            typeAliasList.mapNotNull { typeAlias ->
+                typeAlias.name?.let { TyTypeParameter(trait, it) to typeAlias.type.substitute(positional) }
+            }.toMap()
+        }
+    }
+    return positional + associated
+}

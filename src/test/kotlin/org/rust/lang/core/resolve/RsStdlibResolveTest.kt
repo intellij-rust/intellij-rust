@@ -373,7 +373,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     }
 
-    fun `test infer lamba expr`() = stubOnlyResolve("""
+    fun `test infer lambda expr`() = stubOnlyResolve("""
     //- main.rs
         struct S;
         impl S {

@@ -472,6 +472,8 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test inference type for closure`() = testExpr("""
+        $FN_LANG_ITEMS
+
         struct T;
         impl T {
             fn bar(&self) {}
@@ -485,6 +487,8 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test inference type with where for closure`() = testExpr("""
+        $FN_LANG_ITEMS
+
         struct T;
         impl T {
             fn bar(&self) {}
@@ -549,6 +553,8 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test inference ref type for associated type for closure`() = testExpr("""
+        $FN_LANG_ITEMS
+
         trait A {
             type Item;
             fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {}
@@ -568,6 +574,8 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test inference type for associated type for closure`() = testExpr("""
+        $FN_LANG_ITEMS
+
         trait A {
             type Item;
             fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(Self::Item) {}
