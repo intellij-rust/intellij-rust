@@ -455,8 +455,10 @@ UseItem ::= AttrsAndVis use UsePath ';' {
 //  foo::bar::{self, foo};
 //  foo::{};
 //  ::foo::*;
-private UsePath ::= '::'? UseGlobList
-                  | PathWithoutTypes [ Alias | '::' ( UseGlobList | '*' ) ]
+private UsePath ::= '::'? UseProjection
+                  | PathWithoutTypes [ Alias | '::' UseProjection ]
+
+private UseProjection ::= UseGlobList | '*'
 
 UseGlobList ::= '{' UseGlob_with_recover* '}' {
   pin = 1
