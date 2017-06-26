@@ -156,6 +156,18 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                  //^ &str
     """)
 
+    fun `test associated types for impl`() = testType("""
+        trait A {
+            type Item;
+            fn foo(self) -> Self::Item;
+        }
+        struct S;
+        impl A for S {
+            type Item = S;
+            fn foo(self) -> Self::Item { S }
+        }                         //^ S
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
