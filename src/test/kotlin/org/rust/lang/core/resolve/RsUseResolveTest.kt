@@ -233,6 +233,24 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test root wildcard 1`() = checkByCode("""
+        fn foo() {}
+          //X
+        mod inner {
+            use ::*;
+            fn main() { foo(); }
+        }              //^
+    """)
+
+    fun `test root wildcard 2`() = checkByCode("""
+        fn foo() {}
+          //X
+        mod inner {
+            use ::*;
+            fn main() { foo(); }
+        }              //^
+    """)
+
     fun testSuperWildcard() = checkByCode("""
         fn foo() {}
           //X

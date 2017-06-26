@@ -16,8 +16,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
-import org.rust.lang.core.types.*
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.type
 import java.util.*
 
 // IntelliJ Rust name resolution algorithm.
@@ -491,12 +492,13 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
         return false
     }
     for (use in starImports) {
-        val basePath = use.path ?: continue
-        val mod = basePath.reference.resolve() ?: continue
+        val basePath = use.path
+        val mod = (if (basePath != null) basePath.reference.resolve() else use.crateRoot)
+            ?: continue
 
         val found = processItemOrEnumVariantDeclarations(mod, ns,
             { it.name !in directlyDeclaredNames && originalProcessor(it) },
-            withPrivateImports = isSuperChain(basePath)
+            withPrivateImports = basePath != null && isSuperChain(basePath)
         )
         if (found) return true
     }
