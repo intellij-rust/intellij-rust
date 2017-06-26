@@ -4,6 +4,7 @@ import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -47,11 +48,13 @@ fun inferExpressionType(expr: RsExpr): Ty {
         is RsMethodCallExpr -> {
             val boundMethod = expr.reference.advancedResolve()
             val method = boundMethod?.element as? RsFunction ?: return TyUnknown
-            val retType = (method.retType?.typeReference?.type ?: TyUnit).substitute(boundMethod.typeArguments)
-            val methodType = method.type as? TyFunction ?: return retType
+
+            val returnType = (method.retType?.typeReference?.type ?: TyUnit)
+                .substitute(boundMethod.typeArguments)
+            val methodType = method.type as? TyFunction ?: return returnType
             // drop first element of paramTypes because it's `self` param
             // and it doesn't have value in `expr.valueArgumentList.exprList`
-            retType.substitute(mapTypeParameters(methodType.paramTypes.drop(1), expr.valueArgumentList.exprList))
+            returnType.substitute(mapTypeParameters(methodType.paramTypes.drop(1), expr.valueArgumentList.exprList))
         }
 
         is RsFieldExpr -> {
@@ -115,7 +118,6 @@ fun inferExpressionType(expr: RsExpr): Ty {
                 is BoolOp -> TyBool
                 is ArithmeticOp -> inferArithmeticBinaryExprType(expr, op)
                 is AssignmentOp -> TyUnit
-                else -> TyUnknown
             }
         }
 
@@ -132,14 +134,14 @@ fun inferExpressionType(expr: RsExpr): Ty {
         is RsArrayExpr -> inferArrayType(expr)
 
         is RsRangeExpr -> {
-            val el = expr.exprList;
-            val dot2 = expr.dotdot;
-            val dot3 = expr.dotdotdot;
+            val el = expr.exprList
+            val dot2 = expr.dotdot
+            val dot3 = expr.dotdotdot
 
             val (rangeName, indexType) = when {
                 dot2 != null && el.size == 0 -> "RangeFull" to null
                 dot2 != null && el.size == 1 -> {
-                    val e = el[0];
+                    val e = el[0]
                     if (e.startOffsetInParent < dot2.startOffsetInParent) {
                         "RangeFrom" to e.type
                     } else {
@@ -150,7 +152,7 @@ fun inferExpressionType(expr: RsExpr): Ty {
                     "Range" to getMoreCompleteType(el[0].type, el[1].type)
                 }
                 dot3 != null && el.size == 1 -> {
-                    val e = el[0];
+                    val e = el[0]
                     if (e.startOffsetInParent < dot3.startOffsetInParent) {
                         return TyUnknown
                     } else {
@@ -176,20 +178,20 @@ fun inferExpressionType(expr: RsExpr): Ty {
         is RsMacroExpr -> {
             if (expr.vecMacro != null) {
                 val elements = expr.vecMacro!!.vecMacroArgs?.exprList ?: emptyList()
-                var elementType: Ty = TyUnknown;
+                var elementType: Ty = TyUnknown
                 for (e in elements) {
-                    elementType = getMoreCompleteType(e.type, elementType);
+                    elementType = getMoreCompleteType(e.type, elementType)
                 }
 
                 findStdVec(elementType, expr)
             } else if (expr.logMacro != null) {
                 TyUnit
             } else if (expr.macro != null) {
-                val macro = expr.macro ?: return TyUnknown;
+                val macro = expr.macro ?: return TyUnknown
                 when (macro) {
                     is RsTryMacro -> {
                         // See RsTryExpr where we handle the ? expression in a similar way
-                        val base = macro.tryMacroArgs?.expr?.type ?: return TyUnknown;
+                        val base = macro.tryMacroArgs?.expr?.type ?: return TyUnknown
 
                         if (isStdResult(base))
                             (base as TyEnum).typeArguments.firstOrNull() ?: TyUnknown
@@ -198,7 +200,7 @@ fun inferExpressionType(expr: RsExpr): Ty {
                     }
 
                     is RsFormatLikeMacro -> {
-                        val name = macro.macroInvocation.referenceName;
+                        val name = macro.macroInvocation.referenceName
 
                         if (name == "format")
                             findStdString(expr)
@@ -216,8 +218,10 @@ fun inferExpressionType(expr: RsExpr): Ty {
 
                     else -> TyUnknown
                 }
-            } else return TyUnknown;
+            } else return TyUnknown
         }
+
+        is RsLambdaExpr -> inferTypeForLambdaExpr(expr)
 
         else -> TyUnknown
     }
@@ -225,13 +229,42 @@ fun inferExpressionType(expr: RsExpr): Ty {
 
 private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
     if (t1 is TyUnknown)
-        return t2;
+        return t2
     if (t1 is TyInteger && t2 is TyInteger && t1.isKindWeak)
-        return t2;
+        return t2
     if (t1 is TyFloat && t2 is TyFloat && t1.isKindWeak)
-        return t2;
-
+        return t2
     return t1
+
+}
+
+private val RsCallExpr.declaration: BoundElement<RsFunction>?
+    get() = (expr as? RsPathExpr)?.path?.reference?.advancedResolve()?.downcast()
+
+private val RsMethodCallExpr.declaration: BoundElement<RsFunction>?
+    get() = reference.advancedResolve()?.downcast()
+
+private fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Ty {
+    val fallback = TyFunction(emptyList(), TyUnknown)
+    val parent = lambdaExpr.parent as? RsValueArgumentList ?: return fallback
+    val callExpr = parent.parent
+    val (method, pos) = when (callExpr) {
+        is RsCallExpr -> (callExpr.declaration to parent.exprList.indexOf(lambdaExpr))
+        is RsMethodCallExpr -> (callExpr.declaration to parent.exprList.indexOf(lambdaExpr) + 1)
+        else -> return fallback
+    }
+
+    if (method == null) return fallback
+
+    val function = method.element.type as? TyFunction
+    val typeParameter = function?.paramTypes?.getOrNull(pos) as? TyTypeParameter ?: return fallback
+
+    val fnTrait = typeParameter.getTraitBoundsTransitively()
+        .find { it.element.isAnyFnTrait }
+        ?: return fallback
+
+    return fnTrait.asFunctionType?.substitute(method.typeArguments)
+        ?: fallback
 }
 
 private fun inferArrayType(expr: RsArrayExpr): Ty {
@@ -243,12 +276,12 @@ private fun inferArrayType(expr: RsArrayExpr): Ty {
         val elements = expr.arrayElements
         if (elements.isNullOrEmpty()) return TySlice(TyUnknown)
 
-        var elementType: Ty = TyUnknown;
+        var elementType: Ty = TyUnknown
         // '!!' is safe here because we've just checked that elements isn't null
         for (e in elements!!) {
-            elementType = getMoreCompleteType(e.type, elementType);
+            elementType = getMoreCompleteType(e.type, elementType)
         }
-        elementType to elements.size;
+        elementType to elements.size
     }
     return TyArray(elementType, size)
 }
@@ -332,8 +365,8 @@ private fun addTypeMapping(argsMapping: TypeMapping, fieldType: Ty?, expr: RsExp
  */
 fun RsImplItem.remapTypeParameters(
     map: Map<TyTypeParameter, Ty>
-): Map<TyTypeParameter, Ty> =
-    typeReference?.type?.typeParameterValues.orEmpty()
+): Map<TyTypeParameter, Ty> {
+    val positional = typeReference?.type?.typeParameterValues.orEmpty()
         .mapNotNull {
             val (structParam, structType) = it
             if (structType is TyTypeParameter) {
@@ -343,3 +376,16 @@ fun RsImplItem.remapTypeParameters(
                 null
             }
         }.toMap()
+
+    val associated = run {
+        val trait = traitRef?.resolveToTrait
+        if (trait == null) {
+            emptyMap()
+        } else {
+            typeAliasList.mapNotNull { typeAlias ->
+                typeAlias.name?.let { TyTypeParameter(trait, it) to typeAlias.type.substitute(positional) }
+            }.toMap()
+        }
+    }
+    return positional + associated
+}

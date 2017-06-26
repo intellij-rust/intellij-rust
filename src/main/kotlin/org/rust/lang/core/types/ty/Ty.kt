@@ -95,11 +95,6 @@ fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<BoundElement<R
     }
 }
 
-fun findTraits(project: Project, ty: Ty): Collection<RsTraitItem> {
-    val (impls, traits) = findImplsAndTraits(project, ty)
-    return traits.map { it.element } + impls.mapNotNull { it.element.traitRef?.resolveToTrait }
-}
-
 fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<BoundElement<RsFunction>> {
     val (impls, traits) = findImplsAndTraits(project, ty)
     val result = mutableListOf<BoundElement<RsFunction>>()

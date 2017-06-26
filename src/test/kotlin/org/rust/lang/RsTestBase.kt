@@ -324,6 +324,17 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
             return StreamUtil.readText(stream, Charsets.UTF_8)
         }
+
+        val FN_LANG_ITEMS = """
+            #[lang = "fn_once"]
+            trait FnOnce<Args> { type Output; }
+
+            #[lang = "fn_mut"]
+            trait FnMut<Args>: FnOnce<Args> { }
+
+            #[lang = "fn"]
+            trait Fn<Args>: FnMut<Args> { }
+        """
     }
 }
 

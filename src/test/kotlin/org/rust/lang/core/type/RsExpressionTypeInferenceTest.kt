@@ -472,6 +472,8 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test inference type for closure`() = testExpr("""
+        $FN_LANG_ITEMS
+
         struct T;
         impl T {
             fn bar(&self) {}
@@ -485,6 +487,8 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test inference type with where for closure`() = testExpr("""
+        $FN_LANG_ITEMS
+
         struct T;
         impl T {
             fn bar(&self) {}
@@ -513,5 +517,80 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             x
           //^ <unknown>
         }
+    """)
+
+    fun `test associated types for impl`() = testExpr("""
+        trait A {
+            type Item;
+            fn foo(self) -> Self::Item;
+        }
+        struct S;
+        impl A for S {
+            type Item = S;
+            fn foo(self) -> Self::Item { S }
+        }
+        fn main() {
+            let s = S;
+            let a = s.foo();
+            a;
+        } //^ S
+    """)
+
+    fun `test associated types for default impl`() = testExpr("""
+        trait A {
+            type Item;
+            fn foo(self) -> Self::Item { () }
+        }
+        struct S;
+        impl A for S {
+            type Item = S;
+        }
+        fn main() {
+            let s = S;
+            let a = s.foo();
+            a;
+        } //^ S
+    """)
+
+    fun `test inference ref type for associated type for closure`() = testExpr("""
+        $FN_LANG_ITEMS
+
+        trait A {
+            type Item;
+            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {}
+        }
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }
+        impl A for S {
+            type Item = S;
+        }
+
+        fn main() {
+            let t = S;
+            t.filter(|e| { e.bar(); })
+        }                //^ &S
+    """)
+
+    fun `test inference type for associated type for closure`() = testExpr("""
+        $FN_LANG_ITEMS
+
+        trait A {
+            type Item;
+            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(Self::Item) {}
+        }
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }
+        impl A for S {
+            type Item = S;
+        }
+
+        fn main() {
+            let t = S;
+            t.filter(|e| { e.bar(); })
+        }                //^ S
     """)
 }

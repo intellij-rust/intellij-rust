@@ -7,6 +7,7 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
+import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.types.BoundElement
 
 data class TyTypeParameter private constructor(
@@ -16,6 +17,7 @@ data class TyTypeParameter private constructor(
     constructor(parameter: RsTypeParameter) : this(Named(parameter))
 
     constructor(trait: RsTraitItem) : this(Self(trait))
+    constructor(trait: RsTraitItem, target: String) : this(AssociatedType(trait, target))
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         parameter.bounds.flatMapTo(mutableSetOf()) { it.flattenHierarchy.asSequence() }
@@ -52,7 +54,11 @@ data class TyTypeParameter private constructor(
 
     private data class Self(val trait: RsTraitItem) : TypeParameter {
         override val name: String? get() = "Self"
-
         override val bounds: Sequence<BoundElement<RsTraitItem>> get() = sequenceOf(BoundElement(trait))
+    }
+
+    private data class AssociatedType(val trait: RsTraitItem, val target: String) : TypeParameter {
+        override val name: String? get() = "${trait.name}::target"
+        override val bounds: Sequence<BoundElement<RsTraitItem>> get() = emptySequence()
     }
 }

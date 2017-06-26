@@ -2,8 +2,12 @@ package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTraitRef
+import org.rust.lang.core.resolve.fnTypeArgsParam
+import org.rust.lang.core.resolve.isAnyFnTrait
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 val RsTraitRef.resolveToTrait: RsTraitItem?
@@ -11,14 +15,25 @@ val RsTraitRef.resolveToTrait: RsTraitItem?
 
 val RsTraitRef.resolveToBoundTrait: BoundElement<RsTraitItem>? get() {
     val trait = resolveToTrait ?: return null
-    trait.typeParameters.map {it.typeReference}
-    val typeParameters = trait.typeParameters.map { TyTypeParameter(it) }
-    val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
-    val args = typeParameters.zip(typeArguments)
-        .mapNotNull { (param, arg) ->
-            if (param is TyTypeParameter) param to arg else null
+    val typeArguments = if (trait.isAnyFnTrait) {
+        val argsParam = trait.fnTypeArgsParam
+        val args = path.valueParameterList?.valueParameterList
+            ?.map { it.typeReference?.type ?: TyUnknown }
+        if (argsParam == null || args == null) {
+            emptyMap()
+        } else {
+            mapOf(argsParam to TyTuple(args))
         }
-        .toMap()
-    return BoundElement(trait, args)
+    } else {
+        val params = trait.typeParameters.map { TyTypeParameter(it) }
+        val args = path.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
+        params.zip(args)
+            .mapNotNull { (param, arg) ->
+                if (param is TyTypeParameter) param to arg else null
+            }
+            .toMap()
+    }
+
+    return BoundElement(trait, typeArguments)
 }
 

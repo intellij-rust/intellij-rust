@@ -346,7 +346,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             if let Some(x) = maybe() {
                 x.capacity();
-                   //^ ...string.rs
+                  //^ ...string.rs
             }
         }
     """)
@@ -372,4 +372,17 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             """, true)
         }
     }
+
+    fun `test infer lambda expr`() = stubOnlyResolve("""
+    //- main.rs
+        struct S;
+        impl S {
+            fn foo(&self) {}
+        }
+        fn main() {
+            let test: Vec<S> = Vec::new();
+            test.into_iter().map(|a| a.foo());
+        }                             //^ ...main.rs
+    """)
+
 }
