@@ -55,15 +55,7 @@ private val RsModDeclItem.implicitPaths: List<String> get() {
     return if (isLocal) emptyList() else listOf("$name.rs", "$name/mod.rs")
 }
 
-
-val RsModDeclItem.pathAttribute: String? get() {
-    val stub = stub
-    return if (stub != null)
-        stub.pathAttribute
-    else
-        queryAttributes.lookupStringValueForKey("path")
-}
-
+val RsModDeclItem.pathAttribute: String? get() = queryAttributes.lookupStringValueForKey("path")
 
 abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemStub>,
                                         RsModDeclItem {

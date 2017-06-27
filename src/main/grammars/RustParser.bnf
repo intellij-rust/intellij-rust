@@ -113,17 +113,32 @@ File ::= [ SHEBANG_LINE ] InnerAttr* Items
 // Attributes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fake Attr ::= MetaItem
+fake Attr ::= MetaItem {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+}
 
-InnerAttr ::= '#' '!' '[' MetaItem ']' { extends = Attr }
-OuterAttr ::= '#'     '[' MetaItem ']' { extends = Attr }
+InnerAttr ::= '#' '!' '[' MetaItem ']' {
+  extends = Attr
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+OuterAttr ::= '#'     '[' MetaItem ']' {
+  extends = Attr
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 private OuterAttr_first ::= '#'
 
 MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsMetaItemStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')'
+MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')' {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
