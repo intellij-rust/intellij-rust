@@ -9,7 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.rust.ide.annotator.fixes.RemoveMutableFix
+import org.rust.ide.inspections.fixes.RemoveMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.isMut

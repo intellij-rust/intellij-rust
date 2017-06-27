@@ -13,14 +13,26 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.types.declaration
 
 class AddMutableFix(val binding: RsNamedElement) : LocalQuickFixAndIntentionActionOnPsiElement(binding) {
-    override fun getFamilyName(): String = text
-    override fun getText(): String = "Make variable mutable"
+    override fun getFamilyName(): String = "Make mutable"
+    override fun getText(): String = "Make `${binding.name}` mutable"
     val mutable = true
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         updateMutable(project, binding, mutable)
+    }
+
+    companion object {
+        fun createIfCompatible(expr: RsExpr): AddMutableFix? {
+            val declaration = expr.declaration
+            return if (declaration is RsSelfParameter || declaration is RsPatBinding) {
+                AddMutableFix(declaration as RsNamedElement)
+            } else {
+                null
+            }
+        }
     }
 }
 
