@@ -8,7 +8,7 @@ PREAMBLE=$(cat <<-EOF
 EOF
 )
 
-NO_LICENSE=$(find . -type f -name "*.kt"  -print0 | xargs -0 grep -L "$PREAMBLE")
+NO_LICENSE=$(find . -type f -name "*.kt"  -print0 | xargs -0 grep -L -F "$PREAMBLE")
 
 if [[ $NO_LICENSE ]]; then
     echo "Files without license notice:"
