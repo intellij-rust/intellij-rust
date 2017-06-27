@@ -34,11 +34,9 @@ Common tasks are
     `build/distributions` which can be installed into IntelliJ IDEA via `Install
     plugin from disk...` action found in `Settings > Plugins`.
 
-  - `./gradlew :runIdea` -- run a development IDE with the plugin installed.
+  - `./gradlew :runIde` -- run a development IDE with the plugin installed.
 
   - `./gradlew :test` -- more than a thousand tests. We love tests!
-
-  - `./gradlew :performanceTest` -- a couple of high level performance tests.
 
 Note the `:` in front of the task name. The repository contains two independent
 plugins for Rust and TOML, which are organized as gradle subprojects. Running
@@ -49,7 +47,7 @@ the task for TOML and `./gradle task` will do for both.
 ## Development in Intellij IDEA
 
 You can get the latest Intellij IDEA Community Edition
-[here](https://www.jetbrains.com/idea/download/).
+[here](https://www.jetbrains.com/idea/download/), it is free.
 
 Import the plugin project as you would do with any other gradle based project.
 For example, `Ctrl + Shift + A`, `Import project` and select `build.gradle` from
@@ -75,8 +73,7 @@ using the plugin.
 
 To familiarize yourself with the plugin source code, read
 the [architecture](ARCHITECTURE.md) document and look at some existing pull
-requests. Please do ask any questions in
-our [Gitter]!
+requests. Please do ask questions in our [Gitter]!
 
 
 Work in progress pull requests are very welcome! It is also a great way to ask
@@ -98,7 +95,10 @@ to IDEA's warning and suggestions, and try to keep the code green. If you are
 sure that the warning is false positive, use an annotation to suppress it.
 
 Try to avoid copy-paste and boilerplate as much as possible. For example,
-proactively use `?:` and `?.let` to deal with nullable values.
+proactively use `?:` to deal with nullable values.
+
+If you add a new file, please make sure that it contains a license preamble, as all
+other files do. 
 
 
 ### Commit Messages
