@@ -29,5 +29,13 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
             let iter = vec.iter_m/*caret*/
         }
     """)
+
+    fun testDerivedTraitMethod() = checkSingleCompletion("fmt", """
+        #[derive(Debug)]
+        struct Foo;
+        fn bar(foo: Foo) {
+            foo.fm/*caret*/
+        }
+    """)
 }
 

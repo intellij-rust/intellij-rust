@@ -390,4 +390,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }                             //^ ...main.rs
     """)
 
+    fun `test derivable trait method`() = stubOnlyResolve("""
+    //- main.rs
+        #[derive(Clone)]
+        struct Foo;
+
+        fn bar(foo: Foo) {
+            let x = foo.clone();
+                         //^ ...libcore/clone.rs
+        }
+    """)
 }
