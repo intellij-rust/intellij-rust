@@ -5,21 +5,7 @@
 
 package org.rust.ide.inspections
 
-import org.junit.Ignore
-
 class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
-
-    @Ignore
-    fun `test immutable used at ref mutable method call (self)`() = checkByText("""
-        struct S;
-        impl S {
-            fn test(&mut self) {}
-        }
-        fn main() {
-            let test = S;
-            <error>test</error>.test();
-        }
-    """)
 
     fun `test mutable used at ref mutable method call (self)`() = checkByText("""
         struct S;
@@ -52,29 +38,6 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let test = S;
             let mut reassign = S;
             test.test(&mut reassign);
-        }
-    """)
-
-    @Ignore
-    fun `test immutable used at mutable method call (args)`() = checkByText("""
-        struct S;
-        impl S {
-            fn test(&self, test: &mut S) {}
-        }
-        fn main() {
-            let test = S;
-            let reassign = S;
-            test.test(&mut <error descr="Cannot borrow immutable local variable `reassign` as mutable">reassign</error>);
-        }
-    """)
-
-    @Ignore
-    fun `test immutable used at mutable call`() = checkByText("""
-        struct S;
-        fn test(test: &mut S) {}
-        fn main() {
-            let s = S;
-            test(&mut <error>s</error>);
         }
     """)
 
@@ -198,67 +161,6 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         }
     """)
 
-    @Ignore
-    fun `test fix let at method call (self)`() = checkFixByText("Make `test` mutable", """
-        struct S;
-        impl S {
-            fn test(&mut self) {}
-        }
-        fn main() {
-            let test = S;
-            <error>te<caret>st</error>.test();
-        }
-    """, """
-        struct S;
-        impl S {
-            fn test(&mut self) {}
-        }
-        fn main() {
-            let mut test = S;
-            test.test();
-        }
-    """)
-
-    @Ignore
-    fun `test fix let at method call (args)`() = checkFixByText("Make `reassign` mutable", """
-        struct S;
-        impl S {
-            fn test(&self, test: &mut S) {}
-        }
-        fn main() {
-            let test = S;
-            let reassign = S;
-            test.test(&mut <error>reassi<caret>gn</error>);
-        }
-    """, """
-        struct S;
-        impl S {
-            fn test(&self, test: &mut S) {}
-        }
-        fn main() {
-            let test = S;
-            let mut reassign = S;
-            test.test(&mut reassign);
-        }
-    """)
-
-    @Ignore
-    fun `test fix let at call (args)`() = checkFixByText("Make `s` mutable", """
-        struct S;
-        fn test(test: &mut S) {}
-        fn main() {
-            let s = S;
-            test(&mut <error>s<caret></error>);
-        }
-    """, """
-        struct S;
-        fn test(test: &mut S) {}
-        fn main() {
-            let mut s = S;
-            test(&mut s);
-        }
-    """)
-
     fun `test fix method at method call (self)`() = checkFixByText("Make `self` mutable", """
         struct S;
         impl S {
@@ -292,6 +194,96 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
                 s.foo();
             }
             fn foo(&mut self) {}
+        }
+    """)
+
+    fun `test immutable used at ref mutable method call (self)`() = checkByText("""
+        struct S;
+        impl S {
+            fn test(&mut self) {}
+        }
+        fn main() {
+            let test = S;
+            <error>test</error>.test();
+        }
+    """)
+
+    fun `test immutable used at mutable method call (args)`() = checkByText("""
+        struct S;
+        impl S {
+            fn test(&self, test: &mut S) {}
+        }
+        fn main() {
+            let test = S;
+            let reassign = S;
+            test.test(&mut <error descr="Cannot borrow immutable local variable `reassign` as mutable">reassign</error>);
+        }
+    """)
+
+    fun `test immutable used at mutable call`() = checkByText("""
+        struct S;
+        fn test(test: &mut S) {}
+        fn main() {
+            let s = S;
+            test(&mut <error>s</error>);
+        }
+    """)
+
+    fun `test fix let at method call (self)`() = checkFixByText("Make `test` mutable", """
+        struct S;
+        impl S {
+            fn test(&mut self) {}
+        }
+        fn main() {
+            let test = S;
+            <error>te<caret>st</error>.test();
+        }
+    """, """
+        struct S;
+        impl S {
+            fn test(&mut self) {}
+        }
+        fn main() {
+            let mut test = S;
+            test.test();
+        }
+    """)
+
+    fun `test fix let at method call (args)`() = checkFixByText("Make `reassign` mutable", """
+        struct S;
+        impl S {
+            fn test(&self, test: &mut S) {}
+        }
+        fn main() {
+            let test = S;
+            let reassign = S;
+            test.test(&mut <error>reassi<caret>gn</error>);
+        }
+    """, """
+        struct S;
+        impl S {
+            fn test(&self, test: &mut S) {}
+        }
+        fn main() {
+            let test = S;
+            let mut reassign = S;
+            test.test(&mut reassign);
+        }
+    """)
+
+    fun `test fix let at call (args)`() = checkFixByText("Make `s` mutable", """
+        struct S;
+        fn test(test: &mut S) {}
+        fn main() {
+            let s = S;
+            test(&mut <error>s<caret></error>);
+        }
+    """, """
+        struct S;
+        fn test(test: &mut S) {}
+        fn main() {
+            let mut s = S;
+            test(&mut s);
         }
     """)
 }
