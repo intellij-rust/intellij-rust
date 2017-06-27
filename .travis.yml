@@ -22,13 +22,10 @@ before_script:
 
 install: true
 
-script:
-  # BACKCOMPAT:
-  # HACK: Force grammar kit to use current IDEA version when generating parser.
-  # For actual compilation and running the version from the matrix will be used.
-  - ./check-license.sh
-  - ORG_GRADLE_PROJECT_ideaVersion=2017.1 ./gradlew generateRustParser generateTomlParser
-  - ./gradlew check -x generateRustParser -x generateTomlParser
+# BACKCOMPAT:
+# HACK: Force grammar kit to use current IDEA version when generating parser.
+# For actual compilation and running the version from the matrix will be used.
+script: ./check-license.sh && ORG_GRADLE_PROJECT_ideaVersion=2017.1 ./gradlew generateRustParser generateTomlParser && ./gradlew check -x generateRustParser -x generateTomlParser
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
