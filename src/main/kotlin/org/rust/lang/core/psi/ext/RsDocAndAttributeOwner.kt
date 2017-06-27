@@ -94,6 +94,8 @@ class QueryAttributes(private val attributes: Sequence<RsAttr>) {
     val langAttribute: String?
         get() = getStringAttribute("lang")
 
+    val deriveAttribute: RsMetaItem?
+        get() = attrByName("derive")
 
     fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
 

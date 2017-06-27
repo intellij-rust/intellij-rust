@@ -6,11 +6,12 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.openapi.project.Project
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.flattenHierarchy
-import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.resolve.findDerefTarget
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.BoundElement
@@ -94,9 +95,23 @@ fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<BoundElement<R
         is TyStr -> RsImplIndex.findImpls(project, ty).map { impl -> BoundElement(impl) } to noTraits
         is TyUnit, is TyUnknown -> noImpls to noTraits
 
-        else -> RsImplIndex.findImpls(project, ty).map { impl ->
-            BoundElement(impl, impl.remapTypeParameters(ty.typeParameterValues).orEmpty())
-        } to noTraits
+        else -> {
+            val traits = if (ty is TyStructOrEnumBase) {
+                ty.item.derivedTraits
+                    // select only std traits because we are sure
+                    // that they are resolved correctly
+                    .filter { item ->
+                        val derivableTrait = STD_DERIVABLE_TRAITS[item.name] ?: return@filter false
+                        item.containingCargoPackage?.origin == PackageOrigin.STDLIB &&
+                            item.containingMod?.modName == derivableTrait.modName
+                    }.map { BoundElement(it) }
+            } else {
+                noTraits
+            }
+            RsImplIndex.findImpls(project, ty).map { impl ->
+                BoundElement(impl, impl.remapTypeParameters(ty.typeParameterValues).orEmpty())
+            } to traits
+        }
     }
 }
 
