@@ -366,6 +366,16 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsWrongLifetimeParametersNumberInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Re-assign immutable variable"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsReassignImmutableInspection" />
+
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Borrow checker"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsBorrowCheckerInspection" />
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"

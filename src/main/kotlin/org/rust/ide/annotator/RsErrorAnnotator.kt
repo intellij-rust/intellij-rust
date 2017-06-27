@@ -25,8 +25,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.types.ty.TyPointer
-import org.rust.lang.core.types.ty.TyReference
-import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
@@ -67,22 +65,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         element.accept(visitor)
     }
 
-    private fun checkMethodForNeededMutable(o: RsMethodCallExpr, fn: RsFunction): Boolean {
-        if (!o.expr.isMutable() &&
-            fn.selfParameter != null &&
-            fn.selfParameter?.isMut ?: false &&
-            fn.selfParameter?.isRef ?: false) {
-            val typeRef = o.parentOfType<RsImplItem>()?.typeReference as? RsRefLikeType ?: return true
-            return !typeRef.isMut
-        }
-        return false
-    }
-
     private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCallExpr) {
         val fn = o.reference.resolve() as? RsFunction ?: return
-        if (checkMethodForNeededMutable(o, fn)) {
-            createImmutableErrorAnnotation(holder, o.expr)
-        } else if (fn.unsafe != null) {
+        if (fn.unsafe != null) {
             checkUnsafeCall(holder, o)
         }
     }
@@ -119,9 +104,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkUnsafePtrDereference(holder: AnnotationHolder, o: RsUnaryExpr) {
-        val type = o.expr?.type
-        if (!(type is TyPointer))
-            return
+        if (o.expr?.type !is TyPointer) return
 
         if (!o.isInUnsafeBlockOrFn()) {
             val annotation = holder.createErrorAnnotation(o, "Dereference of raw pointer requires unsafe function or block [E0133]")
@@ -132,10 +115,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkUnaryExpr(holder: AnnotationHolder, unaryExpr: RsUnaryExpr) {
-        val expr = unaryExpr.expr ?: return
-        if (unaryExpr.operatorType == UnaryOperator.REF_MUT && !expr.isMutable()) {
-            createImmutableErrorAnnotation(holder, expr)
-        } else if (unaryExpr.operatorType == UnaryOperator.DEREF) {
+        if (unaryExpr.operatorType == UnaryOperator.DEREF) {
             checkUnsafePtrDereference(holder, unaryExpr)
         }
     }
@@ -430,8 +410,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
             val annotator = holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
             annotator.registerFix(AddTurbofishFix())
-        } else if (o.isAssignBinaryExpr() && !o.left.isMutable()) {
-            createImmutableErrorAnnotation(holder, o.left, true)
         }
     }
 
@@ -523,29 +501,11 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private val String.firstLower: String
         get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
 
-
-    private fun createImmutableErrorAnnotation(holder: AnnotationHolder, expr: RsExpr, binary: Boolean = false) {
-        val message = when {
-            expr is RsPathExpr && binary -> "Reassigning an immutable variable [E0384]"
-            binary -> "Cannot assign to immutable field `${expr.text}`"
-            else -> "Cannot borrow immutable local variable `${expr.text}` as mutable"
-        }
-        val annotation = holder.createErrorAnnotation(expr, message)
-        val declaration = expr.declaration() ?: return
-        if (declaration is RsSelfParameter || declaration is RsPatBinding) {
-            annotation.registerFix(AddMutableFix(declaration as RsNamedElement))
-        }
-    }
 }
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     val op = this as? RsBinaryExpr ?: return false
     return op.operatorType is ComparisonOp
-}
-
-private fun RsExpr?.isAssignBinaryExpr(): Boolean {
-    val op = this as? RsBinaryExpr ?: return false
-    return op.operatorType is AssignmentOp
 }
 
 private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, scope: PsiElement = element.parent, recursively: Boolean = false) {
@@ -654,35 +614,5 @@ private fun RsMethodCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
 
 private val RsCallExpr.declaration: RsFunction?
     get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
-
-private fun RsExpr.declaration(): RsCompositeElement? = when (this) {
-    is RsPathExpr -> this.path.reference.resolve()
-    is RsFieldExpr -> this.expr.declaration()
-    else -> null
-}
-
-private fun RsExpr.isMutable(): Boolean {
-    return when (this) {
-        is RsPathExpr -> {
-            val declaration = this.path.reference.resolve() ?: return true
-            if (declaration is RsSelfParameter) return declaration.isMut
-            if (declaration is RsPatBinding && declaration.isMut) return true
-            if (declaration is RsConstant) return declaration.isMut
-
-            val type = this.type
-            if (type is TyReference) return type.mutable
-
-            val letExpr = declaration.parentOfType<RsLetDecl>()
-            if (letExpr != null && letExpr.eq == null) return true
-            if (type is TyUnknown) return true
-            if (declaration is RsEnumVariant) return true
-
-            false
-        }
-        is RsFieldExpr -> (this.expr.type as? TyReference)?.mutable ?: true
-        is RsUnaryExpr -> mul != null || (expr != null && expr?.isMutable() ?: true)
-        else -> true
-    }
-}
 
 private val RsTupleType.isUnitType: Boolean get() = typeReferenceList.isNullOrEmpty()
