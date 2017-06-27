@@ -203,9 +203,12 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         // We have to save the file to disk to give cargo a chance to check fresh file content.
         object : WriteAction<Unit>() {
             override fun run(result: Result<Unit>) {
-                FileDocumentManager.getInstance().getDocument(file.virtualFile).let {
-                    if (it == null) FileDocumentManager.getInstance().saveAllDocuments()
-                    else FileDocumentManager.getInstance().saveDocument(it)
+                val fileDocumentManager = FileDocumentManager.getInstance()
+                val document = fileDocumentManager.getDocument(file.virtualFile)
+                if (document == null) {
+                    fileDocumentManager.saveAllDocuments()
+                } else if (fileDocumentManager.isDocumentUnsaved(document)) {
+                    fileDocumentManager.saveDocument(document)
                 }
             }
         }.execute()
