@@ -40,5 +40,3 @@ val RsMod.superMods: List<RsMod> get() {
         .takeWhile { visited.add(it) }
         .toList()
 }
-
-

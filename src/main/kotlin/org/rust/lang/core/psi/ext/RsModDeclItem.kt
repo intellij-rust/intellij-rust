@@ -74,3 +74,6 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 }
+
+val RsModDeclItem.hasMacroUse: Boolean get() =
+    queryAttributes.hasAttribute("macro_use")

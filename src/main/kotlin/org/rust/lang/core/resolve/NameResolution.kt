@@ -9,19 +9,22 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.getPsiFor
+import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.types.*
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.inferDeclarationType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import java.util.*
@@ -309,6 +312,86 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
     val traitName = element.referenceName
     val traits = RsNamedElementIndex.findDerivableTraits(element.project, traitName)
     return processAll(traits, processor)
+}
+
+fun processMacroReferenceVariants(referenceElement: RsReferenceElement, processor: RsResolveProcessor): Boolean {
+    walkUp(referenceElement, { false }) { cameFrom, scope ->
+        if (processMacroDeclarations(scope, cameFrom, processor)) return@walkUp true
+        false
+    }
+    return false
+}
+
+fun processMacroDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeElement, processor: RsResolveProcessor): Boolean {
+    check(cameFrom.context == scope)
+    when (scope) {
+        is RsFile -> if (processItemMacroDeclarations(scope, processor, false, scope.isCrateRoot)) return true
+        is RsMod -> if (processItemMacroDeclarations(scope, processor)) return true
+        is RsBlock -> if (processItemMacroDeclarations(scope, processor)) return true
+    }
+    return false
+}
+
+val RsFile.exportedCrateMacros: List<RsMacroItem>
+    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+        val macros = exportedCrateMacros(this)
+        CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
+    })
+
+fun exportedCrateMacros(crateRoot: RsMod): List<RsMacroItem> {
+    val macros = crateRoot.macroItemList.filter { it.hasMacroExport }.toMutableList()
+
+    for (modDecl in crateRoot.modDeclItemList.filter { it.hasMacroUse }) {
+        val mod = modDecl.reference.resolve() ?: continue
+        if (mod is RsMod) {
+            macros.addAll(exportedCrateMacros(mod))
+        }
+    }
+
+    for (crate in crateRoot.externCrateItemList) {
+        val reexport = crate.findOuterAttr("macro_reexport")
+            ?.metaItem?.metaItemArgs?.metaItemList
+            ?.mapNotNull { it.referenceName } ?: continue
+        val mod = crate.reference.resolve() as? RsFile ?: continue
+        val internal_macros = mod.exportedCrateMacros
+
+        macros.addAll(internal_macros.filter { reexport.contains(it.name) })
+    }
+
+    for (mod in crateRoot.modItemList.filter { it.hasMacroUse }) {
+        macros.addAll(exportedCrateMacros(mod))
+    }
+    return macros.toList()
+}
+
+fun processItemMacroDeclarations(
+    scope: RsItemsOwner,
+    processor: RsResolveProcessor,
+    need_export: Boolean = false,
+    add_std_crate: Boolean = false
+): Boolean {
+    val macros = scope.macroItemList.filter { !need_export || it.hasMacroExport }
+    if (processAll(macros, processor)) return true
+
+    for (crate in scope.externCrateItemList.filter { it.hasMacroUse }) {
+        val mod = crate.reference.resolve() ?: continue
+        if (mod is RsFile && processAll(mod.exportedCrateMacros, processor)) return true
+    }
+    if (add_std_crate) {
+        val stdCrate = scope.containingCargoPackage?.findCrateByName("std")?.crateRoot
+        val prelude = scope.project.getPsiFor(stdCrate)?.rustMod
+        if (prelude is RsFile && processAll(prelude.exportedCrateMacros, processor)) return true
+    }
+
+    for (modDecl in scope.modDeclItemList.filter { it.hasMacroUse }) {
+        val mod = modDecl.reference.resolve() ?: continue
+        if (mod is RsMod && processItemMacroDeclarations(mod, processor, true)) return true
+    }
+
+    for (mod in scope.modItemList.filter { it.hasMacroUse }) {
+        if (mod is RsMod && processItemMacroDeclarations(mod, processor, true)) return true
+    }
+    return false
 }
 
 private fun processFieldDeclarations(struct: RsFieldsOwner, subst: Substitution, processor: RsResolveProcessor): Boolean {
