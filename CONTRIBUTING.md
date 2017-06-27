@@ -88,6 +88,13 @@ Here are some example pull requests:
   - Adding a gutter icon: [#758](https://github.com/intellij-rust/intellij-rust/pull/758).
 
 
+We require a contributor license agreement for all contributions. You can sign it 
+electronically at https://www.jetbrains.com/agreements/cla/ via DocuSign. The procedure
+consists of a couple of emails and clicks: no need to scan or print or snail-mail anything :)
+`CONTRIBUTORS.txt` file stores GitHub usernames of people who already signed a CLA.
+  
+The text of the agreement can be found [here](http://www.jetbrains.org/download/attachments/983565/JB_ContributorLicenseAgreement.pdf). 
+
 ## Code style
 
 Please use **reformat code** action to maintain consistent style. Pay attention
