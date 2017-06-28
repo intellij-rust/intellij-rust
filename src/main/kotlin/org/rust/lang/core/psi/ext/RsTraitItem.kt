@@ -53,10 +53,10 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     constructor(stub: RsTraitItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsInnerAttr::class.java)
+        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsInnerAttr::class.java)
 
     override val outerAttrList: List<RsOuterAttr>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsOuterAttr::class.java)
+        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.TRAIT)
@@ -64,4 +64,8 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
     override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
+
+    override val inheritedFunctions: List<RsFunction> get() = emptyList()
+
+    override val implementedTrait: BoundElement<RsTraitItem>? get() = BoundElement(this)
 }
