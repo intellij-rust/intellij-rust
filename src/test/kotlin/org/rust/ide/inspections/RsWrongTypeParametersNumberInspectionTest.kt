@@ -63,4 +63,105 @@ class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongT
         type Type = <error>Foo1<u8, bool, f64></error>;
     """)
 
+    fun `test fix E0244 no type parameters method `() = checkFixByText("Remove all type parameter", """
+        struct Foo0;
+        impl <error>Foo0<caret><u8></error> {}
+    """, """
+        struct Foo0;
+        impl Foo0 {}
+    """)
+
+    fun `test E0035 no type parameters method `() = checkByText("""
+        struct Test;
+
+        impl Test {
+            fn method(&self) {}
+        }
+
+        fn main() {
+            let x = Test;
+
+            <error descr="Wrong number of type parameters: expected 0, found 1 [E0035]">x.method::<i32>()</error>;
+        }
+    """)
+
+    fun `test fix E0035 no type parameters method `() = checkFixByText("Remove all type parameter", """
+        struct Test;
+
+        impl Test {
+            fn method(&self) {}
+        }
+
+        fn main() {
+            let x = Test;
+
+            <error>x.method<caret>::<i32>()</error>;
+        }
+    """, """
+        struct Test;
+
+        impl Test {
+            fn method(&self) {}
+        }
+
+        fn main() {
+            let x = Test;
+
+            x.method();
+        }
+    """)
+
+    fun `test E0036 type parameters method`() = checkByText("""
+        struct Test;
+
+        impl Test {
+            fn method<T>(&self, v: &[T]){}
+            fn method_more<V, T = bool>(&self, v: &[T]){}
+        }
+
+        fn main() {
+            let x = Test;
+            let v = &[0];
+
+            <error descr="Wrong number of type parameters: expected 1, found 2 [E0036]">x.method::<i32, i32>(v)</error>;
+            <error descr="Wrong number of type parameters: expected at most 2, found 3 [E0036]">x.method_more::<i32, i32, i32>(v)</error>;
+            <error descr="Wrong number of type parameters: expected 1, found 0 [E0036]">x.method(v)</error>;
+            <error descr="Wrong number of type parameters: expected at least 1, found 0 [E0036]">x.method_more(v)</error>;
+        }
+    """)
+
+    fun `test E0087 number of type parameters is greater than expected call`() = checkByText("""
+        fn foo<T>() {}
+        fn foo_more<T = bool>(){}
+
+        fn main() {
+            <error descr="Wrong number of type parameters: expected 1, found 2 [E0087]">foo::<f64, bool>()</error>;
+            <error descr="Wrong number of type parameters: expected at most 1, found 2 [E0087]">foo_more::<f64, bool>()</error>;
+        }
+    """)
+
+    fun `test fix E0087 no type parameters method `() = checkFixByText("Remove all type parameter", """
+        fn foo() {}
+
+        fn main() {
+            <error>foo<caret>::<i32>()</error>;
+        }
+    """, """
+        fn foo() {}
+
+        fn main() {
+            foo();
+        }
+    """)
+
+    fun `test E0089 number of type parameters is less than expected call`() = checkByText("""
+        fn foo<T>() {}
+        fn foo_more<V, T = bool>(){}
+
+        fn main() {
+            <error descr="Wrong number of type parameters: expected 1, found 0 [E0089]">foo()</error>;
+            <error descr="Wrong number of type parameters: expected at least 1, found 0 [E0089]">foo_more()</error>;
+        }
+    """)
+
 }
