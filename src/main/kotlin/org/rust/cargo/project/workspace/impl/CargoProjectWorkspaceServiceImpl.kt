@@ -140,6 +140,21 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
                     is UpdateResult.Err -> module.project.showBalloon(
                         "Project '${module.name}' failed to update.<br> ${result.error.message}", NotificationType.ERROR
                     )
+
+                    is UpdateResult.Ok -> {
+                        val outsider = result.workspace.packages
+                            .filter { it.origin == PackageOrigin.WORKSPACE }
+                            .mapNotNull { it.contentRoot }
+                            .find { it !in module.moduleContentScope }
+
+                        if (outsider != null) {
+                            module.project.showBalloon(
+                                "Workspace member ${outsider.presentableUrl} is outside of IDE project, " +
+                                    "please open the root of the workspace.",
+                                NotificationType.WARNING
+                            )
+                        }
+                    }
                 }
             }
         }
