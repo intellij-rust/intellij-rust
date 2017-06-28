@@ -305,8 +305,8 @@ fun processMacroSimpleResolveVariants(element: RsMacroBodySimpleMatching, proces
 }
 
 fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProcessor): Boolean {
-    if (element.parentOfType<RsMetaItem>()?.identifier?.text != "derive") return false
-    val traitName = element.identifier.text
+    if (element.parentOfType<RsMetaItem>()?.referenceName != "derive") return false
+    val traitName = element.referenceName
     val traits = RsNamedElementIndex.findDerivableTraits(element.project, traitName)
     return processAll(traits, processor)
 }

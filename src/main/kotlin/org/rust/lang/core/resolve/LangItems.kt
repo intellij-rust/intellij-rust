@@ -94,11 +94,7 @@ private fun isImplSuitable(project: Project, impl: RsImplItem,
         ?.canUnifyWith(paramType, project) ?: false
 }
 
-private val RsTraitItem.langAttribute: String? get() {
-    val stub = stub
-    if (stub != null) return stub.langAttribute
-    return queryAttributes.langAttribute
-}
+private val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 
 private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
 private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"

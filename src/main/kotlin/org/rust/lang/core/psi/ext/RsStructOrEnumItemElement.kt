@@ -5,4 +5,14 @@
 
 package org.rust.lang.core.psi.ext
 
+import org.rust.lang.core.psi.RsTraitItem
+
 interface RsStructOrEnumItemElement : RsQualifiedNamedElement, RsTypeBearingItemElement, RsGenericDeclaration
+
+val RsStructOrEnumItemElement.derivedTraits: List<RsTraitItem>
+    get() = queryAttributes
+        .deriveAttribute
+        ?.metaItemArgs
+        ?.metaItemList
+        ?.mapNotNull { it.reference.resolve() as? RsTraitItem }
+        ?: emptyList()

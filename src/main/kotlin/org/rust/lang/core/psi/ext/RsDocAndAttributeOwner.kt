@@ -72,39 +72,37 @@ val RsDocAndAttributeOwner.queryAttributes: QueryAttributes
 class QueryAttributes(private val attributes: Sequence<RsAttr>) {
     fun hasCfgAttr(): Boolean = hasAttribute("cfg")
 
-    fun hasAttribute(attributeName: String) = metaItems.any { it.identifier.text == attributeName }
+    fun hasAttribute(attributeName: String) = metaItems.any { it.referenceName == attributeName }
 
     fun hasAtomAttribute(attributeName: String): Boolean {
         val attr = attrByName(attributeName)
-        return attr != null && (attr.eq == null && attr.metaItemArgs == null)
+        return attr != null && (!attr.hasEq && attr.metaItemArgs == null)
     }
 
     fun hasAttributeWithArg(attributeName: String, arg: String): Boolean {
         val attr = attrByName(attributeName) ?: return false
         val args = attr.metaItemArgs ?: return false
-        return args.metaItemList.any { it.identifier.text == arg }
+        return args.metaItemList.any { it.referenceName == arg }
     }
 
     fun lookupStringValueForKey(key: String): String? =
         metaItems
-            .filter { it.identifier.text == key }
-            .mapNotNull { it.litExpr?.stringLiteralValue }
+            .filter { it.referenceName == key }
+            .mapNotNull { it.value }
             .singleOrNull()
 
     val langAttribute: String?
         get() = getStringAttribute("lang")
 
+    val deriveAttribute: RsMetaItem?
+        get() = attrByName("derive")
 
-    fun getStringAttribute(attributeName: String): String? {
-        val attr = attrByName(attributeName) ?: return null
-        if (attr.eq == null) return null
-        return attr.litExpr?.stringLiteralValue
-    }
+    fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
 
     val metaItems: Sequence<RsMetaItem>
         get() = attributes.mapNotNull { it.metaItem }
 
-    private fun attrByName(name: String) = metaItems.find { it.identifier.text == name }
+    private fun attrByName(name: String) = metaItems.find { it.referenceName == name }
 }
 
 

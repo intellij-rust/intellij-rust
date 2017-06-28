@@ -29,7 +29,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 71
+        override fun getStubVersion(): Int = 72
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -120,6 +120,12 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "MACRO_ITEM" -> RsPlaceholderStub.Type("MACRO_ITEM", ::RsMacroItemImpl)
     "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
+
+    "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
+    "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
+
+    "META_ITEM" -> RsMetaItemStub.Type
+    "META_ITEM_ARGS" -> RsPlaceholderStub.Type("META_ITEM_ARGS", ::RsMetaItemArgsImpl)
 
     else -> error("Unknown element $name")
 }
@@ -294,7 +300,6 @@ class RsModDeclItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
     override val isPublic: Boolean,
-    val pathAttribute: String?,
     val isLocal: Boolean    //TODO: get rid of it
 ) : StubBase<RsModDeclItem>(parent, elementType),
     RsNamedStub,
@@ -305,7 +310,6 @@ class RsModDeclItemStub(
             RsModDeclItemStub(parentStub, this,
                 dataStream.readNameAsString(),
                 dataStream.readBoolean(),
-                dataStream.readUTFFast().let { if (it == "") null else it },
                 dataStream.readBoolean()
             )
 
@@ -313,7 +317,6 @@ class RsModDeclItemStub(
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
-                writeUTFFast(stub.pathAttribute ?: "")
                 writeBoolean(stub.isLocal)
             }
 
@@ -321,7 +324,7 @@ class RsModDeclItemStub(
             RsModDeclItemImpl(stub, this)
 
         override fun createStub(psi: RsModDeclItem, parentStub: StubElement<*>?) =
-            RsModDeclItemStub(parentStub, this, psi.name, psi.isPublic, psi.pathAttribute, psi.isLocal)
+            RsModDeclItemStub(parentStub, this, psi.name, psi.isPublic, psi.isLocal)
 
         override fun indexStub(stub: RsModDeclItemStub, sink: IndexSink) = sink.indexModDeclItem(stub)
     }
@@ -364,8 +367,7 @@ class RsModItemStub(
 class RsTraitItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val isPublic: Boolean,
-    val langAttribute: String?
+    override val isPublic: Boolean
 ) : StubBase<RsTraitItem>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
@@ -374,22 +376,20 @@ class RsTraitItemStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTraitItemStub(parentStub, this,
                 dataStream.readNameAsString(),
-                dataStream.readBoolean(),
-                dataStream.readNameAsString()
+                dataStream.readBoolean()
             )
 
         override fun serialize(stub: RsTraitItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
-                writeName(stub.langAttribute)
             }
 
         override fun createPsi(stub: RsTraitItemStub): RsTraitItem =
             RsTraitItemImpl(stub, this)
 
         override fun createStub(psi: RsTraitItem, parentStub: StubElement<*>?) =
-            RsTraitItemStub(parentStub, this, psi.name, psi.isPublic, psi.queryAttributes.langAttribute)
+            RsTraitItemStub(parentStub, this, psi.name, psi.isPublic)
 
         override fun indexStub(stub: RsTraitItemStub, sink: IndexSink) = sink.indexTraitItem(stub)
     }
@@ -821,6 +821,35 @@ class RsMacroDefinitionStub(
     }
 }
 
+class RsMetaItemStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val referenceName: String,
+    val hasEq: Boolean,
+    val value: String?
+) : StubBase<RsMetaItem>(parent, elementType) {
+    object Type : RsStubElementType<RsMetaItemStub, RsMetaItem>("META_ITEM") {
+        override fun createStub(psi: RsMetaItem, parentStub: StubElement<*>?): RsMetaItemStub =
+            RsMetaItemStub(parentStub, this, psi.referenceName, psi.eq != null, psi.litExpr?.stringLiteralValue)
+
+        override fun createPsi(stub: RsMetaItemStub): RsMetaItem = RsMetaItemImpl(stub, this)
+
+        override fun serialize(stub: RsMetaItemStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.referenceName)
+                writeBoolean(stub.hasEq)
+                writeUTFFast(stub.value ?: "")
+            }
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsMetaItemStub =
+            RsMetaItemStub(parentStub, this,
+                dataStream.readNameAsString()!!,
+                dataStream.readBoolean(),
+                dataStream.readUTFFast().let { if (it == "") null else it })
+
+        override fun indexStub(stub: RsMetaItemStub, sink: IndexSink) {
+        }
+    }
+}
 
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
 
