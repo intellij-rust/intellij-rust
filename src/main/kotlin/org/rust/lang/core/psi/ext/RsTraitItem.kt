@@ -12,10 +12,7 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsOuterAttr
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RustPsiImplUtil
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.utils.filterIsInstanceQuery
@@ -54,6 +51,9 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsTraitItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
+    override val innerAttrList: List<RsInnerAttr>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsInnerAttr::class.java)
 
     override val outerAttrList: List<RsOuterAttr>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsOuterAttr::class.java)
