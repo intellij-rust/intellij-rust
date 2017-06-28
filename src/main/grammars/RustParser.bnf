@@ -641,6 +641,7 @@ private TupleField_recover ::= !(')' | ',')
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamBounds? WhereClause? TraitOrImplBody {
+  pin = "trait"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
