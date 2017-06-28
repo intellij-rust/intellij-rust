@@ -9,11 +9,10 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RustPsiImplUtil
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.utils.filterIsInstanceQuery
@@ -53,10 +52,20 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
     constructor(stub: RsTraitItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
+    override val innerAttrList: List<RsInnerAttr>
+        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsInnerAttr::class.java)
+
+    override val outerAttrList: List<RsOuterAttr>
+        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
+
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.TRAIT)
 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
 
     override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
+
+    override val inheritedFunctions: List<RsFunction> get() = emptyList()
+
+    override val implementedTrait: BoundElement<RsTraitItem>? get() = BoundElement(this)
 }

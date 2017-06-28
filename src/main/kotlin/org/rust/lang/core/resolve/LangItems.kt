@@ -31,10 +31,9 @@ enum class StdDerivableTrait(val modName: String) {
 val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.values().associate { it.name to it }
 
 fun findDerefTarget(project: Project, ty: Ty): Ty? {
-    val impls = findImplsAndTraits(project, ty).first
-    for ((impl, subst) in impls) {
-        val trait = impl.traitRef?.resolveToTrait ?: continue
-        if (!trait.isDeref) continue
+    for ((impl, subst) in findImplsAndTraits(project, ty)) {
+        val trait = impl.implementedTrait ?: continue
+        if (!trait.element.isDeref) continue
         return lookupAssociatedType(impl, "Target")
             .substitute(subst)
     }
@@ -42,9 +41,9 @@ fun findDerefTarget(project: Project, ty: Ty): Ty? {
 }
 
 fun findIteratorItemType(project: Project, ty: Ty): Ty {
-    val impl = findImplsAndTraits(project, ty).first
-        .find { boundImpl ->
-            val traitName = boundImpl.element.traitRef?.resolveToTrait?.name
+    val impl = findImplsAndTraits(project, ty)
+        .find { impl ->
+            val traitName = impl.element.implementedTrait?.element?.name
             traitName == "Iterator" || traitName == "IntoIterator"
         } ?: return TyUnknown
 
@@ -114,7 +113,7 @@ val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
     return TyFunction(argumentTypes, TyUnknown)
 }
 
-private fun lookupAssociatedType(impl: RsImplItem, name: String): Ty =
+private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty =
     impl.typeAliasList.find { it.name == name }?.typeReference?.type
         ?: TyUnknown
 

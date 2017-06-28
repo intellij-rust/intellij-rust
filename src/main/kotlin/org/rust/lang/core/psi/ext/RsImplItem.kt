@@ -11,9 +11,11 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.stubs.RsImplItemStub
+import org.rust.lang.core.types.BoundElement
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
@@ -34,6 +36,16 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         }
         return PresentationData(typeReference?.text ?: "Impl", null, RsIcons.IMPL, null)
     }
+
+    override val inheritedFunctions: List<RsFunction> get() {
+        val directlyImplemented = functionList.map { it.name }.toSet()
+        return traitRef?.resolveToTrait?.functionList.orEmpty().filter {
+            it.name !in directlyImplemented
+        }
+    }
+
+    override val implementedTrait: BoundElement<RsTraitItem>?
+        get() = traitRef?.resolveToBoundTrait
 }
 
 /**

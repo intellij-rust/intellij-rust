@@ -17,8 +17,9 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement({)('{')
         PsiWhiteSpace('\n        ')
-        PsiErrorElement:<constant>, <function> or <type alias> expected, got 'intellijidearulezz'
-          PsiElement(identifier)('intellijidearulezz')
+        PsiElement(identifier)('intellijidearulezz')
+        PsiErrorElement:'!' expected, got '}'
+          <empty list>
         PsiWhiteSpace('\n    ')
         PsiElement(})('}')
       PsiWhiteSpace('\n\n    ')
@@ -29,8 +30,9 @@ FILE
         PsiWhiteSpace(' ')
         PsiElement({)('{')
         PsiWhiteSpace('\n        ')
-        PsiErrorElement:<constant>, <function> or <type alias> expected, got 'intellijidearulezzz'
-          PsiElement(identifier)('intellijidearulezzz')
+        PsiElement(identifier)('intellijidearulezzz')
+        PsiErrorElement:'!' expected, got 'fn'
+          <empty list>
         PsiWhiteSpace('\n        ')
         RsFunctionImpl(FUNCTION)
           PsiElement(fn)('fn')

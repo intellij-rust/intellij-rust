@@ -8,8 +8,6 @@ package org.rust.lang.core.types.ty
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.resolve.findDerefTarget
@@ -80,60 +78,43 @@ fun Ty.derefTransitively(project: Project): Set<Ty> {
     return result
 }
 
-fun Ty.getTypeParameter(name: String) : TyTypeParameter? {
+fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.keys.find { it.toString() == name }
 }
 
-fun findImplsAndTraits(project: Project, ty: Ty): Pair<Collection<BoundElement<RsImplItem>>, Collection<BoundElement<RsTraitItem>>> {
-    val noImpls = emptyList<BoundElement<RsImplItem>>()
-    val noTraits = emptyList<BoundElement<RsTraitItem>>()
+fun findImplsAndTraits(project: Project, ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
     return when (ty) {
-        is TyTypeParameter -> noImpls to ty.getTraitBoundsTransitively()
-        is TyTraitObject -> noImpls to BoundElement(ty.trait).flattenHierarchy
+        is TyTypeParameter -> ty.getTraitBoundsTransitively()
+        is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy
 
     //  XXX: TyStr is TyPrimitive, but we want to handle it separately
-        is TyStr -> RsImplIndex.findImpls(project, ty).map { impl -> BoundElement(impl) } to noTraits
-        is TyUnit, is TyUnknown -> noImpls to noTraits
+        is TyStr -> RsImplIndex.findImpls(project, ty).map { impl -> BoundElement(impl) }
+        is TyUnit, is TyUnknown -> emptyList()
 
         else -> {
-            val traits = if (ty is TyStructOrEnumBase) {
-                ty.item.derivedTraits
-                    // select only std traits because we are sure
-                    // that they are resolved correctly
-                    .filter { item ->
-                        val derivableTrait = STD_DERIVABLE_TRAITS[item.name] ?: return@filter false
-                        item.containingCargoPackage?.origin == PackageOrigin.STDLIB &&
-                            item.containingMod?.modName == derivableTrait.modName
-                    }.map { BoundElement(it) }
-            } else {
-                noTraits
-            }
-            RsImplIndex.findImpls(project, ty).map { impl ->
+            val derived = (ty as? TyStructOrEnumBase)?.item?.derivedTraits.orEmpty()
+                // select only std traits because we are sure
+                // that they are resolved correctly
+                .filter { item ->
+                    val derivableTrait = STD_DERIVABLE_TRAITS[item.name] ?: return@filter false
+                    item.containingCargoPackage?.origin == PackageOrigin.STDLIB &&
+                        item.containingMod?.modName == derivableTrait.modName
+                }.map { BoundElement(it) }
+
+            derived + RsImplIndex.findImpls(project, ty).map { impl ->
                 BoundElement(impl, impl.remapTypeParameters(ty.typeParameterValues).orEmpty())
-            } to traits
+            }
         }
     }
 }
 
 fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<BoundElement<RsFunction>> {
-    val (impls, traits) = findImplsAndTraits(project, ty)
+    val traits = findImplsAndTraits(project, ty)
     val result = mutableListOf<BoundElement<RsFunction>>()
-    for ((impl, typeArguments) in impls) {
-        impl.allMethodsAndAssocFunctions.mapTo(result) { BoundElement(it, typeArguments) }
-    }
-    traits.flatMapTo(result) { (trait, typeArguments) ->
-        trait.functionList.map { BoundElement(it, typeArguments) }
+    for ((trait, typeArguments) in traits) {
+        trait.functionsWithInherited.mapTo(result) { BoundElement(it, typeArguments) }
     }
     return result
-}
-
-private val RsImplItem.allMethodsAndAssocFunctions: Collection<RsFunction> get() {
-    val directlyImplemented = functionList.map { it.name }.toSet()
-    val defaulted = traitRef?.resolveToTrait?.functionList.orEmpty().asSequence().filter {
-        it.name !in directlyImplemented
-    }
-
-    return functionList + defaulted
 }
 
 internal inline fun merge(mapping: TypeMapping?, canUnify: (TypeMapping?) -> Boolean): Boolean {
