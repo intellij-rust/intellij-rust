@@ -1,10 +1,14 @@
 andruhon
 atsky
+chriskrycho
+contradictioned
 daschl
 farodin91
 greg-kargin
 HeyLey
+jonas-schievink
 matklad
+mitchhentges
 mkaput
 sirgl
 ujpv
