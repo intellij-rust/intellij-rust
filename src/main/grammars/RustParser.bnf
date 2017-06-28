@@ -637,10 +637,10 @@ private TupleField_recover ::= !(')' | ',')
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Trait
+// Trait & Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamBounds? WhereClause? TraitBody {
+TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamBounds? WhereClause? TraitOrImplBody {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
@@ -649,20 +649,6 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
   stubClass = "org.rust.lang.core.stubs.RsTraitItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-private TraitBody ::= '{' TraitMember* '}' { pin = 1 }
-
-private TraitMember ::= !'}' ( Constant | TypeAlias | Function ) {
-  pin = 1
-  recoverWhile = TraitMember_recover
-}
-
-private TraitMember_recover ::= !('#' | Vis | extern | const | static | unsafe | fn | TYPE_KW | '}' | "default")
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Impl
-///////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? ( TraitImpl | InherentImpl ) {
   pin = "impl"
@@ -673,20 +659,18 @@ ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? ( TraitImpl | InherentI
   stubClass = "org.rust.lang.core.stubs.RsImplItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-private InherentImpl ::= TypeReference !for WhereClause? ImplBody { pin = 2 }
+private InherentImpl ::= TypeReference !for WhereClause? TraitOrImplBody { pin = 2 }
 private TraitImpl ::= '!'? TraitRef for (AutoTraitImpl | TypeTraitImpl) { pin = 3 }
 private AutoTraitImpl ::= '..' '{' '}' { pin = 1 }
-private TypeTraitImpl ::= TypeReference WhereClause? ImplBody { pin = 1 }
+private TypeTraitImpl ::= TypeReference WhereClause? TraitOrImplBody { pin = 1 }
 
-private ImplBody ::= '{' InnerAttr* ImplMember* '}' { pin = 1 }
+private TraitOrImplBody ::= '{' InnerAttr* Member* '}' { pin = 1 }
 
-private ImplMember ::= !'}' ( Function | Constant | ImplMacroMember | TypeAlias ) {
+private Member ::= !'}' ( Function | Constant | TypeAlias | ImplMacroMember ) {
   pin = 1
-  recoverWhile = ImplMember_recover
+  recoverWhile = Member_recover
 }
-private ImplMember_recover ::= !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default" | '}')
-
+private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default" | '}')
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Types

@@ -9,9 +9,11 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RustPsiImplUtil
 import org.rust.lang.core.stubs.RsTraitItemStub
@@ -52,6 +54,9 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsTraitItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
+    override val outerAttrList: List<RsOuterAttr>
+        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsOuterAttr::class.java)
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.TRAIT)
