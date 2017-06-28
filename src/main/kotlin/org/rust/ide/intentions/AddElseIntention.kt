@@ -17,7 +17,7 @@ class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsIfExpr? {
-        val ifStmnt = element.parentOfType<RsIfExpr>() as? RsIfExpr ?: return null
+        val ifStmnt = element.parentOfType<RsIfExpr>() ?: return null
         return if (ifStmnt.elseBranch == null) ifStmnt else null
     }
 

@@ -133,19 +133,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkPath(holder: AnnotationHolder, path: RsPath) {
-        fun isValidSelfSuper(path: RsPath): Boolean {
-            if (path.self == null && path.`super` == null) return true
-            if (path.path == null && path.coloncolon != null) return false
-            if (path.self != null && path.path != null) return false
-            if (path.`super` != null) {
-                val q = path.path ?: return true
-                return q.self != null || q.`super` != null
-            }
-            return true
-        }
-
         val child = path.path
-        if ((child == null || isValidSelfSuper(child)) && !isValidSelfSuper(path)) {
+        if ((child == null || isValidSelfSuperPrefix(child)) && !isValidSelfSuperPrefix(path)) {
             holder.createErrorAnnotation(path, "Invalid path: self and super are allowed only at the beginning")
             return
         }
@@ -616,3 +605,14 @@ private val RsCallExpr.declaration: RsFunction?
     get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
 
 private val RsTupleType.isUnitType: Boolean get() = typeReferenceList.isNullOrEmpty()
+
+private fun isValidSelfSuperPrefix(path: RsPath): Boolean {
+    if (path.self == null && path.`super` == null) return true
+    if (path.path == null && path.coloncolon != null) return false
+    if (path.self != null && path.path != null) return false
+    if (path.`super` != null) {
+        val q = path.path ?: return true
+        return q.self != null || q.`super` != null
+    }
+    return true
+}
