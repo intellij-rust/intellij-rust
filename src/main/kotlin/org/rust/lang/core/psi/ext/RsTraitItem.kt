@@ -65,7 +65,7 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
     override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
 
-    override val inheritedFunctions: List<RsFunction> get() = emptyList()
+    override val inheritedFunctions: List<BoundElement<RsFunction>> get() = emptyList()
 
     override val implementedTrait: BoundElement<RsTraitItem>? get() = BoundElement(this)
 }
