@@ -1052,6 +1052,17 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }                   //^
     """)
 
+    fun `test apply`() = checkByCode("""
+        $FN_LANG_ITEMS
+        struct S;
+        impl S { fn foo(&self) {} }
+                   //X
+
+        fn call<F: Fn() -> S>(f: F) {
+            f().foo()
+        }      //^
+    """)
+
     fun `test generic method with type parameters`() = checkByCode("""
         struct S;
         impl S {

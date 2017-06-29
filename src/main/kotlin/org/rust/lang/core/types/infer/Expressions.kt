@@ -45,8 +45,11 @@ fun inferExpressionType(expr: RsExpr): Ty {
                     is RsStructItem -> return inferTupleStructTypeParameters(expr, variant)
                 }
             }
-
-            val calleeType = fn.type as? TyFunction ?: return TyUnknown
+            val ty = fn.type
+            val calleeType = ty as? TyFunction ?:
+                (findImplsAndTraits(fn.project, fn.type)
+                    .mapNotNull { it.downcast<RsTraitItem>()?.asFunctionType }
+                    .firstOrNull() ?: return TyUnknown)
             calleeType.retType.substitute(mapTypeParameters(calleeType.paramTypes, expr.valueArgumentList.exprList))
         }
 
