@@ -107,10 +107,17 @@ val RsTraitItem.fnTypeArgsParam: TyTypeParameter? get() {
     return TyTypeParameter(param)
 }
 
+val RsTraitItem.fnOutputParam: TyTypeParameter? get() {
+    if (!isAnyFnTrait) return null
+    return TyTypeParameter(this, "Output")
+}
+
 val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
     val param = element.fnTypeArgsParam ?: return null
+    val outputParam = element.fnOutputParam ?: return null
     val argumentTypes = ((typeArguments[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
-    return TyFunction(argumentTypes, TyUnknown)
+    val outputType = (typeArguments[outputParam] ?: TyUnit)
+    return TyFunction(argumentTypes, outputType)
 }
 
 private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty =
@@ -122,40 +129,40 @@ private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty =
 // Java uses fully qualified names for this, perhaps we
 // can do this as well? Will be harder to test though :(
 fun isStdResult(type: Ty): Boolean {
-    return type is TyEnum && type.item.name == "Result";
+    return type is TyEnum && type.item.name == "Result"
 }
 
 private fun tyFromAbsolutePath(prefixStd: String, prefixNoStd: String, name: String, elementForModule: RsCompositeElement): Ty {
-    val module = elementForModule.module ?: return TyUnknown;
+    val module = elementForModule.module ?: return TyUnknown
     val crateRoot = elementForModule.crateRoot as? RsFile ?: return TyUnknown
-    val prefix = if (crateRoot.attributes == RsFile.Attributes.NONE) prefixStd else prefixNoStd;
-    val fullName = prefix + "::" + name;
+    val prefix = if (crateRoot.attributes == RsFile.Attributes.NONE) prefixStd else prefixNoStd
+    val fullName = prefix + "::" + name
 
-    val (element, _) = resolveStringPath(fullName, module) ?: return TyUnknown;
-    return (element as? RsTypeBearingItemElement)?.type ?: TyUnknown;
+    val (element, _) = resolveStringPath(fullName, module) ?: return TyUnknown
+    return (element as? RsTypeBearingItemElement)?.type ?: TyUnknown
 }
 
 fun findStdRange(rangeName: String, indexType: Ty?, elementForModule: RsCompositeElement): Ty {
-    val ty = tyFromAbsolutePath("std", "core", "ops::" + rangeName, elementForModule);
+    val ty = tyFromAbsolutePath("std", "core", "ops::" + rangeName, elementForModule)
 
     if (indexType == null)
-        return ty;
+        return ty
 
-    val typeParameter = ty.getTypeParameter("Idx") ?: return ty;
-    return ty.substitute(mapOf(typeParameter to indexType));
+    val typeParameter = ty.getTypeParameter("Idx") ?: return ty
+    return ty.substitute(mapOf(typeParameter to indexType))
 }
 
 fun findStdVec(elementType: Ty, elementForModule: RsCompositeElement): Ty {
-    val ty = tyFromAbsolutePath("std", "collections", "vec::Vec", elementForModule);
+    val ty = tyFromAbsolutePath("std", "collections", "vec::Vec", elementForModule)
 
     val typeParameter = ty.getTypeParameter("T") ?: return ty
-    return ty.substitute(mapOf(typeParameter to elementType));
+    return ty.substitute(mapOf(typeParameter to elementType))
 }
 
 fun findStdString(elementForModule: RsCompositeElement): Ty {
-    return tyFromAbsolutePath("std", "collections", "string::String", elementForModule);
+    return tyFromAbsolutePath("std", "collections", "string::String", elementForModule)
 }
 
 fun findStdArguments(elementForModule: RsCompositeElement): Ty {
-    return tyFromAbsolutePath("std", "core", "fmt::Arguments", elementForModule);
+    return tyFromAbsolutePath("std", "core", "fmt::Arguments", elementForModule)
 }
