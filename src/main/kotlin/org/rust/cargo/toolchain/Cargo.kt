@@ -13,6 +13,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
@@ -149,7 +150,26 @@ class Cargo(
             // https://github.com/rust-lang/cargo/issues/3566
             handler.destroyProcess()
         }
-        Disposer.register(owner, cargoKiller)
+
+        val alreadyDisposed = runReadAction {
+            if (Disposer.isDisposed(owner)) {
+                true
+            } else {
+                Disposer.register(owner, cargoKiller)
+                false
+            }
+        }
+
+        if (alreadyDisposed) {
+            // On the one hand, this seems fishy,
+            // on the other hand, this is isomorphic
+            // to the scenario where cargoKiller triggers.
+            if (ignoreExitCode) {
+                return ProcessOutput().apply { setCancelled() }
+            } else {
+                throw ExecutionException("Cargo command failed to start")
+            }
+        }
 
         listener?.let { handler.addProcessListener(it) }
         val output = try {
