@@ -1066,4 +1066,24 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             t.foo();
         }    //^
     """)
+
+    fun `test generic trait method`() = checkByCode("""
+        $FN_LANG_ITEMS
+
+        struct S<T1>(T1);
+
+        trait Foo<T2> { fn foo<F: FnOnce(T2)>(&self, f: F) {} }
+        impl<T3> Foo<T3> for S<T3> {}
+
+        struct X;
+        impl X { fn fox(&self) {} }
+                   //X
+
+        fn main() {
+            S(X).foo(|x| {
+                x.fox();
+            });  //^
+        }
+    """)
+
 }

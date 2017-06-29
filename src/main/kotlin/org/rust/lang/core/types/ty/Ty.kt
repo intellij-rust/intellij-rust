@@ -109,12 +109,7 @@ fun findImplsAndTraits(project: Project, ty: Ty): Collection<BoundElement<RsTrai
 }
 
 fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<BoundElement<RsFunction>> {
-    val traits = findImplsAndTraits(project, ty)
-    val result = mutableListOf<BoundElement<RsFunction>>()
-    for ((trait, typeArguments) in traits) {
-        trait.functionsWithInherited.mapTo(result) { BoundElement(it, typeArguments) }
-    }
-    return result
+    return findImplsAndTraits(project, ty).flatMap { it.functionsWithInherited }
 }
 
 internal inline fun merge(mapping: TypeMapping?, canUnify: (TypeMapping?) -> Boolean): Boolean {
@@ -138,3 +133,6 @@ internal fun TypeMapping.merge(otherMapping: TypeMapping) {
         }
     }
 }
+
+fun TypeArguments.substituteInValues(map: TypeArguments): TypeArguments =
+    mapValues { (_, value) -> value.substitute(map) }

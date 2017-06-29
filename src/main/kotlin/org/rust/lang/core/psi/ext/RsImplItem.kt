@@ -16,6 +16,8 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.type
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
@@ -37,15 +39,23 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         return PresentationData(typeReference?.text ?: "Impl", null, RsIcons.IMPL, null)
     }
 
-    override val inheritedFunctions: List<RsFunction> get() {
+    override val inheritedFunctions: List<BoundElement<RsFunction>> get() {
+        val trait = implementedTrait ?: return emptyList()
         val directlyImplemented = functionList.map { it.name }.toSet()
-        return traitRef?.resolveToTrait?.functionList.orEmpty().filter {
+        return trait.element.functionList.filter {
             it.name !in directlyImplemented
+        }.map {
+            BoundElement(it, trait.typeArguments)
         }
     }
 
-    override val implementedTrait: BoundElement<RsTraitItem>?
-        get() = traitRef?.resolveToBoundTrait
+    override val implementedTrait: BoundElement<RsTraitItem>? get() {
+        val (trait, subst) = traitRef?.resolveToBoundTrait ?: return null
+        val aliases = typeAliasList.mapNotNull { typeAlias ->
+            typeAlias.name?.let { TyTypeParameter(trait, it) to typeAlias.type }
+        }.toMap()
+        return BoundElement(trait, subst + aliases)
+    }
 }
 
 /**

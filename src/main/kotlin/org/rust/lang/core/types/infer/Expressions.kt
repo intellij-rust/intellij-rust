@@ -372,8 +372,7 @@ fun RsImplItem.remapTypeParameters(
     map: Map<TyTypeParameter, Ty>
 ): Map<TyTypeParameter, Ty> {
     val positional = typeReference?.type?.typeParameterValues.orEmpty()
-        .mapNotNull {
-            val (structParam, structType) = it
+        .mapNotNull { (structParam, structType) ->
             if (structType is TyTypeParameter) {
                 val implType = map[structParam] ?: return@mapNotNull null
                 structType to implType
@@ -382,15 +381,7 @@ fun RsImplItem.remapTypeParameters(
             }
         }.toMap()
 
-    val associated = run {
-        val trait = traitRef?.resolveToTrait
-        if (trait == null) {
-            emptyMap()
-        } else {
-            typeAliasList.mapNotNull { typeAlias ->
-                typeAlias.name?.let { TyTypeParameter(trait, it) to typeAlias.type.substitute(positional) }
-            }.toMap()
-        }
-    }
+    val associated = (implementedTrait?.typeArguments ?: emptyMap())
+        .substituteInValues(positional)
     return positional + associated
 }
