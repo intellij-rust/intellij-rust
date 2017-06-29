@@ -46,27 +46,52 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
         val expectedRequiredParams = paramsDecl.typeParameterList?.typeParameterList?.filter { it.eq == null }?.size ?: 0
         val expectedTotalParams = paramsDecl.typeParameterList?.typeParameterList?.size ?: 0
 
-        val (code, expectedText) = when {
-            actualArgs < expectedRequiredParams && o is RsBaseType ->
-                ("E0243" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
-            actualArgs > expectedTotalParams && o is RsBaseType ->
-                ("E0244" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
-            actualArgs < expectedRequiredParams && o is RsCallExpr ->
-                ("E0089" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
-            actualArgs > expectedTotalParams && o is RsCallExpr ->
-                ("E0087" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
-            actualArgs != 0 && expectedTotalParams == 0 && o is RsMethodCallExpr ->
-                ("E0035" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedRequiredParams" else "$expectedTotalParams")
-            actualArgs < expectedRequiredParams && o is RsMethodCallExpr ->
-                ("E0036" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
-            actualArgs > expectedTotalParams && o is RsMethodCallExpr ->
-                ("E0036" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
+        val data = when(o) {
+            is RsBaseType -> checkBaseType(actualArgs, expectedRequiredParams, expectedTotalParams)
+            is RsMethodCallExpr -> checkMethodCallExpr(actualArgs, expectedRequiredParams, expectedTotalParams)
+            is RsCallExpr -> checkCallExpr(actualArgs, expectedRequiredParams, expectedTotalParams)
             else -> null
         } ?: return
-        if (expectedTotalParams == 0) {
-            holder.registerProblem(o, "Wrong number of type parameters: expected $expectedText, found $actualArgs [$code]", RemoveTypeParameter(o))
+        val problemText = "Wrong number of type parameters: expected ${data.expectedText}, found $actualArgs [${data.code}]"
+        if (data.fix) {
+            holder.registerProblem(o, problemText, RemoveTypeParameter(o))
         } else {
-            holder.registerProblem(o, "Wrong number of type parameters: expected $expectedText, found $actualArgs [$code]")
+            holder.registerProblem(o, problemText)
         }
+    }
+
+    data class ProblemData(val expectedText: String, val code: String, val fix: Boolean)
+
+    private fun checkBaseType(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
+        val (code, expectedText) = when {
+            actualArgs < expectedRequiredParams ->
+                ("E0243" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
+            actualArgs > expectedTotalParams ->
+                ("E0244" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
+            else -> null
+        } ?: return null
+        return ProblemData(expectedText, code, expectedTotalParams == 0)
+    }
+
+    private fun checkMethodCallExpr(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
+        val (code, expectedText) = when {
+            actualArgs != 0 && expectedTotalParams == 0 ->
+                ("E0035" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedRequiredParams" else "$expectedTotalParams")
+            actualArgs > expectedTotalParams ->
+                ("E0036" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
+            else -> null
+        } ?: return null
+        return ProblemData(expectedText, code, expectedTotalParams == 0)
+
+    }
+
+    private fun checkCallExpr(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
+        val (code, expectedText) = when {
+            actualArgs > expectedTotalParams ->
+                ("E0087" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
+            else -> null
+        } ?: return null
+        return ProblemData(expectedText, code, expectedTotalParams == 0)
+
     }
 }

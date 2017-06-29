@@ -125,8 +125,8 @@ class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongT
 
             <error descr="Wrong number of type parameters: expected 1, found 2 [E0036]">x.method::<i32, i32>(v)</error>;
             <error descr="Wrong number of type parameters: expected at most 2, found 3 [E0036]">x.method_more::<i32, i32, i32>(v)</error>;
-            <error descr="Wrong number of type parameters: expected 1, found 0 [E0036]">x.method(v)</error>;
-            <error descr="Wrong number of type parameters: expected at least 1, found 0 [E0036]">x.method_more(v)</error>;
+            x.method(v);
+            x.method_more(v);
         }
     """)
 
@@ -159,9 +159,11 @@ class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongT
         fn foo_more<V, T = bool>(){}
 
         fn main() {
-            <error descr="Wrong number of type parameters: expected 1, found 0 [E0089]">foo()</error>;
-            <error descr="Wrong number of type parameters: expected at least 1, found 0 [E0089]">foo_more()</error>;
+            foo();
+            foo_more();
         }
     """)
+
+
 
 }
