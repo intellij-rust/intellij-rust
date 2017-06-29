@@ -36,7 +36,9 @@ import org.rust.ide.RsConstants
 import org.rust.lang.core.psi.ext.module
 import java.util.*
 
-data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
+data class CargoCheckAnnotationInfo(
+    val file: PsiFile
+)
 
 class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Project)
     : ModificationTracker by PsiManager.getInstance(project).modificationTracker {
@@ -57,20 +59,18 @@ class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Proje
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
 
-    private fun getCachedResult(file: PsiFile) =
-        CachedValuesManager.getManager(file.project).createCachedValue {
-            CachedValueProvider.Result.create(
-                checkProject(file),
-                PsiModificationTracker.MODIFICATION_COUNT)
-        }
+    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? {
+        if (!file.project.rustSettings.useCargoCheckAnnotator) return null
 
-    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? =
-        if (file.project.rustSettings.useCargoCheckAnnotator) {
-            CargoCheckAnnotationInfo(file, editor)
-        } else null
+        return CargoCheckAnnotationInfo(file)
+    }
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =
-        getCachedResult(info.file).value
+        CachedValuesManager.getManager(info.file.project).createCachedValue {
+            CachedValueProvider.Result.create(
+                checkProject(info.file),
+                PsiModificationTracker.MODIFICATION_COUNT)
+        }.value
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         annotationResult ?: return
