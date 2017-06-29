@@ -8,18 +8,15 @@ package org.rust.ide.annotator
 import com.google.gson.JsonParser
 import com.intellij.lang.annotation.*
 import com.intellij.lang.annotation.Annotation
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -27,20 +24,20 @@ import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.toolchain.CargoCode
-import org.rust.cargo.toolchain.CargoMessage
-import org.rust.cargo.toolchain.CargoSpan
-import org.rust.cargo.toolchain.CargoTopMessage
+import org.rust.cargo.toolchain.*
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.RsConstants
 import org.rust.lang.core.psi.ext.module
 import java.util.*
 
-data class CargoCheckAnnotationInfo(val file: PsiFile, val editor: Editor)
+data class CargoCheckAnnotationInfo(
+    val file: VirtualFile,
+    val toolchain: RustToolchain,
+    val projectPath: String,
+    val module: Module
+)
 
-class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Project)
-    : ModificationTracker by PsiManager.getInstance(project).modificationTracker {
-
+class CargoCheckAnnotationResult(commandOutput: List<String>) {
     companion object {
         private val parser = JsonParser()
         private val messageRegex = """\s*\{\s*"message".*""".toRegex()
@@ -57,20 +54,22 @@ class CargoCheckAnnotationResult(commandOutput: List<String>, val project: Proje
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
 
-    private fun getCachedResult(file: PsiFile) =
-        CachedValuesManager.getManager(file.project).createCachedValue {
-            CachedValueProvider.Result.create(
-                checkProject(file),
-                PsiModificationTracker.MODIFICATION_COUNT)
-        }
+    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? {
+        if (!file.project.rustSettings.useCargoCheckAnnotator) return null
+        val module = file.module ?: return null
+        val projectRoot = module.cargoProjectRoot ?: return null
+        val toolchain = module.project.toolchain ?: return null
 
-    override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? =
-        if (file.project.rustSettings.useCargoCheckAnnotator) {
-            CargoCheckAnnotationInfo(file, editor)
-        } else null
+        return CargoCheckAnnotationInfo(file.virtualFile, toolchain, projectRoot.path, module)
+    }
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =
-        getCachedResult(info.file).value
+        CachedValuesManager.getManager(info.module.project)
+            .getCachedValue(info.module, {
+                CachedValueProvider.Result.create(
+                    checkProject(info),
+                    PsiModificationTracker.MODIFICATION_COUNT)
+            })
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         annotationResult ?: return
@@ -189,32 +188,25 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
     fun CargoSpan.isValid() = line_end > line_start || (line_end == line_start && column_end >= column_start)
 
-    // NB: executed asynchronously off EDT, so care must be taken not to access
-    // disposed objects
-    fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
-        val (toolchain, projectPath, disposable: Disposable) = runReadAction {
-            val module = file.module ?: return@runReadAction null
-            if (module.isDisposed) return@runReadAction null
-            val projectRoot = module.cargoProjectRoot ?: return@runReadAction null
-            val toolchain = module.project.toolchain ?: return@runReadAction null
-            Triple(toolchain, projectRoot.path, module)
-        } ?: return null
+}
 
-        // We have to save the file to disk to give cargo a chance to check fresh file content.
-        object : WriteAction<Unit>() {
-            override fun run(result: Result<Unit>) {
-                val fileDocumentManager = FileDocumentManager.getInstance()
-                val document = fileDocumentManager.getDocument(file.virtualFile)
-                if (document == null) {
-                    fileDocumentManager.saveAllDocuments()
-                } else if (fileDocumentManager.isDocumentUnsaved(document)) {
-                    fileDocumentManager.saveDocument(document)
-                }
+// NB: executed asynchronously off EDT, so care must be taken not to access
+// disposed objects
+private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? {
+    // We have to save the file to disk to give cargo a chance to check fresh file content.
+    object : WriteAction<Unit>() {
+        override fun run(result: Result<Unit>) {
+            val fileDocumentManager = FileDocumentManager.getInstance()
+            val document = fileDocumentManager.getDocument(info.file)
+            if (document == null) {
+                fileDocumentManager.saveAllDocuments()
+            } else if (fileDocumentManager.isDocumentUnsaved(document)) {
+                fileDocumentManager.saveDocument(document)
             }
-        }.execute()
+        }
+    }.execute()
 
-        val output = toolchain.cargo(projectPath).checkProject(disposable)
-        if (output.isCancelled) return null
-        return CargoCheckAnnotationResult(output.stdoutLines, file.project)
-    }
+    val output = info.toolchain.cargo(info.projectPath).checkProject(info.module)
+    if (output.isCancelled) return null
+    return CargoCheckAnnotationResult(output.stdoutLines)
 }
