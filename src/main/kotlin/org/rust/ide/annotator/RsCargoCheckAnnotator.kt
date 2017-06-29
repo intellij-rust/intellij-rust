@@ -68,7 +68,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =
         CachedValuesManager.getManager(info.file.project).createCachedValue {
             CachedValueProvider.Result.create(
-                checkProject(info.file),
+                checkProject(info),
                 PsiModificationTracker.MODIFICATION_COUNT)
         }.value
 
@@ -189,32 +189,33 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
     fun CargoSpan.isValid() = line_end > line_start || (line_end == line_start && column_end >= column_start)
 
-    // NB: executed asynchronously off EDT, so care must be taken not to access
-    // disposed objects
-    fun checkProject(file: PsiFile): CargoCheckAnnotationResult? {
-        val (toolchain, projectPath, disposable: Disposable) = runReadAction {
-            val module = file.module ?: return@runReadAction null
-            if (module.isDisposed) return@runReadAction null
-            val projectRoot = module.cargoProjectRoot ?: return@runReadAction null
-            val toolchain = module.project.toolchain ?: return@runReadAction null
-            Triple(toolchain, projectRoot.path, module)
-        } ?: return null
+}
 
-        // We have to save the file to disk to give cargo a chance to check fresh file content.
-        object : WriteAction<Unit>() {
-            override fun run(result: Result<Unit>) {
-                val fileDocumentManager = FileDocumentManager.getInstance()
-                val document = fileDocumentManager.getDocument(file.virtualFile)
-                if (document == null) {
-                    fileDocumentManager.saveAllDocuments()
-                } else if (fileDocumentManager.isDocumentUnsaved(document)) {
-                    fileDocumentManager.saveDocument(document)
-                }
+// NB: executed asynchronously off EDT, so care must be taken not to access
+// disposed objects
+private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? {
+    val (toolchain, projectPath, disposable: Disposable) = runReadAction {
+        val module = info.file.module ?: return@runReadAction null
+        if (module.isDisposed) return@runReadAction null
+        val projectRoot = module.cargoProjectRoot ?: return@runReadAction null
+        val toolchain = module.project.toolchain ?: return@runReadAction null
+        Triple(toolchain, projectRoot.path, module)
+    } ?: return null
+
+    // We have to save the file to disk to give cargo a chance to check fresh file content.
+    object : WriteAction<Unit>() {
+        override fun run(result: Result<Unit>) {
+            val fileDocumentManager = FileDocumentManager.getInstance()
+            val document = fileDocumentManager.getDocument(info.file.virtualFile)
+            if (document == null) {
+                fileDocumentManager.saveAllDocuments()
+            } else if (fileDocumentManager.isDocumentUnsaved(document)) {
+                fileDocumentManager.saveDocument(document)
             }
-        }.execute()
+        }
+    }.execute()
 
-        val output = toolchain.cargo(projectPath).checkProject(disposable)
-        if (output.isCancelled) return null
-        return CargoCheckAnnotationResult(output.stdoutLines, file.project)
-    }
+    val output = toolchain.cargo(projectPath).checkProject(disposable)
+    if (output.isCancelled) return null
+    return CargoCheckAnnotationResult(output.stdoutLines, info.file.project)
 }
