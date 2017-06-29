@@ -39,15 +39,20 @@ class RustProjectSettingsServiceImpl(
 
     override var data: RustProjectSettingsService.Data
         get() = RustProjectSettingsService.Data(
-            state.toolchainHomeDirectory?.let(::RustToolchain),
-            state.autoUpdateEnabled,
-            state.explicitPathToStdlib,
-            state.useCargoCheckForBuild,
-            state.useCargoCheckAnnotator
+            toolchain = state.toolchainHomeDirectory?.let(::RustToolchain),
+            autoUpdateEnabled = state.autoUpdateEnabled,
+            explicitPathToStdlib = state.explicitPathToStdlib,
+            useCargoCheckForBuild = state.useCargoCheckForBuild,
+            useCargoCheckAnnotator = state.useCargoCheckAnnotator
         )
         set(value) {
-            val newState = State(value.toolchain?.location, value.autoUpdateEnabled, value.explicitPathToStdlib,
-                value.useCargoCheckForBuild, value.useCargoCheckAnnotator)
+            val newState = State(
+                toolchainHomeDirectory = value.toolchain?.location,
+                autoUpdateEnabled = value.autoUpdateEnabled,
+                explicitPathToStdlib = value.explicitPathToStdlib,
+                useCargoCheckForBuild = value.useCargoCheckForBuild,
+                useCargoCheckAnnotator = value.useCargoCheckAnnotator
+            )
             if (state != newState) {
                 state = newState
                 notifyToolchainChanged()
