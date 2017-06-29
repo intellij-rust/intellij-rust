@@ -1051,4 +1051,19 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             t.filter(|e| { e.bar(); })
         }                   //^
     """)
+
+    fun `test generic method with type parameters`() = checkByCode("""
+        struct S;
+        impl S {
+            fn make_t<T>(&self) -> T { unimplemented!() }
+        }
+
+        struct X;
+        impl X { fn foo(&self) {} }
+                   //X
+        fn main() {
+            let t = S.make_t::<X>();
+            t.foo();
+        }    //^
+    """)
 }

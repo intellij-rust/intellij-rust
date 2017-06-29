@@ -6,10 +6,15 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMethodCallExpr
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.*
+import org.rust.lang.core.resolve.collectCompletionVariants
+import org.rust.lang.core.resolve.collectResolveVariants
+import org.rust.lang.core.resolve.processMethodCallExprResolveVariants
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.type
 
 class RsMethodCallReferenceImpl(
     element: RsMethodCallExpr
@@ -21,6 +26,22 @@ class RsMethodCallReferenceImpl(
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processMethodCallExprResolveVariants(element, it) }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
-        collectResolveVariants(element.referenceName) { processMethodCallExprResolveVariants(element, it) }
+    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
+        val result = collectResolveVariants(element.referenceName) { processMethodCallExprResolveVariants(element, it) }
+        val typeArguments = element.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
+        if (typeArguments.isEmpty()) return result
+
+        return result.map { boundElement ->
+            val method = boundElement.element
+            if (method is RsFunction) {
+                val parameters = method.typeParameterList?.typeParameterList.orEmpty().map { TyTypeParameter(it) }
+                BoundElement(
+                    method,
+                    boundElement.typeArguments + parameters.zip(typeArguments).toMap()
+                )
+            } else {
+                boundElement
+            }
+        }
+    }
 }
