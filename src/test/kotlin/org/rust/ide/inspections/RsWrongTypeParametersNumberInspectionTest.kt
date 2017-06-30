@@ -164,6 +164,12 @@ class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongT
         }
     """)
 
+    fun `test don't explode for non-paths`() = checkByText("""
+        fn foo() {}
+        fn main() {
+            (foo)();
+        }
+    """)
 
 
 }
