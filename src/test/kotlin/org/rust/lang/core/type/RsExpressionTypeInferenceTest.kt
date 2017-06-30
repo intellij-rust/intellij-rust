@@ -476,36 +476,6 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test inference type for closure`() = testExpr("""
-        $FN_LANG_ITEMS
-
-        struct T;
-        impl T {
-            fn bar(&self) {}
-        }
-
-        fn foo<F: Fn(&T) -> ()>(f: F) {}
-
-        fn main() {
-            foo(|t| { t.bar(); })
-        }           //^ &T
-    """)
-
-    fun `test inference type with where for closure`() = testExpr("""
-        $FN_LANG_ITEMS
-
-        struct T;
-        impl T {
-            fn bar(&self) {}
-        }
-
-        fn foo<F>(f: F) where F: Fn(&T) -> () {}
-
-        fn main() {
-            foo(|t| { t.bar(); })
-        }           //^ &T
-    """)
-
     // https://github.com/intellij-rust/intellij-rust/issues/1269
     fun `test tuple field`() = testExpr("""
         fn main() {
@@ -555,47 +525,5 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = s.foo();
             a;
         } //^ S
-    """)
-
-    fun `test inference ref type for associated type for closure`() = testExpr("""
-        $FN_LANG_ITEMS
-
-        trait A {
-            type Item;
-            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(&Self::Item) {}
-        }
-        struct S;
-        impl S {
-            fn bar(&self) {}
-        }
-        impl A for S {
-            type Item = S;
-        }
-
-        fn main() {
-            let t = S;
-            t.filter(|e| { e.bar(); })
-        }                //^ &S
-    """)
-
-    fun `test inference type for associated type for closure`() = testExpr("""
-        $FN_LANG_ITEMS
-
-        trait A {
-            type Item;
-            fn filter<P>(self, predicate: P) -> Filter<Self, P> where Self: Sized, P: FnMut(Self::Item) {}
-        }
-        struct S;
-        impl S {
-            fn bar(&self) {}
-        }
-        impl A for S {
-            type Item = S;
-        }
-
-        fn main() {
-            let t = S;
-            t.filter(|e| { e.bar(); })
-        }                //^ S
     """)
 }

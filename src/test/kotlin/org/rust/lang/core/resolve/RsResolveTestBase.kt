@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 
 abstract class RsResolveTestBase : RsTestBase() {
-    protected fun checkByCode(@Language("Rust") code: String) {
+    open protected fun checkByCode(@Language("Rust") code: String) {
         InlineFile(code)
 
         val (refElement, data) = findElementAndDataInEditor<RsReferenceElement>("^")
