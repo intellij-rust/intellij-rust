@@ -156,4 +156,42 @@ class RsClosuresResolveTest : RsResolveTestBase() {
             (with_s)(|s| s.bar())
         }                 //^
     """)
+
+    fun `test layered visitor example`() = checkByCode("""
+        //TODO: this should resolve once we implement unification...
+
+        struct PhantomData;
+
+        trait NodeVisitor<'f, C> {
+            fn visit<T, F>(self, f: F) -> AstVisitor<Self, T, F>
+                where Self: Sized, F: FnMut(&mut C, T) {
+                AstVisitor { visitor: self, f: f, t: PhantomData }
+            }
+        }
+
+        pub struct Visitor<C>(pub C);
+
+        impl<'f, C> NodeVisitor<'f, C> for Visitor<C> {}
+
+        pub struct AstVisitor<V, T, F> {
+            visitor: V,
+            f: F,
+            t: PhantomData<*const T>
+        }
+
+        impl<'f, C, V, T, F> NodeVisitor<'f, C> for AstVisitor<V, T, F>
+            where V: NodeVisitor<'f, C>, F: FnMut(&mut C, T)
+        {}
+
+        struct X;
+        impl X { fn foo(&self) {} }
+                   //X
+        fn main() {
+            let mut ctx = X;
+            Visitor(&mut ctx)
+                .visit::<(), _>(|ctx, t| ctx.foo())
+                .visit::<(), _>(|ctx, t| ctx.foo())
+            ;                               //^ unresolved
+        }
+    """)
 }
