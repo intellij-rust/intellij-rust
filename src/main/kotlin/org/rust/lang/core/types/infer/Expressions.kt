@@ -236,14 +236,12 @@ fun inferExpressionType(expr: RsExpr): Ty {
 }
 
 private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
-    if (t1 is TyUnknown)
-        return t2
-    if (t1 is TyInteger && t2 is TyInteger && t1.isKindWeak)
-        return t2
-    if (t1 is TyFloat && t2 is TyFloat && t1.isKindWeak)
-        return t2
-    return t1
-
+    return when {
+        t1 is TyUnknown -> t2
+        t1 is TyInteger && t2 is TyInteger && t1.isKindWeak -> t2
+        t1 is TyFloat && t2 is TyFloat && t1.isKindWeak -> t2
+        else -> t1
+    }
 }
 
 private val RsCallExpr.declaration: BoundElement<RsFunction>?
