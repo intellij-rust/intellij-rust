@@ -6,10 +6,10 @@
 package org.rust.cargo.runconfig.command
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.util.PathUtil
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustChannel
+import java.nio.file.Paths
 
 class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
 
@@ -17,7 +17,7 @@ class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
         val project = e.project ?: return
         val toolchain = project.toolchain ?: return
         val module = getAppropriateModule(e) ?: return
-        val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
+        val moduleDirectory = Paths.get(module.moduleFilePath).parent!!
         val channel = if (toolchain.isRustupAvailable) RustChannel.NIGHTLY else RustChannel.DEFAULT
 
         runCommand(module, toolchain.cargo(moduleDirectory).clippyCommandLine(channel))

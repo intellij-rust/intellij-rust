@@ -30,6 +30,7 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.lang.core.psi.isNotRustFile
+import org.rust.utils.pathAsPath
 import java.awt.Component
 
 /**
@@ -79,7 +80,7 @@ class MissingToolchainNotificationProvider(
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
         if (module.cargoWorkspace?.hasStandardLibrary == false) {
-            val rustup = module.cargoProjectRoot?.let { toolchain.rustup(it.path) }
+            val rustup = module.cargoProjectRoot?.let { toolchain.rustup(it.pathAsPath) }
             // If rustup is not null, the WorkspaceService will use it
             // to add stdlib automatically. This happens asynchronously,
             // so we can't reliably say here if that succeeded or not.
