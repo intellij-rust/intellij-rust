@@ -12,7 +12,6 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
-import org.rust.lang.core.psi.ext.resolveToTrait
 import org.rust.lang.core.types.BoundElement
 
 data class TyTypeParameter private constructor(
@@ -25,7 +24,7 @@ data class TyTypeParameter private constructor(
     constructor(trait: RsTraitItem, target: String) : this(AssociatedType(trait, target))
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
-        parameter.bounds.flatMapTo(mutableSetOf()) { it.flattenHierarchy.asSequence() }
+        parameter.bounds.flatMap { it.flattenHierarchy }
 
     override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean {
         mapping?.merge(mutableMapOf(this to other))
@@ -38,32 +37,31 @@ data class TyTypeParameter private constructor(
 
     private interface TypeParameter {
         val name: String?
-        val bounds: Sequence<BoundElement<RsTraitItem>>
+        val bounds: Collection<BoundElement<RsTraitItem>>
     }
 
     private data class Named(val parameter: RsTypeParameter) : TypeParameter {
         override val name: String? get() = parameter.name
 
-        override val bounds: Sequence<BoundElement<RsTraitItem>> get() {
+        override val bounds: Collection<BoundElement<RsTraitItem>> get() {
             val owner = parameter.parent?.parent as? RsGenericDeclaration
             val whereBounds =
                 owner?.whereClause?.wherePredList.orEmpty()
-                    .asSequence()
                     .filter { (it.typeReference as? RsBaseType)?.path?.reference?.resolve() == parameter }
-                    .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
+                    .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
 
-            return (parameter.typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds)
+            return (parameter.typeParamBounds?.polyboundList.orEmpty() + whereBounds)
                 .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
         }
     }
 
     private data class Self(val trait: RsTraitItem) : TypeParameter {
         override val name: String? get() = "Self"
-        override val bounds: Sequence<BoundElement<RsTraitItem>> get() = sequenceOf(BoundElement(trait))
+        override val bounds: Collection<BoundElement<RsTraitItem>> get() = listOf(BoundElement(trait))
     }
 
     private data class AssociatedType(val trait: RsTraitItem, val target: String) : TypeParameter {
         override val name: String? get() = "${trait.name}::target"
-        override val bounds: Sequence<BoundElement<RsTraitItem>> get() = emptySequence()
+        override val bounds: Collection<BoundElement<RsTraitItem>> get() = emptyList()
     }
 }
