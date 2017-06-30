@@ -28,12 +28,14 @@ import org.rust.cargo.toolchain.*
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.RsConstants
 import org.rust.lang.core.psi.ext.module
+import org.rust.utils.pathAsPath
+import java.nio.file.Path
 import java.util.*
 
 data class CargoCheckAnnotationInfo(
     val file: VirtualFile,
     val toolchain: RustToolchain,
-    val projectPath: String,
+    val projectPath: Path,
     val module: Module
 )
 
@@ -60,7 +62,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         val projectRoot = module.cargoProjectRoot ?: return null
         val toolchain = module.project.toolchain ?: return null
 
-        return CargoCheckAnnotationInfo(file.virtualFile, toolchain, projectRoot.path, module)
+        return CargoCheckAnnotationInfo(file.virtualFile, toolchain, projectRoot.pathAsPath, module)
     }
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =

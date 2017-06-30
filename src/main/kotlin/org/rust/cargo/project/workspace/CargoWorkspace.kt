@@ -23,7 +23,7 @@ class CargoWorkspace private constructor(
 ) {
 
     class Package(
-        val contentRootUrl: String,
+        private val contentRootUrl: String,
         val name: String,
         val version: String,
         val targets: Collection<Target>,
@@ -50,7 +50,7 @@ class CargoWorkspace private constructor(
         /**
          * Absolute path to the crate root file
          */
-        val crateRootUrl: String,
+        internal val crateRootUrl: String,
         val name: String,
         val kind: TargetKind
     ) {

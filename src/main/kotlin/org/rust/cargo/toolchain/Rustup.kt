@@ -12,15 +12,18 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.utils.GeneralCommandLine
 import org.rust.utils.fullyRefreshDirectory
 import org.rust.utils.seconds
+import org.rust.utils.withWorkDirectory
+import java.nio.file.Path
 
 private val LOG = Logger.getInstance(Rustup::class.java)
 
 class Rustup(
-    private val pathToRustupExecutable: String,
-    private val pathToRustcExecutable: String,
-    private val projectDirectory: String
+    private val rustup: Path,
+    private val rustc: Path,
+    private val projectDirectory: Path
 ) {
     sealed class DownloadResult {
         class Ok(val library: VirtualFile) : DownloadResult()
@@ -28,7 +31,7 @@ class Rustup(
     }
 
     fun downloadStdlib(): DownloadResult {
-        val downloadProcessOutput = GeneralCommandLine(pathToRustupExecutable)
+        val downloadProcessOutput = GeneralCommandLine(rustup)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "add", "rust-src")
             .exec()
@@ -43,7 +46,7 @@ class Rustup(
     }
 
     fun getStdlibFromSysroot(): VirtualFile? {
-        val sysroot = GeneralCommandLine(pathToRustcExecutable)
+        val sysroot = GeneralCommandLine(rustc)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "sysroot")
@@ -56,7 +59,11 @@ class Rustup(
     }
 
     fun createRunCommandLine(channel: RustChannel, varargs: String): GeneralCommandLine =
-        GeneralCommandLine(pathToRustupExecutable, "run", channel.rustupArgument, varargs)
+        if (channel.rustupArgument != null) {
+            GeneralCommandLine(rustup, "run", channel.rustupArgument, varargs)
+        } else {
+            GeneralCommandLine(rustup, "run", varargs)
+        }
 
     private fun GeneralCommandLine.exec(timeoutInMilliseconds: Int? = null): ProcessOutput {
         val handler = CapturingProcessHandler(this)

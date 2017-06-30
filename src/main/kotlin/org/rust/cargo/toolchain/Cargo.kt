@@ -23,8 +23,11 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.utils.GeneralCommandLine
 import org.rust.utils.fullyRefreshDirectory
+import org.rust.utils.withWorkDirectory
 import java.io.File
+import java.nio.file.Path
 
 /**
  * A main gateway for executing cargo commands.
@@ -36,11 +39,11 @@ import java.io.File
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
 class Cargo(
-    private val pathToCargoExecutable: String,
-    private val pathToRustExecutable: String,
+    private val cargoExecutable: Path,
+    private val rustExecutable: Path,
     // It's more convenient to use project directory rather then path to `Cargo.toml`
     // because some commands don't accept `--manifest-path` argument
-    private val projectDirectory: String?,
+    private val projectDirectory: Path?,
     private val rustup: Rustup?
 ) {
     /**
@@ -93,17 +96,17 @@ class Cargo(
 
     private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
         val cmdLine = if (commandLine.channel == RustChannel.DEFAULT) {
-            GeneralCommandLine(pathToCargoExecutable)
+            GeneralCommandLine(cargoExecutable)
         } else {
             if (rustup == null) error("Channel '${commandLine.channel}' cannot be set explicitly because rustup is not available")
-            rustup.createRunCommandLine(commandLine.channel, pathToCargoExecutable)
+            rustup.createRunCommandLine(commandLine.channel, cargoExecutable.toString())
         }
 
         cmdLine
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters(commandLine.command)
-            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, pathToRustExecutable)
+            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
 
         val env = when (commandLine.backtraceMode) {
             BacktraceMode.SHORT -> mapOf(RUST_BACTRACE_ENV_VAR to "short")

@@ -17,6 +17,7 @@ import com.intellij.util.PathUtil
 import org.rust.cargo.project.settings.toolchain
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.core.psi.isRustFile
+import java.nio.file.Paths
 
 class RsFmtFileAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
@@ -42,7 +43,7 @@ class RsFmtFileAction : DumbAwareAction() {
         }
 
         val module = ModuleUtilCore.findModuleForFile(file, project) ?: return
-        val moduleDirectory = PathUtil.getParentPath(module.moduleFilePath)
+        val moduleDirectory = Paths.get(module.moduleFilePath).parent!!
         val cargo = module.project.toolchain?.cargo(moduleDirectory) ?: return
         try {
             cargo.reformatFile(module, file)

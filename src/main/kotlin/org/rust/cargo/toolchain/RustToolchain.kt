@@ -12,10 +12,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PathUtil
 import com.intellij.util.text.SemVer
+import org.rust.utils.GeneralCommandLine
 import org.rust.utils.seconds
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 private val LOG = Logger.getInstance(RustToolchain::class.java)
 
@@ -40,10 +43,10 @@ data class RustToolchain(val location: String) {
         )
     }
 
-    fun cargo(cargoProjectDirectory: String): Cargo =
+    fun cargo(cargoProjectDirectory: Path): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), cargoProjectDirectory, rustup(cargoProjectDirectory))
 
-    fun rustup(cargoProjectDirectory: String): Rustup? =
+    fun rustup(cargoProjectDirectory: Path): Rustup? =
         if (isRustupAvailable)
             Rustup(pathToExecutable(RUSTUP), pathToExecutable(RUSTC), cargoProjectDirectory)
         else
@@ -54,15 +57,15 @@ data class RustToolchain(val location: String) {
     fun nonProjectCargo(): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), null, null)
 
-    val presentableLocation: String = PathUtil.toPresentableUrl(pathToExecutable(CARGO))
+    val presentableLocation: String = pathToExecutable(CARGO).toString()
 
-    private fun pathToExecutable(toolName: String): String {
+    private fun pathToExecutable(toolName: String): Path {
         val exeName = if (SystemInfo.isWindows) "$toolName.exe" else toolName
-        return File(File(location), exeName).absolutePath
+        return Paths.get(location, exeName).toAbsolutePath()
     }
 
     private fun hasExecutable(exec: String): Boolean =
-        File(pathToExecutable(exec)).canExecute()
+        Files.isExecutable(pathToExecutable(exec))
 
     data class VersionInfo(
         val rustc: RustcVersion,
@@ -99,8 +102,8 @@ private fun findSemVer(lines: List<String>): SemVer {
     return SemVer.parseFromTextNonNullize(versionText)
 }
 
-private fun scrapeRustcVersion(pathToRustc: String): RustcVersion {
-    val lines = GeneralCommandLine(pathToRustc)
+private fun scrapeRustcVersion(rustc: Path): RustcVersion {
+    val lines = GeneralCommandLine(rustc)
         .withParameters("--version", "--verbose")
         .runExecutable()
         ?: return RustcVersion.UNKNOWN

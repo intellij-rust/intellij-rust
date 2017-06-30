@@ -30,6 +30,7 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.core.psi.ext.parentOfType
+import java.nio.file.Paths
 import java.util.*
 
 abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCase {
@@ -188,7 +189,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         open class WithRustup : RustProjectDescriptorBase() {
             private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
 
-            val rustup by lazy { toolchain?.rustup("/") }
+            val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
             val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
 
             override val skipTestReason: String? get() {

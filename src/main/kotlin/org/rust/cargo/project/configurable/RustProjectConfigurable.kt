@@ -18,13 +18,17 @@ import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
+import org.rust.utils.pathAsPath
+import java.nio.file.Paths
 import javax.swing.JComponent
 
 class RustProjectConfigurable(
     private val project: Project
 ) : Configurable, Configurable.NoScroll {
 
-    private val rustProjectSettings = RustProjectSettingsPanel(rustModule?.cargoProjectRoot?.path ?: ".")
+    private val rustProjectSettings = RustProjectSettingsPanel(
+        rustModule?.cargoProjectRoot?.pathAsPath ?: Paths.get(".")
+    )
     private val cargoTomlLocation = Label("N/A")
 
     override fun createComponent(): JComponent = panel {

@@ -8,6 +8,7 @@ package org.rust.cargo.commands
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.fileTree
+import org.rust.utils.pathAsPath
 
 class CargoFmtTest : RustWithToolchainTestBase() {
 
@@ -29,7 +30,7 @@ class CargoFmtTest : RustWithToolchainTestBase() {
             }
         }.create()
 
-        val cargo = myModule.project.toolchain!!.cargo(cargoProjectDirectory.path)
+        val cargo = myModule.project.toolchain!!.cargo(cargoProjectDirectory.pathAsPath)
         val main = cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!
         val result = cargo.reformatFile(testRootDisposable, main)
         check(result.exitCode == 0)

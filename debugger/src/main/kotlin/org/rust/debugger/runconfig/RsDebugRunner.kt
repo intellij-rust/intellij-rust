@@ -39,6 +39,11 @@ import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.util.cargoProjectRoot
+import org.rust.utils.GeneralCommandLine
+import org.rust.utils.pathAsPath
+import org.rust.utils.withWorkDirectory
+import java.nio.file.Path
+import java.nio.file.Paths
 
 //BACKCOMPAT: 2017.1 use `AsyncProgramRunner`
 class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
@@ -58,7 +63,7 @@ class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
     override fun prepare(env: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
         val config = env.runnerAndConfigurationSettings!!.configuration as CargoCommandConfiguration
         val project = config.project
-        val cargoProjectDirectory = config.configurationModule.module!!.cargoProjectRoot!!.path
+        val cargoProjectDirectory = config.configurationModule.module!!.cargoProjectRoot!!.pathAsPath
         val cargo = project.toolchain!!.cargo(cargoProjectDirectory)
 
         val buildCommand = if (config.cargoCommandLine.command == "run") {
@@ -102,7 +107,7 @@ private class RsRunProfileStarter(val commandLine: GeneralCommandLine) : RunProf
 }
 
 
-private class Binary(val path: String)
+private class Binary(val path: Path)
 
 /**
  * Runs `command` twice:
@@ -168,7 +173,7 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                                     "Please specify `--bin`, `--lib` or `--test` flag explicitly.")
                                 promise.setResult(null)
                             }
-                            else -> promise.setResult(Binary(binaries.single()))
+                            else -> promise.setResult(Binary(Paths.get(binaries.single())))
                         }
                     }
 

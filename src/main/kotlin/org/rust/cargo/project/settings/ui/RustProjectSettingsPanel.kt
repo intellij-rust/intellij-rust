@@ -21,10 +21,12 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.utils.UiDebouncer
 import org.rust.utils.pathToDirectoryTextField
+import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 
-class RustProjectSettingsPanel(private val cargoProjectDir: String = ".") : Disposable {
+class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get(".")) : Disposable {
     data class Data(
         val toolchain: RustToolchain?,
         val autoUpdateEnabled: Boolean,

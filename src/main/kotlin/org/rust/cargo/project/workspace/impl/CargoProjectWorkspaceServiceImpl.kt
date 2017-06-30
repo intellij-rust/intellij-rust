@@ -31,6 +31,8 @@ import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.checkReadAccessAllowed
 import org.rust.ide.utils.checkWriteAccessAllowed
+import org.rust.utils.pathAsPath
+import java.nio.file.Path
 
 
 private val LOG = Logger.getInstance(CargoProjectWorkspaceServiceImpl::class.java)
@@ -94,7 +96,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
 
     init {
         fun refreshStdlib() {
-            val projectDirectory = module.cargoProjectRoot?.path
+            val projectDirectory = module.cargoProjectRoot?.pathAsPath
                 ?: return
             val rustup = module.project.toolchain?.rustup(projectDirectory)
             if (rustup != null) {
@@ -173,13 +175,13 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
         requestUpdate(toolchain, afterCommit)
 
     override fun syncUpdate(toolchain: RustToolchain) {
-        taskQueue.run(UpdateTask(toolchain, module.cargoProjectRoot!!.path, null))
+        taskQueue.run(UpdateTask(toolchain, module.cargoProjectRoot!!.pathAsPath, null))
     }
 
     private fun requestUpdate(toolchain: RustToolchain, afterCommit: ((UpdateResult) -> Unit)?) {
         val contentRoot = module.cargoProjectRoot ?: return
         debouncer.submit({
-            taskQueue.run(UpdateTask(toolchain, contentRoot.path, afterCommit))
+            taskQueue.run(UpdateTask(toolchain, contentRoot.pathAsPath, afterCommit))
         }, immediately = afterCommit != null)
     }
 
@@ -221,7 +223,7 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
 
     private inner class UpdateTask(
         private val toolchain: RustToolchain,
-        private val projectDirectory: String,
+        private val projectDirectory: Path,
         private val afterCommit: ((UpdateResult) -> Unit)? = null
     ) : Task.Backgroundable(module.project, "Updating cargo") {
 
