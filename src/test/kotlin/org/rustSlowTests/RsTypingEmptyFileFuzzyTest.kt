@@ -3,9 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.typing
+package org.rustSlowTests
 
 import com.intellij.openapi.util.text.StringUtil
+import org.rust.ide.typing.RsTypingTestBase
 
 class RsTypingEmptyFileFuzzyTest : RsTypingTestBase() {
     fun testFuzzy() {
