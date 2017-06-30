@@ -9,6 +9,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationTypeUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
@@ -244,6 +245,8 @@ class RunConfigurationProducerTest : RsTestBase() {
         val root = Element("configurations")
         serialized.forEach { root.addContent(it) }
 
+        //BACKCOMPAT: in 2017.2, a module is saved to XML as well
+        if (ApplicationManager.getApplication().isEAP) return
         assertSameLinesWithFile("$testDataPath/${getTestName(true)}.xml", JDOMUtil.writeElement(root))
     }
 
