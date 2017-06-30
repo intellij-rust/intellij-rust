@@ -30,29 +30,32 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
         }
 
     private fun checkMethod(holder: ProblemsHolder, o: RsCompositeElement) {
-        val actualArgs = when (o) {
-            is RsMethodCallExpr -> o.typeArgumentList?.typeReferenceList?.size ?: 0
-            is RsCallExpr -> (o.expr as RsPathExpr?)?.path?.typeArgumentList?.typeReferenceList?.size ?: 0
-            is RsBaseType -> o.path?.typeArgumentList?.typeReferenceList?.size ?: 0
-            else -> 0
-        }
-        val paramsDecl = when (o) {
-            is RsMethodCallExpr -> o.reference.resolve() as? RsGenericDeclaration?
-            is RsCallExpr -> (o.expr as RsPathExpr?)?.path?.reference?.resolve() as? RsGenericDeclaration?
-            is RsBaseType -> o.path?.reference?.resolve() as? RsGenericDeclaration?
-            else -> null
-        } ?: return
+        val (actualArguments, declaration) = when (o) {
+            is RsMethodCallExpr ->
+                o.typeArgumentList  to o.reference.resolve()
 
-        val expectedRequiredParams = paramsDecl.typeParameterList?.typeParameterList?.filter { it.eq == null }?.size ?: 0
-        val expectedTotalParams = paramsDecl.typeParameterList?.typeParameterList?.size ?: 0
+            is RsCallExpr ->
+                (o.expr as? RsPathExpr)?.path?.typeArgumentList to (o.expr as? RsPathExpr)?.path?.reference?.resolve()
+
+            is RsBaseType ->
+                o.path?.typeArgumentList to o.path?.reference?.resolve()
+
+            else -> return
+        }
+        if (declaration !is RsGenericDeclaration) return
+        val nArguments = actualArguments?.typeReferenceList?.size ?: 0
+
+        val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.eq == null }?.size ?: 0
+        val expectedTotalParams = declaration.typeParameterList?.typeParameterList?.size ?: 0
 
         val data = when(o) {
-            is RsBaseType -> checkBaseType(actualArgs, expectedRequiredParams, expectedTotalParams)
-            is RsMethodCallExpr -> checkMethodCallExpr(actualArgs, expectedRequiredParams, expectedTotalParams)
-            is RsCallExpr -> checkCallExpr(actualArgs, expectedRequiredParams, expectedTotalParams)
+            is RsBaseType -> checkBaseType(nArguments, expectedRequiredParams, expectedTotalParams)
+            is RsMethodCallExpr -> checkMethodCallExpr(nArguments, expectedRequiredParams, expectedTotalParams)
+            is RsCallExpr -> checkCallExpr(nArguments, expectedRequiredParams, expectedTotalParams)
             else -> null
         } ?: return
-        val problemText = "Wrong number of type parameters: expected ${data.expectedText}, found $actualArgs [${data.code}]"
+
+        val problemText = "Wrong number of type parameters: expected ${data.expectedText}, found $nArguments [${data.code}]"
         if (data.fix) {
             holder.registerProblem(o, problemText, RemoveTypeParameter(o))
         } else {
