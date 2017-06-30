@@ -1097,4 +1097,17 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test lambda in generic expression with function type`() = checkByCode("""
+        $FN_LANG_ITEMS
+
+        struct S;
+        impl S { fn bar(&self) {} }
+                   //X
+
+        fn with_s<F: Fn(S)>(f: F) {}
+
+        fn main() {
+            (with_s)(|s| s.bar())
+        }                 //^
+    """)
 }

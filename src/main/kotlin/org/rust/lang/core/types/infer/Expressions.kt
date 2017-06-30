@@ -9,7 +9,6 @@ import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -246,32 +245,31 @@ private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
 
 }
 
-private val RsCallExpr.declaration: BoundElement<RsFunction>?
-    get() = (expr as? RsPathExpr)?.path?.reference?.advancedResolve()?.downcast()
-
-private val RsMethodCallExpr.declaration: BoundElement<RsFunction>?
-    get() = reference.advancedResolve()?.downcast()
-
 private fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Ty {
     val fallback = TyFunction(emptyList(), TyUnknown)
     val parent = lambdaExpr.parent as? RsValueArgumentList ?: return fallback
     val callExpr = parent.parent
-    val (method, pos) = when (callExpr) {
-        is RsCallExpr -> (callExpr.declaration to parent.exprList.indexOf(lambdaExpr))
-        is RsMethodCallExpr -> (callExpr.declaration to parent.exprList.indexOf(lambdaExpr) + 1)
-        else -> return fallback
-    }
+    val containingFunctionType = when (callExpr) {
+        is RsCallExpr -> callExpr.expr.type
+        is RsMethodCallExpr -> {
+            val fn = callExpr.reference.advancedResolve()?.downcast<RsFunction>()
+                ?: return fallback
+            fn.element.type.substitute(fn.typeArguments)
+        }
+        else -> null
+    } as? TyFunction
+        ?: return fallback
 
-    if (method == null) return fallback
+    val lambdaArgumentPosition = parent.exprList.indexOf(lambdaExpr) + (if (callExpr is RsMethodCallExpr) 1 else 0)
 
-    val function = method.element.type as? TyFunction
-    val typeParameter = function?.paramTypes?.getOrNull(pos) as? TyTypeParameter ?: return fallback
+    val typeParameter = containingFunctionType.paramTypes.getOrNull(lambdaArgumentPosition) as? TyTypeParameter
+        ?: return fallback
 
     val fnTrait = typeParameter.getTraitBoundsTransitively()
         .find { it.element.isAnyFnTrait }
         ?: return fallback
 
-    return fnTrait.asFunctionType?.substitute(method.typeArguments)
+    return fnTrait.asFunctionType?.substitute(containingFunctionType.typeParameterValues)
         ?: fallback
 }
 
