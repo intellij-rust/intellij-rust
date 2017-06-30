@@ -194,7 +194,7 @@ class RunConfigurationProducerTest : RsTestBase() {
             bin("hello", "src/main.rs").open()
         }
 
-        modifyTemplaceConfiguration {
+        modifyTemplateConfiguration {
             cargoCommandLine = cargoCommandLine.copy(environmentVariables = mapOf("FOO" to "BAR"))
         }
 
@@ -206,14 +206,14 @@ class RunConfigurationProducerTest : RsTestBase() {
             lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
         }
 
-        modifyTemplaceConfiguration {
+        modifyTemplateConfiguration {
             cargoCommandLine = cargoCommandLine.copy(environmentVariables = mapOf("FOO" to "BAR"))
         }
 
         checkOnTopLevel<RsFunction>()
     }
 
-    private fun modifyTemplaceConfiguration(f: CargoCommandConfiguration.() -> Unit) {
+    private fun modifyTemplateConfiguration(f: CargoCommandConfiguration.() -> Unit) {
         val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
         val factory = configurationType.factory
         val template = RunManager.getInstance(project).getConfigurationTemplate(factory).configuration as CargoCommandConfiguration
