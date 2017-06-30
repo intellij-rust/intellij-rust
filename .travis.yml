@@ -31,8 +31,8 @@ script: ./check-license.sh && ORG_GRADLE_PROJECT_ideaVersion=2017.1 ./gradlew ge
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
-  - rm     $HOME/.gradle/caches/4.0/fileHashes/fileHashes.bin
-  - rm     $HOME/.gradle/caches/4.0/fileHashes/fileHashes.lock
+  - rm -f  $HOME/.gradle/caches/*/fileHashes/fileHashes.bin
+  - rm -f  $HOME/.gradle/caches/*/fileHashes/fileHashes.lock
 cache:
   directories:
     - $HOME/.gradle/caches/
