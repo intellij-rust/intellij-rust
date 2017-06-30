@@ -51,7 +51,10 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
             .map { parser.parse(it) }
             .filter { it.isJsonObject }
             .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
-            .filterNot { it.message.message.startsWith("aborting due to") }
+            .filterNot {
+                it.message.message.startsWith("aborting due to") ||
+                    it.message.message.startsWith("cannot continue")
+            }
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
