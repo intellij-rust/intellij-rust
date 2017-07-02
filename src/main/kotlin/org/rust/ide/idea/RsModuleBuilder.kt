@@ -24,6 +24,11 @@ import org.rust.cargo.toolchain.RustToolchain
  */
 class RsModuleBuilder : ModuleBuilder() {
 
+    data class ConfigurationData(
+        val settings: RustProjectSettingsPanel.Data,
+        val createExecutableModule: Boolean
+    )
+
     override fun getModuleType(): ModuleType<*>? = RsModuleType.INSTANCE
 
     override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean = true
@@ -36,13 +41,14 @@ class RsModuleBuilder : ModuleBuilder() {
     override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
         val root = doAddContentEntry(modifiableRootModel)?.file ?: return
         modifiableRootModel.inheritSdk()
-        val toolchain = rustProjectData?.toolchain
+        val toolchain = configurationData?.settings?.toolchain
         root.refresh(/* async = */ false, /* recursive = */ true)
 
         // Just work if user "creates new project" over an existing one.
         if (toolchain != null && root.findChild(RustToolchain.CARGO_TOML) == null) {
             try {
-                toolchain.nonProjectCargo().init(modifiableRootModel.module, root)
+                toolchain.nonProjectCargo().init(modifiableRootModel.module, root,
+                    configurationData?.createExecutableModule ?: true)
             } catch (e: ExecutionException) {
                 LOG.error(e)
                 throw ConfigurationException(e.message)
@@ -50,7 +56,7 @@ class RsModuleBuilder : ModuleBuilder() {
         }
     }
 
-    var rustProjectData: RustProjectSettingsPanel.Data? = null
+    var configurationData: ConfigurationData? = null
 
     companion object {
         private val LOG = Logger.getInstance(RsModuleBuilder::class.java)
