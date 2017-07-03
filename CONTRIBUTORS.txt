@@ -2,6 +2,7 @@ alexpana
 andruhon
 ashleysommer
 atsky
+bgourlie
 CGavrila
 chriskrycho
 contradictioned
@@ -12,8 +13,11 @@ framlog
 greg-kargin
 HeyLey
 himikof
+HybridEidolon
 jonas-schievink
 Keats
+kumbayo
+la10736
 LiamClark
 madisp
 matklad
