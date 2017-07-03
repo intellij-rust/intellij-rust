@@ -36,11 +36,7 @@ val RsTraitRef.resolveToBoundTrait: BoundElement<RsTraitItem>? get() {
     } else {
         val params = trait.typeParameters.map { TyTypeParameter(it) }
         val args = path.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
-        params.zip(args)
-            .mapNotNull { (param, arg) ->
-                if (param is TyTypeParameter) param to arg else null
-            }
-            .toMap()
+        params.zip(args).toMap()
     }
 
     return BoundElement(trait, typeArguments)
