@@ -15,6 +15,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsPathStub
 
 val RsPath.hasColonColon: Boolean get() = stub?.hasColonColon ?: (coloncolon != null)
+val RsPath.hasCself: Boolean get() = stub?.hasCself ?: (cself != null)
 
 private val RS_CODE_FRAGMENT_CONTEXT = Key.create<RsCompositeElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
 

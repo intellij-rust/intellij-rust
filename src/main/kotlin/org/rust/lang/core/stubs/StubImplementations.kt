@@ -29,7 +29,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 72
+        override fun getStubVersion(): Int = 73
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -623,7 +623,8 @@ class RsUseGlobStub(
 class RsPathStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val referenceName: String,
-    val hasColonColon: Boolean
+    val hasColonColon: Boolean,
+    val hasCself: Boolean
 ) : StubBase<RsPath>(parent, elementType) {
 
     object Type : RsStubElementType<RsPathStub, RsPath>("PATH") {
@@ -633,11 +634,12 @@ class RsPathStub(
             RsPathImpl(stub, this)
 
         override fun createStub(psi: RsPath, parentStub: StubElement<*>?) =
-            RsPathStub(parentStub, this, psi.referenceName, psi.hasColonColon)
+            RsPathStub(parentStub, this, psi.referenceName, psi.hasColonColon, psi.hasCself)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsPathStub(parentStub, this,
                 dataStream.readName()!!.string,
+                dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
 
@@ -645,6 +647,7 @@ class RsPathStub(
             with(dataStream) {
                 writeName(stub.referenceName)
                 writeBoolean(stub.hasColonColon)
+                writeBoolean(stub.hasCself)
             }
 
         override fun indexStub(stub: RsPathStub, sink: IndexSink) {
