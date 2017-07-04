@@ -228,4 +228,15 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
                                    //^ String
         }
     """)
+
+    fun `test infer type of derivable trait method call`() = testExpr("""
+        #[derive(Clone)]
+        struct Foo;
+
+        fn bar(foo: Foo) {
+            let foo2 = foo.clone();
+            foo2
+           //^ Foo
+        }
+    """)
 }

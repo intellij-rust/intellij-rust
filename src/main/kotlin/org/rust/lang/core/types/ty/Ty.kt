@@ -99,7 +99,7 @@ fun findImplsAndTraits(project: Project, ty: Ty): Collection<BoundElement<RsTrai
                     val derivableTrait = STD_DERIVABLE_TRAITS[item.name] ?: return@filter false
                     item.containingCargoPackage?.origin == PackageOrigin.STDLIB &&
                         item.containingMod?.modName == derivableTrait.modName
-                }.map { BoundElement(it) }
+                }.map { BoundElement(it, mapOf(TyTypeParameter(it) to ty)) }
 
             derived + RsImplIndex.findImpls(project, ty).map { impl ->
                 BoundElement(impl, impl.remapTypeParameters(ty.typeParameterValues).orEmpty())

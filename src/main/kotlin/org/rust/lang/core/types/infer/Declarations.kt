@@ -97,9 +97,14 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 
             val target = ref.path?.reference?.resolve() as? RsNamedElement
                 ?: return TyUnknown
-            val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
-            inferDeclarationType(target)
-                .applyTypeArguments(typeArguments.map { it.type })
+
+            if (target is RsTraitItem && ref.isCself) {
+                TyTypeParameter(target)
+            } else {
+                val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
+                inferDeclarationType(target)
+                    .applyTypeArguments(typeArguments.map { it.type })
+            }
         }
 
         is RsRefLikeType -> {
