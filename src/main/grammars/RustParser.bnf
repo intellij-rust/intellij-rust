@@ -681,6 +681,7 @@ private ScalarTypeReference ::= ArrayType
                               | RefLikeType
                               | FnPointerType
                               | BaseType
+                              | TupleType
 
 TypeReference ::= ArrayType
                 | RefLikeType
