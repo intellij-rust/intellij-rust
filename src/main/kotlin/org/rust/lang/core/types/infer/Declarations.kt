@@ -13,18 +13,15 @@ import org.rust.lang.core.types.type
 
 fun inferDeclarationType(decl: RsNamedElement): Ty {
     return when (decl) {
-        is RsStructItem -> TyStruct(decl)
+        is RsStructItem -> TyStruct.valueOf(decl)
 
-        is RsEnumItem -> TyEnum(decl)
-        is RsEnumVariant -> TyEnum(decl.parentEnum)
+        is RsEnumItem -> TyEnum.valueOf(decl)
+        is RsEnumVariant -> TyEnum.valueOf(decl.parentEnum)
 
         is RsTypeAlias -> {
             val typeReference = decl.typeReference
-            if (typeReference != null) {
-                val t = typeReference.type
-                return (t as? TyStructOrEnumBase)
-                    ?.aliasTypeArguments(decl.typeParameters.map(::TyTypeParameter)) ?: t
-            }
+            if (typeReference != null) return typeReference.type
+
             val trait = decl.parentOfType<RsTraitItem>()
                 ?: return TyUnknown
             val name = decl.name ?: return TyUnknown
@@ -94,16 +91,13 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 
             val primitiveType = TyPrimitive.fromPath(path)
             if (primitiveType != null) return primitiveType
-
-            val target = ref.path?.reference?.resolve() as? RsNamedElement
-                ?: return TyUnknown
+            val boundElement = path.reference.advancedResolve()
+            val target =  boundElement?.element as? RsNamedElement ?: return TyUnknown
 
             if (target is RsTraitItem && ref.isCself) {
                 TyTypeParameter(target)
             } else {
-                val typeArguments = path.typeArgumentList?.typeReferenceList.orEmpty()
-                inferDeclarationType(target)
-                    .applyTypeArguments(typeArguments.map { it.type })
+                inferDeclarationType(target).substitute(boundElement.typeArguments)
             }
         }
 
