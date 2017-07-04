@@ -35,13 +35,6 @@ interface Ty {
     fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping? = null): Boolean
 
     /**
-     * Apply positional type arguments to a type constructors.
-     *
-     * This works for `some::path::<Type1, Type2>` case.
-     */
-    fun applyTypeArguments(typeArguments: List<Ty>): Ty = this
-
-    /**
      * Substitute type parameters for their values
      *
      * This works for `struct S<T> { field: T }`, when we
