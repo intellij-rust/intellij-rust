@@ -62,6 +62,7 @@ fn test() -> u32 {
     const TEN: u32 = 10;
     let _ = 1 as u32 + TEN;
     let _ = 1: u32 + TEN;
+    let _ = 1 as (i32);
 
     return (x = y)  /* return */
             + 1
