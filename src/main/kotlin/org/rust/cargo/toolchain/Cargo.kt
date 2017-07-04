@@ -65,9 +65,10 @@ class Cargo(
     }
 
     @Throws(ExecutionException::class)
-    fun init(owner: Disposable, directory: VirtualFile) {
+    fun init(owner: Disposable, directory: VirtualFile, createExecutableModule: Boolean) {
         val path = PathUtil.toSystemDependentName(directory.path)
-        CargoCommandLine("init", listOf("--bin", path))
+        val moduleTypeOption = if (createExecutableModule) "--bin" else "--lib"
+        CargoCommandLine("init", listOf(moduleTypeOption, path))
             .execute(owner)
         check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)

@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.components.JBCheckBox
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
@@ -26,9 +27,11 @@ class CargoConfigurationWizardStep(
 ) : ModuleWizardStep() {
 
     private val rustProjectSettings = RustProjectSettingsPanel()
+    private val createExecutableModuleCheckbox = JBCheckBox(null, true)
 
     override fun getComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
+        row("Create executable project: ") { createExecutableModuleCheckbox() }
     }
 
     override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)
@@ -38,7 +41,10 @@ class CargoConfigurationWizardStep(
 
         val projectBuilder = context.projectBuilder
         if (projectBuilder is RsModuleBuilder) {
-            projectBuilder.rustProjectData = rustProjectSettings.data
+            projectBuilder.configurationData = RsModuleBuilder.ConfigurationData(
+                rustProjectSettings.data,
+                createExecutableModuleCheckbox.isSelected
+            )
             projectBuilder.addModuleConfigurationUpdater(ConfigurationUpdater)
         } else {
             projectDescriptor?.modules?.firstOrNull()?.addConfigurationUpdater(ConfigurationUpdater)

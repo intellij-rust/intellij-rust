@@ -36,11 +36,11 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
     ) {
         fun applyTo(settings: RustProjectSettingsService) {
             settings.data = RustProjectSettingsService.Data(
-                toolchain,
-                autoUpdateEnabled,
-                explicitPathToStdlib,
-                useCargoCheckForBuild,
-                useCargoCheckAnnotator
+                toolchain = toolchain,
+                autoUpdateEnabled = autoUpdateEnabled,
+                explicitPathToStdlib = explicitPathToStdlib,
+                useCargoCheckForBuild = useCargoCheckForBuild,
+                useCargoCheckAnnotator = useCargoCheckAnnotator
             )
         }
     }
@@ -78,11 +78,11 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
 
     var data: Data
         get() = Data(
-            RustToolchain(pathToToolchainField.text),
-            autoUpdateEnabled.isSelected,
-            (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull()),
-            useCargoCheckForBuildCheckbox.isSelected,
-            useCargoCheckAnnotatorCheckbox.isSelected
+            toolchain = RustToolchain(pathToToolchainField.text),
+            autoUpdateEnabled = autoUpdateEnabled.isSelected,
+            explicitPathToStdlib = (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull()),
+            useCargoCheckForBuild = useCargoCheckForBuildCheckbox.isSelected,
+            useCargoCheckAnnotator = useCargoCheckAnnotatorCheckbox.isSelected
         )
         set(value) {
             // https://youtrack.jetbrains.com/issue/KT-16367
@@ -96,11 +96,11 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
         data = Data(
-            RustToolchain.suggest(),
-            true,
-            null,
-            false,
-            true
+            toolchain = RustToolchain.suggest(),
+            autoUpdateEnabled = true,
+            explicitPathToStdlib = null,
+            useCargoCheckForBuild = false,
+            useCargoCheckAnnotator = true
         )
 
         row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }

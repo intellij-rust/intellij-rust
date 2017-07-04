@@ -43,11 +43,11 @@ class RustProjectConfigurable(
         val toolchain = settings.toolchain ?: RustToolchain.suggest()
 
         rustProjectSettings.data = RustProjectSettingsPanel.Data(
-            toolchain,
-            settings.autoUpdateEnabled,
-            settings.data.explicitPathToStdlib,
-            settings.data.useCargoCheckForBuild,
-            settings.data.useCargoCheckAnnotator
+            toolchain = toolchain,
+            autoUpdateEnabled = settings.autoUpdateEnabled,
+            explicitPathToStdlib = settings.data.explicitPathToStdlib,
+            useCargoCheckForBuild = settings.data.useCargoCheckForBuild,
+            useCargoCheckAnnotator = settings.data.useCargoCheckAnnotator
         )
         val module = rustModule
 
