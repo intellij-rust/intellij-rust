@@ -10,12 +10,9 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.Label
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
-import com.intellij.util.PlatformUtils
 import com.intellij.util.text.SemVer
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
@@ -23,24 +20,17 @@ import org.rust.utils.UiDebouncer
 import org.rust.utils.pathToDirectoryTextField
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.swing.JCheckBox
 import javax.swing.JLabel
 
 class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get(".")) : Disposable {
     data class Data(
         val toolchain: RustToolchain?,
-        val autoUpdateEnabled: Boolean,
-        val explicitPathToStdlib: String?,
-        val useCargoCheckForBuild: Boolean,
-        val useCargoCheckAnnotator: Boolean
+        val explicitPathToStdlib: String?
     ) {
         fun applyTo(settings: RustProjectSettingsService) {
-            settings.data = RustProjectSettingsService.Data(
+            settings.data = settings.data.copy(
                 toolchain = toolchain,
-                autoUpdateEnabled = autoUpdateEnabled,
-                explicitPathToStdlib = explicitPathToStdlib,
-                useCargoCheckForBuild = useCargoCheckForBuild,
-                useCargoCheckAnnotator = useCargoCheckAnnotator
+                explicitPathToStdlib = explicitPathToStdlib
             )
         }
     }
@@ -54,9 +44,6 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
 
     private val pathToStdlibField = pathToDirectoryTextField(this,
         "Select directory with standard library source code")
-
-    private val useCargoCheckForBuildCheckbox = JBCheckBox()
-    private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
 
     private val downloadStdlibLink = Link("Download via rustup", action = {
         val rustup = RustToolchain(pathToToolchainField.text).rustup(cargoProjectDir)
@@ -73,45 +60,30 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
         }
     }).apply { isVisible = false }
 
-    private val autoUpdateEnabled = JCheckBox()
     private val toolchainVersion = JLabel()
 
     var data: Data
         get() = Data(
             toolchain = RustToolchain(pathToToolchainField.text),
-            autoUpdateEnabled = autoUpdateEnabled.isSelected,
-            explicitPathToStdlib = (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull()),
-            useCargoCheckForBuild = useCargoCheckForBuildCheckbox.isSelected,
-            useCargoCheckAnnotator = useCargoCheckAnnotatorCheckbox.isSelected
+            explicitPathToStdlib = (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull())
         )
         set(value) {
             // https://youtrack.jetbrains.com/issue/KT-16367
             pathToToolchainField.setText(value.toolchain?.location)
-            autoUpdateEnabled.isSelected = value.autoUpdateEnabled
             pathToStdlibField.text = value.explicitPathToStdlib ?: ""
-            useCargoCheckForBuildCheckbox.isSelected = value.useCargoCheckForBuild
-            useCargoCheckAnnotatorCheckbox.isSelected = value.useCargoCheckAnnotator
             update()
         }
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
         data = Data(
             toolchain = RustToolchain.suggest(),
-            autoUpdateEnabled = true,
-            explicitPathToStdlib = null,
-            useCargoCheckForBuild = false,
-            useCargoCheckAnnotator = true
+            explicitPathToStdlib = null
         )
 
         row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }
         row("Toolchain version:") { toolchainVersion() }
         row("Standard library:") { pathToStdlibField() }
         row { downloadStdlibLink() }
-        row(label = Label("Watch Cargo.toml:")) { autoUpdateEnabled() }
-        if (PlatformUtils.isIntelliJ()) {
-            row("Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
-        }
-        row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
     }
 
     @Throws(ConfigurationException::class)
