@@ -24,7 +24,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.types.owner
 import org.rust.lang.core.types.ty.TyPointer
+import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
@@ -122,7 +124,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
         if (type.underscore == null) return
-        val owner = type.ancestors.drop(1).dropWhile { it is RsTupleType }.first()
+        val owner = type.owner.parent
         if ((owner is RsValueParameter || owner is RsRetType) && owner.parent.parent !is RsLambdaExpr || owner is RsConstant) {
             holder.createErrorAnnotation(type, "The type placeholder `_` is not allowed within types on item signatures [E0121]")
         }
@@ -427,8 +429,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
         if (ret.expr != null) return
         val fn = ret.ancestors.find { it is RsFunction || it is RsLambdaExpr } as? RsFunction ?: return
-        val retType = fn.retType?.typeReference ?: return
-        if (retType is RsTupleType && retType.isUnitType) return
+        val retType = fn.retType?.typeReference?.type ?: return
+        if (retType is TyUnit) return
         holder.createErrorAnnotation(ret, "`return;` in a function whose return type is not `()` [E0069]")
     }
 

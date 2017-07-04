@@ -127,6 +127,32 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
+    @JvmStatic fun tupleOrParenType(b: PsiBuilder, level: Int, typeReference: Parser, tupeTypeUpper: Parser): Boolean {
+        val tupleOrParens: PsiBuilder.Marker = enter_section_(b)
+
+        if (!consumeTokenSmart(b, LPAREN)) {
+            exit_section_(b, tupleOrParens, null, false)
+            return false
+        }
+
+        val firstType = enter_section_(b)
+
+        if (!typeReference.parse(b, level)) {
+            exit_section_(b, firstType, null, false)
+            exit_section_(b, tupleOrParens, null, false)
+            return false
+        }
+        if (consumeTokenFast(b, RPAREN)) {
+            exit_section_(b, firstType, null, true)
+            exit_section_(b, tupleOrParens, null, true)
+            return true
+        }
+        exit_section_(b, firstType, TYPE_REFERENCE, true)
+        val result = tupeTypeUpper.parse(b, level)
+        exit_section_(b, tupleOrParens, TUPLE_TYPE, result)
+        return result
+    }
+
     @JvmStatic fun gtgteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGTEQ, GT, GT, EQ)
     @JvmStatic fun gtgtImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGT, GT, GT)
     @JvmStatic fun gteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTEQ, GT, EQ)

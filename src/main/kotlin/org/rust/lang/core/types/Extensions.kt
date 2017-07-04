@@ -24,17 +24,17 @@ val RsTypeReference.type: Ty
     get() = recursionGuard(this, Computable { inferTypeReferenceType(this) })
         ?: TyUnknown
 
-val RsTypeReference.lifetimeElidable: Boolean get() {
-    val typeOwner = topmostType.parent
+val RsTypeElement.lifetimeElidable: Boolean get() {
+    val typeOwner = owner.parent
     return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
 }
 
-val RsTypeReference.topmostType: RsTypeReference
+val RsTypeElement.owner: RsTypeReference
     get() = ancestors
         .drop(1)
         .filterNot { it is RsTypeArgumentList || it is RsPath }
-        .takeWhile { it is RsBaseType || it is RsTupleType || it is RsRefLikeType }
-        .lastOrNull() as? RsTypeReference ?: this
+        .takeWhile { it is RsBaseType || it is RsTupleType || it is RsRefLikeType || it is RsTypeReference }
+        .last() as RsTypeReference
 
 val RsTypeBearingItemElement.type: Ty
     get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {

@@ -42,7 +42,7 @@ open class SetMutableIntention : RsElementBaseIntentionAction<SetMutableIntentio
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val refType = element.parentOfType<RsRefLikeType>() ?: return null
         if (!refType.isRef) return null
-        val baseType = refType.typeReference as? RsBaseType ?: return null
+        val baseType = refType.typeReference.typeElement as? RsBaseType ?: return null
         if (refType.isMut == mutable) return null
         return Context(refType, baseType)
 

@@ -29,7 +29,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 73
+        override fun getStubVersion(): Int = 76
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -61,73 +61,77 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 }
 
 
-fun factory(name: String): RsStubElementType<*, *> = when (name) {
-    "EXTERN_CRATE_ITEM" -> RsExternCrateItemStub.Type
-    "USE_ITEM" -> RsUseItemStub.Type
+fun factory(name: String): RsStubElementType<*, *> {
+    return when (name) {
+        "EXTERN_CRATE_ITEM" -> RsExternCrateItemStub.Type
+        "USE_ITEM" -> RsUseItemStub.Type
 
-    "STRUCT_ITEM" -> RsStructItemStub.Type
-    "ENUM_ITEM" -> RsEnumItemStub.Type
-    "ENUM_BODY" -> RsPlaceholderStub.Type("ENUM_BODY", ::RsEnumBodyImpl)
-    "ENUM_VARIANT" -> RsEnumVariantStub.Type
+        "STRUCT_ITEM" -> RsStructItemStub.Type
+        "ENUM_ITEM" -> RsEnumItemStub.Type
+        "ENUM_BODY" -> RsPlaceholderStub.Type("ENUM_BODY", ::RsEnumBodyImpl)
+        "ENUM_VARIANT" -> RsEnumVariantStub.Type
 
-    "MOD_DECL_ITEM" -> RsModDeclItemStub.Type
-    "MOD_ITEM" -> RsModItemStub.Type
+        "MOD_DECL_ITEM" -> RsModDeclItemStub.Type
+        "MOD_ITEM" -> RsModItemStub.Type
 
-    "TRAIT_ITEM" -> RsTraitItemStub.Type
-    "IMPL_ITEM" -> RsImplItemStub.Type
+        "TRAIT_ITEM" -> RsTraitItemStub.Type
+        "IMPL_ITEM" -> RsImplItemStub.Type
 
-    "FUNCTION" -> RsFunctionStub.Type
-    "CONSTANT" -> RsConstantStub.Type
-    "TYPE_ALIAS" -> RsTypeAliasStub.Type
-    "FOREIGN_MOD_ITEM" -> RsPlaceholderStub.Type("FOREIGN_MOD_ITEM", ::RsForeignModItemImpl)
+        "FUNCTION" -> RsFunctionStub.Type
+        "CONSTANT" -> RsConstantStub.Type
+        "TYPE_ALIAS" -> RsTypeAliasStub.Type
+        "FOREIGN_MOD_ITEM" -> RsPlaceholderStub.Type("FOREIGN_MOD_ITEM", ::RsForeignModItemImpl)
 
-    "BLOCK_FIELDS" -> RsPlaceholderStub.Type("BLOCK_FIELDS", ::RsBlockFieldsImpl)
-    "TUPLE_FIELDS" -> RsPlaceholderStub.Type("TUPLE_FIELDS", ::RsTupleFieldsImpl)
-    "TUPLE_FIELD_DECL" -> RsPlaceholderStub.Type("TUPLE_FIELD_DECL", ::RsTupleFieldDeclImpl)
-    "FIELD_DECL" -> RsFieldDeclStub.Type
-    "LIFETIME_DECL" -> RsLifetimeDeclStub.Type
-    "ALIAS" -> RsAliasStub.Type
+        "BLOCK_FIELDS" -> RsPlaceholderStub.Type("BLOCK_FIELDS", ::RsBlockFieldsImpl)
+        "TUPLE_FIELDS" -> RsPlaceholderStub.Type("TUPLE_FIELDS", ::RsTupleFieldsImpl)
+        "TUPLE_FIELD_DECL" -> RsPlaceholderStub.Type("TUPLE_FIELD_DECL", ::RsTupleFieldDeclImpl)
+        "FIELD_DECL" -> RsFieldDeclStub.Type
+        "LIFETIME_DECL" -> RsLifetimeDeclStub.Type
+        "ALIAS" -> RsAliasStub.Type
 
-    "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
-    "USE_GLOB" -> RsUseGlobStub.Type
+        "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
+        "USE_GLOB" -> RsUseGlobStub.Type
 
-    "PATH" -> RsPathStub.Type
+        "PATH" -> RsPathStub.Type
 
-    "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
-    "ARRAY_TYPE" -> RsTypeReferenceStub.Type("VEC_TYPE", ::RsArrayTypeImpl)
-    "REF_LIKE_TYPE" -> RsTypeReferenceStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
-    "FN_POINTER_TYPE" -> RsTypeReferenceStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
-    "TUPLE_TYPE" -> RsTypeReferenceStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
-    "BASE_TYPE" -> RsTypeReferenceStub.Type("BASE_TYPE", ::RsBaseTypeImpl)
-    "TYPE_WITH_BOUNDS_TYPE" -> RsTypeReferenceStub.Type("TYPE_WITH_BOUNDS_TYPE", ::RsTypeWithBoundsTypeImpl)
-    "FOR_IN_TYPE" -> RsTypeReferenceStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
-    "IMPL_TRAIT_TYPE" -> RsTypeReferenceStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
+        "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
+        "TYPE_REFERENCE" -> RsPlaceholderStub.Type("TYPE_REFERENCE", ::RsTypeReferenceImpl)
 
-    "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
-    "VALUE_PARAMETER" -> RsPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
-    "SELF_PARAMETER" -> RsSelfParameterStub.Type
-    "TYPE_PARAMETER" -> RsTypeParameterStub.Type
-    "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
-    "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
+        "TYPE_ELEMENT" -> RsTypeElementStub.Type("TYPE_ELEMENT", ::RsTypeElementImpl)
+        "ARRAY_TYPE" -> RsTypeElementStub.Type("VEC_TYPE", ::RsArrayTypeImpl)
+        "REF_LIKE_TYPE" -> RsTypeElementStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
+        "FN_POINTER_TYPE" -> RsTypeElementStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
+        "TUPLE_TYPE" -> RsTypeElementStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
+        "BASE_TYPE" -> RsTypeElementStub.Type("BASE_TYPE", ::RsBaseTypeImpl)
+        "FOR_IN_TYPE" -> RsTypeElementStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
+        "IMPL_TRAIT_TYPE" -> RsTypeElementStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
 
-    "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
-    "POLYBOUND" -> RsPlaceholderStub.Type("POLYBOUND", ::RsPolyboundImpl)
-    "BOUND" -> RsPlaceholderStub.Type("BOUND", ::RsBoundImpl)
-    "WHERE_CLAUSE" -> RsPlaceholderStub.Type("WHERE_CLAUSE", ::RsWhereClauseImpl)
-    "WHERE_PRED" -> RsPlaceholderStub.Type("WHERE_PRED", ::RsWherePredImpl)
+        "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
+        "VALUE_PARAMETER" -> RsPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
+        "SELF_PARAMETER" -> RsSelfParameterStub.Type
+        "TYPE_PARAMETER" -> RsTypeParameterStub.Type
+        "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
+        "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
 
-    "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
+        "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
+        "POLYBOUND" -> RsPlaceholderStub.Type("POLYBOUND", ::RsPolyboundImpl)
+        "BOUND" -> RsPlaceholderStub.Type("BOUND", ::RsBoundImpl)
+        "WHERE_CLAUSE" -> RsPlaceholderStub.Type("WHERE_CLAUSE", ::RsWhereClauseImpl)
+        "WHERE_PRED" -> RsPlaceholderStub.Type("WHERE_PRED", ::RsWherePredImpl)
 
-    "MACRO_ITEM" -> RsPlaceholderStub.Type("MACRO_ITEM", ::RsMacroItemImpl)
-    "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
+        "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
-    "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
-    "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
+        "MACRO_ITEM" -> RsPlaceholderStub.Type("MACRO_ITEM", ::RsMacroItemImpl)
+        "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
 
-    "META_ITEM" -> RsMetaItemStub.Type
-    "META_ITEM_ARGS" -> RsPlaceholderStub.Type("META_ITEM_ARGS", ::RsMetaItemArgsImpl)
+        "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
+        "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
 
-    else -> error("Unknown element $name")
+        "META_ITEM" -> RsMetaItemStub.Type
+        "META_ITEM_ARGS" -> RsPlaceholderStub.Type("META_ITEM_ARGS", ::RsMetaItemArgsImpl)
+
+        else -> error("Unknown element $name")
+    }
 }
 
 
@@ -719,47 +723,51 @@ class RsSelfParameterStub(
 }
 
 
-class RsTypeReferenceStub(
+class RsTypeElementStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val isUnit: Boolean,
     val isMut: Boolean,
     val isRef: Boolean,
     val isPointer: Boolean,
     val arraySize: Int
-) : StubBase<RsTypeReference>(parent, elementType) {
+) : StubBase<RsTypeElement>(parent, elementType) {
 
-    class Type<PsiT : RsTypeReference>(
+    class Type<PsiT : RsTypeElement>(
         debugName: String,
-        private val psiCtor: (RsTypeReferenceStub, IStubElementType<*, *>) -> PsiT
-    ) : RsStubElementType<RsTypeReferenceStub, PsiT>(debugName) {
+        private val psiCtor: (RsTypeElementStub, IStubElementType<*, *>) -> PsiT
+    ) : RsStubElementType<RsTypeElementStub, PsiT>(debugName) {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsTypeReferenceStub(parentStub, this,
+            RsTypeElementStub(parentStub, this,
+                dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readInt()
             )
 
-        override fun serialize(stub: RsTypeReferenceStub, dataStream: StubOutputStream) = with(dataStream) {
+        override fun serialize(stub: RsTypeElementStub, dataStream: StubOutputStream) = with(dataStream) {
+            dataStream.writeBoolean(stub.isUnit)
             dataStream.writeBoolean(stub.isMut)
             dataStream.writeBoolean(stub.isRef)
             dataStream.writeBoolean(stub.isPointer)
             dataStream.writeInt(stub.arraySize)
         }
 
-        override fun createPsi(stub: RsTypeReferenceStub) = psiCtor(stub, this)
+        override fun createPsi(stub: RsTypeElementStub) = psiCtor(stub, this)
 
         override fun createStub(psi: PsiT, parentStub: StubElement<*>?) =
-            RsTypeReferenceStub(parentStub, this,
+            RsTypeElementStub(parentStub, this,
+                (psi as? RsBaseType)?.isUnit ?: false,
                 (psi as? RsRefLikeType)?.isMut ?: false,
                 (psi as? RsRefLikeType)?.isRef ?: false,
                 (psi as? RsRefLikeType)?.isPointer ?: false,
                 (psi as? RsArrayType)?.arraySize ?: -1
             )
 
-        override fun indexStub(stub: RsTypeReferenceStub, sink: IndexSink) {
+        override fun indexStub(stub: RsTypeElementStub, sink: IndexSink) {
         }
     }
 }

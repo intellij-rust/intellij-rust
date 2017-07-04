@@ -21,7 +21,7 @@ FILE
             PsiErrorElement:',', '::', <type reference>, '>', QUOTE_IDENTIFIER, identifier or '{' expected, got ':'
               <empty list>
       PsiElement(:)(':')
-      PsiErrorElement:<fn pointer type> or <path start> expected, got ''static'
+      PsiErrorElement:<scalar type reference> expected, got ''static'
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(QUOTE_IDENTIFIER)(''static')

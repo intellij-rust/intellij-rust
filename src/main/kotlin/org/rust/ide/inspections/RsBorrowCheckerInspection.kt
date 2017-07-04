@@ -40,7 +40,7 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
             fn.selfParameter != null &&
             fn.selfParameter?.isMut ?: false &&
             fn.selfParameter?.isRef ?: false) {
-            val typeRef = o.parentOfType<RsImplItem>()?.typeReference as? RsRefLikeType ?: return true
+            val typeRef = o.parentOfType<RsImplItem>()?.typeReference?.typeElement as? RsRefLikeType ?: return true
             return !typeRef.isMut
         }
         return false

@@ -45,10 +45,10 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
                 return
             }
 
-            val ref = parameter?.typeReference
-            if (ref is RsRefLikeType) {
+            val type = parameter?.typeReference?.typeElement
+            if (type is RsRefLikeType) {
                 val newParameterExpr = RsPsiFactory(project)
-                    .createValueParameter(parameter.pat?.text!!, ref.typeReference!!, mutable)
+                    .createValueParameter(parameter.pat?.text!!, type.typeReference, mutable)
                 parameter.replace(newParameterExpr)
                 return
             }

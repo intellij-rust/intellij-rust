@@ -55,7 +55,7 @@ private fun bounds(parameter: RsTypeParameter): List<BoundElement<RsTraitItem>> 
     val owner = parameter.parent?.parent as? RsGenericDeclaration
     val whereBounds =
         owner?.whereClause?.wherePredList.orEmpty()
-            .filter { (it.typeReference as? RsBaseType)?.path?.reference?.resolve() == parameter }
+            .filter { (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve() == parameter }
             .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
 
     return (parameter.typeParamBounds?.polyboundList.orEmpty() + whereBounds)

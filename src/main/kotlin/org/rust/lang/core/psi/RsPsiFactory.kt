@@ -98,7 +98,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createReferenceType(innerTypeText: String, mutable: Boolean): RsRefLikeType =
-        createType("&${if (mutable) "mut " else ""}$innerTypeText") as RsRefLikeType
+        createType("&${if (mutable) "mut " else ""}$innerTypeText").typeElement as RsRefLikeType
 
     fun createModDeclItem(modName: String): RsModDeclItem =
         createFromText("mod $modName;")
