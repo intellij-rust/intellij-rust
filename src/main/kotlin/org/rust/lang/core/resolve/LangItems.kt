@@ -63,7 +63,7 @@ fun findIndexOutputType(project: Project, containerType: Ty, indexType: Ty): Ty 
 
     val rawOutputType = lookupAssociatedType(suitableImpl, "Output")
     val typeParameterMap = suitableImpl.remapTypeParameters(containerType.typeParameterValues)
-    return TyReference(rawOutputType.substitute(typeParameterMap))
+    return rawOutputType.substitute(typeParameterMap)
 }
 
 fun findArithmeticBinaryExprOutputType(project: Project, lhsType: Ty, rhsType: Ty, op: ArithmeticOp): Ty {
