@@ -14,6 +14,7 @@ greg-kargin
 HeyLey
 himikof
 HybridEidolon
+johnthagen
 jonas-schievink
 Keats
 kumbayo
@@ -24,6 +25,7 @@ matklad
 mcarlin
 mitchhentges
 mkaput
+mrhota
 ninjabear
 oistein
 pavel-v-chernykh
