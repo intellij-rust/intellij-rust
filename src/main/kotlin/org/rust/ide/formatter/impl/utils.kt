@@ -19,7 +19,7 @@ import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
 import com.intellij.psi.tree.TokenSet.create as ts
 
-val SPECIAL_MACRO_ARGS = ts(FORMAT_MACRO_ARGS, LOG_MACRO_ARGS, TRY_MACRO_ARGS, VEC_MACRO_ARGS)
+val SPECIAL_MACRO_ARGS = ts(FORMAT_MACRO_ARGS, LOG_MACRO_ARGS, TRY_MACRO_ARGS, VEC_MACRO_ARGS, ASSERT_EQ_MACRO_ARGS)
 
 val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT)
 val SPACE_AROUND_OPS = TokenSet.andNot(RS_OPERATORS, NO_SPACE_AROUND_OPS)
