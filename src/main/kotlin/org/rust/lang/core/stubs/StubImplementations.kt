@@ -29,7 +29,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 76
+        override fun getStubVersion(): Int = 77
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -97,7 +97,6 @@ fun factory(name: String): RsStubElementType<*, *> {
         "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
         "TYPE_REFERENCE" -> RsPlaceholderStub.Type("TYPE_REFERENCE", ::RsTypeReferenceImpl)
 
-        "TYPE_ELEMENT" -> RsTypeElementStub.Type("TYPE_ELEMENT", ::RsTypeElementImpl)
         "ARRAY_TYPE" -> RsTypeElementStub.Type("VEC_TYPE", ::RsArrayTypeImpl)
         "REF_LIKE_TYPE" -> RsTypeElementStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
         "FN_POINTER_TYPE" -> RsTypeElementStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)

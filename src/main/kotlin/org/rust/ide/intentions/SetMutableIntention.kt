@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.isMut
 import org.rust.lang.core.psi.ext.isRef
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.typeElement
 
 /**
  * Set reference mutable

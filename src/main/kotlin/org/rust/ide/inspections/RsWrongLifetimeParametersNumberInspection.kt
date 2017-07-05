@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.types.lifetimeElidable
-import org.rust.lang.core.types.owner
 
 class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
 

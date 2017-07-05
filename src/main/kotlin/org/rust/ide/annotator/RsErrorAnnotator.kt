@@ -24,7 +24,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
-import org.rust.lang.core.types.owner
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
@@ -605,8 +604,6 @@ private fun RsMethodCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
 
 private val RsCallExpr.declaration: RsFunction?
     get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
-
-private val RsTupleType.isUnitType: Boolean get() = typeReferenceList.isNullOrEmpty()
 
 private fun isValidSelfSuperPrefix(path: RsPath): Boolean {
     if (path.self == null && path.`super` == null) return true

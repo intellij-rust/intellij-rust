@@ -29,13 +29,6 @@ val RsTypeElement.lifetimeElidable: Boolean get() {
     return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
 }
 
-val RsTypeElement.owner: RsTypeReference
-    get() = ancestors
-        .drop(1)
-        .filterNot { it is RsTypeArgumentList || it is RsPath }
-        .takeWhile { it is RsBaseType || it is RsTupleType || it is RsRefLikeType || it is RsTypeReference }
-        .last() as RsTypeReference
-
 val RsTypeBearingItemElement.type: Ty
     get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
         val type = recursionGuard(this, Computable { inferDeclarationType(this) })
@@ -77,7 +70,7 @@ val RsExpr.isMutable: Boolean get() {
 
             false
         }
-        // is RsFieldExpr -> (expr.type as? TyReference)?.mutable ?: DEFAULT_MUTABILITY // <- this one brings false positives without additional analysis
+    // is RsFieldExpr -> (expr.type as? TyReference)?.mutable ?: DEFAULT_MUTABILITY // <- this one brings false positives without additional analysis
         is RsUnaryExpr -> mul != null || (expr != null && expr?.isMutable ?: DEFAULT_MUTABILITY)
         else -> DEFAULT_MUTABILITY
     }

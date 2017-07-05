@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.ext.isPointer
+import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.ty.*
 import java.io.DataInput
 import java.io.DataOutput
@@ -32,7 +33,7 @@ data class TyFingerprint constructor(
                     if (type.isPointer)
                         TyFingerprint("*T")
                     else
-                        type.typeReference?.let { create(it) }
+                        create(type.typeReference)
                 }
                 is RsArrayType -> TyFingerprint("[T]")
                 else -> null

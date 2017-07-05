@@ -9,11 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.psi.ext.isRef
-import org.rust.lang.core.psi.ext.selfParameter
-import org.rust.lang.core.psi.ext.valueParameters
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.*
 
 class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     override fun getText() = "Un-elide lifetimes"

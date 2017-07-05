@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.declaration
 
 class AddMutableFix(val binding: RsNamedElement) : LocalQuickFixAndIntentionActionOnPsiElement(binding) {

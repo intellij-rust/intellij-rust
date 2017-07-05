@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
+import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.BoundElement
 
 class TyTypeParameter private constructor(

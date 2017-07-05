@@ -96,7 +96,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
         }
 
         is RsRefLikeType -> {
-            val base = type.typeReference ?: return TyUnknown
+            val base = type.typeReference
             val mutable = type.isMut
             if (type.isRef) {
                 TyReference(inferTypeReferenceType(base), mutable)
@@ -110,7 +110,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
         }
 
         is RsArrayType -> {
-            val componentType = type.typeReference?.type ?: TyUnknown
+            val componentType = type.typeReference.type
             val size = type.arraySize
             if (size == null) {
                 TySlice(componentType)
