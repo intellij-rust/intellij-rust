@@ -17,6 +17,12 @@ import java.nio.file.Paths
 val Int.seconds: Int
     get() = this * 1000
 
+// BACKCOMPAT: Kotlin API 1.0
+fun String.toIntOrNull(): Int? = try {
+   toInt()
+} catch (e: NumberFormatException) {
+    null
+}
 
 fun GeneralCommandLine(path: Path, vararg args: String) = GeneralCommandLine(path.systemIndependentPath, *args)
 fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.systemIndependentPath)

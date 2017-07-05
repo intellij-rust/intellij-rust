@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.utils.toIntOrNull
 
 fun inferExpressionType(expr: RsExpr) = when (expr) {
     is RsPathExpr -> inferPathExprType(expr)
@@ -88,7 +89,7 @@ private fun inferFieldExprType(expr: RsFieldExpr): Ty {
     val boundField = expr.reference.advancedResolve()
     if (boundField == null) {
         val type = expr.expr.type as? TyTuple ?: return TyUnknown
-        val fieldIndex = expr.fieldId.integerLiteral?.text?.toInt() ?: return TyUnknown
+        val fieldIndex = expr.fieldId.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
         return type.types.getOrElse(fieldIndex) { TyUnknown }
     }
     val field = boundField.element

@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.RsArrayType
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.types.ty.TyInteger
+import org.rust.utils.toIntOrNull
 
 val RsArrayType.arraySize: Int? get() {
     val stub = stub
@@ -19,15 +20,8 @@ val RsArrayType.arraySize: Int? get() {
 }
 
 // TODO: support constants and compile time expressions
-fun calculateArraySize(expr: RsExpr?): Int? {
-    val sizeLiteral = (expr as? RsLitExpr)
-        ?.integerLiteral
-        ?.text
-        ?.removeSuffix(TyInteger.Kind.usize.name)
-    // BACKCOMPAT: Kotlin API 1.0
-    return try {
-        sizeLiteral?.toInt()
-    } catch (e: NumberFormatException) {
-        null
-    }
-}
+fun calculateArraySize(expr: RsExpr?): Int? = (expr as? RsLitExpr)
+    ?.integerLiteral
+    ?.text
+    ?.removeSuffix(TyInteger.Kind.usize.name)
+    ?.toIntOrNull()
