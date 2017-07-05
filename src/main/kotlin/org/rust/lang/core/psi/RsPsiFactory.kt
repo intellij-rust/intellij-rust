@@ -186,6 +186,9 @@ class RsPsiFactory(private val project: Project) {
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling
 
+    fun createSemicolon(): PsiElement =
+        createFromText<RsConstant>("const C: () = ();")!!.semicolon!!
+
     fun createColon(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.colon!!
 
