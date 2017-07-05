@@ -101,7 +101,43 @@ class RsFormatterTest : RsFormatterTestBase() {
 
     fun testUseRoot() = doTest() // https://github.com/intellij-rust/intellij-rust/issues/746
 
-    fun testSpecialMacros() = doTest()
+    fun `test special macros`() = doTextTest("""
+        fn main() {
+            try !  (foo());
+            format  ! ("Hello {}", 92);
+            vec ! [1, 2, 3];
+            let tests = vec![
+            ("1.1.1.1", true),
+            ("255.0.0.0", true),
+            ];
+
+            format!(
+            "Hello, World"
+            );
+
+            error!(
+            "Hello, World"
+            );
+        }
+    """, """
+        fn main() {
+            try!(foo());
+            format!("Hello {}", 92);
+            vec![1, 2, 3];
+            let tests = vec![
+                ("1.1.1.1", true),
+                ("255.0.0.0", true),
+            ];
+
+            format!(
+                "Hello, World"
+            );
+
+            error!(
+                "Hello, World"
+            );
+        }
+    """)
 
     fun testImportGlobAlignment() = doTextTest("""
         use piston_window::{Button,
@@ -212,7 +248,7 @@ class RsFormatterTest : RsFormatterTestBase() {
         fn main() {
             match x {
                 1 => 1,
-                2 => { 2 },
+                2 => { 2 }
                 3 => { 3 }
                 4 => loop {},
                 5 => 5,
@@ -241,7 +277,7 @@ class RsFormatterTest : RsFormatterTestBase() {
                 let _ = S { foo: 1, bar: 2, };
                 match x {
                     1 => 1,
-                    2 => { 2 },
+                    2 => { 2 }
                     3 => { 3 }
                     4 => loop {},
                     5 => 5,
@@ -254,7 +290,7 @@ class RsFormatterTest : RsFormatterTestBase() {
                 let _ = S { foo: 1, bar: 2, };
                 match x {
                     1 => 1,
-                    2 => { 2 },
+                    2 => { 2 }
                     3 => { 3 }
                     4 => loop {},
                     5 => 5,
