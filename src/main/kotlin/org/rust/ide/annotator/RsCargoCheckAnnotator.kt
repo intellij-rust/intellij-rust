@@ -78,7 +78,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         annotationResult ?: return
-        val doc = holder.currentAnnotationSession.file.viewProvider.document ?: throw AssertionError()
+        val doc = holder.currentAnnotationSession.file.viewProvider.document
+            ?: error("Can't find document for $file in Cargo check annotator")
 
         for (topMessage in annotationResult.messages) {
             val message = topMessage.message
@@ -113,7 +114,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
                     }
                 }
             } else {
-                createAnnotation(primarySpan, message, severity, doc, holder).apply {
+                createAnnotation(primarySpan, message, severity, doc, holder)?.apply {
                     problemGroup = ProblemGroup { message.message }
                     setNeedsUpdateOnTyping(true)
                 }
@@ -156,15 +157,20 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     }
 
     fun createAnnotation(span: CargoSpan, message: CargoMessage, severity: HighlightSeverity, doc: Document,
-                         holder: AnnotationHolder): Annotation {
+                         holder: AnnotationHolder): Annotation? {
 
-        fun toOffset(line: Int, column: Int) = doc.getLineStartOffset(line) + column
+        fun toOffset(line: Int, column: Int): Int? {
+            if (line >= doc.lineCount) return null
+            val result = doc.getLineStartOffset(line) + column
+            if (result > doc.textLength) return null
+            return result
+        }
 
         // The compiler message lines and columns are 1 based while intellij idea are 0 based
-        val textRange =
-            TextRange(
-                toOffset(span.line_start - 1, span.column_start - 1),
-                toOffset(span.line_end - 1, span.column_end - 1))
+        val textRange = TextRange(
+            toOffset(span.line_start - 1, span.column_start - 1) ?: return null,
+            toOffset(span.line_end - 1, span.column_end - 1) ?: return null
+        )
 
         val tooltip = with(ArrayList<String>()) {
             val code = message.code.formatAsLink()
