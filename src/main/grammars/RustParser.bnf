@@ -676,6 +676,15 @@ private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn 
 
 private TypeAscription ::= ':' TypeReference
 
+private TypeReferenceInner ::= ( ArrayType
+                               | RefLikeType
+                               | FnPointerType
+                               | BaseType
+                               // External rule to find the difference between `(T)` and `(T,)`
+                               | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
+                               | ForInType
+                               | ImplTraitType) ('+' Bound)*
+
 private ScalarTypeReferenceInner ::= ArrayType
                                    | RefLikeType
                                    | FnPointerType
@@ -683,14 +692,6 @@ private ScalarTypeReferenceInner ::= ArrayType
                                    | <<tupleOrParenType ScalarTypeReferenceInner TupleType_upper>>
                                    | ForInType
                                    | ImplTraitType
-
-private TypeReferenceInner ::= ( ArrayType
-                               | RefLikeType
-                               | FnPointerType
-                               | BaseType
-                               | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
-                               | ForInType
-                               | ImplTraitType) ('+' Bound)*
 
 TypeReference ::= TypeReferenceInner {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"

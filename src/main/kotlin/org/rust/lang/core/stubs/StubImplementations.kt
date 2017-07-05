@@ -61,76 +61,74 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 }
 
 
-fun factory(name: String): RsStubElementType<*, *> {
-    return when (name) {
-        "EXTERN_CRATE_ITEM" -> RsExternCrateItemStub.Type
-        "USE_ITEM" -> RsUseItemStub.Type
+fun factory(name: String): RsStubElementType<*, *> = when (name) {
+    "EXTERN_CRATE_ITEM" -> RsExternCrateItemStub.Type
+    "USE_ITEM" -> RsUseItemStub.Type
 
-        "STRUCT_ITEM" -> RsStructItemStub.Type
-        "ENUM_ITEM" -> RsEnumItemStub.Type
-        "ENUM_BODY" -> RsPlaceholderStub.Type("ENUM_BODY", ::RsEnumBodyImpl)
-        "ENUM_VARIANT" -> RsEnumVariantStub.Type
+    "STRUCT_ITEM" -> RsStructItemStub.Type
+    "ENUM_ITEM" -> RsEnumItemStub.Type
+    "ENUM_BODY" -> RsPlaceholderStub.Type("ENUM_BODY", ::RsEnumBodyImpl)
+    "ENUM_VARIANT" -> RsEnumVariantStub.Type
 
-        "MOD_DECL_ITEM" -> RsModDeclItemStub.Type
-        "MOD_ITEM" -> RsModItemStub.Type
+    "MOD_DECL_ITEM" -> RsModDeclItemStub.Type
+    "MOD_ITEM" -> RsModItemStub.Type
 
-        "TRAIT_ITEM" -> RsTraitItemStub.Type
-        "IMPL_ITEM" -> RsImplItemStub.Type
+    "TRAIT_ITEM" -> RsTraitItemStub.Type
+    "IMPL_ITEM" -> RsImplItemStub.Type
 
-        "FUNCTION" -> RsFunctionStub.Type
-        "CONSTANT" -> RsConstantStub.Type
-        "TYPE_ALIAS" -> RsTypeAliasStub.Type
-        "FOREIGN_MOD_ITEM" -> RsPlaceholderStub.Type("FOREIGN_MOD_ITEM", ::RsForeignModItemImpl)
+    "FUNCTION" -> RsFunctionStub.Type
+    "CONSTANT" -> RsConstantStub.Type
+    "TYPE_ALIAS" -> RsTypeAliasStub.Type
+    "FOREIGN_MOD_ITEM" -> RsPlaceholderStub.Type("FOREIGN_MOD_ITEM", ::RsForeignModItemImpl)
 
-        "BLOCK_FIELDS" -> RsPlaceholderStub.Type("BLOCK_FIELDS", ::RsBlockFieldsImpl)
-        "TUPLE_FIELDS" -> RsPlaceholderStub.Type("TUPLE_FIELDS", ::RsTupleFieldsImpl)
-        "TUPLE_FIELD_DECL" -> RsPlaceholderStub.Type("TUPLE_FIELD_DECL", ::RsTupleFieldDeclImpl)
-        "FIELD_DECL" -> RsFieldDeclStub.Type
-        "LIFETIME_DECL" -> RsLifetimeDeclStub.Type
-        "ALIAS" -> RsAliasStub.Type
+    "BLOCK_FIELDS" -> RsPlaceholderStub.Type("BLOCK_FIELDS", ::RsBlockFieldsImpl)
+    "TUPLE_FIELDS" -> RsPlaceholderStub.Type("TUPLE_FIELDS", ::RsTupleFieldsImpl)
+    "TUPLE_FIELD_DECL" -> RsPlaceholderStub.Type("TUPLE_FIELD_DECL", ::RsTupleFieldDeclImpl)
+    "FIELD_DECL" -> RsFieldDeclStub.Type
+    "LIFETIME_DECL" -> RsLifetimeDeclStub.Type
+    "ALIAS" -> RsAliasStub.Type
 
-        "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
-        "USE_GLOB" -> RsUseGlobStub.Type
+    "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
+    "USE_GLOB" -> RsUseGlobStub.Type
 
-        "PATH" -> RsPathStub.Type
+    "PATH" -> RsPathStub.Type
 
-        "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
-        "TYPE_REFERENCE" -> RsPlaceholderStub.Type("TYPE_REFERENCE", ::RsTypeReferenceImpl)
+    "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
+    "TYPE_REFERENCE" -> RsPlaceholderStub.Type("TYPE_REFERENCE", ::RsTypeReferenceImpl)
 
-        "ARRAY_TYPE" -> RsArrayTypeStub.Type
-        "REF_LIKE_TYPE" -> RsRefLikeTypeStub.Type
-        "FN_POINTER_TYPE" -> RsPlaceholderStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
-        "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
-        "BASE_TYPE" -> RsBaseTypeStub.Type
-        "FOR_IN_TYPE" -> RsPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
-        "IMPL_TRAIT_TYPE" -> RsPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
+    "ARRAY_TYPE" -> RsArrayTypeStub.Type
+    "REF_LIKE_TYPE" -> RsRefLikeTypeStub.Type
+    "FN_POINTER_TYPE" -> RsPlaceholderStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
+    "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
+    "BASE_TYPE" -> RsBaseTypeStub.Type
+    "FOR_IN_TYPE" -> RsPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
+    "IMPL_TRAIT_TYPE" -> RsPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
 
-        "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
-        "VALUE_PARAMETER" -> RsPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
-        "SELF_PARAMETER" -> RsSelfParameterStub.Type
-        "TYPE_PARAMETER" -> RsTypeParameterStub.Type
-        "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
-        "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
+    "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
+    "VALUE_PARAMETER" -> RsPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
+    "SELF_PARAMETER" -> RsSelfParameterStub.Type
+    "TYPE_PARAMETER" -> RsTypeParameterStub.Type
+    "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
+    "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
 
-        "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
-        "POLYBOUND" -> RsPlaceholderStub.Type("POLYBOUND", ::RsPolyboundImpl)
-        "BOUND" -> RsPlaceholderStub.Type("BOUND", ::RsBoundImpl)
-        "WHERE_CLAUSE" -> RsPlaceholderStub.Type("WHERE_CLAUSE", ::RsWhereClauseImpl)
-        "WHERE_PRED" -> RsPlaceholderStub.Type("WHERE_PRED", ::RsWherePredImpl)
+    "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
+    "POLYBOUND" -> RsPlaceholderStub.Type("POLYBOUND", ::RsPolyboundImpl)
+    "BOUND" -> RsPlaceholderStub.Type("BOUND", ::RsBoundImpl)
+    "WHERE_CLAUSE" -> RsPlaceholderStub.Type("WHERE_CLAUSE", ::RsWhereClauseImpl)
+    "WHERE_PRED" -> RsPlaceholderStub.Type("WHERE_PRED", ::RsWherePredImpl)
 
-        "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
+    "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
-        "MACRO_ITEM" -> RsPlaceholderStub.Type("MACRO_ITEM", ::RsMacroItemImpl)
-        "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
+    "MACRO_ITEM" -> RsPlaceholderStub.Type("MACRO_ITEM", ::RsMacroItemImpl)
+    "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
 
-        "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
-        "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
+    "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
+    "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
 
-        "META_ITEM" -> RsMetaItemStub.Type
-        "META_ITEM_ARGS" -> RsPlaceholderStub.Type("META_ITEM_ARGS", ::RsMetaItemArgsImpl)
+    "META_ITEM" -> RsMetaItemStub.Type
+    "META_ITEM_ARGS" -> RsPlaceholderStub.Type("META_ITEM_ARGS", ::RsMetaItemArgsImpl)
 
-        else -> error("Unknown element $name")
-    }
+    else -> error("Unknown element $name")
 }
 
 
