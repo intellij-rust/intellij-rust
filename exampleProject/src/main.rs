@@ -1,3 +1,13 @@
 fn main() {
-    println!("Hello, W0rld!");
+    format!(
+        "Hello, World"
+    );
+
+    error!(
+    "Hello, World"
+    );
+
+    foo!(
+            "hello"
+    )
 }
