@@ -486,13 +486,23 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/1269
-    fun `test tuple incorrect field`() = testExpr("""
+    fun `test tuple out of bound field`() = testExpr("""
         fn main() {
             let x = (1, "foo").2;
             x
           //^ <unknown>
         }
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1423
+    fun `test tuple incorrect field`() = testExpr("""
+        fn main() {
+            let x = (1, "foo").1departure_code;
+            x
+          //^ <unknown>
+        }
+    """)
+
 
     fun `test associated types for impl`() = testExpr("""
         trait A {
