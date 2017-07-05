@@ -675,14 +675,16 @@ private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 private TypeAscription ::= ':' TypeReference
-ScalarTypeReference ::= ArrayType
-                              | RefLikeType
-                              | FnPointerType
-                              | BaseType
-                              | TupleType { elementType=TypeReference }
 
+private ScalarTypeReferenceInner ::= ArrayType
+                                   | RefLikeType
+                                   | FnPointerType
+                                   | BaseType
+                                   | <<tupleOrParenType ScalarTypeReferenceInner TupleType_upper>>
+                                   | ForInType
+                                   | ImplTraitType
 
-private TypeReferenceInner ::= (ArrayType
+private TypeReferenceInner ::= ( ArrayType
                                | RefLikeType
                                | FnPointerType
                                | BaseType
@@ -695,6 +697,8 @@ TypeReference ::= TypeReferenceInner {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+ScalarTypeReference ::= ScalarTypeReferenceInner { elementType = TypeReference }
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
