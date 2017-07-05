@@ -7,6 +7,7 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsStructLiteral
 import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.resolve.ref.RsReference
@@ -14,6 +15,7 @@ import org.rust.lang.core.resolve.ref.RsStructLiteralFieldReferenceImpl
 
 
 val RsStructLiteralField.parentStructLiteral: RsStructLiteral get() = parentOfType<RsStructLiteral>()!!
+val RsStructLiteralField.resolveToDeclaration: RsFieldDecl? get() = reference.resolve() as? RsFieldDecl
 
 abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsCompositeElementImpl(node), RsStructLiteralField {
 

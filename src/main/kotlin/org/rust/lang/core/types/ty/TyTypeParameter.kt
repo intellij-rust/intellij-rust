@@ -40,9 +40,12 @@ class TyTypeParameter private constructor(
         return true
     }
 
-    override fun substitute(map: TypeArguments): Ty = map[this] ?: TyTypeParameter(parameter, name, bounds.map {
-        BoundElement(it.element, it.typeArguments.substituteInValues(map))
-    })
+    override fun substitute(map: TypeArguments): Ty {
+        val ty = map[this] ?: TyUnknown
+        return if (ty !is TyUnknown) ty else TyTypeParameter(parameter, name, bounds.map {
+            BoundElement(it.element, it.typeArguments.substituteInValues(map))
+        })
+    }
 
     override fun toString(): String = name ?: "<unknown>"
 

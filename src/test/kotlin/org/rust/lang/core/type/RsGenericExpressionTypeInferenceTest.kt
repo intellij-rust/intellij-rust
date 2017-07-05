@@ -254,12 +254,48 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test struct expr with explicit type parameter`() = testExpr("""
+        struct S<T> {a: T}
+        fn main() {
+            let x = S::<u8>{a: 1};
+            x.a
+            //^ u8
+        }
+    """)
+
+    fun `test struct expr with explicit and omitted type parameter`() = testExpr("""
+        struct S<T1, T2> {a: T1, b: T2}
+        fn main() {
+            let x = S::<u8, _>{a: 1, b: 2};
+            (x.a, x.b)
+          //^ (u8, i32)
+        }
+    """)
+
     fun testTupleStructExpression() = testExpr("""
         struct S<T> (T);
         fn main() {
             let x = S(5u16);
             x.0
             //^ u16
+        }
+    """)
+
+    fun `test tuple struct expr with explicit type parameter`() = testExpr("""
+        struct S<T> (T);
+        fn main() {
+            let x = S::<u8>(1);
+            x.0
+            //^ u8
+        }
+    """)
+
+    fun `test tuple struct expr with explicit and omitted type parameter`() = testExpr("""
+        struct S<T1, T2> (T1, T2);
+        fn main() {
+            let x = S::<u8, _>(1, 2);
+            (x.0, x.1)
+          //^ (u8, i32)
         }
     """)
 
