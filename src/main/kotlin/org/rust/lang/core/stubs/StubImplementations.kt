@@ -29,7 +29,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 77
+        override fun getStubVersion(): Int = 80
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -97,13 +97,13 @@ fun factory(name: String): RsStubElementType<*, *> {
         "TRAIT_REF" -> RsPlaceholderStub.Type("TRAIT_REF", ::RsTraitRefImpl)
         "TYPE_REFERENCE" -> RsPlaceholderStub.Type("TYPE_REFERENCE", ::RsTypeReferenceImpl)
 
-        "ARRAY_TYPE" -> RsTypeElementStub.Type("VEC_TYPE", ::RsArrayTypeImpl)
-        "REF_LIKE_TYPE" -> RsTypeElementStub.Type("REF_LIKE_TYPE", ::RsRefLikeTypeImpl)
-        "FN_POINTER_TYPE" -> RsTypeElementStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
-        "TUPLE_TYPE" -> RsTypeElementStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
-        "BASE_TYPE" -> RsTypeElementStub.Type("BASE_TYPE", ::RsBaseTypeImpl)
-        "FOR_IN_TYPE" -> RsTypeElementStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
-        "IMPL_TRAIT_TYPE" -> RsTypeElementStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
+        "ARRAY_TYPE" -> RsArrayTypeStub.Type
+        "REF_LIKE_TYPE" -> RsRefLikeTypeStub.Type
+        "FN_POINTER_TYPE" -> RsPlaceholderStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
+        "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
+        "BASE_TYPE" -> RsBaseTypeStub.Type
+        "FOR_IN_TYPE" -> RsPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
+        "IMPL_TRAIT_TYPE" -> RsPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
 
         "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
         "VALUE_PARAMETER" -> RsPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
@@ -722,51 +722,94 @@ class RsSelfParameterStub(
 }
 
 
-class RsTypeElementStub(
+class RsRefLikeTypeStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val isUnit: Boolean,
     val isMut: Boolean,
     val isRef: Boolean,
-    val isPointer: Boolean,
-    val arraySize: Int
+    val isPointer: Boolean
 ) : StubBase<RsTypeElement>(parent, elementType) {
 
-    class Type<PsiT : RsTypeElement>(
-        debugName: String,
-        private val psiCtor: (RsTypeElementStub, IStubElementType<*, *>) -> PsiT
-    ) : RsStubElementType<RsTypeElementStub, PsiT>(debugName) {
+    object Type: RsStubElementType<RsRefLikeTypeStub, RsRefLikeType>("REF_LIKE_TYPE") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsTypeElementStub(parentStub, this,
+            RsRefLikeTypeStub(parentStub, this,
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readInt()
+                dataStream.readBoolean()
             )
 
-        override fun serialize(stub: RsTypeElementStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeBoolean(stub.isUnit)
+        override fun serialize(stub: RsRefLikeTypeStub, dataStream: StubOutputStream) = with(dataStream) {
             dataStream.writeBoolean(stub.isMut)
             dataStream.writeBoolean(stub.isRef)
             dataStream.writeBoolean(stub.isPointer)
+        }
+
+        override fun createPsi(stub: RsRefLikeTypeStub) = RsRefLikeTypeImpl(stub, this)
+
+        override fun createStub(psi: RsRefLikeType, parentStub: StubElement<*>?) =
+            RsRefLikeTypeStub(parentStub, this,
+                psi.isMut,
+                psi.isRef,
+                psi.isPointer
+            )
+
+        override fun indexStub(stub: RsRefLikeTypeStub, sink: IndexSink) {
+        }
+    }
+}
+
+class RsBaseTypeStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val isUnit: Boolean
+) : StubBase<RsBaseType>(parent, elementType) {
+
+    object Type : RsStubElementType<RsBaseTypeStub, RsBaseType>("BASE_TYPE") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsBaseTypeStub(parentStub, this, dataStream.readBoolean())
+
+        override fun serialize(stub: RsBaseTypeStub, dataStream: StubOutputStream) = with(dataStream) {
+            dataStream.writeBoolean(stub.isUnit)
+        }
+
+        override fun createPsi(stub: RsBaseTypeStub) =
+            RsBaseTypeImpl(stub, this)
+
+        override fun createStub(psi: RsBaseType, parentStub: StubElement<*>?) =
+            RsBaseTypeStub(parentStub, this, psi.isUnit)
+
+        override fun indexStub(stub: RsBaseTypeStub, sink: IndexSink) {
+        }
+    }
+}
+
+class RsArrayTypeStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val arraySize: Int
+) : StubBase<RsArrayType>(parent, elementType) {
+
+    object Type : RsStubElementType<RsArrayTypeStub, RsArrayType>("ARRAY_TYPE") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsArrayTypeStub(parentStub, this, dataStream.readInt())
+
+        override fun serialize(stub: RsArrayTypeStub, dataStream: StubOutputStream) = with(dataStream) {
             dataStream.writeInt(stub.arraySize)
         }
 
-        override fun createPsi(stub: RsTypeElementStub) = psiCtor(stub, this)
+        override fun createPsi(stub: RsArrayTypeStub) =
+            RsArrayTypeImpl(stub, this)
 
-        override fun createStub(psi: PsiT, parentStub: StubElement<*>?) =
-            RsTypeElementStub(parentStub, this,
-                (psi as? RsBaseType)?.isUnit ?: false,
-                (psi as? RsRefLikeType)?.isMut ?: false,
-                (psi as? RsRefLikeType)?.isRef ?: false,
-                (psi as? RsRefLikeType)?.isPointer ?: false,
-                (psi as? RsArrayType)?.arraySize ?: -1
-            )
+        override fun createStub(psi: RsArrayType, parentStub: StubElement<*>?) =
+            RsArrayTypeStub(parentStub, this, psi.arraySize ?: -1)
 
-        override fun indexStub(stub: RsTypeElementStub, sink: IndexSink) {
+        override fun indexStub(stub: RsArrayTypeStub, sink: IndexSink) {
         }
     }
 }

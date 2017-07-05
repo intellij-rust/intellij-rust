@@ -703,28 +703,28 @@ ScalarTypeReference ::= ScalarTypeReferenceInner { elementType = TypeReference }
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RsArrayTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 RefLikeType ::= ( '&' Lifetime? mut? | '*' [ const | mut ] ) TypeReference {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RsRefLikeTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 FnPointerType ::= [ unsafe? ExternAbi? ] fn FnTypeParameters RetType? {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 TupleType ::= '(' [ <<comma_separated_list TypeReference>> ] ')' {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -742,21 +742,21 @@ Bound ::= Lifetime | TraitRef {
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ImplTraitType ::= impl Polybound ('+' Polybound)* {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 BaseType ::= '(' ')' | '_' | '!' | !'<' PathGenericArgsWithoutColons | &'<' TypeQualPath {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsTypeElementStub"
+  stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
