@@ -10,10 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
 import org.rust.lang.RsFileType
-import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.childOfType
-import org.rust.lang.core.psi.ext.selfParameter
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.*
 
 class RsPsiFactory(private val project: Project) {
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
@@ -98,7 +95,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createReferenceType(innerTypeText: String, mutable: Boolean): RsRefLikeType =
-        createType("&${if (mutable) "mut " else ""}$innerTypeText") as RsRefLikeType
+        createType("&${if (mutable) "mut " else ""}$innerTypeText").typeElement as RsRefLikeType
 
     fun createModDeclItem(modName: String): RsModDeclItem =
         createFromText("mod $modName;")

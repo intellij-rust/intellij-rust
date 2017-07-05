@@ -11,3 +11,8 @@ val RsBaseType.isCself: Boolean get() {
     val path = path
     return path != null && !path.hasColonColon && path.hasCself
 }
+
+val RsBaseType.isUnit: Boolean get() {
+    val stub = stub
+    return (stub?.isUnit) ?: (lparen != null && rparen != null)
+}

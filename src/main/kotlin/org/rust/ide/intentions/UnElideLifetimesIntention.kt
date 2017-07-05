@@ -9,11 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.psi.ext.isRef
-import org.rust.lang.core.psi.ext.selfParameter
-import org.rust.lang.core.psi.ext.valueParameters
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.*
 
 class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     override fun getText() = "Un-elide lifetimes"
@@ -42,7 +38,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         ctx.typeParameterList?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
 
         // return type
-        val retType = ctx.retType?.typeReference as? RsRefLikeType ?: return
+        val retType = ctx.retType?.typeReference?.typeElement as? RsRefLikeType ?: return
 
         if ((ctx.selfParameter != null) || (ctx.allRefArgs.drop(1).none())) {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
@@ -63,7 +59,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     }
 
     private fun createRefType(project: Project, origin: RsRefLikeType, lifeTimeName: String): RsRefLikeType =
-        RsPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RsRefLikeType
+        RsPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")).typeElement as RsRefLikeType
 
     private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
         RsPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
@@ -72,7 +68,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val selfAfg: List<PsiElement> = listOfNotNull(selfParameter)
         val params: List<PsiElement> = valueParameters
             .filter { param ->
-                val type = param.typeReference
+                val type = param.typeReference?.typeElement
                 type is RsRefLikeType && type.isRef
             }
         return (selfAfg + params).filterNotNull()
@@ -81,7 +77,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     private val PsiElement.lifetime: RsLifetime? get() =
     when (this) {
         is RsSelfParameter -> lifetime
-        is RsValueParameter -> (typeReference as? RsRefLikeType)?.lifetime
+        is RsValueParameter -> (typeReference?.typeElement as? RsRefLikeType)?.lifetime
         else -> null
     }
 }

@@ -9,11 +9,9 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.RsBaseType
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.TyTypeParameter
@@ -29,7 +27,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override val isPublic: Boolean get() = false // pub does not affect imls at all
 
     override fun getPresentation(): ItemPresentation {
-        val t = typeReference
+        val t = typeReference?.typeElement
         if (t is RsBaseType) {
             val pres = (t.path?.reference?.resolve() as? RsNamedElement)?.presentation
             if (pres != null) {
@@ -56,6 +54,12 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         }.toMap()
         return BoundElement(trait, subst + aliases)
     }
+
+    override val innerAttrList: List<RsInnerAttr>
+        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsInnerAttr::class.java)
+
+    override val outerAttrList: List<RsOuterAttr>
+        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
 }
 
 /**

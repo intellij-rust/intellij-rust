@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.declaration
 
 class AddMutableFix(val binding: RsNamedElement) : LocalQuickFixAndIntentionActionOnPsiElement(binding) {
@@ -45,10 +46,10 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
                 return
             }
 
-            val ref = parameter?.typeReference
-            if (ref is RsRefLikeType) {
+            val type = parameter?.typeReference?.typeElement
+            if (type is RsRefLikeType) {
                 val newParameterExpr = RsPsiFactory(project)
-                    .createValueParameter(parameter.pat?.text!!, ref.typeReference!!, mutable)
+                    .createValueParameter(parameter.pat?.text!!, type.typeReference, mutable)
                 parameter.replace(newParameterExpr)
                 return
             }

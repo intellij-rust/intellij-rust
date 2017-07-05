@@ -74,27 +74,21 @@ fun inferTypeForLambdaParameter(parameter: RsValueParameter): Ty {
 }
 
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {
-    return when (ref) {
-        is RsTupleType -> {
-            val single = ref.typeReferenceList.singleOrNull()
-            if (single != null && ref.rparen.getPrevNonCommentSibling()?.elementType != RsElementTypes.COMMA) {
-                return inferTypeReferenceType(single)
-            }
-            if (ref.typeReferenceList.isEmpty()) {
-                return TyUnit
-            }
-            TyTuple(ref.typeReferenceList.map(::inferTypeReferenceType))
-        }
+    val type = ref.typeElement
+    return when (type) {
+        is RsTupleType -> TyTuple(type.typeReferenceList.map(::inferTypeReferenceType))
 
         is RsBaseType -> {
-            val path = ref.path ?: return TyUnknown
+            if (type.isUnit) return TyUnit
+
+            val path = type.path ?: return TyUnknown
 
             val primitiveType = TyPrimitive.fromPath(path)
             if (primitiveType != null) return primitiveType
             val boundElement = path.reference.advancedResolve()
             val target =  boundElement?.element as? RsNamedElement ?: return TyUnknown
 
-            if (target is RsTraitItem && ref.isCself) {
+            if (target is RsTraitItem && type.isCself) {
                 TyTypeParameter(target)
             } else {
                 inferDeclarationType(target).substitute(boundElement.typeArguments)
@@ -102,12 +96,12 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
         }
 
         is RsRefLikeType -> {
-            val base = ref.typeReference ?: return TyUnknown
-            val mutable = ref.isMut
-            if (ref.isRef) {
+            val base = type.typeReference
+            val mutable = type.isMut
+            if (type.isRef) {
                 TyReference(inferTypeReferenceType(base), mutable)
             } else {
-                if (ref.isPointer) { //Raw pointers
+                if (type.isPointer) { //Raw pointers
                     TyPointer(inferTypeReferenceType(base), mutable)
                 } else {
                     TyUnknown
@@ -116,8 +110,8 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
         }
 
         is RsArrayType -> {
-            val componentType = ref.typeReference?.type ?: TyUnknown
-            val size = ref.arraySize
+            val componentType = type.typeReference.type
+            val size = type.arraySize
             if (size == null) {
                 TySlice(componentType)
             } else {

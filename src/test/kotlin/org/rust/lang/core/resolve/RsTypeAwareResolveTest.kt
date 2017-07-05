@@ -464,4 +464,24 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
              //^
         }
     """)
+
+    fun `test tuple paren cast 1`() = checkByCode("""
+        struct Foo;
+        impl Foo { fn foo(&self) {} }
+                     //X
+        fn main() {
+            let foo = unimplemented!() as (Foo);
+            foo.foo();
+        }      //^
+    """)
+
+    fun `test tuple paren cast 2`() = checkByCode("""
+        struct Foo;
+        impl Foo { fn foo(&self) {} }
+
+        fn main() {
+            let foo = unimplemented!() as (Foo,);
+            foo.foo();
+        }      //^ unresolved
+    """)
 }
