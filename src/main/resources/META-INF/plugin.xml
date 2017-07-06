@@ -542,6 +542,9 @@
         <codeInsight.template.postfixTemplateProvider language="Rust"
                                                       implementationClass="org.rust.ide.template.postfix.RsPostfixTemplateProvider"/>
 
+        <!-- Highlight Visitor -->
+        <highlightVisitor implementation="org.rust.ide.highlight.RsRainbowVisitor"/>
+
     </extensions>
 
     <application-components>
