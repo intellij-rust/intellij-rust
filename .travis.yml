@@ -1,6 +1,8 @@
 branches:
-  except:
-    - staging.tmp
+  only:
+    - staging
+    - master
+    - trying
 
 language: java
 

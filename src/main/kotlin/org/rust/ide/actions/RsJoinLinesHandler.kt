@@ -53,7 +53,7 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
         if (leftPsi.elementType != COMMA && rightPsi.elementType != RBRACE) return CANNOT_JOIN
 
         document.deleteString(leftPsi.textOffset, rightPsi.textOffset - 1)
-        return rightPsi.textOffset
+        return leftPsi.textOffset
     }
 
     // Normally this is handled by `CodeDocumentationAwareCommenter`, but Rust have different styles

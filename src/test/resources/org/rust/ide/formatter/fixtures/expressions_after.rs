@@ -14,7 +14,7 @@ fn main() {
         return foo && bar || (baz && bar)
             && moo || boo && (foooooo
             || baaaar) || meh
-            || beh
+            || beh;
     }
 
     match x {

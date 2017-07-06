@@ -311,6 +311,58 @@ class RsFormatterTest : RsFormatterTestBase() {
         """)
     }
 
+    fun `test adds semicolon after return statement`() {
+        doTextTest("""
+            fn main() {
+                return
+            }
+
+            fn foo() {
+                return /* comment */
+            }
+
+            fn bar() {
+                let mut vector = match iterator.next() {
+                    None => return Vec::new(),
+                    Some(element) => {}
+                };
+            }
+        """, """
+            fn main() {
+                return;
+            }
+
+            fn foo() {
+                return; /* comment */
+            }
+
+            fn bar() {
+                let mut vector = match iterator.next() {
+                    None => return Vec::new(),
+                    Some(element) => {}
+                };
+            }
+        """)
+    }
+
+    fun `test adds semicolon after return statement with value`() {
+        doTextTest("""
+            fn foo() -> i32 {
+                if true {
+                    return 92
+                }
+                62
+            }
+        """, """
+            fn foo() -> i32 {
+                if true {
+                    return 92;
+                }
+                62
+            }
+        """)
+    }
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 

@@ -129,14 +129,14 @@ World"
     fun `test join struct`() = doTest("""
         struct S { foo: i32 }
         fn main() {
-            let _ = S { /*caret*/
+            let _ = S {/*caret*/
                 foo: 42,
             };
         }
     ""","""
         struct S { foo: i32 }
         fn main() {
-            let _ = S { foo: 42,
+            let _ = S {/*caret*/ foo: 42,
             };
         }
     """)
@@ -144,13 +144,13 @@ World"
     fun `test remove comma 1`() = doTest("""
         struct S { foo: i32 }
         fn main() {
-            let _ = S { foo: 42, /*caret*/
+            let _ = S { foo: 42,/*caret*/
              };
         }
     ""","""
         struct S { foo: i32 }
         fn main() {
-            let _ = S { foo: 42 };
+            let _ = S { foo: 42/*caret*/ };
         }
     """)
 
@@ -167,7 +167,7 @@ World"
         fn main() {
             let _ = S {
                 foo: 42,
-                bar: 42 };
+                bar: 42/*caret*/ };
         }
     """)
 
