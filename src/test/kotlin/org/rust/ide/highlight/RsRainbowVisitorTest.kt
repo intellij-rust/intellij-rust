@@ -34,16 +34,16 @@ class RsRainbowVisitorTest : RsTestBase() {
         fn main() {
             let mut <rainbow color='ff000002'>test</rainbow> = "";
             <rainbow color='ff000002'>test</rainbow> = "";
-            let mut <rainbow color='ff000004'>test</rainbow> = "";
-            <rainbow color='ff000004'>test</rainbow> = "";
+            let mut <rainbow color='ff000003'>test</rainbow> = "";
+            <rainbow color='ff000003'>test</rainbow> = "";
         }
     """, withColor = true)
 
     fun testComplexDifferentColor() = checkRainbow("""
         fn foo(<rainbow color='ff000002'>test</rainbow>: i32) {
-            let <rainbow color='ff000002'>x</rainbow> = <rainbow color='ff000002'>test</rainbow> + <rainbow color='ff000002'>test</rainbow>;
-            let <rainbow color='ff000002'>y</rainbow> = {
-               let <rainbow color='ff000004'>test</rainbow> = <rainbow color='ff000002'>x</rainbow>;
+            let <rainbow color='ff000004'>x</rainbow> = <rainbow color='ff000002'>test</rainbow> + <rainbow color='ff000002'>test</rainbow>;
+            let <rainbow color='ff000001'>y</rainbow> = {
+               let <rainbow color='ff000003'>test</rainbow> = <rainbow color='ff000004'>x</rainbow>;
             };
             <rainbow color='ff000002'>test</rainbow>
         }
