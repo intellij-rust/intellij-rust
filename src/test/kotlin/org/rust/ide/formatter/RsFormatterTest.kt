@@ -299,6 +299,24 @@ class RsFormatterTest : RsFormatterTestBase() {
         """)
     }
 
+    fun `test adds semicolon after return statement with value`() {
+        doTextTest("""
+            fn foo() -> i32 {
+                if true {
+                    return 92
+                }
+                62
+            }
+        """, """
+            fn foo() -> i32 {
+                if true {
+                    return 92;
+                }
+                62
+            }
+        """)
+    }
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 
