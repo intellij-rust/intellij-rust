@@ -15,6 +15,6 @@ data class TyPointer(val referenced: Ty, val mutable: Boolean = false) : Ty {
 
     override fun toString() = "*${if (mutable) "mut" else "const"} $referenced"
 
-    override fun substitute(map: TypeArguments): Ty =
-        TyPointer(referenced.substitute(map), mutable)
+    override fun substitute(subst: Substitution): Ty =
+        TyPointer(referenced.substitute(subst), mutable)
 }

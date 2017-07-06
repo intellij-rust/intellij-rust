@@ -43,7 +43,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         return trait.element.functionList.filter {
             it.name !in directlyImplemented
         }.map {
-            BoundElement(it, trait.typeArguments)
+            BoundElement(it, trait.subst)
         }
     }
 

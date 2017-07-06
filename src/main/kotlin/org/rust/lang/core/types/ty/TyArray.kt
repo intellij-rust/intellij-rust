@@ -12,8 +12,8 @@ class TyArray(val base: Ty, val size: Int) : Ty {
         other is TyArray && size == other.size && base.canUnifyWith(other.base, project, it)
     }
 
-    override fun substitute(map: TypeArguments): Ty =
-        TyArray(base.substitute(map), size)
+    override fun substitute(subst: Substitution): Ty =
+        TyArray(base.substitute(subst), size)
 
     override fun toString() = "[$base; $size]"
 }

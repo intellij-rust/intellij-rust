@@ -15,9 +15,9 @@ import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.remapTypeParameters
 
-typealias TypeArguments = Map<TyTypeParameter, Ty>
+typealias Substitution = Map<TyTypeParameter, Ty>
 typealias TypeMapping = MutableMap<TyTypeParameter, Ty>
-val emptyTypeArguments: TypeArguments = emptyMap()
+val emptySubstitution: Substitution = emptyMap()
 
 /**
  * Represents both a type, like `i32` or `S<Foo, Bar>`, as well
@@ -40,12 +40,12 @@ interface Ty {
      * This works for `struct S<T> { field: T }`, when we
      * know the type of `T` and want to find the type of `field`.
      */
-    fun substitute(map: TypeArguments): Ty = this
+    fun substitute(subst: Substitution): Ty = this
 
     /**
      * Bindings between formal type parameters and actual type arguments.
      */
-    val typeParameterValues: TypeArguments get() = emptyTypeArguments
+    val typeParameterValues: Substitution get() = emptySubstitution
 
     /**
      * User visible string representation of a type
@@ -127,5 +127,5 @@ internal fun TypeMapping.merge(otherMapping: TypeMapping) {
     }
 }
 
-fun TypeArguments.substituteInValues(map: TypeArguments): TypeArguments =
+fun Substitution.substituteInValues(map: Substitution): Substitution =
     mapValues { (_, value) -> value.substitute(map) }
