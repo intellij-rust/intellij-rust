@@ -163,4 +163,11 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
                  //^
     """)
 
+    fun `test constructor`() = checkByCode("""
+        struct Foo {}
+              //X
+        fn Foo() -> Foo { Foo {}}
+                         //^
+    """)
+
 }
