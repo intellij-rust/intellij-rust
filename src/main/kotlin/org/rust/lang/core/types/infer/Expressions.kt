@@ -41,17 +41,19 @@ fun inferExpressionType(expr: RsExpr) = when (expr) {
 }
 
 private fun inferPathExprType(expr: RsPathExpr): Ty {
-    val target = expr.path.reference.resolve() as? RsNamedElement
-        ?: return TyUnknown
-
-    return inferDeclarationType(target)
+    val (element, subst) = expr.path.reference.advancedResolve()?.downcast<RsNamedElement>() ?: return TyUnknown
+    return inferDeclarationType(element).substitute(subst)
 }
 
 private fun inferStructLiteralType(expr: RsStructLiteral): Ty {
-    val base = expr.path.reference.resolve()
-    return when (base) {
-        is RsStructItem -> inferStructTypeParameters(expr, base)
-        is RsEnumVariant -> inferEnumTypeParameters(expr, base)
+    val (element, subst) = expr.path.reference.advancedResolve() ?: return TyUnknown
+    return when (element) {
+        is RsStructItem -> element.type
+            .substitute(subst)
+            .substitute(inferStructTypeArguments(expr))
+        is RsEnumVariant -> element.parentEnum.type
+            .substitute(subst)
+            .substitute(inferStructTypeArguments(expr))
         else -> TyUnknown
     }
 }
@@ -59,10 +61,14 @@ private fun inferStructLiteralType(expr: RsStructLiteral): Ty {
 private fun inferCallExprType(expr: RsCallExpr): Ty {
     val fn = expr.expr
     if (fn is RsPathExpr) {
-        val variant = fn.path.reference.resolve()
-        when (variant) {
-            is RsEnumVariant -> return inferTupleEnumTypeParameters(expr, variant)
-            is RsStructItem -> return inferTupleStructTypeParameters(expr, variant)
+        val (element, subst) = fn.path.reference.advancedResolve() ?: return TyUnknown
+        when (element) {
+            is RsEnumVariant -> return element.parentEnum.type
+                .substitute(subst)
+                .substitute(inferTupleStructTypeArguments(expr, element))
+            is RsStructItem -> return element.type
+                .substitute(subst)
+                .substitute(inferTupleStructTypeArguments(expr, element))
         }
     }
     val ty = fn.type
@@ -74,11 +80,10 @@ private fun inferCallExprType(expr: RsCallExpr): Ty {
 }
 
 private fun inferMethodCallExprType(expr: RsMethodCallExpr): Ty {
-    val boundMethod = expr.reference.advancedResolve()
-    val method = boundMethod?.element as? RsFunction ?: return TyUnknown
+    val (method, subst) = expr.reference.advancedResolve()?.downcast<RsFunction>() ?: return TyUnknown
 
     val returnType = (method.retType?.typeReference?.type ?: TyUnit)
-        .substitute(boundMethod.typeArguments)
+        .substitute(subst)
     val methodType = method.type as? TyFunction ?: return returnType
     // drop first element of paramTypes because it's `self` param
     // and it doesn't have value in `expr.valueArgumentList.exprList`
@@ -291,65 +296,24 @@ private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
 }
 
 private val RsBlock.type: Ty get() = expr?.type ?: TyUnit
+private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
 
-private fun inferStructTypeParameters(o: RsStructLiteral, item: RsStructItem): Ty {
-    val baseType = item.type
-    if ((baseType as? TyStructOrEnumBase)?.typeArguments.isNullOrEmpty()) return baseType
-    val argsMapping = item.blockFields?.let { inferTypeParametersForFields(o.structLiteralBody.structLiteralFieldList, it) } ?: emptyMap()
-    return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
-}
+private fun inferStructTypeArguments(literal: RsStructLiteral): TypeArguments =
+    inferFieldTypeArguments(literal.structLiteralBody.structLiteralFieldList)
 
-private fun inferEnumTypeParameters(o: RsStructLiteral, item: RsEnumVariant): Ty {
-    val baseType = item.parentEnum.type
-    if ((baseType as? TyStructOrEnumBase)?.typeArguments.isNullOrEmpty()) return baseType
-    val argsMapping = item.blockFields?.let { inferTypeParametersForFields(o.structLiteralBody.structLiteralFieldList, it) } ?: emptyMap()
-    return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
-}
-
-private fun inferTupleStructTypeParameters(o: RsCallExpr, item: RsStructItem): Ty {
-    val baseType = item.type
-    if ((baseType as? TyStructOrEnumBase)?.typeArguments.isNullOrEmpty()) return baseType
-    val argsMapping = item.tupleFields?.let { inferTypeParametersForTuple(o.valueArgumentList.exprList, it) } ?: emptyMap()
-    return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
-}
-
-private fun inferTupleEnumTypeParameters(o: RsCallExpr, item: RsEnumVariant): Ty {
-    val baseType = item.parentEnum.type
-    if ((baseType as? TyStructOrEnumBase)?.typeArguments.isNullOrEmpty()) return baseType
-    val argsMapping = item.tupleFields?.let { inferTypeParametersForTuple(o.valueArgumentList.exprList, it) } ?: emptyMap()
-    return if (argsMapping.isEmpty()) baseType else baseType.substitute(argsMapping)
-}
-
-private fun inferTypeParametersForFields(
-    structLiteralFieldList: List<RsStructLiteralField>,
-    fields: RsBlockFields
-): Map<TyTypeParameter, Ty> {
+private fun inferFieldTypeArguments(fieldExprs: List<RsStructLiteralField>): TypeArguments {
     val argsMapping = mutableMapOf<TyTypeParameter, Ty>()
-    val fieldTypes = fields.fieldDeclList
-        .associate { it.identifier.text to (it.typeReference?.type ?: TyUnknown) }
-    structLiteralFieldList.forEach { field ->
-        field.expr?.let { expr -> addTypeMapping(argsMapping, fieldTypes[field.identifier.text], expr) }
-    }
+    fieldExprs.forEach { field -> field.expr?.let { expr -> addTypeMapping(argsMapping, field.type, expr) } }
     return argsMapping
 }
 
-private fun inferTypeParametersForTuple(
-    tupleExprs: List<RsExpr>,
-    tupleFields: RsTupleFields
-): Map<TyTypeParameter, Ty> {
-    return mapTypeParameters(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, tupleExprs)
-}
+private fun inferTupleStructTypeArguments(expr: RsCallExpr, item: RsFieldsOwner): TypeArguments =
+    item.tupleFields?.let { mapTupleTypeArguments(expr.valueArgumentList.exprList, it) } ?: emptyMap()
 
-private fun inferArithmeticBinaryExprType(expr: RsBinaryExpr, op: ArithmeticOp): Ty {
-    val lhsType = expr.left.type
-    val rhsType = expr.right?.type ?: TyUnknown
-    return findArithmeticBinaryExprOutputType(expr.project, lhsType, rhsType, op)
-}
+private fun mapTupleTypeArguments(tupleExprs: List<RsExpr>, tupleFields: RsTupleFields): TypeArguments =
+    mapTypeParameters(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, tupleExprs)
 
-private fun mapTypeParameters(
-    argDefs: Iterable<Ty>,
-    argExprs: Iterable<RsExpr>
-): Map<TyTypeParameter, Ty> {
+private fun mapTypeParameters(argDefs: Iterable<Ty>, argExprs: Iterable<RsExpr>): TypeArguments {
     val argsMapping = mutableMapOf<TyTypeParameter, Ty>()
     argExprs.zip(argDefs).forEach { (expr, type) -> addTypeMapping(argsMapping, type, expr) }
     return argsMapping
@@ -357,6 +321,12 @@ private fun mapTypeParameters(
 
 private fun addTypeMapping(argsMapping: TypeMapping, fieldType: Ty?, expr: RsExpr) =
     fieldType?.canUnifyWith(expr.type, expr.project, argsMapping)
+
+private fun inferArithmeticBinaryExprType(expr: RsBinaryExpr, op: ArithmeticOp): Ty {
+    val lhsType = expr.left.type
+    val rhsType = expr.right?.type ?: TyUnknown
+    return findArithmeticBinaryExprOutputType(expr.project, lhsType, rhsType, op)
+}
 
 /**
  * Remap type parameters between type declaration and an impl block.
@@ -367,9 +337,7 @@ private fun addTypeMapping(argsMapping: TypeMapping, fieldType: Ty?, expr: RsExp
  * impl<X, Y> Flip<Y, X> { ... }
  * ```
  */
-fun RsImplItem.remapTypeParameters(
-    map: Map<TyTypeParameter, Ty>
-): Map<TyTypeParameter, Ty> {
+fun RsImplItem.remapTypeParameters(map: TypeArguments): TypeArguments {
     val positional = typeReference?.type?.typeParameterValues.orEmpty()
         .mapNotNull { (structParam, structType) ->
             if (structType is TyTypeParameter) {
