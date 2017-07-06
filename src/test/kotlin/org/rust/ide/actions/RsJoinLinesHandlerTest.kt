@@ -6,10 +6,10 @@
 package org.rust.ide.actions
 
 class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
-    fun `test empty file`() = doTest("/*caret*/", "/*caret*/")
+    fun `test empty file`() = doTestRaw ("/*caret*/", "/*caret*/")
 
-    fun `test blank file1`() = doTest("/*caret*/\n\n", "/*caret*/\n")
-    fun `test blank file2`() = doTest("\n/*caret*/\n", "\n/*caret*/")
+    fun `test blank file1`() = doTestRaw("/*caret*/\n\n", "/*caret*/\n")
+    fun `test blank file2`() = doTestRaw("\n/*caret*/\n", "\n/*caret*/")
 
     fun testNoEscape() = doTest("""
         fn main() {
@@ -69,7 +69,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
     fun testNoIndent() = doTest("""
         fn main() {
             "Hel<caret>lo,
-World"
+        World"
         }
     """, """
         fn main() {
@@ -141,7 +141,7 @@ World"
         }
     """)
 
-    fun `test remove comma 1`() = doTest("""
+    fun `test remove comma struct literal 1`() = doTest("""
         struct S { foo: i32 }
         fn main() {
             let _ = S { foo: 42,/*caret*/
@@ -154,7 +154,7 @@ World"
         }
     """)
 
-    fun `test remove comma 2`() = doTest("""
+    fun `test remove comma struct literal 2`() = doTest("""
         struct S { foo: i32, bar: i32 }
         fn main() {
             let _ = S {
@@ -168,6 +168,49 @@ World"
             let _ = S {
                 foo: 42,
                 bar: 42/*caret*/ };
+        }
+    """)
+
+    fun `test remove comma struct definition`() = doTest("""
+        /*caret*/struct S { foo: i32,
+        }
+    ""","""
+        struct S { foo: i32/*caret*/ }
+    """)
+
+    fun `test remove comma tuple struct definition`() = doTest("""
+        /*caret*/struct S(i32,
+        );
+    ""","""
+        struct S(i32/*caret*/);
+    """)
+
+    fun `test remove comma function parameter`() = doTest("""
+        /*caret*/fn foo (foo: i32,
+        ) {}
+    ""","""
+        fn foo (foo: i32/*caret*/) {}
+    """)
+
+    fun `test remove comma function call`() = doTest("""
+        fn main() {
+            foo(1,/*caret*/
+            )
+        }
+    ""","""
+        fn main() {
+            foo(1/*caret*/)
+        }
+    """)
+
+    fun `test don't remove comma from tuple`() = doTest("""
+        fn main() {
+            /*caret*/let _ = (1,
+            );
+        }
+    """, """
+        fn main() {
+            let _ = (1,/*caret*/ );
         }
     """)
 

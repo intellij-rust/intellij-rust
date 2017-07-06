@@ -11,11 +11,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharSequenceSubSequence
+import org.rust.ide.formatter.impl.COMMA_LISTS
 import org.rust.ide.typing.endsWithUnescapedBackslash
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RS_STRING_LITERALS
-import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.elementType
 
@@ -30,8 +31,8 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
         val leftPsi = file.findElementAt(offsetNear) ?: return CANNOT_JOIN
         val rightPsi = file.findElementAt(end) ?: return CANNOT_JOIN
 
-        val tryJoinStruct = joinStruct(document, leftPsi, rightPsi)
-        if (tryJoinStruct != CANNOT_JOIN) return tryJoinStruct
+        val tryJoinCommaList = joinCommaList(document, leftPsi, rightPsi)
+        if (tryJoinCommaList != CANNOT_JOIN) return tryJoinCommaList
 
         if (leftPsi != rightPsi) return CANNOT_JOIN
         val elementType = leftPsi.elementType
@@ -47,13 +48,19 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
         }
     }
 
-    private fun joinStruct(document: Document, leftPsi: PsiElement, rightPsi: PsiElement): Int {
-        if (leftPsi.parent.elementType != STRUCT_LITERAL_BODY) return CANNOT_JOIN
-        if (rightPsi.parent.elementType != STRUCT_LITERAL_BODY) return CANNOT_JOIN
-        if (leftPsi.elementType != COMMA && rightPsi.elementType != RBRACE) return CANNOT_JOIN
 
-        document.deleteString(leftPsi.textOffset, rightPsi.textOffset - 1)
-        return leftPsi.textOffset
+    private fun joinCommaList(document: Document, leftPsi: PsiElement, rightPsi: PsiElement): Int {
+        if (leftPsi.elementType != COMMA) return CANNOT_JOIN
+        val parentType = leftPsi.parent?.elementType ?: return CANNOT_JOIN
+        val rightType = rightPsi.elementType
+        for (list in COMMA_LISTS) {
+            if (parentType == list.listElement && rightType == list.closingBrace) {
+                val replaceWith = if (list.needsSpaceBeforeClosingBrace) " " else ""
+                document.replaceString(leftPsi.textOffset, rightPsi.textOffset, replaceWith)
+                return leftPsi.textOffset
+            }
+        }
+        return CANNOT_JOIN
     }
 
     // Normally this is handled by `CodeDocumentationAwareCommenter`, but Rust have different styles

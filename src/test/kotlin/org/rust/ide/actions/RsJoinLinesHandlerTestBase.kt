@@ -10,12 +10,14 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsJoinLinesHandlerTestBase : RsTestBase() {
-    protected fun doTest(
-        @Language("Rust") before: String,
-        @Language("Rust") after: String
-    ) {
+    protected fun doTestRaw(before: String, after: String) {
         checkByText(before, after) {
             myFixture.performEditorAction(IdeActions.ACTION_EDITOR_JOIN_LINES)
         }
     }
+
+    protected fun doTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) = doTestRaw(before.trimIndent(), after.trimIndent())
 }
