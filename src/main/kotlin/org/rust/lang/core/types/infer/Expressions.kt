@@ -40,10 +40,8 @@ fun inferExpressionType(expr: RsExpr) = when (expr) {
 }
 
 private fun inferPathExprType(expr: RsPathExpr): Ty {
-    val target = expr.path.reference.resolve() as? RsNamedElement
-        ?: return TyUnknown
-
-    return inferDeclarationType(target)
+    val (element, subst) = expr.path.reference.advancedResolve()?.downcast<RsNamedElement>() ?: return TyUnknown
+    return inferDeclarationType(element).substitute(subst)
 }
 
 private fun inferStructLiteralType(expr: RsStructLiteral): Ty {

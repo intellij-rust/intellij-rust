@@ -176,6 +176,38 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun testGenericFunction3() = testExpr("""
+        fn f<T>(t: T) -> T { t }
+
+        fn main() {
+            let a = f::<u8>(1);
+            a
+          //^ u8
+        }
+    """)
+
+    fun testGenericFunctionPointer() = testExpr("""
+        fn f<T>(t: T) -> T { t }
+
+        fn main() {
+            let f = f::<u8>;
+            let r = f(1);
+            r
+          //^ u8
+        }
+    """)
+
+    fun testGenericFunctionPointer2() = testExpr("""
+        fn f<T1, T2>(t1: T1, t2: T2) -> (T1, T2) { (t1, t2) }
+
+        fn main() {
+            let f = f::<u8, _>;
+            let r = f(1, 2);
+            r
+          //^ (u8, i32)
+        }
+    """)
+
     fun testStaticMethod() = testExpr("""
         struct S<T> { value: T }
         impl<T> S<T> {
