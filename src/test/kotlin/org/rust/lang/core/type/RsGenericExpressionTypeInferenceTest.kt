@@ -331,6 +331,14 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test reference to generic tuple constructor`() = testExpr("""
+        struct S<T>(T);
+        fn main() {
+            let f = S::<u8>;
+            f(1).0
+        }      //^ u8
+    """)
+
     fun testGenericAlias() = testExpr("""
         struct S1<T>(T);
         struct S3<T1, T2, T3>(T1, T2, T3);

@@ -42,7 +42,10 @@ fun inferExpressionType(expr: RsExpr) = when (expr) {
 
 private fun inferPathExprType(expr: RsPathExpr): Ty {
     val (element, subst) = expr.path.reference.advancedResolve()?.downcast<RsNamedElement>() ?: return TyUnknown
-    return inferDeclarationType(element).substitute(subst)
+    val type = inferDeclarationType(element)
+    return ((element as? RsFieldsOwner)?.tupleFields?.let {
+        TyFunction(it.tupleFieldDeclList.map { it.typeReference.type }, type)
+    } ?: type).substitute(subst)
 }
 
 private fun inferStructLiteralType(expr: RsStructLiteral): Ty {
@@ -60,18 +63,10 @@ private fun inferStructLiteralType(expr: RsStructLiteral): Ty {
 
 private fun inferCallExprType(expr: RsCallExpr): Ty {
     val fn = expr.expr
-    if (fn is RsPathExpr) {
-        val (element, subst) = fn.path.reference.advancedResolve() ?: return TyUnknown
-        when (element) {
-            is RsEnumVariant -> return element.parentEnum.type
-                .substitute(subst)
-                .substitute(inferTupleStructTypeArguments(expr, element))
-            is RsStructItem -> return element.type
-                .substitute(subst)
-                .substitute(inferTupleStructTypeArguments(expr, element))
-        }
-    }
     val ty = fn.type
+    // `struct S; S();`
+    if (ty is TyStructOrEnumBase && expr.valueArgumentList.exprList.isEmpty()) return ty
+
     val calleeType = ty as? TyFunction ?:
         (findImplsAndTraits(fn.project, fn.type)
             .mapNotNull { it.downcast<RsTraitItem>()?.asFunctionType }
