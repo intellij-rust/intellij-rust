@@ -103,7 +103,7 @@ private fun inferFieldExprType(expr: RsFieldExpr): Ty {
         is RsTupleFieldDecl -> field.typeReference.type
         else -> null
     } ?: TyUnknown
-    return raw.substitute(boundField.typeArguments)
+    return raw.substitute(boundField.subst)
 }
 
 private fun inferLiteralExprType(expr: RsLitExpr): Ty = when (expr.kind) {
@@ -248,7 +248,7 @@ private fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Ty {
         is RsMethodCallExpr -> {
             val fn = callExpr.reference.advancedResolve()?.downcast<RsFunction>()
                 ?: return fallback
-            fn.element.type.substitute(fn.typeArguments)
+            fn.element.type.substitute(fn.subst)
         }
         else -> null
     } as? TyFunction
@@ -298,22 +298,22 @@ private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
 private val RsBlock.type: Ty get() = expr?.type ?: TyUnit
 private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
 
-private fun inferStructTypeArguments(literal: RsStructLiteral): TypeArguments =
+private fun inferStructTypeArguments(literal: RsStructLiteral): Substitution =
     inferFieldTypeArguments(literal.structLiteralBody.structLiteralFieldList)
 
-private fun inferFieldTypeArguments(fieldExprs: List<RsStructLiteralField>): TypeArguments {
+private fun inferFieldTypeArguments(fieldExprs: List<RsStructLiteralField>): Substitution {
     val argsMapping = mutableMapOf<TyTypeParameter, Ty>()
     fieldExprs.forEach { field -> field.expr?.let { expr -> addTypeMapping(argsMapping, field.type, expr) } }
     return argsMapping
 }
 
-private fun inferTupleStructTypeArguments(expr: RsCallExpr, item: RsFieldsOwner): TypeArguments =
+private fun inferTupleStructTypeArguments(expr: RsCallExpr, item: RsFieldsOwner): Substitution =
     item.tupleFields?.let { mapTupleTypeArguments(expr.valueArgumentList.exprList, it) } ?: emptyMap()
 
-private fun mapTupleTypeArguments(tupleExprs: List<RsExpr>, tupleFields: RsTupleFields): TypeArguments =
+private fun mapTupleTypeArguments(tupleExprs: List<RsExpr>, tupleFields: RsTupleFields): Substitution =
     mapTypeParameters(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, tupleExprs)
 
-private fun mapTypeParameters(argDefs: Iterable<Ty>, argExprs: Iterable<RsExpr>): TypeArguments {
+private fun mapTypeParameters(argDefs: Iterable<Ty>, argExprs: Iterable<RsExpr>): Substitution {
     val argsMapping = mutableMapOf<TyTypeParameter, Ty>()
     argExprs.zip(argDefs).forEach { (expr, type) -> addTypeMapping(argsMapping, type, expr) }
     return argsMapping
@@ -337,18 +337,18 @@ private fun inferArithmeticBinaryExprType(expr: RsBinaryExpr, op: ArithmeticOp):
  * impl<X, Y> Flip<Y, X> { ... }
  * ```
  */
-fun RsImplItem.remapTypeParameters(map: TypeArguments): TypeArguments {
+fun RsImplItem.remapTypeParameters(subst: Substitution): Substitution {
     val positional = typeReference?.type?.typeParameterValues.orEmpty()
         .mapNotNull { (structParam, structType) ->
             if (structType is TyTypeParameter) {
-                val implType = map[structParam] ?: return@mapNotNull null
+                val implType = subst[structParam] ?: return@mapNotNull null
                 structType to implType
             } else {
                 null
             }
         }.toMap()
 
-    val associated = (implementedTrait?.typeArguments ?: emptyMap())
+    val associated = (implementedTrait?.subst ?: emptyMap())
         .substituteInValues(positional)
     return positional + associated
 }

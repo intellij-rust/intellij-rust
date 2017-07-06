@@ -25,6 +25,6 @@ interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclara
 }
 
 val BoundElement<RsTraitOrImpl>.functionsWithInherited: List<BoundElement<RsFunction>> get() {
-    return element.functionList.map { BoundElement(it, typeArguments) } +
-        element.inheritedFunctions.map { BoundElement(it.element, it.typeArguments.substituteInValues(typeArguments)) }
+    return element.functionList.map { BoundElement(it, subst) } +
+        element.inheritedFunctions.map { it.substitute(subst) }
 }

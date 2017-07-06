@@ -14,8 +14,8 @@ data class TyTuple(val types: List<Ty>) : Ty {
             types.zip(other.types).all { (type1, type2) -> type1.canUnifyWith(type2, project, it) }
     }
 
-    override fun substitute(map: TypeArguments): TyTuple =
-        TyTuple(types.map { it.substitute(map) })
+    override fun substitute(subst: Substitution): TyTuple =
+        TyTuple(types.map { it.substitute(subst) })
 
     override fun toString(): String = types.joinToString(", ", "(", ")")
 }

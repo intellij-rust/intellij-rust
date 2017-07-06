@@ -11,8 +11,8 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.isTest
 import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.ty.TypeArguments
-import org.rust.lang.core.types.ty.emptyTypeArguments
+import org.rust.lang.core.types.ty.Substitution
+import org.rust.lang.core.types.ty.emptySubstitution
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.
@@ -24,7 +24,7 @@ import org.rust.lang.core.types.ty.emptyTypeArguments
 interface ScopeEntry {
     val name: String
     val element: RsCompositeElement?
-    val typeArguments: TypeArguments get() = emptyTypeArguments
+    val subst: Substitution get() = emptySubstitution
 }
 
 /**
@@ -53,7 +53,7 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
 
         if (e.name == referenceName) {
             val element = e.element ?: return@f false
-            result += BoundElement(element, e.typeArguments)
+            result += BoundElement(element, e.subst)
         }
         false
     }

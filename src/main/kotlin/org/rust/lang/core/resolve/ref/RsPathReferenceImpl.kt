@@ -32,7 +32,7 @@ class RsPathReferenceImpl(
             val parameters = (boundElement.element as? RsGenericDeclaration)?.typeParameters ?: return@map boundElement
             BoundElement(
                 boundElement.element,
-                boundElement.typeArguments + parameters.map { TyTypeParameter(it) }.zip(typeArguments).toMap()
+                boundElement.subst + parameters.map { TyTypeParameter(it) }.zip(typeArguments).toMap()
             )
         }
     }

@@ -85,13 +85,12 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 
             val primitiveType = TyPrimitive.fromPath(path)
             if (primitiveType != null) return primitiveType
-            val boundElement = path.reference.advancedResolve()
-            val target =  boundElement?.element as? RsNamedElement ?: return TyUnknown
+            val (target, subst) = path.reference.advancedResolve()?.downcast<RsNamedElement>() ?: return TyUnknown
 
             if (target is RsTraitItem && type.isCself) {
                 TyTypeParameter(target)
             } else {
-                inferDeclarationType(target).substitute(boundElement.typeArguments)
+                inferDeclarationType(target).substitute(subst)
             }
         }
 

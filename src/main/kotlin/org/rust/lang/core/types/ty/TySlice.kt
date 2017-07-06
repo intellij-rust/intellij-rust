@@ -13,8 +13,8 @@ data class TySlice(val elementType: Ty) : Ty {
             other is TyArray && elementType.canUnifyWith(other.base, project, it)
     }
 
-    override fun substitute(map: TypeArguments): Ty {
-        return TySlice(elementType.substitute(map))
+    override fun substitute(subst: Substitution): Ty {
+        return TySlice(elementType.substitute(subst))
     }
 
     override fun toString() = "[$elementType]"

@@ -37,7 +37,7 @@ class RsMethodCallReferenceImpl(
                 val parameters = method.typeParameterList?.typeParameterList.orEmpty().map { TyTypeParameter(it) }
                 BoundElement(
                     method,
-                    boundElement.typeArguments + parameters.zip(typeArguments).toMap()
+                    boundElement.subst + parameters.zip(typeArguments).toMap()
                 )
             } else {
                 boundElement

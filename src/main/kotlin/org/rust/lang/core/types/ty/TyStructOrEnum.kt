@@ -39,16 +39,16 @@ class TyStruct private constructor(
     override val item: RsStructItem
         get() = boundElement.element
 
-    override val typeParameterValues: TypeArguments
-        get() = boundElement.typeArguments
+    override val typeParameterValues: Substitution
+        get() = boundElement.subst
 
     override val typeArguments: List<Ty>
         get() = item.typeParameters.map { typeParameterValues[TyTypeParameter(it)] ?: TyUnknown }
 
     override fun toString(): String = fullName
 
-    override fun substitute(map: TypeArguments): TyStruct =
-        TyStruct(BoundElement(boundElement.element, boundElement.typeArguments.substituteInValues(map)))
+    override fun substitute(subst: Substitution): TyStruct =
+        TyStruct(boundElement.substitute(subst))
 
     override fun equals(other: Any?): Boolean =
         other is TyStruct && boundElement == other.boundElement
@@ -71,16 +71,16 @@ class TyEnum private constructor(
     override val item: RsEnumItem
         get() = boundElement.element
 
-    override val typeParameterValues: TypeArguments
-        get() = boundElement.typeArguments
+    override val typeParameterValues: Substitution
+        get() = boundElement.subst
 
     override val typeArguments: List<Ty>
         get() = item.typeParameters.map { typeParameterValues[TyTypeParameter(it)] ?: TyUnknown }
 
     override fun toString(): String = fullName
 
-    override fun substitute(map: TypeArguments): TyEnum =
-        TyEnum(BoundElement(boundElement.element, boundElement.typeArguments.substituteInValues(map)))
+    override fun substitute(subst: Substitution): TyEnum =
+        TyEnum(boundElement.substitute(subst))
 
     override fun equals(other: Any?): Boolean =
         other is TyEnum && boundElement == other.boundElement
@@ -96,7 +96,7 @@ class TyEnum private constructor(
     }
 }
 
-private fun defaultSubstitution(item: RsStructOrEnumItemElement): TypeArguments =
+private fun defaultSubstitution(item: RsStructOrEnumItemElement): Substitution =
     item.typeParameters.associate { rsTypeParameter ->
         val tyTypeParameter = TyTypeParameter(rsTypeParameter)
         val defaultType = rsTypeParameter.typeReference?.type ?: tyTypeParameter

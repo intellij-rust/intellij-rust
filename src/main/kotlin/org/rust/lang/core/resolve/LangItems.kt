@@ -48,7 +48,7 @@ fun findIteratorItemType(project: Project, ty: Ty): Ty {
         } ?: return TyUnknown
 
     val rawType = lookupAssociatedType(impl.element, "Item")
-    return rawType.substitute(impl.typeArguments)
+    return rawType.substitute(impl.subst)
 }
 
 fun findIndexOutputType(project: Project, containerType: Ty, indexType: Ty): Ty {
@@ -115,8 +115,8 @@ val RsTraitItem.fnOutputParam: TyTypeParameter? get() {
 val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
     val param = element.fnTypeArgsParam ?: return null
     val outputParam = element.fnOutputParam ?: return null
-    val argumentTypes = ((typeArguments[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
-    val outputType = (typeArguments[outputParam] ?: TyUnit)
+    val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
+    val outputType = (subst[outputParam] ?: TyUnit)
     return TyFunction(argumentTypes, outputType)
 }
 
