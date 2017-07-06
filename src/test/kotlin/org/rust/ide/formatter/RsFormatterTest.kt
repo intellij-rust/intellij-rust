@@ -272,7 +272,7 @@ class RsFormatterTest : RsFormatterTestBase() {
             }
 
             fn foo() {
-                return
+                return /* comment */
             }
 
             fn bar() {
@@ -287,7 +287,7 @@ class RsFormatterTest : RsFormatterTestBase() {
             }
 
             fn foo() {
-                return;
+                return; /* comment */
             }
 
             fn bar() {

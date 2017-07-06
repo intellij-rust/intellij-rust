@@ -20,15 +20,14 @@ import java.util.*
 
 class RsReturnStatementFormatProcessor : PreFormatProcessor {
     override fun process(element: ASTNode, range: TextRange): TextRange {
-
-        var returnElements = ArrayList<RsRetExpr>()
+        val returnElements = ArrayList<RsRetExpr>()
         element.psi.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {
-                if (range.contains(element.textRange)) {
+                if (element.textRange in range) {
                     super.visitElement(element)
                 }
 
-                if (element is RsRetExpr && !(element.parent is RsMatchArm)) {
+                if (element is RsRetExpr && element.parent !is RsMatchArm) {
                     returnElements.add(element)
                 }
             }
@@ -36,7 +35,7 @@ class RsReturnStatementFormatProcessor : PreFormatProcessor {
 
         var nAddedSemicolons = 0
         for (returnElement in returnElements) {
-            if (addSemicolonAfterReturnExpression(returnElement)) {
+            if (tryAddSemicolonAfterReturnExpression(returnElement)) {
                 nAddedSemicolons++
             }
         }
@@ -44,7 +43,7 @@ class RsReturnStatementFormatProcessor : PreFormatProcessor {
         return range.grown(nAddedSemicolons)
     }
 
-    private fun addSemicolonAfterReturnExpression(element: RsRetExpr): Boolean {
+    private fun tryAddSemicolonAfterReturnExpression(element: RsRetExpr): Boolean {
         val nextSibling = element.getNextNonCommentSibling();
         if (nextSibling == null || nextSibling.elementType != SEMICOLON) {
             val psiFactory = RsPsiFactory(element.project)
