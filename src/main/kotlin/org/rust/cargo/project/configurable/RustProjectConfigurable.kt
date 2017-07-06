@@ -11,8 +11,10 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.panel
+import com.intellij.util.PlatformUtils
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
@@ -29,10 +31,30 @@ class RustProjectConfigurable(
     private val rustProjectSettings = RustProjectSettingsPanel(
         rustModule?.cargoProjectRoot?.pathAsPath ?: Paths.get(".")
     )
+    private val autoUpdateEnabledCheckbox = JBCheckBox()
+    private val useCargoCheckForBuildCheckbox = JBCheckBox()
+    private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
     private val cargoTomlLocation = Label("N/A")
+
+    private var autoUpdateEnabled: Boolean
+        get() = autoUpdateEnabledCheckbox.isSelected
+        set(value) { autoUpdateEnabledCheckbox.isSelected = value }
+
+    private var useCargoCheckForBuild: Boolean
+        get() = useCargoCheckForBuildCheckbox.isSelected
+        set(value) { useCargoCheckForBuildCheckbox.isSelected = value }
+
+    private var useCargoCheckAnnotator: Boolean
+        get() = useCargoCheckAnnotatorCheckbox.isSelected
+        set(value) { useCargoCheckAnnotatorCheckbox.isSelected = value }
 
     override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
+        row(label = Label("Watch Cargo.toml:")) { autoUpdateEnabledCheckbox() }
+        if (PlatformUtils.isIntelliJ()) {
+            row("Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
+        }
+        row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
         row("Cargo.toml") { cargoTomlLocation() }
     }
 
@@ -44,11 +66,12 @@ class RustProjectConfigurable(
 
         rustProjectSettings.data = RustProjectSettingsPanel.Data(
             toolchain = toolchain,
-            autoUpdateEnabled = settings.autoUpdateEnabled,
-            explicitPathToStdlib = settings.data.explicitPathToStdlib,
-            useCargoCheckForBuild = settings.data.useCargoCheckForBuild,
-            useCargoCheckAnnotator = settings.data.useCargoCheckAnnotator
+            explicitPathToStdlib = settings.explicitPathToStdlib
         )
+        autoUpdateEnabled = settings.autoUpdateEnabled
+        useCargoCheckForBuild = settings.useCargoCheckForBuild
+        useCargoCheckAnnotator = settings.useCargoCheckAnnotator
+
         val module = rustModule
 
         if (module == null) {
@@ -78,10 +101,10 @@ class RustProjectConfigurable(
         val settings = project.rustSettings
         val data = rustProjectSettings.data
         return data.toolchain?.location != settings.toolchain?.location
-            || data.autoUpdateEnabled != settings.autoUpdateEnabled
-            || data.explicitPathToStdlib != settings.data.explicitPathToStdlib
-            || data.useCargoCheckForBuild != settings.data.useCargoCheckForBuild
-            || data.useCargoCheckAnnotator != settings.data.useCargoCheckAnnotator
+            || data.explicitPathToStdlib != settings.explicitPathToStdlib
+            || autoUpdateEnabled != settings.autoUpdateEnabled
+            || useCargoCheckForBuild != settings.useCargoCheckForBuild
+            || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
     }
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
