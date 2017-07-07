@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.rustSettings
@@ -29,6 +30,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.*
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.RsConstants
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.module
 import org.rust.utils.pathAsPath
 import java.nio.file.Path
@@ -153,10 +155,17 @@ private fun filterMessage(file: PsiFile, document: Document, message: RustcMessa
     }
 
     // The compiler message lines and columns are 1 based while intellij idea are 0 based
-    val textRange = TextRange(
+    var textRange = TextRange(
         toOffset(span.line_start - 1, span.column_start - 1) ?: return null,
         toOffset(span.line_end - 1, span.column_end - 1) ?: return null
     )
+
+    if ("function is never used" in message.message) {
+        val fn = PsiTreeUtil.findElementOfClassAtOffset(file, textRange.startOffset, RsFunction::class.java, false)
+        if (fn != null && fn.textRange.endOffset == textRange.endOffset) {
+            textRange = fn.identifier.textRange
+        }
+    }
 
     val tooltip = with(ArrayList<String>()) {
         val code = message.code.formatAsLink()
