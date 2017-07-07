@@ -387,6 +387,11 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             mod moduleA {}
         """)
 
+        fun testModulesSuppressionBadStyle() = checkByText("""
+            #[allow(bad_style)]
+            mod moduleA {}
+        """)
+
         fun testModulesFix() = checkFixByText("Rename to `mod_foo`", """
             mod <warning descr="Module `modFoo` should have a snake case name such as `mod_foo`">modF<caret>oo</warning> {
                 pub const ONE: u32 = 1;

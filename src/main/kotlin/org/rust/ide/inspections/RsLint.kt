@@ -21,7 +21,8 @@ enum class RsLint(
 ) {
     NonSnakeCase("non_snake_case"),
     NonCamelCaseTypes("non_camel_case_types"),
-    NonUpperCaseGlobals("non_upper_case_globals");
+    NonUpperCaseGlobals("non_upper_case_globals"),
+    BadStyle("bad_style");
 
     /**
      * Returns the level of the lint for the given PSI element.
@@ -33,7 +34,7 @@ enum class RsLint(
         = el.ancestors
         .filterIsInstance<RsDocAndAttributeOwner>()
         .flatMap { it.queryAttributes.metaItems }
-        .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.text == id } }
+        .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.text == id || it.text == BadStyle.id } }
         .mapNotNull { RsLintLevel.valueForId(it.identifier.text) }
         .firstOrNull()
 
