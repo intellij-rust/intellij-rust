@@ -137,6 +137,11 @@ private fun filterMessage(file: PsiFile, document: Document, message: RustcMessa
         // but they look rather ugly, so just skip them.
         ?: return null
 
+    val syntaxErrors = listOf("expected pattern", "unexpected token")
+    if (syntaxErrors.any { it in span.label.orEmpty() || it in message.message }) {
+        return null
+    }
+
     val spanFilePath = PathUtil.toSystemIndependentName(span.file_name)
     if (!file.virtualFile.path.endsWith(spanFilePath)) return null
 
