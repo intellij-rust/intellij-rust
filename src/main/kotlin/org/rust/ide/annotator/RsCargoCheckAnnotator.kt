@@ -6,8 +6,10 @@
 package org.rust.ide.annotator
 
 import com.google.gson.JsonParser
-import com.intellij.lang.annotation.*
-import com.intellij.lang.annotation.Annotation
+import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.ExternalAnnotator
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Document
@@ -51,10 +53,6 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
             .map { parser.parse(it) }
             .filter { it.isJsonObject }
             .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
-            .filterNot {
-                it.message.message.startsWith("aborting due to") ||
-                    it.message.message.startsWith("cannot continue")
-            }
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
@@ -83,122 +81,14 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             ?: error("Can't find document for $file in Cargo check annotator")
 
         for (topMessage in annotationResult.messages) {
-            val message = topMessage.message
-            val filePath = holder.currentAnnotationSession.file.virtualFile.path
-
-            val severity =
-                when (message.level) {
-                    "error" -> HighlightSeverity.ERROR
-                    "warning" -> HighlightSeverity.WEAK_WARNING
-                    else -> HighlightSeverity.INFORMATION
-                }
-
-            val primarySpan = message.spans
-                .filter { it.is_primary }
-                .filter { it.isValid() }
-                .firstOrNull()
-
-            if (primarySpan != null) {
-                val spanFilePath = PathUtil.toSystemIndependentName(primarySpan.file_name)
-                // message for another file
-                if (!filePath.endsWith(spanFilePath)) continue
-            }
-
-            // If spans are empty we add a "global" error
-            if (primarySpan == null) {
-                if (topMessage.target.src_path == filePath) {
-                    // add a global annotation
-                    holder.createAnnotation(severity, TextRange.EMPTY_RANGE, message.message).apply {
-                        isFileLevelAnnotation = true
-                        setNeedsUpdateOnTyping(true)
-                        tooltip = "${escapeHtml(message.message)} ${message.code.formatAsLink().orEmpty()}"
-                    }
-                }
-            } else {
-                createAnnotation(primarySpan, message, severity, doc, holder)?.apply {
+            val message = filterMessage(holder.currentAnnotationSession.file, doc, topMessage.message) ?: continue
+            holder.createAnnotation(message.severity, message.textRange, message.message, message.htmlTooltip)
+                .apply {
                     problemGroup = ProblemGroup { message.message }
                     setNeedsUpdateOnTyping(true)
                 }
-            }
         }
     }
-
-    data class Group(val isList: Boolean, val lines: ArrayList<String>)
-
-    fun formatLine(line: String): String {
-        val (lastGroup, groups) =
-            line.split("\n").fold(
-                Pair(null as Group?, ArrayList<Group>()),
-                { (group: Group?, acc: ArrayList<Group>), line ->
-                    val (isListItem, line) = if (line.startsWith("-")) {
-                        true to line.substring(2)
-                    } else {
-                        false to line
-                    }
-
-                    when {
-                        group == null -> Pair(Group(isListItem, arrayListOf(line)), acc)
-                        group.isList == isListItem -> {
-                            group.lines.add(line)
-                            Pair(group, acc)
-                        }
-                        else -> {
-                            acc.add(group)
-                            Pair(Group(isListItem, arrayListOf(line)), acc)
-                        }
-                    }
-                })
-        if (lastGroup != null && lastGroup.lines.isNotEmpty()) groups.add(lastGroup)
-
-        return groups
-            .map {
-                if (it.isList) "<ul>${it.lines.joinToString("<li>", "<li>")}</ul>"
-                else it.lines.joinToString("<br>")
-            }.joinToString()
-    }
-
-    fun createAnnotation(span: RustcSpan, message: RustcMessage, severity: HighlightSeverity, doc: Document,
-                         holder: AnnotationHolder): Annotation? {
-
-        fun toOffset(line: Int, column: Int): Int? {
-            if (line >= doc.lineCount) return null
-            val result = doc.getLineStartOffset(line) + column
-            if (result > doc.textLength) return null
-            return result
-        }
-
-        // The compiler message lines and columns are 1 based while intellij idea are 0 based
-        val textRange = TextRange(
-            toOffset(span.line_start - 1, span.column_start - 1) ?: return null,
-            toOffset(span.line_end - 1, span.column_end - 1) ?: return null
-        )
-
-        val tooltip = with(ArrayList<String>()) {
-            val code = message.code.formatAsLink()
-            add(escapeHtml(message.message) + if (code == null) "" else " $code")
-
-            if (span.label != null && !message.message.startsWith(span.label)) {
-                add(escapeHtml(span.label))
-            }
-
-            message.children
-                .filter { !it.message.isBlank() }
-                .map { "${it.level.capitalize()}: ${escapeHtml(it.message)}" }
-                .forEach { add(it) }
-
-            this
-                .map { formatLine(it) }
-                .joinToString("<br>")
-        }
-
-        return holder.createAnnotation(severity, textRange, message.message, tooltip)
-    }
-
-    fun ErrorCode?.formatAsLink() =
-        if (this?.code.isNullOrBlank()) null
-        else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
-
-    fun RustcSpan.isValid() = line_end > line_start || (line_end == line_start && column_end >= column_start)
 
 }
 
@@ -221,4 +111,108 @@ private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationRe
     val output = info.toolchain.cargo(info.projectPath).checkProject(info.module)
     if (output.isCancelled) return null
     return CargoCheckAnnotationResult(output.stdoutLines)
+}
+
+private data class FilteredMessage(
+    val severity: HighlightSeverity,
+    val textRange: TextRange,
+    val message: String,
+    val htmlTooltip: String
+)
+
+private fun filterMessage(file: PsiFile, document: Document, message: RustcMessage): FilteredMessage? {
+    if (message.message.startsWith("aborting due to") || message.message.startsWith("cannot continue")) {
+        return null
+    }
+
+    val severity = when (message.level) {
+        "error" -> HighlightSeverity.ERROR
+        "warning" -> HighlightSeverity.WEAK_WARNING
+        else -> HighlightSeverity.INFORMATION
+    }
+
+    val span = message.spans
+        .firstOrNull { it.is_primary && it.isValid() }
+        // Some error messages are global, and we *could* show then atop of the editor,
+        // but they look rather ugly, so just skip them.
+        ?: return null
+
+    val spanFilePath = PathUtil.toSystemIndependentName(span.file_name)
+    if (!file.virtualFile.path.endsWith(spanFilePath)) return null
+
+    fun toOffset(line: Int, column: Int): Int? {
+        if (line >= document.lineCount) return null
+        val result = document.getLineStartOffset(line) + column
+        if (result > document.textLength) return null
+        return result
+    }
+
+    // The compiler message lines and columns are 1 based while intellij idea are 0 based
+    val textRange = TextRange(
+        toOffset(span.line_start - 1, span.column_start - 1) ?: return null,
+        toOffset(span.line_end - 1, span.column_end - 1) ?: return null
+    )
+
+    val tooltip = with(ArrayList<String>()) {
+        val code = message.code.formatAsLink()
+        add(escapeHtml(message.message) + if (code == null) "" else " $code")
+
+        if (span.label != null && !message.message.startsWith(span.label)) {
+            add(escapeHtml(span.label))
+        }
+
+        message.children
+            .filter { !it.message.isBlank() }
+            .map { "${it.level.capitalize()}: ${escapeHtml(it.message)}" }
+            .forEach { add(it) }
+
+        this
+            .map { formatLine(it) }
+            .joinToString("<br>")
+    }
+
+
+    return FilteredMessage(severity, textRange, message.message, tooltip)
+}
+
+private fun RustcSpan.isValid() =
+    line_end > line_start || (line_end == line_start && column_end >= column_start)
+
+private fun ErrorCode?.formatAsLink() =
+    if (this?.code.isNullOrBlank()) null
+    else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
+
+
+private fun formatLine(line: String): String {
+    data class Group(val isList: Boolean, val lines: ArrayList<String>)
+
+    val (lastGroup, groups) =
+        line.split("\n").fold(
+            Pair(null as Group?, ArrayList<Group>()),
+            { (group: Group?, acc: ArrayList<Group>), line ->
+                val (isListItem, line) = if (line.startsWith("-")) {
+                    true to line.substring(2)
+                } else {
+                    false to line
+                }
+
+                when {
+                    group == null -> Pair(Group(isListItem, arrayListOf(line)), acc)
+                    group.isList == isListItem -> {
+                        group.lines.add(line)
+                        Pair(group, acc)
+                    }
+                    else -> {
+                        acc.add(group)
+                        Pair(Group(isListItem, arrayListOf(line)), acc)
+                    }
+                }
+            })
+    if (lastGroup != null && lastGroup.lines.isNotEmpty()) groups.add(lastGroup)
+
+    return groups
+        .map {
+            if (it.isList) "<ul>${it.lines.joinToString("<li>", "<li>")}</ul>"
+            else it.lines.joinToString("<br>")
+        }.joinToString()
 }
