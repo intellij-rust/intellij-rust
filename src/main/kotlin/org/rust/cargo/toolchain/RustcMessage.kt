@@ -10,7 +10,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 
 data class CargoTopMessage(
-    val message: CargoMessage,
+    val message: RustcMessage,
     val package_id: String,
     val reason: String,
     val target: Target
@@ -27,21 +27,21 @@ data class CargoTopMessage(
     }
 }
 
-data class CargoMessage(
-    val children: List<CargoMessage>,
-    val code: CargoCode?,
+data class RustcMessage(
+    val children: List<RustcMessage>,
+    val code: ErrorCode?,
     val level: String,
     val message: String,
     val rendered: String?,
-    val spans: List<CargoSpan>
+    val spans: List<RustcSpan>
 )
 
-data class CargoCode(
+data class ErrorCode(
     val code: String,
     val explanation: String?
 )
 
-data class CargoSpan(
+data class RustcSpan(
     val byte_end: Int,
     val byte_start: Int,
     val column_end: Int,
@@ -53,16 +53,16 @@ data class CargoSpan(
     val line_end: Int,
     val line_start: Int,
     val suggested_replacement: JsonElement,
-    val text: List<CargoText>
+    val text: List<RustcText>
 )
 
 data class Expansion(
-    val def_site_span: CargoSpan?,
+    val def_site_span: RustcSpan?,
     val macro_decl_name: String,
-    val span: CargoSpan
+    val span: RustcSpan
 )
 
-data class CargoText(
+data class RustcText(
     val highlight_end: Int,
     val highlight_start: Int,
     val text: String?
