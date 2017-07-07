@@ -45,7 +45,7 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
         private val messageRegex = """\s*\{\s*"message".*""".toRegex()
     }
 
-    val messages =
+    val messages: List<CargoTopMessage> =
         commandOutput
             .filter { messageRegex.matches(it) }
             .map { parser.parse(it) }
@@ -77,7 +77,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             })
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
-        annotationResult ?: return
+        if (annotationResult == null) return
+
         val doc = holder.currentAnnotationSession.file.viewProvider.document
             ?: error("Can't find document for $file in Cargo check annotator")
 
@@ -156,7 +157,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
             }.joinToString()
     }
 
-    fun createAnnotation(span: CargoSpan, message: CargoMessage, severity: HighlightSeverity, doc: Document,
+    fun createAnnotation(span: RustcSpan, message: RustcMessage, severity: HighlightSeverity, doc: Document,
                          holder: AnnotationHolder): Annotation? {
 
         fun toOffset(line: Int, column: Int): Int? {
@@ -193,11 +194,11 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         return holder.createAnnotation(severity, textRange, message.message, tooltip)
     }
 
-    fun CargoCode?.formatAsLink() =
+    fun ErrorCode?.formatAsLink() =
         if (this?.code.isNullOrBlank()) null
         else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
 
-    fun CargoSpan.isValid() = line_end > line_start || (line_end == line_start && column_end >= column_start)
+    fun RustcSpan.isValid() = line_end > line_start || (line_end == line_start && column_end >= column_start)
 
 }
 
