@@ -8,6 +8,7 @@ package org.rust.ide.formatter.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType.WHITE_SPACE
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.RS_OPERATORS
@@ -104,3 +105,16 @@ fun ASTNode.treeNonWSNext(): ASTNode? {
     }
     return current
 }
+
+data class CommaList(val listElement: IElementType, val openingBrace: IElementType, val closingBrace: IElementType) {
+    val needsSpaceBeforeClosingBrace: Boolean get() = closingBrace == RBRACE
+}
+
+val COMMA_LISTS = listOf(
+    CommaList(BLOCK_FIELDS, LBRACE, RBRACE),
+    CommaList(STRUCT_LITERAL_BODY, LBRACE, RBRACE),
+
+    CommaList(TUPLE_FIELDS, LPAREN, RPAREN),
+    CommaList(VALUE_PARAMETER_LIST, LPAREN, RPAREN),
+    CommaList(VALUE_ARGUMENT_LIST, LPAREN, RPAREN)
+)
