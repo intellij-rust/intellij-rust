@@ -15,6 +15,11 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection(), 
         struct foo;
     """)
 
+    fun testDirrectAllowBadStyle() = checkByText("""
+        #[allow(bad_style)]
+        struct foo;
+    """)
+
     fun testDirrectWarn() = checkByText("""
         #[warn(non_camel_case_types)]
         struct <warning>foo</warning>;
@@ -39,6 +44,15 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection(), 
 
     fun testGrandParentAllow() = checkByText("""
         #[allow(non_camel_case_types)]
+        mod space {
+            mod planet {
+                struct inhabitant;
+            }
+        }
+    """)
+
+    fun testGrandParentAllowBadStyle() = checkByText("""
+        #[allow(bad_style)]
         mod space {
             mod planet {
                 struct inhabitant;
