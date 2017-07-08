@@ -127,9 +127,10 @@ change. Common tags are:
   * INSP for inspections
   * INT for intentions
   * RUN for run configurations
+  * QDOC for quick documentation
 
 
-  * CARGO 
+  * CARGO for cargo-related changes
   * GRD for build changes
   * T for tests
   * DOC for documentation
