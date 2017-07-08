@@ -6,13 +6,11 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParameter
-import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.bounds
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
-import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.BoundElement
 
 class TyTypeParameter private constructor(
@@ -53,13 +51,5 @@ class TyTypeParameter private constructor(
     private data class AssociatedType(val trait: RsTraitItem, val target: String) : TypeParameter
 }
 
-private fun bounds(parameter: RsTypeParameter): List<BoundElement<RsTraitItem>> {
-    val owner = parameter.parent?.parent as? RsGenericDeclaration
-    val whereBounds =
-        owner?.whereClause?.wherePredList.orEmpty()
-            .filter { (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve() == parameter }
-            .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
-
-    return (parameter.typeParamBounds?.polyboundList.orEmpty() + whereBounds)
-        .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-}
+private fun bounds(parameter: RsTypeParameter): List<BoundElement<RsTraitItem>> =
+    parameter.bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
