@@ -14,7 +14,6 @@ import com.intellij.ui.components.Link
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.util.text.SemVer
-import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.utils.UiDebouncer
 import org.rust.utils.pathToDirectoryTextField
@@ -26,14 +25,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
     data class Data(
         val toolchain: RustToolchain?,
         val explicitPathToStdlib: String?
-    ) {
-        fun applyTo(settings: RustProjectSettingsService) {
-            settings.data = settings.data.copy(
-                toolchain = toolchain,
-                explicitPathToStdlib = explicitPathToStdlib
-            )
-        }
-    }
+    )
 
     override fun dispose() {}
 
