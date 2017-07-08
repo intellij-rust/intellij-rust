@@ -13,8 +13,10 @@ import org.rust.ide.utils.presentationInfo
 import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.bounds
 import org.rust.lang.core.types.infer.inferDeclarationType
 import org.rust.lang.doc.documentationAsHtml
 
@@ -23,6 +25,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? = when (element) {
         is RsDocAndAttributeOwner -> generateDoc(element)
         is RsPatBinding -> generateDoc(element)?.let { "<pre>$it</pre>" }
+        is RsTypeParameter -> generateDoc(element)
         else -> null
     }
 
@@ -35,6 +38,14 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         val presentationInfo = element.presentationInfo ?: return null
         val type = inferDeclarationType(element).toString().escaped
         return "${presentationInfo.type} <b>${presentationInfo.name}</b>: $type"
+    }
+
+    private fun generateDoc(element: RsTypeParameter): String? {
+        val name = element.name ?: return null
+        val typeBounds = element.bounds
+        val bounds = if (typeBounds.isEmpty()) "" else typeBounds.joinToString(" + ", ": ") { it.text.escaped }
+        val defaultValue = element.typeReference?.let { " = ${it.text}" } ?: ""
+        return "<pre>type parameter <b>$name</b>$bounds$defaultValue</pre>"
     }
 
     override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? = when (e) {
