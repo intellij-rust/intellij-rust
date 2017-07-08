@@ -328,6 +328,55 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <p>Documented</p>
     """)
 
+    fun `test type parameter`() = doTest("""
+        fn foo<T>() { unimplemented!() }
+             //^
+    """, """
+        <pre>type parameter <b>T</b></pre>
+    """)
+
+    fun `test type parameter with single bound`() = doTest("""
+        fn foo<T: Borrow<Q>>() { unimplemented!() }
+             //^
+    """, """
+        <pre>type parameter <b>T</b>: Borrow&lt;Q&gt;</pre>
+    """)
+
+    fun `test type parameter with multiple bounds`() = doTest("""
+        fn foo<Q, T: Eq + Hash + Borrow<Q>>() { unimplemented!() }
+                //^
+    """, """
+        <pre>type parameter <b>T</b>: Eq + Hash + Borrow&lt;Q&gt;</pre>
+    """)
+
+    fun `test type parameter with lifetime bound`() = doTest("""
+        fn foo<'a, T: 'a>() { unimplemented!() }
+                 //^
+    """, """
+        <pre>type parameter <b>T</b>: &#39;a</pre>
+    """)
+
+    fun `test type parameter with default value`() = doTest("""
+        fn foo<T = RandomState>() { unimplemented!() }
+             //^
+    """, """
+        <pre>type parameter <b>T</b> = RandomState</pre>
+    """)
+
+    fun `test type parameter with bounds in where clause`() = doTest("""
+        fn foo<Q, T>() where T: Eq + Hash + Borrow<Q> { unimplemented!() }
+                //^
+    """, """
+        <pre>type parameter <b>T</b>: Eq + Hash + Borrow&lt;Q&gt;</pre>
+    """)
+
+    fun `test type parameter with complex bounds`() = doTest("""
+        fn foo<'a, Q, T: 'a + Eq>() where T: Hash + Borrow<Q> { unimplemented!() }
+                    //^
+    """, """
+        <pre>type parameter <b>T</b>: &#39;a + Eq + Hash + Borrow&lt;Q&gt;</pre>
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
         = doTest(code, expected, RsDocumentationProvider::generateDoc)
 }
