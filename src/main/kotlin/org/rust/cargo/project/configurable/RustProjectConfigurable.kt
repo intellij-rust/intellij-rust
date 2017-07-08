@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.panel
 import com.intellij.util.PlatformUtils
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
@@ -38,15 +39,21 @@ class RustProjectConfigurable(
 
     private var autoUpdateEnabled: Boolean
         get() = autoUpdateEnabledCheckbox.isSelected
-        set(value) { autoUpdateEnabledCheckbox.isSelected = value }
+        set(value) {
+            autoUpdateEnabledCheckbox.isSelected = value
+        }
 
     private var useCargoCheckForBuild: Boolean
         get() = useCargoCheckForBuildCheckbox.isSelected
-        set(value) { useCargoCheckForBuildCheckbox.isSelected = value }
+        set(value) {
+            useCargoCheckForBuildCheckbox.isSelected = value
+        }
 
     private var useCargoCheckAnnotator: Boolean
         get() = useCargoCheckAnnotatorCheckbox.isSelected
-        set(value) { useCargoCheckAnnotatorCheckbox.isSelected = value }
+        set(value) {
+            useCargoCheckAnnotatorCheckbox.isSelected = value
+        }
 
     override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
@@ -94,7 +101,13 @@ class RustProjectConfigurable(
     override fun apply() {
         rustProjectSettings.validateSettings()
         val settings = project.rustSettings
-        rustProjectSettings.data.applyTo(settings)
+        settings.data = RustProjectSettingsService.Data(
+            toolchain = rustProjectSettings.data.toolchain,
+            explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib,
+            autoUpdateEnabled = autoUpdateEnabled,
+            useCargoCheckForBuild = useCargoCheckForBuild,
+            useCargoCheckAnnotator = useCargoCheckAnnotator
+        )
     }
 
     override fun isModified(): Boolean {

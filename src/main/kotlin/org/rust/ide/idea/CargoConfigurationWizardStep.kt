@@ -5,7 +5,6 @@
 
 package org.rust.ide.idea
 
-import com.intellij.ui.layout.panel
 import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
@@ -16,6 +15,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.layout.panel
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
@@ -61,7 +61,13 @@ class CargoConfigurationWizardStep(
         var data: RustProjectSettingsPanel.Data? = null
 
         override fun update(module: Module, rootModel: ModifiableRootModel) {
-            data?.applyTo(module.project.rustSettings)
+            val data = data
+            if (data != null) {
+                module.project.rustSettings.data = module.project.rustSettings.data.copy(
+                    toolchain = data.toolchain,
+                    explicitPathToStdlib = data.explicitPathToStdlib
+                )
+            }
             // We don't use SDK, but let's inherit one to reduce the amount of
             // "SDK not configured" errors
             // https://github.com/intellij-rust/intellij-rust/issues/1062
