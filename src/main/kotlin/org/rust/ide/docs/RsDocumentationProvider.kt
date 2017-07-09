@@ -24,8 +24,15 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? = when (element) {
         is RsDocAndAttributeOwner -> generateDoc(element)
-        is RsPatBinding -> generateDoc(element)?.let { "<pre>$it</pre>" }
-        is RsTypeParameter -> generateDoc(element)
+        is RsPatBinding -> pre { generateDoc(element) }
+        is RsTypeParameter -> pre { generateDoc(element) }
+        else -> null
+    }
+
+    override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? = when (e) {
+        is RsPatBinding -> generateDoc(e)
+        is RsTypeParameter -> generateDoc(e)
+        is RsNamedElement -> e.presentationInfo?.quickDocumentationText
         else -> null
     }
 
@@ -45,13 +52,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         val typeBounds = element.bounds
         val bounds = if (typeBounds.isEmpty()) "" else typeBounds.joinToString(" + ", ": ") { it.text.escaped }
         val defaultValue = element.typeReference?.let { " = ${it.text}" } ?: ""
-        return "<pre>type parameter <b>$name</b>$bounds$defaultValue</pre>"
-    }
-
-    override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? = when (e) {
-        is RsPatBinding -> generateDoc(e)
-        is RsNamedElement -> e.presentationInfo?.quickDocumentationText
-        else -> null
+        return "type parameter <b>$name</b>$bounds$defaultValue"
     }
 }
 
@@ -77,3 +78,5 @@ private val RsDocAndAttributeOwner.signature: String get() {
     }
     return if (rawSignature != null) "<pre>$rawSignature</pre>\n" else ""
 }
+
+private inline fun pre(block: () -> String?): String? = block()?.let { "<pre>$it</pre>" }
