@@ -239,11 +239,18 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         <i>lifetime:</i> <b>'foo</b> [main.rs]
     """)
 
-    fun `test type parameter`() = doTest("""
+    fun `test simple type parameter`() = doTest("""
         fn foo<T>(t: T) {}
                    //^
     """, """
-        <i>type parameter:</i> <b>T</b> [main.rs]
+        type parameter <b>T</b>
+    """)
+
+    fun `test complex type parameter`() = doTest("""
+        fn foo<'a, Q, T: 'a + Eq>(t: T) where T: Hash + Borrow<Q> { }
+                                   //^
+    """, """
+        type parameter <b>T</b>: &#39;a + Eq + Hash + Borrow&lt;Q&gt;
     """)
 
     fun `test loop label`() = doTest("""
