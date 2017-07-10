@@ -13,11 +13,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.RsFunctionRole
-import org.rust.lang.core.psi.ext.role
-import org.rust.lang.core.psi.ext.superMethod
+import org.rust.lang.core.psi.ext.*
 
 class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
     override fun startInWriteAction() = false
@@ -40,7 +37,7 @@ fun gotoSuperTarget(source: PsiElement): NavigatablePsiElement? {
     ) ?: return null
 
     if (modOrMethod is RsFunction) {
-        return if (modOrMethod.role == RsFunctionRole.IMPL_METHOD) {
+        return if (modOrMethod.role == RsFunctionRole.IMPL_METHOD && ! modOrMethod.isInherentImpl) {
             modOrMethod.superMethod
         } else {
             gotoSuperTarget(modOrMethod.parent)
