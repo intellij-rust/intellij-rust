@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -49,6 +50,9 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
                 if (context.alreadyHasParens) return@handler
                 context.document.insertString(context.selectionEndOffset, "()")
                 EditorModificationUtil.moveCaretRelatively(context.editor, if (valueParameters.isEmpty()) 2 else 1)
+                if (!valueParameters.isEmpty()) {
+                    AutoPopupController.getInstance(project)?.autoPopupParameterInfo(context.editor, this)
+                }
             }
 
         is RsStructItem -> base
