@@ -41,9 +41,6 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
         return findElementForParameterInfo(contextElement)
     }
 
-    fun findElementForParameterInfo(contextElement: PsiElement) =
-        contextElement.parentOfType<RsValueArgumentList>()
-
     override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext) =
         context.file.findElementAt(context.editor.caretModel.offset)
 
@@ -87,6 +84,9 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
             false,
             context.defaultParameterColor)
     }
+
+    private fun findElementForParameterInfo(contextElement: PsiElement) =
+        contextElement.parentOfType<RsValueArgumentList>()
 
     /**
      * Finds index of the argument in the given place
