@@ -11,7 +11,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
 class RsGotoSuperHandlerTest : RsTestBase() {
-    fun testGotoSuper() = checkNavigation("""
+    fun `test module from function`() = checkNavigation("""
         mod foo {
             mod bar {
                 fn foo() { /*caret*/ }
@@ -25,7 +25,7 @@ class RsGotoSuperHandlerTest : RsTestBase() {
         }
     """)
 
-    fun testGotoSuperMethod() = checkNavigation("""
+    fun `test method declataion from impl`() = checkNavigation("""
         trait T {
              fn foo(); // <- should go here
         }
@@ -38,6 +38,36 @@ class RsGotoSuperHandlerTest : RsTestBase() {
         }
         impl T for () {
             fn foo() {}
+        }
+    """)
+
+    fun `test module from method definition`() = checkNavigation("""
+        mod foo {
+            mod bar {
+                struct S;
+                impl S { fn foo(&self) { /*caret*/} }
+            }
+        }
+    """, """
+        mod /*caret*/foo {
+            mod bar {
+                struct S;
+                impl S { fn foo(&self) { } }
+            }
+        }
+    """)
+
+    fun `test module from method in trait`() = checkNavigation("""
+        mod foo {
+            mod bar {
+                trait T { fn foo(&self) { /*caret*/} }
+            }
+        }
+    """, """
+        mod /*caret*/foo {
+            mod bar {
+                trait T { fn foo(&self) { } }
+            }
         }
     """)
 
