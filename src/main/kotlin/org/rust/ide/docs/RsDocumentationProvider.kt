@@ -10,13 +10,9 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.utils.escaped
 import org.rust.ide.utils.presentableQualifiedName
 import org.rust.ide.utils.presentationInfo
-import org.rust.lang.core.psi.RsFieldDecl
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsPatBinding
-import org.rust.lang.core.psi.RsTypeParameter
-import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.bounds
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsFunctionRole.*
 import org.rust.lang.core.types.infer.inferDeclarationType
 import org.rust.lang.doc.documentationAsHtml
 
@@ -29,16 +25,17 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         else -> null
     }
 
-    override fun getQuickNavigateInfo(e: PsiElement, originalElement: PsiElement?): String? = when (e) {
-        is RsPatBinding -> generateDoc(e)
-        is RsTypeParameter -> generateDoc(e)
-        is RsNamedElement -> e.presentationInfo?.quickDocumentationText
+    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? = when (element) {
+        is RsPatBinding -> generateDoc(element)
+        is RsTypeParameter -> generateDoc(element)
+        is RsFunction -> element.header(false) + element.signature(false)
+        is RsNamedElement -> element.presentationInfo?.quickDocumentationText
         else -> null
     }
 
     private fun generateDoc(element: RsDocAndAttributeOwner): String? {
         val doc = element.documentationAsHtml() ?: ""
-        return element.header + element.signature + doc
+        return element.header(true) + element.signature(true) + doc
     }
 
     private fun generateDoc(element: RsPatBinding): String? {
@@ -56,27 +53,86 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     }
 }
 
-private val RsDocAndAttributeOwner.header: String get() {
-    val rawHeader = when (this) {
-        is RsFieldDecl -> {
-            val fieldOwner = parent?.parent as? RsDocAndAttributeOwner
-            if (fieldOwner != null) presentableQualifiedName(fieldOwner) else null
+private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
+    val rawLines = when (this) {
+        is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
+        is RsFunction -> when (role) {
+            FREE, FOREIGN -> listOfNotNull(presentableQualifiedName?.removeSuffix("::$name"))
+            IMPL_METHOD -> {
+                val mod = presentableQualifiedName?.removeSuffix("::$name")
+                if (mod != null) {
+                    val lines = mutableListOf(mod)
+                    val parent = parent as? RsImplItem
+                    val typeRef = parent?.typeReference
+                    if (typeRef != null) {
+                        val traitRef = parent.traitRef
+                        val traitText = if (traitRef != null) "${traitRef.text} for " else ""
+                        val typeParams = parent.typeParameterList?.text ?: ""
+                        lines += "impl$typeParams $traitText${typeRef.text}".escaped
+                        lines += parent.whereClause?.documentationText.orEmpty()
+                    }
+                    lines
+                } else emptyList()
+            }
+            TRAIT_METHOD -> {
+                val parent = parent as? RsTraitItem
+                val name = parent?.presentableQualifiedName
+                if (name != null) {
+                    val typeParams = parent.typeParameterList?.text?.escaped ?: ""
+                    val lines = mutableListOf("$name$typeParams")
+                    lines += parent.whereClause?.documentationText.orEmpty()
+                    lines
+                } else emptyList()
+            }
         }
-        else -> presentableQualifiedName(this)
+        else -> listOfNotNull(presentableQualifiedName)
     }
-    return if (rawHeader != null) "<pre>$rawHeader</pre>\n" else ""
+    val startTag = if (usePreTag) "<pre>" else ""
+    val endTag = if (usePreTag) "</pre>" else ""
+    return when (rawLines.size) {
+        0 -> ""
+        1 -> "$startTag${rawLines[0]}$endTag\n"
+        else -> {
+            val firstLine = "$startTag${rawLines[0]}$endTag\n"
+            val additionalLines = rawLines.drop(1).joinToString("<br>", startTag, endTag)
+            "$firstLine$additionalLines\n"
+        }
+    }
 }
 
-private val RsDocAndAttributeOwner.signature: String get() {
+private val RsWhereClause.documentationText: List<String> get() =
+    listOf("where") + wherePredList.map { "&nbsp;&nbsp;&nbsp;&nbsp;${it.text.escaped}," }
+
+private fun RsDocAndAttributeOwner.signature(usePreTag: Boolean): String {
     val rawSignature = when (this) {
-        // unfortunately, Kotlin compiler doesn't allow to call presentationInfo
-        // after check for RsFunction and RsFieldDecl in one branch
-        // although RsFunction and RsFieldDecl are both RsNamedElement
-        is RsFunction -> presentationInfo?.signatureText
+        is RsFunction -> {
+            val shortSignature = presentationInfo?.shortSignatureText
+            if (shortSignature != null) {
+                val signatureParts = mutableListOf<String>()
+                if (isPublic) {
+                    signatureParts += "pub"
+                }
+                if (isConst) {
+                    signatureParts += "const"
+                }
+                if (isUnsafe) {
+                    signatureParts += "unsafe"
+                }
+                if (isExtern) {
+                    signatureParts += "extern"
+                    abiName?.let { signatureParts += it }
+                }
+                signatureParts += "fn"
+                signatureParts += shortSignature
+                signatureParts.joinToString(" ")
+            } else null
+        }
         is RsFieldDecl -> presentationInfo?.signatureText
         else -> null
     }
-    return if (rawSignature != null) "<pre>$rawSignature</pre>\n" else ""
+    val startTag = if (usePreTag) "<pre>" else ""
+    val endTag = if (usePreTag) "</pre>" else ""
+    return if (rawSignature != null) "$startTag$rawSignature$endTag\n" else ""
 }
 
 private inline fun pre(block: () -> String?): String? = block()?.let { "<pre>$it</pre>" }
