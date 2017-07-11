@@ -24,7 +24,8 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             }
         }
     """, """
-        pub fn <b>double</b>(x: i16) -&gt; i32 [main.rs]
+        test_package::a::b::c
+        pub fn <b>double</b>(x: i16) -&gt; i32
     """)
 
     fun `test no comments`() = doTest("""
@@ -37,7 +38,8 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
           //^
         }
     """, """
-        fn <b>foo</b>() [main.rs]
+        test_package
+        fn <b>foo</b>()
     """)
 
     fun `test big signature`() = doTest("""
@@ -51,7 +53,8 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
           //^
         }
     """, """
-        pub const unsafe extern &quot;C&quot; fn <b>foo</b>&lt;T&gt;(x: T) -&gt; u32 where T: Clone [main.rs]
+        test_package
+        pub const unsafe extern "C" fn <b>foo</b>&lt;T&gt;(x: T) -&gt; u32 where T: Clone
     """)
 
     fun `test method`() = doTest("""
@@ -65,7 +68,35 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             //^
         }
     """, """
-        pub fn <b>consume</b>(self) -&gt; i32 [main.rs]
+        test_package
+        impl S
+        pub fn <b>consume</b>(self) -&gt; i32
+    """)
+
+    fun `test generic struct method`() = doTest("""
+        struct Foo<T>(T);
+
+        impl<T> Foo<T> {
+            pub fn foo(&self) {}
+                  //^
+        }
+    """, """
+        test_package
+        impl&lt;T&gt; Foo&lt;T&gt;
+        pub fn <b>foo</b>(&amp;self)
+    """)
+
+    fun `test generic struct method with where clause`() = doTest("""
+        struct Foo<T, F>(T, F);
+
+        impl<T, F> Foo<T, F> where T: Ord, F: Into<String> {
+            pub fn foo(&self) {}
+                  //^
+        }
+    """, """
+        test_package
+        impl&lt;T, F&gt; Foo&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Ord,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: Into&lt;String&gt;,
+        pub fn <b>foo</b>(&amp;self)
     """)
 
     fun `test trait method`() = doTest("""
@@ -75,7 +106,31 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
              //^
         }
     """, """
-        fn <b>my_func</b>() [main.rs]
+        test_package::MyTrait
+        fn <b>my_func</b>()
+    """)
+
+    fun `test generic trait method`() = doTest("""
+        trait MyTrait<T> {
+            /// Documented
+            fn my_func();
+             //^
+        }
+    """, """
+        test_package::MyTrait&lt;T&gt;
+        fn <b>my_func</b>()
+    """)
+
+    fun `test generic trait method with where clause`() = doTest("""
+        trait MyTrait<T> where T: Into<String> {
+            /// Documented
+            fn my_func();
+             //^
+        }
+    """, """
+        test_package::MyTrait&lt;T&gt;
+        where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        fn <b>my_func</b>()
     """)
 
     fun `test multiple where`() = doTest("""
@@ -92,7 +147,8 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
           //^
         }
     """, """
-        pub const unsafe extern &quot;C&quot; fn <b>foo</b>&lt;T, U, V&gt;(x: T) -&gt; u32 where T: Clone, U: Debug, V: Display [main.rs]
+        test_package
+        pub const unsafe extern "C" fn <b>foo</b>&lt;T, U, V&gt;(x: T) -&gt; u32 where T: Clone, U: Debug, V: Display
     """)
 
     fun `test expanded signature`() = doTest("""
@@ -119,7 +175,53 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
           //^
         }
     """, """
-        pub const unsafe extern &quot;C&quot; fn <b>foo</b>&lt;T, U, V&gt;(x: T, y: u32, z: u64) -&gt; (u32, u64, u64) where T: Clone, U: Debug, V: Display [main.rs]
+        test_package
+        pub const unsafe extern "C" fn <b>foo</b>&lt;T, U, V&gt;(x: T, y: u32, z: u64) -&gt; (u32, u64, u64) where T: Clone, U: Debug, V: Display
+    """)
+
+    fun `test trait method impl`() = doTest("""
+        trait Trait {
+            fn foo();
+        }
+        struct Foo;
+        impl Trait for Foo {
+            fn foo() {}
+              //^
+        }
+    """, """
+        test_package
+        impl Trait for Foo
+        fn <b>foo</b>()
+    """)
+
+    fun `test generic trait method impl`() = doTest("""
+        trait Trait<T> {
+            fn foo();
+        }
+        struct Foo<T>(T);
+        impl<T, F> Trait<T> for Foo<F> {
+            fn foo() {}
+              //^
+        }
+    """, """
+        test_package
+        impl&lt;T, F&gt; Trait&lt;T&gt; for Foo&lt;F&gt;
+        fn <b>foo</b>()
+    """)
+
+    fun `test generic trait method impl with where clause`() = doTest("""
+        trait Trait<T> {
+            fn foo();
+        }
+        struct Foo<T>(T);
+        impl<T, F> Trait<T> for Foo<F> where T: Ord, F: Into<String> {
+            fn foo() {}
+              //^
+        }
+    """, """
+        test_package
+        impl&lt;T, F&gt; Trait&lt;T&gt; for Foo&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Ord,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: Into&lt;String&gt;,
+        fn <b>foo</b>()
     """)
 
     fun `test variable 1`() = doTest("""
