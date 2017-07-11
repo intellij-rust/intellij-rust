@@ -1120,7 +1120,8 @@ PatMacro  ::= ZzMacroCall
 // TODO: Maybe implement item-related stuff for this production?
 MacroItem ::= AttrsAndVis ZzMacroItem {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"; "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsNamedElement" ]
   stubClass = "org.rust.lang.core.stubs.RsMacroItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   mixin = "org.rust.lang.core.psi.ext.RsMacroItemImplMixin"
