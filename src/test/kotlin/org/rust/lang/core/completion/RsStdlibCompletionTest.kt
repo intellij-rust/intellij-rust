@@ -38,7 +38,7 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testMarcoDefinitionPrintln() = checkSingleCompletion("println!()", """
+    fun testMarcoDefinitionPrintln() = checkSingleCompletion("println", """
         fn main() {
             printl/*caret*/
         }
