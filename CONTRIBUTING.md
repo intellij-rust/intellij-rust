@@ -128,6 +128,7 @@ change. Common tags are:
   * INT for intentions
   * RUN for run configurations
   * QDOC for quick documentation
+  * PERF for performance optimizations
 
 
   * CARGO for cargo-related changes
