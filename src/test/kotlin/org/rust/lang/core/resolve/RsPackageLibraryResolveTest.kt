@@ -36,6 +36,20 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub fn hello() {}
     """)
 
+
+    fun testMacroRules() = stubOnlyResolve("""
+    //- main.rs
+        #[macro_use]
+        extern crate my_lib;
+
+        fn main() {
+            foo_bar!();
+        }  //^ lib.rs
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo_bar { () => {} }
+    """)
+
     override fun getProjectDescriptor(): LightProjectDescriptor = WithLibraryProjectDescriptor
 
     private object WithLibraryProjectDescriptor : RustProjectDescriptorBase() {

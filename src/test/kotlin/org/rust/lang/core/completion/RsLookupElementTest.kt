@@ -86,6 +86,11 @@ class RsLookupElementTest : RsTestBase() {
         }
     """, tailText = null, typeText = "expr")
 
+    fun `test marco definition`() = check("""
+        macro_rules! test { () => () }
+                     //^
+    """, tailText = null, typeText = null)
+
     fun testMod() {
         myFixture.configureByText("foo.rs", "")
         val lookup = (myFixture.file as RsFile).createLookupElement("foo")

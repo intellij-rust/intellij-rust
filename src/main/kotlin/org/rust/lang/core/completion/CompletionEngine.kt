@@ -94,6 +94,10 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
         is RsMacroPatternSimpleMatching -> base
             .withTypeText(this.identifier.text)
 
+        is RsMacroItem -> base
+            .withInsertHandler { context: InsertionContext, _: LookupElement ->
+                context.document.insertString(context.selectionEndOffset, "!()")
+            }
         else -> base
     }
 }

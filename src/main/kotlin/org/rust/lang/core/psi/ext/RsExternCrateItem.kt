@@ -32,3 +32,6 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
 
     override fun getIcon(flags: Int) = RsIcons.CRATE
 }
+
+val RsExternCrateItem.hasMacroUse: Boolean get() =
+    queryAttributes.hasAttribute("macro_use")
