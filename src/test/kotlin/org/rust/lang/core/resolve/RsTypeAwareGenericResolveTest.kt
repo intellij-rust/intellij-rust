@@ -570,4 +570,18 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             t.foo();
         }    //^
     """)
+
+    fun `test trait with bounds on itself`() = checkByCode("""
+        trait Foo<T: Foo<T>> {
+            fn foo(&self) { }
+        }     //X
+
+        impl Foo<()> for () { }
+
+        fn bar<T: Foo<T>>(t: T) {
+            t.foo()
+        }    //^
+
+        fn main() { bar(()) }
+    """)
 }
