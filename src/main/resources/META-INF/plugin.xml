@@ -548,6 +548,7 @@
         <!-- Move Actions -->
 
         <moveLeftRightHandler language="Rust" implementationClass="org.rust.ide.actions.RsMoveLeftRightHandler"/>
+        <statementUpDownMover implementation="org.rust.ide.actions.RsFunctionMover" />
 
     </extensions>
 
