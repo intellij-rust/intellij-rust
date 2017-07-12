@@ -12,7 +12,7 @@ import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
-    fun testLibraryAsCrate() = stubOnlyResolve("""
+    fun `test library as crate`() = stubOnlyResolve("""
     //- main.rs
         extern crate my_lib;
 
@@ -24,7 +24,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub fn hello() {}
     """)
 
-    fun testCrateAlias() = stubOnlyResolve("""
+    fun `test crate alias`() = stubOnlyResolve("""
     //- main.rs
         extern crate my_lib as other_name;
 
@@ -34,6 +34,20 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     //- lib.rs
         pub fn hello() {}
+    """)
+
+
+    fun `test macro rules`() = stubOnlyResolve("""
+    //- main.rs
+        #[macro_use]
+        extern crate my_lib;
+
+        fn main() {
+            foo_bar!();
+        }  //^ lib.rs
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo_bar { () => {} }
     """)
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithLibraryProjectDescriptor

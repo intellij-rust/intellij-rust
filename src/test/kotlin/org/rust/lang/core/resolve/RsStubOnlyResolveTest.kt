@@ -255,4 +255,17 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             fn foo(&self) { }
         }
     """)
+
+    fun `test resolve macro`() = checkByCode("""
+        #[macro_export]
+        macro_rules! foo_bar { () => () }
+        //X
+        #[macro_use]
+        mod b {
+            fn main() {
+                foo_bar!();
+                //^
+            }
+        }
+    """)
 }

@@ -219,7 +219,7 @@ class RsLifetimeNamingInspection : RsSnakeCaseNamingInspection("Lifetime") {
 class RsMacroNamingInspection : RsSnakeCaseNamingInspection("Macro") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
-            override fun visitMacroDefinition(el: RsMacroDefinition) = inspect(el.identifier, holder, false)
+            override fun visitMacroDefinition(el: RsMacroDefinition) = inspect(el.nameIdentifier, holder, false)
         }
 }
 

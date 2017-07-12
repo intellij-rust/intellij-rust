@@ -19,7 +19,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.*
-import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
@@ -315,7 +314,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             holder.createErrorAnnotation(traitRef, "The trait `$traitName` requires an `unsafe impl` declaration [E0200]")
         }
         // Macros can add methods
-        if (impl.implMacroMemberList.isNotEmpty()) return
+        if (impl.macroCallList.isNotEmpty()) return
 
         val implemented = impl.functionList.associateBy { it.name }
 

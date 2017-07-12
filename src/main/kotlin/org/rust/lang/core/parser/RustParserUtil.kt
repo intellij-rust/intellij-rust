@@ -91,40 +91,20 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
+    @JvmStatic fun macroSemicolon(b: PsiBuilder, level: Int): Boolean {
+        val m = b.latestDoneMarker ?: return false
+        b.tokenText
+        if (b.originalText[m.endOffset - 1] == '}') return true
+        return consumeToken(b, SEMICOLON)
+    }
+
     @JvmStatic fun macroIdentifier(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
-            TYPE_KW,
-            IDENTIFIER -> {
+            TYPE_KW, CRATE, IDENTIFIER -> {
                 b.advanceLexer()
                 true
             }
             else -> false
-        }
-
-    @JvmStatic fun placeholderMacroToken(b: PsiBuilder, level: Int): Boolean =
-        when (b.tokenType) {
-            LBRACE, RBRACE -> false
-            LPAREN, RPAREN -> false
-            LBRACK, RBRACK -> false
-            DOLLAR -> false
-            else -> {
-                b.advanceLexer()
-                true
-            }
-        }
-
-    @JvmStatic fun tokenAfterComplexPattern(b: PsiBuilder, level: Int): Boolean =
-        when (b.tokenType) {
-            LBRACE, RBRACE -> false
-            LPAREN, RPAREN -> false
-            LBRACK, RBRACK -> false
-            DOLLAR -> false
-            PLUS -> false
-            MUL -> false
-            else -> {
-                b.advanceLexer()
-                true
-            }
         }
 
     @JvmStatic fun tupleOrParenType(b: PsiBuilder, level: Int, typeReference: Parser, tupeTypeUpper: Parser): Boolean {

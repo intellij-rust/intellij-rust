@@ -30,7 +30,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 82
+        override fun getStubVersion(): Int = 85
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -120,7 +120,6 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
-    "MACRO_ITEM" -> RsPlaceholderStub.Type("MACRO_ITEM", ::RsMacroItemImpl)
     "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
 
     "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
@@ -753,7 +752,7 @@ class RsRefLikeTypeStub(
     val isPointer: Boolean
 ) : StubBase<RsTypeElement>(parent, elementType) {
 
-    object Type: RsStubElementType<RsRefLikeTypeStub, RsRefLikeType>("REF_LIKE_TYPE") {
+    object Type : RsStubElementType<RsRefLikeTypeStub, RsRefLikeType>("REF_LIKE_TYPE") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
@@ -876,7 +875,7 @@ class RsMacroDefinitionStub(
     override val isPublic: Boolean get() = true
 
     object Type : RsStubElementType<RsMacroDefinitionStub, RsMacroDefinition>("MACRO_DEFINITION") {
-        override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent.parent is RsMod
+        override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent is RsMod
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacroDefinitionStub(parentStub, this,

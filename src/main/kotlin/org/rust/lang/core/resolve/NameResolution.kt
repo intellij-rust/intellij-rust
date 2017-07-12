@@ -10,9 +10,9 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.cargoWorkspace
@@ -296,9 +296,9 @@ fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoW
     return el to pkg
 }
 
-fun processMacroSimpleResolveVariants(element: RsMacroBodySimpleMatching, processor: RsResolveProcessor): Boolean {
-    val definition = element.parentOfType<RsMacroDefinitionPattern>() ?: return false
-    val simple = definition.macroPattern.descendantsOfType<RsMacroPatternSimpleMatching>()
+fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolveProcessor): Boolean {
+    val definition = ref.parentOfType<RsMacroDefinitionCase>() ?: return false
+    val simple = definition.macroPattern.descendantsOfType<RsMacroBinding>()
         .toList()
 
     return simple.any { processor(it) }
@@ -309,6 +309,81 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
     val traitName = element.referenceName
     val traits = RsNamedElementIndex.findDerivableTraits(element.project, traitName)
     return processAll(traits, processor)
+}
+
+fun processMacroCallVariants(invocation: RsMacroCall, processor: RsResolveProcessor): Boolean {
+    walkUp(invocation, { false }) { cameFrom, scope ->
+        if (processMacroDeclarations(scope, cameFrom, processor)) return@walkUp true
+        false
+    }
+    return false
+}
+
+fun processMacroDeclarations(scope: RsCompositeElement, cameFrom: PsiElement, processor: RsResolveProcessor): Boolean {
+    check(cameFrom.context == scope)
+    when (scope) {
+        is RsFile -> if (processItemMacroDeclarations(scope, processor, scope.isCrateRoot)) return true
+        is RsMod -> if (processItemMacroDeclarations(scope, processor)) return true
+        is RsBlock -> if (processItemMacroDeclarations(scope, processor)) return true
+    }
+    return false
+}
+
+val RsFile.exportedCrateMacros: List<RsMacroDefinition>
+    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+        val macros = exportedCrateMacros(this, true)
+        CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
+    })
+
+private fun exportedCrateMacros(scope: RsItemsOwner, need_export: Boolean): List<RsMacroDefinition> {
+    val macros: MutableList<RsMacroDefinition> = scope.macroDefinitionList
+        .filter { !need_export || it.hasMacroExport }
+        .toMutableList()
+
+    if (need_export) {
+        for (crate in scope.externCrateItemList) {
+            val reexport = crate.findOuterAttr("macro_reexport")
+                ?.metaItem?.metaItemArgs?.metaItemList
+                ?.mapNotNull { it.referenceName } ?: continue
+            val mod = crate.reference.resolve() as? RsFile ?: continue
+            val internal_macros = mod.exportedCrateMacros
+
+            macros.addAll(internal_macros.filter { reexport.contains(it.name) })
+        }
+    } else {
+        for (crate in scope.externCrateItemList.filter { it.hasMacroUse }) {
+            val mod = crate.reference.resolve() as? RsFile ?: continue
+            macros.addAll(mod.exportedCrateMacros)
+        }
+    }
+
+    for (modDecl in scope.modDeclItemList.filter { it.hasMacroUse }) {
+        val mod = modDecl.reference.resolve() ?: continue
+        if (mod is RsMod) {
+            macros.addAll(exportedCrateMacros(mod, true))
+        }
+    }
+
+    for (mod in scope.modItemList.filter { it.hasMacroUse }) {
+        macros.addAll(exportedCrateMacros(mod, true))
+    }
+    return macros.toList()
+}
+
+private fun processItemMacroDeclarations(
+    scope: RsItemsOwner,
+    processor: RsResolveProcessor,
+    addStdCrate: Boolean = false
+): Boolean {
+    val macros = exportedCrateMacros(scope, false)
+    if (processAll(macros, processor)) return true
+
+    if (addStdCrate) {
+        val stdCrate = scope.containingCargoPackage?.findCrateByName("std")?.crateRoot
+        val prelude = scope.project.getPsiFor(stdCrate)?.rustMod
+        if (prelude is RsFile && processAll(prelude.exportedCrateMacros, processor)) return true
+    }
+    return false
 }
 
 private fun processFieldDeclarations(struct: RsFieldsOwner, subst: Substitution, processor: RsResolveProcessor): Boolean {

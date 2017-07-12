@@ -13,7 +13,7 @@ import org.rust.lang.core.types.ty.substituteInValues
 interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclaration {
     val constantList: List<RsConstant>
     val functionList: List<RsFunction>
-    val implMacroMemberList: List<RsImplMacroMember>
+    val macroCallList: List<RsMacroCall>
     val typeAliasList: List<RsTypeAlias>
     val lbrace: PsiElement
     val rbrace: PsiElement?

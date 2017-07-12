@@ -260,6 +260,13 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }   //^ ...libstd/macros.rs
     """)
 
+    fun `test assert_eq macro`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            assert_eq!("Hello, World!", "");
+        }   //^ ...libcore/macros.rs
+    """)
+
     fun `test iterating a vec`() = stubOnlyResolve("""
     //- main.rs
         struct FooBar;

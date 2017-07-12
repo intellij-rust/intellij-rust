@@ -7,6 +7,7 @@ package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
@@ -20,7 +21,7 @@ class RsHighlightingAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val (partToHighlight, color) = when {
             element is RsPatBinding && !element.isReferenceToConstant -> highlightNotReference(element)
-            element is RsMacroInvocation -> highlightNotReference(element)
+            element is RsMacroCall -> highlightNotReference(element)
             element is RsReferenceElement -> highlightReference(element)
             else -> highlightNotReference(element)
         } ?: return
@@ -28,7 +29,7 @@ class RsHighlightingAnnotator : Annotator {
         holder.createInfoAnnotation(partToHighlight, null).textAttributes = color.textAttributesKey
     }
 
-    private fun highlightReference(element: RsReferenceElement): Pair<PsiElement, RsColor>? {
+    private fun highlightReference(element: RsReferenceElement): Pair<TextRange, RsColor>? {
         // These should be highlighted as keywords by the lexer
         if (element is RsPath && (element.self != null || element.`super` != null)) return null
 
@@ -41,16 +42,16 @@ class RsHighlightingAnnotator : Annotator {
             // Highlight the element dependent on what it's referencing.
             colorFor(ref)
         }
-        return color?.let { element.referenceNameElement to it }
+        return color?.let { element.referenceNameElement.textRange to it }
     }
 
-    private fun highlightNotReference(element: PsiElement): Pair<PsiElement, RsColor>? {
+    private fun highlightNotReference(element: PsiElement): Pair<TextRange, RsColor>? {
         if (element is RsLitExpr) {
             if (element.parent is RsMetaItem) {
                 val literal = element.firstChild
                 val color = RsHighlighter.map(literal.elementType)
                     ?: return null // FIXME: `error` here perhaps?
-                return literal to color
+                return literal.textRange to color
             }
             return null
         }
@@ -58,7 +59,7 @@ class RsHighlightingAnnotator : Annotator {
         // Although we remap tokens from identifier to keyword, this happens in the
         // parser's pass, so we can't use HighlightingLexer to color these
         if (element.elementType in RS_CONTEXTUAL_KEYWORDS) {
-            return element to RsColor.KEYWORD
+            return element.textRange to RsColor.KEYWORD
         }
 
         if (element is RsCompositeElement) {
@@ -75,8 +76,10 @@ class RsHighlightingAnnotator : Annotator {
 // If possible, this should use only stubs because this will be called
 // on elements in other files when highlighting references.
 private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
+    is RsMacroDefinition -> RsColor.MACRO
+
     is RsAttr -> RsColor.ATTRIBUTE
-    is RsMacroInvocation -> RsColor.MACRO
+    is RsMacroCall -> RsColor.MACRO
     is RsSelfParameter -> RsColor.SELF_PARAMETER
     is RsTryExpr -> RsColor.Q_OPERATOR
     is RsTraitRef -> RsColor.TRAIT
@@ -102,31 +105,48 @@ private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
     is RsTraitItem -> RsColor.TRAIT
     is RsTypeAlias -> RsColor.TYPE_ALIAS
     is RsTypeParameter -> RsColor.TYPE_PARAMETER
-    is RsMacroBodySimpleMatching -> RsColor.FUNCTION
-    is RsMacroPatternSimpleMatching -> RsColor.FUNCTION
+    is RsMacroReference -> RsColor.FUNCTION
+    is RsMacroBinding -> RsColor.FUNCTION
     else -> null
 }
 
-private fun partToHighlight(element: RsCompositeElement): PsiElement? = when (element) {
-    is RsAttr -> element
-    is RsMacroInvocation -> element
-    is RsSelfParameter -> element.self
-    is RsTryExpr -> element.q
-    is RsTraitRef -> element.path.identifier
+private fun partToHighlight(element: RsCompositeElement): TextRange? {
+    if (element is RsMacroDefinition) {
+        var range = element.identifier?.textRange ?: return null
+        val excl = element.excl
+        if (excl != null) {
+            range = range.union(excl.textRange)
+        }
+        return range
+    }
 
-    is RsEnumItem -> element.identifier
-    is RsEnumVariant -> element.identifier
-    is RsExternCrateItem -> element.identifier
-    is RsFieldDecl -> element.identifier
-    is RsFunction -> element.identifier
-    is RsMethodCallExpr -> element.identifier
-    is RsModDeclItem -> element.identifier
-    is RsModItem -> element.identifier
-    is RsPatBinding -> element.identifier
-    is RsStructItem -> element.identifier
-    is RsTraitItem -> element.identifier
-    is RsTypeAlias -> element.identifier
-    is RsTypeParameter -> element.identifier
-    is RsMacroPatternSimpleMatching -> element.macroBinding
-    else -> null
+    if (element is RsMacroCall) {
+        var range = element.macroName?.textRange ?: return null
+        range = range.union(element.excl.textRange)
+        return range
+    }
+
+    val name = when (element) {
+        is RsAttr -> element
+        is RsSelfParameter -> element.self
+        is RsTryExpr -> element.q
+        is RsTraitRef -> element.path.identifier
+
+        is RsEnumItem -> element.identifier
+        is RsEnumVariant -> element.identifier
+        is RsExternCrateItem -> element.identifier
+        is RsFieldDecl -> element.identifier
+        is RsFunction -> element.identifier
+        is RsMethodCallExpr -> element.identifier
+        is RsModDeclItem -> element.identifier
+        is RsModItem -> element.identifier
+        is RsPatBinding -> element.identifier
+        is RsStructItem -> element.identifier
+        is RsTraitItem -> element.identifier
+        is RsTypeAlias -> element.identifier
+        is RsTypeParameter -> element.identifier
+        is RsMacroBinding -> element.nameElement
+        else -> null
+    }
+    return name?.textRange
 }

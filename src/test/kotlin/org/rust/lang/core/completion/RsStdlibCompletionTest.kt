@@ -37,5 +37,11 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
             foo.fm/*caret*/
         }
     """)
+
+    fun `test macro`() = checkSingleCompletion("unimplemented", """
+        fn main() {
+            unimpl/*caret*/
+        }
+    """)
 }
 

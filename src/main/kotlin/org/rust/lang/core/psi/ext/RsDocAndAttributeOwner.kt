@@ -48,7 +48,7 @@ interface RsOuterAttributeOwner : RsDocAndAttributeOwner {
  * Find the first outer attribute with the given identifier.
  */
 fun RsOuterAttributeOwner.findOuterAttr(name: String): RsOuterAttr? =
-    outerAttrList.find { it.metaItem.identifier.textMatches(name) }
+    outerAttrList.find { it.metaItem.referenceName == name }
 
 /**
  * Get sequence of all item's inner and outer attributes.
@@ -96,7 +96,7 @@ class QueryAttributes(private val attributes: Sequence<RsAttr>) {
 
     val deriveAttribute: RsMetaItem?
         get() = attrByName("derive")
-
+        
     fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
 
     val metaItems: Sequence<RsMetaItem>

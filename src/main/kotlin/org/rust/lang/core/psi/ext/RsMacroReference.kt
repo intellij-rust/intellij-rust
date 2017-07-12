@@ -7,13 +7,11 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.RsMacroInvocation
+import org.rust.lang.core.psi.RsMacroReference
 import org.rust.lang.core.resolve.ref.RsMacroReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
-
-abstract class RsMacroInvocationImplMixin(node: ASTNode) : RsCompositeElementImpl(node), RsMacroInvocation {
+abstract class RsMacroReferenceImplMixin(node: ASTNode) : RsCompositeElementImpl(node), RsMacroReference {
 
     override fun getReference(): RsReference = RsMacroReferenceImpl(this)
 
@@ -21,7 +19,5 @@ abstract class RsMacroInvocationImplMixin(node: ASTNode) : RsCompositeElementImp
         get() = referenceNameElement.text
 
     override val referenceNameElement: PsiElement
-        get() = findChildByType(IDENTIFIER)!!
-
+        get() = macroNameElement(node)!!
 }
-
