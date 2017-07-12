@@ -199,6 +199,16 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test macro with two idents`() = doTextTest("""
+        fn а() {
+            foo!bar();
+        }
+    """, """
+        fn а() {
+            foo! bar();
+        }
+    """)
+
     fun `test indent initializer expression`() = doTextTest("""
         const C: () =
         ();

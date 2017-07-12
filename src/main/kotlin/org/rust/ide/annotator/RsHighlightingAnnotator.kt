@@ -21,7 +21,7 @@ class RsHighlightingAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val (partToHighlight, color) = when {
             element is RsPatBinding && !element.isReferenceToConstant -> highlightNotReference(element)
-            element is RsMacroInvocation -> highlightNotReference(element)
+            element is RsMacroCall -> highlightNotReference(element)
             element is RsReferenceElement -> highlightReference(element)
             else -> highlightNotReference(element)
         } ?: return
@@ -79,7 +79,7 @@ private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
     is RsMacroDefinition -> RsColor.MACRO
 
     is RsAttr -> RsColor.ATTRIBUTE
-    is RsMacroInvocation -> RsColor.MACRO
+    is RsMacroCall -> RsColor.MACRO
     is RsSelfParameter -> RsColor.SELF_PARAMETER
     is RsTryExpr -> RsColor.Q_OPERATOR
     is RsTraitRef -> RsColor.TRAIT
@@ -120,9 +120,14 @@ private fun partToHighlight(element: RsCompositeElement): TextRange? {
         return range
     }
 
-    val name =  when (element) {
+    if (element is RsMacroCall) {
+        var range = element.macroName?.textRange ?: return null
+        range = range.union(element.excl.textRange)
+        return range
+    }
+
+    val name = when (element) {
         is RsAttr -> element
-        is RsMacroInvocation -> element
         is RsSelfParameter -> element.self
         is RsTryExpr -> element.q
         is RsTraitRef -> element.path.identifier

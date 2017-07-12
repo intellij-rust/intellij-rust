@@ -29,7 +29,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 82
+        override fun getStubVersion(): Int = 83
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -119,7 +119,6 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
-    "MACRO_ITEM" -> RsMacroItemStub.Type
     "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
 
     "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
@@ -836,41 +835,6 @@ class RsLifetimeDeclStub(
             }
 
         override fun indexStub(stub: RsLifetimeDeclStub, sink: IndexSink) {
-        }
-    }
-}
-
-class RsMacroItemStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?
-) : StubBase<RsMacroItem>(parent, elementType),
-    RsNamedStub,
-    RsVisibilityStub {
-
-    override val isPublic: Boolean get() = true
-
-    object Type : RsStubElementType<RsMacroItemStub, RsMacroItem>("MACRO_ITEM") {
-        override fun shouldCreateStub(node: ASTNode): Boolean =
-            //FIXME: this is always true =/
-            node.psi.parentOfType<RsMod>() != null
-
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsMacroItemStub(parentStub, this,
-                dataStream.readNameAsString()
-            )
-
-        override fun serialize(stub: RsMacroItemStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.name)
-            }
-
-        override fun createPsi(stub: RsMacroItemStub): RsMacroItem =
-            RsMacroItemImpl(stub, this)
-
-        override fun createStub(psi: RsMacroItem, parentStub: StubElement<*>?) =
-            RsMacroItemStub(parentStub, this, psi.name)
-
-        override fun indexStub(stub: RsMacroItemStub, sink: IndexSink) {
         }
     }
 }

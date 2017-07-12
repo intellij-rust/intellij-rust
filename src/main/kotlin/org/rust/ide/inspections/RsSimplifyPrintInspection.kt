@@ -10,8 +10,10 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsFormatLikeMacro
+import org.rust.lang.core.psi.RsFormatMacroArgument
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.ext.macroName
 
 /**
  * Replace `println!("")` with `println!()` available since Rust 1.14.0
@@ -21,8 +23,12 @@ class RsSimplifyPrintInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
 
-        override fun visitFormatLikeMacro(o: RsFormatLikeMacro) {
-            if (emptyStringArg(o) == null) return
+        override fun visitMacroCall(o: RsMacroCall) {
+            val macroName = o.macroName?.text ?: return
+            val formatMacroArg = o.formatMacroArgument ?: return
+            if (!(macroName.endsWith("println"))) return
+
+            if (emptyStringArg(formatMacroArg) == null) return
             holder.registerProblem(
                 o,
                 "println! macro invocation can be simplified",
@@ -32,8 +38,8 @@ class RsSimplifyPrintInspection : RsLocalInspectionTool() {
                     override fun getFamilyName() = name
 
                     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                        val macro = descriptor.psiElement as RsFormatLikeMacro
-                        val arg = emptyStringArg(macro) ?: return
+                        val macro = descriptor.psiElement as RsMacroCall
+                        val arg = emptyStringArg(macro.formatMacroArgument!!) ?: return
                         arg.delete()
                     }
                 }
@@ -41,11 +47,9 @@ class RsSimplifyPrintInspection : RsLocalInspectionTool() {
         }
     }
 
-    private fun emptyStringArg(macro: RsFormatLikeMacro): PsiElement? {
-        if (!macro.macroInvocation.text.startsWith("println")) return null
-        val arg = macro.formatMacroArgs?.formatMacroArgList.orEmpty().singleOrNull()
-            ?: return null
-        if (arg.text != "\"\"") return null
-        return arg
+    private fun emptyStringArg(arg: RsFormatMacroArgument): PsiElement? {
+        val singeArg = arg.formatMacroArgList.singleOrNull() ?: return null
+        if (singeArg.text != "\"\"") return null
+        return singeArg
     }
 }

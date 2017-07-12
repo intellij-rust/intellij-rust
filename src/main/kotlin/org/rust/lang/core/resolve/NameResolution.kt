@@ -311,7 +311,7 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
     return processAll(traits, processor)
 }
 
-fun processMacroInvocationVariants(invocation: RsMacroInvocation, processor: RsResolveProcessor): Boolean {
+fun processMacroCallVariants(invocation: RsMacroCall, processor: RsResolveProcessor): Boolean {
     walkUp(invocation, { false }) { cameFrom, scope ->
         if (processMacroDeclarations(scope, cameFrom, processor)) return@walkUp true
         false

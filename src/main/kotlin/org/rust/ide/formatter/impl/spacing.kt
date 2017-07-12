@@ -24,7 +24,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import com.intellij.psi.tree.TokenSet.create as ts
@@ -131,10 +130,9 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .betweenInside(ELSE, BLOCK, ELSE_BRANCH).spacing(1, 1, 0, false, 0)
 
         //== macros
-        .betweenInside(IDENTIFIER, EXCL, MACRO_INVOCATION).spaces(0)
-        .betweenInside(IDENTIFIER, EXCL, MACRO_DEFINITION).spaces(0)
-        .betweenInside(MACRO_INVOCATION, IDENTIFIER, MACRO_DEFINITION).spaces(1)
-        .betweenInside(IDENTIFIER, MACRO_ARG, MACRO_DEFINITION).spaces(1)
+        .beforeInside(EXCL, MACRO_CALL).spaces(0)
+        .beforeInside(EXCL, MACRO_DEFINITION).spaces(0)
+        .afterInside(EXCL, MACRO_DEFINITION).spaces(1)
         .betweenInside(IDENTIFIER, MACRO_DEFINITION_BODY, MACRO_DEFINITION).spaces(1)
 
         //== rules with very large area of application
@@ -152,8 +150,8 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spac
             -> return createSpacing(1, 1, 0, true, 0)
 
         // Determine spacing between macro invocation and it's arguments
-            psi1 is RsMacroInvocation && psi2.elementType in MACRO_ARGS
-            -> return if (child2.node.firstChildNode.elementType == LBRACE) {
+            parentPsi is RsMacroCall && elementType1 == EXCL
+            -> return if (node2.chars.first() == '{' || elementType2 == IDENTIFIER) {
                 createSpacing(1, 1, 0, false, 0)
             } else {
                 createSpacing(0, 0, 0, false, 0)

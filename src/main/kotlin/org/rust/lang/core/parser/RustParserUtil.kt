@@ -91,6 +91,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
+    @JvmStatic fun macroSemicolon(b: PsiBuilder, level: Int): Boolean {
+        val m = b.latestDoneMarker ?: return false
+        b.tokenText
+        if (b.originalText[m.endOffset - 1] == '}') return true
+        return consumeToken(b, SEMICOLON)
+    }
+
     @JvmStatic fun macroIdentifier(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
             TYPE_KW, CRATE, IDENTIFIER -> {

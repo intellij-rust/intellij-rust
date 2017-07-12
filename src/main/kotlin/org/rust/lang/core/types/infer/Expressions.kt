@@ -194,44 +194,35 @@ private fun inferIndexExprType(expr: RsIndexExpr): Ty {
 }
 
 private fun inferMacroExprType(expr: RsMacroExpr): Ty {
-    return if (expr.vecMacro != null) {
-        val elements = expr.vecMacro!!.vecMacroArgs?.exprList ?: emptyList()
+    val vecArg = expr.macroCall.vecMacroArgument
+    if (vecArg != null) {
+        val elements = vecArg.exprList
         var elementType: Ty = TyUnknown
         for (e in elements) {
             elementType = getMoreCompleteType(e.type, elementType)
         }
 
-        findStdVec(elementType, expr)
-    } else if (expr.logMacro != null) {
-        TyUnit
-    } else if (expr.macro != null) {
-        val macro = expr.macro ?: return TyUnknown
-        when (macro) {
-            is RsTryMacro -> {
-                // See RsTryExpr where we handle the ? expression in a similar way
-                val base = macro.tryMacroArgs?.expr?.type ?: return TyUnknown
+        return findStdVec(elementType, expr)
+    }
 
-                if (isStdResult(base))
-                    (base as TyEnum).typeArguments.firstOrNull() ?: TyUnknown
-                else
-                    TyUnknown
-            }
+    val tryArg = expr.macroCall.tryMacroArgument
+    if (tryArg != null) {
+        // See RsTryExpr where we handle the ? expression in a similar way
+        val base = tryArg.expr.type
+        return if (isStdResult(base))
+            (base as TyEnum).typeArguments.firstOrNull() ?: TyUnknown
+        else
+            TyUnknown
+    }
 
-            is RsFormatLikeMacro -> {
-                when (macro.macroInvocation.referenceName) {
-                    "format" -> findStdString(expr)
-                    "format_args" -> findStdArguments(expr)
-                    "write", "writeln" -> TyUnknown
-                    "panic", "print", "println" -> TyUnit
-                    else -> TyUnknown
-                }
-            }
-            is RsAssertMacro,
-            is RsAssertEqMacro -> TyUnit
-
-            else -> TyUnknown
-        }
-    } else TyUnknown
+    val name = expr.macroCall.macroName?.text ?: return TyUnknown
+    return when {
+        "print" in name || "assert" in name -> TyUnit
+        name == "format" -> findStdString(expr)
+        name == "format_args" -> findStdArguments(expr)
+        expr.macroCall.formatMacroArgument != null || expr.macroCall.logMacroArgument != null -> TyUnit
+        else -> TyUnknown
+    }
 }
 
 private fun inferTypeForLambdaExpr(lambdaExpr: RsLambdaExpr): Ty {

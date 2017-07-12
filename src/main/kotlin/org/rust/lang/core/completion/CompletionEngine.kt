@@ -90,7 +90,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
 
         is RsMacroBinding -> base.withTypeText(fragmentSpecifier)
 
-        is RsMacroItem -> base
+        is RsMacroDefinition -> base
             .withInsertHandler { context: InsertionContext, _: LookupElement ->
                 context.document.insertString(context.selectionEndOffset, "!()")
             }
