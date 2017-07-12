@@ -32,7 +32,8 @@ class PresentationInfo(
 
     val projectStructureItemTextWithValue: String get() = "$projectStructureItemText${declaration.value}"
 
-    val signatureText: String = "${declaration.prefix}<b>$name</b>${declaration.suffix.escaped}"
+    val shortSignatureText = "<b>$name</b>${declaration.suffix.escaped}"
+    val signatureText: String = "${declaration.prefix}$shortSignatureText"
 
     val quickDocumentationText: String
         get() = if (declaration.isAmbiguous && type != null) {
@@ -101,11 +102,11 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
     return declInfo.second?.let { PresentationInfo(this, declInfo.first, elementName, it) }
 }
 
-fun presentableQualifiedName(element: RsDocAndAttributeOwner): String? {
-    val qName = (element as? RsQualifiedNamedElement)?.qualifiedName
+val RsDocAndAttributeOwner.presentableQualifiedName: String? get() {
+    val qName = (this as? RsQualifiedNamedElement)?.qualifiedName
     if (qName != null) return qName
-    if (element is RsMod) return element.modName
-    return element.name
+    if (this is RsMod) return modName
+    return name
 }
 
 private fun createDeclarationInfo(decl: RsCompositeElement, name: PsiElement?, isAmbiguous: Boolean, stopAt: List<PsiElement?> = emptyList(), valueSeparator: PsiElement? = null): DeclarationInfo? {

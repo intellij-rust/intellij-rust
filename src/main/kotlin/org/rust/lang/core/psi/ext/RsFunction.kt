@@ -20,9 +20,34 @@ import javax.swing.Icon
 
 val RsFunction.isAssocFn: Boolean get() = selfParameter == null
     && (role == RsFunctionRole.IMPL_METHOD || role == RsFunctionRole.TRAIT_METHOD)
-val RsFunction.isTest: Boolean get() = stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
+
+val RsFunction.isTest: Boolean get() {
+    val stub = stub
+    return stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
+}
+
 val RsFunction.isInherentImpl: Boolean
     get() = (parent as? RsImplItem)?.let { return@let if (it.traitRef == null) it else null } != null
+
+val RsFunction.isConst: Boolean get() {
+    val stub = stub
+    return stub?.isConst ?: (const != null)
+}
+
+val RsFunction.isUnsafe: Boolean get() {
+    val stub = stub
+    return stub?.isUnsafe ?: (unsafe != null)
+}
+
+val RsFunction.isExtern: Boolean get() {
+    val stub = stub
+    return stub?.isExtern ?: (abi != null)
+}
+
+val RsFunction.abiName: String? get() {
+    val stub = stub
+    return stub?.abiName ?: abi?.stringLiteral?.text
+}
 
 enum class RsFunctionRole {
     // Bump stub version if reorder fields
@@ -74,6 +99,8 @@ val RsFunction.returnType: Ty get() {
     val retType = retType ?: return TyUnit
     return retType.typeReference?.type ?: TyUnknown
 }
+
+val RsFunction.abi: RsExternAbi? get() = externAbi ?: (parent as? RsForeignModItem)?.externAbi
 
 abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction {
 

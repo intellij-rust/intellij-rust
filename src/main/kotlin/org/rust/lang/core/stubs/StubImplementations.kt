@@ -29,7 +29,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 80
+        override fun getStubVersion(): Int = 81
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -425,7 +425,11 @@ class RsFunctionStub(
     override val isPublic: Boolean,
     val isAbstract: Boolean,
     val isTest: Boolean,
-    val role: RsFunctionRole
+    val role: RsFunctionRole,
+    val isConst: Boolean,
+    val isUnsafe: Boolean,
+    val isExtern: Boolean,
+    val abiName: String?
 ) : StubBase<RsFunction>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
@@ -438,7 +442,11 @@ class RsFunctionStub(
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
-                dataStream.readEnum(RsFunctionRole.values())
+                dataStream.readEnum(RsFunctionRole.values()),
+                dataStream.readBoolean(),
+                dataStream.readBoolean(),
+                dataStream.readBoolean(),
+                dataStream.readUTFFastAsNullable()
             )
 
         override fun serialize(stub: RsFunctionStub, dataStream: StubOutputStream) =
@@ -448,6 +456,10 @@ class RsFunctionStub(
                 writeBoolean(stub.isAbstract)
                 writeBoolean(stub.isTest)
                 writeEnum(stub.role)
+                writeBoolean(stub.isConst)
+                writeBoolean(stub.isUnsafe)
+                writeBoolean(stub.isExtern)
+                writeUTFFastAsNullable(stub.abiName)
             }
 
         override fun createPsi(stub: RsFunctionStub) =
@@ -455,7 +467,16 @@ class RsFunctionStub(
 
         override fun createStub(psi: RsFunction, parentStub: StubElement<*>?) =
             RsFunctionStub(parentStub, this,
-                psi.name, psi.isPublic, psi.isAbstract, psi.isTest, psi.role)
+                name = psi.name,
+                isPublic = psi.isPublic,
+                isAbstract = psi.isAbstract,
+                isTest = psi.isTest,
+                role = psi.role,
+                isConst = psi.isConst,
+                isUnsafe = psi.isUnsafe,
+                isExtern = psi.abi != null,
+                abiName = psi.abiName
+            )
 
         override fun indexStub(stub: RsFunctionStub, sink: IndexSink) = sink.indexFunction(stub)
     }
@@ -888,14 +909,14 @@ class RsMetaItemStub(
             with(dataStream) {
                 writeName(stub.referenceName)
                 writeBoolean(stub.hasEq)
-                writeUTFFast(stub.value ?: "")
+                writeUTFFastAsNullable(stub.value)
             }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsMetaItemStub =
             RsMetaItemStub(parentStub, this,
                 dataStream.readNameAsString()!!,
                 dataStream.readBoolean(),
-                dataStream.readUTFFast().let { if (it == "") null else it })
+                dataStream.readUTFFastAsNullable())
 
         override fun indexStub(stub: RsMetaItemStub, sink: IndexSink) {
         }
@@ -903,6 +924,8 @@ class RsMetaItemStub(
 }
 
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
+private fun StubInputStream.readUTFFastAsNullable(): String? = readUTFFast().let { if (it == "") null else it }
 
 private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
 private fun <E : Enum<E>> StubInputStream.readEnum(values: Array<E>) = values[readByte().toInt()]
+private fun StubOutputStream.writeUTFFastAsNullable(value: String?) = writeUTFFast(value ?: "")
