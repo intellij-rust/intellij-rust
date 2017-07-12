@@ -378,4 +378,11 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() {
         }
     """)
+
+    fun `test macro don't suggests as function name`() = checkNoCompletion("""
+        macro_rules! foo_bar { () => () }
+        fn foo/*caret*/() {
+        }
+    """)
+
 }

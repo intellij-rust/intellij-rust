@@ -10,12 +10,16 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.resolve.RsResolveProcessor
 import org.rust.lang.core.resolve.processMacroDeclarations
 
@@ -29,6 +33,11 @@ object RsMacroDefinitionCompletionProvider : CompletionProvider<CompletionParame
     val elementPattern: ElementPattern<PsiElement> get() {
         return psiElement()
             .withElementType(IDENTIFIER)
+            .withParent(psiElement().with(object : PatternCondition<PsiElement?>("MacroParent") {
+                override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
+                    return t is RsMod || (t is RsPath && t.parent is RsPathExpr)
+                }
+            }))
             .withLanguage(RsLanguage)
     }
 }
@@ -40,6 +49,7 @@ fun processMacroReferenceVariants(referenceElement: PsiElement, processor: RsRes
     }
     return false
 }
+
 fun walkUp(
     start: PsiElement,
     stopAfter: (RsCompositeElement) -> Boolean,
