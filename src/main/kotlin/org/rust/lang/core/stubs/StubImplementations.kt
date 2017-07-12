@@ -30,7 +30,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 85
+        override fun getStubVersion(): Int = 86
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -368,7 +368,8 @@ class RsModItemStub(
 class RsTraitItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val isPublic: Boolean
+    override val isPublic: Boolean,
+    val isUnsafe: Boolean
 ) : StubBase<RsTraitItem>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
@@ -377,6 +378,7 @@ class RsTraitItemStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTraitItemStub(parentStub, this,
                 dataStream.readNameAsString(),
+                dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
 
@@ -384,13 +386,14 @@ class RsTraitItemStub(
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
+                writeBoolean(stub.isUnsafe)
             }
 
         override fun createPsi(stub: RsTraitItemStub): RsTraitItem =
             RsTraitItemImpl(stub, this)
 
         override fun createStub(psi: RsTraitItem, parentStub: StubElement<*>?) =
-            RsTraitItemStub(parentStub, this, psi.name, psi.isPublic)
+            RsTraitItemStub(parentStub, this, psi.name, psi.isPublic, psi.isUnsafe)
 
         override fun indexStub(stub: RsTraitItemStub, sink: IndexSink) = sink.indexTraitItem(stub)
     }
