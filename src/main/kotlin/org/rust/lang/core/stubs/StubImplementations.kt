@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
 import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
+import com.intellij.util.BitUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -29,7 +30,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 83
+        override fun getStubVersion(): Int = 85
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -421,42 +422,67 @@ class RsImplItemStub(
 class RsFunctionStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val isPublic: Boolean,
-    val isAbstract: Boolean,
-    val isTest: Boolean,
-    val role: RsFunctionRole
+    val role: RsFunctionRole,
+    val abiName: String?,
+    private val flags: Int
 ) : StubBase<RsFunction>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
+
+    override val isPublic: Boolean get() = BitUtil.isSet(flags, PUBLIC_MASK)
+    val isAbstract: Boolean get() = BitUtil.isSet(flags, ABSTRACT_MASK)
+    val isTest: Boolean get() = BitUtil.isSet(flags, TEST_MASK)
+    val isConst: Boolean get() = BitUtil.isSet(flags, CONST_MASK)
+    val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
+    val isExtern: Boolean get() = BitUtil.isSet(flags, EXTERN_MASK)
 
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsFunctionStub(parentStub, this,
                 dataStream.readName()?.string,
-                dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean(),
-                dataStream.readEnum(RsFunctionRole.values())
+                dataStream.readEnum(RsFunctionRole.values()),
+                dataStream.readUTFFastAsNullable(),
+                dataStream.readInt()
             )
 
         override fun serialize(stub: RsFunctionStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
-                writeBoolean(stub.isPublic)
-                writeBoolean(stub.isAbstract)
-                writeBoolean(stub.isTest)
                 writeEnum(stub.role)
+                writeUTFFastAsNullable(stub.abiName)
+                writeInt(stub.flags)
             }
 
         override fun createPsi(stub: RsFunctionStub) =
             RsFunctionImpl(stub, this)
 
-        override fun createStub(psi: RsFunction, parentStub: StubElement<*>?) =
-            RsFunctionStub(parentStub, this,
-                psi.name, psi.isPublic, psi.isAbstract, psi.isTest, psi.role)
+        override fun createStub(psi: RsFunction, parentStub: StubElement<*>?): RsFunctionStub {
+            var flags = 0
+            flags = BitUtil.set(flags, PUBLIC_MASK, psi.isPublic)
+            flags = BitUtil.set(flags, ABSTRACT_MASK, psi.isAbstract)
+            flags = BitUtil.set(flags, TEST_MASK, psi.isTest)
+            flags = BitUtil.set(flags, CONST_MASK, psi.isConst)
+            flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
+            flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
+            return RsFunctionStub(parentStub, this,
+                name = psi.name,
+                role = psi.role,
+                abiName = psi.abiName,
+                flags = flags
+            )
+        }
 
         override fun indexStub(stub: RsFunctionStub, sink: IndexSink) = sink.indexFunction(stub)
+    }
+
+    companion object {
+        private const val PUBLIC_MASK: Int = 0x00000001
+        private const val ABSTRACT_MASK: Int = 0x00000002
+        private const val TEST_MASK: Int = 0x00000004
+        private const val CONST_MASK: Int = 0x00000008
+        private const val UNSAFE_MASK: Int = 0x00000010
+        private const val EXTERN_MASK: Int = 0x00000020
     }
 }
 
@@ -887,14 +913,14 @@ class RsMetaItemStub(
             with(dataStream) {
                 writeName(stub.referenceName)
                 writeBoolean(stub.hasEq)
-                writeUTFFast(stub.value ?: "")
+                writeUTFFastAsNullable(stub.value)
             }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsMetaItemStub =
             RsMetaItemStub(parentStub, this,
                 dataStream.readNameAsString()!!,
                 dataStream.readBoolean(),
-                dataStream.readUTFFast().let { if (it == "") null else it })
+                dataStream.readUTFFastAsNullable())
 
         override fun indexStub(stub: RsMetaItemStub, sink: IndexSink) {
         }
@@ -902,6 +928,8 @@ class RsMetaItemStub(
 }
 
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
+private fun StubInputStream.readUTFFastAsNullable(): String? = readUTFFast().let { if (it == "") null else it }
 
 private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
 private fun <E : Enum<E>> StubInputStream.readEnum(values: Array<E>) = values[readByte().toInt()]
+private fun StubOutputStream.writeUTFFastAsNullable(value: String?) = writeUTFFast(value ?: "")

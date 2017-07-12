@@ -67,7 +67,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCallExpr) {
         val fn = o.reference.resolve() as? RsFunction ?: return
-        if (fn.unsafe != null) {
+        if (fn.isUnsafe) {
             checkUnsafeCall(holder, o)
         }
     }
@@ -75,7 +75,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
         val path = (o.expr as? RsPathExpr)?.path ?: return
         val fn = path.reference.resolve() as? RsFunction ?: return
-        if (fn.unsafe != null) {
+        if (fn.isUnsafe) {
             checkUnsafeCall(holder, o)
         }
     }
@@ -91,7 +91,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 }
             } ?: return false
 
-        return parent is RsBlockExpr || (parent is RsFunction && parent.unsafe != null)
+        return parent is RsBlockExpr || (parent is RsFunction && parent.isUnsafe)
     }
 
     private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
