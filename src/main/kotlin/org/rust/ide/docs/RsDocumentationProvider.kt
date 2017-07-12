@@ -13,7 +13,7 @@ import org.rust.ide.utils.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsFunctionRole.*
-import org.rust.lang.core.types.infer.inferDeclarationType
+import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
@@ -40,7 +40,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     private fun generateDoc(element: RsPatBinding): String? {
         val presentationInfo = element.presentationInfo ?: return null
-        val type = inferDeclarationType(element).toString().escaped
+        val type = element.type.toString().escaped
         return "${presentationInfo.type} <b>${presentationInfo.name}</b>: $type"
     }
 

@@ -12,12 +12,7 @@ import org.rust.lang.core.psi.ext.isRef
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
-fun inferPatternBindingType(binding: RsPatBinding, pattern: RsPat, patternType: Ty): Ty {
-    val bindings = collectBindings(pattern, patternType)
-    return bindings[binding] ?: TyUnknown
-}
-
-private fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
+fun collectBindings(pattern: RsPat, type: Ty): Map<RsPatBinding, Ty> {
     val bindings: MutableMap<RsPatBinding, Ty> = mutableMapOf()
 
     // Here, we try to infer as much types as possible, so we use
