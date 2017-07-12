@@ -34,7 +34,16 @@ class TyTypeParameter private constructor(
         bounds.flatMap { it.flattenHierarchy }
 
     override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean {
-        mapping?.merge(mutableMapOf(this to other))
+        if (mapping != null) {
+            val traits = findImplsAndTraits(project, other)
+            for (bound in bounds) {
+                val trait = traits.find { it.element.implementedTrait?.element == bound.element }
+                if (trait != null) {
+                    mapping.merge(bound.subst.reverse().substituteInValues(trait.subst))
+                }
+            }
+            mapping.merge(mapOf(this to other))
+        }
         return true
     }
 

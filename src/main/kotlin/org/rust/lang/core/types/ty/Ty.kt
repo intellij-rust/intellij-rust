@@ -118,7 +118,7 @@ internal inline fun merge(mapping: TypeMapping?, canUnify: (TypeMapping?) -> Boo
     }
 }
 
-internal fun TypeMapping.merge(otherMapping: TypeMapping) {
+internal fun TypeMapping.merge(otherMapping: Substitution) {
     for ((param, value) in otherMapping) {
         val old = get(param)
         if (old == null || old == TyUnknown || old is TyNumeric && old.isKindWeak) {
@@ -129,3 +129,7 @@ internal fun TypeMapping.merge(otherMapping: TypeMapping) {
 
 fun Substitution.substituteInValues(map: Substitution): Substitution =
     mapValues { (_, value) -> value.substitute(map) }
+
+fun Substitution.reverse(): Substitution =
+    mapNotNull { if (it.value is TyTypeParameter) it else null }
+        .associate { (k, v) -> Pair(v as TyTypeParameter, k) }
