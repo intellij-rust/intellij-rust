@@ -12,9 +12,9 @@ import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.types.infer.inferDeclarationType
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.type
 
 
 class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeExplicitlyIntention.Context>() {
@@ -28,7 +28,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
             return null
         }
         val ident = letDecl.pat as? RsPatIdent ?: return null
-        val type = inferDeclarationType(ident.patBinding)
+        val type = ident.patBinding.type
         if (type is TyUnknown) {
             return null
         }

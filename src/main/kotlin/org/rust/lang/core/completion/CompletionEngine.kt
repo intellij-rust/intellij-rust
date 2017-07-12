@@ -13,8 +13,8 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.infer.inferDeclarationType
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.type
 
 object CompletionEngine {
     const val KEYWORD_PRIORITY = 10.0
@@ -81,7 +81,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
             }
 
         is RsPatBinding -> base
-            .withTypeText(inferDeclarationType(this).let {
+            .withTypeText(type.let {
                 when (it) {
                     is TyUnknown -> ""
                     else -> it.toString()

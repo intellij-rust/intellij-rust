@@ -7,55 +7,21 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.findIteratorItemType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 fun inferDeclarationType(decl: RsNamedElement): Ty {
     return when (decl) {
         is RsStructItem -> TyStruct.valueOf(decl)
-
         is RsEnumItem -> TyEnum.valueOf(decl)
         is RsEnumVariant -> TyEnum.valueOf(decl.parentEnum)
-
-        is RsTypeAlias -> {
-            val typeReference = decl.typeReference
-            if (typeReference != null) return typeReference.type
-
-            val trait = decl.parentOfType<RsTraitItem>()
-                ?: return TyUnknown
-            val name = decl.name ?: return TyUnknown
-            return TyTypeParameter(trait, name)
-        }
-
+        is RsTypeAlias -> deviseAliasType(decl)
         is RsFunction -> deviseFunctionType(decl)
-
         is RsTraitItem -> TyTraitObject(decl)
-
         is RsConstant -> decl.typeReference?.type ?: TyUnknown
-
         is RsSelfParameter -> deviseSelfType(decl)
-
-        is RsPatBinding -> {
-            val pattern = decl.topLevelPattern
-            val parent = pattern.parent
-            val patternType = when (parent) {
-                is RsLetDecl ->
-                    // use type ascription, if present or fallback to the type of the initializer expression
-                    parent.typeReference?.type ?: parent.expr?.type
-
-                is RsValueParameter -> parent.typeReference?.type ?: inferTypeForLambdaParameter(parent)
-                is RsCondition -> parent.expr.type
-                is RsMatchArm -> parent.parentOfType<RsMatchExpr>()?.expr?.type
-                is RsForExpr -> findIteratorItemType(decl.project, parent.expr?.type ?: TyUnknown)
-                else -> null
-            } ?: TyUnknown
-
-            inferPatternBindingType(decl, pattern, patternType)
-        }
-
         is RsTypeParameter -> TyTypeParameter(decl)
-
+        is RsPatBinding -> throw IllegalArgumentException()
         else -> TyUnknown
     }
 }
@@ -65,13 +31,6 @@ private val RsCallExpr.declaration: RsFunction?
 
 private val RsMethodCallExpr.declaration: RsFunction?
     get() = reference.resolve() as? RsFunction
-
-fun inferTypeForLambdaParameter(parameter: RsValueParameter): Ty {
-    val lambda = parameter.parentOfType<RsLambdaExpr>() ?: return TyUnknown
-    val parameterPos = lambda.valueParameterList.valueParameterList.indexOf(parameter)
-    val bounds = lambda.type as? TyFunction ?: return TyUnknown
-    return bounds.paramTypes.getOrNull(parameterPos) ?: TyUnknown
-}
 
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {
     val type = ref.typeElement
@@ -120,6 +79,16 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 
         else -> TyUnknown
     }
+}
+
+private fun deviseAliasType(decl: RsTypeAlias): Ty {
+    val typeReference = decl.typeReference
+    if (typeReference != null) return typeReference.type
+
+    val trait = decl.parentOfType<RsTraitItem>()
+        ?: return TyUnknown
+    val name = decl.name ?: return TyUnknown
+    return TyTypeParameter(trait, name)
 }
 
 /**

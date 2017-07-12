@@ -13,6 +13,7 @@ import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processMethodCallExprResolveVariants
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
 
@@ -24,24 +25,32 @@ class RsMethodCallReferenceImpl(
     override val RsMethodCallExpr.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processMethodCallExprResolveVariants(element, it) }
+        collectCompletionVariants { processMethodCallExprResolveVariants(element.project, element.expr.type, it) }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
-        val result = collectResolveVariants(element.referenceName) { processMethodCallExprResolveVariants(element, it) }
-        val typeArguments = element.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
-        if (typeArguments.isEmpty()) return result
+    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
+        resolveMethodCallReferenceWithReceiverType(element.expr.type, element)
+}
 
-        return result.map { boundElement ->
-            val method = boundElement.element
-            if (method is RsFunction) {
-                val parameters = method.typeParameterList?.typeParameterList.orEmpty().map { TyTypeParameter(it) }
-                BoundElement(
-                    method,
-                    boundElement.subst + parameters.zip(typeArguments).toMap()
-                )
-            } else {
-                boundElement
-            }
+fun resolveMethodCallReferenceWithReceiverType(
+    receiverType: Ty,
+    element: RsMethodCallExpr
+):List<BoundElement<RsCompositeElement>> {
+    val result = collectResolveVariants(element.referenceName) {
+        processMethodCallExprResolveVariants(element.project, receiverType, it)
+    }
+    val typeArguments = element.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
+    if (typeArguments.isEmpty()) return result
+
+    return result.map { boundElement ->
+        val method = boundElement.element
+        if (method is RsFunction) {
+            val parameters = method.typeParameterList?.typeParameterList.orEmpty().map { TyTypeParameter(it) }
+            BoundElement(
+                method,
+                boundElement.subst + parameters.zip(typeArguments).toMap()
+            )
+        } else {
+            boundElement
         }
     }
 }

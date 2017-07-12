@@ -62,13 +62,17 @@ import java.util.*
 //     a code fragment in a temporary file and attaching it to some existing file. See the usages of
 //     [RsCodeFragmentFactory]
 
-fun processFieldExprResolveVariants(fieldExpr: RsFieldExpr, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    val receiverType = fieldExpr.expr.type
-    for (ty in receiverType.derefTransitively(fieldExpr.project)) {
+fun processFieldExprResolveVariants(
+    project: Project,
+    receiverType: Ty,
+    isCompletion: Boolean,
+    processor: RsResolveProcessor
+): Boolean {
+    for (ty in receiverType.derefTransitively(project)) {
         if (ty !is TyStruct) continue
         if (processFieldDeclarations(ty.item, ty.typeParameterValues, processor)) return true
     }
-    if (isCompletion && processMethodDeclarationsWithDeref(fieldExpr.project, receiverType, processor)) {
+    if (isCompletion && processMethodDeclarationsWithDeref(project, receiverType, processor)) {
         return true
     }
     return false
@@ -79,9 +83,8 @@ fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, proces
     return processFieldDeclarations(structOrEnumVariant, emptySubstitution, processor)
 }
 
-fun processMethodCallExprResolveVariants(callExpr: RsMethodCallExpr, processor: RsResolveProcessor): Boolean {
-    val receiverType = callExpr.expr.type
-    return processMethodDeclarationsWithDeref(callExpr.project, receiverType, processor)
+fun processMethodCallExprResolveVariants(project: Project, receiverType: Ty, processor: RsResolveProcessor): Boolean {
+    return processMethodDeclarationsWithDeref(project, receiverType, processor)
 }
 
 fun processUseGlobResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Boolean {
