@@ -11,6 +11,8 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.bounds
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
+import org.rust.lang.core.resolve.asFunctionType
+import org.rust.lang.core.resolve.isAnyFnTrait
 import org.rust.lang.core.types.BoundElement
 
 class TyTypeParameter private constructor(
@@ -34,7 +36,18 @@ class TyTypeParameter private constructor(
         bounds.flatMap { it.flattenHierarchy }
 
     override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean {
-        if (mapping != null) {
+        if (mapping == null) return true
+
+        if (other is TyFunction) {
+            for (bound in bounds) {
+                if (bound.element.isAnyFnTrait) {
+                    val fnType = bound.asFunctionType
+                    if (fnType != null && fnType.retType is TyTypeParameter) {
+                        fnType.retType.canUnifyWith(other.retType, project, mapping)
+                    }
+                }
+            }
+        } else {
             val traits = findImplsAndTraits(project, other)
             for (bound in bounds) {
                 val trait = traits.find { it.element.implementedTrait?.element == bound.element }
@@ -42,8 +55,9 @@ class TyTypeParameter private constructor(
                     mapping.merge(bound.subst.reverse().substituteInValues(trait.subst))
                 }
             }
-            mapping.merge(mapOf(this to other))
         }
+
+        mapping.merge(mapOf(this to other))
         return true
     }
 

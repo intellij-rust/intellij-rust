@@ -194,4 +194,15 @@ class RsClosuresResolveTest : RsResolveTestBase() {
             ;                               //^ unresolved
         }
     """)
+
+    fun `test infer generic parameter from lambda return type`() = checkByCode("""
+        struct X;
+        impl X { fn foo(&self) {} }
+                   //X
+        fn apply<T1, T2, F: Fn(T1) -> T2>(t: T1, f: F) -> T2 { f(t) }
+        fn main() {
+            let a = apply(X, |x| x);
+            a.foo()
+        }   //^
+    """)
 }
