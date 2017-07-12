@@ -7,22 +7,22 @@ package org.rust.ide.actions
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange
 import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.tree.IElementType
 import org.rust.ide.utils.findElementAtIgnoreWhitespaceAfter
 import org.rust.ide.utils.findElementAtIgnoreWhitespaceBefore
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.elementType
 
 val PsiElement.line: Int? get() = containingFile.viewProvider.document?.getLineNumber(textRange.startOffset)
 
-abstract class RsAbstractMover : StatementUpDownMover() {
+abstract class RsAbstractUpDownMover : StatementUpDownMover() {
 
-    abstract val listOfContainers: List<Class<out PsiElement>>
-    abstract val jumpOver: List<Class<out PsiElement>>
-
+    abstract val containers: List<IElementType>
+    abstract val jumpOver: List<IElementType>
     abstract fun collectedElement(element: PsiElement): Pair<PsiElement, List<Int>>?
 
     override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
@@ -34,13 +34,13 @@ abstract class RsAbstractMover : StatementUpDownMover() {
         val start = file.findElementAtIgnoreWhitespaceBefore(
             editor.document.getLineStartOffset(selectionRange.startLine)
         ) ?: return false
-        val (collectedElement, possibleStartlines) = collectedElement(start) ?: return false
-        if (!possibleStartlines.contains(selectionRange.startLine)) {
+        val (collectedElement, possibleStartLines) = collectedElement(start) ?: return false
+        if (!possibleStartLines.contains(selectionRange.startLine)) {
             return false
         }
         val range = LineRange(collectedElement)
-
         info.toMove = range
+
         val line = if (!down) {
             info.toMove.startLine - 1
         } else {
@@ -50,41 +50,46 @@ abstract class RsAbstractMover : StatementUpDownMover() {
             return info.prohibitMove()
         }
         val offset = editor.document.getLineStartOffset(line)
-        var element = if (!down) {
-            file.findElementAtIgnoreWhitespaceBefore(offset) ?: return false
+
+        var element: PsiElement? = if (!down) {
+            file.findElementAtIgnoreWhitespaceBefore(offset)
         } else {
-            file.findElementAtIgnoreWhitespaceAfter(offset) ?: return false
-        }
+            file.findElementAtIgnoreWhitespaceAfter(offset)
+        } ?: return info.prohibitMove()
+
         while (element != null && element !is RsFile) {
-            if (listOfContainers.any { it.isAssignableFrom(element.javaClass) }) {
+            if (containers.any { element?.elementType == it }) {
                 var parentOfFn = collectedElement.parent
                 while (parentOfFn !is RsFile) {
-                    if (element == parentOfFn ) {
+                    if (element == parentOfFn) {
                         return info.prohibitMove()
                     }
                     parentOfFn = parentOfFn.parent
                 }
             }
 
-            if (jumpOver.any { it.isAssignableFrom(element.javaClass) }) {
+            if (jumpOver.any { element?.elementType == it }) {
                 break
             }
-            val context = element.context ?: break
-            if (context is RsFile) {
+            val parent = element.parent
+            if (parent is RsFile) {
                 break
             }
-            element = context
+            element = parent
         }
-        val beforeRange = LineRange(element)
-        info.toMove2 = beforeRange
-        if (beforeRange.startLine == range.startLine) {
-            if (!down) {
-                info.toMove2 = LineRange(line, line + 1)
-            } else {
+
+        if (element != null) {
+            info.toMove2 = LineRange(element)
+        }
+        if (down) {
+            if (info.toMove2.startLine - 1  == range.endLine || element == collectedElement) {
                 info.toMove2 = LineRange(line - 1, line)
+            }
+        } else {
+            if (info.toMove2.startLine == range.startLine) {
+                info.toMove2 = LineRange(line, line + 1)
             }
         }
         return true
     }
-
 }
