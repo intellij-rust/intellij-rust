@@ -987,7 +987,9 @@ LitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fake Macro ::= MacroInvocation MacroArg?
+fake Macro ::= MacroInvocation MacroArg? {
+  mixin = "org.rust.lang.core.psi.ext.RsMacroImplMixin"
+}
 
 // Various kinds of macros
 ExprLikeMacro ::= MacroInvocation MacroArg
