@@ -10,17 +10,15 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 
-class RsFunctionMover : RsAbstractMover() {
+class RsStructItemMover : RsAbstractMover() {
     override fun collectedElement(element: PsiElement): Pair<PsiElement, List<Int>>? {
-        val collectedElement = element.parentOfType<RsFunction>() ?: return null
-        return collectedElement to listOf(collectedElement.line, collectedElement.fn.line).mapNotNull { it }
+        val collectedElement = element.parentOfType<RsStructItem>() ?: return null
+        return collectedElement to listOf(collectedElement.line, collectedElement.struct?.line).mapNotNull { it }
     }
 
     override val listOfContainers = listOf(
         RsFunction::class.java,
-        RsModItem::class.java,
-        RsTraitItem::class.java,
-        RsImplItem::class.java
+        RsModItem::class.java
     )
     override val jumpOver = listOf(
         RsFunction::class.java,

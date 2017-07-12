@@ -10,18 +10,18 @@ import com.intellij.openapi.actionSystem.IdeActions.ACTION_MOVE_STATEMENT_UP_ACT
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
-class RsFunctionMoverTest : RsTestBase() {
+class RsStructItemMoverTest: RsTestBase() {
 
     fun `test step up`() = moveUpTest("""
             // - main.rs
 
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
 
         """)
@@ -42,28 +42,28 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
 
         """, """
             // - main.rs
 
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
     fun `test step over function up`() = moveUpTest("""
             // - main.rs
             fn foo() {}
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             fn foo() {}
         """)
@@ -73,106 +73,58 @@ class RsFunctionMoverTest : RsTestBase() {
             fn foo() {
 
             }
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             fn foo() {
 
             }
         """)
 
-    fun `test step over function multi liner in impl up`() = moveUpTest("""
-            // - main.rs
-            struct S;
-            impl s {
-                fn foo() {
-
-                }
-                fn /*caret*/test() {
-
-                }
-            }
-        """, """
-            // - main.rs
-            struct S;
-            impl s {
-                fn test() {
-
-                }
-                fn foo() {
-
-                }
-            }
-        """)
-
-    fun `test step over function multi liner in impl down`() = moveDownTest("""
-            // - main.rs
-            struct S;
-            impl s {
-                fn /*caret*/test() {
-
-                }
-                fn foo() {
-
-                }
-            }
-        """, """
-            // - main.rs
-            struct S;
-            impl s {
-                fn foo() {
-
-                }
-                fn test() {
-
-                }
-            }
-        """)
-
     fun `test step over function down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             fn foo() {}
         """, """
             // - main.rs
             fn foo() {}
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
     fun `test step over struct up`() = moveUpTest("""
             // - main.rs
             struct S;
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             struct S;
         """)
 
     fun `test step over struct down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             struct S;
         """, """
             // - main.rs
             struct S;
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -181,13 +133,13 @@ class RsFunctionMoverTest : RsTestBase() {
             struct S {
                 test: u32
             }
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             struct S {
                 test: u32
@@ -196,8 +148,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over struct fields down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             struct S {
                 test: u32
@@ -207,8 +159,8 @@ class RsFunctionMoverTest : RsTestBase() {
             struct S {
                 test: u32
             }
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -216,13 +168,13 @@ class RsFunctionMoverTest : RsTestBase() {
             // - main.rs
             #[derive(Debug)]
             struct S;
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             #[derive(Debug)]
             struct S;
@@ -230,8 +182,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over struct with outer attr down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             #[derive(Debug)]
             struct S;
@@ -239,36 +191,36 @@ class RsFunctionMoverTest : RsTestBase() {
             // - main.rs
             #[derive(Debug)]
             struct S;
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
     fun `test step over impl up`() = moveUpTest("""
             struct S;
             impl S {}
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             struct S;
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             impl S {}
         """)
 
     fun `test step over impl down`() = moveDownTest("""
             struct S;
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             impl S {}
         """, """
             struct S;
             impl S {}
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -276,13 +228,13 @@ class RsFunctionMoverTest : RsTestBase() {
             // - main.rs
             #[test]
             trait S {}
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             #[test]
             trait S {}
@@ -290,8 +242,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over trait with attr down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             #[test]
             trait S {}
@@ -299,8 +251,8 @@ class RsFunctionMoverTest : RsTestBase() {
             // - main.rs
             #[test]
             trait S {}
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -309,13 +261,13 @@ class RsFunctionMoverTest : RsTestBase() {
             trait S {
 
             }
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             trait S {
 
@@ -324,8 +276,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over trait down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             trait S {
 
@@ -335,36 +287,36 @@ class RsFunctionMoverTest : RsTestBase() {
             trait S {
 
             }
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
     fun `test step over macro up`() = moveUpTest("""
             // - main.rs
             test!();
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             test!();
         """)
 
     fun `test step over macro down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             test!();
         """, """
             // - main.rs
             test!();
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -373,13 +325,13 @@ class RsFunctionMoverTest : RsTestBase() {
             test!{
 
             }
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             test!{
 
@@ -388,8 +340,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over macro multiline down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             test! {
 
@@ -399,8 +351,8 @@ class RsFunctionMoverTest : RsTestBase() {
             test! {
 
             }
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -409,13 +361,13 @@ class RsFunctionMoverTest : RsTestBase() {
             macro_rules! test {
 
             }
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             macro_rules! test {
 
@@ -424,8 +376,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over macro rules down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             macro_rules! test {
 
@@ -435,36 +387,36 @@ class RsFunctionMoverTest : RsTestBase() {
             macro_rules! test {
 
             }
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
     fun `test step over macro rules one line up`() = moveUpTest("""
             // - main.rs
             macro_rules! test {}
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             macro_rules! test {}
         """)
 
     fun `test step over macro rules one line down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             macro_rules! test {}
         """, """
             // - main.rs
             macro_rules! test {}
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -473,13 +425,13 @@ class RsFunctionMoverTest : RsTestBase() {
             mod S {
 
             }
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             mod S {
 
@@ -488,8 +440,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over mod down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             mod S {
 
@@ -499,8 +451,8 @@ class RsFunctionMoverTest : RsTestBase() {
             mod S {
 
             }
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -509,13 +461,13 @@ class RsFunctionMoverTest : RsTestBase() {
             use test::{
                 test
             };
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             use test::{
                 test
@@ -524,8 +476,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over use down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             use test::{
                 test
@@ -535,36 +487,36 @@ class RsFunctionMoverTest : RsTestBase() {
             use test::{
                 test
             };
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
     fun `test step over extern crate up`() = moveUpTest("""
             // - main.rs
             extern crate test;
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             extern crate test;
         """)
 
     fun `test step over extern crate down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             extern crate test;
         """, """
             // - main.rs
             extern crate test;
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
@@ -572,13 +524,13 @@ class RsFunctionMoverTest : RsTestBase() {
             // - main.rs
             #[macro_use]
             extern crate test;
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             #[macro_use]
             extern crate test;
@@ -586,8 +538,8 @@ class RsFunctionMoverTest : RsTestBase() {
 
     fun `test step over extern crate with attr down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             #[macro_use]
             extern crate test;
@@ -595,119 +547,51 @@ class RsFunctionMoverTest : RsTestBase() {
             // - main.rs
             #[macro_use]
             extern crate test;
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
     fun `test step over inner attr up`() = moveUpTest("""
             // - main.rs
             #![allow(bad_style)]
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
         """, """
             // - main.rs
-            fn test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             #![allow(bad_style)]
         """)
 
     fun `test step over inner attr down`() = moveDownTest("""
             // - main.rs
-            fn /*caret*/test() {
-
+            struct /*caret*/ A{
+                test: u32
             }
             #![allow(bad_style)]
         """, """
             // - main.rs
             #![allow(bad_style)]
-            fn test() {
-
-            }
-        """)
-
-    fun `test impl prevent step out up`() = moveUpTest("""
-            // - main.rs
-            struct S;
-            impl S {
-                fn /*caret*/test() {
-                    test!();
-                }
-            }
-        """, """
-            // - main.rs
-            struct S;
-            impl S {
-                fn test() {
-                    test!();
-                }
-            }
-        """)
-
-    fun `test impl prevent step out down`() = moveDownTest("""
-            // - main.rs
-            struct S;
-            impl S {
-                fn /*caret*/test() {
-                    test!();
-                }
-            }
-        """, """
-            // - main.rs
-            struct S;
-            impl S {
-                fn test() {
-                    test!();
-                }
-            }
-        """)
-
-    fun `test trait prevent step out up`() = moveUpTest("""
-            // - main.rs
-            trait S {
-                fn /*caret*/test() {
-                    test!();
-                }
-            }
-        """, """
-            // - main.rs
-            trait S {
-                fn test() {
-                    test!();
-                }
-            }
-        """)
-
-    fun `test trait prevent step out down`() = moveDownTest("""
-            // - main.rs
-            trait S {
-                fn /*caret*/test() {
-                    test!();
-                }
-            }
-        """, """
-            // - main.rs
-            trait S {
-                fn test() {
-                    test!();
-                }
+            struct /*caret*/ A{
+                test: u32
             }
         """)
 
     fun `test mod prevent step out up`() = moveUpTest("""
             // - main.rs
             mod s {
-                fn /*caret*/test() {
-                    test!();
+                struct /*caret*/ A{
+                    test: u32
                 }
             }
         """, """
             // - main.rs
             mod s {
-                fn test() {
-                    test!();
+                struct /*caret*/ A{
+                    test: u32
                 }
             }
         """)
@@ -715,15 +599,15 @@ class RsFunctionMoverTest : RsTestBase() {
     fun `test mod prevent step out down`() = moveDownTest("""
             // - main.rs
             mod s {
-                fn /*caret*/test() {
-                    test!();
+                struct /*caret*/ A{
+                    test: u32
                 }
             }
         """, """
             // - main.rs
             mod s {
-                fn test() {
-                    test!();
+                struct /*caret*/ A{
+                    test: u32
                 }
             }
         """)
@@ -731,15 +615,15 @@ class RsFunctionMoverTest : RsTestBase() {
     fun `test function prevent step out up`() = moveUpTest("""
             // - main.rs
             fn s() {
-                fn /*caret*/test() {
-                    test!();
+                struct /*caret*/ A{
+                    test: u32
                 }
             }
         """, """
             // - main.rs
             fn s() {
-                fn test() {
-                    test!();
+                struct /*caret*/ A{
+                    test: u32
                 }
             }
         """)
@@ -747,15 +631,15 @@ class RsFunctionMoverTest : RsTestBase() {
     fun `test function prevent step out down`() = moveDownTest("""
             // - main.rs
             fn s() {
-                fn /*caret*/test() {
-                    test!();
+                struct /*caret*/ A{
+                    test: u32
                 }
             }
         """, """
             // - main.rs
             fn s() {
-                fn test() {
-                    test!();
+                struct /*caret*/ A{
+                    test: u32
                 }
             }
         """)
