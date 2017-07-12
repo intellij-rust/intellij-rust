@@ -9,7 +9,6 @@ import com.intellij.psi.stubs.IndexSink
 import org.rust.lang.core.psi.ext.RsTypeAliasRole
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.stubs.index.RsGotoClassIndex
-import org.rust.lang.core.stubs.index.RsMacroDefinitionIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 
@@ -64,10 +63,8 @@ fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexMacroDefinition(stub: RsMacroDefinitionStub) {
-    stub.name?.let {
-        occurrence(RsMacroDefinitionIndex.KEY, it)
-    }
+fun IndexSink.indexMacroItem(stub: RsMacroItemStub) {
+    indexNamedStub(stub)
 }
 
 private fun IndexSink.indexNamedStub(stub: RsNamedStub) {

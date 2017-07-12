@@ -10,10 +10,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.RsInnerAttr
-import org.rust.lang.core.psi.RsModItem
-import org.rust.lang.core.psi.RsOuterAttr
-import org.rust.lang.core.psi.RustPsiImplUtil
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsModItemStub
 import javax.swing.Icon
 
@@ -45,9 +42,12 @@ abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
     override val isCrateRoot: Boolean = false
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsInnerAttr::class.java)
+        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsInnerAttr::class.java)
 
     override val outerAttrList: List<RsOuterAttr>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsOuterAttr::class.java)
+        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
 
 }
+
+val RsModItem.hasMacroUse: Boolean get() =
+    queryAttributes.hasAttribute("macro_use")

@@ -364,4 +364,18 @@ class RsCompletionTest : RsCompletionTestBase() {
             foo/*caret*/
         }
     """)
+
+    fun `test complete macro`() = checkSingleCompletion("foo_bar", """
+        macro_rules! foo_bar { () => () }
+        fn main() {
+            fo/*caret*/
+        }
+    """)
+
+    fun `test complete outer macro`() = checkSingleCompletion("foo_bar", """
+        macro_rules! foo_bar { () => () }
+        fo/*caret*/
+        fn main() {
+        }
+    """)
 }
