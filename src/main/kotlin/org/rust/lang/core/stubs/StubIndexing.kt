@@ -63,7 +63,7 @@ fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexMacroItem(stub: RsMacroItemStub) {
+fun IndexSink.indexMacroDefinition(stub: RsMacroDefinitionStub) {
     indexNamedStub(stub)
 }
 

@@ -12,10 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.inferDeclarationType
 import org.rust.lang.core.types.ty.TyUnknown
 
@@ -91,8 +88,7 @@ fun RsCompositeElement.createLookupElement(scopeName: String): LookupElement {
                 }
             })
 
-        is RsMacroPatternSimpleMatching -> base
-            .withTypeText(this.identifier.text)
+        is RsMacroBinding -> base.withTypeText(fragmentSpecifier)
 
         is RsMacroItem -> base
             .withInsertHandler { context: InsertionContext, _: LookupElement ->

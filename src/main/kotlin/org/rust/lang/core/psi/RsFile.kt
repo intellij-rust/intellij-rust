@@ -100,7 +100,7 @@ class RsFile(
     override val modDeclItemList: List<RsModDeclItem> get() = findItems(MOD_DECL_ITEM)
     override val externCrateItemList: List<RsExternCrateItem> get() = findItems(EXTERN_CRATE_ITEM)
     override val foreignModItemList: List<RsForeignModItem> get() = findItems(FOREIGN_MOD_ITEM)
-    override val macroItemList: List<RsMacroItem> get() = findItems(MACRO_ITEM)
+    override val macroDefinitionList: List<RsMacroDefinition> get() = findItems(MACRO_DEFINITION)
 
     private inline fun <reified T : RsCompositeElement> findItems(elementType: IElementType): List<T> {
         val stub = stub

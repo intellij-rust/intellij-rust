@@ -132,9 +132,10 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
         //== macros
         .betweenInside(IDENTIFIER, EXCL, MACRO_INVOCATION).spaces(0)
+        .betweenInside(IDENTIFIER, EXCL, MACRO_DEFINITION).spaces(0)
         .betweenInside(MACRO_INVOCATION, IDENTIFIER, MACRO_DEFINITION).spaces(1)
         .betweenInside(IDENTIFIER, MACRO_ARG, MACRO_DEFINITION).spaces(1)
-        .betweenInside(IDENTIFIER, MACRO_DEFINITION_PATTERN_LIST, MACRO_DEFINITION).spaces(1)
+        .betweenInside(IDENTIFIER, MACRO_DEFINITION_BODY, MACRO_DEFINITION).spaces(1)
 
         //== rules with very large area of application
         .around(NO_SPACE_AROUND_OPS).spaces(0)

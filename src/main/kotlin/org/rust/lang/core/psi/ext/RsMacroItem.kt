@@ -29,5 +29,3 @@ abstract class RsMacroItemImplMixin : RsStubbedNamedElementImpl<RsMacroItemStub>
     }
 }
 
-val RsMacroItem.hasMacroExport: Boolean get() =
-    queryAttributes.hasAttribute("macro_export")

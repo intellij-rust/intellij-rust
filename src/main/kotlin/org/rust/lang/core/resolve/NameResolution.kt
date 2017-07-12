@@ -296,9 +296,9 @@ fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoW
     return el to pkg
 }
 
-fun processMacroSimpleResolveVariants(element: RsMacroBodySimpleMatching, processor: RsResolveProcessor): Boolean {
-    val definition = element.parentOfType<RsMacroDefinitionPattern>() ?: return false
-    val simple = definition.macroPattern.descendantsOfType<RsMacroPatternSimpleMatching>()
+fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolveProcessor): Boolean {
+    val definition = ref.parentOfType<RsMacroDefinitionCase>() ?: return false
+    val simple = definition.macroPattern.descendantsOfType<RsMacroBinding>()
         .toList()
 
     return simple.any { processor(it) }
@@ -311,8 +311,8 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
     return processAll(traits, processor)
 }
 
-fun processMacroReferenceVariants(referenceElement: RsReferenceElement, processor: RsResolveProcessor): Boolean {
-    walkUp(referenceElement, { false }) { cameFrom, scope ->
+fun processMacroInvocationVariants(invocation: RsMacroInvocation, processor: RsResolveProcessor): Boolean {
+    walkUp(invocation, { false }) { cameFrom, scope ->
         if (processMacroDeclarations(scope, cameFrom, processor)) return@walkUp true
         false
     }
@@ -329,14 +329,16 @@ fun processMacroDeclarations(scope: RsCompositeElement, cameFrom: PsiElement, pr
     return false
 }
 
-val RsFile.exportedCrateMacros: List<RsMacroItem>
+val RsFile.exportedCrateMacros: List<RsMacroDefinition>
     get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
         val macros = exportedCrateMacros(this, true)
         CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
     })
 
-private fun exportedCrateMacros(scope: RsItemsOwner, need_export: Boolean): List<RsMacroItem> {
-    val macros = scope.macroItemList.filter { !need_export || it.hasMacroExport }.toMutableList()
+private fun exportedCrateMacros(scope: RsItemsOwner, need_export: Boolean): List<RsMacroDefinition> {
+    val macros: MutableList<RsMacroDefinition> = scope.macroDefinitionList
+        .filter { !need_export || it.hasMacroExport }
+        .toMutableList()
 
     if (need_export) {
         for (crate in scope.externCrateItemList) {
@@ -371,12 +373,12 @@ private fun exportedCrateMacros(scope: RsItemsOwner, need_export: Boolean): List
 private fun processItemMacroDeclarations(
     scope: RsItemsOwner,
     processor: RsResolveProcessor,
-    add_std_crate: Boolean = false
+    addStdCrate: Boolean = false
 ): Boolean {
     val macros = exportedCrateMacros(scope, false)
     if (processAll(macros, processor)) return true
 
-    if (add_std_crate) {
+    if (addStdCrate) {
         val stdCrate = scope.containingCargoPackage?.findCrateByName("std")?.crateRoot
         val prelude = scope.project.getPsiFor(stdCrate)?.rustMod
         if (prelude is RsFile && processAll(prelude.exportedCrateMacros, processor)) return true

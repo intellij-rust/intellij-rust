@@ -135,12 +135,12 @@ class RsPsiPatternTest : RsTestBase() {
         extern crate bar;
     """, RsPsiPattern.onExternCrate)
 
-    fun testOnMacroAttr() = testPattern("""
+    fun `test onMacroDefinition`() = testPattern("""
         #[foo]
         //^
         macro_rules! bar {
         }
-    """, RsPsiPattern.onMacro)
+    """, RsPsiPattern.onMacroDefinition)
 
     fun testOnModAttr() = testPattern("""
         #[foo]

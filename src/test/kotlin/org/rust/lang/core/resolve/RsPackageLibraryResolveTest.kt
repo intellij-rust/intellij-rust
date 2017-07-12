@@ -12,7 +12,7 @@ import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
-    fun testLibraryAsCrate() = stubOnlyResolve("""
+    fun `test library as crate`() = stubOnlyResolve("""
     //- main.rs
         extern crate my_lib;
 
@@ -24,7 +24,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub fn hello() {}
     """)
 
-    fun testCrateAlias() = stubOnlyResolve("""
+    fun `test crate alias`() = stubOnlyResolve("""
     //- main.rs
         extern crate my_lib as other_name;
 
@@ -37,7 +37,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     """)
 
 
-    fun testMacroRules() = stubOnlyResolve("""
+    fun `test macro rules`() = stubOnlyResolve("""
     //- main.rs
         #[macro_use]
         extern crate my_lib;

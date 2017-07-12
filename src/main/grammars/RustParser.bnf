@@ -234,6 +234,7 @@ private Item ::= Constant
                | EnumItem
                | UseItem
                | ExternCrateItem
+               | MacroDefinition
                | MacroItem
 
 private Item_with_recover ::= !('}' | <<eof>>) Item {
@@ -987,6 +988,49 @@ LitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+MacroDefinition ::= AttrsAndVis "macro_rules" '!' identifier MacroDefinitionBody {
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsMacroDefinitionImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsMacroDefinitionStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  pin = 2
+}
+
+MacroDefinitionBody ::=
+  '(' MacroDefinitionCases ')' ';'
+| '[' MacroDefinitionCases ']' ';'
+| '{' MacroDefinitionCases '}'
+{ pin = 1 }
+
+private MacroDefinitionCases ::= (MacroDefinitionCase ';'?)*
+
+MacroDefinitionCase ::= MacroPattern '=>' MacroExpansion
+
+MacroPattern ::= <<any_braces MacroPatternContents >>
+private MacroPatternContents ::=
+  (MacroPattern | MacroBinding | MacroBindingGroup | <<unpairedToken>>)*
+
+MacroBinding ::= '$' <<macroIdentifier>> ':' identifier {
+  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMacroBindingImplMixin"
+}
+MacroBindingGroup ::= '$' '(' MacroPatternContents ')'
+
+
+MacroExpansion ::= <<any_braces MacroExpansionContents>>
+
+private MacroExpansionContents ::=
+  (MacroExpansion | MacroReference | MacroExpansionReferenceGroup | <<unpairedToken>>)*
+
+MacroReference ::= '$' <<macroIdentifier>> {
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMacroReferenceImplMixin"
+}
+MacroExpansionReferenceGroup ::= '$' '(' MacroExpansionContents ')'
+
+
 fake Macro ::= MacroInvocation MacroArg?
 
 // Various kinds of macros
@@ -1001,48 +1045,6 @@ AssertEqMacro ::= AssertEqMacroInvocation AssertEqMacroArgs { pin = 1 }
 VecMacro ::= VecMacroInvocation VecMacroArgs { pin = 1 }
 LogMacro ::= LogMacroInvocation LogMacroArgs { pin = 1 }
 
-MacroDefinition ::= MacroRulesInvocation identifier MacroDefinitionPatternList {
-  pin = 1
-  extends = ItemLikeMacro
-}
-
-MacroDefinitionPatternList ::= <<macro_definition_delim (MacroDefinitionPattern ';'?)* >>
-
-private meta macro_definition_delim ::= '(' <<param>> ')' ';'
-                                      | '{' <<param>> '}'
-                                      | '[' <<param>> ']' ';' { pin = 1 }
-MacroDefinitionPattern ::= MacroPattern '=>' MacroBody
-MacroBinding ::= <<macroIdentifier>>
-
-MacroPattern ::= '(' MacroMatchingTree* ')'
-               | '{' MacroMatchingTree* '}'
-               | '[' MacroMatchingTree* ']'
-MacroMatchingTree ::=  '(' MacroMatchingTree* ')'
-                     | '{' MacroMatchingTree* '}'
-                     | '[' MacroMatchingTree* ']'
-                     | (MacroPatternSimpleMatching | MacroPatternComplexMatching)+
-                     | << placeholderMacroToken >>+
-
-MacroPatternComplexMatching ::= '$' '(' MacroMatchingTree* ')' <<tokenAfterComplexPattern>>* ('*' | '+')
-MacroPatternSimpleMatching ::= '$' MacroBinding ':' identifier {
-  implements = [ "org.rust.lang.core.psi.ext.RsNamedElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsMacroPatternSimpleMatchingImplMixin"
-}
-
-MacroBody ::= '(' MacroTokenTree* ')'
-            | '{' MacroTokenTree* '}'
-            | '[' MacroTokenTree* ']'
-MacroTokenTree ::= '(' MacroTokenTree* ')'
-                 | '{' MacroTokenTree* '}'
-                 | '[' MacroTokenTree* ']'
-                 | (MacroBodyComplexMatching | MacroBodySimpleMatching) +
-                 | << placeholderMacroToken >> +
-MacroBodyComplexMatching ::= '$' '(' MacroTokenTree* ')' <<tokenAfterComplexPattern>>* ('*' | '+')
-MacroBodySimpleMatching ::= '$' (MacroBinding | "crate") {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsMacroBodySimpleMatchingImplMixin"
-}
-
 private BuildInMacro ::= TryMacro
                        | FormatLikeMacro
                        | AssertMacro
@@ -1051,10 +1053,6 @@ private BuildInMacro ::= TryMacro
                        | LogMacro
 
 private ZzMacroCall ::= BuildInMacro | ExprLikeMacro { pin(".*") = MacroInvocation }
-private ZzMacroItem ::= MacroDefinition | ItemLikeMacro {
-  pin(".*") = MacroInvocation
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-}
 
 // Invocations
 MacroInvocation ::= identifier '!' identifier? {
@@ -1065,7 +1063,6 @@ MacroInvocation ::= identifier '!' identifier? {
 TryMacroInvocation ::= "try" '!'
 VecMacroInvocation ::= "vec" '!'
 LogMacroInvocation ::= ( "trace" | "log" | "warn" | "debug" | "error" | "info" ) '!'
-MacroRulesInvocation ::= "macro_rules" '!'
 
 // https://doc.rust-lang.org/std/fmt/
 FormatLikeMacroInvocation ::= ( "format"
@@ -1084,7 +1081,7 @@ AssertEqMacroInvocation ::= ( "assert_eq"
                             | "debug_assert_ne") '!'
 
 // Arguments
-MacroArg ::= <<macro_args_delim TokenTrees>>
+MacroArg ::= <<any_braces TokenTrees>>
 
 ItemMacroArg ::= '(' TokenTrees ')' ';'
                | '{' TokenTrees '}'
@@ -1093,32 +1090,34 @@ ItemMacroArg ::= '(' TokenTrees ')' ';'
   elementType = MacroArg
 }
 
-TryMacroArgs ::= <<macro_args_delim AnyExpr>>
+TryMacroArgs ::= <<any_braces AnyExpr>>
 VecMacroArgs ::= '[' ArrayInitializer ']' | '(' ArrayInitializer ')' | '{' ArrayInitializer '}' {
   pin = 1
 }
 
 private ZzLogMacroArgs ::= ('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?
-LogMacroArgs ::=  <<macro_args_delim ZzLogMacroArgs>>
+LogMacroArgs ::=  <<any_braces ZzLogMacroArgs>>
 
 private ZzAssertMacroArgs ::= AnyExpr [ ',' <<comma_separated_list FormatMacroArg>> ]
-AssertMacroArgs ::= <<macro_args_delim ZzAssertMacroArgs>>
+AssertMacroArgs ::= <<any_braces ZzAssertMacroArgs>>
 
 private ZzAssertEqMacroArgs ::= AnyExpr ',' AnyExpr [ ',' <<comma_separated_list FormatMacroArg>> ]
-AssertEqMacroArgs ::= <<macro_args_delim ZzAssertEqMacroArgs>>
+AssertEqMacroArgs ::= <<any_braces ZzAssertEqMacroArgs>>
 
-FormatMacroArgs ::= <<macro_args_delim [ <<comma_separated_list FormatMacroArg>> ] >>
+FormatMacroArgs ::= <<any_braces [ <<comma_separated_list FormatMacroArg>> ] >>
 FormatMacroArg ::= [ identifier '=' ] AnyExpr
 
-private meta macro_args_delim ::= '(' <<param>> ')'
-                                | '{' <<param>> '}'
-                                | '[' <<param>> ']' { pin = 1 }
+private meta any_braces ::=
+  '(' <<param>> ')'
+| '{' <<param>> '}'
+| '[' <<param>> ']'
+{ pin = 1 }
 
 // Macro wrappers
 MacroExpr ::= ZzMacroCall
 PatMacro  ::= ZzMacroCall
 // TODO: Maybe implement item-related stuff for this production?
-MacroItem ::= AttrsAndVis ZzMacroItem {
+MacroItem ::= AttrsAndVis ItemLikeMacro {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsNamedElement" ]
@@ -1126,7 +1125,10 @@ MacroItem ::= AttrsAndVis ZzMacroItem {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   mixin = "org.rust.lang.core.psi.ext.RsMacroItemImplMixin"
 }
-ImplMacroMember ::= ZzMacroItem
+ImplMacroMember ::= ItemLikeMacro {
+  pin(".*") = MacroInvocation
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+}
 
 private TokenTrees ::= TokenTree*
 
