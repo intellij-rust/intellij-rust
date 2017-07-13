@@ -314,16 +314,34 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
     return processAll(traits, processor)
 }
 
-fun processMacroCallVariants(invocation: RsMacroCall, processor: RsResolveProcessor): Boolean {
-    walkUp(invocation, { false }) { cameFrom, scope ->
-        if (processMacroDeclarations(scope, cameFrom, processor)) return@walkUp true
+fun processMacroCallVariants(invocation: PsiElement, processor: RsResolveProcessor): Boolean {
+    macroWalkUp(invocation, { false }) { scope ->
+        if (processMacroDeclarations(scope, processor)) return@macroWalkUp true
         false
     }
     return false
 }
 
-fun processMacroDeclarations(scope: RsCompositeElement, cameFrom: PsiElement, processor: RsResolveProcessor): Boolean {
-    check(cameFrom.context == scope)
+fun macroWalkUp(
+    start: PsiElement,
+    stopAfter: (RsCompositeElement) -> Boolean,
+    processor: (scope: RsCompositeElement) -> Boolean
+): Boolean {
+    var scope = start.context as RsCompositeElement?
+    while (scope != null) {
+        if (processor(scope)) return true
+        if (stopAfter(scope)) break
+        val cameFrom = scope
+        scope = scope.context as RsCompositeElement?
+        if (scope == null && cameFrom is RsFile) {
+            scope = cameFrom.`super`
+        }
+    }
+
+    return false
+}
+
+fun processMacroDeclarations(scope: RsCompositeElement, processor: RsResolveProcessor): Boolean {
     when (scope) {
         is RsFile -> if (processItemMacroDeclarations(scope, processor, scope.isCrateRoot)) return true
         is RsMod -> if (processItemMacroDeclarations(scope, processor)) return true

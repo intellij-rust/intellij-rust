@@ -18,15 +18,14 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPathExpr
-import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.resolve.RsResolveProcessor
-import org.rust.lang.core.resolve.processMacroDeclarations
+import org.rust.lang.core.resolve.processMacroCallVariants
 
 object RsMacroDefinitionCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
         val element = parameters.position
-        val suggestions = collectCompletionVariants { processMacroReferenceVariants(element, it) }.toList()
+        val suggestions = collectCompletionVariants { processMacroCallVariants(element, it) }.toList()
         result.addAllElements(suggestions)
     }
 
@@ -40,32 +39,6 @@ object RsMacroDefinitionCompletionProvider : CompletionProvider<CompletionParame
             }))
             .withLanguage(RsLanguage)
     }
-}
-
-fun processMacroReferenceVariants(referenceElement: PsiElement, processor: RsResolveProcessor): Boolean {
-    walkUp(referenceElement, { false }) { cameFrom, scope ->
-        if (processMacroDeclarations(scope, cameFrom, processor)) return@walkUp true
-        false
-    }
-    return false
-}
-
-fun walkUp(
-    start: PsiElement,
-    stopAfter: (RsCompositeElement) -> Boolean,
-    processor: (cameFrom: PsiElement, scope: RsCompositeElement) -> Boolean
-): Boolean {
-
-    var cameFrom: PsiElement = start
-    var scope = start.context as RsCompositeElement?
-    while (scope != null) {
-        if (processor(cameFrom, scope)) return true
-        if (stopAfter(scope)) break
-        cameFrom = scope
-        scope = scope.context as RsCompositeElement?
-    }
-
-    return false
 }
 
 fun collectCompletionVariants(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {

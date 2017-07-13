@@ -268,4 +268,14 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             }
         }
     """)
+
+    fun `test resolve macro multi file`() = stubOnlyResolve("""
+    //- b.rs
+        foo_bar!();
+        //^ main.rs
+    //- main.rs
+        macro_rules! foo_bar { () => () }
+        mod b;
+        fn main() {}
+    """)
 }
