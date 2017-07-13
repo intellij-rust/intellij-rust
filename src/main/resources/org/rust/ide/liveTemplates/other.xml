@@ -37,7 +37,18 @@
         </context>
     </template>
 
-        <template name="ifl" description="if let ... statement" toReformat="true" toShortenFQNames="true"
+    <template name="match" description="match" toReformat="true" toShortenFQNames="true"
+              value="match $EXPRESSION$ {&#10;    $CASE1$ =&gt; $RETURN_EXPRESSION$,&#10;    $CASE2$ =&gt; $END$&#10;}">
+        <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="CASE1" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="RETURN_EXPRESSION" expression="" defaultValue="" alwaysStopAt="true" />
+        <variable name="CASE2" expression="" defaultValue="" alwaysStopAt="true" />
+        <context>
+            <option name="RUST_STATEMENT" value="true" />
+        </context>
+    </template>
+
+    <template name="ifl" description="if let ... statement" toReformat="true" toShortenFQNames="true"
               value="if let $PATTERN$ = $EXPRESSION$ {&#10;    $END$&#10;}">
         <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
         <variable name="PATTERN" expression="" defaultValue="" alwaysStopAt="true"/>
