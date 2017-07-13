@@ -28,7 +28,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? = when (element) {
         is RsPatBinding -> generateDoc(element)
         is RsTypeParameter -> generateDoc(element)
-        is RsFunction -> element.header(false) + element.signature(false)
+        is RsTypeBearingItemElement -> element.header(false) + element.signature(false)
         is RsNamedElement -> element.presentationInfo?.quickDocumentationText
         else -> null
     }
@@ -57,32 +57,17 @@ private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
     val rawLines = when (this) {
         is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
         is RsFunction -> when (role) {
-            FREE, FOREIGN -> listOfNotNull(presentableQualifiedName?.removeSuffix("::$name"))
-            IMPL_METHOD -> {
-                val mod = presentableQualifiedName?.removeSuffix("::$name")
-                if (mod != null) {
-                    val lines = mutableListOf(mod)
-                    val parent = parent as? RsImplItem
-                    val typeRef = parent?.typeReference
-                    if (typeRef != null) {
-                        val traitRef = parent.traitRef
-                        val traitText = if (traitRef != null) "${traitRef.text} for " else ""
-                        val typeParams = parent.typeParameterList?.text ?: ""
-                        lines += "impl$typeParams $traitText${typeRef.text}".escaped
-                        lines += parent.whereClause?.documentationText.orEmpty()
-                    }
-                    lines
-                } else emptyList()
-            }
-            TRAIT_METHOD -> {
-                val parent = parent as? RsTraitItem
-                val name = parent?.presentableQualifiedName
-                if (name != null) {
-                    val typeParams = parent.typeParameterList?.text?.escaped ?: ""
-                    val lines = mutableListOf("$name$typeParams")
-                    lines += parent.whereClause?.documentationText.orEmpty()
-                    lines
-                } else emptyList()
+            FREE, FOREIGN -> listOfNotNull(presentableQualifiedModName)
+            IMPL_METHOD -> listOfNotNull(presentableQualifiedModName) + (parent as? RsImplItem)?.declarationText.orEmpty()
+            TRAIT_METHOD -> (parent as? RsTraitItem)?.declarationText.orEmpty()
+        }
+        is RsStructOrEnumItemElement, is RsTraitItem -> listOfNotNull(presentableQualifiedModName)
+        is RsTypeAlias -> {
+            val parent = parent
+            when (parent) {
+                is RsImplItem -> listOfNotNull(presentableQualifiedModName) + parent.declarationText
+                is RsTraitItem -> parent.declarationText
+                else -> listOfNotNull(presentableQualifiedModName)
             }
         }
         else -> listOfNotNull(presentableQualifiedName)
@@ -100,39 +85,100 @@ private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
     }
 }
 
-private val RsWhereClause.documentationText: List<String> get() =
-    listOf("where") + wherePredList.map { "&nbsp;&nbsp;&nbsp;&nbsp;${it.text.escaped}," }
-
 private fun RsDocAndAttributeOwner.signature(usePreTag: Boolean): String {
-    val rawSignature = when (this) {
+    val rawLines = when (this) {
+        is RsFieldDecl -> listOfNotNull(presentationInfo?.signatureText)
         is RsFunction -> {
             val shortSignature = presentationInfo?.shortSignatureText
             if (shortSignature != null) {
                 val signatureParts = mutableListOf<String>()
-                if (isPublic) {
-                    signatureParts += "pub"
-                }
-                if (isConst) {
-                    signatureParts += "const"
-                }
-                if (isUnsafe) {
-                    signatureParts += "unsafe"
-                }
-                if (isExtern) {
-                    signatureParts += "extern"
-                    abiName?.let { signatureParts += it }
-                }
-                signatureParts += "fn"
+                signatureParts += declarationModifiers
                 signatureParts += shortSignature
-                signatureParts.joinToString(" ")
-            } else null
+                listOf(signatureParts.joinToString(" "))
+            } else emptyList()
         }
-        is RsFieldDecl -> presentationInfo?.signatureText
-        else -> null
+        // All these types extend RsTypeBearingItemElement and RsGenericDeclaration interfaces
+        // so all casts are safe
+        is RsStructOrEnumItemElement, is RsTraitItem, is RsTypeAlias -> {
+            val name = name
+            if (name != null) {
+                val signatureParts = mutableListOf<String>()
+                signatureParts += (this as RsTypeBearingItemElement).declarationModifiers
+                this as RsGenericDeclaration
+                signatureParts += "<b>$name</b>${typeParameterList?.text?.escaped ?: ""}"
+                val typeAliasValue = (this as? RsTypeAlias)?.typeReference
+                if (typeAliasValue != null) {
+                    signatureParts += "="
+                    signatureParts += typeAliasValue.text.escaped
+                }
+
+                val lines = mutableListOf(signatureParts.joinToString(" "))
+                lines += whereClause?.documentationText.orEmpty()
+                lines
+            } else emptyList()
+        }
+        else -> emptyList()
     }
     val startTag = if (usePreTag) "<pre>" else ""
     val endTag = if (usePreTag) "</pre>" else ""
-    return if (rawSignature != null) "$startTag$rawSignature$endTag\n" else ""
+    return if (rawLines.isNotEmpty()) rawLines.joinToString("<br>", startTag, "$endTag\n") else ""
 }
+
+private val RsImplItem.declarationText: List<String> get() {
+    val typeRef = typeReference ?: return emptyList()
+    val traitRef = traitRef
+    val traitText = if (traitRef != null) "${traitRef.text} for " else ""
+    val typeParams = typeParameterList?.text ?: ""
+    val lines = mutableListOf("impl$typeParams $traitText${typeRef.text}".escaped)
+    lines += whereClause?.documentationText.orEmpty()
+    return lines
+}
+
+private val RsTraitItem.declarationText: List<String> get() {
+    val name = presentableQualifiedName ?: return emptyList()
+    val typeParams = typeParameterList?.text?.escaped ?: ""
+    val lines = mutableListOf("$name$typeParams")
+    lines += whereClause?.documentationText.orEmpty()
+    return lines
+}
+
+private val RsTypeBearingItemElement.declarationModifiers: List<String> get() {
+    val modifiers = mutableListOf<String>()
+    if (isPublic) {
+        modifiers += "pub"
+    }
+    when (this) {
+        is RsFunction -> {
+            if (isConst) {
+                modifiers += "const"
+            }
+            if (isUnsafe) {
+                modifiers += "unsafe"
+            }
+            if (isExtern) {
+                modifiers += "extern"
+                abiName?.let { modifiers += it }
+            }
+            modifiers += "fn"
+        }
+        is RsStructItem -> modifiers += "struct"
+        is RsEnumItem -> modifiers += "enum"
+        is RsTypeAlias -> modifiers += "type"
+        is RsTraitItem -> {
+            if (isUnsafe) {
+                modifiers += "unsafe"
+            }
+            modifiers += "trait"
+        }
+        else -> error("unexpected type $javaClass")
+    }
+    return modifiers
+}
+
+private val RsWhereClause.documentationText: List<String> get() =
+    listOf("where") + wherePredList.map { "&nbsp;&nbsp;&nbsp;&nbsp;${it.text.escaped}," }
+
+private val RsDocAndAttributeOwner.presentableQualifiedModName: String? get() =
+    presentableQualifiedName?.removeSuffix("::$name")
 
 private inline fun pre(block: () -> String?): String? = block()?.let { "<pre>$it</pre>" }

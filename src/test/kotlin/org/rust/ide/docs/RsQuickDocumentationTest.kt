@@ -189,6 +189,78 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         Inner comment</p>
     """)
 
+    fun `test struct`() = doTest("""
+        struct Foo(i32);
+              //^
+    """, """
+        <pre>test_package</pre>
+        <pre>struct <b>Foo</b></pre>
+    """)
+
+    fun `test pub struct`() = doTest("""
+        pub struct Foo(i32);
+                  //^
+    """, """
+        <pre>test_package</pre>
+        <pre>pub struct <b>Foo</b></pre>
+    """)
+
+    fun `test generic struct`() = doTest("""
+        struct Foo<T>(T);
+              //^
+    """, """
+        <pre>test_package</pre>
+        <pre>struct <b>Foo</b>&lt;T&gt;</pre>
+    """)
+
+    fun `test generic struct with where clause`() = doTest("""
+        struct Foo<T>(T) where T: Into<String>;
+              //^
+    """, """
+        <pre>test_package</pre>
+        <pre>struct <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+    """)
+
+    fun `test enum`() = doTest("""
+        enum Foo {
+            //^
+            Bar
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>enum <b>Foo</b></pre>
+    """)
+
+    fun `test pub enum`() = doTest("""
+        pub enum Foo {
+               //^
+            Bar
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>pub enum <b>Foo</b></pre>
+    """)
+
+    fun `test generic enum`() = doTest("""
+        enum Foo<T> {
+            //^
+            Bar(T)
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>enum <b>Foo</b>&lt;T&gt;</pre>
+    """)
+
+    fun `test generic enum with where clause`() = doTest("""
+        enum Foo<T> where T: Into<String> {
+             //^
+            Bar(T)
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>enum <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+    """)
+
     fun testEnumVariant() = doTest("""
         enum Foo {
             /// I am a well documented enum variant
@@ -205,14 +277,162 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <p>I am a well documented enum variant</p>
     """)
 
-    fun testTraitAssocType() = doTest("""
+    fun `test trait`() = doTest("""
+        trait Foo {
+            //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>trait <b>Foo</b></pre>
+    """)
+
+    fun `test pub trait`() = doTest("""
+        pub trait Foo {
+                 //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>pub trait <b>Foo</b></pre>
+    """)
+
+    fun `test unsafe trait`() = doTest("""
+        unsafe trait Foo {
+                    //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>unsafe trait <b>Foo</b></pre>
+    """)
+
+    fun `test generic trait`() = doTest("""
+        trait Foo<T> {
+             //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>trait <b>Foo</b>&lt;T&gt;</pre>
+    """)
+
+    fun `test generic trait with where clause`() = doTest("""
+        trait Foo<T> where T: Into<String> {
+             //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>trait <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+    """)
+
+    fun `test type alias`() = doTest("""
+        type Foo = Result<(), i32>;
+            //^
+    """, """
+        <pre>test_package</pre>
+        <pre>type <b>Foo</b> = Result&lt;(), i32&gt;</pre>
+    """)
+
+    fun `test pub type alias`() = doTest("""
+        pub type Foo = Result<(), i32>;
+                //^
+    """, """
+        <pre>test_package</pre>
+        <pre>pub type <b>Foo</b> = Result&lt;(), i32&gt;</pre>
+    """)
+
+    fun `test generic type alias`() = doTest("""
+        type Foo<T> = Result<T, i32>;
+            //^
+    """, """
+        <pre>test_package</pre>
+        <pre>type <b>Foo</b>&lt;T&gt; = Result&lt;T, i32&gt;</pre>
+    """)
+
+    fun `test generic type alias with where clause`() = doTest("""
+        type Foo<T> where T: Into<String> = Result<T, i32>;
+             //^
+    """, """
+        <pre>test_package</pre>
+        <pre>type <b>Foo</b>&lt;T&gt; = Result&lt;T, i32&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+    """)
+
+    fun `test impl assoc type`() = doTest("""
+        trait Trait {
+            type AssocType;
+        }
+        struct Foo(i32);
+        impl Trait for Foo {
+            type AssocType = Option<i32>;
+                //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>impl Trait for Foo</pre>
+        <pre>type <b>AssocType</b> = Option&lt;i32&gt;</pre>
+    """)
+
+    fun `test generic impl assoc type`() = doTest("""
+        trait Trait {
+            type AssocType;
+        }
+        struct Foo<T>(T);
+        impl<T> Trait for Foo<T> {
+            type AssocType = Option<T>;
+                //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>impl&lt;T&gt; Trait for Foo&lt;T&gt;</pre>
+        <pre>type <b>AssocType</b> = Option&lt;T&gt;</pre>
+    """)
+
+    fun `test generic impl assoc type with where clause`() = doTest("""
+        trait Trait {
+            type AssocType;
+        }
+        struct Foo<T>(T);
+        impl<T> Trait for Foo<T> where T: Into<String> {
+            type AssocType = Option<T>;
+                //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>impl&lt;T&gt; Trait for Foo&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+        <pre>type <b>AssocType</b> = Option&lt;T&gt;</pre>
+    """)
+
+    fun `test trait assoc type`() = doTest("""
         trait MyTrait {
             /// Documented
             type Awesome;
                //^
         }
     """, """
-        <pre>test_package::Awesome</pre>
+        <pre>test_package::MyTrait</pre>
+        <pre>type <b>Awesome</b></pre>
+        <p>Documented</p>
+    """)
+
+    fun `test generic trait assoc type`() = doTest("""
+        trait MyTrait<T> {
+            /// Documented
+            type Awesome;
+               //^
+        }
+    """, """
+        <pre>test_package::MyTrait&lt;T&gt;</pre>
+        <pre>type <b>Awesome</b></pre>
+        <p>Documented</p>
+    """)
+
+    fun `test generic trait assoc type with where clause`() = doTest("""
+        trait MyTrait<T> where T: Into<String> {
+            /// Documented
+            type Awesome;
+               //^
+        }
+    """, """
+        <pre>test_package::MyTrait&lt;T&gt;</pre>
+        <pre>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+        <pre>type <b>Awesome</b></pre>
         <p>Documented</p>
     """)
 
@@ -429,7 +649,8 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         impl <T> AsRef<T> {}
                   //^
     """, """
-        <pre>test_package::AsRef</pre>
+        <pre>test_package</pre>
+        <pre>pub trait <b>AsRef</b>&lt;T: ?Sized&gt;</pre>
         <p>A cheap, reference-to-reference conversion.</p><p><code>AsRef</code> is very similar to, but different than, <code>Borrow</code>. See
         <a href="../../book/borrow-and-asref.html">the book</a> for more.</p><p><strong>Note: this trait must not fail</strong>. If the conversion can fail, use a dedicated method which
         returns an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p><h1>Examples</h1><p>Both <code>String</code> and <code>&amp;str</code> implement <code>AsRef&lt;str&gt;</code>:</p><pre><code>fn is_hello&lt;T: AsRef&lt;str&gt;&gt;(s: T) {

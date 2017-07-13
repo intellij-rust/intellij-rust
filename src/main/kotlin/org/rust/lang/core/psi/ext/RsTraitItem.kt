@@ -20,6 +20,11 @@ import org.rust.lang.utils.filterQuery
 import org.rust.lang.utils.mapQuery
 import javax.swing.Icon
 
+val RsTraitItem.isUnsafe: Boolean get() {
+    val stub = stub
+    return stub?.isUnsafe ?: (unsafe != null)
+}
+
 val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {
     val result = mutableSetOf<BoundElement<RsTraitItem>>()
     val visited = mutableSetOf<RsTraitItem>()

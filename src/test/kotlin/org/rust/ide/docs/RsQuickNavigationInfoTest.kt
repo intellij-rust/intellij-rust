@@ -265,15 +265,32 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         use self::Foo;
                   //^
     """, """
-        pub struct <b>Foo</b> [main.rs]
+        test_package
+        pub struct <b>Foo</b>
     """)
 
-    fun `test struct with tuple fields`() = doTest("""
-        pub struct Foo(a: bool);
-        use self::Foo;
+    fun `test pub struct`() = doTest("""
+        pub struct Foo(i32);
                   //^
     """, """
-        pub struct <b>Foo</b>(a: bool) [main.rs]
+        test_package
+        pub struct <b>Foo</b>
+    """)
+
+    fun `test generic struct`() = doTest("""
+        struct Foo<T>(T);
+              //^
+    """, """
+        test_package
+        struct <b>Foo</b>&lt;T&gt;
+    """)
+
+    fun `test generic struct with where clause`() = doTest("""
+        struct Foo<T>(T) where T: Into<String>;
+              //^
+    """, """
+        test_package
+        struct <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
     """)
 
     fun `test struct field`() = doTest("""
@@ -291,7 +308,38 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         use self::Foo;
                   //^
     """, """
-        enum <b>Foo</b> [main.rs]
+        test_package
+        enum <b>Foo</b>
+    """)
+
+    fun `test pub enum`() = doTest("""
+        pub enum Foo {
+               //^
+            Bar
+        }
+    """, """
+        test_package
+        pub enum <b>Foo</b>
+    """)
+
+    fun `test generic enum`() = doTest("""
+        enum Foo<T> {
+            //^
+            Bar(T)
+        }
+    """, """
+        test_package
+        enum <b>Foo</b>&lt;T&gt;
+    """)
+
+    fun `test generic enum with where clause`() = doTest("""
+        enum Foo<T> where T: Into<String> {
+             //^
+            Bar(T)
+        }
+    """, """
+        test_package
+        enum <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
     """)
 
     fun `test enum variant`() = doTest("""
@@ -303,11 +351,48 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     """)
 
     fun `test trait`() = doTest("""
-        pub trait Foo { /* no methods */ }
+        trait Foo { /* no methods */ }
         impl Foo for u32 {}
              //^
     """, """
-        pub trait <b>Foo</b> [main.rs]
+        test_package
+        trait <b>Foo</b>
+    """)
+
+    fun `test pub trait`() = doTest("""
+        pub trait Foo {
+                 //^
+        }
+    """, """
+        test_package
+        pub trait <b>Foo</b>
+    """)
+
+    fun `test unsafe trait`() = doTest("""
+        unsafe trait Foo {
+                    //^
+        }
+    """, """
+        test_package
+        unsafe trait <b>Foo</b>
+    """)
+
+    fun `test generic trait`() = doTest("""
+        trait Foo<T> {
+             //^
+        }
+    """, """
+        test_package
+        trait <b>Foo</b>&lt;T&gt;
+    """)
+
+    fun `test generic trait with where clause`() = doTest("""
+        trait Foo<T> where T: Into<String> {
+             //^
+        }
+    """, """
+        test_package
+        trait <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
     """)
 
     fun `test type alias`() = doTest("""
@@ -315,7 +400,111 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         fn foo(s: Str) {}
                   //^
     """, """
-        type <b>Str</b> = &amp;&#39;static str [main.rs]
+        test_package
+        type <b>Str</b> = &amp;&#39;static str
+    """)
+
+    fun `test pub type alias`() = doTest("""
+        pub type Foo = Result<(), i32>;
+                //^
+    """, """
+        test_package
+        pub type <b>Foo</b> = Result&lt;(), i32&gt;
+    """)
+
+    fun `test generic type alias`() = doTest("""
+        type Foo<T> = Result<T, i32>;
+            //^
+    """, """
+        test_package
+        type <b>Foo</b>&lt;T&gt; = Result&lt;T, i32&gt;
+    """)
+
+    fun `test generic type alias with where clause`() = doTest("""
+        type Foo<T> where T: Into<String> = Result<T, i32>;
+             //^
+    """, """
+        test_package
+        type <b>Foo</b>&lt;T&gt; = Result&lt;T, i32&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+    """)
+
+    fun `test impl assoc type`() = doTest("""
+        trait Trait {
+            type AssocType;
+        }
+        struct Foo(i32);
+        impl Trait for Foo {
+            type AssocType = Option<i32>;
+                //^
+        }
+    """, """
+        test_package
+        impl Trait for Foo
+        type <b>AssocType</b> = Option&lt;i32&gt;
+    """)
+
+    fun `test generic impl assoc type`() = doTest("""
+        trait Trait {
+            type AssocType;
+        }
+        struct Foo<T>(T);
+        impl<T> Trait for Foo<T> {
+            type AssocType = Option<T>;
+                //^
+        }
+    """, """
+        test_package
+        impl&lt;T&gt; Trait for Foo&lt;T&gt;
+        type <b>AssocType</b> = Option&lt;T&gt;
+    """)
+
+    fun `test generic impl assoc type with where clause`() = doTest("""
+        trait Trait {
+            type AssocType;
+        }
+        struct Foo<T>(T);
+        impl<T> Trait for Foo<T> where T: Into<String> {
+            type AssocType = Option<T>;
+                //^
+        }
+    """, """
+        test_package
+        impl&lt;T&gt; Trait for Foo&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        type <b>AssocType</b> = Option&lt;T&gt;
+    """)
+
+    fun `test trait assoc type`() = doTest("""
+        trait MyTrait {
+            /// Documented
+            type Awesome;
+               //^
+        }
+    """, """
+        test_package::MyTrait
+        type <b>Awesome</b>
+    """)
+
+    fun `test generic trait assoc type`() = doTest("""
+        trait MyTrait<T> {
+            /// Documented
+            type Awesome;
+               //^
+        }
+    """, """
+        test_package::MyTrait&lt;T&gt;
+        type <b>Awesome</b>
+    """)
+
+    fun `test generic trait assoc type with where clause`() = doTest("""
+        trait MyTrait<T> where T: Into<String> {
+            /// Documented
+            type Awesome;
+               //^
+        }
+    """, """
+        test_package::MyTrait&lt;T&gt;
+        where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        type <b>Awesome</b>
     """)
 
     fun `test const`() = doTest("""
