@@ -574,4 +574,23 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a
         } //^ S<S<S<S<X>>>>
     """)
+
+    fun `test recursive receiver substitution`() = testExpr("""
+        trait Tr<A> {
+            fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() }
+            fn fold(self) -> A where Self: Sized { unimplemented!() }
+        }
+
+        struct X;
+        struct S1<B>(B);
+        struct S<C>(C);
+
+        impl<D> Tr<D> for S1<D> {}
+        impl<Src, Dst> Tr<Dst> for S<Src> where Src: Tr<Dst> {}
+
+        fn main() {
+            let a = S1(X).wrap().wrap().wrap().fold();
+            a
+        } //^ X
+    """)
 }

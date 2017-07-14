@@ -158,8 +158,6 @@ class RsClosuresResolveTest : RsResolveTestBase() {
     """)
 
     fun `test layered visitor example`() = checkByCode("""
-        //TODO: this should resolve once we implement unification...
-
         struct PhantomData;
 
         trait NodeVisitor<'f, C> {
@@ -191,7 +189,7 @@ class RsClosuresResolveTest : RsResolveTestBase() {
             Visitor(&mut ctx)
                 .visit::<(), _>(|ctx, t| ctx.foo())
                 .visit::<(), _>(|ctx, t| ctx.foo())
-            ;                               //^ unresolved
+            ;                               //^
         }
     """)
 
