@@ -18,18 +18,10 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.resolve.StdDerivableTrait
+import org.rust.lang.core.resolve.withDependencies
 
 object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
-
-    private val DERIVABLE_TRAITS = listOf(
-        "Eq", "PartialEq",
-        "Ord", "PartialOrd",
-        "Copy", "Clone",
-        "Hash",
-        "Default",
-        "Debug",
-        "RustcEncodable", "RustcDecodable"
-    )
 
     override fun addCompletions(parameters: CompletionParameters,
                                 context: ProcessingContext?,
@@ -39,8 +31,22 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
             ?: return
         val alreadyDerived = outerAttrElem.metaItem.metaItemArgs?.metaItemList.orEmpty()
             .mapNotNull { it.identifier.text }
-        val lookupElements = DERIVABLE_TRAITS.filter { it !in alreadyDerived }
-            .map { LookupElementBuilder.create(it) }
+
+        val lookupElements = StdDerivableTrait.values()
+            .filter { it.name !in alreadyDerived }
+            .flatMap { trait ->
+                val traitWithDependencies = trait.withDependencies
+                    .filter { it.name !in alreadyDerived }
+                // if 'traitWithDependencies' contains only one element
+                // then all trait dependencies are already satisfied
+                // and 'traitWithDependencies' contains only 'trait' element
+                val variants = if (traitWithDependencies.size > 1) {
+                    listOf(traitWithDependencies.joinToString(", "), trait.name)
+                } else {
+                    listOf(trait.name)
+                }
+                variants.map {LookupElementBuilder.create(it) }
+            }
         result.addAllElements(lookupElements)
     }
 
