@@ -76,9 +76,9 @@ fun findArithmeticBinaryExprOutputType(project: Project, lhsType: Ty, rhsType: T
         impls.find { isImplSuitable(project, it, op.itemName, 0, rhsType) }
     } ?: return TyUnknown
 
-    val rawOutputType = lookupAssociatedType(suitableImpl, "Output")
-    val typeParameterMap = suitableImpl.remapTypeParameters(lhsType.typeParameterValues)
-    return rawOutputType.substitute(typeParameterMap)
+    return lookupAssociatedType(suitableImpl, "Output")
+        .substitute(suitableImpl.remapTypeParameters(lhsType.typeParameterValues))
+        .substitute(mapOf(TyTypeParameter(suitableImpl) to lhsType))
 }
 
 private fun isImplSuitable(project: Project, impl: RsImplItem,

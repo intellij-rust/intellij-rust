@@ -552,4 +552,26 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a
         } //^ i32
     """)
+
+    fun `test Self substitution to trait method`() = testExpr("""
+        trait Tr<A> { fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() } }
+        struct X;
+        struct S<C>(C);
+        impl<D> Tr<D> for S<D> {}
+        fn main() {
+            let a = S(X).wrap().wrap().wrap();
+            a
+        } //^ S<S<S<S<X>>>>
+    """)
+
+    fun `test Self substitution to impl method`() = testExpr("""
+        trait Tr<A> { fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() } }
+        struct X;
+        struct S<C>(C);
+        impl<D> Tr<D> for S<D> { fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() } }
+        fn main() {
+            let a = S(X).wrap().wrap().wrap();
+            a
+        } //^ S<S<S<S<X>>>>
+    """)
 }
