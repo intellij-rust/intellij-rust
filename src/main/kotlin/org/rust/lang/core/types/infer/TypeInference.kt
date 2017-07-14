@@ -181,11 +181,15 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
     }
 
     private fun inferMethodCallExprType(expr: RsMethodCallExpr): Ty {
-        val (method, subst) = resolveMethodCallReferenceWithReceiverType(expr.expr.ty, expr)
+        val receiver = expr.expr.ty
+        val (method, subst) = resolveMethodCallReferenceWithReceiverType(receiver, expr)
             .firstOrNull()?.downcast<RsFunction>() ?: return TyUnknown
 
-        val returnType = (method.retType?.typeReference?.type ?: TyUnit)
+        var returnType = (method.retType?.typeReference?.type ?: TyUnit)
             .substitute(subst)
+        method.parentOfType<RsTraitOrImpl>()?.let { trait ->
+            returnType = returnType.substitute(mapOf(TyTypeParameter(trait) to receiver))
+        }
         val methodType = method.type as? TyFunction ?: return returnType
         // drop first element of paramTypes because it's `self` param
         // and it doesn't have value in `expr.valueArgumentList.exprList`

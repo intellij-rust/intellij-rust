@@ -78,7 +78,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         trait T { fn new() -> Self; }
 
         impl T for S { fn new() -> Self { S } }
-                                  //^ S
+                                  //^ Self
     """)
 
     fun testPrimitiveBool() = testType("""
