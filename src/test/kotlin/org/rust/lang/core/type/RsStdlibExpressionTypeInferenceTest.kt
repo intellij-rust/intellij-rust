@@ -239,4 +239,18 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
            //^ Foo
         }
     """)
+
+    fun `test infer iterator map chain`() = testExpr("""
+        struct S<T>(T);
+        fn main() {
+            let test: Vec<String> = Vec::new();
+            let a = test.into_iter()
+            .map(|x| x.to_string())
+            .map(|x| S(x))
+            .map(|x| x.0)
+            .next().unwrap();
+            a
+          //^ String
+        }
+    """)
 }

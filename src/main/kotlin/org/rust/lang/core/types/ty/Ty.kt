@@ -95,7 +95,7 @@ fun findImplsAndTraits(project: Project, ty: Ty): Collection<BoundElement<RsTrai
                 }.map { BoundElement(it, mapOf(TyTypeParameter(it) to ty)) }
 
             derived + RsImplIndex.findImpls(project, ty).map { impl ->
-                BoundElement(impl, impl.remapTypeParameters(ty.typeParameterValues).orEmpty())
+                BoundElement(impl, impl.remapTypeParameters(ty).orEmpty())
             }
         }
     }
