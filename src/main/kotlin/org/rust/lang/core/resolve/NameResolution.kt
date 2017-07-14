@@ -327,12 +327,12 @@ fun macroWalkUp(
     stopAfter: (RsCompositeElement) -> Boolean,
     processor: (scope: RsCompositeElement) -> Boolean
 ): Boolean {
-    var scope = start.context as RsCompositeElement?
+    var scope = start.context as? RsCompositeElement
     while (scope != null) {
         if (processor(scope)) return true
         if (stopAfter(scope)) break
         val cameFrom = scope
-        scope = scope.context as RsCompositeElement?
+        scope = scope.context as? RsCompositeElement
         if (scope == null && cameFrom is RsFile) {
             scope = cameFrom.`super`
         }
