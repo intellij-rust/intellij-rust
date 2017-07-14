@@ -5,19 +5,38 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.lang.core.resolve.StdDerivableTrait
+import org.rust.lang.core.resolve.withDependencies
+
 class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
-    fun testCompleteOnStruct() = checkSingleCompletion("PartialEq", """
-        #[derive(PartialE/*caret*/)]
+    fun testCompleteOnStruct() = checkSingleCompletion("Debug", """
+        #[derive(Debu/*caret*/)]
         struct Test {
             foo: u8
         }
     """)
 
-    fun testCompleteOnEnum() = checkSingleCompletion("PartialEq", """
-        #[derive(PartialE/*caret*/)]
+    fun testCompleteOnEnum() = checkSingleCompletion("Debug", """
+        #[derive(Debu/*caret*/)]
         enum Test {
             Something
         }
+    """)
+
+    fun `test complete with dependencies`() {
+        StdDerivableTrait.values()
+            .filter { it.dependencies.isNotEmpty() }
+            .forEach {
+                checkContainsCompletion(it.withDependencies.joinToString(", "), """
+                    #[derive(${it.name.dropLast(1)}/*caret*/)]
+                    struct Foo;
+                """)
+            }
+    }
+
+    fun `test complete with partially implemented dependencies`() = checkContainsCompletion("Ord, Eq, PartialEq", """
+        #[derive(PartialOrd, Or/*caret*/)]
+        struct Foo;
     """)
 
     fun testDoesntCompleteOnFn() = checkNoCompletion("""
@@ -42,7 +61,7 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
     """)
 
     fun testDoesntCompleteAlreadyDerived() = checkNoCompletion("""
-        #[derive(PartialEq, PartialE/*caret*/)]
+        #[derive(Debug, Debu/*caret*/)]
         enum Test { Something }
     """)
 }
