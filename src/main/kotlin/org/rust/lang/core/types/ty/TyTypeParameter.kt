@@ -25,7 +25,7 @@ class TyTypeParameter private constructor(
     constructor(trait: RsTraitItem) : this(Self(trait), "Self", listOf(BoundElement(trait)))
     constructor(trait: RsTraitItem, target: String) : this(
         AssociatedType(trait, target),
-        "${trait.name}::target",
+        "${trait.name}::$target",
         emptyList()
     )
 
