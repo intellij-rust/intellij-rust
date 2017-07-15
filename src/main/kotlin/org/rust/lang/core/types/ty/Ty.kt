@@ -14,6 +14,7 @@ import org.rust.lang.core.resolve.findDerefTarget
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.remapTypeParameters
+import org.rust.lang.utils.findWithCache
 
 typealias Substitution = Map<TyTypeParameter, Ty>
 typealias TypeMapping = MutableMap<TyTypeParameter, Ty>
@@ -75,7 +76,10 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.keys.find { it.toString() == name }
 }
 
-fun findImplsAndTraits(project: Project, ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
+fun findImplsAndTraits(project: Project, ty: Ty): Collection<BoundElement<RsTraitOrImpl>> =
+    findWithCache(project, ty) { project, ty -> rawFindImplsAndTraits(project, ty) }
+
+private fun rawFindImplsAndTraits(project: Project, ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
     return when (ty) {
         is TyTypeParameter -> ty.getTraitBoundsTransitively()
         is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy

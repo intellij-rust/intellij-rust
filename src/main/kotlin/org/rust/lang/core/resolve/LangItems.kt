@@ -7,12 +7,9 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -52,36 +49,35 @@ fun findIteratorItemType(project: Project, ty: Ty): Ty {
 }
 
 fun findIndexOutputType(project: Project, containerType: Ty, indexType: Ty): Ty {
-    val impls = RsImplIndex.findImpls(project, containerType)
-        .filter { it.traitRef?.resolveToTrait?.isIndex ?: false }
+    val impls = findImplsAndTraits(project, containerType)
+        .filter { it.element.implementedTrait?.element?.isIndex ?: false }
 
-    val suitableImpl = if (impls.size < 2) {
+    val (element, subst) = if (impls.size < 2) {
         impls.firstOrNull()
     } else {
-        impls.find { isImplSuitable(project, it, "index", 0, indexType) }
+        impls.find { isImplSuitable(project, it.element, "index", 0, indexType) }
     } ?: return TyUnknown
 
-    val rawOutputType = lookupAssociatedType(suitableImpl, "Output")
-    val typeParameterMap = suitableImpl.remapTypeParameters(containerType)
-    return rawOutputType.substitute(typeParameterMap)
+    val rawOutputType = lookupAssociatedType(element, "Output")
+    return rawOutputType.substitute(subst)
 }
 
 fun findArithmeticBinaryExprOutputType(project: Project, lhsType: Ty, rhsType: Ty, op: ArithmeticOp): Ty {
-    val impls = RsImplIndex.findImpls(project, lhsType)
-        .filter { op.itemName == it.traitRef?.resolveToTrait?.langAttribute }
+    val impls = findImplsAndTraits(project, lhsType)
+        .filter { op.itemName == it.element.implementedTrait?.element?.langAttribute }
 
-    val suitableImpl = if (impls.size < 2) {
+    val (element, subst) = if (impls.size < 2) {
         impls.firstOrNull()
     } else {
-        impls.find { isImplSuitable(project, it, op.itemName, 0, rhsType) }
+        impls.find { isImplSuitable(project, it.element, op.itemName, 0, rhsType) }
     } ?: return TyUnknown
 
-    return lookupAssociatedType(suitableImpl, "Output")
-        .substitute(suitableImpl.remapTypeParameters(lhsType))
-        .substitute(mapOf(TyTypeParameter(suitableImpl) to lhsType))
+    return lookupAssociatedType(element, "Output")
+        .substitute(subst)
+        .substitute(mapOf(TyTypeParameter(element) to lhsType))
 }
 
-private fun isImplSuitable(project: Project, impl: RsImplItem,
+private fun isImplSuitable(project: Project, impl: RsTraitOrImpl,
                            fnName: String, paramIndex: Int, paramType: Ty): Boolean {
     return impl.functionList
         .find { it.name == fnName }
