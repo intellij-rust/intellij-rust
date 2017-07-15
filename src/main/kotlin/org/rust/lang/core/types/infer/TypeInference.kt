@@ -394,7 +394,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
     private fun mapTypeParameters(argDefs: Iterable<Ty>, argExprs: Iterable<RsExpr>): Substitution {
         val subst = mutableMapOf<TyTypeParameter, Ty>()
         argExprs.zip(argDefs).forEach { (expr, type) -> addTypeMapping(subst, type, expr) }
-        return subst
+        return subst.substituteInValues(subst) // TODO multiple times?
     }
 
     private fun addTypeMapping(argsMapping: TypeMapping, fieldType: Ty?, expr: RsExpr) =
