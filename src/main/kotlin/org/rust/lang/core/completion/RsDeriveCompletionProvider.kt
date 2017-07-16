@@ -8,6 +8,7 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
@@ -23,6 +24,9 @@ import org.rust.lang.core.resolve.withDependencies
 
 object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
+    private const val DEFAULT_PRIORITY = 5.0
+    private const val GROUP_PRIORITY = DEFAULT_PRIORITY + 0.1
+
     override fun addCompletions(parameters: CompletionParameters,
                                 context: ProcessingContext?,
                                 result: CompletionResultSet) {
@@ -32,22 +36,21 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
         val alreadyDerived = outerAttrElem.metaItem.metaItemArgs?.metaItemList.orEmpty()
             .mapNotNull { it.identifier.text }
 
-        val lookupElements = StdDerivableTrait.values()
+        StdDerivableTrait.values()
             .filter { it.name !in alreadyDerived }
-            .flatMap { trait ->
+            .forEach { trait ->
                 val traitWithDependencies = trait.withDependencies
                     .filter { it.name !in alreadyDerived }
                 // if 'traitWithDependencies' contains only one element
                 // then all trait dependencies are already satisfied
                 // and 'traitWithDependencies' contains only 'trait' element
-                val variants = if (traitWithDependencies.size > 1) {
-                    listOf(traitWithDependencies.joinToString(", "), trait.name)
-                } else {
-                    listOf(trait.name)
+                if (traitWithDependencies.size > 1) {
+                    val element = LookupElementBuilder.create(traitWithDependencies.joinToString(", "))
+                    result.addElement(PrioritizedLookupElement.withPriority(element, GROUP_PRIORITY))
                 }
-                variants.map {LookupElementBuilder.create(it) }
+                val element = LookupElementBuilder.create(trait.name)
+                result.addElement(PrioritizedLookupElement.withPriority(element, DEFAULT_PRIORITY))
             }
-        result.addAllElements(lookupElements)
     }
 
     val elementPattern: ElementPattern<PsiElement> get() {
