@@ -30,16 +30,22 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }    //^
     """)
 
-    fun `test trait impl for ()`() = checkByCode("""
-        trait T { fn foo(&self){} }
-                   //X
-        impl T for () {}
-        fn main() {
-            let a = ();
-            a.foo()
-            //^
+    fun `test trait impl for various types`() {
+        for (type in listOf("bool", "char", "&str", "u32", "f32", "f64", "()", "(i32)", "(i16,)", "(u32, u16)",
+            "[u8; 1]", "&[u16]", "*const u8", "*const i8", "fn(u32) -> u8", "!")) {
+            checkByCode("""
+            trait T { fn foo(&self) {} }
+
+            impl T for $type {
+                fn foo(&self) {}
+            }      //X
+
+            fn test(s: $type) {
+                s.foo()
+            }    //^
+        """)
         }
-    """)
+    }
 
     fun `test trait default method`() = checkByCode("""
         trait T { fn foo(&self) {} }

@@ -68,7 +68,7 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
             is TyFunction -> {
                 val params = TyTuple(ty.paramTypes)
                 val fnOutputSubst = fnOutputParam?.let { mapOf(it to ty.retType) } ?: emptySubstitution
-                fnTraits.map {
+                findSimpleImpls(ty) + fnTraits.map {
                     val subst = mutableMapOf<TyTypeParameter, Ty>()
                     subst.putAll(fnOutputSubst)
                     it.typeParamSingle?.let { subst.put(it, params) }

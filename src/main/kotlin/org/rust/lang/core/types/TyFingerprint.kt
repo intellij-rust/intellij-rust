@@ -5,10 +5,8 @@
 
 package org.rust.lang.core.types
 
-import org.rust.lang.core.psi.RsArrayType
-import org.rust.lang.core.psi.RsBaseType
-import org.rust.lang.core.psi.RsRefLikeType
-import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.isNever
 import org.rust.lang.core.psi.ext.isPointer
 import org.rust.lang.core.psi.ext.isUnit
 import org.rust.lang.core.psi.ext.typeElement
@@ -26,15 +24,15 @@ data class TyFingerprint constructor(
     private val name: String
 ) {
     companion object {
+        // Keep in sync with Declarations-inferTypeReferenceType
         fun create(ref: RsTypeReference): TyFingerprint? {
             val type = ref.typeElement
             return when (type) {
-                is RsBaseType -> {
-                    if (type.isUnit) {
-                        TyFingerprint("()")
-                    } else {
-                        type.path?.referenceName?.let(::TyFingerprint)
-                    }
+                is RsTupleType -> TyFingerprint("(tuple)")
+                is RsBaseType -> when {
+                    type.isUnit -> TyFingerprint("()")
+                    type.isNever -> TyFingerprint("!")
+                    else -> type.path?.referenceName?.let(::TyFingerprint)
                 }
                 is RsRefLikeType -> {
                     if (type.isPointer)
@@ -43,6 +41,7 @@ data class TyFingerprint constructor(
                         create(type.typeReference)
                 }
                 is RsArrayType -> TyFingerprint("[T]")
+                is RsFnPointerType -> TyFingerprint("fn()")
                 else -> null
             }
         }
@@ -50,10 +49,12 @@ data class TyFingerprint constructor(
         fun create(type: Ty): TyFingerprint? = when (type) {
             is TyStruct -> type.item.name?.let(::TyFingerprint)
             is TyEnum -> type.item.name?.let(::TyFingerprint)
-            is TySlice -> TyFingerprint("[T]")
+            is TySlice, is TyArray -> TyFingerprint("[T]")
             is TyPointer -> TyFingerprint("*T")
             is TyReference -> create(type.referenced)
+            is TyTuple -> TyFingerprint("(tuple)")
             is TyPrimitive -> TyFingerprint(type.toString())
+            is TyFunction -> TyFingerprint("fn()")
             else -> null
         }
     }
