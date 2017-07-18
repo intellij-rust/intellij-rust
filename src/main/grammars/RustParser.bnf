@@ -557,6 +557,7 @@ private UnitStructTail ::= WhereClause? ';'
 private BlockStructTail ::= WhereClause? BlockFields
 
 EnumItem ::= AttrsAndVis enum identifier TypeParameterList? WhereClause? EnumBody {
+  pin = "enum"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = "org.rust.lang.core.psi.ext.RsStructOrEnumItemElement"
   mixin = "org.rust.lang.core.psi.ext.RsEnumItemImplMixin"

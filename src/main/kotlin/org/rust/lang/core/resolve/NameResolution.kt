@@ -450,7 +450,7 @@ private fun processFnsWithInherentPriority(fns: Collection<BoundElement<RsFuncti
 private fun processItemOrEnumVariantDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor, withPrivateImports: Boolean = false): Boolean {
     when (scope) {
         is RsEnumItem -> {
-            if (processAll(scope.enumBody.enumVariantList, processor)) return true
+            if (processAll(scope.enumBody?.enumVariantList.orEmpty(), processor)) return true
         }
         is RsMod -> {
             if (processItemDeclarations(scope, ns, processor, withPrivateImports)) return true
