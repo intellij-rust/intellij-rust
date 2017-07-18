@@ -9,7 +9,6 @@ import org.rust.lang.core.psi.RsArrayType
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.types.ty.TyInteger
-import org.rust.utils.toIntOrNull
 
 val RsArrayType.arraySize: Int? get() {
     val stub = stub
