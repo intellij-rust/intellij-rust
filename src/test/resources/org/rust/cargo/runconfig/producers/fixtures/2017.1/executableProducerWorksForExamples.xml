@@ -7,8 +7,6 @@
     <option name="environmentVariables">
       <map />
     </option>
-    <module name="light_idea_test_case">
-      <option name="moduleName" value="light_idea_test_case" />
-    </module>
+    <module name="light_idea_test_case" />
   </configuration>
 </configurations>

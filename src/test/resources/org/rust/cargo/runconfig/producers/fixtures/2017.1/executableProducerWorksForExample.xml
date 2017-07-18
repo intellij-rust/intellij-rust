@@ -1,10 +1,10 @@
 <configurations>
-  <configuration name="Run hello-world" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
+  <configuration name="Run hello" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
     <parameters>
       <option name="additionalArguments">
         <list>
           <option value="--example" />
-          <option value="hello-world" />
+          <option value="hello" />
         </list>
       </option>
       <option name="backtraceMode" value="2" />
@@ -15,8 +15,6 @@
       </option>
       <option name="nocapture" value="true" />
     </parameters>
-    <module name="light_idea_test_case">
-      <option name="moduleName" value="light_idea_test_case" />
-    </module>
+    <module name="light_idea_test_case" />
   </configuration>
 </configurations>

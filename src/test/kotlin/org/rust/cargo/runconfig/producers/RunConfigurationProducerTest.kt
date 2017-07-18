@@ -9,6 +9,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationTypeUtil
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
@@ -30,7 +31,14 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 
 class RunConfigurationProducerTest : RsTestBase() {
-    override val dataPath: String get() = "org/rust/cargo/runconfig/producers/fixtures"
+    override val dataPath: String get() {
+        val info = ApplicationInfo.getInstance()
+        // BACKCOMPAT: 2017.1
+        // HACK: IDEA 2017.2 produces a little bit different configuration xml
+        // so fixtures for 2017.1 were moved into separate folder
+        val compatibilityFolder = if (info.majorVersion == "2017" && info.minorVersion == "1") "/2017.1" else ""
+        return "org/rust/cargo/runconfig/producers/fixtures$compatibilityFolder"
+    }
     // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setRawWorkspace].
     override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
 
