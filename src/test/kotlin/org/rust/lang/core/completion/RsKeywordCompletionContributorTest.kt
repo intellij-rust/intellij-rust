@@ -361,6 +361,90 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         "fn foo() -> i32 { return /*caret*/}"
     )
 
+    fun `test where in generic function`() = checkSingleCompletion("where", """
+        fn foo<T>(t: T) whe/*caret*/
+    """)
+
+    fun `test where in generic function with ret type`() = checkSingleCompletion("where", """
+        fn foo<T>(t: T) -> i32 whe/*caret*/
+    """)
+
+    fun `test where in not generic function`() = checkNoCompletion("""
+        fn foo() whe/*caret*/
+    """)
+
+    fun `test where in not generic function with ret type`() = checkNoCompletion("""
+        fn foo() -> i32 whe/*caret*/
+    """)
+
+    fun `test where in trait method`() = checkSingleCompletion("where", """
+        trait Foo {
+            fn foo() whe/*caret*/
+        }
+    """)
+
+    fun `test where in method`() = checkSingleCompletion("where", """
+        impl Foo {
+            fn foo() whe/*caret*/
+        }
+    """)
+
+    fun `test where in generic struct`() = checkSingleCompletion("where", """
+        struct Foo<T> whe/*caret*/
+    """)
+
+    fun `test where in generic tuple struct`() = checkSingleCompletion("where", """
+        struct Foo<T>(T) whe/*caret*/
+    """)
+
+    fun `test where in not generic struct`() = checkNoCompletion("""
+        struct Foo whe/*caret*/
+    """)
+
+    fun `test where in generic enum`() = checkSingleCompletion("where", """
+        enum Foo<T> whe/*caret*/
+    """)
+
+    fun `test where in not generic enum`() = checkNoCompletion("""
+        enum Foo whe/*caret*/
+    """)
+
+    fun `test where in generic type alias`() = checkSingleCompletion("where", """
+        type Foo<T> whe/*caret*/
+    """)
+
+    fun `test where in not generic type alias`() = checkNoCompletion("""
+        type Foo whe/*caret*/
+    """)
+
+    fun `test where in trait assoc type`() = checkNoCompletion("""
+        trait Foo {
+            type Bar whe/*caret*/
+        }
+    """)
+
+    fun `test where in impl block assoc type`() = checkNoCompletion("""
+        impl Foo for Bar {
+            type FooBar whe/*caret*/
+        }
+    """)
+
+    fun `test where in trait`() = checkSingleCompletion("where", """
+        trait Foo whe/*caret*/
+    """)
+
+    fun `test where in generic trait`() = checkSingleCompletion("where", """
+        trait Foo<T> whe/*caret*/
+    """)
+
+    fun `test where in impl`() = checkSingleCompletion("where", """
+        impl Foo whe/*caret*/
+    """)
+
+    fun `test where in trait impl`() = checkSingleCompletion("where", """
+        impl<T> Foo<T> for Bar whe/*caret*/
+    """)
+
     private fun checkCompletion(
         lookupString: String,
         @Language("Rust") before: String,
