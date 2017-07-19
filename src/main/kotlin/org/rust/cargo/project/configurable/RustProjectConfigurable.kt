@@ -21,6 +21,7 @@ import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
+import org.rust.ide.hints.HintType
 import org.rust.utils.pathAsPath
 import java.nio.file.Paths
 import javax.swing.JComponent
@@ -35,6 +36,8 @@ class RustProjectConfigurable(
     private val autoUpdateEnabledCheckbox = JBCheckBox()
     private val useCargoCheckForBuildCheckbox = JBCheckBox()
     private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
+    private val letBindingHintCheckbox = JBCheckBox()
+    private val parameterHintCheckbox = JBCheckBox()
     private val cargoTomlLocation = Label("N/A")
 
     private var autoUpdateEnabled: Boolean
@@ -55,6 +58,18 @@ class RustProjectConfigurable(
             useCargoCheckAnnotatorCheckbox.isSelected = value
         }
 
+    private var letBindingHint: Boolean
+        get() = letBindingHintCheckbox.isSelected
+        set(value) {
+            letBindingHintCheckbox.isSelected = value
+        }
+
+    private var parameterHint: Boolean
+        get() = parameterHintCheckbox.isSelected
+        set(value) {
+            parameterHintCheckbox.isSelected = value
+        }
+
     override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
         row(label = Label("Watch Cargo.toml:")) { autoUpdateEnabledCheckbox() }
@@ -62,6 +77,8 @@ class RustProjectConfigurable(
             row("Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
         }
         row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
+        row(label = Label("Show local variable type hints:")) { letBindingHintCheckbox() }
+        row(label = Label("Show argument name hints:")) { parameterHintCheckbox() }
         row("Cargo.toml") { cargoTomlLocation() }
     }
 
@@ -78,6 +95,8 @@ class RustProjectConfigurable(
         autoUpdateEnabled = settings.autoUpdateEnabled
         useCargoCheckForBuild = settings.useCargoCheckForBuild
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
+        letBindingHint = HintType.LET_BINDING_HINT.enabled
+        parameterHint = HintType.PARAMETER_HINT.enabled
 
         val module = rustModule
 
@@ -101,6 +120,8 @@ class RustProjectConfigurable(
     override fun apply() {
         rustProjectSettings.validateSettings()
         val settings = project.rustSettings
+        HintType.LET_BINDING_HINT.option.set(letBindingHint)
+        HintType.PARAMETER_HINT.option.set(parameterHint)
         settings.data = RustProjectSettingsService.Data(
             toolchain = rustProjectSettings.data.toolchain,
             explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib,
@@ -118,6 +139,8 @@ class RustProjectConfigurable(
             || autoUpdateEnabled != settings.autoUpdateEnabled
             || useCargoCheckForBuild != settings.useCargoCheckForBuild
             || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
+            || letBindingHint != HintType.LET_BINDING_HINT.option.get()
+            || parameterHint != HintType.PARAMETER_HINT.option.get()
     }
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml

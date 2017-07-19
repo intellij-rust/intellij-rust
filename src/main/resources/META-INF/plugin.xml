@@ -110,6 +110,7 @@
 
         <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.RsExpressionTypeProvider"/>
         <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.RsParameterInfoHandler"/>
+        <codeInsight.parameterNameHints language="Rust" implementationClass="org.rust.ide.hints.RsInlayParameterHintsProvider"/>
 
         <!-- Annotator -->
 
