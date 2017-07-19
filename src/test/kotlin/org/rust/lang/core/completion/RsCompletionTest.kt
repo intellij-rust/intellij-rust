@@ -9,20 +9,62 @@ class RsCompletionTest : RsCompletionTestBase() {
 
     override val dataPath = "org/rust/lang/core/completion/fixtures"
 
-    fun testLocalVariable() = checkSingleCompletion("quux", """
+    fun `test local variable`() = doSingleCompletion("""
         fn foo(quux: i32) { qu/*caret*/ }
+    """, """
+        fn foo(quux: i32) { quux/*caret*/ }
     """)
 
-    fun testFunctionCall() = checkSingleCompletion("frobnicate()", """
+    fun `test function call zero args`() = doSingleCompletion("""
         fn frobnicate() {}
-
         fn main() { frob/*caret*/ }
+    """, """
+        fn frobnicate() {}
+        fn main() { frobnicate()/*caret*/ }
     """)
 
-    fun testFunctionWithParens() = checkSingleCompletion("frobnicate", """
-        fn frobnicate() {}
+    fun `test function call one arg`() = doSingleCompletion("""
+        fn frobnicate(foo: i32) {}
+        fn main() { frob/*caret*/ }
+    """, """
+        fn frobnicate(foo: i32) {}
+        fn main() { frobnicate(/*caret*/) }
+    """)
 
+    fun `test method call only self`() = doSingleCompletion("""
+        struct S;
+        impl S { fn frobnicate(self) {} }
+        fn main() { S.frob/*caret*/ }
+    """, """
+        struct S;
+        impl S { fn frobnicate(self) {} }
+        fn main() { S.frobnicate()/*caret*/ }
+    """)
+
+    fun `test method call self and arg`() = doSingleCompletion("""
+        struct S;
+        impl S { fn frobnicate(self, foo: i32) {} }
+        fn main() { S.frob/*caret*/ }
+    """, """
+        struct S;
+        impl S { fn frobnicate(self, foo: i32) {} }
+        fn main() { S.frobnicate(/*caret*/) }
+    """)
+
+    fun `test function call with parens`() = doSingleCompletion("""
+        fn frobnicate() {}
         fn main() { frob/*caret*/() }
+    """, """
+        fn frobnicate() {}
+        fn main() { frobnicate()/*caret*/ }
+    """)
+
+    fun `test function call with parens with arg`() = doSingleCompletion("""
+        fn frobnicate(foo: i32) {}
+        fn main() { frob/*caret*/() }
+    """, """
+        fn frobnicate(foo: i32) {}
+        fn main() { frobnicate(/*caret*/) }
     """)
 
     fun testPath() = checkSingleCompletion("foo::bar::frobnicate()", """
@@ -183,30 +225,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         openFileInEditor("foo/mod.rs")
         executeSoloCompletion()
     }
-
-    fun testCallCaretPositionNoArguments() = checkByText("""
-        fn frobnicate() {}
-        fn main() {
-            frob/*caret*/
-        }
-    """, """
-        fn frobnicate() {}
-        fn main() {
-            frobnicate()/*caret*/
-        }
-    """) { executeSoloCompletion() }
-
-    fun testCallCaretPositionWithArguments() = checkByText("""
-        fn frobnicate(foo: i32, bar: String) {}
-        fn main() {
-            frob/*caret*/
-        }
-    """, """
-        fn frobnicate(foo: i32, bar: String) {}
-        fn main() {
-            frobnicate(/*caret*/)
-        }
-    """) { executeSoloCompletion() }
 
     fun testCallStructMethod() = checkContainsCompletion("some_fn", """
         struct SomeStruct { }

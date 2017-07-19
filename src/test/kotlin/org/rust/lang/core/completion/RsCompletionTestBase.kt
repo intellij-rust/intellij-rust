@@ -17,6 +17,10 @@ abstract class RsCompletionTestBase : RsTestBase() {
         singleCompletionCheck(target)
     }
 
+    protected fun doSingleCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
+        checkByText(before, after) { executeSoloCompletion() }
+    }
+
     protected fun checkSingleCompletionWithMultipleFiles(target: String, @Language("Rust") code: String) {
         val files = ProjectFile.parseFileCollection(code)
         for ((path, text) in files) {
@@ -29,13 +33,7 @@ abstract class RsCompletionTestBase : RsTestBase() {
     }
 
     protected fun singleCompletionCheck(target: String) {
-        val variants = myFixture.completeBasic()
-
-        fun LookupElement.debug(): String = "$lookupString ($psiElement)"
-        check(variants == null) {
-            "Expected a single completion, but got ${variants.size}:\n" +
-                variants.map { it.debug() }.joinToString("\n")
-        }
+        executeSoloCompletion()
         val normName = target
             .substringBeforeLast("()")
             .substringBeforeLast(" {}")
@@ -91,9 +89,11 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
     protected fun executeSoloCompletion() {
         val variants = myFixture.completeBasic()
+
         if (variants != null) {
-            error("Expected a single completion, but got ${variants.size}\n" +
-                "${variants.toList()}")
+            fun LookupElement.debug(): String = "$lookupString ($psiElement)"
+            error("Expected a single completion, but got ${variants.size}\n"
+                + variants.map { it.debug() }.joinToString("\n"))
         }
     }
 
