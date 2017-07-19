@@ -22,6 +22,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     enum class BinaryMode { ON, OFF }
 
     private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
+    private val TYPE_QUAL_ALLOWED: Key<Boolean> = Key("org.rust.TYPE_QUAL_ALLOWED")
     private val PATH_PARSING_MODE: Key<PathParsingMode> = Key("org.rust.PATH_PARSING_MODE")
     private val STMT_EXPR_MODE: Key<Boolean> = Key("org.rust.STMT_EXPR_MODE")
 
@@ -39,6 +40,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     //
 
     @JvmStatic fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = b.structAllowed
+    @JvmStatic fun checkTypeQualAllowed(b: PsiBuilder, level: Int): Boolean = b.getUserData(TYPE_QUAL_ALLOWED) ?: true
 
     @JvmStatic fun checkBraceAllowed(b: PsiBuilder, level: Int): Boolean {
         return b.structAllowed || b.tokenType != LBRACE
@@ -46,6 +48,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     @JvmStatic fun structLiterals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
         b.withContext(STRUCT_ALLOWED, mode == BinaryMode.ON) { parser.parse(this, level) }
+
+    @JvmStatic fun typeQuals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
+        b.withContext(TYPE_QUAL_ALLOWED, mode == BinaryMode.ON) { parser.parse(this, level) }
 
     /**
      * Controls the difference between

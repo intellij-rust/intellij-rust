@@ -78,7 +78,7 @@ FILE
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')
-      PsiErrorElement:'!', '(', <, <fn pointer type>, <ref like type>, '[', _, for or impl expected, got '<'
+      PsiErrorElement:'!', '(', '::', <, <fn pointer type>, <ref like type>, Self, '[', _, for, identifier, impl, self or super expected, got '<'
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')
@@ -114,7 +114,7 @@ FILE
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')
-      PsiErrorElement:'!', '(', <, <fn pointer type>, <ref like type>, '[', _, for or impl expected, got '<'
+      PsiErrorElement:'!', '(', '::', <, <fn pointer type>, <ref like type>, Self, '[', _, for, identifier, impl, self or super expected, got '<'
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(<)('<')

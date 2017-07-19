@@ -54,7 +54,7 @@ fun RsExpr.isPure(): Boolean? {
         is RsFieldExpr -> expr.isPure()
         is RsParenExpr -> expr.isPure()
         is RsBreakExpr, is RsContExpr, is RsRetExpr, is RsTryExpr -> false   // Changes execution flow
-        is RsPathExpr, is RsQualPathExpr, is RsLitExpr, is RsUnitExpr -> true
+        is RsPathExpr, is RsLitExpr, is RsUnitExpr -> true
 
     // TODO: more complex analysis of blocks of code and search of implemented traits
         is RsBlockExpr, // Have to analyze lines, very hard case
