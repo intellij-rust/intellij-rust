@@ -1,11 +1,12 @@
 <configurations>
-  <configuration name="Test lib" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
+  <configuration name="Test foo" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
     <parameters>
       <option name="additionalArguments">
         <list>
           <option value="--package" />
           <option value="test-package" />
-          <option value="--lib" />
+          <option value="--test" />
+          <option value="foo" />
           <option value="" />
         </list>
       </option>
@@ -17,8 +18,6 @@
       </option>
       <option name="nocapture" value="true" />
     </parameters>
-    <module name="light_idea_test_case">
-      <option name="moduleName" value="light_idea_test_case" />
-    </module>
+    <module name="light_idea_test_case" />
   </configuration>
 </configurations>

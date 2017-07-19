@@ -14,7 +14,6 @@ import org.rust.lang.core.resolve.ref.resolveFieldExprReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
-import org.rust.utils.toIntOrNull
 
 fun inferTypesIn(fn: RsFunction): RsInferenceContext =
     RsInferenceContext().apply { recursionGuard { infer(fn) } }

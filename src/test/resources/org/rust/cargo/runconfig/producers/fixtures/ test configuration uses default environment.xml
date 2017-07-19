@@ -19,6 +19,8 @@
       </option>
       <option name="nocapture" value="true" />
     </parameters>
-    <module name="light_idea_test_case" />
+    <module name="light_idea_test_case">
+      <option name="moduleName" value="light_idea_test_case" />
+    </module>
   </configuration>
 </configurations>
