@@ -310,13 +310,10 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
     return processAll(traits, processor)
 }
 
-fun processMacroCallVariants(invocation: PsiElement, processor: RsResolveProcessor): Boolean {
+fun processMacroCallVariants(invocation: PsiElement, processor: RsResolveProcessor): Boolean =
     macroWalkUp(invocation, { false }) { scope ->
-        if (processMacroDeclarations(scope, processor)) return@macroWalkUp true
-        false
+        processMacroDeclarations(scope, processor)
     }
-    return false
-}
 
 fun macroWalkUp(
     start: PsiElement,
@@ -352,20 +349,20 @@ val RsFile.exportedCrateMacros: List<RsMacroDefinition>
         CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
     })
 
-private fun exportedCrateMacros(scope: RsItemsOwner, need_export: Boolean): List<RsMacroDefinition> {
+private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> {
     val macros: MutableList<RsMacroDefinition> = scope.macroDefinitionList
-        .filter { !need_export || it.hasMacroExport }
+        .filter { !needExport || it.hasMacroExport }
         .toMutableList()
 
-    if (need_export) {
+    if (needExport) {
         for (crate in scope.externCrateItemList) {
             val reexport = crate.findOuterAttr("macro_reexport")
                 ?.metaItem?.metaItemArgs?.metaItemList
                 ?.mapNotNull { it.referenceName } ?: continue
             val mod = crate.reference.resolve() as? RsFile ?: continue
-            val internal_macros = mod.exportedCrateMacros
+            val internalMacros = mod.exportedCrateMacros
 
-            macros.addAll(internal_macros.filter { reexport.contains(it.name) })
+            macros.addAll(internalMacros.filter { reexport.contains(it.name) })
         }
     } else {
         for (crate in scope.externCrateItemList.filter { it.hasMacroUse }) {
@@ -384,7 +381,7 @@ private fun exportedCrateMacros(scope: RsItemsOwner, need_export: Boolean): List
     for (mod in scope.modItemList.filter { it.hasMacroUse }) {
         macros.addAll(exportedCrateMacros(mod, true))
     }
-    return macros.toList()
+    return macros
 }
 
 private fun processItemMacroDeclarations(
