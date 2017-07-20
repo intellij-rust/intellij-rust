@@ -5,12 +5,12 @@
 
 package org.rust.lang.core.types.ty
 
-import com.intellij.openapi.project.Project
+import org.rust.lang.core.resolve.ImplLookup
 
 data class TyReference(val referenced: Ty, val mutable: Boolean = false) : Ty {
 
-    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean = merge(mapping) {
-        other is TyReference && referenced.canUnifyWith(other.referenced, project, it)
+    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean = merge(mapping) {
+        other is TyReference && referenced.canUnifyWith(other.referenced, lookup, it)
     }
 
     override fun toString(): String = "${if (mutable) "&mut " else "&"}$referenced"

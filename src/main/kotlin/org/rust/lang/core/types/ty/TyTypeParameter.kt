@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.types.ty
 
-import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.RsTraitOrImpl
 import org.rust.lang.core.psi.ext.bounds
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.asFunctionType
 import org.rust.lang.core.resolve.isAnyFnTrait
 import org.rust.lang.core.types.BoundElement
@@ -41,7 +41,7 @@ class TyTypeParameter private constructor(
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         bounds.flatMap { it.flattenHierarchy }.map { it.substitute(mapOf(TyTypeParameter(it.element) to this)) }
 
-    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean {
+    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean {
         if (mapping == null) return true
 
         if (other is TyFunction) {
@@ -49,18 +49,18 @@ class TyTypeParameter private constructor(
                 if (bound.element.isAnyFnTrait) {
                     val fnType = bound.asFunctionType
                     if (fnType != null && fnType.retType is TyTypeParameter) {
-                        fnType.retType.canUnifyWith(other.retType, project, mapping)
+                        fnType.retType.canUnifyWith(other.retType, lookup, mapping)
                     }
                 }
             }
         } else {
-            val traits = findImplsAndTraits(project, other)
+            val traits = lookup.findImplsAndTraits(other)
             for ((element, boundSubst) in bounds) {
                 val trait = traits.find { it.element.implementedTrait?.element == element }
                 if (trait != null) {
                     val subst = boundSubst.substituteInValues(mapOf(TyTypeParameter(element) to this))
                     for ((k, v) in subst) {
-                        trait.subst[k]?.let { v.canUnifyWith(it, project, mapping) }
+                        trait.subst[k]?.let { v.canUnifyWith(it, lookup, mapping) }
                     }
                 }
             }

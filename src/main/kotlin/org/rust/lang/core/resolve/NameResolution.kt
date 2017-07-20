@@ -8,7 +8,6 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -63,16 +62,16 @@ import java.util.*
 //     [RsCodeFragmentFactory]
 
 fun processFieldExprResolveVariants(
-    project: Project,
+    lookup: ImplLookup,
     receiverType: Ty,
     isCompletion: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    for (ty in receiverType.derefTransitively(project)) {
+    for (ty in lookup.derefTransitively(receiverType)) {
         if (ty !is TyStruct) continue
         if (processFieldDeclarations(ty.item, ty.typeParameterValues, processor)) return true
     }
-    if (isCompletion && processMethodDeclarationsWithDeref(project, receiverType, processor)) {
+    if (isCompletion && processMethodDeclarationsWithDeref(lookup, receiverType, processor)) {
         return true
     }
     return false
@@ -83,8 +82,8 @@ fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, proces
     return processFieldDeclarations(structOrEnumVariant, emptySubstitution, processor)
 }
 
-fun processMethodCallExprResolveVariants(project: Project, receiverType: Ty, processor: RsResolveProcessor): Boolean {
-    return processMethodDeclarationsWithDeref(project, receiverType, processor)
+fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsResolveProcessor): Boolean {
+    return processMethodDeclarationsWithDeref(lookup, receiverType, processor)
 }
 
 fun processUseGlobResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Boolean {
@@ -198,7 +197,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
-            if (processAssociatedFunctionsAndMethodsDeclarations(base.project, base.type, processor)) return true
+            if (processAssociatedFunctionsAndMethodsDeclarations(ImplLookup.relativeTo(base), base.type, processor)) return true
         }
         if (base is RsTypeParameter) {
             // `impl<T: Tr> S<T> { fn foo() -> T::Item { unimplemented!() } }`
@@ -423,16 +422,16 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, subst: Substitution,
     return false
 }
 
-private fun processMethodDeclarationsWithDeref(project: Project, receiver: Ty, processor: RsResolveProcessor): Boolean {
-    for (ty in receiver.derefTransitively(project)) {
-        val methods = findMethodsAndAssocFunctions(project, ty).filter { !it.element.isAssocFn }
+private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsResolveProcessor): Boolean {
+    for (ty in lookup.derefTransitively(receiver)) {
+        val methods = lookup.findMethodsAndAssocFunctions(ty).filter { !it.element.isAssocFn }
         if (processFnsWithInherentPriority(methods, processor)) return true
     }
     return false
 }
 
-private fun processAssociatedFunctionsAndMethodsDeclarations(project: Project, type: Ty, processor: RsResolveProcessor): Boolean {
-    val assocFunctions = findMethodsAndAssocFunctions(project, type)
+private fun processAssociatedFunctionsAndMethodsDeclarations(lookup: ImplLookup, type: Ty, processor: RsResolveProcessor): Boolean {
+    val assocFunctions = lookup.findMethodsAndAssocFunctions(type)
     return processFnsWithInherentPriority(assocFunctions, processor)
 }
 

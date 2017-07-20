@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
@@ -25,7 +26,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<TyFingerprint> = TyFingerprint.KeyDescriptor
 
     companion object {
-        fun findImpls(project: Project, target: Ty): Collection<RsImplItem> {
+        fun findImpls(project: Project, lookup: ImplLookup, target: Ty): Collection<RsImplItem> {
             val fingerprint = TyFingerprint.create(target)
                 ?: return emptyList()
 
@@ -35,9 +36,9 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
                     // Addition class check is a temporal solution to filter impls for type parameter
                     // with the same name
                     // struct S; impl<S: Tr1> Tr2 for S {}
-                    ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
+                    ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, lookup)
                 }
-        }
+            }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {
             val type = stub.psi.typeReference ?: return

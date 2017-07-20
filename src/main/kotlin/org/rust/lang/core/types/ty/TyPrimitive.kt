@@ -5,11 +5,11 @@
 
 package org.rust.lang.core.types.ty
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.hasColonColon
 import org.rust.lang.core.psi.ext.sizeExpr
+import org.rust.lang.core.resolve.ImplLookup
 
 /**
  * These are "atomic" ty (not type constructors, singletons).
@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.ext.sizeExpr
  * tuples or arrays as primitive.
  */
 interface TyPrimitive : Ty {
-    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean =
+    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean =
         this == other
 
     companion object {
@@ -62,7 +62,7 @@ object TyStr : TyPrimitive {
 interface TyNumeric : TyPrimitive {
     val isKindWeak: Boolean
 
-    override fun canUnifyWith(other: Ty, project: Project, mapping: MutableMap<TyTypeParameter, Ty>?): Boolean
+    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: MutableMap<TyTypeParameter, Ty>?): Boolean
         = this == other || javaClass == other.javaClass && (other as TyNumeric).isKindWeak
 }
 

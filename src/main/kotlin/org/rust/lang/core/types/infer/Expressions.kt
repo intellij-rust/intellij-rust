@@ -6,6 +6,7 @@
 package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -32,9 +33,9 @@ fun inferLiteralExprType(expr: RsLitExpr): Ty = when (expr.kind) {
  * impl<X, Y> Flip<Y, X> { ... }
  * ```
  */
-fun RsImplItem.remapTypeParameters(receiver: Ty): Substitution {
+fun RsImplItem.remapTypeParameters(lookup: ImplLookup, receiver: Ty): Substitution {
     val subst = mutableMapOf<TyTypeParameter, Ty>()
-    typeReference?.type?.canUnifyWith(receiver, project, subst)
+    typeReference?.type?.canUnifyWith(receiver, lookup, subst)
     val associated = (implementedTrait?.subst ?: emptyMap())
         .substituteInValues(subst)
     return subst + associated

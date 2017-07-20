@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
@@ -13,86 +12,8 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
-enum class StdDerivableTrait(val modName: String) {
-    Clone("clone"),
-    Copy("marker"),
-    Debug("fmt"),
-    Default("default"),
-    Eq("cmp"),
-    Hash("hash"),
-    Ord("cmp"),
-    PartialEq("cmp"),
-    PartialOrd("cmp")
-}
+val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 
-val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.values().associate { it.name to it }
-
-fun findDerefTarget(project: Project, ty: Ty): Ty? {
-    for ((impl, subst) in findImplsAndTraits(project, ty)) {
-        val trait = impl.implementedTrait ?: continue
-        if (!trait.element.isDeref) continue
-        return lookupAssociatedType(impl, "Target")
-            .substitute(subst)
-    }
-    return null
-}
-
-fun findIteratorItemType(project: Project, ty: Ty): Ty {
-    val impl = findImplsAndTraits(project, ty)
-        .find { impl ->
-            val traitName = impl.element.implementedTrait?.element?.name
-            traitName == "Iterator" || traitName == "IntoIterator"
-        } ?: return TyUnknown
-
-    val rawType = lookupAssociatedType(impl.element, "Item")
-    return rawType.substitute(impl.subst)
-}
-
-fun findIndexOutputType(project: Project, containerType: Ty, indexType: Ty): Ty {
-    val impls = findImplsAndTraits(project, containerType)
-        .filter { it.element.implementedTrait?.element?.isIndex ?: false }
-
-    val (element, subst) = if (impls.size < 2) {
-        impls.firstOrNull()
-    } else {
-        impls.find { isImplSuitable(project, it.element, "index", 0, indexType) }
-    } ?: return TyUnknown
-
-    val rawOutputType = lookupAssociatedType(element, "Output")
-    return rawOutputType.substitute(subst)
-}
-
-fun findArithmeticBinaryExprOutputType(project: Project, lhsType: Ty, rhsType: Ty, op: ArithmeticOp): Ty {
-    val impls = findImplsAndTraits(project, lhsType)
-        .filter { op.itemName == it.element.implementedTrait?.element?.langAttribute }
-
-    val (element, subst) = if (impls.size < 2) {
-        impls.firstOrNull()
-    } else {
-        impls.find { isImplSuitable(project, it.element, op.itemName, 0, rhsType) }
-    } ?: return TyUnknown
-
-    return lookupAssociatedType(element, "Output")
-        .substitute(subst)
-        .substitute(mapOf(TyTypeParameter(element) to lhsType))
-}
-
-private fun isImplSuitable(project: Project, impl: RsTraitOrImpl,
-                           fnName: String, paramIndex: Int, paramType: Ty): Boolean {
-    return impl.functionList
-        .find { it.name == fnName }
-        ?.valueParameterList
-        ?.valueParameterList
-        ?.getOrNull(paramIndex)
-        ?.typeReference
-        ?.type
-        ?.canUnifyWith(paramType, project) ?: false
-}
-
-private val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
-
-private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
-private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
 val RsTraitItem.isAnyFnTrait: Boolean get() = langAttribute == "fn"
     || langAttribute == "fn_once"
     || langAttribute == "fn_mut"
@@ -115,10 +36,6 @@ val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
     val outputType = (subst[outputParam] ?: TyUnit)
     return TyFunction(argumentTypes, outputType)
 }
-
-private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty =
-    impl.typeAliasList.find { it.name == name }?.typeReference?.type
-        ?: TyUnknown
 
 // This is super hackish. Need to figure out how to
 // identify known ty (See also the CString inspection).

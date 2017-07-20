@@ -27,7 +27,7 @@ class RsInferenceContext {
 
         val block = fn.block
         if (block != null) {
-            RsFnInferenceContext(this).walkBlock(block)
+            RsFnInferenceContext(this, ImplLookup.relativeTo(fn)).walkBlock(block)
         }
     }
 
@@ -58,7 +58,7 @@ class RsInferenceContext {
     }
 }
 
-private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
+private class RsFnInferenceContext(private val ctx: RsInferenceContext, private val lookup: ImplLookup) {
     private val RsExpr.ty: Ty get() = ctx.getExprType(this)
     private val RsBlock.ty: Ty get() = expr?.ty ?: TyUnit
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
@@ -94,7 +94,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
             }
             is RsForExpr -> {
                 walkNullable(psi.expr)
-                ctx.extractBindings(psi.pat, findIteratorItemType(psi.project, psi.expr?.ty ?: TyUnknown))
+                ctx.extractBindings(psi.pat, lookup.findIteratorItemType( psi.expr?.ty ?: TyUnknown))
                 psi.block?.let { walkBlock(it) }
                 ctx.writeTy(psi, TyUnit)
             }
@@ -174,7 +174,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
         if (ty is TyStructOrEnumBase && expr.valueArgumentList.exprList.isEmpty()) return ty
 
         val calleeType = ty as? TyFunction ?:
-            (findImplsAndTraits(fn.project, fn.ty)
+            (lookup.findImplsAndTraits(fn.ty)
                 .mapNotNull { it.downcast<RsTraitItem>()?.asFunctionType }
                 .firstOrNull() ?: return TyUnknown)
         return calleeType.retType.substitute(mapTypeParameters(calleeType.paramTypes, expr.valueArgumentList.exprList))
@@ -182,7 +182,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
 
     private fun inferMethodCallExprType(expr: RsMethodCallExpr): Ty {
         val receiver = expr.expr.ty
-        val (method, subst) = resolveMethodCallReferenceWithReceiverType(receiver, expr)
+        val (method, subst) = resolveMethodCallReferenceWithReceiverType(lookup, receiver, expr)
             .firstOrNull()?.downcast<RsFunction>() ?: return TyUnknown
 
         var returnType = (method.retType?.typeReference?.type ?: TyUnit)
@@ -197,7 +197,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
     }
 
     private fun inferFieldExprType(expr: RsFieldExpr): Ty {
-        val boundField = resolveFieldExprReferenceWithReceiverType(expr.expr.ty, expr).firstOrNull()
+        val boundField = resolveFieldExprReferenceWithReceiverType(lookup, expr.expr.ty, expr).firstOrNull()
         if (boundField == null) {
             val type = expr.expr.ty as? TyTuple ?: return TyUnknown
             val fieldIndex = expr.fieldId.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
@@ -292,7 +292,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
     private fun inferIndexExprType(expr: RsIndexExpr): Ty {
         val containerType = expr.containerExpr?.ty ?: return TyUnknown
         val indexType = expr.indexExpr?.ty ?: return TyUnknown
-        return findIndexOutputType(expr.project, containerType, indexType)
+        return lookup.findIndexOutputType( containerType, indexType)
     }
 
     private fun inferMacroExprType(expr: RsMacroExpr): Ty {
@@ -334,7 +334,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
         val containingFunctionType = when (callExpr) {
             is RsCallExpr -> callExpr.expr.ty
             is RsMethodCallExpr -> {
-                val fn = resolveMethodCallReferenceWithReceiverType(callExpr.expr.ty, callExpr)
+                val fn = resolveMethodCallReferenceWithReceiverType(lookup, callExpr.expr.ty, callExpr)
                     .firstOrNull()
                     ?.downcast<RsFunction>()
                     ?: return fallback
@@ -401,12 +401,12 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext) {
     }
 
     private fun addTypeMapping(argsMapping: TypeMapping, fieldType: Ty?, expr: RsExpr) =
-        fieldType?.canUnifyWith(expr.ty, expr.project, argsMapping)
+        fieldType?.canUnifyWith(expr.ty, lookup, argsMapping)
 
     private fun inferArithmeticBinaryExprType(expr: RsBinaryExpr, op: ArithmeticOp): Ty {
         val lhsType = expr.left.ty
         val rhsType = expr.right?.ty ?: TyUnknown
-        return findArithmeticBinaryExprOutputType(expr.project, lhsType, rhsType, op)
+        return lookup.findArithmeticBinaryExprOutputType(lhsType, rhsType, op)
     }
 }
 
