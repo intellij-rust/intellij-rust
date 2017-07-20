@@ -55,14 +55,13 @@ class TyTypeParameter private constructor(
             }
         } else {
             val traits = findImplsAndTraits(project, other)
-            for (bound in bounds) {
-                val trait = traits.find { it.element.implementedTrait?.element == bound.element }
+            for ((element, boundSubst) in bounds) {
+                val trait = traits.find { it.element.implementedTrait?.element == element }
                 if (trait != null) {
-                    val subst = bound.subst
-                        .substituteInValues(mapOf(TyTypeParameter(bound.element) to this))
-                        .reverse()
-                        .substituteInValues(trait.subst)
-                    mapping.merge(subst)
+                    val subst = boundSubst.substituteInValues(mapOf(TyTypeParameter(element) to this))
+                    for ((k, v) in subst) {
+                        trait.subst[k]?.let { v.canUnifyWith(it, project, mapping) }
+                    }
                 }
             }
         }

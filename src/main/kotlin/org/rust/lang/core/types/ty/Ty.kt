@@ -133,7 +133,3 @@ internal fun TypeMapping.merge(otherMapping: Substitution) {
 
 fun Substitution.substituteInValues(map: Substitution): Substitution =
     mapValues { (_, value) -> value.substitute(map) }
-
-fun Substitution.reverse(): Substitution =
-    mapNotNull { if (it.value is TyTypeParameter) it else null }
-        .associate { (k, v) -> Pair(v as TyTypeParameter, k) }
