@@ -89,6 +89,7 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
         is RsMacroDefinition -> base
             .withInsertHandler { context: InsertionContext, _: LookupElement ->
                 context.document.insertString(context.selectionEndOffset, "!()")
+                EditorModificationUtil.moveCaretRelatively(context.editor, 2)
             }
         else -> base
     }

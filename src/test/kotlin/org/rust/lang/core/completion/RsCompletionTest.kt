@@ -377,7 +377,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         macro_rules! foo_bar { () => () }
         fn main() {
-            foo_bar/*caret*/!()
+            foo_bar!(/*caret*/)
         }
     """)
 
@@ -388,7 +388,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """, """
         macro_rules! foo_bar { () => () }
-        foo_bar/*caret*/!()
+        foo_bar!(/*caret*/)
         fn main() {
         }
     """)
