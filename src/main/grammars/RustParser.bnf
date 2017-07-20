@@ -1044,7 +1044,7 @@ TryMacroArgument ::= <<any_braces AnyExpr>>
 
 // https://doc.rust-lang.org/std/fmt/
 private FormatLikeMacro ::=
-  ("format" | "format_args" | "write" | "writeln" | "print" | "println" | "panic")
+  ("format" | "format_args" | "write" | "writeln" | "print" | "println" | "eprint" | "eprintln" | "panic")
   '!' FormatMacroArgument { pin = 2 }
 
 FormatMacroArgument ::= <<any_braces [ <<comma_separated_list FormatMacroArg>> ] >>
