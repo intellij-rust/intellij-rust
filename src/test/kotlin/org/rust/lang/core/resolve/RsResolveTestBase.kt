@@ -5,9 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.application.Result
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.impl.PsiManagerEx
 import org.assertj.core.api.Assertions.assertThat
@@ -47,7 +44,7 @@ abstract class RsResolveTestBase : RsTestBase() {
         assertThat(resolved).isEqualTo(target)
     }
 
-    protected fun stubOnlyResolve(@Language("Rust") code: String, rewriteExistingFiles: Boolean = false) {
+    protected fun stubOnlyResolve(@Language("Rust") code: String) {
         val testProject = fileTreeFromText(code)
             .createAndOpenFileWithCaretMarker()
 
@@ -81,23 +78,6 @@ abstract class RsResolveTestBase : RsTestBase() {
             check(actualResolveFile == expectedResolveFile) {
                 "Should resolve to ${expectedResolveFile.path}, was ${actualResolveFile.path} instead"
             }
-        }
-    }
-
-    protected fun createFileAndSetText(path: String, text: String, allowRewrite: Boolean) {
-        if (allowRewrite) {
-            val file = myFixture.tempDirFixture.getFile(path)
-            if (file == null) {
-                myFixture.tempDirFixture.createFile(path, text)
-            } else {
-                object : WriteAction<Unit>() {
-                    override fun run(result: Result<Unit>) {
-                        VfsUtil.saveText(file, text)
-                    }
-                }.execute()
-            }
-        } else {
-            myFixture.tempDirFixture.createFile(path, text)
         }
     }
 }

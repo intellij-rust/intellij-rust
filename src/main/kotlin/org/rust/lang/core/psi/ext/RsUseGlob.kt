@@ -15,9 +15,6 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve.ref.RsUseGlobReferenceImpl
 import org.rust.lang.core.stubs.RsUseGlobStub
 
-val RsUseGlob.basePath: RsPath?
-    get() = parentOfType<RsUseItem>()?.path
-
 val RsUseGlob.parentUseItem: RsUseItem get() = parentOfType<RsUseItem>()!!
 
 

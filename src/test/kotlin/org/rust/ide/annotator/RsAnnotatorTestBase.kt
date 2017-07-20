@@ -33,7 +33,5 @@ abstract class RsAnnotatorTestBase : RsTestBase() {
         @Language("Rust") before: String,
         @Language("Rust") after: String
     ) = checkByText(before, after) { applyQuickFix(fixName) }
-
-    protected fun checkQuickFix(fixName: String) = checkByFile { applyQuickFix(fixName) }
 }
 

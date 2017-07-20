@@ -26,21 +26,6 @@ fun RsModDeclItem.getOrCreateModuleFile(): PsiFile? {
     return suggestChildFileName?.let { containingMod.ownedDirectory?.createFile(it) }
 }
 
-/*
- * A list of relative paths to where this module can be found.
- *
- * Paths are relative to the containing mod directory.
- *
- * Can be of length 0, 1 or 2.
- */
-val RsModDeclItem.possiblePaths: List<String> get() {
-    val path = pathAttribute
-    return if (path != null)
-        if (!File(path).isAbsolute) listOf(path) else emptyList()
-    else
-        implicitPaths
-}
-
 val RsModDeclItem.isLocal: Boolean
     get() = stub?.isLocal ?: (parentOfType<RsBlock>() != null)
 
