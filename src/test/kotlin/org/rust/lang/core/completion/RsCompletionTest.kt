@@ -272,52 +272,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     }, "use Spam::Quux/*caret*/;")
 
-    fun testCallStructMethod() = checkContainsCompletion("some_fn", """
-        struct SomeStruct { }
-        impl SomeStruct {
-            fn some_fn(&self) {}
-        }
-        fn main() {
-            let v = SomeStruct { };
-            v./*caret*/
-        }
-    """)
-
-    fun testCallEnumMethod() = checkContainsCompletion("some_fn", """
-        enum SomeEnum { Var1, Var2 }
-        impl SomeEnum {
-            fn some_fn(&self) {}
-        }
-        fn main() {
-            let v = SomeEnum::Var1 ;
-            v./*caret*/
-        }
-    """)
-
-    fun testCallTraitImplForStructMethod() = checkContainsCompletion("some_fn", """
-        trait SomeTrait { fn some_fn(&self); }
-        struct SomeStruct { }
-        impl SomeTrait for SomeStruct {
-            fn some_fn(&self) {}
-        }
-        fn main() {
-            let v = SomeStruct { };
-            v./*caret*/
-        }
-    """)
-
-    fun testCallTraitImplForEnumMethod() = checkContainsCompletion("some_fn", """
-        trait SomeTrait { fn some_fn(&self); }
-        enum SomeEnum { Var1, Var2 }
-        impl SomeTrait for SomeEnum {
-            fn some_fn(&self) {}
-        }
-        fn main() {
-            let v = SomeEnum::Var1 ;
-            v./*caret*/
-        }
-    """)
-
     fun testEnumVariant() = checkSingleCompletion("BAZBAR", """
         enum Foo {
             BARBOO,

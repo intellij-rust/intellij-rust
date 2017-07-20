@@ -44,27 +44,81 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testMethodCallExprRef() = checkSingleCompletion("self.transmogrify()", """
+    fun `test method call on &self`() = doSingleCompletion( """
         struct S;
 
         impl S {
             fn transmogrify(&self) {}
 
-            fn foo(&self) {
-                self.trans/*caret*/
-            }
+            fn foo(&self) { self.trans/*caret*/ }
+        }
+    """, """
+        struct S;
+
+        impl S {
+            fn transmogrify(&self) {}
+
+            fn foo(&self) { self.transmogrify()/*caret*/ }
         }
     """)
 
-    fun testMethodCallExprEnum() = checkSingleCompletion("self.quux()", """
+    fun `test method call on enum`() = doSingleCompletion("""
         enum E { X }
+        impl E { fn quux(&self) {} }
 
-        impl E {
-            fn quux(&self) {}
+        fn main() {
+            let e = E::X;
+            e.qu/*caret*/
+        }
+    """, """
+        enum E { X }
+        impl E { fn quux(&self) {} }
 
-            fn bar(&self) {
-                self.qu/*caret*/
-            }
+        fn main() {
+            let e = E::X;
+            e.quux()/*caret*/
+        }
+    """)
+
+    fun `test call trait impl for struct method`() = doSingleCompletion("""
+        trait SomeTrait { fn some_fn(&self); }
+        struct SomeStruct;
+        impl SomeTrait for SomeStruct {
+            fn some_fn(&self) {}
+        }
+        fn main() {
+            SomeStruct.some_/*caret*/
+        }
+    """, """
+        trait SomeTrait { fn some_fn(&self); }
+        struct SomeStruct;
+        impl SomeTrait for SomeStruct {
+            fn some_fn(&self) {}
+        }
+        fn main() {
+            SomeStruct.some_fn()/*caret*/
+        }
+    """)
+
+    fun `test call trait impl for enum method`() = doSingleCompletion("""
+        trait SomeTrait { fn some_fn(&self); }
+        enum SomeEnum { Var1, Var2 }
+        impl SomeTrait for SomeEnum {
+            fn some_fn(&self) {}
+        }
+        fn main() {
+            let v = SomeEnum::Var1;
+            v.some_/*caret*/
+        }
+    """, """
+        trait SomeTrait { fn some_fn(&self); }
+        enum SomeEnum { Var1, Var2 }
+        impl SomeTrait for SomeEnum {
+            fn some_fn(&self) {}
+        }
+        fn main() {
+            let v = SomeEnum::Var1;
+            v.some_fn()/*caret*/
         }
     """)
 
