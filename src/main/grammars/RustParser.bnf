@@ -154,7 +154,11 @@ private PathImpl ::= PathStart PathSegment*
 PathStart ::= ('::' | <<checkTypeQualAllowed>> TypeQual)? PathIdent PathTypeArguments? { elementType = Path }
 //    <T as Foo>::bar::baz::<i32>
 //    ^~~~~~~~~~~^ TypeQual
-TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::'
+TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 left PathSegment ::= '::' PathIdent PathTypeArguments? { elementType = Path }
 
