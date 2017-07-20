@@ -327,19 +327,17 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
 }
 
 fun processMacroCallVariants(invocation: PsiElement, processor: RsResolveProcessor): Boolean =
-    macroWalkUp(invocation, { false }) { scope ->
+    macroWalkUp(invocation) { scope ->
         processMacroDeclarations(scope, processor)
     }
 
-fun macroWalkUp(
+private fun macroWalkUp(
     start: PsiElement,
-    stopAfter: (RsCompositeElement) -> Boolean,
     processor: (scope: RsCompositeElement) -> Boolean
 ): Boolean {
     var scope = start.context as? RsCompositeElement
     while (scope != null) {
         if (processor(scope)) return true
-        if (stopAfter(scope)) break
         val cameFrom = scope
         scope = scope.context as? RsCompositeElement
         if (scope == null && cameFrom is RsFile) {
