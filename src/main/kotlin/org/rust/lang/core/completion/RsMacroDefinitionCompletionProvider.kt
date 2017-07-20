@@ -25,9 +25,8 @@ object RsMacroDefinitionCompletionProvider : CompletionProvider<CompletionParame
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
         val element = parameters.position
         processMacroCallVariants(element) { entry ->
-            val lookupElement = entry.element?.createLookupElement(entry.name)
-            if (lookupElement != null) {
-                result.addElement(lookupElement)
+            entry.element?.let { el ->
+                result.addElement(createLookupElement(el, entry.name))
             }
             false
         }

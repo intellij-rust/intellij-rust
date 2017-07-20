@@ -63,11 +63,9 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
 fun collectCompletionVariants(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {
     val result = mutableListOf<LookupElement>()
     f { e ->
-        if ((e.element as? RsFunction?)?.isTest ?: false) return@f false
-        val lookupElement = e.element?.createLookupElement(e.name)
-        if (lookupElement != null) {
-            result += lookupElement
-        }
+        val element = e.element ?: return@f false
+        if (element is RsFunction && element.isTest) return@f false
+        result += createLookupElement(element, e.name)
         false
     }
     return result.toTypedArray()

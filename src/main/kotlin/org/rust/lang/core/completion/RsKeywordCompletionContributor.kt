@@ -68,8 +68,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                     }
 
                 // `else` is more common than `else if`
-                result.addElement(PrioritizedLookupElement.withPriority(elseBuilder, CompletionEngine.KEYWORD_PRIORITY * 1.0001))
-                result.addElement(PrioritizedLookupElement.withPriority(elseIfBuilder, CompletionEngine.KEYWORD_PRIORITY))
+                result.addElement(PrioritizedLookupElement.withPriority(elseBuilder, KEYWORD_PRIORITY * 1.0001))
+                result.addElement(PrioritizedLookupElement.withPriority(elseIfBuilder, KEYWORD_PRIORITY))
             }
         })
     }

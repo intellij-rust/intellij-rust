@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.util.ProcessingContext
-import org.rust.lang.core.completion.CompletionEngine.KEYWORD_PRIORITY
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.returnType
