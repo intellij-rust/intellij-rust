@@ -323,8 +323,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     protected fun FileTree.createAndOpenFileWithCaretMarker(): TestProject {
         val testProject = create()
-        val fileWithCaret = testProject.fileWithCaret ?: error("No /*caret*/ or //^ found")
-        myFixture.configureFromTempProjectFile(fileWithCaret)
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
         return testProject
     }
 

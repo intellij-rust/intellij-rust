@@ -50,7 +50,7 @@ abstract class RsResolveTestBase : RsTestBase() {
 
         PsiManagerEx.getInstanceEx(project)
             .setAssertOnFileLoadingFilter(VirtualFileFilter { file ->
-                !file.path.endsWith(testProject.fileWithCaret!!)
+                !file.path.endsWith(testProject.fileWithCaret)
             }, testRootDisposable)
 
         val (reference, resolveFile) = findElementAndDataInEditor<RsReferenceElement>()

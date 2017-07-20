@@ -57,7 +57,7 @@ interface FileTreeBuilder {
 
 class FileTree(private val rootDirectory: Entry.Directory) {
     fun create(project: Project, directory: VirtualFile): TestProject {
-        var fileWithCaret: String? = null
+        val filesWithCaret: MutableList<String> = mutableListOf()
 
         fun go(dir: Entry.Directory, root: VirtualFile, parentComponents: List<String> = emptyList()) {
             for ((name, entry) in dir.children) {
@@ -67,8 +67,7 @@ class FileTree(private val rootDirectory: Entry.Directory) {
                         val vFile = root.findChild(name) ?: root.createChildData(root, name)
                         VfsUtil.saveText(vFile, replaceCaretMarker(entry.text))
                         if (hasCaretMarker(entry.text) || "//^" in entry.text) {
-                            if (fileWithCaret != null) error("More than one file with caret")
-                            fileWithCaret = components.joinToString(separator = "/")
+                            filesWithCaret += components.joinToString(separator = "/")
                         }
                     }
                     is Entry.Directory -> {
@@ -83,7 +82,7 @@ class FileTree(private val rootDirectory: Entry.Directory) {
             fullyRefreshDirectory(directory)
         }
 
-        return TestProject(project, directory, fileWithCaret)
+        return TestProject(project, directory, filesWithCaret)
     }
 
     fun assertEquals(baseDir: VirtualFile) {
@@ -115,8 +114,10 @@ class FileTree(private val rootDirectory: Entry.Directory) {
 class TestProject(
     private val project: Project,
     val root: VirtualFile,
-    val fileWithCaret: String?
+    val filesWithCaret: List<String>
 ) {
+
+    val fileWithCaret: String get() = filesWithCaret.singleOrNull()!!
 
     inline fun <reified T : PsiElement> findElementInFile(path: String): T {
         val element = doFindElementInFile(path)
