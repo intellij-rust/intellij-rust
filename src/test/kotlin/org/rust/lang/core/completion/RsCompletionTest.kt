@@ -5,10 +5,9 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.fileTree
+
 class RsCompletionTest : RsCompletionTestBase() {
-
-    override val dataPath = "org/rust/lang/core/completion/fixtures"
-
     fun `test local variable`() = doSingleCompletion("""
         fn foo(quux: i32) { qu/*caret*/ }
     """, """
@@ -224,20 +223,54 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testChildFile() = checkByDirectory {
-        openFileInEditor("main.rs")
-        executeSoloCompletion()
-    }
+    fun `test child file`() = doSingleCompletion(fileTree {
+        rust("main.rs", """
+            use foo::Spam;
+            mod foo;
 
-    fun testParentFile() = checkByDirectory {
-        openFileInEditor("foo.rs")
-        executeSoloCompletion()
-    }
+            fn main() { let _ = Spam::Q/*caret*/; }
+        """)
+        rust("foo.rs", """
+            pub enum Spam { Quux, Eggs }
+        """)
+    }, """
+        use foo::Spam;
+        mod foo;
 
-    fun testParentFile2() = checkByDirectory {
-        openFileInEditor("foo/mod.rs")
-        executeSoloCompletion()
-    }
+        fn main() { let _ = Spam::Quux/*caret*/; }
+    """)
+
+    fun `test parent file`() = doSingleCompletion(fileTree {
+        rust("main.rs", """
+            mod foo;
+
+            pub enum Spam { Quux, Eggs }
+
+            fn main() { }
+        """)
+        rust("foo.rs", """
+            use super::Spam;
+
+            fn foo() { let _ = Spam::Q/*caret*/; }
+        """)
+    }, """
+        use super::Spam;
+
+        fn foo() { let _ = Spam::Quux/*caret*/; }
+    """)
+
+    fun `test parent file 2`() = doSingleCompletion(fileTree {
+        rust("main.rs", """
+            mod foo;
+
+            pub enum Spam { Quux, Eggs }
+
+            fn main() { }
+        """)
+        dir("foo") {
+            rust("mod.rs", "use Spam::Qu/*caret*/;")
+        }
+    }, "use Spam::Quux/*caret*/;")
 
     fun testCallStructMethod() = checkContainsCompletion("some_fn", """
         struct SomeStruct { }

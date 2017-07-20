@@ -31,15 +31,23 @@ interface FileTreeBuilder {
 
 class FileTree(private val rootDirectory: Entry.Directory) {
     fun create(project: Project, directory: VirtualFile): TestProject {
-        fun go(dir: Entry.Directory, root: VirtualFile) {
+        var fileWithCaret: String? = null
+
+        fun go(dir: Entry.Directory, root: VirtualFile, parentComponents: List<String> = emptyList()) {
             for ((name, entry) in dir.children) {
+                val components = parentComponents + name
                 when (entry) {
                     is Entry.File -> {
                         val vFile = root.createChildData(root, name)
-                        VfsUtil.saveText(vFile, entry.text)
+                        VfsUtil.saveText(vFile, replaceCaretMarker(entry.text))
+                        if (hasCaretMarker(entry.text)) {
+                            if (fileWithCaret != null) error("More than one file with caret")
+                            fileWithCaret = components.joinToString(separator = "/")
+
+                        }
                     }
                     is Entry.Directory -> {
-                        go(entry, root.createChildDirectory(root, name))
+                        go(entry, root.createChildDirectory(root, name), components)
                     }
                 }
             }
@@ -50,7 +58,7 @@ class FileTree(private val rootDirectory: Entry.Directory) {
             fullyRefreshDirectory(directory)
         }
 
-        return TestProject(project, directory)
+        return TestProject(project, directory, fileWithCaret)
     }
 
     fun assertEquals(baseDir: VirtualFile) {
@@ -81,7 +89,8 @@ class FileTree(private val rootDirectory: Entry.Directory) {
 
 class TestProject(
     private val project: Project,
-    val root: VirtualFile
+    val root: VirtualFile,
+    val fileWithCaret: String?
 ) {
 
     inline fun <reified T : PsiElement> findElementInFile(path: String): T {
@@ -126,7 +135,6 @@ class TestProject(
             ?: error("Can't find `$path`")
         val psiManager = PsiManager.getInstance(project)
         return if (vFile.isDirectory) psiManager.findDirectory(vFile)!! else psiManager.findFile(vFile)!!
-
     }
 }
 
@@ -139,7 +147,7 @@ private class FileTreeBuilderImpl(val directory: MutableMap<String, Entry> = mut
 
     override fun file(name: String, code: String) {
         check('/' !in name && '.' in name) { "Bad file name `$name`" }
-        directory[name] = Entry.File(code)
+        directory[name] = Entry.File(code.trimIndent())
     }
 
     fun intoDirectory() = Entry.Directory(directory)
@@ -162,3 +170,6 @@ private fun findElementInFile(file: PsiFile, marker: String): PsiElement {
     return file.findElementAt(elementOffset) ?:
         error { "No element found, offset = $elementOffset" }
 }
+
+fun replaceCaretMarker(text: String): String = text.replace("/*caret*/", "<caret>")
+private fun hasCaretMarker(text: String): Boolean = text.contains("/*caret*/")

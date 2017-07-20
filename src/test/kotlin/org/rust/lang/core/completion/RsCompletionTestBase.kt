@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
+import org.rust.FileTree
 import org.rust.lang.RsTestBase
 
 abstract class RsCompletionTestBase : RsTestBase() {
@@ -19,6 +20,15 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
     protected fun doSingleCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
         checkByText(before, after) { executeSoloCompletion() }
+    }
+
+    fun doSingleCompletion(before: FileTree, @Language("Rust") after: String) {
+        val baseDir = myFixture.findFileInTempDir(".")
+        val testProject = before.create(project, baseDir)
+        val fileWithCaret = testProject.fileWithCaret ?: error("No /*caret*/ found")
+        myFixture.configureFromTempProjectFile(fileWithCaret)
+        executeSoloCompletion()
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
     protected fun checkSingleCompletionWithMultipleFiles(target: String, @Language("Rust") code: String) {
