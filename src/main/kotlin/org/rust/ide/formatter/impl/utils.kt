@@ -111,6 +111,7 @@ data class CommaList(val listElement: IElementType, val openingBrace: IElementTy
 val COMMA_LISTS = listOf(
     CommaList(BLOCK_FIELDS, LBRACE, RBRACE),
     CommaList(STRUCT_LITERAL_BODY, LBRACE, RBRACE),
+    CommaList(ENUM_BODY, LBRACE, RBRACE),
 
     CommaList(TUPLE_FIELDS, LPAREN, RPAREN),
     CommaList(VALUE_PARAMETER_LIST, LPAREN, RPAREN),
