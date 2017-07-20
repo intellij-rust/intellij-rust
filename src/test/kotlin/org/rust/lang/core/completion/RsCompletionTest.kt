@@ -47,143 +47,176 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { frobnicate(/*caret*/) }
     """)
 
-    fun testPath() = checkSingleCompletion("foo::bar::frobnicate()", """
+    fun `test path`() = doSingleCompletion("""
         mod foo {
-            mod bar {
-                fn frobnicate() {}
-            }
+            mod bar { fn frobnicate() {} }
         }
-
         fn frobfrobfrob() {}
 
         fn main() {
             foo::bar::frob/*caret*/
         }
+    """, """
+        mod foo {
+            mod bar { fn frobnicate() {} }
+        }
+        fn frobfrobfrob() {}
+
+        fn main() {
+            foo::bar::frobnicate()/*caret*/
+        }
     """)
 
-    fun testAnonymousItemDoesNotBreakCompletion() = checkSingleCompletion("frobnicate()", """
+    fun `test anonymous item does not break completion`() = doSingleCompletion("""
         extern "C" { }
-
         fn frobnicate() {}
 
         fn main() {
             frob/*caret*/
         }
-    """)
+    """, """
+        extern "C" { }
+        fn frobnicate() {}
 
-    fun `test use glob`() = checkSingleCompletion("quux", """
-        mod foo {
-            pub fn quux() {}
+        fn main() {
+            frobnicate()/*caret*/
         }
-
-        use self::foo::{q/*caret*/};
-
-        fn main() {}
     """)
 
-    fun `test use glob global`() = checkSingleCompletion("Foo", """
+    fun `test use glob`() = doSingleCompletion("""
+        mod foo { pub fn quux() {} }
+
+        use self::foo::q/*caret*/;
+    """, """
+        mod foo { pub fn quux() {} }
+
+        use self::foo::quux/*caret*/;
+    """)
+
+    fun `test use glob global`() = doSingleCompletion("""
         pub struct Foo;
 
         mod m {
-            use {F/*caret*/};
+            use F/*caret*/;
+        }
+    """, """
+        pub struct Foo;
+
+        mod m {
+            use Foo/*caret*/;
         }
     """)
 
-    fun testUseItem() = checkSingleCompletion("quux", """
-        mod foo {
-            pub fn quux() {}
-        }
-
+    fun `test use item`() = doSingleCompletion("""
+        mod foo { pub fn quux() {} }
         use self::foo::q/*caret*/;
-
-        fn main() {}
+    """, """
+        mod foo { pub fn quux() {} }
+        use self::foo::quux/*caret*/;
     """)
 
-    fun testWildcardImports() = checkSingleCompletion("transmogrify()", """
-        mod foo {
-            fn transmogrify() {}
-        }
+    fun `test wildcard imports`() = doSingleCompletion("""
+        mod foo { fn transmogrify() {} }
 
         fn main() {
             use self::foo::*;
-
             trans/*caret*/
+        }
+    """, """
+        mod foo { fn transmogrify() {} }
+
+        fn main() {
+            use self::foo::*;
+            transmogrify()/*caret*/
         }
     """)
 
-    fun testShadowing() = checkSingleCompletion("foobar", """
+    fun `test shadowing`() = doSingleCompletion("""
         fn main() {
             let foobar = "foobar";
             let foobar = foobar.to_string();
             foo/*caret*/
         }
+    """, """
+        fn main() {
+            let foobar = "foobar";
+            let foobar = foobar.to_string();
+            foobar/*caret*/
+        }
     """)
 
-    fun testCompleteAlias() = checkSingleCompletion("frobnicate()", """
-        mod m {
-            pub fn transmogrify() {}
-        }
-
-        use self::m::{transmogrify as frobnicate};
+    fun `test complete alias`() = doSingleCompletion("""
+        mod m { pub fn transmogrify() {} }
+        use self::m::transmogrify as frobnicate;
 
         fn main() {
             frob/*caret*/
         }
-    """)
+    """, """
+        mod m { pub fn transmogrify() {} }
+        use self::m::transmogrify as frobnicate;
 
-    fun testCompleteSelfType() = checkSingleCompletion("Self", """
-        trait T {
-            fn foo() -> Se/*caret*/
+        fn main() {
+            frobnicate()/*caret*/
         }
     """)
 
-    fun testStructField() = checkSingleCompletion("foobarbaz", """
-        struct S {
-            foobarbaz: i32
-        }
+    fun `test complete self type`() = doSingleCompletion("""
+        trait T { fn foo() -> Se/*caret*/ }
+    """, """
+        trait T { fn foo() -> Self/*caret*/ }
+    """)
+
+    fun `test struct field`() = doSingleCompletion("""
+        struct S { foobarbaz: i32 }
         fn main() {
             let _ = S { foo/*caret*/ };
         }
+    """, """
+        struct S { foobarbaz: i32 }
+        fn main() {
+            let _ = S { foobarbaz/*caret*/ };
+        }
     """)
 
-    fun testEnumField() = checkSingleCompletion("bazbarfoo", """
-        enum E {
-            X {
-                bazbarfoo: i32
-            }
-        }
+    fun `test enum field`() = doSingleCompletion("""
+        enum E { X { bazbarfoo: i32 } }
         fn main() {
             let _ = E::X { baz/*caret*/ }
         }
+    """, """
+        enum E { X { bazbarfoo: i32 } }
+        fn main() {
+            let _ = E::X { bazbarfoo/*caret*/ }
+        }
     """)
 
-    fun testLocalScope() = checkNoCompletion("""
+    fun `test local scope`() = checkNoCompletion("""
         fn foo() {
             let x = spam/*caret*/;
             let spamlot = 92;
         }
     """)
 
-    fun testWhileLet() = checkNoCompletion("""
+    fun `test while let`() = checkNoCompletion("""
         fn main() {
             while let Some(quazimagnitron) = quaz/*caret*/ { }
         }
     """)
 
-
-    fun testAliasShadowsOriginalName() = checkNoCompletion("""
+    fun `test alias shadows original name`() = checkNoCompletion("""
         mod m {
             pub fn transmogrify() {}
         }
 
-        use self::m::{transmogrify as frobnicate};
+        use self::m::transmogrify as frobnicate;
 
         fn main() {
             trans/*caret*/
         }
     """)
 
-    fun testCompletionRespectsNamespaces() = checkNoCompletion("""
+    fun `test completion respects namespaces`() = checkNoCompletion("""
         fn foobar() {}
 
         fn main() {
@@ -298,7 +331,7 @@ class RsCompletionTest : RsCompletionTestBase() {
             }
         }
         fn main() {
-            use Foo::{BAR/*caret*/}
+            use Foo::BAR/*caret*/
         }
     """)
 
