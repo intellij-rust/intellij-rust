@@ -36,6 +36,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
+    // TODO `<S as T>::Assoc` should be unified to `S`
     fun testQualifiedPath() = testType("""
         trait T {
             type Assoc;
@@ -49,7 +50,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
 
         fn main() {
             let _: <S as T>::Assoc = S;
-                 //^ <unknown>
+                 //^ <S as T>::Assoc
         }
     """)
 

@@ -178,6 +178,7 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
 
 fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val qualifier = path.path
+    val typeQual = path.typeQual
     val parent = path.context
     val ns = when (parent) {
         is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
@@ -199,7 +200,22 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
             if (processAssociatedFunctionsAndMethodsDeclarations(base.project, base.type, processor)) return true
         }
+        if (base is RsTypeParameter) {
+            // `impl<T: Tr> S<T> { fn foo() -> T::Item { unimplemented!() } }`
+            // Here we're resolving path `T::Item`, so `base` is `T`. First we're looking to the trait bounds of `T`,
+            // then resolving associated type to <Self as Tr>::Item, and then substituting `{Self => T}` into it
+
+            for ((element, subst) in TyTypeParameter(base).getTraitBoundsTransitively()) {
+                if (processAllWithSubst(element.typeAliasList, subst, processor)) return true
+            }
+        }
         return false
+    }
+
+    if (typeQual != null) {
+        val trait = typeQual.traitRef?.resolveToBoundTrait ?: return false
+        val subst = trait.subst.substituteInValues(mapOf(TyTypeParameter(trait.element) to typeQual.typeReference.type))
+        if (processAllWithSubst(trait.element.typeAliasList, subst, processor)) return true
     }
 
     val containingMod = path.containingMod
@@ -783,6 +799,17 @@ private operator fun RsResolveProcessor.invoke(e: BoundElement<RsNamedElement>):
 private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean {
     for (e in elements) {
         if (processor(e)) return true
+    }
+    return false
+}
+
+private fun processAllWithSubst(
+    elements: Collection<RsNamedElement>,
+    subst: Substitution,
+    processor: RsResolveProcessor
+): Boolean {
+    for (e in elements) {
+        if (processor(BoundElement(e, subst))) return true
     }
     return false
 }

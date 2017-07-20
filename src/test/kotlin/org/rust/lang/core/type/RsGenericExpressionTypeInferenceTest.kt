@@ -593,4 +593,65 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a
         } //^ X
     """)
+
+    fun `test bound associated type`() = testExpr("""
+        trait Tr { type Item; }
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) -> B::Item { unimplemented!() } }
+
+        struct X;
+        impl Tr for X { type Item = u8; }
+        fn main() {
+            let a = S(X).foo();
+            a
+        } //^ u8
+    """)
+
+    fun `test bound associated type in explicit UFCS form`() = testExpr("""
+        trait Tr { type Item; }
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) -> <B as Tr>::Item { unimplemented!() } }
+
+        struct X;
+        impl Tr for X { type Item = u8; }
+        fn main() {
+            let a = S(X).foo();
+            a
+        } //^ u8
+    """)
+
+    fun `test 2 bound associated types`() = testExpr("""
+        trait Tr { type Item; }
+        struct S<A, B>(A, B);
+        impl<C: Tr, D: Tr> S<C, D> { fn foo(self) -> (C::Item, D::Item) { unimplemented!() } }
+
+        struct X;
+        struct Y;
+        impl Tr for X { type Item = u8; }
+        impl Tr for Y { type Item = u16; }
+        fn main() {
+            let a = S(X, Y).foo();
+            a
+        } //^ (u8, u16)
+    """)
+
+    fun `test recursive receiver substitution using associated type`() = testExpr("""
+        trait Tr {
+            type Item;
+            fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() }
+            fn fold(self) -> Self::Item where Self: Sized { unimplemented!() }
+        }
+
+        struct X;
+        struct S1<A>(A);
+        struct S<B>(B);
+
+        impl<C> Tr for S1<C> { type Item = C; }
+        impl<D: Tr> Tr for S<D> { type Item = D::Item; }
+
+        fn main() {
+            let a = S1(X).wrap().wrap().wrap().fold();
+            a
+        } //^ X
+    """)
 }

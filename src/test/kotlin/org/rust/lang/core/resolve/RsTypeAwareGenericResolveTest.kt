@@ -584,4 +584,29 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
 
         fn main() { bar(()) }
     """)
+
+    fun `test bound associated type`() = checkByCode("""
+        trait Tr { type Item; }
+                      //X
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) -> B::Item { unimplemented!() } }
+                                            //^
+    """)
+
+    fun `test bound associated type in explicit UFCS form`() = checkByCode("""
+        trait Tr { type Item; }
+                      //X
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) -> <B as Tr>::Item { unimplemented!() } }
+                                                    //^
+    """)
+
+    fun `test bound inherited associated type`() = checkByCode("""
+        trait Tr1 { type Item; }
+                       //X
+        trait Tr2: Tr1 {}
+        struct S<A>(A);
+        impl<B: Tr2> S<B> { fn foo(self) -> B::Item { unimplemented!() } }
+                                             //^
+    """)
 }

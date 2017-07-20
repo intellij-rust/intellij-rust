@@ -30,7 +30,7 @@ class RsPathReferenceImpl(
     override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
         val result = collectResolveVariants(element.referenceName) { processPathResolveVariants(element, false, it) }
 
-        val typeArguments: List<Ty> = run {
+        val typeArguments: List<Ty>? = run {
             val inAngles = element.typeArgumentList
             val fnSugar = element.valueParameterList
             when {
@@ -40,30 +40,34 @@ class RsPathReferenceImpl(
                 )
                 else -> null
             }
-        } ?: return result
+        }
 
         val outputArg = element.retType?.typeReference?.type
 
         return result.map { boundElement ->
-            val element = boundElement.element as? RsGenericDeclaration
-                ?: return@map boundElement
-
-            val parameters = element.typeParameters
+            val (element, subst) = boundElement.downcast<RsGenericDeclaration>() ?: return@map boundElement
 
             val assocTypes = run {
                 if (element is RsTraitItem) {
+                    val aliases = element.typeAliasList
+                        .mapNotNull { it.type as? TyTypeParameter }
+                        .associateBy { it }
+
                     val outputParam = element.fnOutputParam
-                    if (outputArg != null && outputParam != null) {
-                        return@run mapOf(outputParam to outputArg)
+                    return@run aliases + if (outputArg != null && outputParam != null) {
+                        mapOf(outputParam to outputArg)
+                    } else {
+                        emptySubstitution
                     }
                 }
                 emptySubstitution
             }
 
-            BoundElement(
-                element,
-                boundElement.subst
-                    + parameters.map { TyTypeParameter(it) }.zip(typeArguments).toMap()
+            val parameters = element.typeParameters.map { TyTypeParameter(it) }
+
+            BoundElement(element,
+                subst
+                    + (if (typeArguments != null) parameters.zip(typeArguments).toMap() else parameters.associateBy { it })
                     + assocTypes
             )
         }

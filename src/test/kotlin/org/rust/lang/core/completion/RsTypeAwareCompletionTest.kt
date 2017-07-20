@@ -157,4 +157,24 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
 
         fn foo(s: S) { s.frob/*caret*/ }
     """)
+
+    fun `test bound associated type`() = doSingleCompletion("""
+        trait Tr { type Item; }
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) -> B::It/*caret*/ }
+    """, """
+        trait Tr { type Item; }
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) -> B::Item/*caret*/ }
+    """)
+
+    fun `test bound associated type in explicit UFCS form`() = doSingleCompletion("""
+        trait Tr { type Item; }
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) -> <B as Tr>::It/*caret*/ }
+    """, """
+        trait Tr { type Item; }
+        struct S<A>(A);
+        impl<B: Tr> S<B> { fn foo(self) -> <B as Tr>::Item/*caret*/ }
+    """)
 }
