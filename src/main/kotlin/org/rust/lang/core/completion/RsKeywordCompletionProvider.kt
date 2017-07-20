@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.util.ProcessingContext
@@ -27,11 +26,9 @@ class RsKeywordCompletionProvider(
     }
 }
 
-class AddSuffixInsertionHandler(val suffix: String) : InsertHandler<LookupElement> {
-    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-        context.document.insertString(context.selectionEndOffset, suffix)
-        EditorModificationUtil.moveCaretRelatively(context.editor, suffix.length)
-    }
+fun InsertionContext.addSuffix(suffix: String) {
+    document.insertString(selectionEndOffset, suffix)
+    EditorModificationUtil.moveCaretRelatively(editor, suffix.length)
 }
 
 private val ALWAYS_NEEDS_SPACE = setOf("crate", "const", "enum", "extern", "fn", "impl", "let", "mod", "mut", "pub",
@@ -48,5 +45,5 @@ private fun addInsertionHandler(keyword: String, builder: LookupElementBuilder, 
         else -> return builder
     }
 
-    return builder.withInsertHandler(AddSuffixInsertionHandler(suffix))
+    return builder.withInsertHandler({ ctx, _ -> ctx.addSuffix(suffix) })
 }

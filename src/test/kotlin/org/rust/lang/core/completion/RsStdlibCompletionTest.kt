@@ -38,10 +38,10 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test macro`() = checkSingleCompletion("unimplemented", """
-        fn main() {
-            unimpl/*caret*/
-        }
+    fun `test macro`() = doSingleCompletion("""
+        fn main() { unimpl/*caret*/ }
+    """, """
+        fn main() { unimplemented!(/*caret*/) }
     """)
 }
 

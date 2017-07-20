@@ -24,8 +24,13 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
 
     return when (element) {
         is RsMod -> if (scopeName == "self" || scopeName == "super") {
-            base.withInsertHandler(AddSuffixInsertionHandler("::"))
-                .withTailText("::")
+            base.withTailText("::")
+                .withInsertHandler({ ctx, _ ->
+                    val offset = ctx.editor.caretModel.offset
+                    if (ctx.file.findElementAt(offset)?.parentOfType<RsUseGlobList>() == null) {
+                        ctx.addSuffix("::")
+                    }
+                })
         } else {
             base
         }

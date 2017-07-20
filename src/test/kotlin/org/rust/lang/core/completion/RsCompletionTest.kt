@@ -92,6 +92,16 @@ class RsCompletionTest : RsCompletionTestBase() {
         use self::foo::quux/*caret*/;
     """)
 
+    fun `test use glob self`() = doSingleCompletion("""
+        mod foo { }
+
+        use self::foo::{sel/*caret*/};
+    """, """
+        mod foo { }
+
+        use self::foo::{self/*caret*/};
+    """)
+
     fun `test use glob global`() = doSingleCompletion("""
         pub struct Foo;
 
