@@ -64,12 +64,11 @@ class FileTree(private val rootDirectory: Entry.Directory) {
                 val components = parentComponents + name
                 when (entry) {
                     is Entry.File -> {
-                        val vFile = root.createChildData(root, name)
+                        val vFile = root.findChild(name) ?: root.createChildData(root, name)
                         VfsUtil.saveText(vFile, replaceCaretMarker(entry.text))
-                        if (hasCaretMarker(entry.text)) {
+                        if (hasCaretMarker(entry.text) || "//^" in entry.text) {
                             if (fileWithCaret != null) error("More than one file with caret")
                             fileWithCaret = components.joinToString(separator = "/")
-
                         }
                     }
                     is Entry.Directory -> {

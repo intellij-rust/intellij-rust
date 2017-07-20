@@ -7,6 +7,7 @@ package org.rust.ide.navigation.goto
 
 import com.intellij.lang.CodeInsightActions
 import org.intellij.lang.annotations.Language
+import org.rust.fileTreeFromText
 import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
 
@@ -72,18 +73,13 @@ class RsGotoSuperHandlerTest : RsTestBase() {
     """)
 
     fun testOnFileLevel() {
-        val files = ProjectFile.parseFileCollection("""
+        fileTreeFromText("""
             //- foo.rs
-                // only comment
+            /*caret*/    // only comment
 
             //- main.rs
                 mod foo;
-        """)
-
-        for ((path, text) in files) {
-            myFixture.tempDirFixture.createFile(path, text)
-        }
-        myFixture.configureFromTempProjectFile(files[0].path)
+        """).createAndOpenFileWithCaretMarker()
 
         val target = gotoSuperTarget(myFixture.file)
         check(target?.text == "mod foo;")

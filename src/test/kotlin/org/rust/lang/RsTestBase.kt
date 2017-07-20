@@ -95,22 +95,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir(path))
     }
 
-    data class ProjectFile(val path: String, val text: String) {
-        companion object {
-            fun parseFileCollection(text: String): List<ProjectFile> {
-                val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
-                val fileNames = fileSeparator.findAll(text).map { it.groupValues[1] }.toList()
-                val fileTexts = fileSeparator.split(text).filter(String::isNotBlank)
-
-                check(fileNames.size == fileTexts.size) {
-                    "Have you placed `//- filename.rs` markers?"
-                }
-
-                return fileNames.zip(fileTexts).map({ ProjectFile(it.first, it.second) })
-            }
-        }
-    }
-
     protected fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
 
@@ -334,7 +318,15 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         }
     }
 
-    open protected fun FileTree.create(): TestProject =
+    protected fun FileTree.create(): TestProject =
         create(myFixture.project, myFixture.findFileInTempDir("."))
+
+    protected fun FileTree.createAndOpenFileWithCaretMarker(): TestProject {
+        val testProject = create()
+        val fileWithCaret = testProject.fileWithCaret ?: error("No /*caret*/ or //^ found")
+        myFixture.configureFromTempProjectFile(fileWithCaret)
+        return testProject
+    }
+
 }
 

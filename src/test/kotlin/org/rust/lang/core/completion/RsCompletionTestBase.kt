@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
-import org.rust.FileTree
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 
@@ -42,7 +41,7 @@ abstract class RsCompletionTestBase : RsTestBase() {
     }
 
     protected fun doSingleCompletionMultiflie(@Language("Rust") before: String, @Language("Rust") after: String) {
-        fileTreeFromText(before).configure()
+        fileTreeFromText(before).createAndOpenFileWithCaretMarker()
         executeSoloCompletion()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
@@ -63,7 +62,7 @@ abstract class RsCompletionTestBase : RsTestBase() {
     }
 
     protected fun checkNoCompletionWithMultipleFiles(@Language("Rust") code: String) {
-        fileTreeFromText(code).configure()
+        fileTreeFromText(code).createAndOpenFileWithCaretMarker()
         noCompletionCheck()
     }
 
@@ -86,12 +85,6 @@ abstract class RsCompletionTestBase : RsTestBase() {
             error("Expected a single completion, but got ${variants.size}\n"
                 + variants.map { it.debug() }.joinToString("\n"))
         }
-    }
-
-    private fun FileTree.configure() {
-        val testProject = create()
-        val fileWithCaret = testProject.fileWithCaret ?: error("No /*caret*/ found")
-        myFixture.configureFromTempProjectFile(fileWithCaret)
     }
 
     private fun PsiElement.fitsHierarchically(target: String): Boolean = when {

@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.impl.PsiManagerEx
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
+import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
@@ -47,17 +48,13 @@ abstract class RsResolveTestBase : RsTestBase() {
     }
 
     protected fun stubOnlyResolve(@Language("Rust") code: String, rewriteExistingFiles: Boolean = false) {
-        val files = ProjectFile.parseFileCollection(code)
-        for ((path, text) in files) {
-            createFileAndSetText(path, text, rewriteExistingFiles)
-        }
+        val testProject = fileTreeFromText(code)
+            .createAndOpenFileWithCaretMarker()
 
         PsiManagerEx.getInstanceEx(project)
             .setAssertOnFileLoadingFilter(VirtualFileFilter { file ->
-                !file.path.endsWith(files[0].path)
+                !file.path.endsWith(testProject.fileWithCaret!!)
             }, testRootDisposable)
-
-        myFixture.configureFromTempProjectFile(files[0].path)
 
         val (reference, resolveFile) = findElementAndDataInEditor<RsReferenceElement>()
 
