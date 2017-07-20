@@ -272,89 +272,70 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     }, "use Spam::Quux/*caret*/;")
 
-    fun testEnumVariant() = checkSingleCompletion("BAZBAR", """
-        enum Foo {
-            BARBOO,
-            BAZBAR
-        }
-        fn main() {
-            let _ = Foo::BAZ/*caret*/
-        }
+    fun testEnumVariant() = doSingleCompletion("""
+        enum Foo { BARBOO, BAZBAR }
+        fn main() { let _ = Foo::BAZ/*caret*/ }
+    """, """
+        enum Foo { BARBOO, BAZBAR }
+        fn main() { let _ = Foo::BAZBAR/*caret*/ }
     """)
 
-    fun testEnumVariantWithTupleFields() = checkSingleCompletion("Foo::BARBAZ()", """
-        enum Foo {
-            BARBAZ(f64)
-        }
-        fn main() {
-            let _ = Foo::BAR/*caret*/
-        }
+    fun testEnumVariantWithTupleFields() = doSingleCompletion("""
+        enum Foo { BARBAZ(f64) }
+        fn main() { let _ = Foo::BAR/*caret*/ }
+    """, """
+        enum Foo { BARBAZ(f64) }
+        fn main() { let _ = Foo::BARBAZ(/*caret*/) }
     """)
 
-    fun testEnumVariantWithTupleFieldsInUseBlock() = checkSingleCompletion("BARBAZ", """
-        enum Foo {
-            BARBAZ(f64)
-        }
-        fn main() {
-            use Foo::BAR/*caret*/
-        }
+    fun testEnumVariantWithTupleFieldsInUseBlock() = doSingleCompletion("""
+        enum Foo { BARBAZ(f64) }
+        fn main() { use Foo::BAR/*caret*/ }
+    """, """
+        enum Foo { BARBAZ(f64) }
+        fn main() { use Foo::BARBAZ/*caret*/ }
     """)
 
-    fun testEnumVariantWithBlockFields() = checkSingleCompletion("Foo::BARBAZ {}", """
-        enum Foo {
-            BARBAZ {
-                foo: f64
-            }
-        }
-        fn main() {
-            let _ = Foo::BAR/*caret*/
-        }
+    fun testEnumVariantWithBlockFields() = doSingleCompletion("""
+        enum Foo { BARBAZ { foo: f64 } }
+        fn main() { let _ = Foo::BAR/*caret*/ }
+    """, """
+        enum Foo { BARBAZ { foo: f64 } }
+        fn main() { let _ = Foo::BARBAZ {/*caret*/} }
     """)
 
-    fun testEnumVariantWithBlockFieldsInUseBlock() = checkSingleCompletion("BARBAZ", """
-        enum Foo {
-            BARBAZ {
-                foo: f64
-            }
-        }
-        fn main() {
-            use Foo::BAR/*caret*/
-        }
+    fun testEnumVariantWithBlockFieldsInUseBlock() = doSingleCompletion("""
+        enum Foo { BARBAZ { foo: f64 } }
+        fn main() { use Foo::BAR/*caret*/ }
+    """, """
+        enum Foo { BARBAZ { foo: f64 } }
+        fn main() { use Foo::BARBAZ/*caret*/ }
     """)
 
-    fun testTypeNamespaceIsCompletedForPathHead() = checkSingleCompletion("FooBar", """
+    fun testTypeNamespaceIsCompletedForPathHead() = doSingleCompletion("""
         struct FooBar { f: i32 }
 
-        fn main() {
-            Foo/*caret*/
-        }
+        fn main() { Foo/*caret*/ }
+    """, """
+        struct FooBar { f: i32 }
+
+        fn main() { FooBar/*caret*/ }
     """)
 
     // issue #1182
-    fun testAssociatedTypeCompletion() = checkSingleCompletion("Bar", """
+    fun testAssociatedTypeCompletion() = doSingleCompletion("""
         trait Foo {
             type Bar;
             fn foo(bar: Self::Ba/*caret*/);
         }
-    """)
-
-    // issue #1182
-    fun testAssociatedTypeSuggestion() = checkContainsCompletion("Bar", """
+    """, """
         trait Foo {
             type Bar;
-            fn foo(bar: Self::/*caret*/);
+            fn foo(bar: Self::Bar/*caret*/);
         }
     """)
 
-    // issue #1182
-    fun testAssociatedTypeSuggestionWithReference() = checkContainsCompletion("Bar", """
-        trait Foo {
-            type Bar;
-            fn foo(bar: &mut Self::/*caret*/);
-        }
-    """)
-
-    fun `test complete enum variants 1`() = checkSingleCompletion("BinOp", """
+    fun `test complete enum variants 1`() = doSingleCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {
             use self::Expr::*;
@@ -362,14 +343,30 @@ class RsCompletionTest : RsCompletionTestBase() {
                 Bi/*caret*/
             }
         }
+    """, """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        fn foo(e: Expr) {
+            use self::Expr::*;
+            match e {
+                BinOp(/*caret*/)
+            }
+        }
     """)
 
-    fun `test complete enum variants 2`() = checkSingleCompletion("Unit", """
+    fun `test complete enum variants 2`() = doSingleCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {
             use self::Expr::*;
             match e {
                 Un/*caret*/
+            }
+        }
+    """, """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        fn foo(e: Expr) {
+            use self::Expr::*;
+            match e {
+                Unit/*caret*/
             }
         }
     """)
@@ -383,16 +380,26 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete macro`() = checkSingleCompletion("foo_bar", """
+    fun `test complete macro`() = doSingleCompletion("""
         macro_rules! foo_bar { () => () }
         fn main() {
             fo/*caret*/
         }
+    """, """
+        macro_rules! foo_bar { () => () }
+        fn main() {
+            foo_bar/*caret*/!()
+        }
     """)
 
-    fun `test complete outer macro`() = checkSingleCompletion("foo_bar", """
+    fun `test complete outer macro`() = doSingleCompletion("""
         macro_rules! foo_bar { () => () }
         fo/*caret*/
+        fn main() {
+        }
+    """, """
+        macro_rules! foo_bar { () => () }
+        foo_bar/*caret*/!()
         fn main() {
         }
     """)
@@ -402,5 +409,4 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo/*caret*/() {
         }
     """)
-
 }

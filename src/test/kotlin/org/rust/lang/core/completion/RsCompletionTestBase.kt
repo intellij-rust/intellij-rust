@@ -13,6 +13,7 @@ import org.rust.FileTree
 import org.rust.lang.RsTestBase
 
 abstract class RsCompletionTestBase : RsTestBase() {
+    // Prefer using `doSingleCompletion` instead
     protected fun checkSingleCompletion(target: String, @Language("Rust") code: String) {
         InlineFile(code).withCaret()
         singleCompletionCheck(target)
