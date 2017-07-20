@@ -223,54 +223,43 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test child file`() = doSingleCompletion(fileTree {
-        rust("main.rs", """
-            use foo::Spam;
-            mod foo;
-
-            fn main() { let _ = Spam::Q/*caret*/; }
-        """)
-        rust("foo.rs", """
-            pub enum Spam { Quux, Eggs }
-        """)
-    }, """
+    fun `test child file`() = doSingleCompletionMultiflie("""
+    //- main.rs
         use foo::Spam;
         mod foo;
+        fn main() { let _ = Spam::Q/*caret*/; }
 
+    //- foo.rs
+        pub enum Spam { Quux, Eggs }
+    """, """
+        use foo::Spam;
+        mod foo;
         fn main() { let _ = Spam::Quux/*caret*/; }
     """)
 
-    fun `test parent file`() = doSingleCompletion(fileTree {
-        rust("main.rs", """
-            mod foo;
+    fun `test parent file`() = doSingleCompletionMultiflie("""
+    //- main.rs
+        mod foo;
+        pub enum Spam { Quux, Eggs }
 
-            pub enum Spam { Quux, Eggs }
-
-            fn main() { }
-        """)
-        rust("foo.rs", """
-            use super::Spam;
-
-            fn foo() { let _ = Spam::Q/*caret*/; }
-        """)
-    }, """
+    //- foo.rs
         use super::Spam;
-
+        fn foo() { let _ = Spam::Q/*caret*/; }
+    """, """
+        use super::Spam;
         fn foo() { let _ = Spam::Quux/*caret*/; }
     """)
 
-    fun `test parent file 2`() = doSingleCompletion(fileTree {
-        rust("main.rs", """
-            mod foo;
+    fun `test parent file 2`() = doSingleCompletionMultiflie("""
+    //- main.rs
+        mod foo;
+        pub enum Spam { Quux, Eggs }
 
-            pub enum Spam { Quux, Eggs }
-
-            fn main() { }
-        """)
-        dir("foo") {
-            rust("mod.rs", "use Spam::Qu/*caret*/;")
-        }
-    }, "use Spam::Quux/*caret*/;")
+    //- foo/mod.rs
+        use Spam::Qu/*caret*/;
+    """, """
+        use Spam::Quux/*caret*/;
+    """)
 
     fun testEnumVariant() = doSingleCompletion("""
         enum Foo { BARBOO, BAZBAR }

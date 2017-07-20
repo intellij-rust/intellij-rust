@@ -61,15 +61,13 @@ class RsDowngradeModuleToFileTest : RsTestBase() {
     )
 
     fun checkAvailable(target: String, before: FileTree, after: FileTree) {
-        val baseDir = myFixture.findFileInTempDir(".")
-        val file = before.create(project, baseDir).psiFile(target)
+        val file = before.create().psiFile(target)
         testActionOnElement(file)
-        after.assertEquals(baseDir)
+        after.assertEquals(myFixture.findFileInTempDir("."))
     }
 
     fun checkNotAvailable(target: String, before: FileTree) {
-        val baseDir = myFixture.findFileInTempDir(".")
-        val file = before.create(project, baseDir).psiFile(target)
+        val file = before.create().psiFile(target)
         val presentation = testActionOnElement(file)
         check(!presentation.isEnabled)
     }

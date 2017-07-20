@@ -10,46 +10,21 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
+import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 
 abstract class RsCompletionTestBase : RsTestBase() {
     // Prefer using `doSingleCompletion` instead
     protected fun checkSingleCompletion(target: String, @Language("Rust") code: String) {
         InlineFile(code).withCaret()
-        singleCompletionCheck(target)
-    }
-
-    protected fun doSingleCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
-        checkByText(before, after) { executeSoloCompletion() }
-    }
-
-    fun doSingleCompletion(before: FileTree, @Language("Rust") after: String) {
-        val baseDir = myFixture.findFileInTempDir(".")
-        val testProject = before.create(project, baseDir)
-        val fileWithCaret = testProject.fileWithCaret ?: error("No /*caret*/ found")
-        myFixture.configureFromTempProjectFile(fileWithCaret)
         executeSoloCompletion()
-        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
-    }
 
-    protected fun checkSingleCompletionWithMultipleFiles(target: String, @Language("Rust") code: String) {
-        val files = ProjectFile.parseFileCollection(code)
-        for ((path, text) in files) {
-            myFixture.tempDirFixture.createFile(path, replaceCaretMarker(text))
-        }
-
-        openFileInEditor(files[0].path)
-
-        singleCompletionCheck(target)
-    }
-
-    protected fun singleCompletionCheck(target: String) {
-        executeSoloCompletion()
         val normName = target
             .substringBeforeLast("()")
             .substringBeforeLast(" {}")
             .substringAfterLast("::")
             .substringAfterLast(".")
+
         val shift = when {
             target.endsWith("()") || target.endsWith("::") -> 3
             target.endsWith(" {}") -> 4
@@ -60,6 +35,16 @@ abstract class RsCompletionTestBase : RsTestBase() {
         check((skipTextCheck || element.text == normName) && (element.fitsHierarchically(target) || element.fitsLinearly(target))) {
             "Wrong completion, expected `$target`, but got\n${myFixture.file.text}"
         }
+    }
+
+    protected fun doSingleCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
+        checkByText(before, after) { executeSoloCompletion() }
+    }
+
+    protected fun doSingleCompletionMultiflie(@Language("Rust") before: String, @Language("Rust") after: String) {
+        fileTreeFromText(before).configure()
+        executeSoloCompletion()
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
     protected fun checkContainsCompletion(text: String, @Language("Rust") code: String) {
@@ -78,16 +63,11 @@ abstract class RsCompletionTestBase : RsTestBase() {
     }
 
     protected fun checkNoCompletionWithMultipleFiles(@Language("Rust") code: String) {
-        val files = ProjectFile.parseFileCollection(code)
-        for ((path, text) in files) {
-            myFixture.tempDirFixture.createFile(path, replaceCaretMarker(text))
-        }
-
-        openFileInEditor(files[0].path)
+        fileTreeFromText(code).configure()
         noCompletionCheck()
     }
 
-    protected fun noCompletionCheck() {
+    private fun noCompletionCheck() {
         val variants = myFixture.completeBasic()
         checkNotNull(variants) {
             val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
@@ -106,6 +86,12 @@ abstract class RsCompletionTestBase : RsTestBase() {
             error("Expected a single completion, but got ${variants.size}\n"
                 + variants.map { it.debug() }.joinToString("\n"))
         }
+    }
+
+    private fun FileTree.configure() {
+        val testProject = create()
+        val fileWithCaret = testProject.fileWithCaret ?: error("No /*caret*/ found")
+        myFixture.configureFromTempProjectFile(fileWithCaret)
     }
 
     private fun PsiElement.fitsHierarchically(target: String): Boolean = when {

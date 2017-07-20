@@ -22,6 +22,8 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
+import org.rust.FileTree
+import org.rust.TestProject
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
@@ -331,5 +333,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             return StreamUtil.readText(stream, Charsets.UTF_8)
         }
     }
+
+    open protected fun FileTree.create(): TestProject =
+        create(myFixture.project, myFixture.findFileInTempDir("."))
 }
 

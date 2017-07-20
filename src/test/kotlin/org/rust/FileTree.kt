@@ -21,6 +21,32 @@ fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree {
     return FileTree(FileTreeBuilderImpl().apply { builder() }.intoDirectory())
 }
 
+fun fileTreeFromText(@Language("Rust") text: String): FileTree {
+    val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
+    val fileNames = fileSeparator.findAll(text).map { it.groupValues[1] }.toList()
+    val fileTexts = fileSeparator.split(text).filter(String::isNotBlank).map { it.trimIndent() }
+
+    check(fileNames.size == fileTexts.size) {
+        "Have you placed `//- filename.rs` markers?"
+    }
+
+    fun fill(dir: Entry.Directory, path: List<String>, contents: String) {
+        val name = path.first()
+        if (path.size == 1) {
+            dir.children[name] = Entry.File(contents)
+        } else {
+            val childDir = dir.children.getOrPut(name, { Entry.Directory(mutableMapOf()) }) as Entry.Directory
+            fill(childDir, path.drop(1), contents)
+        }
+    }
+
+    return FileTree(Entry.Directory(mutableMapOf()).apply {
+        for ((path, contents) in fileNames.map { it.split("/") }.zip(fileTexts)) {
+            fill(this, path, contents)
+        }
+    })
+}
+
 interface FileTreeBuilder {
     fun dir(name: String, builder: FileTreeBuilder.() -> Unit)
     fun file(name: String, code: String)

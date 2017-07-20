@@ -6,24 +6,24 @@
 package org.rust.lang.core.completion
 
 class RsModCompletionTest : RsCompletionTestBase() {
-    fun testModCompletionSameDirectory() = checkSingleCompletionWithMultipleFiles("my_mod", """
+    fun testModCompletionSameDirectory() = doSingleCompletionMultiflie("""
     //- main.rs
         mod my_m/*caret*/
 
-        fn main() {}
-
     //- my_mod.rs
         pub fn test() {}
+    """, """
+        mod my_mod/*caret*/
     """)
 
-    fun testModCompletionSubdirectory() = checkSingleCompletionWithMultipleFiles("my_mod", """
+    fun testModCompletionSubdirectory() = doSingleCompletionMultiflie("""
     //- main.rs
         mod my_m/*caret*/;
 
-        fn main() {}
-
     //- my_mod/mod.rs
         pub fn test() {}
+    """, """
+        mod my_mod/*caret*/;
     """)
 
     fun testModCompletionSameDirectoryNoModRS() = checkNoCompletionWithMultipleFiles("""
