@@ -31,26 +31,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { frobnicate(/*caret*/) }
     """)
 
-    fun `test method call only self`() = doSingleCompletion("""
-        struct S;
-        impl S { fn frobnicate(self) {} }
-        fn main() { S.frob/*caret*/ }
-    """, """
-        struct S;
-        impl S { fn frobnicate(self) {} }
-        fn main() { S.frobnicate()/*caret*/ }
-    """)
-
-    fun `test method call self and arg`() = doSingleCompletion("""
-        struct S;
-        impl S { fn frobnicate(self, foo: i32) {} }
-        fn main() { S.frob/*caret*/ }
-    """, """
-        struct S;
-        impl S { fn frobnicate(self, foo: i32) {} }
-        fn main() { S.frobnicate(/*caret*/) }
-    """)
-
     fun `test function call with parens`() = doSingleCompletion("""
         fn frobnicate() {}
         fn main() { frob/*caret*/() }

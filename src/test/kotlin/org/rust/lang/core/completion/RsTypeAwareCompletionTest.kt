@@ -5,29 +5,42 @@
 
 package org.rust.lang.core.completion
 
-import java.io.File
-
 class RsTypeAwareCompletionTest : RsCompletionTestBase() {
-    fun testMethodCallExpr() = checkSingleCompletion("S.transmogrify()", """
+    fun `test method call only self`() = doSingleCompletion("""
         struct S;
-
-        impl S { fn transmogrify(&self) {} }
-
-        fn main() {
-            S.trans/*caret*/
-        }
+        impl S { fn frobnicate(self) {} }
+        fn main() { S.frob/*caret*/ }
+    """, """
+        struct S;
+        impl S { fn frobnicate(self) {} }
+        fn main() { S.frobnicate()/*caret*/ }
     """)
 
-    fun testMethodCallExprWithParens() = checkSingleCompletion("x.transmogrify", """
-        struct S {
-            transmogrificator: i32
-        }
+    fun `test method call self and arg`() = doSingleCompletion("""
+        struct S;
+        impl S { fn frobnicate(self, foo: i32) {} }
+        fn main() { S.frob/*caret*/ }
+    """, """
+        struct S;
+        impl S { fn frobnicate(self, foo: i32) {} }
+        fn main() { S.frobnicate(/*caret*/) }
+    """)
 
+    fun `test don't suggest fields for methods`() = doSingleCompletion("""
+        struct S { transmogrificator: i32 }
         impl S { fn transmogrify(&self) {} }
 
         fn main() {
             let x: S = unimplemented!();
             x.trans/*caret*/()
+        }
+    """, """
+        struct S { transmogrificator: i32 }
+        impl S { fn transmogrify(&self) {} }
+
+        fn main() {
+            let x: S = unimplemented!();
+            x.transmogrify()/*caret*/
         }
     """)
 
