@@ -34,7 +34,7 @@ val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.val
 private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
 private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
 
-class ImplLookup(private val project: Project) {
+class ImplLookup(private val project: Project, private val items: StdKnownItems) {
     fun findImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
         return findWithCache(project, ty) { _, ty -> rawFindImplsAndTraits(ty) }
     }
@@ -58,11 +58,32 @@ class ImplLookup(private val project: Project) {
                             item.containingMod?.modName == derivableTrait.modName
                     }.map { BoundElement(it, mapOf(TyTypeParameter(it) to ty)) }
 
-                derived + RsImplIndex.findImpls(project, this, ty).map { impl ->
+                derived + getHardcodedImpls(ty) + RsImplIndex.findImpls(project, this, ty).map { impl ->
                     BoundElement(impl, impl.remapTypeParameters(this, ty).orEmpty())
                 }
             }
         }
+    }
+
+    private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
+        // TODO this code should be completely removed after macros implementation
+        when (ty) {
+            is TyNumeric -> {
+                return items.findBinOpTraits().map { it.substAssocType("Output", ty) }
+            }
+            is TyStruct -> {
+                val mapping: TypeMapping = mutableMapOf()
+                if (items.findCoreTy("slice::Iter").canUnifyWith(ty, this, mapping)) {
+                    val trait = items.findIteratorTrait() ?: return emptyList()
+                    return listOf(trait.substAssocType("Item", TyReference(mapping.valueByName("T"))))
+                }
+                if (items.findCoreTy("slice::IterMut").canUnifyWith(ty, this, mapping)) {
+                    val trait = items.findIteratorTrait() ?: return emptyList()
+                    return listOf(trait.substAssocType("Item", TyReference(mapping.valueByName("T"), true)))
+                }
+            }
+        }
+        return emptyList()
     }
 
     fun findMethodsAndAssocFunctions(ty: Ty): List<BoundElement<RsFunction>> {
@@ -132,9 +153,13 @@ class ImplLookup(private val project: Project) {
             impls.find { isImplSuitable(it.element, op.itemName, 0, rhsType) }
         } ?: return TyUnknown
 
-        return lookupAssociatedType(element, "Output")
-            .substitute(subst)
-            .substitute(mapOf(TyTypeParameter(element) to lhsType))
+        val assocType = if (element is RsTraitItem) {
+            subst[TyTypeParameter(element, "Output")] ?: return TyUnknown
+        } else {
+            lookupAssociatedType(element, "Output").substitute(subst)
+        }
+
+        return assocType.substitute(mapOf(TyTypeParameter(element) to lhsType))
     }
 
     private fun isImplSuitable(impl: RsTraitOrImpl,
@@ -151,9 +176,18 @@ class ImplLookup(private val project: Project) {
 
     companion object {
         fun relativeTo(psi: RsCompositeElement): ImplLookup =
-            ImplLookup(psi.project)
+            ImplLookup(psi.project, StdKnownItems.relativeTo(psi))
     }
 }
+
+private fun RsTraitItem.substAssocType(assoc: String, ty: Ty?): BoundElement<RsTraitItem> {
+    val assocType = TyTypeParameter(this, assoc)
+    val subst = if (ty != null) mapOf(assocType to ty) else emptySubstitution
+    return BoundElement(this, subst)
+}
+
+private fun Substitution.valueByName(name: String): Ty =
+    entries.find { it.key.toString() == name }?.value ?: TyUnknown
 
 private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty =
     impl.typeAliasList.find { it.name == name }?.typeReference?.type
