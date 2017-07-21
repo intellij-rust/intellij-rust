@@ -27,7 +27,8 @@ class RsInferenceContext {
 
         val block = fn.block
         if (block != null) {
-            RsFnInferenceContext(this, ImplLookup.relativeTo(fn)).walkBlock(block)
+            val items = StdKnownItems.relativeTo(fn)
+            RsFnInferenceContext(this, ImplLookup(fn.project, items), items).walkBlock(block)
         }
     }
 
@@ -58,7 +59,11 @@ class RsInferenceContext {
     }
 }
 
-private class RsFnInferenceContext(private val ctx: RsInferenceContext, private val lookup: ImplLookup) {
+private class RsFnInferenceContext(
+    private val ctx: RsInferenceContext,
+    private val lookup: ImplLookup,
+    private val items: StdKnownItems
+) {
     private val RsExpr.ty: Ty get() = ctx.getExprType(this)
     private val RsBlock.ty: Ty get() = expr?.ty ?: TyUnit
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
@@ -286,7 +291,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext, private 
             else -> error("Unrecognized range expression")
         }
 
-        return findStdRange(rangeName, indexType, expr)
+        return items.findRangeTy(rangeName, indexType)
     }
 
     private fun inferIndexExprType(expr: RsIndexExpr): Ty {
@@ -304,7 +309,7 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext, private 
                 elementType = getMoreCompleteType(e.ty, elementType)
             }
 
-            return findStdVec(elementType, expr)
+            return items.findVecForElementTy(elementType)
         }
 
         val tryArg = expr.macroCall.tryMacroArgument
@@ -320,8 +325,8 @@ private class RsFnInferenceContext(private val ctx: RsInferenceContext, private 
         val name = expr.macroCall.macroName?.text ?: return TyUnknown
         return when {
             "print" in name || "assert" in name -> TyUnit
-            name == "format" -> findStdString(expr)
-            name == "format_args" -> findStdArguments(expr)
+            name == "format" -> items.findStringTy()
+            name == "format_args" -> items.findArgumentsTy()
             expr.macroCall.formatMacroArgument != null || expr.macroCall.logMacroArgument != null -> TyUnit
             else -> TyUnknown
         }

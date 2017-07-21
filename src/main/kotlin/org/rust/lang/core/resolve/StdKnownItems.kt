@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.getTypeParameter
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.findWithCache
 import java.util.*
@@ -40,6 +41,30 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
         findCoreItem("iter::Iterator") as? RsTraitItem
 
     fun findBinOpTraits(): List<RsTraitItem> = binOps
+
+    fun findVecForElementTy(elementTy: Ty): Ty {
+        val ty = findStdTy("collections", "vec::Vec")
+
+        val typeParameter = ty.getTypeParameter("T") ?: return ty
+        return ty.substitute(mapOf(typeParameter to elementTy))
+    }
+
+    fun findRangeTy(rangeName: String, indexType: Ty?): Ty {
+        val ty = findStdTy("core", "ops::" + rangeName)
+
+        if (indexType == null) return ty
+
+        val typeParameter = ty.getTypeParameter("Idx") ?: return ty
+        return ty.substitute(mapOf(typeParameter to indexType))
+    }
+
+    fun findStringTy(): Ty {
+        return findStdTy("collections", "string::String")
+    }
+
+    fun findArgumentsTy(): Ty {
+        return findStdTy("core", "fmt::Arguments")
+    }
 
     companion object {
         fun relativeTo(psi: RsCompositeElement): StdKnownItems {
