@@ -7,6 +7,8 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
+import org.rust.lang.core.psi.RsModDeclItem
+import org.rust.lang.core.psi.ext.descendantsOfType
 
 class RenameTest : RsTestBase() {
     override val dataPath = "org/rust/ide/refactoring/fixtures/rename"
@@ -124,6 +126,29 @@ class RenameTest : RsTestBase() {
     """) {
         val file = myFixture.configureFromTempProjectFile("foo.rs")
         myFixture.renameElement(file, "bar.rs")
+    }
+
+    fun `test rename mod declaration`() = checkByDirectory("""
+    //- main.rs
+        use foo::Spam;
+        mod foo;
+
+        fn main() { let _ = Spam::Quux; }
+    //- foo.rs
+        pub enum Spam { Quux, Eggs }
+    """, """
+    //- main.rs
+        use bar::Spam;
+        mod bar;
+
+        fn main() { let _ = Spam::Quux; }
+    //- bar.rs
+        pub enum Spam { Quux, Eggs }
+    """) {
+        val mod = myFixture.configureFromTempProjectFile("main.rs").descendantsOfType<RsModDeclItem>().single()
+        check(mod.name == "foo")
+        val file = mod.reference.resolve()!!
+        myFixture.renameElement(file, "bar")
     }
 
     private fun doTest(
