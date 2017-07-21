@@ -11,8 +11,6 @@ import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.descendantsOfType
 
 class RenameTest : RsTestBase() {
-    override val dataPath = "org/rust/ide/refactoring/fixtures/rename"
-
     fun `test function`() = doTest("spam", """
         mod a {
             mod b {
