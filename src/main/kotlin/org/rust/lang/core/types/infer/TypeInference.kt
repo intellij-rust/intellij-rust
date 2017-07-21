@@ -138,8 +138,8 @@ private class RsFnInferenceContext(
         is RsLitExpr -> inferLiteralExprType(expr)
         is RsBlockExpr -> expr.block.ty
         is RsIfExpr -> if (expr.elseBranch == null) TyUnit else (expr.block?.ty ?: TyUnknown)
-    // TODO: handle break with value
-        is RsWhileExpr, is RsLoopExpr -> TyUnit
+        is RsLoopExpr -> inferLoopExprType(expr)
+        is RsWhileExpr -> TyUnit
         is RsMatchExpr -> inferMatchExprType(expr)
         is RsUnaryExpr -> inferUnaryExprType(expr)
         is RsBinaryExpr -> inferBinaryExprType(expr)
@@ -215,6 +215,33 @@ private class RsFnInferenceContext(
             else -> null
         } ?: TyUnknown
         return raw.substitute(boundField.subst)
+    }
+
+    private fun inferLoopExprType(expr: RsLoopExpr): Ty {
+        val returningTypes = mutableListOf<Ty>()
+        val label = expr.labelDecl?.name
+
+        fun collectReturningTypes(element: PsiElement, matchOnlyByLabel: Boolean) {
+            for (child in element.children) {
+                when (child) {
+                    is RsBreakExpr -> {
+                        collectReturningTypes(child, matchOnlyByLabel)
+                        if (!matchOnlyByLabel && child.label == null || child.label?.referenceName == label) {
+                            returningTypes += child.expr?.ty ?: TyUnit
+                        }
+                    }
+                    is RsLabeledExpression -> {
+                        if (label != null) {
+                            collectReturningTypes(child, true)
+                        }
+                    }
+                    else -> collectReturningTypes(child, matchOnlyByLabel)
+                }
+            }
+        }
+
+        collectReturningTypes(expr, false)
+        return getMoreCompleteType(returningTypes)
     }
 
     private fun inferMatchExprType(expr: RsMatchExpr): Ty =
@@ -303,12 +330,8 @@ private class RsFnInferenceContext(
     private fun inferMacroExprType(expr: RsMacroExpr): Ty {
         val vecArg = expr.macroCall.vecMacroArgument
         if (vecArg != null) {
-            val elements = vecArg.exprList
-            var elementType: Ty = TyUnknown
-            for (e in elements) {
-                elementType = getMoreCompleteType(e.ty, elementType)
-            }
-
+            val elementTypes = vecArg.exprList.map { it.ty }
+            val elementType = getMoreCompleteType(elementTypes)
             return items.findVecForElementTy(elementType)
         }
 
@@ -374,25 +397,27 @@ private class RsFnInferenceContext(
             val size = calculateArraySize(expr.sizeExpr) ?: return TySlice(elementType)
             elementType to size
         } else {
-            val elements = expr.arrayElements
-            if (elements.isNullOrEmpty()) return TySlice(TyUnknown)
+            val elementTypes = expr.arrayElements?.map { it.ty }
+            if (elementTypes.isNullOrEmpty()) return TySlice(TyUnknown)
 
-            var elementType: Ty = TyUnknown
-            // '!!' is safe here because we've just checked that elements isn't null
-            for (e in elements!!) {
-                elementType = getMoreCompleteType(e.ty, elementType)
-            }
-            elementType to elements.size
+            // '!!' is safe here because we've just checked that elementTypes isn't null
+            val elementType = getMoreCompleteType(elementTypes!!)
+            elementType to elementTypes.size
         }
         return TyArray(elementType, size)
     }
 
-    private fun getMoreCompleteType(t1: Ty, t2: Ty): Ty {
-        return when {
-            t1 is TyUnknown -> t2
-            t1 is TyInteger && t2 is TyInteger && t1.isKindWeak -> t2
-            t1 is TyFloat && t2 is TyFloat && t1.isKindWeak -> t2
-            else -> t1
+    private fun getMoreCompleteType(vararg types: Ty): Ty = getMoreCompleteType(types.toList())
+
+    private fun getMoreCompleteType(types: List<Ty>): Ty {
+        if (types.isEmpty()) return TyUnknown
+        return types.reduce { acc, ty ->
+            when {
+                acc is TyUnknown -> ty
+                acc is TyInteger && ty is TyInteger && acc.isKindWeak -> ty
+                acc is TyFloat && ty is TyFloat && acc.isKindWeak -> ty
+                else -> acc
+            }
         }
     }
 
