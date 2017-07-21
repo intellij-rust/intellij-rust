@@ -26,7 +26,7 @@ class RsModCompletionTest : RsCompletionTestBase() {
         mod my_mod/*caret*/;
     """)
 
-    fun testModCompletionSameDirectoryNoModRS() = checkNoCompletionWithMultipleFiles("""
+    fun testModCompletionSameDirectoryNoModRS() = checkNoCompletionWithMultifile("""
     //- function.rs
         mod mo/*caret*/;
 
@@ -36,7 +36,7 @@ class RsModCompletionTest : RsCompletionTestBase() {
         pub fn test() {}
     """)
 
-    fun testModCompletionSameDirectoryNoMainRS() = checkNoCompletionWithMultipleFiles("""
+    fun testModCompletionSameDirectoryNoMainRS() = checkNoCompletionWithMultifile("""
     //- main.rs
         mod m/*caret*/;
 

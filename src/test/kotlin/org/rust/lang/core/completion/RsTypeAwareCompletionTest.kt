@@ -122,40 +122,58 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testFieldExpr() = checkSingleCompletion("transmogrificator", """
+    fun `test field expr`() = doSingleCompletion("""
         struct S { transmogrificator: f32 }
 
         fn main() {
             let s = S { transmogrificator: 92};
             s.trans/*caret*/
         }
-    """)
-
-    fun testStaticMethod() = checkSingleCompletion("S::create()", """
-        struct S;
-
-        impl S {
-            fn create() -> S { S }
-        }
+    """, """
+        struct S { transmogrificator: f32 }
 
         fn main() {
-            let _ = S::cr/*caret*/;
+            let s = S { transmogrificator: 92};
+            s.transmogrificator/*caret*/
         }
     """)
 
-    fun testSelfMethod() = checkSingleCompletion("frobnicate()", """
+    fun `test static method`() = doSingleCompletion("""
+        struct S;
+        impl S { fn create() -> S { S } }
+
+        fn main() { let _ = S::cr/*caret*/; }
+    """, """
+        struct S;
+        impl S { fn create() -> S { S } }
+
+        fn main() { let _ = S::create()/*caret*/; }
+    """)
+
+    fun `test self method`() = doSingleCompletion("""
         trait Foo {
             fn frobnicate(&self);
             fn bar(&self) { self.frob/*caret*/ }
         }
+    """, """
+        trait Foo {
+            fn frobnicate(&self);
+            fn bar(&self) { self.frobnicate()/*caret*/ }
+        }
     """)
 
-    fun `test default method`() = checkSingleCompletion("frobnicate()", """
+    fun `test default method`() = doSingleCompletion("""
         trait Frob { fn frobnicate(&self) { } }
         struct S;
         impl Frob for S {}
 
         fn foo(s: S) { s.frob/*caret*/ }
+    """, """
+        trait Frob { fn frobnicate(&self) { } }
+        struct S;
+        impl Frob for S {}
+
+        fn foo(s: S) { s.frobnicate()/*caret*/ }
     """)
 
     fun `test bound associated type`() = doSingleCompletion("""

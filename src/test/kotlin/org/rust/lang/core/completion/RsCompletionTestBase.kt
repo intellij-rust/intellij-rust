@@ -61,7 +61,7 @@ abstract class RsCompletionTestBase : RsTestBase() {
         noCompletionCheck()
     }
 
-    protected fun checkNoCompletionWithMultipleFiles(@Language("Rust") code: String) {
+    protected fun checkNoCompletionWithMultifile(@Language("Rust") code: String) {
         fileTreeFromText(code).createAndOpenFileWithCaretMarker()
         noCompletionCheck()
     }
