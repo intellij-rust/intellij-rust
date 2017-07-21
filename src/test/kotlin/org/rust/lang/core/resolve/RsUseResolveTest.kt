@@ -256,7 +256,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
-    fun testSuperWildcard() = checkByCode("""
+    fun `test super wildcard with private`() = checkByCode("""
         fn foo() {}
           //X
 
@@ -269,6 +269,15 @@ class RsUseResolveTest : RsResolveTestBase() {
                //^
             }
         }
+    """)
+
+    fun `test self wildcard private`() = checkByCode("""
+        use m::*;
+        use self::bar::foo;
+                       //^
+        mod m {
+            pub mod bar { pub fn foo() {} }
+        }                       //X
     """)
 
     fun testTwoWildcards() = checkByCode("""

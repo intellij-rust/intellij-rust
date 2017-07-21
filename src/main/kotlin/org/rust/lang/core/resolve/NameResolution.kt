@@ -842,5 +842,5 @@ private class LazyScopeEntry(
 
 private fun isSuperChain(path: RsPath): Boolean {
     val qual = path.path
-    return path.referenceName == "super" && (qual == null || isSuperChain(qual))
+    return (path.referenceName == "super" || path.referenceName == "self") && (qual == null || isSuperChain(qual))
 }
