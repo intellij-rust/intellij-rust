@@ -28,7 +28,7 @@ class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustNamedElementIndex")
 
         fun findDerivableTraits(project: Project, target: String): Collection<RsTraitItem> =
-            findWithCache(project, target) { project, target ->
+            findWithCache(project, target) {
                 val stdTrait = STD_DERIVABLE_TRAITS[target]
                 getElements(KEY, target, project, GlobalSearchScope.allScope(project))
                     .mapNotNull { it as? RsTraitItem }

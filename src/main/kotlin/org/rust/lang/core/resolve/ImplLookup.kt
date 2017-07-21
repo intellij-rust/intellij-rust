@@ -36,7 +36,7 @@ private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
 
 class ImplLookup(private val project: Project, private val items: StdKnownItems) {
     fun findImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
-        return findWithCache(project, ty) { _, ty -> rawFindImplsAndTraits(ty) }
+        return findWithCache(project, ty) { rawFindImplsAndTraits(ty) }
     }
 
     private fun rawFindImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {

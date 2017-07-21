@@ -77,7 +77,7 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
             return StdKnownItems { prefixNoStd, name ->
                 val prefix = if (useStdPrefix) "std" else prefixNoStd
                 val path = AbsolutePath(module, "$prefix::$name")
-                findWithCache(project, path) { _, path ->
+                findWithCache(project, path) {
                     Optional.ofNullable(resolveStringPath(path.fullName, module)?.first)
                 }.orElse(null)
             }
