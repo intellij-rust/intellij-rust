@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.refactoring.RsNamesValidator
 
 abstract class RsReferenceBase<T : RsReferenceElement>(
     element: T
@@ -73,7 +74,14 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
         @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
             val factory = RsPsiFactory(identifier.project)
             val newId = when (identifier.elementType) {
-                IDENTIFIER -> factory.createIdentifier(newName.replace(".rs", ""))
+                IDENTIFIER -> {
+                    // Renaming files is tricky: we don't want to change `RenamePsiFileProcessor`,
+                    // so we must be ready for invalid names here
+                    val name = newName.replace(".rs", "")
+                    if (!RsNamesValidator().isIdentifier(name, identifier.project)) return
+                    factory.createIdentifier(name)
+
+                }
                 QUOTE_IDENTIFIER -> factory.createQuoteIdentifier(newName)
                 else -> error("Unsupported identifier type for `$newName` (${identifier.elementType})")
             }
