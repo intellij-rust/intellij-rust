@@ -6,6 +6,7 @@
 package org.rust.lang
 
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -31,6 +32,7 @@ import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.parentOfType
 import java.nio.file.Paths
 import java.util.*
@@ -79,6 +81,13 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         val afterDir = getVirtualFileByName("$testDataPath/$after")
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
+    }
+
+    protected fun checkByDirectory(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {
+        fileTreeFromText(before).create()
+        action()
+        FileDocumentManager.getInstance().saveAllDocuments()
+        fileTreeFromText(after).assertEquals(myFixture.findFileInTempDir("."))
     }
 
     protected fun checkByText(

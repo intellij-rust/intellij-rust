@@ -105,7 +105,23 @@ class RenameTest : RsTestBase() {
         }
     """)
 
-    fun testRenameFile() = checkByDirectory {
+    fun `test rename file`() = checkByDirectory("""
+    //- main.rs
+        use foo::Spam;
+        mod foo;
+
+        fn main() { let _ = Spam::Quux; }
+    //- foo.rs
+        pub enum Spam { Quux, Eggs }
+    """, """
+    //- main.rs
+        use bar::Spam;
+        mod bar;
+
+        fn main() { let _ = Spam::Quux; }
+    //- bar.rs
+        pub enum Spam { Quux, Eggs }
+    """) {
         val file = myFixture.configureFromTempProjectFile("foo.rs")
         myFixture.renameElement(file, "bar.rs")
     }

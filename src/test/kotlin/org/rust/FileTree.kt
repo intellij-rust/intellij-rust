@@ -100,7 +100,9 @@ class FileTree(private val rootDirectory: Entry.Directory) {
                     is Entry.File -> {
                         check(!a.isDirectory)
                         val actualText = String(a.contentsToByteArray(), UTF_8)
-                        check(entry.text == actualText)
+                        check(entry.text == actualText) {
+                            "Expected:\n${entry.text}\nGot:\n$actualText"
+                        }
                     }
                     is Entry.Directory -> go(entry, a)
                 }
