@@ -13,7 +13,10 @@ import org.rust.lang.core.resolve.ref.RsMetaItemReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsMetaItemStub
 
-val RsMetaItem.value: String? get() = stub?.value ?: litExpr?.stringLiteralValue
+val RsMetaItem.value: String? get() {
+    val stub = stub
+    return if (stub != null) stub.value else litExpr?.stringLiteralValue
+}
 
 val RsMetaItem.hasEq: Boolean get() = stub?.hasEq ?: (eq != null)
 abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>, RsMetaItem {
