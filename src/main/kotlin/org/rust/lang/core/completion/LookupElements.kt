@@ -44,7 +44,7 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
             .appendTailText(element.extraTailText, true)
             .withInsertHandler handler@ { context: InsertionContext, _: LookupElement ->
                 if (context.isInUseBlock) return@handler
-                if (!context.alreadyHasParens) {
+                if (!context.alreadyHasCallParens) {
                     context.document.insertString(context.selectionEndOffset, "()")
                 }
                 EditorModificationUtil.moveCaretRelatively(context.editor, if (element.valueParameters.isEmpty()) 2 else 1)
@@ -77,7 +77,9 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
                     element.blockFields != null -> Pair(" {}", 2)
                     else -> return@handler
                 }
-                context.document.insertString(context.selectionEndOffset, text)
+                if (!(context.alreadyHasPatternParens || context.alreadyHasCallParens)) {
+                    context.document.insertString(context.selectionEndOffset, text)
+                }
                 EditorModificationUtil.moveCaretRelatively(context.editor, shift)
             }
 
@@ -103,9 +105,15 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
 private val InsertionContext.isInUseBlock: Boolean
     get() = file.findElementAt(startOffset - 1)!!.parentOfType<RsUseItem>() != null
 
-private val InsertionContext.alreadyHasParens: Boolean get() {
+private val InsertionContext.alreadyHasCallParens: Boolean get() {
     val parent = file.findElementAt(startOffset)!!.parentOfType<RsExpr>()
     return (parent is RsMethodCallExpr) || parent?.parent is RsCallExpr
+}
+
+private val InsertionContext.alreadyHasPatternParens: Boolean get() {
+    val pat = file.findElementAt(startOffset)!!.parentOfType<RsPatEnum>()
+        ?: return false
+    return pat.path.textRange.contains(startOffset)
 }
 
 private val RsFunction.extraTailText: String

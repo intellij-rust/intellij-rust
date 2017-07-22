@@ -38,6 +38,34 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { frobnicate()/*caret*/ }
     """)
 
+    fun `test tuple struct with parens`() = doSingleCompletion("""
+        struct Frobnicate(i32, String);
+        fn main() { Frob/*caret*/() }
+    """, """
+        struct Frobnicate(i32, String);
+        fn main() { Frobnicate/*caret*/() }
+    """)
+
+    fun `test tuple eunm with parens`() = doSingleCompletion("""
+        enum E { Frobnicate(i32, String) }
+        fn main() { E::Frob/*caret*/() }
+    """, """
+        enum E { Frobnicate(i32, String) }
+        fn main() { E::Frobnicate(/*caret*/) }
+    """)
+
+    fun `test tuple enum match`() = doSingleCompletion("""
+        enum E { Frobnicate(i32, String) }
+        fn foo(f: E) { match f {
+            E::Frob/*caret*/() => {}
+        }}
+    """, """
+        enum E { Frobnicate(i32, String) }
+        fn foo(f: E) { match f {
+            E::Frobnicate(/*caret*/) => {}
+        }}
+    """)
+
     fun `test function call with parens with arg`() = doSingleCompletion("""
         fn frobnicate(foo: i32) {}
         fn main() { frob/*caret*/() }
