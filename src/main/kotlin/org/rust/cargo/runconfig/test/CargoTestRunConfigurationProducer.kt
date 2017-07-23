@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.containingCargoTarget
 import org.rust.lang.core.psi.ext.isTest
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.symbols.RustPath
 
 class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 
@@ -65,7 +66,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
 
     private fun findTestFunction(location: Location<*>): TestConfig? {
         val fn = location.psiElement.parentOfType<RsFunction>(strict = false) ?: return null
-        val name = fn.name ?: return null
+        val name = fn.crateRelativePath.configPath() ?: return null
         val target = fn.containingCargoTarget ?: return null
         return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
     }
@@ -77,12 +78,14 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         else
             "Test ${mod.modName}"
 
-        // We need to chop off heading colon `::`, since `crateRelativePath`
-        // always returns fully-qualified path
-        val testPath = (mod.crateRelativePath ?: "").toString().removePrefix("::")
+        val testPath = mod.crateRelativePath.configPath() ?: ""
         val target = mod.containingCargoTarget ?: return null
         if (!mod.functionList.any { it.isTest }) return null
 
         return TestConfig(mod, testName, testPath, target)
     }
 }
+
+// We need to chop off heading colon `::`, since `crateRelativePath`
+// always returns fully-qualified path
+private fun RustPath.CrateRelative?.configPath(): String? = toString().removePrefix("::")
