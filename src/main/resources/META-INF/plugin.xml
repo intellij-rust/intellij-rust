@@ -55,6 +55,7 @@
 
         <lang.syntaxHighlighterFactory language="Rust"
                                        implementationClass="org.rust.ide.highlight.RsHighlighterFactory"/>
+        <highlightUsagesHandlerFactory implementation="org.rust.ide.highlight.RsHighlightExitPointsHandlerFactory"/>
 
         <!-- Formatter -->
 
@@ -370,12 +371,12 @@
         <localInspection language="Rust" groupName="Rust"
                          displayName="Re-assign immutable variable"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsReassignImmutableInspection" />
+                         implementationClass="org.rust.ide.inspections.RsReassignImmutableInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Borrow checker"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsBorrowCheckerInspection" />
+                         implementationClass="org.rust.ide.inspections.RsBorrowCheckerInspection"/>
 
         <!-- Surrounders -->
 
