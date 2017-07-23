@@ -83,6 +83,18 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnTopLevel<RsFunction>()
     }
 
+    fun `test producer use complete function path`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+            mod foo_mod {
+                #[test]
+                fn test_foo() { as<caret>sert!(true); }
+            }
+            """).open()
+        }
+        checkOnTopLevel<RsFunction>()
+    }
+
     fun testTestProducerDisableForNonAnnotatedFunctions() {
         testProject {
             lib("foo", "src/lib.rs", "fn test_foo() { <caret>assert!(true); }").open()
