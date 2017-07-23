@@ -83,7 +83,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnTopLevel<RsFunction>()
     }
 
-    fun `testProducerUseCompleteFunctionPath`() {
+    fun `test producer use complete function path`() {
         testProject {
             lib("foo", "src/lib.rs", """
             mod foo_mod {
