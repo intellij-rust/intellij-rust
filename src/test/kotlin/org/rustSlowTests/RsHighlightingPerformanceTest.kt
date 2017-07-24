@@ -14,6 +14,7 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.utils.fullyRefreshDirectory
 import kotlin.system.measureTimeMillis
 
@@ -25,6 +26,8 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
             println("SKIP $name: clone Cargo to testData")
             return
         }
+        project.rustSettings.data = project.rustSettings.data.copy(useCargoCheckAnnotator = false)
+
         myFixture.configureFromTempProjectFile("src/cargo/core/resolver/mod.rs")
 
         val modificationCount = currentPsiModificationCount()
