@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.Consumer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.elementType
 
 class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
@@ -21,31 +22,10 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
             return null
         }
         val elementType = target.elementType
-        if (elementType == RETURN || elementType == TRY_EXPR || elementType == Q) {
-            return RsHighlightExitPointsHandler(editor, file, target)
-        }
-        if (elementType == IDENTIFIER) {
-            val parent = target.parent
-            if (parent is RsMacroCall && (parent.referenceName == "panic" || parent.referenceName == "try")) {
-                return RsHighlightExitPointsHandler(editor, file, target)
-            }
-        }
-        if (testForExprBeforeBlock(target)) {
+        if (elementType == RETURN || elementType == Q) {
             return RsHighlightExitPointsHandler(editor, file, target)
         }
         return null
-    }
-
-    private fun testForExprBeforeBlock(target: PsiElement): Boolean {
-        var context: PsiElement? = target
-        while (context != null) {
-            val parent = context.parent
-            if (context is RsExpr && parent is RsBlock) {
-                return true
-            }
-            context = parent
-        }
-        return false
     }
 
     private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var target: PsiElement) : HighlightUsagesHandlerBase<PsiElement>(editor, file) {
@@ -55,15 +35,25 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
             selectionConsumer?.consume(targets)
         }
 
-        private fun getFunctionOrLambda(target: PsiElement): PsiElement? {
-            var context: PsiElement? = target
-            while (context != null) {
-                if (context is RsFunction || context is RsLambdaExpr) {
-                    return context
+        private fun getFunctionOrLambda(target: PsiElement): PsiElement? =
+            target.ancestors.first { it is RsFunction || it is RsLambdaExpr }
+
+        private fun onlyExpressionAboveUntilFn(expr: RsExpr): Boolean {
+            expr.ancestors.forEach {
+                val parent = it.parent
+                when (it) {
+                    is RsExpr -> when (parent) {
+                        is RsMatchExpr,
+                        is RsPatRange,
+                        is RsMatchArmGuard -> return false
+                    }
+                    is RsFunction,
+                    is RsLambdaExpr -> return true
+                    is RsCondition,
+                    is RsStmt -> return false
                 }
-                context = context.parent
             }
-            return null
+            return false
         }
 
         override fun computeUsages(targets: MutableList<PsiElement>?) {
@@ -76,7 +66,11 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
                 override fun visitFunction(o: RsFunction) {}
                 override fun visitLambdaExpr(o: RsLambdaExpr) {}
                 override fun visitRetExpr(o: RsRetExpr) = addOccurrence(o)
-                override fun visitTryExpr(o: RsTryExpr) = addOccurrence(o)
+
+                override fun visitTryExpr(o: RsTryExpr) {
+                    (o.expr as? RsMethodCallExpr)?.acceptChildren(this)
+                    addOccurrence(o.q)
+                }
 
                 override fun visitTryMacroArgument(o: RsTryMacroArgument) {
                     val macroCall = o.parent as? RsMacroCall ?: return
@@ -91,10 +85,15 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
                 }
 
                 override fun visitExpr(o: RsExpr) {
-                    if (o.parent is RsBlock) {
-                        addOccurrence(o)
-                    } else {
-                        super.visitExpr(o)
+                    when (o) {
+                        is RsIfExpr,
+                        is RsBlockExpr,
+                        is RsMatchExpr -> o.acceptChildren(this)
+                        else -> if (onlyExpressionAboveUntilFn(o)) {
+                            addOccurrence(o)
+                        } else {
+                            super.visitExpr(o)
+                        }
                     }
                 }
             })

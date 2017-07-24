@@ -31,11 +31,20 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
     fun `test highlight try macro as return`() = doTest("""
         fn main() {
             if true {
-                /*caret*/try!(Err(()))
+                try!(Err(()))
             }
-            return 0
+            /*caret*/return 0;
         }
     """, "try!(Err(()))", "return 0")
+
+    fun `test highlight panic macro as return`() = doTest("""
+        fn main() {
+            if true {
+                panic!("test")
+            }
+            /*caret*/return 0;
+        }
+    """, "panic!(\"test\")", "return 0")
 
     fun `test highlight ? operator as return`() = doTest("""
         fn main() {
@@ -44,16 +53,7 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
             }
             return 0;
         }
-    """, "Err(())?", "return 0")
-
-    fun `test highlight panic as return`() = doTest("""
-        fn main() {
-            if true {
-                /*caret*/panic!("test");
-            }
-            return 0;
-        }
-    """, "panic!(\"test\")", "return 0")
+    """, "?", "return 0")
 
     fun `test highlight complex return as return`() = doTest("""
         struct S;
@@ -63,19 +63,19 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
         fn main() {
             let s = S;
-            s.foo()?.bar().foo()?;
-            /*caret*/return 0;
+            s.foo()/*caret*/?.bar().foo()?;
+            return 0;
         }
-    """, "s.foo()?.bar().foo()?", "return 0")
+    """, "?", "?", "return 0")
 
     fun `test highlight last stmt lit as return`() = doTest("""
         fn test() {}
         fn main() {
             if true {
-                return 1
+                /*caret*/return 1;
             }
             test();
-            /*caret*/0
+            0
         }
     """, "return 1", "0")
 
@@ -83,9 +83,9 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         fn test() -> i32 {}
         fn main() {
             if true {
-                return 1
+                /*caret*/return 1;
             }
-            /*caret*/test()
+            test()
         }
     """, "return 1", "test()")
 
@@ -107,8 +107,8 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
 
     fun `test highlight should not highlight outer function`() = doTest("""
         fn main() {
-            let one = || { /*caret*/return 1 };
-            return 2
+            let one = || { /*caret*/return 1; };
+            return 2;
         }
     """, "return 1")
 
@@ -116,10 +116,90 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         fn test() -> i32 {}
         fn main() {
             if true {
-                return 1;
+                /*caret*/return 1;
             }
-            /*caret*/if false { 2 } else { 3 }
+            if false { 2 } else { 3 }
         }
-    """, "return 1", "if false { 2 } else { 3 }")
+    """, "return 1", "2", "3")
+
+    fun `test highlight last stmt if in if and match as return`() = doTest("""
+        fn test() -> i32 {}
+        fn main() {
+            if true {
+                /*caret*/return 1;
+            }
+            if false {
+                match None {
+                    Some(_) => 2,
+                    None => 3,
+                }
+            } else {
+                if true {
+                    4
+                } else {
+                    5
+                }
+            }
+        }
+    """, "return 1", "2", "3", "4", "5")
+
+    fun `test highlight last stmt match as return`() = doTest("""
+        fn test() -> i32 {}
+        fn main() {
+            if true {
+                /*caret*/return 1;
+            }
+            match Some("test") {
+                Some(s) => { 2 }
+                _ => 3,
+            }
+        }
+    """, "return 1", "2", "3")
+
+    fun `test highlight last stmt match with inner as return`() = doTest("""
+        fn test() -> Result<i32,i32> {}
+        fn main() {
+            if true {
+                /*caret*/return 1;
+            }
+            match test()? {
+                Some(s) => 2,
+                _ => 3,
+            }
+        }
+    """, "return 1", "?", "2", "3")
+
+    fun `test highlight last stmt match with pat as return`() = doTest("""
+        fn test() -> Result<i32,i32> {}
+        fn main() {
+            if true {
+                /*caret*/return 1;
+            }
+            match "test" {
+                "test" => 2,
+                _ => 3,
+            }
+        }
+    """, "return 1", "2", "3")
+
+    fun `test highlight last stmt match in match and if as return`() = doTest("""
+        fn test() -> Result<i32,i32> {}
+        fn main() {
+            if true {
+                /*caret*/return 1;
+            }
+            match None {
+                Some(_) => match "test" {
+                    "test" => 2,
+                    _ => 3,
+                },
+                _ => if true {
+                    4
+                } else {
+                    5
+                },
+            }
+        }
+    """, "return 1", "2", "3", "4", "5")
 
 }
