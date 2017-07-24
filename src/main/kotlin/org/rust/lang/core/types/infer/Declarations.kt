@@ -77,6 +77,12 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
             }
         }
 
+        is RsFnPointerType -> {
+            val paramTypes = type.valueParameterList.valueParameterList.orEmpty()
+                .map { it.typeReference?.type ?: TyUnknown }
+            TyFunction(paramTypes, type.retType?.let { it.typeReference?.type ?: TyUnknown } ?: TyUnit)
+        }
+
         else -> TyUnknown
     }
 }

@@ -162,6 +162,11 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                  //^ &str
     """)
 
+    fun `test fn pointer`() = testType("""
+        type T = fn(i32) -> i32;
+               //^ fn(i32) -> i32
+    """)
+
     fun `test associated types for impl`() = testType("""
         trait A {
             type Item;

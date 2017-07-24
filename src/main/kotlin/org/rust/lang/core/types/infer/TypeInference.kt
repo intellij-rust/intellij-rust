@@ -351,15 +351,21 @@ private class RsFnInferenceContext(
 
         val lambdaArgumentPosition = parent.exprList.indexOf(lambdaExpr) + (if (callExpr is RsMethodCallExpr) 1 else 0)
 
-        val typeParameter = containingFunctionType.paramTypes.getOrNull(lambdaArgumentPosition) as? TyTypeParameter
+        val param = containingFunctionType.paramTypes.getOrNull(lambdaArgumentPosition)
             ?: return fallback
 
-        val fnTrait = typeParameter.getTraitBoundsTransitively()
-            .find { it.element.isAnyFnTrait }
-            ?: return fallback
+        if (param is TyFunction) {
+            return param.substitute(containingFunctionType.typeParameterValues)
+        } else if (param is TyTypeParameter) {
+            val fnTrait = param.getTraitBoundsTransitively()
+                .find { it.element.isAnyFnTrait }
+                ?: return fallback
 
-        return fnTrait.asFunctionType?.substitute(containingFunctionType.typeParameterValues)
-            ?: fallback
+            return fnTrait.asFunctionType?.substitute(containingFunctionType.typeParameterValues)
+                ?: fallback
+        }
+
+        return fallback
     }
 
     private fun inferArrayType(expr: RsArrayExpr): Ty {
