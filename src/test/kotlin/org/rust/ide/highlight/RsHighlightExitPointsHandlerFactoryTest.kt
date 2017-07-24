@@ -22,9 +22,9 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
     fun `test highlight all returns`() = doTest("""
         fn main() {
             if true {
-                /*caret*/return 1
+                /*caret*/return 1;
             }
-            return 0
+            return 0;
         }
     """, "return 1", "return 0")
 
@@ -89,11 +89,34 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 1", "test()")
 
+    fun `test highlight should not highlight inner function`() = doTest("""
+        fn main() {
+            fn bar() {
+                return 2;
+            }
+            /*caret*/return 1;
+        }
+    """, "return 1")
+
+    fun `test highlight should not highlight inner lambda`() = doTest("""
+        fn main() {
+            let one = || { return 1; };
+            /*caret*/return 2;
+        }
+    """, "return 2")
+
+    fun `test highlight should not highlight outer function`() = doTest("""
+        fn main() {
+            let one = || { /*caret*/return 1 };
+            return 2
+        }
+    """, "return 1")
+
     fun `test highlight last stmt if as return`() = doTest("""
         fn test() -> i32 {}
         fn main() {
             if true {
-                return 1
+                return 1;
             }
             /*caret*/if false { 2 } else { 3 }
         }

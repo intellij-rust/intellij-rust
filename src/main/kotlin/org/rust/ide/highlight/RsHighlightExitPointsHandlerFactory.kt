@@ -14,7 +14,6 @@ import com.intellij.util.Consumer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.parentOfType
 
 class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -36,17 +35,18 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
         }
         return null
     }
-     private fun testForExprBeforeBlock(target: PsiElement) : Boolean {
-         var context = target
-         while (context != null) {
-             val parent = context.parent
-             if (context is RsExpr && parent is RsBlock) {
-                 return true
-             }
-             context = context.parent
-         }
-         return false
-     }
+
+    private fun testForExprBeforeBlock(target: PsiElement): Boolean {
+        var context: PsiElement? = target
+        while (context != null) {
+            val parent = context.parent
+            if (context is RsExpr && parent is RsBlock) {
+                return true
+            }
+            context = parent
+        }
+        return false
+    }
 
     private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var target: PsiElement) : HighlightUsagesHandlerBase<PsiElement>(editor, file) {
         override fun getTargets() = listOf(target)
@@ -55,20 +55,28 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
             selectionConsumer?.consume(targets)
         }
 
+        private fun getFunctionOrLambda(target: PsiElement): PsiElement? {
+            var context: PsiElement? = target
+            while (context != null) {
+                if (context is RsFunction || context is RsLambdaExpr) {
+                    return context
+                }
+                context = context.parent
+            }
+            return null
+        }
+
         override fun computeUsages(targets: MutableList<PsiElement>?) {
-            val function = target.parentOfType<RsFunction>() ?: return
-            function.accept(object : RsVisitor() {
+            val function: PsiElement? = getFunctionOrLambda(target)
+            function?.acceptChildren(object : RsVisitor() {
                 override fun visitElement(element: PsiElement?) {
                     element?.acceptChildren(this)
                 }
 
-                override fun visitRetExpr(o: RsRetExpr) {
-                    addOccurrence(o)
-                }
-
-                override fun visitTryExpr(o: RsTryExpr) {
-                    addOccurrence(o)
-                }
+                override fun visitFunction(o: RsFunction) {}
+                override fun visitLambdaExpr(o: RsLambdaExpr) {}
+                override fun visitRetExpr(o: RsRetExpr) = addOccurrence(o)
+                override fun visitTryExpr(o: RsTryExpr) = addOccurrence(o)
 
                 override fun visitTryMacroArgument(o: RsTryMacroArgument) {
                     val macroCall = o.parent as? RsMacroCall ?: return
