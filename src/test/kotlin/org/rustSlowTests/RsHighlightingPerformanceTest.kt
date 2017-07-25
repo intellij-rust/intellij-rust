@@ -20,6 +20,10 @@ import kotlin.system.measureTimeMillis
 
 
 class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
+    // It is a performance test, but we don't want to waste time
+    // measuring CPU performance
+    override fun isPerformanceTest(): Boolean = false
+
     fun `test highlighting Cargo`() {
         val base = openRealProject("testData/cargo")
         if (base == null) {

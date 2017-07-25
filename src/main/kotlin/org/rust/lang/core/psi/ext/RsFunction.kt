@@ -26,8 +26,10 @@ val RsFunction.isTest: Boolean get() {
     return stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 }
 
-val RsFunction.isInherentImpl: Boolean
-    get() = (parent as? RsImplItem)?.let { return@let if (it.traitRef == null) it else null } != null
+val RsFunction.isInherentImpl: Boolean get() {
+    val parent = parent
+    return parent is RsImplItem && parent.traitRef == null
+}
 
 val RsFunction.isConst: Boolean get() {
     val stub = stub
