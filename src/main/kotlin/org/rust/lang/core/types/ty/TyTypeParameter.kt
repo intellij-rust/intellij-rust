@@ -8,6 +8,7 @@ package org.rust.lang.core.types.ty
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParameter
+import org.rust.lang.core.psi.ext.RsTraitOrImpl
 import org.rust.lang.core.psi.ext.bounds
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
@@ -22,7 +23,11 @@ class TyTypeParameter private constructor(
 ) : Ty {
 
     constructor(parameter: RsTypeParameter) : this(Named(parameter), parameter.name, bounds(parameter))
-    constructor(trait: RsTraitItem) : this(Self(trait), "Self", listOf(BoundElement(trait)))
+    constructor(trait: RsTraitOrImpl) : this(
+        Self(trait),
+        "Self",
+        trait.implementedTrait?.let { listOf(it) } ?: emptyList()
+    )
     constructor(trait: RsTraitItem, target: String) : this(
         AssociatedType(trait, target),
         "${trait.name}::$target",
@@ -70,7 +75,7 @@ class TyTypeParameter private constructor(
 
     private interface TypeParameter
     private data class Named(val parameter: RsTypeParameter) : TypeParameter
-    private data class Self(val trait: RsTraitItem) : TypeParameter
+    private data class Self(val trait: RsTraitOrImpl) : TypeParameter
     private data class AssociatedType(val trait: RsTraitItem, val target: String) : TypeParameter
 }
 

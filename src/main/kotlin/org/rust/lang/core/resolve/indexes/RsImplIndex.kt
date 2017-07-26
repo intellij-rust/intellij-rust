@@ -17,7 +17,6 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
-import org.rust.lang.utils.findWithCache
 import org.rust.lang.utils.getElements
 
 class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
@@ -26,20 +25,19 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<TyFingerprint> = TyFingerprint.KeyDescriptor
 
     companion object {
-        fun findImpls(project: Project, target: Ty): Collection<RsImplItem> =
-            findWithCache(project, target) { project, target ->
-                val fingerprint = TyFingerprint.create(target)
-                    ?: return@findWithCache emptyList()
+        fun findImpls(project: Project, target: Ty): Collection<RsImplItem> {
+            val fingerprint = TyFingerprint.create(target)
+                ?: return emptyList()
 
-                getElements(KEY, fingerprint, project, GlobalSearchScope.allScope(project))
-                    .filter { impl ->
-                        val ty = impl.typeReference?.type
-                        // Addition class check is a temporal solution to filter impls for type parameter
-                        // with the same name
-                        // struct S; impl<S: Tr1> Tr2 for S {}
-                        ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
-                    }
-            }
+            return getElements(KEY, fingerprint, project, GlobalSearchScope.allScope(project))
+                .filter { impl ->
+                    val ty = impl.typeReference?.type
+                    // Addition class check is a temporal solution to filter impls for type parameter
+                    // with the same name
+                    // struct S; impl<S: Tr1> Tr2 for S {}
+                    ty != null && ty.javaClass == target.javaClass && ty.canUnifyWith(target, project)
+                }
+        }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {
             val type = stub.psi.typeReference ?: return

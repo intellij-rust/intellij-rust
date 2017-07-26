@@ -192,12 +192,8 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
             val s = base.`super`
             if (s != null && processor("super", s)) return true
         }
-        if (base is RsTraitItem && qualifier.referenceName == "Self") {
+        if (base is RsTraitOrImpl && qualifier.referenceName == "Self") {
             if (processAll(base.typeAliasList, processor)) return true
-        }
-        if (base is RsStructItem && qualifier.referenceName == "Self") {
-            val traitItem = path.parentOfType<RsImplItem>()
-            if (traitItem != null && processAll(traitItem.typeAliasList, processor)) return true
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
@@ -638,16 +634,9 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCo
             if (processAll(scope.typeParameters, processor)) return true
         }
 
-        is RsTraitItem -> {
+        is RsTraitOrImpl -> {
             if (processAll(scope.typeParameters, processor)) return true
             if (processor("Self", scope)) return true
-        }
-
-        is RsImplItem -> {
-            if (processAll(scope.typeParameters, processor)) return true
-            //TODO: handle types which are not `NamedElements` (e.g. tuples)
-            val selfType = (scope.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve()
-            if (selfType != null && processor("Self", selfType)) return true
         }
 
         is RsFunction -> {
