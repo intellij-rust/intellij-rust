@@ -12,6 +12,9 @@ class RsFormatterImportBracesTest : RsFormatterTestBase() {
     fun testWontRemoveBracesIfMultiImport() = doTextTest("use getopts::{optopt, optarg};",
         "use getopts::{optopt, optarg};")
 
+    fun `test won't remove braces for single self`() = doTextTest("use getopts::{self};",
+        "use getopts::{self};")
+
     fun testRemoveBracesWithMultipleImports() = doTextTest(
         """
         use getopts::{optopt};
