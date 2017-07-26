@@ -12,7 +12,6 @@ import org.rust.ide.utils.presentableQualifiedName
 import org.rust.ide.utils.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.ext.RsFunctionRole.*
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
 
@@ -56,18 +55,22 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
     val rawLines = when (this) {
         is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
-        is RsFunction -> when (role) {
-            FREE, FOREIGN -> listOfNotNull(presentableQualifiedModName)
-            IMPL_METHOD -> listOfNotNull(presentableQualifiedModName) + (parent as? RsImplItem)?.declarationText.orEmpty()
-            TRAIT_METHOD -> (parent as? RsTraitItem)?.declarationText.orEmpty()
+        is RsFunction -> {
+            val owner = owner
+            when (owner) {
+                is RsFunctionOwner.Foreign, is RsFunctionOwner.Free -> listOfNotNull(presentableQualifiedModName)
+                is RsFunctionOwner.Impl ->
+                    listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText.orEmpty()
+                is RsFunctionOwner.Trait -> owner.trait.declarationText.orEmpty()
+            }
         }
         is RsStructOrEnumItemElement, is RsTraitItem -> listOfNotNull(presentableQualifiedModName)
         is RsTypeAlias -> {
-            val parent = parent
-            when (parent) {
-                is RsImplItem -> listOfNotNull(presentableQualifiedModName) + parent.declarationText
-                is RsTraitItem -> parent.declarationText
-                else -> listOfNotNull(presentableQualifiedModName)
+            val owner = owner
+            when (owner) {
+                is RsTypeAliasOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
+                is RsTypeAliasOwner.Trait -> owner.trait.declarationText
+                is RsTypeAliasOwner.Free -> listOfNotNull(presentableQualifiedModName)
             }
         }
         else -> listOfNotNull(presentableQualifiedName)

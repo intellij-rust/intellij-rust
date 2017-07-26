@@ -30,7 +30,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 88
+        override fun getStubVersion(): Int = 92
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -76,6 +76,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "TRAIT_ITEM" -> RsTraitItemStub.Type
     "IMPL_ITEM" -> RsImplItemStub.Type
+    "MEMBERS" -> RsPlaceholderStub.Type("MEMBERS", ::RsMembersImpl)
 
     "FUNCTION" -> RsFunctionStub.Type
     "CONSTANT" -> RsConstantStub.Type
@@ -426,7 +427,6 @@ class RsImplItemStub(
 class RsFunctionStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    val role: RsFunctionRole,
     val abiName: String?,
     private val flags: Int
 ) : StubBase<RsFunction>(parent, elementType),
@@ -445,7 +445,6 @@ class RsFunctionStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsFunctionStub(parentStub, this,
                 dataStream.readName()?.string,
-                dataStream.readEnum(RsFunctionRole.values()),
                 dataStream.readUTFFastAsNullable(),
                 dataStream.readInt()
             )
@@ -453,7 +452,6 @@ class RsFunctionStub(
         override fun serialize(stub: RsFunctionStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
-                writeEnum(stub.role)
                 writeUTFFastAsNullable(stub.abiName)
                 writeInt(stub.flags)
             }
@@ -471,7 +469,6 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
             return RsFunctionStub(parentStub, this,
                 name = psi.name,
-                role = psi.role,
                 abiName = psi.abiName,
                 flags = flags
             )
@@ -526,8 +523,7 @@ class RsConstantStub(
 class RsTypeAliasStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val isPublic: Boolean,
-    val role: RsTypeAliasRole
+    override val isPublic: Boolean
 ) : StubBase<RsTypeAlias>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
@@ -537,22 +533,20 @@ class RsTypeAliasStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTypeAliasStub(parentStub, this,
                 dataStream.readNameAsString(),
-                dataStream.readBoolean(),
-                dataStream.readEnum(RsTypeAliasRole.values())
+                dataStream.readBoolean()
             )
 
         override fun serialize(stub: RsTypeAliasStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
-                writeEnum(stub.role)
             }
 
         override fun createPsi(stub: RsTypeAliasStub) =
             RsTypeAliasImpl(stub, this)
 
         override fun createStub(psi: RsTypeAlias, parentStub: StubElement<*>?) =
-            RsTypeAliasStub(parentStub, this, psi.name, psi.isPublic, psi.role)
+            RsTypeAliasStub(parentStub, this, psi.name, psi.isPublic)
 
         override fun indexStub(stub: RsTypeAliasStub, sink: IndexSink) = sink.indexTypeAlias(stub)
     }

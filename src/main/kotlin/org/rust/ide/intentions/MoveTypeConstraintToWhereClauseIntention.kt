@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.RsTraitOrImpl
 import org.rust.lang.core.psi.ext.parentOfType
 
 class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<RsTypeParameterList>() {
@@ -40,8 +41,7 @@ class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<Rs
 private fun RsGenericDeclaration.addWhereClause(whereClause: RsWhereClause): PsiElement? {
     val anchor = when (this) {
         is RsTypeAlias -> eq
-        is RsImplItem -> lbrace
-        is RsTraitItem -> lbrace
+        is RsTraitOrImpl -> members
         is RsFunction -> block
         is RsStructItem -> semicolon ?: blockFields
         is RsEnumItem -> enumBody

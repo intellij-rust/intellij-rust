@@ -42,7 +42,7 @@ val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitI
 }
 
 val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias> get() =
-    this.flattenHierarchy.flatMap { it.element.typeAliasList }
+    this.flattenHierarchy.flatMap { it.element.members?.typeAliasList.orEmpty() }
 
 fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
     return ReferencesSearch.search(this, this.useScope)
@@ -75,11 +75,48 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
     override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
 
-    override val inheritedFunctions: List<BoundElement<RsFunction>> get() = emptyList()
-
     override val implementedTrait: BoundElement<RsTraitItem>? get() = BoundElement(this)
 
     override val associatedTypesTransitively: Collection<RsTypeAlias> get() =
         BoundElement(this).associatedTypesTransitively
 
+}
+
+
+class TraitImplementationInfo private constructor(
+    traitMembers: RsMembers,
+    implMembers: RsMembers,
+    // Macros can add methods
+    hasMacros: Boolean
+) {
+    val declared = traitMembers.abstractable()
+    private val implemented = implMembers.abstractable()
+    private val declaredByName = declared.associateBy { it.name!! }
+    private val implementedByName = implemented.associateBy { it.name!! }
+
+
+    val missingImplementations: List<RsAbstractable> = if (!hasMacros)
+        declared.filter { it.isAbstract }.filter { it.name !in implementedByName }
+    else emptyList()
+
+    val nonExistentInTrait: List<RsAbstractable> = implemented.filter { it.name !in declaredByName }
+
+    val implementationToDeclaration: List<Pair<RsAbstractable, RsAbstractable>> =
+        implemented.mapNotNull { imp ->
+            val dec = declaredByName[imp.name]
+            if (dec != null) imp to dec else null
+        }
+
+
+    private fun RsMembers.abstractable(): List<RsAbstractable> = children.filterIsInstance<RsAbstractable>()
+        .filter { it.name != null }
+
+    companion object {
+        fun create(trait: RsTraitItem, impl: RsImplItem): TraitImplementationInfo? {
+            val traitMembers = trait.members ?: return null
+            val implMembers = impl.members ?: return null
+            val hasMacros = implMembers.macroCallList.orEmpty().isNotEmpty()
+            return TraitImplementationInfo(traitMembers, implMembers, hasMacros)
+        }
+    }
 }

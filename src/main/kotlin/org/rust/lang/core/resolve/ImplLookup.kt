@@ -220,8 +220,8 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
 
     private fun isImplSuitable(impl: RsTraitOrImpl,
                                fnName: String, paramIndex: Int, paramType: Ty): Boolean {
-        return impl.functionList
-            .find { it.name == fnName }
+        return impl.members?.functionList
+            ?.find { it.name == fnName }
             ?.valueParameterList
             ?.valueParameterList
             ?.getOrNull(paramIndex)

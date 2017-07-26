@@ -105,7 +105,7 @@ class RsPsiFactory(private val project: Project) {
         createFromText("use $text;")
             ?: error("Failed to create use item from text: `$text`")
 
-    fun createTraitImplItem(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>, traitConstants: List<RsConstant>): RsImplItem {
+    fun createMembers(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>, traitConstants: List<RsConstant>): RsMembers {
         val members = (
             traitConstants.map { "    const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +
                 traitTypeAliases.map { "    type ${it.name} = ();" }
@@ -122,9 +122,9 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createTraitMethodMember(text: String): RsFunction {
-        val traitImpl: RsTraitItem = createFromText("trait Foo { $text }") ?:
+        val members: RsMembers = createFromText("trait Foo { $text }") ?:
             error("Failed to create an method member from text: `$text`")
-        return traitImpl.functionList.first()
+        return members.functionList.first()
     }
 
     fun createInherentImplItem(name: String, typeParameterList: RsTypeParameterList?, whereClause: RsWhereClause?): RsImplItem {
@@ -200,7 +200,7 @@ class RsPsiFactory(private val project: Project) {
         createFromText<RsFunction>("${if (public) "pub" else ""} fn $name(${if (self) "self" else ""}) {\n" +
             stmts.joinToString(separator = "\n", transform = { it.text }) +
             "\n}")
-            ?: error("Failed to create function element: ${name}")
+            ?: error("Failed to create function element: $name")
 
     fun createFunctionCallFunctionStmt(name: String, type: String?): RsStmt =
         createFromText("fn main(){${if (type != null) "$type::" else ""}$name();}")

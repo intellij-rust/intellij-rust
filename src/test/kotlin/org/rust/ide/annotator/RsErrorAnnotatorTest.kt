@@ -142,10 +142,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             fn no_body();
             extern "C" fn ext_fn();
 
-            <error descr="Trait function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
-            <error descr="Trait function `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo();
-            fn tup_param(<error descr="Trait function `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
-            fn var_foo(a: bool, <error descr="Trait function `var_foo` cannot be variadic">...</error>);
+            <error descr="Associated function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
+            <error descr="Associated function `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo();
+            fn tup_param(<error descr="Associated function `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+            fn var_foo(a: bool, <error descr="Associated function `var_foo` cannot be variadic">...</error>);
         }
     """)
 
@@ -158,10 +158,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             fn no_body(self);
             extern "C" fn ext_m();
 
-            <error descr="Trait method `default_foo` cannot have the `default` qualifier">default</error> fn default_foo(&self);
-            <error descr="Trait method `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo(&mut self);
-            fn tup_param(&self, <error descr="Trait method `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
-            fn var_foo(&self, a: bool, <error descr="Trait method `var_foo` cannot be variadic">...</error>);
+            <error descr="Method `default_foo` cannot have the `default` qualifier">default</error> fn default_foo(&self);
+            <error descr="Method `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo(&mut self);
+            fn tup_param(&self, <error descr="Method `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+            fn var_foo(&self, a: bool, <error descr="Method `var_foo` cannot be variadic">...</error>);
         }
     """)
 

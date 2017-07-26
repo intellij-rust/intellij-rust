@@ -6,7 +6,8 @@
 package org.rust.lang.core.stubs
 
 import com.intellij.psi.stubs.IndexSink
-import org.rust.lang.core.psi.ext.RsTypeAliasRole
+import org.rust.lang.core.psi.ext.RsTypeAliasOwner
+import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.stubs.index.RsGotoClassIndex
@@ -56,7 +57,7 @@ fun IndexSink.indexConstant(stub: RsConstantStub) {
 
 fun IndexSink.indexTypeAlias(stub: RsTypeAliasStub) {
     indexNamedStub(stub)
-    if (stub.role != RsTypeAliasRole.IMPL_ASSOC_TYPE) {
+    if (stub.psi.owner !is RsTypeAliasOwner.Impl) {
         indexGotoClass(stub)
     }
 }

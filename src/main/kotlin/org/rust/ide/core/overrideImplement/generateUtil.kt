@@ -19,8 +19,8 @@ import org.rust.ide.utils.checkWriteAccessAllowed
 import org.rust.ide.utils.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.TraitImplementationInfo
 import org.rust.lang.core.psi.ext.resolveToTrait
-import org.rust.lang.core.psi.ext.toImplementOverride
 import javax.swing.JTree
 
 class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: RsNamedElement) : ClassMember {
@@ -58,9 +58,9 @@ fun createTraitMembersChooser(impl: RsImplItem)
     val traitName = trait.name ?: return null
 
     val base = MemberChooserObjectBase(traitName, trait.getIcon(0))
-    val (toImplement, toOverride) = impl.toImplementOverride(resolvedTrait = trait) ?: return null
-    val mandatoryMembers = toImplement.map { RsTraitMemberChooserMember(base, it) }
-    val allMembers = toOverride.map { RsTraitMemberChooserMember(base, it) }
+    val implInfo = TraitImplementationInfo.create(trait, impl) ?: return null
+    val mandatoryMembers = implInfo.missingImplementations.map { RsTraitMemberChooserMember(base, it) }
+    val allMembers = implInfo.declared.map { RsTraitMemberChooserMember(base, it) }
 
     if (allMembers.isEmpty()) return null
 
@@ -80,18 +80,18 @@ private fun showChooser(all: Collection<RsTraitMemberChooserMember>,
     return chooser.selectedElements ?: listOf()
 }
 
-fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, impl: RsImplItem) {
+fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, members: RsMembers) {
     checkWriteAccessAllowed()
-    if (selected.isEmpty())
-        return
-    val templateImpl = RsPsiFactory(impl.project).createTraitImplItem(
+    if (selected.isEmpty()) return
+
+    val templateImpl = RsPsiFactory(members.project).createMembers(
         selected.mapNotNull { it.member as? RsFunction },
         selected.mapNotNull { it.member as? RsTypeAlias },
         selected.mapNotNull { it.member as? RsConstant }
     )
-    val lastMethodOrBrace = impl.functionList.lastOrNull() ?: impl.lbrace ?: return
-    impl.addRangeAfter(
-        templateImpl.lbrace?.nextSibling,
+    val lastMethodOrBrace = members.functionList.lastOrNull() ?: members.lbrace ?: return
+    members.addRangeAfter(
+        templateImpl.lbrace.nextSibling,
         templateImpl.rbrace?.prevSibling,
         lastMethodOrBrace
     )
@@ -107,6 +107,6 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     }
     val chooserSelected = showChooser(all, selected, impl.project)
     runWriteAction {
-        insertNewTraitMembers(chooserSelected, impl)
+        insertNewTraitMembers(chooserSelected, impl.members!!)
     }
 }

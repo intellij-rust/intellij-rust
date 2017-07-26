@@ -37,20 +37,10 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         return PresentationData(typeReference?.text ?: "Impl", null, RsIcons.IMPL, null)
     }
 
-    override val inheritedFunctions: List<BoundElement<RsFunction>> get() {
-        val trait = implementedTrait ?: return emptyList()
-        val directlyImplemented = functionList.map { it.name }.toSet()
-        return trait.element.functionList.filter {
-            it.name !in directlyImplemented
-        }.map {
-            BoundElement(it, trait.subst)
-        }
-    }
-
     override val implementedTrait: BoundElement<RsTraitItem>? get() {
         val (trait, subst) = traitRef?.resolveToBoundTrait ?: return null
-        val aliases = typeAliasList.mapNotNull { typeAlias ->
-            trait.typeAliasList
+        val aliases = members?.typeAliasList.orEmpty().mapNotNull { typeAlias ->
+            trait.members?.typeAliasList.orEmpty()
                 .find { it.name == typeAlias.name }
                 ?.let { TyTypeParameter.associated(it) to typeAlias.type }
         }.toMap()
@@ -64,24 +54,8 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
 
     override val associatedTypesTransitively: Collection<RsTypeAlias> get() {
-        val implAliases = typeAliasList
+        val implAliases = members?.typeAliasList.orEmpty()
         val traitAliases = implementedTrait?.associatedTypesTransitively ?: emptyList()
         return implAliases + traitAliases.filter { trAl -> implAliases.find { it.name == trAl.name } == null }
     }
-}
-
-/**
- * @return pair of two lists: (mandatory trait members, optional trait members)
- */
-fun RsImplItem.toImplementOverride(resolvedTrait: RsTraitItem? = null): Pair<List<RsNamedElement>, List<RsNamedElement>>? {
-    val trait = resolvedTrait ?: traitRef?.resolveToTrait ?: return null
-    val traitMembers = trait.children.filterIsInstance<RsAbstractable>()
-    val members = children.filterIsInstance<RsAbstractable>()
-    val canImplement = traitMembers.associateBy { it.name }
-    val mustImplement = canImplement.filterValues { it.isAbstract }
-    val implemented = members.associateBy { it.name }
-    val notImplemented = mustImplement.keys - implemented.keys
-    val toImplement = traitMembers.filter { it.name in notImplemented }
-
-    return toImplement to traitMembers
 }

@@ -7,11 +7,9 @@ package org.rust.lang.refactoring.extractFunction
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.components.dialog
-import org.rust.lang.core.psi.RsFunction
 import java.awt.Dimension
 import java.awt.GridLayout
 import javax.swing.JComboBox
@@ -55,15 +53,14 @@ fun extractFunctionDialog(
         project = project,
         parent = null,
         errorText = null,
-        modality = DialogWrapper.IdeModalityType.IDE,
-        ok = {
-            config.name = functionNameField.enteredName
-            config.visibilityLevelPublic = visibilityBox.selectedItem == "Public"
-            RsExtractFunctionHandlerAction(
-                project,
-                file,
-                config
-            ).execute()
-        }
-    ).show()
+        modality = DialogWrapper.IdeModalityType.IDE
+    ) {
+        config.name = functionNameField.enteredName
+        config.visibilityLevelPublic = visibilityBox.selectedItem == "Public"
+        RsExtractFunctionHandlerAction(
+            project,
+            file,
+            config
+        ).execute()
+    }.show()
 }

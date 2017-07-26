@@ -149,7 +149,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             if (function.selfParameter == null) {
                 val error = "The self keyword was used in a static method [E0424]"
                 val annotation = holder.createErrorAnnotation(path, error)
-                if (function.role != RsFunctionRole.FREE) {
+                if (function.owner.isImplOrTrait) {
                     annotation.registerFix(AddSelfFix(function))
                 }
             }
@@ -165,37 +165,38 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
         checkDuplicates(holder, const)
         val title = if (const.static != null) "Static constant `${const.identifier.text}`" else "Constant `${const.identifier.text}`"
-        when (const.role) {
-            RsConstantRole.FREE -> {
+        when (const.owner) {
+            is RsConstantOwner.Free -> {
                 deny(const.default, holder, "$title cannot have the `default` qualifier")
                 require(const.expr, holder, "$title must have a value", const)
             }
-            RsConstantRole.TRAIT_CONSTANT -> {
+            is RsConstantOwner.Foreign -> {
+                deny(const.default, holder, "$title cannot have the `default` qualifier")
+                require(const.static, holder, "Only static constants are allowed in extern blocks", const.const)
+                deny(const.expr, holder, "Static constants in extern blocks cannot have values", const.eq, const.expr)
+            }
+            is RsConstantOwner.Trait -> {
                 deny(const.vis, holder, "$title cannot have the `pub` qualifier")
                 deny(const.default, holder, "$title cannot have the `default` qualifier")
                 deny(const.static, holder, "Static constants are not allowed in traits")
             }
-            RsConstantRole.IMPL_CONSTANT -> {
+            is RsConstantOwner.Impl -> {
                 deny(const.static, holder, "Static constants are not allowed in impl blocks")
                 require(const.expr, holder, "$title must have a value", const)
-            }
-            RsConstantRole.FOREIGN -> {
-                deny(const.default, holder, "$title cannot have the `default` qualifier")
-                require(const.static, holder, "Only static constants are allowed in extern blocks", const.const)
-                deny(const.expr, holder, "Static constants in extern blocks cannot have values", const.eq, const.expr)
             }
         }
     }
 
     private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
         val fn = param.parent.parent as? RsFunction ?: return
-        when (fn.role) {
-            RsFunctionRole.FREE,
-            RsFunctionRole.IMPL_METHOD,
-            RsFunctionRole.FOREIGN -> {
+        //TODO: move this to anonymous parameter inspection
+        when (fn.owner) {
+            is RsFunctionOwner.Free,
+            is RsFunctionOwner.Impl,
+            is RsFunctionOwner.Foreign -> {
                 require(param.pat, holder, "${fn.title} cannot have anonymous parameters", param)
             }
-            RsFunctionRole.TRAIT_METHOD -> {
+            is RsFunctionOwner.Trait -> {
                 denyType<RsPatTup>(param.pat, holder, "${fn.title} cannot have tuple parameters", param)
             }
         }
@@ -203,16 +204,15 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkValueParameterList(holder: AnnotationHolder, params: RsValueParameterList) {
         val fn = params.parent as? RsFunction ?: return
-        when (fn.role) {
-            RsFunctionRole.FREE -> {
+        when (fn.owner) {
+            is RsFunctionOwner.Free -> {
                 deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
                 deny(params.dotdotdot, holder, "${fn.title} cannot be variadic")
             }
-            RsFunctionRole.TRAIT_METHOD,
-            RsFunctionRole.IMPL_METHOD -> {
+            is RsFunctionOwner.Trait, is RsFunctionOwner.Impl -> {
                 deny(params.dotdotdot, holder, "${fn.title} cannot be variadic")
             }
-            RsFunctionRole.FOREIGN -> {
+            RsFunctionOwner.Foreign -> {
                 deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
                 checkDot3Parameter(holder, params.dotdotdot)
             }
@@ -232,23 +232,23 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
         checkDuplicates(holder, fn)
-        when (fn.role) {
-            RsFunctionRole.FREE -> {
+        when (fn.owner) {
+            is RsFunctionOwner.Free -> {
                 require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
                 deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
             }
-            RsFunctionRole.TRAIT_METHOD -> {
+            is RsFunctionOwner.Trait -> {
                 deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
                 deny(fn.vis, holder, "${fn.title} cannot have the `pub` qualifier")
                 deny(fn.const, holder, "Trait functions cannot be declared const [E0379]")
             }
-            RsFunctionRole.IMPL_METHOD -> {
+            is RsFunctionOwner.Impl -> {
                 require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
                 if (fn.default != null) {
                     deny(fn.vis, holder, "Default ${fn.title.firstLower} cannot have the `pub` qualifier")
                 }
             }
-            RsFunctionRole.FOREIGN -> {
+            is RsFunctionOwner.Foreign -> {
                 deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
                 deny(fn.block, holder, "${fn.title} cannot have a body")
                 deny(fn.const, holder, "${fn.title} cannot have the `const` qualifier")
@@ -313,57 +313,50 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         } else if (impl.unsafe == null && trait.unsafe != null && impl.excl == null) {
             holder.createErrorAnnotation(traitRef, "The trait `$traitName` requires an `unsafe impl` declaration [E0200]")
         }
-        // Macros can add methods
-        if (impl.macroCallList.isNotEmpty()) return
+        val implInfo = TraitImplementationInfo.create(trait, impl) ?: return
 
-        val implemented = impl.functionList.associateBy { it.name }
-
-        val (toImplement, toOverride) = impl.toImplementOverride()
-            ?: listOf<RsNamedElement>() to listOf<RsNamedElement>()
-        val notImplemented = toImplement.map { it.name }
-        val canImplement = toOverride.associateBy { it.name }
-
-        if (notImplemented.isNotEmpty()) {
+        if (implInfo.missingImplementations.isNotEmpty()) {
             val implHeaderTextRange = TextRange.create(
                 impl.textRange.startOffset,
                 impl.typeReference?.textRange?.endOffset ?: impl.textRange.endOffset
             )
 
+            val missing = implInfo.missingImplementations.map { it.name }.namesList
             holder.createErrorAnnotation(implHeaderTextRange,
-                "Not all trait items implemented, missing: ${notImplemented.namesList} [E0046]"
+                "Not all trait items implemented, missing: $missing [E0046]"
             ).registerFix(ImplementMembersFix(impl))
         }
 
-        val notMembers = implemented.filterKeys { it !in canImplement }
-        for (method in notMembers.values) {
-            holder.createErrorAnnotation(method.identifier,
-                "Method `${method.name}` is not a member of trait `$traitName` [E0407]")
+        for (member in implInfo.nonExistentInTrait) {
+            holder.createErrorAnnotation(member.nameIdentifier!!,
+                "Method `${member.name}` is not a member of trait `$traitName` [E0407]")
         }
 
-        implemented
-            .map { it.value to canImplement[it.key] }
-            .mapNotNull { it.first to (it.second as? RsFunction ?: return@mapNotNull null) }
-            .forEach { checkTraitFnImplParams(holder, it.first, it.second, traitName) }
+        for ((imp, dec) in implInfo.implementationToDeclaration) {
+            if (imp is RsFunction && dec is RsFunction) {
+                checkTraitFnImplParams(holder, imp, dec, traitName)
+            }
+        }
     }
 
     private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
         checkDuplicates(holder, ta)
         val title = "Type `${ta.identifier.text}`"
-        when (ta.role) {
-            RsTypeAliasRole.FREE -> {
+        val owner = ta.owner
+        when (owner) {
+            is RsTypeAliasOwner.Free -> {
                 deny(ta.default, holder, "$title cannot have the `default` qualifier")
                 deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
                 require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
             }
-            RsTypeAliasRole.TRAIT_ASSOC_TYPE -> {
+            is RsTypeAliasOwner.Trait -> {
                 deny(ta.default, holder, "$title cannot have the `default` qualifier")
                 deny(ta.vis, holder, "$title cannot have the `pub` qualifier")
                 deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
                 deny(ta.whereClause, holder, "$title cannot have `where` clause")
             }
-            RsTypeAliasRole.IMPL_ASSOC_TYPE -> {
-                val impl = ta.parent as? RsImplItem ?: return
-                if (impl.`for` == null) {
+            is RsTypeAliasOwner.Impl -> {
+                if (owner.impl.`for` == null) {
                     holder.createErrorAnnotation(ta, "Associated types are not allowed in inherent impls [E0202]")
                 } else {
                     deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
@@ -453,7 +446,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (el !is T) null else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
 
     private fun isInTraitImpl(o: RsVis): Boolean {
-        val impl = o.parent?.parent
+        val impl = o.parent?.parent?.parent
         return impl is RsImplItem && impl.traitRef != null
     }
 
@@ -498,6 +491,7 @@ private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
 }
 
 private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, scope: PsiElement = element.parent, recursively: Boolean = false) {
+    val owner = if (scope is RsMembers) scope.parent else scope
     val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
     val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
         ?: return
@@ -506,11 +500,11 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, s
         element is RsFieldDecl -> "Field `$name` is already declared [E0124]"
         element is RsEnumVariant -> "Enum variant `$name` is already declared [E0428]"
         element is RsLifetimeParameter -> "Lifetime name `$name` declared twice in the same scope [E0263]"
-        element is RsPatBinding && scope is RsValueParameterList -> "Identifier `$name` is bound more than once in this parameter list [E0415]"
+        element is RsPatBinding && owner is RsValueParameterList -> "Identifier `$name` is bound more than once in this parameter list [E0415]"
         element is RsTypeParameter -> "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
-        scope is RsImplItem -> "Duplicate definitions with name `$name` [E0201]"
+        owner is RsImplItem -> "Duplicate definitions with name `$name` [E0201]"
         else -> {
-            val scopeType = when (scope) {
+            val scopeType = when (owner) {
                 is RsBlock -> "block"
                 is RsMod, is RsForeignModItem -> "module"
                 is RsTraitItem -> "trait"
@@ -583,7 +577,8 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     return when (el) {
         is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.size?.let { Pair(it, false) }
         is RsFunction -> {
-            if (el.role == RsFunctionRole.IMPL_METHOD && !el.isInherentImpl) return null
+            val owner = el.owner
+            if (owner.isTraitImpl) return null
             val count = el.valueParameterList?.valueParameterList?.size ?: return null
             val variadic = el.valueParameterList?.dotdotdot != null
             // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
@@ -598,7 +593,8 @@ private fun RsMethodCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     val fn = reference.resolve() as? RsFunction ?: return null
     if (fn.queryAttributes.hasCfgAttr()) return null
     val variadic = fn.valueParameterList?.dotdotdot != null
-    return if (fn.isInherentImpl) fn.valueParameterList?.valueParameterList?.size?.let { Pair(it, variadic) } else null
+    return fn.valueParameterList?.valueParameterList?.size?.let { Pair(it, variadic) }
+        .takeIf { fn.owner.isInherentImpl }
 }
 
 private val RsCallExpr.declaration: RsFunction?

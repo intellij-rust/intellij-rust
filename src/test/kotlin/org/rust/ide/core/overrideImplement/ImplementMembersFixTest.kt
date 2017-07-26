@@ -185,7 +185,7 @@ class ImplementMembersFixTest : RsTestBase() {
             val defaultChooser = renderChooser(all, selected)
             TestCase.assertEquals(unselectChooser(chooser), defaultChooser)
             val chooserSelected = extractSelected(all, chooser)
-            insertNewTraitMembers(chooserSelected, impl)
+            insertNewTraitMembers(chooserSelected, impl.members!!)
         }
     }
 

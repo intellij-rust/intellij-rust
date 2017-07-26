@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.psi.ext
 
-interface RsAbstractable : RsNamedElement {
+import com.intellij.psi.PsiNameIdentifierOwner
+
+interface RsAbstractable : RsNamedElement, PsiNameIdentifierOwner {
     val isAbstract: Boolean
 }
