@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsUseGlob
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.isSelf
 
 /**
  * Pre format processor ensuring that if an import statement only contains a single import from a crate that
@@ -54,7 +55,8 @@ class RsSingleImportRemoveBracesFormatProcessor : PreFormatProcessor {
         val leftBrace = element.getPrevNonCommentSibling() ?: return false
         val rightBrace = element.getNextNonCommentSibling() ?: return false
         if (leftBrace.elementType == RsElementTypes.LBRACE &&
-            rightBrace.elementType == RsElementTypes.RBRACE) {
+            rightBrace.elementType == RsElementTypes.RBRACE &&
+            !element.isSelf) {
             leftBrace.delete()
             rightBrace.delete()
             return true
