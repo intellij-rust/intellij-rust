@@ -12,8 +12,6 @@ import org.rust.lang.core.psi.ext.bounds
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.asFunctionType
-import org.rust.lang.core.resolve.isAnyFnTrait
 import org.rust.lang.core.types.BoundElement
 
 class TyTypeParameter private constructor(
@@ -44,24 +42,13 @@ class TyTypeParameter private constructor(
     override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean {
         if (mapping == null) return true
 
-        if (other is TyFunction) {
-            for (bound in bounds) {
-                if (bound.element.isAnyFnTrait) {
-                    val fnType = bound.asFunctionType
-                    if (fnType != null && fnType.retType is TyTypeParameter) {
-                        fnType.retType.canUnifyWith(other.retType, lookup, mapping)
-                    }
-                }
-            }
-        } else {
-            val traits = lookup.findImplsAndTraits(other)
-            for ((element, boundSubst) in bounds) {
-                val trait = traits.find { it.element.implementedTrait?.element == element }
-                if (trait != null) {
-                    val subst = boundSubst.substituteInValues(mapOf(TyTypeParameter(element) to this))
-                    for ((k, v) in subst) {
-                        trait.subst[k]?.let { v.canUnifyWith(it, lookup, mapping) }
-                    }
+        val traits = lookup.findImplsAndTraits(other)
+        for ((element, boundSubst) in bounds) {
+            val trait = traits.find { it.element.implementedTrait?.element == element }
+            if (trait != null) {
+                val subst = boundSubst.substituteInValues(mapOf(TyTypeParameter(element) to this))
+                for ((k, v) in subst) {
+                    trait.subst[k]?.let { v.canUnifyWith(it, lookup, mapping) }
                 }
             }
         }

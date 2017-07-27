@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.remapTypeParameters
 import org.rust.lang.core.types.ty.*
@@ -34,15 +35,35 @@ val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.val
 private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
 private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
 
+private val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
+    val param = element.fnTypeArgsParam ?: return null
+    val outputParam = element.fnOutputParam ?: return null
+    val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
+    val outputType = (subst[outputParam] ?: TyUnit)
+    return TyFunction(argumentTypes, outputType)
+}
+
 class ImplLookup(private val project: Project, private val items: StdKnownItems) {
     fun findImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
+        if (ty is TyTypeParameter) {
+            return ty.getTraitBoundsTransitively()
+        }
         return findWithCache(project, ty) { rawFindImplsAndTraits(ty) }
     }
 
     private fun rawFindImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
         return when (ty) {
-            is TyTypeParameter -> ty.getTraitBoundsTransitively()
             is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy
+            is TyFunction -> {
+                val params = TyTuple(ty.paramTypes)
+                listOf("fn", "fn_mut", "fn_once")
+                    .mapNotNull { RsLangItemIndex.findLangItem(project, it) }
+                    .map {
+                        val subst = mutableMapOf(TyTypeParameter(it, "Output") to ty.retType)
+                        it.fnTypeArgsParam?.let { subst.put(it, params) }
+                        BoundElement(it, subst)
+                    }
+            }
 
         //  XXX: TyStr is TyPrimitive, but we want to handle it separately
             is TyStr -> RsImplIndex.findImpls(project, this, ty).map { impl -> BoundElement(impl) }
@@ -172,6 +193,11 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
             ?.typeReference
             ?.type
             ?.canUnifyWith(paramType, this) ?: false
+    }
+
+    fun asTyFunction(ty: Ty): TyFunction? {
+        return ty as? TyFunction ?:
+            (findImplsAndTraits(ty).mapNotNull { it.downcast<RsTraitItem>()?.asFunctionType }.firstOrNull())
     }
 
     companion object {

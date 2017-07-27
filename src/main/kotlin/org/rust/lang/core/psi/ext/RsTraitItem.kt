@@ -25,6 +25,8 @@ val RsTraitItem.isUnsafe: Boolean get() {
     return stub?.isUnsafe ?: (unsafe != null)
 }
 
+val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
+
 val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {
     val result = mutableSetOf<BoundElement<RsTraitItem>>()
     val visited = mutableSetOf<RsTraitItem>()

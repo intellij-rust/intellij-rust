@@ -8,6 +8,7 @@ package org.rust.lang.core.stubs
 import com.intellij.psi.stubs.IndexSink
 import org.rust.lang.core.psi.ext.RsTypeAliasRole
 import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.stubs.index.RsGotoClassIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
@@ -38,6 +39,7 @@ fun IndexSink.indexModItem(stub: RsModItemStub) {
 fun IndexSink.indexTraitItem(stub: RsTraitItemStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
+    RsLangItemIndex.index(stub, this)
 }
 
 fun IndexSink.indexImplItem(stub: RsImplItemStub) {

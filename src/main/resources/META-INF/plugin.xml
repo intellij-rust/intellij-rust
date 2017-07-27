@@ -525,6 +525,7 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
 
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
+        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsLangItemIndex"/>
 
         <!-- Notification Providers -->
 
