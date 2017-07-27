@@ -6,11 +6,15 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.inspections.fixes.SubstituteTextFix
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsValueParameter
+import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.ext.RsFunctionOwner
+import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.parentOfType
 
 class RsAnonymousParameterInspection : RsLocalInspectionTool() {
     override fun getDisplayName(): String = "Anonymous function parameter"
