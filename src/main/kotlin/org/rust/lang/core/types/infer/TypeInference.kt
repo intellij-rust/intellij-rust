@@ -9,7 +9,9 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.*
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.isStdResult
 import org.rust.lang.core.resolve.ref.resolveFieldExprReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.types.ty.*
@@ -178,10 +180,7 @@ private class RsFnInferenceContext(
         // `struct S; S();`
         if (ty is TyStructOrEnumBase && expr.valueArgumentList.exprList.isEmpty()) return ty
 
-        val calleeType = ty as? TyFunction ?:
-            (lookup.findImplsAndTraits(fn.ty)
-                .mapNotNull { it.downcast<RsTraitItem>()?.asFunctionType }
-                .firstOrNull() ?: return TyUnknown)
+        val calleeType = lookup.asTyFunction(ty) ?: return TyUnknown
         return calleeType.retType.substitute(mapTypeParameters(calleeType.paramTypes, expr.valueArgumentList.exprList))
     }
 
@@ -190,11 +189,10 @@ private class RsFnInferenceContext(
         val (method, subst) = resolveMethodCallReferenceWithReceiverType(lookup, receiver, expr)
             .firstOrNull()?.downcast<RsFunction>() ?: return TyUnknown
 
-        var returnType = (method.retType?.typeReference?.type ?: TyUnit)
+        val returnType = (method.retType?.typeReference?.type ?: TyUnit)
             .substitute(subst)
-        method.parentOfType<RsTraitOrImpl>()?.let { trait ->
-            returnType = returnType.substitute(mapOf(TyTypeParameter(trait) to receiver))
-        }
+            .substitute(mapOf(TyTypeParameter.self() to receiver))
+
         val methodType = method.type as? TyFunction ?: return returnType
         // drop first element of paramTypes because it's `self` param
         // and it doesn't have value in `expr.valueArgumentList.exprList`
@@ -354,18 +352,7 @@ private class RsFnInferenceContext(
         val param = containingFunctionType.paramTypes.getOrNull(lambdaArgumentPosition)
             ?: return fallback
 
-        if (param is TyFunction) {
-            return param.substitute(containingFunctionType.typeParameterValues)
-        } else if (param is TyTypeParameter) {
-            val fnTrait = param.getTraitBoundsTransitively()
-                .find { it.element.isAnyFnTrait }
-                ?: return fallback
-
-            return fnTrait.asFunctionType?.substitute(containingFunctionType.typeParameterValues)
-                ?: fallback
-        }
-
-        return fallback
+        return lookup.asTyFunction(param)?.substitute(containingFunctionType.typeParameterValues) ?: fallback
     }
 
     private fun inferArrayType(expr: RsArrayExpr): Ty {

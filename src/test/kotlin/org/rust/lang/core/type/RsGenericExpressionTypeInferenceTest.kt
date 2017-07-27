@@ -631,6 +631,36 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test bound inherited associated type`() = testExpr("""
+        trait Tr1 { type Item; }
+        trait Tr2: Tr1 {}
+        struct S<A>(A);
+        impl<B: Tr2> S<B> { fn foo(self) -> B::Item { unimplemented!() } }
+
+        struct X;
+        impl Tr1 for X { type Item = u8; }
+        impl Tr2 for X {}
+        fn main() {
+            let a = S(X).foo();
+            a
+        } //^ u8
+    """)
+
+    fun `test bound inherited associated type in explicit UFCS form`() = testExpr("""
+        trait Tr1 { type Item; }
+        trait Tr2: Tr1 {}
+        struct S<A>(A);
+        impl<B: Tr2> S<B> { fn foo(self) -> <B as Tr1>::Item { unimplemented!() } }
+
+        struct X;
+        impl Tr1 for X { type Item = u8; }
+        impl Tr2 for X {}
+        fn main() {
+            let a = S(X).foo();
+            a
+        } //^ u8
+    """)
+
     fun `test 2 bound associated types`() = testExpr("""
         trait Tr { type Item; }
         struct S<A, B>(A, B);
@@ -659,6 +689,30 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         impl<C> Tr for S1<C> { type Item = C; }
         impl<D: Tr> Tr for S<D> { type Item = D::Item; }
+
+        fn main() {
+            let a = S1(X).wrap().wrap().wrap().fold();
+            a
+        } //^ X
+    """)
+
+    fun `test recursive receiver substitution using inherited associated type`() = testExpr("""
+        trait Tr1 { type Item; }
+
+        trait Tr: Tr1 {
+            fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() }
+            fn fold(self) -> Self::Item where Self: Sized { unimplemented!() }
+        }
+
+        struct X;
+        struct S1<A>(A);
+        struct S<B>(B);
+
+        impl<C>     Tr1 for S1<C> { type Item = C; }
+        impl<D: Tr> Tr1 for S<D>  { type Item = D::Item; }
+
+        impl<E>     Tr for S1<E> {}
+        impl<F: Tr> Tr for S<F>  {}
 
         fn main() {
             let a = S1(X).wrap().wrap().wrap().fold();

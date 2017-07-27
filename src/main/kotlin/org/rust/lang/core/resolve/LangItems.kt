@@ -5,35 +5,8 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.ty.*
-
-val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
-
-val RsTraitItem.isAnyFnTrait: Boolean get() = langAttribute == "fn"
-    || langAttribute == "fn_once"
-    || langAttribute == "fn_mut"
-
-val RsTraitItem.fnTypeArgsParam: TyTypeParameter? get() {
-    if (!isAnyFnTrait) return null
-    val param = typeParameterList?.typeParameterList?.singleOrNull() ?: return null
-    return TyTypeParameter(param)
-}
-
-val RsTraitItem.fnOutputParam: TyTypeParameter? get() {
-    if (!isAnyFnTrait) return null
-    return TyTypeParameter(this, "Output")
-}
-
-val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
-    val param = element.fnTypeArgsParam ?: return null
-    val outputParam = element.fnOutputParam ?: return null
-    val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
-    val outputType = (subst[outputParam] ?: TyUnit)
-    return TyFunction(argumentTypes, outputType)
-}
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyEnum
 
 // This is super hackish. Need to figure out how to
 // identify known ty (See also the CString inspection).

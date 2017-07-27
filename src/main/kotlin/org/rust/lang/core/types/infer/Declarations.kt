@@ -20,7 +20,7 @@ fun inferDeclarationType(decl: RsNamedElement): Ty {
         is RsTraitItem -> TyTraitObject(decl)
         is RsConstant -> decl.typeReference?.type ?: TyUnknown
         is RsSelfParameter -> deviseSelfType(decl)
-        is RsTypeParameter -> TyTypeParameter(decl)
+        is RsTypeParameter -> TyTypeParameter.named(decl)
         is RsPatBinding -> throw IllegalArgumentException()
         else -> TyUnknown
     }
@@ -47,7 +47,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
             val (target, subst) = path.reference.advancedResolve() ?: return TyUnknown
 
             if (target is RsTraitOrImpl && type.isCself) {
-                TyTypeParameter(target)
+                TyTypeParameter.self(target)
             } else {
                 inferDeclarationType(target as? RsNamedElement ?: return TyUnknown).substitute(subst)
             }
@@ -91,10 +91,8 @@ private fun deviseAliasType(decl: RsTypeAlias): Ty {
     val typeReference = decl.typeReference
     if (typeReference != null) return typeReference.type
 
-    val trait = decl.parentOfType<RsTraitItem>()
-        ?: return TyUnknown
-    val name = decl.name ?: return TyUnknown
-    return TyTypeParameter(trait, name)
+    if (decl.parentOfType<RsTraitItem>() == null) return TyUnknown
+    return TyTypeParameter.associated(decl)
 }
 
 /**
@@ -107,7 +105,7 @@ private fun deviseSelfType(self: RsSelfParameter): Ty {
     } else {
         val trait = self.parentOfType<RsTraitItem>()
             ?: return TyUnknown
-        TyTypeParameter(trait)
+        TyTypeParameter.self(trait)
     }
 
     if (self.isRef) {

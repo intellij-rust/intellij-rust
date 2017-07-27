@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.resolve.ImplLookup
 
 typealias Substitution = Map<TyTypeParameter, Ty>
@@ -73,3 +74,7 @@ internal fun TypeMapping.merge(otherMapping: Substitution) {
 
 fun Substitution.substituteInValues(map: Substitution): Substitution =
     mapValues { (_, value) -> value.substitute(map) }
+
+fun Substitution.get(psi: RsTypeParameter): Ty? {
+    return get(TyTypeParameter.named((psi)))
+}
