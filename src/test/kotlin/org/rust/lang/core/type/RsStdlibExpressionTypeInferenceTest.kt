@@ -213,6 +213,22 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test eprint!`() = testExpr("""
+        fn main() {
+            let x = eprint!("Something went wrong");
+            x
+          //^ ()
+        }
+    """)
+
+    fun `test eprintln!`() = testExpr("""
+        fn main() {
+            let x = eprintln!("Something went wrong");
+            x
+          //^ ()
+        }
+    """)
+
     //From the log crate
     fun `test warn!`() = testExpr("""
         fn main() {
