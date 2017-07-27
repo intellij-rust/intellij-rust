@@ -191,7 +191,7 @@ class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitFunction(el: RsFunction) {
-                if (el.role == RsFunctionRole.FREE) {
+                if (el.owner is RsFunctionOwner.Free) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -201,9 +201,8 @@ class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
 class RsMethodNamingInspection : RsSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
-            override fun visitFunction(el: RsFunction) = when (el.role) {
-                RsFunctionRole.TRAIT_METHOD,
-                RsFunctionRole.IMPL_METHOD -> inspect(el.identifier, holder)
+            override fun visitFunction(el: RsFunction) = when (el.owner) {
+                is RsFunctionOwner.Trait, is RsFunctionOwner.Impl -> inspect(el.identifier, holder)
                 else -> Unit
             }
         }
@@ -256,7 +255,7 @@ class RsTypeAliasNamingInspection : RsCamelCaseNamingInspection("Type", "Type al
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.role == RsTypeAliasRole.FREE) {
+                if (el.owner is RsTypeAliasOwner.Free) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -267,7 +266,7 @@ class RsAssocTypeNamingInspection : RsCamelCaseNamingInspection("Type", "Associa
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.role == RsTypeAliasRole.TRAIT_ASSOC_TYPE) {
+                if (el.owner is RsTypeAliasOwner.Trait) {
                     inspect(el.identifier, holder, false)
                 }
             }

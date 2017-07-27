@@ -205,7 +205,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
             // then resolving associated type to <Self as Tr>::Item, and then substituting `{Self => T}` into it
 
             for ((element, subst) in TyTypeParameter.named(base).getTraitBoundsTransitively()) {
-                if (processAllWithSubst(element.typeAliasList, subst, processor)) return true
+                if (processAllWithSubst(element.members?.typeAliasList.orEmpty(), subst, processor)) return true
             }
         }
         return false
@@ -214,7 +214,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
     if (typeQual != null) {
         val trait = typeQual.traitRef?.resolveToBoundTrait ?: return false
         val subst = trait.subst.substituteInValues(mapOf(TyTypeParameter.self() to typeQual.typeReference.type))
-        if (processAllWithSubst(trait.element.typeAliasList, subst, processor)) return true
+        if (processAllWithSubst(trait.element.members?.typeAliasList.orEmpty(), subst, processor)) return true
     }
 
     val containingMod = path.containingMod
@@ -436,7 +436,7 @@ private fun processAssociatedFunctionsAndMethodsDeclarations(lookup: ImplLookup,
 }
 
 private fun processFnsWithInherentPriority(fns: Collection<BoundElement<RsFunction>>, processor: RsResolveProcessor): Boolean {
-    val (inherent, nonInherent) = fns.partition { it.element is RsFunction && it.element.isInherentImpl }
+    val (inherent, nonInherent) = fns.partition {  it.element.owner.isInherentImpl }
     if (processAllBound(inherent, processor)) return true
 
     val inherentNames = inherent.mapNotNull { it.element.name }.toHashSet()

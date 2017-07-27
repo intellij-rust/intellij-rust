@@ -9,31 +9,33 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.RustPsiImplUtil
 import org.rust.lang.core.stubs.RsTypeAliasStub
 import javax.swing.Icon
 
-enum class RsTypeAliasRole {
-    // Bump stub version if reorder fields
-    FREE,
-    TRAIT_ASSOC_TYPE,
-    IMPL_ASSOC_TYPE
+sealed class RsTypeAliasOwner {
+    object Free: RsTypeAliasOwner()
+    class Trait(val trait: RsTraitItem): RsTypeAliasOwner()
+    class Impl(val impl: RsImplItem): RsTypeAliasOwner()
 }
 
-val RsTypeAlias.role: RsTypeAliasRole get() {
+val RsTypeAlias.owner: RsTypeAliasOwner get() {
     val stub = stub
-    if (stub != null) return stub.role
-    return when (parent) {
-        is RsItemsOwner -> RsTypeAliasRole.FREE
-        is RsTraitItem -> RsTypeAliasRole.TRAIT_ASSOC_TYPE
-        is RsImplItem -> RsTypeAliasRole.IMPL_ASSOC_TYPE
-        else -> error("Unexpected parent of type alias: $parent")
+    val stubOnlyParent = if (stub != null) stub.parentStub.psi else parent
+    return when (stubOnlyParent) {
+        is RsMembers -> {
+            val grandDad = parent.parent
+            when (grandDad) {
+                is RsTraitItem -> RsTypeAliasOwner.Trait(grandDad)
+                is RsImplItem -> RsTypeAliasOwner.Impl(grandDad)
+                else -> error("unreachable")
+            }
+        }
+        else -> RsTypeAliasOwner.Free
     }
 }
+
 
 val RsTypeAlias.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi

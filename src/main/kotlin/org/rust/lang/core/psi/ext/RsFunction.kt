@@ -18,17 +18,11 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import javax.swing.Icon
 
-val RsFunction.isAssocFn: Boolean get() = selfParameter == null
-    && (role == RsFunctionRole.IMPL_METHOD || role == RsFunctionRole.TRAIT_METHOD)
+val RsFunction.isAssocFn: Boolean get() = selfParameter == null && owner.isImplOrTrait
 
 val RsFunction.isTest: Boolean get() {
     val stub = stub
     return stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
-}
-
-val RsFunction.isInherentImpl: Boolean get() {
-    val parent = parent
-    return parent is RsImplItem && parent.traitRef == null
 }
 
 val RsFunction.isConst: Boolean get() {
@@ -51,31 +45,40 @@ val RsFunction.abiName: String? get() {
     return stub?.abiName ?: abi?.stringLiteral?.text
 }
 
-enum class RsFunctionRole {
-    // Bump stub version if reorder fields
-    FREE,
-    TRAIT_METHOD,
-    IMPL_METHOD,
-    FOREIGN
+sealed class RsFunctionOwner {
+    object Free : RsFunctionOwner()
+    object Foreign : RsFunctionOwner()
+    class Trait(val trait: RsTraitItem) : RsFunctionOwner()
+    class Impl(val impl: RsImplItem, val isInherent: Boolean) : RsFunctionOwner()
+
+    val isInherentImpl: Boolean get() = this is Impl && isInherent
+    val isTraitImpl: Boolean get() = this is Impl && !isInherent
+    val isImplOrTrait: Boolean get() = this is Impl || this is Trait
 }
 
-val RsFunction.role: RsFunctionRole get() {
+val RsFunction.owner: RsFunctionOwner get() {
     val stub = stub
-    if (stub != null) return stub.role
-    return when (parent) {
-        is RsItemsOwner -> RsFunctionRole.FREE
-        is RsTraitItem -> RsFunctionRole.TRAIT_METHOD
-        is RsImplItem -> RsFunctionRole.IMPL_METHOD
-        is RsForeignModItem -> RsFunctionRole.FOREIGN
-        else -> error("Unexpected function parent: $parent")
+    val stubOnlyParent = if (stub != null) stub.parentStub.psi else parent
+    return when (stubOnlyParent) {
+        is RsForeignModItem -> RsFunctionOwner.Foreign
+        is RsMembers -> {
+            val traitOrImpl = parent.parent
+            when (traitOrImpl) {
+                is RsImplItem -> RsFunctionOwner.Impl(traitOrImpl, isInherent = traitOrImpl.traitRef == null)
+                is RsTraitItem -> RsFunctionOwner.Trait(traitOrImpl)
+                else -> error("unreachable")
+            }
+        }
+        else -> RsFunctionOwner.Free
     }
 }
+
 
 val RsFunction.superMethod: RsFunction? get() {
     val rustImplItem = parentOfType<RsImplItem>() ?: return null
     val superTrait = rustImplItem.traitRef?.resolveToTrait ?: return null
 
-    return superTrait.functionList.find { it.name == this.name }
+    return superTrait.members?.functionList.orEmpty().find { it.name == this.name }
 }
 
 val RsFunction.valueParameters: List<RsValueParameter>
@@ -88,13 +91,11 @@ val RsFunction.default: PsiElement?
     get() = node.findChildByType(RsElementTypes.DEFAULT)?.psi
 
 val RsFunction.title: String
-    get() = when (role) {
-        RsFunctionRole.TRAIT_METHOD ->
-            if (selfParameter == null) "Trait function `$name`" else "Trait method `$name`"
-        RsFunctionRole.IMPL_METHOD ->
-            if (selfParameter == null) "Associated function `$name`" else "Method `$name`"
-        RsFunctionRole.FOREIGN -> "Foreign function `$name`"
-        else -> "Function `$name`"
+    get() = when (owner) {
+        is RsFunctionOwner.Free -> "Function `$name`"
+        is RsFunctionOwner.Foreign -> "Foreign function `$name`"
+        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl ->
+            if (isAssocFn) "Associated function `$name`" else "Method `$name`"
     }
 
 val RsFunction.returnType: Ty get() {
@@ -119,11 +120,11 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     final override val innerAttrList: List<RsInnerAttr>
         get() = block?.innerAttrList.orEmpty()
 
-    override fun getIcon(flags: Int): Icon = when (role) {
-        RsFunctionRole.FREE, RsFunctionRole.FOREIGN ->
+    override fun getIcon(flags: Int): Icon = when (owner) {
+        is RsFunctionOwner.Free, is RsFunctionOwner.Foreign ->
             if (isTest) RsIcons.FUNCTION.addTestMark() else RsIcons.FUNCTION
 
-        RsFunctionRole.TRAIT_METHOD, RsFunctionRole.IMPL_METHOD -> when {
+        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl -> when {
             isAssocFn && isAbstract -> RsIcons.ABSTRACT_ASSOC_FUNCTION
             isAssocFn -> RsIcons.ASSOC_FUNCTION
             isAbstract -> RsIcons.ABSTRACT_METHOD

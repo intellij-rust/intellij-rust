@@ -19,14 +19,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.selfParameter
 
-enum class RsWrapperType {
-    ImplFunction,
-    TraitFunction,
-    ImplMethod,
-    TraitMethod,
-    Function
-}
-
 class RsExtractFunctionHandler : RefactoringActionHandler {
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
         //this doesn't get called form the editor.
@@ -37,7 +29,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         val start = editor?.selectionModel?.selectionStart
         val end = editor?.selectionModel?.selectionEnd
         if (start === null || end === null) return
-        val config = RsExtractFunctionConfig(file, start, end)
+        val config = RsExtractFunctionConfig.create(file, start, end) ?: return
 
         extractFunctionDialog(project, file, config)
     }

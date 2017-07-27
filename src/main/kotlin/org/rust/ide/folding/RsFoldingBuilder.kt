@@ -20,7 +20,6 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
-import jdk.nashorn.internal.parser.Token
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.leftLeaves
 import org.rust.lang.core.leftSiblings
@@ -76,13 +75,12 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
         override fun visitUseGlobList(o: RsUseGlobList) = fold(o)
 
-        override fun visitTraitItem(o: RsTraitItem) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitMembers(o: RsMembers) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitModItem(o: RsModItem) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitMacroArgument(o: RsMacroArgument) = foldBetween(o, o.lbrace, o.rbrace)
 
-        override fun visitImplItem(o: RsImplItem) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitComment(comment: PsiComment) {
             when (comment.tokenType) {

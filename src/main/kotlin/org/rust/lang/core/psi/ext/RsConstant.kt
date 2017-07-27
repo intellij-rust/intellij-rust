@@ -25,19 +25,25 @@ val RsConstant.kind: RsConstantKind get() = when {
     else -> RsConstantKind.STATIC
 }
 
-enum class RsConstantRole {
-    FREE,
-    TRAIT_CONSTANT,
-    IMPL_CONSTANT,
-    FOREIGN
+sealed class RsConstantOwner {
+    object Free : RsConstantOwner()
+    object Foreign : RsConstantOwner()
+    class Trait(val trait: RsTraitItem) : RsConstantOwner()
+    class Impl(val impl: RsImplItem) : RsConstantOwner()
 }
 
-val RsConstant.role: RsConstantRole get() {
+val RsConstant.owner: RsConstantOwner get() {
     return when (parent) {
-        is RsItemsOwner -> RsConstantRole.FREE
-        is RsTraitItem -> RsConstantRole.TRAIT_CONSTANT
-        is RsImplItem -> RsConstantRole.IMPL_CONSTANT
-        is RsForeignModItem -> RsConstantRole.FOREIGN
+        is RsItemsOwner -> RsConstantOwner.Free
+        is RsForeignModItem -> RsConstantOwner.Foreign
+        is RsMembers -> {
+            val grandDad = parent.parent
+            when (grandDad) {
+                is RsTraitItem -> RsConstantOwner.Trait(grandDad)
+                is RsImplItem -> RsConstantOwner.Impl(grandDad)
+                else -> error("unreachable")
+            }
+        }
         else -> error("Unexpected constant parent: $parent")
     }
 }

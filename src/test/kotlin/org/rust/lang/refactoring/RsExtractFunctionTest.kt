@@ -164,7 +164,7 @@ class RsExtractFunctionTest : RsTestBase() {
             val start = myFixture.editor?.selectionModel?.selectionStart ?: fail("No start selection")
             val end = myFixture.editor?.selectionModel?.selectionEnd ?: fail("No end selection")
 
-            val config = RsExtractFunctionConfig(myFixture.file, start, end)
+            val config = RsExtractFunctionConfig.create(myFixture.file, start, end)!!
             config.name = name
             config.visibilityLevelPublic = pub
 

@@ -9,56 +9,33 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.findStatementsInRange
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.ext.isAssocFn
+import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.core.psi.ext.selfParameter
 
-class RsExtractFunctionConfig(val file: PsiFile, start: Int, end: Int) {
-    var implType = RsWrapperType.Function
-    var anchor: RsFunction? = null
-    var elements: List<PsiElement> = emptyList()
-    var name = ""
-    var visibilityLevelPublic = false
+class RsExtractFunctionConfig private constructor(
+    val containingFunction: RsFunction,
+    val elements: List<PsiElement>,
+    var name: String = "",
+    var visibilityLevelPublic: Boolean = false,
+    val needsSelf: Boolean
+) {
 
-    init {
-        init(start, end)
-    }
+    companion object {
+        fun create(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
+            val elements = findStatementsInRange(file, start, end).asList()
+            if (elements.isEmpty()) return null
+            val first = elements.first()
+            val last = elements.last()
 
-    private fun init(start: Int, end: Int) {
-        elements = findStatementsInRange(file, start, end).asList()
-        if (elements.isEmpty()) return
-        val first = elements.first()
-        val last = elements.last()
-
-        // check element should be a part of one block
-        val parentOfFirst = first.parentOfType<RsFunction>() ?: return
-        anchor = last.parentOfType<RsFunction>() ?: return
-        if (parentOfFirst != anchor) {
-            return
+            // check element should be a part of one block
+            val fn = first.parentOfType<RsFunction>() ?: return null
+            if (fn != last.parentOfType<RsFunction>()) return null
+            return RsExtractFunctionConfig(
+                fn,
+                elements,
+                needsSelf = fn.owner.isImplOrTrait && !fn.isAssocFn
+            )
         }
-
-        // find wrapper parent type of selection: fun / method / trait impl method
-        val impl = parentOfFirst.parent as? RsImplItem?
-        if (impl != null) {
-            if (impl.traitRef != null) {
-                if (parentOfFirst.selfParameter == null) {
-                    implType = RsWrapperType.TraitFunction
-                } else {
-                    implType = RsWrapperType.TraitMethod
-                }
-            } else {
-                if (parentOfFirst.selfParameter == null) {
-                    implType = RsWrapperType.ImplFunction
-                } else {
-                    implType = RsWrapperType.ImplMethod
-                }
-            }
-        }
-
-        //TODO: Find possible input and output parameter
     }
-
-    fun isMethod() =
-        implType == RsWrapperType.TraitMethod || implType == RsWrapperType.ImplMethod
-
 }

@@ -21,10 +21,10 @@ class RsImplTreeElement(element: RsImplItem) : PsiTreeElementBase<RsImplItem>(el
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        val impl = element ?: return emptyList()
+        val members = element?.members ?: return emptyList()
         return listOf(
-            impl.functionList.map(::RsFunctionTreeElement),
-            impl.constantList.map(::RsBaseTreeElement)
+            members.functionList.map(::RsFunctionTreeElement),
+            members.constantList.map(::RsBaseTreeElement)
         ).flatten().sortedBy { it.element?.textOffset }
     }
 }

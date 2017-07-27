@@ -5,20 +5,11 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.BoundElement
 
 interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclaration {
-    val constantList: List<RsConstant>
-    val functionList: List<RsFunction>
-    val macroCallList: List<RsMacroCall>
-    val typeAliasList: List<RsTypeAlias>
-    val lbrace: PsiElement
-    val rbrace: PsiElement?
-
-    // For impls, this are `default` methods
-    val inheritedFunctions: List<BoundElement<RsFunction>>
+    val members: RsMembers?
 
     val implementedTrait: BoundElement<RsTraitItem>?
 
@@ -26,6 +17,18 @@ interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclara
 }
 
 val BoundElement<RsTraitOrImpl>.functionsWithInherited: List<BoundElement<RsFunction>> get() {
-    return element.functionList.map { BoundElement(it, subst) } +
-        element.inheritedFunctions.map { it.substitute(subst) }
+    val directlyImplemented = element.members?.functionList.orEmpty().map { BoundElement(it, subst) }
+    val inherited = when (element) {
+        is RsImplItem -> {
+            val trait = element.implementedTrait
+            if (trait == null) emptyList() else {
+                val direct = directlyImplemented.map { it.element.name }.toSet()
+                trait.element.members?.functionList.orEmpty()
+                    .filter { it.name !in direct }
+                    .map { BoundElement(it, subst) }
+            }
+        }
+        else -> emptyList()
+    }
+    return directlyImplemented + inherited
 }

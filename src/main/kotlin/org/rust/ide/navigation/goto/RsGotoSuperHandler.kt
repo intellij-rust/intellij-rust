@@ -37,7 +37,7 @@ fun gotoSuperTarget(source: PsiElement): NavigatablePsiElement? {
     ) ?: return null
 
     if (modOrMethod is RsFunction) {
-        return if (modOrMethod.role == RsFunctionRole.IMPL_METHOD && ! modOrMethod.isInherentImpl) {
+        return if (modOrMethod.owner.isTraitImpl) {
             modOrMethod.superMethod
         } else {
             gotoSuperTarget(modOrMethod.parent)

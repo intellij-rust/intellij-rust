@@ -12,10 +12,7 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.RsFunctionRole
-import org.rust.lang.core.psi.ext.role
-import org.rust.lang.core.psi.ext.superMethod
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.*
 import javax.swing.Icon
 
 /**
@@ -23,7 +20,7 @@ import javax.swing.Icon
  */
 class RsTraitMethodImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
     override fun collectNavigationMarkers(el: PsiElement, result: MutableCollection<in RelatedItemLineMarkerInfo<PsiElement>>) {
-        if (!(el is RsFunction && el.role == RsFunctionRole.IMPL_METHOD)) return
+        if (!(el is RsFunction && el.owner.isTraitImpl)) return
 
         val traitMethod = el.superMethod ?: return
         val trait = traitMethod.parentOfType<RsTraitItem>() ?: return

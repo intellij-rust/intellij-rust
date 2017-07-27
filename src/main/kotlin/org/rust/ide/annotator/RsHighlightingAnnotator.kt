@@ -88,9 +88,9 @@ private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
     is RsEnumVariant -> RsColor.ENUM_VARIANT
     is RsExternCrateItem -> RsColor.CRATE
     is RsFieldDecl -> RsColor.FIELD
-    is RsFunction -> when (element.role) {
-        RsFunctionRole.FOREIGN, RsFunctionRole.FREE -> RsColor.FUNCTION
-        RsFunctionRole.TRAIT_METHOD, RsFunctionRole.IMPL_METHOD ->
+    is RsFunction -> when (element.owner) {
+        is RsFunctionOwner.Foreign, is RsFunctionOwner.Free -> RsColor.FUNCTION
+        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl->
             if (element.isAssocFn) RsColor.ASSOC_FUNCTION else RsColor.METHOD
     }
     is RsMethodCallExpr -> RsColor.METHOD

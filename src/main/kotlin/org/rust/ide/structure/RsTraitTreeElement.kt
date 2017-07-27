@@ -26,10 +26,10 @@ class RsTraitTreeElement(element: RsTraitItem) : PsiTreeElementBase<RsTraitItem>
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        val trait = element ?: return emptyList()
+        val members = element?.members ?: return emptyList()
         return listOf(
-            trait.functionList.map(::RsFunctionTreeElement),
-            trait.constantList.map(::RsBaseTreeElement)
+            members.functionList.map(::RsFunctionTreeElement),
+            members.constantList.map(::RsBaseTreeElement)
         ).flatten().sortedBy { it.element?.textOffset }
     }
 }

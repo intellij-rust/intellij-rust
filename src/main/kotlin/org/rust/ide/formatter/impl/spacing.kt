@@ -170,8 +170,7 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spac
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
 
         // Format blank lines between impl & trait members
-            (parentPsi is RsTraitItem || parentPsi is RsImplItem)
-                && ncPsi1 is RsNamedElement && ncPsi2 is RsNamedElement
+            parentPsi is RsMembers && ncPsi1 is RsNamedElement && ncPsi2 is RsNamedElement
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
