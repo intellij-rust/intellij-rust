@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.CachedValueProvider
@@ -21,11 +22,7 @@ import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.RsInnerAttributeOwner
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.queryAttributes
-import org.rust.lang.core.psi.ext.module
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsModulesIndex
@@ -43,6 +40,11 @@ class RsFile(
     override fun getStub(): RsFileStub? = super.getStub() as RsFileStub?
 
     override fun getOriginalFile(): RsFile = super.getOriginalFile() as RsFile
+
+    override fun setName(name: String): PsiElement {
+        val nameWithExtension = if ('.' !in name) "$name.rs" else name
+        return super.setName(nameWithExtension)
+    }
 
     override val `super`: RsMod?
         get() {

@@ -141,7 +141,7 @@ MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')' {
 
 private PathIdent ::= !("union" identifier) identifier | self | super | 'Self'
 
-fake Path ::= [ Path '::' ] PathIdent PathTypeArguments? {
+fake Path ::= (Path '::' | '::' | TypeQual)? PathIdent PathTypeArguments? {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
@@ -151,7 +151,15 @@ private Path_first ::= identifier | self | 'Self' | super | '::' | '<'
 
 private PathImpl ::= PathStart PathSegment*
 
-PathStart ::= '::'?  PathIdent PathTypeArguments? { elementType = Path }
+PathStart ::= ('::' | <<checkTypeQualAllowed>> TypeQual)? PathIdent PathTypeArguments? { elementType = Path }
+//    <T as Foo>::bar::baz::<i32>
+//    ^~~~~~~~~~~^ TypeQual
+TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
 left PathSegment ::= '::' PathIdent PathTypeArguments? { elementType = Path }
 
 private PathTypeArguments ::= <<isPathMode 'COLONS'>> ColonTypeArgumentList
@@ -172,33 +180,22 @@ AssocTypeBinding ::= identifier '=' TypeReference
 
 // Paths for expressions:
 //     a::b::<T,U>::c
-PathGenericArgsWithoutColons ::= <<pathMode 'NO_COLONS' PathImpl>> { elementType = Path }
+PathGenericArgsWithoutColons ::= <<typeQuals 'ON' <<pathMode 'NO_COLONS' PathImpl>>>> { elementType = Path }
+PathGenericArgsWithoutColonsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'NO_COLONS' PathImpl>>>> { elementType = Path }
 
 // Paths without type arguments, for use declarations:
 //     a::b::c
-PathWithoutTypes ::= <<pathMode 'NO_TYPES' PathImpl>> { elementType = Path }
+PathWithoutTypes ::= <<typeQuals 'OFF' <<pathMode 'NO_TYPES' PathImpl>>>> { elementType = Path }
 
 // Paths for types:
 //    a::b<T,U>::c<V,W>
 //    a::b<T,U>::c(V) -> W
 //    a::b<T,U>::c(V)
-PathGenericArgsWithColons ::= <<pathMode 'COLONS' PathImpl>> { elementType = Path }
-
-// Qualified paths, formerly know as UFCS
-//
-//    <TYPE [as TRAIT_REF]> :: (path_without_types | path_generic_args_with_colons)
-//    <T>::c<V,W>
-//    <T as Foo>::c(V) -> W
-fake QualifiedPath ::= '<' TypeReference [ as TraitRef] '>' '::' Path
-QualifiedPathWithColons ::= '<' TypeReference [ as TraitRef] '>' '::' PathGenericArgsWithColons {
-  elementType = QualifiedPath
-}
-QualifiedPathWithoutColons ::= '<' TypeReference [ as TraitRef] '>' '::' PathGenericArgsWithoutColons {
-  elementType = QualifiedPath
-}
+PathGenericArgsWithColons ::= <<typeQuals 'ON' <<pathMode 'COLONS' PathImpl>>>> { elementType = Path }
+PathGenericArgsWithColonsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'COLONS' PathImpl>>>> { elementType = Path }
 
 // Path semantically constrained to resolve to a trait
-TraitRef ::= PathGenericArgsWithoutColons {
+TraitRef ::= PathGenericArgsWithoutColonsNoTypeQual {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -393,12 +390,10 @@ Pat ::= PatWild
       | PatIdent
       | PatRange
       | PatUniq
-      | PatQualPath
 
 private Pat_first ::= '_' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
 
 
-PatQualPath ::= QualifiedPathWithColons
 PatUniq ::= box Pat
 
 // XXX(matklad): it is impossible to distinguish between nullary enum variants
@@ -410,8 +405,8 @@ PatUniq ::= box Pat
 //   }
 PatIdent ::= PatBinding [ '@' Pat ]
 
-PatStruct ::= PathGenericArgsWithColons '{' PatField_with_recover* '..'? '}'
-PatEnum   ::= PathGenericArgsWithColons '(' SeqPat ')'
+PatStruct ::= PathGenericArgsWithColonsNoTypeQual '{' PatField_with_recover* '..'? '}'
+PatEnum   ::= PathGenericArgsWithColonsNoTypeQual '(' SeqPat ')'
 
 // TODO: actual recover
 private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
@@ -747,7 +742,7 @@ ImplTraitType ::= impl Polybound ('+' Polybound)* {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-BaseType ::= '(' ')' | '_' | '!' | !'<' PathGenericArgsWithoutColons | &'<' TypeQualPath {
+BaseType ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
@@ -767,8 +762,6 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
   stubClass = "org.rust.lang.core.stubs.RsTypeAliasStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-TypeQualPath ::= QualifiedPathWithoutColons
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Expressions
@@ -825,7 +818,6 @@ BlockExpr ::= [ unsafe &'{' ] SimpleBlock
 private AtomExpr ::= LitExpr
                     | MacroExpr
                     | StructLiteral
-                    | QualPathExpr
                     | MethodCallExpr
                     | FieldExpr
                     | IndexExpr
@@ -866,7 +858,7 @@ UnaryExpr ::= (box | '-' | '*' | '!' | '&' mut?) Expr
 
 LambdaExpr ::= move? LambdaParameters RetType? AnyExpr
 
-StructLiteral ::= <<checkStructAllowed>> PathGenericArgsWithColons StructLiteralBody
+StructLiteral ::= <<checkStructAllowed>> PathGenericArgsWithColonsNoTypeQual StructLiteralBody
 
 StructLiteralBody ::= '{' StructLiteralField_with_recover* ('..'  AnyExpr)? '}' { pin = 1 }
 
@@ -884,8 +876,6 @@ private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
 private StructLiteralField_recover ::= !(identifier | ',' | '}' | '..' | '#')
 
 PathExpr ::= PathGenericArgsWithColons
-
-QualPathExpr ::= QualifiedPathWithColons
 
 WhileExpr ::= LabelDecl? while Condition SimpleBlock {
   pin = 'while'

@@ -96,6 +96,5 @@ fun findNamesInLocalScope(expr: PsiElement): List<String> {
 }
 
 private fun PsiElement.isArgument() = this.parent is RsValueArgumentList
-private fun PsiElement.isStructField() = this.parent is RsStructLiteralField
 
 private fun rustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map { it.toSnakeCase(false) }

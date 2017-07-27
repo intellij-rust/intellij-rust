@@ -5,163 +5,255 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.fileTree
+
 class RsCompletionTest : RsCompletionTestBase() {
-
-    override val dataPath = "org/rust/lang/core/completion/fixtures"
-
-    fun testLocalVariable() = checkSingleCompletion("quux", """
+    fun `test local variable`() = doSingleCompletion("""
         fn foo(quux: i32) { qu/*caret*/ }
+    """, """
+        fn foo(quux: i32) { quux/*caret*/ }
     """)
 
-    fun testFunctionCall() = checkSingleCompletion("frobnicate()", """
+    fun `test function call zero args`() = doSingleCompletion("""
         fn frobnicate() {}
-
         fn main() { frob/*caret*/ }
-    """)
-
-    fun testFunctionWithParens() = checkSingleCompletion("frobnicate", """
+    """, """
         fn frobnicate() {}
-
-        fn main() { frob/*caret*/() }
+        fn main() { frobnicate()/*caret*/ }
     """)
 
-    fun testPath() = checkSingleCompletion("foo::bar::frobnicate()", """
-        mod foo {
-            mod bar {
-                fn frobnicate() {}
-            }
-        }
+    fun `test function call one arg`() = doSingleCompletion("""
+        fn frobnicate(foo: i32) {}
+        fn main() { frob/*caret*/ }
+    """, """
+        fn frobnicate(foo: i32) {}
+        fn main() { frobnicate(/*caret*/) }
+    """)
 
+    fun `test function call with parens`() = doSingleCompletion("""
+        fn frobnicate() {}
+        fn main() { frob/*caret*/() }
+    """, """
+        fn frobnicate() {}
+        fn main() { frobnicate()/*caret*/ }
+    """)
+
+    fun `test tuple struct with parens`() = doSingleCompletion("""
+        struct Frobnicate(i32, String);
+        fn main() { Frob/*caret*/() }
+    """, """
+        struct Frobnicate(i32, String);
+        fn main() { Frobnicate/*caret*/() }
+    """)
+
+    fun `test tuple eunm with parens`() = doSingleCompletion("""
+        enum E { Frobnicate(i32, String) }
+        fn main() { E::Frob/*caret*/() }
+    """, """
+        enum E { Frobnicate(i32, String) }
+        fn main() { E::Frobnicate(/*caret*/) }
+    """)
+
+    fun `test tuple enum match`() = doSingleCompletion("""
+        enum E { Frobnicate(i32, String) }
+        fn foo(f: E) { match f {
+            E::Frob/*caret*/() => {}
+        }}
+    """, """
+        enum E { Frobnicate(i32, String) }
+        fn foo(f: E) { match f {
+            E::Frobnicate(/*caret*/) => {}
+        }}
+    """)
+
+    fun `test function call with parens with arg`() = doSingleCompletion("""
+        fn frobnicate(foo: i32) {}
+        fn main() { frob/*caret*/() }
+    """, """
+        fn frobnicate(foo: i32) {}
+        fn main() { frobnicate(/*caret*/) }
+    """)
+
+    fun `test path`() = doSingleCompletion("""
+        mod foo {
+            mod bar { fn frobnicate() {} }
+        }
         fn frobfrobfrob() {}
 
         fn main() {
             foo::bar::frob/*caret*/
         }
+    """, """
+        mod foo {
+            mod bar { fn frobnicate() {} }
+        }
+        fn frobfrobfrob() {}
+
+        fn main() {
+            foo::bar::frobnicate()/*caret*/
+        }
     """)
 
-    fun testAnonymousItemDoesNotBreakCompletion() = checkSingleCompletion("frobnicate()", """
+    fun `test anonymous item does not break completion`() = doSingleCompletion("""
         extern "C" { }
-
         fn frobnicate() {}
 
         fn main() {
             frob/*caret*/
         }
-    """)
+    """, """
+        extern "C" { }
+        fn frobnicate() {}
 
-    fun `test use glob`() = checkSingleCompletion("quux", """
-        mod foo {
-            pub fn quux() {}
+        fn main() {
+            frobnicate()/*caret*/
         }
-
-        use self::foo::{q/*caret*/};
-
-        fn main() {}
     """)
 
-    fun `test use glob global`() = checkSingleCompletion("Foo", """
+    fun `test use glob`() = doSingleCompletion("""
+        mod foo { pub fn quux() {} }
+
+        use self::foo::q/*caret*/;
+    """, """
+        mod foo { pub fn quux() {} }
+
+        use self::foo::quux/*caret*/;
+    """)
+
+    fun `test use glob self`() = doSingleCompletion("""
+        mod foo { }
+
+        use self::foo::{sel/*caret*/};
+    """, """
+        mod foo { }
+
+        use self::foo::{self/*caret*/};
+    """)
+
+    fun `test use glob global`() = doSingleCompletion("""
         pub struct Foo;
 
         mod m {
-            use {F/*caret*/};
+            use F/*caret*/;
+        }
+    """, """
+        pub struct Foo;
+
+        mod m {
+            use Foo/*caret*/;
         }
     """)
 
-    fun testUseItem() = checkSingleCompletion("quux", """
-        mod foo {
-            pub fn quux() {}
-        }
-
+    fun `test use item`() = doSingleCompletion("""
+        mod foo { pub fn quux() {} }
         use self::foo::q/*caret*/;
-
-        fn main() {}
+    """, """
+        mod foo { pub fn quux() {} }
+        use self::foo::quux/*caret*/;
     """)
 
-    fun testWildcardImports() = checkSingleCompletion("transmogrify()", """
-        mod foo {
-            fn transmogrify() {}
-        }
+    fun `test wildcard imports`() = doSingleCompletion("""
+        mod foo { fn transmogrify() {} }
 
         fn main() {
             use self::foo::*;
-
             trans/*caret*/
+        }
+    """, """
+        mod foo { fn transmogrify() {} }
+
+        fn main() {
+            use self::foo::*;
+            transmogrify()/*caret*/
         }
     """)
 
-    fun testShadowing() = checkSingleCompletion("foobar", """
+    fun `test shadowing`() = doSingleCompletion("""
         fn main() {
             let foobar = "foobar";
             let foobar = foobar.to_string();
             foo/*caret*/
         }
+    """, """
+        fn main() {
+            let foobar = "foobar";
+            let foobar = foobar.to_string();
+            foobar/*caret*/
+        }
     """)
 
-    fun testCompleteAlias() = checkSingleCompletion("frobnicate()", """
-        mod m {
-            pub fn transmogrify() {}
-        }
-
-        use self::m::{transmogrify as frobnicate};
+    fun `test complete alias`() = doSingleCompletion("""
+        mod m { pub fn transmogrify() {} }
+        use self::m::transmogrify as frobnicate;
 
         fn main() {
             frob/*caret*/
         }
-    """)
+    """, """
+        mod m { pub fn transmogrify() {} }
+        use self::m::transmogrify as frobnicate;
 
-    fun testCompleteSelfType() = checkSingleCompletion("Self", """
-        trait T {
-            fn foo() -> Se/*caret*/
+        fn main() {
+            frobnicate()/*caret*/
         }
     """)
 
-    fun testStructField() = checkSingleCompletion("foobarbaz", """
-        struct S {
-            foobarbaz: i32
-        }
+    fun `test complete self type`() = doSingleCompletion("""
+        trait T { fn foo() -> Se/*caret*/ }
+    """, """
+        trait T { fn foo() -> Self/*caret*/ }
+    """)
+
+    fun `test struct field`() = doSingleCompletion("""
+        struct S { foobarbaz: i32 }
         fn main() {
             let _ = S { foo/*caret*/ };
         }
+    """, """
+        struct S { foobarbaz: i32 }
+        fn main() {
+            let _ = S { foobarbaz/*caret*/ };
+        }
     """)
 
-    fun testEnumField() = checkSingleCompletion("bazbarfoo", """
-        enum E {
-            X {
-                bazbarfoo: i32
-            }
-        }
+    fun `test enum field`() = doSingleCompletion("""
+        enum E { X { bazbarfoo: i32 } }
         fn main() {
             let _ = E::X { baz/*caret*/ }
         }
+    """, """
+        enum E { X { bazbarfoo: i32 } }
+        fn main() {
+            let _ = E::X { bazbarfoo/*caret*/ }
+        }
     """)
 
-    fun testLocalScope() = checkNoCompletion("""
+    fun `test local scope`() = checkNoCompletion("""
         fn foo() {
             let x = spam/*caret*/;
             let spamlot = 92;
         }
     """)
 
-    fun testWhileLet() = checkNoCompletion("""
+    fun `test while let`() = checkNoCompletion("""
         fn main() {
             while let Some(quazimagnitron) = quaz/*caret*/ { }
         }
     """)
 
-
-    fun testAliasShadowsOriginalName() = checkNoCompletion("""
+    fun `test alias shadows original name`() = checkNoCompletion("""
         mod m {
             pub fn transmogrify() {}
         }
 
-        use self::m::{transmogrify as frobnicate};
+        use self::m::transmogrify as frobnicate;
 
         fn main() {
             trans/*caret*/
         }
     """)
 
-    fun testCompletionRespectsNamespaces() = checkNoCompletion("""
+    fun `test completion respects namespaces`() = checkNoCompletion("""
         fn foobar() {}
 
         fn main() {
@@ -169,174 +261,108 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testChildFile() = checkByDirectory {
-        openFileInEditor("main.rs")
-        executeSoloCompletion()
-    }
+    fun `test child file`() = doSingleCompletionMultiflie("""
+    //- main.rs
+        use foo::Spam;
+        mod foo;
+        fn main() { let _ = Spam::Q/*caret*/; }
 
-    fun testParentFile() = checkByDirectory {
-        openFileInEditor("foo.rs")
-        executeSoloCompletion()
-    }
-
-    fun testParentFile2() = checkByDirectory {
-        openFileInEditor("foo/mod.rs")
-        executeSoloCompletion()
-    }
-
-    fun testCallCaretPositionNoArguments() = checkByText("""
-        fn frobnicate() {}
-        fn main() {
-            frob/*caret*/
-        }
+    //- foo.rs
+        pub enum Spam { Quux, Eggs }
     """, """
-        fn frobnicate() {}
-        fn main() {
-            frobnicate()/*caret*/
-        }
-    """) { executeSoloCompletion() }
+        use foo::Spam;
+        mod foo;
+        fn main() { let _ = Spam::Quux/*caret*/; }
+    """)
 
-    fun testCallCaretPositionWithArguments() = checkByText("""
-        fn frobnicate(foo: i32, bar: String) {}
-        fn main() {
-            frob/*caret*/
-        }
+    fun `test parent file`() = doSingleCompletionMultiflie("""
+    //- main.rs
+        mod foo;
+        pub enum Spam { Quux, Eggs }
+
+    //- foo.rs
+        use super::Spam;
+        fn foo() { let _ = Spam::Q/*caret*/; }
     """, """
-        fn frobnicate(foo: i32, bar: String) {}
-        fn main() {
-            frobnicate(/*caret*/)
-        }
-    """) { executeSoloCompletion() }
-
-    fun testCallStructMethod() = checkContainsCompletion("some_fn", """
-        struct SomeStruct { }
-        impl SomeStruct {
-            fn some_fn(&self) {}
-        }
-        fn main() {
-            let v = SomeStruct { };
-            v./*caret*/
-        }
+        use super::Spam;
+        fn foo() { let _ = Spam::Quux/*caret*/; }
     """)
 
-    fun testCallEnumMethod() = checkContainsCompletion("some_fn", """
-        enum SomeEnum { Var1, Var2 }
-        impl SomeEnum {
-            fn some_fn(&self) {}
-        }
-        fn main() {
-            let v = SomeEnum::Var1 ;
-            v./*caret*/
-        }
+    fun `test parent file 2`() = doSingleCompletionMultiflie("""
+    //- main.rs
+        mod foo;
+        pub enum Spam { Quux, Eggs }
+
+    //- foo/mod.rs
+        use Spam::Qu/*caret*/;
+    """, """
+        use Spam::Quux/*caret*/;
     """)
 
-    fun testCallTraitImplForStructMethod() = checkContainsCompletion("some_fn", """
-        trait SomeTrait { fn some_fn(&self); }
-        struct SomeStruct { }
-        impl SomeTrait for SomeStruct {
-            fn some_fn(&self) {}
-        }
-        fn main() {
-            let v = SomeStruct { };
-            v./*caret*/
-        }
+    fun testEnumVariant() = doSingleCompletion("""
+        enum Foo { BARBOO, BAZBAR }
+        fn main() { let _ = Foo::BAZ/*caret*/ }
+    """, """
+        enum Foo { BARBOO, BAZBAR }
+        fn main() { let _ = Foo::BAZBAR/*caret*/ }
     """)
 
-    fun testCallTraitImplForEnumMethod() = checkContainsCompletion("some_fn", """
-        trait SomeTrait { fn some_fn(&self); }
-        enum SomeEnum { Var1, Var2 }
-        impl SomeTrait for SomeEnum {
-            fn some_fn(&self) {}
-        }
-        fn main() {
-            let v = SomeEnum::Var1 ;
-            v./*caret*/
-        }
+    fun testEnumVariantWithTupleFields() = doSingleCompletion("""
+        enum Foo { BARBAZ(f64) }
+        fn main() { let _ = Foo::BAR/*caret*/ }
+    """, """
+        enum Foo { BARBAZ(f64) }
+        fn main() { let _ = Foo::BARBAZ(/*caret*/) }
     """)
 
-    fun testEnumVariant() = checkSingleCompletion("BAZBAR", """
-        enum Foo {
-            BARBOO,
-            BAZBAR
-        }
-        fn main() {
-            let _ = Foo::BAZ/*caret*/
-        }
+    fun testEnumVariantWithTupleFieldsInUseBlock() = doSingleCompletion("""
+        enum Foo { BARBAZ(f64) }
+        fn main() { use Foo::BAR/*caret*/ }
+    """, """
+        enum Foo { BARBAZ(f64) }
+        fn main() { use Foo::BARBAZ/*caret*/ }
     """)
 
-    fun testEnumVariantWithTupleFields() = checkSingleCompletion("Foo::BARBAZ()", """
-        enum Foo {
-            BARBAZ(f64)
-        }
-        fn main() {
-            let _ = Foo::BAR/*caret*/
-        }
+    fun testEnumVariantWithBlockFields() = doSingleCompletion("""
+        enum Foo { BARBAZ { foo: f64 } }
+        fn main() { let _ = Foo::BAR/*caret*/ }
+    """, """
+        enum Foo { BARBAZ { foo: f64 } }
+        fn main() { let _ = Foo::BARBAZ {/*caret*/} }
     """)
 
-    fun testEnumVariantWithTupleFieldsInUseBlock() = checkSingleCompletion("BARBAZ", """
-        enum Foo {
-            BARBAZ(f64)
-        }
-        fn main() {
-            use Foo::BAR/*caret*/
-        }
+    fun testEnumVariantWithBlockFieldsInUseBlock() = doSingleCompletion("""
+        enum Foo { BARBAZ { foo: f64 } }
+        fn main() { use Foo::BAR/*caret*/ }
+    """, """
+        enum Foo { BARBAZ { foo: f64 } }
+        fn main() { use Foo::BARBAZ/*caret*/ }
     """)
 
-    fun testEnumVariantWithBlockFields() = checkSingleCompletion("Foo::BARBAZ {}", """
-        enum Foo {
-            BARBAZ {
-                foo: f64
-            }
-        }
-        fn main() {
-            let _ = Foo::BAR/*caret*/
-        }
-    """)
-
-    fun testEnumVariantWithBlockFieldsInUseBlock() = checkSingleCompletion("BARBAZ", """
-        enum Foo {
-            BARBAZ {
-                foo: f64
-            }
-        }
-        fn main() {
-            use Foo::{BAR/*caret*/}
-        }
-    """)
-
-    fun testTypeNamespaceIsCompletedForPathHead() = checkSingleCompletion("FooBar", """
+    fun testTypeNamespaceIsCompletedForPathHead() = doSingleCompletion("""
         struct FooBar { f: i32 }
 
-        fn main() {
-            Foo/*caret*/
-        }
+        fn main() { Foo/*caret*/ }
+    """, """
+        struct FooBar { f: i32 }
+
+        fn main() { FooBar/*caret*/ }
     """)
 
     // issue #1182
-    fun testAssociatedTypeCompletion() = checkSingleCompletion("Bar", """
+    fun testAssociatedTypeCompletion() = doSingleCompletion("""
         trait Foo {
             type Bar;
             fn foo(bar: Self::Ba/*caret*/);
         }
-    """)
-
-    // issue #1182
-    fun testAssociatedTypeSuggestion() = checkContainsCompletion("Bar", """
+    """, """
         trait Foo {
             type Bar;
-            fn foo(bar: Self::/*caret*/);
+            fn foo(bar: Self::Bar/*caret*/);
         }
     """)
 
-    // issue #1182
-    fun testAssociatedTypeSuggestionWithReference() = checkContainsCompletion("Bar", """
-        trait Foo {
-            type Bar;
-            fn foo(bar: &mut Self::/*caret*/);
-        }
-    """)
-
-    fun `test complete enum variants 1`() = checkSingleCompletion("BinOp", """
+    fun `test complete enum variants 1`() = doSingleCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {
             use self::Expr::*;
@@ -344,14 +370,30 @@ class RsCompletionTest : RsCompletionTestBase() {
                 Bi/*caret*/
             }
         }
+    """, """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        fn foo(e: Expr) {
+            use self::Expr::*;
+            match e {
+                BinOp(/*caret*/)
+            }
+        }
     """)
 
-    fun `test complete enum variants 2`() = checkSingleCompletion("Unit", """
+    fun `test complete enum variants 2`() = doSingleCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {
             use self::Expr::*;
             match e {
                 Un/*caret*/
+            }
+        }
+    """, """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        fn foo(e: Expr) {
+            use self::Expr::*;
+            match e {
+                Unit/*caret*/
             }
         }
     """)
@@ -365,16 +407,26 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete macro`() = checkSingleCompletion("foo_bar", """
+    fun `test complete macro`() = doSingleCompletion("""
         macro_rules! foo_bar { () => () }
         fn main() {
             fo/*caret*/
         }
+    """, """
+        macro_rules! foo_bar { () => () }
+        fn main() {
+            foo_bar!(/*caret*/)
+        }
     """)
 
-    fun `test complete outer macro`() = checkSingleCompletion("foo_bar", """
+    fun `test complete outer macro`() = doSingleCompletion("""
         macro_rules! foo_bar { () => () }
         fo/*caret*/
+        fn main() {
+        }
+    """, """
+        macro_rules! foo_bar { () => () }
+        foo_bar!(/*caret*/)
         fn main() {
         }
     """)
@@ -384,5 +436,4 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo/*caret*/() {
         }
     """)
-
 }

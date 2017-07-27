@@ -10,7 +10,6 @@ import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.fileTree
 
 class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
-    override val dataPath = "src/test/resources/org/rust/cargo/check/fixtures"
 
     fun `test no errors if everything is ok`() = doTest("""
         fn main() { println!("Hello, World!"); }
@@ -55,36 +54,6 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
         check(highlights.isEmpty(), {
             "Did not expect any highlights, got:\n$highlights"
         })
-    }
-
-    fun `test don't report syntax errors from cargo check`() {
-        fileTree {
-            toml("Cargo.toml", """
-                [package]
-                name = "hello"
-                version = "0.1.0"
-                authors = []
-            """)
-
-            dir("src") {
-                rust("main.rs", """
-                    fn main() { bla bla bla }
-                    fn foo() { let : X = () }
-                """)
-            }
-        }.create()
-        myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
-        val highlights = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING)
-        val descriptions = highlights.map { it.description }.joinToString(separator = "\n")
-        val expected = """
-            cannot find value `bla` in this scope
-            '!', '&', '(', '::', ';', '[', '^', '{', '|' or '}' expected, got 'bla'
-            '!', '&', '(', '::', ';', '[', '^', '{', '|' or '}' expected, got 'bla'
-            <pat> expected, got ':'
-        """.trimIndent()
-        check(expected == descriptions) {
-            "Expected:\n$expected\nGot:\n$descriptions"
-        }
     }
 
     private fun doTest(mainRs: String) {

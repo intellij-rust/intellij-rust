@@ -21,6 +21,32 @@ fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree {
     return FileTree(FileTreeBuilderImpl().apply { builder() }.intoDirectory())
 }
 
+fun fileTreeFromText(@Language("Rust") text: String): FileTree {
+    val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
+    val fileNames = fileSeparator.findAll(text).map { it.groupValues[1] }.toList()
+    val fileTexts = fileSeparator.split(text).filter(String::isNotBlank).map { it.trimIndent() }
+
+    check(fileNames.size == fileTexts.size) {
+        "Have you placed `//- filename.rs` markers?"
+    }
+
+    fun fill(dir: Entry.Directory, path: List<String>, contents: String) {
+        val name = path.first()
+        if (path.size == 1) {
+            dir.children[name] = Entry.File(contents)
+        } else {
+            val childDir = dir.children.getOrPut(name, { Entry.Directory(mutableMapOf()) }) as Entry.Directory
+            fill(childDir, path.drop(1), contents)
+        }
+    }
+
+    return FileTree(Entry.Directory(mutableMapOf()).apply {
+        for ((path, contents) in fileNames.map { it.split("/") }.zip(fileTexts)) {
+            fill(this, path, contents)
+        }
+    })
+}
+
 interface FileTreeBuilder {
     fun dir(name: String, builder: FileTreeBuilder.() -> Unit)
     fun file(name: String, code: String)
@@ -31,15 +57,21 @@ interface FileTreeBuilder {
 
 class FileTree(private val rootDirectory: Entry.Directory) {
     fun create(project: Project, directory: VirtualFile): TestProject {
-        fun go(dir: Entry.Directory, root: VirtualFile) {
+        val filesWithCaret: MutableList<String> = mutableListOf()
+
+        fun go(dir: Entry.Directory, root: VirtualFile, parentComponents: List<String> = emptyList()) {
             for ((name, entry) in dir.children) {
+                val components = parentComponents + name
                 when (entry) {
                     is Entry.File -> {
-                        val vFile = root.createChildData(root, name)
-                        VfsUtil.saveText(vFile, entry.text)
+                        val vFile = root.findChild(name) ?: root.createChildData(root, name)
+                        VfsUtil.saveText(vFile, replaceCaretMarker(entry.text))
+                        if (hasCaretMarker(entry.text) || "//^" in entry.text) {
+                            filesWithCaret += components.joinToString(separator = "/")
+                        }
                     }
                     is Entry.Directory -> {
-                        go(entry, root.createChildDirectory(root, name))
+                        go(entry, root.createChildDirectory(root, name), components)
                     }
                 }
             }
@@ -50,7 +82,7 @@ class FileTree(private val rootDirectory: Entry.Directory) {
             fullyRefreshDirectory(directory)
         }
 
-        return TestProject(project, directory)
+        return TestProject(project, directory, filesWithCaret)
     }
 
     fun assertEquals(baseDir: VirtualFile) {
@@ -68,7 +100,9 @@ class FileTree(private val rootDirectory: Entry.Directory) {
                     is Entry.File -> {
                         check(!a.isDirectory)
                         val actualText = String(a.contentsToByteArray(), UTF_8)
-                        check(entry.text == actualText)
+                        check(entry.text == actualText) {
+                            "Expected:\n${entry.text}\nGot:\n$actualText"
+                        }
                     }
                     is Entry.Directory -> go(entry, a)
                 }
@@ -81,8 +115,11 @@ class FileTree(private val rootDirectory: Entry.Directory) {
 
 class TestProject(
     private val project: Project,
-    val root: VirtualFile
+    val root: VirtualFile,
+    val filesWithCaret: List<String>
 ) {
+
+    val fileWithCaret: String get() = filesWithCaret.singleOrNull()!!
 
     inline fun <reified T : PsiElement> findElementInFile(path: String): T {
         val element = doFindElementInFile(path)
@@ -126,7 +163,6 @@ class TestProject(
             ?: error("Can't find `$path`")
         val psiManager = PsiManager.getInstance(project)
         return if (vFile.isDirectory) psiManager.findDirectory(vFile)!! else psiManager.findFile(vFile)!!
-
     }
 }
 
@@ -139,7 +175,7 @@ private class FileTreeBuilderImpl(val directory: MutableMap<String, Entry> = mut
 
     override fun file(name: String, code: String) {
         check('/' !in name && '.' in name) { "Bad file name `$name`" }
-        directory[name] = Entry.File(code)
+        directory[name] = Entry.File(code.trimIndent())
     }
 
     fun intoDirectory() = Entry.Directory(directory)
@@ -162,3 +198,6 @@ private fun findElementInFile(file: PsiFile, marker: String): PsiElement {
     return file.findElementAt(elementOffset) ?:
         error { "No element found, offset = $elementOffset" }
 }
+
+fun replaceCaretMarker(text: String): String = text.replace("/*caret*/", "<caret>")
+private fun hasCaretMarker(text: String): Boolean = text.contains("/*caret*/")

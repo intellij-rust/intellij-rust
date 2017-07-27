@@ -6,6 +6,7 @@
 package org.rust.lang.core.type
 
 import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.lang.core.psi.ext.ArithmeticOp
 
 class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
@@ -239,4 +240,74 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
            //^ Foo
         }
     """)
+
+    fun `test infer iterator map chain`() = testExpr("""
+        struct S<T>(T);
+        fn main() {
+            let test: Vec<String> = Vec::new();
+            let a = test.into_iter()
+                .map(|x| x.to_string())
+                .map(|x| S(x))
+                .map(|x| x.0)
+                .next().unwrap();
+            a
+          //^ String
+        }
+    """)
+
+    fun `test infer iterator filter chain`() = testExpr("""
+        struct S<T>(T);
+        fn main() {
+            let test: Vec<i32> = Vec::new();
+            let a = test.into_iter()
+                .filter(|x| x < 30)
+                .filter(|x| x > 10)
+                .filter(|x| x % 2 == 0)
+                .next().unwrap();
+            a
+          //^ i32
+        }
+    """)
+
+    fun `test slice iter`() = testExpr("""
+        struct S<T>(T);
+        fn main() {
+            let test: Vec<i32> = Vec::new();
+            let a = test.iter()
+                .next().unwrap();
+            a
+          //^ &i32
+        }
+    """)
+
+    fun `test slice iter_mut`() = testExpr("""
+        struct S<T>(T);
+        fn main() {
+            let mut test: Vec<i32> = Vec::new();
+            let a = test.iter_mut()
+                .next().unwrap();
+            a
+          //^ &mut i32
+        }
+    """)
+
+    fun `test all binary ops with all numeric types`() {
+        val numericTypes = listOf(
+            "usize", "u8", "u16", "u32", "u64", "u128",
+            "isize", "i8", "i16", "i32", "i64", "i128",
+            "f32", "f64"
+        )
+
+        for (numeric in numericTypes) {
+            for ((_, _, sign) in ArithmeticOp.values()) {
+                testExpr("""
+                    fn foo(lhs: $numeric, rhs: $numeric) {
+                        let x = lhs $sign rhs;
+                        x
+                      //^ $numeric
+                    }
+                """)
+            }
+        }
+    }
 }

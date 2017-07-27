@@ -6,11 +6,11 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.type
 
@@ -26,9 +26,9 @@ interface TyStructOrEnumBase : Ty {
             } else "<anonymous>"
         }
 
-    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean = merge(mapping) {
+    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean = merge(mapping) {
         other is TyStructOrEnumBase && item == other.item &&
-            typeArguments.zip(other.typeArguments).all { (type1, type2) -> type1.canUnifyWith(type2, project, it) }
+            typeArguments.zip(other.typeArguments).all { (type1, type2) -> type1.canUnifyWith(type2, lookup, it) }
     }
 }
 

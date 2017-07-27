@@ -15,13 +15,16 @@ import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 
 class RsNamesValidator : NamesValidator {
 
-    override fun isKeyword(name: String, project: Project?): Boolean = getLexerType(name) in RS_KEYWORDS
+    override fun isKeyword(name: String, project: Project?): Boolean {
+        return getLexerType(name) in RS_KEYWORDS
+    }
 
-    override fun isIdentifier(name: String, project: Project?): Boolean =
-        when (getLexerType(name)) {
+    override fun isIdentifier(name: String, project: Project?): Boolean {
+        return when (getLexerType(name)) {
             IDENTIFIER, QUOTE_IDENTIFIER -> true
             else -> false
         }
+    }
 
     private fun getLexerType(text: String): IElementType? {
         val lexer = RsLexer()

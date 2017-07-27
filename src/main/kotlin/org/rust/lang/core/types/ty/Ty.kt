@@ -5,15 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
-import com.intellij.openapi.project.Project
-import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
-import org.rust.lang.core.resolve.findDerefTarget
-import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.infer.remapTypeParameters
+import org.rust.lang.core.resolve.ImplLookup
 
 typealias Substitution = Map<TyTypeParameter, Ty>
 typealias TypeMapping = MutableMap<TyTypeParameter, Ty>
@@ -32,7 +24,7 @@ interface Ty {
      *
      * Note that `t1.canUnifyWith(t2)` is not the same as `t2.canUnifyWith(t1)`.
      */
-    fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping? = null): Boolean
+    fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping? = null): Boolean
 
     /**
      * Substitute type parameters for their values
@@ -53,56 +45,8 @@ interface Ty {
     override fun toString(): String
 }
 
-fun Ty.derefTransitively(project: Project): Set<Ty> {
-    val result = mutableSetOf<Ty>()
-
-    var ty = this
-    while (true) {
-        if (ty in result) break
-        result += ty
-        ty = if (ty is TyReference) {
-            ty.referenced
-        } else {
-            findDerefTarget(project, ty)
-                ?: break
-        }
-    }
-
-    return result
-}
-
 fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.keys.find { it.toString() == name }
-}
-
-fun findImplsAndTraits(project: Project, ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
-    return when (ty) {
-        is TyTypeParameter -> ty.getTraitBoundsTransitively()
-        is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy
-
-    //  XXX: TyStr is TyPrimitive, but we want to handle it separately
-        is TyStr -> RsImplIndex.findImpls(project, ty).map { impl -> BoundElement(impl) }
-        is TyUnit, is TyUnknown -> emptyList()
-
-        else -> {
-            val derived = (ty as? TyStructOrEnumBase)?.item?.derivedTraits.orEmpty()
-                // select only std traits because we are sure
-                // that they are resolved correctly
-                .filter { item ->
-                    val derivableTrait = STD_DERIVABLE_TRAITS[item.name] ?: return@filter false
-                    item.containingCargoPackage?.origin == PackageOrigin.STDLIB &&
-                        item.containingMod?.modName == derivableTrait.modName
-                }.map { BoundElement(it, mapOf(TyTypeParameter(it) to ty)) }
-
-            derived + RsImplIndex.findImpls(project, ty).map { impl ->
-                BoundElement(impl, impl.remapTypeParameters(ty.typeParameterValues).orEmpty())
-            }
-        }
-    }
-}
-
-fun findMethodsAndAssocFunctions(project: Project, ty: Ty): List<BoundElement<RsFunction>> {
-    return findImplsAndTraits(project, ty).flatMap { it.functionsWithInherited }
 }
 
 internal inline fun merge(mapping: TypeMapping?, canUnify: (TypeMapping?) -> Boolean): Boolean {
@@ -129,7 +73,3 @@ internal fun TypeMapping.merge(otherMapping: Substitution) {
 
 fun Substitution.substituteInValues(map: Substitution): Substitution =
     mapValues { (_, value) -> value.substitute(map) }
-
-fun Substitution.reverse(): Substitution =
-    mapNotNull { if (it.value is TyTypeParameter) it else null }
-        .associate { (k, v) -> Pair(v as TyTypeParameter, k) }

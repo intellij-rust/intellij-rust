@@ -13,4 +13,6 @@ fn patterns() {
     if let Some(x,) = Some(92) { }
 
     let m!(x) = 92;
+
+    let <i32>::foo ... <i32>::bar = 92;
 }

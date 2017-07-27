@@ -6,6 +6,7 @@
 package org.rust.lang
 
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -22,6 +23,8 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
+import org.rust.FileTree
+import org.rust.TestProject
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
@@ -29,6 +32,7 @@ import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.parentOfType
 import java.nio.file.Paths
 import java.util.*
@@ -79,6 +83,13 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 
+    protected fun checkByDirectory(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {
+        fileTreeFromText(before).create()
+        action()
+        FileDocumentManager.getInstance().saveAllDocuments()
+        fileTreeFromText(after).assertEquals(myFixture.findFileInTempDir("."))
+    }
+
     protected fun checkByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
@@ -91,22 +102,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     protected fun openFileInEditor(path: String) {
         myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir(path))
-    }
-
-    data class ProjectFile(val path: String, val text: String) {
-        companion object {
-            fun parseFileCollection(text: String): List<ProjectFile> {
-                val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
-                val fileNames = fileSeparator.findAll(text).map { it.groupValues[1] }.toList()
-                val fileTexts = fileSeparator.split(text).filter(String::isNotBlank)
-
-                check(fileNames.size == fileTexts.size) {
-                    "Have you placed `//- filename.rs` markers?"
-                }
-
-                return fileNames.zip(fileTexts).map({ ProjectFile(it.first, it.second) })
-            }
-        }
     }
 
     protected fun getVirtualFileByName(path: String): VirtualFile? =
@@ -331,5 +326,15 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             return StreamUtil.readText(stream, Charsets.UTF_8)
         }
     }
+
+    protected fun FileTree.create(): TestProject =
+        create(myFixture.project, myFixture.findFileInTempDir("."))
+
+    protected fun FileTree.createAndOpenFileWithCaretMarker(): TestProject {
+        val testProject = create()
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+        return testProject
+    }
+
 }
 

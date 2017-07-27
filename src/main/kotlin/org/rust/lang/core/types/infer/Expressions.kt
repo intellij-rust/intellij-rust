@@ -6,6 +6,7 @@
 package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -32,18 +33,10 @@ fun inferLiteralExprType(expr: RsLitExpr): Ty = when (expr.kind) {
  * impl<X, Y> Flip<Y, X> { ... }
  * ```
  */
-fun RsImplItem.remapTypeParameters(subst: Substitution): Substitution {
-    val positional = typeReference?.type?.typeParameterValues.orEmpty()
-        .mapNotNull { (structParam, structType) ->
-            if (structType is TyTypeParameter) {
-                val implType = subst[structParam] ?: return@mapNotNull null
-                structType to implType
-            } else {
-                null
-            }
-        }.toMap()
-
+fun RsImplItem.remapTypeParameters(lookup: ImplLookup, receiver: Ty): Substitution {
+    val subst = mutableMapOf<TyTypeParameter, Ty>()
+    typeReference?.type?.canUnifyWith(receiver, lookup, subst)
     val associated = (implementedTrait?.subst ?: emptyMap())
-        .substituteInValues(positional)
-    return positional + associated
+        .substituteInValues(subst)
+    return subst + associated
 }

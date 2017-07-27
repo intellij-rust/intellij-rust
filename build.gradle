@@ -6,7 +6,7 @@ buildscript {
         maven { url 'https://jitpack.io' }
     }
     dependencies {
-        classpath "com.github.hurricup:gradle-grammar-kit-plugin:354bb8c477"
+        classpath "com.github.hurricup:gradle-grammar-kit-plugin:2017.1.1"
     }
 }
 
@@ -66,9 +66,7 @@ allprojects {
 
     apply plugin: 'org.jetbrains.grammarkit'
     grammarKit {
-        grammarKitRelease = '1.5.1'
-        grammarKitTargetRoot = 'src/gen'
-        purgeOldFiles = true
+        grammarKitRelease = '1.5.2'
     }
 
     test {
@@ -153,18 +151,22 @@ task generateRustLexer(type: GenerateLexer) {
     source 'src/main/grammars/RustLexer.flex'
     targetDir 'src/gen/org/rust/lang/core/lexer'
     targetClass '_RustLexer'
+    purgeOldFiles = true
 }
 
 task generateRustDocHighlightingLexer(type: GenerateLexer) {
     source 'src/main/grammars/RustDocHighlightingLexer.flex'
     targetDir 'src/gen/org/rust/lang/doc/lexer'
     targetClass '_RustDocHighlightingLexer'
+    purgeOldFiles = true
 }
 
 task generateRustParser(type: GenerateParser) {
     source 'src/main/grammars/RustParser.bnf'
+    targetRoot = 'src/gen'
     pathToParser '/org/rust/lang/core/parser/RustParser.java'
     pathToPsiRoot '/org/rust/lang/core/psi'
+    purgeOldFiles = true
 }
 
 compileKotlin.dependsOn generateRustLexer, generateRustDocHighlightingLexer, generateRustParser
@@ -175,12 +177,15 @@ project(':toml') {
         source 'src/main/grammars/TomlLexer.flex'
         targetDir 'src/gen/org/toml/lang/core/lexer'
         targetClass '_TomlLexer'
+        purgeOldFiles = true
     }
 
     task generateTomlParser(type: GenerateParser) {
         source 'src/main/grammars/TomlParser.bnf'
+        targetRoot = 'src/gen'
         pathToParser '/org/toml/lang/core/parser/TomlParser.java'
         pathToPsiRoot '/org/toml/lang/core/psi'
+        purgeOldFiles = true
     }
 
     compileKotlin.dependsOn generateTomlLexer, generateTomlParser

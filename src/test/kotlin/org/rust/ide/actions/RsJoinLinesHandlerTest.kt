@@ -223,4 +223,10 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
+    fun `test remove comma from enum definition`() = doTest("""
+        enum E { X,/*caret*/ Y,
+        }
+    """, """
+        enum E { X, Y/*caret*/ }
+    """)
 }

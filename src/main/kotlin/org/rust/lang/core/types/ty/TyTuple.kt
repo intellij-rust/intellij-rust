@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.types.ty
 
-import com.intellij.openapi.project.Project
+import org.rust.lang.core.resolve.ImplLookup
 
 data class TyTuple(val types: List<Ty>) : Ty {
 
-    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean = merge(mapping) {
+    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean = merge(mapping) {
         other is TyTuple && types.size == other.types.size &&
-            types.zip(other.types).all { (type1, type2) -> type1.canUnifyWith(type2, project, it) }
+            types.zip(other.types).all { (type1, type2) -> type1.canUnifyWith(type2, lookup, it) }
     }
 
     override fun substitute(subst: Substitution): TyTuple =

@@ -10,38 +10,54 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.ui.UIUtil
 import org.rust.cargo.RustWithToolchainTestBase
-import org.rust.lang.core.psi.RsFile
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.utils.fullyRefreshDirectory
 import kotlin.system.measureTimeMillis
 
-class RsResolvePerformanceTest : RustWithToolchainTestBase() {
-    fun `test resolving Cargo`() {
+
+class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
+    // It is a performance test, but we don't want to waste time
+    // measuring CPU performance
+    override fun isPerformanceTest(): Boolean = false
+
+    fun `test highlighting Cargo`() {
         val base = openRealProject("testData/cargo")
         if (base == null) {
             println("SKIP $name: clone Cargo to testData")
             return
         }
-        val toml = base.findFileByRelativePath("src/cargo/util/toml.rs")
-            ?: error("failed to find toml file")
-        val psiManager = PsiManager.getInstance(project)
-        val psi = psiManager.findFile(toml) as RsFile
+        project.rustSettings.data = project.rustSettings.data.copy(useCargoCheckAnnotator = false)
 
-        val elapsed = measureTimeMillis {
-            psi.accept(object : PsiRecursiveElementVisitor() {
+        myFixture.configureFromTempProjectFile("src/cargo/core/resolver/mod.rs")
+
+        val modificationCount = currentPsiModificationCount()
+        val resolve = measureTimeMillis {
+            myFixture.file.accept(object : PsiRecursiveElementVisitor() {
                 override fun visitElement(element: PsiElement) {
                     super.visitElement(element)
                     element.reference?.resolve()
                 }
             })
         }
+        val highlighting = measureTimeMillis {
+            myFixture.doHighlighting()
+        }
 
-        println("$name: $elapsed ms")
+        check(modificationCount == currentPsiModificationCount()) {
+            "PSI changed during resolve and highlighting, resolve might be double counted"
+        }
+
+        println("resolve = $resolve ms")
+        println("highlighting: $highlighting ms")
     }
 
-    @Suppress("unused")
+    private fun currentPsiModificationCount() =
+        PsiModificationTracker.SERVICE.getInstance(project).modificationCount
+
     private fun openRealProject(path: String): VirtualFile? {
         val projectDir = LocalFileSystem.getInstance().findFileByPath(path)
             ?: return null
@@ -56,6 +72,7 @@ class RsResolvePerformanceTest : RustWithToolchainTestBase() {
         }
 
         refreshWorkspace()
+        UIUtil.dispatchAllInvocationEvents()
         return cargoProjectDirectory
     }
 }

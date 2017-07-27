@@ -589,18 +589,6 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testImplSelfType() = checkByCode("""
-        struct DumbIterator<'a> { data: &'a [u8], }
-                 //X
-
-        impl<'a> Iterator for DumbIterator<'a> {
-            type Item = &'a [u8];
-
-            fn next(&mut self) -> Option<Self::Item> { None }
-                                       //^
-        }
-    """)
-
     fun testTraitSelfType() = checkByCode("""
         trait T {
             //X
@@ -848,5 +836,4 @@ class RsResolveTest : RsResolveTestBase() {
             } //^
         }
     """)
-
 }

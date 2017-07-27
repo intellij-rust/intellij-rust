@@ -36,6 +36,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
+    // TODO `<S as T>::Assoc` should be unified to `S`
     fun testQualifiedPath() = testType("""
         trait T {
             type Assoc;
@@ -49,7 +50,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
 
         fn main() {
             let _: <S as T>::Assoc = S;
-                 //^ <unknown>
+                 //^ <S as T>::Assoc
         }
     """)
 
@@ -78,7 +79,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         trait T { fn new() -> Self; }
 
         impl T for S { fn new() -> Self { S } }
-                                  //^ S
+                                  //^ Self
     """)
 
     fun testPrimitiveBool() = testType("""
@@ -159,6 +160,11 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
     fun testPrimitiveStrRef() = testType("""
         type T = &'static str;
                  //^ &str
+    """)
+
+    fun `test fn pointer`() = testType("""
+        type T = fn(i32) -> i32;
+               //^ fn(i32) -> i32
     """)
 
     fun `test associated types for impl`() = testType("""

@@ -158,8 +158,6 @@ class RsClosuresResolveTest : RsResolveTestBase() {
     """)
 
     fun `test layered visitor example`() = checkByCode("""
-        //TODO: this should resolve once we implement unification...
-
         struct PhantomData;
 
         trait NodeVisitor<'f, C> {
@@ -191,7 +189,7 @@ class RsClosuresResolveTest : RsResolveTestBase() {
             Visitor(&mut ctx)
                 .visit::<(), _>(|ctx, t| ctx.foo())
                 .visit::<(), _>(|ctx, t| ctx.foo())
-            ;                               //^ unresolved
+            ;                               //^
         }
     """)
 
@@ -200,6 +198,17 @@ class RsClosuresResolveTest : RsResolveTestBase() {
         impl X { fn foo(&self) {} }
                    //X
         fn apply<T1, T2, F: Fn(T1) -> T2>(t: T1, f: F) -> T2 { f(t) }
+        fn main() {
+            let a = apply(X, |x| x);
+            a.foo()
+        }   //^
+    """)
+
+    fun `test infer generic parameter from lambda return type by fn pointer`() = checkByCode("""
+        struct X;
+        impl X { fn foo(&self) {} }
+                   //X
+        fn apply<T1, T2>(t: T1, f: fn(T1) -> T2) -> T2 { f(t) }
         fn main() {
             let a = apply(X, |x| x);
             a.foo()

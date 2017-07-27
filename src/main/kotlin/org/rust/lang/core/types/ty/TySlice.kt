@@ -5,12 +5,12 @@
 
 package org.rust.lang.core.types.ty
 
-import com.intellij.openapi.project.Project
+import org.rust.lang.core.resolve.ImplLookup
 
 data class TySlice(val elementType: Ty) : Ty {
-    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean = merge(mapping) {
-        other is TySlice && elementType.canUnifyWith(other.elementType, project, it) ||
-            other is TyArray && elementType.canUnifyWith(other.base, project, it)
+    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean = merge(mapping) {
+        other is TySlice && elementType.canUnifyWith(other.elementType, lookup, it) ||
+            other is TyArray && elementType.canUnifyWith(other.base, lookup, it)
     }
 
     override fun substitute(subst: Substitution): Ty {

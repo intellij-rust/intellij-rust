@@ -381,7 +381,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                 #[derive($trait)]
                         //^ ...libcore/$path
                 struct Foo;
-            """, true)
+            """)
         }
     }
 

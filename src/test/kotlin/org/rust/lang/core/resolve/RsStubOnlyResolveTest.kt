@@ -71,6 +71,16 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     """)
 
+    fun `test invalid path`() = stubOnlyResolve("""
+    //- main.rs
+        use foo::bar;
+                //^ unresolved
+
+        fn main() {}
+    //- foo.rs
+        #[path] mod bar;
+    """)
+
     fun testModDeclPathSuper() = stubOnlyResolve("""
     //- bar/baz/quux.rs
         fn quux() {

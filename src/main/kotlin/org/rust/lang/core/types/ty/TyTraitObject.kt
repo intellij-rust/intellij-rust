@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.types.ty
 
-import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.resolve.ImplLookup
 
 
 /**
@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsTraitItem
  */
 data class TyTraitObject(val trait: RsTraitItem) : Ty {
 
-    override fun canUnifyWith(other: Ty, project: Project, mapping: TypeMapping?): Boolean =
+    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean =
         other is RsTraitItem && trait == other.trait
 
     override fun toString(): String = trait.name ?: "<anonymous>"

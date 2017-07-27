@@ -9,38 +9,21 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
+import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 
 abstract class RsCompletionTestBase : RsTestBase() {
+    // Prefer using `doSingleCompletion` instead
     protected fun checkSingleCompletion(target: String, @Language("Rust") code: String) {
         InlineFile(code).withCaret()
-        singleCompletionCheck(target)
-    }
+        executeSoloCompletion()
 
-    protected fun checkSingleCompletionWithMultipleFiles(target: String, @Language("Rust") code: String) {
-        val files = ProjectFile.parseFileCollection(code)
-        for ((path, text) in files) {
-            myFixture.tempDirFixture.createFile(path, replaceCaretMarker(text))
-        }
-
-        openFileInEditor(files[0].path)
-
-        singleCompletionCheck(target)
-    }
-
-    protected fun singleCompletionCheck(target: String) {
-        val variants = myFixture.completeBasic()
-
-        fun LookupElement.debug(): String = "$lookupString ($psiElement)"
-        check(variants == null) {
-            "Expected a single completion, but got ${variants.size}:\n" +
-                variants.map { it.debug() }.joinToString("\n")
-        }
         val normName = target
             .substringBeforeLast("()")
             .substringBeforeLast(" {}")
             .substringAfterLast("::")
             .substringAfterLast(".")
+
         val shift = when {
             target.endsWith("()") || target.endsWith("::") -> 3
             target.endsWith(" {}") -> 4
@@ -51,6 +34,16 @@ abstract class RsCompletionTestBase : RsTestBase() {
         check((skipTextCheck || element.text == normName) && (element.fitsHierarchically(target) || element.fitsLinearly(target))) {
             "Wrong completion, expected `$target`, but got\n${myFixture.file.text}"
         }
+    }
+
+    protected fun doSingleCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
+        checkByText(before, after) { executeSoloCompletion() }
+    }
+
+    protected fun doSingleCompletionMultiflie(@Language("Rust") before: String, @Language("Rust") after: String) {
+        fileTreeFromText(before).createAndOpenFileWithCaretMarker()
+        executeSoloCompletion()
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
     protected fun checkContainsCompletion(text: String, @Language("Rust") code: String) {
@@ -68,17 +61,12 @@ abstract class RsCompletionTestBase : RsTestBase() {
         noCompletionCheck()
     }
 
-    protected fun checkNoCompletionWithMultipleFiles(@Language("Rust") code: String) {
-        val files = ProjectFile.parseFileCollection(code)
-        for ((path, text) in files) {
-            myFixture.tempDirFixture.createFile(path, replaceCaretMarker(text))
-        }
-
-        openFileInEditor(files[0].path)
+    protected fun checkNoCompletionWithMultifile(@Language("Rust") code: String) {
+        fileTreeFromText(code).createAndOpenFileWithCaretMarker()
         noCompletionCheck()
     }
 
-    protected fun noCompletionCheck() {
+    private fun noCompletionCheck() {
         val variants = myFixture.completeBasic()
         checkNotNull(variants) {
             val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
@@ -91,9 +79,11 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
     protected fun executeSoloCompletion() {
         val variants = myFixture.completeBasic()
+
         if (variants != null) {
-            error("Expected a single completion, but got ${variants.size}\n" +
-                "${variants.toList()}")
+            fun LookupElement.debug(): String = "$lookupString ($psiElement)"
+            error("Expected a single completion, but got ${variants.size}\n"
+                + variants.map { it.debug() }.joinToString("\n"))
         }
     }
 

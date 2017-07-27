@@ -9,9 +9,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMethodCallExpr
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.collectCompletionVariants
-import org.rust.lang.core.resolve.collectResolveVariants
-import org.rust.lang.core.resolve.processMethodCallExprResolveVariants
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
@@ -25,18 +23,19 @@ class RsMethodCallReferenceImpl(
     override val RsMethodCallExpr.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processMethodCallExprResolveVariants(element.project, element.expr.type, it) }
+        collectCompletionVariants { processMethodCallExprResolveVariants(ImplLookup.relativeTo(element), element.expr.type, it) }
 
     override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
-        resolveMethodCallReferenceWithReceiverType(element.expr.type, element)
+        resolveMethodCallReferenceWithReceiverType(ImplLookup.relativeTo(element), element.expr.type, element)
 }
 
 fun resolveMethodCallReferenceWithReceiverType(
+    lookup: ImplLookup,
     receiverType: Ty,
     element: RsMethodCallExpr
 ):List<BoundElement<RsCompositeElement>> {
     val result = collectResolveVariants(element.referenceName) {
-        processMethodCallExprResolveVariants(element.project, receiverType, it)
+        processMethodCallExprResolveVariants(lookup, receiverType, it)
     }
     val typeArguments = element.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
     if (typeArguments.isEmpty()) return result
