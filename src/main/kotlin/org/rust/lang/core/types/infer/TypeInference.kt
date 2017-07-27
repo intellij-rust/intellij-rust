@@ -16,6 +16,7 @@ import org.rust.lang.core.resolve.ref.resolveFieldExprReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.utils.forEachChild
 
 fun inferTypesIn(fn: RsFunction): RsInferenceContext =
     RsInferenceContext().apply { recursionGuard { infer(fn) } }
@@ -80,7 +81,7 @@ private class RsFnInferenceContext(
     }
 
     private fun walkChildren(psi: PsiElement) {
-        psi.children.forEach { walk(it) }
+        psi.forEachChild(this::walk)
     }
 
     private fun walk(psi: PsiElement) {
@@ -220,7 +221,7 @@ private class RsFnInferenceContext(
         val label = expr.labelDecl?.name
 
         fun collectReturningTypes(element: PsiElement, matchOnlyByLabel: Boolean) {
-            for (child in element.children) {
+            element.forEachChild { child ->
                 when (child) {
                     is RsBreakExpr -> {
                         collectReturningTypes(child, matchOnlyByLabel)
