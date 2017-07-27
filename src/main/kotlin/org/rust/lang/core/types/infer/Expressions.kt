@@ -5,10 +5,11 @@
 
 package org.rust.lang.core.types.infer
 
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsLitExpr
+import org.rust.lang.core.psi.RsLiteralKind
+import org.rust.lang.core.psi.kind
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 
 fun inferOutOfFnExpressionType(expr: RsExpr) = when (expr) {
     is RsLitExpr -> inferLiteralExprType(expr)
@@ -22,21 +23,4 @@ fun inferLiteralExprType(expr: RsLitExpr): Ty = when (expr.kind) {
     is RsLiteralKind.String -> TyReference(TyStr)
     is RsLiteralKind.Char -> TyChar
     null -> TyUnknown
-}
-
-/**
- * Remap type parameters between type declaration and an impl block.
- *
- * Think about the following example:
- * ```
- * struct Flip<A, B> { ... }
- * impl<X, Y> Flip<Y, X> { ... }
- * ```
- */
-fun RsImplItem.remapTypeParameters(lookup: ImplLookup, receiver: Ty): Substitution {
-    val subst = mutableMapOf<TyTypeParameter, Ty>()
-    typeReference?.type?.canUnifyWith(receiver, lookup, subst)
-    val associated = (implementedTrait?.subst ?: emptyMap())
-        .substituteInValues(subst)
-    return subst + associated
 }

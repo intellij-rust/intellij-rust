@@ -43,7 +43,7 @@ class TyStruct private constructor(
         get() = boundElement.subst
 
     override val typeArguments: List<Ty>
-        get() = item.typeParameters.map { typeParameterValues[TyTypeParameter(it)] ?: TyUnknown }
+        get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
 
     override fun toString(): String = fullName
 
@@ -75,7 +75,7 @@ class TyEnum private constructor(
         get() = boundElement.subst
 
     override val typeArguments: List<Ty>
-        get() = item.typeParameters.map { typeParameterValues[TyTypeParameter(it)] ?: TyUnknown }
+        get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
 
     override fun toString(): String = fullName
 
@@ -98,7 +98,7 @@ class TyEnum private constructor(
 
 private fun defaultSubstitution(item: RsStructOrEnumItemElement): Substitution =
     item.typeParameters.associate { rsTypeParameter ->
-        val tyTypeParameter = TyTypeParameter(rsTypeParameter)
+        val tyTypeParameter = TyTypeParameter.named(rsTypeParameter)
         val defaultType = rsTypeParameter.typeReference?.type ?: tyTypeParameter
         tyTypeParameter to defaultType
     }

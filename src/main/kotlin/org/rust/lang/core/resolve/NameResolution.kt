@@ -193,7 +193,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
             if (s != null && processor("super", s)) return true
         }
         if (base is RsTraitOrImpl && qualifier.referenceName == "Self") {
-            if (processAll(base.typeAliasList, processor)) return true
+            if (processAll(base.associatedTypesTransitively, processor)) return true
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
@@ -204,7 +204,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
             // Here we're resolving path `T::Item`, so `base` is `T`. First we're looking to the trait bounds of `T`,
             // then resolving associated type to <Self as Tr>::Item, and then substituting `{Self => T}` into it
 
-            for ((element, subst) in TyTypeParameter(base).getTraitBoundsTransitively()) {
+            for ((element, subst) in TyTypeParameter.named(base).getTraitBoundsTransitively()) {
                 if (processAllWithSubst(element.typeAliasList, subst, processor)) return true
             }
         }
@@ -213,7 +213,7 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
 
     if (typeQual != null) {
         val trait = typeQual.traitRef?.resolveToBoundTrait ?: return false
-        val subst = trait.subst.substituteInValues(mapOf(TyTypeParameter(trait.element) to typeQual.typeReference.type))
+        val subst = trait.subst.substituteInValues(mapOf(TyTypeParameter.self() to typeQual.typeReference.type))
         if (processAllWithSubst(trait.element.typeAliasList, subst, processor)) return true
     }
 

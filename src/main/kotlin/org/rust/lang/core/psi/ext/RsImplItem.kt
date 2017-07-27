@@ -50,7 +50,9 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override val implementedTrait: BoundElement<RsTraitItem>? get() {
         val (trait, subst) = traitRef?.resolveToBoundTrait ?: return null
         val aliases = typeAliasList.mapNotNull { typeAlias ->
-            typeAlias.name?.let { TyTypeParameter(trait, it) to typeAlias.type }
+            trait.typeAliasList
+                .find { it.name == typeAlias.name }
+                ?.let { TyTypeParameter.associated(it) to typeAlias.type }
         }.toMap()
         return BoundElement(trait, subst + aliases)
     }
@@ -60,6 +62,12 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
 
     override val outerAttrList: List<RsOuterAttr>
         get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
+
+    override val associatedTypesTransitively: Collection<RsTypeAlias> get() {
+        val implAliases = typeAliasList
+        val traitAliases = implementedTrait?.associatedTypesTransitively ?: emptyList()
+        return implAliases + traitAliases.filter { trAl -> implAliases.find { it.name == trAl.name } == null }
+    }
 }
 
 /**

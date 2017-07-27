@@ -9,7 +9,10 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMethodCallExpr
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.*
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.collectCompletionVariants
+import org.rust.lang.core.resolve.collectResolveVariants
+import org.rust.lang.core.resolve.processMethodCallExprResolveVariants
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
@@ -43,7 +46,7 @@ fun resolveMethodCallReferenceWithReceiverType(
     return result.map { boundElement ->
         val method = boundElement.element
         if (method is RsFunction) {
-            val parameters = method.typeParameterList?.typeParameterList.orEmpty().map { TyTypeParameter(it) }
+            val parameters = method.typeParameterList?.typeParameterList.orEmpty().map { TyTypeParameter.named(it) }
             BoundElement(
                 method,
                 boundElement.subst + parameters.zip(typeArguments).toMap()

@@ -5,26 +5,8 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.langAttribute
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyEnum
-import org.rust.lang.core.types.ty.TyTypeParameter
-
-private val RsTraitItem.isAnyFnTrait: Boolean get() = langAttribute == "fn"
-    || langAttribute == "fn_once"
-    || langAttribute == "fn_mut"
-
-val RsTraitItem.fnTypeArgsParam: TyTypeParameter? get() {
-    if (!isAnyFnTrait) return null
-    val param = typeParameterList?.typeParameterList?.singleOrNull() ?: return null
-    return TyTypeParameter(param)
-}
-
-val RsTraitItem.fnOutputParam: TyTypeParameter? get() {
-    if (!isAnyFnTrait) return null
-    return TyTypeParameter(this, "Output")
-}
 
 // This is super hackish. Need to figure out how to
 // identify known ty (See also the CString inspection).

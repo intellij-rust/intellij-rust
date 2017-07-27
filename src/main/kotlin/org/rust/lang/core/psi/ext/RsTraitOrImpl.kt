@@ -8,7 +8,6 @@ package org.rust.lang.core.psi.ext
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.ty.substituteInValues
 
 interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclaration {
     val constantList: List<RsConstant>
@@ -22,6 +21,8 @@ interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclara
     val inheritedFunctions: List<BoundElement<RsFunction>>
 
     val implementedTrait: BoundElement<RsTraitItem>?
+
+    val associatedTypesTransitively: Collection<RsTypeAlias>
 }
 
 val BoundElement<RsTraitOrImpl>.functionsWithInherited: List<BoundElement<RsFunction>> get() {

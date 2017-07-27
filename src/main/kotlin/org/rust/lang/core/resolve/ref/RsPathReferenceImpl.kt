@@ -49,7 +49,7 @@ class RsPathReferenceImpl(
 
             val assocTypes = run {
                 if (element is RsTraitItem) {
-                    val aliases = element.typeAliasList
+                    val aliases = element.associatedTypesTransitively
                         .mapNotNull { it.type as? TyTypeParameter }
                         .associateBy { it }
 
@@ -63,7 +63,7 @@ class RsPathReferenceImpl(
                 emptySubstitution
             }
 
-            val parameters = element.typeParameters.map { TyTypeParameter(it) }
+            val parameters = element.typeParameters.map { TyTypeParameter.named(it) }
 
             BoundElement(element,
                 subst
