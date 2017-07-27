@@ -93,11 +93,95 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testLoop() = testExpr("""
+    fun `test loop`() = testExpr("""
         fn main() {
             let x = loop { break; };
             x
           //^ ()
+        }
+    """)
+
+    fun `test loop break value`() = testExpr("""
+        fn main() {
+            let x = loop { break 7; };
+            x
+          //^ i32
+        }
+    """)
+
+    fun `test loop break value in not direct child`() = testExpr("""
+        fn foo(v: bool) {
+            let x = loop {
+                if v { break 7; }
+            };
+            x
+          //^ i32
+        }
+    """)
+
+    fun `test loop with several breaks`() = testExpr("""
+        fn foo(v: bool) {
+            let x = loop {
+                if v {
+                    break 7;
+                } else {
+                    break 0u32;
+                }
+            };
+            x
+          //^ u32
+        }
+    """)
+
+    fun `test loop with inner loop`() = testExpr("""
+        fn main() {
+            let x = loop {
+                loop { break "bar"; }
+                break 7;
+            };
+            x
+          //^ i32
+        }
+    """)
+
+    fun `test loop labeled break value 1`() = testExpr("""
+        fn foo(v: bool) {
+            let x = 'outer: loop {
+                if v { break 7; }
+                for n in 1..10 {
+                    if n > 4 {
+                        break 'outer 0u32;
+                    }
+                }
+            };
+            x
+          //^ u32
+        }
+    """)
+
+    fun `test loop labeled break value 2`() = testExpr("""
+        fn foo(v: bool) {
+            let x = 'outer: loop {
+                let y = loop {
+                    if v { break 'outer "bar"; }
+                    break 7;
+                };
+                y
+              //^ i32
+            };
+        }
+    """)
+
+    fun `test loop labeled break value 3`() = testExpr("""
+        fn foo(v: bool) {
+            let x = 'outer: loop {
+                break loop {
+                    if v { break 'outer 0u32; }
+                    break 7;
+                }
+            };
+            x
+          //^ u32
         }
     """)
 
