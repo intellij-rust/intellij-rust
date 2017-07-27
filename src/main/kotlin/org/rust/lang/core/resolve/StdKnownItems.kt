@@ -58,13 +58,14 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
         return ty.substitute(mapOf(typeParameter to indexType))
     }
 
-    fun findStringTy(): Ty {
-        return findStdTy("collections", "string::String")
-    }
+    fun findStringTy(): Ty =
+        findStdTy("collections", "string::String")
 
-    fun findArgumentsTy(): Ty {
-        return findStdTy("core", "fmt::Arguments")
-    }
+    fun findArgumentsTy(): Ty =
+        findCoreTy("fmt::Arguments")
+
+    fun findResultItem(): RsNamedElement? =
+        findCoreItem("result::Result")
 
     companion object {
         fun relativeTo(psi: RsCompositeElement): StdKnownItems {

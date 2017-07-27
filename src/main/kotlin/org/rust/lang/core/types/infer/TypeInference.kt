@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
-import org.rust.lang.core.resolve.isStdResult
 import org.rust.lang.core.resolve.ref.resolveFieldExprReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.types.ty.*
@@ -278,8 +277,8 @@ private class RsFnInferenceContext(
         // See RsMacroExpr where we handle the try! macro in a similar way
         val base = expr.expr.ty
 
-        return if (isStdResult(base))
-            (base as TyEnum).typeArguments.firstOrNull() ?: TyUnknown
+        return if (base is TyEnum && base.item == items.findResultItem())
+            base.typeArguments.firstOrNull() ?: TyUnknown
         else
             TyUnknown
     }
@@ -338,8 +337,8 @@ private class RsFnInferenceContext(
         if (tryArg != null) {
             // See RsTryExpr where we handle the ? expression in a similar way
             val base = tryArg.expr.ty
-            return if (isStdResult(base))
-                (base as TyEnum).typeArguments.firstOrNull() ?: TyUnknown
+            return if (base is TyEnum && base.item == items.findResultItem())
+                base.typeArguments.firstOrNull() ?: TyUnknown
             else
                 TyUnknown
         }

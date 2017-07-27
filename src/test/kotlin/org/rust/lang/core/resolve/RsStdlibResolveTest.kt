@@ -422,4 +422,47 @@ class RsStdlibResolveTest : RsResolveTestBase() {
               //^ ...main.rs
         }
     """)
+
+    fun `test ? operator`() = checkByCode("""
+        struct S { field: u32 }
+                    //X
+        fn foo() -> Result<S, ()> { unimplemented!() }
+
+        fn main() {
+            let s = foo()?;
+            s.field;
+            //^
+        }
+    """)
+
+    fun `test try! macro`() = checkByCode("""
+        struct S { field: u32 }
+                    //X
+        fn foo() -> Result<S, ()> { unimplemented!() }
+
+        fn main() {
+            let s = try!(foo());
+            s.field;
+            //^
+        }
+    """)
+
+    fun `test try! macro with aliased Result`() = checkByCode("""
+        mod io {
+            pub struct IoError;
+            pub type IoResult<T> = Result<T, IoError>;
+
+            pub struct S { field: u32 }
+                          //X
+
+            pub fn foo() -> IoResult<S> { unimplemented!() }
+
+        }
+
+        fn main() {
+            let s = io::foo()?;
+            s.field;
+              //^
+        }
+    """)
 }
