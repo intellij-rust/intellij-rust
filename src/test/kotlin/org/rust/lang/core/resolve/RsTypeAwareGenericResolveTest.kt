@@ -162,32 +162,6 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }         //^
     """)
 
-    fun `test ? operator`() = checkByCode("""
-        enum Result<T, E> { Ok(T), Err(E)}
-        struct S { field: u32 }
-                    //X
-        fn foo() -> Result<S, ()> { unimplemented!() }
-
-        fn main() {
-            let s = foo()?;
-            s.field;
-            //^
-        }
-    """)
-
-    fun `test try! macro`() = checkByCode("""
-        enum Result<T, E> { Ok(T), Err(E)}
-        struct S { field: u32 }
-                    //X
-        fn foo() -> Result<S, ()> { unimplemented!() }
-
-        fn main() {
-            let s = try!(foo());
-            s.field;
-            //^
-        }
-    """)
-
     fun `test Result unwrap`() = checkByCode("""
         enum Result<T, E> { Ok(T), Err(E)}
 
@@ -203,27 +177,6 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             let s = foo().unwrap();
             s.field;
             //^
-        }
-    """)
-
-    fun `test try! macro with aliased Result`() = checkByCode("""
-        enum Result<T, E> { Ok(T), Err(E)}
-
-        mod io {
-            pub struct IoError;
-            pub type IoResult<T> = super::Result<T, IoError>;
-
-            pub struct S { field: u32 }
-                          //X
-
-            pub fn foo() -> IoResult<S> { unimplemented!() }
-
-        }
-
-        fn main() {
-            let s = io::foo()?;
-            s.field;
-              //^
         }
     """)
 
