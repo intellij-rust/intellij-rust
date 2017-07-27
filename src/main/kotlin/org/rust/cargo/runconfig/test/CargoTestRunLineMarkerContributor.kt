@@ -5,7 +5,6 @@
 
 package org.rust.cargo.runconfig.test
 
-import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
