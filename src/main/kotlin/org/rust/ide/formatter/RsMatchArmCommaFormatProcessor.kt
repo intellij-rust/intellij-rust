@@ -19,7 +19,7 @@ import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class RsMatchArmCommaFormatProcessor : PreFormatProcessor {
     override fun process(element: ASTNode, range: TextRange): TextRange {
-        if (CodeStyleSettingsManager.getInstance(element.psi.project).currentSettings.rust.KEEP_COMMAS) return range
+        if (CodeStyleSettingsManager.getInstance(element.psi.project).currentSettings.rust.PRESERVE_PUNCTUATION) return range
 
         var nRemovedCommas = 0
         element.psi.accept(object : PsiRecursiveElementVisitor() {

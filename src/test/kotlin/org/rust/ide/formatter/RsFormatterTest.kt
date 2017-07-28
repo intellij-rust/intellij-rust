@@ -290,9 +290,11 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    fun `test keeps commas settings`() {
-        custom().KEEP_COMMAS = true
+    fun `test preserve punctuation settings`() {
+        custom().PRESERVE_PUNCTUATION = true
         doTextTest("""
+            use foo::{bar};
+
             fn main() {
                 let _ = S { foo: 1, bar: 2, };
                 match x {
@@ -304,8 +306,11 @@ class RsFormatterTest : RsFormatterTestBase() {
                     6 => if true {} else {},
                     7 => 7
                 }
+                return
             }
         """, """
+            use foo::{bar};
+
             fn main() {
                 let _ = S { foo: 1, bar: 2, };
                 match x {
@@ -317,6 +322,7 @@ class RsFormatterTest : RsFormatterTestBase() {
                     6 => if true {} else {},
                     7 => 7
                 }
+                return
             }
         """)
     }

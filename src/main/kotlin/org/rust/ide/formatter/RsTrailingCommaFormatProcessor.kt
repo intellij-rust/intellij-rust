@@ -32,7 +32,7 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
     private fun doProcess(source: PsiElement, settings: CodeStyleSettings, range: TextRange? = null): PostFormatProcessorHelper {
         val helper = PostFormatProcessorHelper(settings)
         helper.resultTextRange = range
-        if (settings.rust.KEEP_COMMAS) return helper
+        if (settings.rust.PRESERVE_PUNCTUATION) return helper
 
         source.accept(object : PsiRecursiveElementWalkingVisitor() {
             override fun visitElement(element: PsiElement?) {
