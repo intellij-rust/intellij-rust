@@ -49,10 +49,10 @@ class RsMoveLeftRightHandlerTest : RsTestBase() {
         fn foo<'b, 'a/*caret*/>(p1: &'a str, p2: &'b str) {}
     """)
 
-    fun `test don't mix lifetime and type parameters`() = doMoveRightTest("""
+    fun `test lifetime and type parameters`() = doMoveRightTest("""
         fn foo<'a/*caret*/, T>(p1: &'a str, p2: T) {}
     """, """
-        fn foo<'a/*caret*/, T>(p1: &'a str, p2: T) {}
+        fn foo<T, 'a/*caret*/>(p1: &'a str, p2: T) {}
     """)
 
     fun `test type param bounds`() = doRightLeftTest("""
