@@ -346,11 +346,6 @@
                          implementationClass="org.rust.ide.inspections.RsSimplifyPrintInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
-                         displayName="Anonymous function parameter"
-                         enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsAnonymousParameterInspection"/>
-
-        <localInspection language="Rust" groupName="Rust"
                          displayName="Simplify boolean expression"
                          enabledByDefault="false" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"/>
