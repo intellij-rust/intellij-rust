@@ -6,7 +6,9 @@
 package org.rust.ide.formatter
 
 class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
-    fun testRemovesCommaIfSingleLine() = doTextTest("""
+    fun `test removes trailing comma if single line in brace blocks`() = doTextTest("""
+        use foo::{bar, baz,};
+
         struct S1 { a: i32, }
 
         struct S2 { a: i32 }
@@ -30,6 +32,8 @@ class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
             };
         }
     """, """
+        use foo::{bar, baz};
+
         struct S1 { a: i32 }
 
         struct S2 { a: i32 }
@@ -51,6 +55,22 @@ class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
             let _ = S {
                 x: 92
             };
+        }
+    """)
+
+    fun `test removes trailing comma if single in parent blocks`() = doTextTest("""
+        struct T(i32,);
+
+        fn f(x: i32,) {
+            foo(1,);
+            foo.bar(1, 2,);
+        }
+    """, """
+        struct T(i32);
+
+        fn f(x: i32) {
+            foo(1);
+            foo.bar(1, 2);
         }
     """)
 }

@@ -82,7 +82,7 @@ class RsFormatterTest : RsFormatterTestBase() {
     fun testMacroUse() = doTest()
     fun testAttributes() = doTest()
 
-    // FIXME: these two guys are way too big
+    // FIXME: this test is way too big
     fun testSpacing() = doTest()
 
     fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
@@ -378,6 +378,20 @@ class RsFormatterTest : RsFormatterTestBase() {
             }
         """)
     }
+
+    fun `test extern block`() = doTextTest("""
+        extern    {
+            fn  foo (name   : *   const    libc   ::   c_uchar   )   ;
+            fn  bar (a   :  i32,         ...        )       ->      i32     ;
+            fn  baz (b   :  i64,        )       ;
+        }
+    """, """
+        extern {
+            fn foo(name: *const libc::c_uchar);
+            fn bar(a: i32, ...) -> i32;
+            fn baz(b: i64);
+        }
+    """)
 
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)

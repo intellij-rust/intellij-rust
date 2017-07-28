@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharSequenceSubSequence
-import org.rust.ide.formatter.impl.COMMA_LISTS
+import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.typing.endsWithUnescapedBackslash
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
@@ -53,12 +53,11 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
         if (leftPsi.elementType != COMMA) return CANNOT_JOIN
         val parentType = leftPsi.parent?.elementType ?: return CANNOT_JOIN
         val rightType = rightPsi.elementType
-        for (list in COMMA_LISTS) {
-            if (parentType == list.listElement && rightType == list.closingBrace) {
-                val replaceWith = if (list.needsSpaceBeforeClosingBrace) " " else ""
-                document.replaceString(leftPsi.textOffset, rightPsi.textOffset, replaceWith)
-                return leftPsi.textOffset
-            }
+        val list = CommaList.forElement(parentType) ?: return CANNOT_JOIN
+        if (rightType == list.closingBrace) {
+            val replaceWith = if (list.needsSpaceBeforeClosingBrace) " " else ""
+            document.replaceString(leftPsi.textOffset, rightPsi.textOffset, replaceWith)
+            return leftPsi.textOffset
         }
         return CANNOT_JOIN
     }

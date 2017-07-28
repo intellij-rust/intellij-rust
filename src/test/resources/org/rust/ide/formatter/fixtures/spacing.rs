@@ -344,12 +344,6 @@ macro_rules!    vec    {
     };
 }
 
-extern    {
-    fn  foo (name   : *   const    libc   ::   c_uchar   )   ;
-    fn  bar (a   :  i32,         ...        )       ->      i32     ;
-    fn  baz (b   :  i64,        )       ;
-}
-
 mod    math    {
     type   Complex    =    (   f64  ,    f64   )   ;
 

@@ -12,10 +12,8 @@ import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
-import org.rust.lang.core.psi.RsBlockFields
+import org.rust.ide.formatter.impl.CommaList
 import org.rust.lang.core.psi.RsElementTypes.COMMA
-import org.rust.lang.core.psi.RsElementTypes.RBRACE
-import org.rust.lang.core.psi.RsStructLiteralBody
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
@@ -35,15 +33,12 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
         if (settings.rust.PRESERVE_PUNCTUATION) return helper
 
         source.accept(object : PsiRecursiveElementWalkingVisitor() {
-            override fun visitElement(element: PsiElement?) {
+            override fun visitElement(element: PsiElement) {
                 super.visitElement(element)
                 if (!helper.isElementFullyInRange(element)) return
-                when (element) {
-                    is RsStructLiteralBody, is RsBlockFields -> {
-                        if (fixSingleLineBracedBlock(element)) {
-                            helper.updateResultRange(1, 0)
-                        }
-                    }
+                val commaList = CommaList.forElement(element.elementType) ?: return
+                if (fixSingleLineBracedBlock(element, commaList)) {
+                    helper.updateResultRange(1, 0)
                 }
             }
         })
@@ -53,12 +48,12 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
 
     companion object {
         /**
-         * Delete trailing comma in one-line structs
+         * Delete trailing comma in one-line blocks
          */
-        fun fixSingleLineBracedBlock(block: PsiElement): Boolean {
+        fun fixSingleLineBracedBlock(block: PsiElement, commaList: CommaList): Boolean {
             if (PostFormatProcessorHelper.isMultiline(block)) return false
             val rbrace = block.lastChild
-            if (rbrace.elementType != RBRACE) return false
+            if (rbrace.elementType != commaList.closingBrace) return false
             val comma = rbrace.getPrevNonCommentSibling() ?: return false
 
             return if (comma.elementType == COMMA) {
