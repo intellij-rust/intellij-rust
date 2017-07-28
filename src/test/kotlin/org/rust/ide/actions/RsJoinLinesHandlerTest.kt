@@ -229,4 +229,11 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
     """, """
         enum E { X, Y/*caret*/ }
     """)
+
+    fun `test remove comma from use glob`() = doTest("""
+        use foo::{bar,/*caret*/ baz,
+        };
+    """, """
+        use foo::{bar, baz/*caret*/};
+    """)
 }
