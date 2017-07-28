@@ -12,24 +12,27 @@ import com.intellij.util.Function
 import org.rust.cargo.runconfig.getExecutorActions
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.isTest
+import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.isTest
+import org.rust.lang.core.psi.ext.queryAttributes
 
 class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
         if (element.elementType != IDENTIFIER) return null
-        val fn = element.parent as? RsFunction ?: return null
-        return when {
-            fn.isTest -> Info(
-                AllIcons.RunConfigurations.TestState.Green2,
-                Function<PsiElement, String> { "Run Test" },
-                // `1` here will prefer test configuration over application configuration,
-                // when both a applicable. Usually configurations are ordered by their target
-                // PSI elements (smaller element means more specific), but this is not the case here.
-                *getExecutorActions(1)
-            )
-
-            else -> null
+        val parent = element.parent
+        val state = when {
+            parent is RsFunction && parent.isTest -> "Run Test"
+            parent is RsModItem && parent.queryAttributes.hasAttributeWithArg("cfg", "test") -> "Run Tests"
+            else -> return null
         }
+        return Info(
+            AllIcons.RunConfigurations.TestState.Run,
+            Function<PsiElement, String> { state },
+            // `1` here will prefer test configuration over application configuration,
+            // when both a applicable. Usually configurations are ordered by their target
+            // PSI elements (smaller element means more specific), but this is not the case here.
+            *getExecutorActions(1)
+        )
     }
 }

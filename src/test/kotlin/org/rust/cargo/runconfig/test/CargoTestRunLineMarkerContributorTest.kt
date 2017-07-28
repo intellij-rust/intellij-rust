@@ -1,9 +1,16 @@
-package org.rust.ide.annotator
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.cargo.runconfig.test
+
+import org.rust.ide.annotator.RsLineMarkerProviderTestBase
 
 /**
  * Tests for Test Function Line Marker
  */
-class RsTestFunctionLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
+class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     fun `test simple function`() = doTestByText("""
         #[test]
         fn has_icon() {assert(true)} // - Run Test
@@ -22,7 +29,7 @@ class RsTestFunctionLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
     fun `test function in a test module`() = doTestByText("""
         #[cfg(test)]
-        mod test {
+        mod test { // - Run Tests
             #[test]
             fn has_icon() {assert(true)} // - Run Test
 
