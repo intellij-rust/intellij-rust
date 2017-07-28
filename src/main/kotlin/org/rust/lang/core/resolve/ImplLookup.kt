@@ -19,8 +19,8 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.findWithCache
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
-    Copy("marker"),
-    Clone("clone", arrayOf(Copy)),
+    Clone("clone"),
+    Copy("marker", arrayOf(Clone)),
     Debug("fmt"),
     Default("default"),
     Hash("hash"),
