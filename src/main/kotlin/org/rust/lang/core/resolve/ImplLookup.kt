@@ -18,17 +18,19 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.findWithCache
 
-enum class StdDerivableTrait(val modName: String) {
-    Clone("clone"),
+enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
     Copy("marker"),
+    Clone("clone", arrayOf(Copy)),
     Debug("fmt"),
     Default("default"),
-    Eq("cmp"),
     Hash("hash"),
-    Ord("cmp"),
     PartialEq("cmp"),
-    PartialOrd("cmp")
+    Eq("cmp", arrayOf(PartialEq)),
+    PartialOrd("cmp", arrayOf(PartialEq)),
+    Ord("cmp", arrayOf(PartialOrd, Eq, PartialEq))
 }
+
+val StdDerivableTrait.withDependencies: List<StdDerivableTrait> get() = listOf(this, *dependencies)
 
 val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.values().associate { it.name to it }
 
