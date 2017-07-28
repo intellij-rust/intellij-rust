@@ -36,7 +36,7 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
         }
 
         private fun getFunctionOrLambda(target: PsiElement): PsiElement? =
-            target.ancestors.first { it is RsFunction || it is RsLambdaExpr }
+            target.ancestors.firstOrNull { it is RsFunction || it is RsLambdaExpr }
 
         private fun onlyExpressionAboveUntilFn(expr: RsExpr): Boolean {
             expr.ancestors.forEach {

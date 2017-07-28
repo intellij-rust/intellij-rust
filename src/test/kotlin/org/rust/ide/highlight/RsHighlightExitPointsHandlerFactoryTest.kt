@@ -202,4 +202,10 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 1", "2", "3", "4", "5")
 
+    fun `test return in macro`() = doTest("""
+        macro_rules! foo {
+            () => { /*caret*/return }
+        }
+    """)
+
 }
