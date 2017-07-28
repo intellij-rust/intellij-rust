@@ -238,4 +238,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test lifetime params after type params`() = checkErrors("""
+        fn foo<T, <error descr="Lifetime parameters must be declared prior to type parameters">'a</error>>(bar: &'a T) {}
+    """)
 }
