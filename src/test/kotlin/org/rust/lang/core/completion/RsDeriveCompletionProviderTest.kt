@@ -5,19 +5,33 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.lang.core.resolve.StdDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
 
 class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
-    fun testCompleteOnStruct() = checkSingleCompletion("Debug", """
+
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
+
+    fun testCompleteOnStruct() = doSingleCompletion("""
         #[derive(Debu/*caret*/)]
+        struct Test {
+            foo: u8
+        }
+    """, """
+        #[derive(Debug/*caret*/)]
         struct Test {
             foo: u8
         }
     """)
 
-    fun testCompleteOnEnum() = checkSingleCompletion("Debug", """
+    fun testCompleteOnEnum() = doSingleCompletion("""
         #[derive(Debu/*caret*/)]
+        enum Test {
+            Something
+        }
+    """, """
+        #[derive(Debug/*caret*/)]
         enum Test {
             Something
         }
@@ -37,6 +51,22 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
     fun `test complete with partially implemented dependencies`() = checkContainsCompletion("Ord, Eq, PartialEq", """
         #[derive(PartialOrd, Or/*caret*/)]
         struct Foo;
+    """)
+
+    fun `test complete with manually implemented dependencies`() = doSingleCompletion("""
+        #[derive(Cop/*caret*/)]
+        enum Foo { Something }
+
+        impl Clone for Foo {
+            fn clone(&self) -> Foo { Foo::Something }
+        }
+    """, """
+        #[derive(Copy/*caret*/)]
+        enum Foo { Something }
+
+        impl Clone for Foo {
+            fn clone(&self) -> Foo { Foo::Something }
+        }
     """)
 
     fun testDoesntCompleteOnFn() = checkNoCompletion("""
@@ -63,5 +93,14 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
     fun testDoesntCompleteAlreadyDerived() = checkNoCompletion("""
         #[derive(Debug, Debu/*caret*/)]
         enum Test { Something }
+    """)
+
+    fun `test doesn't complete already derived`() = checkNoCompletion("""
+        #[derive(Clon/*caret*/)]
+        enum Foo { Something }
+
+        impl Clone for Foo {
+            fn clone(&self) -> Foo { Foo::Something }
+        }
     """)
 }
