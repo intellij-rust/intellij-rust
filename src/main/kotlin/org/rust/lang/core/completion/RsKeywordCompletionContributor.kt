@@ -13,15 +13,12 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.tree.TokenSet
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsModItem
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.RsTraitOrImpl
+import org.rust.lang.core.withPrevSiblingSkipping
 
 /**
  * Completes Rust keywords
@@ -45,6 +42,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("mut"))
         extend(CompletionType.BASIC, loopFlowCommandPatern(),
             RsKeywordCompletionProvider("break", "continue"))
+        extend(CompletionType.BASIC, wherePattern(),
+            RsKeywordCompletionProvider("where"))
 
         extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
@@ -96,24 +95,48 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         RsPsiPattern.inAnyLoop.and(newCodeStatementPattern())
 
     private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
-        psiElement<PsiElement>().andOr(
-            psiElement().withParent(RsPath::class.java),
-            psiElement().withParent(or(psiElement<RsModItem>(), psiElement<RsFile>()))
-        )
+        psiElement()
+            .withParent(or(psiElement<RsPath>(), psiElement<RsModItem>(), psiElement<RsFile>()))
 
     private fun baseCodeStatementPattern(): PsiElementPattern.Capture<PsiElement> =
-        psiElement<PsiElement>()
+        psiElement()
             .inside(psiElement<RsFunction>())
             .andNot(psiElement().withParent(RsModItem::class.java))
 
     private fun statementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
-        psiElement<PsiElement>()
-            .withElementType(TokenSet.create(IDENTIFIER))
-            .and(RsPsiPattern.onStatementBeginning(*startWords))
+        psiElement(IDENTIFIER).and(RsPsiPattern.onStatementBeginning(*startWords))
 
     private fun elsePattern(): PsiElementPattern.Capture<PsiElement> {
         val braceAfterIf = psiElement(RBRACE).withSuperParent(2, psiElement(IF_EXPR))
-        return psiElement<PsiElement>()
-            .afterLeafSkipping(psiElement(PsiWhiteSpace::class.java), braceAfterIf)
+        return psiElement().afterLeafSkipping(RsPsiPattern.whitespace, braceAfterIf)
+    }
+
+    private fun wherePattern(): PsiElementPattern.Capture<PsiElement> {
+        val typeParameters = psiElement<RsTypeParameterList>()
+
+        val function = psiElement<RsFunction>()
+            .withLastChildSkipping(RsPsiPattern.error, or(psiElement<RsValueParameterList>(), psiElement<RsRetType>()))
+            .andOr(psiElement().withChild(psiElement<RsTypeParameterList>()),
+                psiElement().withParent(RsMembers::class.java))
+
+        val struct = psiElement<RsStructItem>()
+            .withChild(typeParameters)
+            .withLastChildSkipping(RsPsiPattern.error, or(typeParameters, psiElement<RsTupleFields>()))
+
+        val enum = psiElement<RsEnumItem>()
+            .withLastChildSkipping(RsPsiPattern.error, typeParameters)
+
+        val typeAlias = psiElement<RsTypeAlias>()
+            .withLastChildSkipping(RsPsiPattern.error, typeParameters)
+            .andNot(psiElement().withParent(RsMembers::class.java))
+
+        val trait = psiElement<RsTraitItem>()
+            .withLastChildSkipping(RsPsiPattern.error, or(psiElement(IDENTIFIER), typeParameters))
+
+        val impl = psiElement<RsImplItem>()
+            .withLastChildSkipping(RsPsiPattern.error, psiElement<RsTypeReference>())
+
+        return psiElement()
+            .withPrevSiblingSkipping(RsPsiPattern.whitespace, or(function, struct, enum, typeAlias, trait, impl))
     }
 }

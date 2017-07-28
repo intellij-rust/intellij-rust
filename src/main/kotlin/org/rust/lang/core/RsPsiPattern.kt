@@ -95,6 +95,10 @@ object RsPsiPattern {
                 psiElement<RsWhileExpr>())),
             psiElement<RsLambdaExpr>())
 
+    val whitespace: PsiElementPattern.Capture<PsiElement> = psiElement().whitespace()
+
+    val error: PsiElementPattern.Capture<PsiErrorElement> = psiElement<PsiErrorElement>()
+
     inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(3)
     }
@@ -126,6 +130,20 @@ val PsiElement.leftLeaves: Sequence<PsiElement> get() = generateSequence(this, P
 val PsiElement.rightSiblings: Sequence<PsiElement> get() = generateSequence(this.nextSibling) { it.nextSibling }
 
 val PsiElement.leftSiblings: Sequence<PsiElement> get() = generateSequence(this.prevSibling) { it.prevSibling }
+
+/**
+ * Similar with [TreeElementPattern.afterSiblingSkipping]
+ * but it uses [PsiElement.getPrevSibling] to get previous sibling elements
+ * instead of [PsiElement.getChildren].
+ */
+fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Self>.withPrevSiblingSkipping(
+    skip: ElementPattern<T>,
+    pattern: ElementPattern<T>
+): Self = with("withPrevSiblingSkipping") {
+    val sibling = it.leftSiblings.dropWhile { skip.accepts(it) }
+        .firstOrNull() ?: return@with false
+    pattern.accepts(sibling)
+}
 
 private fun <T, Self : ObjectPattern<T, Self>> ObjectPattern<T, Self>.with(name: String, cond: (T) -> Boolean): Self =
     with(object : PatternCondition<T>(name) {
