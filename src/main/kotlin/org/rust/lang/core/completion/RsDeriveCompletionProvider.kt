@@ -17,10 +17,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
+import org.rust.lang.core.psi.ext.isStdDerivable
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
+import org.rust.lang.core.types.type
 
 object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
@@ -31,10 +34,14 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                                 context: ProcessingContext?,
                                 result: CompletionResultSet) {
 
-        val outerAttrElem = parameters.position.parentOfType<RsOuterAttr>()
+        val owner = parameters.position.parentOfType<RsStructOrEnumItemElement>()
             ?: return
-        val alreadyDerived = outerAttrElem.metaItem.metaItemArgs?.metaItemList.orEmpty()
-            .mapNotNull { it.identifier.text }
+        val alreadyDerived = ImplLookup.relativeTo(owner)
+            .findImplsAndTraits(owner.type)
+            .mapNotNull {
+                val (trait, _) = it.element.implementedTrait ?: return@mapNotNull null
+                if (trait.isStdDerivable) trait.name else null
+            }
 
         StdDerivableTrait.values()
             .filter { it.name !in alreadyDerived }

@@ -11,8 +11,10 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Query
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.utils.filterIsInstanceQuery
@@ -26,6 +28,12 @@ val RsTraitItem.isUnsafe: Boolean get() {
 }
 
 val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
+
+val RsTraitItem.isStdDerivable: Boolean get() {
+    val derivableTrait = STD_DERIVABLE_TRAITS[name] ?: return false
+    return containingCargoPackage?.origin == PackageOrigin.STDLIB &&
+        containingMod?.modName == derivableTrait.modName
+}
 
 val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {
     val result = mutableSetOf<BoundElement<RsTraitItem>>()
