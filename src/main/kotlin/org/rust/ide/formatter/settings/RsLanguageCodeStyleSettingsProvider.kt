@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*
-import org.rust.ide.utils.loadCodeSampleResource
 import org.rust.lang.RsLanguage
 
 class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
@@ -22,7 +21,7 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
     override fun getCodeSample(settingsType: SettingsType): String =
         when (settingsType) {
             INDENT_SETTINGS -> INDENT_SAMPLE
-            WRAPPING_AND_BRACES_SETTINGS -> WRAP_SAMPLE
+            WRAPPING_AND_BRACES_SETTINGS -> WRAPPING_AND_BRACES_SAMPLE
             BLANK_LINES_SETTINGS -> BLANK_LINES_SAMPLE
             else -> ""
         }
@@ -103,16 +102,99 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                 CONTINUATION_INDENT_SIZE = INDENT_SIZE
             }
         }
+}
 
-    private val INDENT_SAMPLE: String by lazy {
-        loadCodeSampleResource("org/rust/ide/formatter/settings/indent_sample.rs")
-    }
+private fun sample(@org.intellij.lang.annotations.Language("Rust") code: String) = code.trim()
 
-    private val WRAP_SAMPLE: String by lazy {
-        loadCodeSampleResource("org/rust/ide/formatter/settings/wrap_sample.rs")
-    }
+private val INDENT_SAMPLE = sample("""
+struct Vector {
+    x: f64,
+    y: f64,
+    z: f64
+}
 
-    private val BLANK_LINES_SAMPLE: String by lazy {
-        loadCodeSampleResource("org/rust/ide/formatter/settings/blank_lines_sample.rs")
+impl Vector {
+    fn add(&self, other: &Vector) -> Vector {
+        Vector {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
     }
 }
+""")
+
+
+private val WRAPPING_AND_BRACES_SAMPLE = sample("""
+fn concat<X, Y, I>(xs: X,
+                   ys: Y)
+                   -> Box<Iterator<Item=I>>
+    where X: Iterator<Item=I>,
+          Y: Iterator<Item=I>
+{
+    unimplemented!()
+}
+
+
+fn main() {
+    let xs = vec![1, 2, 3].into_iter()
+        .map(|x| x * 2)
+        .filter(|x| x > 2);
+
+    let ys = vec![1,
+                  2,
+                  3].into_iter();
+
+    let zs = concat(xs,
+                    ys);
+
+    let is_even = match zs.next { Some(x) => x % 2 == 0, None => false, };
+
+    match is_even {
+        true => {
+            // comment
+        },
+        _ => println("false"),
+    }
+    return
+}
+""")
+
+
+private val BLANK_LINES_SAMPLE = sample("""
+#![allow(dead_code)]
+
+
+
+use std::cmp::{max, min};
+
+
+
+struct Rectangle {
+    p1: (i32, i32),
+
+
+
+    p2: (i32, i32),
+}
+
+
+
+impl Rectangle {
+    fn dimensions(&self) -> (i32, i32) {
+        let (x1, y1) = self.p1;
+        let (x2, y2) = self.p2;
+
+
+
+        ((x1 - x2).abs(), (y1 - y2).abs())
+    }
+
+
+
+    fn area(&self) -> i32 {
+        let (a, b) = self.dimensions();
+        a * b
+    }
+}
+""")
