@@ -54,8 +54,8 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                     CodeStyleSettingsCustomizable.WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
-                    "KEEP_COMMAS",
-                    "Trailing commas",
+                    "PRESERVE_PUNCTUATION",
+                    "Punctuation",
                     CodeStyleSettingsCustomizable.WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
