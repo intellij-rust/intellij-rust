@@ -562,4 +562,16 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         impl<B: Tr2> S<B> { fn foo(self) -> B::Item { unimplemented!() } }
                                              //^
     """)
+
+    fun `test no stack overflow on self unification with Eq bound (issue 1523)`() = checkByCode("""
+        pub trait PartialEq<Rhs: ?Sized> {}
+        pub trait Eq: PartialEq<Self> {}
+        struct S<A>(A);
+
+        impl<T: Eq> S<T> {
+            fn foo(self) {
+                self.bar()
+            }      //^ unresolved
+        }
+    """)
 }

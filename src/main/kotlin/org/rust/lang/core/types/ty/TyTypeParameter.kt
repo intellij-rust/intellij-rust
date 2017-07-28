@@ -27,9 +27,10 @@ class TyTypeParameter private constructor(
         if (mapping == null) return true
 
         val traits = lookup.findImplsAndTraits(other)
-        for ((element, subst) in getTraitBoundsTransitively()) {
+        for ((element, boundSubst) in bounds) {
             val trait = traits.find { it.element.implementedTrait?.element == element }
             if (trait != null) {
+                val subst = boundSubst.substituteInValues(mapOf(self() to this))
                 for ((k, v) in subst) {
                     trait.subst[k]?.let { v.canUnifyWith(it, lookup, mapping) }
                 }
