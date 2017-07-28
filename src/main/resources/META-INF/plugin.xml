@@ -547,7 +547,12 @@
                                                       implementationClass="org.rust.ide.template.postfix.RsPostfixTemplateProvider"/>
 
         <!-- Highlight Visitor -->
+
         <highlightVisitor implementation="org.rust.ide.highlight.RsRainbowVisitor"/>
+
+        <!-- Move Actions -->
+
+        <moveLeftRightHandler language="Rust" implementationClass="org.rust.ide.actions.RsMoveLeftRightHandler"/>
 
     </extensions>
 
