@@ -212,4 +212,30 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
             <error descr="Associated types are not allowed in inherent impls [E0202]">type Long = i64;</error>
         }
     """)
+
+    fun `test add parameter_name fix`() = checkQuickFix("Add dummy parameter name", """
+        trait Display {
+            fn fmt(&self, F/*caret*/);
+        }
+    """, """
+        trait Display {
+            fn fmt(&self, _: F);
+        }
+    """)
+
+    fun `test no warning for fn type`() = checkWarnings("""
+        fn foo<F: Fn(i32, &mut String)>(f: F) {}
+        pub trait T {
+            fn foo<F: FnMut(i32)>() {}
+        }
+    """)
+
+    fun `test no warning for fn trait object`() = checkWarnings("""
+        pub trait Registry {
+            fn query(&mut self,
+                     dep: &Dependency,
+                     f: &mut FnMut(Summary)) -> CargoResult<()>;
+        }
+    """)
+
 }

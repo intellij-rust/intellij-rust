@@ -40,8 +40,8 @@ class RsDanglingElseInspection : RsLocalInspectionTool() {
                     expr,
                     range,
                     "Suspicious `else if` formatting",
-                    SubstituteTextFix(expr.containingFile, elseEl.rangeWithPrevSpace(expr.prevSibling), null, "Remove `else`"),
-                    SubstituteTextFix(expr.containingFile, fix2Range, " ", "Join `else if`"))
+                    SubstituteTextFix(elseEl.rangeWithPrevSpace(expr.prevSibling), null, "Remove `else`"),
+                    SubstituteTextFix(fix2Range, " ", "Join `else if`"))
             }
         }
 

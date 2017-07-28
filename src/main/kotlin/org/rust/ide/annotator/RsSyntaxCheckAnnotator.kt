@@ -5,17 +5,20 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 
-class RsSyntaxErrorsAnnotator: Annotator {
+class RsSyntaxErrorsAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
             is RsFunction -> checkFunction(holder, element)
@@ -143,7 +146,6 @@ private fun checkDot3Parameter(holder: AnnotationHolder, dot3: PsiElement?) {
 
 private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
     val fn = param.parent.parent as? RsFunction ?: return
-    //TODO: move this to anonymous parameter inspection
     when (fn.owner) {
         is RsFunctionOwner.Free,
         is RsFunctionOwner.Impl,
@@ -152,6 +154,16 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
         }
         is RsFunctionOwner.Trait -> {
             denyType<RsPatTup>(param.pat, holder, "${fn.title} cannot have tuple parameters", param)
+            if (param.pat == null) {
+                val annotation = holder
+                    .createWarningAnnotation(param, "Anonymous functions parameters are deprecated (RFC 1685)")
+
+                val fix = SubstituteTextFix(param.textRange, "_: ${param.text}", "Add dummy parameter name")
+                val descriptor = InspectionManager.getInstance(param.project)
+                    .createProblemDescriptor(param, annotation.message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)
+
+                annotation.registerFix(fix, null, null, descriptor)
+            }
         }
     }
 }
