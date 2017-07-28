@@ -53,8 +53,8 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
                         expr,
                         TextRange(expr.left.text.length, uExprOffset),
                         "Suspicious assignment. Did you mean `$subst1` or `$subst2`?",
-                        SubstituteTextFix(expr.containingFile, substRange, " $op= ", "Change to `$subst1`"),
-                        SubstituteTextFix(expr.containingFile, substRange, " = $op", "Change to `$subst2`"))
+                        SubstituteTextFix(substRange, " $op= ", "Change to `$subst1`"),
+                        SubstituteTextFix(substRange, " = $op", "Change to `$subst2`"))
                 }
             }
         }
