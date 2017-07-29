@@ -9,6 +9,7 @@ import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler
 import com.intellij.codeInsight.editorActions.SimpleTokenSetQuoteHandler
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.StringEscapesTokenTypes.STRING_LITERAL_ESCAPES
+import com.intellij.psi.TokenType.WHITE_SPACE
 import org.rust.lang.core.psi.RS_RAW_LITERALS
 import org.rust.lang.core.psi.RsElementTypes.*
 
@@ -53,7 +54,23 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
             val lastChar = chars[iterator.end - 1]
             return lastChar != '#' && lastChar != '"'
         }
-        return super.isNonClosedLiteral(iterator, chars)
+        if (super.isNonClosedLiteral(iterator, chars)) return true
+        // Rust allows multiline literals, so an unclosed quote will
+        // match with an opening quote of the next literal.
+        // Let's employ heuristics to find out if it is the case!
+        // Specifically, check if the next token can't appear
+        // in valid Rust code.
+        val nextChar = chars.getOrElse(iterator.end, { '"' })
+        if (nextChar == '"') return true
+
+        iterator.advance()
+        if (iterator.tokenType == WHITE_SPACE) {
+            iterator.advance()
+        }
+        when (iterator.tokenType) {
+            IDENTIFIER, INTEGER_LITERAL, FLOAT_LITERAL -> return true
+        }
+        return false
     }
 
     /**

@@ -147,18 +147,23 @@ private fun filterMessage(file: PsiFile, document: Document, message: RustcMessa
     val spanFilePath = PathUtil.toSystemIndependentName(span.file_name)
     if (!file.virtualFile.path.endsWith(spanFilePath)) return null
 
+    @Suppress("NAME_SHADOWING")
     fun toOffset(line: Int, column: Int): Int? {
+        val line = line - 1
+        val column = column - 1
         if (line >= document.lineCount) return null
-        val result = document.getLineStartOffset(line) + column
-        if (result > document.textLength) return null
-        return result
+        return (document.getLineStartOffset(line) + column)
+            .takeIf { it <= document.textLength }
     }
 
     // The compiler message lines and columns are 1 based while intellij idea are 0 based
-    var textRange = TextRange(
-        toOffset(span.line_start - 1, span.column_start - 1) ?: return null,
-        toOffset(span.line_end - 1, span.column_end - 1) ?: return null
-    )
+    val startOffset = toOffset(span.line_start, span.column_start)
+    val endOffset = toOffset(span.line_end, span.column_end)
+    var textRange = if (startOffset != null && endOffset != null && startOffset < endOffset) {
+        TextRange(startOffset, endOffset)
+    } else {
+        return null
+    }
 
     if ("function is never used" in message.message) {
         val fn = PsiTreeUtil.findElementOfClassAtOffset(file, textRange.startOffset, RsFunction::class.java, false)

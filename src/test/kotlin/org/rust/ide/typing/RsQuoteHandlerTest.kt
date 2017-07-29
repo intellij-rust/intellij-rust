@@ -100,4 +100,14 @@ class RsQuoteHandlerTest : RsTypingTestBase() {
     """, """
         r#"'<caret>"#
     """, '\'')
+
+    private fun checkUnclosedHeuristic(nextLiteral: String) = doTestByText("""
+        fn main() { let _ = <caret>; let _ = "$nextLiteral"; }
+    """, """
+        fn main() { let _ = "<caret>"; let _ = "$nextLiteral"; }
+    """, '"')
+
+    fun `test test next string is empty`() = checkUnclosedHeuristic("")
+    fun `test test next string starts with space and word`() = checkUnclosedHeuristic("\nhello world\n")
+    fun `test test next string starts with number`() = checkUnclosedHeuristic("92")
 }
