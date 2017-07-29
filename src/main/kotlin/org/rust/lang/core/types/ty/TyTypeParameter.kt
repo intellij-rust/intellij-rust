@@ -26,13 +26,15 @@ class TyTypeParameter private constructor(
     override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean {
         if (mapping == null) return true
 
-        val traits = lookup.findImplsAndTraits(other)
-        for ((element, boundSubst) in bounds) {
-            val trait = traits.find { it.element.implementedTrait?.element == element }
-            if (trait != null) {
-                val subst = boundSubst.substituteInValues(mapOf(self() to this))
-                for ((k, v) in subst) {
-                    trait.subst[k]?.let { v.canUnifyWith(it, lookup, mapping) }
+        if (!bounds.isEmpty()) {
+            val traits = lookup.findImplsAndTraits(other)
+            for ((element, boundSubst) in bounds) {
+                val trait = traits.find { it.element.implementedTrait?.element == element }
+                if (trait != null) {
+                    val subst = boundSubst.substituteInValues(mapOf(self() to this))
+                    for ((k, v) in subst) {
+                        trait.subst[k]?.let { v.canUnifyWith(it, lookup, mapping) }
+                    }
                 }
             }
         }
