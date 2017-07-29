@@ -2,7 +2,7 @@
     <id>org.rust.lang</id>
     <name>Rust</name>
 
-    <vendor url="https://github.com/intellij-rust/intellij-rust"/>
+    <vendor>JetBrains</vendor>
 
     <description><![CDATA[
       Rust language support
