@@ -23,16 +23,7 @@ class RsMoveLeftRightHandler : MoveElementLeftRightHandler() {
             is RsTupleType -> element.typeReferenceList
             is RsTupleFields -> element.tupleFieldDeclList
             is RsTypeParamBounds -> element.polyboundList
-            is RsTypeParameterList -> {
-                // We can't mix lifetime parameters with type parameters
-                // because lifetime parameters must be declared prior to type parameters
-                // and after moving type parameter before lifetime parameter
-                // code becomes invalid that prevents reverse action.
-                // So if there are more than one type parameters only type parameters will be returned
-                // because it's more common action. Otherwise lifetime parameters will be returned.
-                val typeParameters = element.typeParameterList
-                if (typeParameters.size > 1) typeParameters else element.lifetimeParameterList
-            }
+            is RsTypeParameterList -> element.lifetimeParameterList + element.typeParameterList
             is RsUseGlobList -> element.useGlobList
             is RsValueArgumentList -> element.exprList
             is RsValueParameterList -> element.valueParameterList

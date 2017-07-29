@@ -27,6 +27,7 @@ class RsSyntaxErrorsAnnotator : Annotator {
             is RsConstant -> checkConstant(holder, element)
             is RsValueParameterList -> checkValueParameterList(holder, element)
             is RsValueParameter -> checkValueParameter(holder, element)
+            is RsTypeParameterList -> checkTypeParameterList(holder, element)
         }
     }
 }
@@ -164,6 +165,17 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
 
                 annotation.registerFix(fix, null, null, descriptor)
             }
+        }
+    }
+}
+
+private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypeParameterList) {
+    val lifetimeParams = element.lifetimeParameterList
+    if (lifetimeParams.isEmpty()) return
+    val startOfTypeParams = element.typeParameterList.firstOrNull()?.textOffset ?: return
+    for (e in lifetimeParams) {
+        if (e.textOffset > startOfTypeParams) {
+            holder.createErrorAnnotation(e, "Lifetime parameters must be declared prior to type parameters")
         }
     }
 }
