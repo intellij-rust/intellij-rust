@@ -23,8 +23,8 @@ class RustProjectSettingsServiceImpl(
         var toolchainHomeDirectory: String? = null,
         var autoUpdateEnabled: Boolean = true,
         var explicitPathToStdlib: String? = null,
-        var useCargoCheckForBuild: Boolean = false,
-        var useCargoCheckAnnotator: Boolean = true
+        var useCargoCheckForBuild: Boolean = true,
+        var useCargoCheckAnnotator: Boolean = false
     )
 
     override fun getState(): State = state
