@@ -11,6 +11,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsDotExpr
+import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsMethodCall
 
@@ -19,13 +20,13 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
 
     fun testFnOneArg() = checkByText<RsCallExpr>("""
         fn foo(arg: u32) {}
-        fn main() { foo(<caret>0); }
+        fn main() { foo(/*caret*/0); }
                     //^
     """, "arg:", 0)
 
     fun testFnTwoArg() = checkByText<RsCallExpr>("""
         fn foo(arg: u32, arg2: u32) {}
-        fn main() { foo(0, <caret>1); }
+        fn main() { foo(0, /*caret*/1); }
                     //^
     """, "arg2:", 1)
 
@@ -42,7 +43,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
         fn main() {
             let s = S;
-            s.foo(0, <caret>1);
+            s.foo(0, /*caret*/1);
         }    //^
     """, "arg2:", 1)
 
@@ -53,20 +54,95 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
         fn main() {
             let s = S;
-            S::foo(s, <caret>0);
+            S::foo(s, /*caret*/0);
         }    //^
     """, "arg:", 1)
 
     fun testLetDecl() = checkByText<RsLetDecl>("""
         struct S;
         fn main() {
-            let s<caret> = S;
+            let s/*caret*/ = S;
         }  //^
     """, ": S", 0)
 
+    fun `test smart hint same parameter name`() = checkByText<RsCallExpr>("""
+        fn foo(arg: u32, arg2: u32) {}
+        fn main() {
+            let arg = 0;
+            foo(arg, /*caret*/1);
+        } //^
+    """, "arg2:", 0)
+
+    fun `test smart hint method start with set`() = checkNoHint<RsMethodCallExpr>("""
+        struct S;
+        impl S {
+            fn set_foo(self, arg: u32) {}
+        }
+        fn main() {
+            let s = S;
+            s.set_foo(1);
+        } //^
+    """)
+
+    fun `test smart hint self call start with set`() = checkNoHint<RsCallExpr>("""
+        struct S;
+        impl S {
+            fn set_foo(self, arg: u32) {}
+        }
+        fn main() {
+            let s = S;
+            S::set_foo(s, /*caret*/0);
+        } //^
+    """)
+
+    fun `test smart hint same function name and single parameter`() = checkNoHint<RsCallExpr>("""
+        fn foo(arg: u32) {}
+        fn main() {
+            let foo = 0;
+            foo(foo);
+        } //^
+    """)
+
+    fun `test smart hint same method name and single parameter`() = checkNoHint<RsMethodCallExpr>("""
+        struct S;
+        impl S {
+            fn foo(self, foo: u32) {}
+        }
+        fn main() {
+            let s = S;
+            s.foo(10);
+        }    //^
+    """)
+
+    fun `test smart hint same method name (self call) and single parameter`() = checkNoHint<RsCallExpr>("""
+        struct S;
+        impl S {
+            fn foo(self, foo: u32) {}
+        }
+        fn main() {
+            let s = S;
+            S::foo(s, 10);
+        }    //^
+    """)
+
+    fun `test lamdba type hint`() = checkByText<RsLambdaExpr>("""
+        struct S;
+        fn with_s<F: Fn(S)>(f: F) {}
+        fn main() {
+            with_s(|s/*caret*/| s.bar())
+        }         //^
+    """, ": S", 0)
+
+    inline private fun <reified T : PsiElement> checkNoHint(@Language("Rust") code: String) {
+        InlineFile(code)
+        val handler = RsInlayParameterHintsProvider()
+        val target = findElementInEditor<T>("^")
+        val inlays = handler.getParameterHints(target)
+        Assertions.assertThat(inlays.size).isEqualTo(0)
+    }
 
     inline private fun <reified T : PsiElement> checkByText(@Language("Rust") code: String, hint: String, pos: Int) {
-        myFixture.configureByText("main.rs", code)
+        InlineFile(code)
         val target = findElementInEditor<T>("^")
         val inlays = RsInlayParameterHintsProvider().getParameterHints(target)
         if (pos != -1) {

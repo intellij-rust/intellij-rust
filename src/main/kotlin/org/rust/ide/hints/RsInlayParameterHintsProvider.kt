@@ -56,9 +56,24 @@ enum class HintType(desc: String, enabled: Boolean) {
 
         override fun isApplicable(elem: PsiElement): Boolean
             = elem is RsCallExpr || elem is RsMethodCall
+    },
+    LAMBDA_PARAMETER_HINT("Show lambda parameter type hints", true) {
+        override fun provideHints(elem: PsiElement): List<InlayInfo> {
+            val element = elem as? RsLambdaExpr ?: return emptyList()
+            val type = element.type as? TyFunction ?: return emptyList()
+            return element.valueParameterList.valueParameterList
+                .mapIndexed { index, parameter -> type.paramTypes.getOrNull(index) to parameter.textRange.endOffset }
+                .map { InlayInfo(": ${it.first}", it.second) }
+                .filter { it.first != null }
+        }
+
+        override fun isApplicable(elem: PsiElement): Boolean
+            = elem is RsLambdaExpr
     };
 
+
     companion object {
+        val SMART_HINTING = Option("SMART_HINTING", "Show only smart hints", true)
         fun resolve(elem: PsiElement): HintType?
             = HintType.values().find { it.isApplicable(elem) }
 
@@ -76,11 +91,12 @@ enum class HintType(desc: String, enabled: Boolean) {
     abstract fun provideHints(elem: PsiElement): List<InlayInfo>
     val option = Option("SHOW_${this.name}", desc, enabled)
     val enabled get() = option.get()
+    val smart get() = SMART_HINTING.get()
 }
 
 class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
     override fun getSupportedOptions(): List<Option>
-        = HintType.values().map { it.option }
+        = HintType.values().map { it.option } + HintType.SMART_HINTING
 
     override fun getDefaultBlackList(): Set<String> = emptySet()
 

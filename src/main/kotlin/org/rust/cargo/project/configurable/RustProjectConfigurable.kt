@@ -38,6 +38,8 @@ class RustProjectConfigurable(
     private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
     private val letBindingHintCheckbox = JBCheckBox()
     private val parameterHintCheckbox = JBCheckBox()
+    private val smartHintCheckbox = JBCheckBox()
+    private val lambdaParameterHintCheckbox = JBCheckBox()
     private val cargoTomlLocation = Label("N/A")
 
     private var autoUpdateEnabled: Boolean
@@ -70,6 +72,18 @@ class RustProjectConfigurable(
             parameterHintCheckbox.isSelected = value
         }
 
+    private var lambdaParameterHint: Boolean
+        get() = lambdaParameterHintCheckbox.isSelected
+        set(value) {
+            lambdaParameterHintCheckbox.isSelected = value
+        }
+
+    private var smartHint: Boolean
+        get() = smartHintCheckbox.isSelected
+        set(value) {
+            smartHintCheckbox.isSelected = value
+        }
+
     override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
         row(label = Label("Watch Cargo.toml:")) { autoUpdateEnabledCheckbox() }
@@ -77,8 +91,10 @@ class RustProjectConfigurable(
             row("Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
         }
         row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
-        row(label = Label("Show local variable type hints:")) { letBindingHintCheckbox() }
-        row(label = Label("Show argument name hints:")) { parameterHintCheckbox() }
+        row(label = Label("${HintType.LET_BINDING_HINT.option.name}:")) { letBindingHintCheckbox() }
+        row(label = Label("${HintType.PARAMETER_HINT.option.name}:")) { parameterHintCheckbox() }
+        row(label = Label("${HintType.LAMBDA_PARAMETER_HINT.option.name}:")) { lambdaParameterHintCheckbox() }
+        row(label = Label("${HintType.SMART_HINTING.name}:")) { smartHintCheckbox() }
         row("Cargo.toml") { cargoTomlLocation() }
     }
 
@@ -97,6 +113,8 @@ class RustProjectConfigurable(
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
         letBindingHint = HintType.LET_BINDING_HINT.enabled
         parameterHint = HintType.PARAMETER_HINT.enabled
+        lambdaParameterHint = HintType.LAMBDA_PARAMETER_HINT.enabled
+        smartHint = HintType.SMART_HINTING.get()
 
         val module = rustModule
 
@@ -119,9 +137,13 @@ class RustProjectConfigurable(
     @Throws(ConfigurationException::class)
     override fun apply() {
         rustProjectSettings.validateSettings()
-        val settings = project.rustSettings
+
         HintType.LET_BINDING_HINT.option.set(letBindingHint)
         HintType.PARAMETER_HINT.option.set(parameterHint)
+        HintType.LAMBDA_PARAMETER_HINT.option.set(lambdaParameterHint)
+        HintType.SMART_HINTING.set(smartHint)
+
+        val settings = project.rustSettings
         settings.data = RustProjectSettingsService.Data(
             toolchain = rustProjectSettings.data.toolchain,
             explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib,
@@ -139,8 +161,10 @@ class RustProjectConfigurable(
             || autoUpdateEnabled != settings.autoUpdateEnabled
             || useCargoCheckForBuild != settings.useCargoCheckForBuild
             || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
-            || letBindingHint != HintType.LET_BINDING_HINT.option.get()
-            || parameterHint != HintType.PARAMETER_HINT.option.get()
+            || letBindingHint != HintType.LET_BINDING_HINT.enabled
+            || parameterHint != HintType.PARAMETER_HINT.enabled
+            || lambdaParameterHint != HintType.LAMBDA_PARAMETER_HINT.enabled
+            || smartHint != HintType.SMART_HINTING.get()
     }
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
