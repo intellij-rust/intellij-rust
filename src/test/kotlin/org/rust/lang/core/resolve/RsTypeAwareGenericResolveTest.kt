@@ -563,7 +563,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
                                              //^
     """)
 
-    fun `test no stack overflow on self unification with Eq bound (issue 1523)`() = checkByCode("""
+    fun `test no stack overflow on self unification with Eq bound`() = checkByCode("""
         pub trait PartialEq<Rhs: ?Sized> {}
         pub trait Eq: PartialEq<Self> {}
         struct S<A>(A);
@@ -573,5 +573,18 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
                 self.bar()
             }      //^ unresolved
         }
+    """)
+
+    fun `test no stack overflow (issue 1523)`() = checkByCode("""
+        struct S1;
+        struct S2<A>(A);
+
+        trait Tr { type Item: Sized; }
+        impl Tr for S1 { type Item = S2<S1>; }
+        impl<B: Tr> S2<B> { fn foo(&self) {} }
+                             //X
+        fn main() {
+            S2(S1).foo()
+        }         //^
     """)
 }
