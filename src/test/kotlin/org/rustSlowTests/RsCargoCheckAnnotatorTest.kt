@@ -7,9 +7,15 @@ package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.fileTree
 
 class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
+
+    override fun setUp() {
+        super.setUp()
+        project.rustSettings.data = project.rustSettings.data.copy(useCargoCheckAnnotator = true)
+    }
 
     fun `test no errors if everything is ok`() = doTest("""
         fn main() { println!("Hello, World!"); }

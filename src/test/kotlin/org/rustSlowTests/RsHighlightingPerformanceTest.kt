@@ -30,7 +30,6 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
             println("SKIP $name: clone Cargo to testData")
             return
         }
-        project.rustSettings.data = project.rustSettings.data.copy(useCargoCheckAnnotator = false)
 
         myFixture.configureFromTempProjectFile("src/cargo/core/resolver/mod.rs")
 
