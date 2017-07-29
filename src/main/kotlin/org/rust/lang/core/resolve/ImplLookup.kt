@@ -6,7 +6,6 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
-import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
@@ -19,8 +18,8 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.findWithCache
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
-    Copy("marker"),
-    Clone("clone", arrayOf(Copy)),
+    Clone("clone"),
+    Copy("marker", arrayOf(Clone)),
     Debug("fmt"),
     Default("default"),
     Hash("hash"),
@@ -94,11 +93,8 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return (ty as? TyStructOrEnumBase)?.item?.derivedTraits.orEmpty()
             // select only std traits because we are sure
             // that they are resolved correctly
-            .filter { item ->
-                val derivableTrait = STD_DERIVABLE_TRAITS[item.name] ?: return@filter false
-                item.containingCargoPackage?.origin == PackageOrigin.STDLIB &&
-                    item.containingMod?.modName == derivableTrait.modName
-            }.map { BoundElement(it, mapOf(TyTypeParameter.self(it) to ty)) }
+            .filter { it.isStdDerivable }
+            .map { BoundElement(it, mapOf(TyTypeParameter.self(it) to ty)) }
     }
 
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
