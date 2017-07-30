@@ -15,6 +15,8 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import org.rust.ide.icons.RsIcons
+import org.rust.ide.icons.multiple
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -53,9 +55,11 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                 // and 'traitWithDependencies' contains only 'trait' element
                 if (traitWithDependencies.size > 1) {
                     val element = LookupElementBuilder.create(traitWithDependencies.joinToString(", "))
+                        .withIcon(RsIcons.TRAIT.multiple())
                     result.addElement(PrioritizedLookupElement.withPriority(element, GROUP_PRIORITY))
                 }
                 val element = LookupElementBuilder.create(trait.name)
+                    .withIcon(RsIcons.TRAIT)
                 result.addElement(PrioritizedLookupElement.withPriority(element, DEFAULT_PRIORITY))
             }
     }
