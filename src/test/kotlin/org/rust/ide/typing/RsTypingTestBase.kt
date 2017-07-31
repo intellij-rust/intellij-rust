@@ -13,7 +13,7 @@ abstract class RsTypingTestBase : RsTestBase() {
         myFixture.type(c)
     }
 
-    protected fun doTestByText(@Language("Rust") before: String, @Language("Rust") after: String, c: Char) =
+    protected fun doTestByText(@Language("Rust") before: String, @Language("Rust") after: String, c: Char = '\n') =
         checkByText(before, after) {
             myFixture.type(c)
         }

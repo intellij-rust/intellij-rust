@@ -8,23 +8,186 @@ package org.rust.ide.formatter
 import org.rust.ide.typing.RsTypingTestBase
 
 class RsAutoIndentTest : RsTypingTestBase() {
-    override val dataPath = "org/rust/ide/formatter/fixtures/auto_indent"
+    fun `test fn`() = doTestByText("""
+        fn main() {/*caret*/
+    """, """
+        fn main() {
+            /*caret*/
+        }
+    """)
 
-    fun testFn() = doTest()
-    fun testIf() = doTest()
-    fun testModItem() = doTest()
-    fun testModItem2() = doTest()
-    fun testForeignModItem() = doTest()
-    fun testForeignModItem2() = doTest()
-    fun testPat() = doTest()
-    fun testChainCall() = doTest()
-    fun testChainCall2() = doTest()
-    fun testChainCall3() = doTest()
-    fun testChainCall4() = doTest()
-    fun testChainCall5() = doTest()
-    fun testExpr() = doTest()
-    fun testExpr2() = doTest()
-    fun testExpr3() = doTest()
+    fun `test if`() = doTestByText("""
+        fn main() {
+            if (true) {/*caret*/
+        }
+    """, """
+        fn main() {
+            if (true) {
+                /*caret*/
+            }
+        }
+    """)
 
-    fun testIssue475() = doTest('(')    // https://github.com/intellij-rust/intellij-rust/issues/475
+    fun `test mod item`() = doTestByText("""
+        mod foo {/*caret*/
+    """, """
+        mod foo {
+            /*caret*/
+        }
+    """)
+
+    fun `test mod item 2`() = doTestByText("""
+        mod/*caret*/
+        foo {}
+    """, """
+        mod
+        /*caret*/
+        foo {}
+    """)
+
+    fun `test foreign mod item`() = doTestByText("""
+        extern {/*caret*/
+    """, """
+        extern {
+            /*caret*/
+        }
+    """)
+
+    fun `test foreign mod item 2`() = doTestByText("""
+        extern/*caret*/ {}
+    """, """
+        extern
+        /*caret*/{}
+    """)
+
+    fun `test pat`() = doTestByText("""
+        fn main() {
+            match 1 {
+                Foo {/*caret*/
+            }
+        }
+    """, """
+        fn main() {
+            match 1 {
+                Foo {
+                    /*caret*/
+                }
+            }
+        }
+    """)
+
+    fun `test chain call`() = doTestByText("""
+        fn main() {
+            let moo = foo().bar().baz()/*caret*/
+        }
+    """, """
+        fn main() {
+            let moo = foo().bar().baz()
+            /*caret*/
+        }
+    """)
+
+    fun `test chain call 2`() = doTestByText("""
+        fn main() {
+            let moo = foo().bar()/*caret*/.baz()
+        }
+    """, """
+        fn main() {
+            let moo = foo().bar()
+                /*caret*/.baz()
+        }
+    """)
+
+    fun `test chain call 3`() = doTestByText("""
+        fn main() {
+            let moo = foo().bar().baz()
+                           .moo()/*caret*/
+        }
+    """, """
+        fn main() {
+            let moo = foo().bar().baz()
+                           .moo()
+            /*caret*/
+        }
+    """)
+
+    fun `test chain call 4`() = doTestByText("""
+        fn main() {
+            let moo = foo().bar().baz()
+                           .moo()/*caret*/;
+        }
+    """, """
+        fn main() {
+            let moo = foo().bar().baz()
+                           .moo()
+            /*caret*/;
+        }
+    """)
+
+    fun `test chain call 5`() = doTestByText("""
+        fn main() {
+            moo()/*caret*/
+                .boo()
+                .goo()
+        }
+    """, """
+        fn main() {
+            moo()
+                /*caret*/
+                .boo()
+                .goo()
+        }
+    """)
+
+    fun `test expr`() = doTestByText("""
+        fn main() {
+            if foo && bar/*caret*/
+                && foo {}
+        }
+    """, """
+        fn main() {
+            if foo && bar
+                /*caret*/
+                && foo {}
+        }
+    """)
+
+    fun `test expr 2`() = doTestByText("""
+        fn main() {
+            foo && bar/*caret*/
+                || boo
+        }
+    """, """
+        fn main() {
+            foo && bar
+                /*caret*/
+                || boo
+        }
+    """)
+
+    fun `test expr 3`() = doTestByText("""
+        fn main() {
+            foo && bar ||/*caret*/
+        }
+    """, """
+        fn main() {
+            foo && bar ||
+                /*caret*/
+        }
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/475
+    fun `test issue 475`() = doTestByText("""
+        fn foobar(n: u64) -> String {
+            match (n % 3, n % 5) {
+                /*caret*/
+            }
+        }
+    """, """
+        fn foobar(n: u64) -> String {
+            match (n % 3, n % 5) {
+                (/*caret*/)
+            }
+        }
+    """, '(')
 }
