@@ -23,8 +23,8 @@ class TyTypeParameter private constructor(
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         bounds.flatMap { it.flattenHierarchy }.map { it.substitute(mapOf(self() to this)) }
 
-    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean {
-        if (mapping == null) return true
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult {
+        var result: UnifyResult = UnifyResult.exact
 
         if (!bounds.isEmpty()) {
             val traits = lookup.findImplsAndTraits(other)
@@ -33,14 +33,15 @@ class TyTypeParameter private constructor(
                 if (trait != null) {
                     val subst = boundSubst.substituteInValues(mapOf(self() to this))
                     for ((k, v) in subst) {
-                        trait.subst[k]?.let { v.canUnifyWith(it, lookup, mapping) }
+                        trait.subst[k]?.let { result = result.merge(v.unifyWith(it, lookup)) }
                     }
+                } else {
+                    result = result.merge(UnifyResult.fuzzy)
                 }
             }
         }
 
-        mapping.merge(mapOf(this to other))
-        return true
+        return result.merge(mapOf(this to other))
     }
 
     override fun substitute(subst: Substitution): Ty {

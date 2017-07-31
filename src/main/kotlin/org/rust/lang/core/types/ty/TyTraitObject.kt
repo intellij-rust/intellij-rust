@@ -16,8 +16,8 @@ import org.rust.lang.core.resolve.ImplLookup
  */
 data class TyTraitObject(val trait: RsTraitItem) : Ty {
 
-    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean =
-        other is RsTraitItem && trait == other.trait
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
+        UnifyResult.exactIf(other is RsTraitItem && trait == other.trait)
 
     override fun toString(): String = trait.name ?: "<anonymous>"
 }

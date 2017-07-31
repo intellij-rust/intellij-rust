@@ -394,37 +394,25 @@ private class RsFnInferenceContext(
         return TyArray(elementType, size)
     }
 
-    private fun getMoreCompleteType(vararg types: Ty): Ty = getMoreCompleteType(types.toList())
-
     private fun getMoreCompleteType(types: List<Ty>): Ty {
         if (types.isEmpty()) return TyUnknown
-        return types.reduce { acc, ty ->
-            when {
-                acc is TyUnknown -> ty
-                acc is TyInteger && ty is TyInteger && acc.isKindWeak -> ty
-                acc is TyFloat && ty is TyFloat && acc.isKindWeak -> ty
-                else -> acc
-            }
-        }
+        return types.reduce { acc, ty -> getMoreCompleteType(acc, ty) }
     }
 
     private fun inferStructTypeArguments(literal: RsStructLiteral): Substitution =
         inferFieldTypeArguments(literal.structLiteralBody.structLiteralFieldList)
 
-    private fun inferFieldTypeArguments(fieldExprs: List<RsStructLiteralField>): Substitution {
-        val argsMapping = mutableMapOf<TyTypeParameter, Ty>()
-        fieldExprs.forEach { field -> field.expr?.let { expr -> addTypeMapping(argsMapping, field.type, expr) } }
-        return argsMapping
-    }
+    private fun inferFieldTypeArguments(fieldExprs: List<RsStructLiteralField>): Substitution =
+        UnifyResult.mergeAll(
+            fieldExprs.mapNotNull { field -> field.expr?.let { expr -> field.type.unifyWith(expr.ty, lookup) } }
+        ).substitution().orEmpty()
 
     private fun mapTypeParameters(argDefs: Iterable<Ty>, argExprs: Iterable<RsExpr>): Substitution {
-        val subst = mutableMapOf<TyTypeParameter, Ty>()
-        argExprs.zip(argDefs).forEach { (expr, type) -> addTypeMapping(subst, type, expr) }
+        val subst = UnifyResult.mergeAll(
+            argDefs.zip(argExprs).map { (type, expr) -> type.unifyWith(expr.ty, lookup) }
+        ).substitution().orEmpty()
         return subst.substituteInValues(subst) // TODO multiple times?
     }
-
-    private fun addTypeMapping(argsMapping: TypeMapping, fieldType: Ty?, expr: RsExpr) =
-        fieldType?.canUnifyWith(expr.ty, lookup, argsMapping)
 
     private fun inferArithmeticBinaryExprType(expr: RsBinaryExpr, op: ArithmeticOp): Ty {
         val lhsType = expr.left.ty

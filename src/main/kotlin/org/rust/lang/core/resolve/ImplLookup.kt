@@ -78,11 +78,7 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
                         BoundElement(it, subst)
                     }
             }
-
-        //  XXX: TyStr is TyPrimitive, but we want to handle it separately
-            is TyStr -> RsImplIndex.findImpls(project, this, ty).map { impl -> BoundElement(impl) }
             is TyUnit, is TyUnknown -> emptyList()
-
             else -> {
                 findDerivedTraits(ty) + getHardcodedImpls(ty) + findSimpleImpls(ty)
             }
@@ -104,14 +100,13 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
                 return items.findBinOpTraits().map { it.substAssocType("Output", ty) }
             }
             is TyStruct -> {
-                val mapping: TypeMapping = mutableMapOf()
-                if (items.findCoreTy("slice::Iter").canUnifyWith(ty, this, mapping)) {
+                items.findCoreTy("slice::Iter").unifyWith(ty, this).substitution()?.let { subst ->
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item", TyReference(mapping.valueByName("T"))))
+                    return listOf(trait.substAssocType("Item", TyReference(subst.valueByName("T"))))
                 }
-                if (items.findCoreTy("slice::IterMut").canUnifyWith(ty, this, mapping)) {
+                items.findCoreTy("slice::IterMut").unifyWith(ty, this).substitution()?.let { subst ->
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item", TyReference(mapping.valueByName("T"), true)))
+                    return listOf(trait.substAssocType("Item", TyReference(subst.valueByName("T"), true)))
                 }
             }
         }
@@ -119,8 +114,8 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     }
 
     private fun findSimpleImpls(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
-        val impls = RsImplIndex.findImpls(project, this, ty).map { impl ->
-            BoundElement(impl, remapTypeParameters(impl, ty).orEmpty())
+        val impls = RsImplIndex.findPotentialImpls(project, ty).mapNotNull { impl ->
+            remapTypeParameters(impl, ty)?.let { BoundElement(impl, it) }
         }
 
         val traitToImpl = impls.associateBy { it.element.traitRef?.path?.reference?.resolve() }
@@ -136,9 +131,8 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         }
     }
 
-    private fun remapTypeParameters(impl: RsImplItem, receiver: Ty): Substitution {
-        val subst = mutableMapOf<TyTypeParameter, Ty>()
-        impl.typeReference?.type?.canUnifyWith(receiver, this, subst)
+    private fun remapTypeParameters(impl: RsImplItem, receiver: Ty): Substitution? {
+        val subst = impl.typeReference?.type?.unifyWith(receiver, this)?.substitution() ?: return null
         val associated = (impl.implementedTrait?.subst ?: emptyMap())
             .substituteInValues(subst)
         return subst + associated
@@ -225,7 +219,8 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
             ?.getOrNull(paramIndex)
             ?.typeReference
             ?.type
-            ?.canUnifyWith(paramType, this) ?: false
+            ?.unifyWith(paramType, this)
+            ?.substitution() != null
     }
 
     fun asTyFunction(ty: Ty): TyFunction? {

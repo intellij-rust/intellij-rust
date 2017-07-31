@@ -9,9 +9,12 @@ import org.rust.lang.core.resolve.ImplLookup
 
 data class TyTuple(val types: List<Ty>) : Ty {
 
-    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean = merge(mapping) {
-        other is TyTuple && types.size == other.types.size &&
-            types.zip(other.types).all { (type1, type2) -> type1.canUnifyWith(type2, lookup, it) }
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult {
+        return if (other is TyTuple && types.size == other.types.size) {
+            UnifyResult.mergeAll(types.zip(other.types).map { (type1, type2) -> type1.unifyWith(type2, lookup) })
+        } else {
+            UnifyResult.fail
+        }
     }
 
     override fun substitute(subst: Substitution): TyTuple =
