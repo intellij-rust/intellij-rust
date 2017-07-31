@@ -23,9 +23,9 @@ interface Ty {
     /**
      * Checks if `other` type may be represented as this type.
      *
-     * Note that `t1.canUnifyWith(t2)` is not the same as `t2.canUnifyWith(t1)`.
+     * Note that `t1.unifyWith(t2)` is not the same as `t2.unifyWith(t1)`.
      */
-    fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping? = null): Boolean
+    fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult
 
     /**
      * Substitute type parameters for their values
@@ -50,25 +50,12 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.keys.find { it.toString() == name }
 }
 
-internal inline fun merge(mapping: TypeMapping?, canUnify: (TypeMapping?) -> Boolean): Boolean {
-    return if (mapping != null) {
-        val innerMapping = mutableMapOf<TyTypeParameter, Ty>()
-        val result = canUnify(innerMapping)
-        if (result) {
-            mapping.merge(innerMapping)
-        }
-        result
-    } else {
-        canUnify(null)
-    }
-}
-
-internal fun TypeMapping.merge(otherMapping: Substitution) {
-    for ((param, value) in otherMapping) {
-        val old = get(param)
-        if (old == null || old == TyUnknown || old is TyNumeric && old.isKindWeak) {
-            put(param, value)
-        }
+fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty {
+    return when {
+        ty1 is TyUnknown -> ty2
+        ty1 is TyInteger && ty2 is TyInteger && ty1.isKindWeak -> ty2
+        ty1 is TyFloat && ty2 is TyFloat && ty1.isKindWeak -> ty2
+        else -> ty1
     }
 }
 

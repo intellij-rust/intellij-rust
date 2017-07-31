@@ -18,8 +18,8 @@ import org.rust.lang.core.resolve.ImplLookup
  * tuples or arrays as primitive.
  */
 interface TyPrimitive : Ty {
-    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean =
-        this == other
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
+        UnifyResult.exactIf(this == other)
 
     companion object {
         fun fromPath(path: RsPath): TyPrimitive? {
@@ -62,8 +62,8 @@ object TyStr : TyPrimitive {
 interface TyNumeric : TyPrimitive {
     val isKindWeak: Boolean
 
-    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: MutableMap<TyTypeParameter, Ty>?): Boolean
-        = this == other || javaClass == other.javaClass && (other as TyNumeric).isKindWeak
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
+        UnifyResult.exactIf(this == other || javaClass == other.javaClass && (other as TyNumeric).isKindWeak)
 }
 
 class TyInteger(val kind: Kind, override val isKindWeak: Boolean = false) : TyNumeric {

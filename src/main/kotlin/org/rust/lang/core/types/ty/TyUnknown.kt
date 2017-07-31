@@ -8,7 +8,7 @@ package org.rust.lang.core.types.ty
 import org.rust.lang.core.resolve.ImplLookup
 
 object TyUnknown : Ty {
-    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean = false
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult = UnifyResult.fail
 
     override fun toString(): String = "<unknown>"
 }

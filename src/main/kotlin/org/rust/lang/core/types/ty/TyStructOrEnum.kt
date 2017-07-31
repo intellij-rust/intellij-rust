@@ -26,9 +26,12 @@ interface TyStructOrEnumBase : Ty {
             } else "<anonymous>"
         }
 
-    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean = merge(mapping) {
-        other is TyStructOrEnumBase && item == other.item &&
-            typeArguments.zip(other.typeArguments).all { (type1, type2) -> type1.canUnifyWith(type2, lookup, it) }
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult {
+        return if (other is TyStructOrEnumBase && item == other.item) {
+            UnifyResult.mergeAll(typeArguments.zip(other.typeArguments).map { (type1, type2) -> type1.unifyWith(type2, lookup) })
+        } else {
+            UnifyResult.fail
+        }
     }
 }
 

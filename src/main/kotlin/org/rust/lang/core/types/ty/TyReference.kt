@@ -9,9 +9,8 @@ import org.rust.lang.core.resolve.ImplLookup
 
 data class TyReference(val referenced: Ty, val mutable: Boolean = false) : Ty {
 
-    override fun canUnifyWith(other: Ty, lookup: ImplLookup, mapping: TypeMapping?): Boolean = merge(mapping) {
-        other is TyReference && referenced.canUnifyWith(other.referenced, lookup, it)
-    }
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
+        if (other is TyReference) referenced.unifyWith(other.referenced, lookup) else UnifyResult.fail
 
     override fun toString(): String = "${if (mutable) "&mut " else "&"}$referenced"
 
