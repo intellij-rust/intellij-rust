@@ -125,6 +125,9 @@ private fun deviseFunctionType(fn: RsFunction): TyFunction {
 
     paramTypes += fn.valueParameters.map { it.typeReference?.type ?: TyUnknown }
 
-    return TyFunction(paramTypes, fn.returnType)
+    val ownerType = (fn.owner as? RsFunctionOwner.Impl)?.impl?.typeReference?.type
+    val subst = if (ownerType != null) mapOf(TyTypeParameter.self() to ownerType) else emptyMap()
+
+    return TyFunction(paramTypes, fn.returnType).substitute(subst)
 }
 

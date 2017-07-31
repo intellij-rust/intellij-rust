@@ -620,4 +620,30 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ S
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1549
+    fun `test Self type in assoc function`() = testExpr("""
+        struct Foo;
+        impl Foo {
+            fn new() -> Self { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo::new();
+            x;
+          //^ Foo
+        }
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1549
+    fun `test Self type in assoc function with complex ret type`() = testExpr("""
+        struct Foo;
+        impl Foo {
+            fn new_pair() -> (Self, Self) { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo::new_pair();
+            x;
+          //^ (Foo, Foo)
+        }
+    """)
 }
