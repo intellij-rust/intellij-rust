@@ -155,5 +155,13 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         struct S { foo: i32, bar: i32}
         fn main() { let _ = S { foo: 2, .ba/*caret*/ } }
     """)
+
+    fun `test function parameter`() = doSingleCompletion("""
+        struct Frobnicate;
+        fn foo(x: i32, foo bar: i32, baz: Frob/*caret*/) {}
+    """, """
+        struct Frobnicate;
+        fn foo(x: i32, foo bar: i32, baz: Frobnicate/*caret*/) {}
+    """)
 }
 

@@ -37,7 +37,8 @@ FILE
             RsPathImpl(PATH)
               PsiElement(identifier)('i32')
       PsiElement(,)(',')
-      PsiElement(,)(',')
+      PsiErrorElement:',' unexpected
+        PsiElement(,)(',')
       PsiWhiteSpace(' ')
       PsiElement())(')')
     PsiWhiteSpace(' ')

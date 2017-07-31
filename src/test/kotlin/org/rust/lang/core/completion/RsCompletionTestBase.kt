@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
+import org.rust.hasCaretMarker
 import org.rust.lang.RsTestBase
 
 abstract class RsCompletionTestBase : RsTestBase() {
@@ -37,6 +38,9 @@ abstract class RsCompletionTestBase : RsTestBase() {
     }
 
     protected fun doSingleCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
+        check(hasCaretMarker(before) && hasCaretMarker(after)) {
+            "Please add `/*caret*/` marker"
+        }
         checkByText(before, after) { executeSoloCompletion() }
     }
 
