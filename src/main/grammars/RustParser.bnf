@@ -268,6 +268,12 @@ fake ValueParameter ::= Pat? TypeReference? {
 }
 
 FnParameter ::= [ Pat ':' ] TypeReference
+private FnParameter_with_recover ::= FnParameter (',' | &')') {
+  pin = 1
+  recoverWhile = FnParameter_recover
+}
+private FnParameter_recover ::= !(Pat_first | ')' | '...')
+
 LambdaParameter ::= Pat TypeAscription?
 AnonParameter ::= [ RestrictedPat ':' ] TypeReference
 PathParameter ::= TypeReference !'='
@@ -286,7 +292,7 @@ fake ValueParameterList ::= SelfParameter? ValueParameter* '...'? {
 }
 
 FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ]
-                                   [ FnParameter (',' FnParameter)* [ ',' '...'? ] ','? ]
+                                   FnParameter_with_recover* ['...' ','? ]
                           ')' { pin = 1 }
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
 

@@ -200,4 +200,4 @@ private fun findElementInFile(file: PsiFile, marker: String): PsiElement {
 }
 
 fun replaceCaretMarker(text: String): String = text.replace("/*caret*/", "<caret>")
-private fun hasCaretMarker(text: String): Boolean = text.contains("/*caret*/")
+fun hasCaretMarker(text: String): Boolean = text.contains("/*caret*/")
