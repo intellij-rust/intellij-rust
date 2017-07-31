@@ -719,4 +719,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a
         } //^ X
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1549
+    fun `test Self type in assoc function`() = testExpr("""
+        struct Foo<T>(T);
+        impl<T> Foo<T> {
+            fn new(a: T) -> Self { unimplemented!() }
+        }
+        fn main() {
+            let x = Foo::new(123);
+            x;
+          //^ Foo<i32>
+        }
+    """)
 }

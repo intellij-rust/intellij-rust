@@ -484,4 +484,19 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             foo.foo();
         }      //^ unresolved
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1549
+    fun `test Self type in assoc function`() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn new() -> Self { unimplemented!() }
+            fn bar(&self) {}
+              //X
+        }
+        fn main() {
+            let foo = Foo::new();
+            foo.bar();
+               //^
+        }
+    """)
 }
