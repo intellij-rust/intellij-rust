@@ -16,15 +16,21 @@ class RsTypingEmptyFileFuzzyTest : RsTypingTestBase() {
         for (ch in chars) {
             var backspace = false
             try {
-                doTestByText("<caret>", "$ch<caret>", ch)
+                doTest(ch, "<caret>", "$ch<caret>")
                 backspace = true
-                doTestByText("$ch<caret>", "<caret>", '\b')
+                doTest('\b', "$ch<caret>", "<caret>")
             } catch(e: Throwable) {
                 print("Fuzzy test failed for character '${StringUtil.escapeStringCharacters(ch.toString())}'")
                 if (backspace) print(" when performing backspace")
                 println("!")
                 throw e
             }
+        }
+    }
+
+    private fun doTest(c: Char, before: String, after: String) {
+        checkByText(before, after) {
+            myFixture.type(c)
         }
     }
 }
