@@ -27,10 +27,13 @@ import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.*
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.RsConstants
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.module
 import org.rust.utils.pathAsPath
 import java.nio.file.Path
@@ -79,11 +82,14 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         if (annotationResult == null) return
 
-        val doc = holder.currentAnnotationSession.file.viewProvider.document
+        val fileOrigin = (file as? RsCompositeElement)?.containingCargoPackage?.origin
+        if (fileOrigin != PackageOrigin.WORKSPACE) return
+
+        val doc = file.viewProvider.document
             ?: error("Can't find document for $file in Cargo check annotator")
 
         for (topMessage in annotationResult.messages) {
-            val message = filterMessage(holder.currentAnnotationSession.file, doc, topMessage.message) ?: continue
+            val message = filterMessage(file, doc, topMessage.message) ?: continue
             holder.createAnnotation(message.severity, message.textRange, message.message, message.htmlTooltip)
                 .apply {
                     problemGroup = ProblemGroup { message.message }
