@@ -13,13 +13,14 @@
 
 ## Status
 
-This is a **work in progress**, some features are implemented partially (most
-notably completion), there may be performance and stability problems.
+This is a **work in progress**, some features are implemented partially, 
+there may be performance and stability problems.
 
 ## Usage
 
 Visit [intellij-rust.github.io] to find documentation about available
-installation options and features.
+installation options and features. All new features are announced in 
+the [changelog](https://intellij-rust.github.io/thisweek/).
 
 If you want to jump straight in, install IntelliJ IDEA, open `Settings > Plugins > Browse repositories`,
 install Rust plugin, and use **project from existing sources** action to import a Cargo-based project.
@@ -36,7 +37,7 @@ If you are looking for the TOML plugin, see [toml] directory.
 
 ## Compatible IDEs
 
-The plugin is compatible with any IntelliJ based IDE starting from 2016.2. 
+The plugin is compatible with any IntelliJ based IDE starting from 2017.1. 
 If you don't have any yet, try [IntelliJ IDEA Community Edition](https://www.jetbrains.com/idea/), it's free.
 
 ## Contributing
