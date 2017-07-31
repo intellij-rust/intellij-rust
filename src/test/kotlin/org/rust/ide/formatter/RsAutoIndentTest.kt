@@ -190,4 +190,53 @@ class RsAutoIndentTest : RsTypingTestBase() {
             }
         }
     """, '(')
+
+    fun `test function parameter`() = doTestByText("""
+        fn foo(xs: i32,/*caret*/
+               ys: i32) {}
+    """, """
+        fn foo(xs: i32,
+               /*caret*/
+               ys: i32) {}
+    """)
+
+    fun `test first function parameter`() = doTestByText("""
+        fn foo(/*caret*/) {}
+    """, """
+        fn foo(
+            /*caret*/
+        ) {}
+    """)
+
+    fun `test first call last argument without comma`() = doTestByText("""
+        fn main() {
+            frobnicate(
+                xs/*caret*/)
+        }
+    """, """
+        fn main() {
+            frobnicate(
+                xs
+            /*caret*/)
+        }
+    """)
+
+    // FIXME
+    // Ideally, we want to indent this because of the trailing comma.
+    // This might require a custom enter processor though, because
+    // if there's non-ws after the caret (`)` in this case), autoindent
+    // skips [org.rust.ide.formatter.blocks.RsFmtBlock.getChildAttributes]
+    // and just reformats everything.
+    fun `test first call last argument with comma`() = doTestByText("""
+        fn main() {
+            frobnicate(
+                xs,/*caret*/)
+        }
+    """, """
+        fn main() {
+            frobnicate(
+                xs,
+            /*caret*/)
+        }
+    """)
 }

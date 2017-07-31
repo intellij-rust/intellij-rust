@@ -53,27 +53,27 @@ class RsQuoteHandlerTest : RsTypingTestBase() {
     """, '"')
 
     fun `test complete raw string quotes with hashes`() = doTestByText("""
-        r###<caret>
+        fn f() { let _ = r###<caret> }
     """, """
-        r###"<caret>"###
+        fn f() { let _ = r###"<caret>"### }
     """, '"')
 
     fun `test complete raw string quotes no hashes`() = doTestByText("""
-        r<caret>
+        fn f() { let _ = r<caret> }
     """, """
-        r"<caret>"
+        fn f() { let _ = r"<caret>" }
     """, '"')
 
     fun `test complete raw byte string quotes with hashes`() = doTestByText("""
-        r###<caret>
+        fn f() { let _ = r###<caret> }
     """, """
-        r###"<caret>"###
+        fn f() { let _ = r###"<caret>"### }
     """, '"')
 
     fun `test complete raw byte string quotes no hashes`() = doTestByText("""
-        r<caret>
+        fn f() { let _ = r<caret> }
     """, """
-        r"<caret>"
+        fn f() { let _ = r"<caret>" }
     """, '"')
 
     // https://github.com/intellij-rust/intellij-rust/issues/687

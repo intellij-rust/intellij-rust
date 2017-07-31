@@ -13,6 +13,7 @@ import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.RsFormattingModelBuilder
 import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsExpr
 
 class RsFmtBlock(
     private val node: ASTNode,
@@ -86,8 +87,35 @@ class RsFmtBlock(
 
     override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
 
-    override fun getChildAttributes(newChildIndex: Int): ChildAttributes =
-        ChildAttributes(newChildIndent(newChildIndex), null)
+    override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
+        if (CommaList.forElement(node.elementType) != null && newChildIndex > 1) {
+            return ChildAttributes.DELEGATE_TO_NEXT_CHILD
+        }
+
+        val indent = when {
+        // Flat brace blocks do not have separate PSI node for content blocks
+        // so we have to manually decide whether new child is before (no indent)
+        // or after (normal indent) left brace node.
+            node.isFlatBraceBlock -> {
+                val lbraceIndex = subBlocks.indexOfFirst { it is ASTBlock && it.node.elementType == LBRACE }
+                if (lbraceIndex != -1 && lbraceIndex < newChildIndex) {
+                    Indent.getNormalIndent()
+                } else {
+                    Indent.getNoneIndent()
+                }
+            }
+
+        // We are inside some kind of {...}, [...], (...) or <...> block
+            node.isDelimitedBlock -> Indent.getNormalIndent()
+
+        // Indent expressions (chain calls, binary expressions, ...)
+            node.psi is RsExpr -> Indent.getContinuationWithoutFirstIndent()
+
+        // Otherwise we don't want any indentation (null means continuation indent)
+            else -> Indent.getNoneIndent()
+        }
+        return ChildAttributes(indent, null)
+    }
 
     override fun isLeaf(): Boolean = node.firstChildNode == null
 

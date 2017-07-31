@@ -14,7 +14,7 @@ abstract class RsTypingTestBase : RsTestBase() {
     }
 
     protected fun doTestByText(@Language("Rust") before: String, @Language("Rust") after: String, c: Char = '\n') =
-        checkByText(before, after) {
+        checkByText(before.trimIndent(), after.trimIndent()) {
             myFixture.type(c)
         }
 }

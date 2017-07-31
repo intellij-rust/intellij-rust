@@ -5,36 +5,12 @@
 
 package org.rust.ide.formatter.impl
 
-import com.intellij.formatting.ASTBlock
 import com.intellij.formatting.Indent
 import com.intellij.lang.ASTNode
 import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsExpr
-
-fun RsFmtBlock.newChildIndent(childIndex: Int): Indent? = when {
-// Flat brace blocks do not have separate PSI node for content blocks
-// so we have to manually decide whether new child is before (no indent)
-// or after (normal indent) left brace node.
-    node.isFlatBraceBlock -> {
-        val lbraceIndex = subBlocks.indexOfFirst { it is ASTBlock && it.node.elementType == LBRACE }
-        if (lbraceIndex != -1 && lbraceIndex < childIndex) {
-            Indent.getNormalIndent()
-        } else {
-            Indent.getNoneIndent()
-        }
-    }
-
-// We are inside some kind of {...}, [...], (...) or <...> block
-    node.isDelimitedBlock -> Indent.getNormalIndent()
-
-// Indent expressions (chain calls, binary expressions, ...)
-    node.psi is RsExpr -> Indent.getContinuationWithoutFirstIndent()
-
-// Otherwise we don't want any indentation (null means continuation indent)
-    else -> Indent.getNoneIndent()
-}
 
 fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
     val parentType = node.elementType
