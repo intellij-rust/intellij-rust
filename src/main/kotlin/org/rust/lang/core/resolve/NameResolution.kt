@@ -175,7 +175,7 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
     return false
 }
 
-fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val qualifier = path.path
     val typeQual = path.typeQual
     val parent = path.context
@@ -197,14 +197,14 @@ fun processPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: R
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
-            if (processAssociatedFunctionsAndMethodsDeclarations(ImplLookup.relativeTo(base), base.type, processor)) return true
+            if (processAssociatedFunctionsAndMethodsDeclarations(lookup, base.type, processor)) return true
         }
         if (base is RsTypeParameter) {
             // `impl<T: Tr> S<T> { fn foo() -> T::Item { unimplemented!() } }`
             // Here we're resolving path `T::Item`, so `base` is `T`. First we're looking to the trait bounds of `T`,
             // then resolving associated type to <Self as Tr>::Item, and then substituting `{Self => T}` into it
 
-            for ((element, subst) in TyTypeParameter.named(base).getTraitBoundsTransitively()) {
+            for ((element, subst) in lookup.findImplsAndTraits(TyTypeParameter.named(base))) {
                 if (processAllWithSubst(element.members?.typeAliasList.orEmpty(), subst, processor)) return true
             }
         }

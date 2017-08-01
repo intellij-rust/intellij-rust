@@ -17,7 +17,8 @@ import org.rust.lang.utils.findWithCache
 import java.util.*
 
 class StdKnownItems private constructor(private val absolutePathResolver: (String, String) -> RsNamedElement?) {
-    private val binOps by lazy {
+    // lazy(NONE) is safe here because this class isn't shared between threads
+    private val binOps by lazy(LazyThreadSafetyMode.NONE) {
         ArithmeticOp.values()
             .map { findCoreItem("ops::${it.traitName}") }
             .mapNotNull { it as? RsTraitItem }
@@ -66,6 +67,15 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
 
     fun findResultItem(): RsNamedElement? =
         findCoreItem("result::Result")
+
+    fun findCloneTrait(): RsTraitItem? =
+        findCoreItem("clone::Clone") as? RsTraitItem
+
+    fun findEqTrait(): RsTraitItem? =
+        findCoreItem("cmp::Eq") as? RsTraitItem
+
+    fun findOrdTrait(): RsTraitItem? =
+        findCoreItem("cmp::Ord") as? RsTraitItem
 
     companion object {
         fun relativeTo(psi: RsCompositeElement): StdKnownItems {
