@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPatIdent
+import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.utils.buildList
@@ -31,8 +32,7 @@ enum class HintType(desc: String, enabled: Boolean) {
             return listOf(InlayInfo(": " + type.toString(), patBinding.textRange.endOffset))
         }
 
-        override fun isApplicable(elem: PsiElement): Boolean
-            = elem is RsLetDecl
+        override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl
     },
     PARAMETER_HINT("Show argument name hints", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
@@ -47,11 +47,33 @@ enum class HintType(desc: String, enabled: Boolean) {
                 if (callInfo.selfParameter != null && elem is RsCallExpr) {
                     add(callInfo.selfParameter)
                 }
-                addAll(callInfo.parameters.map { "${it.pattern}:" })
+                addAll(callInfo.parameters.map { it.pattern })
+            }.zip(valueArgumentList.exprList)
+
+            if (smart) {
+                if (onlyOneParam(hints, callInfo, elem)) {
+                    if (callInfo.methodName?.startsWith("set_") ?: true) {
+                        return emptyList()
+                    }
+                    if (callInfo.methodName == callInfo.parameters.getOrNull(0)?.pattern) {
+                        return emptyList()
+                    }
+                }
+                return hints
+                    .filter { (hint, arg) -> !hint.endsWith(arg.text) }
+                    .map { (hint, arg) -> InlayInfo("$hint:", arg.textRange.startOffset) }
             }
-            return hints.zip(valueArgumentList.exprList).map { (hint, arg) ->
-                InlayInfo(hint, arg.textRange.startOffset)
+            return hints.map { (hint, arg) -> InlayInfo("$hint:", arg.textRange.startOffset) }
+        }
+
+        fun onlyOneParam(hints: List<Pair<String, RsExpr>>, callInfo: CallInfo, elem: PsiElement): Boolean {
+            if (callInfo.selfParameter != null && elem is RsCallExpr && hints.size == 2) {
+                return true
             }
+            if (!(callInfo.selfParameter != null && elem is RsCallExpr) && hints.size == 1) {
+                return true
+            }
+            return false
         }
 
         override fun isApplicable(elem: PsiElement): Boolean
@@ -63,19 +85,17 @@ enum class HintType(desc: String, enabled: Boolean) {
             val type = element.type as? TyFunction ?: return emptyList()
             return element.valueParameterList.valueParameterList
                 .mapIndexed { index, parameter -> type.paramTypes.getOrNull(index) to parameter.textRange.endOffset }
-                .map { InlayInfo(": ${it.first}", it.second) }
                 .filter { it.first != null }
+                .map { InlayInfo(": ${it.first}", it.second) }
         }
 
-        override fun isApplicable(elem: PsiElement): Boolean
-            = elem is RsLambdaExpr
+        override fun isApplicable(elem: PsiElement): Boolean = elem is RsLambdaExpr
     };
-
 
     companion object {
         val SMART_HINTING = Option("SMART_HINTING", "Show only smart hints", true)
-        fun resolve(elem: PsiElement): HintType?
-            = HintType.values().find { it.isApplicable(elem) }
+        fun resolve(elem: PsiElement): HintType? =
+            HintType.values().find { it.isApplicable(elem) }
 
         fun resolveToEnabled(elem: PsiElement?): HintType? {
             val resolved = elem?.let { resolve(it) } ?: return null
@@ -95,15 +115,15 @@ enum class HintType(desc: String, enabled: Boolean) {
 }
 
 class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
-    override fun getSupportedOptions(): List<Option>
-        = HintType.values().map { it.option } + HintType.SMART_HINTING
+    override fun getSupportedOptions(): List<Option> =
+        HintType.values().map { it.option } + HintType.SMART_HINTING
 
     override fun getDefaultBlackList(): Set<String> = emptySet()
 
     override fun getHintInfo(element: PsiElement?): HintInfo? = null
 
-    override fun getParameterHints(element: PsiElement): List<InlayInfo>
-        = HintType.resolveToEnabled(element)?.provideHints(element) ?: emptyList()
+    override fun getParameterHints(element: PsiElement): List<InlayInfo> =
+        HintType.resolveToEnabled(element)?.provideHints(element) ?: emptyList()
 
     override fun getInlayPresentation(inlayText: String): String = inlayText
 }

@@ -126,6 +126,14 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
     """)
 
     fun `test lamdba type hint`() = checkByText<RsLambdaExpr>("""
+        #[lang = "fn_once"]
+        trait FnOnce<Args> { type Output; }
+
+        #[lang = "fn_mut"]
+        trait FnMut<Args>: FnOnce<Args> { }
+
+        #[lang = "fn"]
+        trait Fn<Args>: FnMut<Args> { }
         struct S;
         fn with_s<F: Fn(S)>(f: F) {}
         fn main() {
