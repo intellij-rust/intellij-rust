@@ -32,6 +32,16 @@ class RsParameterInfoHandlerTest : RsTestBase() {
         fn main() { foo(<caret>); }
     """, "arg: u32", 0)
 
+    fun `test struct one arg`() = checkByText("""
+        struct Foo(u32);
+        fn main() { Foo(<caret>); }
+    """, "_: u32", 0)
+
+    fun `test enum one arg`() = checkByText("""
+        enum E  { Foo(u32) }
+        fn main() { E::Foo(<caret>); }
+    """, "_: u32", 0)
+
     fun testFnOneArgEnd() = checkByText("""
         fn foo(arg: u32) {}
         fn main() { foo(42<caret>); }
