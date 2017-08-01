@@ -9,9 +9,12 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.parameterInfo.*
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.ide.utils.CallInfo
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsMethodCallExpr
+import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.utils.buildList
 
 /**
  * Provides functions/methods arguments hint.
@@ -28,9 +31,9 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
 
     override fun getParametersForLookup(item: LookupElement, context: ParameterInfoContext?): Array<out Any>? {
         val el = item.`object` as? PsiElement ?: return null
-
-        val p = el.parent?.parent
-        return if (p is RsCallExpr && p.declaration != null || p is RsMethodCallExpr && p.declaration != null) arrayOf(p) else emptyArray()
+        val p = el.parent?.parent ?: return null
+        val isCall = p is RsCallExpr && CallInfo.resolve(p) != null || p is RsMethodCallExpr && CallInfo.resolve(p) != null
+        return if (isCall) arrayOf(p) else emptyArray()
     }
 
     override fun getParametersForDocumentation(p: RsArgumentsDescription, context: ParameterInfoContext?) =
@@ -132,21 +135,18 @@ class RsArgumentsDescription(
          */
         fun findDescription(args: RsValueArgumentList): RsArgumentsDescription? {
             val call = args.parent
-            val paramsList = when (call) {
-                is RsCallExpr -> call.declaration?.valueParameters
-                is RsMethodCallExpr -> call.declaration?.valueParameters
+            val callInfo = when (call) {
+                is RsCallExpr -> CallInfo.resolve(call)
+                is RsMethodCallExpr -> CallInfo.resolve(call)
                 else -> null
             } ?: return null
-            val params = paramsList
-                .map { "${it.pat?.text ?: "?"}: ${it.typeReference?.text ?: "?"}" }
-                .toTypedArray()
-            return RsArgumentsDescription(params)
+            val params = buildList<String> {
+                if (callInfo.selfParameter != null && call is RsCallExpr) {
+                    add(callInfo.selfParameter)
+                }
+                addAll(callInfo.parameters.map { "${it.pattern}: ${it.type}" })
+            }
+            return RsArgumentsDescription(params.toTypedArray())
         }
     }
 }
-
-private val RsCallExpr.declaration: RsFunction?
-    get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
-
-private val RsMethodCallExpr.declaration: RsFunction?
-    get() = reference.resolve() as? RsFunction

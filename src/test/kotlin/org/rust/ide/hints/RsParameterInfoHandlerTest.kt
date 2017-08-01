@@ -32,6 +32,16 @@ class RsParameterInfoHandlerTest : RsTestBase() {
         fn main() { foo(<caret>); }
     """, "arg: u32", 0)
 
+    fun `test struct one arg`() = checkByText("""
+        struct Foo(u32);
+        fn main() { Foo(<caret>); }
+    """, "_: u32", 0)
+
+    fun `test enum one arg`() = checkByText("""
+        enum E  { Foo(u32) }
+        fn main() { E::Foo(<caret>); }
+    """, "_: u32", 0)
+
     fun testFnOneArgEnd() = checkByText("""
         fn foo(arg: u32) {}
         fn main() { foo(42<caret>); }
@@ -134,6 +144,16 @@ class RsParameterInfoHandlerTest : RsTestBase() {
             p.greet("Hello", 19, 10.21<caret>);
         }
     """, "text: &'static str, count: u16, l: f64", 2)
+
+    fun `test method with explicit self`() = checkByText("""
+        struct S;
+        impl S { fn foo(self, arg: u32) {} }
+
+        fn main() {
+            let s = S;
+            S::foo(s, 0<caret>);
+        }
+    """, "self, arg: u32", 1)
 
     fun testNotArgs1() = checkByText("""
         fn foo() {}
