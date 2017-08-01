@@ -17,7 +17,8 @@ import org.rust.lang.utils.findWithCache
 import java.util.*
 
 class StdKnownItems private constructor(private val absolutePathResolver: (String, String) -> RsNamedElement?) {
-    private val binOps by lazy {
+    // lazy(NONE) is safe here because this class isn't shared between threads
+    private val binOps by lazy(LazyThreadSafetyMode.NONE) {
         ArithmeticOp.values()
             .map { findCoreItem("ops::${it.traitName}") }
             .mapNotNull { it as? RsTraitItem }

@@ -16,6 +16,7 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.findWithCache
+import kotlin.LazyThreadSafetyMode.NONE
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
     Clone("clone"),
@@ -40,11 +41,12 @@ private val RsTraitItem.typeParamSingle: TyTypeParameter? get() =
     typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
 
 class ImplLookup(private val project: Project, private val items: StdKnownItems) {
+    // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
-    private val fnTraits by lazy {
+    private val fnTraits by lazy(NONE) {
         listOf("fn", "fn_mut", "fn_once").mapNotNull { RsLangItemIndex.findLangItem(project, it) }
     }
-    val fnOutputParam by lazy {
+    val fnOutputParam by lazy(NONE) {
         RsLangItemIndex.findLangItem(project, "fn_once")?.let { findFreshAssociatedType(it, "Output") }
     }
 
