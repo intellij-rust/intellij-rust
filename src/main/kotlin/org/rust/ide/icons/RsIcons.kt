@@ -83,3 +83,10 @@ fun Icon.addTestMark(): Icon = LayeredIcon(this, RsIcons.TEST_MARK)
 
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon =
     RowIcon(this, if (pub) PlatformIcons.PUBLIC_ICON else PlatformIcons.PRIVATE_ICON)
+
+fun Icon.multiple(): Icon {
+    val compoundIcon = LayeredIcon(2)
+    compoundIcon.setIcon(this, 0, 2 * iconWidth / 5, 0)
+    compoundIcon.setIcon(this, 1, 0, 0)
+    return compoundIcon
+}
