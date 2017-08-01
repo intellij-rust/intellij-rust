@@ -67,6 +67,15 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findResultItem(): RsNamedElement? =
         findCoreItem("result::Result")
 
+    fun findCloneTrait(): RsTraitItem? =
+        findCoreItem("clone::Clone") as? RsTraitItem
+
+    fun findEqTrait(): RsTraitItem? =
+        findCoreItem("cmp::Eq") as? RsTraitItem
+
+    fun findOrdTrait(): RsTraitItem? =
+        findCoreItem("cmp::Ord") as? RsTraitItem
+
     companion object {
         fun relativeTo(psi: RsCompositeElement): StdKnownItems {
             data class AbsolutePath(val module: Module, val fullName: String)

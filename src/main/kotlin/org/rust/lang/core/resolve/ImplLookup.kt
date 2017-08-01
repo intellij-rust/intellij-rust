@@ -40,7 +40,7 @@ private val RsTraitItem.isAnyFnTrait: Boolean get() = langAttribute == "fn"
     || langAttribute == "fn_once"
     || langAttribute == "fn_mut"
 
-private val RsTraitItem.fnTypeArgsParam: TyTypeParameter? get() =
+private val RsTraitItem.singleTypeParam: TyTypeParameter? get() =
     typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
 
 val RsTraitItem.fnOutputParam: TyTypeParameter? get() {
@@ -49,7 +49,7 @@ val RsTraitItem.fnOutputParam: TyTypeParameter? get() {
 }
 
 private val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
-    val param = element.fnTypeArgsParam ?: return null
+    val param = element.singleTypeParam ?: return null
     val outputParam = element.fnOutputParam ?: return null
     val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
     val outputType = (subst[outputParam] ?: TyUnit)
@@ -57,6 +57,8 @@ private val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
 }
 
 class ImplLookup(private val project: Project, private val items: StdKnownItems) {
+    private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
+
     fun findImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
         if (ty is TyTypeParameter) {
             return ty.getTraitBoundsTransitively()
@@ -74,7 +76,7 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
                     .map {
                         val subst = mutableMapOf<TyTypeParameter, Ty>()
                         findFreshAssociatedType(it, "Output")?.let { subst.put(it, ty.retType) }
-                        it.fnTypeArgsParam?.let { subst.put(it, params) }
+                        it.singleTypeParam?.let { subst.put(it, params) }
                         BoundElement(it, subst)
                     }
             }
@@ -96,8 +98,37 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
         // TODO this code should be completely removed after macros implementation
         when (ty) {
-            is TyNumeric -> {
-                return items.findBinOpTraits().map { it.substAssocType("Output", ty) }
+            is TyPrimitive -> {
+                return primitiveTyHardcodedImplsCache.getOrPut(ty) {
+                    val impls = mutableListOf<BoundElement<RsTraitItem>>()
+                    if (ty is TyNumeric) {
+                        // libcore/ops/arith.rs libcore/ops/bit.rs
+                        impls += items.findBinOpTraits().map { it.substAssocType("Output", ty) }
+                    }
+                    if (ty != TyStr) {
+                        // libcore/cmp.rs
+                        if (ty != TyUnit) {
+                            RsLangItemIndex.findLangItem(project, "eq")?.let {
+                                impls.add(BoundElement(it, it.singleTypeParam?.let { mapOf(it to ty) } ?: emptySubstitution))
+                            }
+                        }
+                        if (ty != TyUnit && ty != TyBool) {
+                            RsLangItemIndex.findLangItem(project, "ord")?.let {
+                                impls.add(BoundElement(it, it.singleTypeParam?.let { mapOf(it to ty) } ?: emptySubstitution))
+                            }
+                        }
+                        if (ty !is TyFloat) {
+                            items.findEqTrait()?.let { impls.add(BoundElement(it)) }
+                            if (ty != TyUnit && ty != TyBool) {
+                                items.findOrdTrait()?.let { impls.add(BoundElement(it)) }
+                            }
+                        }
+
+                    }
+                    // libcore/clone.rs
+                    items.findCloneTrait()?.let { impls.add(BoundElement(it)) }
+                    impls
+                }
             }
             is TyStruct -> {
                 items.findCoreTy("slice::Iter").unifyWith(ty, this).substitution()?.let { subst ->
