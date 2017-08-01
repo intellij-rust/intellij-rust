@@ -26,12 +26,6 @@ fun inferDeclarationType(decl: RsNamedElement): Ty {
     }
 }
 
-private val RsCallExpr.declaration: RsFunction?
-    get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
-
-private val RsMethodCallExpr.declaration: RsFunction?
-    get() = reference.resolve() as? RsFunction
-
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {
     val type = ref.typeElement
     return when (type) {

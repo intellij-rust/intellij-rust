@@ -443,9 +443,6 @@ private fun RsMethodCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
         .takeIf { fn.owner.isInherentImpl }
 }
 
-private val RsCallExpr.declaration: RsFunction?
-    get() = (expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
-
 private fun isValidSelfSuperPrefix(path: RsPath): Boolean {
     if (path.self == null && path.`super` == null) return true
     if (path.path == null && path.coloncolon != null) return false
