@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.ext.isPointer
+import org.rust.lang.core.psi.ext.isUnit
 import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.ty.*
 import java.io.DataInput
@@ -28,7 +29,13 @@ data class TyFingerprint constructor(
         fun create(ref: RsTypeReference): TyFingerprint? {
             val type = ref.typeElement
             return when (type) {
-                is RsBaseType -> type.path?.referenceName?.let(::TyFingerprint)
+                is RsBaseType -> {
+                    if (type.isUnit) {
+                        TyFingerprint("()")
+                    } else {
+                        type.path?.referenceName?.let(::TyFingerprint)
+                    }
+                }
                 is RsRefLikeType -> {
                     if (type.isPointer)
                         TyFingerprint("*T")

@@ -28,6 +28,17 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }    //^
     """)
 
+    fun `test trait impl for ()`() = checkByCode("""
+        trait T { fn foo(&self){} }
+                   //X
+        impl T for () {}
+        fn main() {
+            let a = ();
+            a.foo()
+            //^
+        }
+    """)
+
     fun `test trait default method`() = checkByCode("""
         trait T { fn foo(&self) {} }
                     //X

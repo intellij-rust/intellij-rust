@@ -80,7 +80,7 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
                         BoundElement(it, subst)
                     }
             }
-            is TyUnit, is TyUnknown -> emptyList()
+            is TyUnknown -> emptyList()
             else -> {
                 findDerivedTraits(ty) + getHardcodedImpls(ty) + findSimpleImpls(ty)
             }
