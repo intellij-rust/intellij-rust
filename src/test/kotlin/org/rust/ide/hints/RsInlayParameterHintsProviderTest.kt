@@ -28,6 +28,12 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
                     //^
     """, "arg2:", 1)
 
+    fun `test arg out of bounds`() = checkByText<RsCallExpr>("""
+        fn foo(arg: u32) {}
+        fn main() { foo(0, <caret>1); }
+                    //^
+    """, "<none>", -1)
+
     fun testMethodTwoArg() = checkByText<RsMethodCallExpr>("""
         struct S;
         impl S {
@@ -48,7 +54,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             let s = S;
             S::foo(s, <caret>0);
         }    //^
-    """, "arg:", 0)
+    """, "arg:", 1)
 
     fun testLetDecl() = checkByText<RsLetDecl>("""
         struct S;
@@ -60,10 +66,14 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
 
     inline private fun <reified T : PsiElement> checkByText(@Language("Rust") code: String, hint: String, pos: Int) {
         myFixture.configureByText("main.rs", code)
-        val handler = RsInlayParameterHintsProvider()
         val target = findElementInEditor<T>("^")
-        val inlays = handler.getParameterHints(target)
-        Assertions.assertThat(inlays[pos].text).isEqualTo(hint)
-        Assertions.assertThat(inlays[pos].offset).isEqualTo(myFixture.editor.caretModel.offset)
+        val inlays = RsInlayParameterHintsProvider().getParameterHints(target)
+        if (pos != -1) {
+            check(pos < inlays.size) {
+                "Expected at least ${pos + 1} hints, got ${inlays.map { it.text }}"
+            }
+            Assertions.assertThat(inlays[pos].text).isEqualTo(hint)
+            Assertions.assertThat(inlays[pos].offset).isEqualTo(myFixture.editor.caretModel.offset)
+        }
     }
 }

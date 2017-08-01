@@ -9,11 +9,15 @@ import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMethodCallExpr
 import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.ext.selfParameter
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.type
 
-class CallInfo private constructor(val parameters: List<Parameter>) {
+class CallInfo private constructor(
+    val selfParameter: String?,
+    val parameters: List<Parameter>
+) {
     class Parameter(val pattern: String, val type: String)
 
     companion object {
@@ -32,10 +36,12 @@ class CallInfo private constructor(val parameters: List<Parameter>) {
     }
 
     private constructor(fn: RsFunction) : this(
+        fn.selfParameter?.text,
         fn.valueParameters.map { Parameter(it.pat?.text ?: "_", it.typeReference?.text ?: "?") }
     )
 
     private constructor(fn: TyFunction) : this(
+        null,
         fn.paramTypes.map { Parameter("_", it.toString()) }
     )
 }

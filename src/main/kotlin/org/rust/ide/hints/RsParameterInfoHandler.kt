@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsMethodCallExpr
 import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.utils.buildList
 
 /**
  * Provides functions/methods arguments hint.
@@ -139,10 +140,13 @@ class RsArgumentsDescription(
                 is RsMethodCallExpr -> CallInfo.resolve(call)
                 else -> null
             } ?: return null
-            val params = callInfo.parameters
-                .map { "${it.pattern}: ${it.type}" }
-                .toTypedArray()
-            return RsArgumentsDescription(params)
+            val params = buildList<String> {
+                if (callInfo.selfParameter != null && call is RsCallExpr) {
+                    add(callInfo.selfParameter)
+                }
+                addAll(callInfo.parameters.map { "${it.pattern}: ${it.type}" })
+            }
+            return RsArgumentsDescription(params.toTypedArray())
         }
     }
 }

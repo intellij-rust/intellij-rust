@@ -145,6 +145,16 @@ class RsParameterInfoHandlerTest : RsTestBase() {
         }
     """, "text: &'static str, count: u16, l: f64", 2)
 
+    fun `test method with explicit self`() = checkByText("""
+        struct S;
+        impl S { fn foo(self, arg: u32) {} }
+
+        fn main() {
+            let s = S;
+            S::foo(s, 0<caret>);
+        }
+    """, "self, arg: u32", 1)
+
     fun testNotArgs1() = checkByText("""
         fn foo() {}
         fn main() { fo<caret>o(); }
