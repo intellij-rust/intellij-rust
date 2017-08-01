@@ -36,28 +36,17 @@ val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.val
 private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
 private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
 
-private val RsTraitItem.isAnyFnTrait: Boolean get() = langAttribute == "fn"
-    || langAttribute == "fn_once"
-    || langAttribute == "fn_mut"
-
-private val RsTraitItem.singleTypeParam: TyTypeParameter? get() =
+private val RsTraitItem.typeParamSingle: TyTypeParameter? get() =
     typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
-
-val RsTraitItem.fnOutputParam: TyTypeParameter? get() {
-    if (!isAnyFnTrait) return null
-    return findFreshAssociatedType(this, "Output")
-}
-
-private val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
-    val param = element.singleTypeParam ?: return null
-    val outputParam = element.fnOutputParam ?: return null
-    val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
-    val outputType = (subst[outputParam] ?: TyUnit)
-    return TyFunction(argumentTypes, outputType)
-}
 
 class ImplLookup(private val project: Project, private val items: StdKnownItems) {
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
+    private val fnTraits by lazy {
+        listOf("fn", "fn_mut", "fn_once").mapNotNull { RsLangItemIndex.findLangItem(project, it) }
+    }
+    val fnOutputParam by lazy {
+        RsLangItemIndex.findLangItem(project, "fn_once")?.let { findFreshAssociatedType(it, "Output") }
+    }
 
     fun findImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
         if (ty is TyTypeParameter) {
@@ -71,14 +60,13 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
             is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy
             is TyFunction -> {
                 val params = TyTuple(ty.paramTypes)
-                listOf("fn", "fn_mut", "fn_once")
-                    .mapNotNull { RsLangItemIndex.findLangItem(project, it) }
-                    .map {
-                        val subst = mutableMapOf<TyTypeParameter, Ty>()
-                        findFreshAssociatedType(it, "Output")?.let { subst.put(it, ty.retType) }
-                        it.singleTypeParam?.let { subst.put(it, params) }
-                        BoundElement(it, subst)
-                    }
+                val fnOutputSubst = fnOutputParam?.let { mapOf(it to ty.retType) } ?: emptySubstitution
+                fnTraits.map {
+                    val subst = mutableMapOf<TyTypeParameter, Ty>()
+                    subst.putAll(fnOutputSubst)
+                    it.typeParamSingle?.let { subst.put(it, params) }
+                    BoundElement(it, subst)
+                }
             }
             is TyUnknown -> emptyList()
             else -> {
@@ -109,12 +97,12 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
                         // libcore/cmp.rs
                         if (ty != TyUnit) {
                             RsLangItemIndex.findLangItem(project, "eq")?.let {
-                                impls.add(BoundElement(it, it.singleTypeParam?.let { mapOf(it to ty) } ?: emptySubstitution))
+                                impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
                             }
                         }
                         if (ty != TyUnit && ty != TyBool) {
                             RsLangItemIndex.findLangItem(project, "ord")?.let {
-                                impls.add(BoundElement(it, it.singleTypeParam?.let { mapOf(it to ty) } ?: emptySubstitution))
+                                impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
                             }
                         }
                         if (ty !is TyFloat) {
@@ -257,6 +245,14 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     fun asTyFunction(ty: Ty): TyFunction? {
         return ty as? TyFunction ?:
             (findImplsAndTraits(ty).mapNotNull { it.downcast<RsTraitItem>()?.asFunctionType }.firstOrNull())
+    }
+
+    private val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
+        val outputParam = fnOutputParam ?: return null
+        val param = element.typeParamSingle ?: return null
+        val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
+        val outputType = (subst[outputParam] ?: TyUnit)
+        return TyFunction(argumentTypes, outputType)
     }
 
     companion object {

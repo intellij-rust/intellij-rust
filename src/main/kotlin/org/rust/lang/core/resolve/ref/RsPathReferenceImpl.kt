@@ -11,9 +11,9 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
-import org.rust.lang.core.resolve.fnOutputParam
 import org.rust.lang.core.resolve.processPathResolveVariants
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
@@ -28,7 +28,10 @@ class RsPathReferenceImpl(
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
-        val result = collectResolveVariants(element.referenceName) { processPathResolveVariants(element, false, it) }
+        val lookup = ImplLookup.relativeTo(element)
+        val result = collectResolveVariants(element.referenceName) {
+            processPathResolveVariants(lookup, element, false, it)
+        }
 
         val typeArguments: List<Ty>? = run {
             val inAngles = element.typeArgumentList
@@ -53,7 +56,7 @@ class RsPathReferenceImpl(
                         .mapNotNull { it.type as? TyTypeParameter }
                         .associateBy { it }
 
-                    val outputParam = element.fnOutputParam
+                    val outputParam = lookup.fnOutputParam
                     return@run aliases + if (outputArg != null && outputParam != null) {
                         mapOf(outputParam to outputArg)
                     } else {
@@ -74,7 +77,7 @@ class RsPathReferenceImpl(
     }
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processPathResolveVariants(element, true, it) }
+        collectCompletionVariants { processPathResolveVariants(ImplLookup.relativeTo(element), element, true, it) }
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()
