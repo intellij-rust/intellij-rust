@@ -20,12 +20,7 @@ import org.rust.lang.core.psi.ext.queryAttributes
 class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
         if (element.elementType != IDENTIFIER) return null
-        val parent = element.parent
-        val state = when {
-            parent is RsFunction && parent.isTest -> "Run Test"
-            parent is RsModItem && parent.queryAttributes.hasAttributeWithArg("cfg", "test") -> "Run Tests"
-            else -> return null
-        }
+        val state = element.parent.testName() ?: return null
         return Info(
             AllIcons.RunConfigurations.TestState.Run,
             Function<PsiElement, String> { state },

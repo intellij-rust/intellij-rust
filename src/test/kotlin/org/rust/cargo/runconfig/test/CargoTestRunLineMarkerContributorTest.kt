@@ -13,15 +13,15 @@ import org.rust.ide.annotator.RsLineMarkerProviderTestBase
 class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     fun `test simple function`() = doTestByText("""
         #[test]
-        fn has_icon() {assert(true)} // - Run Test
+        fn has_icon() {assert(true)} // - Test has_icon
 
         fn no_icon() {assert(true)}
     """)
 
     fun `test function in a module`() = doTestByText("""
-        mod module {
+        mod module { // - Test module
             #[test]
-            fn has_icon() {assert(true)} // - Run Test
+            fn has_icon() {assert(true)} // - Test module::has_icon
 
             fn no_icon() {assert(true)}
         }
@@ -29,9 +29,19 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
 
     fun `test function in a test module`() = doTestByText("""
         #[cfg(test)]
-        mod test { // - Run Tests
+        mod test { // - Test lib::test
             #[test]
-            fn has_icon() {assert(true)} // - Run Test
+            fn has_icon() {assert(true)} // - Test test::has_icon
+
+            fn no_icon() {assert(true)}
+        }
+    """)
+
+    fun `test function in a tests module`() = doTestByText("""
+        #[cfg(test)]
+        mod tests { // - Test lib::tests
+            #[test]
+            fn has_icon() {assert(true)} // - Test tests::has_icon
 
             fn no_icon() {assert(true)}
         }

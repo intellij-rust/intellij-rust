@@ -70,25 +70,41 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
 
     private fun findTestFunction(location: Location<*>): TestConfig? {
         val fn = location.psiElement.parentOfType<RsFunction>(strict = false) ?: return null
+        val testName = fn.testName() ?: return null
         val name = fn.crateRelativePath.configPath() ?: return null
         val target = fn.containingCargoTarget ?: return null
-        return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
+        return TestConfig(fn, testName, name, target)
     }
 
     private fun findTestMod(location: Location<*>): TestConfig? {
         val mod = location.psiElement.parentOfType<RsMod>(strict = false) ?: return null
-        val testName = if (mod.modName == "test" || mod.modName == "tests")
-            "Test ${mod.`super`?.modName}::${mod.modName}"
-        else
-            "Test ${mod.modName}"
+        val testName = mod.testName() ?: return null
 
         val testPath = mod.crateRelativePath.configPath() ?: ""
         val target = mod.containingCargoTarget ?: return null
-        if (!mod.functionList.any { it.isTest }) return null
 
         return TestConfig(mod, testName, testPath, target)
     }
 }
+
+fun PsiElement.testName(): String? {
+    return when (this) {
+        is RsMod -> {
+            if (!functionList.any { it.isTest }) return null
+            if (modName == "test" || modName == "tests")
+                "Test ${`super`?.modName}::$modName"
+            else
+                "Test $modName"
+        }
+        is RsFunction -> {
+            if (!isTest) return null
+            val name = crateRelativePath.configPath() ?: return null
+            "Test $name"
+        }
+        else -> null
+    }
+}
+
 
 // We need to chop off heading colon `::`, since `crateRelativePath`
 // always returns fully-qualified path
