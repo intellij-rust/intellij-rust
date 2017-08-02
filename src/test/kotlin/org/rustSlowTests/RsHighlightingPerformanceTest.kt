@@ -14,7 +14,6 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.RustWithToolchainTestBase
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.utils.fullyRefreshDirectory
 import kotlin.system.measureTimeMillis
 
@@ -24,14 +23,20 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
     // measuring CPU performance
     override fun isPerformanceTest(): Boolean = false
 
-    fun `test highlighting Cargo`() {
-        val base = openRealProject("testData/cargo")
+    fun `test highlighting Cargo`() =
+        highlightProjectFile("cargo", "https://github.com/rust-lang/cargo", "src/cargo/core/resolver/mod.rs")
+
+    fun `test highlighting mysql_async`() =
+        highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/conn/mod.rs")
+
+    private fun highlightProjectFile(name: String, gitUrl: String, filePath: String) {
+        val base = openRealProject("testData/$name")
         if (base == null) {
-            println("SKIP $name: clone Cargo to testData")
+            println("SKIP $name: git clone $gitUrl testData/$name")
             return
         }
 
-        myFixture.configureFromTempProjectFile("src/cargo/core/resolver/mod.rs")
+        myFixture.configureFromTempProjectFile(filePath)
 
         val modificationCount = currentPsiModificationCount()
         val resolve = measureTimeMillis {
@@ -58,7 +63,7 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
         PsiModificationTracker.SERVICE.getInstance(project).modificationCount
 
     private fun openRealProject(path: String): VirtualFile? {
-        val projectDir = LocalFileSystem.getInstance().findFileByPath(path)
+        val projectDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
             ?: return null
         runWriteAction {
             VfsUtil.copyDirectory(
