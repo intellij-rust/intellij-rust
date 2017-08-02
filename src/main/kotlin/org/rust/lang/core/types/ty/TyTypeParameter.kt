@@ -48,7 +48,13 @@ class TyTypeParameter private constructor(
         val ty = subst[this] ?: TyUnknown
         if (ty !is TyUnknown) return ty
         if (parameter is AssociatedType) {
-            return associated(parameter.type.substitute(subst), parameter.trait, parameter.target)
+            val oldType = parameter.type
+            val newType = if (oldType is TyTypeParameter && oldType.parameter is Self) {
+                oldType.substitute(subst)
+            } else {
+                oldType
+            }
+            return associated(newType, parameter.trait, parameter.target)
         }
         return TyTypeParameter(parameter, bounds.map { it.substitute(subst) })
     }
