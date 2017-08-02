@@ -5,10 +5,7 @@
 
 package org.rust.ide.utils
 
-import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMethodCallExpr
-import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.selfParameter
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.types.ty.TyFunction
@@ -30,7 +27,7 @@ class CallInfo private constructor(
             return null
         }
 
-        fun resolve(methodCall: RsMethodCallExpr): CallInfo? {
+        fun resolve(methodCall: RsMethodCall): CallInfo? {
             return (methodCall.reference.resolve() as? RsFunction)?.let { CallInfo(it) }
         }
     }

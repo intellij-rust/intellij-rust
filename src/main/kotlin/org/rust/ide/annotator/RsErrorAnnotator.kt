@@ -53,7 +53,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitVis(o: RsVis) = checkVis(holder, o)
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
-            override fun visitMethodCallExpr(o: RsMethodCallExpr) = checkMethodCallExpr(holder, o)
+            override fun visitMethodCall(o: RsMethodCall) = checkMethodCallExpr(holder, o)
             override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnaryExpr(holder, o)
             override fun visitExternCrateItem(o: RsExternCrateItem) = checkExternCrate(holder, o)
         }
@@ -61,10 +61,10 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         element.accept(visitor)
     }
 
-    private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCallExpr) {
+    private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCall) {
         val fn = o.reference.resolve() as? RsFunction ?: return
         if (fn.isUnsafe) {
-            checkUnsafeCall(holder, o)
+            checkUnsafeCall(holder, o.parentDotExpr)
         }
     }
 
@@ -267,7 +267,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val parent = args.parent
         val (expectedCount, variadic) = when (parent) {
             is RsCallExpr -> parent.expectedParamsCount()
-            is RsMethodCallExpr -> parent.expectedParamsCount()
+            is RsMethodCall -> parent.expectedParamsCount()
             else -> null
         } ?: return
 
@@ -435,7 +435,7 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     }
 }
 
-private fun RsMethodCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
+private fun RsMethodCall.expectedParamsCount(): Pair<Int, Boolean>? {
     val fn = reference.resolve() as? RsFunction ?: return null
     if (fn.queryAttributes.hasCfgAttr()) return null
     val variadic = fn.valueParameterList?.dotdotdot != null

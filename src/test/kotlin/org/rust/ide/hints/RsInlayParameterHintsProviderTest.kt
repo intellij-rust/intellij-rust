@@ -10,8 +10,9 @@ import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsLetDecl
-import org.rust.lang.core.psi.RsMethodCallExpr
+import org.rust.lang.core.psi.RsMethodCall
 
 
 class RsInlayParameterHintsProviderTest : RsTestBase() {
@@ -34,7 +35,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
                     //^
     """, "<none>", -1)
 
-    fun testMethodTwoArg() = checkByText<RsMethodCallExpr>("""
+    fun testMethodTwoArg() = checkByText<RsMethodCall>("""
         struct S;
         impl S {
             fn foo(self, arg: u32, arg2: u32) {}

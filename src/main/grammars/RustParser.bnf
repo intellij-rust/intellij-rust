@@ -827,8 +827,7 @@ BlockExpr ::= [ unsafe &'{' ] SimpleBlock
 private AtomExpr ::= LitExpr
                     | MacroExpr
                     | StructLiteral
-                    | MethodCallExpr
-                    | FieldExpr
+                    | DotExpr
                     | IndexExpr
                     | PathExpr !'('
                     | CallExpr
@@ -954,19 +953,20 @@ IndexExpr ::= Expr IndexArg
 private IndexArg ::= '[' Expr ']'
 
 CallExpr ::= Expr !<<isCompleteBlockExpr>> ValueArgumentList
-
-MethodCallExpr ::= Expr '.' identifier ColonTypeArgumentList? ValueArgumentList {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsMethodCallExprImplMixin"
-}
-
 ValueArgumentList ::= '(' <<comma_separated_list AnyExpr>>? ')' { pin = 1 }
 
-FieldId ::= identifier | INTEGER_LITERAL
+DotExpr ::= Expr '.'  MethodOrField
 
-FieldExpr ::= Expr '.' FieldId {
+private MethodOrField ::= () (MethodCall | FieldLookup) { pin = 1}
+
+FieldLookup ::= identifier | INTEGER_LITERAL {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsFieldExprImplMixin"
+  mixin = "org.rust.lang.core.psi.ext.RsFieldLookupImplMixin"
+}
+
+MethodCall ::= identifier ColonTypeArgumentList? ValueArgumentList {
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsMethodCallImplMixin"
 }
 
 LitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL

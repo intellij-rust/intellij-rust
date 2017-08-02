@@ -15,10 +15,10 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
-            override fun visitMethodCallExpr(call: RsMethodCallExpr) {
-                val fn = call.reference.resolve() as? RsFunction ?: return
-                if (checkMethodRequiresMutable(call, fn)) {
-                    registerProblem(holder, call.expr, call.expr)
+            override fun visitMethodCall(o: RsMethodCall) {
+                val fn = o.reference.resolve() as? RsFunction ?: return
+                if (checkMethodRequiresMutable(o, fn)) {
+                    registerProblem(holder, o.parentDotExpr.expr, o.parentDotExpr.expr)
                 }
             }
 
@@ -35,8 +35,8 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", *fix)
     }
 
-    private fun checkMethodRequiresMutable(o: RsMethodCallExpr, fn: RsFunction): Boolean {
-        if (!o.expr.isMutable &&
+    private fun checkMethodRequiresMutable(o: RsMethodCall, fn: RsFunction): Boolean {
+        if (!o.parentDotExpr.expr.isMutable &&
             fn.selfParameter != null &&
             fn.selfParameter?.isMut ?: false &&
             fn.selfParameter?.isRef ?: false) {

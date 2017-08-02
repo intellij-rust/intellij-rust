@@ -36,8 +36,8 @@ class RsFmtBlock(
         val sharedAlignment = when (node.elementType) {
             in FN_DECLS -> Alignment.createAlignment()
             VALUE_PARAMETER_LIST -> ctx.sharedAlignment
-            METHOD_CALL_EXPR ->
-                if (node.treeParent.elementType == METHOD_CALL_EXPR)
+            DOT_EXPR ->
+                if (node.treeParent.elementType == DOT_EXPR)
                     ctx.sharedAlignment
                 else
                     Alignment.createAlignment()
@@ -70,7 +70,7 @@ class RsFmtBlock(
         // In other words: foo().bar().baz() => foo().baz()[.baz()]
         // We are using dot as our representative.
         // The idea is nearly copy-pasted from Kotlin's formatter.
-        if (node.elementType == METHOD_CALL_EXPR) {
+        if (node.elementType == DOT_EXPR) {
             val dotIndex = children.indexOfFirst { it.node.elementType == DOT }
             if (dotIndex != -1) {
                 val dotBlock = children[dotIndex]

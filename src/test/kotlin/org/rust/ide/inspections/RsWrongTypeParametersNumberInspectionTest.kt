@@ -81,7 +81,7 @@ class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongT
         fn main() {
             let x = Test;
 
-            <error descr="Wrong number of type parameters: expected 0, found 1 [E0035]">x.method::<i32>()</error>;
+            x.<error descr="Wrong number of type parameters: expected 0, found 1 [E0035]">method::<i32>()</error>;
         }
     """)
 
@@ -95,7 +95,7 @@ class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongT
         fn main() {
             let x = Test;
 
-            <error>x.method<caret>::<i32>()</error>;
+            x.<error>method<caret>::<i32>()</error>;
         }
     """, """
         struct Test;
@@ -123,8 +123,8 @@ class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongT
             let x = Test;
             let v = &[0];
 
-            <error descr="Wrong number of type parameters: expected 1, found 2 [E0036]">x.method::<i32, i32>(v)</error>;
-            <error descr="Wrong number of type parameters: expected at most 2, found 3 [E0036]">x.method_more::<i32, i32, i32>(v)</error>;
+            x.<error descr="Wrong number of type parameters: expected 1, found 2 [E0036]">method::<i32, i32>(v)</error>;
+            x.<error descr="Wrong number of type parameters: expected at most 2, found 3 [E0036]">method_more::<i32, i32, i32>(v)</error>;
             x.method(v);
             x.method_more(v);
         }

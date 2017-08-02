@@ -68,7 +68,7 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
                 override fun visitRetExpr(o: RsRetExpr) = addOccurrence(o)
 
                 override fun visitTryExpr(o: RsTryExpr) {
-                    (o.expr as? RsMethodCallExpr)?.acceptChildren(this)
+                    o.expr.acceptChildren(this)
                     addOccurrence(o.q)
                 }
 

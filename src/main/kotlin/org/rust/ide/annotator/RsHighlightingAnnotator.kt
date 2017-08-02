@@ -93,7 +93,7 @@ private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
         is RsFunctionOwner.Trait, is RsFunctionOwner.Impl->
             if (element.isAssocFn) RsColor.ASSOC_FUNCTION else RsColor.METHOD
     }
-    is RsMethodCallExpr -> RsColor.METHOD
+    is RsMethodCall -> RsColor.METHOD
     is RsModDeclItem -> RsColor.MODULE
     is RsModItem -> RsColor.MODULE
     is RsPatBinding -> when {
@@ -137,7 +137,7 @@ private fun partToHighlight(element: RsCompositeElement): TextRange? {
         is RsExternCrateItem -> element.identifier
         is RsFieldDecl -> element.identifier
         is RsFunction -> element.identifier
-        is RsMethodCallExpr -> element.identifier
+        is RsMethodCall -> element.referenceNameElement
         is RsModDeclItem -> element.identifier
         is RsModItem -> element.identifier
         is RsPatBinding -> element.identifier

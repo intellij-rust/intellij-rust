@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsMethodCallExpr
+import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.utils.buildList
@@ -32,7 +32,7 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
     override fun getParametersForLookup(item: LookupElement, context: ParameterInfoContext?): Array<out Any>? {
         val el = item.`object` as? PsiElement ?: return null
         val p = el.parent?.parent ?: return null
-        val isCall = p is RsCallExpr && CallInfo.resolve(p) != null || p is RsMethodCallExpr && CallInfo.resolve(p) != null
+        val isCall = p is RsCallExpr && CallInfo.resolve(p) != null || p is RsMethodCall && CallInfo.resolve(p) != null
         return if (isCall) arrayOf(p) else emptyArray()
     }
 
@@ -137,7 +137,7 @@ class RsArgumentsDescription(
             val call = args.parent
             val callInfo = when (call) {
                 is RsCallExpr -> CallInfo.resolve(call)
-                is RsMethodCallExpr -> CallInfo.resolve(call)
+                is RsMethodCall -> CallInfo.resolve(call)
                 else -> null
             } ?: return null
             val params = buildList<String> {

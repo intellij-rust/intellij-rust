@@ -8,18 +8,20 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsMethodCallExpr
+import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.parentDotExpr
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.receiver
 
-class UnwrapToTryIntention : RsElementBaseIntentionAction<RsMethodCallExpr>() {
+class UnwrapToTryIntention : RsElementBaseIntentionAction<RsMethodCall>() {
     override fun getText() = "Replace .unwrap() with try"
     override fun getFamilyName() = text
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMethodCallExpr? {
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMethodCall? {
         val methodCall = element
-            .parentOfType<RsMethodCallExpr>(strict = false) ?: return null
-        if (methodCall.identifier.textMatches("unwrap") &&
+            .parentOfType<RsMethodCall>(strict = false) ?: return null
+        if (methodCall.referenceName == "unwrap" &&
             methodCall.typeArgumentList == null &&
             methodCall.valueArgumentList.exprList.isEmpty()) {
             return methodCall
@@ -27,8 +29,8 @@ class UnwrapToTryIntention : RsElementBaseIntentionAction<RsMethodCallExpr>() {
         return null
     }
 
-    override fun invoke(project: Project, editor: Editor, ctx: RsMethodCallExpr) {
-        val tryElement = RsPsiFactory(project).createTryExpression(ctx.expr)
-        ctx.replace(tryElement)
+    override fun invoke(project: Project, editor: Editor, ctx: RsMethodCall) {
+        val tryElement = RsPsiFactory(project).createTryExpression(ctx.receiver)
+        ctx.parentDotExpr.replace(tryElement)
     }
 }

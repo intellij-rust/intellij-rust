@@ -24,6 +24,20 @@ class RsFormatterTest : RsFormatterTestBase() {
         doTest()
     }
 
+    fun `test align incomplete chain`() = doTextTest("""
+        fn main() {
+            frobnicate()
+                .foo()
+            .
+        }
+    """, """
+        fn main() {
+            frobnicate()
+                .foo()
+                .
+        }
+    """)
+
     fun testAlignParamsOff() {
         common().ALIGN_MULTILINE_PARAMETERS = false
         doTest()
