@@ -11,10 +11,7 @@ import com.intellij.codeInsight.hints.InlayParameterHintsProvider
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.CallInfo
-import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsLetDecl
-import org.rust.lang.core.psi.RsMethodCall
-import org.rust.lang.core.psi.RsPatIdent
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -60,7 +57,7 @@ enum class HintType(desc: String, enabled: Boolean) {
                     }
                 }
                 return hints
-                    .filter { (hint, arg) -> !hint.endsWith(arg.text) }
+                    .filter { (hint, arg) -> !arg.text.endsWith(hint) }
                     .map { (hint, arg) -> InlayInfo("$hint:", arg.textRange.startOffset) }
             }
             return hints.map { (hint, arg) -> InlayInfo("$hint:", arg.textRange.startOffset) }
@@ -76,8 +73,8 @@ enum class HintType(desc: String, enabled: Boolean) {
             return false
         }
 
-        override fun isApplicable(elem: PsiElement): Boolean
-            = elem is RsCallExpr || elem is RsMethodCall
+        override fun isApplicable(elem: PsiElement): Boolean =
+            elem is RsCallExpr || elem is RsMethodCall
     },
     LAMBDA_PARAMETER_HINT("Show lambda parameter type hints", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
@@ -109,6 +106,7 @@ enum class HintType(desc: String, enabled: Boolean) {
 
     abstract fun isApplicable(elem: PsiElement): Boolean
     abstract fun provideHints(elem: PsiElement): List<InlayInfo>
+
     val option = Option("SHOW_${this.name}", desc, enabled)
     val enabled get() = option.get()
     val smart get() = SMART_HINTING.get()

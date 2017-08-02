@@ -32,7 +32,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
 
     fun `test arg out of bounds`() = checkByText<RsCallExpr>("""
         fn foo(arg: u32) {}
-        fn main() { foo(0, <caret>1); }
+        fn main() { foo(0, /*caret*/1); }
                     //^
     """, "<none>", -1)
 
@@ -73,7 +73,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         } //^
     """, "arg2:", 0)
 
-    fun `test smart hint method start with set`() = checkNoHint<RsMethodCallExpr>("""
+    fun `test smart hint method start with set`() = checkNoHint<RsMethodCall>("""
         struct S;
         impl S {
             fn set_foo(self, arg: u32) {}
@@ -81,7 +81,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s = S;
             s.set_foo(1);
-        } //^
+        }     //^
     """)
 
     fun `test smart hint self call start with set`() = checkNoHint<RsCallExpr>("""
@@ -103,7 +103,15 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         } //^
     """)
 
-    fun `test smart hint same method name and single parameter`() = checkNoHint<RsMethodCallExpr>("""
+    fun `test smart hint parameter name and ref input`() = checkNoHint<RsCallExpr>("""
+        fn foo(arg: &u32) {}
+        fn main() {
+            let arg = 0;
+            foo(&arg);
+        } //^
+    """)
+
+    fun `test smart hint same method name and single parameter`() = checkNoHint<RsMethodCall>("""
         struct S;
         impl S {
             fn foo(self, foo: u32) {}
@@ -123,6 +131,16 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             let s = S;
             S::foo(s, 10);
         }    //^
+    """)
+
+    fun `test smart should not annotate tuples`() = checkNoHint<RsCallExpr>("""
+        enum Option<T> {
+            Some(T),
+            None
+        }
+        fn main() {
+            let s = Option::Some(10);
+        }                      //^
     """)
 
     fun `test lamdba type hint`() = checkByText<RsLambdaExpr>("""
