@@ -193,6 +193,46 @@ class RsClosuresResolveTest : RsResolveTestBase() {
         }
     """)
 
+    // This test failed with OOME due to the bug in associated types inference
+    fun `test futures example`() = checkByCode("""
+        fn foo<F: Future>(f: F) {
+            f.and_then(|x| x).and_then(|x| x).and_then(|x| x)
+        }                                   //^
+
+        trait Future {
+            type Item;
+            type Error;
+
+            fn and_then<F, B>(self, f: F) -> AndThen<Self, B, F>
+                //X
+                where F: FnOnce(Self::Item) -> B,
+                      B: IntoFuture<Error = Self::Error>,
+                      Self: Sized,
+            { unimplemented!() }
+        }
+
+        pub trait IntoFuture {
+            type Future: Future<Item=Self::Item, Error=Self::Error>;
+            type Item;
+            type Error;
+
+            fn into_future(self) -> Self::Future;
+        }
+
+        pub struct AndThen<A, B, F> where A: Future, B: IntoFuture {
+            state: (A, B::Future, F)
+        }
+
+        impl<A, B, F> Future for AndThen<A, B, F>
+            where A: Future,
+                  B: IntoFuture<Error=A::Error>,
+                  F: FnOnce(A::Item) -> B,
+        {
+            type Item = B::Item;
+            type Error = B::Error;
+        }
+    """)
+
     fun `test infer generic parameter from lambda return type`() = checkByCode("""
         struct X;
         impl X { fn foo(&self) {} }
