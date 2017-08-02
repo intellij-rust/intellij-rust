@@ -51,7 +51,7 @@ fun RsExpr.isPure(): Boolean? {
             else -> null // Have to search if operation is overloaded
         }
         is RsTupleExpr -> exprList.allMaybe(RsExpr::isPure)
-        is RsFieldExpr -> expr.isPure()
+        is RsDotExpr -> if (methodCall != null) null else expr.isPure()
         is RsParenExpr -> expr.isPure()
         is RsBreakExpr, is RsContExpr, is RsRetExpr, is RsTryExpr -> false   // Changes execution flow
         is RsPathExpr, is RsLitExpr, is RsUnitExpr -> true
@@ -67,7 +67,6 @@ fun RsExpr.isPure(): Boolean? {
         is RsLoopExpr,
         is RsMacroExpr,
         is RsMatchExpr,
-        is RsMethodCallExpr,
         is RsRangeExpr,
         is RsUnaryExpr, // May be overloaded
         is RsWhileExpr -> null

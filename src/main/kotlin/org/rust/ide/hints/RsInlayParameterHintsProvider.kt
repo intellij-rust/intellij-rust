@@ -11,7 +11,10 @@ import com.intellij.codeInsight.hints.InlayParameterHintsProvider
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.CallInfo
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsLetDecl
+import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.utils.buildList
@@ -35,7 +38,7 @@ enum class HintType(desc: String, enabled: Boolean) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val (callInfo, valueArgumentList) = when (elem) {
                 is RsCallExpr -> (CallInfo.resolve(elem) to elem.valueArgumentList)
-                is RsMethodCallExpr -> (CallInfo.resolve(elem) to elem.valueArgumentList)
+                is RsMethodCall -> (CallInfo.resolve(elem) to elem.valueArgumentList)
                 else -> return emptyList()
             }
             if (callInfo == null) return emptyList()
@@ -52,7 +55,7 @@ enum class HintType(desc: String, enabled: Boolean) {
         }
 
         override fun isApplicable(elem: PsiElement): Boolean
-            = elem is RsCallExpr || elem is RsMethodCallExpr
+            = elem is RsCallExpr || elem is RsMethodCall
     };
 
     companion object {

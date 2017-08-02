@@ -26,12 +26,12 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
             }
 
             override fun visitCallExpr(o: RsCallExpr) = checkMethod(holder, o)
-            override fun visitMethodCallExpr(o: RsMethodCallExpr) = checkMethod(holder, o)
+            override fun visitMethodCall(o: RsMethodCall) = checkMethod(holder, o)
         }
 
     private fun checkMethod(holder: ProblemsHolder, o: RsCompositeElement) {
         val (actualArguments, declaration) = when (o) {
-            is RsMethodCallExpr ->
+            is RsMethodCall ->
                 o.typeArgumentList  to o.reference.resolve()
 
             is RsCallExpr ->
@@ -50,7 +50,7 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
 
         val data = when(o) {
             is RsBaseType -> checkBaseType(nArguments, expectedRequiredParams, expectedTotalParams)
-            is RsMethodCallExpr -> checkMethodCallExpr(nArguments, expectedRequiredParams, expectedTotalParams)
+            is RsMethodCall -> checkMethodCall(nArguments, expectedRequiredParams, expectedTotalParams)
             is RsCallExpr -> checkCallExpr(nArguments, expectedRequiredParams, expectedTotalParams)
             else -> null
         } ?: return
@@ -76,7 +76,7 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
         return ProblemData(expectedText, code, expectedTotalParams == 0)
     }
 
-    private fun checkMethodCallExpr(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
+    private fun checkMethodCall(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
         val (code, expectedText) = when {
             actualArgs != 0 && expectedTotalParams == 0 ->
                 ("E0035" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedRequiredParams" else "$expectedTotalParams")

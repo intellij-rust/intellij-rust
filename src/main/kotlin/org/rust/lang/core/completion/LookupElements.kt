@@ -107,7 +107,7 @@ private val InsertionContext.isInUseBlock: Boolean
 
 private val InsertionContext.alreadyHasCallParens: Boolean get() {
     val parent = file.findElementAt(startOffset)!!.parentOfType<RsExpr>()
-    return (parent is RsMethodCallExpr) || parent?.parent is RsCallExpr
+    return (parent is RsDotExpr && parent.methodCall != null) || parent?.parent is RsCallExpr
 }
 
 private val InsertionContext.alreadyHasPatternParens: Boolean get() {

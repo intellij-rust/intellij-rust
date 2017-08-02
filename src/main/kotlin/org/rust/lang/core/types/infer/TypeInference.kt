@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
-import org.rust.lang.core.resolve.ref.resolveFieldExprReferenceWithReceiverType
+import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -135,8 +135,15 @@ private class RsFnInferenceContext(
         is RsUnitExpr -> TyUnit
         is RsCastExpr -> expr.typeReference.type
         is RsCallExpr -> inferCallExprType(expr)
-        is RsMethodCallExpr -> inferMethodCallExprType(expr)
-        is RsFieldExpr -> inferFieldExprType(expr)
+        is RsDotExpr -> {
+            val methodCall = expr.methodCall
+            val fieldLookup = expr.fieldLookup
+            when {
+                methodCall != null -> inferMethodCallExprType(methodCall)
+                fieldLookup != null ->inferFieldExprType(fieldLookup)
+                else -> TyUnknown
+            }
+        }
         is RsLitExpr -> inferLiteralExprType(expr)
         is RsBlockExpr -> expr.block.ty
         is RsIfExpr -> if (expr.elseBranch == null) TyUnit else (expr.block?.ty ?: TyUnknown)
@@ -184,9 +191,9 @@ private class RsFnInferenceContext(
         return calleeType.retType.substitute(mapTypeParameters(calleeType.paramTypes, expr.valueArgumentList.exprList))
     }
 
-    private fun inferMethodCallExprType(expr: RsMethodCallExpr): Ty {
-        val receiver = expr.expr.ty
-        val (method, subst) = resolveMethodCallReferenceWithReceiverType(lookup, receiver, expr)
+    private fun inferMethodCallExprType(methodCall: RsMethodCall): Ty {
+        val receiver = methodCall.receiver.ty
+        val (method, subst) = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
             .firstOrNull()?.downcast<RsFunction>() ?: return TyUnknown
 
         val returnType = (method.retType?.typeReference?.type ?: TyUnit)
@@ -195,15 +202,16 @@ private class RsFnInferenceContext(
 
         val methodType = method.type as? TyFunction ?: return returnType
         // drop first element of paramTypes because it's `self` param
-        // and it doesn't have value in `expr.valueArgumentList.exprList`
-        return returnType.substitute(mapTypeParameters(methodType.paramTypes.drop(1), expr.valueArgumentList.exprList))
+        // and it doesn't have value in `methodCall.valueArgumentList.exprList`
+        return returnType.substitute(mapTypeParameters(methodType.paramTypes.drop(1), methodCall.valueArgumentList.exprList))
     }
 
-    private fun inferFieldExprType(expr: RsFieldExpr): Ty {
-        val boundField = resolveFieldExprReferenceWithReceiverType(lookup, expr.expr.ty, expr).firstOrNull()
+    private fun inferFieldExprType(fieldLookup: RsFieldLookup): Ty {
+        val receiver = fieldLookup.receiver
+        val boundField = resolveFieldLookupReferenceWithReceiverType(lookup, receiver.ty, fieldLookup).firstOrNull()
         if (boundField == null) {
-            val type = expr.expr.ty as? TyTuple ?: return TyUnknown
-            val fieldIndex = expr.fieldId.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
+            val type = receiver.ty as? TyTuple ?: return TyUnknown
+            val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
             return type.types.getOrElse(fieldIndex) { TyUnknown }
         }
         val field = boundField.element
@@ -359,8 +367,8 @@ private class RsFnInferenceContext(
         val callExpr = parent.parent
         val containingFunctionType = when (callExpr) {
             is RsCallExpr -> callExpr.expr.ty
-            is RsMethodCallExpr -> {
-                val fn = resolveMethodCallReferenceWithReceiverType(lookup, callExpr.expr.ty, callExpr)
+            is RsMethodCall -> {
+                val fn = resolveMethodCallReferenceWithReceiverType(lookup, callExpr.receiver.ty, callExpr)
                     .firstOrNull()
                     ?.downcast<RsFunction>()
                     ?: return fallback
@@ -370,7 +378,7 @@ private class RsFnInferenceContext(
         } as? TyFunction
             ?: return fallback
 
-        val lambdaArgumentPosition = parent.exprList.indexOf(lambdaExpr) + (if (callExpr is RsMethodCallExpr) 1 else 0)
+        val lambdaArgumentPosition = parent.exprList.indexOf(lambdaExpr) + (if (callExpr is RsMethodCall) 1 else 0)
 
         val param = containingFunctionType.paramTypes.getOrNull(lambdaArgumentPosition)
             ?: return fallback

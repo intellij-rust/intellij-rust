@@ -6,41 +6,72 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMethodCallExpr
+import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.collectCompletionVariants
-import org.rust.lang.core.resolve.collectResolveVariants
-import org.rust.lang.core.resolve.processMethodCallExprResolveVariants
+import org.rust.lang.core.psi.ext.parentDotExpr
+import org.rust.lang.core.psi.ext.receiver
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
 
+
 class RsMethodCallReferenceImpl(
-    element: RsMethodCallExpr
-) : RsReferenceBase<RsMethodCallExpr>(element),
+    element: RsMethodCall
+) : RsReferenceBase<RsMethodCall>(element),
     RsReference {
 
-    override val RsMethodCallExpr.referenceAnchor: PsiElement get() = referenceNameElement
+    override val RsMethodCall.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processMethodCallExprResolveVariants(ImplLookup.relativeTo(element), element.expr.type, it) }
+    override fun getVariants(): Array<out Any> {
+        val lookup = ImplLookup.relativeTo(element)
+        return collectCompletionVariants { processMethodCallExprResolveVariants(lookup, element.receiver.type, it) }
+    }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
-        resolveMethodCallReferenceWithReceiverType(ImplLookup.relativeTo(element), element.expr.type, element)
+    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
+        val receiverType = element.parentDotExpr.expr.type
+        val lookup = ImplLookup.relativeTo(element)
+        return resolveMethodCallReferenceWithReceiverType(lookup, receiverType, element)
+    }
+}
+
+class RsFieldLookupReferenceImpl(
+    element: RsFieldLookup
+) : RsReferenceBase<RsFieldLookup>(element),
+    RsReference {
+
+    override val RsFieldLookup.referenceAnchor: PsiElement get() = referenceNameElement
+
+    override fun getVariants(): Array<out Any> {
+        val lookup = ImplLookup.relativeTo(element)
+        return collectCompletionVariants { processFieldExprResolveVariants(lookup, element.receiver.type, true, it) }
+    }
+
+    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
+        val receiverType = element.parentDotExpr.expr.type
+        val lookup = ImplLookup.relativeTo(element)
+        return resolveFieldLookupReferenceWithReceiverType(lookup, receiverType, element)
+    }
+
+    override fun handleElementRename(newName: String): PsiElement {
+        val ident = element.identifier
+        if (ident != null) doRename(ident, newName)
+        return element
+    }
 }
 
 fun resolveMethodCallReferenceWithReceiverType(
     lookup: ImplLookup,
     receiverType: Ty,
-    element: RsMethodCallExpr
-):List<BoundElement<RsCompositeElement>> {
-    val result = collectResolveVariants(element.referenceName) {
+    methodCall: RsMethodCall
+): List<BoundElement<RsCompositeElement>> {
+    val result = collectResolveVariants(methodCall.referenceName) {
         processMethodCallExprResolveVariants(lookup, receiverType, it)
     }
-    val typeArguments = element.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
+    val typeArguments = methodCall.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
     if (typeArguments.isEmpty()) return result
 
     return result.map { boundElement ->
@@ -56,3 +87,15 @@ fun resolveMethodCallReferenceWithReceiverType(
         }
     }
 }
+
+fun resolveFieldLookupReferenceWithReceiverType(
+    lookup: ImplLookup,
+    receiverType: Ty,
+    expr: RsFieldLookup
+): List<BoundElement<RsCompositeElement>> {
+    return collectResolveVariants(expr.referenceName) {
+        processFieldExprResolveVariants(lookup, receiverType, false, it)
+    }
+}
+
+

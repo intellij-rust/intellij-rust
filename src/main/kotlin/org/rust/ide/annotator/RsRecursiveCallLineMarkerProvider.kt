@@ -13,10 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.FunctionUtil
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMethodCallExpr
-import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.parentOfType
 import java.util.*
 
@@ -55,7 +52,7 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
     private val PsiElement.isRecursive: Boolean get() {
         val def = when (this) {
             is RsCallExpr -> pathExpr?.path?.reference?.resolve()
-            is RsMethodCallExpr -> reference.resolve()
+            is RsMethodCall -> reference.resolve()
             else -> null
         } ?: return false
 

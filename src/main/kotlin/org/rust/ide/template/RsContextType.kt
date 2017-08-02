@@ -58,10 +58,10 @@ sealed class RsContextType(
             if (parent is RsPath && parent.coloncolon != null) return false
 
             // foo.element
-            if (parent is RsFieldId) return false
+            if (parent is RsFieldLookup) return false
 
             // foo.element()
-            if (parent is RsMethodCallExpr) return false
+            if (parent is RsMethodCall) return false
 
             return true
         }

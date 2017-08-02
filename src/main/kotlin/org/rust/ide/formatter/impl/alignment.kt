@@ -60,7 +60,7 @@ fun RsFmtBlock.getAlignmentStrategy(): RsAlignmentStrategy = when (node.elementT
             .alignIf { c, p, x -> x.metLBrace && !c.isBlockDelim(p) }
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS)
 
-    METHOD_CALL_EXPR ->
+    DOT_EXPR ->
         RsAlignmentStrategy.shared()
             .alignIf(DOT) // DOT is synthetic's block representative
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_CHAINED_METHODS)
