@@ -5,6 +5,7 @@
 
 package org.rust.ide.formatter
 
+import org.intellij.lang.annotations.Language
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.RsLanguage
 
@@ -104,10 +105,29 @@ class RsFormatterTest : RsFormatterTestBase() {
     fun testIssue569() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/569
 
     // https://github.com/intellij-rust/intellij-rust/issues/543
-    fun testIssue543a() = doTest()
+    fun testIssue543a() = checkNotChanged("""
+        pub type TeraResult<T> = Result<T, TeraError>;
+    """)
 
-    fun testIssue543b() = doTest()
-    fun testIssue543c() = doTest()
+    fun testIssue543b() = checkNotChanged("""
+        impl_rdp! {
+            grammar! {
+                expression = _{ paren ~ expression? }
+                paren      =  { ["("] ~ expression? ~ [")"] }
+            }
+        }
+    """)
+
+    fun testIssue543c() = checkNotChanged("""
+        fn main() {
+            if previous_end < token.start {
+                space_tokens.push((
+                    insert_at,
+                    Token::new(Rule::text, previous_end, token.start)
+                ));
+            }
+        }
+    """)
 
     fun testElse() = doTest()
 
@@ -277,43 +297,19 @@ class RsFormatterTest : RsFormatterTestBase() {
         fn main() { if let -10 ... -1 = -8 {} }
     """)
 
-    // https://internals.rust-lang.org/t/syntax-of-block-like-expressions-in-match-arms/5025
-    fun `test removes commas in match arms with blocks`() = doTextTest("""
-        fn main() {
-            match x {
-                1 => 1,
-                2 => { 2 }
-                3 => { 3 }
-                4 => loop {},
-                5 => 5,
-                6 => if true {} else {},
-                7 => 7
-            }
-        }
-    """, """
-        fn main() {
-            match x {
-                1 => 1,
-                2 => { 2 }
-                3 => { 3 }
-                4 => loop {},
-                5 => 5,
-                6 => if true {} else {},
-                7 => 7
-            }
-        }
-    """)
-
     fun `test preserve punctuation settings`() {
         custom().PRESERVE_PUNCTUATION = true
-        doTextTest("""
+
+        // don't accidentally blow commas away with ctrl+shift+l
+        @Language("Text")
+        val code = """
             use foo::{bar};
 
             fn main() {
                 let _ = S { foo: 1, bar: 2, };
                 match x {
                     1 => 1,
-                    2 => { 2 }
+                    2 => { 2 },
                     3 => { 3 }
                     4 => loop {},
                     5 => 5,
@@ -322,75 +318,8 @@ class RsFormatterTest : RsFormatterTestBase() {
                 }
                 return
             }
-        """, """
-            use foo::{bar};
-
-            fn main() {
-                let _ = S { foo: 1, bar: 2, };
-                match x {
-                    1 => 1,
-                    2 => { 2 }
-                    3 => { 3 }
-                    4 => loop {},
-                    5 => 5,
-                    6 => if true {} else {},
-                    7 => 7
-                }
-                return
-            }
-        """)
-    }
-
-    fun `test adds semicolon after return statement`() {
-        doTextTest("""
-            fn main() {
-                return
-            }
-
-            fn foo() {
-                return /* comment */
-            }
-
-            fn bar() {
-                let mut vector = match iterator.next() {
-                    None => return Vec::new(),
-                    Some(element) => {}
-                };
-            }
-        """, """
-            fn main() {
-                return;
-            }
-
-            fn foo() {
-                return; /* comment */
-            }
-
-            fn bar() {
-                let mut vector = match iterator.next() {
-                    None => return Vec::new(),
-                    Some(element) => {}
-                };
-            }
-        """)
-    }
-
-    fun `test adds semicolon after return statement with value`() {
-        doTextTest("""
-            fn foo() -> i32 {
-                if true {
-                    return 92
-                }
-                62
-            }
-        """, """
-            fn foo() -> i32 {
-                if true {
-                    return 92;
-                }
-                62
-            }
-        """)
+        """
+        checkNotChanged(code)
     }
 
     fun `test extern block`() = doTextTest("""
