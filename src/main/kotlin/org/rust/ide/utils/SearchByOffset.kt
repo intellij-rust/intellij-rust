@@ -96,7 +96,7 @@ fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Arra
 /**
  * Finds two edge leaf PSI elements within given range.
  */
-private fun PsiFile.getElementRange(startOffset: Int, endOffset: Int): Pair<PsiElement, PsiElement>? {
+fun PsiFile.getElementRange(startOffset: Int, endOffset: Int): Pair<PsiElement, PsiElement>? {
     val element1 = findElementAtIgnoreWhitespaceBefore(startOffset) ?: return null
     val element2 = findElementAtIgnoreWhitespaceAfter(endOffset - 1) ?: return null
 
@@ -110,7 +110,7 @@ private fun PsiFile.getElementRange(startOffset: Int, endOffset: Int): Pair<PsiE
  * Finds a leaf PSI element at the specified offset from the start of the text range of this node.
  * If found element is whitespace, returns its next non-whitespace sibling.
  */
-private fun PsiFile.findElementAtIgnoreWhitespaceBefore(offset: Int): PsiElement? {
+fun PsiFile.findElementAtIgnoreWhitespaceBefore(offset: Int): PsiElement? {
     val element = findElementAt(offset)
     if (element is PsiWhiteSpace) {
         return findElementAt(element.getTextRange().endOffset)
@@ -122,7 +122,7 @@ private fun PsiFile.findElementAtIgnoreWhitespaceBefore(offset: Int): PsiElement
  * Finds a leaf PSI element at the specified offset from the start of the text range of this node.
  * If found element is whitespace, returns its previous non-whitespace sibling.
  */
-private fun PsiFile.findElementAtIgnoreWhitespaceAfter(offset: Int): PsiElement? {
+fun PsiFile.findElementAtIgnoreWhitespaceAfter(offset: Int): PsiElement? {
     val element = findElementAt(offset)
     if (element is PsiWhiteSpace) {
         return findElementAt(element.getTextRange().startOffset - 1)
