@@ -6,6 +6,7 @@
 package org.rust.cargo.runconfig.test
 
 import com.intellij.execution.Location
+import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
@@ -17,12 +18,8 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.containingCargoTarget
-import org.rust.lang.core.psi.ext.isTest
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.*
 
 class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 
@@ -52,59 +49,46 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         return true
     }
 
-    private class TestConfig(
-        val sourceElement: RsCompositeElement,
-        val configurationName: String,
-        testPath: String,
-        target: CargoWorkspace.Target
-    ) {
-        val cargoCommandLine: CargoCommandLine = CargoCommandLine(
-            CargoConstants.Commands.TEST,
-            target.cargoArgumentSpeck + testPath
-        )
-    }
 
-    private fun findTest(location: Location<*>): TestConfig? =
-        findTestFunction(location)
-            ?: findTestMod(location)
+    companion object {
+        private fun findTest(location: Location<*>): TestConfig? =
+            findTestFunction(location)
+                ?: findTestMod(location)
 
-    private fun findTestFunction(location: Location<*>): TestConfig? {
-        val fn = location.psiElement.parentOfType<RsFunction>(strict = false) ?: return null
-        val testName = fn.testName() ?: return null
-        val name = fn.crateRelativePath.configPath() ?: return null
-        val target = fn.containingCargoTarget ?: return null
-        return TestConfig(fn, testName, name, target)
-    }
+        fun findTestFunction(location: Location<*>): TestConfig? {
+            val fn = location.psiElement.parentOfType<RsFunction>(strict = false) ?: return null
+            val name = fn.crateRelativePath.configPath() ?: return null
+            val target = fn.containingCargoTarget ?: return null
+            return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
+        }
 
-    private fun findTestMod(location: Location<*>): TestConfig? {
-        val mod = location.psiElement.parentOfType<RsMod>(strict = false) ?: return null
-        val testName = mod.testName() ?: return null
+        fun findTestMod(location: Location<*>): TestConfig? {
+            val mod = location.psiElement.parentOfType<RsMod>(strict = false) ?: return null
 
-        val testPath = mod.crateRelativePath.configPath() ?: ""
-        val target = mod.containingCargoTarget ?: return null
-
-        return TestConfig(mod, testName, testPath, target)
-    }
-}
-
-fun PsiElement.testName(): String? {
-    return when (this) {
-        is RsMod -> {
-            if (!functionList.any { it.isTest }) return null
-            if (modName == "test" || modName == "tests")
-                "Test ${`super`?.modName}::$modName"
+            val testName = if (mod.modName == "test" || mod.modName == "tests")
+                "Test ${mod.`super`?.modName}::${mod.modName}"
             else
-                "Test $modName"
+                "Test ${mod.modName}"
+            val testPath = mod.crateRelativePath.configPath() ?: ""
+            val target = mod.containingCargoTarget ?: return null
+            if (!mod.functionList.any { it.isTest }) return null
+
+            return TestConfig(mod, testName, testPath, target)
         }
-        is RsFunction -> {
-            if (!isTest) return null
-            val name = crateRelativePath.configPath() ?: return null
-            "Test $name"
-        }
-        else -> null
     }
 }
 
+class TestConfig(
+    val sourceElement: RsCompositeElement,
+    val configurationName: String,
+    testPath: String,
+    target: CargoWorkspace.Target
+) {
+    val cargoCommandLine: CargoCommandLine = CargoCommandLine(
+        CargoConstants.Commands.TEST,
+        target.cargoArgumentSpeck + testPath
+    )
+}
 
 // We need to chop off heading colon `::`, since `crateRelativePath`
 // always returns fully-qualified path
