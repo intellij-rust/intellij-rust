@@ -1,4 +1,4 @@
-/*
+    /*
  * Use of this source code is governed by the MIT license that can be
  * found in the LICENSE file.
  */
@@ -22,7 +22,12 @@ abstract class RsFormatterTestBase : FormatterTestCase() {
     }
 
     override fun doTextTest(@Language("Rust") text: String, @Language("Rust") textAfter: String) {
+        check(text.trimIndent() != textAfter.trimIndent())
         super.doTextTest(text.trimIndent(), textAfter.trimIndent())
+    }
+
+    fun checkNotChanged(@Language("Rust") text: String) {
+        super.doTextTest(text.trimIndent(), text.trimIndent())
     }
 
 }

@@ -15,8 +15,25 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
     fun testAll() = doTest()
     fun testTraits() = doTest()
 
-    fun testBlocks() = doTest()
-    fun testBlocks2() = doTest()
+    fun testBlocks() = doTextTest("""
+        fn main() {
+            let foo = { foo(123, 456,
+                            789) };
+        }
+    """, """
+        fn main() {
+            let foo = {
+                foo(123, 456,
+                    789)
+            };
+        }
+    """)
+
+    fun testBlocks2() = checkNotChanged("""
+        fn main() {
+            let foo = { foo(123, 456, 789) };
+        }
+    """)
 
     fun `test multiline blocks`() = doTextTest("""
         struct S1 { f: i32 }
