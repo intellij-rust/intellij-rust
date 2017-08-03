@@ -12,6 +12,7 @@ import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.type
 
 class CallInfo private constructor(
+    val methodName: String?,
     val selfParameter: String?,
     val parameters: List<Parameter>
 ) {
@@ -33,11 +34,13 @@ class CallInfo private constructor(
     }
 
     private constructor(fn: RsFunction) : this(
+        fn.name,
         fn.selfParameter?.text,
         fn.valueParameters.map { Parameter(it.pat?.text ?: "_", it.typeReference?.text ?: "?") }
     )
 
     private constructor(fn: TyFunction) : this(
+        null,
         null,
         fn.paramTypes.map { Parameter("_", it.toString()) }
     )
