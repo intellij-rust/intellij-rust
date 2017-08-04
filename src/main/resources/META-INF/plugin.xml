@@ -83,6 +83,9 @@
 
         <lang.documentationProvider language="Rust" implementationClass="org.rust.ide.docs.RsDocumentationProvider"/>
 
+        <lang.implementationTextSelectioner language="Rust"
+                                            implementationClass="org.rust.ide.hints.RsImplementationTextSelectioner"/>
+
         <!-- Structure View -->
 
         <lang.psiStructureViewFactory language="Rust"
