@@ -20,10 +20,10 @@ import org.rust.lang.core.stubs.RsNamedStub
 
 interface RsNamedElement : RsCompositeElement, PsiNamedElement, NavigatablePsiElement
 
+interface RsNameIdentifierOwner : RsNamedElement, PsiNameIdentifierOwner
 
 abstract class RsNamedElementImpl(node: ASTNode) : RsCompositeElementImpl(node),
-                                                   RsNamedElement,
-                                                   PsiNameIdentifierOwner {
+                                                   RsNameIdentifierOwner {
 
     override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)
 
@@ -34,15 +34,11 @@ abstract class RsNamedElementImpl(node: ASTNode) : RsCompositeElementImpl(node),
         return this
     }
 
-    override fun getNavigationElement(): PsiElement = nameIdentifier ?: this
-
     override fun getTextOffset(): Int = nameIdentifier?.textOffset ?: super.getTextOffset()
 }
 
-
 abstract class RsStubbedNamedElementImpl<StubT> : RsStubbedElementImpl<StubT>,
-                                                  RsNamedElement,
-                                                  PsiNameIdentifierOwner
+                                                  RsNameIdentifierOwner
 where StubT : RsNamedStub, StubT : StubElement<*> {
 
     constructor(node: ASTNode) : super(node)
@@ -61,8 +57,6 @@ where StubT : RsNamedStub, StubT : StubElement<*> {
         nameIdentifier?.replace(RsPsiFactory(project).createIdentifier(name))
         return this
     }
-
-    override fun getNavigationElement(): PsiElement = nameIdentifier ?: this
 
     override fun getTextOffset(): Int = nameIdentifier?.textOffset ?: super.getTextOffset()
 

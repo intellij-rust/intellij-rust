@@ -12,4 +12,4 @@ package org.rust.lang.core.psi.ext
  * Typical residents are: [org.rust.lang.core.psi.RsStructItem],
  * [org.rust.lang.core.psi.RsEnumItem], [org.rust.lang.core.psi.RsFunction], etc.
  */
-interface RsTypeBearingItemElement : RsItemElement, RsNamedElement
+interface RsTypeBearingItemElement : RsItemElement, RsNameIdentifierOwner
