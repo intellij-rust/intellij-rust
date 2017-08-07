@@ -220,7 +220,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     val containingMod = path.containingMod
     val crateRoot = path.crateRoot
     if (!path.hasColonColon) {
-        if (Namespace.Types in ns && containingMod != null) {
+        if (Namespace.Types in ns) {
             if (processor("self", containingMod)) return true
             val superMod = containingMod.`super`
             if (superMod != null) {
