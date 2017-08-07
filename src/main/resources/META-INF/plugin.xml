@@ -96,6 +96,7 @@
         <!-- Usages Provider -->
 
         <lang.findUsagesProvider language="Rust" implementationClass="org.rust.ide.search.RsFindUsagesProvider"/>
+        <usageTypeProvider implementation="org.rust.ide.search.RsUsageTypeProvider" />
 
         <!-- Smart Enter Processor -->
         <lang.smartEnterProcessor language="Rust"
