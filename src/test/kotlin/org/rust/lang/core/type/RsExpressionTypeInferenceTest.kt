@@ -587,6 +587,17 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/1584
+    fun `test tuple reference field`() = testExpr("""
+        fn main() {
+            let a: (u32, u32) = (0, 0);
+            let v = &a;
+            let i = v.1;
+            i;
+          //^ u32
+        }
+    """)
+
 
     fun `test associated types for impl`() = testExpr("""
         trait A {

@@ -210,9 +210,13 @@ private class RsFnInferenceContext(
         val receiver = fieldLookup.receiver
         val boundField = resolveFieldLookupReferenceWithReceiverType(lookup, receiver.ty, fieldLookup).firstOrNull()
         if (boundField == null) {
-            val type = receiver.ty as? TyTuple ?: return TyUnknown
-            val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
-            return type.types.getOrElse(fieldIndex) { TyUnknown }
+            for (type in lookup.derefTransitively(receiver.ty)) {
+                if (type is TyTuple) {
+                    val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
+                    return type.types.getOrElse(fieldIndex) { TyUnknown }
+                }
+            }
+            return TyUnknown
         }
         val field = boundField.element
         val raw = when (field) {
