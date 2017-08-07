@@ -15,8 +15,8 @@
         </context>
     </template>
 
-    <template name="pd" description="debug println! value" toReformat="true" toShortenFQNames="true"
-              value="println!(&quot;$EXPRESSION_COPY$ = {:?}&quot;, $EXPRESSION$);">
+    <template name="pd" description="debug eprintln! value" toReformat="true" toShortenFQNames="true"
+              value="eprintln!(&quot;$EXPRESSION_COPY$ = {:?}&quot;, $EXPRESSION$);">
         <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
         <variable name="EXPRESSION_COPY" expression="EXPRESSION" defaultValue="" alwaysStopAt="true"/>
         <context>
@@ -24,8 +24,8 @@
         </context>
     </template>
 
-    <template name="ppd" description="debug pretty println! value" toReformat="true" toShortenFQNames="true"
-              value="println!(&quot;$EXPRESSION_COPY$ = {:#?}&quot;, $EXPRESSION$);">
+    <template name="ppd" description="debug pretty eprintln! value" toReformat="true" toShortenFQNames="true"
+              value="eprintln!(&quot;$EXPRESSION_COPY$ = {:#?}&quot;, $EXPRESSION$);">
         <variable name="EXPRESSION" expression="" defaultValue="" alwaysStopAt="true"/>
         <variable name="EXPRESSION_COPY" expression="EXPRESSION" defaultValue="" alwaysStopAt="true"/>
         <context>
