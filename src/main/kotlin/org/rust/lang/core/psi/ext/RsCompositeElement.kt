@@ -15,19 +15,17 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.resolve.ref.RsReference
 
 interface RsCompositeElement : PsiElement {
     override fun getReference(): RsReference?
+
+    /**
+     * Find parent module *in this file*. See [RsMod.super]
+     */
+    val containingMod: RsMod
 }
 
-val RsCompositeElement.containingMod: RsMod?
-    get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
-
-val RsModDeclItem.containingMod: RsMod
-    get() = (this as RsCompositeElement).containingMod
-        ?: error("Rust mod decl outside of a module")
 
 val RsCompositeElement.crateRoot: RsMod? get() {
     return if (this is RsFile) {
@@ -52,6 +50,10 @@ val RsCompositeElement.containingCargoPackage: CargoWorkspace.Package? get() = c
 
 abstract class RsCompositeElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsCompositeElement {
     override fun getReference(): RsReference? = null
+
+    override val containingMod: RsMod
+        get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
+            ?: error("Element outside of module: $text")
 }
 
 abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>, RsCompositeElement {
@@ -61,6 +63,10 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getReference(): RsReference? = null
+
+    override val containingMod: RsMod
+        get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
+            ?: error("Element outside of module: $text")
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }

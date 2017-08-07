@@ -22,7 +22,7 @@ object RustPsiImplUtil {
 
     fun crateRelativePath(element: RsNamedElement): String? {
         val name = element.name ?: return null
-        val qualifier = element.containingMod?.crateRelativePath ?: return null
+        val qualifier = element.containingMod.crateRelativePath ?: return null
         return "$qualifier::$name"
     }
 

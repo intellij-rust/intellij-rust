@@ -34,6 +34,7 @@ class RsFile(
     RsInnerAttributeOwner {
 
     override fun getReference(): RsReference? = null
+    override val containingMod: RsMod get() = this
 
     override fun getFileType(): FileType = RsFileType
 

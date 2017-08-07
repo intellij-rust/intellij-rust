@@ -32,7 +32,7 @@ val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 val RsTraitItem.isStdDerivable: Boolean get() {
     val derivableTrait = STD_DERIVABLE_TRAITS[name] ?: return false
     return containingCargoPackage?.origin == PackageOrigin.STDLIB &&
-        containingMod?.modName == derivableTrait.modName
+        containingMod.modName == derivableTrait.modName
 }
 
 val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {

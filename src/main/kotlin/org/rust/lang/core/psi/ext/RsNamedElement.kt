@@ -65,7 +65,4 @@ where StubT : RsNamedStub, StubT : StubElement<*> {
         return PresentationData(
             name, "(in ${mod.qualifiedName ?: mod.modName})", getIcon(0), null)
     }
-
-    val containingMod: RsMod get() = (this as RsCompositeElement).containingMod
-        ?: error("Rust inner element outside of the module")
 }

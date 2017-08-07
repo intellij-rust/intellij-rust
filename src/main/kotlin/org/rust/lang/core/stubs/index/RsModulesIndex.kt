@@ -14,7 +14,6 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.PathUtil
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.ext.containingMod
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.pathAttribute
 import org.rust.lang.core.stubs.RsFileStub

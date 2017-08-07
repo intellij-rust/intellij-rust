@@ -13,7 +13,6 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.lang.core.psi.ext.containingMod
 import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.utils.findWithCache
@@ -34,7 +33,7 @@ class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
                     .mapNotNull { it as? RsTraitItem }
                     .filter { e ->
                         if (stdTrait == null) return@filter true
-                        e.containingCargoPackage?.origin == PackageOrigin.STDLIB && e.containingMod?.modName == stdTrait.modName
+                        e.containingCargoPackage?.origin == PackageOrigin.STDLIB && e.containingMod.modName == stdTrait.modName
                     }
             }
     }

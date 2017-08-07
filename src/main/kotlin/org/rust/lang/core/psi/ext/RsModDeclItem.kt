@@ -17,7 +17,6 @@ import org.rust.lang.core.psi.RustPsiImplUtil
 import org.rust.lang.core.resolve.ref.RsModReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsModDeclItemStub
-import java.io.File
 import javax.swing.Icon
 
 fun RsModDeclItem.getOrCreateModuleFile(): PsiFile? {
