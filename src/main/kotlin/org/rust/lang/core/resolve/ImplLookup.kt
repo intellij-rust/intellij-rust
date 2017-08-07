@@ -34,7 +34,6 @@ val StdDerivableTrait.withDependencies: List<StdDerivableTrait> get() = listOf(t
 
 val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.values().associate { it.name to it }
 
-private val RsTraitItem.isDeref: Boolean get() = langAttribute == "deref"
 private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
 
 private val RsTraitItem.typeParamSingle: TyTypeParameter? get() =
@@ -48,6 +47,10 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     }
     val fnOutputParam by lazy(NONE) {
         RsLangItemIndex.findLangItem(project, "fn_once")?.let { findFreshAssociatedType(it, "Output") }
+    }
+    private val derefTraitAndTarget: Pair<RsTraitItem, TyTypeParameter>? = run {
+        val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
+        findFreshAssociatedType(trait, "Target")?.let { trait to it }
     }
 
     fun findImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
@@ -181,14 +184,13 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return result
     }
 
+    private fun findImplOfTrait(ty: Ty, trait: RsTraitItem): BoundElement<RsTraitOrImpl>? =
+        findImplsAndTraits(ty).find { it.element.implementedTrait?.element == trait }
+
     private fun findDerefTarget(ty: Ty): Ty? {
-        for ((impl, subst) in findImplsAndTraits(ty)) {
-            val trait = impl.implementedTrait ?: continue
-            if (!trait.element.isDeref) continue
-            return lookupAssociatedType(impl, "Target")
-                .substitute(subst)
-        }
-        return null
+        val (derefTrait, derefTarget) = derefTraitAndTarget ?: return null
+        val (_, subst) = findImplOfTrait(ty, derefTrait) ?: return null
+        return subst[derefTarget]
     }
 
     fun findIteratorItemType(ty: Ty): Ty {
