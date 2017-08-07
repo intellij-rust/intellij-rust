@@ -49,8 +49,6 @@ abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
     override val referenceNameElement: PsiElement get() = nameIdentifier!!
     override val referenceName: String get() = name!!
 
-    override fun getNavigationElement(): PsiElement = identifier
-
     override fun getIcon(flags: Int) = when {
         isArg && isMut -> RsIcons.MUT_ARGUMENT
         isArg -> RsIcons.ARGUMENT

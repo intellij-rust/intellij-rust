@@ -336,7 +336,7 @@ private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     return op.operatorType is ComparisonOp
 }
 
-private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, scope: PsiElement = element.parent, recursively: Boolean = false) {
+private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierOwner, scope: PsiElement = element.parent, recursively: Boolean = false) {
     val owner = if (scope is RsMembers) scope.parent else scope
     val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
     val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
@@ -360,7 +360,7 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNamedElement, s
         }
     }
 
-    holder.createErrorAnnotation(element.navigationElement, message)
+    holder.createErrorAnnotation(element.nameIdentifier ?: element, message)
 }
 
 
