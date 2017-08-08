@@ -40,12 +40,12 @@ class RsLookupElementTest : RsTestBase() {
     """, tailText = "(&self, x: i32) of T", typeText = "()")
 
     fun testConsItem() = check("""
-        const c: S = unimplemented!();
+        const C: S = unimplemented!();
             //^
     """, typeText = "S")
 
     fun testStaticItem() = check("""
-        static c: S = unimplemented!();
+        static C: S = unimplemented!();
              //^
     """, typeText = "S")
 
