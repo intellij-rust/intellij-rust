@@ -42,12 +42,3 @@ fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommand
     configuration.cargoCommandLine = cargoCommandLine
     return runnerAndConfigurationSettings
 }
-
-
-// BACKCOMPAT: 2016.3
-// See https://youtrack.jetbrains.com/issue/KT-17090
-@Suppress("UNCHECKED_CAST")
-fun getExecutorActions(order: Int): Array<AnAction> =
-    ExecutorAction::class.java.getMethod("getActions", Integer.TYPE)
-        .invoke(null, order) as Array<AnAction>
-

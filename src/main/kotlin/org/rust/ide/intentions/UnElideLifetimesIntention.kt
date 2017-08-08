@@ -51,8 +51,6 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
 
     private val nameGenerator = generateSequence(0) { it + 1 }.map {
         val abcSize = 'z' - 'a' + 1
-        // BACKCOMPAT: 2016.3
-        @Suppress("DEPRECATED_BINARY_MOD_AS_REM")
         val letter = 'a' + it % abcSize
         val index = it / abcSize
         return@map if (index == 0) "'$letter" else "'$letter$index"

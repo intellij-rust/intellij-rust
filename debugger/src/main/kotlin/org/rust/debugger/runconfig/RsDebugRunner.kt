@@ -177,9 +177,7 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                         }
                     }
 
-                    //BACKCOMPAT: 2016.3
-                    @Suppress("OverridingDeprecatedMember")
-                    override fun onError(error: Exception) {
+                    override fun onThrowable(error: Throwable) {
                         promise.setResult(null)
                     }
                 }.queue()
