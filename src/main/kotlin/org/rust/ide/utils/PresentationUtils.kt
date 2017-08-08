@@ -24,13 +24,7 @@ class PresentationInfo(
         location = element.containingFile?.let { " [${it.name}]" }.orEmpty()
     }
 
-    val typeNameText: String get() = if (type == null) {
-        name
-    } else "$type `$name`"
-
     val projectStructureItemText: String get() = "$name${declaration.suffix}"
-
-    val projectStructureItemTextWithValue: String get() = "$projectStructureItemText${declaration.value}"
 
     val shortSignatureText = "<b>$name</b>${declaration.suffix.escaped}"
     val signatureText: String = "${declaration.prefix}$shortSignatureText"
@@ -97,7 +91,7 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
             else if (mName != null) return PresentationInfo(this, "mod", name.substringBeforeLast(".rs"), DeclarationInfo("mod "))
             else Pair("file", DeclarationInfo())
         }
-        else -> Pair(javaClass.simpleName, createDeclarationInfo(this, navigationElement, true))
+        else -> Pair(javaClass.simpleName, createDeclarationInfo(this, (this as RsNameIdentifierOwner)?.nameIdentifier, true))
     }
     return declInfo.second?.let { PresentationInfo(this, declInfo.first, elementName, it) }
 }
@@ -109,7 +103,13 @@ val RsDocAndAttributeOwner.presentableQualifiedName: String? get() {
     return name
 }
 
-private fun createDeclarationInfo(decl: RsCompositeElement, name: PsiElement?, isAmbiguous: Boolean, stopAt: List<PsiElement?> = emptyList(), valueSeparator: PsiElement? = null): DeclarationInfo? {
+private fun createDeclarationInfo(
+    decl: RsCompositeElement,
+    name: PsiElement?,
+    isAmbiguous: Boolean,
+    stopAt: List<PsiElement?> = emptyList(),
+    valueSeparator: PsiElement? = null
+): DeclarationInfo? {
     // Break an element declaration into elements. For example:
     //
     // pub const Foo: u32 = 100;

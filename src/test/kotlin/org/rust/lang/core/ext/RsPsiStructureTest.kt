@@ -7,12 +7,10 @@ package org.rust.lang.core.ext
 
 import com.intellij.psi.PsiFileFactory
 import org.intellij.lang.annotations.Language
+import org.rust.ide.utils.presentationInfo
 import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 
@@ -83,6 +81,14 @@ class RsPsiStructureTest : RsTestBase() {
         ))
     }
 
+    fun `test extern crate presentation info`() = checkElement<RsExternCrateItem>("""
+        #[macro_use]
+        #[macro_reexport(vec, format)]
+        extern crate collections as core_collections;
+    """) {
+        val info = it.presentationInfo!!.signatureText
+        check(info == "extern crate <b>collections</b>")
+    }
 
     private inline fun <reified E : RsCompositeElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
         val element = PsiFileFactory.getInstance(project)
