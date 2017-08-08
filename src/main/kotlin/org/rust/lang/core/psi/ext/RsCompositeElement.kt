@@ -18,8 +18,6 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.ref.RsReference
 
 interface RsCompositeElement : PsiElement {
-    override fun getReference(): RsReference?
-
     /**
      * Find parent module *in this file*. See [RsMod.super]
      */
