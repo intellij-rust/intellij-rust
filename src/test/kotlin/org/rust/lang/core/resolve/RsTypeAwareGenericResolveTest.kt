@@ -587,4 +587,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             S2(S1).foo()
         }         //^
     """)
+
+    fun `test no stack overflow (issue 1578)`() = checkByCode("""
+        pub trait Rem<RHS=Self> {
+            type Output = Self;
+        }
+
+        struct S<A>(A);
+        impl<B: Rem> S<B> { fn foo(&self) {} }
+                             //X
+        fn foo<C: Rem>(t: C) {
+            S(t).foo()
+        }      //^
+    """)
 }

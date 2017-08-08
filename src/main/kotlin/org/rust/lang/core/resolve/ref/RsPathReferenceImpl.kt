@@ -53,7 +53,7 @@ class RsPathReferenceImpl(
             val assocTypes = run {
                 if (element is RsTraitItem) {
                     val aliases = element.associatedTypesTransitively
-                        .mapNotNull { it.type as? TyTypeParameter }
+                        .map { TyTypeParameter.associated(it) }
                         .associateBy { it }
 
                     val outputParam = lookup.fnOutputParam
