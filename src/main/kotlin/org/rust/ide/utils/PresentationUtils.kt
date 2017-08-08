@@ -139,8 +139,9 @@ private fun createDeclarationInfo(decl: RsCompositeElement, name: PsiElement?, i
 
     val nameEnd = nameStart + name.textLength
 
-    check(signatureStart <= nameStart && nameEnd <= valueStart
-        && valueStart <= end && end <= decl.textLength)
+    check(signatureStart <= nameStart && nameEnd <= valueStart && valueStart <= end && end <= decl.textLength) {
+        "Can't generate signature for `${decl.text}`"
+    }
 
     val prefix = decl.text.substring(signatureStart, nameStart).escaped
     val value = decl.text.substring(valueStart, end)
