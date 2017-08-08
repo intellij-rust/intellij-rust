@@ -5,10 +5,13 @@
 
 package org.rust.cargo.project.workspace
 
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StdLibType
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -19,8 +22,11 @@ import java.util.concurrent.atomic.AtomicReference
  * an IDEA module.
  */
 class CargoWorkspace private constructor(
-    val packages: Collection<Package>
-) {
+    val manifestPath: Path?,
+    val packages: Collection<Package>,
+    private val dataHolder: UserDataHolder = UserDataHolderBase()
+) : UserDataHolder by dataHolder {
+
 
     class Package(
         private val contentRootUrl: String,
@@ -135,13 +141,15 @@ class CargoWorkspace private constructor(
             pkg.dependencies.addAll(roots + packageFeatureGated)
         }
 
-        return CargoWorkspace(packages + roots)
+        return CargoWorkspace(manifestPath, packages + roots)
     }
 
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
+    val contentRoot: Path? = manifestPath?.parent
+
     companion object {
-        fun deserialize(data: CleanCargoMetadata): CargoWorkspace {
+        fun deserialize(manifestPath: Path?, data: CleanCargoMetadata): CargoWorkspace {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -190,7 +198,7 @@ class CargoWorkspace private constructor(
                 pkg.dependencies.addAll(depNode.dependenciesIndexes.map { packages[it] })
             }
 
-            return CargoWorkspace(packages)
+            return CargoWorkspace(manifestPath, packages)
         }
     }
 }

@@ -12,12 +12,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.module
+import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.parentOfType
 
 class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
@@ -64,21 +67,22 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
 
     companion object {
         fun isMainFunction(fn: RsFunction): Boolean {
-            val module = fn.module ?: return false
-            return fn.name == "main" && findBinaryTarget(module, fn.containingFile.virtualFile) != null
+            val ws = fn.cargoWorkspace ?: return false
+            return fn.name == "main" && findBinaryTarget(ws, fn.containingFile.virtualFile) != null
         }
 
         private fun findBinaryTarget(location: Location<*>): ExecutableTarget? {
-            val module = location.module ?: return null
             val file = location.virtualFile ?: return null
-            return findBinaryTarget(module, file)
+            val rsFile = PsiManager.getInstance(location.project).findFile(file) as? RsFile ?: return null
+            val ws = rsFile.cargoWorkspace ?: return null
+            return findBinaryTarget(ws, file)
         }
 
-        private fun findBinaryTarget(module: Module, file: VirtualFile): ExecutableTarget? {
+        private fun findBinaryTarget(ws: CargoWorkspace, file: VirtualFile): ExecutableTarget? {
             // TODO: specify workspace package here once
             // https://github.com/rust-lang/cargo/issues/3529
             // is fixed
-            val target = module.cargoWorkspace?.findTargetForCrateRootFile(file) ?: return null
+            val target = ws.findTargetForCrateRootFile(file) ?: return null
             return when {
                 target.isBin -> ExecutableTarget(target.name, "bin")
                 target.isExample -> ExecutableTarget(target.name, "example")

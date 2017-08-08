@@ -17,20 +17,6 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
 
-/**
- * Returns module for this PsiElement.
- *
- * If the element is in a library, returns the module which depends on
- * the library.
- */
-val PsiElement.module: Module?
-    get() {
-        // It's important to look the module for `containingFile` file
-        // and not the element itself. Otherwise this will break for
-        // elements in libraries.
-        return ModuleUtilCore.findModuleForPsiElement(containingFile)
-    }
-
 val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { it.parent }
 
 /**

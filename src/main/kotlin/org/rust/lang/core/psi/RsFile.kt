@@ -73,7 +73,7 @@ class RsFile(
 
     override val isCrateRoot: Boolean get() {
         val file = originalFile.virtualFile ?: return false
-        return module?.cargoWorkspace?.isCrateRoot(file) ?: false
+        return cargoWorkspace?.isCrateRoot(file) ?: false
     }
 
     override val innerAttrList: List<RsInnerAttr>

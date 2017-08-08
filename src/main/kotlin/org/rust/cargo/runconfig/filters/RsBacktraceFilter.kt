@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.runconfig.filters.RegexpFileLinkFilter.Companion.FILE_POSITION_RE
 import org.rust.lang.core.resolve.resolveStringPath
 import java.util.*
@@ -31,7 +32,7 @@ class RsBacktraceFilter(
     module: Module
 ) : Filter {
 
-    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at ${FILE_POSITION_RE}")
+    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
     private val backtraceItemFilter = RsBacktraceItemFilter(project, module)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
@@ -75,7 +76,8 @@ private class RsBacktraceItemFilter(
     }
 
     private fun extractFnHyperlink(funcName: String, start: Int, end: Int): Filter.ResultItem? {
-        val (element, pkg) = resolveStringPath(funcName, module) ?: return null
+        val workspace = module.cargoWorkspace ?: return null
+        val (element, pkg) = resolveStringPath(funcName, workspace, project) ?: return null
         val funcFile = element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
         val link = OpenFileHyperlinkInfo(project, funcFile.virtualFile, doc.getLineNumber(element.textOffset))

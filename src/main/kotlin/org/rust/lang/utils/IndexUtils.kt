@@ -20,7 +20,7 @@ inline fun <Key, reified Psi : PsiElement> getElements(indexKey: StubIndexKey<Ke
                                                        scope: GlobalSearchScope?): Collection<Psi> =
     StubIndex.getElements(indexKey, key, project, scope, Psi::class.java)
 
-inline fun <T, R> findWithCache(project: Project, target: T, find: () -> R): R {
+inline fun <T, R> findWithCache(project: Project, key: T, find: () -> R): R {
     val cache = CachedValuesManager.getManager(project)
         .getCachedValue(project, {
             CachedValueProvider.Result.create(
@@ -29,5 +29,5 @@ inline fun <T, R> findWithCache(project: Project, target: T, find: () -> R): R {
             )
         })
 
-    return cache.getOrPut(target) { find() }
+    return cache.getOrPut(key) { find() }
 }
