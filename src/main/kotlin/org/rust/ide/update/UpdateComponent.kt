@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.diagnostic.Logger
@@ -17,7 +18,6 @@ import com.intellij.openapi.editor.event.EditorFactoryAdapter
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.HttpRequests
@@ -92,7 +92,7 @@ class UpdateComponent : ApplicationComponent, Disposable {
             val plugin = PluginManager.getPlugin(PluginId.getId(PLUGIN_ID))!!
             val pluginId = plugin.pluginId.idString
             val os = URLEncoder.encode("${SystemInfo.OS_NAME} ${SystemInfo.OS_VERSION}", Charsets.UTF_8.name())
-            val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
+            val uid = PermanentInstallationID.get()
             val baseUrl = "https://plugins.jetbrains.com/plugins/list"
             return "$baseUrl?pluginId=$pluginId&build=$buildNumber&pluginVersion=${plugin.version}&os=$os&uuid=$uid"
         }

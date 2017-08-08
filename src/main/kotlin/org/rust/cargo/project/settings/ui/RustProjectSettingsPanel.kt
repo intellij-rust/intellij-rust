@@ -98,7 +98,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
             },
             onUiThread = { (rustcVersion, stdlibLocation, hasRustup) ->
                 downloadStdlibLink.isVisible = hasRustup
-                if (rustcVersion == SemVer.UNKNOWN) {
+                if (rustcVersion == null) {
                     toolchainVersion.text = "N/A"
                     toolchainVersion.foreground = JBColor.RED
                 } else {

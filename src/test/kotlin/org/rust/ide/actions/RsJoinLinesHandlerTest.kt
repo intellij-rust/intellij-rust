@@ -113,12 +113,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         /// Hello<caret> fn foo() {}
     """)
 
-    fun `test join struct selection`() {
-        //BACKCOMPAT: does not work with 2016.3 for some reason,
-        // it's easier to wait for 2016 EOL rather then fix it.
-        if (ApplicationInfo.getInstance().majorVersion == "2016") {
-            return
-        }
+    fun `test join struct selection`() =
         doTest("""
             struct S { foo: i32, bar: i32 }
             fn main() {
@@ -133,7 +128,6 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
                 let _ = S { foo: 42, bar: 42 };
             }
         """)
-    }
 
     fun `test join struct`() = doTest("""
         struct S { foo: i32 }

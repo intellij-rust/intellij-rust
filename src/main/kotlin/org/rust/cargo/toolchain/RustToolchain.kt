@@ -29,17 +29,8 @@ data class RustToolchain(val location: String) {
 
     fun queryVersions(): VersionInfo {
         check(!ApplicationManager.getApplication().isDispatchThread)
-        val cargo = nonProjectCargo().toGeneralCommandLine(CargoCommandLine("version"))
-            .runExecutable()?.let(::findSemVer) ?: SemVer.UNKNOWN
-
-        val rustup = GeneralCommandLine(pathToExecutable(RUSTUP))
-            .withParameters("--version")
-            .runExecutable()?.let(::findSemVer) ?: SemVer.UNKNOWN
-
         return VersionInfo(
-            rustc = scrapeRustcVersion(pathToExecutable(RUSTC)),
-            cargo = cargo,
-            rustup = rustup
+            rustc = scrapeRustcVersion(pathToExecutable(RUSTC))
         )
     }
 
@@ -68,9 +59,7 @@ data class RustToolchain(val location: String) {
         Files.isExecutable(pathToExecutable(exec))
 
     data class VersionInfo(
-        val rustc: RustcVersion,
-        val cargo: SemVer,
-        val rustup: SemVer
+        val rustc: RustcVersion
     )
 
     companion object {
@@ -88,18 +77,12 @@ data class RustToolchain(val location: String) {
 }
 
 data class RustcVersion(
-    val semver: SemVer,
+    val semver: SemVer?,
     val nightlyCommitHash: String?
 ) {
     companion object {
-        val UNKNOWN = RustcVersion(SemVer.UNKNOWN, null)
+        val UNKNOWN = RustcVersion(null, null)
     }
-}
-
-private fun findSemVer(lines: List<String>): SemVer {
-    val re = """\d+\.\d+\.\d+""".toRegex()
-    val versionText = lines.mapNotNull { re.find(it) }.firstOrNull()?.value ?: return SemVer.UNKNOWN
-    return SemVer.parseFromTextNonNullize(versionText)
 }
 
 private fun scrapeRustcVersion(rustc: Path): RustcVersion {

@@ -9,6 +9,7 @@ import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.execution.filters.BrowserHyperlinkInfo
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import org.rust.ide.icons.RsIcons
@@ -34,7 +35,7 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
                 RsIcons.DOCS_MARK,
                 Pass.LINE_MARKERS,
                 { "Open documentation for `${crate.pkg.normName}`" },
-                { _, _ -> BrowserHyperlinkInfo.openUrl("https://docs.rs/${crate.pkg.name}/${crate.pkg.version}/${crate.normName}") },
+                { _, _ -> BrowserUtil.browse("https://docs.rs/${crate.pkg.name}/${crate.pkg.version}/${crate.normName}") },
                 GutterIconRenderer.Alignment.LEFT))
         }
     }
