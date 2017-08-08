@@ -93,11 +93,18 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
 
         is RsMacroBinding -> base.withTypeText(element.fragmentSpecifier)
 
-        is RsMacroDefinition -> base
-            .withInsertHandler { context: InsertionContext, _: LookupElement ->
-                context.document.insertString(context.selectionEndOffset, "!()")
-                EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+        is RsMacroDefinition -> {
+            val parens = when (element.name) {
+                "vec" -> "[]"
+                else -> "()"
             }
+            base
+                .withTailText("!")
+                .withInsertHandler { context: InsertionContext, _: LookupElement ->
+                    context.document.insertString(context.selectionEndOffset, "!$parens")
+                    EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                }
+        }
         else -> base
     }
 }
