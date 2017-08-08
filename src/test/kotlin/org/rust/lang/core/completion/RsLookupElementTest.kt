@@ -89,7 +89,7 @@ class RsLookupElementTest : RsTestBase() {
     fun `test marco definition`() = check("""
         macro_rules! test { () => () }
                      //^
-    """, tailText = null, typeText = null)
+    """, tailText = "!", typeText = null)
 
     fun testMod() {
         myFixture.configureByText("foo.rs", "")

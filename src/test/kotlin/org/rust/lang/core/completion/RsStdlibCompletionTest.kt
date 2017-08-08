@@ -43,5 +43,11 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
     """, """
         fn main() { unimplemented!(/*caret*/) }
     """)
+
+    fun `test macro with square brackets`() = doSingleCompletion("""
+        fn main() { vec/*caret*/ }
+    """, """
+        fn main() { vec![/*caret*/] }
+    """)
 }
 

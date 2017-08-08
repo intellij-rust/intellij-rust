@@ -9,9 +9,11 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.stubs.IStubElementType
+import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMacroDefinition
 import org.rust.lang.core.stubs.RsMacroDefinitionStub
+import javax.swing.Icon
 
 abstract class RsMacroDefinitionImplMixin : RsStubbedNamedElementImpl<RsMacroDefinitionStub>,
                                             RsMacroDefinition {
@@ -23,10 +25,9 @@ abstract class RsMacroDefinitionImplMixin : RsStubbedNamedElementImpl<RsMacroDef
     override fun getNameIdentifier(): PsiElement? =
         findChildrenByType<PsiElement>(RsElementTypes.IDENTIFIER)
             .getOrNull(1) // Zeroth is `macro_rules` itself
+
+    override fun getIcon(flags: Int): Icon? = RsIcons.MACRO
 }
-
-val RsMacroDefinition.nameIdentifier: PsiElement? get() = (this as PsiNameIdentifierOwner).nameIdentifier
-
 
 val RsMacroDefinition.hasMacroExport: Boolean
     get() = queryAttributes.hasAttribute("macro_export")

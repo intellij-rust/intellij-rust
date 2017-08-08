@@ -50,6 +50,7 @@ object RsIcons {
     val METHOD = AllIcons.Nodes.Method!!
     val FUNCTION = IconLoader.getIcon("/icons/nodes/function.png")
     val ASSOC_FUNCTION = FUNCTION.addStaticMark()
+    val MACRO = AllIcons.General.ExclMark!!
 
     val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod!!
     val ABSTRACT_FUNCTION = IconLoader.getIcon("/icons/nodes/abstractFunction.png")
