@@ -24,6 +24,8 @@ class CargoWorkspace private constructor(
     val packages: Collection<Package>
 ) {
     class Package(
+        // Note: In tests, we use in-memory file system,
+        // so we can't use `Path` here.
         private val contentRootUrl: String,
         val name: String,
         val version: String,
