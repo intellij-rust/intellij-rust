@@ -15,6 +15,7 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.cargo.util.modules
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.ref.RsReference
 
@@ -30,7 +31,14 @@ val RsCompositeElement.cargoWorkspace: CargoWorkspace? get() {
     // and not the element itself. Otherwise this will break for
     // elements in libraries.
     val module = ModuleUtilCore.findModuleForPsiElement(containingFile)
-    return module?.cargoWorkspace
+    if (module != null) return module.cargoWorkspace
+
+    // The element is outside of a module. Most likely, it is an element
+    // from the library created by `RootsProvider`. Let's just hope there's
+    // a single workspace in this case and return it.
+    // Ideally, we need something more clever here, because there may be two
+    // workspaces, which share the same library.
+    return project.modules.map { it.cargoWorkspace }.firstOrNull { it != null }
 }
 
 

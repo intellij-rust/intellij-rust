@@ -17,6 +17,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Alarm
@@ -49,7 +51,7 @@ private val LOG = Logger.getInstance(CargoProjectWorkspaceServiceImpl::class.jav
  * only on EDT, so you may think of it as an actor maintaining
  * a two bits of state.
  */
-private class WorkspaceMerger {
+private class WorkspaceMerger(private val updateCallback: () -> Unit) {
     private var rawWorkspace: CargoWorkspace? = null
     private var stdlib: StandardLibrary? = null
 
@@ -81,6 +83,7 @@ private class WorkspaceMerger {
             return
         }
         workspace = raw.withStdlib(stdlib?.crates.orEmpty())
+        updateCallback()
     }
 }
 
@@ -92,7 +95,9 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     private val debouncer = Debouncer(delayMillis = 1000, parentDisposable = module)
     private val taskQueue = BackgroundTaskQueue(module.project, "Cargo update")
 
-    private val workspaceMerger = WorkspaceMerger()
+    private val workspaceMerger = WorkspaceMerger {
+        ProjectRootManagerEx.getInstanceEx(module.project).makeRootsChange(EmptyRunnable.getInstance(), false, true)
+    }
 
     init {
         fun refreshStdlib() {
@@ -105,12 +110,9 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
                 }))
             } else {
                 ApplicationManager.getApplication().invokeLater {
-                    val lib = StandardLibrary.fromPath(module.project.rustSettings.data.explicitPathToStdlib ?: "")
+                    val lib = StandardLibrary.fromPath(module.project.rustSettings.explicitPathToStdlib ?: "")
                     if (lib != null) {
-                        runWriteAction {
-                            lib.attachTo(module)
-                            workspaceMerger.setStdlib(lib)
-                        }
+                        runWriteAction { workspaceMerger.setStdlib(lib) }
                     }
                 }
             }
@@ -202,23 +204,9 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
 
         if (r is UpdateResult.Ok) {
             runWriteAction {
-                updateModuleDependencies(r.workspace)
                 workspaceMerger.setRawWorkspace(r.workspace)
             }
         }
-
-        when (r) {
-            is UpdateResult.Ok -> LOG.info("Project '${module.project.name}' successfully updated")
-            is UpdateResult.Err -> LOG.info("Project '${module.project.name}' update failed", r.error)
-        }
-    }
-
-    private fun updateModuleDependencies(workspace: CargoWorkspace) {
-        val libraryRoots = workspace.packages
-            .filter { it.origin != PackageOrigin.WORKSPACE }
-            .mapNotNull { it.contentRoot?.url }
-
-        module.updateLibrary(module.cargoLibraryName, libraryRoots)
     }
 
     private inner class UpdateTask(

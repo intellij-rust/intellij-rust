@@ -25,7 +25,11 @@ interface RustProjectSettingsService {
     var data: Data
 
     val toolchain: RustToolchain? get() = data.toolchain
-    val explicitPathToStdlib: String? get() = data.explicitPathToStdlib
+    var explicitPathToStdlib: String?
+        get() = data.explicitPathToStdlib
+        set(value) {
+            data = data.copy(explicitPathToStdlib = value)
+        }
     val autoUpdateEnabled: Boolean get() = data.autoUpdateEnabled
     val useCargoCheckForBuild: Boolean get() = data.useCargoCheckForBuild
     val useCargoCheckAnnotator: Boolean get() = data.useCargoCheckAnnotator

@@ -259,7 +259,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
 
             val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-            stdlib.attachTo(module)
             (CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl)
                 .setStdlib(stdlib)
 
@@ -271,10 +270,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-
-            val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-            stdlib.attachTo(module)
-
             val packages = listOf(
                 testCargoPackage(contentRoot),
                 externalPackage(contentRoot, "dep-lib/lib.rs", "dep-lib", "dep-lib-target"),
@@ -284,9 +279,9 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
             depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib
 
-            return CleanCargoMetadata(packages, depNodes).let {
-                CargoWorkspace.deserialize(null, it).withStdlib(stdlib.crates)
-            }
+            val ws = CargoWorkspace.deserialize(null, CleanCargoMetadata(packages, depNodes))
+            val stdlib = StandardLibrary.fromFile(stdlib!!)!!
+            return ws.withStdlib(stdlib.crates)
         }
     }
 

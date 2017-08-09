@@ -25,9 +25,9 @@ import com.intellij.ui.EditorNotifications
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.utils.pathAsPath
@@ -134,7 +134,9 @@ class MissingToolchainNotificationProvider(
             setText("Can not attach stdlib sources automatically without rustup.")
             createActionLabel("Attach manually") {
                 val stdlib = chooseStdlibLocation(this) ?: return@createActionLabel
-                if (!tryAttachStdlibToModule(module, stdlib)) {
+                if (StandardLibrary.fromFile(stdlib) != null) {
+                    module.project.rustSettings.explicitPathToStdlib = stdlib.path
+                } else {
                     project.showBalloon(
                         "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
                         NotificationType.ERROR
@@ -153,14 +155,6 @@ class MissingToolchainNotificationProvider(
         val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
 
         return FileChooser.chooseFile(descriptor, parent, project, null)
-    }
-
-    private fun tryAttachStdlibToModule(module: Module, stdlib: VirtualFile): Boolean {
-        val roots = StandardLibrary.fromFile(stdlib)
-            ?: return false
-
-        runWriteAction { roots.attachTo(module) }
-        return true
     }
 
     private fun disableNotification() {
