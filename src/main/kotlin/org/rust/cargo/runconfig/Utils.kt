@@ -7,8 +7,6 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.lineMarker.ExecutorAction
-import com.intellij.openapi.actionSystem.AnAction
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType

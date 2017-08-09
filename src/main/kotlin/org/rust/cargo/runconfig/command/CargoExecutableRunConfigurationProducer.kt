@@ -8,14 +8,12 @@ package org.rust.cargo.runconfig.command
 import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFile
@@ -82,7 +80,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
             // TODO: specify workspace package here once
             // https://github.com/rust-lang/cargo/issues/3529
             // is fixed
-            val target = ws.findTargetForCrateRootFile(file) ?: return null
+            val target = ws.findTargetByCrateRoot(file) ?: return null
             return when {
                 target.isBin -> ExecutableTarget(target.name, "bin")
                 target.isExample -> ExecutableTarget(target.name, "example")

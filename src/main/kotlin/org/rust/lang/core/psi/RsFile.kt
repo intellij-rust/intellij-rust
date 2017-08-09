@@ -18,7 +18,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*

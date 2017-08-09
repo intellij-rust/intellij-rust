@@ -10,7 +10,7 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.utils.findFileByMaybeRelativePath
 
 /**
@@ -97,17 +97,17 @@ object CargoMetadata {
          */
         val src_path: String
     ) {
-        val cleanKind: CargoWorkspace.TargetKind get() = when (kind.singleOrNull()) {
-            "bin" -> CargoWorkspace.TargetKind.BIN
-            "example" -> CargoWorkspace.TargetKind.EXAMPLE
-            "test" -> CargoWorkspace.TargetKind.TEST
-            "bench" -> CargoWorkspace.TargetKind.BENCH
-            "proc-macro" -> CargoWorkspace.TargetKind.LIB
+        val cleanKind: TargetKind get() = when (kind.singleOrNull()) {
+            "bin" -> TargetKind.BIN
+            "example" -> TargetKind.EXAMPLE
+            "test" -> TargetKind.TEST
+            "bench" -> TargetKind.BENCH
+            "proc-macro" -> TargetKind.LIB
             else ->
                 if (kind.any { it.endsWith("lib") })
-                    CargoWorkspace.TargetKind.LIB
+                    TargetKind.LIB
                 else
-                    CargoWorkspace.TargetKind.UNKNOWN
+                    TargetKind.UNKNOWN
         }
     }
 
@@ -224,7 +224,7 @@ data class CleanCargoMetadata(
     data class Target(
         val url: String,
         val name: String,
-        val kind: CargoWorkspace.TargetKind
+        val kind: TargetKind
     )
 }
 

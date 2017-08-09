@@ -8,7 +8,6 @@ package org.rust.ide.annotator
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
-import com.intellij.execution.filters.BrowserHyperlinkInfo
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
@@ -27,7 +26,7 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
         for (el in elements) {
             val crateItem = el as? RsExternCrateItem ?: continue
             val crateName = crateItem.identifier.text
-            val crate = crateItem.containingCargoPackage?.findCrateByName(crateName) ?: continue
+            val crate = crateItem.containingCargoPackage?.findDependency(crateName) ?: continue
             if (crate.pkg.source == null) continue
             result.add(LineMarkerInfo(
                 crateItem.crate,
