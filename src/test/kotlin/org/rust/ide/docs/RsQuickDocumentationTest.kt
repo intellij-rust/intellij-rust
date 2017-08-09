@@ -9,6 +9,8 @@ import org.intellij.lang.annotations.Language
 
 class RsQuickDocumentationTest : RsDocumentationProviderTest() {
 
+    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
+
     fun `test fn`() = doTest("""
         /// Adds one to the number given.
         ///
@@ -101,7 +103,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
           //^
     """, """
         <pre>test_package</pre>
-        <pre>fn <b>foo</b>&lt;T: Into&lt;String&gt;&gt;(t: T)</pre>
+        <pre>fn <b>foo</b>&lt;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;&gt;(t: T)</pre>
     """)
 
     fun `test generic fn with where clause`() = doTest("""
@@ -109,7 +111,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
           //^
     """, """
         <pre>test_package</pre>
-        <pre>fn <b>foo</b>&lt;T&gt;(t: T) where T: Into&lt;String&gt;</pre>
+        <pre>fn <b>foo</b>&lt;T&gt;(t: T)<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
     """)
 
     fun `test complex fn`() = doTest("""
@@ -120,9 +122,19 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                                       //^
     """, """
         <pre>test_package</pre>
-        <pre>pub const unsafe extern "C" fn <b>foo</b>&lt;T: Into&lt;String&gt;, F&gt;(t: T, f: F) where F: Ord</pre>
+        <pre>pub const unsafe extern "C" fn <b>foo</b>&lt;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;, F&gt;(t: T, f: F)<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Ord">Ord</a>,</pre>
         <p>Docs
         More Docs</p>
+    """)
+
+    fun `test fn with complex types`() = doTest("""
+        fn foo<'a>(tuple: (String, &'a i32), f: fn(String) -> [Vec<u32>; 3]) -> Option<[Vec<u32>; 3]> {
+          //^
+            unimplemented!();
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>fn <b>foo</b>&lt;&#39;a&gt;(tuple: (<a href="psi_element://String">String</a>, &amp;&#39;a i32), f: fn(<a href="psi_element://String">String</a>) -&gt; [<a href="psi_element://Vec">Vec</a>&lt;u32&gt;; 3]) -&gt; <a href="psi_element://Option">Option</a>&lt;[<a href="psi_element://Vec">Vec</a>&lt;u32&gt;; 3]&gt;</pre>
     """)
 
     fun `test method`() = doTest("""
@@ -134,8 +146,21 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl Foo</pre>
+        <pre>impl <a href="psi_element://Foo">Foo</a></pre>
         <pre>pub fn <b>foo</b>(&amp;self)</pre>
+    """)
+
+    fun `test method with Self ret type`() = doTest("""
+        struct Foo;
+
+        impl Foo {
+            pub fn foo(&self) -> Self { unimplemented!() }
+                  //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>impl <a href="psi_element://Foo">Foo</a></pre>
+        <pre>pub fn <b>foo</b>(&amp;self) -&gt; Self</pre>
     """)
 
     fun `test generic struct method`() = doTest("""
@@ -147,7 +172,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl&lt;T&gt; Foo&lt;T&gt;</pre>
+        <pre>impl&lt;T&gt; <a href="psi_element://Foo">Foo</a>&lt;T&gt;</pre>
         <pre>pub fn <b>foo</b>(&amp;self)</pre>
     """)
 
@@ -160,7 +185,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl&lt;T, F&gt; Foo&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Ord,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: Into&lt;String&gt;,</pre>
+        <pre>impl&lt;T, F&gt; <a href="psi_element://Foo">Foo</a>&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
         <pre>pub fn <b>foo</b>(&amp;self)</pre>
     """)
 
@@ -218,7 +243,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
               //^
     """, """
         <pre>test_package</pre>
-        <pre>struct <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+        <pre>struct <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
     """)
 
     fun `test enum`() = doTest("""
@@ -258,7 +283,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>enum <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+        <pre>enum <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
     """)
 
     fun testEnumVariant() = doTest("""
@@ -319,7 +344,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>trait <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+        <pre>trait <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
     """)
 
     fun `test type alias`() = doTest("""
@@ -327,7 +352,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
             //^
     """, """
         <pre>test_package</pre>
-        <pre>type <b>Foo</b> = Result&lt;(), i32&gt;</pre>
+        <pre>type <b>Foo</b> = <a href="psi_element://Result">Result</a>&lt;(), i32&gt;</pre>
     """)
 
     fun `test pub type alias`() = doTest("""
@@ -335,7 +360,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                 //^
     """, """
         <pre>test_package</pre>
-        <pre>pub type <b>Foo</b> = Result&lt;(), i32&gt;</pre>
+        <pre>pub type <b>Foo</b> = <a href="psi_element://Result">Result</a>&lt;(), i32&gt;</pre>
     """)
 
     fun `test generic type alias`() = doTest("""
@@ -343,7 +368,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
             //^
     """, """
         <pre>test_package</pre>
-        <pre>type <b>Foo</b>&lt;T&gt; = Result&lt;T, i32&gt;</pre>
+        <pre>type <b>Foo</b>&lt;T&gt; = <a href="psi_element://Result">Result</a>&lt;T, i32&gt;</pre>
     """)
 
     fun `test generic type alias with where clause`() = doTest("""
@@ -351,7 +376,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
              //^
     """, """
         <pre>test_package</pre>
-        <pre>type <b>Foo</b>&lt;T&gt; = Result&lt;T, i32&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+        <pre>type <b>Foo</b>&lt;T&gt; = <a href="psi_element://Result">Result</a>&lt;T, i32&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
     """)
 
     fun `test impl assoc type`() = doTest("""
@@ -365,8 +390,8 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl Trait for Foo</pre>
-        <pre>type <b>AssocType</b> = Option&lt;i32&gt;</pre>
+        <pre>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a></pre>
+        <pre>type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;i32&gt;</pre>
     """)
 
     fun `test generic impl assoc type`() = doTest("""
@@ -380,8 +405,8 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl&lt;T&gt; Trait for Foo&lt;T&gt;</pre>
-        <pre>type <b>AssocType</b> = Option&lt;T&gt;</pre>
+        <pre>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;</pre>
+        <pre>type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;</pre>
     """)
 
     fun `test generic impl assoc type with where clause`() = doTest("""
@@ -395,8 +420,8 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl&lt;T&gt; Trait for Foo&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
-        <pre>type <b>AssocType</b> = Option&lt;T&gt;</pre>
+        <pre>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
+        <pre>type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;</pre>
     """)
 
     fun `test trait assoc type`() = doTest("""
@@ -431,7 +456,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package::MyTrait&lt;T&gt;</pre>
-        <pre>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+        <pre>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
         <pre>type <b>Awesome</b></pre>
         <p>Documented</p>
     """)
@@ -479,7 +504,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package::MyTrait&lt;T&gt;</pre>
-        <pre>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,</pre>
+        <pre>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
         <pre>fn <b>my_func</b>()</pre>
         <p>Documented</p>
     """)
@@ -495,7 +520,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl Trait for Foo</pre>
+        <pre>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a></pre>
         <pre>fn <b>foo</b>()</pre>
     """)
 
@@ -510,7 +535,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl&lt;T, F&gt; Trait&lt;T&gt; for Foo&lt;F&gt;</pre>
+        <pre>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;</pre>
         <pre>fn <b>foo</b>()</pre>
     """)
 
@@ -525,7 +550,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <pre>test_package</pre>
-        <pre>impl&lt;T, F&gt; Trait&lt;T&gt; for Foo&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Ord,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: Into&lt;String&gt;,</pre>
+        <pre>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
         <pre>fn <b>foo</b>()</pre>
     """)
 
@@ -650,7 +675,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                   //^
     """, """
         <pre>test_package</pre>
-        <pre>pub trait <b>AsRef</b>&lt;T: ?Sized&gt;</pre>
+        <pre>pub trait <b>AsRef</b>&lt;T: ?<a href="psi_element://Sized">Sized</a>&gt;</pre>
         <p>A cheap, reference-to-reference conversion.</p><p><code>AsRef</code> is very similar to, but different than, <code>Borrow</code>. See
         <a href="../../book/borrow-and-asref.html">the book</a> for more.</p><p><strong>Note: this trait must not fail</strong>. If the conversion can fail, use a dedicated method which
         returns an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p><h1>Examples</h1><p>Both <code>String</code> and <code>&amp;str</code> implement <code>AsRef&lt;str&gt;</code>:</p><pre><code>fn is_hello&lt;T: AsRef&lt;str&gt;&gt;(s: T) {
@@ -755,17 +780,22 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     """)
 
     fun `test type parameter with single bound`() = doTest("""
+        use std::borrow::Borrow;
+
         fn foo<T: Borrow<Q>>() { unimplemented!() }
              //^
     """, """
-        <pre>type parameter <b>T</b>: Borrow&lt;Q&gt;</pre>
+        <pre>type parameter <b>T</b>: <a href="psi_element://Borrow">Borrow</a>&lt;Q&gt;</pre>
     """)
 
     fun `test type parameter with multiple bounds`() = doTest("""
+        use std::borrow::Borrow;
+        use std::hash::Hash;
+
         fn foo<Q, T: Eq + Hash + Borrow<Q>>() { unimplemented!() }
                 //^
     """, """
-        <pre>type parameter <b>T</b>: Eq + Hash + Borrow&lt;Q&gt;</pre>
+        <pre>type parameter <b>T</b>: <a href="psi_element://Eq">Eq</a> + <a href="psi_element://Hash">Hash</a> + <a href="psi_element://Borrow">Borrow</a>&lt;Q&gt;</pre>
     """)
 
     fun `test type parameter with lifetime bound`() = doTest("""
@@ -776,24 +806,77 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     """)
 
     fun `test type parameter with default value`() = doTest("""
+        use std::collections::hash_map::RandomState;
+
         fn foo<T = RandomState>() { unimplemented!() }
              //^
     """, """
-        <pre>type parameter <b>T</b> = RandomState</pre>
+        <pre>type parameter <b>T</b> = <a href="psi_element://RandomState">RandomState</a></pre>
     """)
 
     fun `test type parameter with bounds in where clause`() = doTest("""
+        use std::borrow::Borrow;
+        use std::hash::Hash;
+
         fn foo<Q, T>() where T: Eq + Hash + Borrow<Q> { unimplemented!() }
                 //^
     """, """
-        <pre>type parameter <b>T</b>: Eq + Hash + Borrow&lt;Q&gt;</pre>
+        <pre>type parameter <b>T</b>: <a href="psi_element://Eq">Eq</a> + <a href="psi_element://Hash">Hash</a> + <a href="psi_element://Borrow">Borrow</a>&lt;Q&gt;</pre>
     """)
 
     fun `test type parameter with complex bounds`() = doTest("""
+        use std::borrow::Borrow;
+        use std::hash::Hash;
+
         fn foo<'a, Q, T: 'a + Eq>() where T: Hash + Borrow<Q> { unimplemented!() }
                     //^
     """, """
-        <pre>type parameter <b>T</b>: &#39;a + Eq + Hash + Borrow&lt;Q&gt;</pre>
+        <pre>type parameter <b>T</b>: &#39;a + <a href="psi_element://Eq">Eq</a> + <a href="psi_element://Hash">Hash</a> + <a href="psi_element://Borrow">Borrow</a>&lt;Q&gt;</pre>
+    """)
+
+    fun `test don't create link for unresolved items`() = doTest("""
+        fn foo() -> Foo { unimplemented!() }
+           //^
+    """, """
+        <pre>test_package</pre>
+        <pre>fn <b>foo</b>() -&gt; Foo</pre>
+    """)
+
+    fun `test assoc type bound`() = doTest("""
+        trait Foo {
+            type Bar;
+        }
+
+        fn foo<T>(t: T) where T: Foo, T::Bar: Into<String> {}
+          //^
+    """, """
+        <pre>test_package</pre>
+        <pre>fn <b>foo</b>&lt;T&gt;(t: T)<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Foo">Foo</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;T::<a href="psi_element://T::Bar">Bar</a>: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre>
+    """)
+
+    fun `test type qual`() = doTest("""
+        trait Foo1 {
+            type Bar;
+        }
+
+        trait Foo2 {
+            type Bar;
+        }
+
+        struct S;
+
+        impl Foo1 for S {
+            type Bar = ();
+        }
+
+        impl Foo2 for S {
+            type Bar = <Self as Foo1>::Bar;
+                //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>impl <a href="psi_element://Foo2">Foo2</a> for <a href="psi_element://S">S</a></pre>
+        <pre>type <b>Bar</b> = &lt;Self as <a href="psi_element://Foo1">Foo1</a>&gt;::<a href="psi_element://&lt;Self as Foo1&gt;::Bar">Bar</a></pre>
     """)
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
