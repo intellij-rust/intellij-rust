@@ -47,10 +47,10 @@ val RsCompositeElement.crateRoot: RsMod? get() {
 }
 
 val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target? get() {
-    val cargoProject = cargoWorkspace ?: return null
+    val ws = cargoWorkspace ?: return null
     val root = crateRoot ?: return null
     val file = root.containingFile.originalFile.virtualFile ?: return null
-    return cargoProject.findTargetForCrateRootFile(file)
+    return ws.findTargetForCrateRootFile(file)
 }
 
 val RsCompositeElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg

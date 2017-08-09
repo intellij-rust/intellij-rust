@@ -5,8 +5,6 @@
 
 package org.rust.cargo.project.workspace
 
-import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
@@ -23,11 +21,8 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class CargoWorkspace private constructor(
     val manifestPath: Path?,
-    val packages: Collection<Package>,
-    private val dataHolder: UserDataHolder = UserDataHolderBase()
-) : UserDataHolder by dataHolder {
-
-
+    val packages: Collection<Package>
+) {
     class Package(
         private val contentRootUrl: String,
         val name: String,
@@ -102,10 +97,13 @@ class CargoWorkspace private constructor(
         val canonicalFile = file.canonicalFile ?: return null
         return targetByCrateRootUrl[canonicalFile.url]
     }
+    fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
     fun findPackage(name: String): Package? = packages.find { it.name == name }
 
-    fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
+    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
+
+    val contentRoot: Path? = manifestPath?.parent
 
     fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace {
         val stdlib = libs.map { crate ->
@@ -143,10 +141,6 @@ class CargoWorkspace private constructor(
 
         return CargoWorkspace(manifestPath, packages + roots)
     }
-
-    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
-
-    val contentRoot: Path? = manifestPath?.parent
 
     companion object {
         fun deserialize(manifestPath: Path?, data: CleanCargoMetadata): CargoWorkspace {
