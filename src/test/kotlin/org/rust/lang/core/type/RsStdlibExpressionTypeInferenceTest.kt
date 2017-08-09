@@ -5,17 +5,10 @@
 
 package org.rust.lang.core.type
 
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.lang.core.psi.ext.ArithmeticOp
 
 class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
-    fun testHasStdlibSources() {
-        val cargoProject = myModule.cargoWorkspace
-        cargoProject?.findCrateByNameApproximately("std")?.crateRoot
-            ?: error("No Rust sources found during test.\nTry running `rustup component add rust-src`")
-    }
 
     fun `test RangeFull`() = testExpr("""
         fn main() {

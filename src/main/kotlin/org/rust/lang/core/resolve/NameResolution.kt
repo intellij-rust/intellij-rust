@@ -7,7 +7,6 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
@@ -15,7 +14,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.getPsiFor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -405,7 +403,7 @@ private fun processItemMacroDeclarations(
     if (processAll(macros, processor)) return true
 
     if (addStdCrate) {
-        val stdCrate = scope.containingCargoPackage?.findCrateByName("std")?.crateRoot
+        val stdCrate = scope.containingCargoPackage?.findDependency("std")?.crateRoot
         val prelude = scope.project.getPsiFor(stdCrate)?.rustMod
         if (prelude is RsFile && processAll(prelude.exportedCrateMacros, processor)) return true
     }
@@ -502,7 +500,7 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
 
             if (pkg != null) {
                 val findStdMod = { name: String ->
-                    val crate = pkg.findCrateByName(name)?.crateRoot
+                    val crate = pkg.findDependency(name)?.crateRoot
                     scope.project.getPsiFor(crate)?.rustMod
                 }
 
@@ -745,7 +743,7 @@ private fun processNestedScopesUpwards(scopeStart: RsCompositeElement, processor
         false
     }
 
-    val preludeFile = scopeStart.containingCargoPackage?.findCrateByName("std")?.crateRoot
+    val preludeFile = scopeStart.containingCargoPackage?.findDependency("std")?.crateRoot
         ?.findFileByRelativePath("../prelude/v1.rs")
     val prelude = scopeStart.project.getPsiFor(preludeFile)?.rustMod
     if (prelude != null && processItemDeclarations(prelude, ns, { v -> v.name !in prevScope && processor(v) }, false)) return true

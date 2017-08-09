@@ -19,101 +19,84 @@ import java.util.concurrent.atomic.AtomicReference
  * [CargoProjectWorkspaceService] is responsible for providing a [CargoWorkspace] for
  * an IDEA module.
  */
-class CargoWorkspace private constructor(
-    val manifestPath: Path?,
+interface CargoWorkspace {
+    val manifestPath: Path?
+    val contentRoot: Path? get() = manifestPath?.parent
+
     val packages: Collection<Package>
-) {
-    class Package(
-        // Note: In tests, we use in-memory file system,
-        // so we can't use `Path` here.
-        private val contentRootUrl: String,
-        val name: String,
-        val version: String,
-        val targets: Collection<Target>,
-        val source: String?,
+    fun findPackage(name: String): Package? = packages.find { it.name == name }
+
+    fun findTargetByCrateRoot(root: VirtualFile): Target?
+    fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
+
+    fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace
+    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
+
+    interface Package {
+        val contentRoot: VirtualFile?
+
+        val name: String
+        val normName: String get() = name.replace('-', '_')
+
+        val version: String
+
+        val source: String?
         val origin: PackageOrigin
-    ) {
-        val normName = name.replace('-', '_')
-        val dependencies: MutableList<Package> = ArrayList()
+
+        val targets: Collection<Target>
         val libTarget: Target? get() = targets.find { it.isLib }
-        val contentRoot: VirtualFile? get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
-        override fun toString() = "Package(contentRootUrl='$contentRootUrl', name='$name')"
+        val dependencies: Collection<Package>
 
-        fun initTargets(): Package {
-            targets.forEach { it.initPackage(this) }
-            return this
-        }
-
-        fun findCrateByName(normName: String): Target? =
-            if (this.normName == normName) libTarget else dependencies.findLibrary(normName)
+        fun findDependency(normName: String): Target? =
+            if (this.normName == normName) libTarget else dependencies.find { it.normName == normName }?.libTarget
     }
 
-    class Target(
-        /**
-         * Absolute path to the crate root file
-         */
-        internal val crateRootUrl: String,
-        val name: String,
-        val kind: TargetKind
-    ) {
+    interface Target {
+        val name: String
         // target name must be a valid Rust identifier, so normalize it by mapping `-` to `_`
         // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
-        val normName = name.replace('-', '_')
+        val normName: String get() = name.replace('-', '_')
+
+        val kind: TargetKind
         val isLib: Boolean get() = kind == TargetKind.LIB
         val isBin: Boolean get() = kind == TargetKind.BIN
         val isExample: Boolean get() = kind == TargetKind.EXAMPLE
 
-        private val crateRootCache = AtomicReference<VirtualFile>()
-        val crateRoot: VirtualFile? get() {
-            val cached = crateRootCache.get()
-            if (cached != null && cached.isValid) return cached
-            val file = VirtualFileManager.getInstance().findFileByUrl(crateRootUrl)
-            crateRootCache.set(file)
-            return file
-        }
+        val crateRoot: VirtualFile?
 
-        private lateinit var myPackage: Package
-        fun initPackage(pkg: Package) {
-            myPackage = pkg
-        }
-
-        val pkg: Package get() = myPackage
-
-        override fun toString(): String
-            = "Target(crateRootUrl='$crateRootUrl', name='$name', kind=$kind)"
+        val pkg: Package
     }
 
     enum class TargetKind {
         LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
     }
 
-    private val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
+    companion object {
+        fun deserialize(manifestPath: Path?, data: CleanCargoMetadata): CargoWorkspace
+            = WorkspaceImpl.deserialize(manifestPath, data)
+    }
+}
 
-    fun findCrateByNameApproximately(normName: String): Target? = packages.findLibrary(normName)
 
-    /**
-     * If the [file] is a crate root, returns the corresponding [Target]
-     */
-    fun findTargetForCrateRootFile(file: VirtualFile): Target? {
-        val canonicalFile = file.canonicalFile ?: return null
+private class WorkspaceImpl(
+    override val manifestPath: Path?,
+    override val packages: Collection<PackageImpl>
+) : CargoWorkspace {
+
+    val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
+    override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? {
+        val canonicalFile = root.canonicalFile ?: return null
         return targetByCrateRootUrl[canonicalFile.url]
     }
-    fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
-    fun findPackage(name: String): Package? = packages.find { it.name == name }
-
-    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
-
-    val contentRoot: Path? = manifestPath?.parent
-
-    fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace {
+    override fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace {
         val stdlib = libs.map { crate ->
-            val pkg = Package(
+            val pkg = PackageImpl(
                 contentRootUrl = crate.packageRootUrl,
                 name = crate.name,
                 version = "",
-                targets = listOf(Target(crate.crateRootUrl, name = crate.name, kind = TargetKind.LIB)),
+                targets = listOf(TargetImpl(crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
                 source = null,
                 origin = PackageOrigin.STDLIB
             ).initTargets()
@@ -121,8 +104,8 @@ class CargoWorkspace private constructor(
         }.toMap()
 
         // Bind dependencies and collect roots
-        val roots = ArrayList<Package>()
-        val featureGated = ArrayList<Package>()
+        val roots = ArrayList<PackageImpl>()
+        val featureGated = ArrayList<PackageImpl>()
         libs.forEach { lib ->
             val slib = stdlib[lib.name] ?: error("Std lib ${lib.name} not found")
             val depPackages = lib.dependencies.mapNotNull { stdlib[it] }
@@ -141,11 +124,16 @@ class CargoWorkspace private constructor(
             pkg.dependencies.addAll(roots + packageFeatureGated)
         }
 
-        return CargoWorkspace(manifestPath, packages + roots)
+        return WorkspaceImpl(manifestPath, packages + roots)
+    }
+
+    override fun toString(): String {
+        val pkgs = packages.map { "    $it,\n" }.joinToString(separator = "")
+        return "Workspace(packages=[\n$pkgs])"
     }
 
     companion object {
-        fun deserialize(manifestPath: Path?, data: CleanCargoMetadata): CargoWorkspace {
+        fun deserialize(manifestPath: Path?, data: CleanCargoMetadata): WorkspaceImpl {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -178,11 +166,11 @@ class CargoWorkspace private constructor(
 
             val packages = data.packages.map { pkg ->
                 val origin = idToOrigin[pkg.id] ?: error("Origin is undefined for package ${pkg.name}")
-                Package(
+                PackageImpl(
                     pkg.url,
                     pkg.name,
                     pkg.version,
-                    pkg.targets.map { Target(it.url, it.name, it.kind) },
+                    pkg.targets.map { TargetImpl(it.url, it.name, it.kind) },
                     pkg.source,
                     origin
                 ).initTargets()
@@ -194,12 +182,60 @@ class CargoWorkspace private constructor(
                 pkg.dependencies.addAll(depNode.dependenciesIndexes.map { packages[it] })
             }
 
-            return CargoWorkspace(manifestPath, packages)
+            return WorkspaceImpl(manifestPath, packages)
         }
     }
 }
 
-private fun Collection<CargoWorkspace.Package>.findLibrary(normName: String): CargoWorkspace.Target? =
-    filter { it.normName == normName }
-        .mapNotNull { it.libTarget }
-        .firstOrNull()
+
+private class PackageImpl(
+    // Note: In tests, we use in-memory file system,
+    // so we can't use `Path` here.
+    private val contentRootUrl: String,
+    override val name: String,
+    override val version: String,
+    override val targets: Collection<TargetImpl>,
+    override val source: String?,
+    override val origin: PackageOrigin
+) : CargoWorkspace.Package {
+
+    override val contentRoot: VirtualFile?
+        get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
+
+    override val dependencies: MutableList<PackageImpl> = ArrayList()
+
+    fun initTargets(): PackageImpl {
+        targets.forEach { it.initPackage(this) }
+        return this
+    }
+
+    override fun toString()
+        = "Package(contentRootUrl='$contentRootUrl', name='$name')"
+}
+
+
+private class TargetImpl(
+    val crateRootUrl: String,
+    override val name: String,
+    override val kind: CargoWorkspace.TargetKind
+) : CargoWorkspace.Target {
+
+    private val crateRootCache = AtomicReference<VirtualFile>()
+    override val crateRoot: VirtualFile? get() {
+        val cached = crateRootCache.get()
+        if (cached != null && cached.isValid) return cached
+        val file = VirtualFileManager.getInstance().findFileByUrl(crateRootUrl)
+        crateRootCache.set(file)
+        return file
+    }
+
+    private lateinit var myPackage: PackageImpl
+    fun initPackage(pkg: PackageImpl) {
+        myPackage = pkg
+    }
+
+    override val pkg: CargoWorkspace.Package get() = myPackage
+
+    override fun toString(): String
+        = "Target(crateRootUrl='$crateRootUrl', name='$name', kind=$kind)"
+}
