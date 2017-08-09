@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -29,12 +30,12 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.*
-import org.rust.cargo.util.cargoProjectRoot
 import org.rust.ide.RsConstants
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.lang.core.psi.ext.module
 import org.rust.utils.pathAsPath
 import java.nio.file.Path
 import java.util.*
@@ -63,12 +64,14 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
 
     override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? {
+        if (file !is RsFile) return null
         if (!file.project.rustSettings.useCargoCheckAnnotator) return null
-        val module = file.module ?: return null
-        val projectRoot = module.cargoProjectRoot ?: return null
+        val ws = file.cargoWorkspace ?: return null
+        val module = ModuleUtil.findModuleForFile(file.virtualFile, file.project) ?: return null
+        val projectRoot = ws.contentRoot ?: return null
         val toolchain = module.project.toolchain ?: return null
 
-        return CargoCheckAnnotationInfo(file.virtualFile, toolchain, projectRoot.pathAsPath, module)
+        return CargoCheckAnnotationInfo(file.virtualFile, toolchain, projectRoot, module)
     }
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =

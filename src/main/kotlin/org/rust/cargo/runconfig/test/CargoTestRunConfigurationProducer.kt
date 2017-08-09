@@ -5,8 +5,6 @@
 
 package org.rust.cargo.runconfig.test
 
-import com.intellij.execution.Location
-import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
@@ -28,7 +26,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         context: ConfigurationContext
     ): Boolean {
         val location = context.location ?: return false
-        val test = findTest(location) ?: return false
+        val test = findTest(location.psiElement) ?: return false
 
         return configuration.configurationModule.module == context.module &&
             configuration.cargoCommandLine == test.cargoCommandLine
@@ -40,7 +38,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         sourceElement: Ref<PsiElement>
     ): Boolean {
         val location = context.location ?: return false
-        val test = findTest(location) ?: return false
+        val test = findTest(location.psiElement) ?: return false
         sourceElement.set(test.sourceElement)
 
         configuration.configurationModule.module = context.module
@@ -51,19 +49,18 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
 
 
     companion object {
-        private fun findTest(location: Location<*>): TestConfig? =
-            findTestFunction(location)
-                ?: findTestMod(location)
+        fun findTest(psi: PsiElement, climbUp: Boolean = true): TestConfig? =
+            findTestFunction(psi, climbUp) ?: findTestMod(psi, climbUp)
 
-        fun findTestFunction(location: Location<*>): TestConfig? {
-            val fn = location.psiElement.parentOfType<RsFunction>(strict = false) ?: return null
+        private fun findTestFunction(psi: PsiElement, climbUp: Boolean): TestConfig? {
+            val fn = findElement<RsFunction>(psi, climbUp) ?: return null
             val name = fn.crateRelativePath.configPath() ?: return null
             val target = fn.containingCargoTarget ?: return null
             return if (fn.isTest) TestConfig(fn, "Test $name", name, target) else null
         }
 
-        fun findTestMod(location: Location<*>): TestConfig? {
-            val mod = location.psiElement.parentOfType<RsMod>(strict = false) ?: return null
+        private fun findTestMod(psi: PsiElement, climbUp: Boolean): TestConfig? {
+            val mod = findElement<RsMod>(psi, climbUp) ?: return null
 
             val testName = if (mod.modName == "test" || mod.modName == "tests")
                 "Test ${mod.`super`?.modName}::${mod.modName}"
@@ -74,6 +71,12 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
             if (!mod.functionList.any { it.isTest }) return null
 
             return TestConfig(mod, testName, testPath, target)
+        }
+
+        private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
+            if (base is T) return base
+            if (!climbUp) return null
+            return base.parentOfType<T>(strict = false)
         }
     }
 }

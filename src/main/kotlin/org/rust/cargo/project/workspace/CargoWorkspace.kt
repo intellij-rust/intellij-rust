@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StdLibType
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -19,9 +20,9 @@ import java.util.concurrent.atomic.AtomicReference
  * an IDEA module.
  */
 class CargoWorkspace private constructor(
+    val manifestPath: Path?,
     val packages: Collection<Package>
 ) {
-
     class Package(
         private val contentRootUrl: String,
         val name: String,
@@ -96,10 +97,13 @@ class CargoWorkspace private constructor(
         val canonicalFile = file.canonicalFile ?: return null
         return targetByCrateRootUrl[canonicalFile.url]
     }
+    fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
 
     fun findPackage(name: String): Package? = packages.find { it.name == name }
 
-    fun isCrateRoot(file: VirtualFile): Boolean = findTargetForCrateRootFile(file) != null
+    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
+
+    val contentRoot: Path? = manifestPath?.parent
 
     fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace {
         val stdlib = libs.map { crate ->
@@ -135,13 +139,11 @@ class CargoWorkspace private constructor(
             pkg.dependencies.addAll(roots + packageFeatureGated)
         }
 
-        return CargoWorkspace(packages + roots)
+        return CargoWorkspace(manifestPath, packages + roots)
     }
 
-    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
-
     companion object {
-        fun deserialize(data: CleanCargoMetadata): CargoWorkspace {
+        fun deserialize(manifestPath: Path?, data: CleanCargoMetadata): CargoWorkspace {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -190,7 +192,7 @@ class CargoWorkspace private constructor(
                 pkg.dependencies.addAll(depNode.dependenciesIndexes.map { packages[it] })
             }
 
-            return CargoWorkspace(packages)
+            return CargoWorkspace(manifestPath, packages)
         }
     }
 }

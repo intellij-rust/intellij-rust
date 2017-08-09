@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.module.Module
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
@@ -79,17 +78,17 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
 
     companion object {
         fun relativeTo(psi: RsCompositeElement): StdKnownItems {
-            data class AbsolutePath(val module: Module, val fullName: String)
             val project = psi.project
-            val module = psi.module ?: return StdKnownItems { _, _ -> null }
+            val workspace = psi.cargoWorkspace ?: return StdKnownItems { _, _ -> null }
             val crateRoot = psi.crateRoot as? RsFile ?: return StdKnownItems { _, _ -> null }
             val useStdPrefix = crateRoot.attributes == RsFile.Attributes.NONE
 
             return StdKnownItems { prefixNoStd, name ->
                 val prefix = if (useStdPrefix) "std" else prefixNoStd
-                val path = AbsolutePath(module, "$prefix::$name")
-                findWithCache(project, path) {
-                    Optional.ofNullable(resolveStringPath(path.fullName, module)?.first)
+                val path = "$prefix::$name"
+                val key = workspace to path
+                findWithCache(project, key) {
+                    Optional.ofNullable(resolveStringPath(path, workspace, project)?.first)
                 }.orElse(null)
             }
         }

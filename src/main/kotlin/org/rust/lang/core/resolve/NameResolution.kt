@@ -8,6 +8,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -158,13 +159,12 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 }
 
 fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    val module = crate.module ?: return false
     val pkg = crate.containingCargoPackage ?: return false
     fun processPackage(pkg: CargoWorkspace.Package): Boolean {
         if (isCompletion && pkg.origin != PackageOrigin.DEPENDENCY) return false
         val libTarget = pkg.libTarget ?: return false
         return processor.lazy(libTarget.normName) {
-            module.project.getPsiFor(libTarget.crateRoot)?.rustMod
+            crate.project.getPsiFor(libTarget.crateRoot)?.rustMod
         }
     }
 
@@ -296,14 +296,13 @@ fun processLocalVariables(place: RsCompositeElement, processor: (RsPatBinding) -
 /**
  * Resolves an absolute path.
  */
-fun resolveStringPath(path: String, module: Module): Pair<RsNamedElement, CargoWorkspace.Package>? {
+fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project): Pair<RsNamedElement, CargoWorkspace.Package>? {
     val parts = path.split("::", limit = 2)
     if (parts.size != 2) return null
-    val workspace = module.cargoWorkspace ?: return null
     val pkg = workspace.findPackage(parts[0]) ?: return null
 
     val el = pkg.targets.asSequence()
-        .mapNotNull { RsCodeFragmentFactory(module.project).createCrateRelativePath("::${parts[1]}", it) }
+        .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath("::${parts[1]}", it) }
         .mapNotNull { it.reference.resolve() }
         .filterIsInstance<RsNamedElement>()
         .firstOrNull() ?: return null
@@ -500,12 +499,11 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
 
         if (scope is RsFile && scope.isCrateRoot) {
             val pkg = scope.containingCargoPackage
-            val module = scope.module
 
-            if (pkg != null && module != null) {
+            if (pkg != null) {
                 val findStdMod = { name: String ->
                     val crate = pkg.findCrateByName(name)?.crateRoot
-                    module.project.getPsiFor(crate)?.rustMod
+                    scope.project.getPsiFor(crate)?.rustMod
                 }
 
                 // Rust injects implicit `extern crate std` in every crate root module unless it is

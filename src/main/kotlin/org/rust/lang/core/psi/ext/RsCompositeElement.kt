@@ -8,6 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
@@ -18,12 +19,18 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.ref.RsReference
 
 interface RsCompositeElement : PsiElement {
-    override fun getReference(): RsReference?
-
     /**
      * Find parent module *in this file*. See [RsMod.super]
      */
     val containingMod: RsMod
+}
+
+val RsCompositeElement.cargoWorkspace: CargoWorkspace? get() {
+    // It's important to look the module for `containingFile` file
+    // and not the element itself. Otherwise this will break for
+    // elements in libraries.
+    val module = ModuleUtilCore.findModuleForPsiElement(containingFile)
+    return module?.cargoWorkspace
 }
 
 
@@ -40,10 +47,10 @@ val RsCompositeElement.crateRoot: RsMod? get() {
 }
 
 val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target? get() {
-    val cargoProject = module?.cargoWorkspace ?: return null
+    val ws = cargoWorkspace ?: return null
     val root = crateRoot ?: return null
     val file = root.containingFile.originalFile.virtualFile ?: return null
-    return cargoProject.findTargetForCrateRootFile(file)
+    return ws.findTargetForCrateRootFile(file)
 }
 
 val RsCompositeElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg

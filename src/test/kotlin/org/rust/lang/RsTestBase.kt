@@ -217,7 +217,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
             val packages = listOf(testCargoPackage(contentRoot))
-            return CargoWorkspace.deserialize(CleanCargoMetadata(packages, ArrayList()))
+            return CargoWorkspace.deserialize(null, CleanCargoMetadata(packages, ArrayList()))
         }
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
@@ -265,7 +265,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
             val packages = listOf(testCargoPackage(contentRoot))
 
-            return CargoWorkspace.deserialize(CleanCargoMetadata(packages, emptyList()))
+            return CargoWorkspace.deserialize(null, CleanCargoMetadata(packages, emptyList()))
         }
     }
 
@@ -285,7 +285,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib
 
             return CleanCargoMetadata(packages, depNodes).let {
-                CargoWorkspace.deserialize(it).withStdlib(stdlib.crates)
+                CargoWorkspace.deserialize(null, it).withStdlib(stdlib.crates)
             }
         }
     }

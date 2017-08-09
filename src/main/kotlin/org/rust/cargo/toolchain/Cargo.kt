@@ -61,7 +61,8 @@ class Cargo(
             .execute(owner, listener)
         val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
-        return CargoWorkspace.deserialize(projectDescriptionData)
+        val manifestPath = projectDirectory?.resolve("Cargo.toml")
+        return CargoWorkspace.deserialize(manifestPath, projectDescriptionData)
     }
 
     @Throws(ExecutionException::class)

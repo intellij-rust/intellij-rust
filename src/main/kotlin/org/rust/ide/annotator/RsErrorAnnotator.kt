@@ -182,7 +182,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             // We don't want to show the warning if there is no cargo project
             // associated with the current module. Without it we can't know for
             // sure that a mod is not a directory owner.
-            if (modDecl.module?.cargoWorkspace != null) {
+            if (modDecl.cargoWorkspace != null) {
                 holder.createErrorAnnotation(modDecl, "Cannot declare a new module at this location")
                     .registerFix(AddModuleFileFix(modDecl, expandModuleFirst = true))
             }
