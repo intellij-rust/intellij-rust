@@ -8,6 +8,7 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import org.rust.ide.presentation.escaped
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
@@ -55,6 +56,14 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             }
             element.typeReference?.generateDocumentation(this, " = ")
         }
+    }
+
+    override fun getDocumentationElementForLink(psiManager: PsiManager, link: String, context: PsiElement): PsiElement? {
+        if (context !is RsCompositeElement) return null
+        return RsCodeFragmentFactory(context.project)
+            .createPath(link, context)
+            ?.reference
+            ?.resolve()
     }
 }
 

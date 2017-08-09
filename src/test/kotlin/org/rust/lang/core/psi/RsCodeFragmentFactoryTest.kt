@@ -26,9 +26,8 @@ class RsCodeFragmentFactoryTest : RsTestBase() {
             }
         """)
         val loop = findElementInEditor<RsLoopExpr>()
-        val path = RsCodeFragmentFactory(project).createLocalVariable("x", loop)
+        val path = RsCodeFragmentFactory(project).createPath("x", loop)
         val declaration = path!!.reference.resolve()
         check((declaration as RsPatBinding).name == "x")
     }
 }
-
