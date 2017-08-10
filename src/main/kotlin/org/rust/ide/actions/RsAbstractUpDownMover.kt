@@ -7,14 +7,13 @@ package org.rust.ide.actions
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange
 import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import org.rust.ide.utils.findElementAtIgnoreWhitespaceAfter
 import org.rust.ide.utils.findElementAtIgnoreWhitespaceBefore
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.elementType
 
 val PsiElement.line: Int? get() = containingFile.viewProvider.document?.getLineNumber(textRange.startOffset)
@@ -82,7 +81,7 @@ abstract class RsAbstractUpDownMover : StatementUpDownMover() {
             info.toMove2 = LineRange(element)
         }
         if (down) {
-            if (info.toMove2.startLine - 1  == range.endLine || element == collectedElement) {
+            if (info.toMove2.startLine - 1 == range.endLine || element == collectedElement) {
                 info.toMove2 = LineRange(line - 1, line)
             }
         } else {
