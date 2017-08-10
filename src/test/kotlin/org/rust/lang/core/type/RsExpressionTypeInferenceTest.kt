@@ -480,6 +480,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test cast inner expr`() = testExpr("""
+        fn main() {
+            let a = 1 as u8;
+        }         //^ i32
+    """)
+
     fun `test pointer deref`() = testExpr("""
         fn main() {
             let x : *const i32;
@@ -655,6 +661,59 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let x = Foo::new_pair();
             x;
           //^ (Foo, Foo)
+        }
+    """)
+
+    fun `test argument expr of unresolved function`() = testExpr("""
+        fn main() {
+            foo(1);
+        }     //^ i32
+    """)
+
+    fun `test excess argument expr of function`() = testExpr("""
+        fn foo(a: i32) {}
+        fn main() {
+            foo(1, 2);
+        }        //^ i32
+    """)
+
+    fun `test argument expr of unresolved method`() = testExpr("""
+        struct S;
+        fn main() {
+            S.foo(1);
+        }       //^ i32
+    """)
+
+    fun `test field expr of unresolved struct`() = testExpr("""
+        fn main() {
+            S { f: 1 }
+        }        //^ i32
+    """)
+
+    fun `test unresolved field expr`() = testExpr("""
+        struct S;
+        fn main() {
+            S { f: 1 }
+        }        //^ i32
+    """)
+
+    fun `test index expr of unresolved path`() = testExpr("""
+        fn main() {
+            a[1]
+        }   //^ i32
+    """)
+
+    fun `test return inner expr`() = testExpr("""
+        fn foo() -> i32 {
+            return 1;
+        }        //^ i32
+    """)
+
+    fun `test loop break inner expr`() = testExpr("""
+        fn main() {
+            loop {
+                break 1;
+            }       //^ i32
         }
     """)
 }
