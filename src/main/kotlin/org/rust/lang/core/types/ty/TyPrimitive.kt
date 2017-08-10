@@ -6,6 +6,7 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.psi.PsiElement
+import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.hasColonColon
 import org.rust.lang.core.psi.ext.sizeExpr
@@ -44,19 +45,19 @@ interface TyPrimitive : Ty {
 }
 
 object TyBool : TyPrimitive {
-    override fun toString(): String = "bool"
+    override fun toString(): String = tyToString(this)
 }
 
 object TyChar : TyPrimitive {
-    override fun toString(): String = "char"
+    override fun toString(): String = tyToString(this)
 }
 
 object TyUnit : TyPrimitive {
-    override fun toString(): String = "()"
+    override fun toString(): String = tyToString(this)
 }
 
 object TyStr : TyPrimitive {
-    override fun toString(): String = "str"
+    override fun toString(): String = tyToString(this)
 }
 
 interface TyNumeric : TyPrimitive {
@@ -103,7 +104,7 @@ class TyInteger(val kind: Kind, override val isKindWeak: Boolean = false) : TyNu
     override fun equals(other: Any?): Boolean = other is TyInteger && other.kind == kind
     override fun hashCode(): Int = kind.hashCode()
 
-    override fun toString(): String = kind.toString()
+    override fun toString(): String = tyToString(this)
 }
 
 class TyFloat(val kind: Kind, override val isKindWeak: Boolean = false) : TyNumeric {
@@ -123,5 +124,5 @@ class TyFloat(val kind: Kind, override val isKindWeak: Boolean = false) : TyNume
     override fun equals(other: Any?): Boolean = other is TyFloat && other.kind == kind
     override fun hashCode(): Int = kind.hashCode()
 
-    override fun toString(): String = kind.toString()
+    override fun toString(): String = tyToString(this)
 }

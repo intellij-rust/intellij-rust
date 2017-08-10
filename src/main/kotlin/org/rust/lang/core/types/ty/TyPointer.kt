@@ -12,8 +12,8 @@ data class TyPointer(val referenced: Ty, val mutable: Boolean = false) : Ty {
     override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
         if (other is TyPointer) referenced.unifyWith(other.referenced, lookup) else UnifyResult.fail
 
-    override fun toString() = "*${if (mutable) "mut" else "const"} $referenced"
-
     override fun substitute(subst: Substitution): Ty =
         TyPointer(referenced.substitute(subst), mutable)
+
+    override fun toString() = "*${if (mutable) "mut" else "const"} $referenced"
 }

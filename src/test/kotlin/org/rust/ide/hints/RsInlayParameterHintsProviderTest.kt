@@ -10,7 +10,6 @@ import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsMethodCall
@@ -143,7 +142,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }                      //^
     """)
 
-    fun `test lamdba type hint`() = checkByText<RsLambdaExpr>("""
+    fun `test lambda type hint`() = checkByText<RsLambdaExpr>("""
         #[lang = "fn_once"]
         trait FnOnce<Args> { type Output; }
 
@@ -158,6 +157,26 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             with_s(|s/*caret*/| s.bar())
         }         //^
     """, ": S", 0)
+
+    fun `test don't render horrendous types in their full glory`() = checkByText<RsLetDecl>("""
+        struct S<T, U>;
+
+        impl<T, U> S<T, U> {
+            fn wrap<F>(self, f: F) -> S<F, Self> {
+                unimplemented!()
+            }
+        }
+
+        fn main() {
+            let s: S<(), ()> = unimplemented!();
+            let foo/*caret*/ = s
+                .wrap(|x: i32| x + 1)
+                .wrap(|x: i32| x + 1)
+                .wrap(|x: i32| x + 1)
+                .wrap(|x: i32| x + 1);
+               //^
+        }
+    """, ": S<fn() -> <unknown>, S<fn() -> <unknown>, S<_, _>>>", 0)
 
     inline private fun <reified T : PsiElement> checkNoHint(@Language("Rust") code: String) {
         InlineFile(code)

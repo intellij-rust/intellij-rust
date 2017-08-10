@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
+import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.resolve.ImplLookup
 
 data class TyTuple(val types: List<Ty>) : Ty {
@@ -20,6 +21,6 @@ data class TyTuple(val types: List<Ty>) : Ty {
     override fun substitute(subst: Substitution): TyTuple =
         TyTuple(types.map { it.substitute(subst) })
 
-    override fun toString(): String = types.joinToString(", ", "(", ")")
+    override fun toString(): String = tyToString(this)
 }
 

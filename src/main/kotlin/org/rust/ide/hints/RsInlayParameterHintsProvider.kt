@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
+import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.ty.TyFunction
@@ -26,7 +27,7 @@ enum class HintType(desc: String, enabled: Boolean) {
             val patBinding = ident.patBinding
             val type = patBinding.type
             if (type is TyUnknown) return emptyList()
-            return listOf(InlayInfo(": " + type.toString(), patBinding.textRange.endOffset))
+            return listOf(InlayInfo(": " + type.shortPresentableText, patBinding.textRange.endOffset))
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl
@@ -93,15 +94,6 @@ enum class HintType(desc: String, enabled: Boolean) {
         val SMART_HINTING = Option("SMART_HINTING", "Show only smart hints", true)
         fun resolve(elem: PsiElement): HintType? =
             HintType.values().find { it.isApplicable(elem) }
-
-        fun resolveToEnabled(elem: PsiElement?): HintType? {
-            val resolved = elem?.let { resolve(it) } ?: return null
-            return if (resolved.enabled) {
-                resolved
-            } else {
-                null
-            }
-        }
     }
 
     abstract fun isApplicable(elem: PsiElement): Boolean
@@ -120,8 +112,11 @@ class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
 
     override fun getHintInfo(element: PsiElement?): HintInfo? = null
 
-    override fun getParameterHints(element: PsiElement): List<InlayInfo> =
-        HintType.resolveToEnabled(element)?.provideHints(element) ?: emptyList()
+    override fun getParameterHints(element: PsiElement): List<InlayInfo> {
+        val resolved = HintType.resolve(element) ?: return emptyList()
+        if (!resolved.enabled) return emptyList()
+        return resolved.provideHints(element)
+    }
 
     override fun getInlayPresentation(inlayText: String): String = inlayText
 }
