@@ -73,7 +73,7 @@ private fun List<String>.reverseNew() = if (this.firstOrNull() == "new") {
     this
 }
 
-fun PsiElement.nameForArgument(): String {
+private fun PsiElement.nameForArgument(): String {
     val call = this.parentOfType<RsCallExpr>(strict = true) ?: return ""
 
     val parameterIndex = call.valueArgumentList.children.indexOf(this)

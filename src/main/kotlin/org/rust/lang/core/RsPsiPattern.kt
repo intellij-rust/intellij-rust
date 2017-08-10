@@ -119,7 +119,7 @@ object RsPsiPattern {
     }
 }
 
-val PsiElement.prevVisibleOrNewLine: PsiElement?
+private val PsiElement.prevVisibleOrNewLine: PsiElement?
     get() = leftLeaves
         .filterNot { it is PsiComment || it is PsiErrorElement }
         .filter { it !is PsiWhiteSpace || it.textContains('\n') }
