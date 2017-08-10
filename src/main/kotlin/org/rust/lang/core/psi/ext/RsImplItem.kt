@@ -27,14 +27,16 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override val isPublic: Boolean get() = false // pub does not affect imls at all
 
     override fun getPresentation(): ItemPresentation {
-        val t = typeReference?.typeElement
-        if (t is RsBaseType) {
-            val pres = (t.path?.reference?.resolve() as? RsNamedElement)?.presentation
-            if (pres != null) {
-                return PresentationData(pres.presentableText, pres.locationString, RsIcons.IMPL, null)
-            }
+        val location = run {
+            val loc = containingMod.qualifiedName ?: containingMod.modName ?: containingFile.name
+            "(in $loc)"
         }
-        return PresentationData(typeReference?.text ?: "Impl", null, RsIcons.IMPL, null)
+        val text = run {
+            val typeName = typeReference?.type?.toString() ?: return@run "Impl"
+            val traitName = traitRef?.path?.referenceName
+            if (traitName == null) typeName else "$traitName for $typeName"
+        }
+        return PresentationData(text, location, RsIcons.IMPL, null)
     }
 
     override val implementedTrait: BoundElement<RsTraitItem>? get() {
