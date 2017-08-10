@@ -54,7 +54,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        pub const unsafe extern "C" fn <b>foo</b>&lt;T&gt;(x: T) -&gt; u32 where T: Clone
+        pub const unsafe extern "C" fn <b>foo</b>&lt;T&gt;(x: T) -&gt; u32<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Clone">Clone</a>,
     """)
 
     fun `test method`() = doTest("""
@@ -69,7 +69,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl S
+        impl <a href="psi_element://S">S</a>
         pub fn <b>consume</b>(self) -&gt; i32
     """)
 
@@ -82,7 +82,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl&lt;T&gt; Foo&lt;T&gt;
+        impl&lt;T&gt; <a href="psi_element://Foo">Foo</a>&lt;T&gt;
         pub fn <b>foo</b>(&amp;self)
     """)
 
@@ -95,7 +95,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl&lt;T, F&gt; Foo&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Ord,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: Into&lt;String&gt;,
+        impl&lt;T, F&gt; <a href="psi_element://Foo">Foo</a>&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         pub fn <b>foo</b>(&amp;self)
     """)
 
@@ -129,11 +129,13 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package::MyTrait&lt;T&gt;
-        where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         fn <b>my_func</b>()
     """)
 
     fun `test multiple where`() = doTest("""
+        use std::fmt::{Debug, Display};
+
         /// Docs
         #[cfg(test)]
         /// More Docs
@@ -148,10 +150,12 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        pub const unsafe extern "C" fn <b>foo</b>&lt;T, U, V&gt;(x: T) -&gt; u32 where T: Clone, U: Debug, V: Display
+        pub const unsafe extern "C" fn <b>foo</b>&lt;T, U, V&gt;(x: T) -&gt; u32<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Clone">Clone</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;U: <a href="psi_element://Debug">Debug</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;V: <a href="psi_element://Display">Display</a>,
     """)
 
     fun `test expanded signature`() = doTest("""
+        use std::fmt::{Debug, Display};
+
         /// Docs
         #[cfg(test)]
         /// More Docs
@@ -176,7 +180,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        pub const unsafe extern "C" fn <b>foo</b>&lt;T, U, V&gt;(x: T, y: u32, z: u64) -&gt; (u32, u64, u64) where T: Clone, U: Debug, V: Display
+        pub const unsafe extern "C" fn <b>foo</b>&lt;T, U, V&gt;(x: T, y: u32, z: u64) -&gt; (u32, u64, u64)<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Clone">Clone</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;U: <a href="psi_element://Debug">Debug</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;V: <a href="psi_element://Display">Display</a>,
     """)
 
     fun `test trait method impl`() = doTest("""
@@ -190,7 +194,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl Trait for Foo
+        impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
         fn <b>foo</b>()
     """)
 
@@ -205,7 +209,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl&lt;T, F&gt; Trait&lt;T&gt; for Foo&lt;F&gt;
+        impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;
         fn <b>foo</b>()
     """)
 
@@ -220,7 +224,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl&lt;T, F&gt; Trait&lt;T&gt; for Foo&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Ord,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: Into&lt;String&gt;,
+        impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         fn <b>foo</b>()
     """)
 
@@ -290,7 +294,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
               //^
     """, """
         test_package
-        struct <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        struct <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
     """)
 
     fun `test struct field`() = doTest("""
@@ -339,7 +343,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        enum <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        enum <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
     """)
 
     fun `test enum variant`() = doTest("""
@@ -392,7 +396,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        trait <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        trait <b>Foo</b>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
     """)
 
     fun `test type alias`() = doTest("""
@@ -409,7 +413,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
                 //^
     """, """
         test_package
-        pub type <b>Foo</b> = Result&lt;(), i32&gt;
+        pub type <b>Foo</b> = <a href="psi_element://Result">Result</a>&lt;(), i32&gt;
     """)
 
     fun `test generic type alias`() = doTest("""
@@ -417,7 +421,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             //^
     """, """
         test_package
-        type <b>Foo</b>&lt;T&gt; = Result&lt;T, i32&gt;
+        type <b>Foo</b>&lt;T&gt; = <a href="psi_element://Result">Result</a>&lt;T, i32&gt;
     """)
 
     fun `test generic type alias with where clause`() = doTest("""
@@ -425,7 +429,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
              //^
     """, """
         test_package
-        type <b>Foo</b>&lt;T&gt; = Result&lt;T, i32&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        type <b>Foo</b>&lt;T&gt; = <a href="psi_element://Result">Result</a>&lt;T, i32&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
     """)
 
     fun `test impl assoc type`() = doTest("""
@@ -439,8 +443,8 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl Trait for Foo
-        type <b>AssocType</b> = Option&lt;i32&gt;
+        impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
+        type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;i32&gt;
     """)
 
     fun `test generic impl assoc type`() = doTest("""
@@ -454,8 +458,8 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl&lt;T&gt; Trait for Foo&lt;T&gt;
-        type <b>AssocType</b> = Option&lt;T&gt;
+        impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;
+        type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;
     """)
 
     fun `test generic impl assoc type with where clause`() = doTest("""
@@ -469,8 +473,8 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package
-        impl&lt;T&gt; Trait for Foo&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
-        type <b>AssocType</b> = Option&lt;T&gt;
+        impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
+        type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;
     """)
 
     fun `test trait assoc type`() = doTest("""
@@ -503,7 +507,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
     """, """
         test_package::MyTrait&lt;T&gt;
-        where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: Into&lt;String&gt;,
+        where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         type <b>Awesome</b>
     """)
 
@@ -538,10 +542,13 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     """)
 
     fun `test complex type parameter`() = doTest("""
+        use std::borrow::Borrow;
+        use std::hash::Hash;
+
         fn foo<'a, Q, T: 'a + Eq>(t: T) where T: Hash + Borrow<Q> { }
                                    //^
     """, """
-        type parameter <b>T</b>: &#39;a + Eq + Hash + Borrow&lt;Q&gt;
+        type parameter <b>T</b>: &#39;a + <a href="psi_element://Eq">Eq</a> + <a href="psi_element://Hash">Hash</a> + <a href="psi_element://Borrow">Borrow</a>&lt;Q&gt;
     """)
 
     fun `test loop label`() = doTest("""
