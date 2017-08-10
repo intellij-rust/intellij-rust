@@ -108,7 +108,7 @@
         <gotoSymbolContributor implementation="org.rust.ide.navigation.goto.RsSymbolNavigationContributor"/>
         <codeInsight.gotoSuper language="Rust" implementationClass="org.rust.ide.navigation.goto.RsGotoSuperHandler"/>
         // `ctrl+alt+b`
-        <definitionsScopedSearch implementation="org.rust.ide.navigation.goto.RsTraitImplementationsSearch"/>
+        <definitionsScopedSearch implementation="org.rust.ide.navigation.goto.RsImplsSearch"/>
         <gotoTargetRendererProvider implementation="org.rust.ide.navigation.goto.RsGotoTargetRendererProvider"/>
 
         <!-- Hints -->
@@ -131,7 +131,7 @@
         <!-- Line Marker Providers -->
 
         <codeInsight.lineMarkerProvider language="Rust"
-                                        implementationClass="org.rust.ide.annotator.RsTraitLineMarkerProvider"/>
+                                        implementationClass="org.rust.ide.annotator.RsImplsLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.annotator.RsRecursiveCallLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"

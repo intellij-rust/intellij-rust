@@ -9,12 +9,14 @@ import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.util.Processor
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.searchForImplementations
+import org.rust.ide.annotator.RsImplsLineMarkerProvider
 
-class RsTraitImplementationsSearch : QueryExecutorBase<PsiElement, DefinitionsScopedSearch.SearchParameters>(/* readAction = */ true) {
+/**
+ * See [org.rust.ide.annotator.RsImplsLineMarkerProvider]
+ */
+class RsImplsSearch : QueryExecutorBase<PsiElement, DefinitionsScopedSearch.SearchParameters>(/* readAction = */ true) {
     override fun processQuery(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<PsiElement>) {
-        val trait = queryParameters.element as? RsTraitItem ?: return
-        trait.searchForImplementations().forEach(Processor { consumer.process(it) })
+        val (query, _) = RsImplsLineMarkerProvider.implsQuery(queryParameters.element) ?: return
+        query.forEach(Processor { consumer.process(it) })
     }
 }
