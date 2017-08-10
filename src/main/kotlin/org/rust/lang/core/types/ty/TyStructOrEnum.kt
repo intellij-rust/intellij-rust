@@ -6,6 +6,7 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
+import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -18,13 +19,6 @@ interface TyStructOrEnumBase : Ty {
     val typeArguments: List<Ty>
 
     val item: RsStructOrEnumItemElement
-
-    val fullName: String
-        get() {
-            return if (item.name != null) {
-                item.name + if (typeArguments.isNotEmpty()) typeArguments.joinToString(", ", "<", ">") else ""
-            } else "<anonymous>"
-        }
 
     override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult {
         return if (other is TyStructOrEnumBase && item == other.item) {
@@ -48,8 +42,6 @@ class TyStruct private constructor(
     override val typeArguments: List<Ty>
         get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
 
-    override fun toString(): String = fullName
-
     override fun substitute(subst: Substitution): TyStruct =
         TyStruct(boundElement.substitute(subst))
 
@@ -58,6 +50,8 @@ class TyStruct private constructor(
 
     override fun hashCode(): Int =
         boundElement.hashCode()
+
+    override fun toString(): String = tyToString(this)
 
     companion object {
         fun valueOf(struct: RsStructItem): TyStruct {
@@ -80,8 +74,6 @@ class TyEnum private constructor(
     override val typeArguments: List<Ty>
         get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
 
-    override fun toString(): String = fullName
-
     override fun substitute(subst: Substitution): TyEnum =
         TyEnum(boundElement.substitute(subst))
 
@@ -90,6 +82,8 @@ class TyEnum private constructor(
 
     override fun hashCode(): Int =
         boundElement.hashCode()
+
+    override fun toString(): String = tyToString(this)
 
     companion object {
         fun valueOf(enum: RsEnumItem): TyEnum {

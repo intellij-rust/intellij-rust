@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
+import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.resolve.ImplLookup
 
 data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty {
@@ -19,11 +20,8 @@ data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty {
         }
     }
 
-    override fun toString(): String {
-        val params = paramTypes.joinToString(", ", "fn(", ")")
-        return if (retType === TyUnit) params else "$params -> $retType"
-    }
-
     override fun substitute(subst: Substitution): TyFunction =
         TyFunction(paramTypes.map { it.substitute(subst) }, retType.substitute(subst))
+
+    override fun toString(): String = tyToString(this)
 }

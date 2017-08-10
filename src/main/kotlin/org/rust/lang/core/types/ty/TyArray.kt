@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
+import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.resolve.ImplLookup
 
 class TyArray(val base: Ty, val size: Int) : Ty {
@@ -14,5 +15,5 @@ class TyArray(val base: Ty, val size: Int) : Ty {
     override fun substitute(subst: Substitution): Ty =
         TyArray(base.substitute(subst), size)
 
-    override fun toString() = "[$base; $size]"
+    override fun toString(): String = tyToString(this)
 }

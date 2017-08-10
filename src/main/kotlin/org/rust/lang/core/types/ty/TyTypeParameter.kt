@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
+import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeParameter
@@ -59,7 +60,9 @@ class TyTypeParameter private constructor(
         return TyTypeParameter(parameter, bounds.map { it.substitute(subst) })
     }
 
-    override fun toString(): String = parameter.name ?: "<unknown>"
+    val name: String? get() = parameter.name
+
+    override fun toString(): String = tyToString(this)
 
     private interface TypeParameter {
         val name: String?
