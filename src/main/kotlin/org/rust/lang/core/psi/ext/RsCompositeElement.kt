@@ -17,7 +17,6 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.util.modules
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.resolve.ref.RsReference
 
 interface RsCompositeElement : PsiElement {
     /**
@@ -64,8 +63,6 @@ val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target? get() {
 val RsCompositeElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
 abstract class RsCompositeElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsCompositeElement {
-    override fun getReference(): RsReference? = null
-
     override val containingMod: RsMod
         get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
             ?: error("Element outside of module: $text")
@@ -76,8 +73,6 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override fun getReference(): RsReference? = null
 
     override val containingMod: RsMod
         get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
