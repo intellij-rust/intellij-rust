@@ -178,6 +178,12 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
 
     override fun syncUpdate(toolchain: RustToolchain) {
         taskQueue.run(UpdateTask(toolchain, module.cargoProjectRoot!!.pathAsPath, null))
+
+        val projectDirectory = module.cargoProjectRoot?.pathAsPath
+            ?: return
+        val rustup = module.project.toolchain?.rustup(projectDirectory)
+            ?: return
+        taskQueue.run(SetupRustStdlibTask(module, rustup, { runWriteAction { workspaceMerger.setStdlib(it) } }))
     }
 
     private fun requestUpdate(toolchain: RustToolchain, afterCommit: ((UpdateResult) -> Unit)?) {
