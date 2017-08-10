@@ -441,6 +441,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                     //X
         fn foo() -> Result<S, ()> { unimplemented!() }
 
+        //noinspection RsTryMacro
         fn main() {
             let s = try!(foo());
             s.field;
