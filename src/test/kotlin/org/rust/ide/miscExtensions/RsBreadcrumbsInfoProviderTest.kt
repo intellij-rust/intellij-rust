@@ -6,7 +6,7 @@
 package org.rust.ide.miscExtensions
 
 import com.intellij.testFramework.UsefulTestCase
-import org.rust.ide.utils.breadcrumbName
+import org.rust.ide.presentation.breadcrumbName
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.descendantsOfType

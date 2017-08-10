@@ -156,7 +156,7 @@
 
         <!-- Description Provider -->
 
-        <elementDescriptionProvider implementation="org.rust.ide.miscExtensions.RsDescriptionProvider"/>
+        <elementDescriptionProvider implementation="org.rust.ide.presentation.RsDescriptionProvider"/>
         <breadcrumbsInfoProvider implementation="org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider"/>
 
         <!-- Spell-checker -->

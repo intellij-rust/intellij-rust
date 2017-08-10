@@ -7,9 +7,9 @@ package org.rust.ide.docs
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
-import org.rust.ide.utils.escaped
-import org.rust.ide.utils.presentableQualifiedName
-import org.rust.ide.utils.presentationInfo
+import org.rust.ide.presentation.escaped
+import org.rust.ide.presentation.presentableQualifiedName
+import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type

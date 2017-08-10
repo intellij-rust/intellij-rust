@@ -7,7 +7,7 @@ package org.rust.ide.miscExtensions
 
 import com.intellij.psi.PsiElement
 import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
-import org.rust.ide.utils.breadcrumbName
+import org.rust.ide.presentation.breadcrumbName
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.ext.RsCompositeElement
 
