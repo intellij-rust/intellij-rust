@@ -17,7 +17,7 @@ class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
                 self.foo();
             }
         }
-        struct Bar {}
+        struct Bar {} // - Has implementations
         impl Foo for Bar {
             fn foo(&self) { // - Implements method in `Foo`
             }
@@ -30,7 +30,7 @@ class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         trait Foo {         // - Has implementations
             fn foo(&self);
         }
-        struct Bar {}
+        struct Bar {} // - Has implementations
         impl Foo for Bar {
             ///
             /// Documentation

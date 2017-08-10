@@ -9,33 +9,51 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.psi.PsiElement
+import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.psi.RsEnumItem
+import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.searchForImplementations
+import org.rust.lang.core.psi.ext.union
 import org.rust.lang.utils.isEmptyQuery
 
 /**
  * Annotates trait declaration with an icon on the gutter that allows to jump to
  * its implementations.
+ *
+ * See [org.rust.ide.navigation.goto.RsImplsSearch]
  */
-class RsTraitLineMarkerProvider : LineMarkerProvider {
+class RsImplsLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<PsiElement>? = null
 
     override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         for (el in elements) {
-            if (el !is RsTraitItem) continue
-            val targets = el.searchForImplementations()
-            if (targets.isEmptyQuery) continue
-
+            val (query, anchor) = implsQuery(el) ?: continue
             val info = NavigationGutterIconBuilder
                 .create(RsIcons.IMPLEMENTED)
-                .setTargets(targets.findAll())
+                .setTargets(query.findAll())
                 .setPopupTitle("Go to implementation")
                 .setTooltipText("Has implementations")
-                .createLineMarkerInfo(el.trait)
+                .createLineMarkerInfo(anchor)
 
             result.add(info)
         }
     }
+
+    companion object {
+        fun implsQuery(psi: PsiElement): Pair<Query<RsImplItem>, PsiElement>? {
+            val (query, anchor) = when (psi) {
+                is RsTraitItem -> psi.searchForImplementations() to psi.trait
+                is RsStructItem -> psi.searchForImplementations() to (psi.struct ?: psi.union)!!
+                is RsEnumItem -> psi.searchForImplementations() to psi.enum
+                else -> return null
+            }
+            if (query.isEmptyQuery) return null
+            return query to anchor
+        }
+    }
+
 }

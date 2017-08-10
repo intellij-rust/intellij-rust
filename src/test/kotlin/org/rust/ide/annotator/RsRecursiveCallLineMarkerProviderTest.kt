@@ -17,7 +17,7 @@ class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
     """)
 
     fun testAssocFunction() = doTestByText("""
-        struct Foo {}
+        struct Foo {} // - Has implementations
         impl Foo {
             fn foo() {
                 Foo::foo();      // - Recursive call
@@ -26,7 +26,7 @@ class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
     """)
 
     fun testMethod() = doTestByText("""
-        struct Foo {}
+        struct Foo {} // - Has implementations
         impl Foo {
             fn foo(&self) {
                 self.foo();      // - Recursive call
@@ -36,7 +36,7 @@ class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
     fun testNamesCollision() = doTestByText("""
         fn foo() {}
-        struct Foo {}
+        struct Foo {} // - Has implementations
         impl Foo {
             fn foo() {
                 foo();  // It's the high-level function, no marker

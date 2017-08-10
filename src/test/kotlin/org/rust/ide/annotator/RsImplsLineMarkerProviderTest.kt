@@ -5,10 +5,7 @@
 
 package org.rust.ide.annotator
 
-/**
- * Tests for Rust Trait Line Marker Provider
- */
-class RsTraitLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
+class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
     fun testNoMarker() = doTestByText("""
         trait Foo {}
@@ -16,7 +13,7 @@ class RsTraitLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
     fun testOneImpl() = doTestByText("""
         trait Foo {}  // - Has implementations
-        struct Bar {}
+        struct Bar {} // - Has implementations
         impl Foo for Bar {}
     """)
 
@@ -24,12 +21,12 @@ class RsTraitLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         trait Foo {}  // - Has implementations
         mod bar {
             use super::Foo;
-            struct Bar {}
+            struct Bar {} // - Has implementations
             impl Foo for Bar {}
         }
         mod baz {
             use super::Foo;
-            struct Baz {}
+            struct Baz {}  // - Has implementations
             impl Foo for Baz {}
         }
     """)
@@ -46,7 +43,7 @@ class RsTraitLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         ///
         #[warn(non_camel_case_types)]
         trait Foo {}                // - Has implementations
-        struct Bar {}
+        struct Bar {}               // - Has implementations
         impl Foo for Bar {}
     """)
 }
