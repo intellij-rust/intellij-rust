@@ -89,7 +89,11 @@ class RsFmtBlock(
 
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
         if (CommaList.forElement(node.elementType) != null && newChildIndex > 1) {
-            return ChildAttributes.DELEGATE_TO_NEXT_CHILD
+            val isBeforeClosingBrace = newChildIndex + 1 == subBlocks.size
+            return if (isBeforeClosingBrace)
+                ChildAttributes.DELEGATE_TO_PREV_CHILD
+            else
+                ChildAttributes.DELEGATE_TO_NEXT_CHILD
         }
 
         val indent = when {

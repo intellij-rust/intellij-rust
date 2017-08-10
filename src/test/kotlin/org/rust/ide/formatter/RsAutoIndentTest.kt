@@ -239,4 +239,24 @@ class RsAutoIndentTest : RsTypingTestBase() {
             /*caret*/)
         }
     """)
+
+    fun `test new struct field`() = doTestByText("""
+        struct ManifestWarning {
+            message: String,/*caret*/
+        }
+    """, """
+        struct ManifestWarning {
+            message: String,
+            /*caret*/
+        }
+    """)
+
+    fun `test first struct field`() = doTestByText("""
+        struct ManifestWarning {/*caret*/
+        }
+    """, """
+        struct ManifestWarning {
+            /*caret*/
+        }
+    """)
 }
