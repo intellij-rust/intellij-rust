@@ -68,6 +68,7 @@ data class RustToolchain(val location: String) {
         private val RUSTUP = "rustup"
 
         val CARGO_TOML = "Cargo.toml"
+        val CARGO_LOCK = "Cargo.lock"
 
         fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
             val candidate = RustToolchain(it.absolutePath)

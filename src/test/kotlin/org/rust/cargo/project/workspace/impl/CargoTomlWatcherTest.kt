@@ -28,6 +28,14 @@ class CargoTomlWatcherTest : RsTestBase() {
         watcher.checkTriggered(newRenameEvent(tomlFile))
     }
 
+    fun `test lockfile modifications`() {
+        val watcher = CargoTomlWatcher { counter += 1 }
+
+        val (lockFile, createEvent) = newCreateEvent("Cargo.lock")
+        watcher.checkTriggered(createEvent)
+        watcher.checkTriggered(newChangeEvent(lockFile))
+    }
+
     fun `test implicit targets`() {
         val watcher = CargoTomlWatcher { counter += 1 }
 
