@@ -230,7 +230,7 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
                 polyboundList.joinTo(buffer, " + ", ": ") { generateDocumentation(it) }
             }
         }
-    // TODO: support 'for lifetimes'
+        // TODO: support 'for lifetimes'
         is RsPolybound -> {
             if (q != null) {
                 buffer += "?"
@@ -284,7 +284,15 @@ private fun generatePathDocumentation(element: RsPath, buffer: StringBuilder) {
         buffer += name
     }
 
-    element.typeArgumentList?.generateDocumentation(buffer)
+    val typeArgumentList = element.typeArgumentList
+    val valueParameterList = element.valueParameterList
+    when {
+        typeArgumentList != null -> typeArgumentList.generateDocumentation(buffer)
+        valueParameterList != null -> {
+            valueParameterList.generateDocumentation(buffer)
+            element.retType?.generateDocumentation(buffer)
+        }
+    }
 }
 
 private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer: StringBuilder) {
