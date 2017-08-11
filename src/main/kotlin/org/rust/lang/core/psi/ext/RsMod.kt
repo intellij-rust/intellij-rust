@@ -19,6 +19,12 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner {
      */
     val `super`: RsMod?
 
+    /**
+     * XXX: this might be different then [com.intellij.psi.PsiNamedElement.getName].
+     *
+     * This contortion is required because [org.rust.lang.core.psi.RsFile] is
+     * [RsMod], but we shouldn't override its name.
+     */
     val modName: String?
 
     val ownsDirectory: Boolean
