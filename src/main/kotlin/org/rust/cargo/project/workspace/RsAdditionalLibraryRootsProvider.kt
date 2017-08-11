@@ -6,6 +6,7 @@
 package org.rust.cargo.project.workspace
 
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.SyntheticLibrary
@@ -52,8 +53,10 @@ class RsWatchedRootsProvider(private val project: Project) : WatchedRootsProvide
 
 
 private fun cargoLibraries(project: Project): Collection<CargoLibrary> =
-    project.modules.mapNotNull { it.cargoWorkspace }
-        .smartFlatMap { it.ideaLibraries }
+    runReadAction {
+        project.modules.mapNotNull { it.cargoWorkspace }
+            .smartFlatMap { it.ideaLibraries }
+    }
 
 private fun <U, V> Collection<U>.smartFlatMap(transform: (U) -> Collection<V>): Collection<V> =
     when (size) {
