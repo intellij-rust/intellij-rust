@@ -17,11 +17,7 @@ class PresentationInfo(
     val name: String,
     private val declaration: DeclarationInfo
 ) {
-    private val location: String?
-
-    init {
-        location = element.containingFile?.let { " [${it.name}]" }.orEmpty()
-    }
+    private val location: String? = element.containingFile?.let { " [${it.name}]" }.orEmpty()
 
     val projectStructureItemText: String get() = "$name${declaration.suffix}"
 
