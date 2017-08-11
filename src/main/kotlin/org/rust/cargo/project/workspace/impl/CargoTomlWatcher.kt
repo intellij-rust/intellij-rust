@@ -34,6 +34,7 @@ class CargoTomlWatcher(
     override fun after(events: List<VFileEvent>) {
         fun isInterestingEvent(event: VFileEvent): Boolean {
             if (event.path.endsWith(RustToolchain.CARGO_TOML)) return true
+            if (event.path.endsWith(RustToolchain.CARGO_LOCK)) return true
             if (event is VFileContentChangeEvent || PathUtil.getFileExtension(event.path) != "rs") return false
 
             if (IMPLICIT_TARGET_FILES.any { event.path.endsWith(it) }) return true

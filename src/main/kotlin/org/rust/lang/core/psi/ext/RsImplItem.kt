@@ -5,12 +5,12 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.ide.projectView.PresentationData
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
@@ -26,18 +26,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
 
     override val isPublic: Boolean get() = false // pub does not affect imls at all
 
-    override fun getPresentation(): ItemPresentation {
-        val location = run {
-            val loc = containingMod.qualifiedName ?: containingMod.modName ?: containingFile.name
-            "(in $loc)"
-        }
-        val text = run {
-            val typeName = typeReference?.type?.toString() ?: return@run "Impl"
-            val traitName = traitRef?.path?.referenceName
-            if (traitName == null) typeName else "$traitName for $typeName"
-        }
-        return PresentationData(text, location, RsIcons.IMPL, null)
-    }
+    override fun getPresentation(): ItemPresentation = getPresentation(this)
 
     override val implementedTrait: BoundElement<RsTraitItem>? get() {
         val (trait, subst) = traitRef?.resolveToBoundTrait ?: return null

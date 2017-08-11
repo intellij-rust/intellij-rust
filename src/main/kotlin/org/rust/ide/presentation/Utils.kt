@@ -5,10 +5,69 @@
 
 package org.rust.ide.presentation
 
+import com.intellij.ide.projectView.PresentationData
+import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.util.text.StringUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.type
 
+
+fun getPresentation(psi: RsCompositeElement): ItemPresentation {
+    val location = run {
+        val mod = psi.containingMod
+        "(in ${mod.qualifiedName ?: mod.modName ?: psi.containingFile.name})"
+    }
+
+    val name = presentableName(psi)
+    return PresentationData(name, location, psi.getIcon(0), null)
+}
+
+fun getPresentationForStructure(psi: RsCompositeElement): ItemPresentation {
+    val presentation = buildString {
+        fun appendCommaList(xs: List<String>) {
+            append('(')
+            append(xs.joinToString(", "))
+            append(')')
+        }
+        append(presentableName(psi))
+        when (psi) {
+            is RsFunction -> {
+                appendCommaList(psi.valueParameters.mapNotNull { it.typeReference?.text })
+
+                val ret = psi.retType?.typeReference
+                if (ret != null) append(" -> ${ret.text}")
+            }
+            is RsConstant -> {
+                psi.typeReference?.let { append(": ${it.text}") }
+            }
+            is RsFieldDecl -> {
+                psi.typeReference?.let { append(": ${it.text}") }
+            }
+            is RsEnumVariant -> {
+                val fields = psi.tupleFields
+                if (fields != null) {
+                    appendCommaList(fields.tupleFieldDeclList.map { it.typeReference.text })
+                }
+            }
+        }
+    }
+    return PresentationData(presentation, null, psi.getIcon(0), null)
+}
+
+private fun presentableName(psi: RsCompositeElement): String? = when (psi) {
+    is RsNamedElement -> psi.name
+    is RsImplItem -> {
+        val typeName = psi.typeReference?.type?.toString()
+        val traitName = psi.traitRef?.path?.referenceName
+        when {
+            typeName == null -> null
+            traitName == null -> typeName
+            else -> "$traitName for $typeName"
+        }
+    }
+    else -> null
+}
 
 val RsDocAndAttributeOwner.presentableQualifiedName: String? get() {
     val qName = (this as? RsQualifiedNamedElement)?.qualifiedName

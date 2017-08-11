@@ -70,14 +70,22 @@ class RsStructureViewTest : RsTestBase() {
           Test
           Build
           Bench
-          Doc
+          -Doc
+           deps: bool
          -CompileFilter
           Everything
-          Only
+          -Only
+           lib: bool
+           bins: &'a [String]
+           examples: &'a [String]
+           tests: &'a [String]
+           benches: &'a [String]
          -Message
           Quit
           ChangeColor(i32, i32, i32)
-          Move
+          -Move
+           x: i32
+           y: i32
           Write(String)
     """)
 
@@ -112,7 +120,7 @@ class RsStructureViewTest : RsTestBase() {
          -Foo
           C: i32
           query(&u32) -> Option<&u32>
-         -Foo for &'static str
+         -Foo for &str
           C: i32
           query(&u32) -> Option<&u32>
     """)
@@ -203,18 +211,19 @@ class RsStructureViewTest : RsTestBase() {
         trait P<X> { }
     """, """
         -main.rs
-         -ExecEngine: Send + Sync
+         -ExecEngine
           exec(CommandPrototype) -> Result<(), ProcessError>
           exec_with_output(CommandPrototype) -> Result<Output, ProcessError>
          -A
+          B
           C: i32
           D: f64
          -Registry
           query(&Dependency) -> CargoResult<Vec<Summary>>
-         -FnBox<A, R>
+         -FnBox
           call_box(A) -> R
          T
-         P<X>
+         P
     """)
 
     fun `test type aliases`() = doTest("""
