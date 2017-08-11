@@ -879,6 +879,35 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <pre>type <b>Bar</b> = &lt;Self as <a href="psi_element://Foo1">Foo1</a>&gt;::<a href="psi_element://&lt;Self as Foo1&gt;::Bar">Bar</a></pre>
     """)
 
+    fun `test type value parameters 1`() = doTest("""
+        fn run<F, T>(f: F, t: T) where F: FnOnce(T) { f(t); }
+          //^
+    """, """
+        <pre>test_package</pre>
+        <pre>fn <b>run</b>&lt;F, T&gt;(f: F, t: T)<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://FnOnce">FnOnce</a>(T),</pre>
+    """)
+
+    fun `test type value parameters 2`() = doTest("""
+        fn call<F, T, R>(f: F, t: T) -> R where F: FnOnce(T) -> R { f(t) }
+          //^
+    """, """
+        <pre>test_package</pre>
+        <pre>fn <b>call</b>&lt;F, T, R&gt;(f: F, t: T) -&gt; R<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://FnOnce">FnOnce</a>(T) -&gt; R,</pre>
+    """)
+
+    fun `test type value parameters 3`() = doTest("""
+        pub trait Iter {
+            type Item;
+
+            fn scan<St, B, F>(self, initial_state: St, f: F) -> Scan<Self, St, F>
+              //^
+                where Self: Sized, F: FnMut(&mut St, Self::Item) -> Option<B> { unimplemented!() }
+        }
+    """, """
+        <pre>test_package::Iter</pre>
+        <pre>fn <b>scan</b>&lt;St, B, F&gt;(self, initial_state: St, f: F) -&gt; Scan&lt;Self, St, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;Self: <a href="psi_element://Sized">Sized</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://FnMut">FnMut</a>(&amp;mut St, Self::<a href="psi_element://Self::Item">Item</a>) -&gt; <a href="psi_element://Option">Option</a>&lt;B&gt;,</pre>
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
         = doTest(code, expected, RsDocumentationProvider::generateDoc)
 }
