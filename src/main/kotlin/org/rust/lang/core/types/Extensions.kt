@@ -40,10 +40,10 @@ val RsFunction.inferenceContext: RsInferenceContext
     })
 
 val RsPatBinding.type: Ty
-    get() = this.parentOfType<RsFunction>()?.inferenceContext?.getBindingType(this) ?: TyUnknown
+    get() = parentOfType<RsFunction>()?.inferenceContext?.getBindingType(this) ?: TyUnknown
 
 val RsExpr.type: Ty
-    get() = this.parentOfType<RsFunction>()?.inferenceContext?.getExprType(this) ?: inferOutOfFnExpressionType(this)
+    get() = parentOfType<RsFunction>()?.inferenceContext?.getExprType(this) ?: inferOutOfFnExpressionType(this)
 
 val RsExpr.declaration: RsCompositeElement?
     get() = when (this) {

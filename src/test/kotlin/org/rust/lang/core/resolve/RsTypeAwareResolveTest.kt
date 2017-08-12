@@ -510,4 +510,16 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                //^
         }
     """)
+
+    fun `test incomplete dot expr`() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn foo(&self) {}
+              //X
+        }
+        fn main() {
+            Foo.foo().
+               //^
+        }
+    """)
 }
