@@ -677,6 +677,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }        //^ i32
     """)
 
+    fun `test tuple expr with more types than expected`() = testExpr("""
+        fn main() {
+            let a: (u8) = (1, 2);
+        }                   //^ i32
+    """)
+
     fun `test argument expr of unresolved method`() = testExpr("""
         struct S;
         fn main() {
@@ -715,5 +721,30 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 break 1;
             }       //^ i32
         }
+    """)
+
+    fun `test infer explicit lambda parameter type`() = testExpr("""
+        fn main() {
+            let a = |x: u8| x;
+        }                 //^ u8
+    """)
+
+    fun `test infer lambda type with explicit parameters`() = testExpr("""
+        fn main() {
+            let a = |x: u8| x;
+            a
+        } //^ fn(u8) -> u8
+    """)
+
+    fun `test infer lambda parameters rvalue from lvalue fn pointer`() = testExpr("""
+        fn main() {
+            let a: fn(u8) = |x| x;
+        }                     //^ u8
+    """)
+
+    fun `test infer excess explicit lambda parameter`() = testExpr("""
+        fn main() {
+            let a: fn(u8) = |x, y: u8| y;
+        }                            //^ u8
     """)
 }

@@ -170,13 +170,13 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s: S<(), ()> = unimplemented!();
             let foo/*caret*/ = s
-                .wrap(|x: i32| x + 1)
-                .wrap(|x: i32| x + 1)
-                .wrap(|x: i32| x + 1)
-                .wrap(|x: i32| x + 1);
+                .wrap(|x: i32| x)
+                .wrap(|x: i32| x)
+                .wrap(|x: i32| x)
+                .wrap(|x: i32| x);
                //^
         }
-    """, ": S<fn() -> <unknown>, S<fn() -> <unknown>, S<_, _>>>", 0)
+    """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
 
     inline private fun <reified T : PsiElement> checkNoHint(@Language("Rust") code: String) {
         InlineFile(code)
