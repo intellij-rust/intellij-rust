@@ -42,7 +42,7 @@ private fun render(ty: Ty, level: Int): String {
 
         is TyTuple -> ty.types.map(r).joinToString(", ", "(", ")")
         is TyArray -> "[${r(ty.base)}; ${ty.size}]"
-        is TyReference -> "${if (ty.mutable) "&mut " else "&"}${r(ty.referenced)}"
+        is TyReference -> "${if (ty.mutable) "&mut " else "&"}${render(ty.referenced, level)}"
         is TyPointer -> "*${if (ty.mutable) "mut" else "const"} ${r(ty.referenced)}"
         is TyTraitObject -> ty.trait.name ?: anonymous
         is TyTypeParameter -> ty.name ?: anonymous
