@@ -171,8 +171,7 @@ private class RsFnInferenceContext(
         return calleeType.retType.substitute(mapTypeParameters(calleeType.paramTypes, argExprs))
     }
 
-    private fun inferMethodCallExprType(methodCall: RsMethodCall): Ty {
-        val receiver = methodCall.receiver.inferType()
+    private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall): Ty {
         val argExprs = methodCall.valueArgumentList.exprList
         val boundElement = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
             .firstOrNull()?.downcast<RsFunction>()
@@ -190,11 +189,10 @@ private class RsFnInferenceContext(
     private fun unknownTyFunction(arity: Int): TyFunction =
         TyFunction(generateSequence { TyUnknown }.take(arity).toList(), TyUnknown)
 
-    private fun inferFieldExprType(fieldLookup: RsFieldLookup): Ty {
-        val receiverTy = fieldLookup.receiver.inferType()
-        val boundField = resolveFieldLookupReferenceWithReceiverType(lookup, receiverTy, fieldLookup).firstOrNull()
+    private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
+        val boundField = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup).firstOrNull()
         if (boundField == null) {
-            for (type in lookup.derefTransitively(receiverTy)) {
+            for (type in lookup.derefTransitively(receiver)) {
                 if (type is TyTuple) {
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
                     return type.types.getOrElse(fieldIndex) { TyUnknown }
@@ -212,11 +210,12 @@ private class RsFnInferenceContext(
     }
 
     private fun inferDotExprType(expr: RsDotExpr): Ty {
+        val receiver = expr.expr.inferType()
         val methodCall = expr.methodCall
         val fieldLookup = expr.fieldLookup
         return when {
-            methodCall != null -> inferMethodCallExprType(methodCall)
-            fieldLookup != null -> inferFieldExprType(fieldLookup)
+            methodCall != null -> inferMethodCallExprType(receiver, methodCall)
+            fieldLookup != null -> inferFieldExprType(receiver, fieldLookup)
             else -> TyUnknown
         }
     }
