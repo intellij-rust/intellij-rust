@@ -6,6 +6,7 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.util.Computable
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -40,10 +41,10 @@ val RsFunction.inferenceContext: RsInferenceContext
     })
 
 val RsPatBinding.type: Ty
-    get() = parentOfType<RsFunction>()?.inferenceContext?.getBindingType(this) ?: TyUnknown
+    get() = inferenceContext?.getBindingType(this) ?: TyUnknown
 
 val RsExpr.type: Ty
-    get() = parentOfType<RsFunction>()?.inferenceContext?.getExprType(this) ?: inferOutOfFnExpressionType(this)
+    get() = inferenceContext?.getExprType(this) ?: inferOutOfFnExpressionType(this)
 
 val RsExpr.declaration: RsCompositeElement?
     get() = when (this) {
@@ -76,3 +77,6 @@ val RsExpr.isMutable: Boolean get() {
         else -> DEFAULT_MUTABILITY
     }
 }
+
+private val PsiElement.inferenceContext: RsInferenceContext?
+    get() = (parentOfType<RsItemElement>() as? RsFunction)?.inferenceContext

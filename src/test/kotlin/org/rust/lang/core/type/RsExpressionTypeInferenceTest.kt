@@ -635,4 +635,16 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a: fn(u8) = |x, y: u8| y;
         }                            //^ u8
     """)
+
+    fun `test infer const inside a function`() = testExpr("""
+        fn main() {
+            const X: i32 = 1;
+        }                //^ i32
+    """)
+
+    fun `test infer static inside a function`() = testExpr("""
+        fn main() {
+            static X: i32 = 1;
+        }                 //^ i32
+    """)
 }
