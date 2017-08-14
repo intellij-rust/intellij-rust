@@ -6,6 +6,102 @@
 package org.rust.lang.core.type
 
 class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
+    fun `test default float`() = testExpr("""
+        fn main() {
+            let a = 1.0;
+        }           //^ f64
+    """)
+
+    fun `test f32`() = testExpr("""
+        fn main() {
+            let a = 1.0f32;
+        }           //^ f32
+    """)
+
+    fun `test f64`() = testExpr("""
+        fn main() {
+            let a = 1.0f64;
+        }           //^ f64
+    """)
+
+    fun `test default integer`() = testExpr("""
+        fn main() {
+            let a = 42;
+        }          //^ i32
+    """)
+
+    fun `test i8`() = testExpr("""
+        fn main() {
+            let a = 42i8;
+        }          //^ i8
+    """)
+
+    fun `test i16`() = testExpr("""
+        fn main() {
+            let a = 42i16;
+        }          //^ i16
+    """)
+
+    fun `test i32`() = testExpr("""
+        fn main() {
+            let a = 42i32;
+        }          //^ i32
+    """)
+
+    fun `test i64`() = testExpr("""
+        fn main() {
+            let a = 42i64;
+        }          //^ i64
+    """)
+
+    fun `test i128`() = testExpr("""
+        fn main() {
+            let a = 42i128;
+        }          //^ i128
+    """)
+
+    fun `test isize`() = testExpr("""
+        fn main() {
+            let a = 42isize;
+        }          //^ isize
+    """)
+
+    fun `test u8`() = testExpr("""
+        fn main() {
+            let a = 42u8;
+        }          //^ u8
+    """)
+
+    fun `test u16`() = testExpr("""
+        fn main() {
+            let a = 42u16;
+        }          //^ u16
+    """)
+
+    fun `test u32`() = testExpr("""
+        fn main() {
+            let a = 42u32;
+        }          //^ u32
+    """)
+
+    fun `test u64`() = testExpr("""
+        fn main() {
+            let a = 42u64;
+        }          //^ u64
+    """)
+
+    fun `test u128`() = testExpr("""
+        fn main() {
+            let a = 42u128;
+        }          //^ u128
+    """)
+
+    fun `test usize`() = testExpr("""
+        fn main() {
+            let a = 42usize;
+        }         //^ usize
+    """)
+
     fun `test infer rvalue from lvalue integer`() = testExpr("""
         fn main() {
             let a: u8 = 1;
