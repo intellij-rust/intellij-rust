@@ -6,12 +6,15 @@
 package org.rust.lang.core.ext
 
 import com.intellij.psi.PsiFileFactory
+import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.ide.presentation.presentationInfo
+import org.rust.ide.presentation.shortPresentableText
 import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.type
 
 
 // Unit tests fo various `parentOfType` like utilities,
@@ -79,6 +82,43 @@ class RsPsiStructureTest : RsTestBase() {
         check(implInfo.implementationToDeclaration.map { (it.first.name to it.second.name) } == listOf(
             "another_required_fn" to "another_required_fn"
         ))
+    }
+
+    fun `test ignore ref for levels`() = testShortTypeExpr("""
+        struct S;
+        fn main() {
+            let s = &&&&S;
+            s;
+          //^ &&&&S
+        }
+    """)
+
+    fun `test basic test`() = testShortTypeExpr("""
+        struct S<T, U>;
+
+        impl<T, U> S<T, U> {
+            fn wrap<F>(self, f: F) -> S<F, Self> {
+                unimplemented!()
+            }
+        }
+
+        fn main() {
+            let s: S<(), ()> = unimplemented!();
+            let foo = s
+                .wrap(|x: i32| x + 1)
+                .wrap(|x: i32| x + 1)
+                .wrap(|x: i32| x + 1)
+                .wrap(|x: i32| x + 1);
+            foo;
+            //^ S<fn() -> <unknown>, S<fn() -> <unknown>, S<_, _>>>
+        }
+    """)
+
+    fun testShortTypeExpr(@Language("Rust") code: String) {
+        InlineFile(code)
+        val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()
+            Assertions.assertThat(expr.type.shortPresentableText)
+                .isEqualTo(expectedType)
     }
 
     fun `test extern crate presentation info`() = checkElement<RsExternCrateItem>("""
