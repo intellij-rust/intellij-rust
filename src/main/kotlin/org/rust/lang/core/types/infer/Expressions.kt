@@ -16,7 +16,7 @@ fun inferOutOfFnExpressionType(expr: RsExpr) = when (expr) {
     else -> TyUnknown
 }
 
-fun inferLiteralExprType(expr: RsLitExpr): Ty = when (expr.kind) {
+private fun inferLiteralExprType(expr: RsLitExpr): Ty = when (expr.kind) {
     is RsLiteralKind.Boolean -> TyBool
     is RsLiteralKind.Integer -> TyInteger.fromLiteral(expr.integerLiteral!!)
     is RsLiteralKind.Float -> TyFloat.fromLiteral(expr.floatLiteral!!)

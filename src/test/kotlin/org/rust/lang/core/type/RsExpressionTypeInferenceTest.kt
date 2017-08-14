@@ -208,118 +208,6 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testDefaultFloat() = testExpr("""
-        fn main() {
-            let a = 1.0;
-                    //^ f64
-        }
-    """)
-
-    fun testF32() = testExpr("""
-        fn main() {
-            let a = 1.0f32;
-                    //^ f32
-        }
-    """)
-
-    fun testF64() = testExpr("""
-        fn main() {
-            let a = 1.0f64;
-                    //^ f64
-        }
-    """)
-
-    fun testDefaultInteger() = testExpr("""
-        fn main() {
-            let a = 42;
-                   //^ i32
-        }
-    """)
-
-    fun testI8() = testExpr("""
-        fn main() {
-            let a = 42i8;
-                   //^ i8
-        }
-    """)
-
-    fun testI16() = testExpr("""
-        fn main() {
-            let a = 42i16;
-                   //^ i16
-        }
-    """)
-
-    fun testI32() = testExpr("""
-        fn main() {
-            let a = 42i32;
-                   //^ i32
-        }
-    """)
-
-    fun testI64() = testExpr("""
-        fn main() {
-            let a = 42i64;
-                   //^ i64
-        }
-    """)
-
-    fun testI128() = testExpr("""
-        fn main() {
-            let a = 42i128;
-                   //^ i128
-        }
-    """)
-
-    fun testISize() = testExpr("""
-        fn main() {
-            let a = 42isize;
-                   //^ isize
-        }
-    """)
-
-    fun testU8() = testExpr("""
-        fn main() {
-            let a = 42u8;
-                   //^ u8
-        }
-    """)
-
-    fun testU16() = testExpr("""
-        fn main() {
-            let a = 42u16;
-                   //^ u16
-        }
-    """)
-
-    fun testU32() = testExpr("""
-        fn main() {
-            let a = 42u32;
-                   //^ u32
-        }
-    """)
-
-    fun testU64() = testExpr("""
-        fn main() {
-            let a = 42u64;
-                   //^ u64
-        }
-    """)
-
-    fun testU128() = testExpr("""
-        fn main() {
-            let a = 42u128;
-                   //^ u128
-        }
-    """)
-
-    fun testUSize() = testExpr("""
-        fn main() {
-            let a = 42usize;
-                   //^ usize
-        }
-    """)
-
     fun testBoolTrue() = testExpr("""
         fn main() {
             let a = true;
@@ -677,6 +565,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }        //^ i32
     """)
 
+    fun `test tuple expr with more types than expected`() = testExpr("""
+        fn main() {
+            let a: (u8) = (1, 2);
+        }                   //^ i32
+    """)
+
     fun `test argument expr of unresolved method`() = testExpr("""
         struct S;
         fn main() {
@@ -715,5 +609,30 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 break 1;
             }       //^ i32
         }
+    """)
+
+    fun `test infer explicit lambda parameter type`() = testExpr("""
+        fn main() {
+            let a = |x: u8| x;
+        }                 //^ u8
+    """)
+
+    fun `test infer lambda type with explicit parameters`() = testExpr("""
+        fn main() {
+            let a = |x: u8| x;
+            a
+        } //^ fn(u8) -> u8
+    """)
+
+    fun `test infer lambda parameters rvalue from lvalue fn pointer`() = testExpr("""
+        fn main() {
+            let a: fn(u8) = |x| x;
+        }                     //^ u8
+    """)
+
+    fun `test infer excess explicit lambda parameter`() = testExpr("""
+        fn main() {
+            let a: fn(u8) = |x, y: u8| y;
+        }                            //^ u8
     """)
 }

@@ -105,12 +105,12 @@ class RsPsiStructureTest : RsTestBase() {
         fn main() {
             let s: S<(), ()> = unimplemented!();
             let foo = s
-                .wrap(|x: i32| x + 1)
-                .wrap(|x: i32| x + 1)
-                .wrap(|x: i32| x + 1)
-                .wrap(|x: i32| x + 1);
+                .wrap(|x: i32| x)
+                .wrap(|x: i32| x)
+                .wrap(|x: i32| x)
+                .wrap(|x: i32| x);
             foo;
-            //^ S<fn() -> <unknown>, S<fn() -> <unknown>, S<_, _>>>
+            //^ S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>
         }
     """)
 
