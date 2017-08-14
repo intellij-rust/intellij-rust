@@ -46,6 +46,18 @@ interface Ty {
     override fun toString(): String
 }
 
+enum class Mutability {
+    MUTABLE,
+    IMMUTABLE;
+
+    val isMut: Boolean get() = this == MUTABLE
+
+    companion object {
+        fun valueOf(mutable: Boolean): Mutability =
+            if (mutable) MUTABLE else IMMUTABLE
+    }
+}
+
 fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.keys.find { it.toString() == name }
 }
