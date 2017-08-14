@@ -38,10 +38,10 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
     private fun checkMethodRequiresMutable(o: RsMethodCall, fn: RsFunction): Boolean {
         if (!o.parentDotExpr.expr.isMutable &&
             fn.selfParameter != null &&
-            fn.selfParameter?.isMut ?: false &&
+            fn.selfParameter?.mutability?.isMut ?: false &&
             fn.selfParameter?.isRef ?: false) {
             val typeRef = o.parentOfType<RsImplItem>()?.typeReference?.typeElement as? RsRefLikeType ?: return true
-            return !typeRef.isMut
+            return !typeRef.mutability.isMut
         }
         return false
     }

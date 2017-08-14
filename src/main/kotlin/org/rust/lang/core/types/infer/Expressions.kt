@@ -20,7 +20,7 @@ private fun inferLiteralExprType(expr: RsLitExpr): Ty = when (expr.kind) {
     is RsLiteralKind.Boolean -> TyBool
     is RsLiteralKind.Integer -> TyInteger.fromLiteral(expr.integerLiteral!!)
     is RsLiteralKind.Float -> TyFloat.fromLiteral(expr.floatLiteral!!)
-    is RsLiteralKind.String -> TyReference(TyStr)
+    is RsLiteralKind.String -> TyReference(TyStr, Mutability.IMMUTABLE)
     is RsLiteralKind.Char -> TyChar
     null -> TyUnknown
 }

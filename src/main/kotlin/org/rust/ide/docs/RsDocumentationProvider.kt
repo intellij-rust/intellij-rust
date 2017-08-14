@@ -319,12 +319,12 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
             if (typeElement.isRef) {
                 buffer += "&amp;"
                 typeElement.lifetime?.generateDocumentation(buffer, suffix = " ")
-                if (typeElement.isMut) {
+                if (typeElement.mutability.isMut) {
                     buffer += "mut "
                 }
             } else {
                 buffer += "*"
-                buffer += if (typeElement.isMut) "mut " else "const "
+                buffer += if (typeElement.mutability.isMut) "mut " else "const "
             }
             typeElement.typeReference.generateDocumentation(buffer)
         }

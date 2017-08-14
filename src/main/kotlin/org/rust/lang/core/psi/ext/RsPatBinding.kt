@@ -14,15 +14,11 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.ref.RsPatBindingReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.types.ty.Mutability
 
-val RsPatBinding.isRef: Boolean
-    get() = bindingMode?.ref != null
-
-val RsPatBinding.isMut: Boolean
-    get() = bindingMode?.mut != null
-
-val RsPatBinding.isArg: Boolean
-    get() = parent?.parent is RsValueParameter
+val RsPatBinding.isRef: Boolean get() = bindingMode?.ref != null
+val RsPatBinding.mutability: Mutability get() = Mutability.valueOf(bindingMode?.mut != null)
+val RsPatBinding.isArg: Boolean get() = parent?.parent is RsValueParameter
 
 val RsPatBinding.topLevelPattern: RsPat
     get() = ancestors
@@ -50,9 +46,9 @@ abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
     override val referenceName: String get() = name!!
 
     override fun getIcon(flags: Int) = when {
-        isArg && isMut -> RsIcons.MUT_ARGUMENT
+        isArg && mutability.isMut -> RsIcons.MUT_ARGUMENT
         isArg -> RsIcons.ARGUMENT
-        isMut -> RsIcons.MUT_BINDING
+        mutability.isMut -> RsIcons.MUT_BINDING
         else -> RsIcons.BINDING
     }
 

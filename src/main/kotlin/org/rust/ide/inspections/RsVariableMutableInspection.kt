@@ -11,14 +11,17 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.inspections.fixes.RemoveMutableFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.mutability
+import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.selfParameter
 
 class RsVariableMutableInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "No mutable required"
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitPatBinding(o: RsPatBinding) {
-                if (!o.isMut) return
+                if (!o.mutability.isMut) return
                 val block = o.parentOfType<RsBlock>() ?: o.parentOfType<RsFunction>() ?: return
                 if (ReferencesSearch.search(o, LocalSearchScope(block))
                     .asSequence()
@@ -42,7 +45,7 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
             is RsMethodCall -> {
                 val ref = parent.reference.resolve() as? RsFunction ?: return true
                 val self = ref.selfParameter ?: return true
-                return self.isMut
+                return self.mutability.isMut
             }
             is RsTupleExpr -> {
                 val expr = parent.parent as? RsUnaryExpr ?: return true

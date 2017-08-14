@@ -734,7 +734,7 @@ class RsSelfParameterStub(
             RsSelfParameterImpl(stub, this)
 
         override fun createStub(psi: RsSelfParameter, parentStub: StubElement<*>?) =
-            RsSelfParameterStub(parentStub, this, psi.isMut, psi.isRef)
+            RsSelfParameterStub(parentStub, this, psi.mutability.isMut, psi.isRef)
 
         override fun indexStub(stub: RsSelfParameterStub, sink: IndexSink) {
             // NOP
@@ -771,7 +771,7 @@ class RsRefLikeTypeStub(
 
         override fun createStub(psi: RsRefLikeType, parentStub: StubElement<*>?) =
             RsRefLikeTypeStub(parentStub, this,
-                psi.isMut,
+                psi.mutability.isMut,
                 psi.isRef,
                 psi.isPointer
             )

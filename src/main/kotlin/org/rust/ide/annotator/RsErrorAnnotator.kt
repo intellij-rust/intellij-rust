@@ -15,7 +15,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -326,7 +325,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private val RsSelfParameter.canonicalDecl: String
         get() = buildString {
             if (isRef) append('&')
-            if (isMut) append("mut ")
+            if (mutability.isMut) append("mut ")
             append("self")
         }
 }

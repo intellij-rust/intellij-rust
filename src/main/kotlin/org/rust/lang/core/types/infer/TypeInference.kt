@@ -14,6 +14,8 @@ import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
+import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 import org.rust.utils.forEachChild
 
@@ -134,7 +136,7 @@ private class RsFnInferenceContext(
         return when (expr.kind) {
             is RsLiteralKind.Boolean -> TyBool
             is RsLiteralKind.Char -> TyChar
-            is RsLiteralKind.String -> TyReference(TyStr)
+            is RsLiteralKind.String -> TyReference(TyStr, IMMUTABLE)
             is RsLiteralKind.Integer -> {
                 val ty = TyInteger.fromLiteral(expr.integerLiteral!!)
                 if (ty.isKindWeak) {
@@ -320,8 +322,8 @@ private class RsFnInferenceContext(
     private fun inferUnaryExprType(expr: RsUnaryExpr, expected: Ty?): Ty {
         val innerExpr = expr.expr ?: return TyUnknown
         return when (expr.operatorType) {
-            UnaryOperator.REF -> inferRefType(innerExpr, expected, mutable = false)
-            UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, mutable = true)
+            UnaryOperator.REF -> inferRefType(innerExpr, expected, IMMUTABLE)
+            UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, MUTABLE)
             UnaryOperator.DEREF -> {
                 // expectation must NOT be used for deref
                 val base = innerExpr.inferType()
@@ -340,7 +342,7 @@ private class RsFnInferenceContext(
         }
     }
 
-    private fun inferRefType(expr: RsExpr, expected: Ty?, mutable: Boolean): Ty =
+    private fun inferRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty =
         TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable)
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {

@@ -12,9 +12,10 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsSelfParameter
 import org.rust.lang.core.stubs.RsSelfParameterStub
+import org.rust.lang.core.types.ty.Mutability
 
 
-val RsSelfParameter.isMut: Boolean get() = stub?.isMut ?: (mut != null)
+val RsSelfParameter.mutability: Mutability get() = Mutability.valueOf(stub?.isMut ?: (mut != null))
 val RsSelfParameter.isRef: Boolean get() = stub?.isRef ?: (and != null)
 
 abstract class RsSelfParameterImplMixin : RsStubbedElementImpl<RsSelfParameterStub>,

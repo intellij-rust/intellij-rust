@@ -98,7 +98,7 @@ private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
     is RsModItem -> RsColor.MODULE
     is RsPatBinding -> when {
         element.parentOfType<RsValueParameter>() != null -> RsColor.PARAMETER
-        element.isMut -> RsColor.MUT_BINDING
+        element.mutability.isMut -> RsColor.MUT_BINDING
         else -> null
     }
     is RsStructItem -> RsColor.STRUCT

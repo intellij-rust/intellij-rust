@@ -14,6 +14,8 @@ import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
+import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.findWithCache
 import kotlin.LazyThreadSafetyMode.NONE
@@ -126,11 +128,11 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
             is TyStruct -> {
                 items.findCoreTy("slice::Iter").unifyWith(ty, this).substitution()?.let { subst ->
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item", TyReference(subst.valueByName("T"))))
+                    return listOf(trait.substAssocType("Item", TyReference(subst.valueByName("T"), IMMUTABLE)))
                 }
                 items.findCoreTy("slice::IterMut").unifyWith(ty, this).substitution()?.let { subst ->
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item", TyReference(subst.valueByName("T"), true)))
+                    return listOf(trait.substAssocType("Item", TyReference(subst.valueByName("T"), MUTABLE)))
                 }
             }
         }

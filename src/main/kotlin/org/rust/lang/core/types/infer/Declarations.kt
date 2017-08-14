@@ -49,15 +49,10 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 
         is RsRefLikeType -> {
             val base = type.typeReference
-            val mutable = type.isMut
-            if (type.isRef) {
-                TyReference(inferTypeReferenceType(base), mutable)
-            } else {
-                if (type.isPointer) { //Raw pointers
-                    TyPointer(inferTypeReferenceType(base), mutable)
-                } else {
-                    TyUnknown
-                }
+            when {
+                type.isRef -> TyReference(inferTypeReferenceType(base), type.mutability)
+                type.isPointer -> TyPointer(inferTypeReferenceType(base), type.mutability)
+                else -> TyUnknown
             }
         }
 
@@ -103,7 +98,7 @@ private fun deviseSelfType(self: RsSelfParameter): Ty {
     }
 
     if (self.isRef) {
-        Self = TyReference(Self, mutable = self.isMut)
+        Self = TyReference(Self, self.mutability)
     }
 
     return Self

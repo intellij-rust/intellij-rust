@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBaseType
-import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.isMut
+import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.ext.isRef
+import org.rust.lang.core.psi.ext.mutability
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.typeElement
 
@@ -44,7 +44,7 @@ open class SetMutableIntention : RsElementBaseIntentionAction<SetMutableIntentio
         val refType = element.parentOfType<RsRefLikeType>() ?: return null
         if (!refType.isRef) return null
         val baseType = refType.typeReference.typeElement as? RsBaseType ?: return null
-        if (refType.isMut == mutable) return null
+        if (refType.mutability.isMut == mutable) return null
         return Context(refType, baseType)
 
     }

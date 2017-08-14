@@ -12,6 +12,7 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.stubs.RsConstantStub
+import org.rust.lang.core.types.ty.Mutability
 
 enum class RsConstantKind {
     STATIC,
@@ -51,8 +52,7 @@ val RsConstant.owner: RsConstantOwner get() {
 val RsConstant.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 
-val RsConstant.isMut: Boolean
-    get() = mut != null
+val RsConstant.mutability: Mutability get() = Mutability.valueOf(mut != null)
 
 abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, RsConstant {
     constructor(node: ASTNode) : super(node)
