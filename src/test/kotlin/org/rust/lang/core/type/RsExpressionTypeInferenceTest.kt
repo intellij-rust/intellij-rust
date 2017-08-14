@@ -93,6 +93,30 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test if else with return 1`() = testExpr("""
+        fn main() {
+            let a = if true { return } else { 1 };
+            a
+        } //^ i32
+    """)
+
+    fun `test if else with return 2`() = testExpr("""
+        fn main() {
+            let a = if true { return } else if true { return } else { 1 };
+            a
+        } //^ i32
+    """)
+
+    fun `test match with return`() = testExpr("""
+        fn main() {
+            let a = match true {
+                true => return,
+                false => 1,
+            };
+            a
+        } //^ i32
+    """)
+
     fun `test loop`() = testExpr("""
         fn main() {
             let x = loop { break; };
@@ -234,6 +258,28 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = "Hello";
                        //^ &str
         }
+    """)
+
+    fun testNever() = testExpr("""
+        fn never() -> ! { unimplemented!() }
+        fn main() {
+            let a = never();
+            a
+        } //^ !
+    """)
+
+    fun `test unimplemented macro`() = testExpr("""
+        fn main() {
+            let a = unimplemented!();
+            a
+        } //^ !
+    """)
+
+    fun `test panic macro`() = testExpr("""
+        fn main() {
+            let a = unimplemented!();
+            a
+        } //^ !
     """)
 
     fun testEnumVariantA() = testExpr("""
@@ -608,6 +654,28 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             loop {
                 break 1;
             }       //^ i32
+        }
+    """)
+
+    fun `test return expr`() = testExpr("""
+        fn main() {
+            return;
+        } //^ !
+    """)
+
+    fun `test loop break expr`() = testExpr("""
+        fn main() {
+            loop {
+                break 1;
+            } //^ !
+        }
+    """)
+
+    fun `test loop continue expr`() = testExpr("""
+        fn main() {
+            loop {
+                continue;
+            } //^ !
         }
     """)
 

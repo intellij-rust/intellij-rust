@@ -20,6 +20,7 @@ private fun render(ty: Ty, level: Int): String {
             is TyBool -> "bool"
             is TyChar -> "char"
             is TyUnit -> "()"
+            is TyNever -> "!"
             is TyStr -> "str"
             is TyInteger -> ty.kind.toString()
             is TyFloat -> ty.kind.toString()
