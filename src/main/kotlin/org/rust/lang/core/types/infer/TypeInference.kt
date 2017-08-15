@@ -125,6 +125,7 @@ private class RsFnInferenceContext(
             is RsLambdaExpr -> inferLambdaExprType(this, expected)
             is RsRetExpr -> inferRetExprType(this)
             is RsBreakExpr -> inferBreakExprType(this)
+            is RsContExpr -> TyNever
             else -> TyUnknown
         }
 
@@ -313,10 +314,7 @@ private class RsFnInferenceContext(
             arm.expr?.inferType(expected)
         }
 
-        return arms.asSequence()
-            .mapNotNull { it.expr?.let(ctx::getExprType) }
-            .firstOrNull { it !is TyUnknown }
-            ?: TyUnknown
+        return getMoreCompleteType(arms.mapNotNull { it.expr?.let(ctx::getExprType) })
     }
 
     private fun inferUnaryExprType(expr: RsUnaryExpr, expected: Ty?): Ty {
@@ -347,13 +345,14 @@ private class RsFnInferenceContext(
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {
         expr.condition?.let { ctx.extractBindings(it.pat, it.expr.inferType(TyBool)) }
-        val blockTy = expr.block?.inferType(expected)
+        val blockTys = mutableListOf<Ty?>()
+        blockTys.add(expr.block?.inferType(expected))
         val elseBranch = expr.elseBranch
         if (elseBranch != null) {
-            elseBranch.ifExpr?.inferType(expected)
-            elseBranch.block?.inferType(expected)
+            blockTys.add(elseBranch.ifExpr?.inferType(expected))
+            blockTys.add(elseBranch.block?.inferType(expected))
         }
-        return if (expr.elseBranch == null) TyUnit else (blockTy ?: TyUnknown)
+        return if (expr.elseBranch == null) TyUnit else getMoreCompleteType(blockTys.filterNotNull())
     }
 
     private fun inferBinaryExprType(expr: RsBinaryExpr): Ty {
@@ -454,6 +453,7 @@ private class RsFnInferenceContext(
             name == "format" -> items.findStringTy()
             name == "format_args" -> items.findArgumentsTy()
             expr.macroCall.formatMacroArgument != null || expr.macroCall.logMacroArgument != null -> TyUnit
+            name == "unimplemented" || name == "panic" -> TyNever
             else -> TyUnknown
         }
     }
@@ -505,12 +505,12 @@ private class RsFnInferenceContext(
 
     private fun inferRetExprType(expr: RsRetExpr): Ty {
         expr.expr?.inferType()
-        return TyUnit // TODO TyNever `!`
+        return TyNever
     }
 
     private fun inferBreakExprType(expr: RsBreakExpr): Ty {
         expr.expr?.inferType()
-        return TyUnit // TODO TyNever `!`
+        return TyNever
     }
 
     private fun getMoreCompleteType(types: List<Ty>): Ty {

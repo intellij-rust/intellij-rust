@@ -56,6 +56,11 @@ object TyUnit : TyPrimitive {
     override fun toString(): String = tyToString(this)
 }
 
+/** The `!` type. E.g. `unimplemented!()` */
+object TyNever : TyPrimitive {
+    override fun toString(): String = tyToString(this)
+}
+
 object TyStr : TyPrimitive {
     override fun toString(): String = tyToString(this)
 }

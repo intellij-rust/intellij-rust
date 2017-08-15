@@ -65,6 +65,7 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
 fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty {
     return when {
         ty1 is TyUnknown -> ty2
+        ty1 is TyNever -> ty2
         ty1 is TyInteger && ty2 is TyInteger && ty1.isKindWeak -> ty2
         ty1 is TyFloat && ty2 is TyFloat && ty1.isKindWeak -> ty2
         else -> ty1

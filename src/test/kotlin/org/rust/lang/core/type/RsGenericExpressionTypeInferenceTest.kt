@@ -250,39 +250,33 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test struct expr with 2 fields of same type integer 1`() = testExpr("""
+    fun `test struct expr with 2 fields of same type 1`() = testExpr("""
+        struct X;
         struct S<T> { a: T, b: T }
         fn main() {
-            let x = S { a: 5u16, b: 0 };
+            let x = S { a: X, b: unimplemented!() };
             x.b
-            //^ u16
+            //^ X
         }
     """)
 
-    fun `test struct expr with 2 fields of same type integer 2`() = testExpr("""
+    fun `test struct expr with 2 fields of same type 2`() = testExpr("""
+        struct X;
         struct S<T> { a: T, b: T }
         fn main() {
-            let x = S { a: 0, b: 5u16 };
+            let x = S { a: unimplemented!(), b: X };
             x.a
-            //^ u16
-        }
-    """)
-
-    fun `test struct expr with 2 fields of same type float 2`() = testExpr("""
-        struct S<T> { a: T, b: T }
-        fn main() {
-            let x = S { a: 0.0, b: 5f32 };
-            x.a
-            //^ f32
+            //^ X
         }
     """)
 
     fun `test struct expr with 2 fields of different types`() = testExpr("""
+        struct X; struct Y;
         struct S<T1, T2> { a: T1, b: T2 }
         fn main() {
-            let x = S { a: 5u16, b: 5u8 };
+            let x = S { a: X, b: Y };
             (x.a, x.b)
-          //^ (u16, u8)
+          //^ (X, Y)
         }
     """)
 
