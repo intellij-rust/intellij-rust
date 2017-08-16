@@ -20,7 +20,7 @@ class CargoCommandLineEditor(
 ) : JPanel(BorderLayout()), TextAccessor {
 
     private val textField = TextFieldWithCompletion(project, CargoCommandCompletionProvider(workspace),
-        "", true, false, true
+        "", true, false, false
     )
     val preferredFocusedComponent: JComponent = textField
 
