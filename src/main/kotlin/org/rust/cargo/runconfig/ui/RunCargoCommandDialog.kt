@@ -34,7 +34,6 @@ class RunCargoCommandDialog(
             commandField.apply {
                 setPreferredWidth(400)
                 attachLabel(label)
-//                SwingUtilities.invokeLater { commandField.textField.requestFocusInWindow() }
             }()
         }
     }
