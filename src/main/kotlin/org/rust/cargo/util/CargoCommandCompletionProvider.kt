@@ -5,7 +5,10 @@
 
 package org.rust.cargo.util
 
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -13,6 +16,7 @@ import com.intellij.openapi.externalSystem.service.execution.cmd.ParametersListL
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.completion.addSuffix
 
 class CargoCommandCompletionProvider(
@@ -46,11 +50,18 @@ class CargoCommandCompletionProvider(
     // public for testing
     fun complete(context: String): List<LookupElement> {
         val args = ParametersListUtil.parse(context)
+        if ("--" in args) return emptyList()
         if (args.isEmpty()) {
             return COMMON_COMMANDS.map { it.lookupElement }
         }
 
         val cmd = COMMON_COMMANDS.find { it.name == args.firstOrNull() } ?: return emptyList()
+
+        val argCompleter = cmd.options.find { it.long == args.lastOrNull() }?.argCompleter
+        if (argCompleter != null) {
+            return workspace?.let { argCompleter(it, args) }.orEmpty()
+        }
+
         return cmd.options
             .filter { it.long !in args }
             .map { it.lookupElement }
@@ -63,16 +74,36 @@ private class Cmd(
 ) {
     val options = OptBuilder().apply(initOptions).result
     val lookupElement: LookupElement =
-        LookupElementBuilder.create(name).withInsertHandler { ctx, _ -> ctx.addSuffix(" ") }
+        LookupElementBuilder.create(name).withInsertHandler { ctx, _ ->
+            ctx.addSuffix(" ")
+        }
 }
 
+private typealias ArgCompleter = (CargoWorkspace, List<String>) -> List<LookupElement>
+
 private class Opt(
-    val name: String
+    val name: String,
+    val argCompleter: ArgCompleter? = null
+
 ) {
     val long get() = "--$name"
 
     val lookupElement: LookupElement =
         LookupElementBuilder.create(long)
+            .withInsertHandler { ctx, _ ->
+                if (argCompleter != null) {
+                    ctx.addSuffix(" ")
+                    ctx.setLaterRunnable {
+                        CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(ctx.project, ctx.editor)
+                    }
+                }
+            }
+}
+
+private val CargoWorkspace.Target.lookupElement: LookupElement get() = LookupElementBuilder.create(name)
+private val CargoWorkspace.Package.lookupElement: LookupElement get() {
+    val priority = if (origin == PackageOrigin.WORKSPACE) 1.0 else 0.0
+    return PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name), priority)
 }
 
 private class OptBuilder(
@@ -86,53 +117,67 @@ private class OptBuilder(
         verbose()
     }
 
-    fun release() = opt("release")
-    fun jobs() = opt("jobs")
+    fun release() = flag("release")
+    fun jobs() = flag("jobs")
     fun features() {
-        opt("features")
-        opt("all-features")
-        opt("no-default-features")
+        flag("features")
+        flag("all-features")
+        flag("no-default-features")
     }
 
-    fun triple() = opt("triple")
+    fun triple() = flag("triple")
 
+    private fun targetCompleter(kind: CargoWorkspace.TargetKind): ArgCompleter = { ws, _ ->
+        ws.packages.filter { it.origin == PackageOrigin.WORKSPACE }
+            .flatMap { it.targets.filter { it.kind == kind } }
+            .map { it.lookupElement }
+    }
 
-    fun targetBin() = opt("bin")
-    fun targetExample() = opt("example")
-    fun targetTest() = opt("test")
-    fun targetBench() = opt("bench")
+    fun targetBin() = opt("bin", targetCompleter(CargoWorkspace.TargetKind.BIN))
+
+    fun targetExample() = opt("example", targetCompleter(CargoWorkspace.TargetKind.EXAMPLE))
+    fun targetTest() = opt("test", targetCompleter(CargoWorkspace.TargetKind.TEST))
+    fun targetBench() = opt("bench", targetCompleter(CargoWorkspace.TargetKind.BENCH))
 
     fun targetAll() {
-        opt("lib")
+        flag("lib")
 
         targetBin()
-        opt("bins")
+        flag("bins")
 
         targetExample()
-        opt("examples")
+        flag("examples")
 
         targetTest()
-        opt("tests")
+        flag("tests")
 
         targetBench()
-        opt("bench")
+        flag("bench")
     }
 
-    fun pkg() = opt("package")
+    fun pkg() = opt("package") { ws, _ ->
+        ws.packages
+            .map { it.lookupElement }
+    }
+
     fun pkgAll() {
         pkg()
-        opt("all")
-        opt("exclude")
+        flag("all")
+        flag("exclude")
     }
 
 
     fun verbose() {
-        opt("verbose")
-        opt("quite")
+        flag("verbose")
+        flag("quite")
     }
 
-    fun opt(long: String) {
+    fun flag(long: String) {
         result += Opt(long)
+    }
+
+    fun opt(long: String, argCompleter: ArgCompleter) {
+        result += Opt(long, argCompleter)
     }
 }
 
@@ -149,10 +194,10 @@ private val COMMON_COMMANDS = listOf(
     Cmd("test") {
         compileOptions()
         targetAll()
-        opt("doc")
+        flag("doc")
         pkgAll()
-        opt("no-run")
-        opt("no-fail-fast")
+        flag("no-run")
+        flag("no-fail-fast")
     },
 
     Cmd("check") {
@@ -169,8 +214,8 @@ private val COMMON_COMMANDS = listOf(
 
     Cmd("update") {
         pkg()
-        opt("aggressive")
-        opt("precise")
+        flag("aggressive")
+        flag("precise")
     },
 
     Cmd("bench") {
@@ -186,11 +231,11 @@ private val COMMON_COMMANDS = listOf(
     },
 
     Cmd("publish") {
-        opt("host")
-        opt("token")
-        opt("no-verify")
-        opt("allow-dirty")
-        opt("jobs")
+        flag("host")
+        flag("token")
+        flag("no-verify")
+        flag("allow-dirty")
+        flag("jobs")
     },
 
     Cmd("clean") {
@@ -199,14 +244,14 @@ private val COMMON_COMMANDS = listOf(
     },
 
     Cmd("search") {
-        opt("host")
-        opt("limit")
+        flag("host")
+        flag("limit")
     },
 
     Cmd("install") {
         compileOptions()
         targetAll()
-        opt("root")
-        opt("force")
+        flag("root")
+        flag("force")
     }
 )

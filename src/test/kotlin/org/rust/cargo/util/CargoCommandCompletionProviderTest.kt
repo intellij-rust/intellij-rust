@@ -6,6 +6,8 @@
 package org.rust.cargo.util
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RsTestBase
 
 
@@ -49,11 +51,27 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         listOf()
     )
 
+    fun `test dont suggest after double dash`() = checkCompletion(
+        "run -- --rel",
+        listOf()
+    )
+
+    fun `test suggest package argument`() = checkCompletion(
+        "test --package ",
+        listOf("foo", "quux")
+    )
+
+    fun `test suggest bin argument`() = checkCompletion(
+        "run --bin ",
+        listOf("bar", "baz")
+    )
+
     private fun checkCompletion(
         text: String,
         expectedCompletions: List<String>
     ) {
-        val provider = CargoCommandCompletionProvider(null)
+
+        val provider = CargoCommandCompletionProvider(TEST_WORKSPACE)
         val (ctx, prefix) = provider.splitContextPrefix(text)
         val matcher = PlainPrefixMatcher(prefix)
 
@@ -61,5 +79,38 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         check(actual == expectedCompletions) {
             "\nExpected:\n$expectedCompletions\n\nActual:\n$actual"
         }
+    }
+
+    private val TEST_WORKSPACE = run {
+        fun target(name: String, kind: CargoWorkspace.TargetKind): CleanCargoMetadata.Target = CleanCargoMetadata.Target(
+            url = "/tmp/lib/rs",
+            name = name,
+            kind = kind
+        )
+
+        fun pkg(
+            name: String,
+            isWorkspaceMember: Boolean,
+            targets: List<CleanCargoMetadata.Target>
+        ): CleanCargoMetadata.Package = CleanCargoMetadata.Package(
+            name = name,
+            id = "pkg-id",
+            url = "/tmp",
+            version = "1.0.0",
+            targets = targets,
+            source = null,
+            manifestPath = "/tmp/Cargo.toml",
+            isWorkspaceMember = isWorkspaceMember
+        )
+
+        val pkgs = listOf(
+            pkg("foo", true, listOf(
+                target("foo", CargoWorkspace.TargetKind.LIB),
+                target("bar", CargoWorkspace.TargetKind.BIN),
+                target("baz", CargoWorkspace.TargetKind.BIN)
+            )),
+            pkg("quux", false, listOf(target("quux", CargoWorkspace.TargetKind.LIB)))
+        )
+        CargoWorkspace.deserialize(null, CleanCargoMetadata(pkgs, dependencies = emptyList()))
     }
 }
