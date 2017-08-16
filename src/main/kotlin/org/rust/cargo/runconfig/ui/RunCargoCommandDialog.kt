@@ -5,40 +5,42 @@
 
 package org.rust.cargo.runconfig.ui
 
-import com.intellij.ui.layout.panel
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.TextFieldWithHistory
+import com.intellij.ui.components.Label
+import com.intellij.ui.layout.panel
 import com.intellij.util.execution.ParametersListUtil
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.util.CargoCommandLineEditor
 import javax.swing.JComponent
 
-class RunCargoCommandDialog(private val project: Project) : DialogWrapper(project, false) {
-    private val commandField = TextFieldWithHistory()
+class RunCargoCommandDialog(
+    project: Project,
+    workspace: CargoWorkspace?
+) : DialogWrapper(project, false) {
+    private val commandField = CargoCommandLineEditor(project, workspace)
+
 
     init {
         init()
-        commandField.history = readHistory()
         title = "Run Cargo Command"
     }
 
     override fun createCenterPanel(): JComponent = panel {
-        row("&Command line") {
+        val label = Label("&Command line")
+        row(label) {
             commandField.apply {
-                // BACKCOMPAT: 2017.1
-                // Should be done automatically in `addGrowIfNeed`
-                setMinimumAndPreferredWidth(350)
+                setPreferredWidth(400)
+                attachLabel(label)
             }()
         }
     }
 
-    override fun getPreferredFocusedComponent(): JComponent = commandField
+    override fun getPreferredFocusedComponent(): JComponent = commandField.preferredFocusedComponent
 
     fun getCargoCommandLine(): CargoCommandLine {
-        commandField.addCurrentTextToHistory()
-        writeHistory(commandField.history)
         val params = ParametersListUtil.parse(commandField.text)
         return CargoCommandLine(params.first(), params.drop(1))
     }
@@ -48,20 +50,5 @@ class RunCargoCommandDialog(private val project: Project) : DialogWrapper(projec
             return ValidationInfo("Specify command", commandField)
         }
         return null
-    }
-
-    private fun readHistory(): List<String> =
-        PropertiesComponent.getInstance(project)
-            .getValue(KEY, "")
-            .split(Companion.SEPARATOR)
-
-    private fun writeHistory(history: List<String>) {
-        PropertiesComponent.getInstance(project)
-            .setValue(KEY, history.joinToString(SEPARATOR))
-    }
-
-    companion object {
-        private val SEPARATOR = "%%%%"
-        private val KEY = "RunCargoCommandDialog.history"
     }
 }
