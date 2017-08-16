@@ -21,7 +21,7 @@ class RsKeywordCompletionProvider(
         for (keyword in keywords) {
             var builder = LookupElementBuilder.create(keyword)
             builder = addInsertionHandler(keyword, builder, parameters)
-            result.addElement(PrioritizedLookupElement.withPriority(builder, KEYWORD_PRIORITY))
+            result.addElement(builder.withPriority(KEYWORD_PRIORITY))
         }
     }
 }

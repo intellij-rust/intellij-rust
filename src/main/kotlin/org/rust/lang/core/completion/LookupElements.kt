@@ -7,6 +7,7 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
@@ -108,6 +109,9 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
         else -> base
     }
 }
+
+fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
+    PrioritizedLookupElement.withPriority(this, priority)
 
 private val InsertionContext.isInUseBlock: Boolean
     get() = file.findElementAt(startOffset - 1)!!.parentOfType<RsUseItem>() != null
