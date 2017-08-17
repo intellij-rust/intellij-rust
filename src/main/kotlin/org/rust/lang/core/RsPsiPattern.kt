@@ -137,8 +137,8 @@ val PsiElement.leftSiblings: Sequence<PsiElement> get() = generateSequence(this.
  * instead of [PsiElement.getChildren].
  */
 fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Self>.withPrevSiblingSkipping(
-    skip: ElementPattern<T>,
-    pattern: ElementPattern<T>
+    skip: ElementPattern<out T>,
+    pattern: ElementPattern<out T>
 ): Self = with("withPrevSiblingSkipping") {
     val sibling = it.leftSiblings.dropWhile { skip.accepts(it) }
         .firstOrNull() ?: return@with false
