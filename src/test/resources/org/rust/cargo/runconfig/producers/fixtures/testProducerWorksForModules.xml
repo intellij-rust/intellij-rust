@@ -1,24 +1,9 @@
 <configurations>
-  <configuration name="Test foo" class="CargoCommandConfiguration" show_console_on_std_err="false" show_console_on_std_out="false">
-    <parameters>
-      <option name="additionalArguments">
-        <list>
-          <option value="--package" />
-          <option value="test-package" />
-          <option value="--lib" />
-          <option value="foo" />
-        </list>
-      </option>
-      <option name="backtraceMode" value="2" />
-      <option name="channel" value="0" />
-      <option name="command" value="test" />
-      <option name="environmentVariables">
-        <map />
-      </option>
-      <option name="nocapture" value="true" />
-    </parameters>
-    <module name="light_idea_test_case">
-      <option name="moduleName" value="light_idea_test_case" />
-    </module>
+  <configuration name="Test foo" class="CargoCommandConfiguration">
+    <option name="channel" value="DEFAULT" />
+    <option name="command" value="test --package test-package --lib foo" />
+    <option name="nocapture" value="true" />
+    <option name="backtrace" value="FULL" />
+    <envs />
   </configuration>
 </configurations>

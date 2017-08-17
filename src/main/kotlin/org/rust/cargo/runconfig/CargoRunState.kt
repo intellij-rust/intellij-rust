@@ -10,29 +10,29 @@ import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.filters.RsBacktraceFilter
 import org.rust.cargo.runconfig.filters.RsConsoleFilter
 import org.rust.cargo.runconfig.filters.RsExplainFilter
 import org.rust.cargo.runconfig.filters.RsPanicFilter
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.utils.pathAsPath
 
 class CargoRunState(
     environment: ExecutionEnvironment,
-    private val toolchain: RustToolchain,
-    module: Module,
-    private val cargoProjectDirectory: VirtualFile,
-    private val commandLine: CargoCommandLine
+    config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CommandLineState(environment) {
+    private val toolchain: RustToolchain = config.toolchain
+    private val cargoProjectDirectory: VirtualFile = config.cargoProjectDirectory
+    private val commandLine: CargoCommandLine = config.cmd
 
     init {
         consoleBuilder.addFilter(RsConsoleFilter(environment.project, cargoProjectDirectory))
         consoleBuilder.addFilter(RsExplainFilter())
         consoleBuilder.addFilter(RsPanicFilter(environment.project, cargoProjectDirectory))
-        consoleBuilder.addFilter(RsBacktraceFilter(environment.project, cargoProjectDirectory, module))
+        consoleBuilder.addFilter(RsBacktraceFilter(environment.project, cargoProjectDirectory, config.module))
     }
 
     override fun startProcess(): ProcessHandler {

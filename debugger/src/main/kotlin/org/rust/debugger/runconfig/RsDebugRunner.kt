@@ -53,7 +53,8 @@ class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
         if (executorId != DefaultDebugExecutor.EXECUTOR_ID || profile !is CargoCommandConfiguration) {
             return false
         }
-        if (profile.cargoCommandLine.command !in listOf("run", "test")) {
+        val cleaned = profile.clean().ok ?: return false
+        if (cleaned.cmd.command !in listOf("run", "test")) {
             return false
         }
 
@@ -61,19 +62,18 @@ class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
     }
 
     override fun prepare(env: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
-        val config = env.runnerAndConfigurationSettings!!.configuration as CargoCommandConfiguration
-        val project = config.project
-        val cargoProjectDirectory = config.configurationModule.module!!.cargoProjectRoot!!.pathAsPath
-        val cargo = project.toolchain!!.cargo(cargoProjectDirectory)
+        val cleaned = (env.runnerAndConfigurationSettings!!.configuration as CargoCommandConfiguration).clean().ok!!
+        val cargoProjectDirectory = cleaned.cargoProjectDirectory.pathAsPath
+        val cargo = cleaned.module.project.toolchain!!.cargo(cargoProjectDirectory)
 
-        val buildCommand = if (config.cargoCommandLine.command == "run") {
-            config.cargoCommandLine.copy(command = "build")
+        val buildCommand = if (cleaned.cmd.command == "run") {
+            cleaned.cmd.copy(command = "build")
         } else {
-            check(config.cargoCommandLine.command == "test")
-            config.cargoCommandLine.prependArgument("--no-run")
+            check(cleaned.cmd.command == "test")
+            cleaned.cmd.prependArgument("--no-run")
         }
 
-        return buildProjectAndGetBinaryArtifactPath(config.configurationModule.module!!, buildCommand, cargo)
+        return buildProjectAndGetBinaryArtifactPath(cleaned.module, buildCommand, cargo)
             .then { result ->
                 result?.path?.let {
                     val commandLine = GeneralCommandLine(it).withWorkDirectory(cargoProjectDirectory)

@@ -16,10 +16,13 @@ import javax.swing.JPanel
 
 class CargoCommandLineEditor(
     project: Project,
-    val workspace: CargoWorkspace?
+    workspaceGetter: () -> CargoWorkspace?
 ) : JPanel(BorderLayout()), TextAccessor {
 
-    private val textField = TextFieldWithCompletion(project, CargoCommandCompletionProvider(workspace),
+    constructor(project: Project, workspace: CargoWorkspace?)
+        : this(project, { workspace })
+
+    private val textField = TextFieldWithCompletion(project, CargoCommandCompletionProvider(workspaceGetter),
         "", true, false, false
     )
     val preferredFocusedComponent: JComponent = textField

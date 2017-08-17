@@ -5,11 +5,13 @@
 
 package org.rust.cargo.toolchain
 
+import com.intellij.execution.configuration.EnvironmentVariablesData
+
 data class CargoCommandLine(
     val command: String, // Can't be `enum` because of custom subcommands
     val additionalArguments: List<String> = emptyList(),
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
-    val environmentVariables: Map<String, String> = emptyMap(),
+    val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val nocapture: Boolean = true
 )

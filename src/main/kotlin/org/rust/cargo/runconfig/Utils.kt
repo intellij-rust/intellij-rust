@@ -28,15 +28,15 @@ val CargoWorkspace.Target.cargoArgumentSpeck: List<String> get() {
     return pkgSpec + targetSpec
 }
 
-fun CargoCommandLine.mergeWithDefault(default: CargoCommandLine): CargoCommandLine =
-    if (environmentVariables.isEmpty())
-        copy(environmentVariables = default.environmentVariables)
+fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): CargoCommandLine =
+    if (environmentVariables.envs.isEmpty())
+        copy(environmentVariables = default.env)
     else
         this
 
 fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommandLine): RunnerAndConfigurationSettings {
     val runnerAndConfigurationSettings = createRunConfiguration(cargoCommandLine.command, CargoCommandConfigurationType().factory)
     val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
-    configuration.cargoCommandLine = cargoCommandLine
+    configuration.setFromCmd(cargoCommandLine)
     return runnerAndConfigurationSettings
 }

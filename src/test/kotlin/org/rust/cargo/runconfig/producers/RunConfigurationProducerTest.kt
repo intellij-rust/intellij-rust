@@ -8,13 +8,13 @@ package org.rust.cargo.runconfig.producers
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
-import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -39,6 +39,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         val compatibilityFolder = if (info.majorVersion == "2017" && info.minorVersion == "1") "/2017.1" else ""
         return "org/rust/cargo/runconfig/producers/fixtures$compatibilityFolder"
     }
+
     // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setRawWorkspace].
     override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
 
@@ -215,7 +216,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         }
 
         modifyTemplateConfiguration {
-            cargoCommandLine = cargoCommandLine.copy(environmentVariables = mapOf("FOO" to "BAR"))
+            env = EnvironmentVariablesData.create(mapOf("FOO" to "BAR"), true)
         }
 
         checkOnTopLevel<RsFile>()
@@ -227,7 +228,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         }
 
         modifyTemplateConfiguration {
-            cargoCommandLine = cargoCommandLine.copy(environmentVariables = mapOf("FOO" to "BAR"))
+            env = EnvironmentVariablesData.create(mapOf("FOO" to "BAR"), true)
         }
 
         checkOnTopLevel<RsFunction>()
@@ -280,8 +281,13 @@ class RunConfigurationProducerTest : RsTestBase() {
         configsFromContext.forEach { check(it.isProducedBy(producer.javaClass)) }
         val configs = configsFromContext.map { it.configuration as CargoCommandConfiguration }
         for (i in 0..1) {
-            assertThat(producer.isConfigurationFromContext(configs[i], contexts[i])).isTrue()
-            assertThat(producer.isConfigurationFromContext(configs[i], contexts[1 - i])).isFalse()
+            check(producer.isConfigurationFromContext(configs[i], contexts[i])) {
+                "Configuration created from context does not believe it"
+            }
+
+            check(!producer.isConfigurationFromContext(configs[i], contexts[1 - i])) {
+                "Configuration wrongly believes it is from another context"
+            }
         }
     }
 
