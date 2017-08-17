@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAware
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
@@ -17,7 +18,6 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.ext.RsTraitOrImpl
 import org.rust.lang.core.withPrevSiblingSkipping
 
 /**
@@ -57,20 +57,32 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
                     }
 
-                val elseIfBuilder = LookupElementBuilder
-                    .create("else if")
-                    .bold()
-                    .withTailText(" {...}")
-                    .withInsertHandler { context, _ ->
-                        context.document.insertString(context.selectionEndOffset, "  { }")
-                        EditorModificationUtil.moveCaretRelatively(context.editor, 1)
-                    }
+                val elseIfBuilder = conditionLookupElement("else if")
 
                 // `else` is more common than `else if`
-                result.addElement(PrioritizedLookupElement.withPriority(elseBuilder, KEYWORD_PRIORITY * 1.0001))
-                result.addElement(PrioritizedLookupElement.withPriority(elseIfBuilder, KEYWORD_PRIORITY))
+                result.addElement(elseBuilder.withPriority(KEYWORD_PRIORITY * 1.0001))
+                result.addElement(elseIfBuilder.withPriority(KEYWORD_PRIORITY))
             }
         })
+
+        extend(CompletionType.BASIC, pathExpressionPattern(), object : CompletionProvider<CompletionParameters>() {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+                for (keyword in CONDITION_KEYWORDS) {
+                    result.addElement(conditionLookupElement(keyword).withPriority(KEYWORD_PRIORITY))
+                }
+            }
+        })
+    }
+
+    private fun conditionLookupElement(lookupString: String): LookupElementBuilder {
+        return LookupElementBuilder
+            .create(lookupString)
+            .bold()
+            .withTailText(" {...}")
+            .withInsertHandler { context, _ ->
+                context.document.insertString(context.selectionEndOffset, "  { }")
+                EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+            }
     }
 
     private fun declarationPattern(): PsiElementPattern.Capture<PsiElement> =
@@ -138,5 +150,23 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
         return psiElement()
             .withPrevSiblingSkipping(RsPsiPattern.whitespace, or(function, struct, enum, typeAlias, trait, impl))
+    }
+
+    private fun pathExpressionPattern(): PsiElementPattern.Capture<PsiElement> {
+        val parent = psiElement<RsPath>()
+            .with(object : PatternCondition<RsPath>("RsPath") {
+                override fun accepts(t: RsPath, context: ProcessingContext?): Boolean {
+                    return t.path == null && t.typeQual == null
+                }
+            })
+
+        return psiElement(IDENTIFIER)
+            .withParent(parent)
+            .withSuperParent<RsPathExpr>(2)
+            .inside(psiElement<RsFunction>())
+    }
+
+    companion object {
+        val CONDITION_KEYWORDS = listOf("if", "match")
     }
 }

@@ -8,7 +8,6 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
@@ -56,11 +55,11 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                 if (traitWithDependencies.size > 1) {
                     val element = LookupElementBuilder.create(traitWithDependencies.joinToString(", "))
                         .withIcon(RsIcons.TRAIT.multiple())
-                    result.addElement(PrioritizedLookupElement.withPriority(element, GROUP_PRIORITY))
+                    result.addElement(element.withPriority(GROUP_PRIORITY))
                 }
                 val element = LookupElementBuilder.create(trait.name)
                     .withIcon(RsIcons.TRAIT)
-                result.addElement(PrioritizedLookupElement.withPriority(element, DEFAULT_PRIORITY))
+                result.addElement(element.withPriority(DEFAULT_PRIORITY))
             }
     }
 

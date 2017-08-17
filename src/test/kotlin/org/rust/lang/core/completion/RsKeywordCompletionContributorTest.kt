@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
+import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     fun testBreakInForLoop() = checkSingleCompletion("break", """
@@ -445,6 +446,66 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         impl<T> Foo<T> for Bar whe/*caret*/
     """)
 
+    fun `test if|match in start of statement`() = checkCompletion(CONDITION_KEYWORDS, """
+        fn foo() {
+            /*caret*/
+        }
+    """, """
+        fn foo() {
+            /*lookup*/ /*caret*/ { }
+        }
+    """)
+
+    fun `test if|match in start of expression`() = checkCompletion(CONDITION_KEYWORDS, """
+        fn foo() {
+            let x = /*caret*/
+        }
+    """, """
+        fn foo() {
+            let x = /*lookup*/ /*caret*/ { }
+        }
+    """)
+
+    fun `test if|match in expression`() = checkCompletion(CONDITION_KEYWORDS, """
+        fn foo() {
+            let x = 1 + /*caret*/
+        }
+    """, """
+        fn foo() {
+            let x = 1 + /*lookup*/ /*caret*/ { }
+        }
+    """)
+
+    fun `test no if|match after path segment`() = checkCompletion(CONDITION_KEYWORDS, """
+        struct Foo;
+
+        fn foo() {
+            Foo::/*caret*/
+        }
+    """, """
+        struct Foo;
+
+        fn foo() {
+            Foo::/*caret*/
+        }
+    """)
+
+    fun `test no if|match out of function`() = checkCompletion(CONDITION_KEYWORDS, """
+        const FOO: &str = /*caret*/
+    """, """
+        const FOO: &str = /*caret*/
+    """)
+
+    private fun checkCompletion(
+        lookupStrings: List<String>,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) {
+        for (lookupString in lookupStrings) {
+            checkCompletion(lookupString, before, after.replace("/*lookup*/", lookupString))
+        }
+    }
+
     private fun checkCompletion(
         lookupString: String,
         @Language("Rust") before: String,
@@ -452,7 +513,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     ) = checkByText(before, after) {
         val items = myFixture.completeBasic()
             ?: return@checkByText // single completion was inserted
-        val lookupItem = items.find { it.lookupString == lookupString }
+        val lookupItem = items.find { it.lookupString == lookupString } ?: return@checkByText
         myFixture.lookup.currentItem = lookupItem
         myFixture.type('\n')
     }

@@ -8,7 +8,6 @@ package org.rust.cargo.util
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -18,6 +17,7 @@ import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.completion.addSuffix
+import org.rust.lang.core.completion.withPriority
 
 class CargoCommandCompletionProvider(
     private val workspace: CargoWorkspace?
@@ -103,7 +103,7 @@ private class Opt(
 private val CargoWorkspace.Target.lookupElement: LookupElement get() = LookupElementBuilder.create(name)
 private val CargoWorkspace.Package.lookupElement: LookupElement get() {
     val priority = if (origin == PackageOrigin.WORKSPACE) 1.0 else 0.0
-    return PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name), priority)
+    return LookupElementBuilder.create(name).withPriority(priority)
 }
 
 private class OptBuilder(
