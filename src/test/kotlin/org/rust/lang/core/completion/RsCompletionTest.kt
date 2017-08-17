@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.completion
 
-import org.rust.fileTree
-
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
         fn foo(quux: i32) { qu/*caret*/ }
@@ -46,7 +44,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { Frobnicate/*caret*/() }
     """)
 
-    fun `test tuple eunm with parens`() = doSingleCompletion("""
+    fun `test tuple enum with parens`() = doSingleCompletion("""
         enum E { Frobnicate(i32, String) }
         fn main() { E::Frob/*caret*/() }
     """, """
@@ -434,6 +432,25 @@ class RsCompletionTest : RsCompletionTestBase() {
     fun `test macro don't suggests as function name`() = checkNoCompletion("""
         macro_rules! foo_bar { () => () }
         fn foo/*caret*/() {
+        }
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1598
+    fun `test no macro completion in item element definition`() {
+        for (itemKeyword in listOf("fn", "struct", "enum", "union", "trait", "type", "impl")) {
+            checkNoCompletion("""
+                macro_rules! foo_bar { () => () }
+                $itemKeyword Foo f/*caret*/
+            """)
+        }
+    }
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1598
+    fun `test no macro completion after path segment`() = checkNoCompletion("""
+        struct Foo;
+        macro_rules! foo_bar { () => () }
+        fn main() {
+            Foo::f/*caret*/
         }
     """)
 }
