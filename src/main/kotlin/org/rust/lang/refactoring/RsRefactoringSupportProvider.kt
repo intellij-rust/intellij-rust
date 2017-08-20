@@ -7,6 +7,7 @@ package org.rust.lang.refactoring
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.RefactoringActionHandler
 import org.rust.lang.core.psi.RsPatBinding
 
 class RsRefactoringSupportProvider : RefactoringSupportProvider() {

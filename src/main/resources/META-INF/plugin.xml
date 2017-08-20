@@ -25,7 +25,7 @@
     <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
 
     <actions>
-        <action id="ExtractFunction" class="org.rust.lang.refactoring.extractFunction.RsExtractFunctionAction"
+        <action id="RsExtractFunction" class="org.rust.lang.refactoring.extractFunction.RsExtractFunctionAction"
                 text="_Function..." use-shortcut-of="ExtractMethod">
             <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
         </action>
