@@ -175,6 +175,22 @@ class RsPsiFactory(private val project: Project) {
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
 
+    fun createMatchBody(enumName: String?, variants: List<RsEnumVariant>): RsMatchBody {
+        val matchBodyText = variants.joinToString(",\n", postfix = ",") { variant ->
+            val tupleFields = variant.tupleFields?.tupleFieldDeclList
+            val blockFields = variant.blockFields
+            val suffix = when {
+                tupleFields != null -> tupleFields.joinToString(", ", " (", ")") { "_" }
+                blockFields != null -> " { .. }"
+                else -> ""
+            }
+            val prefix = if (enumName != null) "$enumName::" else ""
+            "$prefix${variant.name}$suffix => {}"
+        }
+        return createExpressionOfType<RsMatchExpr>("match x { $matchBodyText }").matchBody
+            ?: error("Failed to create match body from text: `$matchBodyText`")
+    }
+
     private inline fun <reified T : RsCompositeElement> createFromText(code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, code)

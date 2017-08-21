@@ -496,6 +496,10 @@
             <className>org.rust.ide.intentions.ToggleIgnoreTestIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.FillMatchArmsIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 

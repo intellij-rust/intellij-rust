@@ -64,6 +64,9 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findArgumentsTy(): Ty =
         findCoreTy("fmt::Arguments")
 
+    fun findOptionItem(): RsNamedElement? =
+        findCoreItem("option::Option")
+
     fun findResultItem(): RsNamedElement? =
         findCoreItem("result::Result")
 
