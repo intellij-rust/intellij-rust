@@ -90,7 +90,8 @@ class TestConfig(
 ) {
     val cargoCommandLine: CargoCommandLine = CargoCommandLine(
         CargoConstants.Commands.TEST,
-        target.cargoArgumentSpeck + testPath
+        target.cargoArgumentSpeck + testPath,
+        workingDirectory = target.pkg.rootDirectory
     )
 }
 

@@ -7,6 +7,7 @@ package org.rust.cargo.runconfig.command
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
+import com.intellij.execution.ExternalizablePath
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -17,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
-import org.jdom.output.XMLOutputter
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.RsRunConfigurationModule
@@ -28,6 +28,8 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
+import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * This class describes a Run Configuration.
@@ -45,6 +47,7 @@ class CargoCommandConfiguration(
     var command: String = "run"
     var nocapture: Boolean = true
     var backtrace: BacktraceMode = BacktraceMode.SHORT
+    var workingDirectory: Path? = null
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
 
     init {
@@ -57,9 +60,14 @@ class CargoCommandConfiguration(
         element.writeString("command", command)
         element.writeBool("nocapture", nocapture)
         element.writeEnum("backtrace", backtrace)
+        element.writePath("workingDirectory", workingDirectory)
         env.writeExternal(element)
     }
 
+    /**
+     * If you change serialization, make sure that the old variant is still
+     * readable for several releases.
+     */
     override fun readExternal(element: Element) {
         super.readExternal(element)
         val oldStyle = element.children.find { it.name == "parameters" }
@@ -88,6 +96,7 @@ class CargoCommandConfiguration(
         element.readString("command")?.let { command = it }
         element.readBool("nocapture")?.let { nocapture = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
+        element.readPath("workingDirectory")?.let { workingDirectory = it }
         env = EnvironmentVariablesData.readExternal(element)
     }
 
@@ -96,6 +105,7 @@ class CargoCommandConfiguration(
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
         nocapture = cmd.nocapture
         backtrace = cmd.backtraceMode
+        workingDirectory = cmd.workingDirectory
         env = cmd.environmentVariables
     }
 
@@ -139,7 +149,7 @@ class CargoCommandConfiguration(
             if (args.isEmpty()) {
                 return CleanConfiguration.error("No command specified")
             }
-            CargoCommandLine(args.first(), args.drop(1), backtrace, channel, env, nocapture)
+            CargoCommandLine(args.first(), args.drop(1), backtrace, channel, workingDirectory, env, nocapture)
         }
 
         val module = configurationModule.module
@@ -176,20 +186,22 @@ private fun Element.writeString(name: String, value: String) {
     addContent(opt)
 }
 
-private fun Element.writeBool(name: String, value: Boolean) {
-    writeString(name, value.toString())
-}
-
-private fun <E : Enum<*>> Element.writeEnum(name: String, value: E) {
-    writeString(name, value.name)
-}
-
 private fun Element.readString(name: String): String? =
     children
         .find { it.name == "option" && it.getAttributeValue("name") == name }
         ?.getAttributeValue("value")
 
+
+private fun Element.writeBool(name: String, value: Boolean) {
+    writeString(name, value.toString())
+}
+
 private fun Element.readBool(name: String) = readString(name)?.toBoolean()
+
+private fun <E : Enum<*>> Element.writeEnum(name: String, value: E) {
+    writeString(name, value.name)
+}
+
 private inline fun <reified E : Enum<E>> Element.readEnum(name: String): E? {
     val variantName = readString(name) ?: return null
     return try {
@@ -199,5 +211,13 @@ private inline fun <reified E : Enum<E>> Element.readEnum(name: String): E? {
     }
 }
 
+private fun Element.writePath(name: String, value: Path?) {
+    if (value != null) {
+        val s = ExternalizablePath.urlValue(value.toString())
+        writeString(name, s)
+    }
+}
 
-val Element.debug: String get() = XMLOutputter().outputString(this)
+private fun Element.readPath(name: String): Path? {
+    return readString(name)?.let { Paths.get(ExternalizablePath.localPathValue(it)) }
+}

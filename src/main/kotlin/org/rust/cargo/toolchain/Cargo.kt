@@ -109,7 +109,7 @@ class Cargo(
 
         cmdLine
             .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(projectDirectory)
+            .withWorkDirectory(commandLine.workingDirectory ?: projectDirectory)
             .withParameters(commandLine.command)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
 

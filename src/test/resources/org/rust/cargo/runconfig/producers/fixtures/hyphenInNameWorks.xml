@@ -4,6 +4,7 @@
     <option name="command" value="run --example hello-world" />
     <option name="nocapture" value="true" />
     <option name="backtrace" value="FULL" />
+    <option name="workingDirectory" value="file:///src" />
     <envs />
   </configuration>
 </configurations>

@@ -31,13 +31,13 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 
 class RunConfigurationProducerTest : RsTestBase() {
-    override val dataPath: String get() {
+    override val dataPath: String = "org/rust/cargo/runconfig/producers/fixtures"
+
+    override fun doRunTests() {
         val info = ApplicationInfo.getInstance()
-        // BACKCOMPAT: 2017.1
-        // HACK: IDEA 2017.2 produces a little bit different configuration xml
-        // so fixtures for 2017.1 were moved into separate folder
-        val compatibilityFolder = if (info.majorVersion == "2017" && info.minorVersion == "1") "/2017.1" else ""
-        return "org/rust/cargo/runconfig/producers/fixtures$compatibilityFolder"
+        // BACKCOMPAT: 2017.1 has different serialization format for run configurations
+        if (info.majorVersion == "2017" && info.minorVersion == "1") return
+        super.doRunTests()
     }
 
     // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setRawWorkspace].

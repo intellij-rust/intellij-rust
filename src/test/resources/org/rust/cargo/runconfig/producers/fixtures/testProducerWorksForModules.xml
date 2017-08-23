@@ -4,6 +4,7 @@
     <option name="command" value="test --package test-package --lib foo" />
     <option name="nocapture" value="true" />
     <option name="backtrace" value="FULL" />
+    <option name="workingDirectory" value="file:///src" />
     <envs />
   </configuration>
 </configurations>

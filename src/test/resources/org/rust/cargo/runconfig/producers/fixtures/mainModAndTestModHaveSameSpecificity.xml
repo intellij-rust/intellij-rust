@@ -4,6 +4,7 @@
     <option name="command" value="run --bin foo" />
     <option name="nocapture" value="true" />
     <option name="backtrace" value="FULL" />
+    <option name="workingDirectory" value="file:///src" />
     <envs />
   </configuration>
   <configuration name="Test main" class="CargoCommandConfiguration">
@@ -11,6 +12,7 @@
     <option name="command" value="test --package test-package --bin foo &quot;&quot;" />
     <option name="nocapture" value="true" />
     <option name="backtrace" value="FULL" />
+    <option name="workingDirectory" value="file:///src" />
     <envs />
   </configuration>
 </configurations>

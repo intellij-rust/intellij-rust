@@ -4,6 +4,7 @@
     <option name="command" value="test --package test-package --bin foo test_foo" />
     <option name="nocapture" value="true" />
     <option name="backtrace" value="FULL" />
+    <option name="workingDirectory" value="file:///src" />
     <envs />
   </configuration>
 </configurations>
