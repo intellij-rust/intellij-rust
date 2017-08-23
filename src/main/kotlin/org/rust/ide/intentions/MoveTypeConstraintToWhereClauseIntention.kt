@@ -9,9 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsGenericDeclaration
-import org.rust.lang.core.psi.ext.RsTraitOrImpl
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.*
 
 class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<RsTypeParameterList>() {
     override fun getText() = "Move type constraint to where clause"
@@ -39,6 +37,17 @@ class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<Rs
 }
 
 private fun RsGenericDeclaration.addWhereClause(whereClause: RsWhereClause): PsiElement? {
+    val existingWhereClause = this.whereClause
+    if (existingWhereClause != null) {
+        ensureTrailingComma(existingWhereClause.wherePredList)
+        existingWhereClause.addRangeAfter(
+            whereClause.wherePredList.first(),
+            whereClause.lastChild,
+            existingWhereClause.lastChild
+        )
+        return existingWhereClause
+    }
+
     val anchor = when (this) {
         is RsTypeAlias -> eq
         is RsTraitOrImpl -> members
