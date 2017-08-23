@@ -76,8 +76,11 @@ class Cargo(
     }
 
     fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
-        val result = CargoCommandLine("fmt", listOf("--", "--write-mode=overwrite", "--skip-children", file.path))
-            .execute(owner, listener)
+        val cmd = CargoCommandLine(
+            "fmt",
+            listOf("--all", "--", "--write-mode=overwrite", "--skip-children", file.path)
+        )
+        val result = cmd.execute(owner, listener)
         VfsUtil.markDirtyAndRefresh(true, true, true, file)
         return result
     }
@@ -197,7 +200,7 @@ class Cargo(
         val json = output.dropWhile { it != '{' }
         return try {
             Gson().fromJson(json, CargoMetadata.Project::class.java)
-        } catch(e: JsonSyntaxException) {
+        } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
     }
