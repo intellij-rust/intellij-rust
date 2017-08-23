@@ -13,20 +13,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.formatter.RsTrailingCommaFormatProcessor
 import org.rust.ide.formatter.impl.CommaList
-import org.rust.lang.core.psi.RsElementTypes.COMMA
-import org.rust.lang.core.psi.RsFieldDecl
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructLiteralBody
-import org.rust.lang.core.psi.RsStructLiteralField
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 /**
  * Adds the given fields to the stricture defined by `expr`
  */
 class AddStructFieldsFix(
-    val declaredFields: List<RsFieldDecl>,
-    val fieldsToAdd: List<RsFieldDecl>,
+    private val declaredFields: List<RsFieldDecl>,
+    private val fieldsToAdd: List<RsFieldDecl>,
     structBody: RsStructLiteralBody
 ) : LocalQuickFixAndIntentionActionOnPsiElement(structBody) {
     override fun getText(): String = "Add missing fields"
@@ -41,18 +36,18 @@ class AddStructFieldsFix(
         endElement: PsiElement
     ) {
         val psiFactory = RsPsiFactory(project)
-        var expr = startElement as RsStructLiteralBody
+        var structLiteral = startElement as RsStructLiteralBody
 
-        val forceMultiline = expr.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
+        val forceMultiline = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
 
         var firstAdded: RsStructLiteralField? = null
         for (fieldDecl in fieldsToAdd) {
             val field = psiFactory.createStructLiteralField(fieldDecl.name!!)
-            val addBefore = findPlaceToAdd(field, expr.structLiteralFieldList, declaredFields)
-            expr.ensureTrailingComma()
+            val addBefore = findPlaceToAdd(field, structLiteral.structLiteralFieldList, declaredFields)
+            ensureTrailingComma(structLiteral.structLiteralFieldList)
 
-            val comma = expr.addBefore(psiFactory.createComma(), addBefore ?: expr.rbrace)
-            val added = expr.addBefore(field, comma) as RsStructLiteralField
+            val comma = structLiteral.addBefore(psiFactory.createComma(), addBefore ?: structLiteral.rbrace)
+            val added = structLiteral.addBefore(field, comma) as RsStructLiteralField
 
             if (firstAdded == null) {
                 firstAdded = added
@@ -60,11 +55,11 @@ class AddStructFieldsFix(
         }
 
         if (forceMultiline) {
-            expr.addAfter(psiFactory.createNewline(), expr.lbrace)
+            structLiteral.addAfter(psiFactory.createNewline(), structLiteral.lbrace)
         }
 
-        expr = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
-        RsTrailingCommaFormatProcessor.fixSingleLineBracedBlock(expr, CommaList.forElement(expr.elementType)!!)
+        structLiteral = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(structLiteral)
+        RsTrailingCommaFormatProcessor.fixSingleLineBracedBlock(structLiteral, CommaList.forElement(structLiteral.elementType)!!)
 
         if (editor != null && firstAdded != null) {
             editor.caretModel.moveToOffset(firstAdded.expr!!.textOffset)
@@ -109,13 +104,5 @@ class AddStructFieldsFix(
         }
 
         return null
-    }
-
-    private fun RsStructLiteralBody.ensureTrailingComma() {
-        val lastField = structLiteralFieldList.lastOrNull()
-            ?: return
-
-        if (lastField.getNextNonCommentSibling()?.elementType == COMMA) return
-        addAfter(RsPsiFactory(project).createComma(), lastField)
     }
 }

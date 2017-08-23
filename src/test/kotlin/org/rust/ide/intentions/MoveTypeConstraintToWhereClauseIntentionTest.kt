@@ -61,6 +61,24 @@ class MoveTypeConstraintToWhereClauseIntentionTest : RsIntentionTestBase(MoveTyp
         """ enum Foo<T> where T: Copy/*caret*/ { X(T) } """
     )
 
+    fun `test partial where clause exists`() = doAvailableTest("""
+        impl<Fut, Req, Func:/*caret*/ Fn(Req) -> Fut, Resp, Err> Service for ServiceFn<Func>
+        where
+            Fut: IntoFuture<Item=Resp, Error=Err>,
+        {
+    """, """
+        impl<Fut, Req, Func, Resp, Err> Service for ServiceFn<Func>
+        where
+            Fut: IntoFuture<Item=Resp, Error=Err>, Func: Fn(Req) -> Fut
+        {
+    """)
+
+    fun `test partial where clause exists adds comma`() = doAvailableTest("""
+        struct Spam<Foo, Bar: /*caret*/Future> where Foo: Iterator { }
+    """, """
+        struct Spam<Foo, Bar> where Foo: Iterator, Bar: Future { }
+    """)
+
     fun testNoLifetimeBounds() = doUnavailableTest(""" fn foo<'a, /*caret*/'b>(t: &'a i32, f: &'b i32) { } """)
 
     fun testNoTraitBounds() = doUnavailableTest(""" fn foo<T, /*caret*/F>(t: T, f: F) { } """)
