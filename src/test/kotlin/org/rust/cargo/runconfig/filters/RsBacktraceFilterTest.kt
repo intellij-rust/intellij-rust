@@ -12,7 +12,7 @@ import org.rust.cargo.util.modules
  * Tests for RustBacktraceFilter
  */
 class RsBacktraceFilterTest : HighlightFilterTestBase() {
-    private val filter: RsBacktraceFilter get() = RsBacktraceFilter(project, projectDir, project.modules.first())
+    private val filter: RsBacktraceFilter get() = RsBacktraceFilter(projectDir, project.modules.first())
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 

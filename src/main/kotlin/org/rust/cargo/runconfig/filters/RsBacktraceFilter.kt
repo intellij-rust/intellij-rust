@@ -27,13 +27,12 @@ import java.util.regex.Pattern
  * - Dims function hash codes to reduce noise.
  */
 class RsBacktraceFilter(
-    project: Project,
     cargoProjectDir: VirtualFile,
     module: Module
 ) : Filter {
 
-    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
-    private val backtraceItemFilter = RsBacktraceItemFilter(project, module)
+    private val sourceLinkFilter = RegexpFileLinkFilter(module.project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
+    private val backtraceItemFilter = RsBacktraceItemFilter(module.project, module)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         return backtraceItemFilter.applyFilter(line, entireLength)

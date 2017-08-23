@@ -32,7 +32,7 @@ class CargoRunState(
         consoleBuilder.addFilter(RsConsoleFilter(environment.project, cargoProjectDirectory))
         consoleBuilder.addFilter(RsExplainFilter())
         consoleBuilder.addFilter(RsPanicFilter(environment.project, cargoProjectDirectory))
-        consoleBuilder.addFilter(RsBacktraceFilter(environment.project, cargoProjectDirectory, config.module))
+        consoleBuilder.addFilter(RsBacktraceFilter(cargoProjectDirectory, config.module))
     }
 
     override fun startProcess(): ProcessHandler {
