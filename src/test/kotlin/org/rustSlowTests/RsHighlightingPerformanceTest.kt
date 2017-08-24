@@ -9,11 +9,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.utils.fullyRefreshDirectory
 import kotlin.system.measureTimeMillis
 
@@ -39,13 +39,14 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
         myFixture.configureFromTempProjectFile(filePath)
 
         val modificationCount = currentPsiModificationCount()
+
+        var refs: Collection<RsReferenceElement> = emptyList()
+        val collectingReferences = measureTimeMillis {
+            refs = myFixture.file.descendantsOfType<RsReferenceElement>()
+        }
+
         val resolve = measureTimeMillis {
-            myFixture.file.accept(object : PsiRecursiveElementVisitor() {
-                override fun visitElement(element: PsiElement) {
-                    super.visitElement(element)
-                    element.reference?.resolve()
-                }
-            })
+            refs.forEach { it.reference.resolve() }
         }
         val highlighting = measureTimeMillis {
             myFixture.doHighlighting()
@@ -55,7 +56,8 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
             "PSI changed during resolve and highlighting, resolve might be double counted"
         }
 
-        println("resolve = $resolve ms")
+        println("collecting:   $collectingReferences ms")
+        println("resolve:      $resolve ms")
         println("highlighting: $highlighting ms")
     }
 
