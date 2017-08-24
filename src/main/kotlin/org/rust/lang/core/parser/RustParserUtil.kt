@@ -21,36 +21,77 @@ object RustParserUtil : GeneratedParserUtilBase() {
     enum class PathParsingMode { COLONS, NO_COLONS, NO_TYPES }
     enum class BinaryMode { ON, OFF }
 
-    private val STRUCT_ALLOWED: Key<Boolean> = Key("org.rust.STRUCT_ALLOWED")
-    private val TYPE_QUAL_ALLOWED: Key<Boolean> = Key("org.rust.TYPE_QUAL_ALLOWED")
-    private val PATH_PARSING_MODE: Key<PathParsingMode> = Key("org.rust.PATH_PARSING_MODE")
-    private val STMT_EXPR_MODE: Key<Boolean> = Key("org.rust.STMT_EXPR_MODE")
+    private val FLAGS: Key<Int> = Key("RustParserUtil.FLAGS")
+    private var PsiBuilder.flags: Int
+        get() = getUserData(FLAGS) ?: DEFAULT_FLAGS
+        set(value) = putUserData(FLAGS, value)
 
-    private val PsiBuilder.structAllowed: Boolean get() = getUserData(STRUCT_ALLOWED) ?: true
-
-    private val PsiBuilder.pathParsingMode: PathParsingMode get() = requireNotNull(getUserData(PATH_PARSING_MODE)) {
-        "Path context is not set. Be sure to call one of `withParsingMode...` functions"
+    private fun PsiBuilder.withFlag(flag: Int, mode: BinaryMode, block: PsiBuilder.() -> Boolean): Boolean {
+        val oldFlags = flags
+        val newFlags = when (mode) {
+            BinaryMode.ON -> oldFlags or flag
+            BinaryMode.OFF -> oldFlags and flag.inv()
+        }
+        flags = newFlags
+        val result = block()
+        flags = oldFlags
+        return result
     }
 
-    @JvmField val DOC_COMMENT_BINDER: WhitespacesAndCommentsBinder = WhitespacesBinders.leadingCommentsBinder(
+
+    private fun isFlagSet(flags: Int, flag: Int) = flags and flag != 0
+
+    private fun mkFlag(flag: Int) = 1 shl flag
+    private val STRUCT_ALLOWED: Int = mkFlag(1)
+    private val TYPE_QUAL_ALLOWED: Int = mkFlag(2)
+    private val STMT_EXPR_MODE: Int = mkFlag(3)
+
+    private val PATH_COLONS: Int = mkFlag(4)
+    private val PATH_NO_COLONS: Int = mkFlag(5)
+    private val PATH_NO_TYPES: Int = mkFlag(6)
+    private fun setPathMod(flags: Int, mode: PathParsingMode): Int {
+        val flag = when (mode) {
+            PathParsingMode.COLONS -> PATH_COLONS
+            PathParsingMode.NO_COLONS -> PATH_NO_COLONS
+            PathParsingMode.NO_TYPES -> PATH_NO_TYPES
+        }
+        return flags and (PATH_COLONS or PATH_NO_COLONS or PATH_NO_TYPES).inv() or flag
+    }
+
+    private fun getPathMod(flags: Int): PathParsingMode = when {
+        isFlagSet(flags, PATH_COLONS) -> PathParsingMode.COLONS
+        isFlagSet(flags, PATH_NO_COLONS) -> PathParsingMode.NO_COLONS
+        isFlagSet(flags, PATH_NO_TYPES) -> PathParsingMode.NO_TYPES
+        else -> error("Path parsing mode not set")
+    }
+
+    private val DEFAULT_FLAGS: Int = STRUCT_ALLOWED or TYPE_QUAL_ALLOWED
+
+    @JvmField
+    val DOC_COMMENT_BINDER: WhitespacesAndCommentsBinder = WhitespacesBinders.leadingCommentsBinder(
         TokenSet.create(OUTER_BLOCK_DOC_COMMENT, OUTER_EOL_DOC_COMMENT))
 
     //
     // Helpers
     //
 
-    @JvmStatic fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = b.structAllowed
-    @JvmStatic fun checkTypeQualAllowed(b: PsiBuilder, level: Int): Boolean = b.getUserData(TYPE_QUAL_ALLOWED) ?: true
+    @JvmStatic
+    fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = isFlagSet(b.flags, STRUCT_ALLOWED)
 
-    @JvmStatic fun checkBraceAllowed(b: PsiBuilder, level: Int): Boolean {
-        return b.structAllowed || b.tokenType != LBRACE
-    }
+    @JvmStatic
+    fun checkTypeQualAllowed(b: PsiBuilder, level: Int): Boolean = isFlagSet(b.flags, TYPE_QUAL_ALLOWED)
 
-    @JvmStatic fun structLiterals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
-        b.withContext(STRUCT_ALLOWED, mode == BinaryMode.ON) { parser.parse(this, level) }
+    @JvmStatic
+    fun checkBraceAllowed(b: PsiBuilder, level: Int): Boolean =
+        b.tokenType != LBRACE || checkStructAllowed(b, level)
 
-    @JvmStatic fun typeQuals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
-        b.withContext(TYPE_QUAL_ALLOWED, mode == BinaryMode.ON) { parser.parse(this, level) }
+    @JvmStatic
+    fun structLiterals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
+        b.withFlag(STRUCT_ALLOWED, mode) { parser.parse(this, level) }
+
+    @JvmStatic
+    fun typeQuals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
+        b.withFlag(TYPE_QUAL_ALLOWED, mode) { parser.parse(this, level) }
 
     /**
      * Controls the difference between
@@ -68,24 +109,37 @@ object RustParserUtil : GeneratedParserUtilBase() {
      *
      * See `Restrictions::RESTRICTION_STMT_EXPR` in libsyntax
      */
-    @JvmStatic fun stmtMode(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
-        b.withContext(STMT_EXPR_MODE, mode == BinaryMode.ON) { parser.parse(this, level) }
+    @JvmStatic
+    fun stmtMode(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
+        b.withFlag(STMT_EXPR_MODE, mode) { parser.parse(this, level) }
 
-    @JvmStatic fun isCompleteBlockExpr(b: PsiBuilder, level: Int): Boolean {
-        return isBlock(b, level) && b.getUserData(STMT_EXPR_MODE) == true
-    }
+    @JvmStatic
+    fun isCompleteBlockExpr(b: PsiBuilder, level: Int): Boolean =
+        isBlock(b, level) && isFlagSet(b.flags, STMT_EXPR_MODE)
 
-    @JvmStatic fun isBlock(b: PsiBuilder, level: Int): Boolean {
+    @JvmStatic
+    fun isBlock(b: PsiBuilder, level: Int): Boolean {
         val m = b.latestDoneMarker ?: return false
         return m.tokenType in RS_BLOCK_LIKE_EXPRESSIONS || m.isBracedMacro(b)
     }
 
-    @JvmStatic fun pathMode(b: PsiBuilder, level: Int, mode: PathParsingMode, parser: Parser): Boolean =
-        b.withContext(PATH_PARSING_MODE, mode) { parser.parse(this, level) }
+    @JvmStatic
+    fun pathMode(b: PsiBuilder, level: Int, mode: PathParsingMode, parser: Parser): Boolean {
+        val oldFlags = b.flags
+        val newFlags = setPathMod(oldFlags, mode)
+        b.flags = newFlags
+        check(getPathMod(b.flags) == mode)
+        val result = parser.parse(b, level)
+        b.flags = oldFlags
+        return result
+    }
 
-    @JvmStatic fun isPathMode(b: PsiBuilder, level: Int, mode: PathParsingMode): Boolean = mode == b.pathParsingMode
+    @JvmStatic
+    fun isPathMode(b: PsiBuilder, level: Int, mode: PathParsingMode): Boolean =
+        mode == getPathMod(b.flags)
 
-    @JvmStatic fun unpairedToken(b: PsiBuilder, level: Int): Boolean =
+    @JvmStatic
+    fun unpairedToken(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
             LBRACE, RBRACE -> false
             LPAREN, RPAREN -> false
@@ -96,14 +150,16 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
         }
 
-    @JvmStatic fun macroSemicolon(b: PsiBuilder, level: Int): Boolean {
+    @JvmStatic
+    fun macroSemicolon(b: PsiBuilder, level: Int): Boolean {
         val m = b.latestDoneMarker ?: return false
         b.tokenText
         if (b.originalText[m.endOffset - 1] == '}') return true
         return consumeToken(b, SEMICOLON)
     }
 
-    @JvmStatic fun macroIdentifier(b: PsiBuilder, level: Int): Boolean =
+    @JvmStatic
+    fun macroIdentifier(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
             TYPE_KW, CRATE, IDENTIFIER -> {
                 b.advanceLexer()
@@ -112,7 +168,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
             else -> false
         }
 
-    @JvmStatic fun tupleOrParenType(b: PsiBuilder, level: Int, typeReference: Parser, tupeTypeUpper: Parser): Boolean {
+    @JvmStatic
+    fun tupleOrParenType(b: PsiBuilder, level: Int, typeReference: Parser, tupeTypeUpper: Parser): Boolean {
         val tupleOrParens: PsiBuilder.Marker = enter_section_(b)
 
         if (!consumeTokenSmart(b, LPAREN)) {
@@ -138,20 +195,39 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return result
     }
 
-    @JvmStatic fun gtgteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGTEQ, GT, GT, EQ)
-    @JvmStatic fun gtgtImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGT, GT, GT)
-    @JvmStatic fun gteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTEQ, GT, EQ)
-    @JvmStatic fun ltlteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTLTEQ, LT, LT, EQ)
-    @JvmStatic fun ltltImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTLT, LT, LT)
-    @JvmStatic fun lteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTEQ, LT, EQ)
-    @JvmStatic fun ororImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, OROR, OR, OR)
-    @JvmStatic fun andandImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, ANDAND, AND, AND)
+    @JvmStatic
+    fun gtgteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGTEQ, GT, GT, EQ)
 
-    @JvmStatic fun defaultKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "default", DEFAULT)
-    @JvmStatic fun unionKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "union", UNION)
+    @JvmStatic
+    fun gtgtImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGT, GT, GT)
+
+    @JvmStatic
+    fun gteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTEQ, GT, EQ)
+
+    @JvmStatic
+    fun ltlteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTLTEQ, LT, LT, EQ)
+
+    @JvmStatic
+    fun ltltImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTLT, LT, LT)
+
+    @JvmStatic
+    fun lteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, LTEQ, LT, EQ)
+
+    @JvmStatic
+    fun ororImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, OROR, OR, OR)
+
+    @JvmStatic
+    fun andandImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, ANDAND, AND, AND)
+
+    @JvmStatic
+    fun defaultKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "default", DEFAULT)
+
+    @JvmStatic
+    fun unionKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "union", UNION)
 
 
-    private @JvmStatic fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
+    private @JvmStatic
+    fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,
         // and when we make sure that we have desired token, we consume and collapse it.
         parts.forEachIndexed { i, tt ->
@@ -161,14 +237,6 @@ object RustParserUtil : GeneratedParserUtilBase() {
         PsiBuilderUtil.advance(b, parts.size)
         marker.collapse(tokenType)
         return true
-    }
-
-    private fun <T> PsiBuilder.withContext(key: Key<T>, value: T, block: PsiBuilder.() -> Boolean): Boolean {
-        val old = getUserData(key)
-        putUserData(key, value)
-        val result = block()
-        putUserData(key, old)
-        return result
     }
 
     private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean =
