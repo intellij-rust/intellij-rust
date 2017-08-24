@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StdLibType
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -34,6 +35,7 @@ interface CargoWorkspace {
 
     interface Package {
         val contentRoot: VirtualFile?
+        val rootDirectory: Path
 
         val name: String
         val normName: String get() = name.replace('-', '_')
@@ -128,7 +130,7 @@ private class WorkspaceImpl(
     }
 
     override fun toString(): String {
-        val pkgs = packages.map { "    $it,\n" }.joinToString(separator = "")
+        val pkgs = packages.joinToString(separator = "") { "    $it,\n" }
         return "Workspace(packages=[\n$pkgs])"
     }
 
@@ -202,6 +204,9 @@ private class PackageImpl(
     override val contentRoot: VirtualFile?
         get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
+    override val rootDirectory: Path
+        get() = Paths.get(VirtualFileManager.extractPath(contentRootUrl))
+
     override val dependencies: MutableList<PackageImpl> = ArrayList()
 
     fun initTargets(): PackageImpl {
@@ -221,13 +226,14 @@ private class TargetImpl(
 ) : CargoWorkspace.Target {
 
     private val crateRootCache = AtomicReference<VirtualFile>()
-    override val crateRoot: VirtualFile? get() {
-        val cached = crateRootCache.get()
-        if (cached != null && cached.isValid) return cached
-        val file = VirtualFileManager.getInstance().findFileByUrl(crateRootUrl)
-        crateRootCache.set(file)
-        return file
-    }
+    override val crateRoot: VirtualFile?
+        get() {
+            val cached = crateRootCache.get()
+            if (cached != null && cached.isValid) return cached
+            val file = VirtualFileManager.getInstance().findFileByUrl(crateRootUrl)
+            crateRootCache.set(file)
+            return file
+        }
 
     private lateinit var myPackage: PackageImpl
     fun initPackage(pkg: PackageImpl) {

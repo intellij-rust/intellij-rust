@@ -20,8 +20,10 @@ import org.rust.lang.core.completion.addSuffix
 import org.rust.lang.core.completion.withPriority
 
 class CargoCommandCompletionProvider(
-    private val workspace: CargoWorkspace?
+    private val workspaceGetter: () -> CargoWorkspace?
 ) : TextFieldCompletionProvider() {
+
+    constructor(workspace: CargoWorkspace?) : this({ workspace })
 
     override fun getPrefix(currentTextPrefix: String): String = splitContextPrefix(currentTextPrefix).second
 
@@ -59,7 +61,7 @@ class CargoCommandCompletionProvider(
 
         val argCompleter = cmd.options.find { it.long == args.lastOrNull() }?.argCompleter
         if (argCompleter != null) {
-            return workspace?.let { argCompleter(it, args) }.orEmpty()
+            return workspaceGetter()?.let { argCompleter(it, args) }.orEmpty()
         }
 
         return cmd.options
@@ -101,10 +103,11 @@ private class Opt(
 }
 
 private val CargoWorkspace.Target.lookupElement: LookupElement get() = LookupElementBuilder.create(name)
-private val CargoWorkspace.Package.lookupElement: LookupElement get() {
-    val priority = if (origin == PackageOrigin.WORKSPACE) 1.0 else 0.0
-    return LookupElementBuilder.create(name).withPriority(priority)
-}
+private val CargoWorkspace.Package.lookupElement: LookupElement
+    get() {
+        val priority = if (origin == PackageOrigin.WORKSPACE) 1.0 else 0.0
+        return LookupElementBuilder.create(name).withPriority(priority)
+    }
 
 private class OptBuilder(
     val result: MutableList<Opt> = mutableListOf()

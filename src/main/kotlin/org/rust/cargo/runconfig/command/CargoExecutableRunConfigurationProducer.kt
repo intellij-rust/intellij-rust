@@ -31,7 +31,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         val target = findBinaryTarget(location) ?: return false
 
         return configuration.configurationModule.module == context.module &&
-            configuration.cargoCommandLine == target.cargoCommandLine
+            configuration.canBeFrom(target.cargoCommandLine)
     }
 
     override fun setupConfigurationFromContext(
@@ -47,19 +47,21 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
 
         configuration.configurationModule.module = context.module
         configuration.name = target.configurationName
-        configuration.cargoCommandLine = target.cargoCommandLine.mergeWithDefault(configuration.cargoCommandLine)
+        val cmd = target.cargoCommandLine.mergeWithDefault(configuration)
+        configuration.setFromCmd(cmd)
         return true
     }
 
     private class ExecutableTarget(
-        name: String,
+        target: CargoWorkspace.Target,
         kind: String
     ) {
-        val configurationName: String = "Run $name"
+        val configurationName: String = "Run ${target.name}"
 
         val cargoCommandLine = CargoCommandLine(
             CargoConstants.Commands.RUN,
-            listOf("--$kind", name)
+            listOf("--$kind", target.name),
+            workingDirectory = target.pkg.rootDirectory
         )
     }
 
@@ -82,8 +84,8 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
             // is fixed
             val target = ws.findTargetByCrateRoot(file) ?: return null
             return when {
-                target.isBin -> ExecutableTarget(target.name, "bin")
-                target.isExample -> ExecutableTarget(target.name, "example")
+                target.isBin -> ExecutableTarget(target, "bin")
+                target.isExample -> ExecutableTarget(target, "example")
                 else -> null
             }
         }

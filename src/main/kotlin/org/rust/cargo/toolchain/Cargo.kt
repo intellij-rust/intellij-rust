@@ -109,15 +109,17 @@ class Cargo(
 
         cmdLine
             .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(projectDirectory)
+            .withWorkDirectory(commandLine.workingDirectory ?: projectDirectory)
             .withParameters(commandLine.command)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
 
-        val env = when (commandLine.backtraceMode) {
-            BacktraceMode.SHORT -> mapOf(RUST_BACTRACE_ENV_VAR to "short")
-            BacktraceMode.FULL -> mapOf(RUST_BACTRACE_ENV_VAR to "full")
-            else -> emptyMap()
-        } + commandLine.environmentVariables
+        when (commandLine.backtraceMode) {
+            BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
+            BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "full")
+            BacktraceMode.NO -> {
+            }
+        }
+        commandLine.environmentVariables.configureCommandLine(cmdLine, true)
 
         val args: List<String> = run {
             val args = commandLine.additionalArguments.toMutableList()
@@ -143,9 +145,7 @@ class Cargo(
                 .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
         }
 
-        return cmdLine
-            .withEnvironment(env)
-            .withParameters(args)
+        return cmdLine.withParameters(args)
     }
 
 

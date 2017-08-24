@@ -29,7 +29,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val test = findTest(location.psiElement) ?: return false
 
         return configuration.configurationModule.module == context.module &&
-            configuration.cargoCommandLine == test.cargoCommandLine
+            configuration.canBeFrom(test.cargoCommandLine)
     }
 
     override fun setupConfigurationFromContext(
@@ -43,7 +43,8 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
 
         configuration.configurationModule.module = context.module
         configuration.name = test.configurationName
-        configuration.cargoCommandLine = test.cargoCommandLine.mergeWithDefault(configuration.cargoCommandLine)
+        val cmd = test.cargoCommandLine.mergeWithDefault(configuration)
+        configuration.setFromCmd(cmd)
         return true
     }
 
@@ -89,7 +90,8 @@ class TestConfig(
 ) {
     val cargoCommandLine: CargoCommandLine = CargoCommandLine(
         CargoConstants.Commands.TEST,
-        target.cargoArgumentSpeck + testPath
+        target.cargoArgumentSpeck + testPath,
+        workingDirectory = target.pkg.rootDirectory
     )
 }
 
