@@ -11,6 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
     fun testFn() = doTest(true)
+    fun testTurbo() = doTest(true)
     fun testExpr() = doTest(true)
     fun testMod() = doTest(true)
     fun testUseItem() = doTest(true)
