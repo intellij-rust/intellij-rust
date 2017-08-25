@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 99
+        override fun getStubVersion(): Int = 100
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -209,7 +209,8 @@ class RsUseItemStub(
 class RsStructItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val isPublic: Boolean
+    override val isPublic: Boolean,
+    val isUnion: Boolean
 ) : StubBase<RsStructItem>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
@@ -218,6 +219,7 @@ class RsStructItemStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsStructItemStub(parentStub, this,
                 dataStream.readNameAsString(),
+                dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
 
@@ -225,13 +227,14 @@ class RsStructItemStub(
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
+                writeBoolean(stub.isUnion)
             }
 
         override fun createPsi(stub: RsStructItemStub): RsStructItem =
             RsStructItemImpl(stub, this)
 
         override fun createStub(psi: RsStructItem, parentStub: StubElement<*>?) =
-            RsStructItemStub(parentStub, this, psi.name, psi.isPublic)
+            RsStructItemStub(parentStub, this, psi.name, psi.isPublic, psi.kind == RsStructKind.UNION)
 
 
         override fun indexStub(stub: RsStructItemStub, sink: IndexSink) = sink.indexStructItem(stub)

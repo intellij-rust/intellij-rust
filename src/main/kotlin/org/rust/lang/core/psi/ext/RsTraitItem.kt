@@ -22,11 +22,6 @@ import org.rust.lang.utils.filterQuery
 import org.rust.lang.utils.mapQuery
 import javax.swing.Icon
 
-val RsTraitItem.isUnsafe: Boolean get() {
-    val stub = stub
-    return stub?.isUnsafe ?: (unsafe != null)
-}
-
 val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 
 val RsTraitItem.isStdDerivable: Boolean get() {
@@ -49,8 +44,8 @@ val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitI
     return result
 }
 
-val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias> get() =
-    this.flattenHierarchy.flatMap { it.element.members?.typeAliasList.orEmpty() }
+val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias>
+    get() = flattenHierarchy.flatMap { it.element.members?.typeAliasList.orEmpty() }
 
 fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
     return ReferencesSearch.search(this, this.useScope)
@@ -85,9 +80,13 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
     override val implementedTrait: BoundElement<RsTraitItem>? get() = BoundElement(this)
 
-    override val associatedTypesTransitively: Collection<RsTypeAlias> get() =
-        BoundElement(this).associatedTypesTransitively
+    override val associatedTypesTransitively: Collection<RsTypeAlias>
+        get() = BoundElement(this).associatedTypesTransitively
 
+    override val isUnsafe: Boolean get() {
+        val stub = stub
+        return stub?.isUnsafe ?: (unsafe != null)
+    }
 }
 
 
@@ -116,8 +115,9 @@ class TraitImplementationInfo private constructor(
         }
 
 
-    private fun RsMembers.abstractable(): List<RsAbstractable> = children.filterIsInstance<RsAbstractable>()
-        .filter { it.name != null }
+    private fun RsMembers.abstractable(): List<RsAbstractable> =
+        PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsAbstractable::class.java)
+            .filter { it.name != null }
 
     companion object {
         fun create(trait: RsTraitItem, impl: RsImplItem): TraitImplementationInfo? {

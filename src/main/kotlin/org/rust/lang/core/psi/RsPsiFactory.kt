@@ -208,7 +208,7 @@ class RsPsiFactory(private val project: Project) {
     fun createNewline(): PsiElement =
         PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
 
-    fun createUnsafe(): PsiElement =
+    fun createUnsafeKeyword(): PsiElement =
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
             ?: error("Failed to create unsafe element")
 

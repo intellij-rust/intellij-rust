@@ -19,7 +19,7 @@ class AddUnsafeFix(val expr: PsiElement) : LocalQuickFixAndIntentionActionOnPsiE
     override fun getText() = "Add unsafe to ${if (expr is RsBlockExpr) "block" else "function" }"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val unsafe = RsPsiFactory(project).createUnsafe()
+        val unsafe = RsPsiFactory(project).createUnsafeKeyword()
         when (expr) {
             is RsBlockExpr -> expr.addBefore(unsafe, expr.block)
             is RsFunction -> expr.addBefore(unsafe, expr.fn)

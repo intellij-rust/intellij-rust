@@ -49,4 +49,6 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         val traitAliases = implementedTrait?.associatedTypesTransitively ?: emptyList()
         return implAliases + traitAliases.filter { trAl -> implAliases.find { it.name == trAl.name } == null }
     }
+
+    override val isUnsafe: Boolean get() = unsafe != null
 }

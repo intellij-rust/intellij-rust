@@ -368,7 +368,8 @@ Function ::= OuterAttr*
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
-                 "org.rust.lang.core.psi.ext.RsAbstractable" ]
+                 "org.rust.lang.core.psi.ext.RsAbstractable"
+                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -631,7 +632,8 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement" ]
+                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
+                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsTraitItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTraitItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -640,7 +642,8 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
 ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? ( TraitImpl | InherentImpl ) WhereClause? Members {
   pin = "impl"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
-  implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
+                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsImplItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsImplItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
