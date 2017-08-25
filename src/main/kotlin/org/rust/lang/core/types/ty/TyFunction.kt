@@ -7,6 +7,7 @@ package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.infer.TypeFolder
 
 data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty {
 
@@ -20,8 +21,8 @@ data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty {
         }
     }
 
-    override fun substitute(subst: Substitution): TyFunction =
-        TyFunction(paramTypes.map { it.substitute(subst) }, retType.substitute(subst))
+    override fun superFoldWith(folder: TypeFolder): Ty =
+        TyFunction(paramTypes.map { it.foldWith(folder) }, retType.foldWith(folder))
 
     override fun toString(): String = tyToString(this)
 }

@@ -209,9 +209,9 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun testStaticMethod() = testExpr("""
-        struct S<T> { value: T }
-        impl<T> S<T> {
-            fn new(t: T) -> S<T> { S {value: t} }
+        struct S<A> { value: A }
+        impl<B> S<B> {
+            fn new(t: B) -> S<B> { S {value: t} }
         }
 
         fn main() {
@@ -429,6 +429,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T>(xs: &[T]) -> T { unimplemented!() }
         fn main() {
             let x = foo(&[1, 2, 3]);
+            x
+          //^ i32
+        }
+    """)
+
+    fun testArrayToSlice2() = testExpr("""
+        fn foo<T>(xs: &[T]) -> T { unimplemented!() }
+        fn main() {
+            let a = [1, 2, 3];
+            let x = foo(&a);
             x
           //^ i32
         }
@@ -725,5 +735,144 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             x;
           //^ Foo<i32>
         }
+    """)
+
+    fun `test non-inferable associated type`() = testExpr("""
+        trait Tr {
+            type Item;
+            fn bar(&self) -> Self::Item { unimplemented!() }
+        }
+        fn foo<T: Tr>(t: T) {
+            let a = t.bar();
+            a
+        } //^ <T as Tr>::Item
+    """)
+
+    fun `test fn return associated type`() = testExpr("""
+        trait Tr { type Item; }
+        struct S;
+        impl Tr for S {
+            type Item = i32;
+        }
+        fn foo<T: Tr>(t: T) -> T::Item { unimplemented!() }
+        fn main() {
+            let x = foo(S);
+            x
+          //^ i32
+        }
+    """)
+
+    fun `test associated type bound`() = testExpr("""
+        trait Tr { type Item; }
+        trait Tr2<A> {}
+        struct S1;
+        struct S2;
+        impl Tr2<i32> for S1 {}
+        impl Tr for S2 { type Item = S1; }
+        fn foo<T1, T2>(t: T1) -> T2
+            where T1: Tr,
+                  T1::Item: Tr2<T2>,
+        { unimplemented!() }
+        fn main() {
+            let x = foo(S2);
+            x
+          //^ i32
+        }
+    """)
+
+    fun `test simple unification`() = testExpr("""
+        struct S<T>(T);
+
+        fn main() {
+            let a: S<_> = S(0i32);
+            a
+        } //^ S<i32>
+    """)
+
+    fun `test unify reference`() = testExpr("""
+        fn foo<A>(a: A, b: A) {}
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let b = 1u8;
+            foo(&a, &b);
+        }
+    """)
+
+    fun `test unify array`() = testExpr("""
+        fn foo<A>(a: A, b: A) {}
+        fn main() {
+            let a = [1, 2];
+                      //^ u8
+            let b = [1, 2u8];
+            foo(a, b);
+        }
+    """)
+
+    fun `test unify struct`() = testExpr("""
+        fn foo<A>(a: A, b: A) {}
+        struct S<B> {f: B}
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let b = 1u8;
+            foo(S { f: a}, S { f: b });
+        }
+    """)
+
+    fun `test unify tuple`() = testExpr("""
+        fn foo<A>(a: A, b: A) {}
+        struct S<B> {f: B}
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let b = 1u8;
+            foo((a, ), (b, ));
+        }
+    """)
+
+    fun `test unify fn with polymorphic return type`() = testExpr("""
+        pub trait FromIterator<A>: Sized { }
+        struct S<B>(B);
+        impl<C> FromIterator<C> for S<C> {}
+
+        fn collect<D: FromIterator<i32>>() -> D { unimplemented!() }
+
+        fn main() {
+            let a: S<_> = collect();
+            a
+        } //^ S<i32>
+    """)
+
+    fun `test unify fn with polymorphic return type non-local`() = testExpr("""
+        pub trait FromIterator<A>: Sized { }
+        struct S<B>(B);
+        impl<C> FromIterator<C> for S<C> {}
+
+        fn collect<D: FromIterator<i32>>() -> D { unimplemented!() }
+        fn foo<E>(a: S<E>) {}
+
+        fn main() {
+            let a = collect();
+            foo(a);
+            a
+        } //^ S<i32>
+    """)
+
+    fun `test unify method with polymorphic return type`() = testExpr("""
+        pub trait FromIterator<A>: Sized { }
+        struct S<B>(B);
+        impl<C> FromIterator<C> for S<C> {}
+
+        struct Iter<D>(D);
+        impl<E> Iter<E> {
+            fn collect<F: FromIterator<E>>(&self) -> F { unimplemented!() }
+        }
+
+        struct X;
+        fn foo(it: Iter<X>) {
+            let a: S<_> = it.collect();
+            a
+        } //^ S<X>
     """)
 }

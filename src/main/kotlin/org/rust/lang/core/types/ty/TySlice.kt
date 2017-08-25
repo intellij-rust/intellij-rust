@@ -7,6 +7,7 @@ package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.infer.TypeFolder
 
 data class TySlice(val elementType: Ty) : Ty {
     override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult {
@@ -17,9 +18,8 @@ data class TySlice(val elementType: Ty) : Ty {
         }
     }
 
-    override fun substitute(subst: Substitution): Ty {
-        return TySlice(elementType.substitute(subst))
-    }
+    override fun superFoldWith(folder: TypeFolder): Ty =
+        TySlice(elementType.foldWith(folder))
 
     override fun toString(): String = tyToString(this)
 }

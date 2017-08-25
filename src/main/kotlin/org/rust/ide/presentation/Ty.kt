@@ -51,6 +51,11 @@ private fun render(ty: Ty, level: Int): String {
             val name = ty.item.name ?: return anonymous
             name + if (ty.typeArguments.isEmpty()) "" else ty.typeArguments.map(r).joinToString(", ", "<", ">")
         }
+        is TyInfer -> when (ty) {
+            is TyInfer.TyVar -> "_"
+            is TyInfer.IntVar -> "{integer}"
+            is TyInfer.FloatVar -> "{float}"
+        }
         else -> error("unreachable")
     }
 }

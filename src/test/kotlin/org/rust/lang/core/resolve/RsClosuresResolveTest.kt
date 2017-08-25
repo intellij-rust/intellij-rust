@@ -233,7 +233,18 @@ class RsClosuresResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test infer generic parameter from lambda return type`() = checkByCode("""
+    fun `test infer generic parameter from lambda return type by fn pointer`() = checkByCode("""
+        struct X;
+        impl X { fn foo(&self) {} }
+                   //X
+        fn apply<T1, T2>(t: T1, f: fn(T1) -> T2) -> T2 { f(t) }
+        fn main() {
+            let a = apply(X, |x| x);
+            a.foo()
+        }   //^
+    """)
+
+    fun `test infer generic parameter from lambda return type 1`() = checkByCode("""
         struct X;
         impl X { fn foo(&self) {} }
                    //X
@@ -244,14 +255,43 @@ class RsClosuresResolveTest : RsResolveTestBase() {
         }   //^
     """)
 
-    fun `test infer generic parameter from lambda return type by fn pointer`() = checkByCode("""
+    fun `test infer generic parameter from lambda return type 2`() = checkByCode("""
         struct X;
         impl X { fn foo(&self) {} }
                    //X
-        fn apply<T1, T2>(t: T1, f: fn(T1) -> T2) -> T2 { f(t) }
+        fn apply<T1, T2, F: Fn(T1) -> T2>(f: F, t: T1) -> T2 { f(t) }
         fn main() {
-            let a = apply(X, |x| x);
+            let a = apply(|x| x, X);
             a.foo()
         }   //^
+    """)
+
+    fun `test infer lambda argument type from next method argument`() = checkByCode("""
+        struct X;
+        impl X {
+            fn foo(self) -> X { self }
+            fn bar(&self) {}
+        }    //X
+        fn apply<T1, T2, F: Fn(T1) -> T2>(f: F, t: T1) -> T2 { f(t) }
+        fn main() {
+            apply((|x| x.foo().bar()), X);
+        }                    //^
+    """)
+
+    fun `test infer argument type from next method argument 2`() = checkByCode("""
+        struct X;
+        impl X {
+            fn foo(self) -> X { self }
+            fn bar(&self) {}
+        }    //X
+        fn apply<T1, T2, T3, F1, F2>(f1: F1, f2: F2, t: T1) -> T3
+            where F1: Fn(T1) -> T2,
+                  F2: Fn(T2) -> T3,
+        {
+            f2(f1(t))
+        }
+        fn main() {
+            apply(|x| x, |x| x.foo().bar(), X);
+        }                          //^
     """)
 }

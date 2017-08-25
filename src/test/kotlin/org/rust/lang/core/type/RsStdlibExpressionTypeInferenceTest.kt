@@ -292,6 +292,40 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test iterator collect`() = testExpr("""
+        use std::vec::Vec;
+
+        fn main() {
+            let vec = vec![1, 2, 3];
+            let b: Vec<_> = vec.into_iter().collect();
+            b
+          //^ Vec<i32>
+        }
+    """)
+
+    fun `test vec push`() = testExpr("""
+        use std::vec::Vec;
+
+        fn main() {
+            let mut vec = Vec::new();
+            vec.push(1);
+            vec
+          //^ Vec<i32>
+        }
+    """)
+
+    fun `test vec push 2`() = testExpr("""
+        use std::vec::Vec;
+
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let mut vec = Vec::new();
+            vec.push(a);
+            vec.push(1u8);
+        }
+    """)
+
     fun `test all binary ops with all numeric types`() {
         val numericTypes = listOf(
             "usize", "u8", "u16", "u32", "u64", "u128",
