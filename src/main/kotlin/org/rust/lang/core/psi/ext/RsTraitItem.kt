@@ -44,8 +44,8 @@ val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitI
     return result
 }
 
-val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias> get() =
-this.flattenHierarchy.flatMap { it.element.members?.typeAliasList.orEmpty() }
+val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias>
+    get() = flattenHierarchy.flatMap { it.element.members?.typeAliasList.orEmpty() }
 
 fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
     return ReferencesSearch.search(this, this.useScope)
@@ -80,8 +80,8 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
     override val implementedTrait: BoundElement<RsTraitItem>? get() = BoundElement(this)
 
-    override val associatedTypesTransitively: Collection<RsTypeAlias> get() =
-    BoundElement(this).associatedTypesTransitively
+    override val associatedTypesTransitively: Collection<RsTypeAlias>
+        get() = BoundElement(this).associatedTypesTransitively
 
     override val isUnsafe: Boolean get() {
         val stub = stub
