@@ -719,11 +719,16 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
                 foo(1, 2, 3);
                 bar<error>(92)</error>;
             }  //^
+
+            struct S;
+            impl T for S { }
         //- m.rs
             extern "C" {
                 fn foo(x: i32, ...);
             }
             fn bar() {}
+
+            trait T {}
         """)
     )
 }

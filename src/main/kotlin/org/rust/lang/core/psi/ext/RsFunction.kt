@@ -30,11 +30,6 @@ val RsFunction.isConst: Boolean get() {
     return stub?.isConst ?: (const != null)
 }
 
-val RsFunction.isUnsafe: Boolean get() {
-    val stub = stub
-    return stub?.isUnsafe ?: (unsafe != null)
-}
-
 val RsFunction.isExtern: Boolean get() {
     val stub = stub
     return stub?.isExtern ?: (abi != null)
@@ -119,6 +114,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     override val isPublic: Boolean get() = RustPsiImplUtil.isPublicNonStubbed(this)
 
     override val isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
+
+    override val isUnsafe: Boolean get() = this.stub?.isUnsafe ?: (unsafe != null)
 
     override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
 
