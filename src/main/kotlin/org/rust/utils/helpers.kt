@@ -24,3 +24,5 @@ interface ListBuilder<in T> {
     fun add(item: T)
     fun addAll(items: List<T>)
 }
+
+fun makeBitMask(bitToSet: Int): Int = 1 shl bitToSet

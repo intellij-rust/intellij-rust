@@ -263,7 +263,7 @@ Lifetime ::= QUOTE_IDENTIFIER {
 // Parameters
 fake ValueParameter ::= Pat? TypeReference? {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsValueParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

@@ -15,6 +15,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
+import org.rust.utils.makeBitMask
 
 
 class RsFileStub : PsiFileStubImpl<RsFile> {
@@ -30,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 94
+        override fun getStubVersion(): Int = 98
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -47,13 +48,17 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
         override fun getExternalId(): String = "Rust.file"
 
 //        Uncomment to find out what causes switch to the AST
-
-//        private val PARESED = ContainerUtil.newConcurrentSet<String>()
-//        override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode? {
+//
+//        private val PARESED = com.intellij.util.containers.ContainerUtil.newConcurrentSet<String>()
+//        override fun doParseContents(chameleon: ASTNode, psi: com.intellij.psi.PsiElement): ASTNode? {
 //            val path = psi.containingFile?.virtualFile?.path
 //            if (path != null && PARESED.add(path)) {
-//                println("Parsing (${PARESED.size}) ${path}")
-//                //Exception().printStackTrace(System.out)
+//                println("Parsing (${PARESED.size}) $path")
+//                val trace = java.io.StringWriter().also { writer ->
+//                    Exception().printStackTrace(java.io.PrintWriter(writer))
+//                    writer.toString()
+//                }
+//                println(trace)
 //                println()
 //            }
 //            return super.doParseContents(chameleon, psi)
@@ -101,14 +106,14 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "ARRAY_TYPE" -> RsArrayTypeStub.Type
     "REF_LIKE_TYPE" -> RsRefLikeTypeStub.Type
-    "FN_POINTER_TYPE" -> RsPlaceholderStub.Type("BARE_FN_TYPE", ::RsFnPointerTypeImpl)
+    "FN_POINTER_TYPE" -> RsPlaceholderStub.Type("FN_POINTER_TYPE", ::RsFnPointerTypeImpl)
     "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
     "BASE_TYPE" -> RsBaseTypeStub.Type
     "FOR_IN_TYPE" -> RsPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
     "IMPL_TRAIT_TYPE" -> RsPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
 
     "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
-    "VALUE_PARAMETER" -> RsPlaceholderStub.Type("VALUE_PARAMETER", ::RsValueParameterImpl)
+    "VALUE_PARAMETER" -> RsValueParameterStub.Type
     "SELF_PARAMETER" -> RsSelfParameterStub.Type
     "TYPE_PARAMETER" -> RsTypeParameterStub.Type
     "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
@@ -436,9 +441,11 @@ class RsFunctionStub(
     override val isPublic: Boolean get() = BitUtil.isSet(flags, PUBLIC_MASK)
     val isAbstract: Boolean get() = BitUtil.isSet(flags, ABSTRACT_MASK)
     val isTest: Boolean get() = BitUtil.isSet(flags, TEST_MASK)
+    val isCfg: Boolean get() = BitUtil.isSet(flags, CFG_MASK)
     val isConst: Boolean get() = BitUtil.isSet(flags, CONST_MASK)
     val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
     val isExtern: Boolean get() = BitUtil.isSet(flags, EXTERN_MASK)
+    val isVariadic: Boolean get() = BitUtil.isSet(flags, VARIADIC_MASK)
 
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
@@ -464,9 +471,11 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, PUBLIC_MASK, psi.isPublic)
             flags = BitUtil.set(flags, ABSTRACT_MASK, psi.isAbstract)
             flags = BitUtil.set(flags, TEST_MASK, psi.isTest)
+            flags = BitUtil.set(flags, CFG_MASK, psi.queryAttributes.hasCfgAttr())
             flags = BitUtil.set(flags, CONST_MASK, psi.isConst)
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
             flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
+            flags = BitUtil.set(flags, VARIADIC_MASK, psi.isExtern)
             return RsFunctionStub(parentStub, this,
                 name = psi.name,
                 abiName = psi.abiName,
@@ -478,12 +487,14 @@ class RsFunctionStub(
     }
 
     companion object {
-        private const val PUBLIC_MASK: Int = 0x00000001
-        private const val ABSTRACT_MASK: Int = 0x00000002
-        private const val TEST_MASK: Int = 0x00000004
-        private const val CONST_MASK: Int = 0x00000008
-        private const val UNSAFE_MASK: Int = 0x00000010
-        private const val EXTERN_MASK: Int = 0x00000020
+        private val PUBLIC_MASK: Int = makeBitMask(0)
+        private val ABSTRACT_MASK: Int = makeBitMask(1)
+        private val TEST_MASK: Int = makeBitMask(2)
+        private val CFG_MASK: Int = makeBitMask(3)
+        private val CONST_MASK: Int = makeBitMask(4)
+        private val UNSAFE_MASK: Int = makeBitMask(5)
+        private val EXTERN_MASK: Int = makeBitMask(6)
+        private val VARIADIC_MASK: Int = makeBitMask(7)
     }
 }
 
@@ -705,6 +716,38 @@ class RsTypeParameterStub(
             RsTypeParameterStub(parentStub, this, psi.name)
 
         override fun indexStub(stub: RsTypeParameterStub, sink: IndexSink) {
+            // NOP
+        }
+    }
+}
+
+
+class RsValueParameterStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val patText: String?,
+    val typeReferenceText: String?
+) : StubBase<RsValueParameter>(parent, elementType) {
+
+    object Type : RsStubElementType<RsValueParameterStub, RsValueParameter>("VALUE_PARAMETER") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsValueParameterStub(parentStub, this,
+                dataStream.readNameAsString(),
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RsValueParameterStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                dataStream.writeName(stub.patText)
+                dataStream.writeName(stub.typeReferenceText)
+            }
+
+        override fun createPsi(stub: RsValueParameterStub): RsValueParameter =
+            RsValueParameterImpl(stub, this)
+
+        override fun createStub(psi: RsValueParameter, parentStub: StubElement<*>?) =
+            RsValueParameterStub(parentStub, this, psi.patText, psi.typeReferenceText)
+
+        override fun indexStub(stub: RsValueParameterStub, sink: IndexSink) {
             // NOP
         }
     }
