@@ -7,8 +7,9 @@ package org.rust.ide.annotator
 
 class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
-    fun testNoMarker() = doTestByText("""
-        trait Foo {}
+    fun `test no impls`() = doTestByText("""
+        // ideally don't want a marker here, but that's costly!
+        trait Foo {} // - Has implementations
     """)
 
     fun testOneImpl() = doTestByText("""
@@ -29,12 +30,6 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
             struct Baz {}  // - Has implementations
             impl Foo for Baz {}
         }
-    """)
-
-    fun testTraitBoundsAndObjects() = doTestByText("""
-        trait Foo {}
-        fn bar<T: Foo>(x: T) {}     // Doesn't count
-        fn baz(x: &Foo) {}          // Doesn't count
     """)
 
     fun testIconPosition() = doTestByText("""

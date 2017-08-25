@@ -5,9 +5,11 @@
 
 package org.rust.ide.utils
 
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.selfParameter
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.type
 
@@ -35,8 +37,14 @@ class CallInfo private constructor(
 
     private constructor(fn: RsFunction) : this(
         fn.name,
-        fn.selfParameter?.text,
-        fn.valueParameters.map { Parameter(it.pat?.text ?: "_", it.typeReference?.text ?: "?") }
+        fn.selfParameter?.let { self ->
+            buildString {
+                if (self.isRef) append("&")
+                if (self.mutability.isMut) append("mut ")
+                append("self")
+            }
+        },
+        fn.valueParameters.map { Parameter(it.patText ?: "_", it.typeReferenceText ?: "?") }
     )
 
     private constructor(fn: TyFunction) : this(

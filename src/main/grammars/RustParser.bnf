@@ -239,18 +239,6 @@ private Item_recover ::= !('}' | Item_first )
 
 private Items ::= Item_with_recover*
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Lifetimes
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-LifetimeDecl ::= QUOTE_IDENTIFIER {
-  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
-  mixin = "org.rust.lang.core.psi.ext.RsLifetimeDeclImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RsLifetimeDeclStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
 Lifetime ::= QUOTE_IDENTIFIER {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsLifetimeImplMixin"
@@ -263,7 +251,7 @@ Lifetime ::= QUOTE_IDENTIFIER {
 // Parameters
 fake ValueParameter ::= Pat? TypeReference? {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsValueParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -312,9 +300,11 @@ TypeParameterList ::= '<' <<list_element (LifetimeParameter | TypeParameter)>>* 
 
 private LifetimesParams ::= <<list_element LifetimeParameter>>*
 
-LifetimeParameter ::= OuterAttr* LifetimeDecl LifetimeParamBounds? {
+LifetimeParameter ::= OuterAttr* QUOTE_IDENTIFIER LifetimeParamBounds? {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsLifetimeParameterImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsLifetimeParameterStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)*

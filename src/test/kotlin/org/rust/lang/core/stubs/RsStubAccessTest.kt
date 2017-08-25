@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -69,7 +68,7 @@ class RsStubAccessTest : RsTestBase() {
             LoggedErrorProcessor.restoreDefaultProcessor()
         }
 
-        (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, testRootDisposable)
+        checkAstNotLoaded(VirtualFileFilter.NONE)
 
         for ((element, stubParent) in parentsByStub) {
             element.node // force AST loading
@@ -80,7 +79,7 @@ class RsStubAccessTest : RsTestBase() {
     }
 
     private inline fun <reified T : PsiElement> processStubsWithoutAstAccess(block: (T) -> Unit) {
-        (psiManager as PsiManagerImpl).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, testRootDisposable)
+        checkAstNotLoaded(VirtualFileFilter.ALL)
 
         val work = ArrayDeque<StubElement<*>>()
 

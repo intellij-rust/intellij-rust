@@ -269,7 +269,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             is RsMethodCall -> parent.expectedParamsCount()
             else -> null
         } ?: return
-
         val realCount = args.exprList.size
         if (variadic && realCount < expectedCount) {
             holder.createErrorAnnotation(args,
@@ -425,10 +424,9 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
             val owner = el.owner
             if (owner.isTraitImpl) return null
             val count = el.valueParameterList?.valueParameterList?.size ?: return null
-            val variadic = el.valueParameterList?.dotdotdot != null
             // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
             val s = if (path.coloncolon != null && el.selfParameter != null) 1 else 0
-            Pair(count + s, variadic)
+            Pair(count + s, el.isVariadic)
         }
         else -> null
     }
@@ -437,8 +435,7 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
 private fun RsMethodCall.expectedParamsCount(): Pair<Int, Boolean>? {
     val fn = reference.resolve() as? RsFunction ?: return null
     if (fn.queryAttributes.hasCfgAttr()) return null
-    val variadic = fn.valueParameterList?.dotdotdot != null
-    return fn.valueParameterList?.valueParameterList?.size?.let { Pair(it, variadic) }
+    return fn.valueParameterList?.valueParameterList?.size?.let { Pair(it, fn.isVariadic) }
         .takeIf { fn.owner.isInherentImpl }
 }
 

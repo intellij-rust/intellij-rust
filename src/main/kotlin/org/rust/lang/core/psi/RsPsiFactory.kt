@@ -23,7 +23,7 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create identifier: `$text`")
 
     fun createQuoteIdentifier(text: String): PsiElement =
-        createFromText<RsLifetimeDecl>("fn foo<$text>(_: &$text u8) {}")?.quoteIdentifier
+        createFromText<RsLifetimeParameter>("fn foo<$text>(_: &$text u8) {}")?.quoteIdentifier
             ?: error("Failed to create quote identifier: `$text`")
 
     fun createExpression(text: String): RsExpr =
@@ -133,7 +133,7 @@ class RsPsiFactory(private val project: Project) {
         val typeArgumentListText = if (typeParameterList == null) {
             ""
         } else {
-            val parameterNames = typeParameterList.lifetimeParameterList.map { it.lifetimeDecl.text } +
+            val parameterNames = typeParameterList.lifetimeParameterList.map { it.quoteIdentifier.text } +
                 typeParameterList.typeParameterList.map { it.name }
             parameterNames.joinToString(", ", "<", ">")
         }

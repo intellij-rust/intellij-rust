@@ -274,9 +274,7 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
             is RsPolybound -> scope.forLifetimes?.lifetimeParameterList
             else -> continue@loop
         }
-        for (l in lifetimeParameters.orEmpty()) {
-            if (processor(l.lifetimeDecl)) return true
-        }
+        if (processAll(lifetimeParameters.orEmpty(), processor)) return true
     }
     return false
 }

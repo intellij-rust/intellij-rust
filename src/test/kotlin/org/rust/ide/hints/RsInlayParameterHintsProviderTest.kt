@@ -5,9 +5,11 @@
 
 package org.rust.ide.hints
 
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.PsiElement
 import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
+import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsLambdaExpr
@@ -177,6 +179,27 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
                //^
         }
     """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
+
+    fun `test don't touch ast`() {
+        fileTreeFromText("""
+        //- main.rs
+            mod foo;
+            use foo::Foo;
+
+            fn main() {
+                Foo.bar(92)
+            }     //^
+        //- foo.rs
+            struct Foo;
+            impl Foo { fn bar(&self, x: i32) {} }
+        """).createAndOpenFileWithCaretMarker()
+
+        val handler = RsInlayParameterHintsProvider()
+        val target = findElementInEditor<RsMethodCall>("^")
+        checkAstNotLoaded(VirtualFileFilter.ALL)
+        val inlays = handler.getParameterHints(target)
+        check(inlays.size == 1)
+    }
 
     inline private fun <reified T : PsiElement> checkNoHint(@Language("Rust") code: String) {
         InlineFile(code)

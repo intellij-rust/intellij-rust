@@ -45,7 +45,7 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
         if (declaration !is RsGenericDeclaration) return
         val nArguments = actualArguments?.typeReferenceList?.size ?: 0
 
-        val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.eq == null }?.size ?: 0
+        val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.typeReference == null }?.size ?: 0
         val expectedTotalParams = declaration.typeParameterList?.typeParameterList?.size ?: 0
 
         val data = when(o) {

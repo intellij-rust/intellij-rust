@@ -6,10 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.NavigatablePsiElement
-import org.rust.lang.core.psi.RsAttr
-import org.rust.lang.core.psi.RsInnerAttr
-import org.rust.lang.core.psi.RsMetaItem
-import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.psi.*
 
 interface RsDocAndAttributeOwner : RsCompositeElement, NavigatablePsiElement
 
@@ -51,26 +48,29 @@ fun RsOuterAttributeOwner.findOuterAttr(name: String): RsOuterAttr? =
     outerAttrList.find { it.metaItem.referenceName == name }
 
 /**
- * Get sequence of all item's inner and outer attributes.
- * Inner attributes take precedence, so they must go first.
- */
-val RsDocAndAttributeOwner.allAttributes: Sequence<RsAttr>
-    get() = Sequence { (this as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
-        Sequence { (this as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
-
-/**
  * Returns [QueryAttributes] for given PSI element.
  */
 val RsDocAndAttributeOwner.queryAttributes: QueryAttributes
-    get() = QueryAttributes(allAttributes)
+    get() = QueryAttributes(this)
 
 /**
  * Allows for easy querying [RsDocAndAttributeOwner] for specific attributes.
  *
  * **Do not instantiate directly**, use [RsDocAndAttributeOwner.queryAttributes] instead.
  */
-class QueryAttributes(private val attributes: Sequence<RsAttr>) {
-    fun hasCfgAttr(): Boolean = hasAttribute("cfg")
+class QueryAttributes(
+    private val psi: RsDocAndAttributeOwner
+) {
+    private val attributes: Sequence<RsAttr> = Sequence { (psi as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
+        Sequence { (psi as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
+
+    fun hasCfgAttr(): Boolean {
+        if (psi is RsFunction) {
+            val stub = psi.stub
+            if (stub != null) return stub.isCfg
+        }
+        return hasAttribute("cfg")
+    }
 
     fun hasAttribute(attributeName: String) = metaItems.any { it.referenceName == attributeName }
 
@@ -96,7 +96,7 @@ class QueryAttributes(private val attributes: Sequence<RsAttr>) {
 
     val deriveAttribute: RsMetaItem?
         get() = attrByName("derive")
-        
+
     fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
 
     val metaItems: Sequence<RsMetaItem>
