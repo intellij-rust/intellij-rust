@@ -10,6 +10,7 @@ import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.util.BitUtil
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
@@ -29,18 +30,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     private fun PsiBuilder.withFlag(flag: Int, mode: BinaryMode, block: PsiBuilder.() -> Boolean): Boolean {
         val oldFlags = flags
-        val newFlags = when (mode) {
-            BinaryMode.ON -> oldFlags or flag
-            BinaryMode.OFF -> oldFlags and flag.inv()
-        }
+        val newFlags = BitUtil.set(oldFlags, flag, mode == BinaryMode.ON)
         flags = newFlags
         val result = block()
         flags = oldFlags
         return result
     }
 
-
-    private fun isFlagSet(flags: Int, flag: Int) = flags and flag != 0
 
     private val STRUCT_ALLOWED: Int = makeBitMask(1)
     private val TYPE_QUAL_ALLOWED: Int = makeBitMask(2)
@@ -59,9 +55,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
     }
 
     private fun getPathMod(flags: Int): PathParsingMode = when {
-        isFlagSet(flags, PATH_COLONS) -> PathParsingMode.COLONS
-        isFlagSet(flags, PATH_NO_COLONS) -> PathParsingMode.NO_COLONS
-        isFlagSet(flags, PATH_NO_TYPES) -> PathParsingMode.NO_TYPES
+        BitUtil.isSet(flags, PATH_COLONS) -> PathParsingMode.COLONS
+        BitUtil.isSet(flags, PATH_NO_COLONS) -> PathParsingMode.NO_COLONS
+        BitUtil.isSet(flags, PATH_NO_TYPES) -> PathParsingMode.NO_TYPES
         else -> error("Path parsing mode not set")
     }
 
@@ -76,10 +72,10 @@ object RustParserUtil : GeneratedParserUtilBase() {
     //
 
     @JvmStatic
-    fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = isFlagSet(b.flags, STRUCT_ALLOWED)
+    fun checkStructAllowed(b: PsiBuilder, level: Int): Boolean = BitUtil.isSet(b.flags, STRUCT_ALLOWED)
 
     @JvmStatic
-    fun checkTypeQualAllowed(b: PsiBuilder, level: Int): Boolean = isFlagSet(b.flags, TYPE_QUAL_ALLOWED)
+    fun checkTypeQualAllowed(b: PsiBuilder, level: Int): Boolean = BitUtil.isSet(b.flags, TYPE_QUAL_ALLOWED)
 
     @JvmStatic
     fun checkBraceAllowed(b: PsiBuilder, level: Int): Boolean =
@@ -115,7 +111,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     @JvmStatic
     fun isCompleteBlockExpr(b: PsiBuilder, level: Int): Boolean =
-        isBlock(b, level) && isFlagSet(b.flags, STMT_EXPR_MODE)
+        isBlock(b, level) && BitUtil.isSet(b.flags, STMT_EXPR_MODE)
 
     @JvmStatic
     fun isBlock(b: PsiBuilder, level: Int): Boolean {
