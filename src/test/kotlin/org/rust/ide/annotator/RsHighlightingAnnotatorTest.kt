@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.rust.fileTreeFromText
 
 class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
@@ -40,6 +39,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
             fn <info>foo</info>() {}
         }
     """)
+
     private val `$` = '$'
 
     fun testMacro() = checkInfo("""
@@ -116,7 +116,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testDontTouchAstInOtherFiles() {
+    fun testDontTouchAstInOtherFiles() = checkDontTouchAstInOtherFiles(
         fileTreeFromText("""
         //- main.rs
             mod aux;
@@ -127,12 +127,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
 
         //- aux.rs
             pub struct S;
-        """).create()
-        myFixture.configureFromTempProjectFile("main.rs")
-
-        (myFixture as CodeInsightTestFixtureImpl) // meh
-            .setVirtualFileFilter { !it.path.endsWith("main.rs") }
-
-        myFixture.testHighlighting(false, true, false)
-    }
+        """),
+        checkInfo = true
+    )
 }

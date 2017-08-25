@@ -15,6 +15,7 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_CO
 import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.utils.makeBitMask
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
@@ -41,14 +42,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     private fun isFlagSet(flags: Int, flag: Int) = flags and flag != 0
 
-    private fun mkFlag(flag: Int) = 1 shl flag
-    private val STRUCT_ALLOWED: Int = mkFlag(1)
-    private val TYPE_QUAL_ALLOWED: Int = mkFlag(2)
-    private val STMT_EXPR_MODE: Int = mkFlag(3)
+    private val STRUCT_ALLOWED: Int = makeBitMask(1)
+    private val TYPE_QUAL_ALLOWED: Int = makeBitMask(2)
+    private val STMT_EXPR_MODE: Int = makeBitMask(3)
 
-    private val PATH_COLONS: Int = mkFlag(4)
-    private val PATH_NO_COLONS: Int = mkFlag(5)
-    private val PATH_NO_TYPES: Int = mkFlag(6)
+    private val PATH_COLONS: Int = makeBitMask(4)
+    private val PATH_NO_COLONS: Int = makeBitMask(5)
+    private val PATH_NO_TYPES: Int = makeBitMask(6)
     private fun setPathMod(flags: Int, mode: PathParsingMode): Int {
         val flag = when (mode) {
             PathParsingMode.COLONS -> PATH_COLONS

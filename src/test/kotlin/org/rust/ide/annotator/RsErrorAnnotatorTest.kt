@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.rust.fileTreeFromText
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
@@ -707,4 +708,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             self::foo()
         }
     """)
+
+    fun `test don't touch AST in other files`() = checkDontTouchAstInOtherFiles(
+        fileTreeFromText("""
+        //- main.rs
+            mod m;
+            use m::*;
+
+            fn main() {
+                foo(1, 2, 3);
+                bar<error>(92)</error>;
+            }  //^
+        //- m.rs
+            extern "C" {
+                fn foo(x: i32, ...);
+            }
+            fn bar() {}
+        """)
+    )
 }
