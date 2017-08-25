@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 98
+        override fun getStubVersion(): Int = 99
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -92,7 +92,6 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TUPLE_FIELDS" -> RsPlaceholderStub.Type("TUPLE_FIELDS", ::RsTupleFieldsImpl)
     "TUPLE_FIELD_DECL" -> RsPlaceholderStub.Type("TUPLE_FIELD_DECL", ::RsTupleFieldDeclImpl)
     "FIELD_DECL" -> RsFieldDeclStub.Type
-    "LIFETIME_DECL" -> RsLifetimeDeclStub.Type
     "ALIAS" -> RsAliasStub.Type
 
     "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
@@ -115,8 +114,9 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
     "VALUE_PARAMETER" -> RsValueParameterStub.Type
     "SELF_PARAMETER" -> RsSelfParameterStub.Type
-    "TYPE_PARAMETER" -> RsTypeParameterStub.Type
     "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
+    "TYPE_PARAMETER" -> RsTypeParameterStub.Type
+    "LIFETIME_PARAMETER" -> RsLifetimeParameterStub.Type
     "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
 
     "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
@@ -880,30 +880,30 @@ class RsArrayTypeStub(
     }
 }
 
-class RsLifetimeDeclStub(
+class RsLifetimeParameterStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?
-) : StubBase<RsLifetimeDecl>(parent, elementType),
+) : StubBase<RsLifetimeParameter>(parent, elementType),
     RsNamedStub {
 
-    object Type : RsStubElementType<RsLifetimeDeclStub, RsLifetimeDecl>("LIFETIME_DECL") {
-        override fun createPsi(stub: RsLifetimeDeclStub) =
-            RsLifetimeDeclImpl(stub, this)
+    object Type : RsStubElementType<RsLifetimeParameterStub, RsLifetimeParameter>("LIFETIME_PARAMETER") {
+        override fun createPsi(stub: RsLifetimeParameterStub) =
+            RsLifetimeParameterImpl(stub, this)
 
-        override fun createStub(psi: RsLifetimeDecl, parentStub: StubElement<*>?) =
-            RsLifetimeDeclStub(parentStub, this, psi.name)
+        override fun createStub(psi: RsLifetimeParameter, parentStub: StubElement<*>?) =
+            RsLifetimeParameterStub(parentStub, this, psi.name)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsLifetimeDeclStub(parentStub, this,
+            RsLifetimeParameterStub(parentStub, this,
                 dataStream.readNameAsString()
             )
 
-        override fun serialize(stub: RsLifetimeDeclStub, dataStream: StubOutputStream) =
+        override fun serialize(stub: RsLifetimeParameterStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
             }
 
-        override fun indexStub(stub: RsLifetimeDeclStub, sink: IndexSink) {
+        override fun indexStub(stub: RsLifetimeParameterStub, sink: IndexSink) {
         }
     }
 }

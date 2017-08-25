@@ -244,7 +244,7 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
         is RsValueParameterList -> (listOfNotNull(selfParameter) + valueParameterList + listOfNotNull(dotdotdot))
             .joinTo(buffer, ", ", "(", ")") { generateDocumentation(it) }
         is RsLifetimeParameter -> {
-            lifetimeDecl.generateDocumentation(buffer)
+            buffer += quoteIdentifier.text.escaped
             lifetimeParamBounds?.generateDocumentation(buffer)
         }
         is RsTypeParameter -> {

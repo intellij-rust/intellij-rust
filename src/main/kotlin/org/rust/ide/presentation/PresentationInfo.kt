@@ -52,7 +52,7 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
         is RsConstant -> Pair("constant", createDeclarationInfo(this, identifier, false, listOf(expr, typeReference), eq))
         is RsSelfParameter -> Pair("parameter", createDeclarationInfo(this, self, false, listOf(typeReference)))
         is RsTypeParameter -> Pair("type parameter", createDeclarationInfo(this, identifier, true))
-        is RsLifetimeDecl -> Pair("lifetime", createDeclarationInfo(this, quoteIdentifier, true))
+        is RsLifetimeParameter -> Pair("lifetime", createDeclarationInfo(this, quoteIdentifier, true))
         is RsModItem -> Pair("module", createDeclarationInfo(this, identifier, false))
         is RsLabelDecl -> {
             val p = parent
