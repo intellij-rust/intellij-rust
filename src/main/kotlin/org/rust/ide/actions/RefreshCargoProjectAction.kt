@@ -30,7 +30,7 @@ class RefreshCargoProjectAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val toolchain = project.toolchain ?: return
-        val modules = project.modulesWithCargoProject.orEmpty()
+        val modules = project.modulesWithCargoProject
         if (modules.isEmpty()) return
 
         ApplicationManager.getApplication().saveAll()

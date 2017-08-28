@@ -8,6 +8,7 @@ package org.rust.cargo.project.workspace.impl
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.PathUtil
 import org.rust.cargo.toolchain.RustToolchain
 
@@ -33,7 +34,7 @@ class CargoTomlWatcher(
 
     override fun after(events: List<VFileEvent>) {
         fun isInterestingEvent(event: VFileEvent): Boolean {
-            if (event.path.endsWith(RustToolchain.CARGO_TOML)) return true
+            if (isCargoTomlChange(event)) return true
             if (event.path.endsWith(RustToolchain.CARGO_LOCK)) return true
             if (event is VFileContentChangeEvent || PathUtil.getFileExtension(event.path) != "rs") return false
 
@@ -43,6 +44,13 @@ class CargoTomlWatcher(
 
         if (events.any(::isInterestingEvent)) {
             onCargoTomlChange()
+        }
+    }
+
+    companion object {
+        fun isCargoTomlChange(vFileEvent: VFileEvent): Boolean {
+            return vFileEvent.path.endsWith(RustToolchain.CARGO_TOML) ||
+                vFileEvent is VFilePropertyChangeEvent && vFileEvent.oldPath.endsWith(RustToolchain.CARGO_TOML)
         }
     }
 }

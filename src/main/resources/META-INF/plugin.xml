@@ -526,6 +526,11 @@
         <moduleService serviceInterface="org.rust.cargo.project.workspace.CargoProjectWorkspaceService"
                        serviceImplementation="org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl"/>
 
+        <toolWindow id="Cargo"
+                    anchor="right"
+                    factoryClass="org.rust.cargo.project.CargoToolWindowFactory"
+                    icon="/icons/rust.png"/>
+
         <additionalLibraryRootsProvider
             implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
         <roots.watchedRootsProvider implementation="org.rust.cargo.project.workspace.RsWatchedRootsProvider"/>
@@ -626,6 +631,11 @@
                 class="org.rust.cargo.runconfig.command.RunClippyAction"
                 text="Run Clippy"/>
 
+        <group id="Rust.Cargo">
+            <reference id="Rust.RefreshCargoProject"/>
+            <reference id="Rust.CargoCommand"/>
+            <reference id="Rust.RunClippy"/>
+        </group>
     </actions>
 
 </idea-plugin>
