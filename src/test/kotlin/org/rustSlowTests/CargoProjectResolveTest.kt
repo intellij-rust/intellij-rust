@@ -24,11 +24,9 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
         dir("src") {
             rust("main.rs", """
-                extern crate rand;
-
-                fn main() {
-                    let _ = rand::XorShiftRng { x: 0, y: 0, z: 0, w: 0 };
-                }                     //^
+                extern crate libc;
+                use libc::int8_t;
+                           //^
             """)
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")
@@ -41,18 +39,14 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             authors = []
 
             [dependencies]
-            rand = "=0.3.14"
-    """)
+            libc = "=0.2.30"
+        """)
 
         dir("src") {
             rust("main.rs", """
-                extern crate rand;
-
-                use rand::distributions;
-
-                fn main() {
-                    let _ = distributions::normal::Normal::new(0.0, 1.0);
-                }                         //^
+                extern crate libc;
+                use libc::int8_t;
+                          //^
             """)
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")

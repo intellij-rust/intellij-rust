@@ -215,7 +215,7 @@ private class PackageImpl(
     }
 
     override fun toString()
-        = "Package(contentRootUrl='$contentRootUrl', name='$name')"
+        = "Package(name='$name', contentRootUrl='$contentRootUrl')"
 }
 
 
@@ -243,5 +243,5 @@ private class TargetImpl(
     override val pkg: CargoWorkspace.Package get() = myPackage
 
     override fun toString(): String
-        = "Target(crateRootUrl='$crateRootUrl', name='$name', kind=$kind)"
+        = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }
