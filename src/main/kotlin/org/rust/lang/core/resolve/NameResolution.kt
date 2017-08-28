@@ -158,16 +158,29 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 
 fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val pkg = crate.containingCargoPackage ?: return false
+
+    val visitedDeps = mutableSetOf<String>()
     fun processPackage(pkg: CargoWorkspace.Package): Boolean {
         if (isCompletion && pkg.origin != PackageOrigin.DEPENDENCY) return false
         val libTarget = pkg.libTarget ?: return false
+
+        if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
+        visitedDeps += pkg.name
         return processor.lazy(libTarget.normName) {
             crate.project.getPsiFor(libTarget.crateRoot)?.rustMod
         }
     }
 
     if (processPackage(pkg)) return true
-    for (p in pkg.dependencies) {
+    val explicitDepsFirst = pkg.dependencies.sortedBy {
+        when (it.origin) {
+            PackageOrigin.WORKSPACE -> 0
+            PackageOrigin.DEPENDENCY -> 1
+            PackageOrigin.STDLIB -> 2
+            PackageOrigin.TRANSITIVE_DEPENDENCY -> 3
+        }
+    }
+    for (p in explicitDepsFirst) {
         if (processPackage(p)) return true
     }
     return false
@@ -431,7 +444,7 @@ private fun processAssociatedFunctionsAndMethodsDeclarations(lookup: ImplLookup,
 }
 
 private fun processFnsWithInherentPriority(fns: Collection<BoundElement<RsFunction>>, processor: RsResolveProcessor): Boolean {
-    val (inherent, nonInherent) = fns.partition {  it.element.owner.isInherentImpl }
+    val (inherent, nonInherent) = fns.partition { it.element.owner.isInherentImpl }
     if (processAllBound(inherent, processor)) return true
 
     val inherentNames = inherent.mapNotNull { it.element.name }.toHashSet()
