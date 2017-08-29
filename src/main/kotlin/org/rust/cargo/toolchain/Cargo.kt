@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.net.HttpConfigurable
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -112,6 +113,8 @@ class Cargo(
             .withWorkDirectory(commandLine.workingDirectory ?: projectDirectory)
             .withParameters(commandLine.command)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
+
+        ProxyHelper().withProxyIfNeeded(cmdLine);
 
         when (commandLine.backtraceMode) {
             BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
