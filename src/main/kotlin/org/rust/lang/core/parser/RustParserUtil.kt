@@ -223,7 +223,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
 
     private @JvmStatic
-    fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
+    fun     collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,
         // and when we make sure that we have desired token, we consume and collapse it.
         parts.forEachIndexed { i, tt ->
