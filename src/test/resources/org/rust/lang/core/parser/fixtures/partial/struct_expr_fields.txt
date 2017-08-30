@@ -123,7 +123,7 @@ FILE
       PsiWhiteSpace(' ')
       RsLitExprImpl(LIT_EXPR)
         PsiElement(INTEGER_LITERAL)('42')
-        PsiErrorElement:'&', '(', ';', '[', '^', '|' or '}' expected, got ','
+        PsiErrorElement:'&', '(', ';', <, '>', '[', '^', '|' or '}' expected, got ','
           <empty list>
       PsiElement(,)(',')
       PsiWhiteSpace('\n    ')

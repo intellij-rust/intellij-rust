@@ -839,7 +839,7 @@ AssignBinExpr ::= Expr BinAssignOp Expr    { rightAssociative = true }
 private BinAssignOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
 
 CompBinExpr      ::= Expr !<<isCompleteBlockExpr>> ('==' | '!=') StmtModeExprOff
-RelCompBinExpr   ::= Expr !<<isCompleteBlockExpr>> ('<' !('<' | '=') | '>' !('>' | '=') | lteq | gteq) StmtModeExprOff
+RelCompBinExpr   ::= Expr !<<isCompleteBlockExpr>> (!('<<' | '<=') '<' | !('>>' | '>=')  '>' | lteq | gteq) StmtModeExprOff
 BitShiftBinExpr  ::= Expr !<<isCompleteBlockExpr>> (ltlt | gtgt) StmtModeExprOff
 AddBinExpr       ::= Expr !<<isCompleteBlockExpr>> ('+' | '-') StmtModeExprOff
 MulBinExpr       ::= Expr !<<isCompleteBlockExpr>> ('*' | '/' | '%') StmtModeExprOff
