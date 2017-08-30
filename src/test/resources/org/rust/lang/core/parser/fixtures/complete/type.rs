@@ -27,3 +27,5 @@ fn foo<T>(xs: Vec<T>) -> impl Iterator<Item=impl FnOnce() -> T> + Clone {
 
 struct S<F>
     where F: FnMut(&mut Self, &T) -> Result<(), <Self as Encoder>::Error>;
+
+struct EmptyWhere where {}
