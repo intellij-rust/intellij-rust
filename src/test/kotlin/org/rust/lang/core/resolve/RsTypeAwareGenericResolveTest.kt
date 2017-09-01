@@ -600,4 +600,14 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             S(t).foo()
         }      //^
     """)
+
+    fun `test resolve assoc constant`() = checkByCode("""
+        trait T {
+            const C: i32;
+        }       //X
+
+        fn foo<X: T>() {
+            X::C
+        }    //^
+    """)
 }

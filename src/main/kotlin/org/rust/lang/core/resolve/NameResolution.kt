@@ -216,7 +216,11 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             // then resolving associated type to <Self as Tr>::Item, and then substituting `{Self => T}` into it
 
             for ((element, subst) in lookup.findImplsAndTraits(TyTypeParameter.named(base))) {
-                if (processAllWithSubst(element.members?.typeAliasList.orEmpty(), subst, processor)) return true
+                val members = element.members
+                if (members != null) {
+                    if (processAllWithSubst(members.typeAliasList, subst, processor)) return true
+                    if (processAllWithSubst(members.constantList, subst, processor)) return true
+                }
             }
         }
         return false
