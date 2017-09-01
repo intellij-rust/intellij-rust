@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsUseItem
-import org.rust.lang.core.psi.RustPsiImplUtil
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsUseItemStub
 
 val RsUseItem.isStarImport: Boolean get() = stub?.isStarImport ?: (mul != null) // I hate operator precedence
@@ -18,5 +18,5 @@ abstract class RsUseItemImplMixin : RsStubbedElementImpl<RsUseItemStub>, RsUseIt
     constructor (node: ASTNode) : super(node)
     constructor (stub: RsUseItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 }

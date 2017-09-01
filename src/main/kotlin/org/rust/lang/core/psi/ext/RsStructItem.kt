@@ -11,7 +11,7 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsElementTypes.UNION
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.RustPsiImplUtil
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsStructItemStub
 import javax.swing.Icon
 
@@ -38,7 +38,7 @@ abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStu
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.STRUCT)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
-    override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 }

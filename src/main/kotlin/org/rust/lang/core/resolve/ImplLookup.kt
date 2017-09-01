@@ -171,15 +171,14 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     fun derefTransitively(baseTy: Ty): Set<Ty> {
         val result = mutableSetOf<Ty>()
 
-        var ty = baseTy
-        while (true) {
+        var ty: Ty? = baseTy
+        while (ty != null) {
             if (ty in result) break
             result += ty
-            ty = if (ty is TyReference) {
-                ty.referenced
-            } else {
-                findDerefTarget(ty)
-                    ?: break
+            ty = when (ty) {
+                is TyReference -> ty.referenced
+                is TyArray -> TySlice(ty.base)
+                else -> findDerefTarget(ty)
             }
         }
 

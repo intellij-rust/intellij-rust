@@ -13,7 +13,7 @@ import org.rust.lang.core.stubs.RsVisibilityStub
  * introducing monster base classes. Can be simplified when Kotlin supports
  * default methods in interfaces with mixed Kotlin-Java hierarchies (KT-9073 ).
  */
-object RustPsiImplUtil {
+object RsPsiImplUtil {
     fun isPublic(psi: RsVisibilityOwner, stub: RsVisibilityStub?): Boolean =
         stub?.isPublic ?: isPublicNonStubbed(psi)
 

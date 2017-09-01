@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import junit.framework.AssertionFailedError
+
 class RsTypeAwareResolveTest : RsResolveTestBase() {
     fun testSelfMethodCallExpr() = checkByCode("""
         struct S;
@@ -442,8 +444,36 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
 
         fn main() {
-            let x : [i32];
-            x.foo()
+            let x: &[i32];
+            x.foo();
+             //^
+        }
+    """)
+
+    fun `test slice resolve UFCS`() = expect<AssertionFailedError> {
+        checkByCode("""
+        impl<T> [T] {
+            fn foo(&self) {}
+              //X
+        }
+
+        fn main() {
+            let x: &[i32];
+            <[i32]>::foo(x);
+                    //^
+        }
+    """)
+    }
+
+    fun `test array coercing to slice resolve`() = checkByCode("""
+        impl<T> [T] {
+            fn foo(&self) {}
+              //X
+        }
+
+        fn main() {
+            let x: [i32; 1];
+            x.foo();
              //^
         }
     """)
