@@ -111,13 +111,13 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 
     constructor(stub: RsFunctionStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublicNonStubbed(this)
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublicNonStubbed(this)
 
     override val isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
 
     override val isUnsafe: Boolean get() = this.stub?.isUnsafe ?: (unsafe != null)
 
-    override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     final override val innerAttrList: List<RsInnerAttr>
         get() = block?.innerAttrList.orEmpty()

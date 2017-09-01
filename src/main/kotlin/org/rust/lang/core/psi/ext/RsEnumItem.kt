@@ -9,7 +9,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsEnumItem
-import org.rust.lang.core.psi.RustPsiImplUtil
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsEnumItemStub
 import javax.swing.Icon
 
@@ -23,7 +23,7 @@ abstract class RsEnumItemImplMixin : RsStubbedNamedElementImpl<RsEnumItemStub>, 
     override fun getIcon(flags: Int): Icon? =
         iconWithVisibility(flags, RsIcons.ENUM)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
-    override val crateRelativePath: String? get() = RustPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 }

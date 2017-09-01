@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
-import org.rust.lang.core.psi.RustPsiImplUtil
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.resolve.ref.RsExternCrateReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsExternCrateItemStub
@@ -28,7 +28,7 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
 
     override val referenceName: String get() = name!!
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
     override fun getIcon(flags: Int) = RsIcons.CRATE
 }

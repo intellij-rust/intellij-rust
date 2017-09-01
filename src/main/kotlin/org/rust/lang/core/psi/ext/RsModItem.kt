@@ -24,13 +24,13 @@ abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.MODULE)
 
-    override val isPublic: Boolean get() = RustPsiImplUtil.isPublic(this, stub)
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
     override val `super`: RsMod get() = containingMod
 
     override val modName: String? get() = name
 
-    override val crateRelativePath: String? get() = RustPsiImplUtil.modCrateRelativePath(this)
+    override val crateRelativePath: String? get() = RsPsiImplUtil.modCrateRelativePath(this)
 
     override val ownsDirectory: Boolean = true // Any inline nested mod owns a directory
 
