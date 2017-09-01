@@ -28,13 +28,6 @@ val RsTypeElement.lifetimeElidable: Boolean get() {
     return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
 }
 
-val RsTypeBearingItemElement.type: Ty
-    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
-        val type = recursionGuard(this, Computable { inferDeclarationType(this) })
-            ?: TyUnknown
-        CachedValueProvider.Result.create(type, PsiModificationTracker.MODIFICATION_COUNT)
-    })
-
 val RsFunction.inferenceContext: RsInferenceContext
     get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
         CachedValueProvider.Result.create(inferTypesIn(this), PsiModificationTracker.MODIFICATION_COUNT)

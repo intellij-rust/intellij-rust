@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.getTypeParameter
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.findWithCache
 import java.util.*
 
@@ -28,7 +27,7 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
 
     fun findStdTy(prefixNoStd: String, name: String): Ty {
         val element = findStdItem(prefixNoStd, name) ?: return TyUnknown
-        return (element as? RsTypeBearingItemElement)?.type ?: TyUnknown
+        return (element as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown
     }
 
     fun findCoreItem(name: String): RsNamedElement? =

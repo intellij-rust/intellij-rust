@@ -146,7 +146,7 @@ private class RsFnInferenceContext(
                     //
                     // rustc treat unsuffixed integer as `usize` if it should be coerced to `*T` or fn(),
                     // e.g. for code `let a: *mut u8 = 5;` the error will be shown: 'expected *-ptr, found usize'
-                    when(expected) {
+                    when (expected) {
                         is TyInteger -> expected
                         is TyChar -> TyInteger(TyInteger.Kind.u8)
                         is TyPointer, is TyFunction -> TyInteger(TyInteger.Kind.usize)
@@ -170,7 +170,15 @@ private class RsFnInferenceContext(
 
     private fun inferPathExprType(expr: RsPathExpr): Ty {
         val (element, subst) = expr.path.reference.advancedResolve()?.downcast<RsNamedElement>() ?: return TyUnknown
-        val type = if (element is RsPatBinding) ctx.getBindingType(element) else inferDeclarationType(element)
+        val type = when (element) {
+            is RsPatBinding -> ctx.getBindingType(element)
+            is RsTypeDeclarationElement -> element.declaredType
+            is RsEnumVariant -> element.parentEnum.declaredType
+            is RsFunction -> element.typeOfValue
+            is RsConstant -> element.typeReference?.type ?: TyUnknown
+            is RsSelfParameter -> element.typeOfValue
+            else -> return TyUnknown
+        }
         val tupleFields = (element as? RsFieldsOwner)?.tupleFields
         return if (tupleFields != null) {
             // Treat tuple constructor as a function
@@ -185,8 +193,8 @@ private class RsFnInferenceContext(
         val inferredSubst = inferStructTypeArguments(expr, expected as? TyStructOrEnumBase)
         val (element, subst) = boundElement ?: return TyUnknown
         return when (element) {
-            is RsStructItem -> element.type
-            is RsEnumVariant -> element.parentEnum.type
+            is RsStructItem -> element.declaredType
+            is RsEnumVariant -> element.parentEnum.declaredType
             else -> TyUnknown
         }.substitute(subst).substitute(inferredSubst)
     }
@@ -219,7 +227,7 @@ private class RsFnInferenceContext(
         val argExprs = methodCall.valueArgumentList.exprList
         val boundElement = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
             .firstOrNull()?.downcast<RsFunction>()
-        val methodType = (boundElement?.element?.type as? TyFunction ?: unknownTyFunction(argExprs.size + 1))
+        val methodType = (boundElement?.element?.typeOfValue ?: unknownTyFunction(argExprs.size + 1))
             .substitute(boundElement?.subst ?: emptySubstitution)
             .substitute(mapOf(TyTypeParameter.self() to receiver))
         // drop first element of paramTypes because it's `self` param
@@ -539,6 +547,42 @@ private class RsFnInferenceContext(
         return subst.substituteInValues(subst) // TODO multiple times?
     }
 }
+
+private val RsSelfParameter.typeOfValue: Ty
+    get() {
+        val impl = parentOfType<RsImplItem>()
+        var Self: Ty = if (impl != null) {
+            impl.typeReference?.type ?: return TyUnknown
+        } else {
+            val trait = parentOfType<RsTraitItem>()
+                ?: return TyUnknown
+            TyTypeParameter.self(trait)
+        }
+
+        if (isRef) {
+            Self = TyReference(Self, mutability)
+        }
+
+        return Self
+    }
+
+private val RsFunction.typeOfValue: TyFunction
+    get() {
+        val paramTypes = mutableListOf<Ty>()
+
+        val self = selfParameter
+        if (self != null) {
+            paramTypes += self.typeOfValue
+        }
+
+        paramTypes += valueParameters.map { it.typeReference?.type ?: TyUnknown }
+
+        val ownerType = (owner as? RsFunctionOwner.Impl)?.impl?.typeReference?.type
+        val subst = if (ownerType != null) mapOf(TyTypeParameter.self() to ownerType) else emptyMap()
+
+        return TyFunction(paramTypes, returnType).substitute(subst)
+    }
+
 
 private val threadLocalGuard: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 

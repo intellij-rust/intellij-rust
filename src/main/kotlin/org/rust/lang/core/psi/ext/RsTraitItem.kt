@@ -17,6 +17,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.RsPsiTypeImplUtil
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyEnum
 import org.rust.lang.utils.filterIsInstanceQuery
 import org.rust.lang.utils.filterQuery
 import org.rust.lang.utils.mapQuery
@@ -87,6 +90,8 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
         val stub = stub
         return stub?.isUnsafe ?: (unsafe != null)
     }
+
+    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 }
 
 

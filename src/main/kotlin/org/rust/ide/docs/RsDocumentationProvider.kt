@@ -29,7 +29,9 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? = when (element) {
         is RsPatBinding -> generateDoc(element)
         is RsTypeParameter -> generateDoc(element)
-        is RsTypeBearingItemElement -> element.header(false) + element.signature(false)
+        is RsConstant -> element.presentationInfo?.quickDocumentationText
+        is RsMod -> element.presentationInfo?.quickDocumentationText
+        is RsItemElement -> element.header(false) + element.signature(false)
         is RsNamedElement -> element.presentationInfo?.quickDocumentationText
         else -> null
     }
@@ -75,8 +77,8 @@ private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
             when (owner) {
                 is RsFunctionOwner.Foreign, is RsFunctionOwner.Free -> listOfNotNull(presentableQualifiedModName)
                 is RsFunctionOwner.Impl ->
-                    listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText.orEmpty()
-                is RsFunctionOwner.Trait -> owner.trait.declarationText.orEmpty()
+                    listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
+                is RsFunctionOwner.Trait -> owner.trait.declarationText
             }
         }
         is RsStructOrEnumItemElement, is RsTraitItem -> listOfNotNull(presentableQualifiedModName)
@@ -122,7 +124,7 @@ private fun RsDocAndAttributeOwner.signature(usePreTag: Boolean): String {
             val name = name
             if (name != null) {
                 val buffer = StringBuilder()
-                (this as RsTypeBearingItemElement).declarationModifiers.joinTo(buffer, " ", "", " ")
+                (this as RsItemElement).declarationModifiers.joinTo(buffer, " ", "", " ")
                 buffer.b { it += name }
                 (this as RsGenericDeclaration).typeParameterList?.generateDocumentation(buffer)
                 (this as? RsTypeAlias)?.typeReference?.generateDocumentation(buffer, " = ")
@@ -158,7 +160,7 @@ private val RsTraitItem.declarationText: List<String> get() {
     return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
 }
 
-private val RsTypeBearingItemElement.declarationModifiers: List<String> get() {
+private val RsItemElement.declarationModifiers: List<String> get() {
     val modifiers = mutableListOf<String>()
     if (isPublic) {
         modifiers += "pub"
