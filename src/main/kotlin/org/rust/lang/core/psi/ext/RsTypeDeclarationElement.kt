@@ -12,6 +12,9 @@ import org.rust.lang.core.types.ty.Ty
  * Archetypal inheritors are structs an enums. Type aliases are type
  * declarations, while constants and statics are not. Notably, traits
  * are type declarations: a bare trait denotes a trait object type.
+ *
+ * Curiously, impls are also type declarations: they declare a type of
+ * Self.
  */
 interface RsTypeDeclarationElement : RsCompositeElement {
     val declaredType: Ty

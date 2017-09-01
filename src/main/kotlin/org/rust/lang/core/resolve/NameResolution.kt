@@ -203,22 +203,35 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             val s = base.`super`
             if (s != null && processor("super", s)) return true
         }
-        if (base is RsTraitOrImpl && qualifier.referenceName == "Self") {
-            if (processAll(base.associatedTypesTransitively, processor)) return true
-        }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
-            if (processAssociatedFunctionsAndMethodsDeclarations(lookup, base.declaredType, processor)) return true
-        }
-        if (base is RsTypeParameter) {
+            val impls = lookup.findImplsAndTraits(base.declaredType)
+            if (Namespace.Values in ns) {
+                val assocFunctions = impls.flatMap { it.functionsWithInherited }
+                if (processFnsWithInherentPriority(assocFunctions, processor)) return true
+            }
+
             // `impl<T: Tr> S<T> { fn foo() -> T::Item { unimplemented!() } }`
             // Here we're resolving path `T::Item`, so `base` is `T`. First we're looking to the trait bounds of `T`,
             // then resolving associated type to <Self as Tr>::Item, and then substituting `{Self => T}` into it
+            if (Namespace.Types in ns) {
+                val typeAliases = run {
+                    // TOOD: this set is needed to avoid double counting:
+                    // `associatedTypesTransitively` includes super traits,
+                    // but they are already included in `impls`. Ideally,
+                    // we should just count everything once
+                    val visited = mutableSetOf<RsTypeAlias>()
+                    impls.flatMap { (element, subst) ->
+                        element.associatedTypesTransitively.filter { visited.add(it) }
+                            .map { BoundElement(it, subst) }
+                    }
+                }
+                if (processAllBound(typeAliases, processor)) return true
+            }
 
-            for ((element, subst) in lookup.findImplsAndTraits(TyTypeParameter.named(base))) {
+            for ((element, subst) in impls) {
                 val members = element.members
-                if (members != null) {
-                    if (processAllWithSubst(members.typeAliasList, subst, processor)) return true
+                if (members != null && Namespace.Values in ns) {
                     if (processAllWithSubst(members.constantList, subst, processor)) return true
                 }
             }
@@ -369,10 +382,10 @@ fun processMacroDeclarations(scope: RsCompositeElement, processor: RsResolveProc
 }
 
 val RsFile.exportedCrateMacros: List<RsMacroDefinition>
-    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+    get() = CachedValuesManager.getCachedValue(this) {
         val macros = exportedCrateMacros(this, true)
         CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
-    })
+    }
 
 private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> {
     val macros: MutableList<RsMacroDefinition> = scope.macroDefinitionList
@@ -436,15 +449,12 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, subst: Substitution,
 
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsResolveProcessor): Boolean {
     for (ty in lookup.derefTransitively(receiver)) {
-        val methods = lookup.findMethodsAndAssocFunctions(ty).filter { !it.element.isAssocFn }
+        val methods = lookup.findImplsAndTraits(ty).flatMap {
+            it.functionsWithInherited.filter { !it.element.isAssocFn }
+        }
         if (processFnsWithInherentPriority(methods, processor)) return true
     }
     return false
-}
-
-private fun processAssociatedFunctionsAndMethodsDeclarations(lookup: ImplLookup, type: Ty, processor: RsResolveProcessor): Boolean {
-    val assocFunctions = lookup.findMethodsAndAssocFunctions(type)
-    return processFnsWithInherentPriority(assocFunctions, processor)
 }
 
 private fun processFnsWithInherentPriority(fns: Collection<BoundElement<RsFunction>>, processor: RsResolveProcessor): Boolean {

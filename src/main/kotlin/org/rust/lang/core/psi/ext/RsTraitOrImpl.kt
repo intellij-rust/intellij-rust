@@ -16,6 +16,10 @@ interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclara
     val associatedTypesTransitively: Collection<RsTypeAlias>
 }
 
+/**
+ * Functions including those which are declared in trait, but not explicitly implemented by impl.
+ * Do not confuse with inherent functions.
+ */
 val BoundElement<RsTraitOrImpl>.functionsWithInherited: List<BoundElement<RsFunction>> get() {
     val directlyImplemented = element.members?.functionList.orEmpty().map { BoundElement(it, subst) }
     val inherited = when (element) {

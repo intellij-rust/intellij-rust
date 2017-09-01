@@ -647,7 +647,8 @@ ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? ( TraitImpl | InherentI
   pin = "impl"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
-                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner" ]
+                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
+                 "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsImplItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsImplItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

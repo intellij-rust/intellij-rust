@@ -610,4 +610,14 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             X::C
         }    //^
     """)
+
+    fun `test assoc type in fn parameter`() = checkByCode("""
+        pub trait Iter {
+            type Item;
+                //X
+
+            fn scan<St, B, F>(self, initial_state: St, f: F) -> Scan<Self, St, F>
+                where Self: Sized, F: FnMut(&mut St, Self::Item) -> Option<B> { unimplemented!() }
+        }                                                 //^
+    """)
 }

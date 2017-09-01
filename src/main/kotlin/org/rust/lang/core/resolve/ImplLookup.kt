@@ -164,10 +164,6 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return subst + associated
     }
 
-    fun findMethodsAndAssocFunctions(ty: Ty): List<BoundElement<RsFunction>> {
-        return findImplsAndTraits(ty).flatMap { it.functionsWithInherited }
-    }
-
     fun derefTransitively(baseTy: Ty): Set<Ty> {
         val result = mutableSetOf<Ty>()
 

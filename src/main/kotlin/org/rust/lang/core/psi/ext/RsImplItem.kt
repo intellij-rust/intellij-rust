@@ -14,6 +14,8 @@ import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.RsPsiTypeImplUtil
+import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
@@ -48,6 +50,8 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         val traitAliases = implementedTrait?.associatedTypesTransitively ?: emptyList()
         return implAliases + traitAliases.filter { trAl -> implAliases.find { it.name == trAl.name } == null }
     }
+
+    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
     override val isUnsafe: Boolean get() = unsafe != null
 }
