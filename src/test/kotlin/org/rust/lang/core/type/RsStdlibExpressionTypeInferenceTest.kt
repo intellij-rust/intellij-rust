@@ -182,14 +182,6 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test panic!`() = testExpr("""
-        fn main() {
-            let x = panic!("Something went wrong");
-            x
-          //^ ()
-        }
-    """)
-
     fun `test print!`() = testExpr("""
         fn main() {
             let x = print!("Something went wrong");

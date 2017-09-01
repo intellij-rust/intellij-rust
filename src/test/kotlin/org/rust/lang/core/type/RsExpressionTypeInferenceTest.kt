@@ -275,9 +275,16 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ !
     """)
 
+    fun `test unreachable macro`() = testExpr("""
+        fn main() {
+            let a = unreachable!();
+            a
+        } //^ !
+    """)
+
     fun `test panic macro`() = testExpr("""
         fn main() {
-            let a = unimplemented!();
+            let a = panic!();
             a
         } //^ !
     """)

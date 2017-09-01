@@ -10,7 +10,7 @@ FILE
         <empty list>
   PsiWhiteSpace('\n    ')
   PsiElement(pub)('pub')
-  PsiErrorElement:'(', assert, assert_eq, assert_ne, const, debug, debug_assert, debug_assert_eq, debug_assert_ne, enum, eprint, eprintln, error, extern, fn, format, format_args, identifier, impl, info, log, macro_rules, mod, panic, print, println, static, struct, trace, trait, try, type, unsafe, use, vec, warn, write or writeln expected, got 'F'
+  PsiErrorElement:'(', assert, assert_eq, assert_ne, const, debug, debug_assert, debug_assert_eq, debug_assert_ne, enum, eprint, eprintln, error, extern, fn, format, format_args, identifier, impl, info, log, macro_rules, mod, panic, print, println, static, struct, trace, trait, try, type, unimplemented, unreachable, unsafe, use, vec, warn, write or writeln expected, got 'F'
     <empty list>
   PsiWhiteSpace(' ')
   PsiElement(identifier)('F')
