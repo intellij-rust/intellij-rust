@@ -460,8 +460,9 @@ private class RsFnInferenceContext(
             "print" in name || "assert" in name -> TyUnit
             name == "format" -> items.findStringTy()
             name == "format_args" -> items.findArgumentsTy()
+            name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
             expr.macroCall.formatMacroArgument != null || expr.macroCall.logMacroArgument != null -> TyUnit
-            name == "unimplemented" || name == "panic" -> TyNever
+
             else -> TyUnknown
         }
     }
