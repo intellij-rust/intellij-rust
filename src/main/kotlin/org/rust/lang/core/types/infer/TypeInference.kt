@@ -173,7 +173,7 @@ private class RsFnInferenceContext(
         val type = when (element) {
             is RsPatBinding -> ctx.getBindingType(element)
             is RsTypeDeclarationElement -> element.declaredType
-            is RsEnumVariant -> TyEnum.valueOf(element.parentEnum)
+            is RsEnumVariant -> element.parentEnum.declaredType
             is RsFunction -> element.typeOfValue
             is RsConstant -> element.typeReference?.type ?: TyUnknown
             is RsSelfParameter -> element.typeOfValue
