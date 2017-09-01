@@ -12,6 +12,8 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.stubs.RsTypeAliasStub
+import org.rust.lang.core.types.RsPsiTypeImplUtil
+import org.rust.lang.core.types.ty.Ty
 import javax.swing.Icon
 
 sealed class RsTypeAliasOwner {
@@ -54,4 +56,6 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
     override val isAbstract: Boolean get() = typeReference == null
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+
+    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 }

@@ -24,7 +24,6 @@ import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
-import org.rust.lang.core.types.type
 
 object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
@@ -38,7 +37,7 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
         val owner = parameters.position.parentOfType<RsStructOrEnumItemElement>()
             ?: return
         val alreadyDerived = ImplLookup.relativeTo(owner)
-            .findImplsAndTraits(owner.type)
+            .findImplsAndTraits(owner.declaredType)
             .mapNotNull {
                 val (trait, _) = it.element.implementedTrait ?: return@mapNotNull null
                 if (trait.isStdDerivable) trait.name else null
@@ -63,25 +62,26 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
             }
     }
 
-    val elementPattern: ElementPattern<PsiElement> get() {
+    val elementPattern: ElementPattern<PsiElement>
+        get() {
 
-        val deriveAttr = psiElement(META_ITEM)
-            .withParent(psiElement(OUTER_ATTR))
-            .with(object : PatternCondition<PsiElement>("derive") {
-                // `withFirstChild` does not handle leaf elements.
-                // See a note in [com.intellij.psi.PsiElement.getChildren]
-                override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean =
-                    t.firstChild.text == "derive"
-            })
+            val deriveAttr = psiElement(META_ITEM)
+                .withParent(psiElement(OUTER_ATTR))
+                .with(object : PatternCondition<PsiElement>("derive") {
+                    // `withFirstChild` does not handle leaf elements.
+                    // See a note in [com.intellij.psi.PsiElement.getChildren]
+                    override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean =
+                        t.firstChild.text == "derive"
+                })
 
-        val traitMetaItem = psiElement(META_ITEM)
-            .withParent(
-                psiElement(META_ITEM_ARGS)
-                    .withParent(deriveAttr)
-            )
+            val traitMetaItem = psiElement(META_ITEM)
+                .withParent(
+                    psiElement(META_ITEM_ARGS)
+                        .withParent(deriveAttr)
+                )
 
-        return psiElement()
-            .inside(traitMetaItem)
-            .withLanguage(RsLanguage)
-    }
+            return psiElement()
+                .inside(traitMetaItem)
+                .withLanguage(RsLanguage)
+        }
 }

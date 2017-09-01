@@ -13,3 +13,4 @@ package org.rust.lang.core.psi.ext
  * [org.rust.lang.core.psi.RsEnumItem], [org.rust.lang.core.psi.RsFunction], etc.
  */
 interface RsTypeBearingItemElement : RsItemElement, RsNameIdentifierOwner
+

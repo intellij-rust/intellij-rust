@@ -13,6 +13,8 @@ import org.rust.lang.core.psi.RsElementTypes.UNION
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsStructItemStub
+import org.rust.lang.core.types.RsPsiTypeImplUtil
+import org.rust.lang.core.types.ty.Ty
 import javax.swing.Icon
 
 val RsStructItem.union: PsiElement?
@@ -41,4 +43,6 @@ abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStu
     override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+
+    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 }

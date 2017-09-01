@@ -310,8 +310,9 @@ LifetimeParameter ::= OuterAttr* QUOTE_IDENTIFIER LifetimeParamBounds? {
 LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)*
 
 TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
-  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
-  extends = "org.rust.lang.core.psi.ext.RsStubbedNamedElementImpl<?>"
+  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsTypeParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -633,7 +634,8 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
-                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner" ]
+                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
+                 "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsTraitItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTraitItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -758,7 +760,8 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
-                 "org.rust.lang.core.psi.ext.RsAbstractable" ]
+                 "org.rust.lang.core.psi.ext.RsAbstractable"
+                 "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsTypeAliasImplMixin"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   stubClass = "org.rust.lang.core.stubs.RsTypeAliasStub"

@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.utils.filterIsInstanceQuery
 import org.rust.lang.utils.mapQuery
 
-interface RsStructOrEnumItemElement : RsQualifiedNamedElement, RsTypeBearingItemElement, RsGenericDeclaration
+interface RsStructOrEnumItemElement : RsQualifiedNamedElement, RsTypeBearingItemElement, RsGenericDeclaration, RsTypeDeclarationElement
 
 val RsStructOrEnumItemElement.derivedTraits: List<RsTraitItem>
     get() = queryAttributes

@@ -11,6 +11,8 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsEnumItemStub
+import org.rust.lang.core.types.RsPsiTypeImplUtil
+import org.rust.lang.core.types.ty.Ty
 import javax.swing.Icon
 
 
@@ -26,4 +28,6 @@ abstract class RsEnumItemImplMixin : RsStubbedNamedElementImpl<RsEnumItemStub>, 
     override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+
+    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 }

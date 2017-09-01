@@ -15,7 +15,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.type
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
@@ -33,7 +32,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         val aliases = members?.typeAliasList.orEmpty().mapNotNull { typeAlias ->
             trait.members?.typeAliasList.orEmpty()
                 .find { it.name == typeAlias.name }
-                ?.let { TyTypeParameter.associated(it) to typeAlias.type }
+                ?.let { TyTypeParameter.associated(it) to typeAlias.declaredType }
         }.toMap()
         return BoundElement(trait, subst + aliases)
     }

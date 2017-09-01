@@ -207,8 +207,8 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             if (processAll(base.associatedTypesTransitively, processor)) return true
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
-        if (base is RsTypeBearingItemElement && parent !is RsUseItem) {
-            if (processAssociatedFunctionsAndMethodsDeclarations(lookup, base.type, processor)) return true
+        if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
+            if (processAssociatedFunctionsAndMethodsDeclarations(lookup, base.declaredType, processor)) return true
         }
         if (base is RsTypeParameter) {
             // `impl<T: Tr> S<T> { fn foo() -> T::Item { unimplemented!() } }`
