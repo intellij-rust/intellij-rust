@@ -368,7 +368,8 @@ Function ::= OuterAttr*
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
-                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
+                 "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
@@ -633,7 +634,8 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
+                 "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsTraitItemImplMixin"
@@ -758,7 +760,8 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
               [ '=' TypeReference ] ';' {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
-                 "org.rust.lang.core.psi.ext.RsTypeBearingItemElement"
+                 "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
