@@ -170,6 +170,32 @@ class RsStructureViewTest : RsTestBase() {
          E: (i32, f64)
     """)
 
+    fun `test extern`() = doTest("""
+        extern {
+            static N: i32;
+            static NAME: &'static str;
+            pub static mut MUT_N: i64;
+            static E: (i32, f64);
+            fn something(p1: i32) -> u8;
+        }
+    """, """
+        -main.rs
+         N: i32
+         NAME: &'static str
+         MUT_N: i64
+         E: (i32, f64)
+         something(i32) -> u8
+    """)
+
+    fun `test macro`() = doTest("""
+        macro_rules! makro {
+            () => { };
+        }
+    """, """
+        -main.rs
+         makro
+    """)
+
     fun `test structs`() = doTest("""
         /// Default implementation of `ExecEngine`.
         #[derive(Clone, Copy)]
