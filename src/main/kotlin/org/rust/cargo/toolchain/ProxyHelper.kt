@@ -22,7 +22,7 @@ class ProxyHelper {
             ) {
             val login = httpSettings.proxyLogin
             val password = httpSettings.plainProxyPassword!!;
-            userInfo = if (password.isNotEmpty()) login + ":" + "password" else login;
+            userInfo = if (password.isNotEmpty()) login + ":" + password else login;
         }
         return URI("http", userInfo, httpSettings.PROXY_HOST, httpSettings.PROXY_PORT, "/", null, null);
     }
