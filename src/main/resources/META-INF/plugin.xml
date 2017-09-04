@@ -382,6 +382,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsBorrowCheckerInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Field initialization shorthand"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsFieldInitShorthandInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
