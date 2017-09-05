@@ -11,6 +11,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 
+// Keep in sync with TyFingerprint-create
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {
     val type = ref.typeElement
     return when (type) {
