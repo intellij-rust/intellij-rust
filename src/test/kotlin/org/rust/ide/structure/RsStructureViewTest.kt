@@ -5,10 +5,15 @@
 
 package org.rust.ide.structure
 
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
+import com.intellij.ui.RowIcon
 import com.intellij.util.ui.tree.TreeUtil
+import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
+import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.RsTestBase
+import org.rust.lang.core.psi.ext.RsCompositeElement
 
 class RsStructureViewTest : RsTestBase() {
     fun `test functions`() = doTest("""
@@ -232,6 +237,30 @@ class RsStructureViewTest : RsTestBase() {
         -main.rs
          A
     """)
+
+    fun `test struct private`() = doPresentationDataTest("""
+        struct Foo;
+    """, "Foo", false)
+
+    fun `test struct pub`() = doPresentationDataTest("""
+        pub struct Foo;
+    """, "Foo", true)
+
+    private inline fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
+        myFixture.configureByText("main.rs", code)
+        val psi = myFixture.file.children.mapNotNull { it as? RsCompositeElement }.first()
+        val data = getPresentationForStructure(psi)
+        TestCase.assertEquals(data.presentableText, expectedPresentableText)
+        val icon = data.getIcon(false) as? RowIcon
+        if (isPublic) {
+            TestCase.assertNotNull(icon)
+            TestCase.assertEquals(icon?.iconCount, 2);
+        } else {
+            if (icon != null) {
+                TestCase.assertEquals(icon.iconCount, 1);
+            }
+        }
+    }
 
     private fun doTest(@Language("Rust") code: String, expected: String) {
         val normExpected = expected.trimIndent() + "\n"

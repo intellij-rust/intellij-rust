@@ -8,6 +8,7 @@ package org.rust.ide.presentation
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.util.text.StringUtil
+import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type
@@ -52,7 +53,11 @@ fun getPresentationForStructure(psi: RsCompositeElement): ItemPresentation {
             }
         }
     }
-    return PresentationData(presentation, null, psi.getIcon(0), null)
+    var icon = psi.getIcon(0)
+    if ((psi as? RsVisibilityOwner)?.isPublic == true) {
+        icon = icon.addVisibilityIcon(true)
+    }
+    return PresentationData(presentation, null, icon, null)
 }
 
 private fun presentableName(psi: RsCompositeElement): String? = when (psi) {
@@ -69,12 +74,13 @@ private fun presentableName(psi: RsCompositeElement): String? = when (psi) {
     else -> null
 }
 
-val RsDocAndAttributeOwner.presentableQualifiedName: String? get() {
-    val qName = (this as? RsQualifiedNamedElement)?.qualifiedName
-    if (qName != null) return qName
-    if (this is RsMod) return modName
-    return name
-}
+val RsDocAndAttributeOwner.presentableQualifiedName: String?
+    get() {
+        val qName = (this as? RsQualifiedNamedElement)?.qualifiedName
+        if (qName != null) return qName
+        if (this is RsMod) return modName
+        return name
+    }
 
 val String.escaped: String get() = StringUtil.escapeXml(this)
 
