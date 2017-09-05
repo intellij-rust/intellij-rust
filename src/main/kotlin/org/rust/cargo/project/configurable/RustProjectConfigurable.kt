@@ -5,6 +5,7 @@
 
 package org.rust.cargo.project.configurable
 
+import com.intellij.codeInsight.hints.InlayParameterHintsExtension
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
@@ -21,7 +22,7 @@ import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
-import org.rust.ide.hints.HintType
+import org.rust.lang.RsLanguage
 import org.rust.utils.pathAsPath
 import java.nio.file.Paths
 import javax.swing.JComponent
@@ -36,10 +37,10 @@ class RustProjectConfigurable(
     private val autoUpdateEnabledCheckbox = JBCheckBox()
     private val useCargoCheckForBuildCheckbox = JBCheckBox()
     private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
-    private val letBindingHintCheckbox = JBCheckBox()
-    private val parameterHintCheckbox = JBCheckBox()
-    private val smartHintCheckbox = JBCheckBox()
-    private val lambdaParameterHintCheckbox = JBCheckBox()
+
+    private val hintCheckboxes: MutableMap<String, JBCheckBox> = mutableMapOf()
+    private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
+
     private val cargoTomlLocation = Label("N/A")
 
     private var autoUpdateEnabled: Boolean
@@ -60,30 +61,6 @@ class RustProjectConfigurable(
             useCargoCheckAnnotatorCheckbox.isSelected = value
         }
 
-    private var letBindingHint: Boolean
-        get() = letBindingHintCheckbox.isSelected
-        set(value) {
-            letBindingHintCheckbox.isSelected = value
-        }
-
-    private var parameterHint: Boolean
-        get() = parameterHintCheckbox.isSelected
-        set(value) {
-            parameterHintCheckbox.isSelected = value
-        }
-
-    private var lambdaParameterHint: Boolean
-        get() = lambdaParameterHintCheckbox.isSelected
-        set(value) {
-            lambdaParameterHintCheckbox.isSelected = value
-        }
-
-    private var smartHint: Boolean
-        get() = smartHintCheckbox.isSelected
-        set(value) {
-            smartHintCheckbox.isSelected = value
-        }
-
     override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
         row(label = Label("Watch Cargo.toml:")) { autoUpdateEnabledCheckbox() }
@@ -91,11 +68,15 @@ class RustProjectConfigurable(
             row("Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
         }
         row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
-        row(label = Label("${HintType.LET_BINDING_HINT.option.name}:")) { letBindingHintCheckbox() }
-        row(label = Label("${HintType.PARAMETER_HINT.option.name}:")) { parameterHintCheckbox() }
-        row(label = Label("${HintType.LAMBDA_PARAMETER_HINT.option.name}:")) { lambdaParameterHintCheckbox() }
-        row(label = Label("${HintType.SMART_HINTING.name}:")) { smartHintCheckbox() }
         row("Cargo.toml") { cargoTomlLocation() }
+
+        var first = true
+        for ((id, name) in hintProvider.supportedOptions) {
+            val checkbox = JBCheckBox()
+            row(label = Label("$name:"), separated = first) { checkbox() }
+            hintCheckboxes.put(id, checkbox)
+            first = false
+        }
     }
 
     override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)
@@ -111,10 +92,11 @@ class RustProjectConfigurable(
         autoUpdateEnabled = settings.autoUpdateEnabled
         useCargoCheckForBuild = settings.useCargoCheckForBuild
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
-        letBindingHint = HintType.LET_BINDING_HINT.enabled
-        parameterHint = HintType.PARAMETER_HINT.enabled
-        lambdaParameterHint = HintType.LAMBDA_PARAMETER_HINT.enabled
-        smartHint = HintType.SMART_HINTING.get()
+
+        for (option in hintProvider.supportedOptions) {
+            val checkbox = hintCheckboxes.get(option.id) ?: continue
+            checkbox.isSelected = option.get()
+        }
 
         val module = rustModule
 
@@ -138,10 +120,10 @@ class RustProjectConfigurable(
     override fun apply() {
         rustProjectSettings.validateSettings()
 
-        HintType.LET_BINDING_HINT.option.set(letBindingHint)
-        HintType.PARAMETER_HINT.option.set(parameterHint)
-        HintType.LAMBDA_PARAMETER_HINT.option.set(lambdaParameterHint)
-        HintType.SMART_HINTING.set(smartHint)
+        for (option in hintProvider.supportedOptions) {
+            val checkbox = hintCheckboxes.get(option.id) ?: continue
+            option.set(checkbox.isSelected)
+        }
 
         val settings = project.rustSettings
         settings.data = RustProjectSettingsService.Data(
@@ -156,15 +138,17 @@ class RustProjectConfigurable(
     override fun isModified(): Boolean {
         val settings = project.rustSettings
         val data = rustProjectSettings.data
+        for (option in hintProvider.supportedOptions) {
+            val checkbox = hintCheckboxes[option.id] ?: continue
+            if (checkbox.isSelected != option.get()) {
+                return true
+            }
+        }
         return data.toolchain?.location != settings.toolchain?.location
             || data.explicitPathToStdlib != settings.explicitPathToStdlib
             || autoUpdateEnabled != settings.autoUpdateEnabled
             || useCargoCheckForBuild != settings.useCargoCheckForBuild
             || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
-            || letBindingHint != HintType.LET_BINDING_HINT.enabled
-            || parameterHint != HintType.PARAMETER_HINT.enabled
-            || lambdaParameterHint != HintType.LAMBDA_PARAMETER_HINT.enabled
-            || smartHint != HintType.SMART_HINTING.get()
     }
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml

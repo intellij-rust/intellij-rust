@@ -13,21 +13,31 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.utils.buildList
+
+private val RsPat.inlayInfo: List<InlayInfo>
+    get() {
+        val idents = if (this is RsPatIdent) {
+            listOf(this)
+        } else {
+            descendantsOfType<RsPatIdent>()
+        }
+        return idents
+            .map { it.patBinding to it.patBinding.type }
+            .filterNot { it.second is TyUnknown }
+            .map { InlayInfo(": " + it.second.shortPresentableText, it.first.textRange.endOffset) }
+    }
 
 enum class HintType(desc: String, enabled: Boolean) {
     LET_BINDING_HINT("Show local variable type hints", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val element = elem as? RsLetDecl ?: return emptyList()
             if (element.typeReference != null) return emptyList()
-            val ident = element.pat as? RsPatIdent ?: return emptyList()
-            val patBinding = ident.patBinding
-            val type = patBinding.type
-            if (type is TyUnknown) return emptyList()
-            return listOf(InlayInfo(": " + type.shortPresentableText, patBinding.textRange.endOffset))
+            return element.pat?.inlayInfo ?: emptyList()
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl
@@ -88,6 +98,14 @@ enum class HintType(desc: String, enabled: Boolean) {
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsLambdaExpr
+    },
+    FOR_PARAMETER_HINT("Show type hints for for loops parameter", true) {
+        override fun provideHints(elem: PsiElement): List<InlayInfo> {
+            val element = elem as? RsForExpr ?: return emptyList()
+            return element.pat?.inlayInfo ?: emptyList()
+        }
+
+        override fun isApplicable(elem: PsiElement): Boolean = elem is RsForExpr
     };
 
     companion object {
