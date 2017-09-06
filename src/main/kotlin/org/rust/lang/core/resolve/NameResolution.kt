@@ -203,25 +203,9 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             val s = base.`super`
             if (s != null && processor("super", s)) return true
         }
-        if (base is RsTraitOrImpl && qualifier.referenceName == "Self") {
-            if (processAll(base.associatedTypesTransitively, processor)) return true
-        }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
-            if (processAssociatedFunctionsAndMethodsDeclarations(lookup, base.declaredType, processor)) return true
-        }
-        if (base is RsTypeParameter) {
-            // `impl<T: Tr> S<T> { fn foo() -> T::Item { unimplemented!() } }`
-            // Here we're resolving path `T::Item`, so `base` is `T`. First we're looking to the trait bounds of `T`,
-            // then resolving associated type to <Self as Tr>::Item, and then substituting `{Self => T}` into it
-
-            for ((element, subst) in lookup.findImplsAndTraits(TyTypeParameter.named(base))) {
-                val members = element.members
-                if (members != null) {
-                    if (processAllWithSubst(members.typeAliasList, subst, processor)) return true
-                    if (processAllWithSubst(members.constantList, subst, processor)) return true
-                }
-            }
+            if (processAssociatedItems(lookup, base.declaredType, ns, processor)) return true
         }
         return false
     }
@@ -369,10 +353,10 @@ fun processMacroDeclarations(scope: RsCompositeElement, processor: RsResolveProc
 }
 
 val RsFile.exportedCrateMacros: List<RsMacroDefinition>
-    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+    get() = CachedValuesManager.getCachedValue(this) {
         val macros = exportedCrateMacros(this, true)
         CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
-    })
+    }
 
 private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> {
     val macros: MutableList<RsMacroDefinition> = scope.macroDefinitionList
@@ -435,27 +419,56 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, subst: Substitution,
 }
 
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsResolveProcessor): Boolean {
-    for (ty in lookup.derefTransitively(receiver)) {
-        val methods = lookup.findMethodsAndAssocFunctions(ty).filter { !it.element.isAssocFn }
-        if (processFnsWithInherentPriority(methods, processor)) return true
+    val methodProcessor: (ScopeEntry) -> Boolean = { entry ->
+        val element = entry.element
+        element is RsFunction && !element.isAssocFn && processor(entry)
     }
-    return false
+    return lookup.derefTransitively(receiver).any { processAssociatedItems(lookup, it, VALUES, methodProcessor) }
 }
 
-private fun processAssociatedFunctionsAndMethodsDeclarations(lookup: ImplLookup, type: Ty, processor: RsResolveProcessor): Boolean {
-    val assocFunctions = lookup.findMethodsAndAssocFunctions(type)
-    return processFnsWithInherentPriority(assocFunctions, processor)
-}
+private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+    val visitedInherent = mutableSetOf<String>()
+    fun processTraitOrImpl(traitOrImpl: BoundElement<RsTraitOrImpl>, inherent: Boolean): Boolean {
+        fun inherentProcessor(entry: BoundElement<RsNamedElement>): Boolean {
+            val name = entry.element.name ?: return false
+            if (inherent) visitedInherent.add(name)
+            if (!inherent && name in visitedInherent) return false
+            return processor(entry)
+        }
 
-private fun processFnsWithInherentPriority(fns: Collection<BoundElement<RsFunction>>, processor: RsResolveProcessor): Boolean {
-    val (inherent, nonInherent) = fns.partition { it.element.owner.isInherentImpl }
-    if (processAllBound(inherent, processor)) return true
+        /**
+         * For `impl T for Foo`, this'll walk impl members and trait `T` members,
+         * which are not implemented.
+         */
+        fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsNamedElement>): Boolean {
+            val (element, subst) = traitOrImpl
+            val directlyImplemented = element.members?.let { accessor(it) }.orEmpty().map { BoundElement(it, subst) }
+            if (directlyImplemented.any { inherentProcessor(it) }) return true
 
-    val inherentNames = inherent.mapNotNull { it.element.name }.toHashSet()
-    for (fn in nonInherent) {
-        if (fn.element.name in inherentNames) continue
-        if (processor(fn)) return true
+            if (element is RsImplItem) {
+                val direct = directlyImplemented.map { it.element.name }.toSet()
+                val membersFromTrait = element.implementedTrait?.element?.members ?: return false
+                for (member in accessor(membersFromTrait)) {
+                    if (member.name !in direct && inherentProcessor(BoundElement(member, subst))) return true
+                }
+            }
+
+            return false
+        }
+
+        if (Namespace.Values in ns) {
+            if (processMembersWithDefaults({ it.functionList })) return true
+            if (processMembersWithDefaults({ it.constantList })) return true
+        }
+        if (Namespace.Types in ns) {
+            if (processMembersWithDefaults({ it.typeAliasList })) return true
+        }
+        return false
     }
+
+    val (traits, inherent) = lookup.findImplsAndTraits(type).partition { (it.element as? RsImplItem)?.traitRef != null }
+    if (inherent.any { processTraitOrImpl(it, true) }) return true
+    if (traits.any { processTraitOrImpl(it, false) }) return true
     return false
 }
 
@@ -818,13 +831,6 @@ private fun processAllWithSubst(
 ): Boolean {
     for (e in elements) {
         if (processor(BoundElement(e, subst))) return true
-    }
-    return false
-}
-
-private fun processAllBound(elements: Collection<BoundElement<RsNamedElement>>, processor: RsResolveProcessor): Boolean {
-    for (e in elements) {
-        if (processor(e)) return true
     }
     return false
 }

@@ -170,4 +170,25 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
                          //^
     """)
 
+    fun `test assoc namespaces 1`() = checkByCode("""
+        trait Foo {
+            type X;
+               //X
+            const X: Self::X;
+        }
+        fn foo<T: Foo>() {
+            let _: T::X = T::X;
+        }           //^
+    """)
+
+    fun `test assoc namespaces 2`() = checkByCode("""
+        trait Foo {
+            type X;
+            const X: Self::X;
+        }       //X
+        fn foo<T: Foo>() {
+            let _: T::X = T::X;
+        }                  //^
+    """)
+
 }

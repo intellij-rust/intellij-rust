@@ -610,4 +610,39 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             X::C
         }    //^
     """)
+
+    fun `test assoc type in fn parameter`() = checkByCode("""
+        pub trait Iter {
+            type Item;
+                //X
+
+            fn scan<St, B, F>(self, initial_state: St, f: F) -> Scan<Self, St, F>
+                where Self: Sized, F: FnMut(&mut St, Self::Item) -> Option<B> { unimplemented!() }
+        }                                                 //^
+    """)
+
+    fun `test direct trait methods wins over inherent via deref`() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn foo(&self) { println!("Inherent"); }
+        }
+
+        struct Bar(Foo);
+        impl ::std::ops::Deref for Bar {
+            type Target = Foo;
+            fn deref(&self) -> &Foo {
+                &self.0
+            }
+        }
+
+        trait T {
+            fn foo(&self) { println!("From a trait"); }
+        }     //X
+        impl T for Bar {}
+
+        fn main() {
+            let bar = Bar(Foo);
+            bar.foo();
+        }      //^
+    """)
 }

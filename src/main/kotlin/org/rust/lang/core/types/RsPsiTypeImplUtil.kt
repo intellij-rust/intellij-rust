@@ -26,4 +26,5 @@ object RsPsiTypeImplUtil {
             is RsTypeAliasOwner.Impl -> TyUnknown
         }
     }
+    fun declaredType(psi: RsImplItem): Ty = TyTypeParameter.self(psi)
 }

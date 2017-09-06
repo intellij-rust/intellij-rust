@@ -15,20 +15,3 @@ interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclara
 
     val associatedTypesTransitively: Collection<RsTypeAlias>
 }
-
-val BoundElement<RsTraitOrImpl>.functionsWithInherited: List<BoundElement<RsFunction>> get() {
-    val directlyImplemented = element.members?.functionList.orEmpty().map { BoundElement(it, subst) }
-    val inherited = when (element) {
-        is RsImplItem -> {
-            val trait = element.implementedTrait
-            if (trait == null) emptyList() else {
-                val direct = directlyImplemented.map { it.element.name }.toSet()
-                trait.element.members?.functionList.orEmpty()
-                    .filter { it.name !in direct }
-                    .map { BoundElement(it, subst) }
-            }
-        }
-        else -> emptyList()
-    }
-    return directlyImplemented + inherited
-}
