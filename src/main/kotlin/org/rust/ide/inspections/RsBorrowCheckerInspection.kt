@@ -10,6 +10,8 @@ import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.isMutable
+import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.type
 
 class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
@@ -17,8 +19,9 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
             override fun visitMethodCall(o: RsMethodCall) {
                 val fn = o.reference.resolve() as? RsFunction ?: return
-                if (checkMethodRequiresMutable(o, fn)) {
-                    registerProblem(holder, o.parentDotExpr.expr, o.parentDotExpr.expr)
+                val receiver = o.receiver
+                if (checkMethodRequiresMutable(receiver, fn)) {
+                    registerProblem(holder, receiver, receiver)
                 }
             }
 
@@ -35,13 +38,13 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", *fix)
     }
 
-    private fun checkMethodRequiresMutable(o: RsMethodCall, fn: RsFunction): Boolean {
-        if (!o.parentDotExpr.expr.isMutable &&
+    private fun checkMethodRequiresMutable(receiver: RsExpr, fn: RsFunction): Boolean {
+        if (!receiver.isMutable &&
             fn.selfParameter != null &&
-            fn.selfParameter?.mutability?.isMut ?: false &&
-            fn.selfParameter?.isRef ?: false) {
-            val typeRef = o.parentOfType<RsImplItem>()?.typeReference?.typeElement as? RsRefLikeType ?: return true
-            return !typeRef.mutability.isMut
+            fn.selfParameter?.mutability?.isMut == true &&
+            fn.selfParameter?.isRef == true) {
+            val type = receiver.type
+            return type !is TyReference || !type.mutability.isMut
         }
         return false
     }

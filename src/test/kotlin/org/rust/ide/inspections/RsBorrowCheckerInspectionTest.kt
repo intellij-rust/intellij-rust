@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
+class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection(), useStdLib = true) {
 
     fun `test mutable used at ref mutable method call (self)`() = checkByText("""
         struct S;
@@ -122,6 +122,16 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         }
         fn test(test: &mut S) {
             test.foo();
+        }
+    """)
+
+    //TODO: this should not show error here
+    fun `test no highlight for mutable for loops`() = checkByText("""
+        fn test() {
+            let mut xs: Vec<Vec<usize>> = vec![vec![1, 2], vec![3, 4]];
+            for test in &mut xs {
+                <error>test</error>.push(0)
+            }
         }
     """)
 
