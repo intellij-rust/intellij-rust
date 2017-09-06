@@ -11,10 +11,7 @@ import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsLambdaExpr
-import org.rust.lang.core.psi.RsLetDecl
-import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.*
 
 
 class RsInlayParameterHintsProviderTest : RsTestBase() {
@@ -63,6 +60,13 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         struct S;
         fn main() {
             let s/*caret*/ = S;
+        }  //^
+    """, ": S", 0)
+
+    fun `test let decl tuple`() = checkByText<RsLetDecl>("""
+        struct S;
+        fn main() {
+            let (s/*caret*/,c) = (S,S);
         }  //^
     """, ": S", 0)
 
@@ -179,6 +183,20 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
                //^
         }
     """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
+
+    fun `test inlay hint for loops`() =checkByText<RsForExpr>("""
+        trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
+        struct S;
+        struct I;
+        impl Iterator for I {
+            type Item = S;
+            fn next(&mut self) -> Option<S> { None }
+        }
+
+        fn main() {
+            for s/*caret*/ in I { }
+        }  //^
+    """, ": S", 0)
 
     fun `test don't touch ast`() {
         fileTreeFromText("""
