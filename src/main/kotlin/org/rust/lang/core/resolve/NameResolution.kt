@@ -205,36 +205,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
-            val impls = lookup.findImplsAndTraits(base.declaredType)
-            if (Namespace.Values in ns) {
-                val assocFunctions = impls.flatMap { it.functionsWithInherited }
-                if (processFnsWithInherentPriority(assocFunctions, processor)) return true
-            }
-
-            // `impl<T: Tr> S<T> { fn foo() -> T::Item { unimplemented!() } }`
-            // Here we're resolving path `T::Item`, so `base` is `T`. First we're looking to the trait bounds of `T`,
-            // then resolving associated type to <Self as Tr>::Item, and then substituting `{Self => T}` into it
-            if (Namespace.Types in ns) {
-                val typeAliases = run {
-                    // TOOD: this set is needed to avoid double counting:
-                    // `associatedTypesTransitively` includes super traits,
-                    // but they are already included in `impls`. Ideally,
-                    // we should just count everything once
-                    val visited = mutableSetOf<RsTypeAlias>()
-                    impls.flatMap { (element, subst) ->
-                        element.associatedTypesTransitively.filter { visited.add(it) }
-                            .map { BoundElement(it, subst) }
-                    }
-                }
-                if (processAllBound(typeAliases, processor)) return true
-            }
-
-            for ((element, subst) in impls) {
-                val members = element.members
-                if (members != null && Namespace.Values in ns) {
-                    if (processAllWithSubst(members.constantList, subst, processor)) return true
-                }
-            }
+            if (processAssociatedItems(lookup, base.declaredType, ns, processor)) return true
         }
         return false
     }
@@ -448,24 +419,56 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, subst: Substitution,
 }
 
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsResolveProcessor): Boolean {
-    for (ty in lookup.derefTransitively(receiver)) {
-        val methods = lookup.findImplsAndTraits(ty).flatMap {
-            it.functionsWithInherited.filter { !it.element.isAssocFn }
-        }
-        if (processFnsWithInherentPriority(methods, processor)) return true
+    val methodProcessor: (ScopeEntry) -> Boolean = { entry ->
+        val element = entry.element
+        element is RsFunction && !element.isAssocFn && processor(entry)
     }
-    return false
+    return lookup.derefTransitively(receiver).any { processAssociatedItems(lookup, it, VALUES, methodProcessor) }
 }
 
-private fun processFnsWithInherentPriority(fns: Collection<BoundElement<RsFunction>>, processor: RsResolveProcessor): Boolean {
-    val (inherent, nonInherent) = fns.partition { it.element.owner.isInherentImpl }
-    if (processAllBound(inherent, processor)) return true
+private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+    val visitedInherent = mutableSetOf<String>()
+    fun processTraitOrImpl(traitOrImpl: BoundElement<RsTraitOrImpl>, inherent: Boolean): Boolean {
+        fun inherentProcessor(entry: BoundElement<RsNamedElement>): Boolean {
+            val name = entry.element.name ?: return false
+            if (inherent) visitedInherent.add(name)
+            if (!inherent && name in visitedInherent) return false
+            return processor(entry)
+        }
 
-    val inherentNames = inherent.mapNotNull { it.element.name }.toHashSet()
-    for (fn in nonInherent) {
-        if (fn.element.name in inherentNames) continue
-        if (processor(fn)) return true
+        /**
+         * For `impl T for Foo`, this'll walk impl members and trait `T` members,
+         * which are not implemented.
+         */
+        fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsNamedElement>): Boolean {
+            val (element, subst) = traitOrImpl
+            val directlyImplemented = element.members?.let { accessor(it) }.orEmpty().map { BoundElement(it, subst) }
+            if (directlyImplemented.any { inherentProcessor(it) }) return true
+
+            if (element is RsImplItem) {
+                val direct = directlyImplemented.map { it.element.name }.toSet()
+                val membersFromTrait = element.implementedTrait?.element?.members ?: return false
+                for (member in accessor(membersFromTrait)) {
+                    if (member.name !in direct && inherentProcessor(BoundElement(member, subst))) return true
+                }
+            }
+
+            return false
+        }
+
+        if (Namespace.Values in ns) {
+            if (processMembersWithDefaults({ it.functionList })) return true
+            if (processMembersWithDefaults({ it.constantList })) return true
+        }
+        if (Namespace.Types in ns) {
+            if (processMembersWithDefaults({ it.typeAliasList })) return true
+        }
+        return false
     }
+
+    val (traits, inherent) = lookup.findImplsAndTraits(type).partition { (it.element as? RsImplItem)?.traitRef != null }
+    if (inherent.any { processTraitOrImpl(it, true) }) return true
+    if (traits.any { processTraitOrImpl(it, false) }) return true
     return false
 }
 
@@ -828,13 +831,6 @@ private fun processAllWithSubst(
 ): Boolean {
     for (e in elements) {
         if (processor(BoundElement(e, subst))) return true
-    }
-    return false
-}
-
-private fun processAllBound(elements: Collection<BoundElement<RsNamedElement>>, processor: RsResolveProcessor): Boolean {
-    for (e in elements) {
-        if (processor(e)) return true
     }
     return false
 }
