@@ -333,6 +333,18 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }      //^ u8
     """)
 
+    fun `test struct new with type parameters`() = testExpr("""
+        struct Foo<F>(F);
+        impl<T> Foo<T> {
+            fn new() -> Self { loop {} }
+        }
+        fn main() {
+            let x = Foo::<u16>::new();
+            x
+          //^ Foo<u16>
+        }
+    """)
+
     fun testGenericAlias() = testExpr("""
         struct S1<T>(T);
         struct S3<T1, T2, T3>(T1, T2, T3);
