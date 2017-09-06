@@ -18,9 +18,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitPath(o: RsPath) {
-                val isPrimitiveType = o is RsPath && TyPrimitive.fromPath(o) != null
-
-                if (isPrimitiveType || o.reference.resolve() != null) return
+                if (TyPrimitive.fromPath(o) != null || o.reference.resolve() != null) return
 
                 val parent = o.path ?: return
                 val parentRes = parent.reference.resolve()
