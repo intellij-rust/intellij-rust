@@ -26,7 +26,7 @@ val channel = prop("publishChannel")
 
 plugins {
     idea
-    kotlin("jvm")
+    kotlin("jvm") version "1.1.4"
     id("org.jetbrains.intellij") version "0.2.15"
     id("de.undercouch.download") version "3.2.0"
 }
@@ -66,6 +66,11 @@ allprojects {
             languageVersion = "1.1"
             apiVersion = "1.1"
         }
+    }
+
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
     }
 
     java.sourceSets {
