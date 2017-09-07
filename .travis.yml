@@ -25,7 +25,7 @@ before_script:
 
 install: true
 
-script: ./check-license.sh && ./gradlew check -Pkotlin.incremental=false -Dkotlin.daemon.jvm.options=-Xmx1024m
+script: ./check-license.sh && ./gradlew check -Pkotlin.incremental=false -Dkotlin.daemon.jvm.options=-Xmx2g
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
