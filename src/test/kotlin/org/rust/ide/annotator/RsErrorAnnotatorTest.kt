@@ -732,4 +732,106 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             struct S {};
         """)
     )
+
+    fun `test a private item was used outside of its scope E0624`() = checkErrors("""
+        mod some_module {
+            pub struct Foo;
+
+            impl Foo {
+                fn method(&self) {}
+            }
+        }
+        fn main() {
+            let f = some_module::Foo;
+            f.<error>method</error>();
+        }
+    """)
+
+    fun `test should not annotate trait methods E0624`() = checkErrors("""
+        mod some_module {
+            pub struct Foo;
+            pub trait Test {
+                fn method(&self);
+            }
+
+            impl Test for Foo {
+                fn method(&self) {}
+            }
+        }
+        use some_module::Test;
+        fn main() {
+            let f = some_module::Foo;
+            f.method();
+        }
+    """)
+
+    fun `test should not annotate public methods E0624`() = checkErrors("""
+        mod some_module {
+            pub struct Foo;
+
+            impl Foo {
+                pub fn method(&self) {}
+            }
+        }
+        fn main() {
+            let f = some_module::Foo;
+            f.method();
+        }
+    """)
+
+    fun `test should not annotate in the same module E0624`() = checkErrors("""
+        struct Foo;
+
+        impl Foo {
+            fn method(&self) {}
+        }
+
+        fn main() {
+            let f = some_module::Foo;
+            f.method();
+        }
+    """)
+
+    fun `test attempted to access a private field on a struct E0616`() = checkErrors("""
+        mod some_module {
+            pub struct Foo {
+                x: u32,
+            }
+
+            impl Foo {
+                pub fn new() -> Foo { Foo { x: 0 } }
+            }
+        }
+        fn main() {
+            let f = some_module::Foo::new();
+            f.<error>x</error>;// error: field `x` of struct `some_module::Foo` is private
+        }
+    """)
+
+    fun `test attempted to access a public field on a struct E0616`() = checkErrors("""
+        mod some_module {
+            pub struct Foo {
+                pub x: u32,
+            }
+
+            impl Foo {
+                pub fn new() -> Foo { Foo { x: 0 } }
+            }
+        }
+        fn main() {
+            let f = some_module::Foo::new();
+            f.x;
+        }
+    """)
+
+    fun `test should not annotate in the same module E0616`() = checkErrors("""
+        struct Foo {
+            x: u32,
+        }
+
+        fn main() {
+            let f = Foo { x: 0 };
+            f.x;
+        }
+    """)
 }
