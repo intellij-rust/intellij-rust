@@ -70,7 +70,7 @@ class RsPathReferenceImpl(
 
             BoundElement(element,
                 subst
-                    + (if (typeArguments != null) parameters.zip(typeArguments).toMap() else parameters.associateBy { it })
+                    + parameters.zip(typeArguments ?: parameters).toMap()
                     + assocTypes
             )
         }
