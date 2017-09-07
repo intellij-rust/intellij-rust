@@ -14,8 +14,8 @@ import com.intellij.util.ui.UIUtil
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.utils.Timings
 import org.rust.utils.fullyRefreshDirectory
-import kotlin.system.measureTimeMillis
 
 
 class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
@@ -24,31 +24,42 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
     override fun isPerformanceTest(): Boolean = false
 
     fun `test highlighting Cargo`() =
-        highlightProjectFile("cargo", "https://github.com/rust-lang/cargo", "src/cargo/core/resolver/mod.rs")
+        repeatTest { highlightProjectFile("cargo", "https://github.com/rust-lang/cargo", "src/cargo/core/resolver/mod.rs") }
 
     fun `test highlighting mysql_async`() =
-        highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/conn/mod.rs")
+        repeatTest { highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/conn/mod.rs") }
 
-    private fun highlightProjectFile(name: String, gitUrl: String, filePath: String) {
+    private fun repeatTest(f: () -> Timings) {
+        var result = Timings()
+        println("${name.substring("test ".length)}:")
+        repeat(10) {
+            result = result.merge(f())
+            tearDown()
+            setUp()
+        }
+        result.report()
+    }
+
+    private fun highlightProjectFile(name: String, gitUrl: String, filePath: String): Timings {
+        val timings = Timings()
         val base = openRealProject("testData/$name")
         if (base == null) {
             println("SKIP $name: git clone $gitUrl testData/$name")
-            return
+            return timings
         }
 
         myFixture.configureFromTempProjectFile(filePath)
 
         val modificationCount = currentPsiModificationCount()
 
-        var refs: Collection<RsReferenceElement> = emptyList()
-        val collectingReferences = measureTimeMillis {
-            refs = myFixture.file.descendantsOfType<RsReferenceElement>()
+        val refs = timings.measure("collecting") {
+            myFixture.file.descendantsOfType<RsReferenceElement>()
         }
 
-        val resolve = measureTimeMillis {
+        timings.measure("resolve") {
             refs.forEach { it.reference.resolve() }
         }
-        val highlighting = measureTimeMillis {
+        timings.measure("highlighting") {
             myFixture.doHighlighting()
         }
 
@@ -56,9 +67,7 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
             "PSI changed during resolve and highlighting, resolve might be double counted"
         }
 
-        println("collecting:   $collectingReferences ms")
-        println("resolve:      $resolve ms")
-        println("highlighting: $highlighting ms")
+        return timings
     }
 
     private fun currentPsiModificationCount() =

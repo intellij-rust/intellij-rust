@@ -11,6 +11,45 @@ import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureNanoTime
+import kotlin.system.measureTimeMillis
+
+class Timings(
+    private val values: LinkedHashMap<String, Long> = LinkedHashMap()
+) {
+    fun <T> measure(name: String, f: () -> T): T {
+        check(name !in values)
+        var result: T? = null
+        values[name] = measureTimeMillis { result = f() }
+        @Suppress("UNCHECKED_CAST")
+        return result as T
+    }
+
+    fun merge(other: Timings): Timings {
+        check(values.isEmpty() || other.values.isEmpty() || values.size == other.values.size)
+        val result = Timings()
+        for (k in values.keys.union(other.values.keys)) {
+            result.values[k] =
+                // https://www.youtube.com/watch?v=vrfYLlR8X8k&feature=youtu.be&t=25m17s
+                minOf(values.getOrDefault(k, Long.MAX_VALUE), other.values.getOrDefault(k, Long.MAX_VALUE))
+        }
+        return result
+    }
+
+    fun report() {
+        if (values.isEmpty()) {
+            println("No metrics recorder")
+            return
+        }
+
+        val width = values.keys.map { it.length }.max()!!
+        for ((k, v) in values) {
+            println("${k.padEnd(width)}: $v ms")
+        }
+        val total = values.values.sum()
+        println("$total ms total.")
+        println()
+    }
+}
 
 
 interface RsWatch {
