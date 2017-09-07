@@ -13,15 +13,16 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsInnerAttributeOwner
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.cargoWorkspace
+import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsModulesIndex
@@ -52,8 +53,8 @@ class RsFile(
             // to store references to PSI inside `CachedValueProvider` other than
             // the key PSI element
             val originalFile = originalFile
-            return CachedValuesManager.getCachedValue(originalFile, CachedValueProvider {
-                com.intellij.psi.util.CachedValueProvider.Result.create(
+            return CachedValuesManager.getCachedValue(originalFile, {
+                CachedValueProvider.Result.create(
                     RsModulesIndex.getSuperFor(originalFile),
                     PsiModificationTracker.MODIFICATION_COUNT
                 )
@@ -70,50 +71,134 @@ class RsFile(
     override val ownedDirectory: PsiDirectory?
         get() = originalFile.parent
 
-    override val isCrateRoot: Boolean get() {
-        val file = originalFile.virtualFile ?: return false
-        return cargoWorkspace?.isCrateRoot(file) ?: false
-    }
+    override val isCrateRoot: Boolean
+        get() {
+            val file = originalFile.virtualFile ?: return false
+            return cargoWorkspace?.isCrateRoot(file) ?: false
+        }
 
     override val innerAttrList: List<RsInnerAttr>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsInnerAttr::class.java)
 
-    val attributes: Attributes get() {
-        val stub = stub
-        if (stub != null) return stub.attributes
-        if (queryAttributes.hasAtomAttribute("no_core")) return Attributes.NO_CORE
-        if (queryAttributes.hasAtomAttribute("no_std")) return Attributes.NO_STD
-        return Attributes.NONE
-    }
+    val attributes: Attributes
+        get() {
+            val stub = stub
+            if (stub != null) return stub.attributes
+            if (queryAttributes.hasAtomAttribute("no_core")) return Attributes.NO_CORE
+            if (queryAttributes.hasAtomAttribute("no_std")) return Attributes.NO_STD
+            return Attributes.NONE
+        }
 
     enum class Attributes {
         NO_CORE, NO_STD, NONE
     }
 
-    override val functionList: List<RsFunction> get() = findItems(FUNCTION)
-    override val modItemList: List<RsModItem> get() = findItems(MOD_ITEM)
-    override val constantList: List<RsConstant> get() = findItems(CONSTANT)
-    override val structItemList: List<RsStructItem> get() = findItems(STRUCT_ITEM)
-    override val enumItemList: List<RsEnumItem> get() = findItems(ENUM_ITEM)
-    override val implItemList: List<RsImplItem> get() = findItems(IMPL_ITEM)
-    override val traitItemList: List<RsTraitItem> get() = findItems(TRAIT_ITEM)
-    override val typeAliasList: List<RsTypeAlias> get() = findItems(TYPE_ALIAS)
-    override val useItemList: List<RsUseItem> get() = findItems(USE_ITEM)
-    override val modDeclItemList: List<RsModDeclItem> get() = findItems(MOD_DECL_ITEM)
-    override val externCrateItemList: List<RsExternCrateItem> get() = findItems(EXTERN_CRATE_ITEM)
-    override val foreignModItemList: List<RsForeignModItem> get() = findItems(FOREIGN_MOD_ITEM)
-    override val macroDefinitionList: List<RsMacroDefinition> get() = findItems(MACRO_DEFINITION)
+    override val functionList: List<RsFunction> get() = itemsCache.functionList
+    override val modItemList: List<RsModItem> get() = itemsCache.modItemList
+    override val constantList: List<RsConstant> get() = itemsCache.constantList
+    override val structItemList: List<RsStructItem> get() = itemsCache.structItemList
+    override val enumItemList: List<RsEnumItem> get() = itemsCache.enumItemList
+    override val implItemList: List<RsImplItem> get() = itemsCache.implItemList
+    override val traitItemList: List<RsTraitItem> get() = itemsCache.traitItemList
+    override val typeAliasList: List<RsTypeAlias> get() = itemsCache.typeAliasList
+    override val useItemList: List<RsUseItem> get() = itemsCache.useItemList
+    override val modDeclItemList: List<RsModDeclItem> get() = itemsCache.modDeclItemList
+    override val externCrateItemList: List<RsExternCrateItem> get() = itemsCache.externCrateItemList
+    override val foreignModItemList: List<RsForeignModItem> get() = itemsCache.foreignModItemList
+    override val macroDefinitionList: List<RsMacroDefinition> get() = itemsCache.macroDefinitionList
 
-    private inline fun <reified T : RsCompositeElement> findItems(elementType: IElementType): List<T> {
-        val stub = stub
-        return if (stub != null) {
-            @Suppress("UNCHECKED_CAST")
-            stub.getChildrenByType(elementType, { arrayOfNulls<T>(it) })
-                .asList() as List<T>
-        } else {
-            PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
-        }
+    private class ItemsCache(
+        val functionList: List<RsFunction>,
+        val modItemList: List<RsModItem>,
+        val constantList: List<RsConstant>,
+        val structItemList: List<RsStructItem>,
+        val enumItemList: List<RsEnumItem>,
+        val implItemList: List<RsImplItem>,
+        val traitItemList: List<RsTraitItem>,
+        val typeAliasList: List<RsTypeAlias>,
+        val useItemList: List<RsUseItem>,
+        val modDeclItemList: List<RsModDeclItem>,
+        val externCrateItemList: List<RsExternCrateItem>,
+        val foreignModItemList: List<RsForeignModItem>,
+        val macroDefinitionList: List<RsMacroDefinition>
+    )
+
+    @Volatile
+    private var _itemsCache: ItemsCache? = null
+
+    override fun subtreeChanged() {
+        super.subtreeChanged()
+        _itemsCache = null
     }
+
+    private val itemsCache: ItemsCache
+        get() {
+            var cached = _itemsCache
+            if (cached != null) return cached
+            // Might calculate cache twice concurrently, but that's ok.
+            // Can't race with subtreeChanged.
+            val functionList = mutableListOf<RsFunction>()
+            val modItemList = mutableListOf<RsModItem>()
+            val constantList = mutableListOf<RsConstant>()
+            val structItemList = mutableListOf<RsStructItem>()
+            val enumItemList = mutableListOf<RsEnumItem>()
+            val implItemList = mutableListOf<RsImplItem>()
+            val traitItemList = mutableListOf<RsTraitItem>()
+            val typeAliasList = mutableListOf<RsTypeAlias>()
+            val useItemList = mutableListOf<RsUseItem>()
+            val modDeclItemList = mutableListOf<RsModDeclItem>()
+            val externCrateItemList = mutableListOf<RsExternCrateItem>()
+            val foreignModItemList = mutableListOf<RsForeignModItem>()
+            val macroDefinitionList = mutableListOf<RsMacroDefinition>()
+
+            fun add(psi: PsiElement) {
+                when (psi) {
+                    is RsFunction -> functionList.add(psi)
+                    is RsModItem -> modItemList.add(psi)
+                    is RsConstant -> constantList.add(psi)
+                    is RsStructItem -> structItemList.add(psi)
+                    is RsEnumItem -> enumItemList.add(psi)
+                    is RsImplItem -> implItemList.add(psi)
+                    is RsTraitItem -> traitItemList.add(psi)
+                    is RsTypeAlias -> typeAliasList.add(psi)
+                    is RsUseItem -> useItemList.add(psi)
+                    is RsModDeclItem -> modDeclItemList.add(psi)
+                    is RsExternCrateItem -> externCrateItemList.add(psi)
+                    is RsForeignModItem -> foreignModItemList.add(psi)
+                    is RsMacroDefinition -> macroDefinitionList.add(psi)
+                }
+            }
+
+            val stub = stub
+            if (stub != null) {
+                stub.childrenStubs.forEach { add(it.psi) }
+            } else {
+                var child = firstChild
+                while (child != null) {
+                    add(child)
+                    child = child.nextSibling
+                }
+            }
+
+            cached = ItemsCache(
+                functionList,
+                modItemList,
+                constantList,
+                structItemList,
+                enumItemList,
+                implItemList,
+                traitItemList,
+                typeAliasList,
+                useItemList,
+                modDeclItemList,
+                externCrateItemList,
+                foreignModItemList,
+                macroDefinitionList
+            )
+            _itemsCache = cached
+
+            return cached
+        }
 }
 
 
