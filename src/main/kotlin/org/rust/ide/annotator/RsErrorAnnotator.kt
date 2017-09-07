@@ -22,6 +22,7 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
@@ -55,9 +56,29 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitMethodCall(o: RsMethodCall) = checkMethodCallExpr(holder, o)
             override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnaryExpr(holder, o)
             override fun visitExternCrateItem(o: RsExternCrateItem) = checkExternCrate(holder, o)
+            override fun visitDotExpr(o: RsDotExpr) = checkDotExpr(holder, o)
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkDotExpr(holder: AnnotationHolder, o: RsDotExpr) {
+        val field = o.fieldLookup ?: o.methodCall
+        if (field != null) {
+            val ref = field.reference.resolve() as? RsVisibilityOwner ?: return
+            if (ref.isPublic) return
+            if (o.parentOfType<RsMod>() == ref.parentOfType<RsMod>()) return
+            if (ref is RsFunction) {
+                val item = ref.parentOfType<RsImplItem>() ?: return
+                if (item.traitRef != null) return
+            }
+            val (elem, desc) = when (field) {
+                is RsFieldLookup -> field to "Attempted to access a private field on a struct. [E0616]"
+                is RsMethodCall -> field.identifier to "A private item was used outside of its scope. [E0624]"
+                else -> return
+            }
+            holder.createErrorAnnotation(elem, desc)
+        }
     }
 
     private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCall) {
