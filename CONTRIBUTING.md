@@ -36,7 +36,7 @@ Common tasks are
 
   - `./gradlew :runIde` -- run a development IDE with the plugin installed.
 
-  - `./gradlew :test` -- more than a thousand tests. We love tests!
+  - `./gradlew :test` -- more than two thousands tests. We love tests!
 
 Note the `:` in front of the task name. The repository contains two independent
 plugins for Rust and TOML, which are organized as gradle subprojects. Running
@@ -50,7 +50,7 @@ You can get the latest Intellij IDEA Community Edition
 [here](https://www.jetbrains.com/idea/download/), it is free.
 
 Import the plugin project as you would do with any other gradle based project.
-For example, `Ctrl + Shift + A`, `Import project` and select `build.gradle` from
+For example, <kbd>Ctrl + Shift + A</kbd>, `Import project` and select `build.gradle` from
 the root directory of the plugin.
 
 There are `Test`, `Run` and `Generate Parser` run configurations for the most
@@ -70,6 +70,10 @@ To find an problem to work on, look for
 [up-for-grab](https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab)
 issues on Github, or, even better, try to fix a problem you face yourself when
 using the plugin.
+
+See [worklist](https://github.com/intellij-rust/intellij-rust/wiki/Worklist) to learn 
+who is doing what right now. This page is a wiki, so feel free to edit it and to write 
+about your plans.
 
 To familiarize yourself with the plugin source code, read
 the [architecture](ARCHITECTURE.md) document and look at some existing pull
