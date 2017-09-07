@@ -322,26 +322,7 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
 }
 
 fun processMacroCallVariants(invocation: PsiElement, processor: RsResolveProcessor): Boolean =
-    macroWalkUp(invocation) { scope ->
-        processMacroDeclarations(scope, processor)
-    }
-
-private fun macroWalkUp(
-    start: PsiElement,
-    processor: (scope: RsCompositeElement) -> Boolean
-): Boolean {
-    var scope = start.context as? RsCompositeElement
-    while (scope != null) {
-        if (processor(scope)) return true
-        val cameFrom = scope
-        scope = scope.context as? RsCompositeElement
-        if (scope == null && cameFrom is RsFile) {
-            scope = cameFrom.`super`
-        }
-    }
-
-    return false
-}
+    walkUp(invocation, { false }, false) { _, scope -> processMacroDeclarations(scope, processor) }
 
 fun processMacroDeclarations(scope: RsCompositeElement, processor: RsResolveProcessor): Boolean {
     when (scope) {
@@ -641,7 +622,7 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
     return false
 }
 
-private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: PsiElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
     check(cameFrom.context == scope)
 
     fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
@@ -779,23 +760,26 @@ private fun processNestedScopesUpwards(scopeStart: RsCompositeElement, processor
     return false
 }
 
-
 // There's already similar functions in TreeUtils, should use it
 private fun walkUp(
-    start: RsCompositeElement,
+    start: PsiElement,
     stopAfter: (RsCompositeElement) -> Boolean,
-    processor: (cameFrom: RsCompositeElement, scope: RsCompositeElement) -> Boolean
+    stopAtFileBoundary: Boolean = true,
+    processor: (cameFrom: PsiElement, scope: RsCompositeElement) -> Boolean
 ): Boolean {
-
-    var cameFrom: RsCompositeElement = start
+    var cameFrom = start
     var scope = start.context as RsCompositeElement?
     while (scope != null) {
         if (processor(cameFrom, scope)) return true
         if (stopAfter(scope)) break
         cameFrom = scope
-        scope = scope.context as RsCompositeElement?
+        scope = scope.context as? RsCompositeElement
+        if (!stopAtFileBoundary) {
+            if (scope == null && cameFrom is RsFile) {
+                scope = cameFrom.`super`
+            }
+        }
     }
-
     return false
 }
 

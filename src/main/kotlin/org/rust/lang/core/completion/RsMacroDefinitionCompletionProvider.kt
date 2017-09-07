@@ -21,18 +21,14 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.processMacroCallVariants
 import org.rust.lang.core.withPrevSiblingSkipping
 
 object RsMacroDefinitionCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
-        val element = parameters.position
-        processMacroCallVariants(element) { entry ->
-            entry.element?.let { el ->
-                result.addElement(createLookupElement(el, entry.name))
-            }
-            false
-        }
+        val lookup = collectCompletionVariants { processMacroCallVariants(parameters.position, it) }.toList()
+        result.addAllElements(lookup)
     }
 
     val elementPattern: ElementPattern<PsiElement> get() {
