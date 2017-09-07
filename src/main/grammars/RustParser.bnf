@@ -1030,7 +1030,7 @@ MacroCallNoSemicolons ::= MacroHead {
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
 }
 
-private MacroHead ::= AttrsAndVis (SpecialMacro | identifier '!' identifier? MacroArgument)
+private MacroHead ::= AttrsAndVis &(identifier '!') (SpecialMacro | identifier '!' identifier? MacroArgument)
 
 MacroArgument ::= <<any_braces TT>>
 TT ::= (<<any_braces TT>> | <<unpairedToken>>)*
