@@ -7,6 +7,7 @@ import org.jetbrains.grammarkit.GrammarKitPluginExtension
 import org.jetbrains.grammarkit.tasks.GenerateLexer
 import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.gradle.api.JavaVersion.VERSION_1_8
 
 buildscript {
     repositories {
@@ -66,14 +67,15 @@ allprojects {
 
     tasks.withType<KotlinCompile> {
         kotlinOptions {
+            jvmTarget = "1.8"
             languageVersion = "1.1"
             apiVersion = "1.1"
         }
     }
 
-    tasks.withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
+    configure<JavaPluginConvention> {
+        sourceCompatibility = VERSION_1_8
+        targetCompatibility = VERSION_1_8
     }
 
     java.sourceSets {
