@@ -9,14 +9,14 @@ language: java
 jdk: oraclejdk8
 
 env:
-  - ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
-  - ORG_GRADLE_PROJECT_ideaVersion=2017.2              RUST_VERSION=1.19.0
-  - ORG_GRADLE_PROJECT_ideaVersion=2017.1              RUST_VERSION=1.18.0
+  - RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT 
+  - RUST_VERSION=1.19.0
+  - RUST_VERSION=1.18.0  ORG_GRADLE_PROJECT_ideaVersion=2017.1.5              
 
 matrix:
   fast_finish: true
   allow_failures:
-    - env: ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT RUST_VERSION=nightly
+    - env: RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT 
 
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
@@ -25,7 +25,7 @@ before_script:
 
 install: true
 
-script: ./check-license.sh && ./gradlew check -Pkotlin.incremental=false -Dkotlin.daemon.jvm.options=-Xmx2g
+script: ./check-license.sh && ./gradlew check -Pkotlin.incremental=false -Dkotlin.daemon.jvm.options=-Xmx2g --no-daemon
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
