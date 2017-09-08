@@ -834,4 +834,45 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             f.x;
         }
     """)
+
+    fun `test should not annotate super fields in a super module E0624`() = checkErrors("""
+        mod foo {
+            use S;
+            fn bar() {
+                let s = S::new();
+                s.x;
+            }
+        }
+
+        struct S {
+            x: u32
+        }
+        impl S {
+            fn new() -> S {
+                S { x:1 }
+            }
+        }
+    """)
+
+    fun `test should not annotate super mod E0624`() = checkDontTouchAstInOtherFiles(
+        fileTreeFromText("""
+        //- m/mod.rs
+            use S;
+            fn bar() {
+                let s = S::new();
+                s.x;
+            }
+        //- main.rs
+            mod m;
+
+            pub struct S {
+                x: u32
+            }
+            impl S {
+                pub fn new() -> S {
+                    S { x:1 }
+                }
+            }
+        """), filePath = "m/mod.rs"
+    )
 }

@@ -67,7 +67,10 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (field != null) {
             val ref = field.reference.resolve() as? RsVisibilityOwner ?: return
             if (ref.isPublic) return
-            if (o.parentOfType<RsMod>() == ref.parentOfType<RsMod>()) return
+            val refMod = ref.parentOfType<RsMod>() ?: return
+            val oMod = o.parentOfType<RsMod>() ?: return
+            if (refMod == oMod) return
+            if (oMod.superMods.contains(refMod)) return
             if (ref is RsFunction) {
                 val item = ref.parentOfType<RsImplItem>() ?: return
                 if (item.traitRef != null) return

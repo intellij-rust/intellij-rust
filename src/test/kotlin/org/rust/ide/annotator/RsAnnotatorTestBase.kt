@@ -36,14 +36,17 @@ abstract class RsAnnotatorTestBase : RsTestBase() {
         @Language("Rust") after: String
     ) = checkByText(before, after) { applyQuickFix(fixName) }
 
-    protected fun checkDontTouchAstInOtherFiles(fileTree: FileTree, checkInfo: Boolean = false) {
+    protected fun checkDontTouchAstInOtherFiles(fileTree: FileTree, checkInfo: Boolean = false, filePath: String? = null) {
         fileTree.create()
         myFixture.configureFromTempProjectFile("main.rs")
 
         (myFixture as CodeInsightTestFixtureImpl) // meh
             .setVirtualFileFilter { !it.path.endsWith("main.rs") }
-
-        myFixture.testHighlighting(false, checkInfo, false)
+        if (filePath == null) {
+            myFixture.testHighlighting(false, checkInfo, false)
+        } else {
+            myFixture.testHighlighting(false, checkInfo, false, filePath)
+        }
     }
 
 }
