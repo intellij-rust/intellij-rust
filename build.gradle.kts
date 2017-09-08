@@ -10,9 +10,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 
 buildscript {
     repositories {
-        maven {
-            setUrl("https://jitpack.io")
-        }
+        maven { setUrl("https://jitpack.io") }
     }
     dependencies {
         classpath("com.github.hurricup:gradle-grammar-kit-plugin:2017.1.1")
@@ -34,8 +32,13 @@ plugins {
 allprojects {
     apply {
         plugin("idea")
+        plugin("kotlin")
         plugin("org.jetbrains.grammarkit")
         plugin("org.jetbrains.intellij")
+    }
+
+    repositories {
+        mavenCentral()
     }
 
     idea {
@@ -86,10 +89,7 @@ project(":") {
     intellij { pluginName = "intellij-rust" }
 
     repositories {
-        mavenCentral()
-        maven {
-            setUrl("https://dl.bintray.com/jetbrains/markdown")
-        }
+        maven { setUrl("https://dl.bintray.com/jetbrains/markdown") }
     }
 
     dependencies {
