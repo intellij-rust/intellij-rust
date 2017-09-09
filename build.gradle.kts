@@ -110,7 +110,7 @@ project(":") {
 
     java.sourceSets {
         getByName("main").kotlin.srcDirs("debugger/src/main/kotlin")
-        getByName("main").compileClasspath = getByName("main").compileClasspath + files("debugger/lib/clion-$clionVersion/lib/clion.jar")
+        getByName("main").compileClasspath += files("debugger/lib/clion-$clionVersion/lib/clion.jar")
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
