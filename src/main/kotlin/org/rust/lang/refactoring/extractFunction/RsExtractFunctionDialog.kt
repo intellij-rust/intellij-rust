@@ -62,5 +62,6 @@ fun extractFunctionDialog(
             file,
             config
         ).execute()
+        true
     }.show()
 }
