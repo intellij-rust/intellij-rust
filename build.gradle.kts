@@ -90,6 +90,12 @@ project(":") {
     version = "0.1.0.${prop("buildNumber")}$versionSuffix"
     intellij { pluginName = "intellij-rust" }
 
+    idea {
+        module {
+            generatedSourceDirs.add(file("tstData"))
+        }
+    }
+
     repositories {
         maven { setUrl("https://dl.bintray.com/jetbrains/markdown") }
     }
@@ -99,12 +105,12 @@ project(":") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
-        compileOnly(files("debugger/lib/clion-$clionVersion/lib/clion.jar"))
         testCompile("org.assertj:assertj-core:3.2.0")
     }
 
     java.sourceSets {
         getByName("main").kotlin.srcDirs("debugger/src/main/kotlin")
+        getByName("main").compileClasspath = getByName("main").compileClasspath + files("debugger/lib/clion-$clionVersion/lib/clion.jar")
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
