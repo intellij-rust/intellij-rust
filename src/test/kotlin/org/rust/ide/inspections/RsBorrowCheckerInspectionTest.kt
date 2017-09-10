@@ -171,6 +171,15 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         }
     """)
 
+    fun `test mutable reference to empty struct with and without braces`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let test1 = &mut S; // Must not be highlighted
+            let test2 = &mut S {}; // Must not be highlighted
+        }
+    """)
+
     fun `test fix method at method call (self)`() = checkFixByText("Make `self` mutable", """
         struct S;
         impl S {

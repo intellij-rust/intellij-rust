@@ -62,6 +62,7 @@ val RsExpr.isMutable: Boolean get() {
             if (letExpr != null && letExpr.eq == null) return true
             if (type is TyUnknown) return DEFAULT_MUTABILITY
             if (declaration is RsEnumVariant) return true
+            if (declaration is RsStructItem) return true
 
             false
         }
