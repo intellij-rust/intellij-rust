@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -27,8 +28,10 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
         is RsMod -> if (scopeName == "self" || scopeName == "super") {
             base.withTailText("::")
                 .withInsertHandler({ ctx, _ ->
-                    val offset = ctx.editor.caretModel.offset
-                    if (ctx.file.findElementAt(offset)?.parentOfType<RsUseGlobList>() == null) {
+                    val offset = ctx.tailOffset - 1
+                    val inUse = PsiTreeUtil.findElementOfClassAtOffset(ctx.file, offset, RsUseGlobList::class.java, false) != null
+                    val inSelfParam = PsiTreeUtil.findElementOfClassAtOffset(ctx.file, offset, RsSelfParameter::class.java, false) != null
+                    if (!(inUse || inSelfParam)) {
                         ctx.addSuffix("::")
                     }
                 })
@@ -116,16 +119,18 @@ fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
 private val InsertionContext.isInUseBlock: Boolean
     get() = file.findElementAt(startOffset - 1)!!.parentOfType<RsUseItem>() != null
 
-private val InsertionContext.alreadyHasCallParens: Boolean get() {
-    val parent = file.findElementAt(startOffset)!!.parentOfType<RsExpr>()
-    return (parent is RsDotExpr && parent.methodCall != null) || parent?.parent is RsCallExpr
-}
+private val InsertionContext.alreadyHasCallParens: Boolean
+    get() {
+        val parent = file.findElementAt(startOffset)!!.parentOfType<RsExpr>()
+        return (parent is RsDotExpr && parent.methodCall != null) || parent?.parent is RsCallExpr
+    }
 
-private val InsertionContext.alreadyHasPatternParens: Boolean get() {
-    val pat = file.findElementAt(startOffset)!!.parentOfType<RsPatEnum>()
-        ?: return false
-    return pat.path.textRange.contains(startOffset)
-}
+private val InsertionContext.alreadyHasPatternParens: Boolean
+    get() {
+        val pat = file.findElementAt(startOffset)!!.parentOfType<RsPatEnum>()
+            ?: return false
+        return pat.path.textRange.contains(startOffset)
+    }
 
 private val RsFunction.extraTailText: String
     get() = parentOfType<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""

@@ -227,9 +227,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         if (Namespace.Types in ns) {
             if (processor("self", containingMod)) return true
             val superMod = containingMod.`super`
-            if (superMod != null) {
-                if (processor("super", superMod)) return true
-            }
+            if (superMod != null && processor("super", superMod)) return true
         }
     }
 
