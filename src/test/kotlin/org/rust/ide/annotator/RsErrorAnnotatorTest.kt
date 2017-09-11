@@ -724,12 +724,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             impl T for S { }
         //- m.rs
             extern "C" {
-                fn foo(x: i32, ...);
+                pub fn foo(x: i32, ...);
             }
-            fn bar() {}
+            pub fn bar() {}
 
-            trait T {}
-            struct S {};
+            pub trait T {}
+            pub struct S {}
         """)
     )
 
@@ -759,10 +759,46 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             }
         }
         use some_module::Test;
+
         fn main() {
             let f = some_module::Foo;
             f.method();
         }
+    """)
+
+    fun `test should not annotate trait default methods E0624`() = checkErrors("""
+        mod some_module {
+            pub struct Foo;
+            pub trait Test {
+                fn bar(&self) {}
+            }
+
+            impl Test for Foo {}
+        }
+        use some_module::Test;
+        fn main() {
+            let f = some_module::Foo;
+            f.bar();
+        }
+    """)
+
+    fun `test should not annotate trait associated types E0603`() = checkErrors("""
+        mod some_module {
+            pub struct Foo;
+            pub trait Test {
+                type Item;
+            }
+
+            impl Test for Foo {
+                type Item = Foo;
+            }
+        }
+        use some_module::Test;
+        struct C<T>;
+        impl<T: Test> Test for C<T> {
+            type Item = T::Item;
+        }
+        fn main() {}
     """)
 
     fun `test should not annotate public methods E0624`() = checkErrors("""
@@ -875,4 +911,53 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             }
         """), filePath = "m/mod.rs"
     )
+
+    fun `test const outside scope E0603`()  = checkErrors("""
+        mod foo {
+            const BAR: u32 = 0x_a_bad_1dea_u32;
+        }
+
+        use <error>foo::BAR</error>;
+    """)
+
+    fun `test not const outside scope E0603`()  = checkErrors("""
+        mod foo {
+            pub const BAR: u32 = 0x_a_bad_1dea_u32;
+        }
+
+        use foo::BAR;
+    """)
+
+    fun `test fn outside scope E0603`()  = checkErrors("""
+        mod foo {
+            fn bar() {}
+        }
+
+        use <error>foo::bar</error>;
+    """)
+
+    fun `test not fn outside scope E0603`()  = checkErrors("""
+        mod foo {
+            pub fn bar() {}
+        }
+
+        use foo::bar;
+    """)
+
+    fun `test struct outside scope E0603`()  = checkErrors("""
+        mod foo {
+            struct Bar;
+        }
+
+        use <error>foo::Bar</error>;
+    """)
+
+    fun `test struct fn outside scope E0603`()  = checkErrors("""
+        mod foo {
+            pub struct Bar;
+        }
+
+        use foo::Bar;
+    """)
+
 }
