@@ -14,12 +14,15 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiReference
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.impl.RsMembersImpl
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
@@ -63,25 +66,32 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkDotExpr(holder: AnnotationHolder, o: RsDotExpr) {
-        val field = o.fieldLookup ?: o.methodCall
-        if (field != null) {
-            val ref = field.reference.resolve() as? RsVisibilityOwner ?: return
-            if (ref.isPublic) return
-            val refMod = ref.parentOfType<RsMod>() ?: return
-            val oMod = o.parentOfType<RsMod>() ?: return
-            if (refMod == oMod) return
-            if (oMod.superMods.contains(refMod)) return
-            if (ref is RsFunction) {
-                val item = ref.parentOfType<RsImplItem>() ?: return
-                if (item.traitRef != null) return
+        val field = o.fieldLookup ?: o.methodCall ?: return
+        checkReferenceIsPublic(field, o, holder)
+    }
+
+    private fun checkReferenceIsPublic(field: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
+        val ref = field.reference.resolve() as? RsVisibilityOwner ?: return
+        if (ref.isPublic) return
+        val refMod = ref.parentOfType<RsMod>() ?: return
+        val oMod = o.parentOfType<RsMod>() ?: return
+        if (refMod == oMod) return
+        if (oMod.superMods.contains(refMod)) return
+        val memberImpls = ref.parent as? RsMembersImpl
+        if (memberImpls != null) {
+            val parent = memberImpls.context ?: return
+            when (parent) {
+                is RsImplItem -> if (parent.traitRef != null) return
+                is RsTraitItem -> return
             }
-            val (elem, desc) = when (field) {
-                is RsFieldLookup -> field to "Attempted to access a private field on a struct. [E0616]"
-                is RsMethodCall -> field.identifier to "A private item was used outside of its scope. [E0624]"
-                else -> return
-            }
-            holder.createErrorAnnotation(elem, desc)
         }
+        val (elem, desc) = when (field) {
+            is RsFieldLookup -> field to "Attempted to access a private field on a struct. [E0616]"
+            is RsMethodCall -> field.identifier to "A private item was used outside of its scope. [E0624]"
+            is RsPath -> field to "A private item was used outside its scope. [E0603]"
+            else -> return
+        }
+        holder.createErrorAnnotation(elem, desc)
     }
 
     private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCall) {
@@ -173,6 +183,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 }
             }
         }
+        checkReferenceIsPublic(path, path, holder)
     }
 
     private fun checkVis(holder: AnnotationHolder, vis: RsVis) {

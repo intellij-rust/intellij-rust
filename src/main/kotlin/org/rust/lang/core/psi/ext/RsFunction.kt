@@ -111,7 +111,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 
     constructor(stub: RsFunctionStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublicNonStubbed(this)
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
     override val isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
 
