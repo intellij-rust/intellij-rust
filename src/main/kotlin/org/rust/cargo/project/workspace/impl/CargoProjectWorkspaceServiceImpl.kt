@@ -176,13 +176,18 @@ class CargoProjectWorkspaceServiceImpl(private val module: Module) : CargoProjec
     override fun requestImmediateUpdate(toolchain: RustToolchain, afterCommit: (UpdateResult) -> Unit) =
         requestUpdate(toolchain, afterCommit)
 
+    @TestOnly
     override fun syncUpdate(toolchain: RustToolchain) {
-        taskQueue.run(UpdateTask(toolchain, module.cargoProjectRoot!!.pathAsPath, null))
-
         val projectDirectory = module.cargoProjectRoot?.pathAsPath
-            ?: return
+            ?: error("Failed to get project directory for $module")
+        taskQueue.run(UpdateTask(toolchain, projectDirectory) { result ->
+            if (result is UpdateResult.Err) {
+                throw IllegalStateException("Failed to update project at $projectDirectory\n", result.error)
+            }
+        })
+
         val rustup = module.project.toolchain?.rustup(projectDirectory)
-            ?: return
+            ?: error("failed to get rustup")
         taskQueue.run(SetupRustStdlibTask(module, rustup, { runWriteAction { workspaceMerger.setStdlib(it) } }))
     }
 
