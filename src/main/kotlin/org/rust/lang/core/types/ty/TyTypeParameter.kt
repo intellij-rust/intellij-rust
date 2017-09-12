@@ -12,9 +12,11 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.substitute
 
 class TyTypeParameter private constructor(
-    private val parameter: TypeParameter,
+    val parameter: TypeParameter,
     private val bounds: Collection<BoundElement<RsTraitItem>>
 ) : Ty {
 
@@ -45,7 +47,8 @@ class TyTypeParameter private constructor(
         return result.merge(mapOf(this to other))
     }
 
-    override fun substitute(subst: Substitution): Ty {
+    // TODO complete dismantle substitution and migrate to folding
+    fun substituteOld(subst: Substitution): Ty {
         val ty = subst[this] ?: TyUnknown
         if (ty !is TyUnknown) return ty
         if (parameter is AssociatedType) {
@@ -60,11 +63,18 @@ class TyTypeParameter private constructor(
         return TyTypeParameter(parameter, bounds.map { it.substitute(subst) })
     }
 
+    override fun superFoldWith(folder: TypeFolder): Ty {
+        if (parameter is AssociatedType) {
+            return associated(parameter.type.foldWith(folder), parameter.trait, parameter.target)
+        }
+        return super.superFoldWith(folder)
+    }
+
     val name: String? get() = parameter.name
 
     override fun toString(): String = tyToString(this)
 
-    private interface TypeParameter {
+    interface TypeParameter {
         val name: String?
     }
     private object Self : TypeParameter {
@@ -75,7 +85,8 @@ class TyTypeParameter private constructor(
         override val name: String? get() = parameter.name
     }
 
-    private data class AssociatedType(val type: Ty, val trait: RsTraitItem, val target: RsTypeAlias) : TypeParameter {
+    // TODO should be a separate Ty
+    data class AssociatedType(val type: Ty, val trait: RsTraitItem, val target: RsTypeAlias) : TypeParameter {
         override val name: String? get() = "<$type as ${trait.name}>::${target.name}"
     }
 
@@ -99,7 +110,7 @@ class TyTypeParameter private constructor(
             return associated(type, trait, target)
         }
 
-        private fun associated(type: Ty, trait: RsTraitItem, target: RsTypeAlias): TyTypeParameter {
+         fun associated(type: Ty, trait: RsTraitItem, target: RsTypeAlias): TyTypeParameter {
             return TyTypeParameter(
                 AssociatedType(type, trait, target),
                 emptyList())

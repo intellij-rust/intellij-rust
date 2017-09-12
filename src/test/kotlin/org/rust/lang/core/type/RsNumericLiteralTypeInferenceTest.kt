@@ -262,4 +262,123 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
             S(1u8).foo(1);
         }            //^ u8
     """)
+
+    fun `test integer unification`() = testExpr("""
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let b: u8 = a;
+        }
+    """)
+
+    fun `test float unification`() = testExpr("""
+        fn main() {
+            let mut a = 0.0;
+                      //^ f32
+            let b: f32 = a;
+        }
+    """)
+
+    fun `test integer unification assign`() = testExpr("""
+        fn main() {
+            let mut a = 0;
+                      //^ u8
+            a = 1u8;
+        }
+    """)
+
+    fun `test integer unification struct field`() = testExpr("""
+        struct S { f: u8 }
+        fn main() {
+            let a = 0;
+                  //^ u8
+            S { f: a };
+        }
+    """)
+
+    fun `test integer unification method param`() = testExpr("""
+        fn foo(a: u8) {}
+        fn main() {
+            let a = 0;
+                  //^ u8
+            foo(a);
+        }
+    """)
+
+    fun `test integer unification generic method param`() = testExpr("""
+        fn foo<T>(a: T, b: T) {}
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let b = 0u8;
+            foo(a, b);
+        }
+    """)
+
+    fun `test integer unification repeat expr`() = testExpr("""
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let b: [u8; 1] = [a; 1];
+        }
+    """)
+
+    fun `test integer unification array expr`() = testExpr("""
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let b: [u8; 3] = [1, a, 3];
+        }
+    """)
+
+    fun `test integer unification tuple expr`() = testExpr("""
+        fn main() {
+            let a = 0;
+                  //^ u8
+            let b: (u8, u8) = (a, 1);
+        }
+    """)
+
+    fun `test integer unification block`() = testExpr("""
+        fn main() {
+        let a = 0;
+              //^ u8
+        let b: u8 = { a };
+        }
+    """)
+
+    fun `test integer unification if else`() = testExpr("""
+        fn main() {
+        let a = 0;
+              //^ u8
+            let b: u8 = if true { a } else { 1 };
+        }
+    """)
+
+    fun `test integer unification if else 2`() = testExpr("""
+        fn main() {
+        let a = 0;
+              //^ u8
+            let b: u8 = if true { 1 } else { a };
+        }
+    """)
+
+    fun `test integer unification if else 3`() = testExpr("""
+        fn main() {
+        let a = 0;
+              //^ u8
+            let b: u8 = if true { 1 } else if true { a } else { 1 };
+        }
+    """)
+
+    fun `test integer unification match`() = testExpr("""
+        fn main() {
+        let a = 0;
+              //^ u8
+            let b: u8 = match true {
+                true => a,
+                false => 1,
+            };
+        }
+    """)
 }

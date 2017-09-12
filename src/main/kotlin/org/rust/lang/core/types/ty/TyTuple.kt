@@ -7,6 +7,7 @@ package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.infer.TypeFolder
 
 data class TyTuple(val types: List<Ty>) : Ty {
 
@@ -18,8 +19,8 @@ data class TyTuple(val types: List<Ty>) : Ty {
         }
     }
 
-    override fun substitute(subst: Substitution): TyTuple =
-        TyTuple(types.map { it.substitute(subst) })
+    override fun superFoldWith(folder: TypeFolder): Ty =
+        TyTuple(types.map { it.foldWith(folder) })
 
     override fun toString(): String = tyToString(this)
 }

@@ -6,13 +6,13 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
@@ -181,7 +181,7 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return result
     }
 
-    private fun findImplOfTrait(ty: Ty, trait: RsTraitItem): BoundElement<RsTraitOrImpl>? =
+    fun findImplOfTrait(ty: Ty, trait: RsTraitItem): BoundElement<RsTraitOrImpl>? =
         findImplsAndTraits(ty).find { it.element.implementedTrait?.element == trait }
 
     private fun findDerefTarget(ty: Ty): Ty? {
@@ -246,6 +246,10 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     fun asTyFunction(ty: Ty): TyFunction? {
         return ty as? TyFunction ?:
             (findImplsAndTraits(ty).mapNotNull { it.downcast<RsTraitItem>()?.asFunctionType }.firstOrNull())
+    }
+
+    fun asTyFunction(ref: BoundElement<RsTraitItem>): TyFunction? {
+        return ref.asFunctionType
     }
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {

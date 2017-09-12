@@ -7,9 +7,11 @@ package org.rust.lang.core.types.ty
 
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.infer.TypeFoldable
+import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.substitute
 
 typealias Substitution = Map<TyTypeParameter, Ty>
-typealias TypeMapping = MutableMap<TyTypeParameter, Ty>
 val emptySubstitution: Substitution = emptyMap()
 
 /**
@@ -19,21 +21,19 @@ val emptySubstitution: Substitution = emptyMap()
  * The name `Ty` is short for `Type`, inspired by the Rust
  * compiler.
  */
-interface Ty {
+interface Ty: TypeFoldable<Ty> {
     /**
      * Checks if `other` type may be represented as this type.
      *
      * Note that `t1.unifyWith(t2)` is not the same as `t2.unifyWith(t1)`.
+     *
+     * TODO replace it with the truly unification
      */
     fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult
 
-    /**
-     * Substitute type parameters for their values
-     *
-     * This works for `struct S<T> { field: T }`, when we
-     * know the type of `T` and want to find the type of `field`.
-     */
-    fun substitute(subst: Substitution): Ty = this
+    override fun foldWith(folder: TypeFolder): Ty = folder(this)
+
+    override fun superFoldWith(folder: TypeFolder): Ty = this
 
     /**
      * Bindings between formal type parameters and actual type arguments.
@@ -62,18 +62,11 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.keys.find { it.toString() == name }
 }
 
-fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty {
-    return when {
-        ty1 is TyUnknown -> ty2
-        ty1 is TyNever -> ty2
-        ty1 is TyInteger && ty2 is TyInteger && ty1.isKindWeak -> ty2
-        ty1 is TyFloat && ty2 is TyFloat && ty1.isKindWeak -> ty2
-        else -> ty1
-    }
-}
-
 fun Substitution.substituteInValues(map: Substitution): Substitution =
     mapValues { (_, value) -> value.substitute(map) }
+
+fun Substitution.foldValues(folder: TypeFolder): Substitution =
+    mapValues { (_, value) -> value.foldWith(folder) }
 
 fun Substitution.get(psi: RsTypeParameter): Ty? {
     return get(TyTypeParameter.named((psi)))

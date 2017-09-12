@@ -8,8 +8,10 @@ package org.rust.lang.core.types
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.emptySubstitution
+import org.rust.lang.core.types.ty.foldValues
 import org.rust.lang.core.types.ty.substituteInValues
 
 /* Represents a potentially generic Psi Element, like
@@ -28,5 +30,8 @@ data class BoundElement<out E : RsCompositeElement>(
 
     fun substitute(subst: Substitution) =
         BoundElement(element, this.subst.substituteInValues(subst))
+
+    fun foldWith(folder: TypeFolder) =
+        BoundElement(element, this.subst.foldValues(folder))
 }
 

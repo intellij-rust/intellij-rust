@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.type
 
 interface TyStructOrEnumBase : Ty {
@@ -42,8 +43,8 @@ class TyStruct private constructor(
     override val typeArguments: List<Ty>
         get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
 
-    override fun substitute(subst: Substitution): TyStruct =
-        TyStruct(boundElement.substitute(subst))
+    override fun superFoldWith(folder: TypeFolder): TyStruct =
+        TyStruct(boundElement.foldWith(folder))
 
     override fun equals(other: Any?): Boolean =
         other is TyStruct && boundElement == other.boundElement
@@ -74,8 +75,8 @@ class TyEnum private constructor(
     override val typeArguments: List<Ty>
         get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
 
-    override fun substitute(subst: Substitution): TyEnum =
-        TyEnum(boundElement.substitute(subst))
+    override fun superFoldWith(folder: TypeFolder): TyEnum =
+        TyEnum(boundElement.foldWith(folder))
 
     override fun equals(other: Any?): Boolean =
         other is TyEnum && boundElement == other.boundElement

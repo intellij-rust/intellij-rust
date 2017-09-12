@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.getTypeParameter

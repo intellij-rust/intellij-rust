@@ -65,20 +65,18 @@ object TyStr : TyPrimitive {
     override fun toString(): String = tyToString(this)
 }
 
-interface TyNumeric : TyPrimitive {
-    val isKindWeak: Boolean
+interface TyNumeric : TyPrimitive
 
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
-        UnifyResult.exactIf(this == other || javaClass == other.javaClass && (other as TyNumeric).isKindWeak)
-}
-
-class TyInteger(val kind: Kind, override val isKindWeak: Boolean = false) : TyNumeric {
+class TyInteger(val kind: Kind) : TyNumeric {
     companion object {
+        fun fromSuffixedLiteral(literal: PsiElement): TyInteger? =
+            Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyInteger)
+
         fun fromLiteral(literal: PsiElement): TyInteger {
             val kind = Kind.values().find { literal.text.endsWith(it.name) }
                 ?: inferKind(literal)
 
-            return TyInteger(kind ?: DEFAULT_KIND, kind == null)
+            return TyInteger(kind ?: DEFAULT_KIND)
         }
 
         /**
@@ -105,6 +103,9 @@ class TyInteger(val kind: Kind, override val isKindWeak: Boolean = false) : TyNu
         i8, i16, i32, i64, i128, isize
     }
 
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
+        UnifyResult.exactIf(this == other || other is TyInfer.IntVar)
+
     // Ignore `isKindWeak` for the purposes of equality
     override fun equals(other: Any?): Boolean = other is TyInteger && other.kind == kind
     override fun hashCode(): Int = kind.hashCode()
@@ -112,18 +113,24 @@ class TyInteger(val kind: Kind, override val isKindWeak: Boolean = false) : TyNu
     override fun toString(): String = tyToString(this)
 }
 
-class TyFloat(val kind: Kind, override val isKindWeak: Boolean = false) : TyNumeric {
+class TyFloat(val kind: Kind) : TyNumeric {
     companion object {
+        fun fromSuffixedLiteral(literal: PsiElement): TyFloat? =
+            Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyFloat)
+
         fun fromLiteral(literal: PsiElement): TyFloat {
             val kind = Kind.values().find { literal.text.endsWith(it.name) }
 
-            return TyFloat(kind ?: DEFAULT_KIND, kind == null)
+            return TyFloat(kind ?: DEFAULT_KIND)
         }
 
         val DEFAULT_KIND = Kind.f64
     }
 
     enum class Kind { f32, f64 }
+
+    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
+        UnifyResult.exactIf(this == other || other is TyInfer.FloatVar)
 
     // Ignore `isKindWeak` for the purposes of equality
     override fun equals(other: Any?): Boolean = other is TyFloat && other.kind == kind

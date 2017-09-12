@@ -81,7 +81,14 @@ private fun Substitution.merge(other: Substitution): Substitution {
     val newSubst = toMutableMap()
     for ((param, value) in other) {
         val old = get(param)
-        newSubst.put(param, if (old == null) value else getMoreCompleteType(old, value))
+        newSubst.put(param, if (old == null) value else getMoreCompleteTypeOld(old, value))
     }
     return newSubst
+}
+
+private fun getMoreCompleteTypeOld(ty1: Ty, ty2: Ty): Ty {
+    return when (ty1) {
+        is TyUnknown, is TyNever, is TyInfer -> ty2
+        else -> ty1
+    }
 }

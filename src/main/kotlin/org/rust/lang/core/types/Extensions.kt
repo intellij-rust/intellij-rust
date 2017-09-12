@@ -13,7 +13,10 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.infer.*
+import org.rust.lang.core.types.infer.RsInferenceResult
+import org.rust.lang.core.types.infer.inferOutOfFnExpressionType
+import org.rust.lang.core.types.infer.inferTypeReferenceType
+import org.rust.lang.core.types.infer.inferTypesIn
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyUnknown
@@ -28,16 +31,16 @@ val RsTypeElement.lifetimeElidable: Boolean get() {
     return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
 }
 
-val RsFunction.inferenceContext: RsInferenceContext
-    get() = CachedValuesManager.getCachedValue(this, CachedValueProvider {
+val RsFunction.inference: RsInferenceResult
+    get() = CachedValuesManager.getCachedValue(this, {
         CachedValueProvider.Result.create(inferTypesIn(this), PsiModificationTracker.MODIFICATION_COUNT)
     })
 
 val RsPatBinding.type: Ty
-    get() = inferenceContext?.getBindingType(this) ?: TyUnknown
+    get() = inference?.getBindingType(this) ?: TyUnknown
 
 val RsExpr.type: Ty
-    get() = inferenceContext?.getExprType(this) ?: inferOutOfFnExpressionType(this)
+    get() = inference?.getExprType(this) ?: inferOutOfFnExpressionType(this)
 
 val RsExpr.declaration: RsCompositeElement?
     get() = when (this) {
@@ -72,5 +75,5 @@ val RsExpr.isMutable: Boolean get() {
     }
 }
 
-private val PsiElement.inferenceContext: RsInferenceContext?
-    get() = (parentOfType<RsItemElement>() as? RsFunction)?.inferenceContext
+private val PsiElement.inference: RsInferenceResult?
+    get() = (parentOfType<RsItemElement>() as? RsFunction)?.inference
