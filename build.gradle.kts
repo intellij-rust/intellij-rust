@@ -8,6 +8,7 @@ import org.jetbrains.grammarkit.tasks.GenerateLexer
 import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.gradle.api.JavaVersion.VERSION_1_8
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 buildscript {
     repositories {
@@ -151,6 +152,12 @@ project(":") {
             generateRustLexer, generateRustDocHighlightingLexer,
             generateRustParser, unpackClion
         )
+    }
+
+    tasks.withType<Test> {
+        testLogging {
+            exceptionFormat = TestExceptionFormat.FULL
+        }
     }
 }
 

@@ -9,23 +9,26 @@ language: java
 jdk: oraclejdk8
 
 env:
-  - RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT 
+  - RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
   - RUST_VERSION=1.19.0
-  - RUST_VERSION=1.18.0  ORG_GRADLE_PROJECT_ideaVersion=2017.1.5              
+  - RUST_VERSION=1.18.0  ORG_GRADLE_PROJECT_ideaVersion=2017.1.5
 
 matrix:
   fast_finish: true
   allow_failures:
-    - env: RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT 
+    - env: RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
+
+install: true
 
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
   - rustfmt --help || cargo install rustfmt --force
+  - ./check-license.sh
+  - ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
 
-install: true
-
-script: ./check-license.sh && ./gradlew check -Pkotlin.incremental=false -Dkotlin.daemon.jvm.options=-Xmx2g --no-daemon
+script:
+  - ./gradlew check -Pkotlin.incremental=false --no-daemon
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
