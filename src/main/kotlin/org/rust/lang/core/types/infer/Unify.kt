@@ -12,6 +12,10 @@ interface Node: NodeOrValue {
 data class VarValue<out V>(val value: V?, val rank: Int): NodeOrValue
 
 /**
+ * [UnificationTable] is map from [K] to [V] with additional ability
+ * to redirect certain K's to a single V en-masse with the help of
+ * disjoint set union.
+ *
  * We implement Tarjan's union-find
  * algorithm: when two keys are unified, one of them is converted
  * into a "redirect" pointing at the other. These redirects form a
@@ -65,8 +69,6 @@ class UnificationTable<K : Node, V> {
         newRootKey.parent = VarValue(newValue, newRank)
         return newRootKey
     }
-
-    fun find(key: K): K = get(key).key
 
     fun findValue(key: K): V? = get(key).value
 

@@ -24,9 +24,13 @@ import org.rust.utils.forEachChild
 fun inferTypesIn(fn: RsFunction): RsInferenceResult =
     RsInferenceContext().run { preventRecursion { infer(fn) } }
 
+/**
+ * [RsInferenceResult] is an immutable per-function map
+ * from expressions to their types.
+ */
 class RsInferenceResult(
-    private val bindings: MutableMap<RsPatBinding, Ty>,
-    private val exprTypes: MutableMap<RsExpr, Ty>
+    private val bindings: Map<RsPatBinding, Ty>,
+    private val exprTypes: Map<RsExpr, Ty>
 ) {
     fun getExprType(expr: RsExpr): Ty =
         exprTypes[expr] ?: TyUnknown
@@ -38,6 +42,9 @@ class RsInferenceResult(
         "RsInferenceResult(bindings=$bindings, exprTypes=$exprTypes)"
 }
 
+/**
+ * A mutable object, which is filled while we walk function body top down.
+ */
 class RsInferenceContext {
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
@@ -155,9 +162,7 @@ class RsInferenceContext {
     }
 
     fun shallowResolve(ty: Ty): Ty {
-        if (ty !is TyInfer) {
-            return ty
-        }
+        if (ty !is TyInfer) return ty
 
         return when (ty) {
             is TyInfer.IntVar -> intUnificationTable.findValue(ty)?.let(::TyInteger) ?: ty
@@ -171,19 +176,19 @@ class RsInferenceContext {
     }
 
     private fun fullyResolve(ty: Ty): Ty {
-        return ty.foldTyInferWith(this::fullyResolve0)
+        fun go(ty: Ty): Ty {
+            if (ty !is TyInfer) return ty
+
+            return when (ty) {
+                is TyInfer.IntVar -> TyInteger(intUnificationTable.findValue(ty) ?: TyInteger.DEFAULT_KIND)
+                is TyInfer.FloatVar -> TyFloat(floatUnificationTable.findValue(ty) ?: TyFloat.DEFAULT_KIND)
+                is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(::go) ?: ty.origin
+            }
+        }
+
+        return ty.foldTyInferWith(::go)
     }
 
-    private fun fullyResolve0(ty: Ty): Ty {
-        if (ty !is TyInfer) {
-            return ty
-        }
-        return when (ty) {
-            is TyInfer.IntVar -> TyInteger(intUnificationTable.findValue(ty) ?: TyInteger.DEFAULT_KIND)
-            is TyInfer.FloatVar -> TyFloat(floatUnificationTable.findValue(ty) ?: TyFloat.DEFAULT_KIND)
-            is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(this::fullyResolve0) ?: ty.origin
-        }
-    }
 
     fun typeVarForParam(ty: TyTypeParameter): Ty {
         return TyInfer.TyVar(ty)
@@ -326,7 +331,6 @@ private class RsFnInferenceContext(
             is RsSelfParameter -> element.typeOfValue
             else -> return TyUnknown
         }
-        val tupleFields = (element as? RsFieldsOwner)?.tupleFields
 
         // This BS is a very temporary (I hope)
         val typeParameters = ((element as? RsGenericDeclaration)?.let(this::instantiateBounds) ?: emptyMap()) +
@@ -343,6 +347,7 @@ private class RsFnInferenceContext(
             }
         }
 
+        val tupleFields = (element as? RsFieldsOwner)?.tupleFields
         return if (tupleFields != null) {
             // Treat tuple constructor as a function
             TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, type)

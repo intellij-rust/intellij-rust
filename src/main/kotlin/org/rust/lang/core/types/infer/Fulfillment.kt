@@ -53,6 +53,12 @@ data class Obligation(val recursionDepth: Int, var predicate: Predicate): TypeFo
 
 data class PendingPredicateObligation(val obligation: Obligation, val stalledOn: MutableList<Ty>)
 
+/**
+ * [ObligationForest] is a mutable collection of obligations.
+ * It's caller's responsibility to add new obligations via
+ * [registerObligationAt] and to remove satisfied obligations
+ * as a side effect of [processObligations].
+ */
 class ObligationForest {
     enum class NodeState {
         /** Obligations for which selection had not yet returned a non-ambiguous result */

@@ -12,6 +12,12 @@ import org.rust.lang.core.types.ty.TyTypeParameter
 
 typealias TypeFolder = (Ty) -> Ty
 
+/**
+ * Despite a scary name, [TypeFoldable] is a rather simple thing.
+ *
+ * It allows to map type variables within a type (or another object,
+ * containing a type, like a [Predicate]) to other types.
+ */
 interface TypeFoldable<out Self> {
     /**
      * Fold `this` type with the folder.
@@ -40,7 +46,7 @@ interface TypeFoldable<out Self> {
     /**
      * Fold inner types (not this type) with the folder.
      * `A<A<B>>.foldWith { C } == A<C>`
-     * This method should be used only by a folder implementations internally
+     * This method should be used only by a folder implementations internally.
      */
     fun superFoldWith(folder: TypeFolder): Self
 }

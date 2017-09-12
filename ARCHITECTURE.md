@@ -164,6 +164,56 @@ resolution info is forgotten and recalculated, but only for the currently opened
 file. See `com.intellij.psi.util.CachedValuesManager` and
 `com.intellij.psi.util.PsiModificationTracker` for the details about caching.
 
+
+# Type inference
+
+Type inference is implemented in `org.rust.lang.core.types.infer` package. It is
+mostly modeled after rustc type checking.
+
+All inference happens at a function level. We walk function body top
+down, processing every expression and statement. The aim is to
+construct a map from expressions to their types
+(`RsInferenceResult`). 
+
+If the type of expression is obvious (is not generic), we record it
+right away. However sometimes we can't infer the type of expression
+precisely without context, for example:
+
+```Rust
+let mut a = 0; 
+// We need this assignment to learn that `a: u64`
+a += 92u64;
+```
+
+In this case, we create a fresh type variables for this type, and
+record it in a special table called `UnificationTable` as a type to be
+determined. Later, when we process `a += 92u64`, we learn the precise
+type and record it.
+
+
+More complex constraints appear when we process generics and traits,
+for example:
+
+```Rust
+trait Foo<T> { }
+
+struct S1;
+struct S2;
+impl Foo<S2> for S1 {}
+
+fn foo<A: Foo<B>, B>(a: A) -> B
+
+fn main() {
+	let s2 = foo(S1);
+}
+```
+
+For them, the basic algorithm is the same: type variables are
+constructed for unknown types, constraints are recorded into a special
+data structure, `ObligationForest`, and, once the constraints are
+resolved, the results are recorded via `UnificationTable`.
+
+
 # Indexing
 
 Intellij provides a powerful API for indexing source code. Roughly speaking, you
@@ -179,15 +229,6 @@ allows to persist indexes to disk between IDE invocations.
 These indexes power go to class and go to symbol functionality. They are also
 used during resolve to find the parent module for a file and to get the list of
 `impl`s for a type.
-
-# Type inference
-
-Type inference support is far from being complete. We don't have a Hindley-Milner
-style unification algorithm, and instead use simple bottom-up inference (
-`org.rust.lang.core.types.infer` package). A particularly interesting problem
-is trait matching. To answer the question "does type `X` implement trait `T`?", 
-we try not to look at every `impl` in the world, but to filter potentially 
-interesting `impls` by type. It is handled by `RsImplIndex`.    
 
 ## Stubs
 
@@ -244,3 +285,5 @@ Read more about [indexing].
 
 [indexing]: http://www.jetbrains.org/intellij/sdk/docs/basics/indexing_and_psi_stubs.html
 [stub-switch]: https://github.com/intellij-rust/intellij-rust/blob/1cc9e40248bd36e43cc016d008270d0e0f4d7f8a/src/main/kotlin/org/rust/lang/core/psi/impl/RustStubbedNamedElementImpl.kt#L27
+
+
