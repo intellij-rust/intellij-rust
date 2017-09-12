@@ -20,6 +20,12 @@ build_script:
 test_script:
   - gradlew.bat check --no-daemon
 
+on_success:
+  - ps: rm C:\Users\appveyor\.gradle\caches\modules-2\modules-2.lock -force
+  - ps: rm C:\Users\appveyor\.gradle\caches\*\plugin-resolution\ -recurse -force
+  - ps: rm C:\Users\appveyor\.gradle\caches\*\fileHashes\fileHashes.bin -force
+  - ps: rm C:\Users\appveyor\.gradle\caches\*\fileHashes\fileHashes.lock -force
+
 cache:
   - C:\Users\appveyor\.cargo\registry
   - C:\Users\appveyor\.cargo\bin
