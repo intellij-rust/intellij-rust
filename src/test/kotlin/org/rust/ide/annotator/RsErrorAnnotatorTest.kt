@@ -948,6 +948,24 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test type mismatch E0308 ptr mutability`() = checkErrors("""
+        fn fn_const(p: *const u8) { }
+        fn fn_mut(p: *mut u8) { }
+
+        fn main () {
+            let mut ptr_const: *const u8;
+            let mut ptr_mut: *mut u8;
+
+            fn_const(ptr_const);
+            fn_const(ptr_mut);
+            fn_mut(<error>ptr_const</error>);
+            fn_mut(ptr_mut);
+
+            ptr_const = ptr_mut;
+            ptr_mut = <error>ptr_const</error>;
+        }
+    """)
+
     fun `test type mismatch E0308 struct`() = checkErrors("""
         struct X; struct Y;
         fn main () {
