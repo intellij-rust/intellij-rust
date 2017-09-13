@@ -125,12 +125,11 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         }
     """)
 
-    //TODO: this should not show error here
     fun `test no highlight for mutable for loops`() = checkByText("""
         fn test() {
             let mut xs: Vec<Vec<usize>> = vec![vec![1, 2], vec![3, 4]];
             for test in &mut xs {
-                <error>test</error>.push(0)
+                test.push(0);
             }
         }
     """)

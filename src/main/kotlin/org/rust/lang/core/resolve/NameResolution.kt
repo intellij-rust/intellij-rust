@@ -198,6 +198,11 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     }
 
     if (qualifier != null) {
+        val primitiveType = TyPrimitive.fromPath(qualifier);
+        if (primitiveType != null) {
+            if (processAssociatedItems(lookup, primitiveType, ns, processor)) return true
+        }
+
         val base = qualifier.reference.resolve() ?: return false
         if (base is RsMod) {
             val s = base.`super`

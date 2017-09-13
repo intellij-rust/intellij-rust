@@ -141,13 +141,11 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                       //^ .../char.rs
     """)
 
-    fun `test inherent impl char 2`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test inherent impl char 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() { char::is_lowercase('Z'); }
                         //^ .../char.rs
     """)
-    }
 
     fun `test inherent impl str 1`() = stubOnlyResolve("""
     //- main.rs
@@ -155,13 +153,11 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                       //^ ...str.rs
     """)
 
-    fun `test inherent impl str 2`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test inherent impl str 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() { str::to_uppercase("Z"); }
                        //^ ...str.rs
     """)
-    }
 
     fun `test inherent impl f32 1`() = stubOnlyResolve("""
     //- main.rs
@@ -169,13 +165,11 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                          //^ .../f32.rs
     """)
 
-    fun `test inherent impl f32 2`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test inherent impl f32 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() { f32::sqrt(0.0f32); }
                        //^ .../f32.rs
     """)
-    }
 
     fun `test inherent impl f32 3`() = expect<IllegalStateException> {
         stubOnlyResolve("""
@@ -191,16 +185,13 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                          //^ .../f64.rs
     """)
 
-    fun `test inherent impl f64 2`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test inherent impl f64 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() { f64::sqrt(0.0f64); }
                        //^ .../f64.rs
     """)
-    }
 
-    fun `test inherent impl const ptr 1`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test inherent impl const ptr 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *const char;
@@ -208,7 +199,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             //^ ...libcore/ptr.rs
         }
     """)
-    }
 
     fun `test inherent impl const ptr 2`() = expect<IllegalStateException> {
         stubOnlyResolve("""
@@ -232,8 +222,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     """)
     }
 
-    fun `test inherent impl mut ptr 1`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test inherent impl mut ptr 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *mut char;
@@ -241,7 +230,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             //^ ...libcore/ptr.rs
         }
     """)
-    }
 
     fun `test inherent impl mut ptr 2`() = expect<IllegalStateException> {
         stubOnlyResolve("""

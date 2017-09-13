@@ -12,7 +12,10 @@ import org.rust.lang.core.types.infer.TypeVisitor
 data class TyPointer(val referenced: Ty, val mutability: Mutability) : Ty {
 
     override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
-        if (other is TyPointer) referenced.unifyWith(other.referenced, lookup) else UnifyResult.fail
+        if (other is TyPointer && mutability == other.mutability)
+            referenced.unifyWith(other.referenced, lookup)
+        else
+            UnifyResult.fail
 
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyPointer(referenced.foldWith(folder), mutability)

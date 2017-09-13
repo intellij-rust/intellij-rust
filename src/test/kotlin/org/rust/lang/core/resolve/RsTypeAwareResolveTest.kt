@@ -558,4 +558,30 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                //^
         }
     """)
+
+    fun `test impl trait for mutable reference`() = checkByCode("""
+        struct Foo;
+        trait T { fn foo(self); }
+        impl<'a> T for &'a Foo { fn foo(self) {} }
+        impl<'a> T for &'a mut Foo { fn foo(self) {} }
+                                       //X
+
+        fn main() {
+            let foo = &mut Foo {};
+            foo.foo();
+        }      //^
+    """)
+
+    fun `test impl trait for mutable pointer`() = checkByCode("""
+        struct Foo;
+        trait T { fn foo(self); }
+        impl T for *const Foo { fn foo(self) {} }
+        impl T for *mut Foo { fn foo(self) {} }
+                                //X
+
+        fn main() {
+            let foo = &mut Foo {} as *mut Foo;
+            foo.foo();
+        }      //^
+    """)
 }
