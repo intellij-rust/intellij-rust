@@ -6,14 +6,13 @@
 package org.rust.ide.miscExtensions
 
 import com.intellij.psi.PsiElement
-import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
 import org.rust.ide.presentation.breadcrumbName
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.ext.RsCompositeElement
 
 
 @Suppress("DEPRECATION") // BACKCOMPAT 2017.1: change to `class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {`
-class RsBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
+class RsBreadcrumbsInfoProvider : com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider() {
     override fun getLanguages(): Array<RsLanguage> = LANGUAGES
 
     override fun acceptElement(e: PsiElement): Boolean =

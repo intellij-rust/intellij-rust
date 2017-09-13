@@ -15,7 +15,6 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.*
-import com.intellij.execution.runners.AsyncGenericProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
@@ -45,7 +44,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 @Suppress("DEPRECATION") //BACKCOMPAT: 2017.1 use `AsyncProgramRunner`
-class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
+class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<RunnerSettings>() {
     override fun getRunnerId(): String = "RsDebugRunner"
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
