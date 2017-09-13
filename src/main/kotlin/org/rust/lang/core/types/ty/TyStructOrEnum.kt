@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.type
 
 interface TyStructOrEnumBase : Ty {
@@ -46,6 +47,9 @@ class TyStruct private constructor(
     override fun superFoldWith(folder: TypeFolder): TyStruct =
         TyStruct(boundElement.foldWith(folder))
 
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
+        boundElement.visitWith(visitor)
+
     override fun equals(other: Any?): Boolean =
         other is TyStruct && boundElement == other.boundElement
 
@@ -77,6 +81,9 @@ class TyEnum private constructor(
 
     override fun superFoldWith(folder: TypeFolder): TyEnum =
         TyEnum(boundElement.foldWith(folder))
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
+        boundElement.visitWith(visitor)
 
     override fun equals(other: Any?): Boolean =
         other is TyEnum && boundElement == other.boundElement

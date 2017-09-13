@@ -8,6 +8,7 @@ package org.rust.lang.core.types.ty
 import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
 
 data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty {
 
@@ -23,6 +24,9 @@ data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty {
 
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyFunction(paramTypes.map { it.foldWith(folder) }, retType.foldWith(folder))
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
+        paramTypes.any(visitor) || retType.visitWith(visitor)
 
     override fun toString(): String = tyToString(this)
 }

@@ -18,6 +18,9 @@ sealed class Predicate: TypeFoldable<Predicate> {
     data class Trait(val trait: TraitRef) : Predicate() {
         override fun superFoldWith(folder: TypeFolder): Trait =
             Trait(trait.foldWith(folder))
+
+        override fun superVisitWith(visitor: TypeVisitor): Boolean =
+            trait.visitWith(visitor)
     }
 
     /** where <T as TraitRef>::Name == X */
@@ -30,6 +33,9 @@ sealed class Predicate: TypeFoldable<Predicate> {
         override fun superFoldWith(folder: TypeFolder): Projection =
             Projection(selfTy.foldWith(folder), trait, target, ty.foldWith(folder))
 
+        override fun superVisitWith(visitor: TypeVisitor): Boolean =
+            selfTy.visitWith(visitor) || ty.visitWith(visitor)
+
         override fun toString(): String =
             "<$selfTy as ${trait.name}>::${target.name} == $ty"
     }
@@ -38,6 +44,9 @@ sealed class Predicate: TypeFoldable<Predicate> {
     data class Equate(val ty1: Ty, val ty2: Ty) : Predicate() {
         override fun superFoldWith(folder: TypeFolder): Predicate =
             Equate(ty1.foldWith(folder), ty2.foldWith(folder))
+
+        override fun superVisitWith(visitor: TypeVisitor): Boolean =
+            ty1.visitWith(visitor) || ty2.visitWith(visitor)
 
         override fun toString(): String =
             "$ty1 == $ty2"
@@ -49,6 +58,9 @@ data class Obligation(val recursionDepth: Int, var predicate: Predicate): TypeFo
 
     override fun superFoldWith(folder: TypeFolder): Obligation =
         copy(predicate = predicate.foldWith(folder))
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
+        predicate.visitWith(visitor)
 }
 
 data class PendingPredicateObligation(val obligation: Obligation, val stalledOn: MutableList<Ty>)
