@@ -12,7 +12,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.ext.RsCompositeElement
 
 
-// BACKCOMPAT 2017.1: change to `class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {`
+@Suppress("DEPRECATION") // BACKCOMPAT 2017.1: change to `class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {`
 class RsBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     override fun getLanguages(): Array<RsLanguage> = LANGUAGES
 

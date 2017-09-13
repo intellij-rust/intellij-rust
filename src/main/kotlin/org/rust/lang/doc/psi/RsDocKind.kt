@@ -66,18 +66,16 @@ enum class RsDocKind {
      */
     abstract fun removeDecoration(lines: Sequence<String>): Sequence<String>
 
-    protected fun removeEolDecoration(lines: Sequence<String>, infix: String = this.infix): Sequence<String> =
-        lines.map { it.substringAfter(infix) }
-            .let { lines ->
-                // detect content indentation
-                val firstLineIndented = lines.first()
-                val firstLine = firstLineIndented.trimStart()
-                val indent = firstLineIndented.length - firstLine.length
+    protected fun removeEolDecoration(decoratedLines: Sequence<String>, infix: String = this.infix): Sequence<String> {
+        val lines = decoratedLines.map { it.substringAfter(infix) }
+        val firstLineIndented = lines.first()
+        val firstLine = firstLineIndented.trimStart()
+        val indent = firstLineIndented.length - firstLine.length
 
-                sequenceOf(firstLine) + lines.drop(1).map {
-                    it.dropWhileAtMost(indent) { it == ' ' }
-                }
-            }
+        return sequenceOf(firstLine) + lines.drop(1).map {
+            it.dropWhileAtMost(indent) { it == ' ' }
+        }
+    }
 
     protected fun removeBlockDecoration(lines: Sequence<String>): Sequence<String> {
         // Doing some patches we can "convert" block comment into eol one
@@ -103,11 +101,13 @@ enum class RsDocKind {
             else -> throw IllegalArgumentException("unsupported token type")
         }
 
-        private inline fun String.dropWhileAtMost(n: Int, predicate: (Char) -> Boolean): String {
+        private fun String.dropWhileAtMost(n: Int, predicate: (Char) -> Boolean): String {
             var i = n
-            for (index in this.indices)
-                if (i-- <= 0 || !predicate(this[index]))
+            for (index in this.indices) {
+                if (i-- <= 0 || !predicate(this[index])) {
                     return substring(index)
+                }
+            }
             return ""
         }
 

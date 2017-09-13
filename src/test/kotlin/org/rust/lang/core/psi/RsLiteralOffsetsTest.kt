@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi
 
+import com.intellij.lang.ASTNode
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import org.junit.Assert.assertEquals
@@ -21,11 +22,11 @@ import org.rust.lang.core.psi.RsElementTypes.RAW_STRING_LITERAL as RAW
 abstract class RsLiteralOffsetsTestCase(
     private val type: IElementType,
     private val text: String,
-    private val constructor: (IElementType, CharSequence) -> LiteralOffsets
+    private val constructor: (ASTNode) -> LiteralOffsets
 ) {
 
     protected fun doTest() {
-        val offsets = constructor(type, text.replace("|", ""))
+        val offsets = constructor(LeafPsiElement(type, text.replace("|", "")))
         val expected = makeOffsets(text)
         assertEquals(expected, offsets)
     }
@@ -46,14 +47,15 @@ abstract class RsLiteralOffsetsTestCase(
 class RsNumericLiteralOffsetsTest(
     type: IElementType,
     text: String
-) : RsLiteralOffsetsTestCase(type, text, { type, text -> offsetsForNumber(LeafPsiElement(type, text)) }) {
+) : RsLiteralOffsetsTestCase(type, text, ::offsetsForNumber) {
 
     @Test
     fun test() = doTest()
 
     companion object {
         @Parameterized.Parameters(name = "{index}: {1}")
-        @JvmStatic fun data(): Collection<Array<Any>> = listOf(
+        @JvmStatic
+        fun data(): Collection<Array<Any>> = listOf(
             arrayOf(INT, "||123||i32"),
             arrayOf(INT, "||0||u"),
             arrayOf(INT, "||0||"),
@@ -74,13 +76,14 @@ class RsNumericLiteralOffsetsTest(
 
 @RunWith(Parameterized::class)
 class RsStringLiteralOffsetsTest(type: IElementType, text: String) :
-    RsLiteralOffsetsTestCase(type, text, { type, text -> offsetsForText(LeafPsiElement(type, text)) }) {
+    RsLiteralOffsetsTestCase(type, text, ::offsetsForText) {
     @Test
     fun test() = doTest()
 
     companion object {
         @Parameterized.Parameters(name = "{index}: {1}")
-        @JvmStatic fun data(): Collection<Array<Any>> = listOf(
+        @JvmStatic
+        fun data(): Collection<Array<Any>> = listOf(
             arrayOf(CHR, "|'|a|'|suf"),
             arrayOf(BCH, "b|'|a|'|"),
             arrayOf(BCH, "b|'|a|'|suf"),
@@ -98,13 +101,14 @@ class RsStringLiteralOffsetsTest(type: IElementType, text: String) :
 
 @RunWith(Parameterized::class)
 class RsRawStringLiteralOffsetsTest(type: IElementType, text: String) :
-    RsLiteralOffsetsTestCase(type, text, { type, text -> offsetsForText(LeafPsiElement(type, text)) }) {
+    RsLiteralOffsetsTestCase(type, text, ::offsetsForText) {
     @Test
     fun test() = doTest()
 
     companion object {
         @Parameterized.Parameters(name = "{index}: {1}")
-        @JvmStatic fun data(): Collection<Array<Any>> = listOf(
+        @JvmStatic
+        fun data(): Collection<Array<Any>> = listOf(
             arrayOf(RAW, "r|\"|a|\"|suf"),
             arrayOf(BRW, "br|\"|a|\"|suf"),
             arrayOf(RAW, "r|\"|a|\"|"),
