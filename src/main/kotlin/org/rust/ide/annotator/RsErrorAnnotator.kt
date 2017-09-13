@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiReference
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
@@ -22,10 +21,9 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsMembersImpl
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
-import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyUnit
-import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
@@ -39,7 +37,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitStructItem(o: RsStructItem) = checkDuplicates(holder, o)
             override fun visitEnumItem(o: RsEnumItem) = checkDuplicates(holder, o)
             override fun visitEnumVariant(o: RsEnumVariant) = checkDuplicates(holder, o)
-            override fun visitFunction(o: RsFunction) = checkDuplicates(holder, o)
+            override fun visitFunction(o: RsFunction) = checkFunction(holder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(holder, o)
             override fun visitLifetime(o: RsLifetime) = checkLifetime(holder, o)
@@ -319,6 +317,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                     + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
                     + " ${pluralise(realCount, "was", "were")} supplied [E0061]")
         }
+    }
+
+    private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
+        for (it in fn.inference.diagnostics) {
+            it.addToHolder(holder)
+        }
+        checkDuplicates(holder, fn)
     }
 
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {

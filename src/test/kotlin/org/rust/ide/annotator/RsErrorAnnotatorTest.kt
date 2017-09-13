@@ -960,4 +960,50 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         use foo::Bar;
     """)
 
+    fun `test type mismatch E0308 primitive`() = checkErrors("""
+        fn main () {
+            let _: u8 = <error>1u16</error>;
+        }
+    """)
+
+    fun `test type mismatch E0308 struct`() = checkErrors("""
+        struct X; struct Y;
+        fn main () {
+            let _: X = <error>Y</error>;
+        }
+    """)
+
+    fun `test type mismatch E0308 tuple`() = checkErrors("""
+        fn main () {
+            let _: (u8, ) = (<error>1u16</error>, );
+        }
+    """)
+
+    // TODO error should be more local
+    fun `test type mismatch E0308 array`() = checkErrors("""
+        fn main () {
+            let _: [u8; 1] = <error>[1u16]</error>;
+        }
+    """)
+
+    fun `test type mismatch E0308 array size`() = checkErrors("""
+        fn main () {
+            let _: [u8; 1] = <error>[1, 2]</error>;
+        }
+    """)
+
+    fun `test type mismatch E0308 struct field`() = checkErrors("""
+        struct S { f: u8 }
+        fn main () {
+            S { f: <error>1u16</error> };
+        }
+    """)
+
+    fun `test type mismatch E0308 function parameter`() = checkErrors("""
+        fn foo(_: u8) {}
+        fn main () {
+            foo(<error>1u16</error>)
+        }
+    """)
+
 }
