@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
 
 class TyTypeParameter private constructor(
@@ -69,6 +70,9 @@ class TyTypeParameter private constructor(
         }
         return super.superFoldWith(folder)
     }
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
+        (parameter as? AssociatedType)?.type?.visitWith(visitor) ?: false
 
     val name: String? get() = parameter.name
 

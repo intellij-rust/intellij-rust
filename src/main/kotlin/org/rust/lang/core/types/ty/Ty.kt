@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
 
 typealias Substitution = Map<TyTypeParameter, Ty>
@@ -34,6 +35,10 @@ interface Ty: TypeFoldable<Ty> {
     override fun foldWith(folder: TypeFolder): Ty = folder(this)
 
     override fun superFoldWith(folder: TypeFolder): Ty = this
+
+    override fun visitWith(visitor: TypeVisitor): Boolean = visitor(this)
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean = false
 
     /**
      * Bindings between formal type parameters and actual type arguments.

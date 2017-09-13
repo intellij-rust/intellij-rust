@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.get
@@ -21,6 +22,9 @@ import org.rust.lang.core.types.ty.get
 data class TraitRef(val selfTy: Ty, val trait: BoundElement<RsTraitItem>): TypeFoldable<TraitRef> {
     override fun superFoldWith(folder: TypeFolder): TraitRef =
         TraitRef(selfTy.foldWith(folder), trait.foldWith(folder))
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
+        selfTy.visitWith(visitor) || trait.visitWith(visitor)
 
     override fun toString(): String {
         val (item, subst) = trait

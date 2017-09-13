@@ -156,7 +156,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
     """)
 
     fun `test let some from mutable reference`() = checkByText("""
-        fn foo(optional: Option<&mut Vec<String>>) {
+        fn foo(optional: Option<&mut String>) {
             if let Some(x) = optional {
                 *x = "str".to_string();
             }

@@ -14,6 +14,7 @@ import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.RsDiagnostic
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
@@ -30,7 +31,8 @@ fun inferTypesIn(fn: RsFunction): RsInferenceResult =
  */
 class RsInferenceResult(
     private val bindings: Map<RsPatBinding, Ty>,
-    private val exprTypes: Map<RsExpr, Ty>
+    private val exprTypes: Map<RsExpr, Ty>,
+    val diagnostics: List<RsDiagnostic>
 ) {
     fun getExprType(expr: RsExpr): Ty =
         exprTypes[expr] ?: TyUnknown
@@ -48,6 +50,7 @@ class RsInferenceResult(
 class RsInferenceContext {
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
+    val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger.Kind> =
         UnificationTable()
@@ -70,7 +73,7 @@ class RsInferenceContext {
             bindings.replaceAll { _, ty -> fullyResolve(ty) }
         }
 
-        return RsInferenceResult(bindings, exprTypes)
+        return RsInferenceResult(bindings, exprTypes, diagnostics)
     }
 
     private fun extractParameterBindings(fn: RsFunction) {
@@ -99,10 +102,14 @@ class RsInferenceContext {
         if (pattern != null) bindings += collectBindings(pattern, baseType)
     }
 
-    fun combineTypes(ty1: Ty, ty2: Ty) {
+    fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
+        diagnostics.add(RsDiagnostic.TypeError(expr, expected, actual))
+    }
+
+    fun combineTypes(ty1: Ty, ty2: Ty): Boolean {
         val ty1 = shallowResolve(ty1)
         val ty2 = shallowResolve(ty2)
-        when {
+        return when {
             ty1 is TyInfer.TyVar -> combineTyVar(ty1, ty2)
             ty2 is TyInfer.TyVar -> combineTyVar(ty2, ty1)
             else -> when {
@@ -113,14 +120,15 @@ class RsInferenceContext {
         }
     }
 
-    private fun combineTyVar(inner1: TyInfer.TyVar, ty2: Ty) {
+    private fun combineTyVar(inner1: TyInfer.TyVar, ty2: Ty): Boolean {
         when (ty2) {
             is TyInfer.TyVar -> varUnificationTable.unifyVarVar(inner1, ty2)
             else -> varUnificationTable.unifyVarValue(inner1, ty2)
         }
+        return true
     }
 
-    private fun combineIntOrFloatVar(ty1: TyInfer, ty2: Ty) {
+    private fun combineIntOrFloatVar(ty1: TyInfer, ty2: Ty): Boolean {
         when (ty1) {
             is TyInfer.IntVar -> when (ty2) {
                 is TyInfer.IntVar -> intUnificationTable.unifyVarVar(ty1, ty2)
@@ -132,12 +140,13 @@ class RsInferenceContext {
             }
             is TyInfer.TyVar -> error("unreachable")
         }
+        return true
     }
 
-    private fun combineTypesNoVars(ty1: Ty, ty2: Ty) {
-        when {
-            ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> {}
-            ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> {}
+    private fun combineTypesNoVars(ty1: Ty, ty2: Ty): Boolean {
+        return when {
+            ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> true
+            ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> true
             ty1 is TyReference && ty2 is TyReference && ty1.mutability == ty2.mutability -> {
                 combineTypes(ty1.referenced, ty2.referenced)
             }
@@ -146,19 +155,25 @@ class RsInferenceContext {
             }
             ty1 is TyArray && ty2 is TyArray && ty1.size == ty2.size -> combineTypes(ty1.base, ty2.base)
             ty1 is TySlice && ty2 is TySlice -> combineTypes(ty1.elementType, ty2.elementType)
-            ty1 is TyTuple && ty2 is TyTuple -> ty1.types.zip(ty2.types).forEach { (t1, t2) -> combineTypes(t1, t2) }
-            ty1 is TyFunction && ty2 is TyFunction -> {
-                ty1.paramTypes.zip(ty2.paramTypes).forEach { (t1, t2) -> combineTypes(t1, t2) }
-                combineTypes(ty1.retType, ty2.retType)
+            ty1 is TyTuple && ty2 is TyTuple -> combinePairs(ty1.types.zip(ty2.types))
+            ty1 is TyFunction && ty2 is TyFunction && ty1.paramTypes.size == ty2.paramTypes.size -> {
+                combinePairs(ty1.paramTypes.zip(ty2.paramTypes)) && combineTypes(ty1.retType, ty2.retType)
             }
             ty1 is TyStructOrEnumBase && ty2 is TyStructOrEnumBase && ty1.item == ty2.item -> {
-                zipValuesForEach(ty1.typeParameterValues, ty2.typeParameterValues) { v1, v2 ->
-                    combineTypes(v1, v2)
-                }
+                combinePairs(zipValues(ty1.typeParameterValues, ty2.typeParameterValues))
             }
-            ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> {}
-            else -> {} // TODO report type mismatch
+            ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> true
+            ty1 is TyNever || ty2 is TyNever -> true
+            else -> false
         }
+    }
+
+    private fun combinePairs(pairs: List<Pair<Ty, Ty>>): Boolean {
+        var canUnify = true
+        for ((t1, t2) in pairs) {
+            canUnify = combineTypes(t1, t2) && canUnify
+        }
+        return canUnify
     }
 
     fun shallowResolve(ty: Ty): Ty {
@@ -281,19 +296,46 @@ private class RsFnInferenceContext(
 
     private fun RsExpr.inferTypeCoercableTo(expected: Ty): Ty {
         val inferred = inferType(expected)
-        coerce(inferred, expected)
+        coerce(this, inferred, expected)
         return inferred
     }
 
-    private fun coerce(inferred: Ty, expected: Ty) {
+    private fun coerce(expr: RsExpr, inferred: Ty, expected: Ty) {
+        val ok = tryCoerce(inferred, expected)
+        if (!ok) {
+            val expected = ctx.resolveTypeVarsIfPossible(expected)
+            val inferred = ctx.resolveTypeVarsIfPossible(inferred)
+            // ignoring possible false-positives (it's only basic experimental type checking)
+            val ignoredTys = listOf(
+                TyUnknown::class.java,
+                TyInfer::class.java,
+                TyTypeParameter::class.java,
+                // TODO TyReference ignored because we actually ignore deref level on method call and so
+                // TODO sometimes substitute a wrong receiver. This should be fixed as soon as possible
+                TyReference::class.java,
+                TyTraitObject::class.java
+            )
+
+            if (!expected.containsTyOfClass(ignoredTys) && !inferred.containsTyOfClass(ignoredTys)) {
+                // another awful hack: check that inner expressions did not annotated as an error
+                // to disallow annotation intersections. This should be done in a different way
+                fun PsiElement.isChildOf(psi: PsiElement) = this.ancestors.contains(psi)
+                if (ctx.diagnostics.all { !it.element.isChildOf(expr) }) {
+                    ctx.reportTypeMismatch(expr, expected, inferred)
+                }
+            }
+        }
+    }
+
+    private fun tryCoerce(inferred: Ty, expected: Ty): Boolean {
         val inferred = resolveTypeVarsWithObligations(inferred)
         val expected = resolveTypeVarsWithObligations(expected)
-        when {
+        return when {
             inferred is TyReference && inferred.referenced is TyArray &&
                 expected is TyReference && expected.referenced is TySlice -> {
                 ctx.combineTypes(inferred.referenced.base, expected.referenced.elementType)
             }
-            // TODO trait object unsizing
+        // TODO trait object unsizing
             else -> ctx.combineTypes(inferred, expected)
         }
     }
@@ -775,7 +817,7 @@ private class RsFnInferenceContext(
 
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)
-            if (expectedElemTy != null) coerce(elementType, expectedElemTy)
+            if (expectedElemTy != null) tryCoerce(elementType, expectedElemTy)
             elementType to elementTypes.size
         }
 
@@ -898,9 +940,8 @@ private fun unwrapParenExprs(expr: RsExpr): RsExpr {
     return expr
 }
 
-private inline fun <K, V1, V2> zipValuesForEach(map1: Map<K, V1>, map2: Map<K, V2>, action: (V1, V2) -> Unit) {
-    map1.forEach { (k, v) -> map2[k]?.let { action(v, it) } }
-}
+private fun <K, V1, V2> zipValues(map1: Map<K, V1>, map2: Map<K, V2>): List<Pair<V1, V2>> =
+    map1.mapNotNull { (k, v1) -> map2[k]?.let { v2 -> Pair(v1, v2) } }
 
 private fun <K, V> Map<K, V>.mergeReduce(other: Map<K, V>, reduce: (V, V) -> V): Map<K, V> {
     val result = LinkedHashMap<K, V>(this.size + other.size)

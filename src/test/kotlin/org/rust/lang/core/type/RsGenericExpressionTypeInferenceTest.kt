@@ -875,4 +875,15 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a
         } //^ S<X>
     """)
+
+    fun `test unification continued on type mismatch`() = testExpr("""
+        struct S<A, B>(A, B);
+        fn foo<T>(a: T, b: T) {}
+        struct X; struct Y;
+        fn main() {
+            let a = 0;
+            foo(S(X, a), S(Y, 1u8));
+            a
+        } //^ u8
+    """)
 }

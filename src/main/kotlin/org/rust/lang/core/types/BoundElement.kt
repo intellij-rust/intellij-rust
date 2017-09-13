@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.emptySubstitution
 import org.rust.lang.core.types.ty.foldValues
@@ -33,5 +34,8 @@ data class BoundElement<out E : RsCompositeElement>(
 
     fun foldWith(folder: TypeFolder) =
         BoundElement(element, this.subst.foldValues(folder))
+
+    fun visitWith(visitor: TypeVisitor): Boolean =
+        subst.values.any(visitor)
 }
 

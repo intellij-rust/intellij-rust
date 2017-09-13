@@ -11,6 +11,7 @@ import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyTypeParameter
 
 typealias TypeFolder = (Ty) -> Ty
+typealias TypeVisitor = (Ty) -> Boolean
 
 /**
  * Despite a scary name, [TypeFoldable] is a rather simple thing.
@@ -49,6 +50,12 @@ interface TypeFoldable<out Self> {
      * This method should be used only by a folder implementations internally.
      */
     fun superFoldWith(folder: TypeFolder): Self
+
+    /** Similar to [superVisitWith], but just visit types without folding */
+    fun visitWith(visitor: TypeVisitor): Boolean = superVisitWith(visitor)
+
+    /** Similar to [foldWith], but just visit types without folding */
+    fun superVisitWith(visitor: TypeVisitor): Boolean
 }
 
 /** Deeply replace any [TyInfer] with the function [folder] */
@@ -86,4 +93,10 @@ fun <T> TypeFoldable<T>.substitute(subst: Substitution): T =
     foldWith(object : TypeFolder {
         override fun invoke(ty: Ty): Ty =
             if (ty is TyTypeParameter) ty.substituteOld(subst) else ty.superFoldWith(this)
+    })
+
+fun <T> TypeFoldable<T>.containsTyOfClass(classes: List<Class<*>>): Boolean =
+    visitWith(object : TypeVisitor {
+        override fun invoke(ty: Ty): Boolean =
+            if (classes.any { it.isInstance(ty) }) true else ty.superVisitWith(this)
     })
