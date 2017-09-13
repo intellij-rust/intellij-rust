@@ -13,7 +13,11 @@ We use [bors](https://bors.tech/) to make sure master is always green. Common co
 * `bors r=username` to merge a PR on behalf of the user without r+ permissions
 * `bors delegate+` to grant the author of PR r+ right for this PR. 
 
-Don't forget to say "Thank you!" when merging pull requests! :) 
+Don't forget to say "Thank you!" when merging pull requests! :)
+
+Each non-stalled pull-request should be assigned to a reviewer, who should make
+sure that PR moves forward. However, anybody with r+ can accept any PR, if
+they are confident that the PR is in a good state.  
 
 ## Upgrades
 
