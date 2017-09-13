@@ -36,7 +36,6 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.utils.pathAsPath
 import java.nio.file.Path
 import java.util.*
 
@@ -91,8 +90,8 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         val doc = file.viewProvider.document
             ?: error("Can't find document for $file in Cargo check annotator")
 
-        for (topMessage in annotationResult.messages) {
-            val message = filterMessage(file, doc, topMessage.message) ?: continue
+        for ((topMessage) in annotationResult.messages) {
+            val message = filterMessage(file, doc, topMessage) ?: continue
             holder.createAnnotation(message.severity, message.textRange, message.message, message.htmlTooltip)
                 .apply {
                     problemGroup = ProblemGroup { message.message }
@@ -194,9 +193,7 @@ private fun filterMessage(file: PsiFile, document: Document, message: RustcMessa
             .map { "${it.level.capitalize()}: ${escapeHtml(it.message)}" }
             .forEach { add(it) }
 
-        this
-            .map { formatLine(it) }
-            .joinToString("<br>")
+        joinToString("<br>") { formatMessage(it) }
     }
 
 
@@ -211,17 +208,17 @@ private fun ErrorCode?.formatAsLink() =
     else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
 
 
-private fun formatLine(line: String): String {
+private fun formatMessage(message: String): String {
     data class Group(val isList: Boolean, val lines: ArrayList<String>)
 
     val (lastGroup, groups) =
-        line.split("\n").fold(
+        message.split("\n").fold(
             Pair(null as Group?, ArrayList<Group>()),
-            { (group: Group?, acc: ArrayList<Group>), line ->
-                val (isListItem, line) = if (line.startsWith("-")) {
-                    true to line.substring(2)
+            { (group: Group?, acc: ArrayList<Group>), lineWithPrefix ->
+                val (isListItem, line) = if (lineWithPrefix.startsWith("-")) {
+                    true to lineWithPrefix.substring(2)
                 } else {
-                    false to line
+                    false to lineWithPrefix
                 }
 
                 when {
@@ -238,9 +235,8 @@ private fun formatLine(line: String): String {
             })
     if (lastGroup != null && lastGroup.lines.isNotEmpty()) groups.add(lastGroup)
 
-    return groups
-        .map {
-            if (it.isList) "<ul>${it.lines.joinToString("<li>", "<li>")}</ul>"
-            else it.lines.joinToString("<br>")
-        }.joinToString()
+    return groups.joinToString {
+        if (it.isList) "<ul>${it.lines.joinToString("<li>", "<li>")}</ul>"
+        else it.lines.joinToString("<br>")
+    }
 }
