@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.RsFileStub
-import org.rust.lang.utils.findWithCache
+import org.rust.lang.utils.ProjectCache
 import org.rust.lang.utils.getElements
 
 class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
@@ -26,8 +26,9 @@ class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
         val KEY: StubIndexKey<String, RsNamedElement> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustNamedElementIndex")
 
+        private val derivableTraitsCache = ProjectCache<String, Collection<RsTraitItem>>("derivableTraitsCache")
         fun findDerivableTraits(project: Project, target: String): Collection<RsTraitItem> =
-            findWithCache(project, target) {
+            derivableTraitsCache.getOrPut(project, target) {
                 val stdTrait = STD_DERIVABLE_TRAITS[target]
                 getElements(KEY, target, project, GlobalSearchScope.allScope(project))
                     .mapNotNull { it as? RsTraitItem }
