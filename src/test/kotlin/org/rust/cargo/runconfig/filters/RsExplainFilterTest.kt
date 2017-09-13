@@ -6,7 +6,6 @@
 package org.rust.cargo.runconfig.filters
 
 import com.intellij.execution.filters.Filter
-import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RsTestBase
 
 class RsExplainFilterTest : RsTestBase() {
@@ -34,7 +33,7 @@ class RsExplainFilterTest : RsTestBase() {
 
     fun testNothingToSee() {
         val text = "src/lib.rs:57:17: 57:25 error: unable to infer enough type information about `_`; type annotations or generic parameter binding required [E0282]"
-        assertThat(filter.applyFilter(text, text.length)).isNull()
+        check(filter.applyFilter(text, text.length) == null)
     }
 
     private fun doTest(line: String, entireLength: Int, highlightingStartOffset: Int, highlightingEndOffset: Int) {
@@ -43,8 +42,8 @@ class RsExplainFilterTest : RsTestBase() {
         }
 
         val item = result.resultItems.single()
-        assertThat(item.getHighlightStartOffset()).isEqualTo(highlightingStartOffset)
-        assertThat(item.getHighlightEndOffset()).isEqualTo(highlightingEndOffset)
-        assertThat(item.getHyperlinkInfo()).isNotNull()
+        check(item.getHighlightStartOffset() == highlightingStartOffset)
+        check(item.getHighlightEndOffset() == highlightingEndOffset)
+        check(item.getHyperlinkInfo() != null)
     }
 }

@@ -6,7 +6,6 @@
 package org.rust.lang.core.parser
 
 import com.intellij.psi.PsiFile
-import org.assertj.core.api.Assertions.assertThat
 
 class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
@@ -49,9 +48,9 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
     override fun checkResult(targetDataName: String?, file: PsiFile?) {
         super.checkResult(targetDataName, file)
-        assertThat(hasError(file!!))
-            .withFailMessage("Error in well formed file ${file.name}")
-            .isFalse()
+        check(!hasError(file!!)){
+            "Error in well formed file ${file.name}"
+        }
     }
 
 }

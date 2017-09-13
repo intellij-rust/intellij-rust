@@ -8,7 +8,6 @@ package org.rust.ide.template.postfix
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
-import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
@@ -40,19 +39,15 @@ abstract class PostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTes
                 }
             }
 
-        Assertions.assertThat(
+        check(
             PostfixLiveTemplate.isApplicableTemplate(
                 provider,
                 postfixTemplate.key,
                 myFixture.file,
                 myFixture.editor
-            )
-        )
-            .withFailMessage(
-                "postfixTemplate %s be applicable to given case:\n\n%s",
-                if (isApplicable) "should" else "shouldn't",
-                testCase
-            )
-            .isEqualTo(isApplicable)
+            ) == isApplicable
+        ) {
+            "postfixTemplate ${if (isApplicable) "should" else "shouldn't"} be applicable to given case:\n\n$testCase"
+        }
     }
 }

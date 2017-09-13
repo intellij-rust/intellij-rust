@@ -106,7 +106,6 @@ project(":") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
-        testCompile("org.assertj:assertj-core:3.2.0")
     }
 
     java.sourceSets {

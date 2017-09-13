@@ -7,7 +7,6 @@ package org.rust.ide.hints
 
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.PsiElement
-import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
@@ -184,7 +183,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
 
-    fun `test inlay hint for loops`() =checkByText<RsForExpr>("""
+    fun `test inlay hint for loops`() = checkByText<RsForExpr>("""
         trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
         struct S;
         struct I;
@@ -224,7 +223,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         val handler = RsInlayParameterHintsProvider()
         val target = findElementInEditor<T>("^")
         val inlays = handler.getParameterHints(target)
-        Assertions.assertThat(inlays.size).isEqualTo(0)
+        check(inlays.isEmpty())
     }
 
     inline private fun <reified T : PsiElement> checkByText(@Language("Rust") code: String, hint: String, pos: Int) {
@@ -235,8 +234,8 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             check(pos < inlays.size) {
                 "Expected at least ${pos + 1} hints, got ${inlays.map { it.text }}"
             }
-            Assertions.assertThat(inlays[pos].text).isEqualTo(hint)
-            Assertions.assertThat(inlays[pos].offset).isEqualTo(myFixture.editor.caretModel.offset)
+            check(inlays[pos].text == hint)
+            check(inlays[pos].offset == myFixture.editor.caretModel.offset)
         }
     }
 }

@@ -6,7 +6,6 @@
 package org.rust.lang.core.ext
 
 import com.intellij.psi.PsiFileFactory
-import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.ide.presentation.presentationInfo
 import org.rust.ide.presentation.shortPresentableText
@@ -26,7 +25,7 @@ class RsPsiStructureTest : RsTestBase() {
 
     fun `test function role free`() = checkFunctionOwner({ it is RsFunctionOwner.Free }, "fn main() {}")
     fun `test function role foreign`() = checkFunctionOwner({ it is RsFunctionOwner.Foreign }, "extern { fn foo(); }")
-    fun `test function role trait method`() = checkFunctionOwner({ it is RsFunctionOwner.Trait}, "trait S { fn foo() {} }")
+    fun `test function role trait method`() = checkFunctionOwner({ it is RsFunctionOwner.Trait }, "trait S { fn foo() {} }")
     fun `test function role inherent impl method`() =
         checkFunctionOwner({ it is RsFunctionOwner.Impl && it.isInherentImpl }, "impl S { fn foo() {} }")
 
@@ -117,8 +116,7 @@ class RsPsiStructureTest : RsTestBase() {
     fun testShortTypeExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()
-            Assertions.assertThat(expr.type.shortPresentableText)
-                .isEqualTo(expectedType)
+        check(expr.type.shortPresentableText == expectedType)
     }
 
     fun `test extern crate presentation info`() = checkElement<RsExternCrateItem>("""

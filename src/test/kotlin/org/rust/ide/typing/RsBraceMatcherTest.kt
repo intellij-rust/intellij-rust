@@ -8,7 +8,6 @@ package org.rust.ide.typing
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil.getMatchedBraceOffset
 import com.intellij.openapi.editor.ex.EditorEx
-import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 
@@ -57,7 +56,7 @@ class RsBraceMatcherTest : RsTestBase() {
 
             val pairOffset = try {
                 BraceMatchingUtil.getMatchedBraceOffset(myFixture.editor, forward, myFixture.file)
-            } catch(e: AssertionError) {
+            } catch (e: AssertionError) {
                 error("Failed to find a pair for `$brace` in `${parent.text}`")
             }
             check(text[pairOffset] == coBrace)
@@ -80,13 +79,13 @@ class RsBraceMatcherTest : RsTestBase() {
         val editorHighlighter = (myFixture.editor as EditorEx).highlighter
         val iterator = editorHighlighter.createIterator(myFixture.editor.caretModel.offset)
         val matched = BraceMatchingUtil.matchBrace(myFixture.editor.document.charsSequence, myFixture.file.fileType, iterator, true)
-        assertThat(matched).`as`(source).isFalse()
+        check(!matched)
     }
 
     private fun doMatch(source: String, coBrace: String) {
         myFixture.configureByText(RsFileType, source)
-        assertThat(getMatchedBraceOffset(myFixture.editor, true, myFixture.file))
-            .isEqualTo(source.replace("<caret>", "").lastIndexOf(coBrace))
+        val expected = source.replace("<caret>", "").lastIndexOf(coBrace)
+        check(getMatchedBraceOffset(myFixture.editor, true, myFixture.file) == expected)
     }
 
     private fun doTest(before: String, type: Char, after: String) {

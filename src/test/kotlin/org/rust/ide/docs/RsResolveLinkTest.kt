@@ -6,7 +6,6 @@
 package org.rust.ide.docs
 
 import com.intellij.psi.PsiManager
-import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -84,6 +83,6 @@ class RsResolveLinkTest : RsTestBase() {
         val expectedElement = findElementInEditor<RsNamedElement>("X")
         val actualElement = RsDocumentationProvider()
             .getDocumentationElementForLink(PsiManager.getInstance(project), link, context)
-        Assertions.assertThat(actualElement).isEqualTo(expectedElement)
+        check(actualElement == expectedElement)
     }
 }

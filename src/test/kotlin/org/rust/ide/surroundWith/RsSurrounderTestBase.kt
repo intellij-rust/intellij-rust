@@ -9,14 +9,12 @@ import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler
 import com.intellij.lang.LanguageSurrounders
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.command.WriteCommandAction
-import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
-import java.util.*
 
-abstract class RsSurrounderTestBase(val surrounder: Surrounder) : RsTestBase() {
+abstract class RsSurrounderTestBase(private val surrounder: Surrounder) : RsTestBase() {
     protected fun doTest(@Language("Rust") before: String,
                          @Language("Rust") after: String,
                          checkSyntaxErrors: Boolean = true) {
@@ -51,13 +49,10 @@ abstract class RsSurrounderTestBase(val surrounder: Surrounder) : RsTestBase() {
         val elements = descriptor.getElementsToSurround(
             myFixture.file, selectionModer.selectionStart, selectionModer.selectionEnd)
 
-        assertThat(surrounder.isApplicable(elements))
-            .withFailMessage(
-                "surrounder %s be applicable to given selection:\n\n%s\nElements: %s",
-                if (isApplicable) "should" else "shouldn't",
-                testCase,
-                Arrays.toString(elements)
-            )
-            .isEqualTo(isApplicable)
+        check(surrounder.isApplicable(elements) == isApplicable) {
+            "surrounder ${if (isApplicable) "should" else "shouldn't"} be applicable to given selection:\n\n" +
+                "$testCase\n" +
+                "Elements: ${elements.toList()}"
+        }
     }
 }

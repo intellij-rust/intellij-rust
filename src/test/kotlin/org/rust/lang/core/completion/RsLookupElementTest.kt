@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -97,8 +96,8 @@ class RsLookupElementTest : RsTestBase() {
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
-        assertThat(presentation.icon).isNotNull()
-        assertThat(presentation.itemText).isEqualTo("foo")
+        check(presentation.icon != null)
+        check(presentation.itemText == "foo")
     }
 
     private fun check(@Language("Rust") code: String, tailText: String? = null, typeText: String? = null) {
@@ -108,9 +107,8 @@ class RsLookupElementTest : RsTestBase() {
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
-        assertThat(presentation.icon).isNotNull()
-        assertThat(presentation.tailText).isEqualTo(tailText)
-        assertThat(presentation.typeText).isEqualTo(typeText)
+        check(presentation.icon != null)
+        check(presentation.tailText == tailText)
+        check(presentation.typeText == typeText)
     }
-
 }
