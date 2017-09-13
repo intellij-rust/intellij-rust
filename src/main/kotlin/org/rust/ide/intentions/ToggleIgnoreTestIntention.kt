@@ -29,13 +29,13 @@ class ToggleIgnoreTestIntention: RsElementBaseIntentionAction<ToggleIgnoreTestIn
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val ignore = ctx.element.findOuterAttr("ignore")
-        if (ignore == null) {
+        val existingIgnore = ctx.element.findOuterAttr("ignore")
+        if (existingIgnore == null) {
             val ignore = RsPsiFactory(project).createOuterAttr("ignore")
             val test = ctx.element.findOuterAttr("test")
             ctx.element.addBefore(ignore, test)
         } else {
-            ignore.delete()
+            existingIgnore.delete()
         }
     }
 }

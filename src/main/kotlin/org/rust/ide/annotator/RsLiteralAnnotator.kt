@@ -39,15 +39,13 @@ class RsLiteralAnnotator : Annotator {
         }
 
         // Check char literal length
-        when (literal) {
-            is RsLiteralKind.Char -> {
-                val value = literal.value
-                when {
-                    value == null || value.isEmpty() -> "empty ${literal.node.displayName}"
-                    value.codePointCount(0, value.length) > 1 -> "too many characters in ${literal.node.displayName}"
-                    else -> null
-                }?.let { holder.createErrorAnnotation(element, it) }
-            }
+        if (literal is RsLiteralKind.Char) {
+            val value = literal.value
+            when {
+                value == null || value.isEmpty() -> "empty ${literal.node.displayName}"
+                value.codePointCount(0, value.length) > 1 -> "too many characters in ${literal.node.displayName}"
+                else -> null
+            }?.let { holder.createErrorAnnotation(element, it) }
         }
 
         // Check delimiters
