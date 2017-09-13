@@ -51,9 +51,9 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                     .create("else")
                     .bold()
                     .withTailText(" {...}")
-                    .withInsertHandler { context, _ ->
-                        context.document.insertString(context.selectionEndOffset, " {  }")
-                        EditorModificationUtil.moveCaretRelatively(context.editor, 3)
+                    .withInsertHandler { ctx, _ ->
+                        ctx.document.insertString(ctx.selectionEndOffset, " {  }")
+                        EditorModificationUtil.moveCaretRelatively(ctx.editor, 3)
 
                     }
 

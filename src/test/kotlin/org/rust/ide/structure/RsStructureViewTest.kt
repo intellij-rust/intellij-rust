@@ -246,7 +246,7 @@ class RsStructureViewTest : RsTestBase() {
         pub struct Foo;
     """, "Foo", true)
 
-    private inline fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
+    private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
         myFixture.configureByText("main.rs", code)
         val psi = myFixture.file.children.mapNotNull { it as? RsCompositeElement }.first()
         val data = getPresentationForStructure(psi)
