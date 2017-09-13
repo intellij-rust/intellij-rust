@@ -17,7 +17,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
-import org.rust.lang.utils.findWithCache
+import org.rust.lang.utils.ProjectCache
 import kotlin.LazyThreadSafetyMode.NONE
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
@@ -38,8 +38,9 @@ val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.val
 
 private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
 
-private val RsTraitItem.typeParamSingle: TyTypeParameter? get() =
-    typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
+private val RsTraitItem.typeParamSingle: TyTypeParameter?
+    get() =
+        typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
 
 class ImplLookup(private val project: Project, private val items: StdKnownItems) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
@@ -56,10 +57,8 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     }
 
     fun findImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
-        if (ty is TyTypeParameter) {
-            return ty.getTraitBoundsTransitively()
-        }
-        return findWithCache(project, ty) { rawFindImplsAndTraits(ty) }
+        if (ty is TyTypeParameter) return ty.getTraitBoundsTransitively()
+        return findImplsAndTraitsCache.getOrPut(project, ty) { rawFindImplsAndTraits(ty) }
     }
 
     private fun rawFindImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
@@ -252,17 +251,21 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return ref.asFunctionType
     }
 
-    private val BoundElement<RsTraitItem>.asFunctionType: TyFunction? get() {
-        val outputParam = fnOutputParam ?: return null
-        val param = element.typeParamSingle ?: return null
-        val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
-        val outputType = (subst[outputParam] ?: TyUnit)
-        return TyFunction(argumentTypes, outputType)
-    }
+    private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
+        get() {
+            val outputParam = fnOutputParam ?: return null
+            val param = element.typeParamSingle ?: return null
+            val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
+            val outputType = (subst[outputParam] ?: TyUnit)
+            return TyFunction(argumentTypes, outputType)
+        }
 
     companion object {
         fun relativeTo(psi: RsCompositeElement): ImplLookup =
             ImplLookup(psi.project, StdKnownItems.relativeTo(psi))
+
+        private val findImplsAndTraitsCache =
+            ProjectCache<Ty, Collection<BoundElement<RsTraitOrImpl>>>("findImplsAndTraitsCache")
     }
 }
 

@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
@@ -12,7 +13,7 @@ import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.getTypeParameter
-import org.rust.lang.utils.findWithCache
+import org.rust.lang.utils.ProjectCache
 import java.util.*
 
 class StdKnownItems private constructor(private val absolutePathResolver: (String, String) -> RsNamedElement?) {
@@ -80,6 +81,9 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
         findCoreItem("cmp::Ord") as? RsTraitItem
 
     companion object {
+        private val stdKnownItemsCache =
+            ProjectCache<Pair<CargoWorkspace, String>, Optional<RsNamedElement>>("stdKnownItemsCache")
+
         fun relativeTo(psi: RsCompositeElement): StdKnownItems {
             val project = psi.project
             val workspace = psi.cargoWorkspace ?: return StdKnownItems { _, _ -> null }
@@ -90,7 +94,7 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
                 val prefix = if (useStdPrefix) "std" else prefixNoStd
                 val path = "$prefix::$name"
                 val key = workspace to path
-                findWithCache(project, key) {
+                stdKnownItemsCache.getOrPut(project, key) {
                     Optional.ofNullable(resolveStringPath(path, workspace, project)?.first)
                 }.orElse(null)
             }
