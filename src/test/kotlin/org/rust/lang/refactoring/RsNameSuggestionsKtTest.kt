@@ -5,7 +5,6 @@
 
 package org.rust.lang.refactoring
 
-import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFile
@@ -22,7 +21,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             foo(4, 10/*caret*/)
         }
     """) {
-        assertThat(it).containsExactly("i", "name", "variable_name", "cool_variable_name", "very_cool_variable_name")
+        checkSuggestions(it, "i", "name", "variable_name", "cool_variable_name", "very_cool_variable_name")
     }
 
     fun testNonDirectArgumentNames() = doTest("""
@@ -34,7 +33,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             foo(4, 1/*caret*/0 + 2)
         }
     """) {
-        assertThat(it).containsExactly("i")
+        checkSuggestions(it, "i")
     }
 
 
@@ -47,7 +46,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             f/*caret*/oo(4, 10 + 2)
         }
     """) {
-        assertThat(it).containsExactly("i", "foo")
+        checkSuggestions(it, "i", "foo")
     }
 
     fun testStringNew() = doTest("""
@@ -56,7 +55,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
 
             file.read_to_string(&mut String:/*caret*/:new())?;
     }""") {
-        assertThat(it).containsExactly("string", "new")
+        checkSuggestions(it, "string", "new")
     }
 
     fun testLocalNames() = doTest("""
@@ -65,7 +64,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             let b = String:/*caret*/:new();
         }
     """) {
-        assertThat(it).containsExactly("new")
+        checkSuggestions(it, "new")
     }
 
     fun testFunctionCallAsArgument() = doTest("""
@@ -75,7 +74,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             foo(Default::de/*caret*/fault());
         }
     """) {
-        assertThat(it).containsExactly("size", "board_size")
+        checkSuggestions(it, "size", "board_size")
     }
 
     fun testStructLiteral() = doTest("""
@@ -90,7 +89,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             }
         }
         """) {
-        assertThat(it).containsExactly("i", "baz")
+        checkSuggestions(it, "i", "baz")
     }
 
     fun testGenericPath() = doTest("""
@@ -108,7 +107,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             Foo:/*caret*/:<i32>::new(10)
         }
         """) {
-        assertThat(it).containsExactly("f", "foo", "new")
+        checkSuggestions(it, "f", "foo", "new")
     }
 
     private fun doTest(@Language("Rust") before: String, action: (Set<String>) -> Unit) {
@@ -117,5 +116,9 @@ class RsNameSuggestionsKtTest : RsTestBase() {
         val refactoring = RsIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RsFile)
         val expr = refactoring.possibleTargets().first()
         action(expr.suggestNames())
+    }
+
+    private fun checkSuggestions(actual: Set<String>, vararg expected: String) {
+        check(actual == expected.toSet())
     }
 }

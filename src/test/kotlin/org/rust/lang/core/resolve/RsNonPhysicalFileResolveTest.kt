@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import org.assertj.core.api.Assertions.assertThat
 import org.rust.lang.RsLanguage
 
 class RsNonPhysicalFileResolveTest : RsResolveTestBase() {
@@ -55,6 +54,6 @@ class RsNonPhysicalFileResolveTest : RsResolveTestBase() {
 
     private fun memoryOnlyFile(code: String): PsiFile =
         PsiFileFactory.getInstance(project).createFileFromText("foo.rs", RsLanguage, code, false, false).apply {
-            assertThat(this.containingFile.virtualFile).isNull()
+            check(this.containingFile.virtualFile == null)
         }
 }

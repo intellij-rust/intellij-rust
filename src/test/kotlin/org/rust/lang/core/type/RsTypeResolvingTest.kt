@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.type
 
-import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.types.type
@@ -198,8 +197,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         InlineFile(code)
         val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsTypeReference>()
 
-        assertThat(typeAtCaret.type.toString())
-            .isEqualTo(expectedType)
+        check(typeAtCaret.type.toString() == expectedType)
     }
 }
 

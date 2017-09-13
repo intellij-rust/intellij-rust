@@ -12,7 +12,6 @@ import com.intellij.execution.process.*
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import org.assertj.core.api.Assertions.assertThat
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
@@ -41,7 +40,7 @@ class RunConfigurationTestCase : RustWithToolchainTestBase() {
         val configuration = createConfiguration()
         val result = execute(configuration)
 
-        assertThat(result.stdout).contains("Hello, world!")
+        check("Hello, world!" in result.stdout)
     }
 
     private fun createConfiguration(): CargoCommandConfiguration {

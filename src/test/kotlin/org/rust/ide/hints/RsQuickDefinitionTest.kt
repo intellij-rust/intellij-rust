@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.assertj.core.api.Assertions
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
@@ -185,6 +184,6 @@ class RsQuickDefinitionTest : RsTestBase() {
             .dropWhile { it.isBlank() }
             .dropLastWhile { it.isBlank() }
             .joinToString("\n")
-        Assertions.assertThat(actualText).isEqualTo(expected)
+        check(actualText == expected)
     }
 }

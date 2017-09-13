@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
-import org.assertj.core.api.Assertions.assertThat
 
 class RsCompletionAutoPopupTest : RsCompletionTestBase() {
     private lateinit var tester: CompletionAutoPopupTester
@@ -32,7 +31,7 @@ class RsCompletionAutoPopupTest : RsCompletionTestBase() {
             }
         """)
         tester.typeWithPauses("::")
-        assertThat(tester.lookup).isNotNull()
+        check(tester.lookup != null)
     }
 
 }

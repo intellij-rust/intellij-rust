@@ -10,7 +10,6 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.assertj.core.api.Assertions
 import org.rust.lang.RsTestBase
 import java.util.*
 
@@ -32,7 +31,9 @@ abstract class HighlightFilterTestBase : RsTestBase() {
 
     protected fun checkNoHighlights(filter: Filter, text: String) {
         val items = filter.applyFilter(text, text.length)?.resultItems ?: return
-        Assertions.assertThat(items.size).isEqualTo(0)
+        check(items.size == 0) {
+            "Expected zero highlights, got $items"
+        }
     }
 
     protected fun checkHighlights(filter: Filter, before: String, after: String, lineIndex: Int = 0) {
@@ -52,7 +53,7 @@ abstract class HighlightFilterTestBase : RsTestBase() {
             checkText = checkText.replaceRange(range, "[$itemText]")
         }
         checkText = checkText.splitLinesKeepSeparators()[lineIndex]
-        Assertions.assertThat(checkText).isEqualTo(after)
+        check(checkText == after)
     }
 
     private fun String.splitLinesKeepSeparators() = split("(?<=\n)".toRegex())

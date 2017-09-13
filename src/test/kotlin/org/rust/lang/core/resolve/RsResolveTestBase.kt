@@ -6,8 +6,6 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.impl.PsiManagerEx
-import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
@@ -41,7 +39,7 @@ abstract class RsResolveTestBase : RsTestBase() {
 
         val target = findElementInEditor<RsNamedElement>("X")
 
-        assertThat(resolved).isEqualTo(target)
+        check(resolved == target)
     }
 
     protected fun stubOnlyResolve(@Language("Rust") code: String) {
