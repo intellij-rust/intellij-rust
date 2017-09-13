@@ -38,14 +38,13 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.util.cargoProjectRoot
 import org.rust.utils.GeneralCommandLine
 import org.rust.utils.pathAsPath
 import org.rust.utils.withWorkDirectory
 import java.nio.file.Path
 import java.nio.file.Paths
 
-//BACKCOMPAT: 2017.1 use `AsyncProgramRunner`
+@Suppress("DEPRECATION") //BACKCOMPAT: 2017.1 use `AsyncProgramRunner`
 class RsDebugRunner : AsyncGenericProgramRunner<RunnerSettings>() {
     override fun getRunnerId(): String = "RsDebugRunner"
 
@@ -148,7 +147,7 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
                             .mapNotNull {
                                 try {
                                     parser.parse(it)
-                                } catch(e: JsonSyntaxException) {
+                                } catch (e: JsonSyntaxException) {
                                     null
                                 }
                             }
