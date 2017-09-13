@@ -202,6 +202,22 @@ class RsCompletionTest : RsCompletionTestBase() {
         trait T { fn foo() -> Self/*caret*/ }
     """)
 
+    fun `test complete self method`() = doSingleCompletion("""
+        struct S;
+        impl S { fn foo(&se/*caret*/) {}}
+    """, """
+        struct S;
+        impl S { fn foo(&self/*caret*/) {}}
+    """)
+
+    fun `test complete self with double colon path method`() = doSingleCompletion("""
+        struct S;
+        impl S { fn foo(test: &se/*caret*/) {}}
+    """, """
+        struct S;
+        impl S { fn foo(test: &self::/*caret*/) {}}
+    """)
+
     fun `test struct field`() = doSingleCompletion("""
         struct S { foobarbaz: i32 }
         fn main() {
