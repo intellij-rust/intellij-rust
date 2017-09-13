@@ -107,8 +107,10 @@ class RsInferenceContext {
     }
 
     fun combineTypes(ty1: Ty, ty2: Ty): Boolean {
-        val ty1 = shallowResolve(ty1)
-        val ty2 = shallowResolve(ty2)
+        return combineTypesResolved(shallowResolve(ty1), shallowResolve(ty2))
+    }
+
+    private fun combineTypesResolved(ty1: Ty, ty2: Ty): Boolean {
         return when {
             ty1 is TyInfer.TyVar -> combineTyVar(ty1, ty2)
             ty2 is TyInfer.TyVar -> combineTyVar(ty2, ty1)
@@ -223,9 +225,9 @@ private class RsFnInferenceContext(
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
 
     private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
-        val ty = ctx.resolveTypeVarsIfPossible(ty)
+        val tyRes = ctx.resolveTypeVarsIfPossible(ty)
         selectObligationsWherePossible()
-        return ctx.resolveTypeVarsIfPossible(ty)
+        return ctx.resolveTypeVarsIfPossible(tyRes)
     }
 
     fun selectObligationsWherePossible() {
@@ -301,10 +303,12 @@ private class RsFnInferenceContext(
     }
 
     private fun coerce(expr: RsExpr, inferred: Ty, expected: Ty) {
+        coerceResolved(expr, resolveTypeVarsWithObligations(inferred), resolveTypeVarsWithObligations(expected))
+    }
+
+    private fun coerceResolved(expr: RsExpr, inferred: Ty, expected: Ty) {
         val ok = tryCoerce(inferred, expected)
         if (!ok) {
-            val expected = ctx.resolveTypeVarsIfPossible(expected)
-            val inferred = ctx.resolveTypeVarsIfPossible(inferred)
             // ignoring possible false-positives (it's only basic experimental type checking)
             val ignoredTys = listOf(
                 TyUnknown::class.java,
@@ -328,8 +332,6 @@ private class RsFnInferenceContext(
     }
 
     private fun tryCoerce(inferred: Ty, expected: Ty): Boolean {
-        val inferred = resolveTypeVarsWithObligations(inferred)
-        val expected = resolveTypeVarsWithObligations(expected)
         return when {
             inferred is TyReference && inferred.referenced is TyArray &&
                 expected is TyReference && expected.referenced is TySlice -> {
@@ -471,12 +473,12 @@ private class RsFnInferenceContext(
     }
 
     private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall): Ty {
-        val receiver = resolveTypeVarsWithObligations(receiver)
+        val receiverRes = resolveTypeVarsWithObligations(receiver)
         val argExprs = methodCall.valueArgumentList.exprList
-        val boundElement = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
+        val boundElement = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
             .firstOrNull()?.downcast<RsFunction>()
         val typeParameters = ((boundElement?.element as? RsGenericDeclaration)
-            ?.let { instantiateBounds(it, boundElement?.subst ?: emptyMap(), receiver) }
+            ?.let { instantiateBounds(it, boundElement?.subst ?: emptyMap(), receiverRes) }
             ?: emptyMap())
 
         boundElement?.subst?.forEach { (k, v1) ->
@@ -933,11 +935,11 @@ private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =
     this + generateSequence { TyUnknown }
 
 private fun unwrapParenExprs(expr: RsExpr): RsExpr {
-    var expr = expr
-    while (expr is RsParenExpr) {
-        expr = expr.expr
+    var child = expr
+    while (child is RsParenExpr) {
+        child = child.expr
     }
-    return expr
+    return child
 }
 
 private fun <K, V1, V2> zipValues(map1: Map<K, V1>, map2: Map<K, V2>): List<Pair<V1, V2>> =
