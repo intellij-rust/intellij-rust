@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.actions
+package org.rust.ide.actions.mover
 
 import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
-abstract class RsBaseUpDownMoverTest : RsTestBase() {
+abstract class RsStatementUpDownMoverTestBase : RsTestBase() {
     fun moveBothDirectionTest(@Language("Rust") down: String, @Language("Rust") up: String) {
         checkByText(up, down) {
             myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
