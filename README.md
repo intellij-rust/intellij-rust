@@ -1,6 +1,7 @@
 # Rust plugin for the IntelliJ Platform
 
 [![official JetBrains project](http://jb.gg/badges/official-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 
 
 | Build Status |                                                                              |
@@ -11,7 +12,6 @@
 | Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]       |
 | AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status] |
 
-[![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 
 ## Status
 
