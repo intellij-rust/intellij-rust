@@ -37,5 +37,8 @@ class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
                         e.containingCargoPackage?.origin == PackageOrigin.STDLIB && e.containingMod.modName == stdTrait.modName
                     }
             }
+
+        fun findElementsByName(project: Project, target: String): Collection<RsNamedElement> =
+            getElements(KEY, target, project, GlobalSearchScope.allScope(project))
     }
 }
