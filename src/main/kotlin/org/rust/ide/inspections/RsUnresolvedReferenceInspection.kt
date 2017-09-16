@@ -20,9 +20,9 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
             override fun visitPath(o: RsPath) {
                 if (TyPrimitive.fromPath(o) != null || o.reference.resolve() != null) return
 
-                val parent = o.path ?: return
-                val parentRes = parent.reference.resolve()
-                if (parentRes is RsMod || parentRes is RsEnumItem) {
+                val parent = o.path
+                val parentRes = parent?.reference?.resolve()
+                if (parent == null || parentRes is RsMod || parentRes is RsEnumItem) {
                     holder.registerProblem(o.navigationElement, "Unresolved reference")
                 }
             }
