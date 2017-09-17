@@ -16,7 +16,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()
 
         check(expr.type.toString() == expectedType) {
-            description
+            "Type mismatch. Expected: $expectedType, found: ${expr.type}. $description"
         }
     }
 }
