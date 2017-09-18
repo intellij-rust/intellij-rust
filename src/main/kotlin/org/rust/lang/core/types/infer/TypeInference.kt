@@ -343,10 +343,17 @@ private class RsFnInferenceContext(
     }
 
     fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
-        return when (expr.kind) {
+        val kind = expr.kind
+        return when (kind) {
             is RsLiteralKind.Boolean -> TyBool
-            is RsLiteralKind.Char -> TyChar
-            is RsLiteralKind.String -> TyReference(TyStr, IMMUTABLE)
+            is RsLiteralKind.Char -> if (kind.isByte) TyInteger(TyInteger.Kind.u8) else TyChar
+            is RsLiteralKind.String -> {
+                if (kind.isByte) {
+                    TyReference(TyArray(TyInteger(TyInteger.Kind.u8), kind.offsets.value?.length ?: 0), IMMUTABLE)
+                } else {
+                    TyReference(TyStr, IMMUTABLE)
+                }
+            }
             is RsLiteralKind.Integer -> {
                 val ty = TyInteger.fromSuffixedLiteral(expr.integerLiteral!!)
                 ty ?: when (expected) {

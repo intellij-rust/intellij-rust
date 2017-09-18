@@ -253,6 +253,20 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun testByteChar() = testExpr("""
+        fn main() {
+            let a = b'A';
+                    //^ u8
+        }
+    """)
+
+    fun testByteStr() = testExpr("""
+        fn main() {
+            let a = b"ABC";
+                    //^ &[u8; 3]
+        }
+    """)
+
     fun testStrRef() = testExpr("""
         fn main() {
             let a = "Hello";
