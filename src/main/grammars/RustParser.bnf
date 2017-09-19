@@ -986,6 +986,7 @@ MacroDefinition ::= AttrsAndVis "macro_rules" '!' identifier MacroDefinitionBody
   extends = "org.rust.lang.core.psi.ext.RsMacroDefinitionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroDefinitionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   pin = 2
 }
 

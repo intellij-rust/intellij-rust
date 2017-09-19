@@ -613,6 +613,21 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <p>Module level docs.</p>
     """)
 
+    //
+    fun testMacroOuterDocstring() = doTest("""
+        /// Outer documentation
+        macro_rules! makro {
+                   //^
+            () => { };
+        }
+
+        fn main() {
+        }
+    """, """
+        <pre>makro</pre>
+        <p>Outer documentation</p>
+    """)
+
     fun testQualifiedName() = doTest("""
         mod q {
             /// Blurb.

@@ -5,6 +5,7 @@ fn documented_function() {
     fn foo() { }
 }
 
+/// doc
 mod m {
     //! This is module docs
     //! It can span more the one line,
@@ -31,6 +32,7 @@ struct T (
   i32
 );
 
+/// doc
 enum E {
     /// doc
     Foo,
@@ -50,6 +52,11 @@ extern {
 
     /// Doc
     static errno: i32;
+}
+
+/// doc
+macro_rules! makro {
+    () => { };
 }
 
 ////////////////////////////////

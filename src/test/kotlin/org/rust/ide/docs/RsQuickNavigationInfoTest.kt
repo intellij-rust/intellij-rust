@@ -511,6 +511,17 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         type <b>Awesome</b>
     """)
 
+    fun `test macro`() = doTest("""
+        /// Documented
+        macro_rules! makro {
+                   //^
+            () => { };
+        }
+
+    """, """
+        macro_rules! <b>makro</b> [main.rs]
+    """)
+
     fun `test const`() = doTest("""
         pub const FOO: u32 = 42;
         fn foo() { let _ = FOO; }
