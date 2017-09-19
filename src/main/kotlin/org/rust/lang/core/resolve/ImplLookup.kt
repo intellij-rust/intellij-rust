@@ -163,21 +163,21 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return subst + associated
     }
 
-    fun derefTransitively(baseTy: Ty): Set<Ty> {
+    fun derefSequence(baseTy: Ty): Sequence<Ty> {
         val result = mutableSetOf<Ty>()
-
-        var ty: Ty? = baseTy
-        while (ty != null) {
-            if (ty in result) break
-            result += ty
-            ty = when (ty) {
-                is TyReference -> ty.referenced
-                is TyArray -> TySlice(ty.base)
-                else -> findDerefTarget(ty)
+        return generateSequence(baseTy) {
+            if (result.add(it)) {
+                deref(it) ?: (it as? TyArray)?.let { TySlice(it.base) }
+            } else {
+                null
             }
-        }
+        }.constrainOnce().take(64) // rustc's default limit
+    }
 
-        return result
+    fun deref(ty: Ty): Ty? = when (ty) {
+        is TyReference -> ty.referenced
+        is TyPointer -> ty.referenced
+        else -> findDerefTarget(ty)
     }
 
     fun findImplOfTrait(ty: Ty, trait: RsTraitItem): BoundElement<RsTraitOrImpl>? =

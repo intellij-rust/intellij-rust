@@ -538,7 +538,7 @@ private class RsFnInferenceContext(
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
         val boundField = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup).firstOrNull()
         if (boundField == null) {
-            for (type in lookup.derefTransitively(receiver)) {
+            for (type in lookup.derefSequence(receiver)) {
                 if (type is TyTuple) {
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
                     return type.types.getOrElse(fieldIndex) { TyUnknown }
@@ -628,11 +628,9 @@ private class RsFnInferenceContext(
             UnaryOperator.DEREF -> {
                 // expectation must NOT be used for deref
                 val base = innerExpr.inferType()
-                when (base) {
-                    is TyReference -> base.referenced
-                    is TyPointer -> base.referenced
-                    else -> TyUnknown
-                }
+                val deref = lookup.deref(base)
+                // TODO if (deref == null) emit E0614
+                deref ?: TyUnknown
             }
             UnaryOperator.MINUS -> innerExpr.inferType(expected)
             UnaryOperator.NOT -> innerExpr.inferType(expected)
