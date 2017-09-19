@@ -66,7 +66,7 @@ fun processFieldExprResolveVariants(
     isCompletion: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    for (ty in lookup.derefTransitively(receiverType)) {
+    for (ty in lookup.derefSequence(receiverType)) {
         if (ty !is TyStruct) continue
         if (processFieldDeclarations(ty.item, ty.typeParameterValues, processor)) return true
     }
@@ -407,7 +407,7 @@ private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty,
         val element = entry.element
         element is RsFunction && !element.isAssocFn && processor(entry)
     }
-    return lookup.derefTransitively(receiver).any { processAssociatedItems(lookup, it, VALUES, methodProcessor) }
+    return lookup.derefSequence(receiver).any { processAssociatedItems(lookup, it, VALUES, methodProcessor) }
 }
 
 private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {

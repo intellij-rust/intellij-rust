@@ -450,6 +450,19 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test overloaded deref`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        struct A;
+        struct B;
+        impl Deref for A { type Target = B; }
+
+        fn foo(a: A) {
+            let b = *a;
+            b
+        } //^ B
+    """)
+
     fun `test slice type`() = testExpr("""
         fn main() {
             let x : [i32];
