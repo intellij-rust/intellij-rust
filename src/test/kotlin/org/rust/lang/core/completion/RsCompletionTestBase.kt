@@ -87,7 +87,7 @@ abstract class RsCompletionTestBase : RsTestBase() {
         if (variants != null) {
             fun LookupElement.debug(): String = "$lookupString ($psiElement)"
             error("Expected a single completion, but got ${variants.size}\n"
-                + variants.map { it.debug() }.joinToString("\n"))
+                + variants.joinToString("\n") { it.debug() })
         }
     }
 

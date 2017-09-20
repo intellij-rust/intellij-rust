@@ -469,4 +469,25 @@ class RsCompletionTest : RsCompletionTestBase() {
             Foo::f/*caret*/
         }
     """)
+
+    fun `test hidden macro completes in the same module`() = doSingleCompletion("""
+        #[doc(hidden)]
+        macro_rules! private_macro {}
+
+        fn main() { private_m/*caret*/ }
+    """, """
+        #[doc(hidden)]
+        macro_rules! private_macro {}
+
+        fn main() { private_macro!(/*caret*/) }
+    """)
+
+    fun `test hidden macro is hidden in other module`() = checkNoCompletion("""
+        #[doc(hidden)]
+        macro_rules! private_macro {}
+
+        mod inner {
+            fn main() { private_m/*caret*/ }
+        }
+    """)
 }
