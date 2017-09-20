@@ -204,14 +204,14 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             if (processAssociatedItems(lookup, primitiveType, ns, processor)) return true
         }
 
-        val base = qualifier.reference.advancedResolve() ?: return false
-        if (base.element is RsMod) {
-            val s = base.element.`super`
+        val (base, subst) = qualifier.reference.advancedResolve() ?: return false
+        if (base is RsMod) {
+            val s = base.`super`
             if (s != null && processor("super", s)) return true
         }
-        if (processItemOrEnumVariantDeclarations(base.element, ns, processor, isSuperChain(qualifier))) return true
-        if (base.element is RsTypeDeclarationElement && parent !is RsUseItem) {
-            if (processAssociatedItems(lookup, base.element.declaredType.substitute(base.subst), ns, processor)) return true
+        if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
+        if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
+            if (processAssociatedItems(lookup, base.declaredType.substitute(subst), ns, processor)) return true
         }
         return false
     }
