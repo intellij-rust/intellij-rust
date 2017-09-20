@@ -6,7 +6,7 @@
 package org.rust.ide.search
 
 import org.intellij.lang.annotations.Language
-import org.rust.ide.actions.line
+import org.rust.ide.actions.mover.line
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 
