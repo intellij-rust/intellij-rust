@@ -64,6 +64,8 @@ class QueryAttributes(
     private val attributes: Sequence<RsAttr> = Sequence { (psi as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
         Sequence { (psi as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
 
+    val isDocHidden: Boolean get() = hasAttributeWithArg("doc", "hidden")
+
     fun hasCfgAttr(): Boolean {
         if (psi is RsFunction) {
             val stub = psi.stub
@@ -97,12 +99,15 @@ class QueryAttributes(
     val deriveAttribute: RsMetaItem?
         get() = attrByName("derive")
 
-    fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
+    private fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
 
     val metaItems: Sequence<RsMetaItem>
         get() = attributes.mapNotNull { it.metaItem }
 
     private fun attrByName(name: String) = metaItems.find { it.referenceName == name }
+
+    override fun toString(): String =
+        "QueryAttributes(${attributes.joinToString { it.text }})"
 }
 
 
