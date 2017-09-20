@@ -11,7 +11,6 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.CharFilter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.externalSystem.service.execution.cmd.ParametersListLexer
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -258,3 +257,48 @@ private val COMMON_COMMANDS = listOf(
         flag("force")
     }
 )
+
+// Copy of com.intellij.openapi.externalSystem.service.execution.cmd.ParametersListLexer,
+// which is not present in all IDEs.
+class ParametersListLexer(private val myText: String) {
+    private var myTokenStart = -1
+    private var index = 0
+
+    val tokenEnd: Int
+        get() {
+            assert(myTokenStart >= 0)
+            return index
+        }
+
+    val currentToken: String
+        get() = myText.substring(myTokenStart, index)
+
+    fun nextToken(): Boolean {
+        var i = index
+
+        while (i < myText.length && Character.isWhitespace(myText[i])) {
+            i++
+        }
+
+        if (i == myText.length) return false
+
+        myTokenStart = i
+        var isInQuote = false
+
+        do {
+            val a = myText[i]
+            if (!isInQuote && Character.isWhitespace(a)) break
+            when {
+                a == '\\' && i + 1 < myText.length && myText[i + 1] == '"' -> i += 2
+                a == '"' -> {
+                    i++
+                    isInQuote = !isInQuote
+                }
+                else -> i++
+            }
+        } while (i < myText.length)
+
+        index = i
+        return true
+    }
+}
