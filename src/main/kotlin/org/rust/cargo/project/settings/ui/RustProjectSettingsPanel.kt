@@ -9,11 +9,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
-import com.intellij.util.text.SemVer
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.utils.UiDebouncer
 import org.rust.utils.pathToDirectoryTextField
@@ -87,6 +87,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
     }
 
     private fun update() {
+        if (Disposer.isDisposed(this)) return
         val pathToToolchain = pathToToolchainField.text
         versionUpdateDebouncer.run(
             onPooledThread = {
