@@ -1006,4 +1006,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test type mismatch E0308 unconstrained integer`() = checkErrors("""
+        struct S;
+        fn main () {
+            let mut a = 0;
+            a = <error>S</error>;
+        }
+    """)
+
 }

@@ -135,10 +135,12 @@ class RsInferenceContext {
             is TyInfer.IntVar -> when (ty2) {
                 is TyInfer.IntVar -> intUnificationTable.unifyVarVar(ty1, ty2)
                 is TyInteger -> intUnificationTable.unifyVarValue(ty1, ty2.kind)
+                else -> return false
             }
             is TyInfer.FloatVar -> when (ty2) {
                 is TyInfer.FloatVar -> floatUnificationTable.unifyVarVar(ty1, ty2)
                 is TyFloat -> floatUnificationTable.unifyVarValue(ty1, ty2.kind)
+                else -> return false
             }
             is TyInfer.TyVar -> error("unreachable")
         }
@@ -312,7 +314,7 @@ private class RsFnInferenceContext(
             // ignoring possible false-positives (it's only basic experimental type checking)
             val ignoredTys = listOf(
                 TyUnknown::class.java,
-                TyInfer::class.java,
+                TyInfer.TyVar::class.java,
                 TyTypeParameter::class.java,
                 // TODO TyReference ignored because we actually ignore deref level on method call and so
                 // TODO sometimes substitute a wrong receiver. This should be fixed as soon as possible
