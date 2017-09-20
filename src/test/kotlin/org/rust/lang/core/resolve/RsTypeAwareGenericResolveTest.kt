@@ -645,4 +645,50 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             bar.foo();
         }      //^
     """)
+
+    fun `test impl for type parameter`() = checkByCode("""
+        trait Foo {
+            fn foo(&self) {}
+              //X
+        }
+        impl<T> Foo for T {}
+        struct Bar;
+        fn main() {
+            Bar.foo();
+               //^
+        }
+    """)
+
+    fun `test impl for type parameter with bound`() = checkByCode("""
+        // TODO: Should be resolved to Foo
+        trait Bar {}
+        trait Foo {
+            fn foo(&self) {}
+        }
+
+        impl<T: Bar> Foo for T {}
+
+        struct S;
+        impl Bar for S {}
+
+        fn main() {
+            S.foo();
+             //^ unresolved
+        }
+    """)
+
+    fun `test impl for type parameter with recursive bounds`() = checkByCode("""
+        trait Foo { fn foo(&self) {} }
+        trait Bar { fn bar(&self) {} }
+
+        impl<T: Bar> Foo for T {}
+        impl<T: Foo> Bar for T {}
+
+        struct S;
+
+        fn main() {
+            S.foo();
+             //^ unresolved
+        }
+    """)
 }

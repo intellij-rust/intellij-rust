@@ -11,7 +11,12 @@ import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
+import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.ext.bounds
+import org.rust.lang.core.psi.ext.name
+import org.rust.lang.core.psi.ext.typeElement
+import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
@@ -33,7 +38,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             val fingerprint = TyFingerprint.create(target)
                 ?: return emptyList()
 
-            return getElements(KEY, fingerprint, project, GlobalSearchScope.allScope(project))
+            val impls = getElements(KEY, fingerprint, project, GlobalSearchScope.allScope(project))
                 .filter { impl ->
                     val ty = impl.typeReference?.type
                     // Addition class check is a temporal solution to filter impls for type parameter
@@ -41,11 +46,29 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
                     // struct S; impl<S: Tr1> Tr2 for S {}
                     ty != null && ty.javaClass == target.javaClass
                 }
-            }
+            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, GlobalSearchScope.allScope(project))
+            return impls + freeImpls
+        }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {
-            val type = stub.psi.typeReference ?: return
-            val key = TyFingerprint.create(type)
+            val impl = stub.psi
+            val typeRef = impl.typeReference ?: return
+            val type = typeRef.typeElement
+
+            val key = if (type is RsBaseType) {
+                val typeParam = impl.typeParameters.find { it.name == type.name }
+                if (typeParam != null) {
+                    // At this moment we support only free trait impls without bounds
+                    // to avoid stack overflow while resolving
+                    if (typeParam.bounds.isNotEmpty()) return
+                    TyFingerprint.TYPE_PARAMETER_FINGERPRINT
+                } else {
+                    TyFingerprint.create(typeRef)
+                }
+            } else {
+                TyFingerprint.create(typeRef)
+            }
+
             if (key != null) {
                 sink.occurrence(KEY, key)
             }

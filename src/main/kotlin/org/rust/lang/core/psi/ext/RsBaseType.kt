@@ -14,3 +14,5 @@ val RsBaseType.isCself: Boolean get() {
 
 val RsBaseType.isUnit: Boolean get() = (stub?.isUnit) ?: (lparen != null && rparen != null)
 val RsBaseType.isNever: Boolean get() = (stub?.isNever) ?: (excl != null)
+
+val RsBaseType.name: String? get() = path?.referenceName
