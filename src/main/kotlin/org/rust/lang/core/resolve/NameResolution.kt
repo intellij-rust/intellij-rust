@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import java.util.*
@@ -203,14 +204,14 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             if (processAssociatedItems(lookup, primitiveType, ns, processor)) return true
         }
 
-        val base = qualifier.reference.resolve() ?: return false
-        if (base is RsMod) {
-            val s = base.`super`
+        val base = qualifier.reference.advancedResolve() ?: return false
+        if (base.element is RsMod) {
+            val s = base.element.`super`
             if (s != null && processor("super", s)) return true
         }
-        if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
-        if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
-            if (processAssociatedItems(lookup, base.declaredType, ns, processor)) return true
+        if (processItemOrEnumVariantDeclarations(base.element, ns, processor, isSuperChain(qualifier))) return true
+        if (base.element is RsTypeDeclarationElement && parent !is RsUseItem) {
+            if (processAssociatedItems(lookup, base.element.declaredType.substitute(base.subst), ns, processor)) return true
         }
         return false
     }
