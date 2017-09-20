@@ -19,6 +19,7 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 const val KEYWORD_PRIORITY = 10.0
+private const val MACRO_PRIORITY = -0.1
 
 fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(element, scopeName)
@@ -108,6 +109,7 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
                     context.document.insertString(context.selectionEndOffset, "!$parens")
                     EditorModificationUtil.moveCaretRelatively(context.editor, 2)
                 }
+                .withPriority(MACRO_PRIORITY)
         }
         else -> base
     }

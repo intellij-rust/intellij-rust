@@ -27,19 +27,20 @@ import org.rust.lang.core.withPrevSiblingSkipping
 
 object RsMacroDefinitionCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
-        val lookup = collectCompletionVariants { processMacroCallVariants(parameters.position, it) }.toList()
+        val lookup = collectCompletionVariants { processMacroCallVariants(parameters.position, it) }.asList()
         result.addAllElements(lookup)
     }
 
-    val elementPattern: ElementPattern<PsiElement> get() {
-        val incompleteItem = psiElement<RsItemElement>().withLastChild(RsPsiPattern.error)
-        return psiElement(IDENTIFIER)
-            .andNot(psiElement().withPrevSiblingSkipping(RsPsiPattern.whitespace, incompleteItem))
-            .withParent(psiElement().with(object : PatternCondition<PsiElement?>("MacroParent") {
-                override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-                    return t is RsMod || (t is RsPath && t.path == null && t.parent is RsPathExpr) || t is RsMacroCall
-                }
-            }))
-            .withLanguage(RsLanguage)
-    }
+    val elementPattern: ElementPattern<PsiElement>
+        get() {
+            val incompleteItem = psiElement<RsItemElement>().withLastChild(RsPsiPattern.error)
+            return psiElement(IDENTIFIER)
+                .andNot(psiElement().withPrevSiblingSkipping(RsPsiPattern.whitespace, incompleteItem))
+                .withParent(psiElement().with(object : PatternCondition<PsiElement?>("MacroParent") {
+                    override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
+                        return t is RsMod || (t is RsPath && t.path == null && t.parent is RsPathExpr) || t is RsMacroCall
+                    }
+                }))
+                .withLanguage(RsLanguage)
+        }
 }
