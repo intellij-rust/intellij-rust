@@ -11,9 +11,10 @@ import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
+import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.ext.bounds
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.psi.ext.typeParameters
@@ -60,7 +61,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
                 if (typeParam != null) {
                     // At this moment we support only free trait impls without bounds
                     // to avoid stack overflow while resolving
-                    if (typeParam.bounds.isNotEmpty()) return
+                    if (hasBounds(typeParam, impl)) return
                     TyFingerprint.TYPE_PARAMETER_FINGERPRINT
                 } else {
                     TyFingerprint.create(typeRef)
@@ -72,6 +73,14 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             if (key != null) {
                 sink.occurrence(KEY, key)
             }
+        }
+
+        // We can't use `RsTypeParameter.bounds` because it uses `resolve`
+        // and it can lead to `IndexNotReadyException` while indexing
+        private fun hasBounds(typeParam: RsTypeParameter, impl: RsImplItem): Boolean {
+            if (!typeParam.typeParamBounds?.polyboundList.isNullOrEmpty()) return true
+            return impl.whereClause?.wherePredList.orEmpty()
+                .any { (it.typeReference?.typeElement as? RsBaseType)?.name == typeParam.name }
         }
 
         private val KEY: StubIndexKey<TyFingerprint, RsImplItem> =
