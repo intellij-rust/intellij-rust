@@ -118,7 +118,6 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
 
     val processForUserOutput = ProcessOutput()
     val processForUser = KillableColoredProcessHandler(cargo.toColoredCommandLine(command))
-    val processForJson = CapturingProcessHandler(cargo.toGeneralCommandLine(command.prependArgument("--message-format=json")))
 
     processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
@@ -135,6 +134,7 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
 
                     override fun run(indicator: ProgressIndicator) {
                         indicator.isIndeterminate = true
+                        val processForJson = CapturingProcessHandler(cargo.toGeneralCommandLine(command.prependArgument("--message-format=json")))
                         val output = processForJson.runProcessWithProgressIndicator(indicator)
                         if (output.isCancelled || output.exitCode != 0) {
                             promise.setResult(null)
