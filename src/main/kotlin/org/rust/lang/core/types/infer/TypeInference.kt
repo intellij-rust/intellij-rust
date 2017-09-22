@@ -540,7 +540,7 @@ private class RsFnInferenceContext(
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
         val boundField = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup).firstOrNull()
         if (boundField == null) {
-            for (type in lookup.derefSequence(receiver)) {
+            for (type in lookup.coercionSequence(receiver)) {
                 if (type is TyTuple) {
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
                     return type.types.getOrElse(fieldIndex) { TyUnknown }
@@ -728,7 +728,10 @@ private class RsFnInferenceContext(
     private fun inferIndexExprType(expr: RsIndexExpr): Ty {
         val containerType = expr.containerExpr?.inferType() ?: return TyUnknown
         val indexType = expr.indexExpr?.inferType() ?: return TyUnknown
-        return lookup.findIndexOutputType(containerType, indexType)
+        return lookup.coercionSequence(containerType)
+            .mapNotNull { type -> lookup.findIndexOutputType(type, indexType) }
+            .firstOrNull()
+            ?: TyUnknown
     }
 
     private fun inferMacroExprType(expr: RsMacroExpr): Ty {
