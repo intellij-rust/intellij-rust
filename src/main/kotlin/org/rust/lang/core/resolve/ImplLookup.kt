@@ -163,7 +163,7 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return subst + associated
     }
 
-    fun derefSequence(baseTy: Ty): Sequence<Ty> {
+    fun coercionSequence(baseTy: Ty): Sequence<Ty> {
         val result = mutableSetOf<Ty>()
         return generateSequence(baseTy) {
             if (result.add(it)) {
@@ -200,7 +200,7 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return rawType.substitute(impl.subst)
     }
 
-    fun findIndexOutputType(containerType: Ty, indexType: Ty): Ty {
+    fun findIndexOutputType(containerType: Ty, indexType: Ty): Ty? {
         val impls = findImplsAndTraits(containerType)
             .filter { it.element.implementedTrait?.element?.isIndex ?: false }
 
@@ -208,7 +208,7 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
             impls.firstOrNull()
         } else {
             impls.find { isImplSuitable(it.element, "index", 0, indexType) }
-        } ?: return TyUnknown
+        } ?: return null
 
         val rawOutputType = lookupAssociatedType(element, "Output")
         return rawOutputType.substitute(subst)
