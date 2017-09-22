@@ -62,5 +62,6 @@ interface CargoProjectWorkspaceService {
 /**
  * Extracts Cargo project description out of `Cargo.toml`
  */
+@Deprecated("Use CargoProjectsService instead")
 val Module.cargoWorkspace: CargoWorkspace?
     get() = CargoProjectWorkspaceService.getInstance(this).workspace

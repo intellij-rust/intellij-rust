@@ -5,14 +5,11 @@
 
 package org.rust.ide.actions
 
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
 import org.rust.cargo.util.modulesWithCargoProject
-import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.isNullOrEmpty
 
 class RefreshCargoProjectAction : AnAction() {
@@ -29,25 +26,6 @@ class RefreshCargoProjectAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val toolchain = project.toolchain ?: return
-        val modules = project.modulesWithCargoProject
-        if (modules.isEmpty()) return
-
-        ApplicationManager.getApplication().saveAll()
-        for (module in modules) {
-            val workspace = CargoProjectWorkspaceService.getInstance(module)
-
-            workspace.requestImmediateUpdate(toolchain) { result ->
-                val (type, content) = when (result) {
-                    is CargoProjectWorkspaceService.UpdateResult.Ok ->
-                        NotificationType.INFORMATION to "Project '${module.name}' successfully updated!"
-
-                    is CargoProjectWorkspaceService.UpdateResult.Err ->
-                        NotificationType.ERROR to "Project '${module.name}' failed to update.<br> ${result.error.message}"
-                }
-
-                project.showBalloon(content, type)
-            }
-        }
+        project.cargoProjects.refreshAllProjects()
     }
 }

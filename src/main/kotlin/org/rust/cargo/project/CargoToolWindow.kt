@@ -5,19 +5,12 @@
 
 package org.rust.cargo.project
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.ColorUtil
@@ -25,10 +18,10 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.UIUtil
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.cargoWorkspace
-import org.rust.cargo.project.workspace.impl.CargoTomlWatcher
-import org.rust.cargo.util.modulesWithCargoProject
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.CargoProject.UpdateStatus
+import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.cargoProjects
 import javax.swing.JEditorPane
 
 
@@ -52,8 +45,8 @@ class CargoToolWindowFactory : ToolWindowFactory {
 private class CargoToolWindow(
     private val project: Project
 ) {
-    private var _cargoProjects: List<Pair<Module, CargoWorkspace?>> = emptyList()
-    private var cargoProjects: List<Pair<Module, CargoWorkspace?>>
+    private var _cargoProjects: List<CargoProject> = emptyList()
+    private var cargoProjects: List<CargoProject>
         get() = _cargoProjects
         set(value) {
             check(ApplicationManager.getApplication().isDispatchThread)
@@ -76,19 +69,12 @@ private class CargoToolWindow(
 
     init {
         with(project.messageBus.connect()) {
-            subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-                override fun rootsChanged(event: ModuleRootEvent?) {
-                    updateData()
-                }
-            })
-            subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-                override fun after(events: List<VFileEvent>) {
-                    if (events.any { CargoTomlWatcher.isCargoTomlChange(it) }) {
-                        updateData()
+            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
+                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+                    ApplicationManager.getApplication().invokeLater {
+                        cargoProjects = projects.sortedBy { it.manifest }
                     }
                 }
-
-                override fun before(events: List<VFileEvent>) {}
             })
         }
 
@@ -97,9 +83,7 @@ private class CargoToolWindow(
 
     private fun updateData() {
         ApplicationManager.getApplication().invokeLater {
-            cargoProjects = project.modulesWithCargoProject.map { module ->
-                module to module.cargoWorkspace
-            }
+            cargoProjects = project.cargoProjects.allProjects.sortedBy { it.manifest }
         }
     }
 
@@ -108,12 +92,17 @@ private class CargoToolWindow(
             html("There are no Cargo projects to display.")
         } else {
             html(buildString {
-                for ((module, ws) in cargoProjects) {
-                    if (ws != null) {
-                        val projectName = ws.manifestPath?.parent?.fileName?.toString()
-                        if (projectName != null) append("Project $projectName up-to-date.")
-                    } else {
-                        append("Project ${module.name} failed to update!")
+                for (project in cargoProjects) {
+                    val status = project.mergedStatus
+                    when (status) {
+                        is UpdateStatus.UpdateFailed ->
+                            append("Project ${project.presentableName} failed to update!")
+
+                        is UpdateStatus.NeedsUpdate ->
+                            append("Project ${project.presentableName} needs update.")
+
+                        is UpdateStatus.UpToDate ->
+                            append("Project ${project.presentableName} is up-to-date.")
                     }
                     append("</br>")
                 }
