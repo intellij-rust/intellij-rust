@@ -996,4 +996,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    // issue #1753
+    fun `test no type mismatch E0308 for multiple impls of the same trait`() = checkErrors("""
+        pub trait From<T> { fn from(_: T) -> Self; }
+        struct A; struct B; struct C;
+        impl From<B> for A { fn from(_: B) -> A { unimplemented!() } }
+        impl From<C> for A { fn from(_: C) -> A { unimplemented!() } }
+        fn main() {
+            A::from(C);
+        }
+    """)
 }

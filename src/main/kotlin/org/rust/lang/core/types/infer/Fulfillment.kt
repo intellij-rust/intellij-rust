@@ -8,6 +8,7 @@ package org.rust.lang.core.types.infer
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.SelectionResult
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInfer
@@ -162,18 +163,17 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
 
         when (predicate) {
             is Predicate.Trait -> {
-                val selfTy = predicate.trait.selfTy
-                if (selfTy is TyInfer) return ProcessPredicateResult.NoChanges
-                val (trait, subst) = predicate.trait.trait
-                val impl = lookup.findImplOfTrait(selfTy, trait) ?: return ProcessPredicateResult.Err
-                return ProcessPredicateResult.Ok(subst.mapNotNull { (k, ty1) ->
-                    impl.subst[k]?.let { ty2 ->
-                        PendingPredicateObligation(Obligation(
-                            obligation.recursionDepth + 1,
-                            Predicate.Equate(ty1, ty2)
-                        ), mutableListOf())
+                if (predicate.trait.selfTy is TyInfer) return ProcessPredicateResult.NoChanges
+                val impl = lookup.select(predicate.trait, obligation.recursionDepth)
+                return when (impl) {
+                    is SelectionResult.Err -> ProcessPredicateResult.Err
+                    is SelectionResult.Ambiguous -> ProcessPredicateResult.NoChanges
+                    is SelectionResult.Ok -> {
+                        return ProcessPredicateResult.Ok(impl.nestedObligations.map {
+                            PendingPredicateObligation(it, mutableListOf())
+                        })
                     }
-                })
+                }
             }
             is Predicate.Equate -> {
                 ctx.combineTypes(predicate.ty1, predicate.ty2)

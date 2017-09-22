@@ -898,4 +898,36 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a
         } //^ u8
     """)
+
+    fun `test infer static method arg with multiple impls of the same trait`() = testExpr("""
+        pub trait From<T> { fn from(_: T) -> Self; }
+        struct S; struct S1;
+        impl From<S1> for S { fn from(_: S1) -> S { unimplemented!() } }
+        impl From<u8> for S { fn from(_: u8) -> S { unimplemented!() } }
+        fn main() {
+            let _: S = From::from(0);
+        }                       //^ u8
+    """)
+
+    // TODO should be u8
+    fun `test infer method arg with multiple impls of the same trait`() = testExpr("""
+        pub trait Tr<T> { fn foo(&self, _: T); }
+        struct S; struct S1;
+        impl Tr<S1> for S { fn foo(&self, _: S1) {} }
+        impl Tr<u8> for S { fn foo(&self, _: u8) {} }
+        fn main() {
+            S.foo(0)
+        }       //^ i32
+    """)
+
+    fun `test infer method arg with multiple impls of the same trait UFCS`() = testExpr("""
+        pub trait Tr<T> { fn foo(&self, _: T); }
+        struct S; struct S1;
+        impl Tr<S1> for S { fn foo(&self, _: S1) {} }
+        impl Tr<u8> for S { fn foo(&self, _: u8) {} }
+        fn main() {
+            let a = S;
+            Tr::foo(&a, 0);
+        }             //^ u8
+    """)
 }

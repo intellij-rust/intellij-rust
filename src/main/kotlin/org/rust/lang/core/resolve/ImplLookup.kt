@@ -12,12 +12,16 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.infer.Obligation
+import org.rust.lang.core.types.infer.Predicate
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.ProjectCache
+import org.rust.utils.zipValues
 import kotlin.LazyThreadSafetyMode.NONE
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
@@ -163,6 +167,46 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return subst + associated
     }
 
+    /**
+     * If the TraitRef is a something like
+     *     `T : Foo<U>`
+     * here we select an impl of the trait `Foo<U>` for the type `T`, i.e.
+     *     `impl Foo<U> for T {}`
+     */
+    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult {
+        val (trait, subst) = ref.trait
+        val impls = findImplsAndTraits(ref.selfTy).filter { it.element.implementedTrait?.element == trait }
+        if (impls.size == 1) {
+            return okResultFor(impls.first(), subst, recursionDepth)
+        }
+        val suitable = impls.filter {
+            zipValues(it.subst, subst).all { (v1, v2) ->
+                v2 is TyInfer.TyVar || v1.unifyWith(v2, this) != UnifyResult.fail
+            }
+        }
+        return when {
+            suitable.isEmpty() -> SelectionResult.Err
+            suitable.size == 1 -> okResultFor(suitable.first(), subst, recursionDepth)
+            else -> SelectionResult.Ambiguous
+        }
+    }
+
+    private fun okResultFor(
+        impl: BoundElement<RsTraitOrImpl>,
+        subst: Substitution,
+        recursionDepth: Int
+    ): SelectionResult.Ok {
+        val (found, foundSubst) = impl
+        return SelectionResult.Ok(found, subst.mapNotNull { (k, ty1) ->
+            foundSubst[k]?.let { ty2 ->
+                Obligation(
+                    recursionDepth + 1,
+                    Predicate.Equate(ty1, ty2)
+                )
+            }
+        })
+    }
+
     fun coercionSequence(baseTy: Ty): Sequence<Ty> {
         val result = mutableSetOf<Ty>()
         return generateSequence(baseTy) {
@@ -267,6 +311,12 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         private val findImplsAndTraitsCache =
             ProjectCache<Ty, Collection<BoundElement<RsTraitOrImpl>>>("findImplsAndTraitsCache")
     }
+}
+
+sealed class SelectionResult {
+    object Ambiguous : SelectionResult()
+    data class Ok(val impl: RsTraitOrImpl, val nestedObligations: List<Obligation>): SelectionResult()
+    object Err: SelectionResult()
 }
 
 private fun RsTraitItem.substAssocType(assoc: String, ty: Ty?): BoundElement<RsTraitItem> {

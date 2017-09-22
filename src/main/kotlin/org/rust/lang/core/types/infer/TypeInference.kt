@@ -21,6 +21,7 @@ import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 import org.rust.utils.forEachChild
+import org.rust.utils.zipValues
 
 fun inferTypesIn(fn: RsFunction): RsInferenceResult =
     RsInferenceContext().run { preventRecursion { infer(fn) } }
@@ -374,7 +375,42 @@ private class RsFnInferenceContext(
     }
 
     private fun inferPathExprType(expr: RsPathExpr): Ty {
-        val (element, subst) = expr.path.reference.advancedResolve()?.downcast<RsNamedElement>() ?: return TyUnknown
+        val variants = expr.path.reference.advancedCachedMultiResolve().mapNotNull { it.downcast<RsNamedElement>() }
+        val qualifier = expr.path.path
+        if (variants.size > 1 && qualifier != null) {
+            val resolved = resolveAmbiguity(variants)
+            if (resolved != null) {
+                val self = qualifier.reference.advancedResolve()?.downcast<RsNamedElement>()
+                if (self != null) {
+                    // This works for `String::from` where `selfTy` is `String` (in opposition to From::from)
+                    val selfTy = instantiatePath(self)
+                    return instantiatePath(resolved, selfTy)
+                }
+            }
+        }
+        return instantiatePath(variants.firstOrNull() ?: return TyUnknown)
+    }
+
+    /** This works for `String::from` where multiple impls of `From` trait found for `String` */
+    private fun resolveAmbiguity(elements: List<BoundElement<RsNamedElement>>): BoundElement<RsFunction>? {
+        if (elements.size <= 1) return null
+
+        val traits = elements.mapNotNull {
+            ((it.element as? RsFunction)?.owner as? RsFunctionOwner.Impl)?.impl?.traitRef?.resolveToTrait
+        }
+
+        if (traits.size == elements.size && traits.toSet().size == 1) {
+            val fnName = elements.first().element.name
+            val trait = traits.first()
+            val fn = trait.members?.functionList?.find { it.name == fnName } ?: return null
+            return BoundElement(fn) // TODO use subst (remap needed)
+        }
+
+        return null
+    }
+
+    private fun instantiatePath(boundElement: BoundElement<RsNamedElement>, pathSelfTy: Ty? = null): Ty {
+        val (element, subst) = boundElement
         val type = when (element) {
             is RsPatBinding -> ctx.getBindingType(element)
             is RsTypeDeclarationElement -> element.declaredType
@@ -385,11 +421,13 @@ private class RsFnInferenceContext(
             else -> return TyUnknown
         }
 
+        val selfTy = pathSelfTy ?: ctx.typeVarForParam(TyTypeParameter.self())
+
         // This BS is a very temporary (I hope)
-        val typeParameters = ((element as? RsGenericDeclaration)?.let(this::instantiateBounds) ?: emptyMap()) +
+        val typeParameters = ((element as? RsGenericDeclaration)?.let { instantiateBounds(it, selfTy) } ?: emptyMap()) +
             (element.takeIf { it is RsFunction || it is RsEnumVariant}
                 ?.parentOfType<RsGenericDeclaration>()
-                ?.let(this::instantiateBounds)
+                ?.let { instantiateBounds(it) }
                 ?: emptyMap())
 
         subst.forEach { (k, v1) ->
@@ -397,6 +435,16 @@ private class RsFnInferenceContext(
                 if (k != v1 && v1 !is TyTypeParameter && v1 !is TyUnknown) {
                     ctx.combineTypes(v2, v1)
                 }
+            }
+        }
+
+        // UFCS - add predicate `Self : Trait<Args>`
+        if (element is RsFunction) {
+            val owner = element.owner
+            if (owner is RsFunctionOwner.Trait) {
+                val boundTrait = BoundElement(owner.trait, owner.trait.bounds.keys.associateBy { it })
+                    .substitute(typeParameters)
+                fulfill.registerPredicateObligation(Obligation(Predicate.Trait(TraitRef(selfTy, boundTrait))))
             }
         }
 
@@ -409,15 +457,16 @@ private class RsFnInferenceContext(
         }.foldWithSubst(typeParameters).foldWith(this::normalizeAssociatedTypesIn)
     }
 
-    private fun instantiateBounds(element: RsGenericDeclaration): Map<TyTypeParameter, Ty> =
-        instantiateBounds(element, emptySubstitution, null)
-
-    private fun instantiateBounds(element: RsGenericDeclaration, subst: Substitution, receiver: Ty?): Map<TyTypeParameter, Ty> {
+    private fun instantiateBounds(
+        element: RsGenericDeclaration,
+        selfTy: Ty? = null,
+        subst: Substitution = emptySubstitution
+    ): Map<TyTypeParameter, Ty> {
         val elementBounds = element.bounds
         var map = subst + elementBounds.keys.associate { it to ctx.typeVarForParam(it) }
-        if (receiver != null) {
-            map = map.substituteInValues(mapOf(TyTypeParameter.self() to receiver)) +
-                mapOf(TyTypeParameter.self() to receiver)
+        if (selfTy != null) {
+            map = map.substituteInValues(mapOf(TyTypeParameter.self() to selfTy)) +
+                mapOf(TyTypeParameter.self() to selfTy)
         }
         for ((ty, bounds) in elementBounds) {
             bounds.asSequence()
@@ -484,10 +533,11 @@ private class RsFnInferenceContext(
     private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall): Ty {
         val receiverRes = resolveTypeVarsWithObligations(receiver)
         val argExprs = methodCall.valueArgumentList.exprList
-        val boundElement = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
-            .firstOrNull()?.downcast<RsFunction>()
+        val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
+            .mapNotNull { it.downcast<RsFunction>() }
+        val boundElement = resolveAmbiguity(variants) ?: variants.firstOrNull() // TODO register obligation
         val typeParameters = ((boundElement?.element as? RsGenericDeclaration)
-            ?.let { instantiateBounds(it, boundElement?.subst ?: emptyMap(), receiverRes) }
+            ?.let { instantiateBounds(it, receiverRes, boundElement?.subst ?: emptyMap()) }
             ?: emptyMap())
 
         boundElement?.subst?.forEach { (k, v1) ->
@@ -951,9 +1001,6 @@ private fun unwrapParenExprs(expr: RsExpr): RsExpr {
     }
     return child
 }
-
-private fun <K, V1, V2> zipValues(map1: Map<K, V1>, map2: Map<K, V2>): List<Pair<V1, V2>> =
-    map1.mapNotNull { (k, v1) -> map2[k]?.let { v2 -> Pair(v1, v2) } }
 
 private fun <K, V> Map<K, V>.mergeReduce(other: Map<K, V>, reduce: (V, V) -> V): Map<K, V> {
     val result = LinkedHashMap<K, V>(this.size + other.size)
