@@ -16,7 +16,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
@@ -31,11 +30,9 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.util.modules
 import org.rust.ide.notifications.showBalloon
 import org.rust.utils.AsyncResult
 import org.rust.utils.TaskResult
-import org.rust.utils.pathAsPath
 import org.rust.utils.runAsyncTask
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -67,17 +64,11 @@ class CargoProjectsServiceImpl(
     override fun loadState(state: Element) {
         val cargoProjectElement = state.getChild("cargoProject")
         setManifest(cargoProjectElement?.getAttributeValue("FILE")?.let { Paths.get(it) })
-        firstTimeInint()
+        firstTimeInit()
     }
 
     override fun noStateLoaded() {
-        val guessManifest = project.modules.asSequence()
-            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
-            .firstOrNull()
-            ?.pathAsPath
-        setManifest(guessManifest)
-        firstTimeInint()
+        firstTimeInit()
     }
 
     private fun setManifest(manifest: Path?) {
@@ -87,7 +78,7 @@ class CargoProjectsServiceImpl(
     val taskQueue = BackgroundTaskQueue(project, "Cargo update")
 
     @Volatile private var initDone: Boolean = false
-    private fun firstTimeInint() {
+    private fun firstTimeInit() {
         if (initDone) return
         initDone = true
         refreshAllProjects()

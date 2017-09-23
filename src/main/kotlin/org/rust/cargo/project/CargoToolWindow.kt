@@ -14,15 +14,21 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBList
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.UIUtil
+import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.cargoProjects
 import javax.swing.JEditorPane
+import javax.swing.JList
 
 
 class CargoToolWindowFactory : ToolWindowFactory {
@@ -51,7 +57,7 @@ private class CargoToolWindow(
         set(value) {
             check(ApplicationManager.getApplication().isDispatchThread)
             _cargoProjects = value
-            updateUi()
+            projectList.setListData(cargoProjects.toTypedArray())
         }
 
     val toolbar: ActionToolbar = run {
@@ -63,8 +69,34 @@ private class CargoToolWindow(
         background = UIUtil.getTreeBackground()
         isEditable = false
     }
+    val projectList = JBList<CargoProject>(emptyList()).apply {
+        emptyText.text = "There are no Cargo projects to display."
+        cellRenderer = object : ColoredListCellRenderer<CargoProject>() {
+            override fun customizeCellRenderer(list: JList<out CargoProject>, value: CargoProject, index: Int, selected: Boolean, hasFocus: Boolean) {
+                icon = CargoIcons.ICON
+                var attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES
+                val status = value.mergedStatus
+                when (status) {
+                    is UpdateStatus.UpdateFailed -> {
+                        attrs = attrs.derive(SimpleTextAttributes.STYLE_WAVED, null, null, JBColor.RED)
+                        toolTipText = status.reason
+                    }
+                    is UpdateStatus.NeedsUpdate -> {
+                        attrs = attrs.derive(SimpleTextAttributes.STYLE_WAVED, null, null, JBColor.GRAY)
+                        toolTipText = "Project needs update"
+                    }
+                    is UpdateStatus.UpToDate -> {
+                        toolTipText = "Project is up-to-date"
+                    }
+                }
+                append(value.presentableName, attrs)
+            }
+        }
+    }
     val content = panel {
-        row { note(CCFlags.push, CCFlags.grow) }
+        row {
+            projectList(CCFlags.push, CCFlags.grow)
+        }
     }
 
     init {
@@ -78,35 +110,8 @@ private class CargoToolWindow(
             })
         }
 
-        updateData()
-    }
-
-    private fun updateData() {
         ApplicationManager.getApplication().invokeLater {
             cargoProjects = project.cargoProjects.allProjects.sortedBy { it.manifest }
-        }
-    }
-
-    private fun updateUi() {
-        note.text = if (cargoProjects.isEmpty()) {
-            html("There are no Cargo projects to display.")
-        } else {
-            html(buildString {
-                for (project in cargoProjects) {
-                    val status = project.mergedStatus
-                    when (status) {
-                        is UpdateStatus.UpdateFailed ->
-                            append("Project ${project.presentableName} failed to update!")
-
-                        is UpdateStatus.NeedsUpdate ->
-                            append("Project ${project.presentableName} needs update.")
-
-                        is UpdateStatus.UpToDate ->
-                            append("Project ${project.presentableName} is up-to-date.")
-                    }
-                    append("</br>")
-                }
-            })
         }
     }
 
