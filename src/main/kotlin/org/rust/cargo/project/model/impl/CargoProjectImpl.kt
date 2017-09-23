@@ -16,9 +16,11 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
+import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
@@ -30,9 +32,11 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.util.modules
 import org.rust.ide.notifications.showBalloon
 import org.rust.utils.AsyncResult
 import org.rust.utils.TaskResult
+import org.rust.utils.pathAsPath
 import org.rust.utils.runAsyncTask
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -81,6 +85,15 @@ class CargoProjectsServiceImpl(
     private fun firstTimeInit() {
         if (initDone) return
         initDone = true
+        val manifest = cargoProject?.manifest
+        if (manifest == null || !manifest.exists()) {
+            val guessManifest = project.modules
+                .asSequence()
+                .map { ModuleRootManager.getInstance(it) }
+                .flatMap { it.contentRoots.asSequence() }
+                .find { it.findChild(RustToolchain.CARGO_TOML) != null }
+            setManifest(guessManifest?.pathAsPath)
+        }
         refreshAllProjects()
     }
 
