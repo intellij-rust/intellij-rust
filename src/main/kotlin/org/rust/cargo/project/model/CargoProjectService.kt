@@ -7,6 +7,7 @@ package org.rust.cargo.project.model
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import org.rust.cargo.project.workspace.CargoWorkspace
 import java.nio.file.Path
@@ -37,6 +38,7 @@ interface CargoProject {
 interface CargoProjectsService {
     val allProjects: Collection<CargoProject>
 
+    fun findProjectForFile(file: VirtualFile): CargoProject?
     fun refreshAllProjects()
 
     companion object {

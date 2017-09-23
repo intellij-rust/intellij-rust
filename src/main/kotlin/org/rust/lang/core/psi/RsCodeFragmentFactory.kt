@@ -5,11 +5,12 @@
 
 package org.rust.lang.core.psi
 
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.psi.ext.CARGO_WORKSPACE
 import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.setContext
 
 class RsCodeFragmentFactory(private val project: Project) {
@@ -25,7 +26,6 @@ class RsCodeFragmentFactory(private val project: Project) {
     fun createPath(path: String, context: RsCompositeElement): RsPath? =
         psiFactory.tryCreatePath(path)?.apply {
             setContext(context)
-            val module = ModuleUtilCore.findModuleForPsiElement(context.containingFile)
-            containingFile?.putUserData(ModuleUtilCore.KEY_MODULE, module)
+            containingFile?.putUserData(CARGO_WORKSPACE, context.cargoWorkspace)
         }
 }

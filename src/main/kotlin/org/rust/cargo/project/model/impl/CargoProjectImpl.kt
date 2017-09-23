@@ -20,6 +20,10 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Consumer
+import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
@@ -41,6 +45,7 @@ import org.rust.utils.runAsyncTask
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = Logger.getInstance(CargoProjectsServiceImpl::class.java)
 
@@ -49,9 +54,6 @@ class CargoProjectsServiceImpl(
     val project: Project
 ) : CargoProjectsService, PersistentStateComponent<Element> {
     @Volatile private var cargoProject: CargoProjectImpl? = null
-
-    override val allProjects: Collection<CargoProject>
-        get() = listOfNotNull(cargoProject)
 
     override fun getState(): Element {
         val state = Element("state")
@@ -74,6 +76,26 @@ class CargoProjectsServiceImpl(
     override fun noStateLoaded() {
         firstTimeInit()
     }
+
+    override val allProjects: Collection<CargoProject>
+        get() = listOfNotNull(cargoProject)
+
+    override fun findProjectForFile(file: VirtualFile): CargoProject? =
+        directoryIndex.getInfoForFile(file).takeIf { it !== NO_PROJECT }
+
+    private val NO_PROJECT = CargoProjectImpl(Paths.get(""), this)
+    private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> = LightDirectoryIndex(project, NO_PROJECT, Consumer { index ->
+        for (cargoProject in listOfNotNull(cargoProject)) {
+            index.putInfo(cargoProject.manifestFile?.parent, cargoProject)
+            val ws = cargoProject.workspace
+            if (ws != null) {
+                for (pkg in ws.packages) {
+                    index.putInfo(pkg.contentRoot, cargoProject)
+                }
+            }
+        }
+        Unit
+    })
 
     private fun setManifest(manifest: Path?) {
         cargoProject = manifest?.let { CargoProjectImpl(it, this) }
@@ -121,6 +143,7 @@ class CargoProjectsServiceImpl(
     }
 
     private fun afterUpdate(projects: Collection<CargoProject>) {
+        directoryIndex.resetIndex()
         ApplicationManager.getApplication().invokeAndWait {
             runWriteAction {
                 ProjectRootManagerEx.getInstanceEx(project)
@@ -156,6 +179,17 @@ data class CargoProjectImpl(
 
     override val presentableName: String
         get() = manifest.parent.fileName.toString()
+
+    private val manifestFileCache = AtomicReference<VirtualFile>()
+    val manifestFile: VirtualFile?
+        get() {
+            val cached = manifestFileCache.get()
+            if (cached != null && cached.isValid) return cached
+            val file = LocalFileSystem.getInstance().findFileByIoFile(manifest.toFile())
+            manifestFileCache.set(file)
+            return file
+        }
+
 
     fun refresh(): CompletableFuture<CargoProjectImpl> = refreshStdlib().thenCompose { it.refreshWorkspace() }
 

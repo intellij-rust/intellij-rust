@@ -8,14 +8,13 @@ package org.rust.lang.core.psi.ext
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.cargoWorkspace
-import org.rust.cargo.util.modules
 import org.rust.lang.core.psi.RsFile
 
 interface RsCompositeElement : PsiElement {
@@ -25,40 +24,35 @@ interface RsCompositeElement : PsiElement {
     val containingMod: RsMod
 }
 
-val RsCompositeElement.cargoWorkspace: CargoWorkspace? get() {
-    // It's important to look the module for `containingFile` file
-    // and not the element itself. Otherwise this will break for
-    // elements in libraries.
-    val module = ModuleUtilCore.findModuleForPsiElement(containingFile)
-    if (module != null) return module.cargoWorkspace
-
-    // The element is outside of a module. Most likely, it is an element
-    // from the library created by `RootsProvider`. Let's just hope there's
-    // a single workspace in this case and return it.
-    // Ideally, we need something more clever here, because there may be two
-    // workspaces, which share the same library.
-    return project.modules.map { it.cargoWorkspace }.firstOrNull { it != null }
-}
-
-
-val RsCompositeElement.crateRoot: RsMod? get() {
-    return if (this is RsFile) {
-        val root = superMods.lastOrNull()
-        if (root != null && root.isCrateRoot)
-            root
-        else
-            null
-    } else {
-        (context as? RsCompositeElement)?.crateRoot
+val CARGO_WORKSPACE = Key.create<CargoWorkspace>("CARGO_WORKSPACE")
+val RsCompositeElement.cargoWorkspace: CargoWorkspace?
+    get() {
+        containingFile.getUserData(CARGO_WORKSPACE)?.let { return it }
+        val vFile = containingFile.virtualFile ?: return null
+        return project.cargoProjects.findProjectForFile(vFile)?.workspace
     }
-}
 
-val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target? get() {
-    val ws = cargoWorkspace ?: return null
-    val root = crateRoot ?: return null
-    val file = root.containingFile.originalFile.virtualFile ?: return null
-    return ws.findTargetByCrateRoot(file)
-}
+
+val RsCompositeElement.crateRoot: RsMod?
+    get() {
+        return if (this is RsFile) {
+            val root = superMods.lastOrNull()
+            if (root != null && root.isCrateRoot)
+                root
+            else
+                null
+        } else {
+            (context as? RsCompositeElement)?.crateRoot
+        }
+    }
+
+val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target?
+    get() {
+        val ws = cargoWorkspace ?: return null
+        val root = crateRoot ?: return null
+        val file = root.containingFile.originalFile.virtualFile ?: return null
+        return ws.findTargetByCrateRoot(file)
+    }
 
 val RsCompositeElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
