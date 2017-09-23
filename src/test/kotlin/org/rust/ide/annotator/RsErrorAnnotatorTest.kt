@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.fileTreeFromText
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
@@ -591,23 +590,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
-
-    fun testE0428_RespectsCrateAliases() = checkErrors("""
-        extern crate libc as libc_alias;
-        mod libc {}
-
-        // FIXME: ideally we want to highlight these
-        extern crate alloc;
-        mod alloc {}
-    """)
-
-    fun testE0463_UnknownCrate() = checkErrors("""
-        extern crate alloc;
-
-        <error descr="Can't find crate for `litarvan` [E0463]">extern crate litarvan;</error>
-    """)
-
     fun testE0428_IgnoresLocalBindings() = checkErrors("""
         mod no_dup {
             fn no_dup() {
@@ -1014,4 +996,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    // issue #1753
+    fun `test no type mismatch E0308 for multiple impls of the same trait`() = checkErrors("""
+        pub trait From<T> { fn from(_: T) -> Self; }
+        struct A; struct B; struct C;
+        impl From<B> for A { fn from(_: B) -> A { unimplemented!() } }
+        impl From<C> for A { fn from(_: C) -> A { unimplemented!() } }
+        fn main() {
+            A::from(C);
+        }
+    """)
 }

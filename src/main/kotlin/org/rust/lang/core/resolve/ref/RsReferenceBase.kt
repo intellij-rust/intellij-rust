@@ -38,7 +38,7 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
     final override fun multiResolve(): List<RsNamedElement> =
         advancedCachedMultiResolve().mapNotNull { it.element as? RsNamedElement }
 
-    private fun advancedCachedMultiResolve(): List<BoundElement<RsCompositeElement>> {
+    override fun advancedCachedMultiResolve(): List<BoundElement<RsCompositeElement>> {
         return ResolveCache.getInstance(element.project)
             .resolveWithCaching(this, Resolver,
                 /* needToPreventRecursion = */ true,

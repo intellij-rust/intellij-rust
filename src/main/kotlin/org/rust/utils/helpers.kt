@@ -26,3 +26,6 @@ interface ListBuilder<in T> {
 }
 
 fun makeBitMask(bitToSet: Int): Int = 1 shl bitToSet
+
+fun <K, V1, V2> zipValues(map1: Map<K, V1>, map2: Map<K, V2>): List<Pair<V1, V2>> =
+    map1.mapNotNull { (k, v1) -> map2[k]?.let { v2 -> Pair(v1, v2) } }

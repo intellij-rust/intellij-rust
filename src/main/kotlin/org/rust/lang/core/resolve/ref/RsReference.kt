@@ -17,6 +17,8 @@ interface RsReference : PsiPolyVariantReference {
 
     fun advancedResolve(): BoundElement<RsCompositeElement>? = resolve()?.let { BoundElement(it) }
 
+    fun advancedCachedMultiResolve(): List<BoundElement<RsCompositeElement>> = multiResolve().map { BoundElement(it) }
+
     fun multiResolve(): List<RsCompositeElement>
 }
 
