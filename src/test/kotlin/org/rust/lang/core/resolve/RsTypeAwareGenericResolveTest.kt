@@ -691,4 +691,48 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
              //^ unresolved
         }
     """)
+
+    // TODO should resolves to T<S2>
+    fun `test resolve method call with multiple impls of the same trait`() = checkByCode("""
+        struct S; struct S1; struct S2;
+        trait T<A> { fn foo(&self, _: A); }
+        impl T<S1> for S { fn foo(&self, _: S1) {} }
+        impl T<S2> for S { fn foo(&self, _: S2) {} }
+        fn main() {
+            S.foo(S2)
+        }    //^ unresolved
+    """)
+
+    fun `test resolve UFCS method call with multiple impls of the same trait`() = checkByCode("""
+        struct S; struct S1; struct S2;
+        trait T<A> { fn foo(&self, _: A); }
+        impl T<S1> for S { fn foo(&self, _: S1) {} }
+        impl T<S2> for S { fn foo(&self, _: S2) {} }
+                            //X
+        fn main() {
+            T::foo(&S, S2);
+        }    //^
+    """)
+
+    fun `test resolve trait associated function with multiple impls of the same trait`() = checkByCode("""
+        struct S; struct S1; struct S2;
+        trait T<A> { fn foo(_: A) -> Self; }
+        impl T<S1> for S { fn foo(_: S1) -> Self { unimplemented!() } }
+        impl T<S2> for S { fn foo(_: S2) -> Self { unimplemented!() } }
+                            //X
+        fn main() {
+            let a: S = T::foo(S2);
+        }               //^
+    """)
+
+    fun `test resolve trait associated function with multiple impls of the same trait 2`() = checkByCode("""
+        struct S; struct S1; struct S2;
+        trait T<A> { fn foo(_: A) -> Self; }
+        impl T<S1> for S { fn foo(_: S1) -> Self { unimplemented!() } }
+        impl T<S2> for S { fn foo(_: S2) -> Self { unimplemented!() } }
+                            //X
+        fn main() {
+            S::foo(S2);
+        }    //^
+    """)
 }

@@ -584,4 +584,24 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             foo.foo();
         }      //^
     """)
+
+    fun `test resolve UFCS method call`() = checkByCode("""
+        struct S;
+        trait T { fn foo(&self); }
+        impl T for S { fn foo(&self) {} }
+                        //X
+        fn main() {
+            T::foo(&S);
+        }    //^
+    """)
+
+    fun `test resolve trait associated function`() = checkByCode("""
+        struct S;
+        trait T { fn foo() -> Self; }
+        impl T for S { fn foo() -> Self { unimplemented!() } }
+                        //X
+        fn main() {
+            let a: S = T::foo();
+        }               //^
+    """)
 }
