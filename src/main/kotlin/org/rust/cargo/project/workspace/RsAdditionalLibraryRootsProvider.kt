@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.WatchedRootsProvider
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.icons.CargoIcons
-import org.rust.cargo.util.modules
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.ide.icons.RsIcons
 import javax.swing.Icon
 
@@ -54,7 +54,8 @@ class RsWatchedRootsProvider(private val project: Project) : WatchedRootsProvide
 
 private fun cargoLibraries(project: Project): Collection<CargoLibrary> =
     runReadAction {
-        project.modules.mapNotNull { it.cargoWorkspace }
+        project.cargoProjects.allProjects
+            .mapNotNull { it.workspace }
             .smartFlatMap { it.ideaLibraries }
     }
 

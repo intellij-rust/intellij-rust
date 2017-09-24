@@ -10,19 +10,19 @@ import com.intellij.testFramework.LightProjectDescriptor
 class RsExternCrateCompletionTest : RsCompletionTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
 
-    fun testExternCrate() = checkSingleCompletion("dep_lib_target", """
+    fun `test extern crate`() = checkSingleCompletion("dep_lib_target", """
         extern crate dep_l/*caret*/
     """)
 
-    fun testExternCrateDoesntSuggestStdlib() = checkNoCompletion("""
+    fun `test extern crate does not suggest core`() = checkNoCompletion("""
         extern crate cor/*caret*/
     """)
 
-    fun testExternCrateDoesntSuggestOurCrate() = checkNoCompletion("""
+    fun `test extern crate does not suggest our crate`() = checkNoCompletion("""
         extern crate tes/*caret*/
     """)
 
-    fun testExternCrateDoesntSuggestTransitiveDependency() = checkNoCompletion("""
+    fun `test extern crate does not suggest transitive dependency`() = checkNoCompletion("""
         extern crate trans_l/*caret*/
     """)
 }

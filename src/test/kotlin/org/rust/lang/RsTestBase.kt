@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,10 +26,9 @@ import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
 import org.rust.TestProject
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
@@ -189,32 +187,23 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
             val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
 
-            override val skipTestReason: String? get() {
-                if (rustup == null) return "No rustup"
-                if (stdlib == null) return "No stdib"
-                return null
-            }
+            override val skipTestReason: String?
+                get() {
+                    if (rustup == null) return "No rustup"
+                    if (stdlib == null) return "No stdib"
+                    return null
+                }
         }
 
         open val skipTestReason: String? = null
 
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
-            if (skipTestReason != null) {
-                return
-            }
+            if (skipTestReason != null) return
 
-            val moduleBaseDir = contentEntry.file!!.url
-            val projectWorkspace = CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl
-
-            projectWorkspace.setRawWorkspace(testCargoProject(module, moduleBaseDir))
-
-            // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.
-            // this seems to fix the issue
-            val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(module.project).libraries
-            for (lib in libraries) {
-                model.addLibraryEntry(lib)
-            }
+            val projectDir = contentEntry.file!!
+            val ws = testCargoProject(module, projectDir.url)
+            module.project.cargoProjects.createTestProject(projectDir, ws)
         }
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
@@ -259,14 +248,12 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-
             val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-            (CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl)
-                .setStdlib(stdlib)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CargoWorkspace.deserialize(null, CleanCargoMetadata(packages, emptyList()))
+                .withStdlib(stdlib.crates)
         }
     }
 
@@ -320,7 +307,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             }
         }
 
-        @JvmStatic fun getResourceAsString(path: String): String? {
+        @JvmStatic
+        fun getResourceAsString(path: String): String? {
             val stream = RsTestBase::class.java.classLoader.getResourceAsStream(path)
                 ?: return null
 

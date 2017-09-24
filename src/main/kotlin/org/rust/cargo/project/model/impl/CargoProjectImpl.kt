@@ -27,6 +27,7 @@ import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
@@ -55,6 +56,22 @@ class CargoProjectsServiceImpl(
 ) : CargoProjectsService, PersistentStateComponent<Element> {
     @Volatile private var cargoProject: CargoProjectImpl? = null
 
+    val taskQueue = BackgroundTaskQueue(project, "Cargo update")
+
+    private val NO_PROJECT = CargoProjectImpl(Paths.get(""), this)
+    private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> = LightDirectoryIndex(project, NO_PROJECT, Consumer { index ->
+        for (cargoProject in listOfNotNull(cargoProject)) {
+            index.putInfo(cargoProject.rootDir?.parent, cargoProject)
+            val ws = cargoProject.workspace
+            if (ws != null) {
+                for (pkg in ws.packages) {
+                    index.putInfo(pkg.contentRoot, cargoProject)
+                }
+            }
+        }
+        Unit
+    })
+
     override fun getState(): Element {
         val state = Element("state")
         val cargoProject = cargoProject
@@ -70,11 +87,6 @@ class CargoProjectsServiceImpl(
     override fun loadState(state: Element) {
         val cargoProjectElement = state.getChild("cargoProject")
         setManifest(cargoProjectElement?.getAttributeValue("FILE")?.let { Paths.get(it) })
-        firstTimeInit()
-    }
-
-    override fun noStateLoaded() {
-        firstTimeInit()
     }
 
     override val allProjects: Collection<CargoProject>
@@ -83,45 +95,38 @@ class CargoProjectsServiceImpl(
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
         directoryIndex.getInfoForFile(file).takeIf { it !== NO_PROJECT }
 
-    private val NO_PROJECT = CargoProjectImpl(Paths.get(""), this)
-    private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> = LightDirectoryIndex(project, NO_PROJECT, Consumer { index ->
-        for (cargoProject in listOfNotNull(cargoProject)) {
-            index.putInfo(cargoProject.manifestFile?.parent, cargoProject)
-            val ws = cargoProject.workspace
-            if (ws != null) {
-                for (pkg in ws.packages) {
-                    index.putInfo(pkg.contentRoot, cargoProject)
-                }
-            }
-        }
-        Unit
-    })
 
     private fun setManifest(manifest: Path?) {
         cargoProject = manifest?.let { CargoProjectImpl(it, this) }
+        refreshAllProjects()
     }
 
-    val taskQueue = BackgroundTaskQueue(project, "Cargo update")
+    @TestOnly
+    override fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace) {
+        val manifest = rootDir.pathAsPath.resolve("Cargo.toml")
+        val testProject = CargoProjectImpl(manifest, this, ws, null, UpdateStatus.UpToDate)
+        testProject.setRootDir(rootDir)
+        cargoProject = testProject
+        afterUpdate(listOf(testProject))
+    }
 
-    @Volatile private var initDone: Boolean = false
-    private fun firstTimeInit() {
-        if (initDone) return
-        initDone = true
+    override fun discoverAndRefresh(): CompletableFuture<List<CargoProject>> {
         val manifest = cargoProject?.manifest
         if (manifest == null || !manifest.exists()) {
             val guessManifest = project.modules
                 .asSequence()
                 .map { ModuleRootManager.getInstance(it) }
                 .flatMap { it.contentRoots.asSequence() }
-                .find { it.findChild(RustToolchain.CARGO_TOML) != null }
+                .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
+                .firstOrNull()
             setManifest(guessManifest?.pathAsPath)
         }
-        refreshAllProjects()
+        return refreshAllProjects()
     }
 
-    override fun refreshAllProjects() {
-        val cargoProject = cargoProject ?: return
-        cargoProject.refresh()
+    override fun refreshAllProjects(): CompletableFuture<List<CargoProject>> {
+        val cargoProject = cargoProject ?: return CompletableFuture.completedFuture(emptyList())
+        return cargoProject.refresh()
             .whenComplete { updatedProject, throwable ->
                 if (throwable != null) {
                     LOG.error(throwable)
@@ -140,6 +145,7 @@ class CargoProjectsServiceImpl(
                 }
                 afterUpdate(listOf(updatedProject))
             }
+            .thenApply { listOf(it) }
     }
 
     private fun afterUpdate(projects: Collection<CargoProject>) {
@@ -180,16 +186,18 @@ data class CargoProjectImpl(
     override val presentableName: String
         get() = manifest.parent.fileName.toString()
 
-    private val manifestFileCache = AtomicReference<VirtualFile>()
-    val manifestFile: VirtualFile?
+    private val rootDirCache = AtomicReference<VirtualFile>()
+    val rootDir: VirtualFile?
         get() {
-            val cached = manifestFileCache.get()
+            val cached = rootDirCache.get()
             if (cached != null && cached.isValid) return cached
-            val file = LocalFileSystem.getInstance().findFileByIoFile(manifest.toFile())
-            manifestFileCache.set(file)
+            val file = LocalFileSystem.getInstance().findFileByIoFile(manifest.parent.toFile())
+            rootDirCache.set(file)
             return file
         }
 
+    @TestOnly
+    fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)
 
     fun refresh(): CompletableFuture<CargoProjectImpl> = refreshStdlib().thenCompose { it.refreshWorkspace() }
 

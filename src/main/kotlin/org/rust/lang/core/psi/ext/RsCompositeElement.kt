@@ -27,8 +27,9 @@ interface RsCompositeElement : PsiElement {
 val CARGO_WORKSPACE = Key.create<CargoWorkspace>("CARGO_WORKSPACE")
 val RsCompositeElement.cargoWorkspace: CargoWorkspace?
     get() {
-        containingFile.getUserData(CARGO_WORKSPACE)?.let { return it }
-        val vFile = containingFile.virtualFile ?: return null
+        val psiFile = containingFile.originalFile
+        psiFile.getUserData(CARGO_WORKSPACE)?.let { return it }
+        val vFile = psiFile.virtualFile ?: return null
         return project.cargoProjects.findProjectForFile(vFile)?.workspace
     }
 

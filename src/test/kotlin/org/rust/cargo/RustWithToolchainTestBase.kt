@@ -10,11 +10,10 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import org.rust.FileTree
 import org.rust.TestProject
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
+import java.util.concurrent.TimeUnit
 
 // This class allows to execute real Cargo during the tests.
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
@@ -32,10 +31,10 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
         }
 
     protected fun refreshWorkspace() {
-        CargoProjectWorkspaceService.getInstance(myModule).syncUpdate(myModule.project.toolchain!!)
-        if (myModule.cargoWorkspace == null) {
-            error("Failed to update a test Cargo project")
-        }
+        val projects = project.cargoProjects.discoverAndRefresh()
+            .get(1, TimeUnit.MINUTES)
+            ?: error("Timeout when refreshing a test Cargo project")
+        if (projects.isEmpty()) error("Failed to update a test Cargo project")
     }
 
 
@@ -50,7 +49,7 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
     override fun setUp() {
         super.setUp()
         if (toolchain != null) {
-             project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
+            project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
         }
     }
 
