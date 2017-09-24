@@ -9,9 +9,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
 import org.rust.cargo.RustWithToolchainTestBase
-import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
-import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.fileTree
 import org.rust.lang.core.psi.RsPath
 
@@ -56,11 +54,8 @@ class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
         }.create()
 
         p.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+        project.cargoProjects.discoverAndRefreshSync()
 
-        CargoProjectWorkspaceService.getInstance(myModule).syncUpdate(project.toolchain!!)
-        if (myModule.cargoWorkspace == null) {
-            error("Failed to update a test Cargo project")
-        }
         val toml = p.root.findFileByRelativePath("Cargo.toml")!!
         runWriteAction {
             VfsUtil.saveText(toml, VfsUtil.loadText(toml).replace("#", ""))

@@ -13,7 +13,6 @@ import org.rust.TestProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RustToolchain
-import java.util.concurrent.TimeUnit
 
 // This class allows to execute real Cargo during the tests.
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
@@ -31,12 +30,8 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
         }
 
     protected fun refreshWorkspace() {
-        val projects = project.cargoProjects.discoverAndRefresh()
-            .get(1, TimeUnit.MINUTES)
-            ?: error("Timeout when refreshing a test Cargo project")
-        if (projects.isEmpty()) error("Failed to update a test Cargo project")
+        project.cargoProjects.discoverAndRefreshSync()
     }
-
 
     override fun runTest() {
         if (toolchain == null) {

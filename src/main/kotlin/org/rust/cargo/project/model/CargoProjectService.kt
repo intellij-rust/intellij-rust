@@ -13,6 +13,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.workspace.CargoWorkspace
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 interface CargoProject {
     val manifest: Path
@@ -42,7 +43,17 @@ interface CargoProjectsService {
 
     @TestOnly
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace)
+
     fun discoverAndRefresh(): CompletableFuture<List<CargoProject>>
+
+    @TestOnly
+    fun discoverAndRefreshSync(): List<CargoProject> {
+        val projects = discoverAndRefresh().get(1, TimeUnit.MINUTES)
+            ?: error("Timeout when refreshing a test Cargo project")
+        if (projects.isEmpty()) error("Failed to update a test Cargo project")
+        return projects
+    }
+
     fun refreshAllProjects(): CompletableFuture<List<CargoProject>>
 
     fun findProjectForFile(file: VirtualFile): CargoProject?

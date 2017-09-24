@@ -22,6 +22,7 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Consumer
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
@@ -31,10 +32,12 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.project.workspace.impl.CargoTomlWatcher
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.modules
@@ -72,6 +75,21 @@ class CargoProjectsServiceImpl(
         Unit
     })
 
+    init {
+        with(project.messageBus.connect()) {
+            subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(fun() {
+                if (!project.rustSettings.autoUpdateEnabled) return
+                refreshAllProjects()
+            }))
+
+            subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC, object : RustProjectSettingsService.ToolchainListener {
+                override fun toolchainChanged() {
+                    refreshAllProjects()
+                }
+            })
+        }
+    }
+
     override fun getState(): Element {
         val state = Element("state")
         val cargoProject = cargoProject
@@ -87,6 +105,10 @@ class CargoProjectsServiceImpl(
     override fun loadState(state: Element) {
         val cargoProjectElement = state.getChild("cargoProject")
         setManifest(cargoProjectElement?.getAttributeValue("FILE")?.let { Paths.get(it) })
+    }
+
+    override fun noStateLoaded() {
+        discoverAndRefresh()
     }
 
     override val allProjects: Collection<CargoProject>
