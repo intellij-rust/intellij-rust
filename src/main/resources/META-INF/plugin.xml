@@ -387,6 +387,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsFieldInitShorthandInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Assert Equal"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsAssertEqualInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
