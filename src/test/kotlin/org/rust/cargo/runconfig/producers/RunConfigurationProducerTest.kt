@@ -401,9 +401,7 @@ class RunConfigurationProducerTest : RsTestBase() {
             val caret = code.indexOf("<caret>")
             val offset = if (caret == -1) null else caret
             val cleanedCode = code.replace("<caret>", "")
-            val file = File(path, cleanedCode, offset)
-            files.add(file)
-            return file
+            return File(path, cleanedCode, offset).also { files.add(it) }
         }
     }
 }

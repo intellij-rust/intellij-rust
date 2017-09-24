@@ -18,7 +18,6 @@ import com.intellij.execution.process.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -61,8 +60,8 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
 
     override fun prepare(env: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
         val cleaned = (env.runnerAndConfigurationSettings!!.configuration as CargoCommandConfiguration).clean().ok!!
-        val cargoProjectDirectory = cleaned.cargoProjectDirectory.pathAsPath
-        val cargo = cleaned.module.project.toolchain!!.cargo(cargoProjectDirectory)
+        val cargoProjectDirectory = cleaned.cargoProject.manifest.parent
+        val cargo = env.project.toolchain!!.cargo(cargoProjectDirectory)
 
         val buildCommand = if (cleaned.cmd.command == "run") {
             cleaned.cmd.copy(command = "build")
@@ -71,7 +70,7 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
             cleaned.cmd.prependArgument("--no-run")
         }
 
-        return buildProjectAndGetBinaryArtifactPath(cleaned.module, buildCommand, cargo)
+        return buildProjectAndGetBinaryArtifactPath(env.project, buildCommand, cargo)
             .then { result ->
                 result?.path?.let {
                     val commandLine = GeneralCommandLine(it).withWorkDirectory(cargoProjectDirectory)
@@ -113,7 +112,7 @@ private class Binary(val path: Path)
  *   * the second time to get json output
  * See https://github.com/rust-lang/cargo/issues/3855
  */
-private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoCommandLine, cargo: Cargo): Promise<Binary?> {
+private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: CargoCommandLine, cargo: Cargo): Promise<Binary?> {
     val promise = AsyncPromise<Binary?>()
 
     val processForUserOutput = ProcessOutput()
@@ -122,14 +121,14 @@ private fun buildProjectAndGetBinaryArtifactPath(module: Module, command: CargoC
     processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
     ApplicationManager.getApplication().invokeLater {
-        RunContentExecutor(module.project, processForUser)
+        RunContentExecutor(project, processForUser)
             .withAfterCompletion {
                 if (processForUserOutput.exitCode != 0) {
                     promise.setResult(null)
                     return@withAfterCompletion
                 }
 
-                object : Task.Backgroundable(module.project, "Building Cargo project") {
+                object : Task.Backgroundable(project, "Building Cargo project") {
                     var result: List<String>? = null
 
                     override fun run(indicator: ProgressIndicator) {

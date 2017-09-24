@@ -6,13 +6,15 @@
 package org.rust.cargo.runconfig.filters
 
 import com.intellij.openapi.util.SystemInfo
-import org.rust.cargo.util.modules
+import org.rust.cargo.project.model.cargoProjects
 
 /**
  * Tests for RustBacktraceFilter
  */
 class RsBacktraceFilterTest : HighlightFilterTestBase() {
-    private val filter: RsBacktraceFilter get() = RsBacktraceFilter(projectDir, project.modules.first())
+    private val filter: RsBacktraceFilter
+        get() =
+            RsBacktraceFilter(projectDir, project, project.cargoProjects.allProjects.single().workspace)
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 

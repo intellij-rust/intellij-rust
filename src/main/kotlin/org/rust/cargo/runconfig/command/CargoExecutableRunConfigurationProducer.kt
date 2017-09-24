@@ -30,8 +30,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         val location = context.location ?: return false
         val target = findBinaryTarget(location) ?: return false
 
-        return configuration.configurationModule.module == context.module &&
-            configuration.canBeFrom(target.cargoCommandLine)
+        return configuration.canBeFrom(target.cargoCommandLine)
     }
 
     override fun setupConfigurationFromContext(
@@ -45,7 +44,6 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         val source = if (fn != null && isMainFunction(fn)) fn else context.psiLocation?.containingFile
         sourceElement.set(source)
 
-        configuration.configurationModule.module = context.module
         configuration.name = target.configurationName
         val cmd = target.cargoCommandLine.mergeWithDefault(configuration)
         configuration.setFromCmd(cmd)

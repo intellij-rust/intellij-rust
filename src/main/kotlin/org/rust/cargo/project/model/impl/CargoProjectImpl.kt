@@ -209,7 +209,7 @@ data class CargoProjectImpl(
         get() = manifest.parent.fileName.toString()
 
     private val rootDirCache = AtomicReference<VirtualFile>()
-    val rootDir: VirtualFile?
+    override val rootDir: VirtualFile?
         get() {
             val cached = rootDirCache.get()
             if (cached != null && cached.isValid) return cached

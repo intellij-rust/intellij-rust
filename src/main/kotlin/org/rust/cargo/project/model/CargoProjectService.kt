@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit
 
 interface CargoProject {
     val manifest: Path
+    val rootDir: VirtualFile?
+
     val presentableName: String
     val workspace: CargoWorkspace?
 

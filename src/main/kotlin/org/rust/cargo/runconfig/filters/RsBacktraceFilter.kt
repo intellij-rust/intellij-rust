@@ -9,12 +9,11 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.runconfig.filters.RegexpFileLinkFilter.Companion.FILE_POSITION_RE
 import org.rust.lang.core.resolve.resolveStringPath
 import java.util.*
@@ -28,11 +27,12 @@ import java.util.regex.Pattern
  */
 class RsBacktraceFilter(
     cargoProjectDir: VirtualFile,
-    module: Module
+    project: Project,
+    workspace: CargoWorkspace?
 ) : Filter {
 
-    private val sourceLinkFilter = RegexpFileLinkFilter(module.project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
-    private val backtraceItemFilter = RsBacktraceItemFilter(module.project, module)
+    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
+    private val backtraceItemFilter = RsBacktraceItemFilter(project, workspace)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         return backtraceItemFilter.applyFilter(line, entireLength)
@@ -45,7 +45,7 @@ class RsBacktraceFilter(
  */
 private class RsBacktraceItemFilter(
     val project: Project,
-    val module: Module
+    val workspace: CargoWorkspace?
 ) : Filter {
     private val pattern = Pattern.compile("^(\\s*\\d+:\\s+(?:0x[a-f0-9]+ - )?)(.+?)(::h[0-9a-f]+)?$")!!
     private val docManager = PsiDocumentManager.getInstance(project)
@@ -75,7 +75,7 @@ private class RsBacktraceItemFilter(
     }
 
     private fun extractFnHyperlink(funcName: String, start: Int, end: Int): Filter.ResultItem? {
-        val workspace = module.cargoWorkspace ?: return null
+        val workspace = workspace ?: return null
         val (element, pkg) = resolveStringPath(funcName, workspace, project) ?: return null
         val funcFile = element.containingFile
         val doc = docManager.getDocument(funcFile) ?: return null
@@ -99,11 +99,11 @@ private class RsBacktraceItemFilter(
         while (true) {
             val range = str.findAngleBrackets() ?: break
             val idx = str.indexOf("::", range.start + 1)
-            if (idx < 0 || idx > range.endInclusive) {
-                str = str.removeRange(range)
+            str = if (idx < 0 || idx > range.endInclusive) {
+                str.removeRange(range)
             } else {
-                str = str.removeRange(IntRange(range.endInclusive, range.endInclusive))
-                    .removeRange(IntRange(range.start, range.start))
+                str.removeRange(IntRange(range.endInclusive, range.endInclusive))
+                        .removeRange(IntRange(range.start, range.start))
             }
         }
         return str
@@ -127,8 +127,7 @@ private class RsBacktraceItemFilter(
                 else -> continue@loop
             }
             if (counter == 0) {
-                val range = IntRange(start, index)
-                return range
+                return IntRange(start, index)
             }
         }
         return null
