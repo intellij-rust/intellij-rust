@@ -29,6 +29,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
@@ -42,13 +43,11 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.modules
 import org.rust.ide.notifications.showBalloon
-import org.rust.utils.AsyncResult
 import org.rust.utils.TaskResult
 import org.rust.utils.pathAsPath
 import org.rust.utils.runAsyncTask
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = Logger.getInstance(CargoProjectsServiceImpl::class.java)
@@ -132,7 +131,7 @@ class CargoProjectsServiceImpl(
         afterUpdate(listOf(testProject))
     }
 
-    override fun discoverAndRefresh(): CompletableFuture<List<CargoProject>> {
+    override fun discoverAndRefresh(): Promise<List<CargoProject>> {
         val manifest = cargoProject?.manifest
         if (manifest == null || !manifest.exists()) {
             val guessManifest = project.modules
@@ -146,15 +145,10 @@ class CargoProjectsServiceImpl(
         return refreshAllProjects()
     }
 
-    override fun refreshAllProjects(): CompletableFuture<List<CargoProject>> {
-        val cargoProject = cargoProject ?: return CompletableFuture.completedFuture(emptyList())
+    override fun refreshAllProjects(): Promise<List<CargoProject>> {
+        val cargoProject = cargoProject ?: return Promise.resolve(emptyList())
         return cargoProject.refresh()
-            .whenComplete { updatedProject, throwable ->
-                if (throwable != null) {
-                    LOG.error(throwable)
-                    return@whenComplete
-                }
-
+            .processed { updatedProject ->
                 this.cargoProject = updatedProject
 
                 val status = updatedProject.mergedStatus
@@ -167,7 +161,7 @@ class CargoProjectsServiceImpl(
                 }
                 afterUpdate(listOf(updatedProject))
             }
-            .thenApply { listOf(it) }
+            .then { listOf(it) }
     }
 
     private fun afterUpdate(projects: Collection<CargoProject>) {
@@ -221,9 +215,9 @@ data class CargoProjectImpl(
     @TestOnly
     fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)
 
-    fun refresh(): CompletableFuture<CargoProjectImpl> = refreshStdlib().thenCompose { it.refreshWorkspace() }
+    fun refresh(): Promise<CargoProjectImpl> = refreshStdlib().thenAsync { it.refreshWorkspace() }
 
-    private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
+    private fun refreshStdlib(): Promise<CargoProjectImpl> {
         val rustup = toolchain?.rustup(projectDirectory)
         if (rustup == null) {
             val explicitPath = project.rustSettings.explicitPathToStdlib
@@ -233,10 +227,9 @@ data class CargoProjectImpl(
                 lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
                 else -> TaskResult.Ok(lib)
             }
-            return CompletableFuture.completedFuture(withStdlib(result))
+            return Promise.resolve(withStdlib(result))
         }
-        return fetchStdlib(project, projectService.taskQueue, rustup)
-            .thenApply(this::withStdlib)
+        return fetchStdlib(project, projectService.taskQueue, rustup).then(this::withStdlib)
     }
 
     private fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
@@ -244,14 +237,14 @@ data class CargoProjectImpl(
         is TaskResult.Err -> copy(stdlibStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
-    private fun refreshWorkspace(): CompletableFuture<CargoProjectImpl> {
+    private fun refreshWorkspace(): Promise<CargoProjectImpl> {
         val toolchain = toolchain ?:
-            return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
+            return Promise.resolve(copy(workspaceStatus = UpdateStatus.UpdateFailed(
                 "Can't update Cargo project, no Rust toolchain"
             )))
 
         return fetchCargoWorkspace(project, projectService.taskQueue, toolchain, projectDirectory)
-            .thenApply(this::withWorkspace)
+            .then(this::withWorkspace)
     }
 
     private fun withWorkspace(result: TaskResult<CargoWorkspace>): CargoProjectImpl = when (result) {
@@ -268,7 +261,7 @@ private fun fetchStdlib(
     project: Project,
     queue: BackgroundTaskQueue,
     rustup: Rustup
-): AsyncResult<StandardLibrary> {
+): Promise<TaskResult<StandardLibrary>> {
     return runAsyncTask(project, queue, "Getting Rust stdlib") {
         progress.isIndeterminate = true
         val download = rustup.downloadStdlib()
@@ -295,7 +288,7 @@ private fun fetchCargoWorkspace(
     queue: BackgroundTaskQueue,
     toolchain: RustToolchain,
     projectDirectory: Path
-): AsyncResult<CargoWorkspace> {
+): Promise<TaskResult<CargoWorkspace>> {
     return runAsyncTask(project, queue, "Updating cargo") {
         progress.isIndeterminate = true
         if (!toolchain.looksLikeValidToolchain()) {
