@@ -76,6 +76,10 @@ private class RsStructureViewElement(
                 addAll(psi.structItemList)
                 addAll(psi.traitItemList)
                 addAll(psi.typeAliasList)
+                addAll(psi.macroDefinitionList)
+                val foreignModItemList = psi.foreignModItemList
+                addAll(foreignModItemList.flatMap { it.functionList })
+                addAll(foreignModItemList.flatMap { it.constantList })
             }
             is RsStructItem -> psi.blockFields?.fieldDeclList.orEmpty()
             is RsEnumVariant -> psi.blockFields?.fieldDeclList.orEmpty()

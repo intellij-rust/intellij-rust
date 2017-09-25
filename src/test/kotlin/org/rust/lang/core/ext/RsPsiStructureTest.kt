@@ -16,8 +16,8 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type
 
 
-// Unit tests fo various `parentOfType` like utilities,
-// which use `instaceof` under the hood and thus sensitive
+// Unit tests for various `parentOfType` like utilities,
+// which use `instanceof` under the hood and thus sensitive
 // to PSI structure
 class RsPsiStructureTest : RsTestBase() {
     private fun checkFunctionOwner(cond: (RsFunctionOwner) -> Boolean, @Language("Rust") code: String) =
