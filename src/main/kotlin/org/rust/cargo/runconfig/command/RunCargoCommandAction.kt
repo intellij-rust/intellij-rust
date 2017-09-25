@@ -7,18 +7,17 @@ package org.rust.cargo.runconfig.command
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.icons.CargoIcons
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.runconfig.ui.RunCargoCommandDialog
 
 class RunCargoCommandAction : RunCargoCommandActionBase(CargoIcons.ICON) {
 
     override fun actionPerformed(e: AnActionEvent) {
-        val module = getAppropriateModule(e) ?: return
-        val dialog = RunCargoCommandDialog(module.project, module.cargoWorkspace)
-
+        val project = e.project ?: return
+        val ws = getAppropriateCargoProject(e)?.workspace
+        val dialog = RunCargoCommandDialog(project, ws)
         if (!dialog.showAndGet()) return
 
-        runCommand(module, dialog.getCargoCommandLine())
+        runCommand(project, dialog.getCargoCommandLine())
     }
 
 }
