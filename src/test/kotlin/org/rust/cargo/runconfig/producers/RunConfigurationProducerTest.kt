@@ -16,9 +16,8 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jdom.Element
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
@@ -362,8 +361,6 @@ class RunConfigurationProducerTest : RsTestBase() {
                 }
             }
 
-            val metadataService = CargoProjectWorkspaceService.getInstance(myFixture.module) as CargoProjectWorkspaceServiceImpl
-
             val projectDescription = CargoWorkspace.deserialize(
                 null,
                 CleanCargoMetadata(
@@ -389,7 +386,7 @@ class RunConfigurationProducerTest : RsTestBase() {
                 )
             )
 
-            metadataService.setRawWorkspace(projectDescription)
+            project.cargoProjects.createTestProject(myFixture.findFileInTempDir("."), projectDescription)
         }
 
         private fun addTarget(name: String, kind: CargoWorkspace.TargetKind, path: String, code: String) {
