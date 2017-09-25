@@ -340,6 +340,10 @@ private class RsFnInferenceContext(
                 expected is TyReference && expected.referenced is TySlice -> {
                 ctx.combineTypes(inferred.referenced.base, expected.referenced.elementType)
             }
+            inferred is TyPointer && inferred.mutability.isMut
+                && expected is TyPointer && !expected.mutability.isMut -> {
+                ctx.combineTypes(inferred.referenced, expected.referenced)
+            }
         // TODO trait object unsizing
             else -> ctx.combineTypes(inferred, expected)
         }
