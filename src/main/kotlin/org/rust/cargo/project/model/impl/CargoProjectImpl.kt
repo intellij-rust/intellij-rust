@@ -108,11 +108,16 @@ class CargoProjectsServiceImpl(
             .mapNotNull { it.getAttributeValue("FILE") }
             .map { Paths.get(it) }
             .forEach { addCargoProject(it) }
-        refreshAllProjects()
+
+        ApplicationManager.getApplication().invokeLater {
+            refreshAllProjects()
+        }
     }
 
     override fun noStateLoaded() {
-        discoverAndRefresh()
+        ApplicationManager.getApplication().invokeLater {
+            discoverAndRefresh()
+        }
     }
 
     override val allProjects: Collection<CargoProject>
