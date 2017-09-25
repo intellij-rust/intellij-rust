@@ -26,25 +26,36 @@ import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.DetachCargoProjectAction
 import org.rust.cargo.project.model.cargoProjects
 import javax.swing.JEditorPane
 import javax.swing.JList
+import javax.swing.ListSelectionModel
 
 
 class CargoToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val toolwindowPanel = run {
-            val cargoTab = CargoToolWindow(project)
-            SimpleToolWindowPanel(true, false).apply {
-                setToolbar(cargoTab.toolbar.component)
-                cargoTab.toolbar.setTargetComponent(this)
-                setContent(cargoTab.content)
-            }
-        }
-
+        val toolwindowPanel = CargoToolWindowPanel(project)
         val tab = ContentFactory.SERVICE.getInstance()
             .createContent(toolwindowPanel, "", false)
         toolWindow.contentManager.addContent(tab)
+    }
+}
+
+private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
+    private val cargoTab = CargoToolWindow(project)
+
+    init {
+        setToolbar(cargoTab.toolbar.component)
+        cargoTab.toolbar.setTargetComponent(this)
+        setContent(cargoTab.content)
+    }
+
+    override fun getData(dataId: String): Any? {
+        if (DetachCargoProjectAction.CARGO_PROJECT_TO_DETACH.`is`(dataId)) {
+            return cargoTab.selectedProject
+        }
+        return super.getData(dataId)
     }
 }
 
@@ -69,8 +80,9 @@ private class CargoToolWindow(
         background = UIUtil.getTreeBackground()
         isEditable = false
     }
-    val projectList = JBList<CargoProject>(emptyList()).apply {
+    private val projectList = JBList<CargoProject>(emptyList()).apply {
         emptyText.text = "There are no Cargo projects to display."
+        selectionMode = ListSelectionModel.SINGLE_SELECTION
         cellRenderer = object : ColoredListCellRenderer<CargoProject>() {
             override fun customizeCellRenderer(list: JList<out CargoProject>, value: CargoProject, index: Int, selected: Boolean, hasFocus: Boolean) {
                 icon = CargoIcons.ICON
@@ -93,6 +105,8 @@ private class CargoToolWindow(
             }
         }
     }
+    val selectedProject: CargoProject? get() = projectList.selectedValue
+
     val content = panel {
         row {
             projectList(CCFlags.push, CCFlags.grow)

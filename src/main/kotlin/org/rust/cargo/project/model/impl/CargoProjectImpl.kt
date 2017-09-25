@@ -38,6 +38,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.project.workspace.impl.CargoTomlWatcher
 import org.rust.cargo.toolchain.RustToolchain
@@ -127,6 +128,26 @@ class CargoProjectsServiceImpl(
         projects = old + CargoProjectImpl(manifest, this)
     }
 
+    override fun attachCargoProject(manifest: Path): Boolean {
+        val old = projects
+        if (old.any { it.manifest == manifest }) return false
+
+        val wsPackages = old
+            .mapNotNull { it.workspace }
+            .flatMap { it.packages }
+            .filter { it.origin == PackageOrigin.WORKSPACE }
+        if (wsPackages.any { it.rootDirectory == manifest.parent }) return false
+
+        projects = old + CargoProjectImpl(manifest, this)
+        refreshAllProjects()
+        return true
+    }
+
+    override fun detachCargoProject(cargoProject: CargoProject) {
+        projects = projects.filter { it.manifest != cargoProject.manifest }
+        afterUpdate(projects)
+    }
+
     @TestOnly
     override fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace) {
         val manifest = rootDir.pathAsPath.resolve("Cargo.toml")
@@ -145,7 +166,7 @@ class CargoProjectsServiceImpl(
                 .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
                 .firstOrNull()
             if (guessManifest != null) {
-                addCargoProject(guessManifest.pathAsPath)
+                projects = listOf(CargoProjectImpl(guessManifest.pathAsPath, this))
             }
         }
         return refreshAllProjects()

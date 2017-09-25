@@ -47,6 +47,8 @@ interface CargoProjectsService {
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace)
 
     fun discoverAndRefresh(): Promise<List<CargoProject>>
+    fun attachCargoProject(manifest: Path): Boolean
+    fun detachCargoProject(cargoProject: CargoProject)
 
     @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {

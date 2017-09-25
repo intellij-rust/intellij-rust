@@ -644,10 +644,23 @@
                 class="org.rust.cargo.runconfig.command.RunClippyAction"
                 text="Run Clippy"/>
 
+        <action id="Rust.AttachCargoProject"
+                class="org.rust.cargo.project.model.AttachCargoProjectAction"
+                text="Attach Cargo project"
+                icon="AllIcons.ToolbarDecorator.Add"/>
+
+        <action id="Rust.DetachCargoProject"
+                class="org.rust.cargo.project.model.DetachCargoProjectAction"
+                text="Detach Cargo project"
+                icon="AllIcons.ToolbarDecorator.Remove"/>
+
         <group id="Rust.Cargo">
             <reference id="Rust.RefreshCargoProject"/>
             <reference id="Rust.CargoCommand"/>
             <reference id="Rust.RunClippy"/>
+            <separator/>
+            <reference id="Rust.AttachCargoProject"/>
+            <reference id="Rust.DetachCargoProject"/>
         </group>
     </actions>
 
