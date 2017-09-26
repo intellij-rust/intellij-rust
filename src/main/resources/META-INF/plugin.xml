@@ -535,8 +535,6 @@
                         serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
         <projectService serviceInterface="org.rust.cargo.project.model.CargoProjectsService"
                         serviceImplementation="org.rust.cargo.project.model.impl.CargoProjectsServiceImpl"/>
-        <moduleService serviceInterface="org.rust.cargo.project.workspace.CargoProjectWorkspaceService"
-                       serviceImplementation="org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl"/>
 
         <toolWindow id="Cargo"
                     anchor="right"
