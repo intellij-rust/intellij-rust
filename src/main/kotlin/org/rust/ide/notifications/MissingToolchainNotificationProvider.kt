@@ -5,7 +5,6 @@
 
 package org.rust.ide.notifications
 
-import com.intellij.ProjectTopics
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -13,22 +12,19 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.cargoProjectRoot
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.utils.pathAsPath
 import java.awt.Component
@@ -53,12 +49,8 @@ class MissingToolchainNotificationProvider(
                     }
                 })
 
-            subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-                override fun beforeRootsChange(event: ModuleRootEvent?) {
-                    // NOP
-                }
-
-                override fun rootsChanged(event: ModuleRootEvent?) {
+            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
+                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
                     notifications.updateAllNotifications()
                 }
             })
@@ -78,15 +70,14 @@ class MissingToolchainNotificationProvider(
                 createBadToolchainPanel()
         }
 
-        val module = ModuleUtilCore.findModuleForFile(file, project) ?: return null
-        if (module.cargoWorkspace?.hasStandardLibrary == false) {
-            val rustup = module.cargoProjectRoot?.let { toolchain.rustup(it.pathAsPath) }
+        val cargoProject = project.cargoProjects.findProjectForFile(file)
+        val workspace = cargoProject?.workspace ?: return null
+        if (!workspace.hasStandardLibrary) {
+            val noRustup = cargoProject.rootDir?.let { toolchain.rustup(it.pathAsPath) } == null
             // If rustup is not null, the WorkspaceService will use it
             // to add stdlib automatically. This happens asynchronously,
             // so we can't reliably say here if that succeeded or not.
-            if (rustup == null) {
-                createLibraryAttachingPanel(module)
-            }
+            if (noRustup) return createLibraryAttachingPanel()
         }
 
         return null
@@ -128,14 +119,13 @@ class MissingToolchainNotificationProvider(
             }
         }
 
-
-    private fun createLibraryAttachingPanel(module: Module): EditorNotificationPanel =
+    private fun createLibraryAttachingPanel(): EditorNotificationPanel =
         EditorNotificationPanel().apply {
             setText("Can not attach stdlib sources automatically without rustup.")
             createActionLabel("Attach manually") {
                 val stdlib = chooseStdlibLocation(this) ?: return@createActionLabel
                 if (StandardLibrary.fromFile(stdlib) != null) {
-                    module.project.rustSettings.explicitPathToStdlib = stdlib.path
+                    project.rustSettings.explicitPathToStdlib = stdlib.path
                 } else {
                     project.showBalloon(
                         "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
