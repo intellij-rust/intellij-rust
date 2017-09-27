@@ -547,7 +547,7 @@
 
         <!-- Icon Provider -->
 
-        <iconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>
+        <fileIconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>
         <iconProvider implementation="org.rust.ide.icons.RsIconProvider"/>
 
         <!-- Indices -->
