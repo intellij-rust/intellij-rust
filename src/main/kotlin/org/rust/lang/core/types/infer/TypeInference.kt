@@ -487,7 +487,7 @@ private class RsFnInferenceContext(
     }
 
     private fun inferPathExprType(expr: RsPathExpr): Ty {
-        val variants = expr.path.reference.advancedCachedMultiResolve().mapNotNull { it.downcast<RsNamedElement>() }
+        val variants = expr.path.reference.advancedMultiResolve().mapNotNull { it.downcast<RsNamedElement>() }
         val qualifier = expr.path.path
         if (variants.size > 1 && qualifier != null) {
             val resolved = resolveAmbiguity(variants.map { it.element })

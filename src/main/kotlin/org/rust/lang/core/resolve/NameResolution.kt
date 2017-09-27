@@ -50,9 +50,9 @@ import java.util.*
 // Technicalities:
 //
 //   * We can get into infinite loop during name resolution. This is handled by
-//     `RsReferenceBase`.
+//     `RsReferenceCached`.
 //   * The results of name resolution are cached and invalidated on every code change.
-//     Caching also is handled by `RsReferenceBase`.
+//     Caching also is handled by `RsReferenceCached`.
 //   * Ideally, all of the methods except for `processLexicalDeclarations` should operate on stubs only.
 //   * Rust uses two namespaces for declarations ("types" and "values"). The necessary namespace is
 //     determined by the syntactic position of the reference in `processResolveVariants` function and

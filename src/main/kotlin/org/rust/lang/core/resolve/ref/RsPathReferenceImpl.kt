@@ -6,14 +6,17 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.ResolveResult
+import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.collectCompletionVariants
-import org.rust.lang.core.resolve.collectResolveVariants
+import org.rust.lang.core.resolve.collectPathResolveVariants
 import org.rust.lang.core.resolve.processPathResolveVariants
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
@@ -23,13 +26,13 @@ import org.rust.lang.core.types.type
 class RsPathReferenceImpl(
     element: RsPath
 ) : RsReferenceBase<RsPath>(element),
-    RsReference {
+    RsPathReference{
 
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
+    private fun resolveInner(): List<BoundElement<RsCompositeElement>> {
         val lookup = ImplLookup.relativeTo(element)
-        val result = collectResolveVariants(element.referenceName) {
+        val result = collectPathResolveVariants(element.referenceName) {
             processPathResolveVariants(lookup, element, false, it)
         }
 
@@ -78,5 +81,27 @@ class RsPathReferenceImpl(
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()
         return element.manager.areElementsEquivalent(target, element)
+    }
+
+    override fun advancedResolve(): BoundElement<RsCompositeElement>? =
+        advancedMultiResolve().firstOrNull()
+
+    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
+        advancedMultiResolve().toTypedArray()
+
+    override fun multiResolve(): List<RsNamedElement> =
+        advancedMultiResolve().mapNotNull { it.element as? RsNamedElement }
+
+    override fun advancedMultiResolve(): List<BoundElement<RsCompositeElement>> {
+        return ResolveCache.getInstance(element.project)
+            .resolveWithCaching(this, Resolver,
+                /* needToPreventRecursion = */ true,
+                /* incompleteCode = */ false).orEmpty()
+    }
+
+    private object Resolver : ResolveCache.AbstractResolver<RsPathReferenceImpl, List<BoundElement<RsCompositeElement>>> {
+        override fun resolve(ref: RsPathReferenceImpl, incompleteCode: Boolean): List<BoundElement<RsCompositeElement>> {
+            return ref.resolveInner()
+        }
     }
 }

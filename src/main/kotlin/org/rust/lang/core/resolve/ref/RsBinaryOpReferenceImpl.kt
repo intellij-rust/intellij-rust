@@ -12,16 +12,15 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processBinaryOpVariants
-import org.rust.lang.core.types.BoundElement
 
 class RsBinaryOpReferenceImpl(
     element: RsBinaryOp
-) : RsReferenceBase<RsBinaryOp>(element),
+) : RsReferenceCached<RsBinaryOp>(element),
     RsReference {
 
     override val RsBinaryOp.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
+    override fun resolveInner(): List<RsCompositeElement> {
         val operator = element.operatorType as? OverloadableBinaryOperator ?: return emptyList()
         return collectResolveVariants(operator.fnName) { processBinaryOpVariants(element, operator, it) }
     }

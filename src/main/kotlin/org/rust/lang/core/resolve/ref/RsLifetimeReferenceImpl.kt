@@ -11,16 +11,15 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processLifetimeResolveVariants
-import org.rust.lang.core.types.BoundElement
 
 class RsLifetimeReferenceImpl(
     element: RsLifetime
-) : RsReferenceBase<RsLifetime>(element),
+) : RsReferenceCached<RsLifetime>(element),
     RsReference {
 
     override val RsLifetime.referenceAnchor: PsiElement get() = quoteIdentifier
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
+    override fun resolveInner(): List<RsCompositeElement> =
         collectResolveVariants(element.referenceName) { processLifetimeResolveVariants(element, it) }
 
     override fun getVariants(): Array<out Any> =

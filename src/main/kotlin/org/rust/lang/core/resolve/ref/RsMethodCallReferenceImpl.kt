@@ -14,7 +14,6 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.parentDotExpr
 import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.emptySubstitution
@@ -23,7 +22,7 @@ import org.rust.lang.core.types.type
 
 class RsMethodCallReferenceImpl(
     element: RsMethodCall
-) : RsReferenceBase<RsMethodCall>(element),
+) : RsReferenceCached<RsMethodCall>(element),
     RsReference {
 
     override val RsMethodCall.referenceAnchor: PsiElement get() = referenceNameElement
@@ -33,7 +32,7 @@ class RsMethodCallReferenceImpl(
         return collectCompletionVariants { processMethodCallExprResolveVariants(lookup, element.receiver.type, it) }
     }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
+    override fun resolveInner(): List<RsCompositeElement> {
         val receiverType = element.parentDotExpr.expr.type
         val lookup = ImplLookup.relativeTo(element)
         return collectResolveVariants(element.referenceName) {
@@ -44,7 +43,7 @@ class RsMethodCallReferenceImpl(
 
 class RsFieldLookupReferenceImpl(
     element: RsFieldLookup
-) : RsReferenceBase<RsFieldLookup>(element),
+) : RsReferenceCached<RsFieldLookup>(element),
     RsReference {
 
     override val RsFieldLookup.referenceAnchor: PsiElement get() = referenceNameElement
@@ -54,11 +53,10 @@ class RsFieldLookupReferenceImpl(
         return collectCompletionVariants { processFieldExprResolveVariants(lookup, element.receiver.type, true, it) }
     }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
+    override fun resolveInner(): List<RsCompositeElement> {
         val receiverType = element.parentDotExpr.expr.type
         val lookup = ImplLookup.relativeTo(element)
         return resolveFieldLookupReferenceWithReceiverType(lookup, receiverType, element)
-            .map { BoundElement(it) }
     }
 
     override fun handleElementRename(newName: String): PsiElement {
@@ -85,7 +83,7 @@ fun resolveFieldLookupReferenceWithReceiverType(
 ): List<RsCompositeElement> {
     return collectResolveVariants(expr.referenceName) {
         processFieldExprResolveVariants(lookup, receiverType, false, it)
-    }.map { it.element }
+    }
 }
 
 data class MethodCallee(

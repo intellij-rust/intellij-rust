@@ -11,16 +11,15 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processMacroReferenceVariants
-import org.rust.lang.core.types.BoundElement
 
 
-class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceBase<RsMacroReference>(pattern) {
+class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceCached<RsMacroReference>(pattern) {
     override val RsMacroReference.referenceAnchor: PsiElement
         get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processMacroReferenceVariants(element, it) }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>>
+    override fun resolveInner(): List<RsCompositeElement>
         =  collectResolveVariants(element.referenceName) { processMacroReferenceVariants(element, it) }
 }

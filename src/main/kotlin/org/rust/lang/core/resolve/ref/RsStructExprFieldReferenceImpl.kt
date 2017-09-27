@@ -10,12 +10,13 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.resolve.collectCompletionVariants
+import org.rust.lang.core.resolve.collectResolveVariants
+import org.rust.lang.core.resolve.processStructLiteralFieldResolveVariants
 
 class RsStructLiteralFieldReferenceImpl(
     field: RsStructLiteralField
-) : RsReferenceBase<RsStructLiteralField>(field),
+) : RsReferenceCached<RsStructLiteralField>(field),
     RsReference {
 
     override val RsStructLiteralField.referenceAnchor: PsiElement get() = referenceNameElement
@@ -23,7 +24,7 @@ class RsStructLiteralFieldReferenceImpl(
     override fun getVariants(): Array<out LookupElement> =
         collectCompletionVariants { processStructLiteralFieldResolveVariants(element, it) }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
+    override fun resolveInner(): List<RsCompositeElement> =
         collectResolveVariants(element.referenceName) {
             processStructLiteralFieldResolveVariants(element, it)
         }

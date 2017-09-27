@@ -143,7 +143,7 @@ MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')' {
 private PathIdent ::= !("union" identifier) identifier | self | super | 'Self'
 
 fake Path ::= (Path '::' | '::' | TypeQual)? PathIdent PathTypeArguments? {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
                  "org.rust.lang.core.macros.ExpansionResult" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
