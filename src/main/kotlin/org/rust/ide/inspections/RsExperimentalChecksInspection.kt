@@ -8,8 +8,8 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.types.addToHolder
 import org.rust.lang.core.types.inference
+import org.rust.lang.utils.addToHolder
 
 class RsExperimentalChecksInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
