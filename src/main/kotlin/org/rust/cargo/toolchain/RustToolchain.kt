@@ -35,7 +35,16 @@ data class RustToolchain(val location: String) {
     }
 
     fun cargo(cargoProjectDirectory: Path): Cargo =
-        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), cargoProjectDirectory, rustup(cargoProjectDirectory))
+        Cargo(chooseCargoExecutable(cargoProjectDirectory), pathToExecutable(RUSTC), cargoProjectDirectory, rustup(cargoProjectDirectory))
+
+    private fun hasXargoToml(projectDirectory: Path): Boolean =
+        projectDirectory.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
+
+    private fun chooseCargoExecutable(cargoProjectDirectory: Path): Path =
+        if (hasXargoToml(cargoProjectDirectory) && hasExecutable(XARGO))
+            pathToExecutable(XARGO)
+        else
+            pathToExecutable(CARGO)
 
     fun rustup(cargoProjectDirectory: Path): Rustup? =
         if (isRustupAvailable)
@@ -66,9 +75,11 @@ data class RustToolchain(val location: String) {
         private val RUSTC = "rustc"
         private val CARGO = "cargo"
         private val RUSTUP = "rustup"
+        private val XARGO = "xargo"
 
         val CARGO_TOML = "Cargo.toml"
         val CARGO_LOCK = "Cargo.lock"
+        val XARGO_TOML = "Xargo.toml"
 
         fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
             val candidate = RustToolchain(it.absolutePath)
