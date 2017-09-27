@@ -37,6 +37,8 @@ fun inferTypesIn(fn: RsFunction): RsInferenceResult =
 class RsInferenceResult(
     private val bindings: Map<RsPatBinding, Ty>,
     private val exprTypes: Map<RsExpr, Ty>,
+    private val resolvedMethods: Map<RsMethodCall, List<RsFunction>>,
+    private val resolvedFields: Map<RsFieldLookup, List<RsCompositeElement>>,
     val diagnostics: List<RsDiagnostic>
 ) {
     fun getExprType(expr: RsExpr): Ty =
@@ -44,6 +46,12 @@ class RsInferenceResult(
 
     fun getBindingType(binding: RsPatBinding): Ty =
         bindings[binding] ?: TyUnknown
+
+    fun getResolvedMethod(call: RsMethodCall): List<RsFunction> =
+        resolvedMethods[call] ?: emptyList()
+
+    fun getResolvedField(call: RsFieldLookup): List<RsCompositeElement> =
+        resolvedFields[call] ?: emptyList()
 
     override fun toString(): String =
         "RsInferenceResult(bindings=$bindings, exprTypes=$exprTypes)"
@@ -55,6 +63,8 @@ class RsInferenceResult(
 class RsInferenceContext {
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
+    private val resolvedMethods: MutableMap<RsMethodCall, List<RsFunction>> = HashMap()
+    private val resolvedFields: MutableMap<RsFieldLookup, List<RsCompositeElement>> = HashMap()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger.Kind> =
@@ -111,7 +121,7 @@ class RsInferenceContext {
             bindings.replaceAll { _, ty -> fullyResolve(ty) }
         }
 
-        return RsInferenceResult(bindings, exprTypes, diagnostics)
+        return RsInferenceResult(bindings, exprTypes, resolvedMethods, resolvedFields, diagnostics)
     }
 
     private fun extractParameterBindings(fn: RsFunction) {
@@ -134,6 +144,14 @@ class RsInferenceContext {
 
     fun writeTy(psi: RsExpr, ty: Ty) {
         exprTypes[psi] = ty
+    }
+
+    fun writeResolvedMethod(call: RsMethodCall, resolvedTo: List<RsFunction>) {
+        resolvedMethods[call] = resolvedTo
+    }
+
+    fun writeResolvedField(lookup: RsFieldLookup, resolvedTo: List<RsCompositeElement>) {
+        resolvedFields[lookup] = resolvedTo
     }
 
     fun extractBindings(pattern: RsPat?, baseType: Ty) {
@@ -675,6 +693,7 @@ private class RsFnInferenceContext(
         val receiverRes = resolveTypeVarsWithObligations(receiver)
         val argExprs = methodCall.valueArgumentList.exprList
         val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
+        ctx.writeResolvedMethod(methodCall, variants.map { it.element })
         val callee = /* resolveAmbiguity(variants.map { it.element }) ?: */ variants.firstOrNull()
         if (callee == null) {
             val methodType = unknownTyFunction(argExprs.size)
@@ -755,7 +774,9 @@ private class RsFnInferenceContext(
     }
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
-        val field = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup).firstOrNull()
+        val variants = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup)
+        ctx.writeResolvedField(fieldLookup, variants)
+        val field = variants.firstOrNull()
         if (field == null) {
             for (type in lookup.coercionSequence(receiver)) {
                 if (type is TyTuple) {

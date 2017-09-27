@@ -7,7 +7,9 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
+import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
@@ -22,6 +24,9 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
     RsReference {
 
     override fun resolve(): RsCompositeElement? = super.resolve() as? RsCompositeElement
+
+    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
+        multiResolve().map { PsiElementResolveResult(it) }.toTypedArray()
 
     abstract val T.referenceAnchor: PsiElement
 
