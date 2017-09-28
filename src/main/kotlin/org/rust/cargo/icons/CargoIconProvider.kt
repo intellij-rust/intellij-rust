@@ -14,6 +14,7 @@ import javax.swing.Icon
 class CargoIconProvider : FileIconProvider {
     override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? = when (file.name) {
         CargoConstants.MANIFEST_FILE -> CargoIcons.ICON
+        CargoConstants.XARGO_MANIFEST_FILE -> CargoIcons.ICON
         CargoConstants.LOCK_FILE -> CargoIcons.LOCK_ICON
         else -> null
     }
