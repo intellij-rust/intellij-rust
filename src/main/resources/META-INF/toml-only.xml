@@ -2,5 +2,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <completion.contributor language="TOML"
                                 implementationClass="org.rust.toml.CargoTomlCompletionContributor"/>
+        <codeInsight.lineMarkerProvider language="TOML"
+                                        implementationClass="org.rust.toml.CargoCrateDocLineMarkerProvider"/>
     </extensions>
 </idea-plugin>
