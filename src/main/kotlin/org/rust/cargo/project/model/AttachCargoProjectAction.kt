@@ -17,7 +17,7 @@ import org.rust.utils.pathAsPath
 class AttachCargoProjectAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+        val descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
             .withFileFilter { it.name == RustToolchain.CARGO_TOML }
             .withTitle("Select Cargo.toml")
         val chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null)

@@ -650,7 +650,8 @@
         <action id="Rust.DetachCargoProject"
                 class="org.rust.cargo.project.model.DetachCargoProjectAction"
                 text="Detach Cargo project"
-                icon="AllIcons.ToolbarDecorator.Remove"/>
+                icon="AllIcons.ToolbarDecorator.Remove"
+                use-shortcut-of="$Delete"/>
 
         <group id="Rust.Cargo">
             <reference id="Rust.RefreshCargoProject"/>

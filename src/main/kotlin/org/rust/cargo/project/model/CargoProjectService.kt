@@ -43,18 +43,19 @@ interface CargoProject {
 interface CargoProjectsService {
     fun findProjectForFile(file: VirtualFile): CargoProject?
     val allProjects: Collection<CargoProject>
+    val hasAtLeastOneValidProject: Boolean
 
     fun attachCargoProject(manifest: Path): Boolean
     fun detachCargoProject(cargoProject: CargoProject)
     fun refreshAllProjects(): Promise<List<CargoProject>>
-    fun discoverAndRefresh(): Promise<List<CargoProject>>
+    fun discoverAndRefresh(): Promise<List<CargoProject>>?
 
     @TestOnly
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace)
 
     @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {
-        val projects = discoverAndRefresh().blockingGet(1, TimeUnit.MINUTES)
+        val projects = discoverAndRefresh()!!.blockingGet(1, TimeUnit.MINUTES)
             ?: error("Timeout when refreshing a test Cargo project")
         if (projects.isEmpty()) error("Failed to update a test Cargo project")
         return projects

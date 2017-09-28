@@ -70,7 +70,15 @@ class MissingToolchainNotificationProvider(
                 createBadToolchainPanel()
         }
 
-        val cargoProject = project.cargoProjects.findProjectForFile(file)
+        val cargoProjects = project.cargoProjects
+        if (!cargoProjects.hasAtLeastOneValidProject) {
+            return if (cargoProjects.discoverAndRefresh() != null)
+                null
+            else
+                createAttachCargoProjectPanel()
+        }
+
+        val cargoProject = cargoProjects.findProjectForFile(file)
         val workspace = cargoProject?.workspace ?: return null
         if (!workspace.hasStandardLibrary) {
             val noRustup = cargoProject.rootDir?.let { toolchain.rustup(it.pathAsPath) } == null
@@ -113,6 +121,16 @@ class MissingToolchainNotificationProvider(
             createActionLabel("Setup toolchain") {
                 project.rustSettings.configureToolchain()
             }
+            createActionLabel("Do not show again") {
+                disableNotification()
+                notifications.updateAllNotifications()
+            }
+        }
+
+    private fun createAttachCargoProjectPanel(): EditorNotificationPanel =
+        EditorNotificationPanel().apply {
+            setText("No Cargo project found")
+            createActionLabel("Attach", "Rust.AttachCargoProject")
             createActionLabel("Do not show again") {
                 disableNotification()
                 notifications.updateAllNotifications()

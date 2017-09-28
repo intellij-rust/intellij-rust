@@ -94,6 +94,9 @@ class CargoProjectsServiceImpl(
     override val allProjects: Collection<CargoProject>
         get() = projects.currentState
 
+    override val hasAtLeastOneValidProject: Boolean
+        get() = hasAtLeastOneValidProject(allProjects)
+
     override fun attachCargoProject(manifest: Path): Boolean {
         if (isExistingProject(allProjects, manifest)) return false
         modifyProjects { projects ->
@@ -115,15 +118,16 @@ class CargoProjectsServiceImpl(
         modifyProjects { doRefresh(project, it) }
             .then { projects -> projects.map { it as CargoProject } }
 
-    override fun discoverAndRefresh(): Promise<List<CargoProject>> {
+    override fun discoverAndRefresh(): Promise<List<CargoProject>>? {
+        val guessManifest = project.modules
+            .asSequence()
+            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
+            .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
+            .firstOrNull()
+            ?: return null
+
         return modifyProjects { projects ->
-            if (projects.any { it.manifest.exists() }) return@modifyProjects Promise.resolve(projects)
-            val guessManifest = project.modules
-                .asSequence()
-                .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-                .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
-                .firstOrNull()
-                ?: return@modifyProjects Promise.resolve(projects)
+            if (hasAtLeastOneValidProject(projects)) return@modifyProjects Promise.resolve(projects)
             doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
         }.then { projects -> projects.map { it as CargoProject } }
     }
@@ -180,15 +184,13 @@ class CargoProjectsServiceImpl(
             }
     }
 
-    override fun noStateLoaded() {
-        ApplicationManager.getApplication().invokeLater { discoverAndRefresh() }
-    }
-
-
     override fun toString(): String {
         return "CargoProjectsService(projects = $allProjects)"
     }
 }
+
+private fun hasAtLeastOneValidProject(projects: Collection<CargoProject>) =
+    projects.any { it.manifest.exists() }
 
 data class CargoProjectImpl(
     override val manifest: Path,
