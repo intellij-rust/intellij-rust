@@ -10,6 +10,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiParserFacade
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsFunctionOwner
 import org.rust.lang.core.psi.ext.owner
@@ -34,7 +35,9 @@ class RsExtractFunctionHandlerAction(
             config.name,
             config.elements,
             config.visibilityLevelPublic,
-            config.needsSelf
+            config.needsSelf,
+            config.returnType,
+            config.returnBindingName
         )
         when {
             owner is RsFunctionOwner.Impl && !owner.isInherent -> {
@@ -58,11 +61,17 @@ class RsExtractFunctionHandlerAction(
     }
 
     private fun replaceOldStatementsWithCallExpr(psiFactory: RsPsiFactory) {
-        val call = if (config.needsSelf) {
-            psiFactory.createFunctionCallSelfMethodStmt(config.name)
-        } else {
-            psiFactory.createFunctionCallFunctionStmt(config.name, (config.containingFunction.owner as? RsFunctionOwner.Impl)?.impl?.typeReference?.text)
+        var stmt = ""
+        if (config.returnBindingName != null) {
+            stmt += "let ${config.returnBindingName} = "
         }
+        if (config.needsSelf) {
+            stmt += "self.${config.name}();"
+        } else {
+            val type = (config.containingFunction.owner as? RsFunctionOwner.Impl)?.impl?.typeReference?.text
+            stmt += "${if (type != null) "$type::" else ""}${config.name}();"
+        }
+        val call = psiFactory.createStatement(stmt)
         config.elements.forEachIndexed { index, psiElement ->
             if (index == 0) {
                 psiElement.replace(call)

@@ -6,47 +6,76 @@
 package org.rust.lang.refactoring.extractFunction
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.components.dialog
+import com.intellij.ui.layout.panel
 import java.awt.Dimension
-import java.awt.GridLayout
-import javax.swing.JComboBox
-import javax.swing.JLabel
-import javax.swing.JPanel
+
+private fun extractConfig(
+    config: RsExtractFunctionConfig,
+    functionName: NameSuggestionsField,
+    visibilityBox: ComboBox<String>
+): RsExtractFunctionConfig {
+    config.name = functionName.enteredName
+    config.visibilityLevelPublic = visibilityBox.selectedItem == "Public"
+    return config
+}
+
+private fun genSignature(config: RsExtractFunctionConfig): String {
+    var signature = "fn ${config.name}()"
+    if (config.returnType != null) {
+        signature += " -> ${config.returnType}"
+    }
+    if (config.visibilityLevelPublic) {
+        signature = "pub " + signature
+    }
+    signature += "{\n${config.elements.joinToString(separator = "\n", transform = { it.text })}"
+    if (config.returnBindingName != null) {
+        signature += "\n${config.returnBindingName}"
+    }
+    return signature + "\n}"
+}
 
 fun extractFunctionDialog(
     project: Project,
     file: PsiFile,
     config: RsExtractFunctionConfig
 ) {
-    val contentPanel = JPanel(GridLayout(2, 2))
-    val functionNameLabel = JLabel()
     val functionNameField = NameSuggestionsField(project)
-    val visibilityLabel = JLabel()
-    val visibilityBox = JComboBox<String>()
 
-    contentPanel.size = Dimension(522, 396)
-    functionNameLabel.text = "Name:"
-
-    visibilityLabel.text = "Visibility:"
+    val visibilityBox = ComboBox<String>()
     with(visibilityBox) {
         addItem("Public")
         addItem("Private")
     }
     visibilityBox.selectedItem = "Private"
+    val signature = genSignature(config)
+    val signatureComponent = RsSignatureComponent(signature, project)
+    signatureComponent.minimumSize = Dimension(300, 30)
 
-    with(contentPanel) {
-        add(visibilityLabel)
-        add(functionNameLabel)
-        add(visibilityBox)
-        add(functionNameField)
+    visibilityBox.addActionListener {
+        val config = extractConfig(config, functionNameField, visibilityBox)
+        val signature = genSignature(config)
+        signatureComponent.setSignature(signature)
+    }
+    functionNameField.addDataChangedListener {
+        val config = extractConfig(config, functionNameField, visibilityBox)
+        val signature = genSignature(config)
+        signatureComponent.setSignature(signature)
+    }
+
+    val panel = panel {
+        row("Name:") { functionNameField() }
+        row("Visibility:") { visibilityBox() }
+        row("Signature:") { signatureComponent() }
     }
 
     dialog(
         "Extract Function",
-        contentPanel,
+        panel,
         resizable = false,
         focusedComponent = functionNameField,
         okActionEnabled = true,
@@ -55,13 +84,8 @@ fun extractFunctionDialog(
         errorText = null,
         modality = DialogWrapper.IdeModalityType.IDE
     ) {
-        config.name = functionNameField.enteredName
-        config.visibilityLevelPublic = visibilityBox.selectedItem == "Public"
-        RsExtractFunctionHandlerAction(
-            project,
-            file,
-            config
-        ).execute()
+        val config = extractConfig(config, functionNameField, visibilityBox)
+        RsExtractFunctionHandlerAction(project, file, config).execute()
         true
     }.show()
 }
