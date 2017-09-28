@@ -40,7 +40,6 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.cargo.project.workspace.impl.CargoTomlWatcher
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.modules
@@ -75,10 +74,27 @@ class CargoProjectsServiceImpl(
         }
     }
 
+    /**
+     * While in theory Cargo and rustup are concurrency-safe, in practice
+     * it's better to serialize their execution, and this queue does
+     * exactly that. Not that [AsyncValue] [projects] also provides
+     * serialization grantees, so this queue is no strictly necessary.
+     */
     val taskQueue = BackgroundTaskQueue(project, "Cargo update")
+
+    /**
+     * The heart of the plugin Project model. Care must be taken to ensure
+     * this is thread-safe, and that refreshes are scheduled after
+     * set of projects changes.
+     */
     private val projects = AsyncValue<List<CargoProjectImpl>>(emptyList())
 
+
     private val NO_PROJECT = CargoProjectImpl(Paths.get(""), this)
+    /**
+     * [directoryIndex] allows to quickly map from a [VirtualFile] to
+     * a containing [CargoProject].
+     */
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
         LightDirectoryIndex(project, NO_PROJECT, Consumer { index ->
             for (cargoProject in projects.currentState) {
@@ -132,6 +148,11 @@ class CargoProjectsServiceImpl(
         }.then { projects -> projects.map { it as CargoProject } }
     }
 
+    /**
+     * All modifications to project model except for low-level `loadState` should
+     * go through this method: it makes sure that when we update various IDEA listeners,
+     * [allProjects] contains fresh projects.
+     */
     private fun modifyProjects(
         f: (List<CargoProjectImpl>) -> Promise<List<CargoProjectImpl>>
     ): Promise<List<CargoProjectImpl>> =
@@ -184,13 +205,18 @@ class CargoProjectsServiceImpl(
             }
     }
 
+    override fun noStateLoaded() {
+        // Do nothing: in theory, we might try to do [discoverAndRefresh]
+        // here, but the `RustToolchain` is most likely not ready.
+        //
+        // So the actual "Let's guess a project model if it is not imported
+        // explicitly" happens in [org.rust.ide.notifications.MissingToolchainNotificationProvider]
+    }
+
     override fun toString(): String {
         return "CargoProjectsService(projects = $allProjects)"
     }
 }
-
-private fun hasAtLeastOneValidProject(projects: Collection<CargoProject>) =
-    projects.any { it.manifest.exists() }
 
 data class CargoProjectImpl(
     override val manifest: Path,
@@ -267,6 +293,9 @@ data class CargoProjectImpl(
         return "CargoProject(manifest = $manifest)"
     }
 }
+
+private fun hasAtLeastOneValidProject(projects: Collection<CargoProject>) =
+    projects.any { it.manifest.exists() }
 
 private fun isExistingProject(projects: Collection<CargoProject>, manifest: Path): Boolean {
     if (projects.any { it.manifest == manifest }) return true

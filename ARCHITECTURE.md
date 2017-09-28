@@ -35,7 +35,10 @@ The `lang` package is the heart of the plugin. It includes a parser for the Rust
 language, machinery for connecting declaration and usages and a type inference
 algorithm. Completion and go to declarations is built using the `lang` package.
 
-The `cargo` package is used for integration with Cargo and rustup.
+The `cargo` package is used for integration with Cargo and rustup. Most importantly,
+it describes the project model in `model` and `workspace` subpackages. The model
+is roughly the data from `cargo metadata` command, but it also contains information 
+about standard library and logic for automatic refresh based on `Cargo.toml` modifications.
 
 The `ide` package uses `cargo` and `lang` packages to provide useful
 functionality for the user. It consists of numerous sub packages. Some of them

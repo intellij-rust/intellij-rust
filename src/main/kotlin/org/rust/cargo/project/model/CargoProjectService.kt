@@ -15,31 +15,13 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
-interface CargoProject {
-    val manifest: Path
-    val rootDir: VirtualFile?
-
-    val presentableName: String
-    val workspace: CargoWorkspace?
-
-    val workspaceStatus: UpdateStatus
-    val stdlibStatus: UpdateStatus
-
-    val mergedStatus: UpdateStatus
-        get() = when {
-            workspaceStatus is UpdateStatus.UpdateFailed -> workspaceStatus
-            stdlibStatus is UpdateStatus.UpdateFailed -> stdlibStatus
-            workspaceStatus is UpdateStatus.NeedsUpdate -> workspaceStatus
-            else -> stdlibStatus
-        }
-
-    sealed class UpdateStatus {
-        object NeedsUpdate : UpdateStatus()
-        object UpToDate : UpdateStatus()
-        class UpdateFailed(val reason: String) : UpdateStatus()
-    }
-}
-
+/**
+ * [CargoProjectsService] stores a list of `Cargo.toml` file,
+ * registered with the current IDE project. Each `Cargo.toml`
+ * is represented by a [CargoProject], whose main attribute is
+ * `workspace`: a description of a Cargo project acquired from
+ * Cargo itself via `cargo metadata` command.
+ */
 interface CargoProjectsService {
     fun findProjectForFile(file: VirtualFile): CargoProject?
     val allProjects: Collection<CargoProject>
@@ -74,3 +56,28 @@ interface CargoProjectsService {
 }
 
 val Project.cargoProjects get() = service<CargoProjectsService>()
+
+interface CargoProject {
+    val manifest: Path
+    val rootDir: VirtualFile?
+
+    val presentableName: String
+    val workspace: CargoWorkspace?
+
+    val workspaceStatus: UpdateStatus
+    val stdlibStatus: UpdateStatus
+
+    val mergedStatus: UpdateStatus
+        get() = when {
+            workspaceStatus is UpdateStatus.UpdateFailed -> workspaceStatus
+            stdlibStatus is UpdateStatus.UpdateFailed -> stdlibStatus
+            workspaceStatus is UpdateStatus.NeedsUpdate -> workspaceStatus
+            else -> stdlibStatus
+        }
+
+    sealed class UpdateStatus {
+        object NeedsUpdate : UpdateStatus()
+        object UpToDate : UpdateStatus()
+        class UpdateFailed(val reason: String) : UpdateStatus()
+    }
+}

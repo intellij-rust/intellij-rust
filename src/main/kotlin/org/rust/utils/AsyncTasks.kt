@@ -43,7 +43,15 @@ fun <T> runAsyncTask(project: Project, queue: BackgroundTaskQueue, title: String
     return fut
 }
 
-
+/**
+ * A container for an immutable value, which allows
+ * reading and updating value safely concurrently.
+ * [AsyncValue] is similar to Clojure's atom.
+ *
+ * [updateAsync] method is used to schedule a modification
+ * of the form `(T) -> Promise<T>`. It is guaranteed that
+ * all updates are serialized.
+ */
 class AsyncValue<T>(initial: T) {
     @Volatile
     private var current: T = initial
