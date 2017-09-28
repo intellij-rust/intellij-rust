@@ -11,6 +11,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 sealed class TaskResult<out T> {
     class Ok<out T>(val value: T) : TaskResult<T>()
@@ -39,4 +41,48 @@ fun <T> runAsyncTask(project: Project, queue: BackgroundTaskQueue, title: String
         }
     })
     return fut
+}
+
+
+class AsyncValue<T>(initial: T) {
+    @Volatile
+    private var current: T = initial
+
+    private val updates: Queue<(T) -> Promise<Unit>> = ConcurrentLinkedQueue()
+    private var running: Boolean = false
+
+    val currentState: T get() = current
+
+    fun updateAsync(updater: (T) -> Promise<T>): Promise<T> {
+        val result = AsyncPromise<T>()
+        updates.add { current ->
+            updater(current)
+                .done { next -> this.current = next }
+                .apply { notify(result) }
+                .then { Unit }
+        }
+        startUpdateProcessing()
+        return result
+    }
+
+    fun updateSync(updater: (T) -> T): Promise<T> =
+        updateAsync { Promise.resolve(updater(it)) }
+
+    @Synchronized
+    private fun startUpdateProcessing() {
+        if (running || updates.isEmpty()) return
+        val nextUpdate = updates.remove()
+        running = true
+        nextUpdate(current)
+            .processed {
+                stopUpdateProcessing()
+                startUpdateProcessing()
+            }
+    }
+
+    @Synchronized
+    private fun stopUpdateProcessing() {
+        check(running)
+        running = false
+    }
 }

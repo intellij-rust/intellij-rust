@@ -45,11 +45,13 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.modules
 import org.rust.ide.notifications.showBalloon
+import org.rust.utils.AsyncValue
 import org.rust.utils.TaskResult
 import org.rust.utils.pathAsPath
 import org.rust.utils.runAsyncTask
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = Logger.getInstance(CargoProjectsServiceImpl::class.java)
@@ -58,25 +60,6 @@ private val LOG = Logger.getInstance(CargoProjectsServiceImpl::class.java)
 class CargoProjectsServiceImpl(
     val project: Project
 ) : CargoProjectsService, PersistentStateComponent<Element> {
-    //FIXME: concurrency
-    @Volatile private var projects: List<CargoProjectImpl> = emptyList()
-
-    val taskQueue = BackgroundTaskQueue(project, "Cargo update")
-
-    private val NO_PROJECT = CargoProjectImpl(Paths.get(""), this)
-    private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> = LightDirectoryIndex(project, NO_PROJECT, Consumer { index ->
-        for (cargoProject in projects) {
-            index.putInfo(cargoProject.rootDir?.parent, cargoProject)
-            val ws = cargoProject.workspace
-            if (ws != null) {
-                for (pkg in ws.packages) {
-                    index.putInfo(pkg.contentRoot, cargoProject)
-                }
-            }
-        }
-        Unit
-    })
-
     init {
         with(project.messageBus.connect()) {
             subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(fun() {
@@ -92,125 +75,118 @@ class CargoProjectsServiceImpl(
         }
     }
 
-    override fun getState(): Element {
-        val state = Element("state")
-        for ((manifest) in projects) {
-            val cargoProjectElement = Element("cargoProject")
-            cargoProjectElement.setAttribute("FILE", manifest.systemIndependentPath)
-            state.addContent(cargoProjectElement)
-        }
+    val taskQueue = BackgroundTaskQueue(project, "Cargo update")
+    private val projects = AsyncValue<List<CargoProjectImpl>>(emptyList())
 
-        return state
-    }
-
-    override fun loadState(state: Element) {
-        state.getChildren("cargoProject")
-            .mapNotNull { it.getAttributeValue("FILE") }
-            .map { Paths.get(it) }
-            .forEach { addCargoProject(it) }
-
-        ApplicationManager.getApplication().invokeLater {
-            refreshAllProjects()
-        }
-    }
-
-    override fun noStateLoaded() {
-        ApplicationManager.getApplication().invokeLater {
-            discoverAndRefresh()
-        }
-    }
-
-    override val allProjects: Collection<CargoProject>
-        get() = projects
+    private val NO_PROJECT = CargoProjectImpl(Paths.get(""), this)
+    private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
+        LightDirectoryIndex(project, NO_PROJECT, Consumer { index ->
+            for (cargoProject in projects.currentState) {
+                index.putInfo(cargoProject.rootDir?.parent, cargoProject)
+                cargoProject.workspace
+                    ?.packages?.forEach { index.putInfo(it.contentRoot, cargoProject) }
+            }
+        })
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
         directoryIndex.getInfoForFile(file).takeIf { it !== NO_PROJECT }
 
-
-    private fun addCargoProject(manifest: Path) {
-        val old = projects
-        if (old.any { it.manifest == manifest }) return
-        projects = old + CargoProjectImpl(manifest, this)
-    }
+    override val allProjects: Collection<CargoProject>
+        get() = projects.currentState
 
     override fun attachCargoProject(manifest: Path): Boolean {
-        val old = projects
-        if (old.any { it.manifest == manifest }) return false
-
-        val wsPackages = old
-            .mapNotNull { it.workspace }
-            .flatMap { it.packages }
-            .filter { it.origin == PackageOrigin.WORKSPACE }
-        if (wsPackages.any { it.rootDirectory == manifest.parent }) return false
-
-        projects = old + CargoProjectImpl(manifest, this)
-        refreshAllProjects()
+        if (isExistingProject(allProjects, manifest)) return false
+        modifyProjects { projects ->
+            if (isExistingProject(projects, manifest))
+                Promise.resolve(projects)
+            else
+                doRefresh(project, projects + CargoProjectImpl(manifest, this))
+        }
         return true
     }
 
     override fun detachCargoProject(cargoProject: CargoProject) {
-        projects = projects.filter { it.manifest != cargoProject.manifest }
-        afterUpdate(projects)
+        modifyProjects { projects ->
+            Promise.resolve(projects.filter { it.manifest != cargoProject.manifest })
+        }
     }
+
+    override fun refreshAllProjects(): Promise<List<CargoProject>> =
+        modifyProjects { doRefresh(project, it) }
+            .then { projects -> projects.map { it as CargoProject } }
+
+    override fun discoverAndRefresh(): Promise<List<CargoProject>> {
+        return modifyProjects { projects ->
+            if (projects.any { it.manifest.exists() }) return@modifyProjects Promise.resolve(projects)
+            val guessManifest = project.modules
+                .asSequence()
+                .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
+                .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
+                .firstOrNull()
+                ?: return@modifyProjects Promise.resolve(projects)
+            doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
+        }.then { projects -> projects.map { it as CargoProject } }
+    }
+
+    private fun modifyProjects(
+        f: (List<CargoProjectImpl>) -> Promise<List<CargoProjectImpl>>
+    ): Promise<List<CargoProjectImpl>> =
+        projects.updateAsync(f)
+            .then { projects ->
+                directoryIndex.resetIndex()
+                ApplicationManager.getApplication().invokeAndWait {
+                    runWriteAction {
+                        ProjectRootManagerEx.getInstanceEx(project)
+                            .makeRootsChange(EmptyRunnable.getInstance(), false, true)
+                    }
+                }
+                project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
+                    .cargoProjectsUpdated(projects)
+
+                projects
+            }
 
     @TestOnly
     override fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace) {
         val manifest = rootDir.pathAsPath.resolve("Cargo.toml")
         val testProject = CargoProjectImpl(manifest, this, ws, null, UpdateStatus.UpToDate)
         testProject.setRootDir(rootDir)
-        projects = listOf(testProject)
-        afterUpdate(listOf(testProject))
-    }
-
-    override fun discoverAndRefresh(): Promise<List<CargoProject>> {
-        if (!projects.any { it.manifest.exists() }) {
-            val guessManifest = project.modules
-                .asSequence()
-                .map { ModuleRootManager.getInstance(it) }
-                .flatMap { it.contentRoots.asSequence() }
-                .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
-                .firstOrNull()
-            if (guessManifest != null) {
-                projects = listOf(CargoProjectImpl(guessManifest.pathAsPath, this))
-            }
+        modifyProjects { _ ->
+            Promise.resolve(listOf(testProject))
         }
-        return refreshAllProjects()
+            .blockingGet(1, TimeUnit.MINUTES)
     }
 
-    override fun refreshAllProjects(): Promise<List<CargoProject>> {
-        return collectResults(projects.map { it.refresh() })
-            .processed { updatedProjects ->
-                projects = updatedProjects
-
-                for (p in updatedProjects) {
-                    val status = p.mergedStatus
-                    if (status is UpdateStatus.UpdateFailed) {
-                        project.showBalloon(
-                            "Cargo project update failed:<br>${status.reason}",
-                            NotificationType.ERROR
-                        )
-                        break
-                    }
-                }
-
-                afterUpdate(updatedProjects)
-            }.then { projects -> projects.map { it as CargoProject } }
-    }
-
-    private fun afterUpdate(projects: Collection<CargoProject>) {
-        directoryIndex.resetIndex()
-        ApplicationManager.getApplication().invokeAndWait {
-            runWriteAction {
-                ProjectRootManagerEx.getInstanceEx(project)
-                    .makeRootsChange(EmptyRunnable.getInstance(), false, true)
-            }
+    override fun getState(): Element {
+        val state = Element("state")
+        for (cargoProject in allProjects) {
+            val cargoProjectElement = Element("cargoProject")
+            cargoProjectElement.setAttribute("FILE", cargoProject.manifest.systemIndependentPath)
+            state.addContent(cargoProjectElement)
         }
-        project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
-            .cargoProjectsUpdated(projects)
+        return state
     }
+
+    override fun loadState(state: Element) {
+        val loaded = state.getChildren("cargoProject")
+            .mapNotNull { it.getAttributeValue("FILE") }
+            .map { CargoProjectImpl(Paths.get(it), this) }
+        // Refresh projects via `invokeLater` to avoid model modifications
+        // while the project is being opened. Use `updateSync` directly
+        // instead of `modifyProjects` for this reason
+        projects.updateSync { _ -> loaded }
+            .done {
+                ApplicationManager.getApplication().invokeLater { refreshAllProjects() }
+            }
+    }
+
+    override fun noStateLoaded() {
+        ApplicationManager.getApplication().invokeLater { discoverAndRefresh() }
+    }
+
 
     override fun toString(): String {
-        return "CargoProjectsService(projects = $projects)"
+        return "CargoProjectsService(projects = $allProjects)"
     }
 }
 
@@ -289,6 +265,30 @@ data class CargoProjectImpl(
         return "CargoProject(manifest = $manifest)"
     }
 }
+
+private fun isExistingProject(projects: Collection<CargoProject>, manifest: Path): Boolean {
+    if (projects.any { it.manifest == manifest }) return true
+    return projects.mapNotNull { it.workspace }.flatMap { it.packages }
+        .filter { it.origin == PackageOrigin.WORKSPACE }
+        .any { it.rootDirectory == manifest.parent }
+}
+
+private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): Promise<List<CargoProjectImpl>> {
+    return collectResults(projects.map { it.refresh() })
+        .processed { updatedProjects ->
+            for (p in updatedProjects) {
+                val status = p.mergedStatus
+                if (status is UpdateStatus.UpdateFailed) {
+                    project.showBalloon(
+                        "Cargo project update failed:<br>${status.reason}",
+                        NotificationType.ERROR
+                    )
+                    break
+                }
+            }
+        }
+}
+
 
 private fun fetchStdlib(
     project: Project,

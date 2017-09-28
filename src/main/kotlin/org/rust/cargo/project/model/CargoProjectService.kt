@@ -41,14 +41,16 @@ interface CargoProject {
 }
 
 interface CargoProjectsService {
+    fun findProjectForFile(file: VirtualFile): CargoProject?
     val allProjects: Collection<CargoProject>
+
+    fun attachCargoProject(manifest: Path): Boolean
+    fun detachCargoProject(cargoProject: CargoProject)
+    fun refreshAllProjects(): Promise<List<CargoProject>>
+    fun discoverAndRefresh(): Promise<List<CargoProject>>
 
     @TestOnly
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace)
-
-    fun discoverAndRefresh(): Promise<List<CargoProject>>
-    fun attachCargoProject(manifest: Path): Boolean
-    fun detachCargoProject(cargoProject: CargoProject)
 
     @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {
@@ -57,10 +59,6 @@ interface CargoProjectsService {
         if (projects.isEmpty()) error("Failed to update a test Cargo project")
         return projects
     }
-
-    fun refreshAllProjects(): Promise<List<CargoProject>>
-
-    fun findProjectForFile(file: VirtualFile): CargoProject?
 
     companion object {
         val CARGO_PROJECTS_TOPIC: Topic<CargoProjectsListener> = Topic(
