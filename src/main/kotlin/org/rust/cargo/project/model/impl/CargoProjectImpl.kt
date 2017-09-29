@@ -206,9 +206,8 @@ class CargoProjectsServiceImpl(
         // explicitly" happens in [org.rust.ide.notifications.MissingToolchainNotificationProvider]
     }
 
-    override fun toString(): String {
-        return "CargoProjectsService(projects = $allProjects)"
-    }
+    override fun toString(): String =
+        "CargoProjectsService(projects = $allProjects)"
 }
 
 data class CargoProjectImpl(
@@ -282,9 +281,8 @@ data class CargoProjectImpl(
         is TaskResult.Err -> copy(workspaceStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
-    override fun toString(): String {
-        return "CargoProject(manifest = $manifest)"
-    }
+    override fun toString(): String =
+        "CargoProject(manifest = $manifest)"
 }
 
 private fun hasAtLeastOneValidProject(projects: Collection<CargoProject>) =
