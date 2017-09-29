@@ -10,9 +10,10 @@ import com.intellij.testFramework.LightProjectDescriptor
 class RsExternCrateCompletionTest : RsCompletionTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
 
-    fun `test extern crate`() = checkSingleCompletion("dep_lib_target", """
-        extern crate dep_l/*caret*/
-    """)
+    fun `test extern crate`() = doSingleCompletion(
+        "extern crate dep_l/*caret*/",
+        "extern crate dep_lib_target/*caret*/"
+    )
 
     fun `test extern crate does not suggest core`() = checkNoCompletion("""
         extern crate cor/*caret*/
