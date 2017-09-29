@@ -241,15 +241,25 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait ?: return
         val traitName = trait.name ?: return
+
+        fun mayDangleOnTypeOrLifetimeParameters(impl: RsImplItem): Boolean {
+            return impl.typeParameters.any() { it.queryAttributes.hasAtomAttribute("may_dangle") } ||
+                impl.lifetimeParameters.any() { it.queryAttributes.hasAtomAttribute("may_dangle") }
+        }
+
+        val attrRequiringUnsafeImpl = if (mayDangleOnTypeOrLifetimeParameters(impl)) "may_dangle" else null
         when {
             impl.isUnsafe && impl.excl != null ->
                 RsDiagnostic.UnsafeNegativeImplementationError(traitRef).addToHolder(holder)
 
-            impl.isUnsafe && !trait.isUnsafe ->
+            impl.isUnsafe && !trait.isUnsafe && attrRequiringUnsafeImpl == null ->
                 RsDiagnostic.UnsafeTraitImplError(traitRef, traitName).addToHolder(holder)
 
             !impl.isUnsafe && trait.isUnsafe && impl.excl == null ->
                 RsDiagnostic.TraitMissingUnsafeImplError(traitRef, traitName).addToHolder(holder)
+
+            !impl.isUnsafe && !trait.isUnsafe && impl.excl == null && attrRequiringUnsafeImpl != null ->
+                RsDiagnostic.TraitMissingUnsafeImplAttributeError(traitRef, attrRequiringUnsafeImpl).addToHolder(holder)
         }
         val implInfo = TraitImplementationInfo.create(trait, impl) ?: return
 

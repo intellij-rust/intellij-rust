@@ -364,6 +364,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         impl <error descr="The trait `Bar` requires an `unsafe impl` declaration [E0200]">Bar</error> for Foo2 { }
     """)
 
+    fun `test may_dangle E0569`() = checkErrors("""
+        struct Foo1<T>(T);
+        struct Foo2<T>(T);
+        struct Foo3<T>(T);
+        struct Foo4<T>(T);
+
+        trait Bar { }
+
+        unsafe impl<#[may_dangle] A> Bar for Foo1<A> { }
+        impl<#[may_dangle] A> <error descr="Requires an `unsafe impl` declaration due to `#[may_dangle]` attribute [E0569]">Bar</error> for Foo2<A> { }
+        unsafe impl<#[may_dangle]'a, A> Bar for Foo3<A> { }
+        impl<#[may_dangle]'a, A> <error descr="Requires an `unsafe impl` declaration due to `#[may_dangle]` attribute [E0569]">Bar</error> for Foo4<A> { }
+    """)
+
     fun `test name duplication in impl E0201`() = checkErrors("""
         struct Foo;
         impl Foo {

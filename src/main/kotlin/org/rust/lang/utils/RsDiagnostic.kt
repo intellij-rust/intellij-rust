@@ -168,6 +168,21 @@ sealed class RsDiagnostic(
         }
     }
 
+    class TraitMissingUnsafeImplAttributeError(
+        element: PsiElement,
+        private val attrRequiringUnsafeImpl: String
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0569,
+            errorText()
+        )
+
+        private fun errorText(): String {
+            return "Requires an `unsafe impl` declaration due to `#[$attrRequiringUnsafeImpl]` attribute"
+        }
+    }
+
     class UnknownMethodInTraitError(
         element: PsiElement,
         private val member: RsAbstractable,
@@ -504,6 +519,7 @@ enum class RsErrorCode {
     E0200, E0201, E0202, E0261, E0263, E0277,
     E0308, E0379,
     E0403, E0407, E0415, E0424, E0426, E0428, E0449, E0463,
+    E0569,
     E0603, E0616, E0624;
 
     val code: String
