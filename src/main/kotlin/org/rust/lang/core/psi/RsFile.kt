@@ -19,10 +19,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.ext.RsInnerAttributeOwner
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.cargoWorkspace
-import org.rust.lang.core.psi.ext.queryAttributes
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsModulesIndex
@@ -34,7 +31,11 @@ class RsFile(
     RsInnerAttributeOwner {
 
     override fun getReference(): RsReference? = null
+
     override val containingMod: RsMod get() = this
+
+    override val crateRoot: RsMod?
+        get() = superMods.lastOrNull()?.takeIf { it.isCrateRoot }
 
     override fun getFileType(): FileType = RsFileType
 

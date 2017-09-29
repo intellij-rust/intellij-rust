@@ -15,13 +15,14 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.lang.core.psi.RsFile
 
 interface RsCompositeElement : PsiElement {
     /**
      * Find parent module *in this file*. See [RsMod.super]
      */
     val containingMod: RsMod
+
+    val crateRoot: RsMod?
 }
 
 val CARGO_WORKSPACE = Key.create<CargoWorkspace>("CARGO_WORKSPACE")
@@ -33,19 +34,6 @@ val RsCompositeElement.cargoWorkspace: CargoWorkspace?
         return project.cargoProjects.findProjectForFile(vFile)?.workspace
     }
 
-
-val RsCompositeElement.crateRoot: RsMod?
-    get() {
-        return if (this is RsFile) {
-            val root = superMods.lastOrNull()
-            if (root != null && root.isCrateRoot)
-                root
-            else
-                null
-        } else {
-            (context as? RsCompositeElement)?.crateRoot
-        }
-    }
 
 val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target?
     get() {
@@ -61,6 +49,9 @@ abstract class RsCompositeElementImpl(node: ASTNode) : ASTWrapperPsiElement(node
     override val containingMod: RsMod
         get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
             ?: error("Element outside of module: $text")
+
+    final override val crateRoot: RsMod?
+        get() = (context as? RsCompositeElement)?.crateRoot
 }
 
 abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>, RsCompositeElement {
@@ -72,6 +63,9 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     override val containingMod: RsMod
         get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
             ?: error("Element outside of module: $text")
+
+    final override val crateRoot: RsMod?
+        get() = (context as? RsCompositeElement)?.crateRoot
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }
