@@ -5,13 +5,13 @@
 
 package org.rust.utils
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 
 sealed class TaskResult<out T> {
@@ -26,18 +26,18 @@ interface AsyncTaskCtx<T> {
 }
 
 fun <T> runAsyncTask(project: Project, queue: BackgroundTaskQueue, title: String,
-                     task: AsyncTaskCtx<T>.() -> TaskResult<T>): Promise<TaskResult<T>> {
-    val fut = AsyncPromise<TaskResult<T>>()
+                     task: AsyncTaskCtx<T>.() -> TaskResult<T>): CompletableFuture<TaskResult<T>> {
+    val fut = CompletableFuture<TaskResult<T>>()
     queue.run(object : Task.Backgroundable(project, title) {
         override fun run(indicator: ProgressIndicator) {
             val ctx = object : AsyncTaskCtx<T> {
                 override val progress: ProgressIndicator get() = indicator
             }
-            fut.setResult(ctx.task())
+            fut.complete(ctx.task())
         }
 
         override fun onThrowable(error: Throwable) {
-            fut.setError(error)
+            fut.completeExceptionally(error)
         }
     })
     return fut
@@ -56,25 +56,32 @@ class AsyncValue<T>(initial: T) {
     @Volatile
     private var current: T = initial
 
-    private val updates: Queue<(T) -> Promise<Unit>> = ConcurrentLinkedQueue()
+    private val updates: Queue<(T) -> CompletableFuture<Unit>> = ConcurrentLinkedQueue()
     private var running: Boolean = false
 
     val currentState: T get() = current
 
-    fun updateAsync(updater: (T) -> Promise<T>): Promise<T> {
-        val result = AsyncPromise<T>()
+    fun updateAsync(updater: (T) -> CompletableFuture<T>): CompletableFuture<T> {
+        val result = CompletableFuture<T>()
         updates.add { current ->
             updater(current)
-                .done { next -> this.current = next }
-                .apply { notify(result) }
-                .then { Unit }
+                .handle { next, err ->
+                    if (err == null) {
+                        this.current = next
+                        result.complete(next)
+                    } else {
+                        LOG.error(err)
+                        result.completeExceptionally(err)
+                    }
+                    Unit
+                }
         }
         startUpdateProcessing()
         return result
     }
 
-    fun updateSync(updater: (T) -> T): Promise<T> =
-        updateAsync { Promise.resolve(updater(it)) }
+    fun updateSync(updater: (T) -> T): CompletableFuture<T> =
+        updateAsync { CompletableFuture.completedFuture(updater(it)) }
 
     @Synchronized
     private fun startUpdateProcessing() {
@@ -82,7 +89,7 @@ class AsyncValue<T>(initial: T) {
         val nextUpdate = updates.remove()
         running = true
         nextUpdate(current)
-            .processed {
+            .whenComplete { _, _ ->
                 stopUpdateProcessing()
                 startUpdateProcessing()
             }
@@ -93,4 +100,13 @@ class AsyncValue<T>(initial: T) {
         check(running)
         running = false
     }
+
+    companion object {
+        private val LOG = Logger.getInstance(AsyncValue::class.java)
+    }
 }
+
+// :-(
+// https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Traversable.html
+fun <T> List<CompletableFuture<T>>.joinAll(): CompletableFuture<List<T>> =
+    CompletableFuture.allOf(*this.toTypedArray()).thenApply { map { it.join() } }

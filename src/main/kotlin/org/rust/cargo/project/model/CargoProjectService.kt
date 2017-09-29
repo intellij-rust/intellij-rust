@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.workspace.CargoWorkspace
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 /**
@@ -29,15 +29,15 @@ interface CargoProjectsService {
 
     fun attachCargoProject(manifest: Path): Boolean
     fun detachCargoProject(cargoProject: CargoProject)
-    fun refreshAllProjects(): Promise<List<CargoProject>>
-    fun discoverAndRefresh(): Promise<List<CargoProject>>?
+    fun refreshAllProjects(): CompletableFuture<List<CargoProject>>
+    fun discoverAndRefresh(): CompletableFuture<List<CargoProject>>?
 
     @TestOnly
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace)
 
     @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {
-        val projects = discoverAndRefresh()!!.blockingGet(1, TimeUnit.MINUTES)
+        val projects = discoverAndRefresh()!!.get(1, TimeUnit.MINUTES)
             ?: error("Timeout when refreshing a test Cargo project")
         if (projects.isEmpty()) error("Failed to update a test Cargo project")
         return projects

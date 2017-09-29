@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -29,8 +28,6 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.collectResults
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
@@ -44,16 +41,13 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.modules
 import org.rust.ide.notifications.showBalloon
-import org.rust.utils.AsyncValue
-import org.rust.utils.TaskResult
-import org.rust.utils.pathAsPath
-import org.rust.utils.runAsyncTask
+import org.rust.utils.*
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-private val LOG = Logger.getInstance(CargoProjectsServiceImpl::class.java)
 
 @State(name = "CargoProjects")
 class CargoProjectsServiceImpl(
@@ -117,7 +111,7 @@ class CargoProjectsServiceImpl(
         if (isExistingProject(allProjects, manifest)) return false
         modifyProjects { projects ->
             if (isExistingProject(projects, manifest))
-                Promise.resolve(projects)
+                CompletableFuture.completedFuture(projects)
             else
                 doRefresh(project, projects + CargoProjectImpl(manifest, this))
         }
@@ -126,15 +120,15 @@ class CargoProjectsServiceImpl(
 
     override fun detachCargoProject(cargoProject: CargoProject) {
         modifyProjects { projects ->
-            Promise.resolve(projects.filter { it.manifest != cargoProject.manifest })
+            CompletableFuture.completedFuture(projects.filter { it.manifest != cargoProject.manifest })
         }
     }
 
-    override fun refreshAllProjects(): Promise<List<CargoProject>> =
+    override fun refreshAllProjects(): CompletableFuture<List<CargoProject>> =
         modifyProjects { doRefresh(project, it) }
-            .then { projects -> projects.map { it as CargoProject } }
+            .thenApply { projects -> projects.map { it as CargoProject } }
 
-    override fun discoverAndRefresh(): Promise<List<CargoProject>>? {
+    override fun discoverAndRefresh(): CompletableFuture<List<CargoProject>>? {
         val guessManifest = project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
@@ -143,9 +137,9 @@ class CargoProjectsServiceImpl(
             ?: return null
 
         return modifyProjects { projects ->
-            if (hasAtLeastOneValidProject(projects)) return@modifyProjects Promise.resolve(projects)
+            if (hasAtLeastOneValidProject(projects)) return@modifyProjects CompletableFuture.completedFuture(projects)
             doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
-        }.then { projects -> projects.map { it as CargoProject } }
+        }.thenApply { projects -> projects.map { it as CargoProject } }
     }
 
     /**
@@ -154,10 +148,10 @@ class CargoProjectsServiceImpl(
      * [allProjects] contains fresh projects.
      */
     private fun modifyProjects(
-        f: (List<CargoProjectImpl>) -> Promise<List<CargoProjectImpl>>
-    ): Promise<List<CargoProjectImpl>> =
+        f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>
+    ): CompletableFuture<List<CargoProjectImpl>> =
         projects.updateAsync(f)
-            .then { projects ->
+            .thenApply { projects ->
                 directoryIndex.resetIndex()
                 ApplicationManager.getApplication().invokeAndWait {
                     runWriteAction {
@@ -177,9 +171,8 @@ class CargoProjectsServiceImpl(
         val testProject = CargoProjectImpl(manifest, this, ws, null, UpdateStatus.UpToDate)
         testProject.setRootDir(rootDir)
         modifyProjects { _ ->
-            Promise.resolve(listOf(testProject))
-        }
-            .blockingGet(1, TimeUnit.MINUTES)
+            CompletableFuture.completedFuture(listOf(testProject))
+        }.get(1, TimeUnit.MINUTES)
     }
 
     override fun getState(): Element {
@@ -200,7 +193,7 @@ class CargoProjectsServiceImpl(
         // while the project is being opened. Use `updateSync` directly
         // instead of `modifyProjects` for this reason
         projects.updateSync { _ -> loaded }
-            .done {
+            .whenComplete { _, _ ->
                 ApplicationManager.getApplication().invokeLater { refreshAllProjects() }
             }
     }
@@ -252,9 +245,9 @@ data class CargoProjectImpl(
     @TestOnly
     fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)
 
-    fun refresh(): Promise<CargoProjectImpl> = refreshStdlib().thenAsync { it.refreshWorkspace() }
+    fun refresh(): CompletableFuture<CargoProjectImpl> = refreshStdlib().thenCompose { it.refreshWorkspace() }
 
-    private fun refreshStdlib(): Promise<CargoProjectImpl> {
+    private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
         val rustup = toolchain?.rustup(projectDirectory)
         if (rustup == null) {
             val explicitPath = project.rustSettings.explicitPathToStdlib
@@ -264,9 +257,9 @@ data class CargoProjectImpl(
                 lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
                 else -> TaskResult.Ok(lib)
             }
-            return Promise.resolve(withStdlib(result))
+            return CompletableFuture.completedFuture(withStdlib(result))
         }
-        return fetchStdlib(project, projectService.taskQueue, rustup).then(this::withStdlib)
+        return fetchStdlib(project, projectService.taskQueue, rustup).thenApply(this::withStdlib)
     }
 
     private fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
@@ -274,14 +267,14 @@ data class CargoProjectImpl(
         is TaskResult.Err -> copy(stdlibStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
-    private fun refreshWorkspace(): Promise<CargoProjectImpl> {
+    private fun refreshWorkspace(): CompletableFuture<CargoProjectImpl> {
         val toolchain = toolchain ?:
-            return Promise.resolve(copy(workspaceStatus = UpdateStatus.UpdateFailed(
+            return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
                 "Can't update Cargo project, no Rust toolchain"
             )))
 
         return fetchCargoWorkspace(project, projectService.taskQueue, toolchain, projectDirectory)
-            .then(this::withWorkspace)
+            .thenApply(this::withWorkspace)
     }
 
     private fun withWorkspace(result: TaskResult<CargoWorkspace>): CargoProjectImpl = when (result) {
@@ -304,9 +297,10 @@ private fun isExistingProject(projects: Collection<CargoProject>, manifest: Path
         .any { it.rootDirectory == manifest.parent }
 }
 
-private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): Promise<List<CargoProjectImpl>> {
-    return collectResults(projects.map { it.refresh() })
-        .processed { updatedProjects ->
+private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): CompletableFuture<List<CargoProjectImpl>> {
+    return projects.map { it.refresh() }
+        .joinAll()
+        .thenApply { updatedProjects ->
             for (p in updatedProjects) {
                 val status = p.mergedStatus
                 if (status is UpdateStatus.UpdateFailed) {
@@ -317,6 +311,7 @@ private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): Promi
                     break
                 }
             }
+            updatedProjects
         }
 }
 
@@ -325,7 +320,7 @@ private fun fetchStdlib(
     project: Project,
     queue: BackgroundTaskQueue,
     rustup: Rustup
-): Promise<TaskResult<StandardLibrary>> {
+): CompletableFuture<TaskResult<StandardLibrary>> {
     return runAsyncTask(project, queue, "Getting Rust stdlib") {
         progress.isIndeterminate = true
         val download = rustup.downloadStdlib()
@@ -352,7 +347,7 @@ private fun fetchCargoWorkspace(
     queue: BackgroundTaskQueue,
     toolchain: RustToolchain,
     projectDirectory: Path
-): Promise<TaskResult<CargoWorkspace>> {
+): CompletableFuture<TaskResult<CargoWorkspace>> {
     return runAsyncTask(project, queue, "Updating cargo") {
         progress.isIndeterminate = true
         if (!toolchain.looksLikeValidToolchain()) {

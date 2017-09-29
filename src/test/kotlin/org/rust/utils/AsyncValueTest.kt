@@ -7,6 +7,7 @@ package org.rust.utils
 
 import junit.framework.TestCase
 import org.jetbrains.concurrency.AsyncPromise
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.RecursiveTask
 import java.util.concurrent.TimeUnit
@@ -22,10 +23,10 @@ class AsyncValueTest : TestCase() {
             pool.execute {
                 for (j in 0 until m) {
                     value.updateAsync { v ->
-                        val p = AsyncPromise<Int>()
+                        val p = CompletableFuture<Int>()
                         object : RecursiveTask<Unit>() {
                             override fun compute() {
-                                p.setResult(v + 1)
+                                p.complete(v + 1)
                             }
                         }.fork()
                         p
@@ -35,7 +36,7 @@ class AsyncValueTest : TestCase() {
         }
         pool.shutdown()
         pool.awaitTermination(1, TimeUnit.MINUTES)
-        val result = value.updateSync { v -> v }.blockingGet(1, TimeUnit.MINUTES)
+        val result = value.updateSync { v -> v }.get(1, TimeUnit.MINUTES)
         check(value.currentState == n * m)
         check(result == n * m) {
             "Impossible: expected ${n * m}, got $result"
