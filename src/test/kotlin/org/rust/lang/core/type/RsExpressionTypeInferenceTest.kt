@@ -534,6 +534,52 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    // TODO: should be [i32; 2]
+    fun `test usize constant as array size`() = testExpr("""
+        const COUNT: usize = 2;
+        fn main() {
+            let x = [1; COUNT];
+            x
+          //^ [i32; <unknown>]
+        }
+    """)
+
+    fun `test not usize constant as array size`() = testExpr("""
+        const COUNT: i32 = 2;
+        fn main() {
+            let x = [1; COUNT];
+            x
+          //^ [i32; <unknown>]
+        }
+    """)
+
+    // TODO: should be [i32; 5]
+    fun `test binary expr as array size`() = testExpr("""
+        fn main() {
+            let x = [1; 2 + 3];
+            x
+          //^ [i32; <unknown>]
+        }
+    """)
+
+    fun `test negative binary expr as array size`() = testExpr("""
+        fn main() {
+            let x = [1; 2 - 3];
+            x
+          //^ [i32; <unknown>]
+        }
+    """)
+
+    // TODO: should be [i32; 28]
+    fun `test complex expr as array size`() = testExpr("""
+        const COUNT: usize = 2;
+        fn main() {
+            let x = [1; (2 * COUNT + 3) << (4 / 2)];
+            x
+          //^ [i32; <unknown>]
+        }
+    """)
+
     // https://github.com/intellij-rust/intellij-rust/issues/1269
     fun `test tuple field`() = testExpr("""
         fn main() {
