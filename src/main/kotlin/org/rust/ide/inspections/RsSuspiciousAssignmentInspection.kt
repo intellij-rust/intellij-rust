@@ -10,7 +10,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.inspections.fixes.SubstituteTextFix
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsBinaryExpr
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsUnaryExpr
+import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.operator
 
 /**
@@ -49,12 +52,13 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
                     val subst1 = "$left $op= $right"
                     val subst2 = "$left = $right2"
                     val substRange = TextRange(expr.left.textRange.endOffset, unaryBody.textRange.startOffset)
+                    val file = expr.containingFile
                     holder.registerProblem(
                         expr,
                         TextRange(expr.left.text.length, uExprOffset),
                         "Suspicious assignment. Did you mean `$subst1` or `$subst2`?",
-                        SubstituteTextFix(substRange, " $op= ", "Change to `$subst1`"),
-                        SubstituteTextFix(substRange, " = $op", "Change to `$subst2`"))
+                        SubstituteTextFix.replace("Change to `$subst1`", file, substRange, " $op= "),
+                        SubstituteTextFix.replace("Change to `$subst2`", file, substRange, " = $op"))
                 }
             }
         }

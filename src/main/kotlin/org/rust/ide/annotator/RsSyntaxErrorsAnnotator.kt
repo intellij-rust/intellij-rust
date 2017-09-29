@@ -159,7 +159,12 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
                 val annotation = holder
                     .createWarningAnnotation(param, "Anonymous functions parameters are deprecated (RFC 1685)")
 
-                val fix = SubstituteTextFix(param.textRange, "_: ${param.text}", "Add dummy parameter name")
+                val fix = SubstituteTextFix.replace(
+                    "Add dummy parameter name",
+                    param.containingFile,
+                    param.textRange,
+                    "_: ${param.text}"
+                )
                 val descriptor = InspectionManager.getInstance(param.project)
                     .createProblemDescriptor(param, annotation.message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)
 
