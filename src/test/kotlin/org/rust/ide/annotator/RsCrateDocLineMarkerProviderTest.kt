@@ -5,11 +5,14 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.testFramework.LightProjectDescriptor
-
 class RsCrateDocLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
+    override fun getProjectDescriptor() = WithStdlibAndDependencyRustProjectDescriptor
+
+    override fun setUp() {
+        super.setUp()
+        projectDescriptor.setUp(myFixture)
+    }
 
     fun testDocumentationLink() = doTestByText("""
         #[cfg(not(windows))]

@@ -5,11 +5,15 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.lang.RsTestBase
 
 class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = RsTestBase.WithStdlibAndDependencyRustProjectDescriptor
+    override fun getProjectDescriptor() = RsTestBase.WithStdlibAndDependencyRustProjectDescriptor
+
+    override fun setUp() {
+        super.setUp()
+        projectDescriptor.setUp(myFixture)
+    }
 
     fun testE0428_RespectsCrateAliases() = checkErrors("""
         extern crate libc as libc_alias;

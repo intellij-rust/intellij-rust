@@ -5,10 +5,13 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.testFramework.LightProjectDescriptor
-
 class RsExternCrateCompletionTest : RsCompletionTestBase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
+    override fun getProjectDescriptor() = WithStdlibAndDependencyRustProjectDescriptor
+
+    override fun setUp() {
+        super.setUp()
+        projectDescriptor.setUp(myFixture)
+    }
 
     fun `test extern crate`() = doSingleCompletion(
         "extern crate dep_l/*caret*/",

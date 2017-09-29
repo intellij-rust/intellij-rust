@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,6 +22,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
@@ -224,24 +226,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             manifestPath = "$contentRoot/../Cargo.toml",
             isWorkspaceMember = true
         )
-
-        protected fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CleanCargoMetadata.Package {
-            val root = VirtualFileManager.getInstance().findFileByUrl(contentRoot)!!
-            val vFile = source?.let { VfsTestUtil.createFile(root, it) }
-
-            return CleanCargoMetadata.Package(
-                id = "$name 0.0.1",
-                url = "",
-                name = name,
-                version = "0.0.1",
-                targets = listOf(
-                    CleanCargoMetadata.Target(vFile?.url ?: "", targetName, CargoWorkspace.TargetKind.LIB)
-                ),
-                source = source,
-                manifestPath = "/ext-libs/$name/Cargo.toml",
-                isWorkspaceMember = false
-            )
-        }
     }
 
     protected object DefaultDescriptor : RustProjectDescriptorBase()
@@ -258,6 +242,29 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     }
 
     protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
+        private fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CleanCargoMetadata.Package {
+            return CleanCargoMetadata.Package(
+                id = "$name 0.0.1",
+                url = "",
+                name = name,
+                version = "0.0.1",
+                targets = listOf(
+                    CleanCargoMetadata.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
+                ),
+                source = source,
+                manifestPath = "/ext-libs/$name/Cargo.toml",
+                isWorkspaceMember = false
+            )
+        }
+
+
+        fun setUp(fixture: CodeInsightTestFixture) {
+            val root = fixture.findFileInTempDir(".")!!
+            for (source in listOf("dep-lib/lib.rs", "trans-lib/lib.rs")) {
+                VfsTestUtil.createFile(root, source)
+            }
+        }
+
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
             val packages = listOf(
                 testCargoPackage(contentRoot),
