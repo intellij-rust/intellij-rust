@@ -691,6 +691,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `testE0424 ignore use self with parens`() = checkErrors("""
+        fn foo() {}
+        fn bat() {}
+        fn bar() {
+            use self::{foo};
+            use self::{foo,bat};
+        }
+    """)
+
     fun `test don't touch AST in other files`() = checkDontTouchAstInOtherFiles(
         fileTreeFromText("""
         //- main.rs
