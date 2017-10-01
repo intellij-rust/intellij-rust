@@ -281,8 +281,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test &mut self 2`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test &mut self 2`() = testExpr("""
         struct Foo;
         impl Foo {
             fn foo(self: &mut Self) {
@@ -291,10 +290,8 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             }
         }
     """)
-    }
 
-    fun `test &mut self 3`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test &mut self 3`() = testExpr("""
         struct Foo;
         impl Foo {
             fn foo(self: &mut Foo) {
@@ -303,10 +300,8 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             }
         }
     """)
-    }
 
-    fun `test box self 1`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test box self 1`() = testExpr("""
         struct Box<T>(T);
         struct Foo;
         impl Foo {
@@ -316,10 +311,8 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             }
         }
     """)
-    }
 
-    fun `test box self 2`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test box self 2`() = testExpr("""
         struct Box<T>(T);
         struct Foo;
         impl Foo {
@@ -329,7 +322,6 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             }
         }
     """)
-    }
 
     fun `test struct expr`() = testExpr("""
         struct S<T> { a: T }

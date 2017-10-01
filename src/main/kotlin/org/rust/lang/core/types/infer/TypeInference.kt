@@ -949,6 +949,13 @@ private val RsSelfParameter.typeOfValue: Ty
             TyTypeParameter.self(trait)
         }
 
+        if (isExplicitType) {
+            // self: Self, self: &Self, self: &mut Self, self: Box<Self>
+            val ty = this.typeReference?.type ?: TyUnknown
+            return ty.substitute(mapOf(TyTypeParameter.self() to Self))
+        }
+
+        // self, &self, &mut self
         if (isRef) {
             Self = TyReference(Self, mutability)
         }
