@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import org.junit.ComparisonFailure
 import org.rust.fileTreeFromText
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
@@ -948,7 +949,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test type mismatch E0308 ptr mutability`() = checkErrors("""
+    fun `test type mismatch E0308 coerce ptr mutability`() = checkErrors("""
         fn fn_const(p: *const u8) { }
         fn fn_mut(p: *mut u8) { }
 
@@ -965,6 +966,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             ptr_mut = <error>ptr_const</error>;
         }
     """)
+
+    // TODO In TypeInference.coerceResolved() we currently ignore type errors when references are involved
+    fun `test type mismatch E0308 coerce reference to ptr`() = expect<ComparisonFailure> {
+        checkErrors("""
+        fn fn_const(p: *const u8) { }
+        fn fn_mut(p: *mut u8) { }
+
+        fn main () {
+            let const_u8 = &1u8;
+            let mut_u8 = &mut 1u8;
+            fn_const(const_u8);
+            fn_const(mut_u8);
+            fn_mut(<error>const_u8</error>);
+            fn_mut(mut_u8);
+        }
+    """)
+    }
 
     fun `test type mismatch E0308 struct`() = checkErrors("""
         struct X; struct Y;
