@@ -97,18 +97,19 @@ object CargoMetadata {
          */
         val src_path: String
     ) {
-        val cleanKind: TargetKind get() = when (kind.singleOrNull()) {
-            "bin" -> TargetKind.BIN
-            "example" -> TargetKind.EXAMPLE
-            "test" -> TargetKind.TEST
-            "bench" -> TargetKind.BENCH
-            "proc-macro" -> TargetKind.LIB
-            else ->
-                if (kind.any { it.endsWith("lib") })
-                    TargetKind.LIB
-                else
-                    TargetKind.UNKNOWN
-        }
+        val cleanKind: TargetKind
+            get() = when (kind.singleOrNull()) {
+                "bin" -> TargetKind.BIN
+                "example" -> TargetKind.EXAMPLE
+                "test" -> TargetKind.TEST
+                "bench" -> TargetKind.BENCH
+                "proc-macro" -> TargetKind.LIB
+                else ->
+                    if (kind.any { it.endsWith("lib") })
+                        TargetKind.LIB
+                    else
+                        TargetKind.UNKNOWN
+            }
     }
 
 
@@ -166,7 +167,7 @@ object CargoMetadata {
                     packageIdToIndex(id),
                     dependencies.map { packageIdToIndex(it) }
                 )
-            }
+            }.sortedBy { it.packageIndex }
         )
     }
 
@@ -195,8 +196,8 @@ object CargoMetadata {
 }
 
 /**
- * A POD-style representation of [CargoWorkspace] used as an intermediate representation
- * between `cargo metadata` JSON and [CargoWorkspace] object graph.
+ * A POD-style representation of [org.rust.cargo.project.workspace.CargoWorkspace] used as an intermediate representation
+ * between `cargo metadata` JSON and [org.rust.cargo.project.workspace.CargoWorkspace] object graph.
  *
  * Dependency graph is represented via adjacency list, where `Index` is the order of a particular
  * package in `packages` list.
