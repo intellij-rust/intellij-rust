@@ -10,7 +10,7 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 
-class TyArray(val base: Ty, val size: Int?) : Ty {
+class TyArray(val base: Ty, val size: Long?) : Ty {
     override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
         if (other is TyArray && (size == null || other.size == null || size == other.size))
             base.unifyWith(other.base, lookup) else UnifyResult.fail

@@ -10,17 +10,19 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.types.ty.TyInteger
 
-val RsArrayType.arraySize: Int? get() {
+val RsArrayType.isSlice: Boolean get() = stub?.isSlice ?: (expr == null)
+
+val RsArrayType.arraySize: Long? get() {
     val stub = stub
     if (stub != null) {
-        return if (stub.arraySize == -1) null else stub.arraySize
+        return if (stub.arraySize == -1L) null else stub.arraySize
     }
     return calculateArraySize(expr)
 }
 
 // TODO: support constants and compile time expressions
-fun calculateArraySize(expr: RsExpr?): Int? = (expr as? RsLitExpr)
+fun calculateArraySize(expr: RsExpr?): Long? = (expr as? RsLitExpr)
     ?.integerLiteral
     ?.text
     ?.removeSuffix(TyInteger.Kind.usize.name)
-    ?.toIntOrNull()
+    ?.toLongOrNull()
