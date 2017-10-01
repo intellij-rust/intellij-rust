@@ -1051,4 +1051,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             A::from(C);
         }
     """)
+
+    // issue #1790
+    fun `test not type mismatch E0308 with unknown size array`() = checkErrors("""
+        struct Foo {
+            v: [usize; COUNT]
+        }
+
+        fn main() {
+            let x = Foo { v: [10, 20] };
+        }
+    """)
 }

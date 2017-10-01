@@ -311,9 +311,9 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
         is RsArrayType -> {
             buffer += "["
             typeElement.typeReference.generateDocumentation(buffer)
-            typeElement.arraySize?.let {
+            if (!typeElement.isSlice) {
                 buffer += "; "
-                buffer.append(it)
+                buffer.append(typeElement.arraySize ?: "<unknown>")
             }
             buffer += "]"
         }

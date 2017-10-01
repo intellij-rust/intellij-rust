@@ -158,7 +158,8 @@ class RsInferenceContext {
             ty1 is TyPointer && ty2 is TyPointer && ty1.mutability == ty2.mutability -> {
                 combineTypes(ty1.referenced, ty2.referenced)
             }
-            ty1 is TyArray && ty2 is TyArray && ty1.size == ty2.size -> combineTypes(ty1.base, ty2.base)
+            ty1 is TyArray && ty2 is TyArray &&
+                (ty1.size == null || ty2.size == null || ty1.size == ty2.size) -> combineTypes(ty1.base, ty2.base)
             ty1 is TySlice && ty2 is TySlice -> combineTypes(ty1.elementType, ty2.elementType)
             ty1 is TyTuple && ty2 is TyTuple -> combinePairs(ty1.types.zip(ty2.types))
             ty1 is TyFunction && ty2 is TyFunction && ty1.paramTypes.size == ty2.paramTypes.size -> {
@@ -365,7 +366,7 @@ private class RsFnInferenceContext(
             is RsLiteralKind.Char -> if (kind.isByte) TyInteger(TyInteger.Kind.u8) else TyChar
             is RsLiteralKind.String -> {
                 if (kind.isByte) {
-                    TyReference(TyArray(TyInteger(TyInteger.Kind.u8), kind.offsets.value?.length ?: 0), IMMUTABLE)
+                    TyReference(TyArray(TyInteger(TyInteger.Kind.u8), kind.offsets.value?.length?.toLong() ?: 0), IMMUTABLE)
                 } else {
                     TyReference(TyStr, IMMUTABLE)
                 }
@@ -884,7 +885,7 @@ private class RsFnInferenceContext(
                 ?: expr.initializer?.inferType()
                 ?: return TySlice(TyUnknown)
             expr.sizeExpr?.inferType(TyInteger(TyInteger.Kind.usize))
-            val size = calculateArraySize(expr.sizeExpr) ?: return TySlice(elementType)
+            val size = calculateArraySize(expr.sizeExpr)
             elementType to size
         } else {
             val elementTypes = expr.arrayElements?.map { it.inferType(expectedElemTy) }
@@ -893,7 +894,7 @@ private class RsFnInferenceContext(
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)
             if (expectedElemTy != null) tryCoerce(elementType, expectedElemTy)
-            elementType to elementTypes.size
+            elementType to elementTypes.size.toLong()
         }
 
         return TyArray(elementType, size)

@@ -26,7 +26,7 @@ private fun inferLiteralExprType(expr: RsLitExpr): Ty {
         is RsLiteralKind.Char -> if (kind.isByte) TyInteger(TyInteger.Kind.u8) else TyChar
         is RsLiteralKind.String -> {
             if (kind.isByte) {
-                TyReference(TyArray(TyInteger(TyInteger.Kind.u8), kind.offsets.value?.length ?: 0), IMMUTABLE)
+                TyReference(TyArray(TyInteger(TyInteger.Kind.u8), kind.offsets.value?.length?.toLong() ?: 0), IMMUTABLE)
             } else {
                 TyReference(TyStr, IMMUTABLE)
             }

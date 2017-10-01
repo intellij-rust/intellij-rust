@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 102
+        override fun getStubVersion(): Int = 103
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -858,7 +858,8 @@ class RsBaseTypeStub(
 
 class RsArrayTypeStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val arraySize: Int
+    val arraySize: Long,
+    val isSlice: Boolean
 ) : StubBase<RsArrayType>(parent, elementType) {
 
     object Type : RsStubElementType<RsArrayTypeStub, RsArrayType>("ARRAY_TYPE") {
@@ -866,17 +867,18 @@ class RsArrayTypeStub(
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsArrayTypeStub(parentStub, this, dataStream.readInt())
+            RsArrayTypeStub(parentStub, this, dataStream.readLong(), dataStream.readBoolean())
 
         override fun serialize(stub: RsArrayTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeInt(stub.arraySize)
+            writeLong(stub.arraySize)
+            writeBoolean(stub.isSlice)
         }
 
         override fun createPsi(stub: RsArrayTypeStub) =
             RsArrayTypeImpl(stub, this)
 
         override fun createStub(psi: RsArrayType, parentStub: StubElement<*>?) =
-            RsArrayTypeStub(parentStub, this, psi.arraySize ?: -1)
+            RsArrayTypeStub(parentStub, this, psi.arraySize ?: -1L, psi.isSlice)
 
         override fun indexStub(stub: RsArrayTypeStub, sink: IndexSink) {
         }

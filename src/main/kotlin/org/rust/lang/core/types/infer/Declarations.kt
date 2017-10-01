@@ -45,11 +45,10 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 
         is RsArrayType -> {
             val componentType = type.typeReference.type
-            val size = type.arraySize
-            if (size == null) {
+            if (type.isSlice) {
                 TySlice(componentType)
             } else {
-                TyArray(componentType, size)
+                TyArray(componentType, type.arraySize)
             }
         }
 
