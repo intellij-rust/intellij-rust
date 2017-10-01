@@ -39,14 +39,24 @@ class CargoTomlWatcherTest : RsTestBase() {
     fun `test implicit targets`() {
         val watcher = CargoTomlWatcher { counter += 1 }
 
+        // src/bin/*.rs
         val (binFile, createEvent) = newCreateEvent("src/bin/foo.rs")
         watcher.checkTriggered(createEvent)
         watcher.checkNotTriggered(newChangeEvent(binFile))
 
+        // src/main.rs
+        watcher.checkTriggered(newCreateEvent("src/main.rs").second)
+
+        // src/lib.rs
+        watcher.checkTriggered(newCreateEvent("src/lib.rs").second)
         watcher.checkNotTriggered(newCreateEvent("src/bar.rs").second)
 
+        // benches/*.rs, examples/*.rs, tests/*.rs
+        watcher.checkTriggered(newCreateEvent("benches/foo.rs").second)
+        watcher.checkTriggered(newCreateEvent("examples/foo.rs").second)
         watcher.checkTriggered(newCreateEvent("tests/foo.rs").second)
 
+        // build.rs
         watcher.checkTriggered(newCreateEvent("build.rs").second)
     }
 
