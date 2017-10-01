@@ -174,6 +174,12 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         }                   //^ u8
     """)
 
+    fun `test infer coerce reference to ptr`() = testExpr("""
+        fn main() {
+            let a: *const u8 = &0;
+        }                     //^ u8
+    """)
+
     fun `test infer unary minus rvalue from lvalue`() = testExpr("""
         fn main() {
             let a: i8 = -1;

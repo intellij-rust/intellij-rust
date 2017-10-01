@@ -53,8 +53,8 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
     """)
 
     fun `test should not annotate mutated parameter`() = checkByText("""
-        fn foo(&mut i: i32) {
-            i = 20;
+        fn foo(i: &mut i32) {
+            *i = 20;
         }
 
         fn main() {

@@ -336,10 +336,19 @@ private class RsFnInferenceContext(
 
     private fun tryCoerce(inferred: Ty, expected: Ty): Boolean {
         return when {
+        // Coerce array to slice
             inferred is TyReference && inferred.referenced is TyArray &&
                 expected is TyReference && expected.referenced is TySlice -> {
                 ctx.combineTypes(inferred.referenced.base, expected.referenced.elementType)
             }
+        // Coerce reference to pointer
+            inferred is TyReference && expected is TyPointer &&
+                (inferred.mutability == expected.mutability ||
+                    inferred.mutability.isMut && !expected.mutability.isMut) -> {
+                ctx.combineTypes(inferred.referenced, expected.referenced)
+            }
+
+        // Coerce mutable pointer to const pointer
             inferred is TyPointer && inferred.mutability.isMut
                 && expected is TyPointer && !expected.mutability.isMut -> {
                 ctx.combineTypes(inferred.referenced, expected.referenced)
