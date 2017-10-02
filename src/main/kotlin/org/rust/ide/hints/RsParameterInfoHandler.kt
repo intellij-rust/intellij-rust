@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.utils.buildList
+import org.rust.stdext.buildList
 
 /**
  * Provides functions/methods arguments hint.
@@ -123,8 +123,7 @@ class RsArgumentsDescription(
     fun getArgumentRange(index: Int): TextRange {
         if (index < 0 || index >= arguments.size) return TextRange.EMPTY_RANGE
         val start = arguments.take(index).sumBy { it.length + 2 }
-        val range = TextRange(start, start + arguments[index].length)
-        return range
+        return TextRange(start, start + arguments[index].length)
     }
 
     val presentText = if (arguments.isEmpty()) "<no arguments>" else arguments.joinToString(", ")

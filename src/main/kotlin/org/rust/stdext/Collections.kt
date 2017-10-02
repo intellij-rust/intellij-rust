@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.utils
+package org.rust.stdext
 
 
 fun <T> buildList(builder: (ListBuilder<T>).() -> Unit): List<T> {

@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
-import org.rust.utils.buildList
+import org.rust.stdext.buildList
 
 private val RsPat.inlayInfo: List<InlayInfo>
     get() {
@@ -60,7 +60,7 @@ enum class HintType(desc: String, enabled: Boolean) {
 
             if (smart) {
                 if (onlyOneParam(hints, callInfo, elem)) {
-                    if (callInfo.methodName?.startsWith("set_") ?: true) {
+                    if (callInfo.methodName?.startsWith("set_") != false) {
                         return emptyList()
                     }
                     if (callInfo.methodName == callInfo.parameters.getOrNull(0)?.pattern) {
