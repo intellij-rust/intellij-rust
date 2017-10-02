@@ -19,6 +19,7 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsBlockExpr? {
         val blockExpr = element.parentOfType<RsBlockExpr>() ?: return null
+        if (blockExpr.unsafe != null) return null
         val block = blockExpr.block
 
         return if (block.expr != null && block.lbrace.getNextNonCommentSibling() == block.expr)
