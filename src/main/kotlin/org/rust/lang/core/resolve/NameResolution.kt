@@ -10,11 +10,9 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
 import com.intellij.psi.util.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.util.getPsiFor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
@@ -23,6 +21,7 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.openapiext.toPsiFile
 import java.util.*
 
 // IntelliJ Rust name resolution algorithm.
@@ -128,7 +127,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     val explicitPath = modDecl.pathAttribute
     if (explicitPath != null) {
         val vFile = dir.virtualFile.findFileByRelativePath(explicitPath) ?: return false
-        val mod = PsiManager.getInstance(modDecl.project).findFile(vFile)?.rustMod ?: return false
+        val mod = vFile.toPsiFile(modDecl.project)?.rustMod ?: return false
 
         val name = modDecl.name ?: return false
         return processor(name, mod)
@@ -168,7 +167,7 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
         if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
         visitedDeps += pkg.name
         return processor.lazy(libTarget.normName) {
-            crate.project.getPsiFor(libTarget.crateRoot)?.rustMod
+            libTarget.crateRoot?.toPsiFile(crate.project)?.rustMod
         }
     }
 
@@ -387,8 +386,10 @@ private fun processItemMacroDeclarations(
     if (processAll(macros, processor)) return true
 
     if (addStdCrate) {
-        val stdCrate = scope.containingCargoPackage?.findDependency("std")?.crateRoot
-        val prelude = scope.project.getPsiFor(stdCrate)?.rustMod
+        val prelude = scope.containingCargoPackage?.findDependency("std")
+            ?.crateRoot
+            ?.toPsiFile(scope.project)
+            ?.rustMod
         if (prelude is RsFile && processAll(prelude.exportedCrateMacros, processor)) return true
     }
     return false
@@ -514,7 +515,7 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
             if (pkg != null) {
                 val findStdMod = { name: String ->
                     val crate = pkg.findDependency(name)?.crateRoot
-                    scope.project.getPsiFor(crate)?.rustMod
+                    crate?.toPsiFile(scope.project)?.rustMod
                 }
 
                 // Rust injects implicit `extern crate std` in every crate root module unless it is
@@ -756,9 +757,10 @@ private fun processNestedScopesUpwards(scopeStart: RsCompositeElement, processor
         false
     }
 
-    val preludeFile = scopeStart.containingCargoPackage?.findDependency("std")?.crateRoot
+    val prelude = scopeStart.containingCargoPackage?.findDependency("std")?.crateRoot
         ?.findFileByRelativePath("../prelude/v1.rs")
-    val prelude = scopeStart.project.getPsiFor(preludeFile)?.rustMod
+        ?.toPsiFile(scopeStart.project)
+        ?.rustMod
     if (prelude != null && processItemDeclarations(prelude, ns, { v -> v.name !in prevScope && processor(v) }, false)) return true
 
     return false

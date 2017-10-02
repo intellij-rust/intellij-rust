@@ -23,7 +23,7 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
 import org.rust.lang.RsLanguage
-import org.rust.utils.pathAsPath
+import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 import javax.swing.JComponent
 
@@ -94,7 +94,7 @@ class RustProjectConfigurable(
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
 
         for (option in hintProvider.supportedOptions) {
-            val checkbox = hintCheckboxes.get(option.id) ?: continue
+            val checkbox = hintCheckboxes[option.id] ?: continue
             checkbox.isSelected = option.get()
         }
 
@@ -121,7 +121,7 @@ class RustProjectConfigurable(
         rustProjectSettings.validateSettings()
 
         for (option in hintProvider.supportedOptions) {
-            val checkbox = hintCheckboxes.get(option.id) ?: continue
+            val checkbox = hintCheckboxes[option.id] ?: continue
             option.set(checkbox.isSelected)
         }
 

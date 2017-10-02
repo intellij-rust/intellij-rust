@@ -8,7 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.ide.utils.isNullOrEmpty
+import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.resolve.StdKnownItems

@@ -15,8 +15,8 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.RsFileStub
-import org.rust.lang.utils.ProjectCache
-import org.rust.lang.utils.getElements
+import org.rust.openapiext.ProjectCache
+import org.rust.openapiext.getElements
 
 class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion

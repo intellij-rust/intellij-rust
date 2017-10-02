@@ -15,12 +15,12 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
-import org.rust.ide.utils.checkWriteAccessAllowed
 import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.TraitImplementationInfo
 import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.openapiext.checkWriteAccessAllowed
 import javax.swing.JTree
 
 class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: RsNamedElement) : ClassMember {

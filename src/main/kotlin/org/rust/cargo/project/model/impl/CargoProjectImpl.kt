@@ -39,9 +39,13 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.util.modules
 import org.rust.ide.notifications.showBalloon
-import org.rust.utils.*
+import org.rust.openapiext.TaskResult
+import org.rust.openapiext.modules
+import org.rust.openapiext.pathAsPath
+import org.rust.openapiext.runAsyncTask
+import org.rust.stdext.AsyncValue
+import org.rust.stdext.joinAll
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -84,13 +88,13 @@ class CargoProjectsServiceImpl(
     private val projects = AsyncValue<List<CargoProjectImpl>>(emptyList())
 
 
-    private val NO_PROJECT = CargoProjectImpl(Paths.get(""), this)
+    private val noProjectMarker = CargoProjectImpl(Paths.get(""), this)
     /**
      * [directoryIndex] allows to quickly map from a [VirtualFile] to
      * a containing [CargoProject].
      */
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
-        LightDirectoryIndex(project, NO_PROJECT, Consumer { index ->
+        LightDirectoryIndex(project, noProjectMarker, Consumer { index ->
             for (cargoProject in projects.currentState) {
                 index.putInfo(cargoProject.rootDir?.parent, cargoProject)
                 cargoProject.workspace
@@ -99,7 +103,7 @@ class CargoProjectsServiceImpl(
         })
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
-        directoryIndex.getInfoForFile(file).takeIf { it !== NO_PROJECT }
+        directoryIndex.getInfoForFile(file).takeIf { it !== noProjectMarker }
 
     override val allProjects: Collection<CargoProject>
         get() = projects.currentState

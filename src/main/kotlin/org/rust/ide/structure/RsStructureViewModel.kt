@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.utils.buildList
+import org.rust.stdext.buildList
 
 class RsStructureViewModel(editor: Editor?, file: RsFile) : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
                                                             StructureViewModel.ElementInfoProvider {
@@ -54,36 +54,37 @@ private class RsStructureViewElement(
         childElements.sortedBy { it.textOffset }
             .map(::RsStructureViewElement).toTypedArray()
 
-    private val childElements: List<RsCompositeElement> get() {
-        return when (psi) {
-            is RsEnumItem -> psi.enumBody?.enumVariantList.orEmpty()
-            is RsImplItem, is RsTraitItem -> {
-                val members = (if (psi is RsImplItem) psi.members else (psi as RsTraitItem).members)
-                    ?: return emptyList()
-                buildList<RsCompositeElement> {
-                    addAll(members.functionList)
-                    addAll(members.constantList)
-                    addAll(members.typeAliasList)
+    private val childElements: List<RsCompositeElement>
+        get() {
+            return when (psi) {
+                is RsEnumItem -> psi.enumBody?.enumVariantList.orEmpty()
+                is RsImplItem, is RsTraitItem -> {
+                    val members = (if (psi is RsImplItem) psi.members else (psi as RsTraitItem).members)
+                        ?: return emptyList()
+                    buildList {
+                        addAll(members.functionList)
+                        addAll(members.constantList)
+                        addAll(members.typeAliasList)
+                    }
                 }
+                is RsMod -> buildList {
+                    addAll(psi.enumItemList)
+                    addAll(psi.functionList)
+                    addAll(psi.implItemList)
+                    addAll(psi.modDeclItemList)
+                    addAll(psi.modItemList)
+                    addAll(psi.constantList)
+                    addAll(psi.structItemList)
+                    addAll(psi.traitItemList)
+                    addAll(psi.typeAliasList)
+                    addAll(psi.macroDefinitionList)
+                    val foreignModItemList = psi.foreignModItemList
+                    addAll(foreignModItemList.flatMap { it.functionList })
+                    addAll(foreignModItemList.flatMap { it.constantList })
+                }
+                is RsStructItem -> psi.blockFields?.fieldDeclList.orEmpty()
+                is RsEnumVariant -> psi.blockFields?.fieldDeclList.orEmpty()
+                else -> emptyList()
             }
-            is RsMod -> buildList<RsCompositeElement> {
-                addAll(psi.enumItemList)
-                addAll(psi.functionList)
-                addAll(psi.implItemList)
-                addAll(psi.modDeclItemList)
-                addAll(psi.modItemList)
-                addAll(psi.constantList)
-                addAll(psi.structItemList)
-                addAll(psi.traitItemList)
-                addAll(psi.typeAliasList)
-                addAll(psi.macroDefinitionList)
-                val foreignModItemList = psi.foreignModItemList
-                addAll(foreignModItemList.flatMap { it.functionList })
-                addAll(foreignModItemList.flatMap { it.constantList })
-            }
-            is RsStructItem -> psi.blockFields?.fieldDeclList.orEmpty()
-            is RsEnumVariant -> psi.blockFields?.fieldDeclList.orEmpty()
-            else -> emptyList()
         }
-    }
 }

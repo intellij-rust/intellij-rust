@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.ext.CARGO_WORKSPACE
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.setContext
+import org.rust.openapiext.toPsiFile
 
 class RsCodeFragmentFactory(private val project: Project) {
     private val psiFactory = RsPsiFactory(project)
@@ -19,7 +20,7 @@ class RsCodeFragmentFactory(private val project: Project) {
     fun createCrateRelativePath(pathText: String, target: CargoWorkspace.Target): RsPath? {
         check(pathText.startsWith("::"))
         val vFile = target.crateRoot ?: return null
-        val crateRoot = PsiManager.getInstance(project).findFile(vFile) as? RsFile ?: return null
+        val crateRoot = vFile.toPsiFile(project) as? RsFile ?: return null
         return psiFactory.tryCreatePath(pathText)?.apply { setContext(crateRoot) }
     }
 

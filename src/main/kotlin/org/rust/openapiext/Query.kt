@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.utils
+package org.rust.openapiext
 
 import com.intellij.openapi.util.Condition
 import com.intellij.util.*

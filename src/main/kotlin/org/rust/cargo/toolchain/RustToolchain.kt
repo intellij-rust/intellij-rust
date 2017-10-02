@@ -13,8 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.text.SemVer
-import org.rust.utils.GeneralCommandLine
-import org.rust.utils.seconds
+import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -181,7 +180,8 @@ private object Suggestions {
 
 private fun GeneralCommandLine.runExecutable(): List<String>? {
     val procOut = try {
-        CapturingProcessHandler(this).runProcess(1.seconds)
+        val timeoutMs = 1000
+        CapturingProcessHandler(this).runProcess(timeoutMs)
     } catch (e: ExecutionException) {
         LOG.warn("Failed to run executable!", e)
         return null

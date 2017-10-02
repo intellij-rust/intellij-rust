@@ -12,7 +12,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.lang.annotations.Language
-import org.rust.utils.findFileByMaybeRelativePath
+import org.rust.openapiext.findFileByMaybeRelativePath
 import java.io.File
 
 /**

@@ -6,6 +6,7 @@
 package org.rust.lang.refactoring
 
 import com.intellij.psi.PsiFileSystemItem
+import org.rust.openapiext.checkWriteAccessAllowed
 
 class RsDowngradeModuleToFile : com.intellij.refactoring.actions.BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out com.intellij.psi.PsiElement>): Boolean = elements.all { it.isDirectoryMod }
@@ -32,7 +33,7 @@ class RsDowngradeModuleToFile : com.intellij.refactoring.actions.BaseRefactoring
 }
 
 private fun contractModule(fileOrDirectory: com.intellij.psi.PsiFileSystemItem) {
-    org.rust.ide.utils.checkWriteAccessAllowed()
+    checkWriteAccessAllowed()
 
     val (file, dir) = when (fileOrDirectory) {
         is org.rust.lang.core.psi.RsFile -> fileOrDirectory to fileOrDirectory.parent!!

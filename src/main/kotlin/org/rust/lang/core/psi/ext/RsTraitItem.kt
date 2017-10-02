@@ -19,10 +19,9 @@ import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyEnum
-import org.rust.lang.utils.filterIsInstanceQuery
-import org.rust.lang.utils.filterQuery
-import org.rust.lang.utils.mapQuery
+import org.rust.openapiext.filterIsInstanceQuery
+import org.rust.openapiext.filterQuery
+import org.rust.openapiext.mapQuery
 import javax.swing.Icon
 
 val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute

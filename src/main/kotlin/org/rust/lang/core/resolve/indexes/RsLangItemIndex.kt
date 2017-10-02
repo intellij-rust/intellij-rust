@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.langAttribute
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsTraitItemStub
-import org.rust.lang.utils.getElements
+import org.rust.openapiext.getElements
 
 class RsLangItemIndex : AbstractStubIndex<String, RsTraitItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion

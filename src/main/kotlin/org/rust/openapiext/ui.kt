@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.utils
+package org.rust.openapiext
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -15,8 +15,8 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.util.Alarm
 import javax.swing.event.DocumentEvent
 
-class UiDebouncer(parentDisaposable: Disposable, private val delayMillis: Int = 200) {
-    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisaposable)
+class UiDebouncer(parentDisposable: Disposable, private val delayMillis: Int = 200) {
+    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
 
     fun <T> run(onPooledThread: () -> T, onUiThread: (T) -> Unit) {
         alarm.cancelAllRequests()

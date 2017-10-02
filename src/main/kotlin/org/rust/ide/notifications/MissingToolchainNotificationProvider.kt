@@ -26,7 +26,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.lang.core.psi.isNotRustFile
-import org.rust.utils.pathAsPath
+import org.rust.openapiext.pathAsPath
 import java.awt.Component
 
 /**
