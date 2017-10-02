@@ -533,8 +533,8 @@
                              groupId="language"/>
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
-        <moduleService serviceInterface="org.rust.cargo.project.workspace.CargoProjectWorkspaceService"
-                       serviceImplementation="org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl"/>
+        <projectService serviceInterface="org.rust.cargo.project.model.CargoProjectsService"
+                        serviceImplementation="org.rust.cargo.project.model.impl.CargoProjectsServiceImpl"/>
 
         <toolWindow id="Cargo"
                     anchor="right"
@@ -642,10 +642,24 @@
                 class="org.rust.cargo.runconfig.command.RunClippyAction"
                 text="Run Clippy"/>
 
+        <action id="Rust.AttachCargoProject"
+                class="org.rust.cargo.project.model.AttachCargoProjectAction"
+                text="Attach Cargo project"
+                icon="AllIcons.ToolbarDecorator.Add"/>
+
+        <action id="Rust.DetachCargoProject"
+                class="org.rust.cargo.project.model.DetachCargoProjectAction"
+                text="Detach Cargo project"
+                icon="AllIcons.ToolbarDecorator.Remove"
+                use-shortcut-of="$Delete"/>
+
         <group id="Rust.Cargo">
             <reference id="Rust.RefreshCargoProject"/>
             <reference id="Rust.CargoCommand"/>
             <reference id="Rust.RunClippy"/>
+            <separator/>
+            <reference id="Rust.AttachCargoProject"/>
+            <reference id="Rust.DetachCargoProject"/>
         </group>
     </actions>
 

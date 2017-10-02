@@ -5,18 +5,9 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.cargo.project.workspace.cargoWorkspace
-
 class RsStdlibResolveTest : RsResolveTestBase() {
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
-    fun testHasStdlibSources() {
-        val cargoProject = myModule.cargoWorkspace
-        check(cargoProject?.hasStandardLibrary == true) {
-            "No Rust sources found during test.\nTry running `rustup component add rust-src`"
-        }
-    }
 
     fun testResolveFs() = stubOnlyResolve("""
     //- main.rs

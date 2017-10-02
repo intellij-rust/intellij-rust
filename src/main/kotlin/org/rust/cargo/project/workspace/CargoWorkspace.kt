@@ -17,8 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Rust project model represented roughly in the same way as in Cargo itself.
  *
- * [CargoProjectWorkspaceService] is responsible for providing a [CargoWorkspace] for
- * an IDEA module.
+ * [org.rust.cargo.project.model.CargoProjectsService] manages workspaces.
  */
 interface CargoWorkspace {
     val manifestPath: Path?

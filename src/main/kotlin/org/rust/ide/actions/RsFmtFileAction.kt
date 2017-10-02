@@ -48,7 +48,14 @@ class RsFmtFileAction : DumbAwareAction() {
         try {
             cargo.reformatFile(module, file)
         } catch (e: ExecutionException) {
-            project.showBalloon(e.message ?: "", NotificationType.ERROR)
+            val message = e.message ?: ""
+
+            // #1131 - Check if we get a `no such subcommand: fmt` and let the user know to install fmt
+            if ("no such subcommand: fmt" in message) {
+                project.showBalloon("Install rustfmt: https://github.com/rust-lang-nursery/rustfmt", NotificationType.ERROR)
+            } else {
+                project.showBalloon(message, NotificationType.ERROR)
+            }
         }
     }
 }

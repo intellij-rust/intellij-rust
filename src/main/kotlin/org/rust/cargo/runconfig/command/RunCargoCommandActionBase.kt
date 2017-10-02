@@ -1,7 +1,7 @@
 /*
- * Use of this source code is governed by the MIT license that can be
- * found in the LICENSE file.
- */
+* Use of this source code is governed by the MIT license that can be
+* found in the LICENSE file.
+*/
 
 package org.rust.cargo.runconfig.command
 
@@ -12,39 +12,39 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.Project
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.util.modulesWithCargoProject
 import javax.swing.Icon
 
 abstract class RunCargoCommandActionBase(icon: Icon) : AnAction(icon) {
     override fun update(e: AnActionEvent) {
-        val hasCargoModule = e.project?.modulesWithCargoProject.orEmpty().isNotEmpty()
-
-        e.presentation.isEnabled = hasCargoModule
-        e.presentation.isVisible = hasCargoModule
+        val hasCargoProject = e.project?.cargoProjects?.allProjects.orEmpty().isNotEmpty()
+        e.presentation.isEnabledAndVisible = hasCargoProject
     }
 
-    protected fun getAppropriateModule(e: AnActionEvent): Module? {
-        val cargoModules = e.project?.modulesWithCargoProject.orEmpty()
-        val current = e.getData(LangDataKeys.MODULE)
+    protected fun getAppropriateCargoProject(e: AnActionEvent): CargoProject? {
+        val cargoProjects = e.project?.cargoProjects ?: return null
+        cargoProjects.allProjects.singleOrNull()?.let { return it }
 
-        return if (current in cargoModules)
-            current
-        else
-            cargoModules.firstOrNull()
+        e.getData(CommonDataKeys.VIRTUAL_FILE)
+            ?.let { cargoProjects.findProjectForFile(it) }
+            ?.let { return it }
+
+        return cargoProjects.allProjects.firstOrNull()
     }
 
-    protected fun runCommand(module: Module, cargoCommandLine: CargoCommandLine) {
-        val runConfiguration = createRunConfiguration(module, cargoCommandLine)
+    protected fun runCommand(project: Project, cargoCommandLine: CargoCommandLine) {
+        val runConfiguration = createRunConfiguration(project, cargoCommandLine)
         val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
-        ProgramRunnerUtil.executeConfiguration(module.project, runConfiguration, executor)
+        ProgramRunnerUtil.executeConfiguration(project, runConfiguration, executor)
     }
 
-    private fun createRunConfiguration(module: Module, cargoCommandLine: CargoCommandLine): RunnerAndConfigurationSettings {
-        val runManager = RunManagerEx.getInstanceEx(module.project)
+    private fun createRunConfiguration(project: Project, cargoCommandLine: CargoCommandLine): RunnerAndConfigurationSettings {
+        val runManager = RunManagerEx.getInstanceEx(project)
 
         return runManager.createCargoCommandRunConfiguration(cargoCommandLine).apply {
             runManager.setTemporaryConfiguration(this)

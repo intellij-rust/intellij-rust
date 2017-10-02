@@ -258,6 +258,6 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("bar/src/lib.rs", toCrate = "rand 54.0.0")
     }
 
-    fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
+    private fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
         fileTree { builder() }.create()
 }

@@ -5,29 +5,27 @@
 
 package org.rust.cargo.runconfig.command
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
 import com.intellij.execution.ExternalizablePath
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
-import org.rust.cargo.runconfig.RsRunConfigurationModule
 import org.rust.cargo.runconfig.ui.CargoRunConfigurationEditorForm
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.cargoProjectRoot
-import org.rust.cargo.util.modulesWithCargoProject
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -40,7 +38,7 @@ class CargoCommandConfiguration(
     project: Project,
     name: String,
     factory: ConfigurationFactory
-) : ModuleBasedConfiguration<RsRunConfigurationModule>(name, RsRunConfigurationModule(project), factory),
+) : LocatableConfigurationBase(project, factory, name),
     RunConfigurationWithSuppressedDefaultDebugAction {
 
     var channel: RustChannel = RustChannel.DEFAULT
@@ -49,10 +47,6 @@ class CargoCommandConfiguration(
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var workingDirectory: Path? = null
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
-
-    init {
-        configurationModule.module = project.modulesWithCargoProject.firstOrNull()
-    }
 
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
@@ -112,8 +106,6 @@ class CargoCommandConfiguration(
     fun canBeFrom(cmd: CargoCommandLine): Boolean =
         command == ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
 
-    override fun getValidModules(): Collection<Module> = project.modulesWithCargoProject
-
     @Throws(RuntimeConfigurationError::class)
     override fun checkConfiguration() {
         val config = clean()
@@ -130,7 +122,7 @@ class CargoCommandConfiguration(
         class Ok(
             val cmd: CargoCommandLine,
             val toolchain: RustToolchain,
-            val module: Module,
+            val cargoProject: CargoProject,
             val cargoProjectDirectory: VirtualFile
         ) : CleanConfiguration()
 
@@ -152,8 +144,8 @@ class CargoCommandConfiguration(
             CargoCommandLine(args.first(), args.drop(1), backtrace, channel, workingDirectory, env, nocapture)
         }
 
-        val module = configurationModule.module
-            ?: return CleanConfiguration.error(ExecutionBundle.message("module.not.specified.error.text"))
+        val cargoProject = findCargoProject(project, command, workingDirectory)
+            ?: return CleanConfiguration.error("Unable to determine Cargo project")
 
         val toolchain = project.toolchain
             ?: return CleanConfiguration.error("No Rust toolchain specified")
@@ -170,12 +162,32 @@ class CargoCommandConfiguration(
         return CleanConfiguration.Ok(
             cmd,
             toolchain,
-            module,
-            module.cargoProjectRoot
-                ?: return CleanConfiguration.error("No Cargo.toml at the root of the module")
+            cargoProject,
+            cargoProject.rootDir
+                ?: return CleanConfiguration.error("Cargo project does not exist")
         )
     }
 
+    companion object {
+        fun findCargoProject(project: Project, cmd: String, workingDirectory: Path?): CargoProject? {
+            val cargoProjects = project.cargoProjects
+            cargoProjects.allProjects.singleOrNull()?.let { return it }
+
+            val manifestPath = run {
+                val args = ParametersListUtil.parse(cmd)
+                val idx = args.indexOf("--manifest-path")
+                if (idx == -1) return@run null
+                args.getOrNull(idx + 1)?.let { Paths.get(it) }
+            }
+
+            for (dir in listOfNotNull(manifestPath?.parent, workingDirectory)) {
+                LocalFileSystem.getInstance().findFileByIoFile(dir.toFile())
+                    ?.let { cargoProjects.findProjectForFile(it) }
+                    ?.let { return it }
+            }
+            return null
+        }
+    }
 }
 
 

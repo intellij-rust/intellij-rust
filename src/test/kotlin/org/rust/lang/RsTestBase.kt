@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,15 +22,15 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
 import org.rust.TestProject
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.cargo.project.workspace.impl.CargoProjectWorkspaceServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
@@ -189,32 +189,23 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
             val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
 
-            override val skipTestReason: String? get() {
-                if (rustup == null) return "No rustup"
-                if (stdlib == null) return "No stdib"
-                return null
-            }
+            override val skipTestReason: String?
+                get() {
+                    if (rustup == null) return "No rustup"
+                    if (stdlib == null) return "No stdib"
+                    return null
+                }
         }
 
         open val skipTestReason: String? = null
 
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
-            if (skipTestReason != null) {
-                return
-            }
+            if (skipTestReason != null) return
 
-            val moduleBaseDir = contentEntry.file!!.url
-            val projectWorkspace = CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl
-
-            projectWorkspace.setRawWorkspace(testCargoProject(module, moduleBaseDir))
-
-            // XXX: for whatever reason libraries created by `updateLibrary` are not indexed in tests.
-            // this seems to fix the issue
-            val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(module.project).libraries
-            for (lib in libraries) {
-                model.addLibraryEntry(lib)
-            }
+            val projectDir = contentEntry.file!!
+            val ws = testCargoProject(module, projectDir.url)
+            module.project.cargoProjects.createTestProject(projectDir, ws)
         }
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
@@ -235,42 +226,45 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             manifestPath = "$contentRoot/../Cargo.toml",
             isWorkspaceMember = true
         )
-
-        protected fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CleanCargoMetadata.Package {
-            val root = VirtualFileManager.getInstance().findFileByUrl(contentRoot)!!
-            val vFile = source?.let { VfsTestUtil.createFile(root, it) }
-
-            return CleanCargoMetadata.Package(
-                id = "$name 0.0.1",
-                url = "",
-                name = name,
-                version = "0.0.1",
-                targets = listOf(
-                    CleanCargoMetadata.Target(vFile?.url ?: "", targetName, CargoWorkspace.TargetKind.LIB)
-                ),
-                source = source,
-                manifestPath = "/ext-libs/$name/Cargo.toml",
-                isWorkspaceMember = false
-            )
-        }
     }
 
     protected object DefaultDescriptor : RustProjectDescriptorBase()
 
     protected object WithStdlibRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-
             val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-            (CargoProjectWorkspaceService.getInstance(module) as CargoProjectWorkspaceServiceImpl)
-                .setStdlib(stdlib)
 
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CargoWorkspace.deserialize(null, CleanCargoMetadata(packages, emptyList()))
+                .withStdlib(stdlib.crates)
         }
     }
 
     protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
+        private fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CleanCargoMetadata.Package {
+            return CleanCargoMetadata.Package(
+                id = "$name 0.0.1",
+                url = "",
+                name = name,
+                version = "0.0.1",
+                targets = listOf(
+                    CleanCargoMetadata.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
+                ),
+                source = source,
+                manifestPath = "/ext-libs/$name/Cargo.toml",
+                isWorkspaceMember = false
+            )
+        }
+
+
+        fun setUp(fixture: CodeInsightTestFixture) {
+            val root = fixture.findFileInTempDir(".")!!
+            for (source in listOf("dep-lib/lib.rs", "trans-lib/lib.rs")) {
+                VfsTestUtil.createFile(root, source)
+            }
+        }
+
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
             val packages = listOf(
                 testCargoPackage(contentRoot),
@@ -320,7 +314,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             }
         }
 
-        @JvmStatic fun getResourceAsString(path: String): String? {
+        @JvmStatic
+        fun getResourceAsString(path: String): String? {
             val stream = RsTestBase::class.java.classLoader.getResourceAsStream(path)
                 ?: return null
 

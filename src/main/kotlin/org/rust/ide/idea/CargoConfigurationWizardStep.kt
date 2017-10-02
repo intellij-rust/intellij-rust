@@ -17,8 +17,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.panel
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
+import org.rust.cargo.toolchain.RustToolchain
+import org.rust.utils.pathAsPath
 import javax.swing.JComponent
 
 class CargoConfigurationWizardStep(
@@ -75,6 +78,11 @@ class CargoConfigurationWizardStep(
 
             val contentEntry = rootModel.contentEntries.singleOrNull()
             if (contentEntry != null) {
+                val manifest = contentEntry.file?.findChild(RustToolchain.CARGO_TOML)
+                if (manifest != null) {
+                    module.project.cargoProjects.attachCargoProject(manifest.pathAsPath)
+                }
+
                 val projectRoot = contentEntry.file ?: return
                 val makeVfsUrl = { dirName: String -> FileUtil.join(projectRoot.url, dirName) }
                 CargoConstants.ProjectLayout.sources.map(makeVfsUrl).forEach {

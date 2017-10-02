@@ -5,7 +5,6 @@
 
 package org.rust.cargo.runconfig.ui
 
-import com.intellij.application.options.ModulesComboBox
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -23,21 +22,24 @@ import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
 import com.intellij.util.text.nullize
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.cargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.util.CargoCommandLineEditor
 import java.awt.Dimension
+import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 
-class CargoRunConfigurationEditorForm(project: Project) : SettingsEditor<CargoCommandConfiguration>() {
+class CargoRunConfigurationEditorForm(val project: Project) : SettingsEditor<CargoCommandConfiguration>() {
+    private fun currentWorkspace(): CargoWorkspace? =
+        CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace
 
-    private val comboModules = ModulesComboBox()
-    private val command = CargoCommandLineEditor(project, { comboModules.selectedModule?.cargoWorkspace })
+    private val command = CargoCommandLineEditor(project, { this.currentWorkspace() })
+
     private val backtraceMode = ComboBox<BacktraceMode>().apply {
         BacktraceMode.values()
             .sortedBy { it.index }
@@ -49,6 +51,7 @@ class CargoRunConfigurationEditorForm(project: Project) : SettingsEditor<CargoCo
             .sortedBy { it.index }
             .forEach { addItem(it) }
     }
+    private val currentWorkingDirectory: Path? get() = workingDirectory.component.text.nullize()?.let { Paths.get(it) }
     private val workingDirectory = run {
         val textField = TextFieldWithBrowseButton().apply {
             val fileChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor().apply {
@@ -63,9 +66,6 @@ class CargoRunConfigurationEditorForm(project: Project) : SettingsEditor<CargoCo
 
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
-        comboModules.setModules(configuration.validModules)
-        comboModules.selectedModule = configuration.configurationModule.module
-
         channel.selectedIndex = configuration.channel.index
         command.text = configuration.command
         nocapture.isSelected = configuration.nocapture
@@ -78,15 +78,14 @@ class CargoRunConfigurationEditorForm(project: Project) : SettingsEditor<CargoCo
     override fun applyEditorTo(configuration: CargoCommandConfiguration) {
         val configChannel = RustChannel.fromIndex(channel.selectedIndex)
 
-        configuration.setModule(comboModules.selectedModule)
         configuration.channel = configChannel
         configuration.command = command.text
         configuration.nocapture = nocapture.isSelected
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
-        configuration.workingDirectory = workingDirectory.component.text.nullize()?.let { Paths.get(it) }
+        configuration.workingDirectory = currentWorkingDirectory
         configuration.env = environmentVariables.envData
 
-        val rustupAvailable = comboModules.selectedModule?.project?.toolchain?.isRustupAvailable ?: false
+        val rustupAvailable = project.toolchain?.isRustupAvailable ?: false
         channel.isEnabled = rustupAvailable || configChannel != RustChannel.DEFAULT
         if (!rustupAvailable && configChannel != RustChannel.DEFAULT) {
             throw ConfigurationException("Channel cannot be set explicitly because rustup is not available")
@@ -94,7 +93,6 @@ class CargoRunConfigurationEditorForm(project: Project) : SettingsEditor<CargoCo
     }
 
     override fun createEditor(): JComponent = panel {
-        labeledRow("Rust &project:", comboModules) { comboModules(CCFlags.push) }
         labeledRow("&Command:", command) {
             command(CCFlags.pushX, CCFlags.growX)
             channelLabel.labelFor = channel

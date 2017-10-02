@@ -10,10 +10,8 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import org.rust.FileTree
 import org.rust.TestProject
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoProjectWorkspaceService
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 
 // This class allows to execute real Cargo during the tests.
@@ -32,12 +30,8 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
         }
 
     protected fun refreshWorkspace() {
-        CargoProjectWorkspaceService.getInstance(myModule).syncUpdate(myModule.project.toolchain!!)
-        if (myModule.cargoWorkspace == null) {
-            error("Failed to update a test Cargo project")
-        }
+        project.cargoProjects.discoverAndRefreshSync()
     }
-
 
     override fun runTest() {
         if (toolchain == null) {
@@ -50,7 +44,7 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
     override fun setUp() {
         super.setUp()
         if (toolchain != null) {
-             project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
+            project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
         }
     }
 

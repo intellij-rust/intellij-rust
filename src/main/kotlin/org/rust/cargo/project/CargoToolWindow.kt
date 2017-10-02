@@ -5,60 +5,70 @@
 
 package org.rust.cargo.project
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBList
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.UIUtil
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.cargoWorkspace
-import org.rust.cargo.project.workspace.impl.CargoTomlWatcher
-import org.rust.cargo.util.modulesWithCargoProject
+import org.rust.cargo.icons.CargoIcons
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.CargoProject.UpdateStatus
+import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.DetachCargoProjectAction
+import org.rust.cargo.project.model.cargoProjects
 import javax.swing.JEditorPane
+import javax.swing.JList
+import javax.swing.ListSelectionModel
 
 
 class CargoToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val toolwindowPanel = run {
-            val cargoTab = CargoToolWindow(project)
-            SimpleToolWindowPanel(true, false).apply {
-                setToolbar(cargoTab.toolbar.component)
-                cargoTab.toolbar.setTargetComponent(this)
-                setContent(cargoTab.content)
-            }
-        }
-
+        val toolwindowPanel = CargoToolWindowPanel(project)
         val tab = ContentFactory.SERVICE.getInstance()
             .createContent(toolwindowPanel, "", false)
         toolWindow.contentManager.addContent(tab)
     }
 }
 
+private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
+    private val cargoTab = CargoToolWindow(project)
+
+    init {
+        setToolbar(cargoTab.toolbar.component)
+        cargoTab.toolbar.setTargetComponent(this)
+        setContent(cargoTab.content)
+    }
+
+    override fun getData(dataId: String): Any? {
+        if (DetachCargoProjectAction.CARGO_PROJECT_TO_DETACH.`is`(dataId)) {
+            return cargoTab.selectedProject
+        }
+        return super.getData(dataId)
+    }
+}
+
 private class CargoToolWindow(
     private val project: Project
 ) {
-    private var _cargoProjects: List<Pair<Module, CargoWorkspace?>> = emptyList()
-    private var cargoProjects: List<Pair<Module, CargoWorkspace?>>
+    private var _cargoProjects: List<CargoProject> = emptyList()
+    private var cargoProjects: List<CargoProject>
         get() = _cargoProjects
         set(value) {
             check(ApplicationManager.getApplication().isDispatchThread)
             _cargoProjects = value
-            updateUi()
+            projectList.setListData(cargoProjects.toTypedArray())
         }
 
     val toolbar: ActionToolbar = run {
@@ -70,54 +80,52 @@ private class CargoToolWindow(
         background = UIUtil.getTreeBackground()
         isEditable = false
     }
+    private val projectList = JBList<CargoProject>(emptyList()).apply {
+        emptyText.text = "There are no Cargo projects to display."
+        selectionMode = ListSelectionModel.SINGLE_SELECTION
+        cellRenderer = object : ColoredListCellRenderer<CargoProject>() {
+            override fun customizeCellRenderer(list: JList<out CargoProject>, value: CargoProject, index: Int, selected: Boolean, hasFocus: Boolean) {
+                icon = CargoIcons.ICON
+                var attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES
+                val status = value.mergedStatus
+                when (status) {
+                    is UpdateStatus.UpdateFailed -> {
+                        attrs = attrs.derive(SimpleTextAttributes.STYLE_WAVED, null, null, JBColor.RED)
+                        toolTipText = status.reason
+                    }
+                    is UpdateStatus.NeedsUpdate -> {
+                        attrs = attrs.derive(SimpleTextAttributes.STYLE_WAVED, null, null, JBColor.GRAY)
+                        toolTipText = "Project needs update"
+                    }
+                    is UpdateStatus.UpToDate -> {
+                        toolTipText = "Project is up-to-date"
+                    }
+                }
+                append(value.presentableName, attrs)
+            }
+        }
+    }
+    val selectedProject: CargoProject? get() = projectList.selectedValue
+
     val content = panel {
-        row { note(CCFlags.push, CCFlags.grow) }
+        row {
+            projectList(CCFlags.push, CCFlags.grow)
+        }
     }
 
     init {
         with(project.messageBus.connect()) {
-            subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-                override fun rootsChanged(event: ModuleRootEvent?) {
-                    updateData()
-                }
-            })
-            subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-                override fun after(events: List<VFileEvent>) {
-                    if (events.any { CargoTomlWatcher.isCargoTomlChange(it) }) {
-                        updateData()
+            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
+                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+                    ApplicationManager.getApplication().invokeLater {
+                        cargoProjects = projects.sortedBy { it.manifest }
                     }
                 }
-
-                override fun before(events: List<VFileEvent>) {}
             })
         }
 
-        updateData()
-    }
-
-    private fun updateData() {
         ApplicationManager.getApplication().invokeLater {
-            cargoProjects = project.modulesWithCargoProject.map { module ->
-                module to module.cargoWorkspace
-            }
-        }
-    }
-
-    private fun updateUi() {
-        note.text = if (cargoProjects.isEmpty()) {
-            html("There are no Cargo projects to display.")
-        } else {
-            html(buildString {
-                for ((module, ws) in cargoProjects) {
-                    if (ws != null) {
-                        val projectName = ws.manifestPath?.parent?.fileName?.toString()
-                        if (projectName != null) append("Project $projectName up-to-date.")
-                    } else {
-                        append("Project ${module.name} failed to update!")
-                    }
-                    append("</br>")
-                }
-            })
+            cargoProjects = project.cargoProjects.allProjects.sortedBy { it.manifest }
         }
     }
 

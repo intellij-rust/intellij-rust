@@ -199,7 +199,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     }
 
     if (qualifier != null) {
-        val primitiveType = TyPrimitive.fromPath(qualifier);
+        val primitiveType = TyPrimitive.fromPath(qualifier)
         if (primitiveType != null) {
             if (processAssociatedItems(lookup, primitiveType, ns, processor)) return true
         }

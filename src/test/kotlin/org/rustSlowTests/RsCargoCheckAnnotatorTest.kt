@@ -7,8 +7,8 @@ package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.workspace.cargoWorkspace
 import org.rust.fileTree
 
 class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
@@ -88,7 +88,7 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
             }
         }.create()
 
-        val path = myModule.cargoWorkspace
+        val path = project.cargoProjects.allProjects.single().workspace
             ?.findPackage("rand")
             ?.contentRoot
             ?.findFileByRelativePath("src/lib.rs")

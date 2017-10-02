@@ -5,24 +5,28 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.testFramework.LightProjectDescriptor
-
 class RsExternCrateCompletionTest : RsCompletionTestBase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
+    override fun getProjectDescriptor() = WithStdlibAndDependencyRustProjectDescriptor
 
-    fun testExternCrate() = checkSingleCompletion("dep_lib_target", """
-        extern crate dep_l/*caret*/
-    """)
+    override fun setUp() {
+        super.setUp()
+        projectDescriptor.setUp(myFixture)
+    }
 
-    fun testExternCrateDoesntSuggestStdlib() = checkNoCompletion("""
+    fun `test extern crate`() = doSingleCompletion(
+        "extern crate dep_l/*caret*/",
+        "extern crate dep_lib_target/*caret*/"
+    )
+
+    fun `test extern crate does not suggest core`() = checkNoCompletion("""
         extern crate cor/*caret*/
     """)
 
-    fun testExternCrateDoesntSuggestOurCrate() = checkNoCompletion("""
+    fun `test extern crate does not suggest our crate`() = checkNoCompletion("""
         extern crate tes/*caret*/
     """)
 
-    fun testExternCrateDoesntSuggestTransitiveDependency() = checkNoCompletion("""
+    fun `test extern crate does not suggest transitive dependency`() = checkNoCompletion("""
         extern crate trans_l/*caret*/
     """)
 }

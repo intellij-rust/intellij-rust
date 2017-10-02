@@ -116,14 +116,14 @@ class FileTree(private val rootDirectory: Entry.Directory) {
 class TestProject(
     private val project: Project,
     val root: VirtualFile,
-    val filesWithCaret: List<String>
+    private val filesWithCaret: List<String>
 ) {
 
     val fileWithCaret: String get() = filesWithCaret.singleOrNull()!!
 
     inline fun <reified T : PsiElement> findElementInFile(path: String): T {
         val element = doFindElementInFile(path)
-        return element.parentOfType<T>()
+        return element.parentOfType()
             ?: error("No parent of type ${T::class.java} for ${element.text}")
     }
 
