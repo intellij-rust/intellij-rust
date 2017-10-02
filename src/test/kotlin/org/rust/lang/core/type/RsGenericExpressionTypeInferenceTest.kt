@@ -241,6 +241,88 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test self 1`() = testExpr("""
+        struct Foo;
+        impl Foo {
+            fn foo(self) {
+                self;
+              //^ Foo
+            }
+        }
+    """)
+
+    fun `test self 2`() = testExpr("""
+        struct Foo;
+        impl Foo {
+            fn foo(self: Self) {
+                self;
+              //^ Foo
+            }
+        }
+    """)
+
+    fun `test self 3`() = testExpr("""
+        struct Foo;
+        impl Foo {
+            fn foo(self: Foo) {
+                self;
+              //^ Foo
+            }
+        }
+    """)
+
+    fun `test &mut self 1`() = testExpr("""
+        struct Foo;
+        impl Foo {
+            fn foo(&mut self) {
+                self;
+              //^ &mut Foo
+            }
+        }
+    """)
+
+    fun `test &mut self 2`() = testExpr("""
+        struct Foo;
+        impl Foo {
+            fn foo(self: &mut Self) {
+                self;
+              //^ &mut Foo
+            }
+        }
+    """)
+
+    fun `test &mut self 3`() = testExpr("""
+        struct Foo;
+        impl Foo {
+            fn foo(self: &mut Foo) {
+                self;
+              //^ &mut Foo
+            }
+        }
+    """)
+
+    fun `test box self 1`() = testExpr("""
+        struct Box<T>(T);
+        struct Foo;
+        impl Foo {
+            fn foo(self: Box<Self>) {
+                self;
+              //^ Box<Foo>
+            }
+        }
+    """)
+
+    fun `test box self 2`() = testExpr("""
+        struct Box<T>(T);
+        struct Foo;
+        impl Foo {
+            fn foo(self: Box<Foo>) {
+                self;
+              //^ Box<Foo>
+            }
+        }
+    """)
+
     fun `test struct expr`() = testExpr("""
         struct S<T> { a: T }
         fn main() {

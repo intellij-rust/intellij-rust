@@ -17,6 +17,7 @@ import org.rust.lang.core.types.ty.Mutability
 
 val RsSelfParameter.mutability: Mutability get() = Mutability.valueOf(stub?.isMut ?: (mut != null))
 val RsSelfParameter.isRef: Boolean get() = stub?.isRef ?: (and != null)
+val RsSelfParameter.isExplicitType get() = stub?.isExplicitType ?: (colon != null)
 
 abstract class RsSelfParameterImplMixin : RsStubbedElementImpl<RsSelfParameterStub>,
                                           PsiNameIdentifierOwner,

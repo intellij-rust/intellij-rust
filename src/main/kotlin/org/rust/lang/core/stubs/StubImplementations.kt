@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 103
+        override fun getStubVersion(): Int = 104
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -760,12 +760,14 @@ class RsValueParameterStub(
 class RsSelfParameterStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val isMut: Boolean,
-    val isRef: Boolean
+    val isRef: Boolean,
+    val isExplicitType: Boolean
 ) : StubBase<RsSelfParameter>(parent, elementType) {
 
     object Type : RsStubElementType<RsSelfParameterStub, RsSelfParameter>("SELF_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsSelfParameterStub(parentStub, this,
+                dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
@@ -774,13 +776,14 @@ class RsSelfParameterStub(
             with(dataStream) {
                 dataStream.writeBoolean(stub.isMut)
                 dataStream.writeBoolean(stub.isRef)
+                dataStream.writeBoolean(stub.isExplicitType)
             }
 
         override fun createPsi(stub: RsSelfParameterStub): RsSelfParameter =
             RsSelfParameterImpl(stub, this)
 
         override fun createStub(psi: RsSelfParameter, parentStub: StubElement<*>?) =
-            RsSelfParameterStub(parentStub, this, psi.mutability.isMut, psi.isRef)
+            RsSelfParameterStub(parentStub, this, psi.mutability.isMut, psi.isRef, psi.isExplicitType)
 
         override fun indexStub(stub: RsSelfParameterStub, sink: IndexSink) {
             // NOP
