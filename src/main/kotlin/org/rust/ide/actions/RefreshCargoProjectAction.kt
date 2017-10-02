@@ -7,10 +7,10 @@ package org.rust.ide.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.util.containers.isNullOrEmpty
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.util.modulesWithCargoProject
-import org.rust.ide.utils.isNullOrEmpty
 
 class RefreshCargoProjectAction : AnAction() {
     init {

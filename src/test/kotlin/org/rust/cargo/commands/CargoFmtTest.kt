@@ -8,7 +8,7 @@ package org.rust.cargo.commands
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.fileTree
-import org.rust.utils.pathAsPath
+import org.rust.openapiext.pathAsPath
 
 class CargoFmtTest : RustWithToolchainTestBase() {
 

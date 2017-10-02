@@ -36,9 +36,8 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.utils.GeneralCommandLine
-import org.rust.utils.pathAsPath
-import org.rust.utils.withWorkDirectory
+import org.rust.openapiext.GeneralCommandLine
+import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
 import java.nio.file.Paths
 

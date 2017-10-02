@@ -7,9 +7,9 @@ package org.rust.ide.colors
 
 import com.intellij.openapi.options.colors.ColorDescriptor
 import com.intellij.openapi.options.colors.ColorSettingsPage
+import com.intellij.openapi.util.io.StreamUtil
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.ide.icons.RsIcons
-import org.rust.ide.utils.loadCodeSampleResource
 
 class RsColorSettingsPage : ColorSettingsPage {
     private val ATTRS = RsColor.values().map { it.attributesDescriptor }.toTypedArray()
@@ -21,7 +21,8 @@ class RsColorSettingsPage : ColorSettingsPage {
 
     private val DEMO_TEXT by lazy {
         // TODO: The annotations in this file should be generable, and would be more accurate for it.
-        loadCodeSampleResource("org/rust/ide/colors/highlighterDemoText.rs")
+        val stream = javaClass.classLoader.getResourceAsStream("org/rust/ide/colors/highlighterDemoText.rs")
+        StreamUtil.convertSeparators(StreamUtil.readText(stream, "UTF-8"))
     }
 
     override fun getDisplayName() = "Rust"

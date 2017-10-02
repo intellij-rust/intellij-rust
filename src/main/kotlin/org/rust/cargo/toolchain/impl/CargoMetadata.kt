@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
-import org.rust.utils.findFileByMaybeRelativePath
+import org.rust.openapiext.findFileByMaybeRelativePath
 
 /**
  * Classes mirroring JSON output of `cargo metadata`.

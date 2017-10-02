@@ -11,7 +11,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.ui.Messages
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.utils.pathAsPath
+import org.rust.openapiext.pathAsPath
 
 
 class AttachCargoProjectAction : AnAction() {

@@ -15,8 +15,8 @@ import com.intellij.ui.components.Link
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.utils.UiDebouncer
-import org.rust.utils.pathToDirectoryTextField
+import org.rust.openapiext.UiDebouncer
+import org.rust.openapiext.pathToDirectoryTextField
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JLabel

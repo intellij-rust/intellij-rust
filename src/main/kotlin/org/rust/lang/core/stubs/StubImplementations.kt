@@ -15,7 +15,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
-import org.rust.utils.makeBitMask
+import org.rust.stdext.makeBitMask
 
 
 class RsFileStub : PsiFileStubImpl<RsFile> {

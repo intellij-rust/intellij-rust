@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import org.rust.ide.utils.recursionGuard
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.RsInferenceResult
@@ -20,6 +19,7 @@ import org.rust.lang.core.types.infer.inferTypesIn
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.openapiext.recursionGuard
 
 
 val RsTypeReference.type: Ty

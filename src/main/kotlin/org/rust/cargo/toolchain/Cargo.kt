@@ -19,14 +19,13 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.util.net.HttpConfigurable
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.utils.GeneralCommandLine
-import org.rust.utils.fullyRefreshDirectory
-import org.rust.utils.withWorkDirectory
+import org.rust.openapiext.GeneralCommandLine
+import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.openapiext.withWorkDirectory
 import java.io.File
 import java.nio.file.Path
 
@@ -114,7 +113,7 @@ class Cargo(
             .withParameters(commandLine.command)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
 
-        ProxyHelper().withProxyIfNeeded(cmdLine);
+        ProxyHelper().withProxyIfNeeded(cmdLine)
 
         when (commandLine.backtraceMode) {
             BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")

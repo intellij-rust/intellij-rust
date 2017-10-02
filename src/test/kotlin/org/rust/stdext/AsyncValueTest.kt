@@ -3,10 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.utils
+package org.rust.stdext
 
 import junit.framework.TestCase
-import org.jetbrains.concurrency.AsyncPromise
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.RecursiveTask

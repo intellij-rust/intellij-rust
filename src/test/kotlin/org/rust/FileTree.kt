@@ -14,7 +14,8 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.utils.fullyRefreshDirectory
+import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.openapiext.toPsiFile
 import kotlin.text.Charsets.UTF_8
 
 fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree {
@@ -154,7 +155,7 @@ class TestProject(
     fun doFindElementInFile(path: String): PsiElement {
         val vFile = root.findFileByRelativePath(path)
             ?: error("No `$path` file in test project")
-        val file = PsiManager.getInstance(project).findFile(vFile)!!
+        val file = vFile.toPsiFile(project)!!
         return findElementInFile(file, "^")
     }
 

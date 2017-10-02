@@ -18,7 +18,7 @@ import org.rust.cargo.runconfig.filters.RsExplainFilter
 import org.rust.cargo.runconfig.filters.RsPanicFilter
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.utils.pathAsPath
+import org.rust.openapiext.pathAsPath
 
 class CargoRunState(
     environment: ExecutionEnvironment,

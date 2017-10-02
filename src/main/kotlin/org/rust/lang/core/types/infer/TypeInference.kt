@@ -6,7 +6,7 @@
 package org.rust.lang.core.types.infer
 
 import com.intellij.psi.PsiElement
-import org.rust.ide.utils.isNullOrEmpty
+import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -20,8 +20,8 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
-import org.rust.utils.forEachChild
-import org.rust.utils.zipValues
+import org.rust.openapiext.forEachChild
+import org.rust.stdext.zipValues
 
 fun inferTypesIn(fn: RsFunction): RsInferenceResult =
     RsInferenceContext().run { preventRecursion { infer(fn) } }

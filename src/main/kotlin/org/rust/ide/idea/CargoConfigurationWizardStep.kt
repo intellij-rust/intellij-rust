@@ -21,7 +21,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.utils.pathAsPath
+import org.rust.openapiext.pathAsPath
 import javax.swing.JComponent
 
 class CargoConfigurationWizardStep(

@@ -10,8 +10,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.KeyDescriptor
-import org.rust.ide.utils.isNullOrEmpty
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTypeParameter
@@ -23,7 +23,7 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
-import org.rust.lang.utils.getElements
+import org.rust.openapiext.getElements
 
 class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion

@@ -13,7 +13,7 @@ import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.getTypeParameter
-import org.rust.lang.utils.ProjectCache
+import org.rust.openapiext.ProjectCache
 import java.util.*
 
 class StdKnownItems private constructor(private val absolutePathResolver: (String, String) -> RsNamedElement?) {

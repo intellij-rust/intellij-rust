@@ -17,10 +17,10 @@ import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
-import org.rust.ide.utils.checkWriteAccessAllowed
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.openapiext.checkWriteAccessAllowed
 
 class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =

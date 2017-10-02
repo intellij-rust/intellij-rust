@@ -12,10 +12,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.utils.GeneralCommandLine
-import org.rust.utils.fullyRefreshDirectory
-import org.rust.utils.seconds
-import org.rust.utils.withWorkDirectory
+import org.rust.openapiext.GeneralCommandLine
+import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
 
 private val LOG = Logger.getInstance(Rustup::class.java)
@@ -46,11 +45,12 @@ class Rustup(
     }
 
     fun getStdlibFromSysroot(): VirtualFile? {
+        val timeoutMs = 5000
         val sysroot = GeneralCommandLine(rustc)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "sysroot")
-            .exec(5.seconds)
+            .exec(timeoutMs)
             .stdout.trim()
 
 

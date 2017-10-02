@@ -20,8 +20,8 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
-import org.rust.lang.utils.ProjectCache
-import org.rust.utils.zipValues
+import org.rust.openapiext.ProjectCache
+import org.rust.stdext.zipValues
 import kotlin.LazyThreadSafetyMode.NONE
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {

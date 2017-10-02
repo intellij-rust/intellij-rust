@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.openapiext.toPsiFile
 
 class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 
@@ -71,7 +72,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
 
         private fun findBinaryTarget(location: Location<*>): ExecutableTarget? {
             val file = location.virtualFile ?: return null
-            val rsFile = PsiManager.getInstance(location.project).findFile(file) as? RsFile ?: return null
+            val rsFile = file.toPsiFile(location.project) as? RsFile ?: return null
             val ws = rsFile.cargoWorkspace ?: return null
             return findBinaryTarget(ws, file)
         }

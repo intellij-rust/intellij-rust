@@ -11,8 +11,8 @@ import com.intellij.util.Query
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeReference
-import org.rust.lang.utils.filterIsInstanceQuery
-import org.rust.lang.utils.mapQuery
+import org.rust.openapiext.filterIsInstanceQuery
+import org.rust.openapiext.mapQuery
 
 interface RsStructOrEnumItemElement : RsQualifiedNamedElement, RsItemElement, RsGenericDeclaration, RsTypeDeclarationElement, RsNameIdentifierOwner
 

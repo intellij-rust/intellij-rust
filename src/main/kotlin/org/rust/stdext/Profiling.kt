@@ -5,9 +5,9 @@
 
 @file:Suppress("unused")
 
-package org.rust.utils
+package org.rust.stdext
 
-import com.intellij.util.containers.ContainerUtil
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureNanoTime
@@ -131,7 +131,7 @@ private class NestingCounter : ThreadLocal<Int>() {
 }
 
 private object WATCHES {
-    private val registered = ContainerUtil.newConcurrentSet<RsWatch>()
+    private val registered = ConcurrentHashMap.newKeySet<RsWatch>()
 
     init {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
