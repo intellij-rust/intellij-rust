@@ -92,6 +92,14 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
+    fun testUnavailableUnwrapBracesUnsafe() = doUnavailableTest(
+        """
+        fn main() {
+            let wellThen = unsafe<caret> { magic() };
+        }
+        """
+    )
+
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         myFixture.configureByText(RsFileType, before)
         myFixture.launchAction(UnwrapSingleExprIntention())
