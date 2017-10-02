@@ -35,12 +35,11 @@ class RsMissingElseInspection : RsLocalInspectionTool() {
                 val condition = nextIf.condition ?: return
                 val rangeStart = expr.startOffsetInParent + firstIf.textLength
                 val rangeLen = condition.expr.textRange.startOffset - firstIf.textRange.startOffset - firstIf.textLength
-                val fixRange = TextRange(nextIf.textRange.startOffset, nextIf.textRange.startOffset)
                 holder.registerProblem(
                     expr.parent,
                     TextRange(rangeStart, rangeStart + rangeLen),
                     "Suspicious if. Did you mean `else if`?",
-                    SubstituteTextFix(fixRange, "else ", "Change to `else if`"))
+                    SubstituteTextFix.insert("Change to `else if`", nextIf.containingFile, nextIf.textRange.startOffset, "else "))
             }
         }
 
