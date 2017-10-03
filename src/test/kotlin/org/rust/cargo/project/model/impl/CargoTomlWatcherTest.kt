@@ -44,6 +44,9 @@ class CargoTomlWatcherTest : RsTestBase() {
         watcher.checkTriggered(createEvent)
         watcher.checkNotTriggered(newChangeEvent(binFile))
 
+        // src/bin/*/main.rs
+        watcher.checkTriggered(newCreateEvent("src/bin/foo/main.rs").second)
+
         // src/main.rs
         watcher.checkTriggered(newCreateEvent("src/main.rs").second)
         watcher.checkNotTriggered(newCreateEvent("prefix_src/main.rs").second)
@@ -58,6 +61,11 @@ class CargoTomlWatcherTest : RsTestBase() {
         watcher.checkTriggered(newCreateEvent("examples/foo.rs").second)
         watcher.checkTriggered(newCreateEvent("tests/foo.rs").second)
         watcher.checkNotTriggered(newCreateEvent("prefix_tests/foo.rs").second)
+
+        // benches/*/main.rs, examples/*/main.rs, tests/*/main.rs
+        watcher.checkTriggered(newCreateEvent("benches/foo/main.rs").second)
+        watcher.checkTriggered(newCreateEvent("examples/foo/main.rs").second)
+        watcher.checkTriggered(newCreateEvent("tests/foo/main.rs").second)
 
         // build.rs
         watcher.checkTriggered(newCreateEvent("build.rs").second)

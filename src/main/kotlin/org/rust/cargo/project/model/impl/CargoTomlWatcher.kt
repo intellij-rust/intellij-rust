@@ -30,6 +30,8 @@ class CargoTomlWatcher(
         "/src/bin", "/examples", "/tests", "/benches"
     )
 
+    private val MAIN = "main.rs"
+
     override fun before(events: List<VFileEvent>) {
     }
 
@@ -38,9 +40,12 @@ class CargoTomlWatcher(
             if (isCargoTomlChange(event)) return true
             if (event.path.endsWith(RustToolchain.CARGO_LOCK)) return true
             if (event is VFileContentChangeEvent || PathUtil.getFileExtension(event.path) != "rs") return false
+            val parent = PathUtil.getParentPath(event.path)
+            val grandParent = PathUtil.getParentPath(parent)
+            val name = PathUtil.getFileName(event.path)
 
             if (IMPLICIT_TARGET_FILES.any { event.path.endsWith(it) }) return true
-            return IMPLICIT_TARGET_DIRS.any { PathUtil.getParentPath(event.path).endsWith(it) }
+            return IMPLICIT_TARGET_DIRS.any { parent.endsWith(it) || (name == MAIN && grandParent.endsWith(it)) }
         }
 
         if (events.any(::isInterestingEvent)) {
