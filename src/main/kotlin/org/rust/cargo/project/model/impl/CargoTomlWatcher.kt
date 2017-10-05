@@ -14,6 +14,7 @@ import org.rust.cargo.toolchain.RustToolchain
 
 /**
  * File changes listener, detecting changes inside the `Cargo.toml` files
+ * and creation of `*.rs` files acting as automatic crate root.
  */
 class CargoTomlWatcher(
     private val onCargoTomlChange: () -> Unit
@@ -22,12 +23,14 @@ class CargoTomlWatcher(
     // These are paths and files names used by Cargo to infer targets without Cargo.toml
     // https://github.com/rust-lang/cargo/blob/2c2e07f5cfc9a5de10854654bc1e8abd02ae7b4f/src/cargo/util/toml.rs#L50-L56
     private val IMPLICIT_TARGET_FILES = listOf(
-        "build.rs", "src/main.rs", "src/bin.rs"
+        "/build.rs", "/src/main.rs", "/src/lib.rs"
     )
 
     private val IMPLICIT_TARGET_DIRS = listOf(
-        "src/bin", "examples", "tests", "benches"
+        "/src/bin", "/examples", "/tests", "/benches"
     )
+
+    private val MAIN = "main.rs"
 
     override fun before(events: List<VFileEvent>) {
     }
@@ -37,9 +40,12 @@ class CargoTomlWatcher(
             if (isCargoTomlChange(event)) return true
             if (event.path.endsWith(RustToolchain.CARGO_LOCK)) return true
             if (event is VFileContentChangeEvent || PathUtil.getFileExtension(event.path) != "rs") return false
+            val parent = PathUtil.getParentPath(event.path)
+            val grandParent = PathUtil.getParentPath(parent)
+            val name = PathUtil.getFileName(event.path)
 
             if (IMPLICIT_TARGET_FILES.any { event.path.endsWith(it) }) return true
-            return IMPLICIT_TARGET_DIRS.any { PathUtil.getParentPath(event.path).endsWith(it) }
+            return IMPLICIT_TARGET_DIRS.any { parent.endsWith(it) || (name == MAIN && grandParent.endsWith(it)) }
         }
 
         if (events.any(::isInterestingEvent)) {
