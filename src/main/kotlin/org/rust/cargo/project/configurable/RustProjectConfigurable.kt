@@ -12,7 +12,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.panel
@@ -49,9 +48,8 @@ class RustProjectConfigurable(
     private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
     private val hintCheckboxes: Map<String, JBCheckBox> =
         hintProvider.supportedOptions.associate { it.id to JBCheckBox() }
-    private fun checkboxForOption(opt: Option) = hintCheckboxes[opt.id]!!
 
-    private val cargoTomlLocation = Label("N/A")
+    private fun checkboxForOption(opt: Option) = hintCheckboxes[opt.id]!!
 
     override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
@@ -60,7 +58,6 @@ class RustProjectConfigurable(
             row("Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
         }
         row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
-        row("Cargo.toml") { cargoTomlLocation() }
 
         var first = true
         for (option in hintProvider.supportedOptions) {
@@ -85,23 +82,6 @@ class RustProjectConfigurable(
 
         for (option in hintProvider.supportedOptions) {
             checkboxForOption(option).isSelected = option.get()
-        }
-
-        val module = rustModule
-
-        if (module == null) {
-            cargoTomlLocation.text = "N/A"
-            cargoTomlLocation.foreground = JBColor.RED
-        } else {
-            val projectRoot = module.cargoProjectRoot
-
-            if (projectRoot != null) {
-                cargoTomlLocation.text = projectRoot.findChild(RustToolchain.CARGO_TOML)?.presentableUrl
-            } else {
-                cargoTomlLocation.text = "N/A"
-            }
-
-            cargoTomlLocation.foreground = JBColor.foreground()
         }
     }
 
