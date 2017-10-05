@@ -103,8 +103,11 @@ class Cargo(
         val cmdLine = if (commandLine.channel == RustChannel.DEFAULT) {
             GeneralCommandLine(cargoExecutable)
         } else {
-            if (rustup == null) error("Channel '${commandLine.channel}' cannot be set explicitly because rustup is not available")
-            rustup.createRunCommandLine(commandLine.channel, cargoExecutable.toString())
+            if (rustup == null) {
+                error("Channel '${commandLine.channel}' cannot be set explicitly because rustup is not available")
+            } else {
+                GeneralCommandLine(cargoExecutable, "+${commandLine.channel}")
+            }
         }
 
         cmdLine
@@ -112,6 +115,8 @@ class Cargo(
             .withWorkDirectory(commandLine.workingDirectory ?: projectDirectory)
             .withParameters(commandLine.command)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
+            .withEnvironment("TERM", "ansi")
+            .withRedirectErrorStream(true)
 
         ProxyHelper().withProxyIfNeeded(cmdLine)
 
@@ -134,16 +139,13 @@ class Cargo(
             args
         }
 
-
-        // add colors
+        // Force colors
         if (colors
             && !SystemInfo.isWindows //BACKCOMPAT: remove windows check once termcolor'ed Cargo is stable
             && commandLine.command in COLOR_ACCEPTING_COMMANDS
             && args.none { it.startsWith("--color") }) {
 
             cmdLine
-                .withEnvironment("TERM", "ansi")
-                .withRedirectErrorStream(true)
                 .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
         }
 
