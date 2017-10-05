@@ -92,23 +92,25 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
         versionUpdateDebouncer.run(
             onPooledThread = {
                 val toolchain = RustToolchain(pathToToolchain)
-                val rustcVerson = toolchain.queryVersions().rustc.semver
+                val rustcVersion = toolchain.queryVersions().rustc.semver
                 val rustup = toolchain.rustup(cargoProjectDir)
                 val stdlibLocation = rustup?.getStdlibFromSysroot()?.presentableUrl
-                Triple(rustcVerson, stdlibLocation, rustup != null)
+                Triple(rustcVersion, stdlibLocation, rustup != null)
             },
             onUiThread = { (rustcVersion, stdlibLocation, hasRustup) ->
                 downloadStdlibLink.isVisible = hasRustup && stdlibLocation == null
+
                 pathToStdlibField.isEditable = !hasRustup
+                if (hasRustup) {
+                    pathToStdlibField.text = stdlibLocation ?: ""
+                }
+
                 if (rustcVersion == null) {
                     toolchainVersion.text = "N/A"
                     toolchainVersion.foreground = JBColor.RED
                 } else {
                     toolchainVersion.text = rustcVersion.parsedVersion
                     toolchainVersion.foreground = JBColor.foreground()
-                }
-                if (hasRustup) {
-                    pathToStdlibField.text = stdlibLocation ?: ""
                 }
             }
         )
