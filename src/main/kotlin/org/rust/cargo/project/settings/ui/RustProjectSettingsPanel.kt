@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.CCFlags
@@ -87,7 +86,6 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
     }
 
     private fun update() {
-        if (Disposer.isDisposed(this)) return
         val pathToToolchain = pathToToolchainField.text
         versionUpdateDebouncer.run(
             onPooledThread = {

@@ -11,21 +11,30 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.Alarm
 import javax.swing.event.DocumentEvent
 import kotlin.reflect.KProperty
 
-class UiDebouncer(parentDisposable: Disposable, private val delayMillis: Int = 200) {
+class UiDebouncer(
+    private val parentDisposable: Disposable,
+    private val delayMillis: Int = 200
+) {
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
 
     fun <T> run(onPooledThread: () -> T, onUiThread: (T) -> Unit) {
+        if (Disposer.isDisposed(parentDisposable)) return
         alarm.cancelAllRequests()
         val modalityState = ModalityState.current()
         alarm.addRequest({
             val r = onPooledThread()
-            ApplicationManager.getApplication().invokeLater({ onUiThread(r) }, modalityState)
+            ApplicationManager.getApplication().invokeLater({
+                if (!Disposer.isDisposed(parentDisposable)) {
+                    onUiThread(r)
+                }
+            }, modalityState)
         }, delayMillis)
     }
 }
