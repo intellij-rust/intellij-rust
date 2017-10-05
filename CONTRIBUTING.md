@@ -71,6 +71,13 @@ To find an problem to work on, look for
 issues on Github, or, even better, try to fix a problem you face yourself when
 using the plugin.
 
+When choosing an issue, you can navigate by the `E-` labels. They describes an
+experience needed to solve an issue (`E-easy`, `E-medium`, `E-hard` or `E-unknown`).
+The `E-mentor` label means that someone know how to fix the issue and most likely
+they provided some instructions about how to fix it, links to the relevant code
+and so on. If you looking for good first issue, `E-mentor`-labeled one is the
+best choice.
+
 See [worklist](https://github.com/intellij-rust/intellij-rust/wiki/Worklist) to learn 
 who is doing what right now. This page is a wiki, so feel free to edit it and to write 
 about your plans.
