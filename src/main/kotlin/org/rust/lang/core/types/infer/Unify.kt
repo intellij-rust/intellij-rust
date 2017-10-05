@@ -24,11 +24,11 @@ data class VarValue<out V>(val value: V?, val rank: Int): NodeOrValue
  * to keep the DAG relatively balanced, which helps keep the running
  * time of the algorithm under control. For more information, see
  * <http://en.wikipedia.org/wiki/Disjoint-set_data_structure>.
- *
- * TODO this class should provide snapshot-rollback feature
  */
 @Suppress("UNCHECKED_CAST")
 class UnificationTable<K : Node, V> {
+    private val undoLog: MutableList<UndoLogEntry> = mutableListOf()
+
     @Suppress("UNCHECKED_CAST")
     private data class Root<out K: Node, out V>(val key: K) {
         private val varValue: VarValue<V> = key.parent as VarValue<V>
@@ -38,14 +38,20 @@ class UnificationTable<K : Node, V> {
 
     private fun get(key: Node): Root<K, V> {
         val parent = key.parent
-        return (parent as? Node)?.let {
-            val got = get(it)
-            key.parent = got.key // Path compression
-            got
-        } ?: Root(key as K)
+        return if (parent is Node) {
+            val root = get(parent)
+            if (key.parent != root.key) {
+                logNodeState(key)
+                key.parent = root.key // Path compression
+            }
+            root
+        } else {
+            Root(key as K)
+        }
     }
 
     private fun setValue(root: Root<K, V>, value: V) {
+        logNodeState(root.key)
         root.key.parent = VarValue(value, root.rank)
     }
 
@@ -65,6 +71,8 @@ class UnificationTable<K : Node, V> {
     private fun redirectRoot(newRank: Int, oldRoot: Root<K, V>, newRoot: Root<K, V>, newValue: V?): K {
         val oldRootKey = oldRoot.key
         val newRootKey = newRoot.key
+        logNodeState(newRootKey)
+        logNodeState(oldRootKey)
         oldRootKey.parent = newRootKey
         newRootKey.parent = VarValue(newValue, newRank)
         return newRootKey
@@ -96,5 +104,68 @@ class UnificationTable<K : Node, V> {
         if (node.value != null && node.value != value) error("unification error") // must be solved on the upper level
 
         setValue(node, value)
+    }
+
+    private fun logNodeState(node: Node) {
+        if (isSnapshot()) undoLog.add(UndoLogEntry.SetParent(node, node.parent))
+    }
+
+    private fun isSnapshot(): Boolean = !undoLog.isEmpty()
+
+    fun startSnapshot(): Snapshot {
+        undoLog.add(UndoLogEntry.OpenSnapshot)
+        return SnapshotImpl(undoLog.size - 1)
+    }
+
+    private inner class SnapshotImpl(val position: Int): Snapshot {
+        override fun commit() {
+            assertOpenSnapshot(this)
+            if (position == 0) {
+                undoLog.clear()
+            } else {
+                undoLog[position] = UndoLogEntry.CommittedSnapshot
+            }
+        }
+
+        override fun rollback(){
+            val snapshoted = undoLog.subList(position + 1, undoLog.size)
+            snapshoted.reversed().forEach(UndoLogEntry::rollback)
+            snapshoted.clear()
+
+            val last = undoLog.removeAt(undoLog.size - 1)
+            check(last is UndoLogEntry.OpenSnapshot)
+            check(undoLog.size == position)
+        }
+
+        private fun assertOpenSnapshot(snapshot: SnapshotImpl) {
+            check(undoLog.getOrNull(snapshot.position) is UndoLogEntry.OpenSnapshot)
+        }
+    }
+}
+
+interface Snapshot {
+    fun commit()
+
+    fun rollback()
+}
+
+private sealed class UndoLogEntry {
+    abstract fun rollback()
+
+    object OpenSnapshot : UndoLogEntry() {
+        override fun rollback() {
+            error("Cannot rollback an uncommitted snapshot")
+        }
+    }
+    object CommittedSnapshot : UndoLogEntry() {
+        override fun rollback() {
+            // This occurs when there are nested snapshots and
+            // the inner is committed but outer is rolled back.
+        }
+    }
+    data class SetParent(val node: Node, val oldParent: NodeOrValue) : UndoLogEntry() {
+        override fun rollback() {
+            node.parent = oldParent
+        }
     }
 }
