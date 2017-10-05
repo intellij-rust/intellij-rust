@@ -7,10 +7,8 @@ package org.rust.ide.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.util.containers.isNullOrEmpty
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.util.modulesWithCargoProject
 
 class RefreshCargoProjectAction : AnAction() {
     init {
@@ -19,7 +17,8 @@ class RefreshCargoProjectAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        if (e.project?.toolchain == null || e.project?.modulesWithCargoProject.isNullOrEmpty()) {
+        val project = e.project
+        if (project == null || project.toolchain == null || project.cargoProjects.allProjects.isEmpty()) {
             e.presentation.isEnabled = false
         }
     }
