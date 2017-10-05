@@ -6,6 +6,7 @@
 package org.rust.cargo.project.configurable
 
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension
+import com.intellij.codeInsight.hints.Option
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
@@ -23,6 +24,7 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.cargo.util.modulesWithCargoProject
 import org.rust.lang.RsLanguage
+import org.rust.openapiext.CheckboxDelegate
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 import javax.swing.JComponent
@@ -34,32 +36,22 @@ class RustProjectConfigurable(
     private val rustProjectSettings = RustProjectSettingsPanel(
         rustModule?.cargoProjectRoot?.pathAsPath ?: Paths.get(".")
     )
-    private val autoUpdateEnabledCheckbox = JBCheckBox()
-    private val useCargoCheckForBuildCheckbox = JBCheckBox()
-    private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
 
-    private val hintCheckboxes: MutableMap<String, JBCheckBox> = mutableMapOf()
+    private val autoUpdateEnabledCheckbox = JBCheckBox()
+    private var autoUpdateEnabled: Boolean by CheckboxDelegate(autoUpdateEnabledCheckbox)
+
+    private val useCargoCheckForBuildCheckbox = JBCheckBox()
+    private var useCargoCheckForBuild: Boolean by CheckboxDelegate(useCargoCheckForBuildCheckbox)
+
+    private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
+    private var useCargoCheckAnnotator: Boolean by CheckboxDelegate(useCargoCheckAnnotatorCheckbox)
+
     private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
+    private val hintCheckboxes: Map<String, JBCheckBox> =
+        hintProvider.supportedOptions.associate { it.id to JBCheckBox() }
+    private fun checkboxForOption(opt: Option) = hintCheckboxes[opt.id]!!
 
     private val cargoTomlLocation = Label("N/A")
-
-    private var autoUpdateEnabled: Boolean
-        get() = autoUpdateEnabledCheckbox.isSelected
-        set(value) {
-            autoUpdateEnabledCheckbox.isSelected = value
-        }
-
-    private var useCargoCheckForBuild: Boolean
-        get() = useCargoCheckForBuildCheckbox.isSelected
-        set(value) {
-            useCargoCheckForBuildCheckbox.isSelected = value
-        }
-
-    private var useCargoCheckAnnotator: Boolean
-        get() = useCargoCheckAnnotatorCheckbox.isSelected
-        set(value) {
-            useCargoCheckAnnotatorCheckbox.isSelected = value
-        }
 
     override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
@@ -71,10 +63,8 @@ class RustProjectConfigurable(
         row("Cargo.toml") { cargoTomlLocation() }
 
         var first = true
-        for ((id, name) in hintProvider.supportedOptions) {
-            val checkbox = JBCheckBox()
-            row(label = Label("$name:"), separated = first) { checkbox() }
-            hintCheckboxes.put(id, checkbox)
+        for (option in hintProvider.supportedOptions) {
+            row(label = Label("${option.name}:"), separated = first) { checkboxForOption(option)() }
             first = false
         }
     }
@@ -94,8 +84,7 @@ class RustProjectConfigurable(
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
 
         for (option in hintProvider.supportedOptions) {
-            val checkbox = hintCheckboxes[option.id] ?: continue
-            checkbox.isSelected = option.get()
+            checkboxForOption(option).isSelected = option.get()
         }
 
         val module = rustModule
@@ -121,8 +110,7 @@ class RustProjectConfigurable(
         rustProjectSettings.validateSettings()
 
         for (option in hintProvider.supportedOptions) {
-            val checkbox = hintCheckboxes[option.id] ?: continue
-            option.set(checkbox.isSelected)
+            option.set(checkboxForOption(option).isSelected)
         }
 
         val settings = project.rustSettings
@@ -138,12 +126,7 @@ class RustProjectConfigurable(
     override fun isModified(): Boolean {
         val settings = project.rustSettings
         val data = rustProjectSettings.data
-        for (option in hintProvider.supportedOptions) {
-            val checkbox = hintCheckboxes[option.id] ?: continue
-            if (checkbox.isSelected != option.get()) {
-                return true
-            }
-        }
+        if (hintProvider.supportedOptions.any { checkboxForOption(it).isSelected != it.get() }) return true
         return data.toolchain?.location != settings.toolchain?.location
             || data.explicitPathToStdlib != settings.explicitPathToStdlib
             || autoUpdateEnabled != settings.autoUpdateEnabled
