@@ -14,6 +14,7 @@ import com.intellij.ui.components.Link
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.Rustup
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
 import java.nio.file.Path
@@ -37,7 +38,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
         "Select directory with standard library source code")
 
     private val downloadStdlibLink = Link("Download via rustup", action = {
-        val rustup = RustToolchain(pathToToolchainField.text).rustup(cargoProjectDir)
+        val rustup = RustToolchain(pathToToolchainField.text).rustup
         if (rustup != null) {
             object : Task.Backgroundable(null, "Downloading Rust standard library") {
                 override fun shouldStartInBackground(): Boolean = false
@@ -91,7 +92,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
             onPooledThread = {
                 val toolchain = RustToolchain(pathToToolchain)
                 val rustcVersion = toolchain.queryVersions().rustc.semver
-                val rustup = toolchain.rustup(cargoProjectDir)
+                val rustup = toolchain.rustup
                 val stdlibLocation = rustup?.getStdlibFromSysroot()?.presentableUrl
                 Triple(rustcVersion, stdlibLocation, rustup != null)
             },
@@ -113,6 +114,8 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
             }
         )
     }
+
+    private val RustToolchain.rustup: Rustup? get() = rustup(cargoProjectDir)
 }
 
 private fun String.blankToNull(): String? = if (isBlank()) null else this

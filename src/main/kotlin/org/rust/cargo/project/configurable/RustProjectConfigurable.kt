@@ -7,7 +7,6 @@ package org.rust.cargo.project.configurable
 
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension
 import com.intellij.codeInsight.hints.Option
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
@@ -16,12 +15,11 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.panel
 import com.intellij.util.PlatformUtils
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.util.cargoProjectRoot
-import org.rust.cargo.util.modulesWithCargoProject
 import org.rust.lang.RsLanguage
 import org.rust.openapiext.CheckboxDelegate
 import org.rust.openapiext.pathAsPath
@@ -33,7 +31,7 @@ class RustProjectConfigurable(
 ) : Configurable, Configurable.NoScroll {
 
     private val rustProjectSettings = RustProjectSettingsPanel(
-        rustModule?.cargoProjectRoot?.pathAsPath ?: Paths.get(".")
+        project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
     )
 
     private val autoUpdateEnabledCheckbox = JBCheckBox()
@@ -117,7 +115,4 @@ class RustProjectConfigurable(
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
 
     override fun getHelpTopic(): String? = null
-
-    private val rustModule: Module? get() = project.modulesWithCargoProject.firstOrNull()
 }
-
