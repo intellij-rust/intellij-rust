@@ -23,11 +23,8 @@ import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.icons.CargoIcons
-import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
-import org.rust.cargo.project.model.CargoProjectsService
-import org.rust.cargo.project.model.DetachCargoProjectAction
-import org.rust.cargo.project.model.cargoProjects
 import javax.swing.JEditorPane
 import javax.swing.JList
 import javax.swing.ListSelectionModel
@@ -35,6 +32,7 @@ import javax.swing.ListSelectionModel
 
 class CargoToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        guessAndSetupRustProject(project)
         val toolwindowPanel = CargoToolWindowPanel(project)
         val tab = ContentFactory.SERVICE.getInstance()
             .createContent(toolwindowPanel, "", false)
