@@ -132,13 +132,13 @@ class CargoProjectsServiceImpl(
         modifyProjects { doRefresh(project, it) }
             .thenApply { projects -> projects.map { it as CargoProject } }
 
-    override fun discoverAndRefresh(): CompletableFuture<List<CargoProject>>? {
+    override fun discoverAndRefresh(): CompletableFuture<List<CargoProject>> {
         val guessManifest = project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
             .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
             .firstOrNull()
-            ?: return null
+            ?: return CompletableFuture.completedFuture(projects.currentState)
 
         return modifyProjects { projects ->
             if (hasAtLeastOneValidProject(projects)) return@modifyProjects CompletableFuture.completedFuture(projects)
