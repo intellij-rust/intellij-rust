@@ -12,8 +12,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.Alarm
 import javax.swing.event.DocumentEvent
+import kotlin.reflect.KProperty
 
 class UiDebouncer(parentDisposable: Disposable, private val delayMillis: Int = 200) {
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
@@ -46,4 +48,14 @@ fun pathToDirectoryTextField(
     })
 
     return component
+}
+
+class CheckboxDelegate(private val checkbox: JBCheckBox) {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean {
+        return checkbox.isSelected
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
+        checkbox.isSelected = value
+    }
 }
