@@ -5,13 +5,13 @@
 
 package org.rust.cargo.toolchain
 
-enum class RustChannel(val index: Int, val title: String, val rustupArgument: String?) {
-    DEFAULT(0, "[Default]", null),
-    STABLE(1, "Stable", "stable"),
-    BETA(2, "Beta", "beta"),
-    NIGHTLY(3, "Nightly", "nightly");
+enum class RustChannel(val index: Int, val channel: String?) {
+    DEFAULT(0, null),
+    STABLE(1, "stable"),
+    BETA(2, "beta"),
+    NIGHTLY(3, "nightly");
 
-    override fun toString(): String = title
+    override fun toString(): String = if (channel != null) { channel } else { "[default]" }
 
     companion object {
         fun fromIndex(index: Int) = RustChannel.values().find { it.index == index } ?: RustChannel.DEFAULT

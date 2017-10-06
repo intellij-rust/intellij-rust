@@ -154,7 +154,6 @@ class CargoCommandConfiguration(
             return CleanConfiguration.error("Invalid toolchain: ${toolchain.presentableLocation}")
         }
 
-
         if (!toolchain.isRustupAvailable && channel != RustChannel.DEFAULT) {
             return CleanConfiguration.error("Channel '$channel' is set explicitly with no rustup available")
         }

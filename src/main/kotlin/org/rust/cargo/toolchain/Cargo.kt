@@ -92,7 +92,6 @@ class Cargo(
     fun clippyCommandLine(channel: RustChannel): CargoCommandLine =
         CargoCommandLine("clippy", channel = channel)
 
-
     fun toColoredCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
         generalCommandLine(commandLine, true)
 
@@ -102,12 +101,10 @@ class Cargo(
     private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
         val cmdLine = if (commandLine.channel == RustChannel.DEFAULT) {
             GeneralCommandLine(cargoExecutable)
+        } else if (rustup == null) {
+            error("Channel cannot be set because rustup is not available")
         } else {
-            if (rustup == null) {
-                error("Channel '${commandLine.channel}' cannot be set explicitly because rustup is not available")
-            } else {
                 GeneralCommandLine(cargoExecutable, "+${commandLine.channel}")
-            }
         }
 
         cmdLine
