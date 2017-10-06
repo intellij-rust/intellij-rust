@@ -59,8 +59,8 @@ class Rustup(
     }
 
     fun createRunCommandLine(channel: RustChannel, varargs: String): GeneralCommandLine =
-        if (channel.rustupArgument != null) {
-            GeneralCommandLine(rustup, "run", channel.rustupArgument, varargs)
+        if (channel.channel != null) {
+            GeneralCommandLine(rustup, "run", channel.channel, varargs)
         } else {
             GeneralCommandLine(rustup, "run", varargs)
         }
