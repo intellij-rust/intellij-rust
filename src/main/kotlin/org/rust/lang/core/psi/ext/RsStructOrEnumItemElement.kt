@@ -18,11 +18,11 @@ interface RsStructOrEnumItemElement : RsQualifiedNamedElement, RsItemElement, Rs
 
 val RsStructOrEnumItemElement.derivedTraits: List<RsTraitItem>
     get() = queryAttributes
-        .deriveAttribute
-        ?.metaItemArgs
-        ?.metaItemList
-        ?.mapNotNull { it.reference.resolve() as? RsTraitItem }
-        ?: emptyList()
+        .deriveAttributes
+        .toList()
+        .flatMap { it.metaItemArgs?.metaItemList ?: emptyList() }
+        .mapNotNull { it.reference.resolve() as? RsTraitItem }
+        .toList()
 
 
 fun RsStructOrEnumItemElement.searchForImplementations(): Query<RsImplItem> {

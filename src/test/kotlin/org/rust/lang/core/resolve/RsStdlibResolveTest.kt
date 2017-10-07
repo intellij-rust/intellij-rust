@@ -408,8 +408,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test multiple derivable trait method`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test multiple derivable trait method`() = stubOnlyResolve("""
     //- main.rs
         #[derive(Debug)]
         #[derive(Clone)]
@@ -421,7 +420,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                          //^ ...libcore/clone.rs
         }
     """)
-    }
 
     fun `test derivable trait method call`() = stubOnlyResolve("""
     //- main.rs

@@ -96,8 +96,8 @@ class QueryAttributes(
     val langAttribute: String?
         get() = getStringAttribute("lang")
 
-    val deriveAttribute: RsMetaItem?
-        get() = attrByName("derive")
+    val deriveAttributes: Sequence<RsMetaItem>
+        get() = attrsByName("derive")
 
     private fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
 
@@ -105,6 +105,11 @@ class QueryAttributes(
         get() = attributes.mapNotNull { it.metaItem }
 
     private fun attrByName(name: String) = metaItems.find { it.referenceName == name }
+
+    /**
+     * Get a sequence of all attributes named [name]
+     */
+    private fun attrsByName(name: String): Sequence<RsMetaItem> = metaItems.filter { it.referenceName == name }
 
     override fun toString(): String =
         "QueryAttributes(${attributes.joinToString { it.text }})"
