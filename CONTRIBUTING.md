@@ -40,8 +40,8 @@ Common tasks are
 
 Note the `:` in front of the task name. The repository contains two independent
 plugins for Rust and TOML, which are organized as gradle subprojects. Running
-`./gradle :task` executes the task only for Rust plugin, `:toml:task` will run
-the task for TOML and `./gradle task` will do for both.
+`./gradlew :task` executes the task only for Rust plugin, `:toml:task` will run
+the task for TOML and `./gradlew task` will do for both.
 
 
 ## Development in Intellij IDEA
@@ -50,7 +50,7 @@ You can get the latest Intellij IDEA Community Edition
 [here](https://www.jetbrains.com/idea/download/), it is free.
 
 Import the plugin project as you would do with any other gradle based project.
-For example, <kbd>Ctrl + Shift + A</kbd>, `Import project` and select `build.gradle` from
+For example, <kbd>Ctrl + Shift + A</kbd>, `Import project` and select `build.gradle.kts` from
 the root directory of the plugin.
 
 There are `Test`, `Run` and `Generate Parser` run configurations for the most
@@ -66,16 +66,16 @@ You might want to install the following plugins:
 
 # Contributing
 
-To find an problem to work on, look for
+To find a problem to work on, look for
 [up-for-grab](https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab)
 issues on Github, or, even better, try to fix a problem you face yourself when
 using the plugin.
 
-When choosing an issue, you can navigate by the `E-` labels. They describes an
+When choosing an issue, you can navigate by the `E-` labels. They describe an
 experience needed to solve an issue (`E-easy`, `E-medium`, `E-hard` or `E-unknown`).
-The `E-mentor` label means that someone know how to fix the issue and most likely
+The `E-mentor` label means that someone knows how to fix the issue and most likely
 they provided some instructions about how to fix it, links to the relevant code
-and so on. If you looking for good first issue, `E-mentor`-labeled one is the
+and so on. If you are looking for a good first issue, `E-mentor`-labeled one is the
 best choice.
 
 See [worklist](https://github.com/intellij-rust/intellij-rust/wiki/Worklist) to learn 
