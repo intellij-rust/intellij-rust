@@ -121,7 +121,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             targets = targets,
             source = null,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
-            edition = edition
+            edition = edition,
+            features = emptyList()
         )
 
         val pkgs = listOf(

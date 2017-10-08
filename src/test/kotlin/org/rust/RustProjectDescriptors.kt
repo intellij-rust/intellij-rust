@@ -70,7 +70,8 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         ),
         source = null,
         origin = PackageOrigin.WORKSPACE,
-        edition = Edition.EDITION_2015
+        edition = Edition.EDITION_2015,
+        features = emptyList()
     )
 }
 
@@ -151,7 +152,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             ),
             source = source,
             origin = origin,
-            edition = Edition.EDITION_2015
+            edition = Edition.EDITION_2015,
+            features = emptyList()
         )
     }
 

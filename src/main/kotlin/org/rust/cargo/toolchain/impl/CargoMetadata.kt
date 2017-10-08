@@ -7,6 +7,7 @@ package org.rust.cargo.toolchain.impl
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -19,6 +20,8 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.mapToSet
 import java.util.*
+
+private val LOG = Logger.getInstance(CargoMetadata::class.java)
 
 /**
  * Classes mirroring JSON output of `cargo metadata`.
@@ -84,6 +87,12 @@ object CargoMetadata {
          * This is a list of crates that can be build from the package.
          */
         val targets: List<Target>,
+
+        /**
+         * Features available in this package.
+         * The entry named "default" defines which features are enabled by default.
+         */
+        val features: Map<String, List<String>>,
 
         /**
          * Path to Cargo.toml
@@ -204,7 +213,13 @@ object CargoMetadata {
          * Contains additional info compared with [dependencies] like custom package name.
          * Since: Rust 1.30.0
          */
-        val deps: List<Dep>?
+        val deps: List<Dep>?,
+
+        /**
+         * Enabled features and enabled optional dependencies.
+         * Since: Rust 1.26.0
+         */
+        val features: List<String>?
     )
 
     /**
@@ -248,9 +263,29 @@ object CargoMetadata {
         val members = project.workspace_members
             ?: error("No `workspace_members` key in the `cargo metadata` output.\n" +
                 "Your version of Cargo is no longer supported, please upgrade Cargo.")
+
         return CargoWorkspaceData(
-            project.packages.mapNotNull { it.clean(fs, it.id in members) },
-            project.resolve.nodes.associate { (id, dependencies, deps) ->
+            project.packages.mapNotNull {
+                // resolve contains all enabled features for each package
+                val resolveNode = project.resolve.nodes.find { node -> node.id == it.id }
+                if (resolveNode == null) {
+                    LOG.error("Could not find package with `id` '${it.id}' in `resolve` section of the `cargo metadata` output.")
+                }
+
+                // Convert to a Set so contains() is cheaper if we have a lot of features
+                val enabledFeatures = resolveNode?.features?.toSet()
+                val features = it.features.keys.map { feature ->
+                    val state = when {
+                        enabledFeatures == null -> CargoWorkspace.FeatureState.Unknown
+                        enabledFeatures.contains(feature) -> CargoWorkspace.FeatureState.Enabled
+                        else -> CargoWorkspace.FeatureState.Disabled
+                    }
+                    CargoWorkspace.Feature(feature, state)
+                }
+
+                it.clean(fs, it.id in members, features)
+            },
+            project.resolve.nodes.associate { (id, dependencies, deps, _) ->
                 val dependencySet = if (deps != null) {
                     deps.mapToSet { (pkgId, name) -> CargoWorkspaceData.Dependency(pkgId, name) }
                 } else {
@@ -262,10 +297,11 @@ object CargoMetadata {
         )
     }
 
-    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CargoWorkspaceData.Package? {
+    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean, features: List<CargoWorkspace.Feature>): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
+
         return CargoWorkspaceData.Package(
             id,
             root.url,
@@ -274,7 +310,8 @@ object CargoMetadata {
             targets.mapNotNull { it.clean(root) },
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
-            edition = edition.cleanEdition()
+            edition = edition.cleanEdition(),
+            features = features
         )
     }
 
