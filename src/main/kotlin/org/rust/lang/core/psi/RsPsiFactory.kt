@@ -59,8 +59,16 @@ class RsPsiFactory(private val project: Project) {
         return path
     }
 
-    fun createStructLiteralField(name: String): RsStructLiteralField =
-        createExpressionOfType<RsStructLiteral>("S { $name: () }").structLiteralBody.structLiteralFieldList[0]
+    fun createStructLiteral(name: String): RsStructLiteral =
+        createExpressionOfType<RsStructLiteral>("$name { }")
+
+    fun createStructLiteralField(name: String, value: RsExpr? = null): RsStructLiteralField {
+        val structLiteralField = createExpressionOfType<RsStructLiteral>("S { $name: () }")
+            .structLiteralBody
+            .structLiteralFieldList[0]
+        if (value != null) structLiteralField.expr?.replace(value)
+        return structLiteralField
+    }
 
     data class BlockField(val pub: Boolean, val name: String, val type: RsTypeReference)
 
