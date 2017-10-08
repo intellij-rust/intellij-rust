@@ -293,7 +293,7 @@ data class CargoProjectImpl(
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null
         val stdlib = stdlib ?: return@lazy rawWorkspace
-        rawWorkspace.withStdlib(stdlib, rustcInfo)
+        rawWorkspace.withStdlib(stdlib, rawWorkspace.defaultCfgData, rustcInfo)
     }
 
     override val presentableName: String
@@ -502,6 +502,15 @@ private fun fetchCargoWorkspace(
         }
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
         try {
+            //Running "cargo rustc -- --print cfg" causes an error when run in a project with multiple targets...
+            //error: extra arguments to `rustc` can only be passed to one target, consider filtering
+            //the package by passing e.g. `--lib` or `--bin NAME` to specify a single target
+            //Running "cargo rustc --bin=projectname  -- --print cfg" we can get around this
+            // but it also compiles the whole project, which is probably not wanted...
+            //
+            //TODO: This does not query the target specific cfg flags during cross compilation :-(
+            val cfgs = toolchain.getCfg(projectDirectory) ?: emptyList()//TODO handle errors
+
             val json = cargo.fullProjectDescription(project, projectDirectory, object : ProcessAdapter() {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
                     val text = event.text.trim { it <= ' ' }
@@ -518,7 +527,7 @@ private fun fetchCargoWorkspace(
             }
             val projectDescriptionData = CargoMetadata.clean(rawData)
             val manifestPath = projectDirectory.resolve("Cargo.toml")
-            val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData)
+            val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgs)
             ok(ws)
         } catch (e: ExecutionException) {
             err(e.message ?: "failed to run Cargo")

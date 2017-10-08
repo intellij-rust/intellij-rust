@@ -46,6 +46,16 @@ data class RustToolchain(val location: Path) {
         return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
     }
 
+    fun getCfg(projectDirectory: Path): List<String>? {
+        val timeoutMs = 10000
+        val output = GeneralCommandLine(pathToExecutable(RUSTC))
+            .withCharset(Charsets.UTF_8)
+            .withWorkDirectory(projectDirectory)
+            .withParameters("--print", "cfg")
+            .execute(timeoutMs)
+        return if (output?.isSuccess == true) output.stdoutLines else null
+    }
+
     fun rawCargo(): Cargo = Cargo(pathToExecutable(CARGO))
 
     fun cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {

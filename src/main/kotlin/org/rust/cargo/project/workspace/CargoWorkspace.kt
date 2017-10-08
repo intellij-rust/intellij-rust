@@ -30,13 +30,15 @@ interface CargoWorkspace {
 
     val workspaceRootPath: Path?
 
+    val defaultCfgData: CfgData
+
     val packages: Collection<Package>
     fun findPackage(name: String): Package? = packages.find { it.name == name || it.normName == name }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
-    fun withStdlib(stdlib: StandardLibrary, rustcInfo: RustcInfo? = null): CargoWorkspace
+    fun withStdlib(stdlib: StandardLibrary, cfgData: CfgData, rustcInfo: RustcInfo? = null): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     @TestOnly
@@ -60,6 +62,8 @@ interface CargoWorkspace {
         val dependencies: Collection<Dependency>
 
         val features: Collection<Feature>
+
+        val cfgData: CfgData
 
         val workspace: CargoWorkspace
 
@@ -132,17 +136,48 @@ interface CargoWorkspace {
         Disabled
     }
 
+    class CfgData(
+        val stringCfg: Collection<Pair<String, String>>,
+        val boolCfg: Map<String, Boolean>
+    )
+
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace =
-            WorkspaceImpl.deserialize(manifestPath, data)
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgs: List<String>): CargoWorkspace =
+            WorkspaceImpl.deserialize(manifestPath, data, cfgs)
+
+        fun parseToCfgData(cfgs: List<String>): CfgData {
+            val knownStringCfg: MutableList<Pair<String, String>> = mutableListOf()
+            val knownBoolCfg: MutableMap<String, Boolean> = mutableMapOf()
+            cfgs.forEach {
+                val split = it.split('=', limit = 2)
+                if (split.size == 1) knownBoolCfg.put(split[0], true)
+                //TODO: How to handle when not having " at the beginging/end?
+                //TODO: Can the value contain a = character?
+                else if (split.size == 2) knownStringCfg.add(split[0] to split[1].trim('"'))
+            }
+
+            return CfgData(knownStringCfg, knownBoolCfg)
+        }
     }
 }
 
+// When compiling a crate, cargo runs
+// rustc --cfg 'feature="foo"'
+// How should we properly combine the available global information with the per crate information?
+
+private fun CargoWorkspace.CfgData.addFeatures(features: Collection<CargoWorkspace.Feature>): CargoWorkspace.CfgData {
+    val stringCfg = mutableListOf<Pair<String, String>>()
+    stringCfg.addAll(this.stringCfg)
+    //TODO: This could duplicate entries?
+    stringCfg.addAll(features.filter { it.state != CargoWorkspace.FeatureState.Disabled }.map { "feature" to it.name })
+    return CargoWorkspace.CfgData(stringCfg, this.boolCfg)
+}
 
 private class WorkspaceImpl(
     override val manifestPath: Path,
     override val workspaceRootPath: Path?,
-    packagesData: Collection<CargoWorkspaceData.Package>
+    packagesData: Collection<CargoWorkspaceData.Package>,
+    override val defaultCfgData: CargoWorkspace.CfgData
 ) : CargoWorkspace {
     override val packages: List<PackageImpl> = packagesData.map { pkg ->
         PackageImpl(
@@ -155,7 +190,8 @@ private class WorkspaceImpl(
             pkg.source,
             pkg.origin,
             pkg.edition,
-            pkg.features
+            pkg.features,
+            defaultCfgData.addFeatures(pkg.features)
         )
     }
 
@@ -164,7 +200,7 @@ private class WorkspaceImpl(
     override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? =
         root.applyWithSymlink { targetByCrateRootUrl[it.url] }
 
-    override fun withStdlib(stdlib: StandardLibrary, rustcInfo: RustcInfo?): CargoWorkspace {
+    override fun withStdlib(stdlib: StandardLibrary, cfgData: CargoWorkspace.CfgData, rustcInfo: RustcInfo?): CargoWorkspace {
         // This is a bit trickier than it seems required.
         // The problem is that workspace packages and targets have backlinks
         // so we have to rebuild the whole workspace from scratch instead of
@@ -178,7 +214,8 @@ private class WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
             packages.map { it.asPackageData() } +
-                stdlib.crates.map { it.asPackageData(rustcInfo) }
+                stdlib.crates.map { it.asPackageData(rustcInfo) },
+            cfgData
         )
 
         run {
@@ -212,7 +249,8 @@ private class WorkspaceImpl(
                 // Currently, stdlib doesn't use 2018 edition
                 val packageEdition = if (pkg.origin == PackageOrigin.STDLIB) pkg.edition else edition
                 pkg.asPackageData(packageEdition)
-            }
+            },
+            defaultCfgData
         )
 
         val oldIdToPackage = packages.associateBy { it.id }
@@ -233,7 +271,7 @@ private class WorkspaceImpl(
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): WorkspaceImpl {
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgs: List<String>): WorkspaceImpl {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -241,7 +279,8 @@ private class WorkspaceImpl(
             // handle cycles here.
 
             val workspaceRootPath = data.workspaceRoot?.let { Paths.get(it) }
-            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages)
+            val cfgData = CargoWorkspace.parseToCfgData(cfgs)
+            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgData)
             // Fill package dependencies
             run {
                 val idToPackage = result.packages.associateBy { it.id }
@@ -280,7 +319,8 @@ private class PackageImpl(
     override val source: String?,
     override var origin: PackageOrigin,
     override val edition: CargoWorkspace.Edition,
-    override val features: Collection<CargoWorkspace.Feature>
+    override val features: Collection<CargoWorkspace.Feature>,
+    override val cfgData: CargoWorkspace.CfgData
 ) : CargoWorkspace.Package {
     override val targets = targetsData.map {
         TargetImpl(

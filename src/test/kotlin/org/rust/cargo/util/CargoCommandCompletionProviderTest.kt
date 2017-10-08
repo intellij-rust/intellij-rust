@@ -7,6 +7,7 @@ package org.rust.cargo.util
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import org.rust.RsTestBase
+import org.rust.RsTestCase.Companion.testDefaultCfg
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
@@ -133,6 +134,6 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             )),
             pkg("quux", false, listOf(target("quux", TargetKind.Lib(LibKind.LIB))))
         )
-        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyMap()))
+        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyMap()), testDefaultCfg)
     }
 }

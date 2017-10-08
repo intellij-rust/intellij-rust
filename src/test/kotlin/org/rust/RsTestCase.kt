@@ -15,6 +15,11 @@ interface RsTestCase {
 
     companion object {
         val testResourcesPath = "src/test/resources"
+        // See `rustc --print cfg` for some defaults
+        // We do not want to set "test" inside Rust stdlib as this disables some important parts
+        // TODO: Is this safe for initialization?
+        val testDefaultCfgStdLib = listOf("unix", "target_has_atomic=\"ptr\"", "feature=\"use_std\"")
+        val testDefaultCfg = testDefaultCfgStdLib.toMutableList() + "test"
     }
 }
 
