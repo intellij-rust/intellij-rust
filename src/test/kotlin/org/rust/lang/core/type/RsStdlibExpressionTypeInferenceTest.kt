@@ -10,7 +10,8 @@ import org.rust.lang.core.psi.ext.ArithmeticOp
 class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
-    fun `test RangeFull`() = testExpr("""
+    fun `test RangeFull`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = ..;
             x
@@ -18,7 +19,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test RangeFull no_std`() = testExpr("""
+    fun `test RangeFull no_std`() = stubOnlyTypeInfer("""
+    //- main.rs
         #![no_std]
         fn main() {
             let x = ..;
@@ -27,7 +29,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test RangeFrom`() = testExpr("""
+    fun `test RangeFrom`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = 0u16..;
             x
@@ -35,7 +38,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test RangeTo`() = testExpr("""
+    fun `test RangeTo`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = ..42u16;
             x
@@ -43,7 +47,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test Range 2`() = testExpr("""
+    fun `test Range 2`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = 0u16..42;
             x
@@ -51,7 +56,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test Range 1`() = testExpr("""
+    fun `test Range 1`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = 0..42u16;
             x
@@ -59,7 +65,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test RangeToInclusive`() = testExpr("""
+    fun `test RangeToInclusive`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = ...42u16;
             x
@@ -67,7 +74,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test RangeInclusive 1`() = testExpr("""
+    fun `test RangeInclusive 1`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = 0u16...42;
             x
@@ -75,7 +83,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test RangeInclusive 2`() = testExpr("""
+    fun `test RangeInclusive 2`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = 0...42u16;
             x
@@ -83,7 +92,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test vec!`() = testExpr("""
+    fun `test vec!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = vec!(1, 2u16, 4, 8);
             x
@@ -91,7 +101,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test vec! no_std`() = testExpr("""
+    fun `test vec! no_std`() = stubOnlyTypeInfer("""
+    //- main.rs
         #![no_std]
         fn main() {
             let x = vec!(1, 2u16, 4, 8);
@@ -100,7 +111,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test format!`() = testExpr("""
+    fun `test format!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = format!("{} {}", "Hello", "world!");
             x
@@ -108,7 +120,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test format! no_std`() = testExpr("""
+    fun `test format! no_std`() = stubOnlyTypeInfer("""
+    //- main.rs
         #![no_std]
         fn main() {
             let x = format!("{} {}", "Hello", "world!");
@@ -117,7 +130,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test format_args!`() = testExpr("""
+    fun `test format_args!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = format_args!("{} {}", "Hello", "world!");
             x
@@ -125,7 +139,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test format_args! no_std`() = testExpr("""
+    fun `test format_args! no_std`() = stubOnlyTypeInfer("""
+    //- main.rs
         #![no_std]
         fn main() {
             let x = format_args!("{} {}", "Hello", "world!");
@@ -134,7 +149,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test assert!`() = testExpr("""
+    fun `test assert!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = assert!(1 != 2);
             x
@@ -142,7 +158,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test debug_assert!`() = testExpr("""
+    fun `test debug_assert!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = debug_assert!(1 != 2);
             x
@@ -150,7 +167,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test assert_eq!`() = testExpr("""
+    fun `test assert_eq!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = assert_eq!(1 + 1, 2);
             x
@@ -158,7 +176,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test assert_ne!`() = testExpr("""
+    fun `test assert_ne!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = assert_ne!(1, 2);
             x
@@ -166,7 +185,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test debug_assert_eq!`() = testExpr("""
+    fun `test debug_assert_eq!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = debug_assert_eq!(1 + 1, 2);
             x
@@ -174,7 +194,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test debug_assert_ne!`() = testExpr("""
+    fun `test debug_assert_ne!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = debug_assert_ne!(1, 2);
             x
@@ -182,7 +203,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test print!`() = testExpr("""
+    fun `test print!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = print!("Something went wrong");
             x
@@ -190,7 +212,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test println!`() = testExpr("""
+    fun `test println!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = println!("Something went wrong");
             x
@@ -198,7 +221,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test eprint!`() = testExpr("""
+    fun `test eprint!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = eprint!("Something went wrong");
             x
@@ -206,7 +230,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test eprintln!`() = testExpr("""
+    fun `test eprintln!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = eprintln!("Something went wrong");
             x
@@ -215,7 +240,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     //From the log crate
-    fun `test warn!`() = testExpr("""
+    fun `test warn!`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let x = warn!("Something went wrong");
             x
@@ -223,7 +249,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test infer lambda expr`() = testExpr("""
+    fun `test infer lambda expr`() = stubOnlyTypeInfer("""
+    //- main.rs
         fn main() {
             let test: Vec<String> = Vec::new();
             test.into_iter().map(|a| a.to_string());
@@ -231,7 +258,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test infer type of derivable trait method call`() = testExpr("""
+    fun `test infer type of derivable trait method call`() = stubOnlyTypeInfer("""
+    //- main.rs
         #[derive(Clone)]
         struct Foo;
 
@@ -242,7 +270,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test infer iterator map chain`() = testExpr("""
+    fun `test infer iterator map chain`() = stubOnlyTypeInfer("""
+    //- main.rs
         struct S<T>(T);
         fn main() {
             let test: Vec<String> = Vec::new();
@@ -256,7 +285,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test infer iterator filter chain`() = testExpr("""
+    fun `test infer iterator filter chain`() = stubOnlyTypeInfer("""
+    //- main.rs
         struct S<T>(T);
         fn main() {
             let test: Vec<i32> = Vec::new();
@@ -270,7 +300,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test slice iter`() = testExpr("""
+    fun `test slice iter`() = stubOnlyTypeInfer("""
+    //- main.rs
         struct S<T>(T);
         fn main() {
             let test: Vec<i32> = Vec::new();
@@ -281,7 +312,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test slice iter_mut`() = testExpr("""
+    fun `test slice iter_mut`() = stubOnlyTypeInfer("""
+    //- main.rs
         struct S<T>(T);
         fn main() {
             let mut test: Vec<i32> = Vec::new();
@@ -292,7 +324,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test iterator collect`() = testExpr("""
+    fun `test iterator collect`() = stubOnlyTypeInfer("""
+    //- main.rs
         use std::vec::Vec;
 
         fn main() {
@@ -303,7 +336,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test vec push`() = testExpr("""
+    fun `test vec push`() = stubOnlyTypeInfer("""
+    //- main.rs
         use std::vec::Vec;
 
         fn main() {
@@ -314,7 +348,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test vec push 2`() = testExpr("""
+    fun `test vec push 2`() = stubOnlyTypeInfer("""
+    //- main.rs
         use std::vec::Vec;
 
         fn main() {
@@ -335,7 +370,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         for (numeric in numericTypes) {
             for ((_, _, sign) in ArithmeticOp.values()) {
-                testExpr("""
+                stubOnlyTypeInfer("""
+                    //- main.rs
                     fn foo(lhs: $numeric, rhs: $numeric) {
                         let x = lhs $sign rhs;
                         x
