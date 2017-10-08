@@ -34,6 +34,11 @@ object CargoMetadata {
         val packages: List<Package>,
 
         /**
+         * Ids of packages that are members of the cargo workspace
+         */
+        val workspace_members: List<String>?,
+
+        /**
          * A graph of dependencies
          */
         val resolve: Resolve,
@@ -42,11 +47,6 @@ object CargoMetadata {
          * Version of the format (currently 1)
          */
         val version: Int,
-
-        /**
-         * Ids of packages that are members of the cargo workspace
-         */
-        val workspace_members: List<String>?,
 
         /**
          * Path to workspace root folder. Can be null for old cargo version
@@ -65,13 +65,6 @@ object CargoMetadata {
         val version: String,
 
         /**
-         * Where did this package comes from? Local file system, crates.io, github repository.
-         *
-         * Will be `null` for the root package and path dependencies.
-         */
-        val source: String?,
-
-        /**
          * A unique id.
          * There may be several packages with the same name, but different version/source.
          * The triple (name, version, source) is unique.
@@ -79,15 +72,22 @@ object CargoMetadata {
         val id: PackageId,
 
         /**
-         * Path to Cargo.toml
+         * Where did this package comes from? Local file system, crates.io, github repository.
+         *
+         * Will be `null` for the root package and path dependencies.
          */
-        val manifest_path: String,
+        val source: String?,
 
         /**
          * Artifacts that can be build from this package.
          * This is a list of crates that can be build from the package.
          */
         val targets: List<Target>,
+
+        /**
+         * Path to Cargo.toml
+         */
+        val manifest_path: String,
 
         /**
          * Code edition of current package.
@@ -109,6 +109,13 @@ object CargoMetadata {
         val kind: List<String>,
 
         /**
+         * List of crate types
+         *
+         * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
+         */
+        val crate_types: List<String>,
+
+        /**
          * Name
          */
         val name: String,
@@ -117,13 +124,6 @@ object CargoMetadata {
          * Path to the root module of the crate (aka crate root)
          */
         val src_path: String,
-
-        /**
-         * List of crate types
-         *
-         * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
-         */
-        val crate_types: List<String>,
 
         /**
          * Code edition of current target.
