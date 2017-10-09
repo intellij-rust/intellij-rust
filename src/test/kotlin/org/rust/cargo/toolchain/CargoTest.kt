@@ -6,6 +6,7 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.net.HttpConfigurable
 import org.rust.lang.RsTestBase
 import java.nio.file.Paths
@@ -38,8 +39,28 @@ class CargoTest : RsTestBase() {
         )
     }
 
-    private fun checkCommandLine(cmd: GeneralCommandLine, expected: String) {
-        val cleaned = expected.trimIndent()
+    fun `test adds colors for common commands`() = checkCommandLine(
+        cargo.toColoredCommandLine(CargoCommandLine("run", listOf("--release", "--", "foo"))),
+        """
+        cmd: /usr/bin/cargo run --color=always --release -- foo
+        env: TERM=ansi, RUST_BACKTRACE=full, RUSTC=/usr/bin/rustc
+        """,
+        """
+        cmd: /usr/bin/cargo run --release -- foo
+        env: TERM=ansi, RUST_BACKTRACE=full, RUSTC=/usr/bin/rustc
+        """
+    )
+
+    fun `test don't add color for unknown command`() = checkCommandLine(
+        cargo.toColoredCommandLine(CargoCommandLine("tree")),
+        """
+        cmd: /usr/bin/cargo tree
+        env: TERM=ansi, RUST_BACKTRACE=full, RUSTC=/usr/bin/rustc
+        """
+    )
+
+    private fun checkCommandLine(cmd: GeneralCommandLine, expected: String, expectedWin: String? = null) {
+        val cleaned = (if (expectedWin != null && SystemInfo.isWindows) expectedWin else expected).trimIndent()
         val actual = cmd.debug().trim()
         check(cleaned == actual) {
             "Expected:\n$cleaned\nActual:\n$actual"
