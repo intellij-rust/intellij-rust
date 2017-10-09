@@ -125,6 +125,32 @@ class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention())
         }
     """)
 
+    fun `test don't remove comments`() = doAvailableTest("""
+        enum FooBar {
+            Foo,
+            Bar
+        }
+
+        fn foo(x: FooBar) {
+            match x/*caret*/ {
+                // test
+            }
+        }
+    """, """
+        enum FooBar {
+            Foo,
+            Bar
+        }
+
+        fn foo(x: FooBar) {
+            match x {
+                // test
+                FooBar::Foo => {/*caret*/},
+                FooBar::Bar => {},
+            }
+        }
+    """)
+
     fun `test not empty match expr body`() = doUnavailableTest("""
         enum FooBar {
             Foo,
