@@ -19,6 +19,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.net.HttpConfigurable
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -46,6 +48,7 @@ class Cargo(
     private val projectDirectory: Path?,
     private val rustup: Rustup?
 ) {
+
     /**
      * Fetch all dependencies and calculate project information.
      *
@@ -99,12 +102,10 @@ class Cargo(
         generalCommandLine(commandLine, false)
 
     private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
-        val cmdLine = if (commandLine.channel == RustChannel.DEFAULT) {
-            GeneralCommandLine(cargoExecutable)
-        } else if (rustup == null) {
-            error("Channel cannot be set because rustup is not available")
-        } else {
-                GeneralCommandLine(cargoExecutable, "+${commandLine.channel}")
+        val cmdLine = when {
+            commandLine.channel == RustChannel.DEFAULT -> GeneralCommandLine(cargoExecutable)
+            rustup == null -> error("Channel cannot be set because rustup is not available")
+            else -> GeneralCommandLine(cargoExecutable, "+${commandLine.channel}")
         }
 
         cmdLine
@@ -115,7 +116,7 @@ class Cargo(
             .withEnvironment("TERM", "ansi")
             .withRedirectErrorStream(true)
 
-        ProxyHelper().withProxyIfNeeded(cmdLine)
+        withProxyIfNeeded(cmdLine, http)
 
         when (commandLine.backtraceMode) {
             BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
@@ -206,7 +207,18 @@ class Cargo(
         }
     }
 
+    private var _http: HttpConfigurable? = null
+    private val http: HttpConfigurable
+        get() = _http ?: HttpConfigurable.getInstance()
+
+    @TestOnly
+    fun setHttp(http: HttpConfigurable) {
+        _http = http
+    }
+
     private companion object {
-        val COLOR_ACCEPTING_COMMANDS = listOf("bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update")
+        val COLOR_ACCEPTING_COMMANDS = listOf(
+            "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"
+        )
     }
 }

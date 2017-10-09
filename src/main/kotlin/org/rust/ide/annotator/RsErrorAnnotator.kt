@@ -21,6 +21,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsMembersImpl
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.types.addToHolder
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyUnit
@@ -321,7 +322,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
         for (it in fn.inference.diagnostics) {
-            it.addToHolder(holder)
+            if (!it.experimental) it.addToHolder(holder)
         }
         checkDuplicates(holder, fn)
     }

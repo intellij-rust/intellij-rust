@@ -392,6 +392,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsAssertEqualInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Experimental checks"
+                         enabledByDefault="false" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsExperimentalChecksInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"

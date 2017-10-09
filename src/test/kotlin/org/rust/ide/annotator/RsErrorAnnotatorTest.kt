@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import org.junit.ComparisonFailure
 import org.rust.fileTreeFromText
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
@@ -950,116 +949,5 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
 
         use foo::Bar;
-    """)
-
-    fun `test type mismatch E0308 primitive`() = checkErrors("""
-        fn main () {
-            let _: u8 = <error>1u16</error>;
-        }
-    """)
-
-    fun `test type mismatch E0308 coerce ptr mutability`() = checkErrors("""
-        fn fn_const(p: *const u8) { }
-        fn fn_mut(p: *mut u8) { }
-
-        fn main () {
-            let mut ptr_const: *const u8;
-            let mut ptr_mut: *mut u8;
-
-            fn_const(ptr_const);
-            fn_const(ptr_mut);
-            fn_mut(<error>ptr_const</error>);
-            fn_mut(ptr_mut);
-
-            ptr_const = ptr_mut;
-            ptr_mut = <error>ptr_const</error>;
-        }
-    """)
-
-    // TODO In TypeInference.coerceResolved() we currently ignore type errors when references are involved
-    fun `test type mismatch E0308 coerce reference to ptr`() = expect<ComparisonFailure> {
-        checkErrors("""
-        fn fn_const(p: *const u8) { }
-        fn fn_mut(p: *mut u8) { }
-
-        fn main () {
-            let const_u8 = &1u8;
-            let mut_u8 = &mut 1u8;
-            fn_const(const_u8);
-            fn_const(mut_u8);
-            fn_mut(<error>const_u8</error>);
-            fn_mut(mut_u8);
-        }
-    """)
-    }
-
-    fun `test type mismatch E0308 struct`() = checkErrors("""
-        struct X; struct Y;
-        fn main () {
-            let _: X = <error>Y</error>;
-        }
-    """)
-
-    fun `test type mismatch E0308 tuple`() = checkErrors("""
-        fn main () {
-            let _: (u8, ) = (<error>1u16</error>, );
-        }
-    """)
-
-    // TODO error should be more local
-    fun `test type mismatch E0308 array`() = checkErrors("""
-        fn main () {
-            let _: [u8; 1] = <error>[1u16]</error>;
-        }
-    """)
-
-    fun `test type mismatch E0308 array size`() = checkErrors("""
-        fn main () {
-            let _: [u8; 1] = <error>[1, 2]</error>;
-        }
-    """)
-
-    fun `test type mismatch E0308 struct field`() = checkErrors("""
-        struct S { f: u8 }
-        fn main () {
-            S { f: <error>1u16</error> };
-        }
-    """)
-
-    fun `test type mismatch E0308 function parameter`() = checkErrors("""
-        fn foo(_: u8) {}
-        fn main () {
-            foo(<error>1u16</error>)
-        }
-    """)
-
-    fun `test type mismatch E0308 unconstrained integer`() = checkErrors("""
-        struct S;
-        fn main () {
-            let mut a = 0;
-            a = <error>S</error>;
-        }
-    """)
-
-    // issue #1753
-    fun `test no type mismatch E0308 for multiple impls of the same trait`() = checkErrors("""
-        pub trait From<T> { fn from(_: T) -> Self; }
-        struct A; struct B; struct C;
-        impl From<B> for A { fn from(_: B) -> A { unimplemented!() } }
-        impl From<C> for A { fn from(_: C) -> A { unimplemented!() } }
-        fn main() {
-            A::from(C);
-        }
-    """)
-
-    // issue #1790
-    fun `test not type mismatch E0308 with unknown size array`() = checkErrors("""
-        struct Foo {
-            v: [usize; COUNT]
-        }
-
-        fn main() {
-            let x = Foo { v: [10, 20] };
-        }
     """)
 }
