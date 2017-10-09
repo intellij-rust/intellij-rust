@@ -14,11 +14,12 @@ import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
 
-class AddUnsafeFix(val expr: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+class AddUnsafeFix(expr: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+    private val _text = "Add unsafe to ${if (expr is RsBlockExpr) "block" else "function" }"
     override fun getFamilyName() = text
-    override fun getText() = "Add unsafe to ${if (expr is RsBlockExpr) "block" else "function" }"
+    override fun getText() = _text
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(project: Project, file: PsiFile, editor: Editor?, expr: PsiElement, endElement: PsiElement) {
         val unsafe = RsPsiFactory(project).createUnsafeKeyword()
         when (expr) {
             is RsBlockExpr -> expr.addBefore(unsafe, expr.block)
