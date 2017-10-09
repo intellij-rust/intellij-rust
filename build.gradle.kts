@@ -93,7 +93,7 @@ project(":") {
 
     idea {
         module {
-            generatedSourceDirs.add(file("tstData"))
+            excludeDirs.add(file("testData"))
         }
     }
 
@@ -160,9 +160,8 @@ project(":") {
     }
 }
 
-project(":toml") {
+project(":intellij-toml") {
     version = "0.1.0.${prop("buildNumber")}$versionSuffix"
-    intellij { pluginName = "intellij-toml" }
 
     val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
         source = "src/main/grammars/TomlLexer.flex"
