@@ -304,7 +304,7 @@ private class RsFnInferenceContext(
 
         val ty = when (this) {
             is RsPathExpr -> inferPathExprType(this)
-            is RsStructLiteral -> inferStructLiteralType(this, expected)
+            is RsStructLiteral -> inferStructLiteralType(this)
             is RsTupleExpr -> inferRsTupleExprType(this, expected)
             is RsParenExpr -> this.expr.inferType(expected)
             is RsUnitExpr -> TyUnit
@@ -499,13 +499,7 @@ private class RsFnInferenceContext(
                 ?.let { instantiateBounds(it) }
                 ?: emptyMap())
 
-        subst.forEach { (k, v1) ->
-            typeParameters[k]?.let { v2 ->
-                if (k != v1 && v1 !is TyTypeParameter && v1 !is TyUnknown) {
-                    ctx.combineTypes(v2, v1)
-                }
-            }
-        }
+        unifySubst(subst, typeParameters)
 
         // UFCS - add predicate `Self : Trait<Args>`
         if (element is RsFunction) {
@@ -563,15 +557,53 @@ private class RsFnInferenceContext(
         }
     }
 
-    private fun inferStructLiteralType(expr: RsStructLiteral, expected: Ty?): Ty {
+    private fun unifySubst(subst1: Substitution, subst2: Substitution) {
+        subst1.forEach { (k, v1) ->
+            subst2[k]?.let { v2 ->
+                if (k != v1 && v1 !is TyTypeParameter && v1 !is TyUnknown) {
+                    ctx.combineTypes(v2, v1)
+                }
+            }
+        }
+    }
+
+    private fun inferStructLiteralType(expr: RsStructLiteral): Ty {
         val boundElement = expr.path.reference.advancedResolve()
-        val inferredSubst = inferStructTypeArguments(expr, expected as? TyStructOrEnumBase)
-        val (element, subst) = boundElement ?: return TyUnknown
-        return when (element) {
+        if (boundElement == null) {
+            for (field in expr.structLiteralBody.structLiteralFieldList) {
+                field.expr?.inferType()
+            }
+            return TyUnknown
+        }
+
+        val (element, subst) = boundElement
+        val genericDecl: RsGenericDeclaration = when (element) {
+            is RsStructItem -> element
+            is RsEnumVariant -> element.parentEnum
+            else -> return TyUnknown
+        }
+
+        val typeParameters = instantiateBounds(genericDecl)
+        unifySubst(subst, typeParameters)
+
+        val type = when (element) {
             is RsStructItem -> element.declaredType
             is RsEnumVariant -> element.parentEnum.declaredType
             else -> TyUnknown
-        }.substitute(subst).substitute(inferredSubst)
+        }.foldWithSubst(typeParameters)
+
+        inferStructTypeArguments(expr, typeParameters)
+
+        return type
+    }
+
+    private fun inferStructTypeArguments(literal: RsStructLiteral, typeParameters: Substitution) {
+        literal.structLiteralBody.structLiteralFieldList.mapNotNull { field ->
+            field.expr?.let { expr ->
+                val fieldType = field.type
+                expr.inferTypeCoercableTo(fieldType.foldWithSubst(typeParameters))
+            }
+        }
     }
 
     private fun inferRsTupleExprType(expr: RsTupleExpr, expected: Ty?): Ty {
@@ -609,13 +641,8 @@ private class RsFnInferenceContext(
             ?.let { instantiateBounds(it, receiverRes, boundElement?.subst ?: emptyMap()) }
             ?: emptyMap())
 
-        boundElement?.subst?.forEach { (k, v1) ->
-            typeParameters[k]?.let { v2 ->
-                if (k != v1 && v1 !is TyTypeParameter && v1 !is TyUnknown) {
-                    ctx.combineTypes(v2, v1)
-                }
-            }
-        }
+        if (boundElement != null)
+            unifySubst(boundElement.subst, typeParameters)
 
         val methodType = (boundElement?.element?.typeOfValue ?: unknownTyFunction(argExprs.size + 1))
             .foldWithSubst(typeParameters)
@@ -673,7 +700,7 @@ private class RsFnInferenceContext(
             is RsTupleFieldDecl -> field.typeReference.type
             else -> null
         } ?: TyUnknown
-        return raw.substitute(boundField.subst)
+        return raw.foldWithSubst(boundField.subst)
     }
 
     private fun inferDotExprType(expr: RsDotExpr): Ty {
@@ -980,17 +1007,6 @@ private class RsFnInferenceContext(
             ty1
         }
     }
-
-    private fun inferStructTypeArguments(literal: RsStructLiteral, expected: TyStructOrEnumBase?): Substitution {
-        val expectedSubst = expected?.typeParameterValues ?: emptySubstitution
-        val results = literal.structLiteralBody.structLiteralFieldList.mapNotNull { field ->
-            field.expr?.let { expr ->
-                val fieldType = field.type
-                fieldType.unifyWith(expr.inferTypeCoercableTo(fieldType.substitute(expectedSubst)), lookup)
-            }
-        }
-        return UnifyResult.mergeAll(results).substitution().orEmpty()
-    }
 }
 
 private val RsSelfParameter.typeOfValue: Ty
@@ -1030,7 +1046,7 @@ private val RsFunction.typeOfValue: TyFunction
         val ownerType = (owner as? RsFunctionOwner.Impl)?.impl?.typeReference?.type
         val subst = if (ownerType != null) mapOf(TyTypeParameter.self() to ownerType) else emptyMap()
 
-        return TyFunction(paramTypes, returnType).substitute(subst) as TyFunction
+        return TyFunction(paramTypes, returnType).foldWithSubst(subst) as TyFunction
     }
 
 private val RsGenericDeclaration.bounds: Map<TyTypeParameter, List<BoundElement<RsTraitItem>>> get() {

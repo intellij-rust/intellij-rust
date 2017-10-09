@@ -342,13 +342,13 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    // TODO fix `!` unification and replace `0` to `unimplemented!()`
     fun `test struct expr with 2 fields of same type 2`() = testExpr("""
-        struct X;
         struct S<T> { a: T, b: T }
         fn main() {
-            let x = S { a: unimplemented!(), b: X };
+            let x = S { a: 0, b: 1u8 };
             x.a
-            //^ X
+            //^ u8
         }
     """)
 
@@ -912,6 +912,21 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = 1u8;
             foo(S { f: a}, S { f: b });
         }
+    """)
+
+    fun `test unify struct 2`() = testExpr("""
+        struct S<A, B> {a: A, b: B}
+        fn main() {
+            let a: S<u8, _> = S::<_, u16> {a: 0, b: 1};
+            a
+        } //^ S<u8, u16>
+    """)
+
+    fun `test unify struct fields`() = testExpr("""
+        struct S<A> {a: A, b: A}
+        fn main() {
+            S {a: 0, b: 1u8}
+        }       //^ u8
     """)
 
     fun `test unify tuple`() = testExpr("""
