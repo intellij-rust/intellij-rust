@@ -57,6 +57,30 @@ class RsInferenceContext {
     private val varUnificationTable: UnificationTable<TyInfer.TyVar, Ty> =
         UnificationTable()
 
+    private data class CombinedSnapshot(
+        private val intSnapshot: Snapshot,
+        private val floatSnapshot: Snapshot,
+        private val varSnapshot: Snapshot
+    ): Snapshot {
+        override fun rollback() {
+            intSnapshot.rollback()
+            floatSnapshot.rollback()
+            varSnapshot.rollback()
+        }
+
+        override fun commit() {
+            intSnapshot.commit()
+            floatSnapshot.commit()
+            varSnapshot.commit()
+        }
+    }
+
+    private fun startSnapshot(): Snapshot = CombinedSnapshot(
+        intUnificationTable.startSnapshot(),
+        floatUnificationTable.startSnapshot(),
+        varUnificationTable.startSnapshot()
+    )
+
     fun infer(fn: RsFunction): RsInferenceResult {
         extractParameterBindings(fn)
 
@@ -102,6 +126,21 @@ class RsInferenceContext {
 
     fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
         diagnostics.add(RsDiagnostic.TypeError(expr, expected, actual))
+    }
+
+    fun combineTypesIfOk(ty1: Ty, ty2: Ty): Boolean {
+        return combineTypesIfOkResolved(shallowResolve(ty1), shallowResolve(ty2))
+    }
+
+    private fun combineTypesIfOkResolved(ty1: Ty, ty2: Ty): Boolean {
+        val snapshot = startSnapshot()
+        val res = combineTypesResolved(ty1, ty2)
+        if (res) {
+            snapshot.commit()
+        } else {
+            snapshot.rollback()
+        }
+        return res
     }
 
     fun combineTypes(ty1: Ty, ty2: Ty): Boolean {
@@ -341,19 +380,38 @@ private class RsFnInferenceContext(
             }
         // Coerce reference to pointer
             inferred is TyReference && expected is TyPointer &&
-                (inferred.mutability == expected.mutability ||
-                    inferred.mutability.isMut && !expected.mutability.isMut) -> {
+                coerceMutability(inferred.mutability, expected.mutability) -> {
                 ctx.combineTypes(inferred.referenced, expected.referenced)
             }
-
         // Coerce mutable pointer to const pointer
             inferred is TyPointer && inferred.mutability.isMut
                 && expected is TyPointer && !expected.mutability.isMut -> {
                 ctx.combineTypes(inferred.referenced, expected.referenced)
             }
+        // Coerce references
+            inferred is TyReference && expected is TyReference &&
+                coerceMutability(inferred.mutability, expected.mutability) -> {
+                coerceReference(inferred, expected)
+            }
         // TODO trait object unsizing
             else -> ctx.combineTypes(inferred, expected)
         }
+    }
+
+    private fun coerceMutability(from: Mutability, to: Mutability): Boolean =
+        from == to || from.isMut && !to.isMut
+
+    /**
+     * Reborrows `&mut A` to `&mut B` and `&(mut) A` to `&B`.
+     * To match `A` with `B`, autoderef will be performed
+     */
+    private fun coerceReference(inferred: TyReference, expected: TyReference): Boolean {
+        for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
+            val derefTyRef = TyReference(derefTy, expected.mutability)
+            if (ctx.combineTypesIfOk(derefTyRef, expected)) return true
+        }
+
+        return false
     }
 
     fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {

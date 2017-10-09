@@ -1012,4 +1012,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             Tr::foo(&a, 0);
         }             //^ u8
     """)
+
+    fun `test infer type by reference coercion`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct S<T>(T);
+        impl<T> Deref for S<T> { type Target = T;}
+
+        fn main() {
+            let _: &u8 = &S(0);
+        }                 //^ u8
+    """)
 }
