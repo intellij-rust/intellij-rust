@@ -10,26 +10,23 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiFile
+import org.rust.ide.annotator.calculateMissingFields
 import org.rust.ide.formatter.RsTrailingCommaFormatProcessor
 import org.rust.ide.formatter.impl.CommaList
-import org.rust.ide.navigation.goto.RsClassNavigationContributor
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
-import kotlin.reflect.jvm.internal.impl.resolve.scopes.TypeIntersectionScope
 
 /**
  * Adds the given fields to the stricture defined by `expr`
  */
 class AddStructFieldsFix(
-    private val declaredFields: List<RsFieldDecl>,
-    private val fieldsToAdd: List<RsFieldDecl>,
-    structBody: RsStructLiteralBody,
+    structBody: RsStructLiteral,
     private val recursive: Boolean = false
 ) : LocalQuickFixAndIntentionActionOnPsiElement(structBody) {
     override fun getText(): String {
@@ -50,8 +47,11 @@ class AddStructFieldsFix(
         endElement: PsiElement
     ) {
         val psiFactory = RsPsiFactory(project)
-        var structLiteral = startElement as RsStructLiteralBody
-        val (firstAdded, _) = fillStruct(psiFactory, structLiteral, declaredFields, fieldsToAdd, true, recursive)
+        val structLiteral = startElement as RsStructLiteral
+        val decl = structLiteral.path.reference.resolve() as? RsFieldsOwner ?: return
+        val body = structLiteral.structLiteralBody
+        val fieldsToAdd = calculateMissingFields(body, decl)
+        val (firstAdded, _) = fillStruct(psiFactory, body, decl.namedFields, fieldsToAdd, true, recursive)
 
         if (editor != null && firstAdded != null) {
             editor.caretModel.moveToOffset(firstAdded.expr!!.textOffset)

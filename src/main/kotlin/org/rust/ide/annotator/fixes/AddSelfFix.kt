@@ -14,12 +14,13 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.valueParameters
 
-class AddSelfFix(val function: RsFunction) : LocalQuickFixAndIntentionActionOnPsiElement(function) {
+class AddSelfFix(function: RsFunction) : LocalQuickFixAndIntentionActionOnPsiElement(function) {
     override fun getFamilyName() = "Add self to function"
 
     override fun getText() = "Add self to function"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+        val function = startElement as RsFunction
         val hasParameters = function.valueParameters.isNotEmpty()
         val psiFactory = RsPsiFactory(project)
 

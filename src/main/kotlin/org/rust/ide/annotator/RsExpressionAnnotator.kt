@@ -15,9 +15,6 @@ import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import java.util.*
-import java.io.FileNotFoundException
-import java.io.IOException
-
 
 
 class RsExpressionAnnotator : Annotator {
@@ -26,7 +23,7 @@ class RsExpressionAnnotator : Annotator {
         if (element is RsStructLiteral) {
             val decl = element.path.reference.resolve() as? RsFieldsOwner
             if (decl != null) {
-                checkStructLiteral(holder, decl, element.structLiteralBody)
+                checkStructLiteral(holder, decl, element)
             }
         }
     }
@@ -34,35 +31,33 @@ class RsExpressionAnnotator : Annotator {
     private fun checkStructLiteral(
         holder: AnnotationHolder,
         decl: RsFieldsOwner,
-        expr: RsStructLiteralBody
+        literal: RsStructLiteral
     ) {
-        expr.structLiteralFieldList
+        val body = literal.structLiteralBody
+        body.structLiteralFieldList
             .filter { it.reference.resolve() == null }
             .forEach {
                 holder.createErrorAnnotation(it.identifier, "No such field")
                     .highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
             }
 
-        for (field in expr.structLiteralFieldList.findDuplicateReferences()) {
+        for (field in body.structLiteralFieldList.findDuplicateReferences()) {
             holder.createErrorAnnotation(field.identifier, "Duplicate field")
         }
 
-        if (expr.dotdot != null) return  // functional update, no need to declare all the fields.
-
-        val declaredFields = expr.structLiteralFieldList.map { it.referenceName }.toSet()
-        val missingFields = decl.namedFields.filter { it.name !in declaredFields && !it.queryAttributes.hasCfgAttr() }
+        if (body.dotdot != null) return  // functional update, no need to declare all the fields.
 
         if (decl is RsStructItem && decl.kind == RsStructKind.UNION) {
-            if (expr.structLiteralFieldList.size > 1) {
-                holder.createErrorAnnotation(expr, "Union expressions should have exactly one field")
+            if (body.structLiteralFieldList.size > 1) {
+                holder.createErrorAnnotation(body, "Union expressions should have exactly one field")
             }
         } else {
-            if (missingFields.isNotEmpty()) {
-                val structNameRange = expr.parent.childOfType<RsPath>()?.textRange
+            if (calculateMissingFields(body, decl).isNotEmpty()) {
+                val structNameRange = literal.childOfType<RsPath>()?.textRange
                 if (structNameRange != null) {
                     val annotation = holder.createErrorAnnotation(structNameRange, "Some fields are missing")
-                    annotation.registerFix(AddStructFieldsFix(decl.namedFields, missingFields, expr), expr.parent.textRange)
-                    annotation.registerFix(AddStructFieldsFix(decl.namedFields, missingFields, expr, recursive = true), expr.parent.textRange)
+                    annotation.registerFix(AddStructFieldsFix(literal), body.parent.textRange)
+                    annotation.registerFix(AddStructFieldsFix(literal, recursive = true), body.parent.textRange)
                 }
             }
         }
@@ -107,4 +102,9 @@ private fun <T : RsReferenceElement> Collection<T>.findDuplicateReferences(): Co
         names += name
     }
     return result
+}
+
+fun calculateMissingFields(expr: RsStructLiteralBody, decl: RsFieldsOwner): List<RsFieldDecl> {
+    val declaredFields = expr.structLiteralFieldList.map { it.referenceName }.toSet()
+    return decl.namedFields.filter { it.name !in declaredFields && !it.queryAttributes.hasCfgAttr() }
 }

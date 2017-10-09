@@ -16,13 +16,14 @@ import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.declaration
 
-class AddMutableFix(val binding: RsNamedElement) : LocalQuickFixAndIntentionActionOnPsiElement(binding) {
+class AddMutableFix(binding: RsNamedElement) : LocalQuickFixAndIntentionActionOnPsiElement(binding) {
+    private val _text = "Make `${binding.name}` mutable"
     override fun getFamilyName(): String = "Make mutable"
-    override fun getText(): String = "Make `${binding.name}` mutable"
+    override fun getText(): String = _text
     val mutable = true
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        updateMutable(project, binding, mutable)
+        updateMutable(project, startElement as RsNamedElement, mutable)
     }
 
     companion object {
