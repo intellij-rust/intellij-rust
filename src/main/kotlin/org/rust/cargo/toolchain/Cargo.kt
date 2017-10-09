@@ -45,8 +45,7 @@ class Cargo(
     private val rustExecutable: Path,
     // It's more convenient to use project directory rather then path to `Cargo.toml`
     // because some commands don't accept `--manifest-path` argument
-    private val projectDirectory: Path?,
-    private val rustup: Rustup?
+    private val projectDirectory: Path?
 ) {
 
     /**
@@ -104,7 +103,6 @@ class Cargo(
     private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
         val cmdLine = when {
             commandLine.channel == RustChannel.DEFAULT -> GeneralCommandLine(cargoExecutable)
-            rustup == null -> error("Channel cannot be set because rustup is not available")
             else -> GeneralCommandLine(cargoExecutable, "+${commandLine.channel}")
         }
 

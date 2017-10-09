@@ -59,6 +59,15 @@ class CargoTest : RsTestBase() {
         env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=full, TERM=ansi
     """)
 
+    fun `test adds nightly channel`() = checkCommandLine(
+        cargo.toColoredCommandLine(CargoCommandLine("run", listOf("--release", "--", "foo"), channel = RustChannel.NIGHTLY)), """
+        cmd: /usr/bin/cargo +nightly run --color=always --release -- foo
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi
+        """, """
+        cmd: C:/usr/bin/cargo.exe +nightly run --release -- foo
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=full, TERM=ansi
+    """)
+
     private fun checkCommandLine(cmd: GeneralCommandLine, expected: String, expectedWin: String) {
         val cleaned = (if (SystemInfo.isWindows) expectedWin else expected).trimIndent()
         val actual = cmd.debug().trim()
