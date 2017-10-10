@@ -35,7 +35,16 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (expr, name, variants) = ctx
         var body = RsPsiFactory(project).createMatchBody(name, variants)
-        body = (expr.matchBody?.replace(body) ?: expr.addAfter(body, expr.expr)) as RsMatchBody
+        val matchBody = expr.matchBody
+        if (matchBody != null) {
+            val rbrace = matchBody.rbrace
+            for (arm in body.matchArmList){
+                matchBody.addBefore(arm, rbrace)
+            }
+            body = matchBody
+        } else {
+            body = expr.addAfter(body, expr.expr) as RsMatchBody
+        }
 
         val lbraceOffset = (body.matchArmList.firstOrNull()?.expr as? RsBlockExpr)
             ?.block?.lbrace?.textOffset ?: return
