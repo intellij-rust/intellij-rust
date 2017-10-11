@@ -4,7 +4,7 @@
 out/
 build/
 gen/
-debugger/lib
+deps/
 exampleProject
 testData
 .DS_Store

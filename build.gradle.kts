@@ -31,6 +31,13 @@ plugins {
     id("de.undercouch.download") version "3.2.0"
 }
 
+idea {
+    module {
+        // https://github.com/gradle/kotlin-dsl/issues/537/
+        excludeDirs = excludeDirs + file("testData") + file("deps")
+    }
+}
+
 allprojects {
     apply {
         plugin("idea")
@@ -54,6 +61,7 @@ allprojects {
         downloadSources = !CI
         updateSinceUntilBuild = false
         instrumentCode = false
+        ideaDependencyCachePath = file("deps").absolutePath
     }
 
     configure<GrammarKitPluginExtension> {
@@ -91,12 +99,6 @@ project(":") {
     version = "0.1.0.${prop("buildNumber")}$versionSuffix"
     intellij { pluginName = "intellij-rust" }
 
-    idea {
-        module {
-            excludeDirs.add(file("testData"))
-        }
-    }
-
     repositories {
         maven { setUrl("https://dl.bintray.com/jetbrains/markdown") }
     }
@@ -110,7 +112,7 @@ project(":") {
 
     java.sourceSets {
         getByName("main").kotlin.srcDirs("debugger/src/main/kotlin")
-        getByName("main").compileClasspath += files("debugger/lib/clion-$clionVersion/lib/clion.jar")
+        getByName("main").compileClasspath += files("deps/clion-$clionVersion/lib/clion.jar")
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
@@ -137,12 +139,12 @@ project(":") {
 
     val downloadClion = task<Download>("downloadClion") {
         src("https://download.jetbrains.com/cpp/CLion-$clionVersion.tar.gz")
-        dest(file("${project.projectDir}/debugger/lib/clion-$clionVersion.tar.gz"))
+        dest(file("${project.projectDir}/deps/clion-$clionVersion.tar.gz"))
         overwrite(false)
     }
     val unpackClion = task<Copy>("unpackClion") {
-        from(tarTree("debugger/lib/clion-$clionVersion.tar.gz"))
-        into(file("${project.projectDir}/debugger/lib"))
+        from(tarTree("deps/clion-$clionVersion.tar.gz"))
+        into(file("${project.projectDir}/deps"))
         dependsOn(downloadClion)
     }
 
