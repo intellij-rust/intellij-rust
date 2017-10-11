@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 /**
  * Tests for Self Convention inspection
  */
-class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection()) {
+class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection(), useStdLib = true) {
 
     fun testFrom() = checkByText("""
         struct Foo;
@@ -49,6 +49,23 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         struct Copyable;
         impl Copyable {
             fn is_ok(self) {}
+        }
+    """)
+
+    fun `test is suppresed for copyable on trait`() = checkByText("""
+        use std::marker::Copy;
+        trait Copyable: Copy {
+            fn is_ok(self) {}
+        }
+    """)
+
+    fun `test suppress to on trait impls but not on traits`() = checkByText("""
+        struct Foo;
+        trait Bar {
+            fn to_something(<warning descr="methods called `to_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) -> u32;
+        }
+        impl Bar for Foo {
+            fn to_something(self) -> u32 { 0 }
         }
     """)
 }
