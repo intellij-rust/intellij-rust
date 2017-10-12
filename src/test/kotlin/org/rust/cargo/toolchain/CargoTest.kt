@@ -85,6 +85,6 @@ class CargoTest : RsTestBase() {
         }.replace("\\", "/")
     }
 
-    private val toolchain get() = RustToolchain(Paths.get("/usr/bin").toString())
+    private val toolchain get() = RustToolchain(Paths.get("/usr/bin"))
     private val cargo = toolchain.cargo(Paths.get("/my-crate"))
 }

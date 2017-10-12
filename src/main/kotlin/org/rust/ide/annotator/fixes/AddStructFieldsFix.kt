@@ -51,7 +51,7 @@ class AddStructFieldsFix(
         val decl = structLiteral.path.reference.resolve() as? RsFieldsOwner ?: return
         val body = structLiteral.structLiteralBody
         val fieldsToAdd = calculateMissingFields(body, decl)
-        val (firstAdded, _) = fillStruct(psiFactory, body, decl.namedFields, fieldsToAdd, true, recursive)
+        val (firstAdded, _) = fillStruct(psiFactory, body, decl.namedFields, fieldsToAdd, postProcess = true)
 
         if (editor != null && firstAdded != null) {
             editor.caretModel.moveToOffset(firstAdded.expr!!.textOffset)
@@ -63,8 +63,8 @@ class AddStructFieldsFix(
         structLiteralBody: RsStructLiteralBody,
         declaredFields: List<RsFieldDecl>,
         fieldsToAdd: List<RsFieldDecl>,
-        postProcess: Boolean = true,
-        recursive: Boolean): Pair<RsStructLiteralField?, RsStructLiteralBody> {
+        postProcess: Boolean
+    ): Pair<RsStructLiteralField?, RsStructLiteralBody> {
         var structLiteral = structLiteralBody
         val forceMultiline = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
 
@@ -143,11 +143,10 @@ class AddStructFieldsFix(
             is TyFloat -> factory.createExpression("0.0")
             is TyChar -> factory.createExpression("''")
             is TyStr -> factory.createExpression("\"\"")
-            is TyReference -> {
+            is TyReference ->
                 defaultValueExprFor(factory, fieldDecl, ty.referenced)
-            }
             is TyStructOrEnumBase -> {
-                when(ty.item) {
+                when (ty.item) {
                     stdknownItems.findCoreItem("option::Option") -> factory.createExpression("None")
                     stdknownItems.findStdItem("collections", "string::String") -> factory.createExpression("String::new()")
                     stdknownItems.findStdItem("collections", "vec::Vec") -> factory.createExpression("Vec::new()")
@@ -159,8 +158,8 @@ class AddStructFieldsFix(
                                 structLiteral.structLiteralBody,
                                 ty.item.namedFields,
                                 ty.item.namedFields,
-                                false,
-                                recursive)
+                                postProcess = false
+                            )
                             structLiteral
                         } else {
                             factory.createExpression("()")
@@ -168,11 +167,12 @@ class AddStructFieldsFix(
                     }
                 }
             }
-            is TySlice, is TyArray -> {
-                factory.createExpression("[]")
-            }
+            is TySlice, is TyArray -> factory.createExpression("[]")
             is TyTuple -> {
-                factory.createExpression(ty.types.map { defaultValueExprFor(factory, fieldDecl, it).text }.joinToString(prefix = "(", separator = ", ", postfix = ")"))
+                val text = ty.types.joinToString(prefix = "(", separator = ", ", postfix = ")") { tupleElement ->
+                    defaultValueExprFor(factory, fieldDecl, tupleElement).text
+                }
+                factory.createExpression(text)
             }
             else -> factory.createExpression("()")
         }

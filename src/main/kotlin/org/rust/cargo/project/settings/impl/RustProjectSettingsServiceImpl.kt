@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
+import java.nio.file.Path
 
 @State(name = "RustProjectSettings")
 class RustProjectSettingsServiceImpl(
@@ -20,7 +21,7 @@ class RustProjectSettingsServiceImpl(
     private var state: State = State()
 
     data class State(
-        var toolchainHomeDirectory: String? = null,
+        var toolchainHomeDirectory: Path? = null,
         var autoUpdateEnabled: Boolean = true,
         var explicitPathToStdlib: String? = null,
         var useCargoCheckForBuild: Boolean = true,
