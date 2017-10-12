@@ -45,6 +45,8 @@ val RsExpr.type: Ty
 val RsExpr.declaration: RsCompositeElement?
     get() = when (this) {
         is RsPathExpr -> path.reference.resolve()
+        is RsCallExpr -> expr.declaration
+        is RsStructLiteral -> path.reference.resolve()
         else -> null
     }
 

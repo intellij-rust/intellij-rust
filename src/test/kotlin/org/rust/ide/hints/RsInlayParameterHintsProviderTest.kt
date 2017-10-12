@@ -11,6 +11,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.descendantsOfType
 
 
 class RsInlayParameterHintsProviderTest : RsTestBase() {
@@ -60,7 +61,25 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s/*caret*/ = S;
         }  //^
-    """, ": S", 0)
+    """, ": S", 0, smart = false)
+
+    fun `test smart hint don't show redundant hints`() = checkNoHint<RsLetDecl>("""
+        struct S;
+        struct TupleStruct(f32);
+        struct BracedStruct { f: f32 }
+        enum E {
+            C, B { f: f32 }, T(f32)
+        }
+
+        fn main() {
+            let no_hint = S;
+            let no_hint = TupleStruct(1.0);
+            let no_hint = BracedStruct { f: 1.0 };
+            let no_hint = E::C;
+            let no_hint = E::B { f: 1.0 };
+            let no_hint = E::T(1.0);
+        }
+    """)
 
     fun `test let decl tuple`() = checkByText<RsLetDecl>("""
         struct S;
@@ -85,7 +104,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s = S;
             s.set_foo(1);
-        }     //^
+        }
     """)
 
     fun `test smart hint self call start with set`() = checkNoHint<RsCallExpr>("""
@@ -96,7 +115,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s = S;
             S::set_foo(s, /*caret*/0);
-        } //^
+        }
     """)
 
     fun `test smart hint same function name and single parameter`() = checkNoHint<RsCallExpr>("""
@@ -104,7 +123,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let foo = 0;
             foo(foo);
-        } //^
+        }
     """)
 
     fun `test smart hint parameter name and ref input`() = checkNoHint<RsCallExpr>("""
@@ -112,7 +131,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let arg = 0;
             foo(&arg);
-        } //^
+        }
     """)
 
     fun `test smart hint same method name and single parameter`() = checkNoHint<RsMethodCall>("""
@@ -123,7 +142,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s = S;
             s.foo(10);
-        }    //^
+        }
     """)
 
     fun `test smart hint same method name (self call) and single parameter`() = checkNoHint<RsCallExpr>("""
@@ -134,7 +153,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s = S;
             S::foo(s, 10);
-        }    //^
+        }
     """)
 
     fun `test smart should not annotate tuples`() = checkNoHint<RsCallExpr>("""
@@ -144,7 +163,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
         fn main() {
             let s = Option::Some(10);
-        }                      //^
+        }
     """)
 
     fun `test lambda type hint`() = checkByText<RsLambdaExpr>("""
@@ -218,16 +237,19 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         check(inlays.size == 1)
     }
 
-    inline private fun <reified T : PsiElement> checkNoHint(@Language("Rust") code: String) {
+    inline private fun <reified T : PsiElement> checkNoHint(@Language("Rust") code: String, smart: Boolean = true) {
         InlineFile(code)
+        HintType.SMART_HINTING.set(smart)
         val handler = RsInlayParameterHintsProvider()
-        val target = findElementInEditor<T>("^")
-        val inlays = handler.getParameterHints(target)
-        check(inlays.isEmpty())
+        val targets = myFixture.file.descendantsOfType<T>()
+        targets
+            .map { handler.getParameterHints(it) }
+            .forEach { check(it.isEmpty()) }
     }
 
-    inline private fun <reified T : PsiElement> checkByText(@Language("Rust") code: String, hint: String, pos: Int) {
+    inline private fun <reified T : PsiElement> checkByText(@Language("Rust") code: String, hint: String, pos: Int, smart: Boolean = true) {
         InlineFile(code)
+        HintType.SMART_HINTING.set(smart)
         val target = findElementInEditor<T>("^")
         val inlays = RsInlayParameterHintsProvider().getParameterHints(target)
         if (pos != -1) {
