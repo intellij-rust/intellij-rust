@@ -17,11 +17,10 @@ import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 
 private val LOG = Logger.getInstance(RustToolchain::class.java)
 
-data class RustToolchain(val location: String) {
+data class RustToolchain(val location: Path) {
 
     fun looksLikeValidToolchain(): Boolean =
         hasExecutable(CARGO) && hasExecutable(RUSTC)
@@ -60,7 +59,7 @@ data class RustToolchain(val location: String) {
 
     private fun pathToExecutable(toolName: String): Path {
         val exeName = if (SystemInfo.isWindows) "$toolName.exe" else toolName
-        return Paths.get(location, exeName).toAbsolutePath()
+        return location.resolve(exeName).toAbsolutePath()
     }
 
     private fun hasExecutable(exec: String): Boolean =
@@ -81,7 +80,7 @@ data class RustToolchain(val location: String) {
         val XARGO_TOML = "Xargo.toml"
 
         fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
-            val candidate = RustToolchain(it.absolutePath)
+            val candidate = RustToolchain(it.toPath().toAbsolutePath())
             if (candidate.looksLikeValidToolchain()) candidate else null
         }.firstOrNull()
     }
