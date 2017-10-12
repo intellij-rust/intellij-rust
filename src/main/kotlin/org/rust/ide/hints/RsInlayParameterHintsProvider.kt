@@ -14,6 +14,7 @@ import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -37,6 +38,11 @@ enum class HintType(desc: String, enabled: Boolean) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val element = elem as? RsLetDecl ?: return emptyList()
             if (element.typeReference != null) return emptyList()
+            if (smart) {
+                val expr = element.expr
+                val declaration = expr?.declaration
+                if (declaration is RsStructItem || declaration is RsEnumVariant) return emptyList()
+            }
             return element.pat?.inlayInfo ?: emptyList()
         }
 
