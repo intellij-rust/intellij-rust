@@ -9,7 +9,6 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.cargoArgumentSpeck
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -87,7 +86,7 @@ class TestConfig(
     target: CargoWorkspace.Target
 ) {
     val cargoCommandLine: CargoCommandLine = CargoCommandLine(
-        CargoConstants.Commands.TEST,
+        "test",
         target.cargoArgumentSpeck + testPath,
         workingDirectory = target.pkg.rootDirectory
     )

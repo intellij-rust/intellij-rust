@@ -11,8 +11,6 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
-import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -58,7 +56,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         val configurationName: String = "Run ${target.name}"
 
         val cargoCommandLine = CargoCommandLine(
-            CargoConstants.Commands.RUN,
+            "run",
             listOf("--$kind", target.name),
             workingDirectory = target.pkg.rootDirectory
         )
