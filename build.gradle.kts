@@ -96,7 +96,7 @@ val versionSuffix = if (channel.isBlank()) "" else "-$channel"
 
 project(":") {
     val clionVersion = prop("clionVersion")
-    version = "0.1.0.${prop("buildNumber")}$versionSuffix"
+    version = "0.2.0.${prop("buildNumber")}$versionSuffix"
     intellij { pluginName = "intellij-rust" }
 
     repositories {
