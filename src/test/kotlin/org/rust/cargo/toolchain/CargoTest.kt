@@ -78,13 +78,23 @@ class CargoTest : RsTestBase() {
 
     private fun GeneralCommandLine.debug(): String {
         val env = environment.entries.sortedBy { it.key }
-        return buildString {
+
+        var result = buildString {
             append("cmd: $commandLineString")
             append("\n")
             append("env: ${env.joinToString { (key, value) -> "$key=$value" }}")
-        }.replace("\\", "/")
+        }
+
+        if (SystemInfo.isWindows) {
+            result = result.toUnixSlashes().replace(drive, "C:/")
+        }
+
+        return result
     }
 
     private val toolchain get() = RustToolchain(Paths.get("/usr/bin"))
     private val cargo = toolchain.cargo(Paths.get("/my-crate"))
+    private val drive = Paths.get("/").toAbsolutePath().toString().toUnixSlashes()
+
+    private fun String.toUnixSlashes(): String = replace("\\", "/")
 }
