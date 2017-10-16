@@ -6,6 +6,7 @@
 package org.rust.cargo.util
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RsTestBase
@@ -13,7 +14,7 @@ import org.rust.lang.RsTestBase
 
 class CargoCommandCompletionProviderTest : RsTestBase() {
     fun `test split context prefix`() {
-        val provider = CargoCommandCompletionProvider(null)
+        val provider = CargoCommandCompletionProvider(project.cargoProjects,null)
         fun doCheck(text: String, ctx: String, prefix: String) {
             val (actualCtx, actualPrefix) = provider.splitContextPrefix(text)
             check(actualCtx == ctx && actualPrefix == prefix) {
@@ -71,7 +72,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         expectedCompletions: List<String>
     ) {
 
-        val provider = CargoCommandCompletionProvider(TEST_WORKSPACE)
+        val provider = CargoCommandCompletionProvider(project.cargoProjects, TEST_WORKSPACE)
         val (ctx, prefix) = provider.splitContextPrefix(text)
         val matcher = PlainPrefixMatcher(prefix)
 

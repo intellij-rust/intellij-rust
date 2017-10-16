@@ -8,6 +8,7 @@ package org.rust.cargo.util
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TextAccessor
 import com.intellij.util.textCompletion.TextFieldWithCompletion
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -22,7 +23,9 @@ class CargoCommandLineEditor(
     constructor(project: Project, workspace: CargoWorkspace?)
         : this(project, { workspace })
 
-    private val textField = TextFieldWithCompletion(project, CargoCommandCompletionProvider(workspaceGetter),
+    private val textField = TextFieldWithCompletion(
+        project,
+        CargoCommandCompletionProvider(project.cargoProjects, workspaceGetter),
         "", true, false, false
     )
     val preferredFocusedComponent: JComponent = textField

@@ -13,16 +13,19 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.execution.ParametersListUtil
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.completion.addSuffix
 import org.rust.lang.core.completion.withPriority
 
 class CargoCommandCompletionProvider(
+    private val projects: CargoProjectsService,
     private val workspaceGetter: () -> CargoWorkspace?
 ) : TextFieldCompletionProvider() {
 
-    constructor(workspace: CargoWorkspace?) : this({ workspace })
+    constructor(projects: CargoProjectsService, workspace: CargoWorkspace?) : this(projects, { workspace })
 
     override fun getPrefix(currentTextPrefix: String): String = splitContextPrefix(currentTextPrefix).second
 
@@ -60,7 +63,7 @@ class CargoCommandCompletionProvider(
 
         val argCompleter = cmd.options.find { it.long == args.lastOrNull() }?.argCompleter
         if (argCompleter != null) {
-            return workspaceGetter()?.let { argCompleter(it, args) }.orEmpty()
+            return argCompleter(Context(projects.allProjects, workspaceGetter(), args))
         }
 
         return cmd.options
@@ -80,7 +83,13 @@ private class Cmd(
         }
 }
 
-private typealias ArgCompleter = (CargoWorkspace, List<String>) -> List<LookupElement>
+private data class Context(
+    val projects: Collection<CargoProject>,
+    val currentWorkspace: CargoWorkspace?,
+    val commandLinePrefix: List<String>
+)
+
+private typealias ArgCompleter = (Context) -> List<LookupElement>
 
 private class Opt(
     val name: String,
@@ -129,8 +138,9 @@ private class OptBuilder(
 
     fun triple() = flag("triple")
 
-    private fun targetCompleter(kind: CargoWorkspace.TargetKind): ArgCompleter = { ws, _ ->
-        ws.packages.filter { it.origin == PackageOrigin.WORKSPACE }
+    private fun targetCompleter(kind: CargoWorkspace.TargetKind): ArgCompleter = { ctx ->
+        ctx.currentWorkspace?.packages.orEmpty()
+            .filter { it.origin == PackageOrigin.WORKSPACE }
             .flatMap { it.targets.filter { it.kind == kind } }
             .map { it.lookupElement }
     }
@@ -157,9 +167,8 @@ private class OptBuilder(
         flag("bench")
     }
 
-    fun pkg() = opt("package") { ws, _ ->
-        ws.packages
-            .map { it.lookupElement }
+    fun pkg() = opt("package") { ctx ->
+        ctx.currentWorkspace?.packages.orEmpty().map { it.lookupElement }
     }
 
     fun pkgAll() {
