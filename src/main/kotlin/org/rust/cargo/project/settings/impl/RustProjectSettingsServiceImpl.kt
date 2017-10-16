@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
-import java.nio.file.Path
+import java.nio.file.Paths
 
 @State(name = "RustProjectSettings")
 class RustProjectSettingsServiceImpl(
@@ -21,7 +21,7 @@ class RustProjectSettingsServiceImpl(
     private var state: State = State()
 
     data class State(
-        var toolchainHomeDirectory: Path? = null,
+        var toolchainHomeDirectory: String? = null,
         var autoUpdateEnabled: Boolean = true,
         var explicitPathToStdlib: String? = null,
         var useCargoCheckForBuild: Boolean = true,
@@ -40,7 +40,7 @@ class RustProjectSettingsServiceImpl(
 
     override var data: RustProjectSettingsService.Data
         get() = RustProjectSettingsService.Data(
-            toolchain = state.toolchainHomeDirectory?.let(::RustToolchain),
+            toolchain = state.toolchainHomeDirectory?.let { RustToolchain(Paths.get(it)) },
             autoUpdateEnabled = state.autoUpdateEnabled,
             explicitPathToStdlib = state.explicitPathToStdlib,
             useCargoCheckForBuild = state.useCargoCheckForBuild,
@@ -48,7 +48,7 @@ class RustProjectSettingsServiceImpl(
         )
         set(value) {
             val newState = State(
-                toolchainHomeDirectory = value.toolchain?.location,
+                toolchainHomeDirectory = value.toolchain?.location?.toString(),
                 autoUpdateEnabled = value.autoUpdateEnabled,
                 explicitPathToStdlib = value.explicitPathToStdlib,
                 useCargoCheckForBuild = value.useCargoCheckForBuild,
