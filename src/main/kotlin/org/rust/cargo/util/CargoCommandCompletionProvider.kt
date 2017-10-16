@@ -233,11 +233,12 @@ private val COMMON_COMMANDS = listOf(
     },
 
     Cmd("publish") {
-        flag("host")
+        flag("index")
         flag("token")
         flag("no-verify")
         flag("allow-dirty")
         flag("jobs")
+        flag("dry-run")
     },
 
     Cmd("clean") {
@@ -246,7 +247,7 @@ private val COMMON_COMMANDS = listOf(
     },
 
     Cmd("search") {
-        flag("host")
+        flag("index")
         flag("limit")
     },
 
