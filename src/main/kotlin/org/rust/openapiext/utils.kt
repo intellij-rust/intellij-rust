@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -22,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.systemIndependentPath
+import org.jdom.Element
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -75,3 +77,6 @@ inline fun <Key, reified Psi : PsiElement> getElements(
     scope: GlobalSearchScope?
 ): Collection<Psi> =
     StubIndex.getElements(indexKey, key, project, scope, Psi::class.java)
+
+
+fun Element.toXmlString() = JDOMUtil.writeElement(this)

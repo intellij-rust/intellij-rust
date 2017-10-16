@@ -28,6 +28,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.openapiext.toXmlString
 
 class RunConfigurationProducerTest : RsTestBase() {
     override val dataPath: String = "org/rust/cargo/runconfig/producers/fixtures"
@@ -267,7 +268,7 @@ class RunConfigurationProducerTest : RsTestBase() {
 
         //BACKCOMPAT: in 2017.2, a module is saved to XML as well
         if (ApplicationManager.getApplication().isEAP) return
-        assertSameLinesWithFile("$testDataPath/${getTestName(true)}.xml", JDOMUtil.writeElement(root))
+        assertSameLinesWithFile("$testDataPath/${getTestName(true)}.xml", root.toXmlString())
     }
 
     private fun doTestRemembersContext(
