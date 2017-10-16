@@ -6,6 +6,7 @@
 package org.rust.cargo.util
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RsTestBase
@@ -13,7 +14,7 @@ import org.rust.lang.RsTestBase
 
 class CargoCommandCompletionProviderTest : RsTestBase() {
     fun `test split context prefix`() {
-        val provider = CargoCommandCompletionProvider(null)
+        val provider = CargoCommandCompletionProvider(project.cargoProjects, null)
         fun doCheck(text: String, ctx: String, prefix: String) {
             val (actualCtx, actualPrefix) = provider.splitContextPrefix(text)
             check(actualCtx == ctx && actualPrefix == prefix) {
@@ -43,7 +44,14 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
     fun `test complete run args`() = checkCompletion(
         "run ",
-        listOf("--release", "--jobs", "--features", "--all-features", "--no-default-features", "--triple", "--verbose", "--quite", "--bin", "--example", "--package")
+        listOf(
+            "--release", "--jobs",
+            "--features", "--all-features", "--no-default-features",
+            "--triple",
+            "--verbose", "--quite",
+            "--bin", "--example", "--package",
+            "--manifest-path"
+        )
     )
 
     fun `test dont suggest a flag twice`() = checkCompletion(
@@ -66,12 +74,17 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         listOf("bar", "baz")
     )
 
+    fun `test suggest manifest path`() = checkCompletion(
+        "run --manifest-path ",
+        listOf(project.cargoProjects.allProjects.singleOrNull()?.manifest.toString())
+    )
+
     private fun checkCompletion(
         text: String,
         expectedCompletions: List<String>
     ) {
 
-        val provider = CargoCommandCompletionProvider(TEST_WORKSPACE)
+        val provider = CargoCommandCompletionProvider(project.cargoProjects, TEST_WORKSPACE)
         val (ctx, prefix) = provider.splitContextPrefix(text)
         val matcher = PlainPrefixMatcher(prefix)
 
