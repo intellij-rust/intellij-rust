@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
@@ -64,28 +63,6 @@ class CargoCommandConfiguration(
      */
     override fun readExternal(element: Element) {
         super.readExternal(element)
-        val oldStyle = element.children.find { it.name == "parameters" }
-        // BACKCOMPAT: can be removed after a couple of releases
-        if (oldStyle != null) {
-            data class SerializableCargoCommandLine(
-                var command: String = "",
-                var additionalArguments: List<String> = mutableListOf(),
-                var backtraceMode: Int = BacktraceMode.DEFAULT.index,
-                var channel: Int = RustChannel.DEFAULT.index,
-                var environmentVariables: Map<String, String> = mutableMapOf(),
-                var nocapture: Boolean = true
-            )
-
-            val cmd = SerializableCargoCommandLine()
-            XmlSerializer.deserializeInto(cmd, oldStyle)
-            channel = RustChannel.fromIndex(cmd.channel)
-            command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
-            nocapture = cmd.nocapture
-            backtrace = BacktraceMode.fromIndex(cmd.backtraceMode)
-            env = EnvironmentVariablesData.create(cmd.environmentVariables, true)
-            return
-        }
-
         element.readEnum<RustChannel>("channel")?.let { channel = it }
         element.readString("command")?.let { command = it }
         element.readBool("nocapture")?.let { nocapture = it }
