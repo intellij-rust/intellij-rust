@@ -18,6 +18,7 @@ enum class RsColor(humanName: String, val default: TextAttributesKey) {
     METHOD("Method", Default.INSTANCE_METHOD),
     ASSOC_FUNCTION("Associated function", Default.STATIC_METHOD),
     PARAMETER("Parameter", Default.PARAMETER),
+    MUT_PARAMETER("Mutable parameter", Default.PARAMETER),
     SELF_PARAMETER("Self parameter", Default.KEYWORD),
     Q_OPERATOR("? operator", Default.KEYWORD),
 

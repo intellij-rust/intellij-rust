@@ -14,6 +14,8 @@ import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
+import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.type
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RsHighlightingAnnotator : Annotator {
@@ -90,16 +92,21 @@ private fun colorFor(element: RsCompositeElement): RsColor? = when (element) {
     is RsFieldDecl -> RsColor.FIELD
     is RsFunction -> when (element.owner) {
         is RsFunctionOwner.Foreign, is RsFunctionOwner.Free -> RsColor.FUNCTION
-        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl->
+        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl ->
             if (element.isAssocFn) RsColor.ASSOC_FUNCTION else RsColor.METHOD
     }
     is RsMethodCall -> RsColor.METHOD
     is RsModDeclItem -> RsColor.MODULE
     is RsModItem -> RsColor.MODULE
-    is RsPatBinding -> when {
-        element.parentOfType<RsValueParameter>() != null -> RsColor.PARAMETER
-        element.mutability.isMut -> RsColor.MUT_BINDING
-        else -> null
+    is RsPatBinding -> {
+        val isParameter = element.parentOfType<RsValueParameter>() != null
+        val isMut = element.mutability.isMut || element.type.let { it is TyReference && it.mutability.isMut }
+        when {
+            isMut && isParameter -> RsColor.MUT_PARAMETER
+            isMut -> RsColor.MUT_BINDING
+            isParameter -> RsColor.PARAMETER
+            else -> null
+        }
     }
     is RsStructItem -> RsColor.STRUCT
     is RsTraitItem -> RsColor.TRAIT
