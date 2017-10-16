@@ -67,7 +67,7 @@ You might want to install the following plugins:
 # Contributing
 
 To find a problem to work on, look for
-[up-for-grab](https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab)
+[help wanted](https://github.com/intellij-rust/intellij-rust/labels/help%20wanted)
 issues on Github, or, even better, try to fix a problem you face yourself when
 using the plugin.
 
