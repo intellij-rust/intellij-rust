@@ -48,11 +48,11 @@ You're encouraged to contribute to the plugin in any form if you've found any
 issues or missing functionality that you'd want to see. Check out
 [CONTRIBUTING.md] to learn how to setup the project and [ARCHITECTURE.md] to
 understand the high level structure of the code base. Good first bugs are tagged
-with [up-for-grab].
+with [help wanted].
 
 [intellij-rust.github.io]: https://intellij-rust.github.io/docs/
 [website]: https://intellij-rust.github.io/docs/faq.html
-[up-for-grab]: https://github.com/intellij-rust/intellij-rust/labels/up%20for%20grab
+[help wanted]: https://github.com/intellij-rust/intellij-rust/labels/help%20wanted
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [ARCHITECTURE.md]: ARCHITECTURE.md
 [TeamCity]: https://teamcity.jetbrains.com/guestAuth/repository/download/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/.lastSuccessful/intellij-rust-0.1.0.{build.number}.zip
