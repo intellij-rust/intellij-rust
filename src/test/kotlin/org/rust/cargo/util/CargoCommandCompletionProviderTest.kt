@@ -14,7 +14,7 @@ import org.rust.lang.RsTestBase
 
 class CargoCommandCompletionProviderTest : RsTestBase() {
     fun `test split context prefix`() {
-        val provider = CargoCommandCompletionProvider(project.cargoProjects,null)
+        val provider = CargoCommandCompletionProvider(project.cargoProjects, null)
         fun doCheck(text: String, ctx: String, prefix: String) {
             val (actualCtx, actualPrefix) = provider.splitContextPrefix(text)
             check(actualCtx == ctx && actualPrefix == prefix) {
@@ -44,7 +44,14 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
     fun `test complete run args`() = checkCompletion(
         "run ",
-        listOf("--release", "--jobs", "--features", "--all-features", "--no-default-features", "--triple", "--verbose", "--quite", "--bin", "--example", "--package")
+        listOf(
+            "--release", "--jobs",
+            "--features", "--all-features", "--no-default-features",
+            "--triple",
+            "--verbose", "--quite",
+            "--bin", "--example", "--package",
+            "--manifest-path"
+        )
     )
 
     fun `test dont suggest a flag twice`() = checkCompletion(
@@ -65,6 +72,11 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
     fun `test suggest bin argument`() = checkCompletion(
         "run --bin ",
         listOf("bar", "baz")
+    )
+
+    fun `test suggest manifest path`() = checkCompletion(
+        "run --manifest-path ",
+        listOf(project.cargoProjects.allProjects.singleOrNull()?.manifest.toString())
     )
 
     private fun checkCompletion(

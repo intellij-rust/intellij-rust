@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.execution.ParametersListUtil
+import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -110,6 +111,12 @@ private class Opt(
             }
 }
 
+private val CargoProject.lookupElement: LookupElement
+    get() =
+        LookupElementBuilder
+            .create(manifest.toString())
+            .withIcon(CargoIcons.ICON)
+
 private val CargoWorkspace.Target.lookupElement: LookupElement get() = LookupElementBuilder.create(name)
 private val CargoWorkspace.Package.lookupElement: LookupElement
     get() {
@@ -177,6 +184,12 @@ private class OptBuilder(
         flag("exclude")
     }
 
+    fun manifestPath() {
+        opt("manifest-path") { ctx ->
+            ctx.projects.map { it.lookupElement }
+        }
+    }
+
 
     fun verbose() {
         flag("verbose")
@@ -200,6 +213,7 @@ private val COMMON_COMMANDS = listOf(
         targetBin()
         targetExample()
         pkg()
+        manifestPath()
     },
 
     Cmd("test") {
@@ -207,6 +221,7 @@ private val COMMON_COMMANDS = listOf(
         targetAll()
         flag("doc")
         pkgAll()
+        manifestPath()
         flag("no-run")
         flag("no-fail-fast")
     },
@@ -215,16 +230,19 @@ private val COMMON_COMMANDS = listOf(
         compileOptions() // yeah, you can check with `--release`
         targetAll()
         pkgAll()
+        manifestPath()
     },
 
     Cmd("build") {
         compileOptions()
         targetAll()
         pkgAll()
+        manifestPath()
     },
 
     Cmd("update") {
         pkg()
+        manifestPath()
         flag("aggressive")
         flag("precise")
     },
@@ -233,11 +251,13 @@ private val COMMON_COMMANDS = listOf(
         compileOptions()
         targetAll()
         pkgAll()
+        manifestPath()
     },
 
     Cmd("doc") {
         compileOptions()
         pkgAll()
+        manifestPath()
         targetAll()
     },
 
@@ -248,11 +268,13 @@ private val COMMON_COMMANDS = listOf(
         flag("allow-dirty")
         flag("jobs")
         flag("dry-run")
+        manifestPath()
     },
 
     Cmd("clean") {
         compileOptions()
         pkg()
+        manifestPath()
     },
 
     Cmd("search") {
