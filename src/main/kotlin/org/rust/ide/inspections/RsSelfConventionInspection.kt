@@ -9,8 +9,10 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.ty.TyStructOrEnumBase
 import org.rust.lang.core.types.type
 
@@ -19,20 +21,23 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
-                // Should this handle traits as well perhaps?
-                if (m.owner !is RsFunctionOwner.Impl) return
+                val owner = m.owner
+                if (!(owner.isInherentImpl || owner.isTrait)) return
 
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfType in convention.selfTypes) return
-                if (m.selfType == SelfType.SELF && m.isOwnerCopyable()) return
+                if (m.selfType == SelfType.SELF && owner.isOwnerCopyable()) return
                 holder.registerProblem(m.selfParameter ?: m.identifier, convention)
             }
         }
 
-    private fun RsFunction.isOwnerCopyable(): Boolean {
-        val implBlock = parentOfType<RsImplItem>() ?: return false
-        val owner = implBlock.typeReference?.type as? TyStructOrEnumBase ?: return false
-        return owner.item.queryAttributes.hasAttributeWithArg("derive", "Copy")
+    private fun RsFunctionOwner.isOwnerCopyable(): Boolean {
+        val impls = when (this) {
+            is RsFunctionOwner.Trait -> trait.traits
+            is RsFunctionOwner.Impl -> impl.traits
+            else -> null
+        } ?: return false
+        return impls.any { it.name == "Copy" }
     }
 
     private companion object {
@@ -53,15 +58,30 @@ enum class SelfType(val description: String) {
     REF_MUT_SELF("self by mutable reference");
 }
 
-private val RsFunction.selfType: SelfType get() {
-    val self = selfParameter
-    return when {
-        self == null -> SelfType.NO_SELF
-        self.isRef && self.mutability.isMut -> SelfType.REF_MUT_SELF
-        self.isRef -> SelfType.REF_SELF
-        else -> SelfType.SELF
+private val RsTraitOrImpl.traits: Sequence<RsTraitItem>
+    get() {
+        when (this) {
+            is RsImplItem -> {
+                val type = this.typeReference?.type as? TyStructOrEnumBase ?: return emptySequence()
+                val impls = ImplLookup.relativeTo(type.item)
+                    .findImplsAndTraits(type)
+                return impls.asSequence().mapNotNull { it.element as? RsTraitItem }
+            }
+            is RsTraitItem -> return superTraits.map { it.element }
+        }
+        return emptySequence()
     }
-}
+
+private val RsFunction.selfType: SelfType
+    get() {
+        val self = selfParameter
+        return when {
+            self == null -> SelfType.NO_SELF
+            self.isRef && self.mutability.isMut -> SelfType.REF_MUT_SELF
+            self.isRef -> SelfType.REF_SELF
+            else -> SelfType.SELF
+        }
+    }
 
 data class SelfConvention(val prefix: String, val selfTypes: Collection<SelfType>)
 

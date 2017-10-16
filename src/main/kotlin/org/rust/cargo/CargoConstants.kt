@@ -15,11 +15,6 @@ object CargoConstants {
     const val RUSTC_ENV_VAR = "RUSTC"
     const val RUST_BACTRACE_ENV_VAR = "RUST_BACKTRACE"
 
-    object Commands {
-        val RUN = "run"
-        val TEST = "test"
-    }
-
     object ProjectLayout {
         val binaries = listOf("src/bin")
         val sources = listOf("src", "examples")

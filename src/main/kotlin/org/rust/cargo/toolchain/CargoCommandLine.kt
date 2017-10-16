@@ -6,6 +6,7 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
+import org.rust.cargo.project.model.CargoProject
 import java.nio.file.Path
 
 data class CargoCommandLine(
@@ -16,4 +17,21 @@ data class CargoCommandLine(
     val workingDirectory: Path? = null,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val nocapture: Boolean = true
-)
+) {
+    companion object {
+        fun forProject(
+            project: CargoProject,
+            command: String, // Can't be `enum` because of custom subcommands
+            additionalArguments: List<String> = emptyList(),
+            backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
+            channel: RustChannel = RustChannel.DEFAULT,
+            workingDirectory: Path? = null,
+            environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
+            nocapture: Boolean = true
+        ): CargoCommandLine = CargoCommandLine(
+            command,
+            listOf("--manifest-path", project.manifest.toString()) + additionalArguments,
+            backtraceMode, channel, workingDirectory, environmentVariables, nocapture
+        )
+    }
+}

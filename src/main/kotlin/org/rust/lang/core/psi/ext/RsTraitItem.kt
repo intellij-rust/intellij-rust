@@ -56,7 +56,7 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
         .filterQuery(Condition { it.typeReference != null })
 }
 
-private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
+val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
     val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
     return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
 }
