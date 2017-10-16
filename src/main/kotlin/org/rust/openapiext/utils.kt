@@ -24,6 +24,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
+import org.jdom.input.SAXBuilder
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -42,6 +43,7 @@ fun checkWriteAccessAllowed() {
     }
 }
 
+@Suppress("unused")
 fun checkReadAccessAllowed() {
     check(ApplicationManager.getApplication().isReadAccessAllowed) {
         "Needs read action"
@@ -80,3 +82,5 @@ inline fun <Key, reified Psi : PsiElement> getElements(
 
 
 fun Element.toXmlString() = JDOMUtil.writeElement(this)
+fun elementFromXmlString(xml: String): org.jdom.Element =
+    SAXBuilder().build(xml.byteInputStream()).rootElement
