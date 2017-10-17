@@ -9,7 +9,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.*
 import org.rust.lang.core.psi.ext.RsElement
 
-class RsPlaceholderStub(parent: StubElement<*>?, elementType: IStubElementType<*, *>)
+open class RsPlaceholderStub(parent: StubElement<*>?, elementType: IStubElementType<*, *>)
     : StubBase<RsElement>(parent, elementType) {
 
     class Type<PsiT : RsElement>(
@@ -28,8 +28,5 @@ class RsPlaceholderStub(parent: StubElement<*>?, elementType: IStubElementType<*
         override fun createPsi(stub: RsPlaceholderStub) = psiCtor(stub, this)
 
         override fun createStub(psi: PsiT, parentStub: StubElement<*>?) = RsPlaceholderStub(parentStub, this)
-
-        override fun indexStub(stub: RsPlaceholderStub, sink: IndexSink) {
-        }
     }
 }

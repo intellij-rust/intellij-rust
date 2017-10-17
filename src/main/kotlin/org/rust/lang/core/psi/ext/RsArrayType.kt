@@ -12,17 +12,10 @@ import org.rust.lang.core.types.ty.TyInteger
 
 val RsArrayType.isSlice: Boolean get() = stub?.isSlice ?: (expr == null)
 
-val RsArrayType.arraySize: Long? get() {
-    val stub = stub
-    if (stub != null) {
-        return if (stub.arraySize == -1L) null else stub.arraySize
-    }
-    return calculateArraySize(expr)
-}
+val RsArrayType.arraySize: Long? get() = calculateArraySize(expr)
 
 // TODO: support constants and compile time expressions
 fun calculateArraySize(expr: RsExpr?): Long? = (expr as? RsLitExpr)
-    ?.integerLiteral
-    ?.text
+    ?.integerLiteralValue
     ?.removeSuffix(TyInteger.Kind.usize.name)
     ?.toLongOrNull()

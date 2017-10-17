@@ -821,9 +821,12 @@ Expr ::= RetExpr
        | CastExpr
        | UnaryExpr
        | TryExpr
-       | AtomExpr
+       | AtomExpr {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+}
 
-Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | true | false | box | QUOTE_IDENTIFIER
+private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | true | false | box | QUOTE_IDENTIFIER
   | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
@@ -832,7 +835,9 @@ AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Exp
 StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
 StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
 
-BlockExpr ::= OuterAttr* [ unsafe &'{' ] SimpleBlock
+BlockExpr ::= OuterAttr* [ unsafe &'{' ] SimpleBlock {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 
 private AtomExpr ::= LitExpr
@@ -851,6 +856,7 @@ fake BinaryExpr ::= Expr BinaryOp Expr {
     left="/Expr[0]"
     right="/Expr[1]"
   ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 fake BinaryOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
@@ -861,6 +867,8 @@ fake BinaryOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=
                 | oror | andand | '|' | '&' | '^' {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsBinaryOpImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsBinaryOpStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 AssignBinExpr ::= Expr AssignBinOp Expr    { rightAssociative = true }
@@ -891,15 +899,25 @@ BitOrBinOp       ::= '|'
 BitAndBinOp      ::= '&'
 BitXorBinOp      ::= '^'
 
-CastExpr ::= Expr (as | ':')  ScalarTypeReference
+CastExpr ::= Expr (as | ':')  ScalarTypeReference {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-TryExpr ::= Expr '?'
+TryExpr ::= Expr '?' {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' mut?) Expr
+UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' mut?) Expr {
+ elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-LambdaExpr ::= OuterAttr* move? LambdaParameters RetType? AnyExpr
+LambdaExpr ::= OuterAttr* move? LambdaParameters RetType? AnyExpr {
+ elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-StructLiteral ::= <<checkStructAllowed>> OuterAttr* PathGenericArgsWithColonsNoTypeQual StructLiteralBody
+StructLiteral ::= <<checkStructAllowed>> OuterAttr* PathGenericArgsWithColonsNoTypeQual StructLiteralBody {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 StructLiteralBody ::= '{' StructLiteralField_with_recover* ('..'  AnyExpr)? '}' { pin = 1 }
 
@@ -916,26 +934,35 @@ private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
 
 private StructLiteralField_recover ::= !(identifier | ',' | '}' | '..' | '#')
 
-PathExpr ::= OuterAttr* PathGenericArgsWithColons
+PathExpr ::= OuterAttr* PathGenericArgsWithColons {
+ elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
   pin = 'while'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 Condition ::= [ let Pat '=' ] NoStructLitExpr
 
 LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
   pin = 'loop'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ContExpr ::= OuterAttr* continue Label?
+ContExpr ::= OuterAttr* continue Label? {
+ elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-BreakExpr ::= OuterAttr* break Label? AnyExpr?
+BreakExpr ::= OuterAttr* break Label? AnyExpr? {
+ elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ForExpr ::= OuterAttr* LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
   pin = 'for'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 LabelDecl ::= QUOTE_IDENTIFIER ':' {
@@ -947,7 +974,10 @@ Label ::= QUOTE_IDENTIFIER {
   mixin = "org.rust.lang.core.psi.ext.RsLabelImplMixin"
 }
 
-MatchExpr ::= OuterAttr* match NoStructLitExpr MatchBody { pin = 'match'}
+MatchExpr ::= OuterAttr* match NoStructLitExpr MatchBody {
+  pin = 'match'
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 MatchBody ::= '{' MatchArm* '}' { pin = 1 }
 MatchArm ::= OuterAttr* Pat ('|' Pat)* MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
   pin = 2
@@ -956,39 +986,64 @@ MatchArm ::= OuterAttr* Pat ('|' Pat)* MatchArmGuard? '=>' StmtModeExpr (',' | (
 private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}')
 MatchArmGuard ::= if AnyExpr
 
-IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? { pin = 'if' }
+IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
+  pin = 'if'
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 ElseBranch ::= else ( IfExpr | SimpleBlock )
 
-RetExpr ::= OuterAttr* return Expr?
+RetExpr ::= OuterAttr* return Expr? {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-UnitExpr ::= OuterAttr* '(' ')'
+UnitExpr ::= OuterAttr* '(' ')' {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-fake TupleExpr ::= '(' AnyExpr+ ')'
-fake ParenExpr ::= '(' AnyExpr ')'
+fake TupleExpr ::= '(' AnyExpr+ ')' {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+fake ParenExpr ::= '(' AnyExpr ')' {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 // XXX: without the `pin`, upper rules won't work, GK can change element type
 // of the frame only if it already has some type
 // https://github.com/JetBrains/Grammar-Kit/blob/d716ade658c1f8e1f84bd0d61764c9949a7df5f2/src/org/intellij/grammar/parser/GeneratedParserUtilBase.java#L656
-TupleOrParenExpr ::= OuterAttr* '(' AnyExpr (TupleExprUpper | ParenExprUpper) { pin = 2 }
-upper TupleExprUpper ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')' { elementType = TupleExpr}
+TupleOrParenExpr ::= OuterAttr* '(' AnyExpr (TupleExprUpper | ParenExprUpper) {
+  pin = 2
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+upper TupleExprUpper ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')' { elementType = TupleExpr }
 upper ParenExprUpper ::= ')' { elementType = ParenExpr }
 
-ArrayExpr ::= OuterAttr* '[' ArrayInitializer ']' { pin = 2 }
+ArrayExpr ::= OuterAttr* '[' ArrayInitializer ']' {
+  pin = 2
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 private ArrayInitializer ::= [ AnyExpr ( ';' AnyExpr | (',' AnyExpr)* ','? ) ]
 
-fake RangeExpr ::= Expr? ('..' | '...') Expr?
+fake RangeExpr ::= Expr? ('..' | '...') Expr? {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 FullRangeExpr ::= Expr ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
 OpenRangeExpr ::=      ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
 
-IndexExpr ::= Expr IndexArg
+IndexExpr ::= Expr IndexArg {
+ elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 // Do not inline this rule, it breaks expression parsing
 private IndexArg ::= '[' Expr ']'
 
-CallExpr ::= Expr !<<isCompleteBlockExpr>> ValueArgumentList
+CallExpr ::= Expr !<<isCompleteBlockExpr>> ValueArgumentList {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 ValueArgumentList ::= '(' <<comma_separated_list AnyExpr>>? ')' { pin = 1 }
 
-DotExpr ::= Expr '.'  MethodOrField
+DotExpr ::= Expr '.'  MethodOrField {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 private MethodOrField ::= () (MethodCall | FieldLookup) { pin = 1}
 
@@ -1007,7 +1062,9 @@ LitExpr ::= OuterAttr*
   | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
   | CHAR_LITERAL | BYTE_LITERAL
   | INTEGER_LITERAL | FLOAT_LITERAL
-  | BOOL_LITERAL)
+  | BOOL_LITERAL) {
+ elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Macros
@@ -1114,7 +1171,9 @@ private meta any_braces ::=
 { pin = 1 }
 
 // Macro wrappers
-MacroExpr ::= OuterAttr* MacroCallNoSemicolons
+MacroExpr ::= OuterAttr* MacroCallNoSemicolons {
+ elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 PatMacro ::= MacroCallNoSemicolons
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1146,7 +1205,9 @@ private BlockElement_recover ::= !('}' | Item_first | Expr_first | let | ';')
 
 Stmt ::= LetDecl | EmptyStmt | never ';'
 
-ExprStmtOrLastExpr ::= StmtModeExpr (ExprStmtUpper | LastExprUpper)
+ExprStmtOrLastExpr ::= StmtModeExpr (ExprStmtUpper | LastExprUpper) {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 upper ExprStmtUpper ::= ';' | () <<isBlock>> !('}') { elementType = ExprStmt }
 upper LastExprUpper ::= () &'}' { elementType = Expr pin = 1 }
