@@ -8,10 +8,24 @@ package org.rust.cargo.toolchain
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.net.HttpConfigurable
+import org.junit.Test
 import org.rust.lang.RsTestBase
+import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 
 class CargoTest : RsTestBase() {
+
+    fun `test run arguments preserved`() = checkCommandLine(
+        cargo
+            .toColoredCommandLine(CargoCommandLine("run", listOf("--bin", "parity", "--", "--prune", "archive")))
+            .withCharset(Charsets.UTF_8),
+        "cmd: /usr/bin/cargo run --color=always --bin parity -- --prune archive\n" +
+            "env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi"
+        , """
+            cmd: C:/usr/bin/cargo.exe run --bin parity -- --prune archive
+            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=full, TERM=ansi
+    """)
+
     fun `test basic command`() = checkCommandLine(
         cargo.toGeneralCommandLine(CargoCommandLine("test", listOf("--all"))), """
         cmd: /usr/bin/cargo test --all -- --nocapture
