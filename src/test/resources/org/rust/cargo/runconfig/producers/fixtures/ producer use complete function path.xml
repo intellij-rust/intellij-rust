@@ -1,7 +1,7 @@
 <configurations>
   <configuration name="Test foo_mod::test_foo" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
-    <option name="command" value="test --package test-package --lib foo_mod::test_foo" />
+    <option name="command" value="test --package test-package --lib foo_mod::test_foo -- --exact" />
     <option name="nocapture" value="true" />
     <option name="backtrace" value="FULL" />
     <option name="workingDirectory" value="file:///src" />
