@@ -8,12 +8,12 @@ package org.rust.cargo.toolchain
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.text.SemVer
 import org.rust.openapiext.GeneralCommandLine
+import org.rust.openapiext.checkIsBackgroundThread
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -26,10 +26,8 @@ data class RustToolchain(val location: Path) {
         hasExecutable(CARGO) && hasExecutable(RUSTC)
 
     fun queryVersions(): VersionInfo {
-        check(!ApplicationManager.getApplication().isDispatchThread)
-        return VersionInfo(
-            rustc = scrapeRustcVersion(pathToExecutable(RUSTC))
-        )
+        checkIsBackgroundThread()
+        return VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
     }
 
     fun cargo(cargoProjectDirectory: Path): Cargo =

@@ -55,10 +55,13 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
     private val toolchainVersion = JLabel()
 
     var data: Data
-        get() = Data(
-            toolchain = RustToolchain(Paths.get(pathToToolchainField.text)),
-            explicitPathToStdlib = (if (downloadStdlibLink.isVisible) null else pathToStdlibField.text.blankToNull())
-        )
+        get() {
+            val toolchain = RustToolchain(Paths.get(pathToToolchainField.text))
+            return Data(
+                toolchain = toolchain,
+                explicitPathToStdlib = pathToStdlibField.text.blankToNull()?.takeIf { toolchain.rustup == null }
+            )
+        }
         set(value) {
             // https://youtrack.jetbrains.com/issue/KT-16367
             pathToToolchainField.setText(value.toolchain?.location?.toString())

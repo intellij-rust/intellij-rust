@@ -58,13 +58,6 @@ class Rustup(
         return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
     }
 
-    fun createRunCommandLine(channel: RustChannel, varargs: String): GeneralCommandLine =
-        if (channel.channel != null) {
-            GeneralCommandLine(rustup, "run", channel.channel, varargs)
-        } else {
-            GeneralCommandLine(rustup, "run", varargs)
-        }
-
     private fun GeneralCommandLine.exec(timeoutInMilliseconds: Int? = null): ProcessOutput {
         val handler = CapturingProcessHandler(this)
 

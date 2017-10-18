@@ -43,13 +43,18 @@ fun checkWriteAccessAllowed() {
     }
 }
 
-@Suppress("unused")
+@Suppress("unused") // TODO: check if we need to protect some of our data with IDEA lock
 fun checkReadAccessAllowed() {
     check(ApplicationManager.getApplication().isReadAccessAllowed) {
         "Needs read action"
     }
 }
 
+fun checkIsBackgroundThread() {
+    check(!ApplicationManager.getApplication().isDispatchThread) {
+        "Long running operation invoked on UI thread"
+    }
+}
 
 fun fullyRefreshDirectory(directory: VirtualFile) {
     VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, directory)
