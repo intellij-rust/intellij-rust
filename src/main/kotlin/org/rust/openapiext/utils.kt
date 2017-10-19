@@ -43,12 +43,6 @@ fun checkWriteAccessAllowed() {
     }
 }
 
-@Suppress("unused") // TODO: check if we need to protect some of our data with IDEA lock
-fun checkReadAccessAllowed() {
-    check(ApplicationManager.getApplication().isReadAccessAllowed) {
-        "Needs read action"
-    }
-}
 
 fun checkIsBackgroundThread() {
     check(!ApplicationManager.getApplication().isDispatchThread) {
