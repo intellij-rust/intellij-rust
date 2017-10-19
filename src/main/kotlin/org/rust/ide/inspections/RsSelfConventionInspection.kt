@@ -86,7 +86,7 @@ private val RsFunction.selfType: SelfType
 data class SelfConvention(val prefix: String, val selfTypes: Collection<SelfType>)
 
 private fun ProblemsHolder.registerProblem(element: PsiElement, convention: SelfConvention) {
-    val selfTypes = convention.selfTypes.map { it.description }.joinToString(" or ")
+    val selfTypes = convention.selfTypes.joinToString(" or ") { it.description }
 
     val description = "methods called `${convention.prefix}*` usually take $selfTypes; " +
         "consider choosing a less ambiguous name"
