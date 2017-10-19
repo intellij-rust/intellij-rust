@@ -6,7 +6,6 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.project.model.CargoProject
 import java.nio.file.Path
 
@@ -37,20 +36,12 @@ data class CargoCommandLine(
     }
 
     /**
-     * Returns the list of arguments after the "--". If there is no "--" returns an empty list.
+     * Splits [additionalArguments] into parts before and after `--`.
+     * For `cargo run --release -- foo bar`, returns (["--release"], ["foo", "bar"])
      */
-    fun getRunArguments() : List<String> {
+    fun splitOnDoubleDash(): Pair<List<String>, List<String>> {
         val idx = additionalArguments.indexOf("--")
-        val cnt = if(idx >= 0) idx else additionalArguments.size-1
-        return additionalArguments.takeLast(Math.max(0, additionalArguments.size - cnt - 1))
-    }
-
-    /**
-     * Returns the arguments before any "--" argument, intended for the "cargo build" command.
-     */
-    fun getBuildArguments() : List<String> {
-        val idx = additionalArguments.indexOf("--")
-        val cnt = if(idx >= 0) idx else additionalArguments.size
-        return additionalArguments.take(cnt)
+        if (idx == -1) return additionalArguments to emptyList()
+        return additionalArguments.take(idx) to additionalArguments.drop(idx + 1)
     }
 }

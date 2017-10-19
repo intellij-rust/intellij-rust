@@ -62,8 +62,10 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
         val cargoProjectDirectory = cleaned.cargoProject.manifest.parent
         val cargo = env.project.toolchain!!.cargo(cargoProjectDirectory)
 
+        val (buildArgs, execArgs) = cleaned.cmd.splitOnDoubleDash()
+
         val buildCommand = if (cleaned.cmd.command == "run") {
-            cleaned.cmd.copy(command = "build", additionalArguments = cleaned.cmd.getBuildArguments())
+            cleaned.cmd.copy(command = "build", additionalArguments = buildArgs)
         } else {
             check(cleaned.cmd.command == "test")
             cleaned.cmd.prependArgument("--no-run")
@@ -73,7 +75,7 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
             .then { result ->
                 result?.path?.let {
                     val commandLine = GeneralCommandLine(it).withWorkDirectory(cargoProjectDirectory)
-                    commandLine.withParameters(cleaned.cmd.getRunArguments())
+                    commandLine.withParameters(execArgs)
                     RsRunProfileStarter(commandLine)
                 }
             }

@@ -16,14 +16,12 @@ import java.nio.file.Paths
 class CargoTest : RsTestBase() {
 
     fun `test run arguments preserved`() = checkCommandLine(
-        cargo
-            .toColoredCommandLine(CargoCommandLine("run", listOf("--bin", "parity", "--", "--prune", "archive")))
-            .withCharset(Charsets.UTF_8),
-        "cmd: /usr/bin/cargo run --color=always --bin parity -- --prune archive\n" +
-            "env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi"
-        , """
-            cmd: C:/usr/bin/cargo.exe run --bin parity -- --prune archive
-            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=full, TERM=ansi
+        cargo.toColoredCommandLine(CargoCommandLine("run", listOf("--bin", "parity", "--", "--prune", "archive"))), """
+        cmd: /usr/bin/cargo run --color=always --bin parity -- --prune archive
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi
+        """, """
+        cmd: C:/usr/bin/cargo.exe run --bin parity -- --prune archive
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=full, TERM=ansi
     """)
 
     fun `test basic command`() = checkCommandLine(
