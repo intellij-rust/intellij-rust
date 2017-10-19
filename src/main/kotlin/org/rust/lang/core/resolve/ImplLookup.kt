@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
+import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.infer.Obligation
@@ -54,6 +55,9 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     }
     val fnOutputParam by lazy(NONE) {
         RsLangItemIndex.findLangItem(project, "fn_once")?.let { findFreshAssociatedType(it, "Output") }
+    }
+    private val copyTrait: RsTraitItem? by lazy(NONE) {
+        RsNamedElementIndex.findDerivableTraits(project, "Copy").firstOrNull()
     }
     private val derefTraitAndTarget: Pair<RsTraitItem, TyTypeParameter>? = run {
         val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
@@ -294,6 +298,8 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     fun asTyFunction(ref: BoundElement<RsTraitItem>): TyFunction? {
         return ref.asFunctionType
     }
+
+    fun isCopy(ty: Ty): Boolean = findImplsAndTraits(ty).any { it.element == copyTrait }
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
         get() {

@@ -13,13 +13,10 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.RsDiagnostic
-import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
-import org.rust.lang.core.types.type
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.zipValues
 
@@ -940,27 +937,25 @@ private class RsFnInferenceContext(
 
 private val RsSelfParameter.typeOfValue: Ty
     get() {
-        val impl = parentOfType<RsImplItem>()
-        var Self: Ty = if (impl != null) {
-            impl.typeReference?.type ?: return TyUnknown
-        } else {
-            val trait = parentOfType<RsTraitItem>()
-                ?: return TyUnknown
-            TyTypeParameter.self(trait)
+        val owner = parentFunction.owner
+        var selfType = when (owner) {
+            is RsFunctionOwner.Impl -> owner.impl.selfType
+            is RsFunctionOwner.Trait -> owner.trait.selfType
+            else -> return TyUnknown
         }
 
         if (isExplicitType) {
             // self: Self, self: &Self, self: &mut Self, self: Box<Self>
             val ty = this.typeReference?.type ?: TyUnknown
-            return ty.substitute(mapOf(TyTypeParameter.self() to Self))
+            return ty.substitute(mapOf(TyTypeParameter.self() to selfType))
         }
 
         // self, &self, &mut self
         if (isRef) {
-            Self = TyReference(Self, mutability)
+            selfType = TyReference(selfType, mutability)
         }
 
-        return Self
+        return selfType
     }
 
 private val RsFunction.typeOfValue: TyFunction

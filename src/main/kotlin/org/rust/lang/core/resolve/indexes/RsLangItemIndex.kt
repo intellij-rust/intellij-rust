@@ -14,6 +14,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.langAttribute
+import org.rust.lang.core.resolve.StdDerivableTrait
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.openapiext.getElements
@@ -24,12 +25,14 @@ class RsLangItemIndex : AbstractStubIndex<String, RsTraitItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<String> = EnumeratorStringDescriptor.INSTANCE
 
     companion object {
-        fun findLangItems(project: Project, langAttribute: String): Collection<RsTraitItem> {
+        fun findLangItemDerivableTrait(project: Project, langAttribute: String, trait: StdDerivableTrait): RsTraitItem? {
+            // dox.rs in libclibc contains some rustdoc shims, so we can't *just* use lang attribute
             return getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project))
+                .firstOrNull { it.containingMod.modName == trait.modName }
         }
 
         fun findLangItem(project: Project, langAttribute: String): RsTraitItem? {
-            return findLangItems(project, langAttribute).firstOrNull()
+            return getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project)).firstOrNull()
         }
 
         fun index(stub: RsTraitItemStub, sink: IndexSink) {

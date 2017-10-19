@@ -56,7 +56,7 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
         .filterQuery(Condition { it.typeReference != null })
 }
 
-val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
+private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
     val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
     return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
 }
@@ -127,7 +127,7 @@ class TraitImplementationInfo private constructor(
         fun create(trait: RsTraitItem, impl: RsImplItem): TraitImplementationInfo? {
             val traitMembers = trait.members ?: return null
             val implMembers = impl.members ?: return null
-            val hasMacros = implMembers.macroCallList.orEmpty().isNotEmpty()
+            val hasMacros = implMembers.macroCallList.isNotEmpty()
             return TraitImplementationInfo(traitMembers, implMembers, hasMacros)
         }
     }
