@@ -89,15 +89,17 @@ interface CargoProject {
     }
 }
 
-fun guessAndSetupRustProject(project: Project): Boolean {
-    val alreadyTried = run {
-        val key = "org.rust.cargo.project.model.PROJECT_DISCOVERY"
-        val properties = PropertiesComponent.getInstance(project)
-        val alreadyTried = properties.getBoolean(key)
-        properties.setValue(key, true)
-        alreadyTried
+fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false): Boolean {
+    if (!explicitRequest) {
+        val alreadyTried = run {
+            val key = "org.rust.cargo.project.model.PROJECT_DISCOVERY"
+            val properties = PropertiesComponent.getInstance(project)
+            val alreadyTried = properties.getBoolean(key)
+            properties.setValue(key, true)
+            alreadyTried
+        }
+        if (alreadyTried) return false
     }
-    if (alreadyTried) return false
 
     val toolchain = project.rustSettings.toolchain
     if (toolchain == null || !toolchain.looksLikeValidToolchain()) {
