@@ -295,6 +295,9 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         return ref.asFunctionType
     }
 
+    fun isCopy(ty: Ty) =
+        findImplsAndTraits(ty).any { it.element.name == "Copy" }
+
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
         get() {
             val outputParam = fnOutputParam ?: return null

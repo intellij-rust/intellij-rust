@@ -18,6 +18,7 @@ import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.infer.inferTypesIn
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.openapiext.recursionGuard
 
@@ -49,6 +50,14 @@ val RsExpr.declaration: RsCompositeElement?
         is RsStructLiteral -> path.reference.resolve()
         else -> null
     }
+
+val RsTraitOrImpl.selfType: Ty get() {
+    return when (this) {
+        is RsImplItem -> typeReference?.type ?: return TyUnknown
+        is RsTraitItem -> TyTypeParameter.self(this)
+        else -> error("Unreachable")
+    }
+}
 
 private val DEFAULT_MUTABILITY = true
 

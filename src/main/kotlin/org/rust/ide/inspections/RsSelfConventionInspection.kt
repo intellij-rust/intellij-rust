@@ -13,7 +13,9 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.selfType
 import org.rust.lang.core.types.ty.TyStructOrEnumBase
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
@@ -22,23 +24,25 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
                 val owner = m.owner
-                if (!(owner.isInherentImpl || owner.isTrait)) return
+                @Suppress("USELESS_CAST")
+                val traitOrImpl = when (owner) {
+                    is RsFunctionOwner.Trait -> owner.trait as RsTraitOrImpl?
+                    is RsFunctionOwner.Impl -> owner.impl.takeIf { owner.isInherent }
+                    else -> null
+                } ?: return
 
                 val convention = SELF_CONVENTIONS.find { m.identifier.text.startsWith(it.prefix) } ?: return
                 if (m.selfSignature in convention.selfSignatures) return
-                if (m.selfSignature == SelfSignature.BY_VAL && owner.isOwnerCopyable()) return
+
+                if (m.selfSignature == SelfSignature.BY_VAL) {
+                    val selfType = traitOrImpl.selfType
+                    val implLookup = ImplLookup.relativeTo(traitOrImpl)
+                    if (selfType is TyUnknown || implLookup.isCopy(selfType)) return
+                }
+
                 holder.registerProblem(m.selfParameter ?: m.identifier, convention)
             }
         }
-
-    private fun RsFunctionOwner.isOwnerCopyable(): Boolean {
-        val impls = when (this) {
-            is RsFunctionOwner.Trait -> trait.traits
-            is RsFunctionOwner.Impl -> impl.traits
-            else -> null
-        } ?: return false
-        return impls.any { it.name == "Copy" }
-    }
 
     private companion object {
         val SELF_CONVENTIONS = listOf(
