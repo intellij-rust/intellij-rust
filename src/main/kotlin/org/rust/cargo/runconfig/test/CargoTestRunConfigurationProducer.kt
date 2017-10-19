@@ -74,7 +74,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
             if (base is T) return base
             if (!climbUp) return null
-            return base.parentOfType<T>(strict = false)
+            return base.parentOfType(strict = false)
         }
     }
 }
@@ -84,7 +84,7 @@ class TestConfig(
     val configurationName: String,
     testPath: String,
     target: CargoWorkspace.Target,
-    val exact: Boolean
+    private val exact: Boolean
 ) {
     val cargoCommandLine: CargoCommandLine = CargoCommandLine(
         "test",

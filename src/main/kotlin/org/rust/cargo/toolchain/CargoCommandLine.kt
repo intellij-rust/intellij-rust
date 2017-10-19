@@ -18,21 +18,9 @@ data class CargoCommandLine(
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val nocapture: Boolean = true
 ) {
-    companion object {
-        fun forProject(
-            project: CargoProject,
-            command: String, // Can't be `enum` because of custom subcommands
-            additionalArguments: List<String> = emptyList(),
-            backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
-            channel: RustChannel = RustChannel.DEFAULT,
-            workingDirectory: Path? = null,
-            environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
-            nocapture: Boolean = true
-        ): CargoCommandLine = CargoCommandLine(
-            command,
-            listOf("--manifest-path", project.manifest.toString()) + additionalArguments,
-            backtraceMode, channel, workingDirectory, environmentVariables, nocapture
-        )
+
+    fun forProject(project: CargoProject): CargoCommandLine {
+        return copy(additionalArguments = listOf("--manifest-path", project.manifest.toString()) + additionalArguments)
     }
 
     /**
