@@ -8,6 +8,7 @@ package org.rust.ide.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.project.settings.toolchain
 
 class RefreshCargoProjectAction : AnAction() {
@@ -25,6 +26,10 @@ class RefreshCargoProjectAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        project.cargoProjects.refreshAllProjects()
+        if (project.toolchain == null || project.cargoProjects.allProjects.isEmpty()) {
+            guessAndSetupRustProject(project, explicitRequest = true)
+        } else {
+            project.cargoProjects.refreshAllProjects()
+        }
     }
 }
