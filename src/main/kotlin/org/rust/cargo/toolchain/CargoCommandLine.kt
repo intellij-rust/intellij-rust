@@ -23,6 +23,12 @@ data class CargoCommandLine(
         return copy(additionalArguments = listOf("--manifest-path", project.manifest.toString()) + additionalArguments)
     }
 
+    fun withDoubleDashFlag(arg: String): CargoCommandLine {
+        val (pre, post) = splitOnDoubleDash()
+        if (arg in post) return this
+        return copy(additionalArguments = pre + "--" + arg + post)
+    }
+
     /**
      * Splits [additionalArguments] into parts before and after `--`.
      * For `cargo run --release -- foo bar`, returns (["--release"], ["foo", "bar"])

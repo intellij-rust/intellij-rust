@@ -101,6 +101,13 @@ class Cargo(
         generalCommandLine(commandLine, false)
 
     private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
+        @Suppress("NAME_SHADOWING")
+        val commandLine = if (commandLine.command == "test" && commandLine.nocapture) {
+            commandLine.withDoubleDashFlag("--nocapture")
+        } else {
+            commandLine
+        }
+
         val cmdLine = when {
             commandLine.channel == RustChannel.DEFAULT -> GeneralCommandLine(cargoExecutable)
             else -> GeneralCommandLine(cargoExecutable, "+${commandLine.channel}")
@@ -124,28 +131,17 @@ class Cargo(
         }
         commandLine.environmentVariables.configureCommandLine(cmdLine, true)
 
-        val args: List<String> = run {
-            val args = commandLine.additionalArguments.toMutableList()
-            if (commandLine.command == "test" && commandLine.nocapture && "--nocapture" !in args) {
-                if ("--" !in args) {
-                    args += "--"
-                }
-                args += "--nocapture"
-            }
-            args
-        }
-
         // Force colors
         if (colors
             && !SystemInfo.isWindows //BACKCOMPAT: remove windows check once termcolor'ed Cargo is stable
             && commandLine.command in COLOR_ACCEPTING_COMMANDS
-            && args.none { it.startsWith("--color") }) {
+            && commandLine.additionalArguments.none { it.startsWith("--color") }) {
 
             cmdLine
                 .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
         }
 
-        return cmdLine.withParameters(args)
+        return cmdLine.withParameters(commandLine.additionalArguments)
     }
 
 

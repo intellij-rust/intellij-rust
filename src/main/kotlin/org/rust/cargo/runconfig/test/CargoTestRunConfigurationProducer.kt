@@ -88,17 +88,9 @@ class TestConfig(
 ) {
     val cargoCommandLine: CargoCommandLine = CargoCommandLine(
         "test",
-        target.cargoArgumentSpeck + testPath + exactArguments(),
+        target.cargoArgumentSpeck + testPath,
         workingDirectory = target.pkg.rootDirectory
-    )
-
-    private fun exactArguments(): List<String> {
-        return if (exact) {
-            listOf("--", "--exact")
-        } else {
-            emptyList()
-        }
-    }
+    ).let { if (exact) it.withDoubleDashFlag("--exact") else it }
 }
 
 // We need to chop off heading colon `::`, since `crateRelativePath`
