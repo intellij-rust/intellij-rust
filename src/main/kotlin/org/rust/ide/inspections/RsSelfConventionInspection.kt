@@ -17,6 +17,7 @@ import org.rust.lang.core.types.selfType
 import org.rust.lang.core.types.ty.TyStructOrEnumBase
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import org.rust.stdext.typeAscription
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
 
@@ -24,9 +25,8 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
                 val owner = m.owner
-                @Suppress("USELESS_CAST")
                 val traitOrImpl = when (owner) {
-                    is RsFunctionOwner.Trait -> owner.trait as RsTraitOrImpl?
+                    is RsFunctionOwner.Trait -> typeAscription<RsTraitOrImpl>(owner.trait)
                     is RsFunctionOwner.Impl -> owner.impl.takeIf { owner.isInherent }
                     else -> null
                 } ?: return
