@@ -150,6 +150,22 @@ class RsCompletionTest : RsCompletionTestBase() {
         use self::foo::quux/*caret*/;
     """)
 
+    fun `test use glob function no semicolon`() = doSingleCompletion("""
+        mod foo { pub fn quux() {} }
+        use self::foo::{q/*caret*/};
+    """, """
+        mod foo { pub fn quux() {} }
+        use self::foo::{quux/*caret*/};
+    """)
+
+    fun `test use function semicolon`() = doSingleCompletion("""
+        use self::f/*caret*/
+        fn foo() {}
+    """, """
+        use self::foo;/*caret*/
+        fn foo() {}
+    """)
+
     fun `test wildcard imports`() = doSingleCompletion("""
         mod foo { fn transmogrify() {} }
 

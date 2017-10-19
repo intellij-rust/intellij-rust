@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.debugger.createVariableContext
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -30,9 +31,8 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
             base.withTailText("::")
                 .withInsertHandler({ ctx, _ ->
                     val offset = ctx.tailOffset - 1
-                    val inUse = PsiTreeUtil.findElementOfClassAtOffset(ctx.file, offset, RsUseGlobList::class.java, false) != null
                     val inSelfParam = PsiTreeUtil.findElementOfClassAtOffset(ctx.file, offset, RsSelfParameter::class.java, false) != null
-                    if (!(inUse || inSelfParam)) {
+                    if (!(ctx.isInGlob || inSelfParam)) {
                         ctx.addSuffix("::")
                     }
                 })
@@ -48,7 +48,15 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
             .withTailText(element.valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
             .appendTailText(element.extraTailText, true)
             .withInsertHandler handler@ { context: InsertionContext, _: LookupElement ->
-                if (context.isInUseBlock) return@handler
+                val curUseItem = context.getUseItem
+                if (curUseItem != null) {
+                    val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
+                    if (!(hasSemicolon || context.isInGlob)) {
+                        context.addSuffix(";")
+                    }
+                    return@handler
+                }
+
                 if (!context.alreadyHasCallParens) {
                     context.document.insertString(context.selectionEndOffset, "()")
                 }
@@ -76,7 +84,7 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
                 else -> ""
             })
             .withInsertHandler handler@ { context, _ ->
-                if (context.isInUseBlock) return@handler
+                if (context.getUseItem != null) return@handler
                 val (text, shift) = when {
                     element.tupleFields != null -> Pair("()", 1)
                     element.blockFields != null -> Pair(" {}", 2)
@@ -118,8 +126,11 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     PrioritizedLookupElement.withPriority(this, priority)
 
-private val InsertionContext.isInUseBlock: Boolean
-    get() = file.findElementAt(startOffset - 1)!!.parentOfType<RsUseItem>() != null
+private val InsertionContext.getUseItem: RsUseItem?
+    get() = PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, RsUseItem::class.java, false)
+
+private val InsertionContext.isInGlob: Boolean
+    get() = PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, RsUseGlobList::class.java, false) != null
 
 private val InsertionContext.alreadyHasCallParens: Boolean
     get() {
