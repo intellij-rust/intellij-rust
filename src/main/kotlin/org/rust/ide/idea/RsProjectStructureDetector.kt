@@ -40,6 +40,6 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
     override fun createWizardSteps(builder: ProjectFromSourcesBuilder,
                                    projectDescriptor: ProjectDescriptor,
                                    stepIcon: Icon?): List<ModuleWizardStep> =
-        listOf(CargoConfigurationWizardStep(builder.context, projectDescriptor))
+        listOf(CargoConfigurationWizardStep.importExistingProject(builder.context, projectDescriptor))
 }
 
