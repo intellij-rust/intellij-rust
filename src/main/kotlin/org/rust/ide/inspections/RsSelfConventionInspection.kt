@@ -62,20 +62,6 @@ enum class SelfSignature(val description: String) {
     BY_MUT_REF("self by mutable reference");
 }
 
-private val RsTraitOrImpl.traits: Sequence<RsTraitItem>
-    get() {
-        when (this) {
-            is RsImplItem -> {
-                val type = this.typeReference?.type as? TyStructOrEnumBase ?: return emptySequence()
-                val impls = ImplLookup.relativeTo(type.item)
-                    .findImplsAndTraits(type)
-                return impls.asSequence().mapNotNull { it.element as? RsTraitItem }
-            }
-            is RsTraitItem -> return superTraits.map { it.element }
-        }
-        return emptySequence()
-    }
-
 private val RsFunction.selfSignature: SelfSignature
     get() {
         val self = selfParameter
