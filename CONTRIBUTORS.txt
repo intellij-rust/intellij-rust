@@ -1,3 +1,7 @@
+# List is sorted alphabetically.
+# If you are wondering, how to sort lines in IDEA, then the answer is
+# https://plugins.jetbrains.com/plugin/2162
+
 alexeykudinkin
 alexpana
 allengeorge
@@ -34,6 +38,7 @@ matklad
 mbStavola
 mcarlin
 mfarrugi
+mhaessig
 mitchhentges
 mkaput
 mrhota
@@ -41,6 +46,7 @@ netvl
 ninjabear
 oistein
 osialr
+pasa
 pavel-v-chernykh
 pocket7878
 sanmai-NL
@@ -56,4 +62,3 @@ vasily-kirichenko
 vlad20012
 winger
 zjhmale
-pasa
