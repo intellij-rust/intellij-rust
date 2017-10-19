@@ -261,8 +261,8 @@ fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): 
     for (scope in label.ancestors) {
         if (scope is RsLambdaExpr || scope is RsFunction) return false
         if (scope is RsLabeledExpression) {
-            val lableDecl = scope.labelDecl ?: continue
-            if (processor(lableDecl)) return true
+            val labelDecl = scope.labelDecl ?: continue
+            if (processor(labelDecl)) return true
         }
     }
     return false
@@ -647,6 +647,7 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: PsiE
 
     fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
         val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
+            .filter { it.reference.resolve() == null }
         return processAll(boundNames, processor)
     }
 
