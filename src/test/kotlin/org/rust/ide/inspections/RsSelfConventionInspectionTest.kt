@@ -44,7 +44,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
-    fun testIsSuppresedForCopyable() = checkByText("""
+    fun `test is suppressed for copyable`() = checkByText("""
         #[derive(Copy)]
         struct Copyable;
         impl Copyable {
@@ -52,7 +52,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
-    fun `test is suppresed for copyable on trait`() = checkByText("""
+    fun `test is suppressed for copyable on trait`() = checkByText("""
         use std::marker::Copy;
         trait Copyable: Copy {
             fn is_ok(self) {}
