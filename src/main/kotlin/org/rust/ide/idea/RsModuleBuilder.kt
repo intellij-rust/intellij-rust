@@ -34,7 +34,7 @@ class RsModuleBuilder : ModuleBuilder() {
     override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean = true
 
     override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep =
-        CargoConfigurationWizardStep(context).apply {
+        CargoConfigurationWizardStep.newProject(context).apply {
             Disposer.register(parentDisposable, Disposable { this.disposeUIResources() })
         }
 

@@ -24,7 +24,7 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.openapiext.pathAsPath
 import javax.swing.JComponent
 
-class CargoConfigurationWizardStep(
+class CargoConfigurationWizardStep private constructor(
     private val context: WizardContext,
     private val projectDescriptor: ProjectDescriptor? = null
 ) : ModuleWizardStep() {
@@ -34,7 +34,9 @@ class CargoConfigurationWizardStep(
 
     override fun getComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
-        row("Create executable project: ") { createExecutableModuleCheckbox() }
+        if (projectDescriptor == null) {
+            row("Create executable project: ") { createExecutableModuleCheckbox() }
+        }
     }
 
     override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)
@@ -96,4 +98,11 @@ class CargoConfigurationWizardStep(
         }
     }
 
+    companion object {
+        fun newProject(context: WizardContext) =
+            CargoConfigurationWizardStep(context, null)
+
+        fun importExistingProject(context: WizardContext, projectDescriptor: ProjectDescriptor) =
+            CargoConfigurationWizardStep(context, projectDescriptor)
+    }
 }
