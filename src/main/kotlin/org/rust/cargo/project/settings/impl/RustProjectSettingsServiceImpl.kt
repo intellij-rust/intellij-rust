@@ -18,6 +18,7 @@ import java.nio.file.Paths
 class RustProjectSettingsServiceImpl(
     private val project: Project
 ) : PersistentStateComponent<RustProjectSettingsServiceImpl.State>, RustProjectSettingsService {
+    @Volatile
     private var state: State = State()
 
     data class State(
@@ -39,13 +40,16 @@ class RustProjectSettingsServiceImpl(
     }
 
     override var data: RustProjectSettingsService.Data
-        get() = RustProjectSettingsService.Data(
-            toolchain = state.toolchainHomeDirectory?.let { RustToolchain(Paths.get(it)) },
-            autoUpdateEnabled = state.autoUpdateEnabled,
-            explicitPathToStdlib = state.explicitPathToStdlib,
-            useCargoCheckForBuild = state.useCargoCheckForBuild,
-            useCargoCheckAnnotator = state.useCargoCheckAnnotator
-        )
+        get() {
+            state = state
+            return RustProjectSettingsService.Data(
+                toolchain = state.toolchainHomeDirectory?.let { RustToolchain(Paths.get(it)) },
+                autoUpdateEnabled = state.autoUpdateEnabled,
+                explicitPathToStdlib = state.explicitPathToStdlib,
+                useCargoCheckForBuild = state.useCargoCheckForBuild,
+                useCargoCheckAnnotator = state.useCargoCheckAnnotator
+            )
+        }
         set(value) {
             val newState = State(
                 toolchainHomeDirectory = value.toolchain?.location?.toString(),
