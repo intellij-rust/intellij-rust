@@ -319,6 +319,24 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test resolve assignment operator`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let s = String::new();
+            s += "foo";
+             //^ ...string.rs
+        }
+    """)
+
+    fun `test resolve arithmetic operator`() = stubOnlyResolve("""
+    //- main.rs
+        use std::time::{Duration, Instant};
+        fn main() {
+            let x = Instant::now() - Duration::from_secs(3);
+                                 //^ ...time/mod.rs
+        }
+    """)
+
     fun `test autoderef Rc`() = stubOnlyResolve("""
     //- main.rs
         use std::rc::Rc;
