@@ -438,12 +438,12 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     """)
 
     fun `test arithmetic operations`() {
-        for ((traitName, itemName, sign) in ArithmeticOp.values()) {
+        for ((traitName, itemName, fnName, sign) in ArithmeticOp.values()) {
             checkByCode("""
                 #[lang = "$itemName"]
                 pub trait $traitName<RHS=Self> {
                     type Output;
-                    fn $itemName(self, rhs: RHS) -> Self::Output;
+                    fn $fnName(self, rhs: RHS) -> Self::Output;
                 }
 
                 struct Foo;
@@ -456,7 +456,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
 
                 impl $traitName<i32> for Foo {
                     type Output = Bar;
-                    fn $itemName(self, rhs: i32) -> Bar { unimplemented!() }
+                    fn $fnName(self, rhs: i32) -> Bar { unimplemented!() }
                 }
 
                 fn foo(lhs: Foo, rhs: i32) {
@@ -469,12 +469,12 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     }
 
     fun `test arithmetic operations with multiple impls`() {
-        for ((traitName, itemName, sign) in ArithmeticOp.values()) {
+        for ((traitName, itemName, fnName, sign) in ArithmeticOp.values()) {
             checkByCode("""
                 #[lang = "$itemName"]
                 pub trait $traitName<RHS=Self> {
                     type Output;
-                    fn $itemName(self, rhs: RHS) -> Self::Output;
+                    fn $fnName(self, rhs: RHS) -> Self::Output;
                 }
 
                 struct Foo;
@@ -492,12 +492,12 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
 
                 impl $traitName<f64> for Foo {
                     type Output = Bar;
-                    fn $itemName(self, rhs: f64) -> Bar { unimplemented!() }
+                    fn $fnName(self, rhs: f64) -> Bar { unimplemented!() }
                 }
 
                 impl $traitName<i32> for Foo {
                     type Output = FooBar;
-                    fn $itemName(self, rhs: i32) -> FooBar { unimplemented!() }
+                    fn $fnName(self, rhs: i32) -> FooBar { unimplemented!() }
                 }
 
                 fn foo(lhs: Foo, rhs: i32) {

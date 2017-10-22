@@ -138,6 +138,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 
         //== rules with very large area of application
         .around(NO_SPACE_AROUND_OPS).spaces(0)
+        .around(BINARY_OP).spaces(1)
         .around(SPACE_AROUND_OPS).spaces(1)
         .around(RS_KEYWORDS).spaces(1)
         .applyForEach(BLOCK_LIKE) { before(it).spaces(1) }

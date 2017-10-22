@@ -374,8 +374,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 }
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
-    val op = this as? RsBinaryExpr ?: return false
-    return op.operatorType is ComparisonOp
+    val op = (this as? RsBinaryExpr)?.operatorType ?: return false
+    return op is ComparisonOp || op is EqualityOp
 }
 
 private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierOwner, scope: PsiElement = element.parent, recursively: Boolean = false) {

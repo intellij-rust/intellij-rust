@@ -9,19 +9,19 @@ import org.rust.lang.core.psi.ext.ArithmeticOp
 
 class RsArithmeticOpsTest : RsTypificationTestBase() {
 
-    fun `test same type of lhs and rhs`() = testExprWithAllOps { traitName, itemName, sign ->
+    fun `test same type of lhs and rhs`() = testExprWithAllOps { traitName, itemName, fnName, sign ->
         """
         #[lang = "$itemName"]
         pub trait $traitName<RHS=Self> {
             type Output;
-            fn $itemName(self, rhs: RHS) -> Self::Output;
+            fn $fnName(self, rhs: RHS) -> Self::Output;
         }
 
         struct Foo;
 
         impl $traitName for Foo {
             type Output = Foo;
-            fn $itemName(self, rhs: Foo) -> Foo { unimplemented!() }
+            fn $fnName(self, rhs: Foo) -> Foo { unimplemented!() }
         }
 
         fn foo(lhs: Foo, rhs: Foo) {
@@ -32,19 +32,19 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
         """
     }
 
-    fun `test same type of lhs and rhs with 'Self' output`() = testExprWithAllOps { traitName, itemName, sign ->
+    fun `test same type of lhs and rhs with 'Self' output`() = testExprWithAllOps { traitName, itemName, fnName, sign ->
         """
         #[lang = "$itemName"]
         pub trait $traitName<RHS=Self> {
             type Output;
-            fn $itemName(self, rhs: RHS) -> Self::Output;
+            fn $fnName(self, rhs: RHS) -> Self::Output;
         }
 
         struct Foo;
 
         impl $traitName for Foo {
             type Output = Self;
-            fn $itemName(self, rhs: Self) -> Self { unimplemented!() }
+            fn $fnName(self, rhs: Self) -> Self { unimplemented!() }
         }
 
         fn foo(lhs: Foo, rhs: Foo) {
@@ -55,12 +55,12 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
         """
     }
 
-    fun `test different types of lhs, rhs and output`() = testExprWithAllOps { traitName, itemName, sign ->
+    fun `test different types of lhs, rhs and output`() = testExprWithAllOps { traitName, itemName, fnName, sign ->
         """
         #[lang = "$itemName"]
         pub trait $traitName<RHS=Self> {
             type Output;
-            fn $itemName(self, rhs: RHS) -> Self::Output;
+            fn $fnName(self, rhs: RHS) -> Self::Output;
         }
 
         struct Foo;
@@ -68,7 +68,7 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
 
         impl $traitName<i32> for Foo {
             type Output = Bar;
-            fn $itemName(self, rhs: i32) -> Bar { unimplemented!() }
+            fn $fnName(self, rhs: i32) -> Bar { unimplemented!() }
         }
 
         fn foo(lhs: Foo, rhs: i32) {
@@ -79,12 +79,12 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
         """
     }
 
-    fun `test multiple impls`() = testExprWithAllOps { traitName, itemName, sign ->
+    fun `test multiple impls`() = testExprWithAllOps { traitName, itemName, fnName, sign ->
         """
         #[lang = "$itemName"]
         pub trait $traitName<RHS=Self> {
             type Output;
-            fn $itemName(self, rhs: RHS) -> Self::Output;
+            fn $fnName(self, rhs: RHS) -> Self::Output;
         }
 
         struct Foo;
@@ -93,12 +93,12 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
 
         impl $traitName<f64> for Foo {
             type Output = Bar;
-            fn $itemName(self, rhs: f64) -> Bar { unimplemented!() }
+            fn $fnName(self, rhs: f64) -> Bar { unimplemented!() }
         }
 
         impl $traitName<i32> for Foo {
             type Output = FooBar;
-            fn $itemName(self, rhs: i32) -> FooBar { unimplemented!() }
+            fn $fnName(self, rhs: i32) -> FooBar { unimplemented!() }
         }
 
         fn foo(lhs: Foo, rhs: i32) {
@@ -109,12 +109,12 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
         """
     }
 
-    fun `test generic lhs and output`() = testExprWithAllOps { traitName, itemName, sign ->
+    fun `test generic lhs and output`() = testExprWithAllOps { traitName, itemName, fnName, sign ->
         """
         #[lang = "$itemName"]
         pub trait $traitName<RHS=Self> {
             type Output;
-            fn $itemName(self, rhs: RHS) -> Self::Output;
+            fn $fnName(self, rhs: RHS) -> Self::Output;
         }
 
         struct Foo<T1>(T1);
@@ -123,7 +123,7 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
 
         impl<T> $traitName<Bar> for Foo<T> {
             type Output = FooBar<T>;
-            fn $itemName(self, rhs: Bar) -> FooBar<T> { unimplemented!() }
+            fn $fnName(self, rhs: Bar) -> FooBar<T> { unimplemented!() }
         }
 
         fn foo(lhs: Foo<i32>, rhs: Bar) {
@@ -134,9 +134,9 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
         """
     }
 
-    private inline fun testExprWithAllOps(codeGenerator: (String, String, String) -> String) {
-        for ((traitName, itemName, sign) in ArithmeticOp.values()) {
-            testExpr(codeGenerator(traitName, itemName, sign))
+    private inline fun testExprWithAllOps(codeGenerator: (String, String, String, String) -> String) {
+        for ((traitName, itemName, fnName, sign) in ArithmeticOp.values()) {
+            testExpr(codeGenerator(traitName, itemName, fnName, sign))
         }
     }
 }

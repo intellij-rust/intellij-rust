@@ -80,6 +80,7 @@
 
     extends("(.+Expr|StructLiteral)") = Expr
     elementType(".+BinExpr") = BinaryExpr
+    elementType(".+BinOp") = BinaryOp
 
     extends("Pat(Wild|Ref|Tup|Vec|Macro|Struct|Enum|Ident|Range|Uniq|QualPath)") = Pat
 
@@ -835,28 +836,50 @@ private AtomExpr ::= LitExpr
                     | UnitExpr
                     | TupleOrParenExpr
 
-fake BinaryExpr ::= Expr+ {
+fake BinaryExpr ::= Expr BinaryOp Expr {
   methods=[
     left="/Expr[0]"
     right="/Expr[1]"
   ]
 }
 
-AssignBinExpr ::= Expr BinAssignOp Expr    { rightAssociative = true }
-private BinAssignOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
+fake BinaryOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
+                | '==' | '!='
+                | '<' | '>' | lteq | gteq
+                | ltlt | gtgt
+                | '+' | '-' | '*' | '/' | '%'
+                | oror | andand | '|' | '&' | '^' {
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsBinaryOpImplMixin"
+}
 
-CompBinExpr      ::= Expr !<<isCompleteBlockExpr>> ('==' | '!=') StmtModeExprOff
-RelCompBinExpr   ::= Expr !<<isCompleteBlockExpr>> (!('<<' | '<=') '<' | !('>>' | '>=')  '>' | lteq | gteq) StmtModeExprOff
-BitShiftBinExpr  ::= Expr !<<isCompleteBlockExpr>> (ltlt | gtgt) StmtModeExprOff
-AddBinExpr       ::= Expr !<<isCompleteBlockExpr>> ('+' | '-') StmtModeExprOff
-MulBinExpr       ::= Expr !<<isCompleteBlockExpr>> ('*' | '/' | '%') StmtModeExprOff
+AssignBinExpr ::= Expr AssignBinOp Expr    { rightAssociative = true }
+AssignBinOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
+
+CompBinExpr      ::= Expr !<<isCompleteBlockExpr>> CompBinOp StmtModeExprOff
+RelCompBinExpr   ::= Expr !<<isCompleteBlockExpr>> RelCompBinOp StmtModeExprOff
+BitShiftBinExpr  ::= Expr !<<isCompleteBlockExpr>> BitShiftBinOp StmtModeExprOff
+AddBinExpr       ::= Expr !<<isCompleteBlockExpr>> AddBinOp StmtModeExprOff
+MulBinExpr       ::= Expr !<<isCompleteBlockExpr>> MulBinOp StmtModeExprOff
+
+CompBinOp        ::= '==' | '!='
+RelCompBinOp     ::= (!('<<' | '<=') '<' | !('>>' | '>=')  '>' | lteq | gteq)
+BitShiftBinOp    ::= ltlt | gtgt
+AddBinOp         ::= '+' | '-'
+MulBinOp         ::= '*' | '/' | '%'
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
-BoolOrBinExpr    ::= Expr !<<isCompleteBlockExpr>> oror StmtModeExprOff
-BoolAndBinExpr   ::= Expr !<<isCompleteBlockExpr>> andand StmtModeExprOff
-BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror)   '|' StmtModeExprOff
-BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) '&' StmtModeExprOff
-BitXorBinExpr    ::= Expr !<<isCompleteBlockExpr>> '^' StmtModeExprOff
+BoolOrBinExpr    ::= Expr !<<isCompleteBlockExpr>> BoolOrBinOp StmtModeExprOff
+BoolAndBinExpr   ::= Expr !<<isCompleteBlockExpr>> BoolAndBinOp StmtModeExprOff
+BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror) BitOrBinOp StmtModeExprOff
+BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) BitAndBinOp StmtModeExprOff
+BitXorBinExpr    ::= Expr !<<isCompleteBlockExpr>> BitXorBinOp StmtModeExprOff
+
+BoolOrBinOp      ::= oror
+BoolAndBinOp     ::= andand
+BitOrBinOp       ::= '|'
+BitAndBinOp      ::= '&'
+BitXorBinOp      ::= '^'
 
 CastExpr ::= Expr (as | ':')  ScalarTypeReference
 
