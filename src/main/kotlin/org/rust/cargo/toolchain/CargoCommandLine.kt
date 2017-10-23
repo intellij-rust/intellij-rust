@@ -8,11 +8,12 @@ package org.rust.cargo.toolchain
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.runconfig.command.workingDirectory
 import java.nio.file.Path
 
 data class CargoCommandLine(
     val command: String, // Can't be `enum` because of custom subcommands
-    val workingDirectory: Path? = null,
+    val workingDirectory: Path,
     val additionalArguments: List<String> = emptyList(),
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
@@ -20,9 +21,6 @@ data class CargoCommandLine(
     val nocapture: Boolean = true
 ) {
 
-    fun forProject(project: CargoProject): CargoCommandLine {
-        return copy(additionalArguments = listOf("--manifest-path", project.manifest.toString()) + additionalArguments)
-    }
 
     fun withDoubleDashFlag(arg: String): CargoCommandLine {
         val (pre, post) = splitOnDoubleDash()
@@ -59,6 +57,20 @@ data class CargoCommandLine(
                 command,
                 workingDirectory = target.pkg.workspace.manifestPath.parent,
                 additionalArguments = listOf("--package", target.pkg.name) + targetArgs + additionalArguments
+            )
+        }
+
+        fun forProject(
+            cargoProject: CargoProject,
+            command: String,
+            additionalArguments: List<String> = emptyList(),
+            channel: RustChannel = RustChannel.DEFAULT
+        ): CargoCommandLine {
+            return CargoCommandLine(
+                command,
+                cargoProject.workingDirectory,
+                additionalArguments,
+                channel = channel
             )
         }
     }
