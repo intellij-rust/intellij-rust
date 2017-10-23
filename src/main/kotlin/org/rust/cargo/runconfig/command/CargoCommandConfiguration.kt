@@ -20,7 +20,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
-import org.rust.cargo.runconfig.ui.CargoRunConfigurationEditorForm
+import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
@@ -44,7 +44,7 @@ class CargoCommandConfiguration(
     var command: String = "run"
     var nocapture: Boolean = true
     var backtrace: BacktraceMode = BacktraceMode.SHORT
-    var workingDirectory: Path? = null
+    var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
 
     override fun writeExternal(element: Element) {
@@ -90,7 +90,7 @@ class CargoCommandConfiguration(
     }
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
-        CargoRunConfigurationEditorForm(project)
+        CargoCommandConfigurationEditor(project, project.cargoProjects.allProjects)
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
         clean().ok?.let { CargoRunState(environment, it) }
@@ -113,12 +113,14 @@ class CargoCommandConfiguration(
     }
 
     fun clean(): CleanConfiguration {
+        val workingDirectory = workingDirectory
+            ?: return CleanConfiguration.error("No working directory specified")
         val cmd = run {
             val args = ParametersListUtil.parse(command)
             if (args.isEmpty()) {
                 return CleanConfiguration.error("No command specified")
             }
-            CargoCommandLine(args.first(), args.drop(1), backtrace, channel, workingDirectory, env, nocapture)
+            CargoCommandLine(args.first(), workingDirectory, args.drop(1), backtrace, channel, env, nocapture)
         }
 
         val cargoProject = findCargoProject(project, command, workingDirectory)
@@ -165,6 +167,8 @@ class CargoCommandConfiguration(
         }
     }
 }
+
+val CargoProject.workingDirectory: Path get() = manifest.parent
 
 
 private fun Element.writeString(name: String, value: String) {

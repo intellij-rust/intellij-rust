@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.task.*
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.cargoProjectRoot
 
@@ -23,7 +24,7 @@ class RsProjectTasksRunner : ProjectTaskRunner() {
         val command = if (project.rustSettings.useCargoCheckForBuild) "check" else "build"
 
         for (cargoProject in project.cargoProjects.allProjects) {
-            val cmd = CargoCommandLine(command, listOf("--all")).forProject(cargoProject)
+            val cmd = CargoCommandLine(command, cargoProject.workingDirectory, listOf("--all"))
             val runnerAndConfigurationSettings = RunManager.getInstance(project)
                 .createCargoCommandRunConfiguration(cmd)
             val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)

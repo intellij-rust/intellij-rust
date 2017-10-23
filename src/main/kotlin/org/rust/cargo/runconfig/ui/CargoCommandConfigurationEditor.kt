@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.ui.ListCellRendererWrapper
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.CCFlags
@@ -21,9 +22,11 @@ import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
 import com.intellij.util.text.nullize
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.util.CargoCommandLineEditor
@@ -31,10 +34,14 @@ import java.awt.Dimension
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.JPanel
 
 
-class CargoRunConfigurationEditorForm(val project: Project) : SettingsEditor<CargoCommandConfiguration>() {
+class CargoCommandConfigurationEditor(
+    private val project: Project,
+    private val cargoProjects: Collection<CargoProject>
+) : SettingsEditor<CargoCommandConfiguration>() {
     private fun currentWorkspace(): CargoWorkspace? =
         CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace
 
@@ -51,6 +58,7 @@ class CargoRunConfigurationEditorForm(val project: Project) : SettingsEditor<Car
             .sortedBy { it.index }
             .forEach { addItem(it) }
     }
+
     private val currentWorkingDirectory: Path? get() = workingDirectory.component.text.nullize()?.let { Paths.get(it) }
     private val workingDirectory = run {
         val textField = TextFieldWithBrowseButton().apply {
@@ -61,6 +69,30 @@ class CargoRunConfigurationEditorForm(val project: Project) : SettingsEditor<Car
         }
         LabeledComponent.create(textField, ExecutionBundle.message("run.configuration.working.directory.label"))
     }
+    private val cargoProject = ComboBox<CargoProject>().apply {
+        renderer = object : ListCellRendererWrapper<CargoProject>() {
+            override fun customize(list: JList<*>?, value: CargoProject, index: Int, selected: Boolean, hasFocus: Boolean) {
+                setText(value.presentableName)
+            }
+        }
+        cargoProjects
+            .sortedBy { it.presentableName }
+            .forEach { addItem(it) }
+
+        addItemListener {
+            setWorkingDirectoryFromSelectedProject()
+        }
+    }
+
+    private fun setWorkingDirectoryFromSelectedProject() {
+        val selectedProject = run {
+            val idx = cargoProject.selectedIndex
+            if (idx == -1) return
+            cargoProject.getItemAt(idx)
+        }
+        workingDirectory.component.text = selectedProject.workingDirectory.toString()
+    }
+
     private val environmentVariables = EnvironmentVariablesComponent()
     private val nocapture = CheckBox("Show stdout/stderr in tests", true)
 
@@ -103,7 +135,12 @@ class CargoRunConfigurationEditorForm(val project: Project) : SettingsEditor<Car
         row { nocapture() }
 
         row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
-        row(workingDirectory.label) { workingDirectory.apply { makeWide() }() }
+        row(workingDirectory.label) {
+            workingDirectory.apply { makeWide() }()
+            if (cargoProjects.size > 1) {
+                cargoProject()
+            }
+        }
         labeledRow("Back&trace:", backtraceMode) { backtraceMode() }
     }
 

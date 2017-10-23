@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.google.gson.JsonParser
+import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -118,7 +119,11 @@ private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationRe
         }
     }.execute()
 
-    val output = info.toolchain.cargo(info.projectPath).checkProject(info.module)
+    val output = try {
+        info.toolchain.cargoOrXargo(info.projectPath).checkProject(info.module, info.projectPath)
+    } catch (e: ExecutionException) {
+        return null
+    }
     if (output.isCancelled) return null
     return CargoCheckAnnotationResult(output.stdoutLines)
 }

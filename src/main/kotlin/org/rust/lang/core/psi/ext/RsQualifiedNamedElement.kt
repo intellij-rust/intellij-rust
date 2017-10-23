@@ -11,6 +11,6 @@ interface RsQualifiedNamedElement : RsNamedElement {
 
 val RsQualifiedNamedElement.qualifiedName: String? get() {
     val inCratePath = crateRelativePath ?: return null
-    val cargoTarget = containingCargoTarget?.normName ?: return null
+    val cargoTarget = cargoContext?.target?.normName ?: return null
     return "$cargoTarget$inCratePath"
 }

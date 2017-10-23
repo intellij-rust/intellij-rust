@@ -40,7 +40,9 @@ class RunConfigurationTestCase : RustWithToolchainTestBase() {
         val configuration = createConfiguration()
         val result = execute(configuration)
 
-        check("Hello, world!" in result.stdout)
+        check("Hello, world!" in result.stdout) {
+            "Failed to run project, exit code ${result.exitCode}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}\n"
+        }
     }
 
     private fun createConfiguration(): CargoCommandConfiguration {

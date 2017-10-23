@@ -6,21 +6,42 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.lang.core.psi.ext.CargoContext
 import java.nio.file.Path
 
 data class CargoCommandLine(
     val command: String, // Can't be `enum` because of custom subcommands
+    val workingDirectory: Path, // workingDirectory is important: it specifies the Cargo project for command line
     val additionalArguments: List<String> = emptyList(),
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
-    val workingDirectory: Path? = null,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val nocapture: Boolean = true
 ) {
 
-    fun forProject(project: CargoProject): CargoCommandLine {
-        return copy(additionalArguments = listOf("--manifest-path", project.manifest.toString()) + additionalArguments)
+    companion object {
+        fun forCargoContext(
+            ctx: CargoContext,
+            command: String,
+            additionalArguments: List<String> = emptyList()
+        ): CargoCommandLine {
+            val targetSpec = when (ctx.target.kind) {
+                CargoWorkspace.TargetKind.BIN -> listOf("--bin", ctx.target.name)
+                CargoWorkspace.TargetKind.TEST -> listOf("--test", ctx.target.name)
+                CargoWorkspace.TargetKind.EXAMPLE -> listOf("--example", ctx.target.name)
+                CargoWorkspace.TargetKind.BENCH -> listOf("--bench", ctx.target.name)
+                CargoWorkspace.TargetKind.LIB -> listOf("--lib")
+                CargoWorkspace.TargetKind.UNKNOWN -> emptyList()
+            }
+
+            return CargoCommandLine(
+                command,
+                ctx.project.workingDirectory,
+                listOf("--package", ctx.pkg.name) + targetSpec + additionalArguments
+            )
+        }
     }
 
     fun withDoubleDashFlag(arg: String): CargoCommandLine {
