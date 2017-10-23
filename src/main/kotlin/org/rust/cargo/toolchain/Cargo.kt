@@ -86,6 +86,7 @@ class Cargo(
         fullyRefreshDirectory(directory)
     }
 
+    @Throws(ExecutionException::class)
     fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
         val cmd = CargoCommandLine(
             "fmt", file.parent.pathAsPath,
