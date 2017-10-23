@@ -11,7 +11,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ComparisonOp
+import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.psi.ext.operatorType
 
@@ -25,14 +25,14 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
 
             val expr = assertMacroArg.expr as? RsBinaryExpr ?: return
             when (expr.operatorType) {
-                ComparisonOp.EQ -> {
+                EqualityOp.EQ -> {
                     holder.registerProblem(
                         o,
                         "assert!(a == b) can be assert_eq!(a, b)",
                         SpecializedAssertQuickFix("assert_eq")
                     )
                 }
-                ComparisonOp.EXCLEQ -> {
+                EqualityOp.EXCLEQ -> {
                     holder.registerProblem(
                         o,
                         "assert!(a != b) can be assert_ne!(a, b)",

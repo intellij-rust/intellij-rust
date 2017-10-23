@@ -249,32 +249,28 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
     }
 
     fun findIndexOutputType(containerType: Ty, indexType: Ty): Ty? {
-        val impls = findImplsAndTraits(containerType)
-            .filter { it.element.implementedTrait?.element?.isIndex ?: false }
-
-        val (element, subst) = if (impls.size < 2) {
-            impls.firstOrNull()
-        } else {
-            impls.find { isImplSuitable(it.element, "index", 0, indexType) }
-        } ?: return null
-
+        val (element, subst) = findLangTraitImpl(containerType, indexType, "index") ?: return null
         val rawOutputType = lookupAssociatedType(element, "Output")
         return rawOutputType.substitute(subst)
     }
 
     fun findArithmeticBinaryExprOutputType(lhsType: Ty, rhsType: Ty, op: ArithmeticOp): Ty {
-        val impls = findImplsAndTraits(lhsType)
-            .filter { op.itemName == it.element.implementedTrait?.element?.langAttribute }
-
-        val (element, subst) = if (impls.size < 2) {
-            impls.firstOrNull()
-        } else {
-            impls.find { isImplSuitable(it.element, op.itemName, 0, rhsType) }
-        } ?: return TyUnknown
-
+        val (element, subst) = findLangTraitImpl(lhsType, rhsType, op.itemName, op.fnName) ?: return TyUnknown
         return lookupAssociatedType(element, "Output")
             .substitute(subst)
             .substitute(mapOf(TyTypeParameter.self(element) to lhsType))
+    }
+
+    fun findLangTraitImpl(implType: Ty, argumentType: Ty,
+                          itemName: String, fnName: String = itemName): BoundElement<RsTraitOrImpl>? {
+        val impls = findImplsAndTraits(implType)
+            .filter { itemName == it.element.implementedTrait?.element?.langAttribute }
+
+        return if (impls.size < 2) {
+            impls.firstOrNull()
+        } else {
+            impls.find { isImplSuitable(it.element, fnName, 0, argumentType) }
+        }
     }
 
     private fun isImplSuitable(impl: RsTraitOrImpl,

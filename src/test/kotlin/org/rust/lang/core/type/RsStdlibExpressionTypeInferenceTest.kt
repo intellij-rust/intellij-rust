@@ -369,7 +369,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         )
 
         for (numeric in numericTypes) {
-            for ((_, _, sign) in ArithmeticOp.values()) {
+            for ((_, _, _, sign) in ArithmeticOp.values()) {
                 stubOnlyTypeInfer("""
                     //- main.rs
                     fn foo(lhs: $numeric, rhs: $numeric) {

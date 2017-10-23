@@ -336,6 +336,21 @@ fun processMacroDeclarations(scope: RsCompositeElement, processor: RsResolveProc
     return false
 }
 
+fun processBinaryOpVariants(element: RsBinaryOp, operator: OverloadableBinaryOperator,
+                            processor: RsResolveProcessor): Boolean {
+    val binaryExpr = element.parentOfType<RsBinaryExpr>() ?: return false
+    val rhsType = binaryExpr.right?.type ?: return false
+    val lhsType = binaryExpr.left.type
+    val lookup = ImplLookup.relativeTo(element)
+    val function = lookup.findLangTraitImpl(lhsType, rhsType, operator.itemName, operator.fnName)
+        ?.element
+        ?.members
+        ?.functionList
+        ?.find { it.name == operator.fnName }
+        ?: return false
+    return processor(function)
+}
+
 val RsFile.exportedCrateMacros: List<RsMacroDefinition>
     get() = CachedValuesManager.getCachedValue(this) {
         val macros = exportedCrateMacros(this, true)
