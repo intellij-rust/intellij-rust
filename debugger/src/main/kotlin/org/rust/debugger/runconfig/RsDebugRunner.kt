@@ -60,7 +60,7 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
     override fun prepare(env: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
         val cleaned = (env.runnerAndConfigurationSettings!!.configuration as CargoCommandConfiguration).clean().ok!!
         val cargoProjectDirectory = cleaned.cargoProject.manifest.parent
-        val cargo = env.project.toolchain!!.cargo(cargoProjectDirectory)
+        val cargo = env.project.toolchain!!.cargoOrWrapper(cargoProjectDirectory)
 
         val (buildArgs, execArgs) = cleaned.cmd.splitOnDoubleDash()
 

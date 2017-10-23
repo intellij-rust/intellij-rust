@@ -36,7 +36,7 @@ class CargoRunState(
     }
 
     override fun startProcess(): ProcessHandler {
-        val cmd = toolchain.cargo(cargoProjectDirectory.pathAsPath)
+        val cmd = toolchain.cargoOrWrapper(cargoProjectDirectory.pathAsPath)
             .toColoredCommandLine(commandLine)
             // Explicitly use UTF-8.
             // Even though default system encoding is usually not UTF-8 on windows,

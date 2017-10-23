@@ -33,17 +33,11 @@ data class RustToolchain(val location: Path) {
     fun rawCargo(): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC))
 
-    fun cargo(cargoProjectDirectory: Path): Cargo =
-        Cargo(chooseCargoExecutable(cargoProjectDirectory), pathToExecutable(RUSTC))
-
-    private fun hasXargoToml(projectDirectory: Path): Boolean =
-        projectDirectory.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
-
-    private fun chooseCargoExecutable(cargoProjectDirectory: Path): Path =
-        if (hasXargoToml(cargoProjectDirectory) && hasExecutable(XARGO))
-            pathToExecutable(XARGO)
-        else
-            pathToExecutable(CARGO)
+    fun cargoOrWrapper(cargoProjectDirectory: Path): Cargo {
+        val hasXargoToml = cargoProjectDirectory.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
+        val cargoWrapper = if (hasXargoToml && hasExecutable(XARGO)) XARGO else CARGO
+        return Cargo(pathToExecutable(cargoWrapper), pathToExecutable(RUSTC))
+    }
 
     fun rustup(cargoProjectDirectory: Path): Rustup? =
         if (isRustupAvailable)
