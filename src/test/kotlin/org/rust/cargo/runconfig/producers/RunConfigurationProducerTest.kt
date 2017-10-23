@@ -29,6 +29,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.openapiext.toXmlString
+import java.nio.file.Paths
 
 class RunConfigurationProducerTest : RsTestBase() {
     override val dataPath: String = "org/rust/cargo/runconfig/producers/fixtures"
@@ -363,7 +364,7 @@ class RunConfigurationProducerTest : RsTestBase() {
             }
 
             val projectDescription = CargoWorkspace.deserialize(
-                null,
+                Paths.get("/my-crate/Cargo.toml"),
                 CleanCargoMetadata(
                     packages = listOf(
                         CleanCargoMetadata.Package(

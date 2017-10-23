@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicReference
  * [org.rust.cargo.project.model.CargoProjectsService] manages workspaces.
  */
 interface CargoWorkspace {
-    val manifestPath: Path?
-    val contentRoot: Path? get() = manifestPath?.parent
+    val manifestPath: Path
+    val contentRoot: Path get() = manifestPath.parent
 
     val packages: Collection<Package>
     fun findPackage(name: String): Package? = packages.find { it.name == name }
@@ -74,14 +74,14 @@ interface CargoWorkspace {
     }
 
     companion object {
-        fun deserialize(manifestPath: Path?, data: CleanCargoMetadata): CargoWorkspace
+        fun deserialize(manifestPath: Path, data: CleanCargoMetadata): CargoWorkspace
             = WorkspaceImpl.deserialize(manifestPath, data)
     }
 }
 
 
 private class WorkspaceImpl(
-    override val manifestPath: Path?,
+    override val manifestPath: Path,
     override val packages: Collection<PackageImpl>
 ) : CargoWorkspace {
 
@@ -134,7 +134,7 @@ private class WorkspaceImpl(
     }
 
     companion object {
-        fun deserialize(manifestPath: Path?, data: CleanCargoMetadata): WorkspaceImpl {
+        fun deserialize(manifestPath: Path, data: CleanCargoMetadata): WorkspaceImpl {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
