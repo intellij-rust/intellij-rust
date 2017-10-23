@@ -49,17 +49,9 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         return true
     }
 
-    private class ExecutableTarget(
-        target: CargoWorkspace.Target,
-        kind: String
-    ) {
+    private class ExecutableTarget(target: CargoWorkspace.Target) {
         val configurationName: String = "Run ${target.name}"
-
-        val cargoCommandLine = CargoCommandLine(
-            "run",
-            listOf("--$kind", target.name),
-            workingDirectory = target.pkg.rootDirectory
-        )
+        val cargoCommandLine = CargoCommandLine.forTarget(target, "run")
     }
 
     companion object {
@@ -76,15 +68,9 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         }
 
         private fun findBinaryTarget(ws: CargoWorkspace, file: VirtualFile): ExecutableTarget? {
-            // TODO: specify workspace package here once
-            // https://github.com/rust-lang/cargo/issues/3529
-            // is fixed
             val target = ws.findTargetByCrateRoot(file) ?: return null
-            return when {
-                target.isBin -> ExecutableTarget(target, "bin")
-                target.isExample -> ExecutableTarget(target, "example")
-                else -> null
-            }
+            if (!target.isBin && !target.isExample) return null
+            return ExecutableTarget(target)
         }
     }
 }

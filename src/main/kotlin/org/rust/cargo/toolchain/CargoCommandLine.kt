@@ -7,6 +7,7 @@ package org.rust.cargo.toolchain
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.workspace.CargoWorkspace
 import java.nio.file.Path
 
 data class CargoCommandLine(
@@ -37,5 +38,28 @@ data class CargoCommandLine(
         val idx = additionalArguments.indexOf("--")
         if (idx == -1) return additionalArguments to emptyList()
         return additionalArguments.take(idx) to additionalArguments.drop(idx + 1)
+    }
+
+    companion object {
+        fun forTarget(
+            target: CargoWorkspace.Target,
+            command: String,
+            additionalArguments: List<String> = emptyList()
+        ): CargoCommandLine {
+            val targetArgs = when (target.kind) {
+                CargoWorkspace.TargetKind.BIN -> listOf("--bin", target.name)
+                CargoWorkspace.TargetKind.TEST -> listOf("--test", target.name)
+                CargoWorkspace.TargetKind.EXAMPLE -> listOf("--example", target.name)
+                CargoWorkspace.TargetKind.BENCH -> listOf("--bench", target.name)
+                CargoWorkspace.TargetKind.LIB -> listOf("--lib")
+                CargoWorkspace.TargetKind.UNKNOWN -> emptyList()
+            }
+
+            return CargoCommandLine(
+                command,
+                listOf("--package", target.pkg.name) + targetArgs + additionalArguments,
+                workingDirectory = target.pkg.workspace.manifestPath.parent
+            )
+        }
     }
 }

@@ -1,10 +1,10 @@
 <configurations>
   <configuration name="Run foo" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
-    <option name="command" value="run --bin foo" />
+    <option name="command" value="run --package test-package --bin foo" />
     <option name="nocapture" value="true" />
     <option name="backtrace" value="FULL" />
-    <option name="workingDirectory" value="file:///src" />
+    <option name="workingDirectory" value="file:///my-crate" />
     <envs />
   </configuration>
 </configurations>

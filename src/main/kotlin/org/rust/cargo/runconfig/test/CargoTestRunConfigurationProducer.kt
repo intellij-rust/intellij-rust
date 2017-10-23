@@ -10,7 +10,6 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.runconfig.cargoArgumentSpeck
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.mergeWithDefault
@@ -86,11 +85,8 @@ class TestConfig(
     target: CargoWorkspace.Target,
     private val exact: Boolean
 ) {
-    val cargoCommandLine: CargoCommandLine = CargoCommandLine(
-        "test",
-        target.cargoArgumentSpeck + testPath,
-        workingDirectory = target.pkg.rootDirectory
-    ).let { if (exact) it.withDoubleDashFlag("--exact") else it }
+    val cargoCommandLine: CargoCommandLine = CargoCommandLine.forTarget(target, "test", listOf(testPath))
+        .let { if (exact) it.withDoubleDashFlag("--exact") else it }
 }
 
 // We need to chop off heading colon `::`, since `crateRelativePath`
