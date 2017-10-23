@@ -9,8 +9,6 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.runconfig.cargoArgumentSpeck
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.mergeWithDefault
@@ -53,8 +51,8 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         private fun findTestFunction(psi: PsiElement, climbUp: Boolean): TestConfig? {
             val fn = findElement<RsFunction>(psi, climbUp) ?: return null
             val name = fn.crateRelativePath.configPath() ?: return null
-            val target = fn.containingCargoTarget ?: return null
-            return if (fn.isTest) TestConfig(fn, "Test $name", name, target, true) else null
+            val ctx = fn.cargoContext ?: return null
+            return if (fn.isTest) TestConfig(fn, "Test $name", name, ctx, true) else null
         }
 
         private fun findTestMod(psi: PsiElement, climbUp: Boolean): TestConfig? {
@@ -65,10 +63,10 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
             else
                 "Test ${mod.modName}"
             val testPath = mod.crateRelativePath.configPath() ?: ""
-            val target = mod.containingCargoTarget ?: return null
+            val ctx = mod.cargoContext ?: return null
             if (!mod.functionList.any { it.isTest }) return null
 
-            return TestConfig(mod, testName, testPath, target, false)
+            return TestConfig(mod, testName, testPath, ctx, false)
         }
 
         private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
@@ -83,13 +81,13 @@ class TestConfig(
     val sourceElement: RsCompositeElement,
     val configurationName: String,
     testPath: String,
-    target: CargoWorkspace.Target,
+    ctx: CargoContext,
     private val exact: Boolean
 ) {
-    val cargoCommandLine: CargoCommandLine = CargoCommandLine(
+    val cargoCommandLine: CargoCommandLine = CargoCommandLine.forCargoContext(
+        ctx,
         "test",
-        target.pkg.rootDirectory,
-        target.cargoArgumentSpeck + testPath
+        listOf(testPath)
     ).let { if (exact) it.withDoubleDashFlag("--exact") else it }
 }
 

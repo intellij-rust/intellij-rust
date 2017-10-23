@@ -152,10 +152,10 @@ class Cargo(
             if (commandLine.channel != RustChannel.DEFAULT) {
                 add("+${commandLine.channel}")
             }
+            add(commandLine.command)
             if (forceColors) {
                 add("--color=always")
             }
-            add(commandLine.command)
             addAll(commandLine.additionalArguments)
         }
 

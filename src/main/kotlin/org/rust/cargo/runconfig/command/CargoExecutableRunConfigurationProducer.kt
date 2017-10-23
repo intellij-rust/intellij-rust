@@ -9,14 +9,14 @@ import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.cargoWorkspace
+import org.rust.lang.core.psi.ext.CargoContext
+import org.rust.lang.core.psi.ext.cargoContext
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.openapiext.toPsiFile
 
@@ -49,42 +49,28 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
         return true
     }
 
-    private class ExecutableTarget(
-        target: CargoWorkspace.Target,
-        kind: String
-    ) {
-        val configurationName: String = "Run ${target.name}"
-
-        val cargoCommandLine = CargoCommandLine(
-            "run",
-            target.pkg.rootDirectory,
-            listOf("--$kind", target.name)
-        )
+    private class ExecutableTarget(ctx: CargoContext) {
+        val configurationName: String = "Run ${ctx.target.name}"
+        val cargoCommandLine = CargoCommandLine.forCargoContext(ctx, "run")
     }
 
     companion object {
         fun isMainFunction(fn: RsFunction): Boolean {
-            val ws = fn.cargoWorkspace ?: return false
-            return fn.name == "main" && findBinaryTarget(ws, fn.containingFile.virtualFile) != null
+            val ctx = fn.cargoContext ?: return false
+            return fn.name == "main" && findBinaryTarget(ctx) != null
         }
 
         private fun findBinaryTarget(location: Location<*>): ExecutableTarget? {
             val file = location.virtualFile ?: return null
             val rsFile = file.toPsiFile(location.project) as? RsFile ?: return null
-            val ws = rsFile.cargoWorkspace ?: return null
-            return findBinaryTarget(ws, file)
+            val ctx = rsFile.cargoContext ?: return null
+            return findBinaryTarget(ctx)
         }
 
-        private fun findBinaryTarget(ws: CargoWorkspace, file: VirtualFile): ExecutableTarget? {
-            // TODO: specify workspace package here once
-            // https://github.com/rust-lang/cargo/issues/3529
-            // is fixed
-            val target = ws.findTargetByCrateRoot(file) ?: return null
-            return when {
-                target.isBin -> ExecutableTarget(target, "bin")
-                target.isExample -> ExecutableTarget(target, "example")
+        private fun findBinaryTarget(ctx: CargoContext): ExecutableTarget? =
+            when (ctx.target.kind) {
+                CargoWorkspace.TargetKind.EXAMPLE, CargoWorkspace.TargetKind.BIN -> ExecutableTarget(ctx)
                 else -> null
             }
-        }
     }
 }

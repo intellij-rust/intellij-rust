@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 
@@ -33,6 +34,22 @@ val RsCompositeElement.cargoWorkspace: CargoWorkspace?
         val vFile = psiFile.virtualFile ?: return null
         return project.cargoProjects.findProjectForFile(vFile)?.workspace
     }
+
+data class CargoContext(
+    val project: CargoProject,
+    val workspace: CargoWorkspace,
+    val target: CargoWorkspace.Target
+) {
+    val pkg: CargoWorkspace.Package get() = target.pkg
+}
+
+val RsCompositeElement.cargoContext: CargoContext? get() {
+    val cargoProject = project.cargoProjects.findProjectForFile(containingFile.virtualFile)
+    val ws = cargoProject?.workspace ?: return null
+    val file = crateRoot?.containingFile?.originalFile?.virtualFile ?: return null
+    val target = ws.findTargetByCrateRoot(file) ?: return null
+    return CargoContext(cargoProject, ws, target)
+}
 
 
 val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target?
