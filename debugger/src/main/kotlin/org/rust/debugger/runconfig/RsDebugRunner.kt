@@ -60,7 +60,7 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
     override fun prepare(env: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
         val cleaned = (env.runnerAndConfigurationSettings!!.configuration as CargoCommandConfiguration).clean().ok!!
         val cargoProjectDirectory = cleaned.cargoProject.manifest.parent
-        val cargo = env.project.toolchain!!.cargo(cargoProjectDirectory)
+        val cargo = env.project.toolchain!!.cargoOrXargo(cargoProjectDirectory)
 
         val (buildArgs, execArgs) = cleaned.cmd.splitOnDoubleDash()
 
@@ -118,7 +118,7 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
     val promise = AsyncPromise<Binary?>()
 
     val processForUserOutput = ProcessOutput()
-    val processForUser = KillableColoredProcessHandler(cargo.toColoredCommandLine(command))
+    val processForUser = KillableColoredProcessHandler(cargo.generalCommandLineWithColors(command))
 
     processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
@@ -135,7 +135,7 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
 
                     override fun run(indicator: ProgressIndicator) {
                         indicator.isIndeterminate = true
-                        val processForJson = CapturingProcessHandler(cargo.toGeneralCommandLine(command.prependArgument("--message-format=json")))
+                        val processForJson = CapturingProcessHandler(cargo.generalCommandLineNoColors(command.prependArgument("--message-format=json")))
                         val output = processForJson.runProcessWithProgressIndicator(indicator)
                         if (output.isCancelled || output.exitCode != 0) {
                             promise.setResult(null)

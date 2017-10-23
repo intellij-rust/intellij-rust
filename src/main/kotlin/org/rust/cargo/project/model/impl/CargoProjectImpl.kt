@@ -357,7 +357,7 @@ private fun fetchCargoWorkspace(
                 "invalid Rust toolchain ${toolchain.presentableLocation}"
             )
         }
-        val cargo = toolchain.cargo(projectDirectory)
+        val cargo = toolchain.cargo()
         try {
             val ws = cargo.metadata(project, projectDirectory, object : ProcessAdapter() {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {

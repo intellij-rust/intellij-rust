@@ -27,6 +27,8 @@ import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.openapiext.pathAsPath
+import org.rust.openapiext.withWorkDirectory
+import org.rust.stdext.buildList
 import java.nio.file.Path
 
 /**
@@ -60,14 +62,25 @@ class Cargo(
     ): CargoWorkspace {
         val output = CargoCommandLine("metadata", projectDirectory, listOf("--verbose", "--format-version", "1", "--all-features"))
             .execute(owner, listener)
-        val rawData = parse(output.stdout)
-        val projectDescriptionData = CargoMetadata.clean(rawData)
+
+        val json = output.stdout.dropWhile { it != '{' }
+        val rawData = try {
+            Gson().fromJson(json, CargoMetadata.Project::class.java)
+        } catch (e: JsonSyntaxException) {
+            throw ExecutionException(e)
+        }
+
         val manifestPath = projectDirectory.resolve("Cargo.toml")
+        val projectDescriptionData = CargoMetadata.clean(rawData)
         return CargoWorkspace.deserialize(manifestPath, projectDescriptionData)
     }
 
     @Throws(ExecutionException::class)
-    fun init(owner: Disposable, projectDirectory: VirtualFile, createBinary: Boolean) {
+    fun init(
+        owner: Disposable,
+        projectDirectory: VirtualFile,
+        createBinary: Boolean
+    ) {
         check(projectDirectory.exists()) {
             "Failed to initialize Cargo project: `${projectDirectory.path}` does not exist"
         }
@@ -82,27 +95,26 @@ class Cargo(
     }
 
     @Throws(ExecutionException::class)
-    fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
+    fun reformatFile(owner: Disposable, file: VirtualFile): ProcessOutput {
         val cmd = CargoCommandLine(
             "fmt",
+            file.parent.pathAsPath,
             listOf("--all", "--", "--write-mode=overwrite", "--skip-children", file.path)
         )
-        val result = cmd.execute(owner, listener)
+        val result = cmd.execute(owner)
         VfsUtil.markDirtyAndRefresh(true, true, true, file)
         return result
     }
 
-    fun checkProject(owner: Disposable): ProcessOutput =
-        CargoCommandLine("check", listOf("--message-format=json", "--all"))
-            .execute(owner, ignoreExitCode = true)
+    @Throws(ExecutionException::class)
+    fun checkProject(owner: Disposable, projectDirectory: Path): ProcessOutput =
+        CargoCommandLine("check", projectDirectory, listOf("--message-format=json", "--all"))
+            .execute(owner)
 
-    fun clippyCommandLine(channel: RustChannel): CargoCommandLine =
-        CargoCommandLine("clippy", channel = channel)
-
-    fun toColoredCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
+    fun generalCommandLineWithColors(commandLine: CargoCommandLine): GeneralCommandLine =
         generalCommandLine(commandLine, true)
 
-    fun toGeneralCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
+    fun generalCommandLineNoColors(commandLine: CargoCommandLine): GeneralCommandLine =
         generalCommandLine(commandLine, false)
 
     private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
@@ -113,15 +125,11 @@ class Cargo(
             commandLine
         }
 
-        val cmdLine = when {
-            commandLine.channel == RustChannel.DEFAULT -> GeneralCommandLine(cargoExecutable)
-            else -> GeneralCommandLine(cargoExecutable, "+${commandLine.channel}")
-        }
+        val cmdLine = GeneralCommandLine(cargoExecutable)
 
         cmdLine
             .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(commandLine.workingDirectory ?: projectDirectory)
-            .withParameters(commandLine.command)
+            .withWorkDirectory(commandLine.workingDirectory)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
             .withEnvironment("TERM", "ansi")
             .withRedirectErrorStream(true)
@@ -131,28 +139,31 @@ class Cargo(
         when (commandLine.backtraceMode) {
             BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
             BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "full")
-            BacktraceMode.NO -> {
-            }
+            BacktraceMode.NO -> Unit
         }
         commandLine.environmentVariables.configureCommandLine(cmdLine, true)
 
-        // Force colors
-        if (colors
-            && !SystemInfo.isWindows //BACKCOMPAT: remove windows check once termcolor'ed Cargo is stable
+        val forceColors = colors
+            && !SystemInfo.isWindows //Hey, wanna switch rustc to termcolor to get us colors on windows?
             && commandLine.command in COLOR_ACCEPTING_COMMANDS
-            && commandLine.additionalArguments.none { it.startsWith("--color") }) {
+            && commandLine.additionalArguments.none { it.startsWith("--color") }
 
-            cmdLine
-                .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
+        val parameters = buildList<String> {
+            if (commandLine.channel != RustChannel.DEFAULT) {
+                add("+${commandLine.channel}")
+            }
+            if (forceColors) {
+                add("--color=always")
+            }
+            add(commandLine.command)
+            addAll(commandLine.additionalArguments)
         }
 
-        return cmdLine.withParameters(commandLine.additionalArguments)
+        return cmdLine.withParameters(parameters)
     }
 
-
-    private fun CargoCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
-                                         ignoreExitCode: Boolean = false): ProcessOutput {
-        val command = toGeneralCommandLine(this)
+    private fun CargoCommandLine.execute(owner: Disposable, listener: ProcessListener? = null): ProcessOutput {
+        val command = generalCommandLineNoColors(this)
         val handler = CapturingProcessHandler(command)
         val cargoKiller = Disposable {
             // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
@@ -173,11 +184,7 @@ class Cargo(
             // On the one hand, this seems fishy,
             // on the other hand, this is isomorphic
             // to the scenario where cargoKiller triggers.
-            if (ignoreExitCode) {
-                return ProcessOutput().apply { setCancelled() }
-            } else {
-                throw ExecutionException("Cargo command failed to start")
-            }
+            throw ExecutionException("Cargo command failed to start")
         }
 
         listener?.let { handler.addProcessListener(it) }
@@ -186,7 +193,7 @@ class Cargo(
         } finally {
             Disposer.dispose(cargoKiller)
         }
-        if (!ignoreExitCode && output.exitCode != 0) {
+        if (output.exitCode != 0) {
             throw ExecutionException("""
             Cargo execution failed (exit code ${output.exitCode}).
             ${command.commandLineString}
@@ -194,16 +201,6 @@ class Cargo(
             stderr : ${output.stderr}""".trimIndent())
         }
         return output
-    }
-
-    private fun parse(output: String): CargoMetadata.Project {
-        // Skip "Downloading..." stuff
-        val json = output.dropWhile { it != '{' }
-        return try {
-            Gson().fromJson(json, CargoMetadata.Project::class.java)
-        } catch (e: JsonSyntaxException) {
-            throw ExecutionException(e)
-        }
     }
 
     private var _http: HttpConfigurable? = null

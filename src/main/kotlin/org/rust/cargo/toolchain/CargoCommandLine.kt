@@ -19,10 +19,6 @@ data class CargoCommandLine(
     val nocapture: Boolean = true
 ) {
 
-    fun forProject(project: CargoProject): CargoCommandLine {
-        return copy(additionalArguments = listOf("--manifest-path", project.manifest.toString()) + additionalArguments)
-    }
-
     fun withDoubleDashFlag(arg: String): CargoCommandLine {
         val (pre, post) = splitOnDoubleDash()
         if (arg in post) return this

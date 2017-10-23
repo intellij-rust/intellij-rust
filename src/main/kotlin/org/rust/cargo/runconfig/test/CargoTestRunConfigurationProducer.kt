@@ -88,8 +88,8 @@ class TestConfig(
 ) {
     val cargoCommandLine: CargoCommandLine = CargoCommandLine(
         "test",
-        target.cargoArgumentSpeck + testPath,
-        workingDirectory = target.pkg.rootDirectory
+        target.pkg.rootDirectory,
+        target.cargoArgumentSpeck + testPath
     ).let { if (exact) it.withDoubleDashFlag("--exact") else it }
 }
 

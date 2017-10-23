@@ -57,8 +57,8 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
 
         val cargoCommandLine = CargoCommandLine(
             "run",
-            listOf("--$kind", target.name),
-            workingDirectory = target.pkg.rootDirectory
+            target.pkg.rootDirectory,
+            listOf("--$kind", target.name)
         )
     }
 
