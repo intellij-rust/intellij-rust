@@ -97,8 +97,9 @@ class Cargo(
         return result
     }
 
-    fun checkProject(owner: Disposable): ProcessOutput =
-        CargoCommandLine("check", additionalArguments = listOf("--message-format=json", "--all"))
+    @Throws(ExecutionException::class)
+    fun checkProject(owner: Disposable, projectDirectory: Path): ProcessOutput =
+        CargoCommandLine("check", projectDirectory, listOf("--message-format=json", "--all"))
             .execute(owner, ignoreExitCode = true)
 
     fun clippyCommandLine(channel: RustChannel): CargoCommandLine =

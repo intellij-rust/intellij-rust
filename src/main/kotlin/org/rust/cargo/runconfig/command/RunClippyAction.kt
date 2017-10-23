@@ -8,6 +8,7 @@ package org.rust.cargo.runconfig.command
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
 
 class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
