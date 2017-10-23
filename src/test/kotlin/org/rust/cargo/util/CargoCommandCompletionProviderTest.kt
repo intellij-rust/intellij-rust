@@ -10,6 +10,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.lang.RsTestBase
+import java.nio.file.Paths
 
 
 class CargoCommandCompletionProviderTest : RsTestBase() {
@@ -124,6 +125,6 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             )),
             pkg("quux", false, listOf(target("quux", CargoWorkspace.TargetKind.LIB)))
         )
-        CargoWorkspace.deserialize(null, CleanCargoMetadata(pkgs, dependencies = emptyList()))
+        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CleanCargoMetadata(pkgs, dependencies = emptyList()))
     }
 }

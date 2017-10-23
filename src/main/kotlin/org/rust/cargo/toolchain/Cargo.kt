@@ -58,12 +58,19 @@ class Cargo(
      * runs for too long.
      */
     @Throws(ExecutionException::class)
-    fun fullProjectDescription(owner: Disposable, listener: ProcessListener? = null): CargoWorkspace {
-        val output = CargoCommandLine("metadata", listOf("--verbose", "--format-version", "1", "--all-features"))
-            .execute(owner, listener)
-        val rawData = parse(output.stdout)
+    fun fullProjectDescription(owner: Disposable, projectDirectory: Path, listener: ProcessListener? = null): CargoWorkspace {
+        val json = CargoCommandLine("metadata",
+            listOf("--verbose", "--format-version", "1", "--all-features")
+        ).execute(owner, listener)
+            .stdout
+            .dropWhile { it != '{' }
+        val rawData = try {
+            Gson().fromJson(json, CargoMetadata.Project::class.java)
+        } catch (e: JsonSyntaxException) {
+            throw ExecutionException(e)
+        }
         val projectDescriptionData = CargoMetadata.clean(rawData)
-        val manifestPath = projectDirectory?.resolve("Cargo.toml")
+        val manifestPath = projectDirectory.resolve("Cargo.toml")
         return CargoWorkspace.deserialize(manifestPath, projectDescriptionData)
     }
 
@@ -189,16 +196,6 @@ class Cargo(
             stderr : ${output.stderr}""".trimIndent())
         }
         return output
-    }
-
-    private fun parse(output: String): CargoMetadata.Project {
-        // Skip "Downloading..." stuff
-        val json = output.dropWhile { it != '{' }
-        return try {
-            Gson().fromJson(json, CargoMetadata.Project::class.java)
-        } catch (e: JsonSyntaxException) {
-            throw ExecutionException(e)
-        }
     }
 
     private var _http: HttpConfigurable? = null

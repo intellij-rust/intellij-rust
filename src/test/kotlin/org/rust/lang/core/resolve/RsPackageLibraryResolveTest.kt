@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import java.nio.file.Paths
 
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
@@ -55,7 +56,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     private object WithLibraryProjectDescriptor : RustProjectDescriptorBase() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
             return CleanCargoMetadata(listOf(testCargoPackage(contentRoot, name = "my_lib")), emptyList()).let {
-                CargoWorkspace.deserialize(null, it)
+                CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), it)
             }
         }
     }

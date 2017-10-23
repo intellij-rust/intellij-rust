@@ -359,7 +359,7 @@ private fun fetchCargoWorkspace(
         }
         val cargo = toolchain.cargo(projectDirectory)
         try {
-            val ws = cargo.fullProjectDescription(project, object : ProcessAdapter() {
+            val ws = cargo.fullProjectDescription(project, projectDirectory, object : ProcessAdapter() {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
                     val text = event.text.trim { it <= ' ' }
                     if (text.startsWith("Updating") || text.startsWith("Downloading")) {
