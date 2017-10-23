@@ -8,7 +8,6 @@ package org.rust.lang.core.types
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsTypeAliasOwner
 import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.types.ty.*
 
 

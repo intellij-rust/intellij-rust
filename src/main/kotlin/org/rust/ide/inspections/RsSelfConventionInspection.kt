@@ -8,15 +8,11 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.selfType
-import org.rust.lang.core.types.ty.TyStructOrEnumBase
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.type
 import org.rust.stdext.typeAscription
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {

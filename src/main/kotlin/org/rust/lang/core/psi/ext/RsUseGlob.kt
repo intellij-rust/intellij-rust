@@ -8,7 +8,6 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsUseGlob
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.resolve.ref.RsReference

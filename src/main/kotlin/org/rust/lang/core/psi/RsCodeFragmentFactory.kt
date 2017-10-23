@@ -6,7 +6,6 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiManager
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.ext.CARGO_WORKSPACE
 import org.rust.lang.core.psi.ext.RsCompositeElement
