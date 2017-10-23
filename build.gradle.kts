@@ -146,6 +146,7 @@ project(":") {
         overwrite(false)
     }
     val unpackClion = task<Copy>("unpackClion") {
+        onlyIf { !file("${project.projectDir}/deps/clion-$clionVersion").exists() }
         from(tarTree("deps/clion-$clionVersion.tar.gz"))
         into(file("${project.projectDir}/deps"))
         dependsOn(downloadClion)
@@ -161,6 +162,16 @@ project(":") {
     tasks.withType<Test> {
         testLogging {
             exceptionFormat = TestExceptionFormat.FULL
+        }
+    }
+
+    task("resolveDependencies") {
+        dependsOn(unpackClion)
+        doLast {
+            rootProject.allprojects
+                .map { it.configurations }
+                .flatMap { listOf(it.compile, it.testCompile) }
+                .forEach { it.resolve() }
         }
     }
 }

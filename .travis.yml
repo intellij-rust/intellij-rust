@@ -25,6 +25,7 @@ before_script:
   - export PATH=$HOME/.cargo/bin:$PATH
   - rustfmt --help || cargo install rustfmt --force
   - ./check-license.sh
+  - ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon
   - ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
 
 script:
