@@ -40,7 +40,18 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
             base
         }
 
-        is RsConstant -> base.withTypeText(element.typeReference?.text)
+        is RsConstant -> base
+            .withTypeText(element.typeReference?.text)
+            .withInsertHandler handler@ { context: InsertionContext, _ ->
+                val curUseItem = context.getItemOfType<RsUseItem>()
+                if (curUseItem != null) {
+                    val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
+                    if (!(hasSemicolon || context.isInGlob)) {
+                        context.addSuffix(";")
+                    }
+                    return@handler
+                }
+            }
         is RsFieldDecl -> base.withTypeText(element.typeReference?.text)
 
         is RsFunction -> base
@@ -136,8 +147,8 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     PrioritizedLookupElement.withPriority(this, priority)
 
-inline fun <reified T: RsItemElement>InsertionContext.getItemOfType(strict: Boolean = false): T? =
-    PsiTreeUtil.findElementOfClassAtOffset(this.file, this.tailOffset -1, T::class.java, strict)
+inline fun <reified T : RsItemElement> InsertionContext.getItemOfType(strict: Boolean = false): T? =
+    PsiTreeUtil.findElementOfClassAtOffset(this.file, this.tailOffset - 1, T::class.java, strict)
 
 private val InsertionContext.isInGlob: Boolean
     get() = PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, RsUseGlobList::class.java, false) != null
