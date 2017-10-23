@@ -119,7 +119,7 @@ private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationRe
 
 
     val output = try {
-        info.toolchain.cargo(info.projectPath).checkProject(info.module, info.projectPath)
+        info.toolchain.cargoOrWrapper(info.projectPath).checkProject(info.module, info.projectPath)
     } catch (e: ExecutionException) {
         return null
     }

@@ -44,10 +44,7 @@ import java.nio.file.Path
  */
 class Cargo(
     private val cargoExecutable: Path,
-    private val rustExecutable: Path,
-    // It's more convenient to use project directory rather then path to `Cargo.toml`
-    // because some commands don't accept `--manifest-path` argument
-    private val projectDirectory: Path?
+    private val rustExecutable: Path
 ) {
 
     /**
@@ -118,7 +115,7 @@ class Cargo(
 
         val cmdLine = GeneralCommandLine(cargoExecutable)
             .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(commandLine.workingDirectory ?: projectDirectory)
+            .withWorkDirectory(commandLine.workingDirectory)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
             .withEnvironment("TERM", "ansi")
             .withRedirectErrorStream(true)

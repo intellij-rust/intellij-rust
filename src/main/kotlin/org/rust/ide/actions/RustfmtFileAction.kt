@@ -16,7 +16,6 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.core.psi.isRustFile
-import org.rust.openapiext.pathAsPath
 
 class RustfmtFileAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
@@ -27,7 +26,7 @@ class RustfmtFileAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val (project, toolchain, file) = getContext(e) ?: return
 
-        val cargo = toolchain.cargo(file.parent.pathAsPath)
+        val cargo = toolchain.rawCargo()
         try {
             cargo.reformatFile(project, file)
         } catch (e: ExecutionException) {
