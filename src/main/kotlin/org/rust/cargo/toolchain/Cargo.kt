@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
 import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
@@ -27,8 +26,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.fullyRefreshDirectory
-import org.rust.openapiext.withWorkDirectory
-import java.io.File
+import org.rust.openapiext.pathAsPath
 import java.nio.file.Path
 
 /**
@@ -42,10 +40,7 @@ import java.nio.file.Path
  */
 class Cargo(
     private val cargoExecutable: Path,
-    private val rustExecutable: Path,
-    // It's more convenient to use project directory rather then path to `Cargo.toml`
-    // because some commands don't accept `--manifest-path` argument
-    private val projectDirectory: Path?
+    private val rustExecutable: Path
 ) {
 
     /**
@@ -58,25 +53,35 @@ class Cargo(
      * runs for too long.
      */
     @Throws(ExecutionException::class)
-    fun fullProjectDescription(owner: Disposable, listener: ProcessListener? = null): CargoWorkspace {
-        val output = CargoCommandLine("metadata", listOf("--verbose", "--format-version", "1", "--all-features"))
+    fun metadata(
+        owner: Disposable,
+        projectDirectory: Path,
+        listener: ProcessListener? = null
+    ): CargoWorkspace {
+        val output = CargoCommandLine("metadata", projectDirectory, listOf("--verbose", "--format-version", "1", "--all-features"))
             .execute(owner, listener)
         val rawData = parse(output.stdout)
         val projectDescriptionData = CargoMetadata.clean(rawData)
-        val manifestPath = projectDirectory?.resolve("Cargo.toml")
+        val manifestPath = projectDirectory.resolve("Cargo.toml")
         return CargoWorkspace.deserialize(manifestPath, projectDescriptionData)
     }
 
     @Throws(ExecutionException::class)
-    fun init(owner: Disposable, directory: VirtualFile, createBinary: Boolean) {
-        val path = PathUtil.toSystemDependentName(directory.path)
+    fun init(owner: Disposable, projectDirectory: VirtualFile, createBinary: Boolean) {
+        check(projectDirectory.exists()) {
+            "Failed to initialize Cargo project: `${projectDirectory.path}` does not exist"
+        }
+        val projectPath = projectDirectory.pathAsPath
         val crateType = if (createBinary) "--bin" else "--lib"
-        CargoCommandLine("init", listOf(crateType, path))
+        CargoCommandLine("init", projectPath, listOf(crateType))
             .execute(owner)
-        check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
-        fullyRefreshDirectory(directory)
+        fullyRefreshDirectory(projectDirectory)
+        check(projectDirectory.findChild("Cargo.toml") != null) {
+            "Failed to initialize Cargo project: no Cargo.toml in `${projectDirectory.path}`"
+        }
     }
 
+    @Throws(ExecutionException::class)
     fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
         val cmd = CargoCommandLine(
             "fmt",
