@@ -49,6 +49,8 @@ interface CargoWorkspace {
 
         val dependencies: Collection<Package>
 
+        val workspace: CargoWorkspace
+
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.normName == normName }?.libTarget
     }
@@ -183,7 +185,9 @@ private class WorkspaceImpl(
                 pkg.dependencies.addAll(depNode.dependenciesIndexes.map { packages[it] })
             }
 
-            return WorkspaceImpl(manifestPath, packages)
+            val workspace = WorkspaceImpl(manifestPath, packages)
+            workspace.packages.forEach { it.initWorkspace(workspace) }
+            return workspace
         }
     }
 }
@@ -212,6 +216,14 @@ private class PackageImpl(
         targets.forEach { it.initPackage(this) }
         return this
     }
+
+    private lateinit var myWorkspace: WorkspaceImpl
+    fun initWorkspace(workspace: WorkspaceImpl) {
+        myWorkspace = workspace
+    }
+
+    override val workspace: CargoWorkspace get() = myWorkspace
+
 
     override fun toString()
         = "Package(name='$name', contentRootUrl='$contentRootUrl')"

@@ -1,12 +1,14 @@
 <component name="ProjectDictionaryState">
   <dictionary name="matklad">
     <words>
+      <w>clippy</w>
       <w>debouncer</w>
       <w>frobnicate</w>
       <w>nocapture</w>
       <w>rustc</w>
       <w>rustup</w>
       <w>subcommand</w>
+      <w>subcommands</w>
       <w>toml</w>
       <w>tuples</w>
       <w>unsafety</w>
