@@ -167,11 +167,11 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     fun `test use struct semicolon`() = doSingleCompletion("""
-        use self::f/*caret*/
-        struct foo{}
+        use self::F/*caret*/
+        struct Foo;
     """, """
-        use self::foo;/*caret*/
-        struct foo{}
+        use self::Foo;/*caret*/
+        struct Foo;
     """)
 
     fun `test use const semicolon`() = doSingleCompletion("""
@@ -180,6 +180,14 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         use self::foo;/*caret*/
         const foo: str = "foo";
+    """)
+
+    fun `test use trait semicolon`() = doSingleCompletion("""
+        use self::f/*caret*/
+        trait foo{}
+    """, """
+        use self::foo;/*caret*/
+        trait foo{}
     """)
 
     fun `test wildcard imports`() = doSingleCompletion("""

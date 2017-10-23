@@ -42,17 +42,9 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
 
         is RsConstant -> base
             .withTypeText(element.typeReference?.text)
-            .withInsertHandler handler@ { context: InsertionContext, _ ->
-                val curUseItem = context.getItemOfType<RsUseItem>()
-                if (curUseItem != null) {
-                    val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
-                    if (!(hasSemicolon || context.isInGlob)) {
-                        context.addSuffix(";")
-                    }
-                    return@handler
-                }
-            }
+            .withInsertHandler({ context: InsertionContext, _ -> appendSemicolon(context) })
         is RsFieldDecl -> base.withTypeText(element.typeReference?.text)
+        is RsTraitItem -> base.withInsertHandler({ context: InsertionContext, _ -> appendSemicolon(context) })
 
         is RsFunction -> base
             .withTypeText(element.retType?.typeReference?.text ?: "()")
@@ -83,16 +75,7 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
                 element.tupleFields != null -> element.tupleFields!!.text
                 else -> ""
             })
-            .withInsertHandler handler@ { context: InsertionContext, _: LookupElement ->
-                val curUseItem = context.getItemOfType<RsUseItem>()
-                if (curUseItem != null) {
-                    val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
-                    if (!(hasSemicolon || context.isInGlob)) {
-                        context.addSuffix(";")
-                    }
-                    return@handler
-                }
-            }
+            .withInsertHandler({ context: InsertionContext, _: LookupElement -> appendSemicolon(context) })
 
         is RsEnumVariant -> base
             .withTypeText(element.parentOfType<RsEnumItem>()?.name ?: "")
@@ -146,6 +129,17 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
 
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     PrioritizedLookupElement.withPriority(this, priority)
+
+fun appendSemicolon(context: InsertionContext) {
+    val curUseItem = context.getItemOfType<RsUseItem>()
+    if (curUseItem != null) {
+        val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
+        if (!(hasSemicolon || context.isInGlob)) {
+            context.addSuffix(";")
+        }
+    }
+}
+
 
 inline fun <reified T : RsItemElement> InsertionContext.getItemOfType(strict: Boolean = false): T? =
     PsiTreeUtil.findElementOfClassAtOffset(this.file, this.tailOffset - 1, T::class.java, strict)
