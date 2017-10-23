@@ -26,7 +26,7 @@ class RsModuleBuilder : ModuleBuilder() {
 
     data class ConfigurationData(
         val settings: RustProjectSettingsPanel.Data,
-        val createExecutableModule: Boolean
+        val createBinary: Boolean
     )
 
     override fun getModuleType(): ModuleType<*>? = RsModuleType.INSTANCE
@@ -48,7 +48,7 @@ class RsModuleBuilder : ModuleBuilder() {
         if (toolchain != null && root.findChild(RustToolchain.CARGO_TOML) == null) {
             try {
                 toolchain.nonProjectCargo().init(modifiableRootModel.module, root,
-                    configurationData?.createExecutableModule ?: true)
+                    configurationData?.createBinary ?: true)
             } catch (e: ExecutionException) {
                 LOG.error(e)
                 throw ConfigurationException(e.message)

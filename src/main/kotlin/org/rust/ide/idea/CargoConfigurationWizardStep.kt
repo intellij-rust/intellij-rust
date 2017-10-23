@@ -30,12 +30,12 @@ class CargoConfigurationWizardStep private constructor(
 ) : ModuleWizardStep() {
 
     private val rustProjectSettings = RustProjectSettingsPanel()
-    private val createExecutableModuleCheckbox = JBCheckBox(null, true)
+    private val createBinaryCheckbox = JBCheckBox(null, true)
 
     override fun getComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
         if (projectDescriptor == null) {
-            row("Create executable project: ") { createExecutableModuleCheckbox() }
+            row("Use a binary (application) template:") { createBinaryCheckbox() }
         }
     }
 
@@ -48,7 +48,7 @@ class CargoConfigurationWizardStep private constructor(
         if (projectBuilder is RsModuleBuilder) {
             projectBuilder.configurationData = RsModuleBuilder.ConfigurationData(
                 rustProjectSettings.data,
-                createExecutableModuleCheckbox.isSelected
+                createBinaryCheckbox.isSelected
             )
             projectBuilder.addModuleConfigurationUpdater(ConfigurationUpdater)
         } else {
