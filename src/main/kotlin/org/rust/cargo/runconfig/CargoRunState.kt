@@ -10,33 +10,42 @@ import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.openapi.vfs.VirtualFile
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.filters.RsBacktraceFilter
 import org.rust.cargo.runconfig.filters.RsConsoleFilter
 import org.rust.cargo.runconfig.filters.RsExplainFilter
 import org.rust.cargo.runconfig.filters.RsPanicFilter
+import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.openapiext.pathAsPath
 
 class CargoRunState(
     environment: ExecutionEnvironment,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CommandLineState(environment) {
     private val toolchain: RustToolchain = config.toolchain
-    private val cargoProjectDirectory: VirtualFile = config.cargoProjectDirectory
-    private val commandLine: CargoCommandLine = config.cmd
+    val commandLine: CargoCommandLine = config.cmd
+    private val cargoProject: CargoProject? = CargoCommandConfiguration.findCargoProject(
+        environment.project,
+        commandLine.additionalArguments,
+        commandLine.workingDirectory
+    )
+
+    fun cargo(): Cargo = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
 
     init {
         consoleBuilder.addFilter(RsExplainFilter())
-        consoleBuilder.addFilter(RsConsoleFilter(environment.project, cargoProjectDirectory))
-        consoleBuilder.addFilter(RsPanicFilter(environment.project, cargoProjectDirectory))
-        consoleBuilder.addFilter(RsBacktraceFilter(environment.project, cargoProjectDirectory, config.cargoProject.workspace))
+        val dir = cargoProject?.rootDir
+        if (dir != null) {
+            consoleBuilder.addFilter(RsConsoleFilter(environment.project, dir))
+            consoleBuilder.addFilter(RsPanicFilter(environment.project, dir))
+            consoleBuilder.addFilter(RsBacktraceFilter(environment.project, dir, cargoProject?.workspace))
+        }
     }
 
     override fun startProcess(): ProcessHandler {
-        val cmd = toolchain.cargoOrWrapper(cargoProjectDirectory.pathAsPath)
+        val cmd = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
             .toColoredCommandLine(commandLine)
             // Explicitly use UTF-8.
             // Even though default system encoding is usually not UTF-8 on windows,

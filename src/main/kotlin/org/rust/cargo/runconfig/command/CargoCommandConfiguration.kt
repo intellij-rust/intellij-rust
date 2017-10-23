@@ -13,7 +13,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
 import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
@@ -98,9 +97,7 @@ class CargoCommandConfiguration(
     sealed class CleanConfiguration {
         class Ok(
             val cmd: CargoCommandLine,
-            val toolchain: RustToolchain,
-            val cargoProject: CargoProject,
-            val cargoProjectDirectory: VirtualFile
+            val toolchain: RustToolchain
         ) : CleanConfiguration()
 
         class Err(val error: RuntimeConfigurationError) : CleanConfiguration()
@@ -123,9 +120,6 @@ class CargoCommandConfiguration(
             CargoCommandLine(args.first(), workingDirectory, args.drop(1), backtrace, channel, env, nocapture)
         }
 
-        val cargoProject = findCargoProject(project, command, workingDirectory)
-            ?: return CleanConfiguration.error("Unable to determine Cargo project")
-
         val toolchain = project.toolchain
             ?: return CleanConfiguration.error("No Rust toolchain specified")
 
@@ -137,25 +131,18 @@ class CargoCommandConfiguration(
             return CleanConfiguration.error("Channel '$channel' is set explicitly with no rustup available")
         }
 
-        return CleanConfiguration.Ok(
-            cmd,
-            toolchain,
-            cargoProject,
-            cargoProject.rootDir
-                ?: return CleanConfiguration.error("Cargo project does not exist")
-        )
+        return CleanConfiguration.Ok(cmd, toolchain)
     }
 
     companion object {
-        fun findCargoProject(project: Project, cmd: String, workingDirectory: Path?): CargoProject? {
+        fun findCargoProject(project: Project, additionalArgs: List<String>, workingDirectory: Path?): CargoProject? {
             val cargoProjects = project.cargoProjects
             cargoProjects.allProjects.singleOrNull()?.let { return it }
 
             val manifestPath = run {
-                val args = ParametersListUtil.parse(cmd)
-                val idx = args.indexOf("--manifest-path")
+                val idx = additionalArgs.indexOf("--manifest-path")
                 if (idx == -1) return@run null
-                args.getOrNull(idx + 1)?.let { Paths.get(it) }
+                additionalArgs.getOrNull(idx + 1)?.let { Paths.get(it) }
             }
 
             for (dir in listOfNotNull(manifestPath?.parent, workingDirectory)) {
@@ -165,6 +152,10 @@ class CargoCommandConfiguration(
             }
             return null
         }
+
+        fun findCargoProject(project: Project, cmd: String, workingDirectory: Path?): CargoProject? = findCargoProject(
+            project, ParametersListUtil.parse(cmd), workingDirectory
+        )
     }
 }
 
