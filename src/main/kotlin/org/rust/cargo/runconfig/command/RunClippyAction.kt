@@ -8,6 +8,7 @@ package org.rust.cargo.runconfig.command
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
 
 class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
@@ -17,7 +18,7 @@ class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
         val toolchain = project.toolchain ?: return
         val cargoProject = getAppropriateCargoProject(e) ?: return
         val channel = if (toolchain.isRustupAvailable) RustChannel.NIGHTLY else RustChannel.DEFAULT
-        runCommand(project, toolchain.cargo(cargoProject.manifest.parent).clippyCommandLine(channel))
+        runCommand(project, CargoCommandLine("clippy", cargoProject.workingDirectory, channel = channel))
     }
 
 }
