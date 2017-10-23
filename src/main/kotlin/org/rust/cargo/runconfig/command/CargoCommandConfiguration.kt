@@ -118,7 +118,7 @@ class CargoCommandConfiguration(
             if (args.isEmpty()) {
                 return CleanConfiguration.error("No command specified")
             }
-            CargoCommandLine(args.first(), args.drop(1), backtrace, channel, workingDirectory, env, nocapture)
+            CargoCommandLine(args.first(), workingDirectory, args.drop(1), backtrace, channel, env, nocapture)
         }
 
         val cargoProject = findCargoProject(project, command, workingDirectory)

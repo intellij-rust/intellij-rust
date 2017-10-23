@@ -27,6 +27,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.withWorkDirectory
 import org.rust.stdext.buildList
 import java.io.File
@@ -60,7 +61,7 @@ class Cargo(
      */
     @Throws(ExecutionException::class)
     fun fullProjectDescription(owner: Disposable, projectDirectory: Path, listener: ProcessListener? = null): CargoWorkspace {
-        val json = CargoCommandLine("metadata",
+        val json = CargoCommandLine("metadata", projectDirectory,
             listOf("--verbose", "--format-version", "1", "--all-features")
         ).execute(owner, listener)
             .stdout
@@ -79,7 +80,7 @@ class Cargo(
     fun init(owner: Disposable, directory: VirtualFile, createBinary: Boolean) {
         val path = PathUtil.toSystemDependentName(directory.path)
         val crateType = if (createBinary) "--bin" else "--lib"
-        CargoCommandLine("init", listOf(crateType, path))
+        CargoCommandLine("init", directory.pathAsPath, listOf(crateType, path))
             .execute(owner)
         check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)
@@ -87,7 +88,7 @@ class Cargo(
 
     fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
         val cmd = CargoCommandLine(
-            "fmt",
+            "fmt", file.parent.pathAsPath,
             listOf("--all", "--", "--write-mode=overwrite", "--skip-children", file.path)
         )
         val result = cmd.execute(owner, listener)
@@ -96,7 +97,7 @@ class Cargo(
     }
 
     fun checkProject(owner: Disposable): ProcessOutput =
-        CargoCommandLine("check", listOf("--message-format=json", "--all"))
+        CargoCommandLine("check", additionalArguments = listOf("--message-format=json", "--all"))
             .execute(owner, ignoreExitCode = true)
 
     fun clippyCommandLine(channel: RustChannel): CargoCommandLine =

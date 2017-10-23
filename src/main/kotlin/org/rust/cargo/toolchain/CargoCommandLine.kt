@@ -12,10 +12,10 @@ import java.nio.file.Path
 
 data class CargoCommandLine(
     val command: String, // Can't be `enum` because of custom subcommands
+    val workingDirectory: Path? = null,
     val additionalArguments: List<String> = emptyList(),
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
-    val workingDirectory: Path? = null,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val nocapture: Boolean = true
 ) {
@@ -57,8 +57,8 @@ data class CargoCommandLine(
 
             return CargoCommandLine(
                 command,
-                listOf("--package", target.pkg.name) + targetArgs + additionalArguments,
-                workingDirectory = target.pkg.workspace.manifestPath.parent
+                workingDirectory = target.pkg.workspace.manifestPath.parent,
+                additionalArguments = listOf("--package", target.pkg.name) + targetArgs + additionalArguments
             )
         }
     }
