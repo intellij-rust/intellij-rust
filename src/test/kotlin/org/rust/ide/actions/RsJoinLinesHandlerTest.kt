@@ -5,8 +5,6 @@
 
 package org.rust.ide.actions
 
-import com.intellij.openapi.application.ApplicationInfo
-
 class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
     fun `test empty file`() = doTestRaw ("/*caret*/", "/*caret*/")
 

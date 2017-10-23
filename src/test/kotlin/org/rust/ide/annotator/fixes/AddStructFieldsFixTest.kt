@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator.fixes
 
-import com.intellij.testFramework.LightProjectDescriptor
 import org.intellij.lang.annotations.Language
 import org.rust.ide.annotator.RsAnnotatorTestBase
 

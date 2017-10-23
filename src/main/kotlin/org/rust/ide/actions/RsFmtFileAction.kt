@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.PathUtil
 import org.rust.cargo.project.settings.toolchain
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.core.psi.isRustFile

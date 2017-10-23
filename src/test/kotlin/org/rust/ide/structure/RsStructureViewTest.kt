@@ -5,7 +5,6 @@
 
 package org.rust.ide.structure
 
-import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
 import com.intellij.ui.RowIcon
 import com.intellij.util.ui.tree.TreeUtil

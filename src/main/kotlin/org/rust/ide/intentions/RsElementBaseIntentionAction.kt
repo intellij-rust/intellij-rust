@@ -7,7 +7,6 @@ package org.rust.ide.intentions
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project

@@ -13,7 +13,6 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsDescriptionProvider : ElementDescriptionProvider {

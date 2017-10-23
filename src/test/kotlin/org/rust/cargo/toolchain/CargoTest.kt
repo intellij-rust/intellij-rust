@@ -8,9 +8,7 @@ package org.rust.cargo.toolchain
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.net.HttpConfigurable
-import org.junit.Test
 import org.rust.lang.RsTestBase
-import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 
 class CargoTest : RsTestBase() {

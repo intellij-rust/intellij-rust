@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFieldLookup
-import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.resolve.ref.RsFieldLookupReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
