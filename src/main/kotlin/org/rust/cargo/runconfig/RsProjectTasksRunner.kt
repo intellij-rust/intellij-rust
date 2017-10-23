@@ -23,7 +23,7 @@ class RsProjectTasksRunner : ProjectTaskRunner() {
         val command = if (project.rustSettings.useCargoCheckForBuild) "check" else "build"
 
         for (cargoProject in project.cargoProjects.allProjects) {
-            val cmd = CargoCommandLine(command, additionalArguments = listOf("--all")).forProject(cargoProject)
+            val cmd = CargoCommandLine.forProject(cargoProject, command, listOf("--all"))
             val runnerAndConfigurationSettings = RunManager.getInstance(project)
                 .createCargoCommandRunConfiguration(cmd)
             val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)

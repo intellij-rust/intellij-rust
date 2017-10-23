@@ -18,7 +18,6 @@ class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
         val toolchain = project.toolchain ?: return
         val cargoProject = getAppropriateCargoProject(e) ?: return
         val channel = if (toolchain.isRustupAvailable) RustChannel.NIGHTLY else RustChannel.DEFAULT
-        runCommand(project, CargoCommandLine("clippy", cargoProject.workingDirectory, channel = channel))
+        runCommand(project, CargoCommandLine.forProject(cargoProject, "clippy", channel = channel))
     }
-
 }

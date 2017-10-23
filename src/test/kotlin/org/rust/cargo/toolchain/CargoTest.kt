@@ -61,7 +61,7 @@ class CargoTest : RsTestBase() {
     """)
 
     fun `test don't add color for unknown command`() = checkCommandLine(
-        cargo.toColoredCommandLine(CargoCommandLine("tree")), """
+        cargo.toColoredCommandLine(CargoCommandLine("tree", wd)), """
         cmd: /usr/bin/cargo tree
         env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi
         """, """

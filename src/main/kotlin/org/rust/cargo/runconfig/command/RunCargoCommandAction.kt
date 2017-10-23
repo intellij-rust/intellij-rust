@@ -13,8 +13,8 @@ class RunCargoCommandAction : RunCargoCommandActionBase(CargoIcons.ICON) {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val ws = getAppropriateCargoProject(e)?.workspace
-        val dialog = RunCargoCommandDialog(project, ws)
+        val cargoProject = getAppropriateCargoProject(e) ?: return
+        val dialog = RunCargoCommandDialog(project, cargoProject)
         if (!dialog.showAndGet()) return
 
         runCommand(project, dialog.getCargoCommandLine())

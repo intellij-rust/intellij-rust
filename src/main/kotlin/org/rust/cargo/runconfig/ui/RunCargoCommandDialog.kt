@@ -11,17 +11,16 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.panel
 import com.intellij.util.execution.ParametersListUtil
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoCommandLineEditor
 import javax.swing.JComponent
 
 class RunCargoCommandDialog(
     project: Project,
-    workspace: CargoWorkspace?
+    private val cargoProject: CargoProject
 ) : DialogWrapper(project, false) {
-    private val commandField = CargoCommandLineEditor(project, workspace)
-
+    private val commandField = CargoCommandLineEditor(project, cargoProject.workspace)
 
     init {
         init()
@@ -42,7 +41,7 @@ class RunCargoCommandDialog(
 
     fun getCargoCommandLine(): CargoCommandLine {
         val params = ParametersListUtil.parse(commandField.text)
-        return CargoCommandLine(params.first(), additionalArguments = params.drop(1))
+        return CargoCommandLine.forProject(cargoProject, params.first(), params.drop(1))
     }
 
     override fun doValidate(): ValidationInfo? {
