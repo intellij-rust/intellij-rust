@@ -44,7 +44,7 @@ class CargoCommandConfiguration(
     var command: String = "run"
     var nocapture: Boolean = true
     var backtrace: BacktraceMode = BacktraceMode.SHORT
-    var workingDirectory: Path? = null
+    var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
 
     override fun writeExternal(element: Element) {
@@ -113,6 +113,8 @@ class CargoCommandConfiguration(
     }
 
     fun clean(): CleanConfiguration {
+        val workingDirectory = workingDirectory
+            ?: return CleanConfiguration.error("No working directory specified")
         val cmd = run {
             val args = ParametersListUtil.parse(command)
             if (args.isEmpty()) {
@@ -165,6 +167,8 @@ class CargoCommandConfiguration(
         }
     }
 }
+
+val CargoProject.workingDirectory: Path get() = manifest.parent
 
 
 private fun Element.writeString(name: String, value: String) {
