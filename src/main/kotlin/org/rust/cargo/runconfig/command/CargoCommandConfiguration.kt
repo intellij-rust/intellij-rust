@@ -20,7 +20,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
-import org.rust.cargo.runconfig.ui.CargoRunConfigurationEditorForm
+import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
@@ -90,7 +90,7 @@ class CargoCommandConfiguration(
     }
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
-        CargoRunConfigurationEditorForm(project)
+        CargoCommandConfigurationEditor(project)
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
         clean().ok?.let { CargoRunState(environment, it) }

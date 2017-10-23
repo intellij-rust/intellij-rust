@@ -34,7 +34,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 
-class CargoRunConfigurationEditorForm(val project: Project) : SettingsEditor<CargoCommandConfiguration>() {
+class CargoCommandConfigurationEditor(
+    private val project: Project
+) : SettingsEditor<CargoCommandConfiguration>() {
     private fun currentWorkspace(): CargoWorkspace? =
         CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace
 
