@@ -100,9 +100,6 @@ class Cargo(
         CargoCommandLine("check", additionalArguments = listOf("--message-format=json", "--all"))
             .execute(owner, ignoreExitCode = true)
 
-    fun clippyCommandLine(channel: RustChannel): CargoCommandLine =
-        CargoCommandLine("clippy", channel = channel)
-
     fun toColoredCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
         generalCommandLine(commandLine, true)
 
