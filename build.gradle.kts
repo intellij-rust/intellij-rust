@@ -163,6 +163,16 @@ project(":") {
             exceptionFormat = TestExceptionFormat.FULL
         }
     }
+
+    task("resolveDependencies") {
+        dependsOn(unpackClion)
+        doLast {
+            rootProject.allprojects
+                .map { it.configurations }
+                .flatMap { listOf(it.compile, it.testCompile) }
+                .forEach { it.resolve() }
+        }
+    }
 }
 
 project(":intellij-toml") {
