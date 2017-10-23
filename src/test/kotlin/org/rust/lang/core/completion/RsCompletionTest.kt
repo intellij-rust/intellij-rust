@@ -166,6 +166,14 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo() {}
     """)
 
+    fun `test use struct semicolon`() = doSingleCompletion("""
+        use self::f/*caret*/
+        struct foo{}
+    """, """
+        use self::foo;/*caret*/
+        struct foo{}
+    """)
+
     fun `test wildcard imports`() = doSingleCompletion("""
         mod foo { fn transmogrify() {} }
 

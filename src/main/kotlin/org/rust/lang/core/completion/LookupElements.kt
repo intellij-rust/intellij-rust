@@ -72,6 +72,16 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
                 element.tupleFields != null -> element.tupleFields!!.text
                 else -> ""
             })
+            .withInsertHandler handler@ { context: InsertionContext, _: LookupElement ->
+                val curUseItem = context.getItemOfType<RsUseItem>()
+                if (curUseItem != null) {
+                    val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
+                    if (!(hasSemicolon || context.isInGlob)) {
+                        context.addSuffix(";")
+                    }
+                    return@handler
+                }
+            }
 
         is RsEnumVariant -> base
             .withTypeText(element.parentOfType<RsEnumItem>()?.name ?: "")
