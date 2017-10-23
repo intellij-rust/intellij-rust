@@ -47,7 +47,7 @@ class RsModuleBuilder : ModuleBuilder() {
         // Just work if user "creates new project" over an existing one.
         if (toolchain != null && root.findChild(RustToolchain.CARGO_TOML) == null) {
             try {
-                toolchain.nonProjectCargo().init(modifiableRootModel.module, root,
+                toolchain.rawCargo().init(modifiableRootModel.module, root,
                     configurationData?.createBinary ?: true)
             } catch (e: ExecutionException) {
                 LOG.error(e)

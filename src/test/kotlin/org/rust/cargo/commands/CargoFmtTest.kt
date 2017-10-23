@@ -30,7 +30,7 @@ class CargoFmtTest : RustWithToolchainTestBase() {
             }
         }.create()
 
-        val cargo = myModule.project.toolchain!!.cargo(cargoProjectDirectory.pathAsPath)
+        val cargo = myModule.project.toolchain!!.rawCargo()
         val main = cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!
         val result = cargo.reformatFile(testRootDisposable, main)
         check(result.exitCode == 0)
