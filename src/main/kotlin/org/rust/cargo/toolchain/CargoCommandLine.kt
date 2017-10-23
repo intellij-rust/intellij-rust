@@ -13,7 +13,7 @@ import java.nio.file.Path
 
 data class CargoCommandLine(
     val command: String, // Can't be `enum` because of custom subcommands
-    val workingDirectory: Path,
+    val workingDirectory: Path, // Note that working directory selects Cargo project as well
     val additionalArguments: List<String> = emptyList(),
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
