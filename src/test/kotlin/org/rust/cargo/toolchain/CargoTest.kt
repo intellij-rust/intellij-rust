@@ -14,7 +14,7 @@ import java.nio.file.Paths
 class CargoTest : RsTestBase() {
 
     fun `test run arguments preserved`() = checkCommandLine(
-        cargo.toColoredCommandLine(CargoCommandLine("run", listOf("--bin", "parity", "--", "--prune", "archive"))), """
+        cargo.toColoredCommandLine(CargoCommandLine("run", wd, listOf("--bin", "parity", "--", "--prune", "archive"))), """
         cmd: /usr/bin/cargo run --color=always --bin parity -- --prune archive
         env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi
         """, """
@@ -23,7 +23,7 @@ class CargoTest : RsTestBase() {
     """)
 
     fun `test basic command`() = checkCommandLine(
-        cargo.toGeneralCommandLine(CargoCommandLine("test", listOf("--all"))), """
+        cargo.toGeneralCommandLine(CargoCommandLine("test", wd, listOf("--all"))), """
         cmd: /usr/bin/cargo test --all -- --nocapture
         env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi
         """, """
@@ -42,7 +42,7 @@ class CargoTest : RsTestBase() {
         }
         val cargo = cargo.apply { setHttp(http) }
         checkCommandLine(
-            cargo.toGeneralCommandLine(CargoCommandLine("check")), """
+            cargo.toGeneralCommandLine(CargoCommandLine("check", wd)), """
             cmd: /usr/bin/cargo check
             env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi, http_proxy=http://user:pwd@host:3268/
             """, """
@@ -52,7 +52,7 @@ class CargoTest : RsTestBase() {
     }
 
     fun `test adds colors for common commands`() = checkCommandLine(
-        cargo.toColoredCommandLine(CargoCommandLine("run", listOf("--release", "--", "foo"))), """
+        cargo.toColoredCommandLine(CargoCommandLine("run", wd, listOf("--release", "--", "foo"))), """
         cmd: /usr/bin/cargo run --color=always --release -- foo
         env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi
         """, """
@@ -70,7 +70,7 @@ class CargoTest : RsTestBase() {
     """)
 
     fun `test adds nightly channel`() = checkCommandLine(
-        cargo.toColoredCommandLine(CargoCommandLine("run", listOf("--release", "--", "foo"), channel = RustChannel.NIGHTLY)), """
+        cargo.toColoredCommandLine(CargoCommandLine("run", wd, listOf("--release", "--", "foo"), channel = RustChannel.NIGHTLY)), """
         cmd: /usr/bin/cargo +nightly run --color=always --release -- foo
         env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=full, TERM=ansi
         """, """
@@ -105,6 +105,7 @@ class CargoTest : RsTestBase() {
     private val toolchain get() = RustToolchain(Paths.get("/usr/bin"))
     private val cargo = toolchain.cargo(Paths.get("/my-crate"))
     private val drive = Paths.get("/").toAbsolutePath().toString().toUnixSlashes()
+    private val wd = Paths.get("/my-crate")
 
     private fun String.toUnixSlashes(): String = replace("\\", "/")
 }

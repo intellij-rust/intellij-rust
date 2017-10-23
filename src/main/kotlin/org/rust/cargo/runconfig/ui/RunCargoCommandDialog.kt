@@ -42,7 +42,7 @@ class RunCargoCommandDialog(
 
     fun getCargoCommandLine(): CargoCommandLine {
         val params = ParametersListUtil.parse(commandField.text)
-        return CargoCommandLine(params.first(), params.drop(1))
+        return CargoCommandLine(params.first(), additionalArguments = params.drop(1))
     }
 
     override fun doValidate(): ValidationInfo? {
