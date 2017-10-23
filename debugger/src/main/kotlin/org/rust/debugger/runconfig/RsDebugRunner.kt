@@ -29,7 +29,6 @@ import com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -58,23 +57,22 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
     }
 
     override fun prepare(env: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
-        val cleaned = (env.runnerAndConfigurationSettings!!.configuration as CargoCommandConfiguration).clean().ok!!
-        val cargoProjectDirectory = cleaned.cargoProject.manifest.parent
-        val cargo = env.project.toolchain!!.cargoOrWrapper(cargoProjectDirectory)
+        state as CargoRunState
+        val cmd = state.commandLine
 
-        val (buildArgs, execArgs) = cleaned.cmd.splitOnDoubleDash()
+        val (buildArgs, execArgs) = cmd.splitOnDoubleDash()
 
-        val buildCommand = if (cleaned.cmd.command == "run") {
-            cleaned.cmd.copy(command = "build", additionalArguments = buildArgs)
+        val buildCommand = if (cmd.command == "run") {
+            cmd.copy(command = "build", additionalArguments = buildArgs)
         } else {
-            check(cleaned.cmd.command == "test")
-            cleaned.cmd.prependArgument("--no-run")
+            check(cmd.command == "test")
+            cmd.prependArgument("--no-run")
         }
 
-        return buildProjectAndGetBinaryArtifactPath(env.project, buildCommand, cargo)
+        return buildProjectAndGetBinaryArtifactPath(env.project, buildCommand, state.cargo())
             .then { result ->
                 result?.path?.let {
-                    val commandLine = GeneralCommandLine(it).withWorkDirectory(cargoProjectDirectory)
+                    val commandLine = GeneralCommandLine(it).withWorkDirectory(cmd.workingDirectory)
                     commandLine.withParameters(execArgs)
                     RsRunProfileStarter(commandLine)
                 }

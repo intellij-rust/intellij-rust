@@ -97,7 +97,10 @@ val versionSuffix = if (channel.isBlank()) "" else "-$channel"
 project(":") {
     val clionVersion = prop("clionVersion")
     version = "0.2.0.${prop("buildNumber")}$versionSuffix"
-    intellij { pluginName = "intellij-rust" }
+    intellij {
+        pluginName = "intellij-rust"
+//        alternativeIdePath = "deps/clion-$clionVersion"
+    }
 
     repositories {
         maven { setUrl("https://dl.bintray.com/jetbrains/markdown") }
