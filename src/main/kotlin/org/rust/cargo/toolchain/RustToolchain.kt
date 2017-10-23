@@ -31,7 +31,7 @@ data class RustToolchain(val location: Path) {
     }
 
     fun cargo(cargoProjectDirectory: Path): Cargo =
-        Cargo(chooseCargoExecutable(cargoProjectDirectory), pathToExecutable(RUSTC), cargoProjectDirectory)
+        Cargo(chooseCargoExecutable(cargoProjectDirectory), pathToExecutable(RUSTC))
 
     private fun hasXargoToml(projectDirectory: Path): Boolean =
         projectDirectory.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
@@ -51,7 +51,7 @@ data class RustToolchain(val location: Path) {
     val isRustupAvailable: Boolean get() = hasExecutable(RUSTUP)
 
     fun nonProjectCargo(): Cargo =
-        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), null)
+        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC))
 
     val presentableLocation: String = pathToExecutable(CARGO).toString()
 
