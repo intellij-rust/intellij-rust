@@ -130,7 +130,7 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     PrioritizedLookupElement.withPriority(this, priority)
 
-fun appendSemicolon(context: InsertionContext) {
+private fun appendSemicolon(context: InsertionContext) {
     val curUseItem = context.getItemOfType<RsUseItem>()
     if (curUseItem != null) {
         val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
@@ -141,7 +141,7 @@ fun appendSemicolon(context: InsertionContext) {
 }
 
 
-inline fun <reified T : RsItemElement> InsertionContext.getItemOfType(strict: Boolean = false): T? =
+private inline fun <reified T : RsItemElement> InsertionContext.getItemOfType(strict: Boolean = false): T? =
     PsiTreeUtil.findElementOfClassAtOffset(this.file, this.tailOffset - 1, T::class.java, strict)
 
 private val InsertionContext.isInGlob: Boolean

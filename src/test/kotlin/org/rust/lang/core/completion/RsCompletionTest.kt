@@ -175,11 +175,19 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     fun `test use const semicolon`() = doSingleCompletion("""
-        use self::f/*caret*/
-        const foo: str = "foo";
+        use self::F/*caret*/
+        const Foo: str = "foo";
     """, """
-        use self::foo;/*caret*/
-        const foo: str = "foo";
+        use self::Foo;/*caret*/
+        const Foo: str = "foo";
+    """)
+
+    fun `test use static semicolon`() = doSingleCompletion("""
+        use self::F/*caret*/
+        static Foo: str = "foo";
+    """, """
+        use self::Foo;/*caret*/
+        static Foo: str = "foo";
     """)
 
     fun `test use trait semicolon`() = doSingleCompletion("""
