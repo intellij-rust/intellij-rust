@@ -29,10 +29,10 @@ class CargoRunState(
     private val commandLine: CargoCommandLine = config.cmd
 
     init {
-        consoleBuilder.addFilter(RsConsoleFilter(environment.project, cargoProjectDirectory))
         consoleBuilder.addFilter(RsExplainFilter())
+        consoleBuilder.addFilter(RsConsoleFilter(environment.project, cargoProjectDirectory))
         consoleBuilder.addFilter(RsPanicFilter(environment.project, cargoProjectDirectory))
-        consoleBuilder.addFilter(RsBacktraceFilter(cargoProjectDirectory, environment.project, config.cargoProject.workspace))
+        consoleBuilder.addFilter(RsBacktraceFilter(environment.project, cargoProjectDirectory, config.cargoProject.workspace))
     }
 
     override fun startProcess(): ProcessHandler {

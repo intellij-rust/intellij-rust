@@ -14,7 +14,7 @@ import org.rust.cargo.project.model.cargoProjects
 class RsBacktraceFilterTest : HighlightFilterTestBase() {
     private val filter: RsBacktraceFilter
         get() =
-            RsBacktraceFilter(projectDir, project, project.cargoProjects.allProjects.single().workspace)
+            RsBacktraceFilter(project, projectDir, project.cargoProjects.allProjects.single().workspace)
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 

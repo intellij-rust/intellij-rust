@@ -26,8 +26,8 @@ import java.util.regex.Pattern
  * - Dims function hash codes to reduce noise.
  */
 class RsBacktraceFilter(
-    cargoProjectDir: VirtualFile,
     project: Project,
+    cargoProjectDir: VirtualFile,
     workspace: CargoWorkspace?
 ) : Filter {
 
