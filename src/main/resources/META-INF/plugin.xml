@@ -629,7 +629,7 @@
         </action>
 
         <action id="Rust.CargoFmtFile"
-                class="org.rust.ide.actions.RsFmtFileAction"
+                class="org.rust.ide.actions.RustfmtFileAction"
                 text="Reformat file with rustfmt"
                 description="Reformat current file with rustfmt">
             <add-to-group group-id="CodeMenu" anchor="last"/>
