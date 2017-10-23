@@ -103,7 +103,7 @@ class CargoTest : RsTestBase() {
     }
 
     private val toolchain get() = RustToolchain(Paths.get("/usr/bin"))
-    private val cargo = toolchain.cargo(Paths.get("/my-crate"))
+    private val cargo = toolchain.rawCargo()
     private val drive = Paths.get("/").toAbsolutePath().toString().toUnixSlashes()
     private val wd = Paths.get("/my-crate")
 

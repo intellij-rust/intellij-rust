@@ -30,6 +30,9 @@ data class RustToolchain(val location: Path) {
         return VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
     }
 
+    fun rawCargo(): Cargo =
+        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC))
+
     fun cargo(cargoProjectDirectory: Path): Cargo =
         Cargo(chooseCargoExecutable(cargoProjectDirectory), pathToExecutable(RUSTC))
 
@@ -49,9 +52,6 @@ data class RustToolchain(val location: Path) {
             null
 
     val isRustupAvailable: Boolean get() = hasExecutable(RUSTUP)
-
-    fun nonProjectCargo(): Cargo =
-        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC))
 
     val presentableLocation: String = pathToExecutable(CARGO).toString()
 
