@@ -28,6 +28,7 @@ import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.openapiext.withWorkDirectory
+import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Path
 
@@ -115,15 +116,9 @@ class Cargo(
             commandLine
         }
 
-        val cmdLine = when {
-            commandLine.channel == RustChannel.DEFAULT -> GeneralCommandLine(cargoExecutable)
-            else -> GeneralCommandLine(cargoExecutable, "+${commandLine.channel}")
-        }
-
-        cmdLine
+        val cmdLine = GeneralCommandLine(cargoExecutable)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(commandLine.workingDirectory ?: projectDirectory)
-            .withParameters(commandLine.command)
             .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
             .withEnvironment("TERM", "ansi")
             .withRedirectErrorStream(true)
@@ -133,22 +128,28 @@ class Cargo(
         when (commandLine.backtraceMode) {
             BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
             BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "full")
-            BacktraceMode.NO -> {
-            }
+            BacktraceMode.NO -> Unit
         }
         commandLine.environmentVariables.configureCommandLine(cmdLine, true)
 
         // Force colors
-        if (colors
-            && !SystemInfo.isWindows //BACKCOMPAT: remove windows check once termcolor'ed Cargo is stable
+        val forceColors = colors
+            // Hey, wanna repeat https://github.com/rust-lang/cargo/pull/4162 for rustc,
+            // so that we can enable colors on windows?
+            && !SystemInfo.isWindows
             && commandLine.command in COLOR_ACCEPTING_COMMANDS
-            && commandLine.additionalArguments.none { it.startsWith("--color") }) {
+            && commandLine.additionalArguments.none { it.startsWith("--color") }
 
-            cmdLine
-                .withParameters("--color=always") // Must come first in order not to corrupt the running program arguments
+        val parameters = buildList<String> {
+            if (commandLine.channel != RustChannel.DEFAULT) {
+                add("+${commandLine.channel}")
+            }
+            add(commandLine.command)
+            if (forceColors) add("--color=always")
+            addAll(commandLine.additionalArguments)
         }
 
-        return cmdLine.withParameters(commandLine.additionalArguments)
+        return cmdLine.withParameters(parameters)
     }
 
 
