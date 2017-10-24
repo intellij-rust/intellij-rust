@@ -70,8 +70,8 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     }
     private val cargoProject = ComboBox<CargoProject>().apply {
         renderer = object : ListCellRendererWrapper<CargoProject>() {
-            override fun customize(list: JList<*>?, value: CargoProject, index: Int, selected: Boolean, hasFocus: Boolean) {
-                setText(value.presentableName)
+            override fun customize(list: JList<*>?, value: CargoProject?, index: Int, selected: Boolean, hasFocus: Boolean) {
+                setText(value?.presentableName)
             }
         }
         project.cargoProjects.allProjects
@@ -104,7 +104,9 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         workingDirectory.component.text = configuration.workingDirectory?.toString() ?: ""
         environmentVariables.envData = configuration.env
         val vFile = currentWorkingDirectory?.let { LocalFileSystem.getInstance().findFileByIoFile(it.toFile()) }
-        if (vFile != null) {
+        if (vFile == null) {
+            cargoProject.selectedIndex = -1
+        } else {
             val projectForWd = project.cargoProjects.findProjectForFile(vFile)
             cargoProject.selectedIndex = project.cargoProjects.allProjects.indexOf(projectForWd)
         }
