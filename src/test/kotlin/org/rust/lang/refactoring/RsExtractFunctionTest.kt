@@ -33,6 +33,48 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "test")
 
+    fun `test extract basic return type`() = doTest("""
+            fn main() {
+                <selection>let test = 10i32;</selection>
+                println!("{}", test);
+            }
+        """, """
+            fn main() {
+                let test = test();
+                println!("{}", test);
+            }
+
+            fn test() -> i32 {
+                let test = 10i32;
+                test
+            }
+        """,
+        false,
+        "test")
+
+    fun `test extract take last possible return binding`() = doTest("""
+            fn main() {
+                <selection>let test2 = 10i32;
+                let test = 10i32;</selection>
+                println!("{}", test);
+                println!("{}", test2);
+            }
+        """, """
+            fn main() {
+                let (test2, test) = test();
+                println!("{}", test);
+                println!("{}", test2);
+            }
+
+            fn test() -> (i32, i32) {
+                let test2 = 10i32;
+                let test = 10i32;
+                (test2, test)
+            }
+        """,
+        false,
+        "test")
+
     fun `test pub extraction`() = doTest("""
             fn main() {
                 <selection>println!("test");
