@@ -24,21 +24,6 @@ private fun extractConfig(
     return config
 }
 
-private fun genSignature(config: RsExtractFunctionConfig): String {
-    var signature = "fn ${config.name}()"
-    if (config.returnType != null) {
-        signature += " -> ${config.returnType}"
-    }
-    if (config.visibilityLevelPublic) {
-        signature = "pub " + signature
-    }
-    signature += "{\n${config.elements.joinToString(separator = "\n", transform = { it.text })}"
-    if (config.returnBindingName != null) {
-        signature += "\n${config.returnBindingName}"
-    }
-    return signature + "\n}"
-}
-
 fun extractFunctionDialog(
     project: Project,
     file: PsiFile,
@@ -52,19 +37,16 @@ fun extractFunctionDialog(
         addItem("Private")
     }
     visibilityBox.selectedItem = "Private"
-    val signature = genSignature(config)
-    val signatureComponent = RsSignatureComponent(signature, project)
+    val signatureComponent = RsSignatureComponent(config.signature, project)
     signatureComponent.minimumSize = Dimension(300, 30)
 
     visibilityBox.addActionListener {
         val config = extractConfig(config, functionNameField, visibilityBox)
-        val signature = genSignature(config)
-        signatureComponent.setSignature(signature)
+        signatureComponent.setSignature(config.signature)
     }
     functionNameField.addDataChangedListener {
         val config = extractConfig(config, functionNameField, visibilityBox)
-        val signature = genSignature(config)
-        signatureComponent.setSignature(signature)
+        signatureComponent.setSignature(config.signature)
     }
 
     val panel = panel {

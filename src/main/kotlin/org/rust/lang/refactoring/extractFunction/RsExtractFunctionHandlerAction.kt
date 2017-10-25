@@ -31,14 +31,7 @@ class RsExtractFunctionHandlerAction(
     private fun addExtractedFunction(psiFactory: RsPsiFactory): Boolean {
         val owner = config.containingFunction.owner
 
-        val function = psiFactory.createFunction(
-            config.name,
-            config.elements,
-            config.visibilityLevelPublic,
-            config.needsSelf,
-            config.returnType,
-            config.returnBindingName
-        )
+        val function = psiFactory.createFunction(config)
         when {
             owner is RsFunctionOwner.Impl && !owner.isInherent -> {
                 val beforeNewline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
@@ -62,19 +55,24 @@ class RsExtractFunctionHandlerAction(
 
     private fun replaceOldStatementsWithCallExpr(psiFactory: RsPsiFactory) {
         var stmt = ""
-        if (config.returnBindingName != null) {
-            stmt += "let ${config.returnBindingName} = "
+        if (config.returnValue?.expression != null) {
+            stmt += "let ${config.returnValue.expression} = "
         }
-        if (config.needsSelf) {
-            stmt += "self.${config.name}();"
+        stmt += if (config.needsSelf) {
+            "self.${config.name}()"
         } else {
             val type = (config.containingFunction.owner as? RsFunctionOwner.Impl)?.impl?.typeReference?.text
-            stmt += "${if (type != null) "$type::" else ""}${config.name}();"
+            "${if (type != null) "$type::" else ""}${config.name}()"
         }
-        val call = psiFactory.createStatement(stmt)
+        val element = if (config.returnValue == null || config.returnValue.expression != null ) {
+            stmt += ";"
+            psiFactory.createStatement(stmt)
+        } else {
+            psiFactory.createExpression(stmt)
+        }
         config.elements.forEachIndexed { index, psiElement ->
             if (index == 0) {
-                psiElement.replace(call)
+                psiElement.replace(element)
             } else {
                 psiElement.delete()
             }

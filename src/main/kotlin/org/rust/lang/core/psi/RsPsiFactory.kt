@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
 
 class RsPsiFactory(private val project: Project) {
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
@@ -221,19 +222,10 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create unsafe element")
 
     fun createFunction(
-        name: String,
-        stmts: List<PsiElement>,
-        public: Boolean,
-        self: Boolean,
-        returnType: String?,
-        returnName: String?
+        config: RsExtractFunctionConfig
     ): RsFunction =
-        createFromText<RsFunction>(
-            "${if (public) "pub" else ""} fn $name(${if (self) "self" else ""}) ${if (returnType != null) "-> $returnType" else ""} {\n" +
-                stmts.joinToString(separator = "\n", transform = { it.text }) +
-                (if (returnName != null) "\n$returnName" else "") +
-                "\n}")
-            ?: error("Failed to create function element: $name")
+        createFromText<RsFunction>(config.signature)
+            ?: error("Failed to create function element: ${config.name}")
 
     fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
         createFromText<RsImplItem>("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
