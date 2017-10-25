@@ -18,7 +18,7 @@
 This is a **work in progress**, some features are implemented partially, 
 there may be performance and stability problems.
 
-## Usage
+## Installation & Usage
 
 Visit [intellij-rust.github.io] to find documentation about available
 installation options and features. All new features are announced in 
