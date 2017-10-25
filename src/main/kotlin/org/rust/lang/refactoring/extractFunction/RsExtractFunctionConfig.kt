@@ -10,23 +10,59 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.utils.findStatementsInRange
+import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.isAssocFn
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
+
+class ReturnValue(val expression: String?, val type: Ty) {
+    companion object {
+        fun direct(expr: RsExpr): ReturnValue {
+            return ReturnValue(null, expr.type)
+        }
+
+        fun namedValue(value: RsPatBinding): ReturnValue {
+            return ReturnValue(value.referenceName, value.type)
+        }
+
+        fun tupleNamedValue(value: List<RsPatBinding>): ReturnValue {
+            return ReturnValue(
+                value.map { it.referenceName }.joinToString(", ", postfix = ")", prefix = "("),
+                TyTuple(value.map { it.type })
+            )
+        }
+    }
+}
 
 class RsExtractFunctionConfig private constructor(
     val containingFunction: RsFunction,
     val elements: List<PsiElement>,
-    val returnType: String? = null,
-    val returnBindingName: String? = null,
+    val returnValue: ReturnValue? = null,
     var name: String = "",
     var visibilityLevelPublic: Boolean = false,
     val needsSelf: Boolean
 ) {
+    val signature: String
+        get() {
+            var signature = "fn ${name}(${if (needsSelf) "self" else ""})"
+            if (returnValue != null) {
+                signature += " -> ${returnValue.type}"
+            }
+            if (visibilityLevelPublic) {
+                signature = "pub " + signature
+            }
+            signature += "{\n${elements.joinToString(separator = "\n", transform = { it.text })}"
+            if (returnValue?.expression != null) {
+                signature += "\n${returnValue.expression}"
+            }
+            return signature + "\n}"
+        }
 
     companion object {
         fun create(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
@@ -47,19 +83,24 @@ class RsExtractFunctionConfig private constructor(
                         .asSequence()
                         .any { ref -> ref.element.textOffset > end }
                 }
-            val (returnBindingName, returnType) = if (innerBinding.isEmpty()) {
-                null to null
+
+            val returnValue = if (innerBinding.isEmpty()) {
+                val last = elements.last()
+                if (last is RsExpr) {
+                    ReturnValue.direct(last)
+                } else {
+                    null
+                }
             } else if (innerBinding.size == 1) {
-                innerBinding.map { it.referenceName }.joinToString(", ") to innerBinding.map { it.type }.joinToString(", ")
+                ReturnValue.namedValue(innerBinding[0])
             } else {
-                innerBinding.map { it.referenceName }.joinToString(", ", postfix = ")", prefix = "(") to innerBinding.map { it.type }.joinToString(", ", postfix = ")", prefix = "(")
+                ReturnValue.tupleNamedValue(innerBinding)
             }
 
             return RsExtractFunctionConfig(
                 fn,
                 elements,
-                returnType = returnType,
-                returnBindingName = returnBindingName,
+                returnValue = returnValue,
                 needsSelf = fn.owner.isImplOrTrait && !fn.isAssocFn
             )
         }

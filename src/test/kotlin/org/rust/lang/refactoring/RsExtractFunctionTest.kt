@@ -52,7 +52,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "test")
 
-    fun `test extract take last possible return binding`() = doTest("""
+    fun `test extract return tuple`() = doTest("""
             fn main() {
                 <selection>let test2 = 10i32;
                 let test = 10i32;</selection>
@@ -74,6 +74,26 @@ class RsExtractFunctionTest : RsTestBase() {
         """,
         false,
         "test")
+
+    fun `test extract return parameter expr`() = doTest("""
+            fn test() -> (i32, i32) {
+                let test2 = 10i32;
+                <selection>let test = 10i32;
+                (test2, test)</selection>
+            }
+        """, """
+            fn test() -> (i32, i32) {
+                let test2 = 10i32;
+                test2()
+            }
+
+            fn test2() -> (i32, i32) {
+                let test = 10i32;
+                (test2, test)
+            }
+        """,
+        false,
+        "test2")
 
     fun `test pub extraction`() = doTest("""
             fn main() {
