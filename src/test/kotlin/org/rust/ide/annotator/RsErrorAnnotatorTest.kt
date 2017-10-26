@@ -260,6 +260,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             let four = |x: _| 4;
             let _ = match (8, 3) { (_, _) => four(1) };
             if let Some(_) = Some(0) {}
+            let foo = || -> _ { 42 };
+            let bar = || -> Option<_> { Some(1) };
         }
 
         fn foo(a: <error descr="The type placeholder `_` is not allowed within types on item signatures [E0121]">_</error>) {}
