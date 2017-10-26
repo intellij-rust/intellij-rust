@@ -14,14 +14,13 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.panel
 import java.awt.Dimension
 
-private fun extractConfig(
+private fun updateConfig(
     config: RsExtractFunctionConfig,
     functionName: NameSuggestionsField,
     visibilityBox: ComboBox<String>
-): RsExtractFunctionConfig {
+) {
     config.name = functionName.enteredName
     config.visibilityLevelPublic = visibilityBox.selectedItem == "Public"
-    return config
 }
 
 fun extractFunctionDialog(
@@ -41,11 +40,11 @@ fun extractFunctionDialog(
     signatureComponent.minimumSize = Dimension(300, 30)
 
     visibilityBox.addActionListener {
-        val config = extractConfig(config, functionNameField, visibilityBox)
+        updateConfig(config, functionNameField, visibilityBox)
         signatureComponent.setSignature(config.signature)
     }
     functionNameField.addDataChangedListener {
-        val config = extractConfig(config, functionNameField, visibilityBox)
+        updateConfig(config, functionNameField, visibilityBox)
         signatureComponent.setSignature(config.signature)
     }
 
@@ -66,7 +65,7 @@ fun extractFunctionDialog(
         errorText = null,
         modality = DialogWrapper.IdeModalityType.IDE
     ) {
-        val config = extractConfig(config, functionNameField, visibilityBox)
+        updateConfig(config, functionNameField, visibilityBox)
         RsExtractFunctionHandlerAction(project, file, config).execute()
         true
     }.show()
