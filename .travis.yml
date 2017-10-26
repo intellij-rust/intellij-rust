@@ -11,7 +11,7 @@ jdk: oraclejdk8
 env:
   - RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
   - RUST_VERSION=stable
-  - RUST_VERSION=1.18.0  ORG_GRADLE_PROJECT_ideaVersion=2017.1.5
+  - RUST_VERSION=1.18.0  ORG_GRADLE_PROJECT_ideaVersion=2017.2.5
 
 matrix:
   fast_finish: true
