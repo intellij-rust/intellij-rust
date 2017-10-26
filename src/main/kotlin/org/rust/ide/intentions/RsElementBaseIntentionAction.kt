@@ -5,12 +5,12 @@
 
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.openapiext.checkReadAccessAllowed
+import org.rust.openapiext.checkWriteAccessAllowed
 
 /**
  * A base class for implementing intentions: actions available via "light bulb" / `Alt+Enter`.
@@ -39,26 +39,14 @@ abstract class RsElementBaseIntentionAction<Ctx> : BaseElementAtCaretIntentionAc
 
     abstract fun invoke(project: Project, editor: Editor, ctx: Ctx)
 
-    // BACKCOMPAT: 2016.3
-    //
-    // Some files may be readonly. It's not the end of the world --- the action
-    // just needs to show "make writable" dialog in the `invoke` call. In 2017.1 this is handled
-    // automagically: `getElementToMakeWritable` returns some PSI element (the file by default),
-    // and IDE ensures that it is not readonly.
-    //
-    // We don't have that luxury yet, so we need to do this manually. It is forbidden to show
-    // GUI dialogs in write action, so we must take care to show dialog first, and run the write
-    // action afterwards.
-    final override fun startInWriteAction(): Boolean = false
-
     final override fun invoke(project: Project, editor: Editor, element: PsiElement) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
         val ctx = findApplicableContext(project, editor, element) ?: return
-        runWriteAction {
-            invoke(project, editor, ctx)
-        }
+        checkWriteAccessAllowed()
+        invoke(project, editor, ctx)
     }
 
-    final override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean
-        = findApplicableContext(project, editor, element) != null
+    final override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
+        checkReadAccessAllowed()
+        return findApplicableContext(project, editor, element) != null
+    }
 }

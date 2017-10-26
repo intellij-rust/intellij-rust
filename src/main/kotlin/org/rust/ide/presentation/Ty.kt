@@ -43,13 +43,13 @@ private fun render(
 
     return when (ty) {
         is TyFunction -> {
-            val params = ty.paramTypes.map(r).joinToString(", ", "fn(", ")")
+            val params = ty.paramTypes.joinToString(", ", "fn(", ")", transform = r)
             return if (ty.retType is TyUnit) params else "$params -> ${ty.retType}"
 
         }
         is TySlice -> "[${r(ty.elementType)}]"
 
-        is TyTuple -> ty.types.map(r).joinToString(", ", "(", ")")
+        is TyTuple -> ty.types.joinToString(", ", "(", ")", transform = r)
         is TyArray -> "[${r(ty.base)}; ${ty.size ?: unknown}]"
         is TyReference -> "${if (ty.mutability.isMut) "&mut " else "&"}${
         render(ty.referenced, level, unknown, anonymous, integer, float)
@@ -59,7 +59,7 @@ private fun render(
         is TyTypeParameter -> ty.name ?: anonymous
         is TyStructOrEnumBase -> {
             val name = ty.item.name ?: return anonymous
-            name + if (ty.typeArguments.isEmpty()) "" else ty.typeArguments.map(r).joinToString(", ", "<", ">")
+            name + if (ty.typeArguments.isEmpty()) "" else ty.typeArguments.joinToString(", ", "<", ">", transform = r)
         }
         is TyInfer -> when (ty) {
             is TyInfer.TyVar -> "_"
