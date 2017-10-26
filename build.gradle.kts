@@ -9,6 +9,8 @@ import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 buildscript {
     repositories {
@@ -199,6 +201,22 @@ project(":intellij-toml") {
     }
 }
 
+task("advanceSnapshot") {
+    doLast {
+        val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/LATEST-EAP-SNAPSHOT/BUILD-LATEST-EAP-SNAPSHOT.txt")
+        val eapVersion = versionUrl.openStream().bufferedReader().readLine().trim()
+        println("\n    NEW SNAPSHOT: $eapVersion\n")
+        val travisYml = File(rootProject.projectDir, ".travis.yml")
+        val updated = travisYml.readLines().joinToString("\n") { line ->
+            if ("modified by script" in line) {
+                "  - RUST_VERSION=stable ORG_GRADLE_PROJECT_ideaVersion=$eapVersion # modified by script"
+            } else {
+                line
+            }
+        }
+        travisYml.writeText(updated)
+    }
+}
 
 fun prop(name: String): String =
     extra.properties[name] as? String
