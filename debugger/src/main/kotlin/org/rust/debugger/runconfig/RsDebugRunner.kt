@@ -8,13 +8,12 @@ package org.rust.debugger.runconfig
 import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import com.intellij.execution.RunContentExecutor
-import com.intellij.execution.RunProfileStarter
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.*
+import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
@@ -40,8 +39,7 @@ import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@Suppress("DEPRECATION") //BACKCOMPAT: 2017.1 use `AsyncProgramRunner`
-class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<RunnerSettings>() {
+class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
     override fun getRunnerId(): String = "RsDebugRunner"
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
@@ -56,7 +54,7 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
         return true
     }
 
-    override fun prepare(env: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
+    override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         state as CargoRunState
         val cmd = state.commandLine
 
@@ -69,40 +67,35 @@ class RsDebugRunner : com.intellij.execution.runners.AsyncGenericProgramRunner<R
             cmd.prependArgument("--no-run")
         }
 
-        return buildProjectAndGetBinaryArtifactPath(env.project, buildCommand, state.cargo())
-            .then { result ->
-                result?.path?.let {
-                    val commandLine = GeneralCommandLine(it).withWorkDirectory(cmd.workingDirectory)
-                    commandLine.withParameters(execArgs)
-                    RsRunProfileStarter(commandLine)
-                }
-            }
-    }
-}
-
-private class RsRunProfileStarter(val commandLine: GeneralCommandLine) : RunProfileStarter() {
-    override fun execute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor {
-        state as CargoRunState
-        check(commandLine.workDirectory != null) {
-            "LLDB requires working directory"
+        val runCommand = { executablePath: Path ->
+            GeneralCommandLine(executablePath)
+                .withWorkDirectory(cmd.workingDirectory)
+                .withParameters(execArgs)
         }
-        val runParameters = RsDebugRunParameters(commandLine)
-        val debugSession = XDebuggerManager.getInstance(env.project)
-            .startSession(env, object : XDebugProcessConfiguratorStarter() {
 
-                override fun start(session: XDebugSession): XDebugProcess =
-                    RsDebugProcess(runParameters, session, state.consoleBuilder).apply {
-                        ProcessTerminatedListener.attach(processHandler, env.project)
-                        start()
-                    }
+        return buildProjectAndGetBinaryArtifactPath(environment.project, buildCommand, state.cargo())
+            .then { binary ->
+                val path = binary?.path ?: return@then null
+                val commandLine = runCommand(path)
+                check(commandLine.workDirectory != null) {
+                    "LLDB requires working directory"
+                }
+                val runParameters = RsDebugRunParameters(commandLine)
+                XDebuggerManager.getInstance(environment.project)
+                    .startSession(environment, object : XDebugProcessConfiguratorStarter() {
+                        override fun start(session: XDebugSession): XDebugProcess =
+                            RsDebugProcess(runParameters, session, state.consoleBuilder).apply {
+                                ProcessTerminatedListener.attach(processHandler, environment.project)
+                                start()
+                            }
 
-                override fun configure(data: XDebugSessionData?) {}
-            })
+                        override fun configure(data: XDebugSessionData?) {}
+                    })
+                    .runContentDescriptor
+            }
 
-        return debugSession.runContentDescriptor
     }
 }
-
 
 private class Binary(val path: Path)
 

@@ -5,11 +5,12 @@
 
 package org.rust.ide.idea
 
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import org.rust.ide.icons.RsIcons
 import javax.swing.Icon
 
-class RsModuleType : RsModuleTypeBase(ID) {
+class RsModuleType : ModuleType<RsModuleBuilder>(ID) {
     override fun getNodeIcon(isOpened: Boolean): Icon = RsIcons.RUST
 
     override fun createModuleBuilder(): RsModuleBuilder = RsModuleBuilder()

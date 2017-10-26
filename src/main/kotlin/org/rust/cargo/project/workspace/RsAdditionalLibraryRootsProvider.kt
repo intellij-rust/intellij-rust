@@ -6,11 +6,9 @@
 package org.rust.cargo.project.workspace
 
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.SyntheticLibrary
-import com.intellij.openapi.roots.WatchedRootsProvider
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.cargoProjects
@@ -38,26 +36,18 @@ class CargoLibrary(
 
 
 class RsAdditionalLibraryRootsProvider : AdditionalLibraryRootsProvider() {
-    override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
-        return cargoLibraries(project)
-    }
-}
-
-
-//BACKCOMPAT 2017.1: implement `RsAdditionalLibraryRootsProvider.getRootsToWatch`
-class RsWatchedRootsProvider(private val project: Project) : WatchedRootsProvider {
-    override fun getRootsToWatch(): Set<String> {
-        return cargoLibraries(project).map { it.root.path }.toSet()
-    }
-}
-
-
-private fun cargoLibraries(project: Project): Collection<CargoLibrary> =
-    runReadAction {
+    override fun getAdditionalProjectLibraries(project: Project): Collection<CargoLibrary> =
+        // BACKCOMPAT 2017.3: add `checkReadAccessAllowed()` here.
+        // This *should* use read action, but it does not do it always.
+        // We don't launch read action ourselves though, because we use
+        // only safe operations. Fingers crossed.
         project.cargoProjects.allProjects
             .mapNotNull { it.workspace }
             .smartFlatMap { it.ideaLibraries }
-    }
+
+    override fun getRootsToWatch(project: Project): Collection<VirtualFile> =
+        getAdditionalProjectLibraries(project).map { it.root }
+}
 
 private fun <U, V> Collection<U>.smartFlatMap(transform: (U) -> Collection<V>): Collection<V> =
     when (size) {

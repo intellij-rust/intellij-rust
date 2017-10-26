@@ -10,8 +10,6 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.ConfigurationTypeUtil
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jdom.Element
@@ -32,13 +30,6 @@ import java.nio.file.Paths
 
 class RunConfigurationProducerTest : RsTestBase() {
     override val dataPath: String = "org/rust/cargo/runconfig/producers/fixtures"
-
-    override fun doRunTests() {
-        val info = ApplicationInfo.getInstance()
-        // BACKCOMPAT: 2017.1 has different serialization format for run configurations
-        if (info.majorVersion == "2017" && info.minorVersion == "1") return
-        super.doRunTests()
-    }
 
     // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setRawWorkspace].
     override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
@@ -266,8 +257,6 @@ class RunConfigurationProducerTest : RsTestBase() {
         val root = Element("configurations")
         serialized.forEach { root.addContent(it) }
 
-        //BACKCOMPAT: in 2017.2, a module is saved to XML as well
-        if (ApplicationManager.getApplication().isEAP) return
         assertSameLinesWithFile("$testDataPath/${getTestName(true)}.xml", root.toXmlString())
     }
 

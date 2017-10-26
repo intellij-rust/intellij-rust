@@ -43,6 +43,11 @@ fun checkWriteAccessAllowed() {
     }
 }
 
+fun checkReadAccessAllowed() {
+    check(ApplicationManager.getApplication().isReadAccessAllowed) {
+        "Needs read action"
+    }
+}
 
 fun checkIsBackgroundThread() {
     check(!ApplicationManager.getApplication().isDispatchThread) {
