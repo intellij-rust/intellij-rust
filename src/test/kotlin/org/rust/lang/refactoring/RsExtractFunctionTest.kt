@@ -33,6 +33,71 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "test")
 
+    fun `test complex extract`() = doTest("""
+        fn parse_test(call: Call) -> JsResult<JsValue> {
+            <selection>let scope = call.scope;
+            let test = call.arguments.require(scope, 0)?.check::<JsInteger>()?.value() as usize;
+            let callback = call.arguments.require(scope, 1)?.check::<JsFunction>()?;
+            let file = FILE.lock().unwrap();
+            let file = get_file_or_return_null!(file).clone();</selection>
+
+            struct RenderTask(Arc<File>, usize);
+            impl Task for RenderTask {
+                type Output = String;
+                type Error = ();
+                type JsEvent = JsString;
+
+                fn perform(&self) -> Result<String, ()> {
+                    let mut renderer = renderer();
+                    let tree = renderer.render_one(&self.0, self.1);
+                    Ok(tree)
+                }
+
+                fn complete<'a, T: Scope<'a>>(self, scope: &'a mut T, result: Result<String, ()>) -> JsResult<JsString> {
+                    Ok(JsString::new(scope, &result.unwrap()).unwrap())
+                }
+            }
+
+            RenderTask(file, test).schedule(callback);
+            Ok(JsNull::new().upcast())
+        }
+        """, """
+        fn parse_test(call: Call) -> JsResult<JsValue> {
+            let (test, callback, file) = foo();
+
+            struct RenderTask(Arc<File>, usize);
+            impl Task for RenderTask {
+                type Output = String;
+                type Error = ();
+                type JsEvent = JsString;
+
+                fn perform(&self) -> Result<String, ()> {
+                    let mut renderer = renderer();
+                    let tree = renderer.render_one(&self.0, self.1);
+                    Ok(tree)
+                }
+
+                fn complete<'a, T: Scope<'a>>(self, scope: &'a mut T, result: Result<String, ()>) -> JsResult<JsString> {
+                    Ok(JsString::new(scope, &result.unwrap()).unwrap())
+                }
+            }
+
+            RenderTask(file, test).schedule(callback);
+            Ok(JsNull::new().upcast())
+        }
+
+        fn foo() -> (usize, _, _) {
+            let scope = call.scope;
+            let test = call.arguments.require(scope, 0)?.check::<JsInteger>()?.value() as usize;
+            let callback = call.arguments.require(scope, 1)?.check::<JsFunction>()?;
+            let file = FILE.lock().unwrap();
+            let file = get_file_or_return_null!(file).clone();
+            (test, callback, file)
+        }
+        """,
+        false,
+        "foo")
+
     fun `test extract basic return type`() = doTest("""
             fn main() {
                 <selection>let test = 10i32;</selection>
