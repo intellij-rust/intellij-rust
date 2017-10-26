@@ -9,12 +9,21 @@ import org.rust.lang.core.types.ty.*
 
 
 val Ty.shortPresentableText: String get() = render(this, level = 3)
+val Ty.insertionSafeText: String
+    get() = render(this, level = Int.MAX_VALUE, unknown = "_", anonymous = "_", integer = "_", float = "_")
 
 fun tyToString(ty: Ty) = render(ty, Int.MAX_VALUE)
 
-private fun render(ty: Ty, level: Int): String {
+private fun render(
+    ty: Ty,
+    level: Int,
+    unknown: String = "<unknown>",
+    anonymous: String = "<anonymous>",
+    integer: String = "{integer}",
+    float: String = "{float}"
+): String {
     check(level >= 0)
-    if (ty is TyUnknown) return "<unknown>"
+    if (ty is TyUnknown) return unknown
     if (ty is TyPrimitive) {
         return when (ty) {
             is TyBool -> "bool"
@@ -30,8 +39,7 @@ private fun render(ty: Ty, level: Int): String {
 
     if (level == 0) return "_"
 
-    val r = { subTy: Ty -> render(subTy, level - 1) }
-    val anonymous = "<anonymous>"
+    val r = { subTy: Ty -> render(subTy, level - 1, unknown, anonymous, integer, float) }
 
     return when (ty) {
         is TyFunction -> {
@@ -42,8 +50,10 @@ private fun render(ty: Ty, level: Int): String {
         is TySlice -> "[${r(ty.elementType)}]"
 
         is TyTuple -> ty.types.map(r).joinToString(", ", "(", ")")
-        is TyArray -> "[${r(ty.base)}; ${ty.size ?: "<unknown>"}]"
-        is TyReference -> "${if (ty.mutability.isMut) "&mut " else "&"}${render(ty.referenced, level)}"
+        is TyArray -> "[${r(ty.base)}; ${ty.size ?: unknown}]"
+        is TyReference -> "${if (ty.mutability.isMut) "&mut " else "&"}${
+        render(ty.referenced, level, unknown, anonymous, integer, float)
+        }"
         is TyPointer -> "*${if (ty.mutability.isMut) "mut" else "const"} ${r(ty.referenced)}"
         is TyTraitObject -> ty.trait.name ?: anonymous
         is TyTypeParameter -> ty.name ?: anonymous
@@ -53,8 +63,8 @@ private fun render(ty: Ty, level: Int): String {
         }
         is TyInfer -> when (ty) {
             is TyInfer.TyVar -> "_"
-            is TyInfer.IntVar -> "{integer}"
-            is TyInfer.FloatVar -> "{float}"
+            is TyInfer.IntVar -> integer
+            is TyInfer.FloatVar -> float
         }
         else -> error("unreachable")
     }

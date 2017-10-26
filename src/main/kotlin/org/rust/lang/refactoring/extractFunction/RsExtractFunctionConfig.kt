@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.utils.findStatementsInRange
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFunction
@@ -52,16 +53,16 @@ class RsExtractFunctionConfig private constructor(
         get() {
             var signature = "fn $name(${if (needsSelf) "self" else ""})"
             if (returnValue != null) {
-                signature += " -> ${returnValue.type}"
+                signature += " -> ${returnValue.type.insertionSafeText}"
             }
             if (visibilityLevelPublic) {
                 signature = "pub " + signature
             }
-            signature += "{\n${elements.joinToString(separator = "\n", transform = { it.text })}"
+            val stmts = elements.map { it.text }.toMutableList()
             if (returnValue?.expression != null) {
-                signature += "\n${returnValue.expression}"
+                stmts.add(returnValue.expression)
             }
-            return signature + "\n}"
+            return signature + "{\n${stmts.joinToString(separator = "\n")}\n}"
         }
 
     companion object {
