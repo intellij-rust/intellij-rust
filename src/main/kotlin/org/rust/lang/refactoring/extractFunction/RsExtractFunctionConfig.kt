@@ -33,7 +33,7 @@ class ReturnValue(val expression: String?, val type: Ty) {
 
         fun tupleNamedValue(value: List<RsPatBinding>): ReturnValue {
             return ReturnValue(
-                value.map { it.referenceName }.joinToString(", ", postfix = ")", prefix = "("),
+                value.joinToString(", ", postfix = ")", prefix = "(") { it.referenceName },
                 TyTuple(value.map { it.type })
             )
         }
@@ -50,7 +50,7 @@ class RsExtractFunctionConfig private constructor(
 ) {
     val signature: String
         get() {
-            var signature = "fn ${name}(${if (needsSelf) "self" else ""})"
+            var signature = "fn $name(${if (needsSelf) "self" else ""})"
             if (returnValue != null) {
                 signature += " -> ${returnValue.type}"
             }
@@ -84,17 +84,10 @@ class RsExtractFunctionConfig private constructor(
                         .any { ref -> ref.element.textOffset > end }
                 }
 
-            val returnValue = if (innerBinding.isEmpty()) {
-                val last = elements.last()
-                if (last is RsExpr) {
-                    ReturnValue.direct(last)
-                } else {
-                    null
-                }
-            } else if (innerBinding.size == 1) {
-                ReturnValue.namedValue(innerBinding[0])
-            } else {
-                ReturnValue.tupleNamedValue(innerBinding)
+            val returnValue = when (innerBinding.size) {
+                0 -> if (last is RsExpr) ReturnValue.direct(last) else null
+                1 -> ReturnValue.namedValue(innerBinding[0])
+                else -> ReturnValue.tupleNamedValue(innerBinding)
             }
 
             return RsExtractFunctionConfig(
