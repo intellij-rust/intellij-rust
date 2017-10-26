@@ -548,7 +548,6 @@
 
         <additionalLibraryRootsProvider
             implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
-        <roots.watchedRootsProvider implementation="org.rust.cargo.project.workspace.RsWatchedRootsProvider"/>
 
         <!-- Icon Provider -->
 
