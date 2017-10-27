@@ -5,12 +5,14 @@
 
 package org.rust.cargo.project.model.impl
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.PathUtil
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_LOCK
+import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_TOML
 
 /**
  * File changes listener, detecting changes inside the `Cargo.toml` files
@@ -30,22 +32,19 @@ class CargoTomlWatcher(
         "/src/bin", "/examples", "/tests", "/benches"
     )
 
-    private val MAIN = "main.rs"
-
     override fun before(events: List<VFileEvent>) {
     }
 
     override fun after(events: List<VFileEvent>) {
         fun isInterestingEvent(event: VFileEvent): Boolean {
-            if (isCargoTomlChange(event)) return true
-            if (event.path.endsWith(RustToolchain.CARGO_LOCK)) return true
+            if (event.isFile(CARGO_TOML) || event.isFile(CARGO_LOCK)) return true
             if (event is VFileContentChangeEvent || PathUtil.getFileExtension(event.path) != "rs") return false
+            if (event is VFilePropertyChangeEvent && event.propertyName != VirtualFile.PROP_NAME) return false
             val parent = PathUtil.getParentPath(event.path)
             val grandParent = PathUtil.getParentPath(parent)
-            val name = PathUtil.getFileName(event.path)
 
-            if (IMPLICIT_TARGET_FILES.any { event.path.endsWith(it) }) return true
-            return IMPLICIT_TARGET_DIRS.any { parent.endsWith(it) || (name == MAIN && grandParent.endsWith(it)) }
+            if (IMPLICIT_TARGET_FILES.any { event.isFile(it) }) return true
+            return IMPLICIT_TARGET_DIRS.any { parent.endsWith(it) || (event.isFile("main.rs") && grandParent.endsWith(it)) }
         }
 
         if (events.any(::isInterestingEvent)) {
@@ -53,10 +52,6 @@ class CargoTomlWatcher(
         }
     }
 
-    companion object {
-        fun isCargoTomlChange(vFileEvent: VFileEvent): Boolean {
-            return vFileEvent.path.endsWith(RustToolchain.CARGO_TOML) ||
-                vFileEvent is VFilePropertyChangeEvent && vFileEvent.oldPath.endsWith(RustToolchain.CARGO_TOML)
-        }
-    }
+    private fun VFileEvent.isFile(name: String): Boolean = path.endsWith(name) ||
+        this is VFilePropertyChangeEvent && oldPath.endsWith(name)
 }

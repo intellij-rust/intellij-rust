@@ -5,6 +5,7 @@
 
 package org.rust.cargo.project.model.impl
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -25,7 +26,8 @@ class CargoTomlWatcherTest : RsTestBase() {
 
         watcher.checkTriggered(newChangeEvent(tomlFile))
 
-        watcher.checkTriggered(newRenameEvent(tomlFile))
+        watcher.checkTriggered(newRenameEvent(tomlFile, "Foo.toml"))
+        watcher.checkTriggered(newRenameEvent(tomlFile, "Cargo.toml"))
     }
 
     fun `test lockfile modifications`() {
@@ -72,6 +74,15 @@ class CargoTomlWatcherTest : RsTestBase() {
         watcher.checkNotTriggered(newCreateEvent("prefix_build.rs").second)
     }
 
+    fun `test event properties`() {
+        val watcher = CargoTomlWatcher { counter += 1 }
+        val (binFile, createEvent) = newCreateEvent("src/foo.rs")
+        watcher.checkNotTriggered(createEvent)
+        watcher.checkTriggered(newRenameEvent(binFile, "main.rs"))
+        watcher.checkNotTriggered(VFilePropertyChangeEvent(null, binFile, VirtualFile.PROP_WRITABLE, false, true, true))
+        watcher.checkTriggered(newRenameEvent(binFile, "foo.rs"))
+    }
+
     private fun CargoTomlWatcher.checkTriggered(event: VFileEvent) {
         val old = counter
         after(listOf(event))
@@ -95,5 +106,9 @@ class CargoTomlWatcherTest : RsTestBase() {
 
     private fun newChangeEvent(vFile: VirtualFile) = VFileContentChangeEvent(null, vFile, vFile.modificationStamp - 1, vFile.modificationStamp, true)
 
-    private fun newRenameEvent(vFile: VirtualFile) = VFilePropertyChangeEvent(null, vFile, VirtualFile.PROP_NAME, "Foo.toml", "Cargo.toml", true)
+    private fun newRenameEvent(vFile: VirtualFile, newName: String): VFilePropertyChangeEvent {
+        val oldName = vFile.name
+        runWriteAction { vFile.rename(null, newName) }
+        return VFilePropertyChangeEvent(null, vFile, VirtualFile.PROP_NAME, oldName, newName, true)
+    }
 }
