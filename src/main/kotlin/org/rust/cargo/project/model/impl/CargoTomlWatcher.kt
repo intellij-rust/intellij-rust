@@ -21,37 +21,35 @@ import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_TOML
 class CargoTomlWatcher(
     private val onCargoTomlChange: () -> Unit
 ) : BulkFileListener {
-
-    // These are paths and files names used by Cargo to infer targets without Cargo.toml
-    // https://github.com/rust-lang/cargo/blob/2c2e07f5cfc9a5de10854654bc1e8abd02ae7b4f/src/cargo/util/toml.rs#L50-L56
-    private val IMPLICIT_TARGET_FILES = listOf(
-        "/build.rs", "/src/main.rs", "/src/lib.rs"
-    )
-
-    private val IMPLICIT_TARGET_DIRS = listOf(
-        "/src/bin", "/examples", "/tests", "/benches"
-    )
-
-    override fun before(events: List<VFileEvent>) {
-    }
+    override fun before(events: List<VFileEvent>) = Unit
 
     override fun after(events: List<VFileEvent>) {
-        fun isInterestingEvent(event: VFileEvent): Boolean {
-            if (event.isFile(CARGO_TOML) || event.isFile(CARGO_LOCK)) return true
-            if (event is VFileContentChangeEvent || PathUtil.getFileExtension(event.path) != "rs") return false
-            if (event is VFilePropertyChangeEvent && event.propertyName != VirtualFile.PROP_NAME) return false
-            val parent = PathUtil.getParentPath(event.path)
-            val grandParent = PathUtil.getParentPath(parent)
-
-            if (IMPLICIT_TARGET_FILES.any { event.isFile(it) }) return true
-            return IMPLICIT_TARGET_DIRS.any { parent.endsWith(it) || (event.isFile("main.rs") && grandParent.endsWith(it)) }
-        }
-
-        if (events.any(::isInterestingEvent)) {
-            onCargoTomlChange()
-        }
+        if (events.any(::isInterestingEvent)) onCargoTomlChange()
     }
-
-    private fun VFileEvent.isFile(name: String): Boolean = path.endsWith(name) ||
-        this is VFilePropertyChangeEvent && oldPath.endsWith(name)
 }
+
+// These are paths and files names used by Cargo to infer targets without Cargo.toml
+// https://github.com/rust-lang/cargo/blob/2c2e07f5cfc9a5de10854654bc1e8abd02ae7b4f/src/cargo/util/toml.rs#L50-L56
+private val IMPLICIT_TARGET_FILES = listOf(
+    "/build.rs", "/src/main.rs", "/src/lib.rs"
+)
+
+private val IMPLICIT_TARGET_DIRS = listOf(
+    "/src/bin", "/examples", "/tests", "/benches"
+)
+
+private fun isInterestingEvent(event: VFileEvent): Boolean = when {
+    event.pathEndsWith(CARGO_TOML) || event.pathEndsWith(CARGO_LOCK) -> true
+    event is VFileContentChangeEvent -> false
+    !event.pathEndsWith(".rs") -> false
+    event is VFilePropertyChangeEvent && event.propertyName != VirtualFile.PROP_NAME -> false
+    IMPLICIT_TARGET_FILES.any { event.pathEndsWith(it) } -> true
+    else -> {
+        val parent = PathUtil.getParentPath(event.path)
+        val grandParent = PathUtil.getParentPath(parent)
+        IMPLICIT_TARGET_DIRS.any { parent.endsWith(it) || (event.pathEndsWith("main.rs") && grandParent.endsWith(it)) }
+    }
+}
+
+private fun VFileEvent.pathEndsWith(suffix: String): Boolean = path.endsWith(suffix) ||
+    this is VFilePropertyChangeEvent && oldPath.endsWith(suffix)
