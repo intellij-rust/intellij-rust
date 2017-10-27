@@ -294,13 +294,13 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
     class RsMacroNamingInspectionTest: RsNamingInspectionTest(RsMacroNamingInspection()) {
         fun testMacros() = checkByText("""
-            macro_rules! macro_ok { ( $( ${'$'}x:expr ),* ) => {}; }
-            macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">MacroFoo</warning> { ( $( ${'$'}x:expr ),* ) => {}; }
+            macro_rules! macro_ok { () => {}; }
+            macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">MacroFoo</warning> { () => {}; }
         """)
 
         fun testMacrosSuppression() = checkByText("""
             #[allow(non_snake_case)]
-            macro_rules! MacroFoo { ( $( ${'$'}x:expr ),* ) => {}; }
+            macro_rules! MacroFoo { () => {}; }
         """)
     }
 
