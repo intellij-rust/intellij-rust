@@ -249,6 +249,7 @@ class RsPsiFactory(private val project: Project) {
 
 private val RsFunction.signatureText: String?
     get() {
+        val unsafe = if (isUnsafe) "unsafe " else ""
         // We can't simply take a substring of original method declaration
         // because of anonymous parameters.
         val name = name ?: return null
@@ -261,7 +262,7 @@ private val RsFunction.signatureText: String?
 
         val ret = retType?.text?.let { it + " " } ?: ""
         val where = whereClause?.text ?: ""
-        return "fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
+        return "${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
     }
 
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "

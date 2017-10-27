@@ -174,6 +174,56 @@ class ImplementMembersFixTest : RsTestBase() {
         }
     """)
 
+    fun test6() = doTest("""
+        trait T {
+            unsafe fn foo();
+            unsafe fn bar() {}
+        }
+        struct S;
+        impl T for S {}
+    """, """
+        |*s foo()
+        |   bar()
+    """, """
+        trait T {
+            unsafe fn foo();
+            unsafe fn bar() {}
+        }
+        struct S;
+        impl T for S {
+            unsafe fn foo() {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun test7() = doTest("""
+        trait T {
+            unsafe fn foo();
+            unsafe fn bar() {}
+        }
+        struct S;
+        impl T for S {}
+    """, """
+        |*s foo()
+        | s bar()
+    """, """
+        trait T {
+            unsafe fn foo();
+            unsafe fn bar() {}
+        }
+        struct S;
+        impl T for S {
+            unsafe fn foo() {
+                unimplemented!()
+            }
+
+            unsafe fn bar() {
+                unimplemented!()
+            }
+        }
+    """)
+
     private fun doTest(@Language("Rust") code: String,
                        chooser: String,
                        @Language("Rust") expected: String) {
