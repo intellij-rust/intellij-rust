@@ -5,7 +5,7 @@
 
 package org.rust.cargo.runconfig.test
 
-import org.rust.ide.annotator.RsLineMarkerProviderTestBase
+import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
 
 /**
  * Tests for Test Function Line Marker

@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package org.rust.ide.lineMarkers
 
 /**
- * Tests for Rust Recursvice Call Line Marker Provider
+ * Tests for Rust Recursive Call Line Marker Provider
  */
 class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 

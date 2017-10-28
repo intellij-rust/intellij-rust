@@ -5,6 +5,8 @@
 
 package org.rust.ide.annotator
 
+import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
+
 /**
  * Tests for Trait Method Implementation Line Marker
  */

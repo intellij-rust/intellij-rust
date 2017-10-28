@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package org.rust.ide.lineMarkers
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
@@ -31,33 +31,33 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
 
     override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         for (el in elements) {
-            val (query, anchor) = implsQuery(el) ?: continue
+            // Ideally, we want to avoid showing an icon if there are no implementations,
+            // but that might be costly. To save time, we always show an icon, but calculate
+            // the actual icons only when the user clicks it.
+            // if (query.isEmptyQuery) return null
+            val query = implsQuery(el) ?: continue
             val targets: NotNullLazyValue<Collection<PsiElement>> = NotNullLazyValue.createValue { query.findAll() }
             val info = NavigationGutterIconBuilder
                 .create(RsIcons.IMPLEMENTED)
                 .setTargets(targets)
                 .setPopupTitle("Go to implementation")
                 .setTooltipText("Has implementations")
-                .createLineMarkerInfo(anchor)
+                .createLineMarkerInfo(el)
 
             result.add(info)
         }
     }
 
     companion object {
-        fun implsQuery(psi: PsiElement): Pair<Query<RsImplItem>, PsiElement>? {
-            val (query, anchor) = when (psi) {
-                is RsTraitItem -> psi.searchForImplementations() to psi.trait
-                is RsStructItem -> psi.searchForImplementations() to (psi.struct ?: psi.union)!!
-                is RsEnumItem -> psi.searchForImplementations() to psi.enum
+        fun implsQuery(psi: PsiElement): Query<RsImplItem>? {
+            val parent = psi.parent
+            return when  {
+                parent is RsTraitItem && parent.trait == psi -> parent.searchForImplementations()
+                parent is RsStructItem && (parent.struct == psi || parent.union == psi) ->
+                    parent.searchForImplementations()
+                parent is RsEnumItem && parent.enum == psi -> parent.searchForImplementations()
                 else -> return null
             }
-            // Ideally, we want to avoid showing an icon if there are no implementations,
-            // but that might be costly. To save time, we always show an icon, but calculate
-            // the actual icons only when the user clicks it.
-            // if (query.isEmptyQuery) return null
-            return query to anchor
         }
     }
-
 }
