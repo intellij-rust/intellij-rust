@@ -131,13 +131,19 @@
         <!-- Line Marker Providers -->
 
         <codeInsight.lineMarkerProvider language="Rust"
-                                        implementationClass="org.rust.ide.annotator.RsImplsLineMarkerProvider"/>
+                                        implementationClass="org.rust.ide.lineMarkers.RsImplsLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
-                                        implementationClass="org.rust.ide.annotator.RsRecursiveCallLineMarkerProvider"/>
+                                        implementationClass="org.rust.ide.lineMarkers.RsRecursiveCallLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.annotator.RsTraitMethodImplLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
-                                        implementationClass="org.rust.ide.annotator.RsCrateDocLineMarkerProvider"/>
+                                        implementationClass="org.rust.ide.lineMarkers.RsCrateDocLineMarkerProvider"/>
+
+        <runLineMarkerContributor language="Rust"
+                                  implementationClass="org.rust.ide.lineMarkers.CargoExecutableRunLineMarkerContributor"/>
+        <runLineMarkerContributor language="Rust"
+                                  implementationClass="org.rust.ide.lineMarkers.CargoTestRunLineMarkerContributor"/>
+
         <!-- Rename Processor -->
 
         <renamePsiElementProcessor implementation="org.rust.lang.refactoring.RsRenameProcessor"/>
@@ -523,11 +529,6 @@
         <runConfigurationProducer
             implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>
-
-        <runLineMarkerContributor language="Rust"
-                                  implementationClass="org.rust.cargo.runconfig.command.CargoExecutableRunLineMarkerContributor"/>
-        <runLineMarkerContributor language="Rust"
-                                  implementationClass="org.rust.cargo.runconfig.test.CargoTestRunLineMarkerContributor"/>
 
         <projectTaskRunner implementation="org.rust.cargo.runconfig.RsProjectTasksRunner"/>
 

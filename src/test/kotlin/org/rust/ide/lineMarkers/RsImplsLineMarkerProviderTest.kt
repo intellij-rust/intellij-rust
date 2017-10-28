@@ -3,7 +3,8 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package org.rust.ide.lineMarkers
+
 
 class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 

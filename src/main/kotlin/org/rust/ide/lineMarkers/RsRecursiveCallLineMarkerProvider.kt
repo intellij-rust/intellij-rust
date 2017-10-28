@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package org.rust.ide.lineMarkers
 
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
@@ -19,7 +19,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 import java.util.*
 
 /**
- * Line marker provider that annotates recursive funciton and method calls with
+ * Line marker provider that annotates recursive function and method calls with
  * an icon on the gutter.
  */
 class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
