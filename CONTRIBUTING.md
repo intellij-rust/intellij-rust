@@ -67,16 +67,19 @@ You might want to install the following plugins:
 # Contributing
 
 To find a problem to work on, look for
-[help wanted](https://github.com/intellij-rust/intellij-rust/labels/help%20wanted)
+[`help wanted`](https://github.com/intellij-rust/intellij-rust/labels/help%20wanted)
 issues on Github, or, even better, try to fix a problem you face yourself when
 using the plugin.
 
 When choosing an issue, you can navigate by the `E-` labels. They describe an
 experience needed to solve an issue (`E-easy`, `E-medium`, `E-hard` or `E-unknown`).
-The `E-mentor` label means that someone knows how to fix the issue and most likely
+The [`E-mentor`] label means that someone knows how to fix the issue and most likely
 they provided some instructions about how to fix it, links to the relevant code
 and so on. If you are looking for a good first issue, `E-mentor`-labeled one is the
 best choice.
+
+[`help-wanted`]: https://github.com/intellij-rust/intellij-rust/labels/help%20wanted
+[`E-mentor`]: https://github.com/intellij-rust/intellij-rust/labels/E-mentor
 
 See [worklist](https://github.com/intellij-rust/intellij-rust/wiki/Worklist) to learn 
 who is doing what right now. This page is a wiki, so feel free to edit it and to write 
