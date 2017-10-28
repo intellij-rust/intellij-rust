@@ -15,6 +15,7 @@ import com.intellij.util.FunctionUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.resolve.ref.RsReference
 import java.util.*
 
 /**
@@ -29,7 +30,18 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
                                         result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         val lines = HashSet<Int>()  // To prevent several markers on one line
 
-        for (el in elements.filter { it.isRecursive }) {
+        for (el in elements) {
+            val parent = el.parent
+            val isRecursive = when {
+                parent is RsMethodCall && el == parent.identifier && parent.reference.isRecursive -> true
+                parent is RsPath && el == parent.identifier -> {
+                    val expr = parent.parent as? RsPathExpr
+                    val call = expr?.parent as? RsCallExpr
+                    expr != null && call != null && call.expr == expr && parent.reference.isRecursive
+                }
+                else -> false
+            }
+            if (!isRecursive) continue
             val doc = PsiDocumentManager.getInstance(el.project).getDocument(el.containingFile) ?: continue
             val lineNumber = doc.getLineNumber(el.textOffset)
             if (lineNumber !in lines) {
@@ -46,16 +58,8 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
         }
     }
 
-    private val RsCallExpr.pathExpr: RsPathExpr?
-        get() = expr as? RsPathExpr
-
-    private val PsiElement.isRecursive: Boolean get() {
-        val def = when (this) {
-            is RsCallExpr -> pathExpr?.path?.reference?.resolve()
-            is RsMethodCall -> reference.resolve()
-            else -> null
-        } ?: return false
-
-        return parentOfType<RsFunction>() == def
+    private val RsReference.isRecursive: Boolean get() {
+        val def = resolve()
+        return def != null && element.parentOfType<RsFunction>() == def
     }
 }

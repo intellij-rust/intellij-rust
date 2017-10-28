@@ -9,14 +9,9 @@ language: java
 jdk: oraclejdk8
 
 env:
-  - RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
+  - RUST_VERSION=stable ORG_GRADLE_PROJECT_ideaVersion=173.3302.8 # modified by script
   - RUST_VERSION=stable
-  - RUST_VERSION=1.18.0  ORG_GRADLE_PROJECT_ideaVersion=2017.2.5
-
-matrix:
-  fast_finish: true
-  allow_failures:
-    - env: RUST_VERSION=nightly ORG_GRADLE_PROJECT_ideaVersion=LATEST-EAP-SNAPSHOT
+  - RUST_VERSION=1.18.0 ORG_GRADLE_PROJECT_ideaVersion=2017.2.5
 
 install: true
 

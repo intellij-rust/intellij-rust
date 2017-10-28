@@ -10,13 +10,13 @@ package org.rust.ide.annotator
  */
 class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
-    fun testFunction() = doTestByText("""
+    fun `test function`() = doTestByText("""
         fn foo() {
             foo();      // - Recursive call
         }
     """)
 
-    fun testAssocFunction() = doTestByText("""
+    fun `test assoc function`() = doTestByText("""
         struct Foo {} // - Has implementations
         impl Foo {
             fn foo() {
@@ -25,7 +25,7 @@ class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    fun testMethod() = doTestByText("""
+    fun `test method`() = doTestByText("""
         struct Foo {} // - Has implementations
         impl Foo {
             fn foo(&self) {
@@ -34,7 +34,7 @@ class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    fun testNamesCollision() = doTestByText("""
+    fun `test names collision`() = doTestByText("""
         fn foo() {}
         struct Foo {} // - Has implementations
         impl Foo {
@@ -44,7 +44,7 @@ class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    fun testIgnoreTransitive() = doTestByText("""
+    fun `test ignore transitive`() = doTestByText("""
         fn foo() {
             bar();      // Doesn't count
         }
@@ -53,7 +53,7 @@ class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    fun testMultiple() = doTestByText("""
+    fun `test multiple`() = doTestByText("""
         fn increment(v: u32) -> u32 {
             increment(increment(1))     // - Recursive call
         }
