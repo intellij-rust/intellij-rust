@@ -20,6 +20,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
@@ -368,7 +369,7 @@ class RunConfigurationProducerTest : RsTestBase() {
                                 )
                             },
                             source = null,
-                            isWorkspaceMember = true
+                            origin = PackageOrigin.WORKSPACE
                         )
                     ),
                     dependencies = emptyMap()

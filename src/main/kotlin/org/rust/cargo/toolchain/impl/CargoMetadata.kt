@@ -13,6 +13,7 @@ import com.intellij.util.PathUtil
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.openapiext.findFileByMaybeRelativePath
 
 /**
@@ -177,7 +178,7 @@ object CargoMetadata {
             version,
             targets.mapNotNull { it.clean(root) },
             source,
-            isWorkspaceMember
+            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY
         )
     }
 

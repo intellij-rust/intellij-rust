@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsTestBase
 import java.nio.file.Paths
 
@@ -113,7 +114,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             version = "1.0.0",
             targets = targets,
             source = null,
-            isWorkspaceMember = isWorkspaceMember
+            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY
         )
 
         val pkgs = listOf(

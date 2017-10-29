@@ -30,7 +30,7 @@ data class CargoWorkspaceData(
         val version: String,
         val targets: Collection<Target>,
         val source: String?,
-        val isWorkspaceMember: Boolean
+        val origin: PackageOrigin
     )
 
     data class Target(

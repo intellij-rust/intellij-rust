@@ -33,6 +33,7 @@ import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.parentOfType
 import java.nio.file.Paths
@@ -222,7 +223,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 CargoWorkspaceData.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
             ),
             source = null,
-            isWorkspaceMember = true
+            origin = PackageOrigin.WORKSPACE
         )
     }
 
@@ -250,10 +251,9 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                     CargoWorkspaceData.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
                 ),
                 source = source,
-                isWorkspaceMember = false
+                origin = PackageOrigin.DEPENDENCY
             )
         }
-
 
         fun setUp(fixture: CodeInsightTestFixture) {
             val root = fixture.findFileInTempDir(".")!!
