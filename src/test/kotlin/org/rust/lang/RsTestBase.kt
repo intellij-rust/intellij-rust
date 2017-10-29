@@ -214,7 +214,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoWorkspaceData.Package(
             id = "$name 0.0.1",
-            url = contentRoot,
+            contentRootUrl = contentRoot,
             name = name,
             version = "0.0.1",
             targets = listOf(
@@ -243,7 +243,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         private fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CargoWorkspaceData.Package {
             return CargoWorkspaceData.Package(
                 id = "$name 0.0.1",
-                url = "",
+                contentRootUrl = "",
                 name = name,
                 version = "0.0.1",
                 targets = listOf(

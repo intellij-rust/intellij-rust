@@ -102,7 +102,7 @@ private class WorkspaceImpl(
                 contentRootUrl = crate.packageRootUrl,
                 name = crate.name,
                 version = "",
-                targets = listOf(CargoWorkspaceData.Target(url = crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
+                targets = listOf(CargoWorkspaceData.Target(crateRootUrl = crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
                 source = null,
                 origin = PackageOrigin.STDLIB
             )
@@ -165,7 +165,7 @@ private class WorkspaceImpl(
             val packages = data.packages.associate { pkg ->
                 val origin = idToOrigin[pkg.id] ?: error("Origin is undefined for package ${pkg.name}")
                 pkg.id to PackageImpl(
-                    pkg.url,
+                    pkg.contentRootUrl,
                     pkg.name,
                     pkg.version,
                     pkg.targets,
@@ -196,7 +196,7 @@ private class PackageImpl(
     override val source: String?,
     override val origin: PackageOrigin
 ) : CargoWorkspace.Package {
-    override val targets = targets.map { TargetImpl(this, crateRootUrl = it.url, name = it.name, kind = it.kind) }
+    override val targets = targets.map { TargetImpl(this, crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind) }
 
     override val contentRoot: VirtualFile?
         get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)

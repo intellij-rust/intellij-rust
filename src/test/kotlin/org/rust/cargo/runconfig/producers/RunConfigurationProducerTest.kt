@@ -357,7 +357,7 @@ class RunConfigurationProducerTest : RsTestBase() {
                     packages = listOf(
                         CargoWorkspaceData.Package(
                             id = "test-package 0.0.1",
-                            url = myFixture.tempDirFixture.getFile(".")!!.url,
+                            contentRootUrl = myFixture.tempDirFixture.getFile(".")!!.url,
                             name = "test-package",
                             version = "0.0.1",
                             targets = targets.map {

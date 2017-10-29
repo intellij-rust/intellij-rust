@@ -97,7 +97,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
     private val TEST_WORKSPACE = run {
         fun target(name: String, kind: CargoWorkspace.TargetKind): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
-            url = "/tmp/lib/rs",
+            crateRootUrl = "/tmp/lib/rs",
             name = name,
             kind = kind
         )
@@ -109,7 +109,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         ): CargoWorkspaceData.Package = CargoWorkspaceData.Package(
             name = name,
             id = "$name 1.0.0",
-            url = "/tmp",
+            contentRootUrl = "/tmp",
             version = "1.0.0",
             targets = targets,
             source = null,

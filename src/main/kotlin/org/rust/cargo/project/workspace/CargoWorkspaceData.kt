@@ -25,7 +25,7 @@ data class CargoWorkspaceData(
 
     data class Package(
         val id: PackageId,
-        val url: String,
+        val contentRootUrl: String,
         val name: String,
         val version: String,
         val targets: Collection<Target>,
@@ -34,7 +34,7 @@ data class CargoWorkspaceData(
     )
 
     data class Target(
-        val url: String,
+        val crateRootUrl: String,
         val name: String,
         val kind: CargoWorkspace.TargetKind
     )
