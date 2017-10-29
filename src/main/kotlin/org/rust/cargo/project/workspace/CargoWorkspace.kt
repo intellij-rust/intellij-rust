@@ -28,7 +28,7 @@ interface CargoWorkspace {
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
-    fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace
+    fun withStdlib(stdlib: StandardLibrary): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     interface Package {
@@ -96,8 +96,8 @@ private class WorkspaceImpl(
         return targetByCrateRootUrl[canonicalFile.url]
     }
 
-    override fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace {
-        val stdlib = libs.map { crate ->
+    override fun withStdlib(stdlib: StandardLibrary): CargoWorkspace {
+        val nameToPkg = stdlib.crates.map { crate ->
             val pkg = PackageImpl(
                 contentRootUrl = crate.packageRootUrl,
                 name = crate.name,
@@ -112,14 +112,14 @@ private class WorkspaceImpl(
         // Bind dependencies and collect roots
         val roots = ArrayList<PackageImpl>()
         val featureGated = ArrayList<PackageImpl>()
-        libs.forEach { lib ->
-            val slib = stdlib[lib.name] ?: error("Std lib ${lib.name} not found")
-            val depPackages = lib.dependencies.mapNotNull { stdlib[it] }
+        stdlib.crates.forEach { crate ->
+            val slib = nameToPkg[crate.name] ?: error("Std lib ${crate.name} not found")
+            val depPackages = crate.dependencies.mapNotNull { nameToPkg[it] }
             slib.dependencies.addAll(depPackages)
-            if (lib.type == StdLibType.ROOT) {
-                roots.add(slib)
-            } else if (lib.type == StdLibType.FEATURE_GATED) {
-                featureGated.add(slib)
+            when(crate.type) {
+                StdLibType.ROOT -> roots.add(slib)
+                StdLibType.FEATURE_GATED -> featureGated.add(slib)
+                StdLibType.DEPENDENCY -> Unit
             }
         }
 

@@ -236,7 +236,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val packages = listOf(testCargoPackage(contentRoot))
 
             return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, emptyMap()))
-                .withStdlib(stdlib.crates)
+                .withStdlib(stdlib)
         }
     }
 
@@ -278,7 +278,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 packages[0].id to setOf(packages[1].id, packages[2].id)
             )))
             val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-            return ws.withStdlib(stdlib.crates)
+            return ws.withStdlib(stdlib)
         }
     }
 
