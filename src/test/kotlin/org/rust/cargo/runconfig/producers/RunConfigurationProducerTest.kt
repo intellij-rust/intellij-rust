@@ -368,7 +368,6 @@ class RunConfigurationProducerTest : RsTestBase() {
                                 )
                             },
                             source = null,
-                            manifestPath = "/somewhere/test-package/Cargo.toml",
                             isWorkspaceMember = true
                         )
                     ),

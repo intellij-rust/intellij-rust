@@ -30,7 +30,6 @@ data class CargoWorkspaceData(
         val version: String,
         val targets: Collection<Target>,
         val source: String?,
-        val manifestPath: String,
         val isWorkspaceMember: Boolean
     )
 

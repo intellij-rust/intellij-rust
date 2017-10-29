@@ -147,17 +147,12 @@ private class WorkspaceImpl(
             // handle cycles here.
 
             // Figure out packages origins:
-            // - if a package is a workspace member, or if it resides inside a workspace member directory, it's WORKSPACE
+            // - if a package is a workspace member it's WORKSPACE
             // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
             // - otherwise, it's TRANSITIVE_DEPENDENCY
             val idToOrigin = HashMap<PackageId, PackageOrigin>(data.packages.size)
-            val workspacePaths = data.packages
-                .filter { it.isWorkspaceMember }
-                .map { it.manifestPath.substringBeforeLast("Cargo.toml", "") }
-                .filter(String::isNotEmpty)
-                .toList()
             for (pkg in data.packages) {
-                if (pkg.isWorkspaceMember || workspacePaths.any { pkg.manifestPath.startsWith(it) }) {
+                if (pkg.isWorkspaceMember) {
                     idToOrigin[pkg.id] = PackageOrigin.WORKSPACE
                     for (dep in data.dependencies[pkg.id].orEmpty()) {
                         idToOrigin.merge(dep, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })

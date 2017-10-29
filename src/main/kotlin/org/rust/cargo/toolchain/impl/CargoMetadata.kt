@@ -177,7 +177,6 @@ object CargoMetadata {
             version,
             targets.mapNotNull { it.clean(root) },
             source,
-            manifest_path,
             isWorkspaceMember
         )
     }

@@ -222,7 +222,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 CargoWorkspaceData.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
             ),
             source = null,
-            manifestPath = "$contentRoot/../Cargo.toml",
             isWorkspaceMember = true
         )
     }
@@ -251,7 +250,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                     CargoWorkspaceData.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
                 ),
                 source = source,
-                manifestPath = "/ext-libs/$name/Cargo.toml",
                 isWorkspaceMember = false
             )
         }

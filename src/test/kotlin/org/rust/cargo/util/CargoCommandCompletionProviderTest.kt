@@ -113,7 +113,6 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             version = "1.0.0",
             targets = targets,
             source = null,
-            manifestPath = "/tmp/Cargo.toml",
             isWorkspaceMember = isWorkspaceMember
         )
 
