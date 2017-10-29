@@ -102,7 +102,7 @@ private class WorkspaceImpl(
                 contentRootUrl = crate.packageRootUrl,
                 name = crate.name,
                 version = "",
-                targets = listOf(TargetImpl(crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
+                targets = listOf(CargoWorkspaceData.Target(url = crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
                 source = null,
                 origin = PackageOrigin.STDLIB
             )
@@ -116,7 +116,7 @@ private class WorkspaceImpl(
             val slib = nameToPkg[crate.name] ?: error("Std lib ${crate.name} not found")
             val depPackages = crate.dependencies.mapNotNull { nameToPkg[it] }
             slib.dependencies.addAll(depPackages)
-            when(crate.type) {
+            when (crate.type) {
                 StdLibType.ROOT -> roots.add(slib)
                 StdLibType.FEATURE_GATED -> featureGated.add(slib)
                 StdLibType.DEPENDENCY -> Unit
@@ -173,7 +173,7 @@ private class WorkspaceImpl(
                     pkg.url,
                     pkg.name,
                     pkg.version,
-                    pkg.targets.map { TargetImpl(it.url, it.name, it.kind) },
+                    pkg.targets,
                     pkg.source,
                     origin
                 )
@@ -197,14 +197,11 @@ private class PackageImpl(
     private val contentRootUrl: String,
     override val name: String,
     override val version: String,
-    override val targets: Collection<TargetImpl>,
+    targets: Collection<CargoWorkspaceData.Target>,
     override val source: String?,
     override val origin: PackageOrigin
 ) : CargoWorkspace.Package {
-
-    init {
-        targets.forEach { it.initPackage(this) }
-    }
+    override val targets = targets.map { TargetImpl(this, crateRootUrl = it.url, name = it.name, kind = it.kind) }
 
     override val contentRoot: VirtualFile?
         get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
@@ -228,6 +225,7 @@ private class PackageImpl(
 
 
 private class TargetImpl(
+    override val pkg: PackageImpl,
     val crateRootUrl: String,
     override val name: String,
     override val kind: CargoWorkspace.TargetKind
@@ -242,13 +240,6 @@ private class TargetImpl(
             crateRootCache.set(file)
             return file
         }
-
-    private lateinit var myPackage: PackageImpl
-    fun initPackage(pkg: PackageImpl) {
-        myPackage = pkg
-    }
-
-    override val pkg: CargoWorkspace.Package get() = myPackage
 
     override fun toString(): String
         = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
