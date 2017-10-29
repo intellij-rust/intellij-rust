@@ -5,6 +5,8 @@
 
 package org.rust.cargo.project.workspace
 
+typealias PackageId = String
+
 /**
  * A POD-style representation of [CargoWorkspace] used as an intermediate representation
  * between `cargo metadata` JSON and [CargoWorkspace] object graph.
@@ -22,7 +24,7 @@ data class CargoWorkspaceData(
     )
 
     data class Package(
-        val id: String,
+        val id: PackageId,
         val url: String,
         val name: String,
         val version: String,

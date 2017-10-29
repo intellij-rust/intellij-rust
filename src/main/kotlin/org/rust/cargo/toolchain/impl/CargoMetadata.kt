@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageId
 import org.rust.openapiext.findFileByMaybeRelativePath
 
 /**
@@ -64,7 +65,7 @@ object CargoMetadata {
          * There may be several packages with the same name, but different version/source.
          * The triple (name, version, source) is unique.
          */
-        val id: String,
+        val id: PackageId,
 
         /**
          * Path to Cargo.toml
@@ -123,12 +124,12 @@ object CargoMetadata {
 
 
     data class ResolveNode(
-        val id: String,
+        val id: PackageId,
 
         /**
          * id's of dependent packages
          */
-        val dependencies: List<String>
+        val dependencies: List<PackageId>
     )
 
     // The next two things do not belong here,
@@ -153,9 +154,10 @@ object CargoMetadata {
     )
 
     fun clean(project: Project): CargoWorkspaceData {
-        val packageIdToIndex: (String) -> Int = project.packages.mapIndexed { i, p -> p.id to i }.toMap().let { pkgs ->
-            { pkgs[it] ?: error("Cargo metadata references an unlisted package: `$it`") }
-        }
+        val packageIdToIndex: (PackageId) -> Int = project.packages
+            .mapIndexed { i, p -> p.id to i }
+            .toMap()
+            .let { pkgs -> { pkgs[it] ?: error("Cargo metadata references an unlisted package: `$it`") } }
 
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
