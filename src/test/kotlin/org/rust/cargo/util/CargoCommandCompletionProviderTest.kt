@@ -108,7 +108,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             targets: List<CargoWorkspaceData.Target>
         ): CargoWorkspaceData.Package = CargoWorkspaceData.Package(
             name = name,
-            id = "pkg-id",
+            id = "$name 1.0.0",
             url = "/tmp",
             version = "1.0.0",
             targets = targets,
@@ -125,6 +125,6 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             )),
             pkg("quux", false, listOf(target("quux", CargoWorkspace.TargetKind.LIB)))
         )
-        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyList()))
+        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyMap()))
     }
 }

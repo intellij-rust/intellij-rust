@@ -372,7 +372,7 @@ class RunConfigurationProducerTest : RsTestBase() {
                             isWorkspaceMember = true
                         )
                     ),
-                    dependencies = emptyList()
+                    dependencies = emptyMap()
                 )
             )
 

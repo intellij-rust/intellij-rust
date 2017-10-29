@@ -154,23 +154,15 @@ object CargoMetadata {
     )
 
     fun clean(project: Project): CargoWorkspaceData {
-        val packageIdToIndex: (PackageId) -> Int = project.packages
-            .mapIndexed { i, p -> p.id to i }
-            .toMap()
-            .let { pkgs -> { pkgs[it] ?: error("Cargo metadata references an unlisted package: `$it`") } }
-
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
             ?: error("No `members` key in the `cargo metadata` output.\n" +
             "Your version of Cargo is no longer supported, please upgrade Cargo.")
         return CargoWorkspaceData(
             project.packages.mapNotNull { it.clean(fs, it.id in members) },
-            project.resolve.nodes.map { (id, dependencies) ->
-                CargoWorkspaceData.DependencyNode(
-                    packageIdToIndex(id),
-                    dependencies.map { packageIdToIndex(it) }
-                )
-            }.sortedBy { it.packageIndex }
+            project.resolve.nodes.associate { (id, dependencies) ->
+                id to dependencies.toSet()
+            }
         )
     }
 

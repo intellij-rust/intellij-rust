@@ -55,7 +55,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     private object WithLibraryProjectDescriptor : RustProjectDescriptorBase() {
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-            return CargoWorkspaceData(listOf(testCargoPackage(contentRoot, name = "my_lib")), emptyList()).let {
+            return CargoWorkspaceData(listOf(testCargoPackage(contentRoot, name = "my_lib")), emptyMap()).let {
                 CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), it)
             }
         }

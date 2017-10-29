@@ -152,23 +152,20 @@ private class WorkspaceImpl(
                 .map { it.manifestPath.substringBeforeLast("Cargo.toml", "") }
                 .filter(String::isNotEmpty)
                 .toList()
-            data.packages.forEachIndexed pkgs@ { index, pkg ->
+            for (pkg in data.packages) {
                 if (pkg.isWorkspaceMember || workspacePaths.any { pkg.manifestPath.startsWith(it) }) {
                     idToOrigin[pkg.id] = PackageOrigin.WORKSPACE
-                    val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
-                    depNode.dependenciesIndexes
-                        .mapNotNull { data.packages.getOrNull(it) }
-                        .forEach {
-                            idToOrigin.merge(it.id, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
-                        }
+                    for (dep in data.dependencies[pkg.id].orEmpty()) {
+                        idToOrigin.merge(dep, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
+                    }
                 } else {
                     idToOrigin.putIfAbsent(pkg.id, PackageOrigin.TRANSITIVE_DEPENDENCY)
                 }
             }
 
-            val packages = data.packages.map { pkg ->
+            val packages = data.packages.associate { pkg ->
                 val origin = idToOrigin[pkg.id] ?: error("Origin is undefined for package ${pkg.name}")
-                PackageImpl(
+                pkg.id to PackageImpl(
                     pkg.url,
                     pkg.name,
                     pkg.version,
@@ -176,15 +173,15 @@ private class WorkspaceImpl(
                     pkg.source,
                     origin
                 ).initTargets()
-            }.toList()
-
-            // Fill package dependencies
-            packages.forEachIndexed pkgs@ { index, pkg ->
-                val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
-                pkg.dependencies.addAll(depNode.dependenciesIndexes.map { packages[it] })
             }
 
-            val workspace = WorkspaceImpl(manifestPath, packages)
+            // Fill package dependencies
+            packages.forEach pkgs@ { (id, pkg) ->
+                val deps = data.dependencies[id].orEmpty()
+                pkg.dependencies.addAll(deps.mapNotNull { packages[it] })
+            }
+
+            val workspace = WorkspaceImpl(manifestPath, packages.values.toList())
             workspace.packages.forEach { it.initWorkspace(workspace) }
             return workspace
         }
