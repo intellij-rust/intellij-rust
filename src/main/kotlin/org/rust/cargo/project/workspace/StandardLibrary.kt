@@ -26,7 +26,9 @@ class StandardLibrary private constructor(
         val crateRootUrl: String,
         val packageRootUrl: String,
         val dependencies: Collection<String>
-    )
+    ) {
+        val id: PackageId get() = "(stdlib) $name"
+    }
 
     companion object {
         fun fromPath(path: String): StandardLibrary? =
