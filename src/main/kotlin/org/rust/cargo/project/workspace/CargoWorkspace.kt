@@ -102,7 +102,7 @@ private class WorkspaceImpl(
                 contentRootUrl = crate.packageRootUrl,
                 name = crate.name,
                 version = "",
-                targets = listOf(TargetImpl(crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
+                targets = listOf(CargoWorkspaceData.Target(crateRootUrl = crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
                 source = null,
                 origin = PackageOrigin.STDLIB
             )
@@ -116,7 +116,7 @@ private class WorkspaceImpl(
             val slib = nameToPkg[crate.name] ?: error("Std lib ${crate.name} not found")
             val depPackages = crate.dependencies.mapNotNull { nameToPkg[it] }
             slib.dependencies.addAll(depPackages)
-            when(crate.type) {
+            when (crate.type) {
                 StdLibType.ROOT -> roots.add(slib)
                 StdLibType.FEATURE_GATED -> featureGated.add(slib)
                 StdLibType.DEPENDENCY -> Unit
@@ -147,17 +147,12 @@ private class WorkspaceImpl(
             // handle cycles here.
 
             // Figure out packages origins:
-            // - if a package is a workspace member, or if it resides inside a workspace member directory, it's WORKSPACE
+            // - if a package is a workspace member it's WORKSPACE
             // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
             // - otherwise, it's TRANSITIVE_DEPENDENCY
             val idToOrigin = HashMap<PackageId, PackageOrigin>(data.packages.size)
-            val workspacePaths = data.packages
-                .filter { it.isWorkspaceMember }
-                .map { it.manifestPath.substringBeforeLast("Cargo.toml", "") }
-                .filter(String::isNotEmpty)
-                .toList()
             for (pkg in data.packages) {
-                if (pkg.isWorkspaceMember || workspacePaths.any { pkg.manifestPath.startsWith(it) }) {
+                if (pkg.isWorkspaceMember) {
                     idToOrigin[pkg.id] = PackageOrigin.WORKSPACE
                     for (dep in data.dependencies[pkg.id].orEmpty()) {
                         idToOrigin.merge(dep, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
@@ -170,10 +165,10 @@ private class WorkspaceImpl(
             val packages = data.packages.associate { pkg ->
                 val origin = idToOrigin[pkg.id] ?: error("Origin is undefined for package ${pkg.name}")
                 pkg.id to PackageImpl(
-                    pkg.url,
+                    pkg.contentRootUrl,
                     pkg.name,
                     pkg.version,
-                    pkg.targets.map { TargetImpl(it.url, it.name, it.kind) },
+                    pkg.targets,
                     pkg.source,
                     origin
                 )
@@ -197,14 +192,11 @@ private class PackageImpl(
     private val contentRootUrl: String,
     override val name: String,
     override val version: String,
-    override val targets: Collection<TargetImpl>,
+    targets: Collection<CargoWorkspaceData.Target>,
     override val source: String?,
     override val origin: PackageOrigin
 ) : CargoWorkspace.Package {
-
-    init {
-        targets.forEach { it.initPackage(this) }
-    }
+    override val targets = targets.map { TargetImpl(this, crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind) }
 
     override val contentRoot: VirtualFile?
         get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
@@ -228,6 +220,7 @@ private class PackageImpl(
 
 
 private class TargetImpl(
+    override val pkg: PackageImpl,
     val crateRootUrl: String,
     override val name: String,
     override val kind: CargoWorkspace.TargetKind
@@ -242,13 +235,6 @@ private class TargetImpl(
             crateRootCache.set(file)
             return file
         }
-
-    private lateinit var myPackage: PackageImpl
-    fun initPackage(pkg: PackageImpl) {
-        myPackage = pkg
-    }
-
-    override val pkg: CargoWorkspace.Package get() = myPackage
 
     override fun toString(): String
         = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
