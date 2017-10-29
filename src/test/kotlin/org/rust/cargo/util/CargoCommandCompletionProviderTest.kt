@@ -8,7 +8,7 @@ package org.rust.cargo.util
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CleanCargoMetadata
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.RsTestBase
 import java.nio.file.Paths
 
@@ -96,7 +96,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
     }
 
     private val TEST_WORKSPACE = run {
-        fun target(name: String, kind: CargoWorkspace.TargetKind): CleanCargoMetadata.Target = CleanCargoMetadata.Target(
+        fun target(name: String, kind: CargoWorkspace.TargetKind): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
             url = "/tmp/lib/rs",
             name = name,
             kind = kind
@@ -105,8 +105,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         fun pkg(
             name: String,
             isWorkspaceMember: Boolean,
-            targets: List<CleanCargoMetadata.Target>
-        ): CleanCargoMetadata.Package = CleanCargoMetadata.Package(
+            targets: List<CargoWorkspaceData.Target>
+        ): CargoWorkspaceData.Package = CargoWorkspaceData.Package(
             name = name,
             id = "pkg-id",
             url = "/tmp",
@@ -125,6 +125,6 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             )),
             pkg("quux", false, listOf(target("quux", CargoWorkspace.TargetKind.LIB)))
         )
-        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CleanCargoMetadata(pkgs, dependencies = emptyList()))
+        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyList()))
     }
 }

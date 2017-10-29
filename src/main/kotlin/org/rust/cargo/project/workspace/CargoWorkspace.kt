@@ -75,7 +75,7 @@ interface CargoWorkspace {
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CleanCargoMetadata): CargoWorkspace
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace
             = WorkspaceImpl.deserialize(manifestPath, data)
     }
 }
@@ -135,7 +135,7 @@ private class WorkspaceImpl(
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CleanCargoMetadata): WorkspaceImpl {
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): WorkspaceImpl {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps

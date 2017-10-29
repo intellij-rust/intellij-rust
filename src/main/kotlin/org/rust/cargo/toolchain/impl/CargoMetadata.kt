@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
-import org.rust.cargo.project.workspace.CleanCargoMetadata
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.openapiext.findFileByMaybeRelativePath
 
 /**
@@ -152,7 +152,7 @@ object CargoMetadata {
         val test: Boolean
     )
 
-    fun clean(project: Project): CleanCargoMetadata {
+    fun clean(project: Project): CargoWorkspaceData {
         val packageIdToIndex: (String) -> Int = project.packages.mapIndexed { i, p -> p.id to i }.toMap().let { pkgs ->
             { pkgs[it] ?: error("Cargo metadata references an unlisted package: `$it`") }
         }
@@ -161,10 +161,10 @@ object CargoMetadata {
         val members = project.workspace_members
             ?: error("No `members` key in the `cargo metadata` output.\n" +
             "Your version of Cargo is no longer supported, please upgrade Cargo.")
-        return CleanCargoMetadata(
+        return CargoWorkspaceData(
             project.packages.mapNotNull { it.clean(fs, it.id in members) },
             project.resolve.nodes.map { (id, dependencies) ->
-                CleanCargoMetadata.DependencyNode(
+                CargoWorkspaceData.DependencyNode(
                     packageIdToIndex(id),
                     dependencies.map { packageIdToIndex(it) }
                 )
@@ -172,11 +172,11 @@ object CargoMetadata {
         )
     }
 
-    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CleanCargoMetadata.Package? {
+    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
-        return CleanCargoMetadata.Package(
+        return CargoWorkspaceData.Package(
             id,
             root.url,
             name,
@@ -188,11 +188,11 @@ object CargoMetadata {
         )
     }
 
-    private fun Target.clean(root: VirtualFile): CleanCargoMetadata.Target? {
+    private fun Target.clean(root: VirtualFile): CargoWorkspaceData.Target? {
 
         val mainFile = root.findFileByMaybeRelativePath(src_path)
 
-        return mainFile?.let { CleanCargoMetadata.Target(it.url, name, cleanKind) }
+        return mainFile?.let { CargoWorkspaceData.Target(it.url, name, cleanKind) }
     }
 }
 

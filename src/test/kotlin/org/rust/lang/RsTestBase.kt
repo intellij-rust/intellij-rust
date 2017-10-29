@@ -32,7 +32,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.project.workspace.CleanCargoMetadata
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.parentOfType
 import java.nio.file.Paths
@@ -209,17 +209,17 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
             val packages = listOf(testCargoPackage(contentRoot))
-            return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CleanCargoMetadata(packages, ArrayList()))
+            return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, ArrayList()))
         }
 
-        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
+        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoWorkspaceData.Package(
             id = "$name 0.0.1",
             url = contentRoot,
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CleanCargoMetadata.Target("$contentRoot/main.rs", name, CargoWorkspace.TargetKind.BIN),
-                CleanCargoMetadata.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
+                CargoWorkspaceData.Target("$contentRoot/main.rs", name, CargoWorkspace.TargetKind.BIN),
+                CargoWorkspaceData.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
             ),
             source = null,
             manifestPath = "$contentRoot/../Cargo.toml",
@@ -235,20 +235,20 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
             val packages = listOf(testCargoPackage(contentRoot))
 
-            return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CleanCargoMetadata(packages, emptyList()))
+            return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, emptyList()))
                 .withStdlib(stdlib.crates)
         }
     }
 
     protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
-        private fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CleanCargoMetadata.Package {
-            return CleanCargoMetadata.Package(
+        private fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CargoWorkspaceData.Package {
+            return CargoWorkspaceData.Package(
                 id = "$name 0.0.1",
                 url = "",
                 name = name,
                 version = "0.0.1",
                 targets = listOf(
-                    CleanCargoMetadata.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
+                    CargoWorkspaceData.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
                 ),
                 source = source,
                 manifestPath = "/ext-libs/$name/Cargo.toml",
@@ -271,10 +271,10 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 externalPackage(contentRoot, null, "nosrc-lib", "nosrc-lib-target"),
                 externalPackage(contentRoot, "trans-lib/lib.rs", "trans-lib"))
 
-            val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
-            depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib
+            val depNodes = ArrayList<CargoWorkspaceData.DependencyNode>()
+            depNodes.add(CargoWorkspaceData.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib
 
-            val ws = CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CleanCargoMetadata(packages, depNodes))
+            val ws = CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, depNodes))
             val stdlib = StandardLibrary.fromFile(stdlib!!)!!
             return ws.withStdlib(stdlib.crates)
         }
