@@ -86,6 +86,10 @@ private class WorkspaceImpl(
     override val packages: Collection<PackageImpl>
 ) : CargoWorkspace {
 
+    init {
+        packages.forEach { it.initWorkspace(this) }
+    }
+
     val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
     override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? {
         val canonicalFile = root.canonicalFile ?: return null
@@ -101,7 +105,7 @@ private class WorkspaceImpl(
                 targets = listOf(TargetImpl(crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
                 source = null,
                 origin = PackageOrigin.STDLIB
-            ).initTargets()
+            )
             (crate.name to pkg)
         }.toMap()
 
@@ -172,18 +176,16 @@ private class WorkspaceImpl(
                     pkg.targets.map { TargetImpl(it.url, it.name, it.kind) },
                     pkg.source,
                     origin
-                ).initTargets()
+                )
             }
 
             // Fill package dependencies
-            packages.forEach pkgs@ { (id, pkg) ->
+            packages.forEach { (id, pkg) ->
                 val deps = data.dependencies[id].orEmpty()
                 pkg.dependencies.addAll(deps.mapNotNull { packages[it] })
             }
 
-            val workspace = WorkspaceImpl(manifestPath, packages.values.toList())
-            workspace.packages.forEach { it.initWorkspace(workspace) }
-            return workspace
+            return WorkspaceImpl(manifestPath, packages.values.toList())
         }
     }
 }
@@ -200,6 +202,10 @@ private class PackageImpl(
     override val origin: PackageOrigin
 ) : CargoWorkspace.Package {
 
+    init {
+        targets.forEach { it.initPackage(this) }
+    }
+
     override val contentRoot: VirtualFile?
         get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
@@ -207,11 +213,6 @@ private class PackageImpl(
         get() = Paths.get(VirtualFileManager.extractPath(contentRootUrl))
 
     override val dependencies: MutableList<PackageImpl> = ArrayList()
-
-    fun initTargets(): PackageImpl {
-        targets.forEach { it.initPackage(this) }
-        return this
-    }
 
     private lateinit var myWorkspace: WorkspaceImpl
     fun initWorkspace(workspace: WorkspaceImpl) {
