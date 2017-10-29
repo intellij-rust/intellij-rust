@@ -25,12 +25,6 @@ class RsLangItemIndex : AbstractStubIndex<String, RsTraitItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<String> = EnumeratorStringDescriptor.INSTANCE
 
     companion object {
-        fun findLangItemDerivableTrait(project: Project, langAttribute: String, trait: StdDerivableTrait): RsTraitItem? {
-            // dox.rs in libclibc contains some rustdoc shims, so we can't *just* use lang attribute
-            return getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project))
-                .firstOrNull { it.containingMod.modName == trait.modName }
-        }
-
         fun findLangItem(project: Project, langAttribute: String): RsTraitItem? {
             return getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project)).firstOrNull()
         }

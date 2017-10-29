@@ -20,5 +20,3 @@ fun <U, V> Query<U>.mapQuery(f: (U) -> V) = object : AbstractQuery<V>() {
         return this@mapQuery.forEach(Processor<U> { t -> consumer.process(f(t)) })
     }
 }
-
-val Query<*>.isEmptyQuery get() = findFirst() == null

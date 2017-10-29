@@ -16,7 +16,6 @@ object CargoConstants {
     const val RUST_BACTRACE_ENV_VAR = "RUST_BACKTRACE"
 
     object ProjectLayout {
-        val binaries = listOf("src/bin")
         val sources = listOf("src", "examples")
         val tests = listOf("tests", "benches")
         val target = "target"
