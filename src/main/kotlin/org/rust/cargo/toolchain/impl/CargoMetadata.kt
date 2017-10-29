@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
+import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageId
 import org.rust.openapiext.findFileByMaybeRelativePath
 
 /**
@@ -63,7 +65,7 @@ object CargoMetadata {
          * There may be several packages with the same name, but different version/source.
          * The triple (name, version, source) is unique.
          */
-        val id: String,
+        val id: PackageId,
 
         /**
          * Path to Cargo.toml
@@ -122,12 +124,12 @@ object CargoMetadata {
 
 
     data class ResolveNode(
-        val id: String,
+        val id: PackageId,
 
         /**
          * id's of dependent packages
          */
-        val dependencies: List<String>
+        val dependencies: List<PackageId>
     )
 
     // The next two things do not belong here,
@@ -151,31 +153,24 @@ object CargoMetadata {
         val test: Boolean
     )
 
-    fun clean(project: Project): CleanCargoMetadata {
-        val packageIdToIndex: (String) -> Int = project.packages.mapIndexed { i, p -> p.id to i }.toMap().let { pkgs ->
-            { pkgs[it] ?: error("Cargo metadata references an unlisted package: `$it`") }
-        }
-
+    fun clean(project: Project): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
             ?: error("No `members` key in the `cargo metadata` output.\n" +
             "Your version of Cargo is no longer supported, please upgrade Cargo.")
-        return CleanCargoMetadata(
+        return CargoWorkspaceData(
             project.packages.mapNotNull { it.clean(fs, it.id in members) },
-            project.resolve.nodes.map { (id, dependencies) ->
-                CleanCargoMetadata.DependencyNode(
-                    packageIdToIndex(id),
-                    dependencies.map { packageIdToIndex(it) }
-                )
-            }.sortedBy { it.packageIndex }
+            project.resolve.nodes.associate { (id, dependencies) ->
+                id to dependencies.toSet()
+            }
         )
     }
 
-    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CleanCargoMetadata.Package? {
+    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
-        return CleanCargoMetadata.Package(
+        return CargoWorkspaceData.Package(
             id,
             root.url,
             name,
@@ -187,45 +182,11 @@ object CargoMetadata {
         )
     }
 
-    private fun Target.clean(root: VirtualFile): CleanCargoMetadata.Target? {
+    private fun Target.clean(root: VirtualFile): CargoWorkspaceData.Target? {
 
         val mainFile = root.findFileByMaybeRelativePath(src_path)
 
-        return mainFile?.let { CleanCargoMetadata.Target(it.url, name, cleanKind) }
+        return mainFile?.let { CargoWorkspaceData.Target(it.url, name, cleanKind) }
     }
-}
-
-/**
- * A POD-style representation of [org.rust.cargo.project.workspace.CargoWorkspace] used as an intermediate representation
- * between `cargo metadata` JSON and [org.rust.cargo.project.workspace.CargoWorkspace] object graph.
- *
- * Dependency graph is represented via adjacency list, where `Index` is the order of a particular
- * package in `packages` list.
- */
-data class CleanCargoMetadata(
-    val packages: List<Package>,
-    val dependencies: List<DependencyNode>
-) {
-    data class DependencyNode(
-        val packageIndex: Int,
-        val dependenciesIndexes: Collection<Int>
-    )
-
-    data class Package(
-        val id: String,
-        val url: String,
-        val name: String,
-        val version: String,
-        val targets: Collection<Target>,
-        val source: String?,
-        val manifestPath: String,
-        val isWorkspaceMember: Boolean
-    )
-
-    data class Target(
-        val url: String,
-        val name: String,
-        val kind: TargetKind
-    )
 }
 

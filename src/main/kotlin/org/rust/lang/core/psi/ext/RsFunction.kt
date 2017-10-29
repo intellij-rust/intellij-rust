@@ -54,7 +54,6 @@ sealed class RsFunctionOwner {
     val isInherentImpl: Boolean get() = this is Impl && isInherent
     val isTraitImpl: Boolean get() = this is Impl && !isInherent
     val isImplOrTrait: Boolean get() = this is Impl || this is Trait
-    val isTrait: Boolean get() = this is Trait
 }
 
 val RsFunction.owner: RsFunctionOwner get() {

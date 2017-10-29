@@ -41,8 +41,6 @@ val StdDerivableTrait.withDependencies: List<StdDerivableTrait> get() = listOf(t
 
 val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.values().associate { it.name to it }
 
-private val RsTraitItem.isIndex: Boolean get() = langAttribute == "index"
-
 private val RsTraitItem.typeParamSingle: TyTypeParameter?
     get() =
         typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }

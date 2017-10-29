@@ -229,7 +229,7 @@ data class CargoProjectImpl(
     override val workspace: CargoWorkspace? = run {
         val rawWorkspace = rawWorkspace ?: return@run null
         val stdlib = stdlib ?: return@run rawWorkspace
-        rawWorkspace.withStdlib(stdlib.crates)
+        rawWorkspace.withStdlib(stdlib)
     }
 
     override val presentableName: String

@@ -19,7 +19,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
@@ -353,15 +353,15 @@ class RunConfigurationProducerTest : RsTestBase() {
 
             val projectDescription = CargoWorkspace.deserialize(
                 Paths.get("/my-crate/Cargo.toml"),
-                CleanCargoMetadata(
+                CargoWorkspaceData(
                     packages = listOf(
-                        CleanCargoMetadata.Package(
+                        CargoWorkspaceData.Package(
                             id = "test-package 0.0.1",
                             url = myFixture.tempDirFixture.getFile(".")!!.url,
                             name = "test-package",
                             version = "0.0.1",
                             targets = targets.map {
-                                CleanCargoMetadata.Target(
+                                CargoWorkspaceData.Target(
                                     myFixture.tempDirFixture.getFile(it.file.path)!!.url,
                                     it.name,
                                     it.kind
@@ -372,7 +372,7 @@ class RunConfigurationProducerTest : RsTestBase() {
                             isWorkspaceMember = true
                         )
                     ),
-                    dependencies = emptyList()
+                    dependencies = emptyMap()
                 )
             )
 

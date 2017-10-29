@@ -32,7 +32,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.parentOfType
 import java.nio.file.Paths
@@ -62,7 +62,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     protected val fileName: String
         get() = "$testName.rs"
 
-    protected val testName: String
+    private val testName: String
         get() = camelOrWordsToSnake(getTestName(true))
 
     protected fun checkByFile(ignoreTrailingWhitespace: Boolean = true, action: () -> Unit) {
@@ -105,7 +105,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         myFixture.configureFromExistingVirtualFile(myFixture.findFileInTempDir(path))
     }
 
-    protected fun getVirtualFileByName(path: String): VirtualFile? =
+    private fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
 
     protected inline fun <reified X : Throwable> expect(f: () -> Unit) {
@@ -185,7 +185,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         open class WithRustup : RustProjectDescriptorBase() {
             private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
 
-            val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
+            private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
             val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
 
             override val skipTestReason: String?
@@ -209,17 +209,17 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         open protected fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
             val packages = listOf(testCargoPackage(contentRoot))
-            return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CleanCargoMetadata(packages, ArrayList()))
+            return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, emptyMap()))
         }
 
-        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CleanCargoMetadata.Package(
+        protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoWorkspaceData.Package(
             id = "$name 0.0.1",
             url = contentRoot,
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CleanCargoMetadata.Target("$contentRoot/main.rs", name, CargoWorkspace.TargetKind.BIN),
-                CleanCargoMetadata.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
+                CargoWorkspaceData.Target("$contentRoot/main.rs", name, CargoWorkspace.TargetKind.BIN),
+                CargoWorkspaceData.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
             ),
             source = null,
             manifestPath = "$contentRoot/../Cargo.toml",
@@ -235,20 +235,20 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
             val packages = listOf(testCargoPackage(contentRoot))
 
-            return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CleanCargoMetadata(packages, emptyList()))
-                .withStdlib(stdlib.crates)
+            return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, emptyMap()))
+                .withStdlib(stdlib)
         }
     }
 
     protected object WithStdlibAndDependencyRustProjectDescriptor : RustProjectDescriptorBase.WithRustup() {
-        private fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CleanCargoMetadata.Package {
-            return CleanCargoMetadata.Package(
+        private fun externalPackage(contentRoot: String, source: String?, name: String, targetName: String = name): CargoWorkspaceData.Package {
+            return CargoWorkspaceData.Package(
                 id = "$name 0.0.1",
                 url = "",
                 name = name,
                 version = "0.0.1",
                 targets = listOf(
-                    CleanCargoMetadata.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
+                    CargoWorkspaceData.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
                 ),
                 source = source,
                 manifestPath = "/ext-libs/$name/Cargo.toml",
@@ -271,12 +271,14 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 externalPackage(contentRoot, null, "nosrc-lib", "nosrc-lib-target"),
                 externalPackage(contentRoot, "trans-lib/lib.rs", "trans-lib"))
 
-            val depNodes = ArrayList<CleanCargoMetadata.DependencyNode>()
-            depNodes.add(CleanCargoMetadata.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib
+            val depNodes = ArrayList<CargoWorkspaceData.DependencyNode>()
+            depNodes.add(CargoWorkspaceData.DependencyNode(0, listOf(1, 2)))   // Our package depends on dep_lib and dep_nosrc_lib
 
-            val ws = CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CleanCargoMetadata(packages, depNodes))
+            val ws = CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
+                packages[0].id to setOf(packages[1].id, packages[2].id)
+            )))
             val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-            return ws.withStdlib(stdlib.crates)
+            return ws.withStdlib(stdlib)
         }
     }
 
@@ -294,9 +296,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         fun camelOrWordsToSnake(name: String): String {
             if (' ' in name) return name.replace(" ", "_")
 
-            return name.split("(?=[A-Z])".toRegex())
-                .map(String::toLowerCase)
-                .joinToString("_")
+            return name.split("(?=[A-Z])".toRegex()).joinToString("_", transform = String::toLowerCase)
         }
 
         @JvmStatic

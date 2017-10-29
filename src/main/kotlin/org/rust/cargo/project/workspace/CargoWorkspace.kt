@@ -7,7 +7,6 @@ package org.rust.cargo.project.workspace
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StdLibType
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -29,7 +28,7 @@ interface CargoWorkspace {
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
-    fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace
+    fun withStdlib(stdlib: StandardLibrary): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     interface Package {
@@ -76,7 +75,7 @@ interface CargoWorkspace {
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CleanCargoMetadata): CargoWorkspace
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace
             = WorkspaceImpl.deserialize(manifestPath, data)
     }
 }
@@ -87,14 +86,18 @@ private class WorkspaceImpl(
     override val packages: Collection<PackageImpl>
 ) : CargoWorkspace {
 
+    init {
+        packages.forEach { it.initWorkspace(this) }
+    }
+
     val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
     override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? {
         val canonicalFile = root.canonicalFile ?: return null
         return targetByCrateRootUrl[canonicalFile.url]
     }
 
-    override fun withStdlib(libs: List<StandardLibrary.StdCrate>): CargoWorkspace {
-        val stdlib = libs.map { crate ->
+    override fun withStdlib(stdlib: StandardLibrary): CargoWorkspace {
+        val nameToPkg = stdlib.crates.map { crate ->
             val pkg = PackageImpl(
                 contentRootUrl = crate.packageRootUrl,
                 name = crate.name,
@@ -102,21 +105,21 @@ private class WorkspaceImpl(
                 targets = listOf(TargetImpl(crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
                 source = null,
                 origin = PackageOrigin.STDLIB
-            ).initTargets()
+            )
             (crate.name to pkg)
         }.toMap()
 
         // Bind dependencies and collect roots
         val roots = ArrayList<PackageImpl>()
         val featureGated = ArrayList<PackageImpl>()
-        libs.forEach { lib ->
-            val slib = stdlib[lib.name] ?: error("Std lib ${lib.name} not found")
-            val depPackages = lib.dependencies.mapNotNull { stdlib[it] }
+        stdlib.crates.forEach { crate ->
+            val slib = nameToPkg[crate.name] ?: error("Std lib ${crate.name} not found")
+            val depPackages = crate.dependencies.mapNotNull { nameToPkg[it] }
             slib.dependencies.addAll(depPackages)
-            if (lib.type == StdLibType.ROOT) {
-                roots.add(slib)
-            } else if (lib.type == StdLibType.FEATURE_GATED) {
-                featureGated.add(slib)
+            when(crate.type) {
+                StdLibType.ROOT -> roots.add(slib)
+                StdLibType.FEATURE_GATED -> featureGated.add(slib)
+                StdLibType.DEPENDENCY -> Unit
             }
         }
 
@@ -136,7 +139,7 @@ private class WorkspaceImpl(
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CleanCargoMetadata): WorkspaceImpl {
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): WorkspaceImpl {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -147,47 +150,42 @@ private class WorkspaceImpl(
             // - if a package is a workspace member, or if it resides inside a workspace member directory, it's WORKSPACE
             // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
             // - otherwise, it's TRANSITIVE_DEPENDENCY
-            val idToOrigin = HashMap<String, PackageOrigin>(data.packages.size)
+            val idToOrigin = HashMap<PackageId, PackageOrigin>(data.packages.size)
             val workspacePaths = data.packages
                 .filter { it.isWorkspaceMember }
                 .map { it.manifestPath.substringBeforeLast("Cargo.toml", "") }
                 .filter(String::isNotEmpty)
                 .toList()
-            data.packages.forEachIndexed pkgs@ { index, pkg ->
+            for (pkg in data.packages) {
                 if (pkg.isWorkspaceMember || workspacePaths.any { pkg.manifestPath.startsWith(it) }) {
                     idToOrigin[pkg.id] = PackageOrigin.WORKSPACE
-                    val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
-                    depNode.dependenciesIndexes
-                        .mapNotNull { data.packages.getOrNull(it) }
-                        .forEach {
-                            idToOrigin.merge(it.id, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
-                        }
+                    for (dep in data.dependencies[pkg.id].orEmpty()) {
+                        idToOrigin.merge(dep, PackageOrigin.DEPENDENCY, { o1, o2 -> PackageOrigin.min(o1, o2) })
+                    }
                 } else {
                     idToOrigin.putIfAbsent(pkg.id, PackageOrigin.TRANSITIVE_DEPENDENCY)
                 }
             }
 
-            val packages = data.packages.map { pkg ->
+            val packages = data.packages.associate { pkg ->
                 val origin = idToOrigin[pkg.id] ?: error("Origin is undefined for package ${pkg.name}")
-                PackageImpl(
+                pkg.id to PackageImpl(
                     pkg.url,
                     pkg.name,
                     pkg.version,
                     pkg.targets.map { TargetImpl(it.url, it.name, it.kind) },
                     pkg.source,
                     origin
-                ).initTargets()
-            }.toList()
-
-            // Fill package dependencies
-            packages.forEachIndexed pkgs@ { index, pkg ->
-                val depNode = data.dependencies.getOrNull(index) ?: return@pkgs
-                pkg.dependencies.addAll(depNode.dependenciesIndexes.map { packages[it] })
+                )
             }
 
-            val workspace = WorkspaceImpl(manifestPath, packages)
-            workspace.packages.forEach { it.initWorkspace(workspace) }
-            return workspace
+            // Fill package dependencies
+            packages.forEach { (id, pkg) ->
+                val deps = data.dependencies[id].orEmpty()
+                pkg.dependencies.addAll(deps.mapNotNull { packages[it] })
+            }
+
+            return WorkspaceImpl(manifestPath, packages.values.toList())
         }
     }
 }
@@ -204,6 +202,10 @@ private class PackageImpl(
     override val origin: PackageOrigin
 ) : CargoWorkspace.Package {
 
+    init {
+        targets.forEach { it.initPackage(this) }
+    }
+
     override val contentRoot: VirtualFile?
         get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
 
@@ -211,11 +213,6 @@ private class PackageImpl(
         get() = Paths.get(VirtualFileManager.extractPath(contentRootUrl))
 
     override val dependencies: MutableList<PackageImpl> = ArrayList()
-
-    fun initTargets(): PackageImpl {
-        targets.forEach { it.initPackage(this) }
-        return this
-    }
 
     private lateinit var myWorkspace: WorkspaceImpl
     fun initWorkspace(workspace: WorkspaceImpl) {

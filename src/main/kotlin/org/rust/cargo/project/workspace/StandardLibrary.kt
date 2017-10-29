@@ -50,35 +50,3 @@ class StandardLibrary private constructor(
         }
     }
 }
-
-class SetupRustStdlibTask(
-    private val module: Module,
-    private val rustup: Rustup,
-    private val withCurrentStdlib: (StandardLibrary) -> Unit
-) : Task.Backgroundable(module.project, "Setup Rust stdlib") {
-    private lateinit var result: Rustup.DownloadResult
-
-    override fun run(indicator: ProgressIndicator) {
-        indicator.isIndeterminate = true
-        result = rustup.downloadStdlib()
-    }
-
-    override fun onSuccess() {
-        if (module.isDisposed) return
-
-        val result = result
-        when (result) {
-            is Rustup.DownloadResult.Ok -> {
-                val stdlib = StandardLibrary.fromFile(result.library)
-                    ?: return failWithMessage("${result.library.presentableUrl} is not a valid Rust standard library")
-                withCurrentStdlib(stdlib)
-            }
-            is Rustup.DownloadResult.Err ->
-                return failWithMessage("Failed to download standard library: ${result.error}")
-        }
-    }
-
-    private fun failWithMessage(message: String) {
-        project.showBalloon(message, NotificationType.ERROR)
-    }
-}
