@@ -8,7 +8,7 @@ package org.rust.cargo.util
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.cargo.project.workspace.CleanCargoMetadata
 import org.rust.lang.RsTestBase
 import java.nio.file.Paths
 

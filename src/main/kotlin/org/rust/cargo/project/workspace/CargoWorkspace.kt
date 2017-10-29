@@ -7,7 +7,6 @@ package org.rust.cargo.project.workspace
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
 import org.rust.cargo.util.StdLibType
 import java.nio.file.Path
 import java.nio.file.Paths

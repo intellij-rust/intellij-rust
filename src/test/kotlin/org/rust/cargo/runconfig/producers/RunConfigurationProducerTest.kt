@@ -19,7 +19,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.cargo.project.workspace.CleanCargoMetadata
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction

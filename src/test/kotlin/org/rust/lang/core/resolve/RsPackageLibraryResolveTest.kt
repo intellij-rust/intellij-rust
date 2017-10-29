@@ -8,7 +8,7 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.module.Module
 import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.toolchain.impl.CleanCargoMetadata
+import org.rust.cargo.project.workspace.CleanCargoMetadata
 import java.nio.file.Paths
 
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
