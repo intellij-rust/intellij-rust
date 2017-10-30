@@ -80,7 +80,7 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
                 check(commandLine.workDirectory != null) {
                     "LLDB requires working directory"
                 }
-                val runParameters = RsDebugRunParameters(commandLine)
+                val runParameters = RsDebugRunParameters(environment.project, commandLine)
                 XDebuggerManager.getInstance(environment.project)
                     .startSession(environment, object : XDebugProcessConfiguratorStarter() {
                         override fun start(session: XDebugSession): XDebugProcess =
