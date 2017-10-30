@@ -116,29 +116,8 @@ private class WorkspaceImpl(
 
         val result = WorkspaceImpl(
             manifestPath,
-            packages.map { pkg ->
-                CargoWorkspaceData.Package(
-                    pkg.id,
-                    pkg.contentRootUrl,
-                    pkg.name,
-                    pkg.version,
-                    pkg.targets.map { target ->
-                        CargoWorkspaceData.Target(crateRootUrl = target.crateRootUrl, name = target.name, kind = target.kind)
-                    },
-                    pkg.source,
-                    pkg.origin
-                )
-            } + stdlib.crates.map { crate ->
-                CargoWorkspaceData.Package(
-                    id = crate.id,
-                    contentRootUrl = crate.packageRootUrl,
-                    name = crate.name,
-                    version = "",
-                    targets = listOf(CargoWorkspaceData.Target(crateRootUrl = crate.crateRootUrl, name = crate.name, kind = CargoWorkspace.TargetKind.LIB)),
-                    source = null,
-                    origin = PackageOrigin.STDLIB
-                )
-            }
+            packages.map { it.asPackageData } +
+                stdlib.crates.map { it.asPackageData }
         )
 
         run {
@@ -244,3 +223,28 @@ private class TargetImpl(
     override fun toString(): String
         = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }
+
+
+private val PackageImpl.asPackageData: CargoWorkspaceData.Package
+    get() =
+        CargoWorkspaceData.Package(
+            id = id,
+            contentRootUrl = contentRootUrl,
+            name = name,
+            version = version,
+            targets = targets.map { CargoWorkspaceData.Target(crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind) },
+            source = source,
+            origin = origin
+        )
+
+private val StandardLibrary.StdCrate.asPackageData
+    get() =
+        CargoWorkspaceData.Package(
+            id = id,
+            contentRootUrl = packageRootUrl,
+            name = name,
+            version = "",
+            targets = listOf(CargoWorkspaceData.Target(crateRootUrl = crateRootUrl, name = name, kind = CargoWorkspace.TargetKind.LIB)),
+            source = null,
+            origin = PackageOrigin.STDLIB
+        )
