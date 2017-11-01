@@ -63,6 +63,14 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
         mod foo {}
     """)
 
+    fun testMacroUseOnMod2() = doSingleCompletion("""
+        #[macr/*caret*/]
+        mod foo;
+    """, """
+        #[macro_use/*caret*/]
+        mod foo;
+    """)
+
     fun testOuterWarnOnMod() = @Suppress("DEPRECATION") checkSingleCompletion("warn", """
         mod foo {
             #![war/*caret*/]

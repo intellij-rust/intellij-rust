@@ -149,6 +149,12 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onMod)
 
+    fun testOnModAttr2() = testPattern("""
+        #[foo]
+        //^
+        mod bar;
+    """, RsPsiPattern.onMod)
+
     fun testOnStaticAttr() = testPattern("""
         #[foo]
         //^
