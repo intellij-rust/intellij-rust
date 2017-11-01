@@ -728,6 +728,8 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: PsiE
 
         is RsIfExpr -> {
             if (Namespace.Values !in ns) return false
+            // else branch of 'if let' expression shouldn't look into condition pattern
+            if (scope.elseBranch == cameFrom) return false
             return processCondition(scope.condition, processor)
         }
         is RsWhileExpr -> {
