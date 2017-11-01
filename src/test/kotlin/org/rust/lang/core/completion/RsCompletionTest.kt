@@ -547,8 +547,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test hidden macro is hidden in other module multiple doc attributes`() = expect<IllegalStateException> {
-        checkNoCompletion("""
+    fun `test hidden macro is hidden in other module multiple doc attributes`() = checkNoCompletion("""
         #[doc="No problems with"]
         #[doc(hidden)]
         #[doc="explicit docs"]
@@ -558,5 +557,4 @@ class RsCompletionTest : RsCompletionTestBase() {
             fn main() { private_m/*caret*/ }
         }
     """)
-    }
 }

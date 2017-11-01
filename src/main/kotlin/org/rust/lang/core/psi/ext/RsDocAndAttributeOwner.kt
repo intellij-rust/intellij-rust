@@ -74,17 +74,22 @@ class QueryAttributes(
         return hasAttribute("cfg")
     }
 
-    fun hasAttribute(attributeName: String) = metaItems.any { it.referenceName == attributeName }
-
-    fun hasAtomAttribute(attributeName: String): Boolean {
-        val attr = attrByName(attributeName)
-        return attr != null && (!attr.hasEq && attr.metaItemArgs == null)
+    // `#[attributeName]`, `#[attributeName(arg)]`, `#[attributeName = "Xxx"]`
+    fun hasAttribute(attributeName: String): Boolean {
+        val attrs = attrsByName(attributeName)
+        return attrs.any()
     }
 
+    // `#[attributeName]`
+    fun hasAtomAttribute(attributeName: String): Boolean {
+        val attrs = attrsByName(attributeName)
+        return attrs.any { !it.hasEq && it.metaItemArgs == null }
+    }
+
+    // `#[attributeName(arg)]`
     fun hasAttributeWithArg(attributeName: String, arg: String): Boolean {
-        val attr = attrByName(attributeName) ?: return false
-        val args = attr.metaItemArgs ?: return false
-        return args.metaItemList.any { it.referenceName == arg }
+        val attrs = attrsByName(attributeName)
+        return attrs.any { it.metaItemArgs?.metaItemList?.any { it.referenceName == arg } ?: false }
     }
 
     fun lookupStringValueForKey(key: String): String? =
