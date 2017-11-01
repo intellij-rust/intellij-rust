@@ -134,6 +134,18 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test if let else branch`() = checkByCode("""
+        fn foo(x: Option<i32>) {
+             //X
+            if let Some(x) = x {
+                x
+            } else {
+                x
+              //^
+            }
+        }
+    """)
+
     fun testWhileLet1() = checkByCode("""
         fn main() {
             while let Some(i) = Some(92) {
