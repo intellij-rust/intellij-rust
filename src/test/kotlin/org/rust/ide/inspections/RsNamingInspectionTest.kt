@@ -26,15 +26,15 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
         // TODO: Uncomment when associated types support renaming
         //
-        // fun testAssociatedTypesFix() = checkFixByText<RustAssocTypeNamingInspection>("Rename to `assocType`", """
+        // fun testAssociatedTypesFix() = checkFixByText("Rename to `AssocFoo`", """
         //     trait Foo {
         //         type <warning descr="Type `assoc_foo` should have a camel case name such as `AssocFoo`">ass<caret>oc_foo</warning>;
-        //         fn bar(&Self::assoc_foo) {}
+        //         fn bar(foo: &Self::assoc_foo) {}
         //     }
         // """, """
         //     trait Foo {
         //         type AssocFoo;
-        //         fn bar(&Self::AssocFoo) {}
+        //         fn bar(foo: &Self::AssocFoo) {}
         //     }
         // """)
     }
@@ -341,14 +341,14 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testTraitlMethods() = checkByText("""
+        fun testTraitMethods() = checkByText("""
             trait Foo {
                 fn met_ok() {}
                 fn <warning descr="Method `MET_BAR` should have a snake case name such as `met_bar`">MET_BAR</warning>() {}
             }
         """)
 
-        fun testTraitlMethodsSuppression() = checkByText("""
+        fun testTraitMethodsSuppression() = checkByText("""
             trait Foo {
                 #[allow(non_snake_case)]
                 fn MET_BAR() {}
@@ -357,7 +357,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
         // TODO: Uncomment when trait methods support renaming
         //
-        // fun testTraitlMethodsFix() = checkFixByText<RustMethodNamingInspection>("Rename to `bar_baz`", """
+        // fun testTraitMethodsFix() = checkFixByText("Rename to `bar_baz`", """
         //     trait Foo {
         //         fn <warning descr="Method `BarBaz` should have a snake case name such as `bar_baz`">Bar<caret>Baz</warning>() {}
         //     }
