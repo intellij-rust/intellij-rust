@@ -405,15 +405,17 @@ private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<
         }
     }
 
-    for (modDecl in scope.modDeclItemList.filter { it.hasMacroUse }) {
+    // We do not care about the #[macro_use] attribute when searching for exported macros
+    for (modDecl in scope.modDeclItemList.filter { needExport || it.hasMacroUse }) {
         val mod = modDecl.reference.resolve() ?: continue
         if (mod is RsMod) {
-            macros.addAll(exportedCrateMacros(mod, true))
+            macros.addAll(exportedCrateMacros(mod, needExport))
         }
     }
 
-    for (mod in scope.modItemList.filter { it.hasMacroUse }) {
-        macros.addAll(exportedCrateMacros(mod, true))
+    // We do not care about the #[macro_use] attribute when searching for exported macros
+    for (mod in scope.modItemList.filter { needExport || it.hasMacroUse }) {
+        macros.addAll(exportedCrateMacros(mod, needExport))
     }
     return macros
 }

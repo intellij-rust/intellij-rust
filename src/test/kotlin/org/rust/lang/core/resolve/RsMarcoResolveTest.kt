@@ -59,7 +59,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
     fun `test resolve macro mod lower`() = checkByCode("""
         macro_rules! foo_bar { () => () }
         //X
-        #[macro_use]
         mod b {
             fn main() {
                 foo_bar!();
@@ -68,23 +67,9 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test resolve macro unresolved`() = checkByCode("""
-        mod a {
-            #[macro_export]
-            macro_rules! foo_bar { () => () }
-        }
-        mod b {
-            fn main() {
-                foo_bar!();
-                //^ unresolved
-            }
-        }
-    """)
-
     fun `test resolve macro mod`() = checkByCode("""
         #[macro_use]
         mod a {
-            #[macro_export]
             macro_rules! foo_bar { () => () }
             //X
         }
@@ -96,8 +81,19 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test unresolve macro no export`() = checkByCode("""
-        #[macro_use]
+    fun `test resolve macro missing macro_use`() = checkByCode("""
+        // Missing #[macro_use] here
+        mod a {
+            macro_rules! foo_bar { () => () }
+        }
+        fn main() {
+            foo_bar!();
+            //^ unresolved
+        }
+    """)
+
+    fun `test resolve macro missing macro_use mod`() = checkByCode("""
+        // Missing #[macro_use] here
         mod a {
             macro_rules! foo_bar { () => () }
         }
@@ -108,4 +104,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
             }
         }
     """)
+
+    // More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest]
 }
