@@ -66,11 +66,14 @@ class MissingToolchainNotificationProvider(
 
         val cargoProjects = project.cargoProjects
         if (!cargoProjects.hasAtLeastOneValidProject) {
-            return createAttachCargoProjectPanel()
+            return createNoCargoProjectsPanel()
         }
 
-        val cargoProject = cargoProjects.findProjectForFile(file)
-        val workspace = cargoProject?.workspace ?: return null
+        val cargoProject = cargoProjects.findProjectForFile(file) ?:
+            //TODO: more precise check here
+            return createNoCargoProjectForFilePanel()
+
+        val workspace = cargoProject.workspace ?: return null
         if (!workspace.hasStandardLibrary) {
             // If rustup is not null, the WorkspaceService will use it
             // to add stdlib automatically. This happens asynchronously,
@@ -93,9 +96,15 @@ class MissingToolchainNotificationProvider(
             }
         }
 
-    private fun createAttachCargoProjectPanel(): EditorNotificationPanel =
+    private fun createNoCargoProjectsPanel(): EditorNotificationPanel =
+        createAttachCargoProjectPanel("No Cargo projects found")
+
+    private fun createNoCargoProjectForFilePanel(): EditorNotificationPanel =
+        createAttachCargoProjectPanel("File does not belong to any known Cargo project")
+
+    private fun createAttachCargoProjectPanel(message: String): EditorNotificationPanel =
         EditorNotificationPanel().apply {
-            setText("No Cargo project found")
+            setText(message)
             createActionLabel("Attach", "Rust.AttachCargoProject")
             createActionLabel("Do not show again") {
                 disableNotification()
