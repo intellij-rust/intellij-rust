@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.formatter
+package org.rust.ide.formatter.processors
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.rust.ide.formatter.impl.CommaList
+import org.rust.ide.formatter.rust
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling

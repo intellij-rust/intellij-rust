@@ -60,10 +60,10 @@
         <!-- Formatter -->
 
         <lang.formatter language="Rust" implementationClass="org.rust.ide.formatter.RsFormattingModelBuilder"/>
-        <postFormatProcessor implementation="org.rust.ide.formatter.RsTrailingCommaFormatProcessor"/>
-        <preFormatProcessor implementation="org.rust.ide.formatter.RsMatchArmCommaFormatProcessor"/>
-        <preFormatProcessor implementation="org.rust.ide.formatter.RsReturnStatementFormatProcessor"/>
-        <preFormatProcessor implementation="org.rust.ide.formatter.RsSingleImportRemoveBracesFormatProcessor"/>
+        <postFormatProcessor implementation="org.rust.ide.formatter.processors.RsTrailingCommaFormatProcessor"/>
+        <preFormatProcessor implementation="org.rust.ide.formatter.processors.RsMatchArmCommaFormatProcessor"/>
+        <preFormatProcessor implementation="org.rust.ide.formatter.processors.RsReturnStatementFormatProcessor"/>
+        <preFormatProcessor implementation="org.rust.ide.formatter.processors.RsSingleImportRemoveBracesFormatProcessor"/>
 
         <!-- Refactoring support -->
 
