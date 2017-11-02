@@ -96,7 +96,7 @@ class CargoProjectsServiceImpl(
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
         LightDirectoryIndex(project, noProjectMarker, Consumer { index ->
             for (cargoProject in projects.currentState) {
-                index.putInfo(cargoProject.rootDir?.parent, cargoProject)
+                index.putInfo(cargoProject.rootDir, cargoProject)
                 cargoProject.workspace
                     ?.packages?.forEach { index.putInfo(it.contentRoot, cargoProject) }
             }
