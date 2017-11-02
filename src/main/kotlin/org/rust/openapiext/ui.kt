@@ -24,17 +24,20 @@ class UiDebouncer(
 ) {
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
 
+    /**
+     * @param onUiThread: callback to be executed in EDT with **any** modality state.
+     * Use it only for UI updates
+     */
     fun <T> run(onPooledThread: () -> T, onUiThread: (T) -> Unit) {
         if (Disposer.isDisposed(parentDisposable)) return
         alarm.cancelAllRequests()
-        val modalityState = ModalityState.current()
         alarm.addRequest({
             val r = onPooledThread()
             ApplicationManager.getApplication().invokeLater({
                 if (!Disposer.isDisposed(parentDisposable)) {
                     onUiThread(r)
                 }
-            }, modalityState)
+            }, ModalityState.any())
         }, delayMillis)
     }
 }
