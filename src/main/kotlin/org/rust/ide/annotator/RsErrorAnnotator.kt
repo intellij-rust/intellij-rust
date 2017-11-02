@@ -151,8 +151,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
         if (type.underscore == null) return
         val owner = type.owner.parent
-        if ((owner is RsValueParameter && owner.parent.parent !is RsLambdaExpr)
-            || (owner is RsRetType && owner.parent !is RsLambdaExpr) || owner is RsConstant) {
+        if ((owner is RsValueParameter && owner.parent.parent is RsFunction)
+            || (owner is RsRetType && owner.parent is RsFunction) || owner is RsConstant) {
             holder.createErrorAnnotation(type, "The type placeholder `_` is not allowed within types on item signatures [E0121]")
         }
     }
