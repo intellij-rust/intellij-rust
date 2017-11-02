@@ -10,7 +10,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 class RsStdlibCompletionTest : RsCompletionTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
-    fun testPrelude() = checkSingleCompletion("drop()", """
+    fun testPrelude() = @Suppress("DEPRECATION") checkSingleCompletion("drop()", """
         fn main() {
             dr/*caret*/
         }
@@ -23,14 +23,14 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testIter() = checkSingleCompletion("iter_mut()", """
+    fun testIter() = @Suppress("DEPRECATION") checkSingleCompletion("iter_mut()", """
         fn main() {
             let vec: Vec<i32> = Vec::new();
             let iter = vec.iter_m/*caret*/
         }
     """)
 
-    fun testDerivedTraitMethod() = checkSingleCompletion("fmt", """
+    fun testDerivedTraitMethod() = @Suppress("DEPRECATION") checkSingleCompletion("fmt", """
         #[derive(Debug)]
         struct Foo;
         fn bar(foo: Foo) {
