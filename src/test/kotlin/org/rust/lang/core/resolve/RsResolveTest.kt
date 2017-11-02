@@ -848,4 +848,13 @@ class RsResolveTest : RsResolveTestBase() {
             } //^
         }
     """)
+
+    fun `test pattern constant ambiguity 2`() = checkByCode("""
+        const NONE: () = ();
+             //X
+
+        fn main() {
+            match () { NONE => NONE }
+        }                     //^
+    """)
 }
