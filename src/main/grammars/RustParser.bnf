@@ -235,7 +235,7 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
   recoverWhile = Item_recover
 }
-private Item_first ::= '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait | static | TYPE_KW | impl | "union"
+private Item_first ::= '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait | static | TYPE_KW | impl | "union" | "default"
 private Item_recover ::= !('}' | Item_first )
 
 private Items ::= Item_with_recover*
@@ -644,7 +644,7 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ImplItem ::= AttrsAndVis unsafe? impl TypeParameterList? ( TraitImpl | InherentImpl ) WhereClause? Members {
+ImplItem ::= AttrsAndVis default_? unsafe? impl TypeParameterList? ( TraitImpl | InherentImpl ) WhereClause? Members {
   pin = "impl"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"

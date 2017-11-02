@@ -45,3 +45,5 @@ impl<T: fmt::Display + ?Sized> ToString for T {
     default fn b() {}
     default const BAR: u32 = 81;
 }
+
+default unsafe impl X for X {}
