@@ -6,6 +6,7 @@
 package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.ApplicationManager
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -29,13 +30,18 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
         }
     """)
 
-    fun `test fixes up unused function span`() = doTest("""
-        fn <weak_warning>foo</weak_warning>() {
-            let _ = 46 * 2;
-        }
+    fun `test fixes up unused function span`() {
+        // BACKCOMPAT: Rust 1.20
+        // Nightly Rust produces nice spans here without our intervention
+        if (ApplicationManager.getApplication().isEAP) return
+        doTest("""
+            fn <weak_warning>foo</weak_warning>() {
+                let _ = 46 * 2;
+            }
 
-        fn main() {}
-    """)
+            fn main() {}
+        """)
+    }
 
     fun `test highlights from other files do not interfer`() {
         fileTree {
