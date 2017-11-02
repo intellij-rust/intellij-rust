@@ -262,6 +262,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             if let Some(_) = Some(0) {}
             let foo = || -> _ { 42 };
             let bar = || -> Option<_> { Some(1) };
+            let xy : Vec<(&str, fn(_, _) -> _)> = vec![
+                ("x", |a: i32, b: i32| a + b),
+                ("y", |a: i32, b: i32| a - b)
+            ];
         }
 
         fn foo(a: <error descr="The type placeholder `_` is not allowed within types on item signatures [E0121]">_</error>) {}

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.util.io.systemIndependentPath
 import org.rust.cargo.project.configurable.RustProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
@@ -52,7 +53,7 @@ class RustProjectSettingsServiceImpl(
         }
         set(value) {
             val newState = State(
-                toolchainHomeDirectory = value.toolchain?.location?.toString(),
+                toolchainHomeDirectory = value.toolchain?.location?.systemIndependentPath,
                 autoUpdateEnabled = value.autoUpdateEnabled,
                 explicitPathToStdlib = value.explicitPathToStdlib,
                 useCargoCheckForBuild = value.useCargoCheckForBuild,

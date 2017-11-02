@@ -26,15 +26,15 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
         // TODO: Uncomment when associated types support renaming
         //
-        // fun testAssociatedTypesFix() = checkFixByText<RustAssocTypeNamingInspection>("Rename to `assocType`", """
+        // fun testAssociatedTypesFix() = checkFixByText("Rename to `AssocFoo`", """
         //     trait Foo {
         //         type <warning descr="Type `assoc_foo` should have a camel case name such as `AssocFoo`">ass<caret>oc_foo</warning>;
-        //         fn bar(&Self::assoc_foo) {}
+        //         fn bar(foo: &Self::assoc_foo) {}
         //     }
         // """, """
         //     trait Foo {
         //         type AssocFoo;
-        //         fn bar(&Self::AssocFoo) {}
+        //         fn bar(foo: &Self::AssocFoo) {}
         //     }
         // """)
     }
@@ -290,17 +290,35 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             #[allow(non_snake_case)]
             fn lifetimes<'LifetimeFoo>() {}
         """)
+
+        fun testLifetimesFix() = checkFixByText("Rename to `'lifetime_foo`", """
+            fn lifetimes<
+                <warning descr="Lifetime `'LifetimeFoo` should have a snake case name such as `'lifetime_foo`">'Lifetime<caret>Foo</warning>>(x: &'LifetimeFoo u32) {
+            }
+        """, """
+            fn lifetimes<
+                'lifetime_foo>(x: &'lifetime_foo u32) {
+            }
+        """)
     }
 
     class RsMacroNamingInspectionTest: RsNamingInspectionTest(RsMacroNamingInspection()) {
         fun testMacros() = checkByText("""
-            macro_rules! macro_ok { ( $( ${'$'}x:expr ),* ) => {}; }
-            macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">MacroFoo</warning> { ( $( ${'$'}x:expr ),* ) => {}; }
+            macro_rules! macro_ok { () => {}; }
+            macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">MacroFoo</warning> { () => {}; }
         """)
 
         fun testMacrosSuppression() = checkByText("""
             #[allow(non_snake_case)]
-            macro_rules! MacroFoo { ( $( ${'$'}x:expr ),* ) => {}; }
+            macro_rules! MacroFoo { () => {}; }
+        """)
+
+        fun testMacrosFix() = checkFixByText("Rename to `macro_foo`", """
+            macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">Macro<caret>Foo</warning> { () => {}; }
+            MacroFoo!();
+        """, """
+            macro_rules! macro_foo { () => {}; }
+            macro_foo!();
         """)
     }
 
@@ -341,14 +359,14 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testTraitlMethods() = checkByText("""
+        fun testTraitMethods() = checkByText("""
             trait Foo {
                 fn met_ok() {}
                 fn <warning descr="Method `MET_BAR` should have a snake case name such as `met_bar`">MET_BAR</warning>() {}
             }
         """)
 
-        fun testTraitlMethodsSuppression() = checkByText("""
+        fun testTraitMethodsSuppression() = checkByText("""
             trait Foo {
                 #[allow(non_snake_case)]
                 fn MET_BAR() {}
@@ -357,7 +375,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
         // TODO: Uncomment when trait methods support renaming
         //
-        // fun testTraitlMethodsFix() = checkFixByText<RustMethodNamingInspection>("Rename to `bar_baz`", """
+        // fun testTraitMethodsFix() = checkFixByText("Rename to `bar_baz`", """
         //     trait Foo {
         //         fn <warning descr="Method `BarBaz` should have a snake case name such as `bar_baz`">Bar<caret>Baz</warning>() {}
         //     }
