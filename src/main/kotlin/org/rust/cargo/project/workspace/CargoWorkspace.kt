@@ -8,10 +8,10 @@ package org.rust.cargo.project.workspace
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.util.StdLibType
+import org.rust.openapiext.CachedVirtualFile
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Rust project model represented roughly in the same way as in Cargo itself.
@@ -190,8 +190,7 @@ private class PackageImpl(
 ) : CargoWorkspace.Package {
     override val targets = targetsData.map { TargetImpl(this, crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind) }
 
-    override val contentRoot: VirtualFile?
-        get() = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl)
+    override val contentRoot: VirtualFile? by CachedVirtualFile(contentRootUrl)
 
     override val rootDirectory: Path
         get() = Paths.get(VirtualFileManager.extractPath(contentRootUrl))
@@ -210,15 +209,7 @@ private class TargetImpl(
     override val kind: CargoWorkspace.TargetKind
 ) : CargoWorkspace.Target {
 
-    private val crateRootCache = AtomicReference<VirtualFile>()
-    override val crateRoot: VirtualFile?
-        get() {
-            val cached = crateRootCache.get()
-            if (cached != null && cached.isValid) return cached
-            val file = VirtualFileManager.getInstance().findFileByUrl(crateRootUrl)
-            crateRootCache.set(file)
-            return file
-        }
+    override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
 
     override fun toString(): String
         = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"

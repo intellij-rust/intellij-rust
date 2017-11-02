@@ -16,6 +16,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -27,6 +28,8 @@ import org.jdom.Element
 import org.jdom.input.SAXBuilder
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.reflect.KProperty
 
 
 val Project.modules: Collection<Module>
@@ -88,3 +91,15 @@ inline fun <Key, reified Psi : PsiElement> getElements(
 fun Element.toXmlString() = JDOMUtil.writeElement(this)
 fun elementFromXmlString(xml: String): org.jdom.Element =
     SAXBuilder().build(xml.byteInputStream()).rootElement
+
+class CachedVirtualFile(private val url: String) {
+    private val cache = AtomicReference<VirtualFile>()
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): VirtualFile? {
+        val cached = cache.get()
+        if (cached != null && cached.isValid) return cached
+        val file = VirtualFileManager.getInstance().findFileByUrl(url)
+        cache.set(file)
+        return file
+    }
+}
