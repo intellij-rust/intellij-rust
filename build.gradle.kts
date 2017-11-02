@@ -9,8 +9,9 @@ import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlin.concurrent.thread
 
 buildscript {
     repositories {
@@ -204,12 +205,19 @@ project(":intellij-toml") {
 task("advanceSnapshot") {
     doLast {
         val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/LATEST-EAP-SNAPSHOT/BUILD-LATEST-EAP-SNAPSHOT.txt")
-        val eapVersion = versionUrl.openStream().bufferedReader().readLine().trim()
-        println("\n    NEW SNAPSHOT: $eapVersion\n")
+        val ideaVersion = versionUrl.openStream().bufferedReader().readLine().trim()
+        println("\n    NEW IDEA: $ideaVersion\n")
+
+        "rustup update nightly".execute()
+        val version = "rustup run nightly rustc --version".execute()
+        val date = """\d\d\d\d-\d\d-\d\d""".toRegex().find(version)!!.value
+        val rustVersion = "nightly-$date"
+        println("\n    NEW RUST: $rustVersion\n")
+
         val travisYml = File(rootProject.projectDir, ".travis.yml")
         val updated = travisYml.readLines().joinToString("\n") { line ->
             if ("modified by script" in line) {
-                "  - RUST_VERSION=stable ORG_GRADLE_PROJECT_ideaVersion=$eapVersion # modified by script"
+                "  - RUST_VERSION=$rustVersion ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion # modified by script"
             } else {
                 line
             }
@@ -235,3 +243,20 @@ val SourceSet.kotlin: SourceDirectorySet
 
 fun SourceSet.kotlin(action: SourceDirectorySet.() -> Unit) =
     kotlin.action()
+
+fun String.execute(): String {
+    val process = ProcessBuilder(split(" "))
+        .start()
+    var result = ""
+    val errReader = thread { process.errorStream.bufferedReader().forEachLine { println(it) } }
+    val outReader = thread {
+        process.inputStream.bufferedReader().forEachLine { line ->
+            println(line)
+            result += line
+        }
+    }
+    process.waitFor()
+    outReader.join()
+    errReader.join()
+    return result
+}
