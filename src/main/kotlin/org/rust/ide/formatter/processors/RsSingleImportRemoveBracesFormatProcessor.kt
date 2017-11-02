@@ -3,13 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.formatter
+package org.rust.ide.formatter.processors
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsUseGlob
@@ -33,7 +32,7 @@ import org.rust.lang.core.psi.ext.isSelf
  */
 class RsSingleImportRemoveBracesFormatProcessor : PreFormatProcessor {
     override fun process(element: ASTNode, range: TextRange): TextRange {
-        if (CodeStyleSettingsManager.getInstance(element.psi.project).currentSettings.rust.PRESERVE_PUNCTUATION) return range
+        if (!shouldRunPunctuationProcessor(element)) return range
 
         var numRemovedBraces = 0
         element.psi.accept(object : PsiRecursiveElementVisitor() {
