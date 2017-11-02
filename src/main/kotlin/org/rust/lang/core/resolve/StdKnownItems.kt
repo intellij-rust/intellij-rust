@@ -27,7 +27,7 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findStdItem(prefixNoStd: String, name: String): RsNamedElement? =
         absolutePathResolver(prefixNoStd, name)
 
-    fun findStdTy(prefixNoStd: String, name: String): Ty {
+    private fun findStdTy(prefixNoStd: String, name: String): Ty {
         val element = findStdItem(prefixNoStd, name) ?: return TyUnknown
         return (element as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown
     }
@@ -44,7 +44,7 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findBinOpTraits(): List<RsTraitItem> = binOps
 
     fun findVecForElementTy(elementTy: Ty): Ty {
-        val ty = findStdTy("collections", "vec::Vec")
+        val ty = findStdTy("alloc", "vec::Vec")
 
         val typeParameter = ty.getTypeParameter("T") ?: return ty
         return ty.substitute(mapOf(typeParameter to elementTy))
@@ -60,7 +60,7 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     }
 
     fun findStringTy(): Ty =
-        findStdTy("collections", "string::String")
+        findStdTy("alloc", "string::String")
 
     fun findArgumentsTy(): Ty =
         findCoreTy("fmt::Arguments")
