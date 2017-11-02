@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
 import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
@@ -75,10 +74,13 @@ class Cargo(
 
     @Throws(ExecutionException::class)
     fun init(owner: Disposable, directory: VirtualFile, createBinary: Boolean) {
-        val path = PathUtil.toSystemDependentName(directory.path)
+        val path = directory.pathAsPath
+        val name = path.fileName.toString().replace(' ', '_')
         val crateType = if (createBinary) "--bin" else "--lib"
-        CargoCommandLine("init", directory.pathAsPath, listOf(crateType, path))
-            .execute(owner)
+        CargoCommandLine(
+            "init", path,
+            listOf(crateType, "--name", name, path.toString())
+        ).execute(owner)
         check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)
     }
