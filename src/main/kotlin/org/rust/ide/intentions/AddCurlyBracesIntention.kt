@@ -33,26 +33,20 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
 
     class Context(
         val useItem: RsUseItem,
-        val path: RsPath
+        val path: RsPath,
+        val semicolon: PsiElement
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val useItem = element.parentOfType<RsUseItem>() ?: return null
+        val semicolon = useItem.semicolon ?: return null
         val path = useItem.path ?: return null
         if (useItem.useGlobList != null || useItem.isStarImport) return null
-        return Context(useItem, path)
+        return Context(useItem, path, semicolon)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val identifier = ctx.path.referenceNameElement
-        // Remember the caret position, adjusting by the new curly braces
-        val caret = editor.caretModel.offset
-
-        val newOffset = when {
-            caret < identifier.textOffset -> caret
-            caret < identifier.textOffset + identifier.textLength -> caret + 1
-            else -> caret + 2
-        }
 
         // Create a new use item that contains a glob list that we can use.
         // Then extract from it the glob list and the double colon.
@@ -69,15 +63,20 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
         }
 
         // Remove the identifier from the path by replacing it with its subpath
-        ctx.path.replace(ctx.path.path ?: return)
+        val qualifier = ctx.path.path
+        if (qualifier != null) {
+            ctx.path.replace(qualifier)
+        } else {
+            ctx.path.delete()
+        }
 
         // Delete the alias of the identifier, if any
         alias?.delete()
 
         // Insert the double colon and glob list into the use item
-        ctx.useItem.addBefore(newColonColon, ctx.useItem.semicolon)
-        ctx.useItem.addBefore(newGlobList, ctx.useItem.semicolon)
+        ctx.useItem.addBefore(newColonColon, ctx.semicolon)
+        ctx.useItem.addBefore(newGlobList, ctx.semicolon)
 
-        editor.caretModel.moveToOffset(newOffset)
+        editor.caretModel.moveToOffset(ctx.semicolon.textRange.startOffset - 1)
     }
 }
