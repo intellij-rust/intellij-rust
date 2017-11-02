@@ -15,6 +15,10 @@ import org.rust.lang.RsTestBase
 
 abstract class RsCompletionTestBase : RsTestBase() {
     // Prefer using `doSingleCompletion` instead
+    @Deprecated(
+        "Use doSingleCompletion, because it's simpler and checks caret position as well",
+        replaceWith = ReplaceWith("doSingleCompletion(code, code)")
+    )
     protected fun checkSingleCompletion(target: String, @Language("Rust") code: String) {
         InlineFile(code).withCaret()
         executeSoloCompletion()
