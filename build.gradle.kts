@@ -180,7 +180,7 @@ project(":") {
 }
 
 project(":intellij-toml") {
-    version = "0.1.0.${prop("buildNumber")}$versionSuffix"
+    version = "0.2.0.${prop("buildNumber")}$versionSuffix"
 
     val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
         source = "src/main/grammars/TomlLexer.flex"
