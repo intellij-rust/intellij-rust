@@ -143,7 +143,8 @@ MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')' {
 private PathIdent ::= !("union" identifier) identifier | self | super | 'Self'
 
 fake Path ::= (Path '::' | '::' | TypeQual)? PathIdent PathTypeArguments? {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+                 "org.rust.lang.core.macros.ExpansionResult" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -436,7 +437,8 @@ Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscr
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
-                 "org.rust.lang.core.psi.ext.RsAbstractable" ]
+                 "org.rust.lang.core.psi.ext.RsAbstractable"
+                 "org.rust.lang.core.macros.ExpansionResult" ]
   mixin = "org.rust.lang.core.psi.ext.RsConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstantStub"
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
@@ -1046,6 +1048,8 @@ MacroCall ::= MacroHead <<macroSemicolon>> {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsMacroCallStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 MacroCallNoSemicolons ::= MacroHead {

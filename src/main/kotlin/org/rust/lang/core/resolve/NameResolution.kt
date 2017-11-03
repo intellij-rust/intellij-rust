@@ -576,6 +576,12 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
         if (processor(name, mod)) return true
     }
 
+    for (macro in scope.macroCallList) {
+        val item = macro.expansion as? RsNamedElement ?: continue
+        val name = item.name ?: continue
+        if (processor(name, item)) return true
+    }
+
     fun processMultiResolveWithNs(name: String, ref: RsReference, processor: RsResolveProcessor): Boolean {
         // XXX: use items can legitimately resolve in both namespaces.
         // Because we must be lazy, we don't know up front how many times we

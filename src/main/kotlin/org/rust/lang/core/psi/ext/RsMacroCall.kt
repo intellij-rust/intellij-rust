@@ -7,13 +7,22 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import org.rust.lang.core.macros.expandMacro
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.resolve.ref.RsMacroCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.stubs.RsMacroCallStub
 
 
-abstract class RsMacroCallImplMixin(node: ASTNode) : RsCompositeElementImpl(node), RsMacroCall {
+abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>, RsMacroCall {
+
+    constructor(node: ASTNode) : super(node)
+    constructor(stub: RsMacroCallStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getReference(): RsReference = RsMacroCallReferenceImpl(this)
 
@@ -25,4 +34,13 @@ abstract class RsMacroCallImplMixin(node: ASTNode) : RsCompositeElementImpl(node
 
 }
 
-val RsMacroCall.macroName: PsiElement? get() = referenceNameElement
+val RsMacroCall.macroName: String? get() {
+    val stub = stub
+    if (stub != null) return stub.macroName
+    return referenceName
+}
+
+val RsMacroCall.expansion: PsiElement?
+    get() = CachedValuesManager.getCachedValue(this, {
+        CachedValueProvider.Result.create(expandMacro(this), PsiModificationTracker.MODIFICATION_COUNT)
+    })

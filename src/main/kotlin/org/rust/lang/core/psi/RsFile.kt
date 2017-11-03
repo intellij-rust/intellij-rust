@@ -107,6 +107,7 @@ class RsFile(
     override val externCrateItemList: List<RsExternCrateItem> get() = itemsCache.externCrateItemList
     override val foreignModItemList: List<RsForeignModItem> get() = itemsCache.foreignModItemList
     override val macroDefinitionList: List<RsMacroDefinition> get() = itemsCache.macroDefinitionList
+    override val macroCallList: List<RsMacroCall> get() = itemsCache.macroCallList
 
     private class ItemsCache(
         val functionList: List<RsFunction>,
@@ -121,7 +122,8 @@ class RsFile(
         val modDeclItemList: List<RsModDeclItem>,
         val externCrateItemList: List<RsExternCrateItem>,
         val foreignModItemList: List<RsForeignModItem>,
-        val macroDefinitionList: List<RsMacroDefinition>
+        val macroDefinitionList: List<RsMacroDefinition>,
+        val macroCallList: List<RsMacroCall>
     )
 
     @Volatile
@@ -151,6 +153,7 @@ class RsFile(
             val externCrateItemList = mutableListOf<RsExternCrateItem>()
             val foreignModItemList = mutableListOf<RsForeignModItem>()
             val macroDefinitionList = mutableListOf<RsMacroDefinition>()
+            val macroCallList = mutableListOf<RsMacroCall>()
 
             fun add(psi: PsiElement) {
                 when (psi) {
@@ -167,6 +170,7 @@ class RsFile(
                     is RsExternCrateItem -> externCrateItemList.add(psi)
                     is RsForeignModItem -> foreignModItemList.add(psi)
                     is RsMacroDefinition -> macroDefinitionList.add(psi)
+                    is RsMacroCall -> macroCallList.add(psi)
                 }
             }
 
@@ -194,7 +198,8 @@ class RsFile(
                 modDeclItemList,
                 externCrateItemList,
                 foreignModItemList,
-                macroDefinitionList
+                macroDefinitionList,
+                macroCallList
             )
             _itemsCache = cached
 

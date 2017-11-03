@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 104
+        override fun getStubVersion(): Int = 105
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -128,6 +128,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
     "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
+    "MACRO_CALL" -> RsMacroCallStub.Type
 
     "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
     "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
@@ -945,6 +946,34 @@ class RsMacroDefinitionStub(
             RsMacroDefinitionStub(parentStub, this, psi.name)
 
         override fun indexStub(stub: RsMacroDefinitionStub, sink: IndexSink) = sink.indexMacroDefinition(stub)
+    }
+}
+
+class RsMacroCallStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val macroName: String?
+) : StubBase<RsMacroCall>(parent, elementType) {
+
+    object Type : RsStubElementType<RsMacroCallStub, RsMacroCall>("MACRO_CALL") {
+        override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent is RsMod
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsMacroCallStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RsMacroCallStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.macroName)
+            }
+
+        override fun createPsi(stub: RsMacroCallStub): RsMacroCall =
+            RsMacroCallImpl(stub, this)
+
+        override fun createStub(psi: RsMacroCall, parentStub: StubElement<*>?) =
+            RsMacroCallStub(parentStub, this, psi.macroName)
+
+        override fun indexStub(stub: RsMacroCallStub, sink: IndexSink) = Unit
     }
 }
 

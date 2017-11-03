@@ -20,7 +20,7 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitMacroExpr(o: RsMacroExpr) {
-            if (o.macroCall.macroName?.text != "try" || o.macroCall.tryMacroArgument == null) return
+            if (o.macroCall.macroName != "try" || o.macroCall.tryMacroArgument == null) return
             holder.registerProblem(
                 o,
                 "try! macro can be replaced with ? operator",
