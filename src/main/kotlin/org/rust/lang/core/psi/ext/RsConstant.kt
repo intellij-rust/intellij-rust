@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.stubs.RsConstantStub
@@ -68,4 +69,6 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
     override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
     override val isAbstract: Boolean get() = expr == null
+
+    override fun getContext(): RsCompositeElement = ExpansionResult.getContextImpl(this)
 }

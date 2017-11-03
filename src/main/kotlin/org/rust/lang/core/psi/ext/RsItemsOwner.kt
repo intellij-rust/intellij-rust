@@ -21,5 +21,6 @@ interface RsItemsOwner : RsCompositeElement {
     val externCrateItemList: List<RsExternCrateItem>
     val foreignModItemList: List<RsForeignModItem>
     val macroDefinitionList: List<RsMacroDefinition>
+    val macroCallList: List<RsMacroCall>
 }
 

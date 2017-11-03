@@ -7,6 +7,10 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import org.rust.lang.core.macros.expandMacro
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.resolve.ref.RsMacroCallReferenceImpl
@@ -26,3 +30,8 @@ abstract class RsMacroCallImplMixin(node: ASTNode) : RsCompositeElementImpl(node
 }
 
 val RsMacroCall.macroName: PsiElement? get() = referenceNameElement
+
+val RsMacroCall.expansion: PsiElement?
+    get() = CachedValuesManager.getCachedValue(this, {
+        CachedValueProvider.Result.create(expandMacro(this), PsiModificationTracker.MODIFICATION_COUNT)
+    })
