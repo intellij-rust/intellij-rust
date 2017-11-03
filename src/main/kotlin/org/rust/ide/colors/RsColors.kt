@@ -10,7 +10,7 @@ import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 
 /**
- * See [RsColorSettingsPage] and [org.rust.ide.highlight.syntax.RustHighlighter]
+ * See [RsColorSettingsPage] and [org.rust.ide.highlight.RsHighlighter]
  */
 enum class RsColor(humanName: String, val default: TextAttributesKey) {
     IDENTIFIER("Identifier", Default.IDENTIFIER),
