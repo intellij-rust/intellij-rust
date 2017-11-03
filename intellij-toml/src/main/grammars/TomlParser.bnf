@@ -1,56 +1,71 @@
-// There is no official grammar for TOML as of 02/09/2015
-// Work on the grammar is done here https://github.com/toml-lang/toml/pull/236/
+// https://github.com/toml-lang/toml/blob/master/toml.abnf
 {
-    parserClass="org.toml.lang.core.parser.TomlParser"
+  generatePsi=false // We employ hand-written Kotlin PSI
+  parserClass="org.toml.lang.parse.TomlParser"
+  parserUtilClass="org.toml.lang.parse.TomlParserUtil"
 
-    extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+  elementTypeHolderClass="org.toml.lang.psi.TomlElementTypes"
+  elementTypeClass="org.toml.lang.psi.TomlCompositeType"
+  tokenTypeClass="org.toml.lang.psi.TomlTokenType"
 
-    psiClassPrefix="Toml"
-    psiImplClassSuffix="Impl"
-    psiPackage="org.toml.lang.core.psi"
-    psiImplPackage="org.toml.lang.core.psi.impl"
+  tokens=[
+    COMMENT="regexp:#.*"
 
-    elementTypeHolderClass="org.toml.lang.core.psi.TomlTypes"
-    elementTypeClass="org.toml.lang.core.psi.TomlElementType"
-    tokenTypeClass="org.toml.lang.core.lexer.TomlTokenType"
+    BOOLEAN
 
-    tokens=[
-      comment='regexp:#[^\n\r]*'
-      string='regexp:("[^"]*")'
-      number='regexp:(\d|_)+'
-      simple_number='regexp:(\d|_)+'
-      boolean='regexp:true|false'
-      simple_key='regexp:[0-9_\-a-zA-Z]+'
-      space='regexp:\s+'
-      date='date'
-      dot='.'
-      comma=','
-      eq='='
-      lbracket='['
-      rbracket=']'
-      lbrace='{'
-      rbrace='}'
-    ]
+    BARE_KEY_OR_NUMBER="regexp:\d+"
+    BARE_KEY_OR_DATE="regexp:\d{4}-\d{2}-\d{2}"
+    NUMBER
+    BARE_KEY
+    DATE_TIME
+
+    BASIC_STRING
+    LITERAL_STRING
+    MULTILINE_BASIC_STRING
+    MULTILINE_LITERAL_STRING
+
+    EQ='='
+    COMMA=','
+    DOT='.'
+    L_BRACKET='['
+    R_BRACKET=']'
+    L_CURLY='{'
+    R_CURLY='}'
+  ]
 }
 
-tomlFile ::= expression *
+File ::= FileForm*
 
-expression ::= key_value | table | table_array
+private FileForm ::= KeyValue | ArrayTable | Table {recoverWhile=FileForm_recover}
+private FileForm_recover ::= !(
+  BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '['
+)
 
-table ::= table_header table_entries
-table_header ::= '[' path ']'
+KeyValue ::= Key '=' Value {pin=1}
 
-table_array ::= table_array_header table_entries
-table_array_header ::= '[' '[' path ']' ']'
+Key ::= BareKey | BASIC_STRING | LITERAL_STRING
+private BareKey ::= BARE_KEY
+  | <<remap 'BARE_KEY_OR_NUMBER' 'BARE_KEY'>>
+  | <<remap 'BARE_KEY_OR_DATE' 'BARE_KEY'>>
 
-key ::= simple_key | simple_number | string
-path ::= key ('.' key) *
-table_entries ::= key_value *
 
-key_value ::= key '=' value
+private Value ::= Literal | Array | InlineTable
 
-//TODO inline_table should be on the single line
-inline_table ::= '{' (key_value (',' key_value)* ','?)? '}'
+Literal ::= Number | Date | BOOLEAN
+  | BASIC_STRING | LITERAL_STRING
+  | MULTILINE_BASIC_STRING | MULTILINE_LITERAL_STRING
 
-value ::= string | simple_number | number | boolean | date | array | inline_table
-array ::= '[' (value (',' value)* ','?)? ']'
+private Number ::= <<remap 'BARE_KEY_OR_NUMBER' 'NUMBER'>> | NUMBER
+private Date ::= <<remap 'BARE_KEY_OR_DATE' 'DATE_TIME'>> | DATE_TIME
+
+Array ::= '[' ArrayElement* ']' {pin=1}
+private ArrayElement ::= Value (','|&']') {pin=1}
+
+Table ::= TableHeader KeyValue*
+TableHeader ::= '[' Key ('.' Key)* ']' {pin=1}
+
+ArrayTable ::= ArrayTableHeader KeyValue*
+ArrayTableHeader ::= '[''[' Key ('.' Key)* ']'']' {pin=2 elementType=TableHeader}
+
+InlineTable ::= '{' InlineTableElement* '}' {pin=1}
+private InlineTableElement ::= KeyValue (','|&'}') {pin=1}
