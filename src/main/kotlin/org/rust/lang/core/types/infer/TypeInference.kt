@@ -6,6 +6,9 @@
 package org.rust.lang.core.types.infer
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -1119,7 +1122,15 @@ private val RsFunction.typeOfValue: TyFunction
 val RsGenericDeclaration.generics: List<TyTypeParameter>
     get() = typeParameters.map { TyTypeParameter.named(it) }
 
-val RsGenericDeclaration.bounds: List<TraitRef> get() {
+val RsGenericDeclaration.bounds: List<TraitRef>
+    get() = CachedValuesManager.getCachedValue(this, {
+        CachedValueProvider.Result.create(
+            doGetBounds(),
+            PsiModificationTracker.MODIFICATION_COUNT
+        )
+    })
+
+private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
     val whereBounds = this.whereClause?.wherePredList.orEmpty()
         .flatMap {
             val (element, subst) = (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve()
