@@ -26,7 +26,7 @@ class RsHighlighter : SyntaxHighlighterBase() {
         pack(map(tokenType)?.textAttributesKey)
 
     companion object {
-        fun map(tokenType: IElementType?): RsColor? = when (tokenType) {
+        fun map(tokenType: IElementType): RsColor? = when (tokenType) {
             IDENTIFIER -> RsColor.IDENTIFIER
             UNDERSCORE -> RsColor.IDENTIFIER
 
