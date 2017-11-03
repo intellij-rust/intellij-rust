@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.macroName
 
 fun expandMacro(call: RsMacroCall): ExpansionResult? {
-    if (call.macroName?.text != "lazy_static") return null
+    if (call.macroName != "lazy_static") return null
     val arg = call.macroArgument?.tt ?: return null
     val ctx = call.context as? RsCompositeElement ?: return null
 

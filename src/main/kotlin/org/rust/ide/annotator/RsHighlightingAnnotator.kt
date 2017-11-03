@@ -128,7 +128,7 @@ private fun partToHighlight(element: RsCompositeElement): TextRange? {
     }
 
     if (element is RsMacroCall) {
-        var range = element.macroName?.textRange ?: return null
+        var range = element.referenceNameElement.textRange ?: return null
         range = range.union(element.excl.textRange)
         return range
     }

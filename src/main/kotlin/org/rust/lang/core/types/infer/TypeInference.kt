@@ -814,7 +814,7 @@ private class RsFnInferenceContext(
                 TyUnknown
         }
 
-        val name = expr.macroCall.macroName?.text ?: return TyUnknown
+        val name = expr.macroCall.macroName ?: return TyUnknown
         return when {
             "print" in name || "assert" in name -> TyUnit
             name == "format" -> items.findStringTy()

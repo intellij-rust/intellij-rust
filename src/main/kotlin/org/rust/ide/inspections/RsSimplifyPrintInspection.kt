@@ -24,7 +24,7 @@ class RsSimplifyPrintInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
 
         override fun visitMacroCall(o: RsMacroCall) {
-            val macroName = o.macroName?.text ?: return
+            val macroName = o.macroName ?: return
             val formatMacroArg = o.formatMacroArgument ?: return
             if (!(macroName.endsWith("println"))) return
 

@@ -1048,6 +1048,8 @@ MacroCall ::= MacroHead <<macroSemicolon>> {
   pin = 2
   hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsMacroCallStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 MacroCallNoSemicolons ::= MacroHead {
