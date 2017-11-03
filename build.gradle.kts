@@ -184,7 +184,7 @@ project(":intellij-toml") {
 
     val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
         source = "src/main/grammars/TomlLexer.flex"
-        targetDir = "src/gen/org/toml/lang/core/lexer"
+        targetDir = "src/gen/org/toml/lang/parse"
         targetClass = "_TomlLexer"
         purgeOldFiles = true
     }
@@ -192,8 +192,8 @@ project(":intellij-toml") {
     val generateTomlParser = task<GenerateParser>("generateTomlParser") {
         source = "src/main/grammars/TomlParser.bnf"
         targetRoot = "src/gen"
-        pathToParser = "/org/toml/lang/core/parser/TomlParser.java"
-        pathToPsiRoot = "/org/toml/lang/core/psi"
+        pathToParser = "/org/toml/lang/parse/TomlParser.java"
+        pathToPsiRoot = "/org/toml/lang/psi"
         purgeOldFiles = true
     }
 
