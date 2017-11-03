@@ -72,6 +72,14 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { frobnicate(/*caret*/) }
     """)
 
+    fun `test function call with parens overwrite`() = doSingleCompletion("""
+        fn frobnicate(foo: i32) {}
+        fn main() { frob/*caret*/transmog() }
+    """, """
+        fn frobnicate(foo: i32) {}
+        fn main() { frobnicate(/*caret*/)transmog() }
+    """)
+
     fun `test path`() = doSingleCompletion("""
         mod foo {
             mod bar { fn frobnicate() {} }

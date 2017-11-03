@@ -89,6 +89,12 @@ abstract class RsCompletionTestBase : RsTestBase() {
         val variants = myFixture.completeBasic()
 
         if (variants != null) {
+            if (variants.size == 1) {
+                // for cases like `frob/*caret*/nicate()`,
+                // completion won't be selected automatically.
+                myFixture.type('\n')
+                return
+            }
             fun LookupElement.debug(): String = "$lookupString ($psiElement)"
             error("Expected a single completion, but got ${variants.size}\n"
                 + variants.joinToString("\n") { it.debug() })
