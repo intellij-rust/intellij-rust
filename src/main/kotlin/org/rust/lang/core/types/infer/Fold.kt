@@ -74,25 +74,11 @@ fun <T> TypeFoldable<T>.foldTyTypeParameterWith(folder: (TyTypeParameter) -> Ty)
 
 /**
  * Deeply replace any [TyTypeParameter] by [subst] mapping.
- * It differs from [substitute] in handling of TyTypeParameter where it can't be substituted
- * TODO remove it
- */
-fun <T> TypeFoldable<T>.foldWithSubst(subst: Substitution): T =
-    foldWith(object : TypeFolder {
-        override fun invoke(ty: Ty): Ty =
-            subst[ty] ?: ty.superFoldWith(this)
-    })
-
-/**
- * Deeply replace any [TyTypeParameter] by [subst] mapping.
- * This is a plain old `Ty.substitute()`. It will be completely replaced with folding alternatives soon
- * It differs from [foldWithSubst] in handling of TyTypeParameter where it can't be substituted
- * TODO remove it
  */
 fun <T> TypeFoldable<T>.substitute(subst: Substitution): T =
     foldWith(object : TypeFolder {
         override fun invoke(ty: Ty): Ty =
-            if (ty is TyTypeParameter) ty.substituteOld(subst) else ty.superFoldWith(this)
+            subst[ty] ?: ty.superFoldWith(this)
     })
 
 fun <T> TypeFoldable<T>.containsTyOfClass(classes: List<Class<*>>): Boolean =

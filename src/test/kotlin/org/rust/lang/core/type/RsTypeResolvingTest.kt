@@ -175,7 +175,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         impl A for S {
             type Item = S;
             fn foo(self) -> Self::Item { S }
-        }                         //^ S
+        }                         //^ <Self as A>::Item
     """)
 
     fun `test inherited associated types for impl`() = testType("""
@@ -197,7 +197,9 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         InlineFile(code)
         val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsTypeReference>()
 
-        check(typeAtCaret.type.toString() == expectedType)
+        check(typeAtCaret.type.toString() == expectedType) {
+            "${typeAtCaret.type} != $expectedType"
+        }
     }
 }
 

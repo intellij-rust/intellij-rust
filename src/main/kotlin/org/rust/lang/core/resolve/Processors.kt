@@ -10,6 +10,7 @@ import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.psi.ext.isTest
+import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.emptySubstitution
@@ -45,6 +46,7 @@ enum class ScopeEvent : ScopeEntry {
  * return `false` to continue search
  */
 typealias RsResolveProcessor = (ScopeEntry) -> Boolean
+typealias RsMethodResolveProcessor = (MethodCallee) -> Boolean
 
 fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<BoundElement<RsCompositeElement>> {
     val result = mutableListOf<BoundElement<RsCompositeElement>>()

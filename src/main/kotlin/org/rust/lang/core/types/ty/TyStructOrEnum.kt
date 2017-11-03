@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
@@ -21,14 +20,6 @@ interface TyStructOrEnumBase : Ty {
     val typeArguments: List<Ty>
 
     val item: RsStructOrEnumItemElement
-
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult {
-        return if (other is TyStructOrEnumBase && item == other.item) {
-            UnifyResult.mergeAll(typeArguments.zip(other.typeArguments).map { (type1, type2) -> type1.unifyWith(type2, lookup) })
-        } else {
-            UnifyResult.fail
-        }
-    }
 }
 
 class TyStruct private constructor(

@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 105
+        override fun getStubVersion(): Int = 106
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -831,31 +831,54 @@ class RsRefLikeTypeStub(
     }
 }
 
-class RsBaseTypeStub(
+class RsBaseTypeStub private constructor(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val isUnit: Boolean,
-    val isNever: Boolean
+    private val variant: Variant
 ) : StubBase<RsBaseType>(parent, elementType) {
+
+    val isUnit: Boolean
+        get() = variant == Variant.UNIT
+    val isNever: Boolean
+        get() = variant == Variant.NEVER
+    val isUnderscore: Boolean
+        get() = variant == Variant.UNDERSCORE
 
     object Type : RsStubElementType<RsBaseTypeStub, RsBaseType>("BASE_TYPE") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, dataStream.readBoolean(), dataStream.readBoolean())
+            RsBaseTypeStub(parentStub, this, Variant.valueOf(dataStream.readByte().toInt()))
 
         override fun serialize(stub: RsBaseTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeBoolean(stub.isUnit)
-            dataStream.writeBoolean(stub.isNever)
+            dataStream.writeByte(stub.variant.ordinal)
         }
 
         override fun createPsi(stub: RsBaseTypeStub) =
             RsBaseTypeImpl(stub, this)
 
         override fun createStub(psi: RsBaseType, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, psi.isUnit, psi.isNever)
+            RsBaseTypeStub(parentStub, this, Variant.fromPsi(psi))
 
         override fun indexStub(stub: RsBaseTypeStub, sink: IndexSink) {
+        }
+    }
+
+    private enum class Variant {
+        DEFAULT, UNIT, NEVER, UNDERSCORE;
+
+        companion object {
+            private val _values = values()
+
+            fun valueOf(ordinal: Int): Variant =
+                _values[ordinal]
+
+            fun fromPsi(psi: RsBaseType): Variant = when {
+                psi.isUnit -> UNIT
+                psi.isNever -> NEVER
+                psi.isUnderscore -> UNDERSCORE
+                else -> DEFAULT
+            }
         }
     }
 }

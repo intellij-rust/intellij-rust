@@ -8,21 +8,21 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.infer.Obligation
-import org.rust.lang.core.types.infer.Predicate
-import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 import org.rust.openapiext.ProjectCache
-import org.rust.stdext.zipValues
+import org.rust.stdext.buildList
+import org.rust.stdext.concatLists
 import kotlin.LazyThreadSafetyMode.NONE
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
@@ -45,54 +45,77 @@ private val RsTraitItem.typeParamSingle: TyTypeParameter?
     get() =
         typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
 
-class ImplLookup(private val project: Project, private val items: StdKnownItems) {
+const val DEFAULT_RECURSION_LIMIT = 64
+
+class ImplLookup(
+    private val project: Project,
+    private val items: StdKnownItems,
+    private var _ctx: RsInferenceContext? = null
+) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
+    private val binOpsTraitAndOutputCache = mutableMapOf<ArithmeticOp, Pair<RsTraitItem, RsTypeAlias>?>()
     private val fnTraits by lazy(NONE) {
         listOf("fn", "fn_mut", "fn_once").mapNotNull { RsLangItemIndex.findLangItem(project, it) }
     }
+    private val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
+        val trait = RsLangItemIndex.findLangItem(project, "fn_once") ?: return@lazy null
+        findAssociatedType(trait, "Output")
+    }
     val fnOutputParam by lazy(NONE) {
-        RsLangItemIndex.findLangItem(project, "fn_once")?.let { findFreshAssociatedType(it, "Output") }
+        fnOnceOutput?.let { TyTypeParameter.associated(it) }
     }
     private val copyTrait: RsTraitItem? by lazy(NONE) {
         RsNamedElementIndex.findDerivableTraits(project, "Copy").firstOrNull()
     }
-    private val derefTraitAndTarget: Pair<RsTraitItem, TyTypeParameter>? = run {
+    private val derefTraitAndTarget: Pair<RsTraitItem, RsTypeAlias>? = run {
         val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
-        findFreshAssociatedType(trait, "Target")?.let { trait to it }
+        findAssociatedType(trait, "Target")?.let { trait to it }
+    }
+    private val indexTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
+        val trait = RsLangItemIndex.findLangItem(project, "index") ?: return@lazy null
+        findAssociatedType(trait, "Output")?.let { trait to it }
+    }
+    private val iteratorTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
+        val trait = items.findIteratorTrait() ?: return@lazy null
+        findAssociatedType(trait, "Item")?.let { trait to it }
+    }
+    private val intoIteratorTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
+        val trait = items.findCoreItem("iter::IntoIterator") as? RsTraitItem ?: return@lazy null
+        findAssociatedType(trait, "Item")?.let { trait to it }
     }
 
-    fun findImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
-        if (ty is TyTypeParameter) return ty.getTraitBoundsTransitively()
-        return findImplsAndTraitsCache.getOrPut(project, ty) { rawFindImplsAndTraits(ty) }
+    private val ctx: RsInferenceContext
+        get() {
+            if (_ctx == null) _ctx = RsInferenceContext()
+            return _ctx!!
+        }
+
+    fun findImplsAndTraits(ty: Ty): Collection<RsTraitOrImpl> {
+        return findImplsAndTraitsCache.getOrPut(project, freshen(ty)) { rawFindImplsAndTraits(ty) }
     }
 
-    private fun rawFindImplsAndTraits(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
+    private fun rawFindImplsAndTraits(ty: Ty): Collection<RsTraitOrImpl> {
         return when (ty) {
-            is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy
+            is TyTypeParameter -> ty.getTraitBoundsTransitively().map { it.element }
+            is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy.map { it.element }
             is TyFunction -> {
-                val params = TyTuple(ty.paramTypes)
-                val fnOutputSubst = fnOutputParam?.let { mapOf(it to ty.retType) } ?: emptySubstitution
-                findSimpleImpls(ty) + fnTraits.map {
-                    val subst = mutableMapOf<TyTypeParameter, Ty>()
-                    subst.putAll(fnOutputSubst)
-                    it.typeParamSingle?.let { subst.put(it, params) }
-                    BoundElement(it, subst)
-                }
+                findSimpleImpls(ty) + fnTraits
             }
             is TyUnknown -> emptyList()
-            else -> {
-                findDerivedTraits(ty) + getHardcodedImpls(ty) + findSimpleImpls(ty)
-            }
+            else -> concatLists(
+                findDerivedTraits(ty),
+                getHardcodedImpls(ty).map { it.element },
+                findSimpleImpls(ty)
+            )
         }
     }
 
-    private fun findDerivedTraits(ty: Ty): Collection<BoundElement<RsTraitItem>> {
+    private fun findDerivedTraits(ty: Ty): Collection<RsTraitItem> {
         return (ty as? TyStructOrEnumBase)?.item?.derivedTraits.orEmpty()
             // select only std traits because we are sure
             // that they are resolved correctly
             .filter { it.isStdDerivable }
-            .map { BoundElement(it, mapOf(TyTypeParameter.self(it) to ty)) }
     }
 
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
@@ -130,43 +153,28 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
                     impls
                 }
             }
-            is TyStruct -> {
-                items.findCoreTy("slice::Iter").unifyWith(ty, this).substitution()?.let { subst ->
+            is TyStruct -> when {
+                ty.item == items.findCoreItem("slice::Iter") -> {
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item", TyReference(subst.valueByName("T"), IMMUTABLE)))
+                    return listOf(trait.substAssocType("Item",
+                        TyReference(ty.typeParameterValues.valueByName("T"), IMMUTABLE)))
                 }
-                items.findCoreTy("slice::IterMut").unifyWith(ty, this).substitution()?.let { subst ->
+                ty.item == items.findCoreItem("slice::IterMut") -> {
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item", TyReference(subst.valueByName("T"), MUTABLE)))
+                    return listOf(trait.substAssocType("Item",
+                        TyReference(ty.typeParameterValues.valueByName("T"), MUTABLE)))
                 }
             }
         }
         return emptyList()
     }
 
-    private fun findSimpleImpls(ty: Ty): Collection<BoundElement<RsTraitOrImpl>> {
-        val impls = RsImplIndex.findPotentialImpls(project, ty).mapNotNull { impl ->
-            remapTypeParameters(impl, ty)?.let { BoundElement(impl, it) }
+    private fun findSimpleImpls(selfTy: Ty): Collection<RsImplItem> {
+        return RsImplIndex.findPotentialImpls(project, selfTy).mapNotNull { impl ->
+            val subst = impl.generics.associate { it to ctx.typeVarForParam(it) }
+            val formalSelfTy = impl.typeReference?.type?.substitute(subst) ?: return@mapNotNull null
+            impl.takeIf { ctx.canCombineTypes(formalSelfTy, selfTy) }
         }
-
-        val traitToImpl = impls.associateBy { it.element.traitRef?.path?.reference?.resolve() }
-
-        return impls.map { (impl, oldSubst) ->
-            var subst = oldSubst
-            impl.implementedTrait?.let { trait ->
-                for ((element, _) in trait.flattenHierarchy.filter { it != trait }) {
-                    traitToImpl[element]?.let { subst = subst.substituteInValues(it.subst) }
-                }
-            }
-            BoundElement(impl, subst)
-        }
-    }
-
-    private fun remapTypeParameters(impl: RsImplItem, receiver: Ty): Substitution? {
-        val subst = impl.typeReference?.type?.unifyWith(receiver, this)?.substitution() ?: return null
-        val associated = (impl.implementedTrait?.subst ?: emptyMap())
-            .substituteInValues(subst)
-        return subst + associated
     }
 
     /**
@@ -175,21 +183,118 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
      * here we select an impl of the trait `Foo<U>` for the type `T`, i.e.
      *     `impl Foo<U> for T {}`
      */
-    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult {
-        val (trait, subst) = ref.trait
-        val impls = findImplsAndTraits(ref.selfTy).filter { it.element.implementedTrait?.element == trait }
-        if (impls.size == 1) {
-            return okResultFor(impls.first(), subst, recursionDepth)
+    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> {
+        if (recursionDepth > DEFAULT_RECURSION_LIMIT) return SelectionResult.Err()
+        return traitSelectionCache.getOrPut(project, freshen(ref)) { selectCandidate(ref) }
+            .map { confirmCandidate(ref, recursionDepth, it) }
+    }
+
+    private fun selectCandidate(ref: TraitRef): SelectionResult<SelectionCandidate> {
+        val candidates = assembleCandidates(ref)
+
+        return when (candidates.size) {
+            0 -> SelectionResult.Err()
+            1 -> SelectionResult.Ok(candidates.single())
+            else -> SelectionResult.Ambiguous()
         }
-        val suitable = impls.filter {
-            zipValues(it.subst, subst).all { (v1, v2) ->
-                v2 is TyInfer.TyVar || v1.unifyWith(v2, this) != UnifyResult.fail
+    }
+
+    /**
+     * When we doing an independent cache lookups we want to treat
+     * these types as the same (A & B is type variables)
+     * ` S<A, B, A> == S<B, A, B>`
+     */
+    private fun <T : TypeFoldable<T>> freshen(ty: T): T {
+        var counter = 0
+        val map = HashMap<TyInfer, FreshTyInfer>()
+
+        return ty.foldTyInferWith {
+            map.getOrPut(it) {
+                when (it) {
+                    is TyInfer.TyVar -> FreshTyInfer.TyVar(counter++)
+                    is TyInfer.IntVar -> FreshTyInfer.IntVar(counter++)
+                    is TyInfer.FloatVar -> FreshTyInfer.FloatVar(counter++)
+                }
             }
         }
-        return when {
-            suitable.isEmpty() -> SelectionResult.Err
-            suitable.size == 1 -> okResultFor(suitable.first(), subst, recursionDepth)
-            else -> SelectionResult.Ambiguous
+    }
+
+    private fun assembleCandidates(ref: TraitRef): List<SelectionCandidate> = buildList {
+        addAll(assembleImplCandidates(ref))
+        addAll(assembleDerivedCandidates(ref))
+        if (ref.selfTy is TyFunction && ref.trait.element in fnTraits) add(SelectionCandidate.Closure)
+        if (ref.selfTy is TyTypeParameter) {
+            val bound = ref.selfTy.getTraitBoundsTransitively().find { it.element == ref.trait.element }
+            if (bound != null) add(SelectionCandidate.TypeParameter(bound))
+        }
+        getHardcodedImpls(ref.selfTy).find { it.element == ref.trait.element }
+            ?.let { add(SelectionCandidate.TypeParameter(it)) }
+    }
+
+    private fun assembleImplCandidates(ref: TraitRef): List<SelectionCandidate> {
+        return RsImplIndex.findPotentialImpls(project, ref.selfTy)
+            .mapNotNull { impl ->
+                val boundTrait = impl.implementedTrait ?: return@mapNotNull null
+                if (boundTrait.element != ref.trait.element) return@mapNotNull null
+                val subst = impl.generics.associate { it to ctx.typeVarForParam(it) }
+                val formalSelfTy = impl.typeReference?.type?.substitute(subst) ?: return@mapNotNull null
+                val boundSubst = boundTrait.substitute(subst).subst.mapValues { (k, v) ->
+                    if (k == v && v is TyTypeParameter && v.parameter is TyTypeParameter.Named) {
+                        v.parameter.parameter.typeReference?.type?.substitute(subst) ?: v
+                    } else {
+                        v
+                    }
+                }.substituteInValues(mapOf(TyTypeParameter.self() to ref.selfTy))
+                val implTraitRef = TraitRef(formalSelfTy, BoundElement(boundTrait.element, boundSubst))
+                if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return@mapNotNull null
+                SelectionCandidate.Impl(impl, subst, implTraitRef)
+            }
+    }
+
+    private fun assembleDerivedCandidates(ref: TraitRef): List<SelectionCandidate> {
+        return (ref.selfTy as? TyStructOrEnumBase)?.item?.derivedTraits.orEmpty()
+            // select only std traits because we are sure
+            // that they are resolved correctly
+            .filter { it.isStdDerivable }
+            .filter { it == ref.trait.element }
+            .map { SelectionCandidate.DerivedTrait(it) }
+    }
+
+    private fun confirmCandidate(
+        ref: TraitRef,
+        recursionDepth: Int = 0,
+        candidate: SelectionCandidate
+    ): Selection {
+        val newRecDepth = recursionDepth + 1
+        return when (candidate) {
+            is SelectionCandidate.Impl -> {
+                ctx.combineTraitRefs(ref, candidate.ref)
+                val candidateSubst = candidate.subst + mapOf(TyTypeParameter.self() to ref.selfTy)
+                val obligations = candidate.item.bounds.asSequence()
+                    .map { it.substitute(candidateSubst) }
+                    .map { ctx.normalizeAssociatedTypesIn(it, recursionDepth) }
+                    .flatMap { it.obligations.asSequence() + Obligation(newRecDepth, Predicate.Trait(it.value)) }
+                    .toList()
+                Selection(candidate.item, obligations, candidateSubst)
+            }
+            is SelectionCandidate.DerivedTrait -> Selection(candidate.item, emptyList())
+            is SelectionCandidate.Closure -> {
+                // TODO hacks hacks hacks
+                val (trait, subst) = ref.trait
+                val predicate = Predicate.Equate(subst[fnOutputParam] ?: TyUnit, (ref.selfTy as TyFunction).retType)
+                val obligations = if (predicate.ty1 != predicate.ty2) {
+                    listOf(Obligation(
+                        newRecDepth,
+                        predicate
+                    ))
+                } else {
+                    emptyList()
+                }
+                Selection(trait, obligations)
+            }
+            is SelectionCandidate.TypeParameter -> {
+                okResultFor(candidate.bound, ref.trait.subst, recursionDepth)
+            }
         }
     }
 
@@ -197,9 +302,9 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
         impl: BoundElement<RsTraitOrImpl>,
         subst: Substitution,
         recursionDepth: Int
-    ): SelectionResult.Ok {
+    ): Selection {
         val (found, foundSubst) = impl
-        return SelectionResult.Ok(found, subst.mapNotNull { (k, ty1) ->
+        return Selection(found, subst.mapNotNull { (k, ty1) ->
             foundSubst[k]?.let { ty2 ->
                 Obligation(
                     recursionDepth + 1,
@@ -217,83 +322,117 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
             } else {
                 null
             }
-        }.constrainOnce().take(64) // rustc's default limit
+        }.map(ctx::shallowResolve).constrainOnce().take(DEFAULT_RECURSION_LIMIT)
     }
 
     fun deref(ty: Ty): Ty? = when (ty) {
         is TyReference -> ty.referenced
         is TyPointer -> ty.referenced
-        else -> findDerefTarget(ty)
+        else -> findDerefTarget(ty)?.value // TODO don't ignore obligations
     }
 
-    fun findImplOfTrait(ty: Ty, trait: RsTraitItem): BoundElement<RsTraitOrImpl>? =
-        findImplsAndTraits(ty).find { it.element.implementedTrait?.element == trait }
-
-    private fun findDerefTarget(ty: Ty): Ty? {
-        val (derefTrait, derefTarget) = derefTraitAndTarget ?: return null
-        val (_, subst) = findImplOfTrait(ty, derefTrait) ?: return null
-        return subst[derefTarget]
+    private fun findDerefTarget(ty: Ty): TyWithObligations<Ty>? {
+        return selectProjection(derefTraitAndTarget ?: return null, ty).ok()
     }
 
-    fun findIteratorItemType(ty: Ty): Ty {
+    fun findIteratorItemType(ty: Ty): TyWithObligations<Ty>? {
+        return selectProjection(iteratorTraitAndOutput ?: return legacyFindIteratorItemType(ty), ty).ok()
+            ?: selectProjection(intoIteratorTraitAndOutput ?: return null, ty).ok()
+    }
+
+    // TODO legacy; used in tests only; should be removed
+    private fun legacyFindIteratorItemType(ty: Ty): TyWithObligations<Ty>? {
         val impl = findImplsAndTraits(ty)
             .find { impl ->
-                val traitName = impl.element.implementedTrait?.element?.name
+                val traitName = impl.implementedTrait?.element?.name
                 traitName == "Iterator" || traitName == "IntoIterator"
-            } ?: return TyUnknown
+            } ?: return null
 
-        val rawType = lookupAssociatedType(impl.element, "Item")
-        return rawType.substitute(impl.subst)
+        val rawType = lookupAssociatedType(impl, "Item")
+        return TyWithObligations(rawType, emptyList())
     }
 
-    fun findIndexOutputType(containerType: Ty, indexType: Ty): Ty? {
-        val (element, subst) = findLangTraitImpl(containerType, indexType, "index") ?: return null
-        val rawOutputType = lookupAssociatedType(element, "Output")
-        return rawOutputType.substitute(subst)
+    fun findIndexOutputType(containerType: Ty, indexType: Ty): TyWithObligations<Ty>? {
+        return selectProjection(indexTraitAndOutput ?: return null, containerType, indexType).ok()
     }
 
-    fun findArithmeticBinaryExprOutputType(lhsType: Ty, rhsType: Ty, op: ArithmeticOp): Ty {
-        val (element, subst) = findLangTraitImpl(lhsType, rhsType, op.itemName, op.fnName) ?: return TyUnknown
-        return lookupAssociatedType(element, "Output")
-            .substitute(subst)
-            .substitute(mapOf(TyTypeParameter.self(element) to lhsType))
+    fun findArithmeticBinaryExprOutputType(lhsType: Ty, rhsType: Ty, op: ArithmeticOp): TyWithObligations<Ty>? {
+        val traitAndOutput = binOpsTraitAndOutputCache.getOrPut(op) {
+            val trait = RsLangItemIndex.findLangItem(project, op.itemName, op.modName) ?: return@getOrPut null
+            findAssociatedType(trait, "Output")?.let { trait to it }
+        } ?: return null
+        return selectProjection(traitAndOutput, lhsType, rhsType).ok()
     }
 
-    fun findLangTraitImpl(implType: Ty, argumentType: Ty,
-                          itemName: String, fnName: String = itemName): BoundElement<RsTraitOrImpl>? {
-        val impls = findImplsAndTraits(implType)
-            .filter { itemName == it.element.implementedTrait?.element?.langAttribute }
+    private fun selectProjection(
+        traitAndOutput: Pair<RsTraitItem, RsTypeAlias>,
+        selfTy: Ty,
+        vararg subst: Ty
+    ): SelectionResult<TyWithObligations<Ty>?> {
+        val (trait, assocType) = traitAndOutput
+        return selectProjection(TraitRef(selfTy, trait.withSubst(*subst)), assocType)
+    }
 
-        return if (impls.size < 2) {
-            impls.firstOrNull()
-        } else {
-            impls.find { isImplSuitable(it.element, fnName, 0, argumentType) }
+    fun selectProjection(
+        ref: TraitRef,
+        assocType: RsTypeAlias,
+        recursionDepth: Int = 0
+    ): SelectionResult<TyWithObligations<Ty>?> {
+        return select(ref, recursionDepth).map {
+            lookupAssociatedType(ref.selfTy, it, assocType)
+                ?.let { ctx.normalizeAssociatedTypesIn(it, recursionDepth) }
+                ?.withObligations(it.nestedObligations)
         }
     }
 
-    private fun isImplSuitable(impl: RsTraitOrImpl,
-                               fnName: String, paramIndex: Int, paramType: Ty): Boolean {
-        return impl.members?.functionList
-            ?.find { it.name == fnName }
-            ?.valueParameterList
-            ?.valueParameterList
-            ?.getOrNull(paramIndex)
-            ?.typeReference
-            ?.type
-            ?.unifyWith(paramType, this)
-            ?.substitution() != null
+    private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
+        if (selfTy is TyTypeParameter) {
+            return lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
+        }
+        val ty = lookupAssocTypeInSelection(res, assocType) ?:
+            lookupAssocTypeInBounds(getHardcodedImpls(selfTy), res.impl, assocType)
+        return ty?.substitute(mapOf(TyTypeParameter.self() to selfTy))
     }
 
-    fun asTyFunction(ty: Ty): TyFunction? {
-        return ty as? TyFunction ?:
-            (findImplsAndTraits(ty).mapNotNull { it.downcast<RsTraitItem>()?.asFunctionType }.firstOrNull())
+    private fun lookupAssocTypeInSelection(selection: Selection, assoc: RsTypeAlias): Ty? =
+        selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.type?.substitute(selection.subst)
+
+    private fun lookupAssocTypeInBounds(
+        subst: Collection<BoundElement<RsTraitItem>>,
+        trait: RsTraitOrImpl,
+        assocType: RsTypeAlias
+    ): Ty? {
+        return subst
+            .find { it.element == trait }
+            ?.subst
+            ?.get(TyTypeParameter.associated(assocType))
+    }
+
+    fun findOverloadedOpImpl(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): RsTraitOrImpl? {
+        val trait = RsLangItemIndex.findLangItem(project, op.itemName, op.modName) ?: return null
+        return select(TraitRef(lhsType, trait.withSubst(rhsType))).ok()?.impl
+    }
+
+    fun asTyFunction(ty: Ty): TyWithObligations<TyFunction>? {
+        return (ty as? TyFunction)?.withObligations() ?: run {
+            val output = fnOnceOutput ?: return@run null
+
+            val inputArgVar = TyInfer.TyVar()
+            val ok = fnTraits.asSequence()
+                .mapNotNull { selectProjection(it to output, ty, inputArgVar).ok() }
+                .firstOrNull() ?: return@run null
+            TyWithObligations(
+                TyFunction((ctx.shallowResolve(inputArgVar) as? TyTuple)?.types.orEmpty(), ok.value),
+                ok.obligations
+            )
+        }
     }
 
     fun asTyFunction(ref: BoundElement<RsTraitItem>): TyFunction? {
         return ref.asFunctionType
     }
 
-    fun isCopy(ty: Ty): Boolean = findImplsAndTraits(ty).any { it.element == copyTrait }
+    fun isCopy(ty: Ty): Boolean = findImplsAndTraits(ty).any { it == copyTrait }
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
         get() {
@@ -309,18 +448,67 @@ class ImplLookup(private val project: Project, private val items: StdKnownItems)
             ImplLookup(psi.project, StdKnownItems.relativeTo(psi))
 
         private val findImplsAndTraitsCache =
-            ProjectCache<Ty, Collection<BoundElement<RsTraitOrImpl>>>("findImplsAndTraitsCache")
+            ProjectCache<Ty, Collection<RsTraitOrImpl>>("findImplsAndTraitsCache")
+
+        private val traitSelectionCache =
+            ProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("traitSelectionCache")
     }
 }
 
-sealed class SelectionResult {
-    object Ambiguous : SelectionResult()
-    data class Ok(val impl: RsTraitOrImpl, val nestedObligations: List<Obligation>): SelectionResult()
-    object Err: SelectionResult()
+sealed class SelectionResult<out T> {
+    class Err<out T> : SelectionResult<T>()
+    class Ambiguous<out T> : SelectionResult<T>()
+    data class Ok<out T>(
+        val result: T
+    ) : SelectionResult<T>()
+
+    fun ok(): T? = (this as? Ok<T>)?.result
+
+    inline fun <R> map(action: (T) -> R): SelectionResult<R> = when (this) {
+        is SelectionResult.Err -> SelectionResult.Err()
+        is SelectionResult.Ambiguous -> SelectionResult.Ambiguous()
+        is SelectionResult.Ok -> SelectionResult.Ok(action(result))
+    }
+}
+
+data class Selection(
+    val impl: RsTraitOrImpl,
+    val nestedObligations: List<Obligation>,
+    val subst: Substitution = emptySubstitution
+)
+
+fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
+    val subst1 = typeParameterList?.typeParameterList?.withIndex()?.associate { (i, par) ->
+        val param = TyTypeParameter.named(par)
+        param to (subst.getOrNull(i) ?: param)
+    }
+
+    return BoundElement(this, subst1 ?: emptySubstitution)
+}
+
+private sealed class SelectionCandidate {
+    /**
+     * ```
+     * impl<A, B> Foo<A> for Bar<B> {}
+     * |   |      |
+     * |   |      ref
+     * |   subst
+     * item
+     * ```
+     */
+    data class Impl(
+        val item: RsImplItem,
+        val subst: Substitution,
+        val ref: TraitRef
+    ) : SelectionCandidate()
+
+    data class DerivedTrait(val item: RsTraitItem) : SelectionCandidate()
+    data class TypeParameter(val bound: BoundElement<RsTraitItem>) : SelectionCandidate()
+    object Closure : SelectionCandidate()
 }
 
 private fun RsTraitItem.substAssocType(assoc: String, ty: Ty?): BoundElement<RsTraitItem> {
-    val assocType = findFreshAssociatedType(this, assoc)
+    val assocType = findAssociatedType(this, assoc)?.let { TyTypeParameter.associated(it) }
     val subst = if (assocType != null && ty != null) mapOf(assocType to ty) else emptySubstitution
     return BoundElement(this, subst)
 }
@@ -335,5 +523,8 @@ private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty {
         ?: TyUnknown
 }
 
-private fun findFreshAssociatedType(baseTrait: RsTraitItem, name: String): TyTypeParameter? =
-    baseTrait.associatedTypesTransitively.find { it.name == name }?.let { TyTypeParameter.associated(it) }
+private fun findAssociatedType(baseTrait: RsTraitItem, name: String): RsTypeAlias? =
+    baseTrait.associatedTypesTransitively.find { it.name == name }
+
+private fun <T : Ty> T.withObligations(obligations: List<Obligation> = emptyList()): TyWithObligations<T> =
+    TyWithObligations(this, obligations)

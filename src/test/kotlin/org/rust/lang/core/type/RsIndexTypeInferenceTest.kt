@@ -54,7 +54,7 @@ class RsIndexTypeInferenceTest : RsTypificationTestBase() {
             }
         }
 
-        fn foo(s: S<Key<i32>, f64>) {
+        fn foo(s: S<i32, f64>) {
             let x = s[Key(10)];
             x
           //^ f64

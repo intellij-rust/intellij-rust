@@ -673,6 +673,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S<S<S<S<X>>>>
     """)
 
+    fun `test Self substitution to trait method with deref`() = testExpr("""
+        trait Tr<A> { fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() } }
+        struct X;
+        struct S<C>(C);
+        impl<D> Tr<D> for S<D> {}
+        fn main() {
+            let a = (&S(X)).wrap().wrap().wrap();
+            a
+        } //^ S<S<S<S<X>>>>
+    """)
+
     fun `test Self substitution to impl method`() = testExpr("""
         trait Tr<A> { fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() } }
         struct X;
@@ -820,9 +831,9 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
     // https://github.com/intellij-rust/intellij-rust/issues/1549
     fun `test Self type in assoc function`() = testExpr("""
-        struct Foo<T>(T);
-        impl<T> Foo<T> {
-            fn new(a: T) -> Self { unimplemented!() }
+        struct Foo<A>(A);
+        impl<B> Foo<B> {
+            fn new(a: B) -> Self { unimplemented!() }
         }
         fn main() {
             let x = Foo::new(123);
@@ -881,6 +892,13 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a: S<_> = S(0i32);
             a
         } //^ S<i32>
+    """)
+
+    fun `test simple unification 1`() = testExpr("""
+        fn main() {
+            let a: _ = 0i32;
+            a
+        } //^ i32
     """)
 
     fun `test unify reference`() = testExpr("""
@@ -946,26 +964,15 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl<C> FromIterator<C> for S<C> {}
 
         fn collect<D: FromIterator<i32>>() -> D { unimplemented!() }
-
-        fn main() {
-            let a: S<_> = collect();
-            a
-        } //^ S<i32>
-    """)
-
-    fun `test unify fn with polymorphic return type non-local`() = testExpr("""
-        pub trait FromIterator<A>: Sized { }
-        struct S<B>(B);
-        impl<C> FromIterator<C> for S<C> {}
-
-        fn collect<D: FromIterator<i32>>() -> D { unimplemented!() }
         fn foo<E>(a: S<E>) {}
 
         fn main() {
-            let a = collect();
-            foo(a);
-            a
-        } //^ S<i32>
+            let a: S<_> = collect();
+            let b = collect::<S<_>>();
+            let c = collect();
+            foo(c);
+            (a, b, c)
+        } //^ (S<i32>, S<i32>, S<i32>)
     """)
 
     fun `test unify method with polymorphic return type`() = testExpr("""
@@ -977,12 +984,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl<E> Iter<E> {
             fn collect<F: FromIterator<E>>(&self) -> F { unimplemented!() }
         }
+        fn foo<E>(a: S<E>) {}
 
         struct X;
-        fn foo(it: Iter<X>) {
+        fn bar(it: Iter<X>) {
             let a: S<_> = it.collect();
-            a
-        } //^ S<X>
+            let b = it.collect::<S<_>>();
+            let c = it.collect();
+            foo(c);
+            (a, b, c)
+        } //^ (S<X>, S<X>, S<X>)
     """)
 
     fun `test unification continued on type mismatch`() = testExpr("""

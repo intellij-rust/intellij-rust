@@ -39,7 +39,7 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
         val alreadyDerived = ImplLookup.relativeTo(owner)
             .findImplsAndTraits(owner.declaredType)
             .mapNotNull {
-                val (trait, _) = it.element.implementedTrait ?: return@mapNotNull null
+                val (trait, _) = it.implementedTrait ?: return@mapNotNull null
                 if (trait.isStdDerivable) trait.name else null
             }
 

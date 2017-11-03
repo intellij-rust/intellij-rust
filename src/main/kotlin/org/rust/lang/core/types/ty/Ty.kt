@@ -6,7 +6,6 @@
 package org.rust.lang.core.types.ty
 
 import org.rust.lang.core.psi.RsTypeParameter
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
@@ -23,14 +22,6 @@ val emptySubstitution: Substitution = emptyMap()
  * compiler.
  */
 interface Ty: TypeFoldable<Ty> {
-    /**
-     * Checks if `other` type may be represented as this type.
-     *
-     * Note that `t1.unifyWith(t2)` is not the same as `t2.unifyWith(t1)`.
-     *
-     * TODO replace it with the truly unification
-     */
-    fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult
 
     override fun foldWith(folder: TypeFolder): Ty = folder(this)
 

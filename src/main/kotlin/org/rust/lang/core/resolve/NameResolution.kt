@@ -15,6 +15,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.BoundElement
@@ -81,7 +82,7 @@ fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, proces
     return processFieldDeclarations(structOrEnumVariant, emptySubstitution, processor)
 }
 
-fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsResolveProcessor): Boolean {
+fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsMethodResolveProcessor): Boolean {
     return processMethodDeclarationsWithDeref(lookup, receiverType, processor)
 }
 
@@ -210,14 +211,27 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
-            if (processAssociatedItems(lookup, base.declaredType.substitute(subst), ns, processor)) return true
+            // Foo::<Bar>::baz
+            val selfTy = base.declaredType.substitute(subst)
+            val isSelf = qualifier.hasColonColon || !qualifier.hasCself
+            val selfSubst = if (isSelf && base !is RsTraitItem) {
+                mapOf(TyTypeParameter.self() to selfTy)
+            } else {
+                emptySubstitution
+            }
+            val assocItemsProcessor: RsResolveProcessor = {
+                processor(it.name, it.element!!, it.subst + selfSubst)
+            }
+            if (processAssociatedItems(lookup, selfTy, ns, assocItemsProcessor)) return true
         }
         return false
     }
 
     if (typeQual != null) {
+        // <T as Trait>::Item
         val trait = typeQual.traitRef?.resolveToBoundTrait ?: return false
-        val subst = trait.subst.substituteInValues(mapOf(TyTypeParameter.self() to typeQual.typeReference.type))
+        val selfSubst = mapOf(TyTypeParameter.self() to typeQual.typeReference.type)
+        val subst = trait.subst.substituteInValues(selfSubst) + selfSubst
         if (processAllWithSubst(trait.element.members?.typeAliasList.orEmpty(), subst, processor)) return true
     }
 
@@ -342,8 +356,7 @@ fun processBinaryOpVariants(element: RsBinaryOp, operator: OverloadableBinaryOpe
     val rhsType = binaryExpr.right?.type ?: return false
     val lhsType = binaryExpr.left.type
     val lookup = ImplLookup.relativeTo(element)
-    val function = lookup.findLangTraitImpl(lhsType, rhsType, operator.itemName, operator.fnName)
-        ?.element
+    val function = lookup.findOverloadedOpImpl(lhsType, rhsType, operator)
         ?.members
         ?.functionList
         ?.find { it.name == operator.fnName }
@@ -419,22 +432,24 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, subst: Substitution,
     return false
 }
 
-private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsResolveProcessor): Boolean {
-    val methodProcessor: (ScopeEntry) -> Boolean = { entry ->
-        val element = entry.element
-        element is RsFunction && !element.isAssocFn && processor(entry)
+private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsMethodResolveProcessor): Boolean {
+    return lookup.coercionSequence(receiver).any { ty ->
+        val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, subst, impl) ->
+            assert(subst.isEmpty())
+            element is RsFunction && !element.isAssocFn && processor(MethodCallee(name, element, impl, ty))
+        }
+        processAssociatedItems(lookup, ty, VALUES, methodProcessor)
     }
-    return lookup.coercionSequence(receiver).any { processAssociatedItems(lookup, it, VALUES, methodProcessor) }
 }
 
-private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespace>, processor: (AssocItemScopeEntry) -> Boolean): Boolean {
     val visitedInherent = mutableSetOf<String>()
-    fun processTraitOrImpl(traitOrImpl: BoundElement<RsTraitOrImpl>, inherent: Boolean): Boolean {
-        fun inherentProcessor(entry: BoundElement<RsNamedElement>): Boolean {
-            val name = entry.element.name ?: return false
+    fun processTraitOrImpl(traitOrImpl: RsTraitOrImpl, inherent: Boolean): Boolean {
+        fun inherentProcessor(entry: RsNamedElement, impl: RsImplItem?): Boolean {
+            val name = entry.name ?: return false
             if (inherent) visitedInherent.add(name)
             if (!inherent && name in visitedInherent) return false
-            return processor(entry)
+            return processor(AssocItemScopeEntry(name, entry, emptySubstitution, impl))
         }
 
         /**
@@ -442,15 +457,16 @@ private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespa
          * which are not implemented.
          */
         fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsNamedElement>): Boolean {
-            val (element, subst) = traitOrImpl
-            val directlyImplemented = element.members?.let { accessor(it) }.orEmpty().map { BoundElement(it, subst) }
-            if (directlyImplemented.any { inherentProcessor(it) }) return true
+            val element = traitOrImpl
+            val impl = element as? RsImplItem
+            val directlyImplemented = element.members?.let { accessor(it) }.orEmpty()
+            if (directlyImplemented.any { inherentProcessor(it, impl) }) return true
 
             if (element is RsImplItem) {
-                val direct = directlyImplemented.map { it.element.name }.toSet()
+                val direct = directlyImplemented.map { it.name }.toSet()
                 val membersFromTrait = element.implementedTrait?.element?.members ?: return false
                 for (member in accessor(membersFromTrait)) {
-                    if (member.name !in direct && inherentProcessor(BoundElement(member, subst))) return true
+                    if (member.name !in direct && inherentProcessor(member, impl)) return true
                 }
             }
 
@@ -467,7 +483,7 @@ private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespa
         return false
     }
 
-    val (traits, inherent) = lookup.findImplsAndTraits(type).partition { (it.element as? RsImplItem)?.traitRef != null }
+    val (traits, inherent) = lookup.findImplsAndTraits(type).partition { (it as? RsImplItem)?.traitRef != null }
     if (inherent.any { processTraitOrImpl(it, true) }) return true
     if (traits.any { processTraitOrImpl(it, false) }) return true
     return false
@@ -860,6 +876,13 @@ private data class SimpleScopeEntry(
     override val name: String,
     override val element: RsCompositeElement,
     override val subst: Substitution = emptySubstitution
+) : ScopeEntry
+
+private data class AssocItemScopeEntry(
+    override val name: String,
+    override val element: RsCompositeElement,
+    override val subst: Substitution = emptySubstitution,
+    val impl: RsImplItem?
 ) : ScopeEntry
 
 private class LazyScopeEntry(

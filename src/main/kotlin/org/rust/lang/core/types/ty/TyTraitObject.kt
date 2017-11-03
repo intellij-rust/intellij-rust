@@ -7,7 +7,6 @@ package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.resolve.ImplLookup
 
 
 /**
@@ -16,9 +15,6 @@ import org.rust.lang.core.resolve.ImplLookup
  * only the latter are ty.
  */
 data class TyTraitObject(val trait: RsTraitItem) : Ty {
-
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
-        UnifyResult.exactIf(other is RsTraitItem && trait == other.trait)
 
     override fun toString(): String = tyToString(this)
 }

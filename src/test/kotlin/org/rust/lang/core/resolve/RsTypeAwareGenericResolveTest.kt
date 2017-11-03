@@ -148,8 +148,8 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     """)
 
     fun `test trait bound propagates type arguments`() = checkByCode("""
-        trait I<T> {
-            fn foo(&self) -> T;
+        trait I<A> {
+            fn foo(&self) -> A;
         }
 
         struct S;
