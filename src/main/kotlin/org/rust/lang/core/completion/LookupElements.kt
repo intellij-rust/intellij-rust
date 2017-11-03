@@ -81,9 +81,7 @@ fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupE
             .withTailText(when {
                 element.blockFields != null -> " { ... }"
                 element.tupleFields != null ->
-                    element.tupleFields!!.tupleFieldDeclList
-                        .map { it.typeReference.text }
-                        .joinToString(prefix = "(", postfix = ")")
+                    element.tupleFields!!.tupleFieldDeclList.joinToString(prefix = "(", postfix = ")") { it.typeReference.text }
                 else -> ""
             })
             .withInsertHandler handler@ { context, _ ->
@@ -148,8 +146,7 @@ private val InsertionContext.isInGlob: Boolean
 
 private val InsertionContext.alreadyHasCallParens: Boolean
     get() {
-        val parent = file.findElementAt(startOffset)!!.parentOfType<RsExpr>()
-        return (parent is RsDotExpr && parent.methodCall != null) || parent?.parent is RsCallExpr
+        return document.charsSequence.indexOfSkippingSpace('(', tailOffset) != null
     }
 
 private val InsertionContext.alreadyHasPatternParens: Boolean
@@ -161,3 +158,12 @@ private val InsertionContext.alreadyHasPatternParens: Boolean
 
 private val RsFunction.extraTailText: String
     get() = parentOfType<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
+
+private fun CharSequence.indexOfSkippingSpace(c: Char, startIndex: Int): Int? {
+    for (i in startIndex until this.length) {
+        val currentChar = this[i]
+        if (c == currentChar) return i
+        if (currentChar != ' ' && currentChar != '\t') return null
+    }
+    return null
+}

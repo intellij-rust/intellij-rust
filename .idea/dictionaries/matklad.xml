@@ -5,6 +5,7 @@
       <w>debouncer</w>
       <w>frobnicate</w>
       <w>nocapture</w>
+      <w>parens</w>
       <w>rustc</w>
       <w>rustfmt</w>
       <w>rustup</w>
