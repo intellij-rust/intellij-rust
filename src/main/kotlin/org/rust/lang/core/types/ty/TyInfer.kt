@@ -10,7 +10,7 @@ import org.rust.lang.core.types.infer.Node
 import org.rust.lang.core.types.infer.NodeOrValue
 import org.rust.lang.core.types.infer.VarValue
 
-sealed class TyInfer : Ty {
+sealed class TyInfer : Ty(HAS_TY_INFER_MASK) {
     // Note these classes must NOT be `data` classes and must provide equality by identity
     class TyVar(
         val origin: TyTypeParameter? = null,
@@ -23,7 +23,7 @@ sealed class TyInfer : Ty {
 }
 
 /** Used for caching only */
-sealed class FreshTyInfer : Ty {
+sealed class FreshTyInfer : Ty() {
     data class TyVar(val id: Int) : FreshTyInfer()
     data class IntVar(val id: Int) : FreshTyInfer()
     data class FloatVar(val id: Int) : FreshTyInfer()

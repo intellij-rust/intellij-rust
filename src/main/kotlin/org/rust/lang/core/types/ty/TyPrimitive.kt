@@ -20,7 +20,7 @@ import org.rust.lang.core.psi.ext.sizeExpr
  * Definition intentionally differs from the reference: we don't treat
  * tuples or arrays as primitive.
  */
-interface TyPrimitive : Ty {
+abstract class TyPrimitive : Ty() {
 
     companion object {
         fun fromPath(path: RsPath): TyPrimitive? {
@@ -43,30 +43,30 @@ interface TyPrimitive : Ty {
     }
 }
 
-object TyBool : TyPrimitive {
+object TyBool : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
-object TyChar : TyPrimitive {
+object TyChar : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
-object TyUnit : TyPrimitive {
+object TyUnit : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
 /** The `!` type. E.g. `unimplemented!()` */
-object TyNever : TyPrimitive {
+object TyNever : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
-object TyStr : TyPrimitive {
+object TyStr : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
-interface TyNumeric : TyPrimitive
+abstract class TyNumeric : TyPrimitive()
 
-class TyInteger(val kind: Kind) : TyNumeric {
+class TyInteger(val kind: Kind) : TyNumeric() {
     companion object {
         fun fromSuffixedLiteral(literal: PsiElement): TyInteger? =
             Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyInteger)
@@ -109,7 +109,7 @@ class TyInteger(val kind: Kind) : TyNumeric {
     override fun toString(): String = tyToString(this)
 }
 
-class TyFloat(val kind: Kind) : TyNumeric {
+class TyFloat(val kind: Kind) : TyNumeric() {
     companion object {
         fun fromSuffixedLiteral(literal: PsiElement): TyFloat? =
             Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyFloat)

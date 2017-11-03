@@ -17,7 +17,7 @@ import org.rust.lang.core.types.infer.TypeVisitor
 class TyTypeParameter private constructor(
     val parameter: TypeParameter,
     boundsSupplier: () -> Collection<BoundElement<RsTraitItem>>
-) : Ty {
+) : Ty(HAS_TY_TYPE_PARAMETER_MASK) {
 
     private val bounds: Collection<BoundElement<RsTraitItem>> by lazy(LazyThreadSafetyMode.NONE, boundsSupplier)
 

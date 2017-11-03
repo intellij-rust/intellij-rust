@@ -9,8 +9,7 @@ import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 
-class TyArray(val base: Ty, val size: Long?) : Ty {
-
+class TyArray(val base: Ty, val size: Long?) : Ty(base.flags) {
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyArray(base.foldWith(folder), size)
 

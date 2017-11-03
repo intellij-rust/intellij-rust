@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.RsTraitItem
  * Though you use the same path to denote both traits and trait objects,
  * only the latter are ty.
  */
-data class TyTraitObject(val trait: RsTraitItem) : Ty {
+data class TyTraitObject(val trait: RsTraitItem) : Ty() {
 
     override fun toString(): String = tyToString(this)
 }

@@ -9,7 +9,7 @@ import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 
-data class TyTuple(val types: List<Ty>) : Ty {
+data class TyTuple(val types: List<Ty>) : Ty(mergeFlags(types)) {
 
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyTuple(types.map { it.foldWith(folder) })

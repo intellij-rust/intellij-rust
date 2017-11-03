@@ -9,7 +9,7 @@ import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 
-data class TyReference(val referenced: Ty, val mutability: Mutability) : Ty {
+data class TyReference(val referenced: Ty, val mutability: Mutability) : Ty(referenced.flags) {
 
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyReference(referenced.foldWith(folder), mutability)

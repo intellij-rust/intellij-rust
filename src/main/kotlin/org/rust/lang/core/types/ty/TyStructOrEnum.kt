@@ -16,15 +16,15 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.type
 
-interface TyStructOrEnumBase : Ty {
-    val typeArguments: List<Ty>
+abstract class TyStructOrEnumBase(flags: TypeFlags) : Ty(flags) {
+    abstract val typeArguments: List<Ty>
 
-    val item: RsStructOrEnumItemElement
+    abstract val item: RsStructOrEnumItemElement
 }
 
 class TyStruct private constructor(
     private val boundElement: BoundElement<RsStructItem>
-) : TyStructOrEnumBase {
+) : TyStructOrEnumBase(mergeFlags(boundElement)) {
 
     override val item: RsStructItem
         get() = boundElement.element
@@ -59,7 +59,7 @@ class TyStruct private constructor(
 
 class TyEnum private constructor(
     private val boundElement: BoundElement<RsEnumItem>
-) : TyStructOrEnumBase {
+) : TyStructOrEnumBase(mergeFlags(boundElement)) {
 
     override val item: RsEnumItem
         get() = boundElement.element
