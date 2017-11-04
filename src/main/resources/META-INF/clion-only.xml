@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
     <extensions defaultExtensionNs="cidr.debugger">
         <languageSupportFactory implementation="org.rust.debugger.lang.RsDebuggerLanguageSupportFactory"
                                 order="first"/>

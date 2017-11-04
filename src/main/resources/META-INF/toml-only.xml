@@ -1,0 +1,6 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <completion.contributor language="TOML"
+                                implementationClass="org.rust.toml.CargoTomlCompletionContributor"/>
+    </extensions>
+</idea-plugin>
