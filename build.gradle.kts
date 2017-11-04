@@ -144,9 +144,9 @@ project(":") {
     }
 
     val downloadClion = task<Download>("downloadClion") {
+        onlyIf { !file("${project.projectDir}/deps/clion-$clionVersion.tar.gz").exists() }
         src("https://download.jetbrains.com/cpp/CLion-$clionVersion.tar.gz")
         dest(file("${project.projectDir}/deps/clion-$clionVersion.tar.gz"))
-        overwrite(false)
     }
     val unpackClion = task<Copy>("unpackClion") {
         onlyIf { !file("${project.projectDir}/deps/clion-$clionVersion").exists() }
