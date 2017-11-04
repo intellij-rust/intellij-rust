@@ -20,7 +20,7 @@ class ImplementMembersFix(
     implBody: RsImplItem
 ) : LocalQuickFixAndIntentionActionOnPsiElement(implBody) {
 
-    override fun getText(): String = "Implement methods"
+    override fun getText(): String = "Implement members"
 
     override fun getFamilyName(): String = text
 
