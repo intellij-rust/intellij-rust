@@ -6,12 +6,14 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.configurations.CommandLineState
+import com.intellij.execution.configurations.SearchScopeProvider
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.console.CargoConsoleBuilder
 import org.rust.cargo.runconfig.filters.RsBacktraceFilter
 import org.rust.cargo.runconfig.filters.RsConsoleFilter
 import org.rust.cargo.runconfig.filters.RsExplainFilter
@@ -35,6 +37,9 @@ class CargoRunState(
     fun cargo(): Cargo = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
 
     init {
+        val scope = SearchScopeProvider.createSearchScope(environment.project, environment.runProfile)
+        consoleBuilder = CargoConsoleBuilder(environment.project, scope)
+
         consoleBuilder.addFilter(RsExplainFilter())
         val dir = cargoProject?.rootDir
         if (dir != null) {
