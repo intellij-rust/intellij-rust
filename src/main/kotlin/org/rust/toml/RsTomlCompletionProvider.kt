@@ -66,20 +66,13 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
         }
 
     companion object {
-        fun getElementPattern(): ElementPattern<PsiElement> {
-            load<TomlKey>()
-            load<TomlTable>()
-            load<TomlArrayTable>()
-            load<TomlTableHeader>()
-            load<TomlKeyValueOwner>()
-            return PlatformPatterns.psiElement()
+        val elementPattern: ElementPattern<PsiElement>
+            get() = PlatformPatterns.psiElement()
                 .inVirtualFile(VirtualFilePattern().withName("Cargo.toml"))
                 .withParent(TomlKey::class.java)
-        }
     }
 }
 
-private inline fun <reified T : Any> load(): String = T::class.java.name
 
 
 @Language("TOML")
