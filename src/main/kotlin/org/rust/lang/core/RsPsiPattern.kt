@@ -39,7 +39,7 @@ object RsPsiPattern {
 
     val onFn: PsiElementPattern.Capture<PsiElement> = onItem<RsFunction>()
 
-    val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RsModItem>()
+    val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RsModItem>() or onItem<RsModDeclItem>()
 
     val onStatic: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
         .with("onStaticCondition") {
