@@ -9,6 +9,7 @@ import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.jvm.tasks.Jar
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.concurrent.thread
@@ -117,8 +118,16 @@ project(":") {
     }
 
     java.sourceSets {
-        getByName("main").kotlin.srcDirs("debugger/src/main/kotlin")
-        getByName("main").compileClasspath += files("deps/clion-$clionVersion/lib/clion.jar")
+        create("debugger") {
+            kotlin.srcDirs("debugger/src/main/kotlin")
+            compileClasspath += getByName("main").compileClasspath +
+                getByName("main").output +
+                files("deps/clion-$clionVersion/lib/clion.jar")
+        }
+    }
+
+    tasks.withType<Jar> {
+        from(java.sourceSets.getByName("debugger").output)
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
