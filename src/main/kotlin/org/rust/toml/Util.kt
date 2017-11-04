@@ -11,7 +11,9 @@ import org.toml.lang.psi.*
 import kotlin.reflect.KProperty
 
 
-fun tomlPluginIsAbiCompatible(): Boolean {
+fun tomlPluginIsAbiCompatible(): Boolean = computeOnce
+
+private val computeOnce: Boolean by lazy {
     try {
         load<TomlKey>()
         load<TomlValue>()
@@ -27,14 +29,14 @@ fun tomlPluginIsAbiCompatible(): Boolean {
 
         load(TomlTableHeader::names)
         load(TomlKeyValueOwner::entries)
+        true
     } catch (e: LinkageError) {
         showBalloonWithoutProject(
             "Incompatible TOML plugin version, code completion for Cargo.toml is not available.",
             NotificationType.WARNING
         )
-        return false
+        false
     }
-    return true
 }
 
 private inline fun <reified T : Any> load(): String = T::class.java.name
