@@ -277,7 +277,7 @@ edit some files.
 
 The current implementation uses the following trick. When indexing `mod foo;`,
 we associated the declaration with the potential name of the file. In this case,
-it would be `"foo"`, for `#[path=bar/baz.rs]` it would be `baz`. Then, when we
+it would be `"foo"`, for `#[path="bar/baz.rs"]` it would be `baz`. Then, when we
 want to find the parent of the `foo.rs` or `foo/mod.rs` file, we query the index
 for all mod decls with the `foo` key. This may give us some false positives, if
 there are several `foo` modules in the different parts of the project, but it
