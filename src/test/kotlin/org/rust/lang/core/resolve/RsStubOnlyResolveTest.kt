@@ -126,8 +126,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub fn quux() {}
     """)
 
-    fun `test resolve explicit mod path mod rs`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test resolve explicit mod path mod rs`() = stubOnlyResolve("""
     //- main.rs
         #[path = "sub/mod.rs"]
         mod foo;
@@ -139,10 +138,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             //^ main.rs
        }
     """)
-    }
 
-    fun `test resolve explicit mod path mod rs 2`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
+    fun `test resolve explicit mod path mod rs 2`() = stubOnlyResolve("""
     //- main.rs
         #[path = "sub/bar/mod.rs"]
         mod foo;
@@ -154,7 +151,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             //^ main.rs
        }
     """)
-    }
 
     fun testUseFromChild() = stubOnlyResolve("""
     //- main.rs
