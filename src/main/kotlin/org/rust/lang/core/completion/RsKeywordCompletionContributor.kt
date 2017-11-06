@@ -18,6 +18,7 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.withPrevSiblingSkipping
 
 /**
@@ -80,7 +81,14 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             .bold()
             .withTailText(" {...}")
             .withInsertHandler { context, _ ->
-                context.document.insertString(context.selectionEndOffset, "  { }")
+                val isLetExpr = context.file.findElementAt(context.tailOffset - 1)
+                    ?.parentOfType<RsLetDecl>()
+                    ?.let { it.expr?.text == lookupString } == true
+                val hasSemicolon = context.nextCharIs(';')
+
+                var tail = "  { }"
+                if (isLetExpr && !hasSemicolon) tail += ';'
+                context.document.insertString(context.selectionEndOffset, tail)
                 EditorModificationUtil.moveCaretRelatively(context.editor, 1)
             }
     }
