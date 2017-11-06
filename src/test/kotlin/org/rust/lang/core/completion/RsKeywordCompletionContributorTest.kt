@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
-    fun testBreakInForLoop() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
+    fun `test break in for loop`() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
         fn foo() {
             for _ in 0..4 {
                 bre/*caret*/
@@ -17,7 +17,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testBreakInLoop() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
+    fun `test break in loop`() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
         fn foo() {
             loop {
                 br/*caret*/
@@ -25,7 +25,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testBreakInWhileLoop() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
+    fun `test break in while loop`() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
         fn foo() {
             while true {
                 brea/*caret*/
@@ -33,7 +33,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testBreakNotAppliedIfDoesntStartStmt() = checkNoCompletion("""
+    fun `test break not applied if doesnt start stmt`() = checkNoCompletion("""
         fn foo() {
             while true {
                 let brea/*caret*/
@@ -41,13 +41,13 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testBreakNotAppliedOutsideLoop() = checkNoCompletion("""
+    fun `test break not applied outside loop`() = checkNoCompletion("""
         fn foo() {
             bre/*caret*/
         }
     """)
 
-    fun testBreakNotAppliedWithinClosure() = checkNoCompletion("""
+    fun `test break not applied within closure`() = checkNoCompletion("""
         fn bar() {
             loop {
                 let _ = || { bre/*caret*/ }
@@ -55,7 +55,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testContinueInForLoop() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
+    fun `test continue in for loop`() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
         fn foo() {
             for _ in 0..4 {
                 cont/*caret*/
@@ -63,7 +63,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testContinueInLoop() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
+    fun `test continue in loop`() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
         fn foo() {
             loop {
                 cont/*caret*/
@@ -71,7 +71,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testContinueInWhileLoop() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
+    fun `test continue in while loop`() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
         fn foo() {
             while true {
                 conti/*caret*/
@@ -79,137 +79,137 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testConst() = @Suppress("DEPRECATION") checkSingleCompletion("const", """
+    fun `test const`() = @Suppress("DEPRECATION") checkSingleCompletion("const", """
         con/*caret*/
     """)
 
-    fun testPubConst() = @Suppress("DEPRECATION") checkSingleCompletion("const", """
+    fun `test pub const`() = @Suppress("DEPRECATION") checkSingleCompletion("const", """
         pub con/*caret*/
     """)
 
-    fun testEnum() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
         enu/*caret*/
     """)
 
-    fun testEnumAtTheFileVeryBeginning() = @Suppress("DEPRECATION") checkSingleCompletion("enum", "enu/*caret*/")
+    fun `test enum at the file very beginning`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", "enu/*caret*/")
 
-    fun testPubEnum() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test pub enum`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
         pub enu/*caret*/
     """)
 
-    fun testEnumWithinMod() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum within mod`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
         mod foo {
             en/*caret*/
         }
     """)
 
-    fun testEnumWithinFn() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum within fn`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
         fn foo() {
             en/*caret*/
         }
     """)
 
-    fun testEnumWithinFnNestedBlock() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum within fn nested block`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
         fn foo() {{
             en/*caret*/
         }}
     """)
 
-    fun testEnumWithinFnAfterOtherStmt() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum within fn after other stmt`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
         fn foo() {
             let _ = 10;
             en/*caret*/
         }
     """)
 
-    fun testEnumNotAppliedIfDoesntStartStmtWithinFn() = checkNoCompletion("""
+    fun `test enum not applied if doesnt start stmt within fn`() = checkNoCompletion("""
         fn foo() {
             let en/*caret*/
         }
     """)
 
-    fun testEnumNotAppliedWithinStruct() = checkNoCompletion("""
+    fun `test enum not applied within struct`() = checkNoCompletion("""
         struct Foo {
             en/*caret*/
         }
     """)
 
-    fun testEnumNotAppliedIfDoesntStartStmt() = checkNoCompletion("""
+    fun `test enum not applied if doesnt start stmt`() = checkNoCompletion("""
         mod en/*caret*/
     """)
 
-    fun testExtern() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
+    fun `test extern`() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
         ext/*caret*/
     """)
 
-    fun testPubExtern() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
+    fun `test pub extern`() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
         pub ext/*caret*/
     """)
 
-    fun testUnsafeExtern() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
+    fun `test unsafe extern`() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
         unsafe ext/*caret*/
     """)
 
-    fun testPubUnsafeExtern() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
+    fun `test pub unsafe extern`() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
         pub unsafe ext/*caret*/
     """)
 
-    fun testExternCrate() = @Suppress("DEPRECATION") checkSingleCompletion("crate", """
+    fun `test extern crate`() = @Suppress("DEPRECATION") checkSingleCompletion("crate", """
         extern cr/*caret*/
     """)
 
-    fun testCrateNotAppliedAtFileBeginning() = checkNoCompletion("crat/*caret*/")
+    fun `test crate not applied at file beginning`() = checkNoCompletion("crat/*caret*/")
 
-    fun testCrateNotAppliedWithoutPrefix() = checkNoCompletion("""
+    fun `test crate not applied without prefix`() = checkNoCompletion("""
         crat/*caret*/
     """)
 
-    fun testFn() = checkContainsCompletion("fn", """
+    fun `test fn`() = checkContainsCompletion("fn", """
         f/*caret*/
     """)
 
-    fun testPubFn() = checkContainsCompletion("fn", """
+    fun `test pub fn`() = checkContainsCompletion("fn", """
         pub f/*caret*/
     """)
 
-    fun testExternFn() = @Suppress("DEPRECATION") checkSingleCompletion("fn", """
+    fun `test extern fn`() = @Suppress("DEPRECATION") checkSingleCompletion("fn", """
         extern f/*caret*/
     """)
 
-    fun testUnsafeFn() = @Suppress("DEPRECATION") checkSingleCompletion("fn", """
+    fun `test unsafe fn`() = @Suppress("DEPRECATION") checkSingleCompletion("fn", """
         unsafe f/*caret*/
     """)
 
-    fun testImpl() = @Suppress("DEPRECATION") checkSingleCompletion("impl", """
+    fun `test impl`() = @Suppress("DEPRECATION") checkSingleCompletion("impl", """
         imp/*caret*/
     """)
 
-    fun testUnsafeImpl() = @Suppress("DEPRECATION") checkSingleCompletion("impl", """
+    fun `test unsafe impl`() = @Suppress("DEPRECATION") checkSingleCompletion("impl", """
         unsafe im/*caret*/
     """)
 
-    fun testLetWithinFn() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
+    fun `test let within fn`() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
         fn main() {
             let a = 12;
             le/*caret*/
         }
     """)
 
-    fun testLetWithinAssocFn() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
+    fun `test let within assoc fn`() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
         struct Foo;
         impl Foo {
             fn shutdown() { le/*caret*/ }
         }
     """)
 
-    fun testLetWithinMethod() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
+    fun `test let within method`() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
         struct Foo;
         impl Foo {
             fn calc(&self) { le/*caret*/ }
         }
     """)
 
-    fun testLetNotAppliedWithinNestedMod() = checkNoCompletion("""
+    fun `test let not applied within nested mod`() = checkNoCompletion("""
         fn foo() {
             mod bar {
                 le/*caret*/
@@ -217,113 +217,113 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testMod() = @Suppress("DEPRECATION") checkSingleCompletion("mod", """
+    fun `test mod`() = @Suppress("DEPRECATION") checkSingleCompletion("mod", """
         mo/*caret*/
     """)
 
-    fun testPubMod() = @Suppress("DEPRECATION") checkSingleCompletion("mod", """
+    fun `test pub mod`() = @Suppress("DEPRECATION") checkSingleCompletion("mod", """
         pub mo/*caret*/
     """)
 
-    fun testMut() = @Suppress("DEPRECATION") checkSingleCompletion("mut", """
+    fun `test mut`() = @Suppress("DEPRECATION") checkSingleCompletion("mut", """
         fn main() {
             let m/*caret*/
         }
     """)
 
-    fun testReturnWithinFn() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
+    fun `test return within fn`() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
         fn main() {
             re/*caret*/
         }
     """)
 
-    fun testReturnWithinAssocFn() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
+    fun `test return within assoc fn`() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
         struct Foo;
         impl Foo {
             fn shutdown() { retu/*caret*/ }
         }
     """)
 
-    fun testReturnWithinMethod() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
+    fun `test return within method`() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
         struct Foo;
         impl Foo {
             fn print(&self) { retu/*caret*/ }
         }
     """)
 
-    fun testReturnNotAppliedOnFileLevel() = checkNoCompletion("""
+    fun `test return not applied on file level`() = checkNoCompletion("""
         retu/*caret*/
     """)
 
-    fun testReturnNotAppliedWithinParametersList() = checkNoCompletion("""
+    fun `test return not applied within parameters list`() = checkNoCompletion("""
         fn foo(retu/*caret*/) {}
     """)
 
-    fun testReturnNotAppliedBeforeBlock() = checkNoCompletion("""
+    fun `test return not applied before block`() = checkNoCompletion("""
         fn foo() retu/*caret*/ {}
     """)
 
-    fun testReturnNotAppliedIfDoesntStartStatement() = checkNoCompletion("""
+    fun `test return not applied if doesnt start statement`() = checkNoCompletion("""
         const retu/*caret*/
     """)
 
-    fun testStatic() = @Suppress("DEPRECATION") checkSingleCompletion("static", """
+    fun `test static`() = @Suppress("DEPRECATION") checkSingleCompletion("static", """
         sta/*caret*/
     """)
 
-    fun testPubStatic() = @Suppress("DEPRECATION") checkSingleCompletion("static", """
+    fun `test pub static`() = @Suppress("DEPRECATION") checkSingleCompletion("static", """
         pub stat/*caret*/
     """)
 
-    fun testStruct() = @Suppress("DEPRECATION") checkSingleCompletion("struct", """
+    fun `test struct`() = @Suppress("DEPRECATION") checkSingleCompletion("struct", """
         str/*caret*/
     """)
 
-    fun testPubStruct() = @Suppress("DEPRECATION") checkSingleCompletion("struct", """
+    fun `test pub struct`() = @Suppress("DEPRECATION") checkSingleCompletion("struct", """
         pub str/*caret*/
     """)
 
-    fun testTrait() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
+    fun `test trait`() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
         tra/*caret*/
     """)
 
-    fun testPubTrait() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
+    fun `test pub trait`() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
         pub tra/*caret*/
     """)
 
-    fun testUnsafeTrait() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
+    fun `test unsafe trait`() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
         unsafe tra/*caret*/
     """)
 
-    fun testType() = @Suppress("DEPRECATION") checkSingleCompletion("type", """
+    fun `test type`() = @Suppress("DEPRECATION") checkSingleCompletion("type", """
         typ/*caret*/
     """)
 
-    fun testPubType() = @Suppress("DEPRECATION") checkSingleCompletion("type", """
+    fun `test pub type`() = @Suppress("DEPRECATION") checkSingleCompletion("type", """
         pub typ/*caret*/
     """)
 
-    fun testUnsafe() = @Suppress("DEPRECATION") checkSingleCompletion("unsafe", """
+    fun `test unsafe`() = @Suppress("DEPRECATION") checkSingleCompletion("unsafe", """
         uns/*caret*/
     """)
 
-    fun testPubUnsafe() = @Suppress("DEPRECATION") checkSingleCompletion("unsafe", """
+    fun `test pub unsafe`() = @Suppress("DEPRECATION") checkSingleCompletion("unsafe", """
         pub unsa/*caret*/
     """)
 
-    fun testUse() = @Suppress("DEPRECATION") checkSingleCompletion("use", """
+    fun `test use`() = @Suppress("DEPRECATION") checkSingleCompletion("use", """
         us/*caret*/
     """)
 
-    fun testPubUse() = @Suppress("DEPRECATION") checkSingleCompletion("use", """
+    fun `test pub use`() = @Suppress("DEPRECATION") checkSingleCompletion("use", """
         pub us/*caret*/
     """)
 
-    fun testUseSelf() = @Suppress("DEPRECATION") checkSingleCompletion("self::", """
+    fun `test use self`() = @Suppress("DEPRECATION") checkSingleCompletion("self::", """
         use se/*caret*/
     """)
 
-    fun testUseSuper() = @Suppress("DEPRECATION") checkSingleCompletion("super::", """
+    fun `test use super`() = @Suppress("DEPRECATION") checkSingleCompletion("super::", """
         mod m { use su/*caret*/ }
     """)
 
