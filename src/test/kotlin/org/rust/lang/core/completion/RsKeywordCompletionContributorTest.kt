@@ -456,13 +456,23 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test if|match in start of expression`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if|match in let statement`() = checkCompletion(CONDITION_KEYWORDS, """
         fn foo() {
             let x = /*caret*/
         }
     """, """
         fn foo() {
-            let x = /*lookup*/ /*caret*/ { }
+            let x = /*lookup*/ /*caret*/ { };
+        }
+    """)
+
+    fun `test if|match in let statement with semicolon`() = checkCompletion(CONDITION_KEYWORDS, """
+        fn foo() {
+            let x = /*caret*/;
+        }
+    """, """
+        fn foo() {
+            let x = /*lookup*/ /*caret*/ { };
         }
     """)
 

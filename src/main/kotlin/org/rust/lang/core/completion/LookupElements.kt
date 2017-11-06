@@ -145,9 +145,7 @@ private val InsertionContext.isInGlob: Boolean
     get() = PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, RsUseGlobList::class.java, false) != null
 
 private val InsertionContext.alreadyHasCallParens: Boolean
-    get() {
-        return document.charsSequence.indexOfSkippingSpace('(', tailOffset) != null
-    }
+    get() = nextCharIs('(')
 
 private val InsertionContext.alreadyHasPatternParens: Boolean
     get() {
@@ -158,6 +156,10 @@ private val InsertionContext.alreadyHasPatternParens: Boolean
 
 private val RsFunction.extraTailText: String
     get() = parentOfType<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
+
+
+fun InsertionContext.nextCharIs(c: Char): Boolean =
+    document.charsSequence.indexOfSkippingSpace(c, tailOffset) != null
 
 private fun CharSequence.indexOfSkippingSpace(c: Char, startIndex: Int): Int? {
     for (i in startIndex until this.length) {
