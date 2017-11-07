@@ -28,9 +28,6 @@ import org.rust.lang.utils.Severity.*
 sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = false) {
     abstract fun prepare(): PreparedAnnotation
 
-    protected fun pluralise(count: Int, singular: String, plural: String): String =
-        if (count == 1) singular else plural
-
     class TypeError(
         element: PsiElement,
         private val expectedTy: Ty,
@@ -53,11 +50,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class AccessError(
         element: PsiElement,
         private val error: RsErrorCode
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             error,
-            errorText(element.parent, element),
             errorText(element.parent, element)
         )
 
@@ -77,7 +73,7 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class UnsafeError(
         element: PsiElement,
         private val message: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation {
             val block = element.parentOfType<RsBlock>()?.parent
             val fixes = mutableListOf<LocalQuickFix>(SurroundWithUnsafeFix(element as RsExpr))
@@ -86,19 +82,17 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
                 ERROR,
                 E0133,
                 message,
-                message,
-                fixes
+                fixes = fixes
             )
         }
     }
 
     class TypePlaceholderForbiddenError(
         element: PsiElement
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0121,
-            "The type placeholder `_` is not allowed within types on item signatures",
             "The type placeholder `_` is not allowed within types on item signatures"
         )
     }
@@ -106,7 +100,7 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class SelfInStaticMethodError(
         element: PsiElement,
         private val function: RsFunction
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation {
             val fixes = mutableListOf<LocalQuickFix>()
             if (function.owner.isImplOrTrait) fixes.add(AddSelfFix(function))
@@ -114,30 +108,27 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
                 ERROR,
                 E0424,
                 "The self keyword was used in a static method",
-                "The self keyword was used in a static method",
-                fixes
+                fixes = fixes
             )
         }
     }
 
     class UnnecessaryVisibilityQualifierError(
         element: PsiElement
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0449,
-            "Unnecessary visibility qualifier",
             "Unnecessary visibility qualifier"
         )
     }
 
     class UnsafeNegativeImplementationError(
         element: PsiElement
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0198,
-            "Negative implementations are not unsafe",
             "Negative implementations are not unsafe"
         )
     }
@@ -145,11 +136,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class UnsafeTraitImplError(
         element: PsiElement,
         private val traitName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0199,
-            errorText(),
             errorText()
         )
 
@@ -162,11 +152,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class TraitMissingUnsafeImplError(
         element: PsiElement,
         private val traitName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0200,
-            errorText(),
             errorText()
         )
 
@@ -180,11 +169,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
         element: PsiElement,
         private val member: RsAbstractable,
         private val traitName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0407,
-            errorText(),
             errorText()
         )
 
@@ -199,11 +187,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
         element: PsiElement,
         private val fn: RsFunction,
         private val selfParameter: RsSelfParameter
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0185,
-            errorText(),
             errorText()
         )
 
@@ -216,11 +203,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
         element: PsiElement,
         private val fn: RsFunction,
         private val selfParameter: RsSelfParameter?
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0186,
-            errorText(),
             errorText()
         )
 
@@ -235,11 +221,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
         private val traitName: String,
         private val paramsCount: Int,
         private val superParamsCount: Int
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0050,
-            errorText(),
             errorText()
         )
 
@@ -254,11 +239,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
         element: PsiElement,
         private val expectedCount: Int,
         private val realCount: Int
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0060,
-            errorText(),
             errorText()
         )
 
@@ -273,11 +257,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
         element: PsiElement,
         private val expectedCount: Int,
         private val realCount: Int
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0061,
-            errorText(),
             errorText()
         )
 
@@ -290,11 +273,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
 
     class ReturnMustHaveValueError(
         element: PsiElement
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0069,
-            "`return;` in a function whose return type is not `()`",
             "`return;` in a function whose return type is not `()`"
         )
     }
@@ -302,11 +284,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class DuplicateFieldError(
         element: PsiElement,
         private val fieldName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0124,
-            errorText(),
             errorText()
         )
 
@@ -318,11 +299,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class DuplicateEnumVariantError(
         element: PsiElement,
         private val fieldName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0428,
-            errorText(),
             errorText()
         )
 
@@ -335,11 +315,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class DuplicateLifetimeError(
         element: PsiElement,
         private val fieldName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0263,
-            errorText(),
             errorText()
         )
 
@@ -352,11 +331,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class DuplicateBindingError(
         element: PsiElement,
         private val fieldName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0415,
-            errorText(),
             errorText()
         )
 
@@ -369,11 +347,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class DuplicateTypeParameterError(
         element: PsiElement,
         private val fieldName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0403,
-            errorText(),
             errorText()
         )
 
@@ -386,11 +363,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
     class DuplicateDefinitionError(
         element: PsiElement,
         private val fieldName: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0201,
-            errorText(),
             errorText()
         )
 
@@ -405,11 +381,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
         private val itemType: String,
         private val fieldName: String,
         private val scopeType: String
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0428,
-            errorText(),
             errorText()
         )
 
@@ -423,33 +398,30 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
 
     class AssociatedTypeInInherentImplError(
         element: PsiElement
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0202,
-            "Associated types are not allowed in inherent impls",
             "Associated types are not allowed in inherent impls"
         )
     }
 
     class ConstTraitFnError(
         element: PsiElement
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0379,
-            "Trait functions cannot be declared const",
             "Trait functions cannot be declared const"
         )
     }
 
     class UndeclaredLabelError(
         element: RsReferenceElement
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0426,
-            errorText(),
             errorText()
         )
 
@@ -461,11 +433,10 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
 
     class UndeclaredLifetimeError(
         element: RsReferenceElement
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0261,
-            errorText(),
             errorText()
         )
 
@@ -483,13 +454,12 @@ sealed class RsTextRangeDiagnostic(val textRange: TextRange, val experimental: B
         textRange: TextRange,
         private val missing: String,
         private val impl: RsImplItem
-    ) : RsTextRangeDiagnostic(textRange, experimental = true) {
+    ) : RsTextRangeDiagnostic(textRange) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0046,
             errorText(),
-            errorText(),
-            listOf(ImplementMembersFix(impl))
+            fixes = listOf(ImplementMembersFix(impl))
         )
 
         private fun errorText(): String {
@@ -501,11 +471,10 @@ sealed class RsTextRangeDiagnostic(val textRange: TextRange, val experimental: B
     class CrateNotFoundError(
         textRange: TextRange,
         private val crateName: String
-    ) : RsTextRangeDiagnostic(textRange, experimental = true) {
+    ) : RsTextRangeDiagnostic(textRange) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0463,
-            errorText(),
             errorText()
         )
 
@@ -543,7 +512,7 @@ class PreparedAnnotation(
     val severity: Severity,
     val errorCode: RsErrorCode,
     val header: String,
-    val description: String,
+    val description: String = "",
     val fixes: List<LocalQuickFix> = emptyList()
 )
 
@@ -611,6 +580,9 @@ private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
     val actualTyS = escapeString(actualTy.toString())
     return "expected $expectedTyS, found $actualTyS"
 }
+
+private fun pluralise(count: Int, singular: String, plural: String): String =
+    if (count == 1) singular else plural
 
 private val RsSelfParameter.canonicalDecl: String
     get() = buildString {
