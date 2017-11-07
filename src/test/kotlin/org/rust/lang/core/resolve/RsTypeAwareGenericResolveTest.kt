@@ -264,14 +264,16 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test impl not resolved by accident if struct name is the same as generic type`() = checkByCode("""
+    // really unresolved in rustc, but IDE will resolve it anyway
+    fun `test no stack overflow if struct name is the same as generic type`() = checkByCode("""
         struct S;
-        trait Tr1{}
-        trait Tr2{ fn some_fn(&self) {} }
+        trait Tr1 {}
+        trait Tr2 { fn some_fn(&self) {} }
+                     //X
         impl<S: Tr1> Tr2 for S {}
         fn main(v: S) {
             v.some_fn();
-            //^ unresolved
+            //^
         }
     """)
 
@@ -661,11 +663,10 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     """)
 
     fun `test impl for type parameter with bound`() = checkByCode("""
-        // TODO: Should be resolved to Foo
         trait Bar {}
         trait Foo {
             fn foo(&self) {}
-        }
+        }    //X
 
         impl<T: Bar> Foo for T {}
 
@@ -674,12 +675,14 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
 
         fn main() {
             S.foo();
-             //^ unresolved
+             //^
         }
     """)
 
+    // really unresolved in rustc, but IDE will resolve it anyway
     fun `test impl for type parameter with recursive bounds`() = checkByCode("""
         trait Foo { fn foo(&self) {} }
+                     //X
         trait Bar { fn bar(&self) {} }
 
         impl<T: Bar> Foo for T {}
@@ -689,7 +692,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
 
         fn main() {
             S.foo();
-             //^ unresolved
+             //^
         }
     """)
 
