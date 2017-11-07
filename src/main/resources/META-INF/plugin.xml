@@ -23,6 +23,7 @@
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
     <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
+    <depends optional="true" config-file="toml-only.xml">org.toml.lang</depends>
 
     <actions>
         <action id="RsExtractFunction" class="org.rust.lang.refactoring.extractFunction.RsExtractFunctionAction"
