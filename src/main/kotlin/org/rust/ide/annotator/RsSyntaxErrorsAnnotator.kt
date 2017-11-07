@@ -16,6 +16,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
 
 
 class RsSyntaxErrorsAnnotator : Annotator {
@@ -41,7 +43,7 @@ private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
         is RsFunctionOwner.Trait -> {
             deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
             deny(fn.vis, holder, "${fn.title} cannot have the `pub` qualifier")
-            deny(fn.const, holder, "Trait functions cannot be declared const [E0379]")
+            fn.const?.let { RsDiagnostic.ConstTraitFnError(it).addToHolder(holder) }
         }
         is RsFunctionOwner.Impl -> {
             require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
@@ -82,7 +84,7 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
         }
         is RsTypeAliasOwner.Impl -> {
             if (owner.impl.`for` == null) {
-                holder.createErrorAnnotation(ta, "Associated types are not allowed in inherent impls [E0202]")
+                RsDiagnostic.AssociatedTypeInInherentImplError(ta).addToHolder(holder)
             } else {
                 deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
                 deny(ta.whereClause, holder, "$title cannot have `where` clause")

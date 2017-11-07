@@ -17,6 +17,7 @@ import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
+import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.zipValues
 

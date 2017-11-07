@@ -6,7 +6,6 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.Annotator
@@ -15,17 +14,21 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.annotator.fixes.*
+import org.rust.ide.annotator.fixes.AddModuleFileFix
+import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsMembersImpl
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
-import org.rust.lang.core.types.addToHolder
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.RsErrorCode
+import org.rust.lang.utils.RsTextRangeDiagnostic
+import org.rust.lang.utils.addToHolder
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -69,8 +72,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         checkReferenceIsPublic(field, o, holder)
     }
 
-    private fun checkReferenceIsPublic(field: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
-        val ref = field.reference.resolve() as? RsVisibilityOwner ?: return
+    private fun checkReferenceIsPublic(element: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
+        val ref = element.reference.resolve() as? RsVisibilityOwner ?: return
         if (ref.isPublic) return
         val refMod = ref.contextOfType<RsMod>() ?: return
         val oMod = o.contextOfType<RsMod>() ?: return
@@ -84,13 +87,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 is RsTraitItem -> return
             }
         }
-        val (elem, desc) = when (field) {
-            is RsFieldLookup -> field to "Attempted to access a private field on a struct. [E0616]"
-            is RsMethodCall -> field.identifier to "A private item was used outside of its scope. [E0624]"
-            is RsPath -> field to "A private item was used outside its scope. [E0603]"
+        val error = when (element) {
+            is RsFieldLookup -> RsDiagnostic.AccessError(element, RsErrorCode.E0616)
+            is RsMethodCall -> RsDiagnostic.AccessError(element.identifier, RsErrorCode.E0624)
+            is RsPath -> RsDiagnostic.AccessError(element, RsErrorCode.E0603)
             else -> return
         }
-        holder.createErrorAnnotation(elem, desc)
+        error.addToHolder(holder)
     }
 
     private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCall) {
@@ -124,10 +127,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
         if (!o.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
-            val annotation = holder.createErrorAnnotation(o, "Call to unsafe function requires unsafe function or block [E0133]")
-            annotation.registerFix(SurroundWithUnsafeFix(o))
-            val block = o.parentOfType<RsBlock>()?.parent ?: return
-            annotation.registerFix(AddUnsafeFix(block))
+            RsDiagnostic.UnsafeError(o, "Call to unsafe function requires unsafe function or block").addToHolder(holder)
         }
     }
 
@@ -135,10 +135,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (o.expr?.type !is TyPointer) return
 
         if (!o.isInUnsafeBlockOrFn()) {
-            val annotation = holder.createErrorAnnotation(o, "Dereference of raw pointer requires unsafe function or block [E0133]")
-            annotation.registerFix(SurroundWithUnsafeFix(o))
-            val block = o.parentOfType<RsBlock>()?.parent ?: return
-            annotation.registerFix(AddUnsafeFix(block))
+            RsDiagnostic.UnsafeError(o, "Dereference of raw pointer requires unsafe function or block").addToHolder(holder)
         }
     }
 
@@ -153,7 +150,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val owner = type.owner.parent
         if ((owner is RsValueParameter && owner.parent.parent is RsFunction)
             || (owner is RsRetType && owner.parent is RsFunction) || owner is RsConstant) {
-            holder.createErrorAnnotation(type, "The type placeholder `_` is not allowed within types on item signatures [E0121]")
+            RsDiagnostic.TypePlaceholderForbiddenError(type).addToHolder(holder)
         }
     }
 
@@ -176,11 +173,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             }
 
             if (function.selfParameter == null) {
-                val error = "The self keyword was used in a static method [E0424]"
-                val annotation = holder.createErrorAnnotation(path, error)
-                if (function.owner.isImplOrTrait) {
-                    annotation.registerFix(AddSelfFix(function))
-                }
+                RsDiagnostic.SelfInStaticMethodError(path, function).addToHolder(holder)
             }
         }
         checkReferenceIsPublic(path, path, holder)
@@ -188,16 +181,18 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkVis(holder: AnnotationHolder, vis: RsVis) {
         if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis) || isInEnumVariantField(vis)) {
-            holder.createErrorAnnotation(vis, "Unnecessary visibility qualifier [E0449]")
+            RsDiagnostic.UnnecessaryVisibilityQualifierError(vis).addToHolder(holder)
         }
     }
 
-    private fun checkLabel(holder: AnnotationHolder, label: RsLabel) =
-        requireResolve(holder, label, "Use of undeclared label `${label.text}` [E0426]")
+    private fun checkLabel(holder: AnnotationHolder, label: RsLabel) {
+        if (!hasResolve(label)) return
+        RsDiagnostic.UndeclaredLabelError(label).addToHolder(holder)
+    }
 
     private fun checkLifetime(holder: AnnotationHolder, lifetime: RsLifetime) {
-        if (lifetime.isPredefined) return
-        requireResolve(holder, lifetime, "Use of undeclared lifetime name `${lifetime.text}` [E0261]")
+        if (lifetime.isPredefined || !hasResolve(lifetime)) return
+        RsDiagnostic.UndeclaredLifetimeError(lifetime).addToHolder(holder)
     }
 
     private fun checkModDecl(holder: AnnotationHolder, modDecl: RsModDeclItem) {
@@ -235,13 +230,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val traitName = trait.name ?: return
         when {
             impl.isUnsafe && impl.excl != null ->
-                holder.createErrorAnnotation(traitRef, "Negative implementations are not unsafe [E0198]")
+                RsDiagnostic.UnsafeNegativeImplementationError(traitRef).addToHolder(holder)
 
             impl.isUnsafe && !trait.isUnsafe ->
-                holder.createErrorAnnotation(traitRef, "Implementing the trait `$traitName` is not unsafe [E0199]")
+                RsDiagnostic.UnsafeTraitImplError(traitRef, traitName).addToHolder(holder)
 
             !impl.isUnsafe && trait.isUnsafe && impl.excl == null ->
-                holder.createErrorAnnotation(traitRef, "The trait `$traitName` requires an `unsafe impl` declaration [E0200]")
+                RsDiagnostic.TraitMissingUnsafeImplError(traitRef, traitName).addToHolder(holder)
         }
         val implInfo = TraitImplementationInfo.create(trait, impl) ?: return
 
@@ -252,14 +247,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             )
 
             val missing = implInfo.missingImplementations.map { it.name }.namesList
-            holder.createErrorAnnotation(implHeaderTextRange,
-                "Not all trait items implemented, missing: $missing [E0046]"
-            ).registerFix(ImplementMembersFix(impl))
+            RsTextRangeDiagnostic.TraitItemsMissingImplError(implHeaderTextRange, missing, impl)
+                .addToHolder(holder)
         }
 
         for (member in implInfo.nonExistentInTrait) {
-            holder.createErrorAnnotation(member.nameIdentifier!!,
-                "Method `${member.name}` is not a member of trait `$traitName` [E0407]")
+            RsDiagnostic.UnknownMethodInTraitError(member.nameIdentifier!!, member, traitName)
+                .addToHolder(holder)
         }
 
         for ((imp, dec) in implInfo.implementationToDeclaration) {
@@ -278,18 +272,16 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val selfArg = fn.selfParameter
 
         if (selfArg != null && superFn.selfParameter == null) {
-            holder.createErrorAnnotation(selfArg,
-                "Method `${fn.name}` has a `${selfArg.canonicalDecl}` declaration in the impl, but not in the trait [E0185]")
+            RsDiagnostic.DeclMissingFromTraitError(selfArg, fn, selfArg).addToHolder(holder)
         } else if (selfArg == null && superFn.selfParameter != null) {
-            holder.createErrorAnnotation(params,
-                "Method `${fn.name}` has a `${superFn.selfParameter?.canonicalDecl}` declaration in the trait, but not in the impl [E0186]")
+            RsDiagnostic.DeclMissingFromImplError(params, fn, superFn.selfParameter).addToHolder(holder)
         }
 
         val paramsCount = fn.valueParameters.size
         val superParamsCount = superFn.valueParameters.size
         if (paramsCount != superParamsCount) {
-            holder.createErrorAnnotation(params,
-                "Method `${fn.name}` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitName` has $superParamsCount [E0050]")
+            RsDiagnostic.TraitParamCountMismatchError(params, fn, traitName, paramsCount, superParamsCount)
+                .addToHolder(holder)
         }
     }
 
@@ -309,15 +301,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         } ?: return
         val realCount = args.exprList.size
         if (variadic && realCount < expectedCount) {
-            holder.createErrorAnnotation(args,
-                "This function takes at least $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}"
-                    + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
-                    + " ${pluralise(realCount, "was", "were")} supplied [E0060]")
+            RsDiagnostic.TooFewParamsError(args, expectedCount, realCount).addToHolder(holder)
         } else if (!variadic && realCount != expectedCount) {
-            holder.createErrorAnnotation(args,
-                "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}"
-                    + " but $realCount ${pluralise(realCount, "parameter", "parameters")}"
-                    + " ${pluralise(realCount, "was", "were")} supplied [E0061]")
+            RsDiagnostic.TooManyParamsError(args, expectedCount, realCount).addToHolder(holder)
         }
     }
 
@@ -333,20 +319,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val fn = ret.ancestors.find { it is RsFunction || it is RsLambdaExpr } as? RsFunction ?: return
         val retType = fn.retType?.typeReference?.type ?: return
         if (retType is TyUnit) return
-        holder.createErrorAnnotation(ret, "`return;` in a function whose return type is not `()` [E0069]")
+        RsDiagnostic.ReturnMustHaveValueError(ret).addToHolder(holder)
     }
 
     private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
         if (el.reference.multiResolve().isNotEmpty() || el.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
-        holder.createErrorAnnotation(el.textRange, "Can't find crate for `${el.identifier.text}` [E0463]")
+        RsTextRangeDiagnostic.CrateNotFoundError(el.textRange, el.identifier.text).addToHolder(holder)
     }
-
-    private fun requireResolve(holder: AnnotationHolder, el: RsReferenceElement, message: String) {
-        if (el.reference.resolve() != null || el.reference.multiResolve().size > 1) return
-        holder.createErrorAnnotation(el.textRange, message)
-            .highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-    }
-
 
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent?.parent
@@ -360,18 +339,11 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         return field.parent.parent is RsEnumVariant
     }
 
-    private fun pluralise(count: Int, singular: String, plural: String): String =
-        if (count == 1) singular else plural
-
     private val Collection<String?>.namesList: String
         get() = mapNotNull { "`$it`" }.joinToString(", ")
 
-    private val RsSelfParameter.canonicalDecl: String
-        get() = buildString {
-            if (isRef) append('&')
-            if (mutability.isMut) append("mut ")
-            append("self")
-        }
+    private fun hasResolve(el: RsReferenceElement): Boolean =
+        !(el.reference.resolve() != null || el.reference.multiResolve().size > 1)
 }
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
@@ -385,13 +357,14 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierO
     val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
         ?: return
     val name = element.name!!
+    val identifier = element.nameIdentifier ?: element
     val message = when {
-        element is RsFieldDecl -> "Field `$name` is already declared [E0124]"
-        element is RsEnumVariant -> "Enum variant `$name` is already declared [E0428]"
-        element is RsLifetimeParameter -> "Lifetime name `$name` declared twice in the same scope [E0263]"
-        element is RsPatBinding && owner is RsValueParameterList -> "Identifier `$name` is bound more than once in this parameter list [E0415]"
-        element is RsTypeParameter -> "The name `$name` is already used for a type parameter in this type parameter list [E0403]"
-        owner is RsImplItem -> "Duplicate definitions with name `$name` [E0201]"
+        element is RsFieldDecl -> RsDiagnostic.DuplicateFieldError(identifier, name)
+        element is RsEnumVariant -> RsDiagnostic.DuplicateEnumVariantError(identifier, name)
+        element is RsLifetimeParameter -> RsDiagnostic.DuplicateLifetimeError(identifier, name)
+        element is RsPatBinding && owner is RsValueParameterList -> RsDiagnostic.DuplicateBindingError(identifier, name)
+        element is RsTypeParameter -> RsDiagnostic.DuplicateTypeParameterError(identifier, name)
+        owner is RsImplItem -> RsDiagnostic.DuplicateDefinitionError(identifier, name)
         else -> {
             val scopeType = when (owner) {
                 is RsBlock -> "block"
@@ -399,11 +372,10 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierO
                 is RsTraitItem -> "trait"
                 else -> "scope"
             }
-            "A ${ns.itemName} named `$name` has already been defined in this $scopeType [E0428]"
+            RsDiagnostic.DuplicateItemError(identifier, ns.itemName, name, scopeType)
         }
     }
-
-    holder.createErrorAnnotation(element.nameIdentifier ?: element, message)
+    message.addToHolder(holder)
 }
 
 
