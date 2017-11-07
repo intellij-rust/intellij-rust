@@ -5,274 +5,251 @@
 
 package org.rust.ide.core.overrideImplement
 
+import com.intellij.psi.PsiDocumentManager
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.childOfType
-import java.util.*
 
 class ImplementMembersFixTest : RsTestBase() {
     override fun isWriteActionRequired() = true
 
-    fun test1() = doTest("""
+    fun `test implement methods`() = doTest("""
         trait T {
-            fn foo();
-            fn bar() {}
+            fn f1();
+            fn f2();
+            fn f3() {}
+            fn f4() {}
         }
         struct S;
         impl T for S {}
-    """, """
-        |*s foo()
-        |   bar()
-    """, """
+    """, listOf(
+        ImplementMemberSelection("f1()", true, true),
+        ImplementMemberSelection("f2()", true, false),
+        ImplementMemberSelection("f3()", false, false),
+        ImplementMemberSelection("f4()", false, true)
+    ), """
         trait T {
-            fn foo();
-            fn bar() {}
+            fn f1();
+            fn f2();
+            fn f3() {}
+            fn f4() {}
         }
         struct S;
         impl T for S {
-            fn foo() {
+            fn f1() {
+                unimplemented!()
+            }
+
+            fn f4() {
                 unimplemented!()
             }
         }
     """)
 
-    fun test2() = doTest("""
+    fun `test implement unsafe methods`() = doTest("""
         trait T {
-            fn foo();
-            fn bar() {}
+            unsafe fn f1();
+            unsafe fn f2();
+            unsafe fn f3() {}
+            unsafe fn f4() {}
         }
         struct S;
         impl T for S {}
-    """, """
-        |*s foo()
-        | s bar()
-    """, """
+    """, listOf(
+        ImplementMemberSelection("f1()", true, true),
+        ImplementMemberSelection("f2()", true, false),
+        ImplementMemberSelection("f3()", false, false),
+        ImplementMemberSelection("f4()", false, true)
+    ), """
         trait T {
-            fn foo();
-            fn bar() {}
+            unsafe fn f1();
+            unsafe fn f2();
+            unsafe fn f3() {}
+            unsafe fn f4() {}
         }
         struct S;
         impl T for S {
-            fn foo() {
+            unsafe fn f1() {
                 unimplemented!()
             }
 
-            fn bar() {
+            unsafe fn f4() {
                 unimplemented!()
             }
         }
     """)
 
-    fun test3() = doTest("""
+    fun `test implement more methods`() = doTest("""
         trait T {
-            type Type;
-            fn foo();
-            fn bar() {}
+            fn f1(a: i8, b: i16, c: i32, d: i64);
+            fn f2(a: (i32, u32));
+            fn f3(u32, u64);
+            fn f4() -> bool;
+            fn f5(a: f64, b: bool) -> (i8, u8);
         }
         struct S;
         impl T for S {}
-    """, """
-        |*s Type
-        |*s foo()
-        |   bar()
-    """, """
+    """, listOf(
+        ImplementMemberSelection("f1(a: i8, b: i16, c: i32, d: i64)", true),
+        ImplementMemberSelection("f2(a: (i32, u32))", true),
+        ImplementMemberSelection("f3(u32, u64)", true),
+        ImplementMemberSelection("f4() -> bool", true),
+        ImplementMemberSelection("f5(a: f64, b: bool) -> (i8, u8)", true)
+    ), """
         trait T {
-            type Type;
-            fn foo();
-            fn bar() {}
+            fn f1(a: i8, b: i16, c: i32, d: i64);
+            fn f2(a: (i32, u32));
+            fn f3(u32, u64);
+            fn f4() -> bool;
+            fn f5(a: f64, b: bool) -> (i8, u8);
         }
         struct S;
         impl T for S {
-            type Type = ();
+            fn f1(a: i8, b: i16, c: i32, d: i64) {
+                unimplemented!()
+            }
 
-            fn foo() {
+            fn f2(a: (i32, u32)) {
+                unimplemented!()
+            }
+
+            fn f3(_: u32, _: u64) {
+                unimplemented!()
+            }
+
+            fn f4() -> bool {
+                unimplemented!()
+            }
+
+            fn f5(a: f64, b: bool) -> (i8, u8) {
                 unimplemented!()
             }
         }
     """)
 
-    fun test4() = doTest("""
+    fun `test implement types`() = doTest("""
         trait T {
-            type Type;
-            type Type2 = i32;
+            type T1;
+            type T2;
+            type T3 = i32;
+            type T4 = f64;
         }
         struct S;
         impl T for S {}
-    """, """
-        |*s Type
-        | s Type2
-    """, """
+    """, listOf(
+        ImplementMemberSelection("T1", true, true),
+        ImplementMemberSelection("T2", true, false),
+        ImplementMemberSelection("T3", false, false),
+        ImplementMemberSelection("T4", false, true)
+    ), """
         trait T {
-            type Type;
-            type Type2 = i32;
+            type T1;
+            type T2;
+            type T3 = i32;
+            type T4 = f64;
         }
         struct S;
         impl T for S {
-            type Type = ();
-            type Type2 = ();
+            type T1 = ();
+            type T4 = ();
         }
     """)
 
-    fun test5() = doTest("""
+    fun `test implement constants`() = doTest("""
         trait T {
-            type Type1;
-            type Type2;
-            type Type3 = f64;
-            const CONST1: i32;
-            const CONST2: f64;
-            const CONST3: &'static str = "123";
-            fn foo(x: i32) -> i32;
-            fn bar(f64);
-            fn baz() {
-                println!("Hello world");
-            }
+            const C1: i32;
+            const C2: f64;
+            const C3: &'static str = "foo";
+            const C4: &'static str = "bar";
         }
         struct S;
         impl T for S {}
-    """, """
-        |*s Type1
-        |*s Type2
-        | s Type3
-        |*s CONST1: i32
-        |*s CONST2: f64
-        | s CONST3: &'static str
-        |*s foo(x: i32) -> i32
-        |*s bar(f64)
-        |   baz()
-    """, """
+    """, listOf(
+        ImplementMemberSelection("C1: i32", true, true),
+        ImplementMemberSelection("C2: f64", true, false),
+        ImplementMemberSelection("C3: &'static str", false, false),
+        ImplementMemberSelection("C4: &'static str", false, true)
+    ), """
         trait T {
-            type Type1;
-            type Type2;
-            type Type3 = f64;
-            const CONST1: i32;
-            const CONST2: f64;
-            const CONST3: &'static str = "123";
-            fn foo(x: i32) -> i32;
-            fn bar(f64);
-            fn baz() {
-                println!("Hello world");
-            }
+            const C1: i32;
+            const C2: f64;
+            const C3: &'static str = "foo";
+            const C4: &'static str = "bar";
         }
         struct S;
         impl T for S {
-            const CONST1: i32 = unimplemented!();
-            const CONST2: f64 = unimplemented!();
-            const CONST3: &'static str = unimplemented!();
-            type Type1 = ();
-            type Type2 = ();
-            type Type3 = ();
-
-            fn foo(x: i32) -> i32 {
-                unimplemented!()
-            }
-
-            fn bar(_: f64) {
-                unimplemented!()
-            }
+            const C1: i32 = unimplemented!();
+            const C4: &'static str = unimplemented!();
         }
     """)
 
-    fun test6() = doTest("""
+    fun `test implement all`() = doTest("""
         trait T {
-            unsafe fn foo();
-            unsafe fn bar() {}
+            fn f1();
+            type T1;
+            const C1: i32;
+            fn f2() {}
+            type T2 = f64;
+            const C2: f64 = 4.2;
         }
         struct S;
         impl T for S {}
-    """, """
-        |*s foo()
-        |   bar()
-    """, """
+    """, listOf(
+        ImplementMemberSelection("f1()", true),
+        ImplementMemberSelection("T1", true),
+        ImplementMemberSelection("C1: i32", true),
+        ImplementMemberSelection("f2()", false),
+        ImplementMemberSelection("T2", false),
+        ImplementMemberSelection("C2: f64", false)
+
+    ),"""
         trait T {
-            unsafe fn foo();
-            unsafe fn bar() {}
+            fn f1();
+            type T1;
+            const C1: i32;
+            fn f2() {}
+            type T2 = f64;
+            const C2: f64 = 4.2;
         }
         struct S;
         impl T for S {
-            unsafe fn foo() {
-                unimplemented!()
-            }
-        }
-    """)
+            const C1: i32 = unimplemented!();
+            type T1 = ();
 
-    fun test7() = doTest("""
-        trait T {
-            unsafe fn foo();
-            unsafe fn bar() {}
-        }
-        struct S;
-        impl T for S {}
-    """, """
-        |*s foo()
-        | s bar()
-    """, """
-        trait T {
-            unsafe fn foo();
-            unsafe fn bar() {}
-        }
-        struct S;
-        impl T for S {
-            unsafe fn foo() {
-                unimplemented!()
-            }
-
-            unsafe fn bar() {
+            fn f1() {
                 unimplemented!()
             }
         }
     """)
 
     private fun doTest(@Language("Rust") code: String,
-                       chooser: String,
+                       chooser: List<ImplementMemberSelection>,
                        @Language("Rust") expected: String) {
+
         checkByText(code.trimIndent(), expected.trimIndent()) {
             val impl = myFixture.file.childOfType<RsImplItem>()
                 ?: fail("Caret is not in an impl block")
-            val (all, selected) = createTraitMembersChooser(impl)
+            val (all, default) = createTraitMembersChooser(impl)
                 ?: fail("No members are available")
-            val defaultChooser = renderChooser(all, selected)
-            TestCase.assertEquals(unselectChooser(chooser), defaultChooser)
-            val chooserSelected = extractSelected(all, chooser)
-            insertNewTraitMembers(chooserSelected, impl.members!!)
+
+            TestCase.assertEquals(all.map { it.formattedText() }, chooser.map { it.member })
+            TestCase.assertEquals(default.map { it.formattedText() }, chooser.filter { it.byDefault }.map { it.member })
+            insertNewTraitMembers(extractSelected(all, chooser), impl.members!!)
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(myFixture.editor.document)
         }
     }
 
-    private fun extractSelected(all: List<RsTraitMemberChooserMember>, chooser: String): List<RsTraitMemberChooserMember> {
-        val boolSelection = chooser.split("\n").filter(String::isNotBlank).map { it.trim()[2] == 's' }
-        TestCase.assertEquals(all.size, boolSelection.size)
-        val result = (0..all.size - 1)
-            .filter { boolSelection[it] }
-            .map { all[it] }
-        return result
+    private fun extractSelected(all: List<RsTraitMemberChooserMember>, chooser: List<ImplementMemberSelection>): List<RsTraitMemberChooserMember> {
+        val selected = chooser.filter { it.isSelected }.map { it.member }
+        return all.filter { selected.contains(it.formattedText()) }
     }
-
-    private fun unselectChooser(chooser: String) = chooser.split("\n").filter(String::isNotBlank).map {
-        val s = it.trim()
-        if (s.length >= 4)
-            "|" + s[1] + "  " + s.substring(4)
-        else
-            s
-    }.joinToString("\n")
 
     private fun fail(message: String): Nothing {
         TestCase.fail(message)
         error("Test failed with message: \"$message\"")
     }
 
-    private fun renderChooser(all: Collection<RsTraitMemberChooserMember>,
-                              selected: Collection<RsTraitMemberChooserMember>): String {
-        val selectedSet = HashSet(selected)
-        val builder = StringBuilder()
-        for (member in all) {
-            if (member in selectedSet)
-                builder.append("|*  ")
-            else
-                builder.append("|   ")
-            builder.append(member.formattedText()).append("\n")
-        }
-        builder.deleteCharAt(builder.lastIndex)
-        return builder.toString()
-    }
+    private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 }
