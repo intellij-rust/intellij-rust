@@ -28,7 +28,7 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
         result: CompletionResultSet
     ) {
         val schema = cachedSchema ?:
-            TomlSchema(parameters.position.project, EXAMPLE_CARGO_TOML).also { cachedSchema = it }
+            TomlSchema.parse(parameters.position.project, EXAMPLE_CARGO_TOML).also { cachedSchema = it }
 
         val key = parameters.position.parent as? TomlKey ?: return
         val table = key.topLevelTable ?: return
@@ -75,6 +75,8 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
 
 
 
+// Example from http://doc.crates.io/manifest.html,
+// basic completion is automatically generated from it.
 @Language("TOML")
 private val EXAMPLE_CARGO_TOML = """
 
