@@ -16,10 +16,13 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
-import org.rust.lang.core.types.*
+import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.selfType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
+import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.zipValues
@@ -752,8 +755,8 @@ private class RsFnInferenceContext(
     }
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
-        val boundField = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup).firstOrNull()
-        if (boundField == null) {
+        val field = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup).firstOrNull()
+        if (field == null) {
             for (type in lookup.coercionSequence(receiver)) {
                 if (type is TyTuple) {
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
@@ -762,13 +765,12 @@ private class RsFnInferenceContext(
             }
             return TyUnknown
         }
-        val field = boundField.element
         val raw = when (field) {
             is RsFieldDecl -> field.typeReference?.type
             is RsTupleFieldDecl -> field.typeReference.type
             else -> null
         } ?: TyUnknown
-        return raw.substitute(boundField.subst)
+        return raw.substitute(receiver.typeParameterValues)
     }
 
     private fun inferDotExprType(expr: RsDotExpr): Ty {

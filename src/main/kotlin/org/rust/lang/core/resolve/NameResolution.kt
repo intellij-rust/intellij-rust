@@ -69,7 +69,7 @@ fun processFieldExprResolveVariants(
 ): Boolean {
     for (ty in lookup.coercionSequence(receiverType)) {
         if (ty !is TyStruct) continue
-        if (processFieldDeclarations(ty.item, ty.typeParameterValues, processor)) return true
+        if (processFieldDeclarations(ty.item, processor)) return true
     }
     if (isCompletion && processMethodDeclarationsWithDeref(lookup, receiverType, processor)) {
         return true
@@ -79,7 +79,7 @@ fun processFieldExprResolveVariants(
 
 fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
     val structOrEnumVariant = field.parentStructLiteral.path.reference.resolve() as? RsFieldsOwner ?: return false
-    return processFieldDeclarations(structOrEnumVariant, emptySubstitution, processor)
+    return processFieldDeclarations(structOrEnumVariant, processor)
 }
 
 fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsMethodResolveProcessor): Boolean {
@@ -423,11 +423,11 @@ private fun processItemMacroDeclarations(
     return false
 }
 
-private fun processFieldDeclarations(struct: RsFieldsOwner, subst: Substitution, processor: RsResolveProcessor): Boolean {
-    if (processAllBound(struct.namedFields, subst, processor)) return true
+private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
+    if (processAll(struct.namedFields, processor)) return true
 
     for ((idx, field) in struct.positionalFields.withIndex()) {
-        if (processor(idx.toString(), field, subst)) return true
+        if (processor(idx.toString(), field)) return true
     }
     return false
 }

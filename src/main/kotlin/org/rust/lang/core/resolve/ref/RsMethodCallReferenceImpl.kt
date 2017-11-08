@@ -58,6 +58,7 @@ class RsFieldLookupReferenceImpl(
         val receiverType = element.parentDotExpr.expr.type
         val lookup = ImplLookup.relativeTo(element)
         return resolveFieldLookupReferenceWithReceiverType(lookup, receiverType, element)
+            .map { BoundElement(it) }
     }
 
     override fun handleElementRename(newName: String): PsiElement {
@@ -81,10 +82,10 @@ fun resolveFieldLookupReferenceWithReceiverType(
     lookup: ImplLookup,
     receiverType: Ty,
     expr: RsFieldLookup
-): List<BoundElement<RsCompositeElement>> {
+): List<RsCompositeElement> {
     return collectResolveVariants(expr.referenceName) {
         processFieldExprResolveVariants(lookup, receiverType, false, it)
-    }
+    }.map { it.element }
 }
 
 data class MethodCallee(
