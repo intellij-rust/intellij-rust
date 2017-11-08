@@ -16,6 +16,7 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
+import org.rust.lang.core.resolve.ref.resolvePath
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.selfType
@@ -37,6 +38,7 @@ fun inferTypesIn(fn: RsFunction): RsInferenceResult =
 class RsInferenceResult(
     private val bindings: Map<RsPatBinding, Ty>,
     private val exprTypes: Map<RsExpr, Ty>,
+    private val resolvedPaths: Map<RsPathExpr, List<RsCompositeElement>>,
     private val resolvedMethods: Map<RsMethodCall, List<RsFunction>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsCompositeElement>>,
     val diagnostics: List<RsDiagnostic>
@@ -46,6 +48,9 @@ class RsInferenceResult(
 
     fun getBindingType(binding: RsPatBinding): Ty =
         bindings[binding] ?: TyUnknown
+
+    fun getResolvedPath(expr: RsPathExpr): List<RsCompositeElement> =
+        resolvedPaths[expr] ?: emptyList()
 
     fun getResolvedMethod(call: RsMethodCall): List<RsFunction> =
         resolvedMethods[call] ?: emptyList()
@@ -63,6 +68,7 @@ class RsInferenceResult(
 class RsInferenceContext {
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
+    private val resolvedPaths: MutableMap<RsPathExpr, List<RsCompositeElement>> = HashMap()
     private val resolvedMethods: MutableMap<RsMethodCall, List<RsFunction>> = HashMap()
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsCompositeElement>> = HashMap()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
@@ -121,7 +127,7 @@ class RsInferenceContext {
             bindings.replaceAll { _, ty -> fullyResolve(ty) }
         }
 
-        return RsInferenceResult(bindings, exprTypes, resolvedMethods, resolvedFields, diagnostics)
+        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics)
     }
 
     private fun extractParameterBindings(fn: RsFunction) {
@@ -144,6 +150,10 @@ class RsInferenceContext {
 
     fun writeTy(psi: RsExpr, ty: Ty) {
         exprTypes[psi] = ty
+    }
+
+    fun writePath(path: RsPathExpr, resolved: List<BoundElement<RsCompositeElement>>) {
+        resolvedPaths[path] = resolved.map { it.element }
     }
 
     fun writeResolvedMethod(call: RsMethodCall, resolvedTo: List<RsFunction>) {
@@ -505,8 +515,10 @@ private class RsFnInferenceContext(
     }
 
     private fun inferPathExprType(expr: RsPathExpr): Ty {
-        val variants = expr.path.reference.advancedMultiResolve().mapNotNull { it.downcast<RsNamedElement>() }
-        val qualifier = expr.path.path
+        val path = expr.path
+        val variants = resolvePath(path).mapNotNull { it.downcast<RsNamedElement>() }
+        ctx.writePath(expr, variants)
+        val qualifier = path.path
         if (variants.size > 1 && qualifier != null) {
             val resolved = resolveAmbiguity(variants.map { it.element })
             if (resolved != null) {
