@@ -10,59 +10,22 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.infer.substitute
 
 class TyTypeParameter private constructor(
     val parameter: TypeParameter,
-    private val bounds: Collection<BoundElement<RsTraitItem>>
-) : Ty {
+    boundsSupplier: () -> Collection<BoundElement<RsTraitItem>>
+) : Ty(HAS_TY_TYPE_PARAMETER_MASK) {
+
+    private val bounds: Collection<BoundElement<RsTraitItem>> by lazy(LazyThreadSafetyMode.NONE, boundsSupplier)
 
     override fun equals(other: Any?): Boolean = other is TyTypeParameter && other.parameter == parameter
     override fun hashCode(): Int = parameter.hashCode()
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
-        bounds.flatMap { it.flattenHierarchy }.map { it.substitute(mapOf(self() to this)) }
-
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult {
-        var result: UnifyResult = UnifyResult.exact
-
-        if (!bounds.isEmpty()) {
-            val traits = lookup.findImplsAndTraits(other)
-            for ((element, boundSubst) in bounds) {
-                val trait = traits.find { it.element.implementedTrait?.element == element }
-                if (trait != null) {
-                    val subst = boundSubst.substituteInValues(mapOf(self() to this))
-                    for ((k, v) in subst) {
-                        trait.subst[k]?.let { result = result.merge(v.unifyWith(it, lookup)) }
-                    }
-                } else {
-                    result = result.merge(UnifyResult.fuzzy)
-                }
-            }
-        }
-
-        return result.merge(mapOf(this to other))
-    }
-
-    // TODO complete dismantle substitution and migrate to folding
-    fun substituteOld(subst: Substitution): Ty {
-        val ty = subst[this] ?: TyUnknown
-        if (ty !is TyUnknown) return ty
-        if (parameter is AssociatedType) {
-            val oldType = parameter.type
-            val newType = if (oldType is TyTypeParameter && oldType.parameter is Self) {
-                oldType.substitute(subst)
-            } else {
-                oldType
-            }
-            return associated(newType, parameter.trait, parameter.target)
-        }
-        return TyTypeParameter(parameter, bounds.map { it.substitute(subst) })
-    }
+        bounds.flatMap { it.flattenHierarchy }
 
     override fun superFoldWith(folder: TypeFolder): Ty {
         if (parameter is AssociatedType) {
@@ -85,7 +48,7 @@ class TyTypeParameter private constructor(
         override val name: String? get() = "Self"
     }
 
-    private data class Named(val parameter: RsTypeParameter) : TypeParameter {
+    data class Named(val parameter: RsTypeParameter) : TypeParameter {
         override val name: String? get() = parameter.name
     }
 
@@ -95,15 +58,15 @@ class TyTypeParameter private constructor(
     }
 
     companion object {
-        private val SELF = TyTypeParameter(Self, emptyList())
+        private val self = TyTypeParameter(Self, { emptyList() })
 
-        fun self(): TyTypeParameter = SELF
+        fun self(): TyTypeParameter = self
 
         fun self(trait: RsTraitOrImpl): TyTypeParameter =
-            TyTypeParameter(Self, trait.implementedTrait?.let { listOf(it) } ?: emptyList())
+            TyTypeParameter(Self, { listOfNotNull(trait.implementedTrait) })
 
         fun named(parameter: RsTypeParameter): TyTypeParameter =
-            TyTypeParameter(Named(parameter), bounds(parameter))
+            TyTypeParameter(Named(parameter)) { bounds(parameter) }
 
         fun associated(target: RsTypeAlias): TyTypeParameter =
             associated(self(), target)
@@ -114,10 +77,10 @@ class TyTypeParameter private constructor(
             return associated(type, trait, target)
         }
 
-         fun associated(type: Ty, trait: RsTraitItem, target: RsTypeAlias): TyTypeParameter {
+        fun associated(type: Ty, trait: RsTraitItem, target: RsTypeAlias): TyTypeParameter {
             return TyTypeParameter(
                 AssociatedType(type, trait, target),
-                emptyList())
+                { emptyList() } )
         }
     }
 }

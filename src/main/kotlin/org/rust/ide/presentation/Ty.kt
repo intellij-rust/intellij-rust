@@ -66,6 +66,7 @@ private fun render(
             is TyInfer.IntVar -> integer
             is TyInfer.FloatVar -> float
         }
+        is FreshTyInfer -> "<fresh>" // really should never be displayed; debug only
         else -> error("unreachable")
     }
 }

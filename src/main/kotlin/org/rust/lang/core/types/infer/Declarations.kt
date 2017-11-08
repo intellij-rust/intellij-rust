@@ -20,6 +20,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
         is RsBaseType -> {
             if (type.isUnit) return TyUnit
             if (type.isNever) return TyNever
+            if (type.isUnderscore) return TyInfer.TyVar()
 
             val path = type.path ?: return TyUnknown
 

@@ -6,17 +6,10 @@
 package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.tyToString
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 
-data class TyReference(val referenced: Ty, val mutability: Mutability) : Ty {
-
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
-        if (other is TyReference && mutability == other.mutability)
-            referenced.unifyWith(other.referenced, lookup)
-        else
-            UnifyResult.fail
+data class TyReference(val referenced: Ty, val mutability: Mutability) : Ty(referenced.flags) {
 
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyReference(referenced.foldWith(folder), mutability)

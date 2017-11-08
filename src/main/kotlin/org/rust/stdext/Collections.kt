@@ -25,6 +25,14 @@ interface ListBuilder<in T> {
     fun addAll(items: List<T>)
 }
 
+fun <T> concatLists(vararg lists: Collection<T>): List<T> {
+    val result = ArrayList<T>(lists.sumBy { it.size })
+    for (list in lists) {
+        result.addAll(list)
+    }
+    return result
+}
+
 fun makeBitMask(bitToSet: Int): Int = 1 shl bitToSet
 
 fun <K, V1, V2> zipValues(map1: Map<K, V1>, map2: Map<K, V2>): List<Pair<V1, V2>> =

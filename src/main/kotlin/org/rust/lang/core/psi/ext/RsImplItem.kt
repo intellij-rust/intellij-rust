@@ -8,6 +8,9 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getPresentation
@@ -45,7 +48,15 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override val outerAttrList: List<RsOuterAttr>
         get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
 
-    override val associatedTypesTransitively: Collection<RsTypeAlias> get() {
+    override val associatedTypesTransitively: Collection<RsTypeAlias>
+        get() = CachedValuesManager.getCachedValue(this, {
+            CachedValueProvider.Result.create(
+                doGetAssociatedTypesTransitively(),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        })
+
+    private fun doGetAssociatedTypesTransitively(): List<RsTypeAlias> {
         val implAliases = members?.typeAliasList.orEmpty()
         val traitAliases = implementedTrait?.associatedTypesTransitively ?: emptyList()
         return implAliases + traitAliases.filter { trAl -> implAliases.find { it.name == trAl.name } == null }

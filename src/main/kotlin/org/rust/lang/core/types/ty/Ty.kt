@@ -5,8 +5,9 @@
 
 package org.rust.lang.core.types.ty
 
+import com.intellij.util.BitUtil
 import org.rust.lang.core.psi.RsTypeParameter
-import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
@@ -15,6 +16,10 @@ import org.rust.lang.core.types.infer.substitute
 typealias Substitution = Map<TyTypeParameter, Ty>
 val emptySubstitution: Substitution = emptyMap()
 
+typealias TypeFlags = Int
+const val HAS_TY_INFER_MASK: Int = 1
+const val HAS_TY_TYPE_PARAMETER_MASK: Int = 2
+
 /**
  * Represents both a type, like `i32` or `S<Foo, Bar>`, as well
  * as an unbound constructor `S`.
@@ -22,15 +27,7 @@ val emptySubstitution: Substitution = emptyMap()
  * The name `Ty` is short for `Type`, inspired by the Rust
  * compiler.
  */
-interface Ty: TypeFoldable<Ty> {
-    /**
-     * Checks if `other` type may be represented as this type.
-     *
-     * Note that `t1.unifyWith(t2)` is not the same as `t2.unifyWith(t1)`.
-     *
-     * TODO replace it with the truly unification
-     */
-    fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult
+abstract class Ty(val flags: TypeFlags = 0): TypeFoldable<Ty> {
 
     override fun foldWith(folder: TypeFolder): Ty = folder(this)
 
@@ -43,12 +40,12 @@ interface Ty: TypeFoldable<Ty> {
     /**
      * Bindings between formal type parameters and actual type arguments.
      */
-    val typeParameterValues: Substitution get() = emptySubstitution
+    open val typeParameterValues: Substitution get() = emptySubstitution
 
     /**
      * User visible string representation of a type
      */
-    override fun toString(): String
+    abstract override fun toString(): String
 }
 
 enum class Mutability {
@@ -67,6 +64,12 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.keys.find { it.toString() == name }
 }
 
+val Ty.hasTyInfer
+    get(): Boolean = BitUtil.isSet(flags, HAS_TY_INFER_MASK)
+
+val Ty.hasTyTypeParameters
+    get(): Boolean = BitUtil.isSet(flags, HAS_TY_TYPE_PARAMETER_MASK)
+
 fun Substitution.substituteInValues(map: Substitution): Substitution =
     mapValues { (_, value) -> value.substitute(map) }
 
@@ -76,3 +79,9 @@ fun Substitution.foldValues(folder: TypeFolder): Substitution =
 fun Substitution.get(psi: RsTypeParameter): Ty? {
     return get(TyTypeParameter.named((psi)))
 }
+
+fun mergeFlags(element: BoundElement<*>): TypeFlags =
+    element.subst.values.fold(0) { a, b -> a or b.flags }
+
+fun mergeFlags(tys: List<Ty>): TypeFlags =
+    tys.fold(0) { a, b -> a or b.flags }

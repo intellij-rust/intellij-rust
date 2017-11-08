@@ -7,10 +7,12 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.tyToString
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsArrayExpr
+import org.rust.lang.core.psi.RsLitExpr
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsVariantDiscriminant
 import org.rust.lang.core.psi.ext.hasColonColon
 import org.rust.lang.core.psi.ext.sizeExpr
-import org.rust.lang.core.resolve.ImplLookup
 
 /**
  * These are "atomic" ty (not type constructors, singletons).
@@ -18,9 +20,7 @@ import org.rust.lang.core.resolve.ImplLookup
  * Definition intentionally differs from the reference: we don't treat
  * tuples or arrays as primitive.
  */
-interface TyPrimitive : Ty {
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
-        UnifyResult.exactIf(this == other)
+abstract class TyPrimitive : Ty() {
 
     companion object {
         fun fromPath(path: RsPath): TyPrimitive? {
@@ -43,30 +43,30 @@ interface TyPrimitive : Ty {
     }
 }
 
-object TyBool : TyPrimitive {
+object TyBool : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
-object TyChar : TyPrimitive {
+object TyChar : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
-object TyUnit : TyPrimitive {
+object TyUnit : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
 /** The `!` type. E.g. `unimplemented!()` */
-object TyNever : TyPrimitive {
+object TyNever : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
-object TyStr : TyPrimitive {
+object TyStr : TyPrimitive() {
     override fun toString(): String = tyToString(this)
 }
 
-interface TyNumeric : TyPrimitive
+abstract class TyNumeric : TyPrimitive()
 
-class TyInteger(val kind: Kind) : TyNumeric {
+class TyInteger(val kind: Kind) : TyNumeric() {
     companion object {
         fun fromSuffixedLiteral(literal: PsiElement): TyInteger? =
             Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyInteger)
@@ -102,9 +102,6 @@ class TyInteger(val kind: Kind) : TyNumeric {
         i8, i16, i32, i64, i128, isize
     }
 
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
-        UnifyResult.exactIf(this == other || other is TyInfer.IntVar)
-
     // Ignore `isKindWeak` for the purposes of equality
     override fun equals(other: Any?): Boolean = other is TyInteger && other.kind == kind
     override fun hashCode(): Int = kind.hashCode()
@@ -112,7 +109,7 @@ class TyInteger(val kind: Kind) : TyNumeric {
     override fun toString(): String = tyToString(this)
 }
 
-class TyFloat(val kind: Kind) : TyNumeric {
+class TyFloat(val kind: Kind) : TyNumeric() {
     companion object {
         fun fromSuffixedLiteral(literal: PsiElement): TyFloat? =
             Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyFloat)
@@ -127,9 +124,6 @@ class TyFloat(val kind: Kind) : TyNumeric {
     }
 
     enum class Kind { f32, f64 }
-
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult =
-        UnifyResult.exactIf(this == other || other is TyInfer.FloatVar)
 
     // Ignore `isKindWeak` for the purposes of equality
     override fun equals(other: Any?): Boolean = other is TyFloat && other.kind == kind

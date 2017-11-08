@@ -11,29 +11,20 @@ import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.type
 
-interface TyStructOrEnumBase : Ty {
-    val typeArguments: List<Ty>
+abstract class TyStructOrEnumBase(flags: TypeFlags) : Ty(flags) {
+    abstract val typeArguments: List<Ty>
 
-    val item: RsStructOrEnumItemElement
-
-    override fun unifyWith(other: Ty, lookup: ImplLookup): UnifyResult {
-        return if (other is TyStructOrEnumBase && item == other.item) {
-            UnifyResult.mergeAll(typeArguments.zip(other.typeArguments).map { (type1, type2) -> type1.unifyWith(type2, lookup) })
-        } else {
-            UnifyResult.fail
-        }
-    }
+    abstract val item: RsStructOrEnumItemElement
 }
 
 class TyStruct private constructor(
     private val boundElement: BoundElement<RsStructItem>
-) : TyStructOrEnumBase {
+) : TyStructOrEnumBase(mergeFlags(boundElement)) {
 
     override val item: RsStructItem
         get() = boundElement.element
@@ -68,7 +59,7 @@ class TyStruct private constructor(
 
 class TyEnum private constructor(
     private val boundElement: BoundElement<RsEnumItem>
-) : TyStructOrEnumBase {
+) : TyStructOrEnumBase(mergeFlags(boundElement)) {
 
     override val item: RsEnumItem
         get() = boundElement.element

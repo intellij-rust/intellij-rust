@@ -52,12 +52,8 @@ class RsPathReferenceImpl(
 
             val assocTypes = run {
                 if (element is RsTraitItem) {
-                    val aliases = element.associatedTypesTransitively
-                        .map { TyTypeParameter.associated(it) }
-                        .associateBy { it }
-
                     val outputParam = lookup.fnOutputParam
-                    return@run aliases + if (outputArg != null && outputParam != null) {
+                    return@run if (outputArg != null && outputParam != null) {
                         mapOf(outputParam to outputArg)
                     } else {
                         emptySubstitution

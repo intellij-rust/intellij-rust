@@ -9,10 +9,10 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.SelectionResult
+import org.rust.lang.core.resolve.withSubst
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInfer
-import org.rust.lang.core.types.ty.TyTypeParameter
 
 sealed class Predicate: TypeFoldable<Predicate> {
     /** where T : Bar<A,B,C> */
@@ -121,10 +121,6 @@ class ObligationForest {
             }
         }
 
-        if (!stalled) {
-            nodes.removeIf { it.state != NodeState.Pending }
-        }
-
         return stalled
     }
 }
@@ -169,7 +165,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
                     is SelectionResult.Err -> ProcessPredicateResult.Err
                     is SelectionResult.Ambiguous -> ProcessPredicateResult.NoChanges
                     is SelectionResult.Ok -> {
-                        return ProcessPredicateResult.Ok(impl.nestedObligations.map {
+                        return ProcessPredicateResult.Ok(impl.result.nestedObligations.map {
                             PendingPredicateObligation(it, mutableListOf())
                         })
                     }
@@ -182,21 +178,36 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
             is Predicate.Projection -> {
                 val selfTy = predicate.selfTy
                 if (selfTy is TyInfer) return ProcessPredicateResult.NoChanges
-                val impl = lookup.findImplOfTrait(selfTy, predicate.trait) ?: return ProcessPredicateResult.Err
-                val theTy = impl.subst[TyTypeParameter.associated(predicate.target)] ?: return ProcessPredicateResult.Err
-                return ProcessPredicateResult.Ok(PendingPredicateObligation(Obligation(
-                    obligation.recursionDepth + 1,
-                    Predicate.Equate(theTy, predicate.ty)
-                ), mutableListOf()))
+                val result = lookup.selectProjection(
+                    TraitRef(selfTy, predicate.trait.withSubst()), // TODO use subst
+                    predicate.target,
+                    obligation.recursionDepth
+                )
+                return when (result) {
+                    is SelectionResult.Err -> ProcessPredicateResult.Err
+                    is SelectionResult.Ambiguous -> ProcessPredicateResult.NoChanges
+                    is SelectionResult.Ok -> {
+                        val theTy = result.result ?: return ProcessPredicateResult.Err
+                        ProcessPredicateResult.Ok((theTy.obligations + Obligation(
+                            obligation.recursionDepth + 1,
+                            Predicate.Equate(theTy.value, predicate.ty)
+                        )).map {PendingPredicateObligation(it, mutableListOf()) })
+                    }
+                }
             }
         }
+    }
+
+    fun <T> TyWithObligations<T>.register(): T {
+        obligations.forEach { registerPredicateObligation(it) }
+        return value
     }
 }
 
 sealed class ProcessPredicateResult {
+    object Err: ProcessPredicateResult()
     object NoChanges: ProcessPredicateResult()
     data class Ok(val children: List<PendingPredicateObligation>): ProcessPredicateResult() {
         constructor(vararg children: PendingPredicateObligation): this(listOf(*children))
     }
-    object Err: ProcessPredicateResult()
 }
