@@ -16,6 +16,7 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
+import org.rust.lang.core.resolve.ref.resolvePath
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.selfType
@@ -37,6 +38,7 @@ fun inferTypesIn(fn: RsFunction): RsInferenceResult =
 class RsInferenceResult(
     private val bindings: Map<RsPatBinding, Ty>,
     private val exprTypes: Map<RsExpr, Ty>,
+    private val resolvedPaths: Map<RsPathExpr, List<RsCompositeElement>>,
     private val resolvedMethods: Map<RsMethodCall, List<RsFunction>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsCompositeElement>>,
     val diagnostics: List<RsDiagnostic>
@@ -46,6 +48,9 @@ class RsInferenceResult(
 
     fun getBindingType(binding: RsPatBinding): Ty =
         bindings[binding] ?: TyUnknown
+
+    fun getResolvedPath(expr: RsPathExpr): List<RsCompositeElement> =
+        resolvedPaths[expr] ?: emptyList()
 
     fun getResolvedMethod(call: RsMethodCall): List<RsFunction> =
         resolvedMethods[call] ?: emptyList()
@@ -63,8 +68,10 @@ class RsInferenceResult(
 class RsInferenceContext {
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
+    private val resolvedPaths: MutableMap<RsPathExpr, List<RsCompositeElement>> = HashMap()
     private val resolvedMethods: MutableMap<RsMethodCall, List<RsFunction>> = HashMap()
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsCompositeElement>> = HashMap()
+    private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger.Kind> =
@@ -113,20 +120,34 @@ class RsInferenceContext {
         val block = fn.block
         if (block != null) {
             val items = StdKnownItems.relativeTo(fn)
-            val fctx = RsFnInferenceContext(this, ImplLookup(fn.project, items), items)
+            val lookup = ImplLookup(fn.project, items, this)
+            val fctx = RsFnInferenceContext(this, lookup, items)
             fctx.inferBlockType(block)
 
             fctx.selectObligationsWherePossible()
             exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
             bindings.replaceAll { _, ty -> fullyResolve(ty) }
+
+            performPathsRefinement(lookup)
         }
 
-        return RsInferenceResult(bindings, exprTypes, resolvedMethods, resolvedFields, diagnostics)
+        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics)
     }
 
     private fun extractParameterBindings(fn: RsFunction) {
         for (param in fn.valueParameters) {
             extractBindings(param.pat, param.typeReference?.type ?: TyUnknown)
+        }
+    }
+
+    private fun performPathsRefinement(lookup: ImplLookup) {
+        for ((path, traitRef) in pathRefinements) {
+            val fnName = resolvedPaths[path]?.firstOrNull()?.let { (it as? RsFunction)?.name }
+            val ok = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()
+            if (ok != null) {
+                val fn = ok.impl.members?.functionList?.find { it.name == fnName }
+                if (fn != null) resolvedPaths[path] = listOf(fn)
+            }
         }
     }
 
@@ -146,12 +167,20 @@ class RsInferenceContext {
         exprTypes[psi] = ty
     }
 
+    fun writePath(path: RsPathExpr, resolved: List<BoundElement<RsCompositeElement>>) {
+        resolvedPaths[path] = resolved.map { it.element }
+    }
+
     fun writeResolvedMethod(call: RsMethodCall, resolvedTo: List<RsFunction>) {
         resolvedMethods[call] = resolvedTo
     }
 
     fun writeResolvedField(lookup: RsFieldLookup, resolvedTo: List<RsCompositeElement>) {
         resolvedFields[lookup] = resolvedTo
+    }
+
+    fun registerPathRefinement(path: RsPathExpr, traitRef: TraitRef) {
+        pathRefinements.add(Pair(path, traitRef))
     }
 
     fun extractBindings(pattern: RsPat?, baseType: Ty) {
@@ -505,15 +534,19 @@ private class RsFnInferenceContext(
     }
 
     private fun inferPathExprType(expr: RsPathExpr): Ty {
-        val variants = expr.path.reference.advancedMultiResolve().mapNotNull { it.downcast<RsNamedElement>() }
-        val qualifier = expr.path.path
+        val path = expr.path
+        val variants = resolvePath(path).mapNotNull { it.downcast<RsNamedElement>() }
+        ctx.writePath(expr, variants)
+        val qualifier = path.path
         if (variants.size > 1 && qualifier != null) {
             val resolved = resolveAmbiguity(variants.map { it.element })
             if (resolved != null) {
-                return instantiatePath(BoundElement(resolved)) // TODO use subst (remap needed)
+                // TODO remap subst
+                return instantiatePath(BoundElement(resolved, variants.first().subst), expr, tryRefinePath = true)
             }
         }
-        return instantiatePath(variants.firstOrNull() ?: return TyUnknown)
+        val first = variants.firstOrNull() ?: return TyUnknown
+        return instantiatePath(first, expr, tryRefinePath = variants.size == 1)
     }
 
     /** This works for `String::from` where multiple impls of `From` trait found for `String` */
@@ -533,7 +566,11 @@ private class RsFnInferenceContext(
         return null
     }
 
-    private fun instantiatePath(boundElement: BoundElement<RsNamedElement>): Ty {
+    private fun instantiatePath(
+        boundElement: BoundElement<RsNamedElement>,
+        pathExpr: RsPathExpr? = null,
+        tryRefinePath: Boolean = false
+    ): Ty {
         val (element, subst) = boundElement
         val type = when (element) {
             is RsPatBinding -> ctx.getBindingType(element)
@@ -559,10 +596,12 @@ private class RsFnInferenceContext(
                     is RsFunctionOwner.Trait -> {
                         val typeParameters = instantiateBounds(owner.trait)
                         // UFCS - add predicate `Self : Trait<Args>`
-                        val selfTy = ctx.typeVarForParam(TyTypeParameter.self())
+                        val selfTy = subst[TyTypeParameter.self()] ?: ctx.typeVarForParam(TyTypeParameter.self())
                         val boundTrait = BoundElement(owner.trait, owner.trait.generics.associateBy { it })
                             .substitute(typeParameters)
-                        fulfill.registerPredicateObligation(Obligation(Predicate.Trait(TraitRef(selfTy, boundTrait))))
+                        val traitRef = TraitRef(selfTy, boundTrait)
+                        fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
+                        if (pathExpr != null && tryRefinePath) ctx.registerPathRefinement(pathExpr, traitRef)
                         typeParameters to selfTy
                     }
                     else -> emptySubstitution to null
