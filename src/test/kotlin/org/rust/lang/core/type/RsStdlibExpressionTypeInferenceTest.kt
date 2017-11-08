@@ -336,6 +336,18 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test iterator collect with path parameter`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::vec::Vec;
+
+        fn main() {
+            let vec = vec![1, 2, 3];
+            let b = vec.into_iter().collect::<Vec<_>>();
+            b
+          //^ Vec<i32>
+        }
+    """)
+
     fun `test vec push`() = stubOnlyTypeInfer("""
     //- main.rs
         use std::vec::Vec;
