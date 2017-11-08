@@ -48,7 +48,10 @@ enum class ScopeEvent : ScopeEntry {
 typealias RsResolveProcessor = (ScopeEntry) -> Boolean
 typealias RsMethodResolveProcessor = (MethodCallee) -> Boolean
 
-fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<BoundElement<RsCompositeElement>> {
+fun collectPathResolveVariants(
+    referenceName: String,
+    f: (RsResolveProcessor) -> Unit
+): List<BoundElement<RsCompositeElement>> {
     val result = mutableListOf<BoundElement<RsCompositeElement>>()
     f { e ->
         if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
@@ -56,6 +59,19 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
         if (e.name == referenceName) {
             val element = e.element ?: return@f false
             result += BoundElement(element, e.subst)
+        }
+        false
+    }
+    return result
+}
+
+fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsCompositeElement> {
+    val result = mutableListOf<RsCompositeElement>()
+    f { e ->
+        if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
+
+        if (e.name == referenceName) {
+            result += e.element ?: return@f false
         }
         false
     }

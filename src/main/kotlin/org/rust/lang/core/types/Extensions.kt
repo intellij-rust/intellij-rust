@@ -37,6 +37,9 @@ val RsFunction.inference: RsInferenceResult
         CachedValueProvider.Result.create(inferTypesIn(this), PsiModificationTracker.MODIFICATION_COUNT)
     })
 
+val PsiElement.inference: RsInferenceResult?
+    get() = (parentOfType<RsItemElement>() as? RsFunction)?.inference
+
 val RsPatBinding.type: Ty
     get() = inference?.getBindingType(this) ?: TyUnknown
 
@@ -85,6 +88,3 @@ val RsExpr.isMutable: Boolean get() {
         else -> DEFAULT_MUTABILITY
     }
 }
-
-private val PsiElement.inference: RsInferenceResult?
-    get() = (parentOfType<RsItemElement>() as? RsFunction)?.inference

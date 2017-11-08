@@ -8,12 +8,13 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.resolve.collectCompletionVariants
+import org.rust.lang.core.resolve.collectResolveVariants
+import org.rust.lang.core.resolve.processModDeclResolveVariants
 
 class RsModReferenceImpl(
     modDecl: RsModDeclItem
-) : RsReferenceBase<RsModDeclItem>(modDecl),
+) : RsReferenceCached<RsModDeclItem>(modDecl),
     RsReference {
 
     override val RsModDeclItem.referenceAnchor: PsiElement get() = identifier
@@ -21,6 +22,6 @@ class RsModReferenceImpl(
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processModDeclResolveVariants(element, it) }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
+    override fun resolveInner(): List<RsCompositeElement> =
         collectResolveVariants(element.referenceName) { processModDeclResolveVariants(element, it) }
 }

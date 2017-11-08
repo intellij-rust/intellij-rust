@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
-import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsPathStub
 
 val RsPath.hasColonColon: Boolean get() = stub?.hasColonColon ?: (coloncolon != null)
@@ -24,7 +24,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
 
     constructor(stub: RsPathStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RsReference = RsPathReferenceImpl(this)
+    override fun getReference(): RsPathReference = RsPathReferenceImpl(this)
 
     override val referenceNameElement: PsiElement
         get() = checkNotNull(identifier ?: self ?: `super` ?: cself) {

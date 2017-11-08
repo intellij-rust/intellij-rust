@@ -11,10 +11,9 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.psi.ext.parentDotExpr
 import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.emptySubstitution
@@ -33,13 +32,8 @@ class RsMethodCallReferenceImpl(
         return collectCompletionVariants { processMethodCallExprResolveVariants(lookup, element.receiver.type, it) }
     }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
-        val receiverType = element.parentDotExpr.expr.type
-        val lookup = ImplLookup.relativeTo(element)
-        return collectResolveVariants(element.referenceName) {
-            processMethodCallExprResolveVariants(lookup, receiverType, it)
-        }
-    }
+    override fun multiResolve(): List<RsCompositeElement> =
+        element.inference?.getResolvedMethod(element) ?: emptyList()
 }
 
 class RsFieldLookupReferenceImpl(
@@ -54,11 +48,8 @@ class RsFieldLookupReferenceImpl(
         return collectCompletionVariants { processFieldExprResolveVariants(lookup, element.receiver.type, true, it) }
     }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> {
-        val receiverType = element.parentDotExpr.expr.type
-        val lookup = ImplLookup.relativeTo(element)
-        return resolveFieldLookupReferenceWithReceiverType(lookup, receiverType, element)
-    }
+    override fun multiResolve(): List<RsCompositeElement> =
+        element.inference?.getResolvedField(element) ?: emptyList()
 
     override fun handleElementRename(newName: String): PsiElement {
         val ident = element.identifier
@@ -81,7 +72,7 @@ fun resolveFieldLookupReferenceWithReceiverType(
     lookup: ImplLookup,
     receiverType: Ty,
     expr: RsFieldLookup
-): List<BoundElement<RsCompositeElement>> {
+): List<RsCompositeElement> {
     return collectResolveVariants(expr.referenceName) {
         processFieldExprResolveVariants(lookup, receiverType, false, it)
     }

@@ -11,15 +11,14 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processMetaItemResolveVariants
-import org.rust.lang.core.types.BoundElement
 
 class RsMetaItemReferenceImpl(
     element: RsMetaItem
-) : RsReferenceBase<RsMetaItem>(element) {
+) : RsReferenceCached<RsMetaItem>(element) {
 
     override val RsMetaItem.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
+    override fun resolveInner(): List<RsCompositeElement> =
         collectResolveVariants(element.referenceName) { processMetaItemResolveVariants(element, it) }
 
     override fun getVariants(): Array<out Any> =

@@ -8,12 +8,13 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.ext.RsCompositeElement
-import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.resolve.collectCompletionVariants
+import org.rust.lang.core.resolve.collectResolveVariants
+import org.rust.lang.core.resolve.processExternCrateResolveVariants
 
 class RsExternCrateReferenceImpl(
     externCrate: RsExternCrateItem
-) : RsReferenceBase<RsExternCrateItem>(externCrate),
+) : RsReferenceCached<RsExternCrateItem>(externCrate),
     RsReference {
 
     override val RsExternCrateItem.referenceAnchor: PsiElement get() = referenceNameElement
@@ -21,6 +22,6 @@ class RsExternCrateReferenceImpl(
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processExternCrateResolveVariants(element, true, it) }
 
-    override fun resolveInner(): List<BoundElement<RsCompositeElement>> =
+    override fun resolveInner(): List<RsCompositeElement> =
         collectResolveVariants(element.name!!) { processExternCrateResolveVariants(element, false, it) }
 }
