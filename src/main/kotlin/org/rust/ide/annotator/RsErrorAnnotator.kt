@@ -10,7 +10,6 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -27,7 +26,6 @@ import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
-import org.rust.lang.utils.RsTextRangeDiagnostic
 import org.rust.lang.utils.addToHolder
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
@@ -241,13 +239,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val implInfo = TraitImplementationInfo.create(trait, impl) ?: return
 
         if (implInfo.missingImplementations.isNotEmpty()) {
-            val implHeaderTextRange = TextRange.create(
-                impl.textRange.startOffset,
-                impl.typeReference?.textRange?.endOffset ?: impl.textRange.endOffset
-            )
-
             val missing = implInfo.missingImplementations.map { it.name }.namesList
-            RsTextRangeDiagnostic.TraitItemsMissingImplError(implHeaderTextRange, missing, impl)
+            RsDiagnostic.TraitItemsMissingImplError(impl.impl, impl.typeReference ?: impl.impl, missing, impl)
                 .addToHolder(holder)
         }
 
@@ -324,7 +317,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
         if (el.reference.multiResolve().isNotEmpty() || el.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
-        RsTextRangeDiagnostic.CrateNotFoundError(el.textRange, el.identifier.text).addToHolder(holder)
+        RsDiagnostic.CrateNotFoundError(el, el.identifier.text).addToHolder(holder)
     }
 
     private fun isInTraitImpl(o: RsVis): Boolean {
