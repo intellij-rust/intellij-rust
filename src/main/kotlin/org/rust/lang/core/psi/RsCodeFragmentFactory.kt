@@ -12,7 +12,7 @@ import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.ext.CARGO_WORKSPACE
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.childOfType
 import org.rust.openapiext.toPsiFile
@@ -29,13 +29,13 @@ class RsCodeFragmentFactory(val project: Project) {
             ?.apply { setContext(crateRoot) }
     }
 
-    fun createPath(path: String, context: RsCompositeElement): RsPath? =
+    fun createPath(path: String, context: RsElement): RsPath? =
         psiFactory.tryCreatePath(path)?.apply {
             setContext(context)
             containingFile?.putUserData(CARGO_WORKSPACE, context.cargoWorkspace)
         }
 
-    inline fun <reified I : ExpansionResult> createExpandedItem(code: String, context: RsCompositeElement): I? {
+    inline fun <reified I : ExpansionResult> createExpandedItem(code: String, context: RsElement): I? {
         return PsiFileFactory.getInstance(project)
             .createFileFromText("MACRO.rs", RsFileType, code)
             .childOfType<I>()

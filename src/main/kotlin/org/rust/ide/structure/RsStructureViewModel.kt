@@ -15,7 +15,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.NavigatablePsiElement
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.stdext.buildList
@@ -43,7 +43,7 @@ class RsStructureViewModel(editor: Editor?, file: RsFile) : StructureViewModelBa
 }
 
 private class RsStructureViewElement(
-    val psi: RsCompositeElement
+    val psi: RsElement
 ) : StructureViewTreeElement, Navigatable by (psi as NavigatablePsiElement) {
 
     override fun getValue() = psi
@@ -54,7 +54,7 @@ private class RsStructureViewElement(
         childElements.sortedBy { it.textOffset }
             .map(::RsStructureViewElement).toTypedArray()
 
-    private val childElements: List<RsCompositeElement>
+    private val childElements: List<RsElement>
         get() {
             return when (psi) {
                 is RsEnumItem -> psi.enumBody?.enumVariantList.orEmpty()

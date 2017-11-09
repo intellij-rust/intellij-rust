@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.RsTypeParameterList
 import org.rust.lang.core.psi.RsWhereClause
 
-interface RsGenericDeclaration : RsCompositeElement {
+interface RsGenericDeclaration : RsElement {
     val typeParameterList: RsTypeParameterList?
     val whereClause: RsWhereClause?
 }

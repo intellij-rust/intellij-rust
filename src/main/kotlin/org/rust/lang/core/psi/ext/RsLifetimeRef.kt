@@ -15,7 +15,7 @@ import org.rust.lang.refactoring.RsNamesValidator
 
 val RsLifetime.isPredefined : Boolean get() = quoteIdentifier.text in RsNamesValidator.PredefinedLifetimes
 
-abstract class RsLifetimeImplMixin (node: ASTNode) : RsCompositeElementImpl(node), RsLifetime {
+abstract class RsLifetimeImplMixin (node: ASTNode) : RsElementImpl(node), RsLifetime {
 
     override val referenceNameElement: PsiElement get() = quoteIdentifier
 

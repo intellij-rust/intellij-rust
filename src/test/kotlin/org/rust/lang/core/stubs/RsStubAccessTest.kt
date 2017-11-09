@@ -16,7 +16,7 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LoggedErrorProcessor
 import org.apache.log4j.Logger
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import java.util.*
 
@@ -42,7 +42,7 @@ class RsStubAccessTest : RsTestBase() {
     }
 
     fun testGettingReferenceDoesNotNeedAst() {
-        processStubsWithoutAstAccess<RsCompositeElement> { it.reference }
+        processStubsWithoutAstAccess<RsElement> { it.reference }
     }
 
     fun testParentWorksCorrectlyForStubbedElements() {
@@ -54,7 +54,7 @@ class RsStubAccessTest : RsTestBase() {
                     throw AssertionError(message)
                 }
             })
-            processStubsWithoutAstAccess<RsCompositeElement> {
+            processStubsWithoutAstAccess<RsElement> {
                 val parent = try {
                     it.parent
                 } catch (e: AssertionError) {

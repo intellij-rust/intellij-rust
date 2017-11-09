@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructLiteralField
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processStructLiteralFieldResolveVariants
@@ -24,7 +24,7 @@ class RsStructLiteralFieldReferenceImpl(
     override fun getVariants(): Array<out LookupElement> =
         collectCompletionVariants { processStructLiteralFieldResolveVariants(element, it) }
 
-    override fun resolveInner(): List<RsCompositeElement> =
+    override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) {
             processStructLiteralFieldResolveVariants(element, it)
         }

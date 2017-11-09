@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 
-interface RsCompositeElement : PsiElement {
+interface RsElement : PsiElement {
     /**
      * Find parent module *in this file*. See [RsMod.super]
      */
@@ -26,7 +26,7 @@ interface RsCompositeElement : PsiElement {
 }
 
 val CARGO_WORKSPACE = Key.create<CargoWorkspace>("CARGO_WORKSPACE")
-val RsCompositeElement.cargoWorkspace: CargoWorkspace?
+val RsElement.cargoWorkspace: CargoWorkspace?
     get() {
         val psiFile = containingFile.originalFile
         psiFile.getUserData(CARGO_WORKSPACE)?.let { return it }
@@ -35,7 +35,7 @@ val RsCompositeElement.cargoWorkspace: CargoWorkspace?
     }
 
 
-val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target?
+val RsElement.containingCargoTarget: CargoWorkspace.Target?
     get() {
         val ws = cargoWorkspace ?: return null
         val root = crateRoot ?: return null
@@ -43,18 +43,18 @@ val RsCompositeElement.containingCargoTarget: CargoWorkspace.Target?
         return ws.findTargetByCrateRoot(file)
     }
 
-val RsCompositeElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
+val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
-abstract class RsCompositeElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsCompositeElement {
+abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
     override val containingMod: RsMod
         get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
-        get() = (context as? RsCompositeElement)?.crateRoot
+        get() = (context as? RsElement)?.crateRoot
 }
 
-abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>, RsCompositeElement {
+abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>, RsElement {
 
     constructor(node: ASTNode) : super(node)
 
@@ -65,7 +65,7 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
-        get() = (context as? RsCompositeElement)?.crateRoot
+        get() = (context as? RsElement)?.crateRoot
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }

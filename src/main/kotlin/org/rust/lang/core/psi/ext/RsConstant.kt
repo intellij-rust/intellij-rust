@@ -70,5 +70,5 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
 
     override val isAbstract: Boolean get() = expr == null
 
-    override fun getContext(): RsCompositeElement = ExpansionResult.getContextImpl(this)
+    override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
 }

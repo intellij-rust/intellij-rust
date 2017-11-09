@@ -5,8 +5,8 @@
 
 package org.rust.lang.core
 
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.type
@@ -28,7 +28,7 @@ sealed class ExitPoint {
 private class ExitPointVisitor(
     private val sink: (ExitPoint) -> Unit
 ) : RsVisitor() {
-    override fun visitElement(element: PsiElement) = element.acceptChildren(this)
+    override fun visitElement(element: RsElement) = element.acceptChildren(this)
 
     override fun visitLambdaExpr(o: RsLambdaExpr) = Unit
     override fun visitFunction(o: RsFunction) = Unit

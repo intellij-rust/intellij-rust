@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import org.rust.lang.core.psi.*
 
 
-interface RsTypeElement : RsCompositeElement
+interface RsTypeElement : RsElement
 
 val RsTypeElement.owner: RsTypeReference
     get() = ancestors

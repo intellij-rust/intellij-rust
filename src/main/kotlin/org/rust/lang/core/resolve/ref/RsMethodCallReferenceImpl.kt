@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsMethodCall
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.inference
@@ -32,7 +32,7 @@ class RsMethodCallReferenceImpl(
         return collectCompletionVariants { processMethodCallExprResolveVariants(lookup, element.receiver.type, it) }
     }
 
-    override fun multiResolve(): List<RsCompositeElement> =
+    override fun multiResolve(): List<RsElement> =
         element.inference?.getResolvedMethod(element) ?: emptyList()
 }
 
@@ -48,7 +48,7 @@ class RsFieldLookupReferenceImpl(
         return collectCompletionVariants { processFieldExprResolveVariants(lookup, element.receiver.type, true, it) }
     }
 
-    override fun multiResolve(): List<RsCompositeElement> =
+    override fun multiResolve(): List<RsElement> =
         element.inference?.getResolvedField(element) ?: emptyList()
 
     override fun handleElementRename(newName: String): PsiElement {
@@ -72,7 +72,7 @@ fun resolveFieldLookupReferenceWithReceiverType(
     lookup: ImplLookup,
     receiverType: Ty,
     expr: RsFieldLookup
-): List<RsCompositeElement> {
+): List<RsElement> {
     return collectResolveVariants(expr.referenceName) {
         processFieldExprResolveVariants(lookup, receiverType, false, it)
     }

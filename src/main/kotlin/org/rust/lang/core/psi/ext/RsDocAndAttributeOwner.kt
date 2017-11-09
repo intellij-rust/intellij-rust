@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.psi.NavigatablePsiElement
 import org.rust.lang.core.psi.*
 
-interface RsDocAndAttributeOwner : RsCompositeElement, NavigatablePsiElement
+interface RsDocAndAttributeOwner : RsElement, NavigatablePsiElement
 
 interface RsInnerAttributeOwner : RsDocAndAttributeOwner {
     /**

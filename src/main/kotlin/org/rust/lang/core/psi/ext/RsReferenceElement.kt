@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.resolve.ref.RsReference
 
-interface RsReferenceElement : RsCompositeElement {
+interface RsReferenceElement : RsElement {
 
     val referenceNameElement: PsiElement
 

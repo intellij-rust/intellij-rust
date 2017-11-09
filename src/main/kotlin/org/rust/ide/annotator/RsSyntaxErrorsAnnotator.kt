@@ -195,7 +195,7 @@ private fun deny(el: PsiElement?, holder: AnnotationHolder, message: String, var
     if (el == null) null
     else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
 
-private inline fun <reified T : RsCompositeElement> denyType(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
+private inline fun <reified T : RsElement> denyType(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
     if (el !is T) null
     else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
 

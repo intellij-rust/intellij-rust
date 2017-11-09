@@ -84,7 +84,7 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
         private val stdKnownItemsCache =
             ProjectCache<Pair<CargoWorkspace, String>, Optional<RsNamedElement>>("stdKnownItemsCache")
 
-        fun relativeTo(psi: RsCompositeElement): StdKnownItems {
+        fun relativeTo(psi: RsElement): StdKnownItems {
             val project = psi.project
             val workspace = psi.cargoWorkspace ?: return StdKnownItems { _, _ -> null }
             val crateRoot = psi.crateRoot as? RsFile ?: return StdKnownItems { _, _ -> null }

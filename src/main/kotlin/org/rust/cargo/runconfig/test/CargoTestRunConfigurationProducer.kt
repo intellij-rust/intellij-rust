@@ -79,7 +79,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
 }
 
 class TestConfig(
-    val sourceElement: RsCompositeElement,
+    val sourceElement: RsElement,
     val configurationName: String,
     testPath: String,
     target: CargoWorkspace.Target,

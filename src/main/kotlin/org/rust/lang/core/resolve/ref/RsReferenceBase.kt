@@ -13,7 +13,7 @@ import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.refactoring.RsNamesValidator
@@ -23,7 +23,7 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
 ) : PsiPolyVariantReferenceBase<T>(element),
     RsReference {
 
-    override fun resolve(): RsCompositeElement? = super.resolve() as? RsCompositeElement
+    override fun resolve(): RsElement? = super.resolve() as? RsElement
 
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         multiResolve().map { PsiElementResolveResult(it) }.toTypedArray()

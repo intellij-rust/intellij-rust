@@ -9,16 +9,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import org.rust.ide.presentation.breadcrumbName
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 
 
 class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
     override fun getLanguages(): Array<RsLanguage> = LANGUAGES
 
     override fun acceptElement(e: PsiElement): Boolean =
-        e is RsCompositeElement && breadcrumbName(e) != null
+        e is RsElement && breadcrumbName(e) != null
 
-    override fun getElementInfo(e: PsiElement): String = breadcrumbName(e as RsCompositeElement)!!
+    override fun getElementInfo(e: PsiElement): String = breadcrumbName(e as RsElement)!!
 
     override fun getElementTooltip(e: PsiElement): String? = null
 

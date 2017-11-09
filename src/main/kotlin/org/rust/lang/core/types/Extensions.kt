@@ -46,7 +46,7 @@ val RsPatBinding.type: Ty
 val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: inferOutOfFnExpressionType(this)
 
-val RsExpr.declaration: RsCompositeElement?
+val RsExpr.declaration: RsElement?
     get() = when (this) {
         is RsPathExpr -> path.reference.resolve()
         is RsCallExpr -> expr.declaration

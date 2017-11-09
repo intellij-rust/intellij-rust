@@ -94,10 +94,10 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
 
     private fun isCallExpression(expr: RsExpr) = expr is RsParenExpr || expr.firstChild is RsParenExpr
 
-    private inline fun <reified T : RsCompositeElement> create(project: Project, text: String): T? =
+    private inline fun <reified T : RsElement> create(project: Project, text: String): T? =
         createFromText(project, "fn main() { $text; }")
 
-    private inline fun <reified T : RsCompositeElement> createFromText(project: Project, code: String): T? =
+    private inline fun <reified T : RsElement> createFromText(project: Project, code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, code)
             .childOfType<T>()
