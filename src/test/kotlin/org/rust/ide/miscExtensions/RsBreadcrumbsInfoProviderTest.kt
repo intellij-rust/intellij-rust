@@ -8,7 +8,7 @@ package org.rust.ide.miscExtensions
 import com.intellij.testFramework.UsefulTestCase
 import org.rust.ide.presentation.breadcrumbName
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.descendantsOfType
 
 
@@ -26,7 +26,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
             macro_rules! foo {}
         """)
 
-        val actual = myFixture.file.descendantsOfType<RsCompositeElement>()
+        val actual = myFixture.file.descendantsOfType<RsElement>()
             .mapNotNull { breadcrumbName(it) }
             .joinToString(separator = "\n")
 

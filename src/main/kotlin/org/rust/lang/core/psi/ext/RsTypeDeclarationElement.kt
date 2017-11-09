@@ -16,6 +16,6 @@ import org.rust.lang.core.types.ty.Ty
  * Curiously, impls are also type declarations: they declare a type of
  * Self.
  */
-interface RsTypeDeclarationElement : RsCompositeElement {
+interface RsTypeDeclarationElement : RsElement {
     val declaredType: Ty
 }

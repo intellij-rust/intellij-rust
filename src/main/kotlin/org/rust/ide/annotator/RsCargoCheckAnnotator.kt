@@ -34,7 +34,7 @@ import org.rust.cargo.toolchain.*
 import org.rust.ide.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import java.nio.file.Path
@@ -83,7 +83,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         if (annotationResult == null) return
 
-        val fileOrigin = (file as? RsCompositeElement)?.containingCargoPackage?.origin
+        val fileOrigin = (file as? RsElement)?.containingCargoPackage?.origin
         if (fileOrigin != PackageOrigin.WORKSPACE) return
 
         val doc = file.viewProvider.document

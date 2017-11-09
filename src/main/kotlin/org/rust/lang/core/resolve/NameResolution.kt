@@ -297,7 +297,7 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
     return false
 }
 
-fun processLocalVariables(place: RsCompositeElement, processor: (RsPatBinding) -> Unit) {
+fun processLocalVariables(place: RsElement, processor: (RsPatBinding) -> Unit) {
     walkUp(place, { it is RsItemElement }) { cameFrom, scope ->
         processLexicalDeclarations(scope, cameFrom, VALUES) { v ->
             val el = v.element
@@ -341,7 +341,7 @@ fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProc
 fun processMacroCallVariants(invocation: PsiElement, processor: RsResolveProcessor): Boolean =
     walkUp(invocation, { false }, false) { _, scope -> processMacroDeclarations(scope, processor) }
 
-fun processMacroDeclarations(scope: RsCompositeElement, processor: RsResolveProcessor): Boolean {
+fun processMacroDeclarations(scope: RsElement, processor: RsResolveProcessor): Boolean {
     when (scope) {
         is RsFile -> if (processItemMacroDeclarations(scope, processor, scope.isCrateRoot)) return true
         is RsMod -> if (processItemMacroDeclarations(scope, processor)) return true
@@ -489,7 +489,7 @@ private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespa
     return false
 }
 
-private fun processItemOrEnumVariantDeclarations(scope: RsCompositeElement, ns: Set<Namespace>, processor: RsResolveProcessor, withPrivateImports: Boolean = false): Boolean {
+private fun processItemOrEnumVariantDeclarations(scope: RsElement, ns: Set<Namespace>, processor: RsResolveProcessor, withPrivateImports: Boolean = false): Boolean {
     when (scope) {
         is RsEnumItem -> {
             if (processAll(scope.enumBody?.enumVariantList.orEmpty(), processor)) return true
@@ -664,7 +664,7 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
     return false
 }
 
-private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: PsiElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
+private fun processLexicalDeclarations(scope: RsElement, cameFrom: PsiElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
     check(cameFrom.context == scope)
 
     fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
@@ -782,7 +782,7 @@ private fun processLexicalDeclarations(scope: RsCompositeElement, cameFrom: PsiE
     return false
 }
 
-private fun processNestedScopesUpwards(scopeStart: RsCompositeElement, processor: RsResolveProcessor, ns: Set<Namespace>): Boolean {
+private fun processNestedScopesUpwards(scopeStart: RsElement, processor: RsResolveProcessor, ns: Set<Namespace>): Boolean {
     val prevScope = mutableSetOf<String>()
     walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
         val currScope = mutableListOf<String>()
@@ -809,17 +809,17 @@ private fun processNestedScopesUpwards(scopeStart: RsCompositeElement, processor
 // There's already similar functions in TreeUtils, should use it
 private fun walkUp(
     start: PsiElement,
-    stopAfter: (RsCompositeElement) -> Boolean,
+    stopAfter: (RsElement) -> Boolean,
     stopAtFileBoundary: Boolean = true,
-    processor: (cameFrom: PsiElement, scope: RsCompositeElement) -> Boolean
+    processor: (cameFrom: PsiElement, scope: RsElement) -> Boolean
 ): Boolean {
     var cameFrom = start
-    var scope = start.context as RsCompositeElement?
+    var scope = start.context as RsElement?
     while (scope != null) {
         if (processor(cameFrom, scope)) return true
         if (stopAfter(scope)) break
         cameFrom = scope
-        scope = scope.context as? RsCompositeElement
+        scope = scope.context as? RsElement
         if (!stopAtFileBoundary) {
             if (scope == null && cameFrom is RsFile) {
                 scope = cameFrom.`super`
@@ -829,11 +829,11 @@ private fun walkUp(
     return false
 }
 
-private operator fun RsResolveProcessor.invoke(name: String, e: RsCompositeElement, subst: Substitution = emptySubstitution): Boolean {
+private operator fun RsResolveProcessor.invoke(name: String, e: RsElement, subst: Substitution = emptySubstitution): Boolean {
     return this(SimpleScopeEntry(name, e, subst))
 }
 
-private fun RsResolveProcessor.lazy(name: String, e: () -> RsCompositeElement?): Boolean {
+private fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean {
     return this(LazyScopeEntry(name, lazy(e)))
 }
 
@@ -874,22 +874,22 @@ private fun processAllBound(elements: Collection<RsNamedElement>, subst: Substit
 
 private data class SimpleScopeEntry(
     override val name: String,
-    override val element: RsCompositeElement,
+    override val element: RsElement,
     override val subst: Substitution = emptySubstitution
 ) : ScopeEntry
 
 private data class AssocItemScopeEntry(
     override val name: String,
-    override val element: RsCompositeElement,
+    override val element: RsElement,
     override val subst: Substitution = emptySubstitution,
     val impl: RsImplItem?
 ) : ScopeEntry
 
 private class LazyScopeEntry(
     override val name: String,
-    thunk: Lazy<RsCompositeElement?>
+    thunk: Lazy<RsElement?>
 ) : ScopeEntry {
-    override val element: RsCompositeElement? by thunk
+    override val element: RsElement? by thunk
 
     override fun toString(): String = "LazyScopeEntry($name, $element)"
 }

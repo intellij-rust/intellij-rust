@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type
 
 
-fun getPresentation(psi: RsCompositeElement): ItemPresentation {
+fun getPresentation(psi: RsElement): ItemPresentation {
     val location = run {
         val mod = psi.containingMod
         "(in ${mod.qualifiedName ?: mod.modName ?: psi.containingFile.name})"
@@ -24,7 +24,7 @@ fun getPresentation(psi: RsCompositeElement): ItemPresentation {
     return PresentationData(name, location, psi.getIcon(0), null)
 }
 
-fun getPresentationForStructure(psi: RsCompositeElement): ItemPresentation {
+fun getPresentationForStructure(psi: RsElement): ItemPresentation {
     val presentation = buildString {
         fun appendCommaList(xs: List<String>) {
             append('(')
@@ -60,7 +60,7 @@ fun getPresentationForStructure(psi: RsCompositeElement): ItemPresentation {
     return PresentationData(presentation, null, icon, null)
 }
 
-private fun presentableName(psi: RsCompositeElement): String? = when (psi) {
+private fun presentableName(psi: RsElement): String? = when (psi) {
     is RsNamedElement -> psi.name
     is RsImplItem -> {
         val typeName = psi.typeReference?.type?.toString()
@@ -84,7 +84,7 @@ val RsDocAndAttributeOwner.presentableQualifiedName: String?
 
 val String.escaped: String get() = StringUtil.escapeXml(this)
 
-fun breadcrumbName(e: RsCompositeElement): String? {
+fun breadcrumbName(e: RsElement): String? {
     fun lastComponentWithoutGenerics(path: RsPath) = path.referenceName
 
     return when (e) {

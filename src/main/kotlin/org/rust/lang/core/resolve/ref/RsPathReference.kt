@@ -5,11 +5,11 @@
 
 package org.rust.lang.core.resolve.ref
 
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.types.BoundElement
 
 interface RsPathReference : RsReference {
-    fun advancedResolve(): BoundElement<RsCompositeElement>?
+    fun advancedResolve(): BoundElement<RsElement>?
 
-    fun advancedMultiResolve(): List<BoundElement<RsCompositeElement>>
+    fun advancedMultiResolve(): List<BoundElement<RsElement>>
 }

@@ -9,9 +9,9 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 
-class RemoveTypeParameter(val element: RsCompositeElement) : LocalQuickFix {
+class RemoveTypeParameter(val element: RsElement) : LocalQuickFix {
 
     override fun getName() = "Remove all type parameters"
     override fun getFamilyName() = name

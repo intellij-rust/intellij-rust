@@ -61,7 +61,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     }
 
     override fun getDocumentationElementForLink(psiManager: PsiManager, link: String, context: PsiElement): PsiElement? {
-        if (context !is RsCompositeElement) return null
+        if (context !is RsElement) return null
         return RsCodeFragmentFactory(context.project)
             .createPath(link, context)
             ?.reference

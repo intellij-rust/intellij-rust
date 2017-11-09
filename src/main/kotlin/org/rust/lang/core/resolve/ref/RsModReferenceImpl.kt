@@ -7,7 +7,7 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processModDeclResolveVariants
@@ -22,6 +22,6 @@ class RsModReferenceImpl(
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processModDeclResolveVariants(element, it) }
 
-    override fun resolveInner(): List<RsCompositeElement> =
+    override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processModDeclResolveVariants(element, it) }
 }

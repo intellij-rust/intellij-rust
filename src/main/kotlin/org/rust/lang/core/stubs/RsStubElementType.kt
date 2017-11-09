@@ -10,9 +10,9 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IStubFileElementType
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 
-abstract class RsStubElementType<StubT : StubElement<*>, PsiT : RsCompositeElement>(
+abstract class RsStubElementType<StubT : StubElement<*>, PsiT : RsElement>(
     debugName: String
 ) : IStubElementType<StubT, PsiT>(debugName, RsLanguage) {
 

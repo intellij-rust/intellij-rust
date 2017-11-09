@@ -21,7 +21,7 @@ import org.rust.lang.core.types.type
 const val KEYWORD_PRIORITY = 10.0
 private const val MACRO_PRIORITY = -0.1
 
-fun createLookupElement(element: RsCompositeElement, scopeName: String): LookupElement {
+fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
     val base = LookupElementBuilder.create(element, scopeName)
         .withIcon(if (element is RsFile) RsIcons.MODULE else element.getIcon(0))
 

@@ -17,7 +17,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 val RsFieldLookup.parentDotExpr: RsDotExpr get() = parent as RsDotExpr
 val RsFieldLookup.receiver: RsExpr get() = parentDotExpr.expr
 
-abstract class RsFieldLookupImplMixin(node: ASTNode) : RsCompositeElementImpl(node), RsFieldLookup {
+abstract class RsFieldLookupImplMixin(node: ASTNode) : RsElementImpl(node), RsFieldLookup {
     override val referenceNameElement: PsiElement get() = (identifier ?: integerLiteral)!!
 
     override val referenceName: String get() = referenceNameElement.text

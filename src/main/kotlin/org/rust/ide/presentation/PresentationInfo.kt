@@ -93,7 +93,7 @@ data class DeclarationInfo(
 )
 
 private fun createDeclarationInfo(
-    decl: RsCompositeElement,
+    decl: RsElement,
     name: PsiElement?,
     isAmbiguous: Boolean,
     stopAt: List<PsiElement?> = emptyList(),

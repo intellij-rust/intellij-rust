@@ -200,7 +200,7 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create match body from text: `$matchBodyText`")
     }
 
-    private inline fun <reified T : RsCompositeElement> createFromText(code: String): T? =
+    private inline fun <reified T : RsElement> createFromText(code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, code)
             .childOfType<T>()

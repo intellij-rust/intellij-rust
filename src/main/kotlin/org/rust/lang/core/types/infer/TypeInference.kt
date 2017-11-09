@@ -38,9 +38,9 @@ fun inferTypesIn(fn: RsFunction): RsInferenceResult =
 class RsInferenceResult(
     private val bindings: Map<RsPatBinding, Ty>,
     private val exprTypes: Map<RsExpr, Ty>,
-    private val resolvedPaths: Map<RsPathExpr, List<RsCompositeElement>>,
+    private val resolvedPaths: Map<RsPathExpr, List<RsElement>>,
     private val resolvedMethods: Map<RsMethodCall, List<RsFunction>>,
-    private val resolvedFields: Map<RsFieldLookup, List<RsCompositeElement>>,
+    private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
     val diagnostics: List<RsDiagnostic>
 ) {
     fun getExprType(expr: RsExpr): Ty =
@@ -49,13 +49,13 @@ class RsInferenceResult(
     fun getBindingType(binding: RsPatBinding): Ty =
         bindings[binding] ?: TyUnknown
 
-    fun getResolvedPath(expr: RsPathExpr): List<RsCompositeElement> =
+    fun getResolvedPath(expr: RsPathExpr): List<RsElement> =
         resolvedPaths[expr] ?: emptyList()
 
     fun getResolvedMethod(call: RsMethodCall): List<RsFunction> =
         resolvedMethods[call] ?: emptyList()
 
-    fun getResolvedField(call: RsFieldLookup): List<RsCompositeElement> =
+    fun getResolvedField(call: RsFieldLookup): List<RsElement> =
         resolvedFields[call] ?: emptyList()
 
     override fun toString(): String =
@@ -68,9 +68,9 @@ class RsInferenceResult(
 class RsInferenceContext {
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
-    private val resolvedPaths: MutableMap<RsPathExpr, List<RsCompositeElement>> = HashMap()
+    private val resolvedPaths: MutableMap<RsPathExpr, List<RsElement>> = HashMap()
     private val resolvedMethods: MutableMap<RsMethodCall, List<RsFunction>> = HashMap()
-    private val resolvedFields: MutableMap<RsFieldLookup, List<RsCompositeElement>> = HashMap()
+    private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = HashMap()
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
 
@@ -167,7 +167,7 @@ class RsInferenceContext {
         exprTypes[psi] = ty
     }
 
-    fun writePath(path: RsPathExpr, resolved: List<BoundElement<RsCompositeElement>>) {
+    fun writePath(path: RsPathExpr, resolved: List<BoundElement<RsElement>>) {
         resolvedPaths[path] = resolved.map { it.element }
     }
 
@@ -175,7 +175,7 @@ class RsInferenceContext {
         resolvedMethods[call] = resolvedTo
     }
 
-    fun writeResolvedField(lookup: RsFieldLookup, resolvedTo: List<RsCompositeElement>) {
+    fun writeResolvedField(lookup: RsFieldLookup, resolvedTo: List<RsElement>) {
         resolvedFields[lookup] = resolvedTo
     }
 
@@ -869,7 +869,7 @@ private class RsFnInferenceContext(
         }
 
         collectReturningTypes(expr, false)
-        return getMoreCompleteType(returningTypes)
+        return if (returningTypes.isEmpty()) TyNever else getMoreCompleteType(returningTypes)
     }
 
     private fun inferForExprType(expr: RsForExpr): Ty {

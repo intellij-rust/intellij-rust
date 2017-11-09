@@ -2,12 +2,12 @@
     parserClass='org.rust.lang.core.parser.RustParser'
     parserUtilClass='org.rust.lang.core.parser.RustParserUtil'
 
-    implements='org.rust.lang.core.psi.ext.RsCompositeElement'
-    extends='org.rust.lang.core.psi.ext.RsCompositeElementImpl'
+    implements='org.rust.lang.core.psi.ext.RsElement'
+    extends='org.rust.lang.core.psi.ext.RsElementImpl'
 
     elementTypeHolderClass='org.rust.lang.core.psi.RsElementTypes'
 
-    elementTypeClass='org.rust.lang.core.psi.RsCompositeElementType'
+    elementTypeClass='org.rust.lang.core.psi.RsElementType'
     tokenTypeClass='org.rust.lang.core.psi.RsTokenType'
 
     psiClassPrefix='Rs'

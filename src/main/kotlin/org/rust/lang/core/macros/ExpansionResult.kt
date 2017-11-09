@@ -6,7 +6,7 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.Key
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 
 /**
  *  [ExpansionResult]s are those elements which exist in temporary,
@@ -14,22 +14,22 @@ import org.rust.lang.core.psi.ext.RsCompositeElement
  *  parent is this temp PSI-file, but they are seen by the rest of
  *  the plugin as the children of [getContext] element.
  */
-interface ExpansionResult : RsCompositeElement {
-    override fun getContext(): RsCompositeElement
+interface ExpansionResult : RsElement {
+    override fun getContext(): RsElement
 
     companion object {
-        fun getContextImpl(psi: ExpansionResult): RsCompositeElement {
+        fun getContextImpl(psi: ExpansionResult): RsElement {
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
-            (psi.parent as? RsCompositeElement)?.let { return it }
-            error("Parent for ExpansionResult $psi is not RsCompositeElement")
+            (psi.parent as? RsElement)?.let { return it }
+            error("Parent for ExpansionResult $psi is not RsElement")
         }
     }
 }
 
-fun ExpansionResult.setContext(context: RsCompositeElement) {
+fun ExpansionResult.setContext(context: RsElement) {
     putUserData(RS_EXPANSION_CONTEXT, context)
 }
 
 
-private val RS_EXPANSION_CONTEXT = Key.create<RsCompositeElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
+private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
 

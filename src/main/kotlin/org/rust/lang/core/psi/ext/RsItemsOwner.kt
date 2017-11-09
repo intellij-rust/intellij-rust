@@ -7,7 +7,7 @@ package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.*
 
-interface RsItemsOwner : RsCompositeElement {
+interface RsItemsOwner : RsElement {
     val functionList: List<RsFunction>
     val modItemList: List<RsModItem>
     val constantList: List<RsConstant>

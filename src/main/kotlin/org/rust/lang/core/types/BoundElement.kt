@@ -7,7 +7,7 @@ package org.rust.lang.core.types
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Substitution
@@ -19,14 +19,14 @@ import org.rust.lang.core.types.ty.substituteInValues
  * `fn make_t<T>() -> T { ... }`, together with actual
  * type arguments, like `T := i32`.
  */
-data class BoundElement<out E : RsCompositeElement>(
+data class BoundElement<out E : RsElement>(
     val element: E,
     val subst: Substitution = emptySubstitution
 ) : ResolveResult {
     override fun getElement(): PsiElement = element
     override fun isValidResult(): Boolean = true
 
-    inline fun <reified T : RsCompositeElement> downcast(): BoundElement<T>? =
+    inline fun <reified T : RsElement> downcast(): BoundElement<T>? =
         if (element is T) BoundElement(element, subst) else null
 
     fun substitute(subst: Substitution) =

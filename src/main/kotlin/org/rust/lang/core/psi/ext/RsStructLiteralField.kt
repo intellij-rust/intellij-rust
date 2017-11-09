@@ -17,7 +17,7 @@ import org.rust.lang.core.resolve.ref.RsStructLiteralFieldReferenceImpl
 val RsStructLiteralField.parentStructLiteral: RsStructLiteral get() = parentOfType<RsStructLiteral>()!!
 val RsStructLiteralField.resolveToDeclaration: RsFieldDecl? get() = reference.resolve() as? RsFieldDecl
 
-abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsCompositeElementImpl(node), RsStructLiteralField {
+abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsElementImpl(node), RsStructLiteralField {
 
     override fun getReference(): RsReference = RsStructLiteralFieldReferenceImpl(this)
 

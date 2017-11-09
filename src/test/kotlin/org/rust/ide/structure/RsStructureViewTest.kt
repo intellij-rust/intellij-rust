@@ -12,7 +12,7 @@ import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 
 class RsStructureViewTest : RsTestBase() {
     fun `test functions`() = doTest("""
@@ -273,7 +273,7 @@ class RsStructureViewTest : RsTestBase() {
 
     private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
         myFixture.configureByText("main.rs", code)
-        val psi = myFixture.file.children.mapNotNull { it as? RsCompositeElement }.first()
+        val psi = myFixture.file.children.mapNotNull { it as? RsElement }.first()
         val data = getPresentationForStructure(psi)
         TestCase.assertEquals(data.presentableText, expectedPresentableText)
         val icon = data.getIcon(false) as? RowIcon

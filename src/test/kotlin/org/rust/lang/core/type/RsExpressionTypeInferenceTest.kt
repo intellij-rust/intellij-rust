@@ -125,6 +125,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test endless loop`() = testExpr("""
+        fn main() {
+            let x = loop { };
+            x
+          //^ !
+        }
+    """)
+
     fun `test loop break value`() = testExpr("""
         fn main() {
             let x = loop { break 7; };

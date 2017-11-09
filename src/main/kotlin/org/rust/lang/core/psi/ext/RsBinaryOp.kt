@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RsBinaryOp
 import org.rust.lang.core.resolve.ref.RsBinaryOpReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
-abstract class RsBinaryOpImplMixin(node: ASTNode) : RsCompositeElementImpl(node), RsBinaryOp {
+abstract class RsBinaryOpImplMixin(node: ASTNode) : RsElementImpl(node), RsBinaryOp {
 
     override val referenceNameElement: PsiElement get() = operator
 

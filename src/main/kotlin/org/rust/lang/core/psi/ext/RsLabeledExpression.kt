@@ -7,6 +7,6 @@ package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.RsLabelDecl
 
-interface RsLabeledExpression : RsCompositeElement {
+interface RsLabeledExpression : RsElement {
     val labelDecl: RsLabelDecl?
 }

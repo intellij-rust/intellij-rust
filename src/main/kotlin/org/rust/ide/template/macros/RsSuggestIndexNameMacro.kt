@@ -10,7 +10,7 @@ import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.macro.MacroBase
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.lang.core.resolve.processLocalVariables
 import java.util.*
@@ -18,7 +18,7 @@ import java.util.*
 class RsSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIndexName()") {
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext, quick: Boolean): Result? {
         if (params.isNotEmpty()) return null
-        val pivot = context.psiElementAtStartOffset?.parentOfType<RsCompositeElement>() ?: return null
+        val pivot = context.psiElementAtStartOffset?.parentOfType<RsElement>() ?: return null
         val pats = getPatBindingNamesVisibleAt(pivot)
         return ('i'..'z')
             .map(Char::toString)
@@ -27,7 +27,7 @@ class RsSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIn
     }
 }
 
-private fun getPatBindingNamesVisibleAt(pivot: RsCompositeElement): Set<String> {
+private fun getPatBindingNamesVisibleAt(pivot: RsElement): Set<String> {
     val result = HashSet<String>()
     processLocalVariables(pivot) { patBinding ->
         val name = patBinding.name

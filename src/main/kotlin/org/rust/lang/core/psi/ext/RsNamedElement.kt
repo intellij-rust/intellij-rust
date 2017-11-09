@@ -18,11 +18,11 @@ import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.stubs.RsNamedStub
 
-interface RsNamedElement : RsCompositeElement, PsiNamedElement, NavigatablePsiElement
+interface RsNamedElement : RsElement, PsiNamedElement, NavigatablePsiElement
 
 interface RsNameIdentifierOwner : RsNamedElement, PsiNameIdentifierOwner
 
-abstract class RsNamedElementImpl(node: ASTNode) : RsCompositeElementImpl(node),
+abstract class RsNamedElementImpl(node: ASTNode) : RsElementImpl(node),
                                                    RsNameIdentifierOwner {
 
     override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)

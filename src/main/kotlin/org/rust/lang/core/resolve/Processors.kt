@@ -8,7 +8,7 @@ package org.rust.lang.core.resolve
 import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.isTest
 import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.types.BoundElement
@@ -24,7 +24,7 @@ import org.rust.lang.core.types.ty.emptySubstitution
  */
 interface ScopeEntry {
     val name: String
-    val element: RsCompositeElement?
+    val element: RsElement?
     val subst: Substitution get() = emptySubstitution
 }
 
@@ -38,7 +38,7 @@ enum class ScopeEvent : ScopeEntry {
     // to make winapi 0.2 work in a reasonable amount of time.
     STAR_IMPORTS;
 
-    override val element: RsCompositeElement? get() = null
+    override val element: RsElement? get() = null
 }
 
 /**
@@ -51,8 +51,8 @@ typealias RsMethodResolveProcessor = (MethodCallee) -> Boolean
 fun collectPathResolveVariants(
     referenceName: String,
     f: (RsResolveProcessor) -> Unit
-): List<BoundElement<RsCompositeElement>> {
-    val result = mutableListOf<BoundElement<RsCompositeElement>>()
+): List<BoundElement<RsElement>> {
+    val result = mutableListOf<BoundElement<RsElement>>()
     f { e ->
         if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
 
@@ -65,8 +65,8 @@ fun collectPathResolveVariants(
     return result
 }
 
-fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsCompositeElement> {
-    val result = mutableListOf<RsCompositeElement>()
+fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsElement> {
+    val result = mutableListOf<RsElement>()
     f { e ->
         if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
 

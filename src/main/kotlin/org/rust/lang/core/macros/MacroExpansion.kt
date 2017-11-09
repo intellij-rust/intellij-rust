@@ -8,14 +8,14 @@ package org.rust.lang.core.macros
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.macroName
 
 fun expandMacro(call: RsMacroCall): ExpansionResult? {
     if (call.macroName != "lazy_static") return null
     val arg = call.macroArgument?.tt ?: return null
-    val ctx = call.context as? RsCompositeElement ?: return null
+    val ctx = call.context as? RsElement ?: return null
 
     val lazyStaticCall = parseLazyStaticCall(arg) ?: return null
     return RsCodeFragmentFactory(ctx.project)

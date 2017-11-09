@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveTypeParameter
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 
 /**
@@ -29,7 +29,7 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
             override fun visitMethodCall(o: RsMethodCall) = checkMethod(holder, o)
         }
 
-    private fun checkMethod(holder: ProblemsHolder, o: RsCompositeElement) {
+    private fun checkMethod(holder: ProblemsHolder, o: RsElement) {
         val (actualArguments, declaration) = when (o) {
             is RsMethodCall ->
                 o.typeArgumentList  to o.reference.resolve()

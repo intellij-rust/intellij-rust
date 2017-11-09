@@ -9,7 +9,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BasePlatformRefactoringAction
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 
 class RsExtractFunctionAction : BasePlatformRefactoringAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler =
@@ -18,5 +18,5 @@ class RsExtractFunctionAction : BasePlatformRefactoringAction() {
     override fun isAvailableInEditorOnly(): Boolean = true
 
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =
-        elements.all { it is RsCompositeElement }
+        elements.all { it is RsElement }
 }

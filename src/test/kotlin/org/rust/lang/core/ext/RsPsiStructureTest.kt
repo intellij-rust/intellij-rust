@@ -128,7 +128,7 @@ class RsPsiStructureTest : RsTestBase() {
         check(info == "extern crate <b>collections</b>")
     }
 
-    private inline fun <reified E : RsCompositeElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
+    private inline fun <reified E : RsElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
         val element = PsiFileFactory.getInstance(project)
             .createFileFromText("main.rs", RsFileType, code)
             .childOfType<E>() ?: error("No ${E::class.java} in\n$code")

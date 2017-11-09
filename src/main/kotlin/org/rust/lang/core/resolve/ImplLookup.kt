@@ -444,7 +444,7 @@ class ImplLookup(
         }
 
     companion object {
-        fun relativeTo(psi: RsCompositeElement): ImplLookup =
+        fun relativeTo(psi: RsElement): ImplLookup =
             ImplLookup(psi.project, StdKnownItems.relativeTo(psi))
 
         private val findImplsAndTraitsCache =

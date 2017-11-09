@@ -8,7 +8,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.ext.RsCompositeElement
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 
@@ -17,7 +17,7 @@ abstract class RsReferenceCached<T : RsReferenceElement>(
 ) : RsReferenceBase<T>(element),
     RsReference {
 
-    abstract protected fun resolveInner(): List<RsCompositeElement>
+    abstract protected fun resolveInner(): List<RsElement>
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         cachedMultiResolve().toTypedArray()

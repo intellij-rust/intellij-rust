@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.RsMacroReference
 import org.rust.lang.core.resolve.ref.RsMacroReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
-abstract class RsMacroReferenceImplMixin(node: ASTNode) : RsCompositeElementImpl(node), RsMacroReference {
+abstract class RsMacroReferenceImplMixin(node: ASTNode) : RsElementImpl(node), RsMacroReference {
 
     override fun getReference(): RsReference = RsMacroReferenceImpl(this)
 

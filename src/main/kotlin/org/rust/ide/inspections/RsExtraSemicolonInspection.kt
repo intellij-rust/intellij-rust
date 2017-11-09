@@ -10,7 +10,10 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.ExitPoint
+import org.rust.lang.core.psi.RsExprStmt
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 
@@ -32,28 +35,26 @@ class RsExtraSemicolonInspection : RsLocalInspectionTool() {
 
 
 private fun inspect(holder: ProblemsHolder, fn: RsFunction) {
-    val block = fn.block ?: return
     val retType = fn.retType?.typeReference ?: return
     if (retType.type == TyUnit) return
-    if (block.expr != null) return
-    val lastStatement = block.stmtList.lastOrNull() as? RsExprStmt ?: return
+    ExitPoint.process(fn) { exitPoint ->
+        when (exitPoint) {
+            is ExitPoint.TailStatement -> {
+                holder.registerProblem(
+                    exitPoint.stmt,
+                    "Function returns () instead of ${retType.text}",
+                    object : LocalQuickFix {
+                        override fun getName() = "Remove semicolon"
 
-    when (lastStatement.expr) {
-        is RsRetExpr, is RsMacroExpr, is RsLoopExpr -> return
-    }
+                        override fun getFamilyName() = name
 
-    holder.registerProblem(
-        lastStatement,
-        "Function returns () instead of ${retType.text}",
-        object : LocalQuickFix {
-            override fun getName() = "Remove semicolon"
-
-            override fun getFamilyName() = name
-
-            override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                val statement = (descriptor.psiElement as RsExprStmt)
-                statement.replace(statement.expr)
+                        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+                            val statement = (descriptor.psiElement as RsExprStmt)
+                            statement.replace(statement.expr)
+                        }
+                    }
+                )
             }
         }
-    )
+    }
 }
