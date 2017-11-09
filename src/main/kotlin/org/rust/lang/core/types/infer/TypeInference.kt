@@ -368,25 +368,27 @@ private class RsFnInferenceContext(
         block.inferType()
 
     private fun RsBlock.inferType(expected: Ty? = null): Ty {
+        var isDiverging = false
         for (stmt in stmtList) {
-            processStatement(stmt)
+            isDiverging = processStatement(stmt) || isDiverging
         }
-
-        return expr?.inferType(expected) ?: TyUnit
+        val type = expr?.inferType(expected) ?: TyUnit
+        return if (isDiverging) TyNever else type
     }
 
-    private fun processStatement(psi: RsStmt) {
-        when (psi) {
-            is RsLetDecl -> {
-                val explicitTy = psi.typeReference?.type
-                val inferredTy = explicitTy
-                    ?.let { psi.expr?.inferTypeCoercableTo(it) }
-                    ?: psi.expr?.inferType()
-                    ?: TyUnknown
-                ctx.extractBindings(psi.pat, explicitTy ?: inferredTy)
-            }
-            is RsExprStmt -> psi.expr.inferType()
+    // returns true if expr is always diverging
+    private fun processStatement(psi: RsStmt): Boolean = when (psi) {
+        is RsLetDecl -> {
+            val explicitTy = psi.typeReference?.type
+            val inferredTy = explicitTy
+                ?.let { psi.expr?.inferTypeCoercableTo(it) }
+                ?: psi.expr?.inferType()
+                ?: TyUnknown
+            ctx.extractBindings(psi.pat, explicitTy ?: inferredTy)
+            inferredTy == TyNever
         }
+        is RsExprStmt -> psi.expr.inferType() == TyNever
+        else -> false
     }
 
     private fun RsExpr.inferType(expected: Ty? = null): Ty {

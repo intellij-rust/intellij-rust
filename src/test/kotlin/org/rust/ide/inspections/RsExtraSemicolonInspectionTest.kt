@@ -34,6 +34,12 @@ class RsExtraSemicolonInspectionTest : RsInspectionsTestBase(RsExtraSemicolonIns
         }
     """)
 
+    fun `test not applicable with diverging if`() = checkByText("""
+        fn a() -> i32 {
+            if true { return 0; } else { return 6; };
+        }
+    """)
+
     fun `test fix`() = checkFixByText("Remove semicolon", """
         fn foo() -> i32 {
             let x = 92;
