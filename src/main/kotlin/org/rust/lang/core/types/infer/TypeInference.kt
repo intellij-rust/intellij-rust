@@ -1135,8 +1135,8 @@ private class RsFnInferenceContext(
 
     // TODO should be replaced with coerceMany
     fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty = when (ty1) {
-        is TyUnknown -> ty2
         is TyNever -> ty2
+        is TyUnknown -> if (ty2 !is TyNever) ty2 else TyUnknown
         else -> {
             ctx.combineTypes(ty1, ty2)
             ty1
