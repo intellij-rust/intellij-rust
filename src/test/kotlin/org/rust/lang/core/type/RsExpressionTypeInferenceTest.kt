@@ -803,4 +803,11 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             static X: i32 = 1;
         }                 //^ i32
     """)
+
+    fun `test unknown type is more priority than '!' type`() = testExpr("""
+        fn main() {
+            let a = if true { UnknownFoo } else { return };
+            a
+        } //^ <unknown>
+    """)
 }
