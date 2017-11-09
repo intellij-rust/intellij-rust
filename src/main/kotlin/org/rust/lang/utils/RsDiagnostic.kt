@@ -25,7 +25,11 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
 
-sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = false) {
+sealed class RsDiagnostic(
+    val element: PsiElement,
+    val endElement: PsiElement? = null,
+    val experimental: Boolean = false
+) {
     abstract fun prepare(): PreparedAnnotation
 
     class TypeError(
@@ -445,16 +449,13 @@ sealed class RsDiagnostic(val element: PsiElement, val experimental: Boolean = f
             return "Use of undeclared lifetime name `$lifetimeText`"
         }
     }
-}
-
-sealed class RsTextRangeDiagnostic(val textRange: TextRange, val experimental: Boolean = true) {
-    abstract fun prepare(): PreparedAnnotation
 
     class TraitItemsMissingImplError(
-        textRange: TextRange,
+        startElement: PsiElement,
+        endElement: PsiElement,
         private val missing: String,
         private val impl: RsImplItem
-    ) : RsTextRangeDiagnostic(textRange) {
+    ) : RsDiagnostic(startElement, endElement) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0046,
@@ -469,9 +470,9 @@ sealed class RsTextRangeDiagnostic(val textRange: TextRange, val experimental: B
     }
 
     class CrateNotFoundError(
-        textRange: TextRange,
+        startElement: PsiElement,
         private val crateName: String
-    ) : RsTextRangeDiagnostic(textRange) {
+    ) : RsDiagnostic(startElement) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0463,
@@ -518,9 +519,19 @@ class PreparedAnnotation(
 
 fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
     val prepared = prepare()
+
+    val textRange = if (endElement != null) {
+        TextRange.create(
+            element.textRange.startOffset,
+            endElement.textRange.endOffset
+        )
+    } else {
+        element.textRange
+    }
+
     val ann = holder.createAnnotation(
         prepared.severity.toHighlightSeverity(),
-        element.textRange,
+        textRange,
         simpleHeader(prepared.errorCode, prepared.header),
         "<html>${htmlHeader(prepared.errorCode, prepared.header)}<br>${prepared.description}</html>"
     )
@@ -530,7 +541,14 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
             ann.registerFix(fix)
         } else {
             val descriptor = InspectionManager.getInstance(element.project)
-                .createProblemDescriptor(element, ann.message, fix, prepared.severity.toProblemHighlightType(), true)
+                .createProblemDescriptor(
+                    element,
+                    endElement ?: element,
+                    ann.message,
+                    prepared.severity.toProblemHighlightType(),
+                    true,
+                    fix
+                )
 
             ann.registerFix(fix, null, null, descriptor)
         }
@@ -539,22 +557,15 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
 
 fun RsDiagnostic.addToHolder(holder: ProblemsHolder) {
     val prepared = prepare()
-    holder.registerProblem(
+    val descriptor = holder.manager.createProblemDescriptor(
         element,
+        endElement ?: element,
         "<html>${htmlHeader(prepared.errorCode, prepared.header)}<br>${prepared.description}</html>",
         prepared.severity.toProblemHighlightType(),
+        holder.isOnTheFly,
         *prepared.fixes.toTypedArray()
     )
-}
-
-fun RsTextRangeDiagnostic.addToHolder(holder: AnnotationHolder) {
-    val prepared = prepare()
-    holder.createAnnotation(
-        prepared.severity.toHighlightSeverity(),
-        textRange,
-        simpleHeader(prepared.errorCode, prepared.header),
-        "<html>${htmlHeader(prepared.errorCode, prepared.header)}<br>${prepared.description}</html>"
-    )
+    holder.registerProblem(descriptor)
 }
 
 private fun Severity.toProblemHighlightType(): ProblemHighlightType = when (this) {
