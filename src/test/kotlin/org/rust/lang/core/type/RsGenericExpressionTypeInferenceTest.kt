@@ -831,14 +831,27 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
     // https://github.com/intellij-rust/intellij-rust/issues/1549
     fun `test Self type in assoc function`() = testExpr("""
-        struct Foo<A>(A);
-        impl<B> Foo<B> {
+        struct S<A>(A);
+        impl<B> S<B> {
             fn new(a: B) -> Self { unimplemented!() }
         }
         fn main() {
-            let x = Foo::new(123);
+            let x = S::new(123);
             x;
-          //^ Foo<i32>
+          //^ S<i32>
+        }
+    """)
+
+    fun `test Self type in trait assoc function`() = testExpr("""
+        struct S<A>(A);
+        trait Tr<B> where Self: Sized {
+            fn new(a: B) -> Self { unimplemented!() }
+        }
+        impl<C> Tr<C> for S<C> { }
+        fn main() {
+            let x = S::new(123);
+            x;
+          //^ S<i32>
         }
     """)
 

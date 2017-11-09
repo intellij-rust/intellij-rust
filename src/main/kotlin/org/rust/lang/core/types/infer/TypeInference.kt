@@ -589,11 +589,10 @@ private class RsFnInferenceContext(
                 val owner = element.owner
                 var (typeParameters, selfTy) = when (owner) {
                     is RsFunctionOwner.Impl -> {
-                        val selfTy = subst[TyTypeParameter.self()]?.let {
-                            val ownerType = owner.impl.typeReference?.type
-                            it.substitute(ownerType?.typeParameterValues ?: emptySubstitution)
-                        }
-                        instantiateBounds(owner.impl) to selfTy
+                        val typeParameters = instantiateBounds(owner.impl)
+                        val selfTy = owner.impl.typeReference?.type?.substitute(typeParameters) ?: TyUnknown
+                        subst[TyTypeParameter.self()]?.let { ctx.combineTypes(selfTy, it) }
+                        typeParameters to selfTy
                     }
                     is RsFunctionOwner.Trait -> {
                         val typeParameters = instantiateBounds(owner.trait)
@@ -636,18 +635,21 @@ private class RsFnInferenceContext(
         val map = run {
             val map = typeParameters + element.generics.associate { it to ctx.typeVarForParam(it) }
             if (selfTy != null) {
-                val selfTySubst = selfTy.substitute(map)
-                map.substituteInValues(mapOf(TyTypeParameter.self() to selfTySubst)) +
-                    (TyTypeParameter.self() to selfTySubst)
+                map.substituteInValues(mapOf(TyTypeParameter.self() to selfTy)) +
+                    (TyTypeParameter.self() to selfTy)
             } else {
                 map
             }
         }
-        element.bounds.asSequence()
-            .map { it.substitute(map) }
-            .map(this::normalizeAssociatedTypesIn)
-            .forEach { fulfill.registerPredicateObligation(Obligation(Predicate.Trait(it))) }
+        instantiateBounds(element.bounds, map)
         return map
+    }
+
+    private fun instantiateBounds(bounds: List<TraitRef>, subst: Map<TyTypeParameter, Ty>) {
+        bounds.asSequence()
+                .map { it.substitute(subst) }
+                .map(this::normalizeAssociatedTypesIn)
+                .forEach { fulfill.registerPredicateObligation(Obligation(Predicate.Trait(it))) }
     }
 
     private fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T): T {

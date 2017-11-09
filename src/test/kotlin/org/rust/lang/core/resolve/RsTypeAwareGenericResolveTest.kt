@@ -735,4 +735,19 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             S::foo(S2);
         }    //^
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/1649
+    fun `test issue 1649`() = checkByCode("""
+        trait Foo {}
+        struct S<A: Foo> { a: A }
+        struct C;
+        impl Foo for C {}
+        type S1<B> = S<B>;
+        impl S<C> {
+          fn bar() -> Self { unimplemented!() }
+        }    //X
+        fn main() {
+          S1::bar();
+        }   //^
+    """)
 }
