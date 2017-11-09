@@ -42,6 +42,7 @@
         <!-- File-type Factory -->
 
         <fileTypeFactory implementation="org.rust.lang.RsFileTypeFactory"/>
+        <internalFileTemplate name="Rust File"/>
 
         <!-- Parser -->
 
