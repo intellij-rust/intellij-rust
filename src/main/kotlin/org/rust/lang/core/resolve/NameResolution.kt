@@ -19,6 +19,7 @@ import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -212,7 +213,16 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
             // Foo::<Bar>::baz
-            val selfTy = base.declaredType.substitute(subst)
+            val selfTy = run {
+                val realSubst = if (qualifier.typeArgumentList != null) {
+                    // If the path contains explicit type arguments `Foo::<_, Bar, _>::baz`
+                    // it means that all possible `TyInfer` has already substituted (with `_`)
+                    subst
+                } else {
+                    subst.mapValues { (_, v) -> v.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+                }
+                base.declaredType.substitute(realSubst)
+            }
             val isSelf = qualifier.hasColonColon || !qualifier.hasCself
             val selfSubst = if (isSelf && base !is RsTraitItem) {
                 mapOf(TyTypeParameter.self() to selfTy)
