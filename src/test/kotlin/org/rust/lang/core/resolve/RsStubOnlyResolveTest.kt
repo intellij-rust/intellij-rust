@@ -152,6 +152,19 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
        }
     """)
 
+    fun `test resolve explicit mod path mod rs windows path separator`() = stubOnlyResolve("""
+    //- main.rs
+        #[path = "sub\\bar\\mod.rs"]
+        mod foo;
+
+        fn quux() {}
+    //- sub/bar/mod.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+       }
+    """)
+
     fun testUseFromChild() = stubOnlyResolve("""
     //- main.rs
         use child::{foo};

@@ -128,7 +128,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 
     val explicitPath = modDecl.pathAttribute
     if (explicitPath != null) {
-        val vFile = dir.virtualFile.findFileByRelativePath(explicitPath) ?: return false
+        val vFile = dir.virtualFile.findFileByRelativePath(explicitPath.replace('\\', '/')) ?: return false
         val mod = vFile.toPsiFile(modDecl.project)?.rustMod ?: return false
 
         val name = modDecl.name ?: return false
