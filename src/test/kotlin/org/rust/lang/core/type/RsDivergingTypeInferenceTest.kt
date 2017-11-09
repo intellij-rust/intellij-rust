@@ -27,4 +27,19 @@ class RsDivergingTypeInferenceTest : RsTypificationTestBase() {
             x;
         } //^ !
     """)
+
+    fun `test match with divergence`() = testExpr("""
+        enum Buck { Full(u32), Empty }
+        fn peek() -> Buck { Buck::Empty }
+
+        fn stuff() -> u32 {
+            let full = match peek() {
+                Buck::Empty => {
+                    return 0;
+                }
+                Buck::Full(bucket) => bucket,
+            };
+            full
+        }  //^ u32
+    """)
 }
