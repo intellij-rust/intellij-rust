@@ -869,7 +869,7 @@ private class RsFnInferenceContext(
         }
 
         collectReturningTypes(expr, false)
-        return getMoreCompleteType(returningTypes)
+        return if (returningTypes.isEmpty()) TyNever else getMoreCompleteType(returningTypes)
     }
 
     private fun inferForExprType(expr: RsForExpr): Ty {

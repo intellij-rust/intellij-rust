@@ -11,9 +11,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.Consumer
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.ExitPoint
 import org.rust.lang.core.psi.RsElementTypes.Q
 import org.rust.lang.core.psi.RsElementTypes.RETURN
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsLambdaExpr
+import org.rust.lang.core.psi.RsTryExpr
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.elementType
 
@@ -37,66 +41,21 @@ private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var ta
     }
 
     override fun computeUsages(targets: MutableList<PsiElement>?) {
-        val function: PsiElement = getFunctionOrLambda(target) ?: return
-
-        function.acceptChildren(object : RsVisitor() {
-            override fun visitElement(element: PsiElement) = element.acceptChildren(this)
-
-            override fun visitFunction(o: RsFunction) = Unit
-            override fun visitLambdaExpr(o: RsLambdaExpr) = Unit
-
-            override fun visitRetExpr(o: RsRetExpr) = addOccurrence(o)
-
-            override fun visitTryExpr(o: RsTryExpr) {
-                o.expr.acceptChildren(this)
-                addOccurrence(o.q)
-            }
-
-            override fun visitTryMacroArgument(o: RsTryMacroArgument) {
-                val macroCall = o.parent as? RsMacroCall ?: return
-                addOccurrence(macroCall)
-            }
-
-            override fun visitFormatMacroArgument(o: RsFormatMacroArgument) {
-                val macroCall = o.parent as? RsMacroCall ?: return
-                if (macroCall.referenceName == "panic") {
-                    addOccurrence(macroCall)
-                }
-            }
-
-            override fun visitExpr(o: RsExpr) {
-                when (o) {
-                    is RsIfExpr,
-                    is RsBlockExpr,
-                    is RsMatchExpr -> o.acceptChildren(this)
-                    else -> if (onlyExpressionAboveUntilFn(o)) {
-                        addOccurrence(o)
-                    } else {
-                        super.visitExpr(o)
-                    }
-                }
-            }
-        })
-    }
-
-    private fun getFunctionOrLambda(target: PsiElement): PsiElement? =
-        target.ancestors.firstOrNull { it is RsFunction || it is RsLambdaExpr }
-
-    private fun onlyExpressionAboveUntilFn(expr: RsExpr): Boolean {
-        expr.ancestors.forEach {
-            val parent = it.parent
-            when (it) {
-                is RsExpr -> when (parent) {
-                    is RsMatchExpr,
-                    is RsPatRange,
-                    is RsMatchArmGuard -> return false
-                }
-                is RsFunction,
-                is RsLambdaExpr -> return true
-                is RsCondition,
-                is RsStmt -> return false
+        val sink: (ExitPoint) -> Unit = { exitPoint ->
+            when (exitPoint) {
+                is ExitPoint.Return -> addOccurrence(exitPoint.e)
+                is ExitPoint.TryExpr -> if (exitPoint.e is RsTryExpr) addOccurrence(exitPoint.e.q) else addOccurrence(exitPoint.e)
+                is ExitPoint.DivergingExpr -> addOccurrence(exitPoint.e)
+                is ExitPoint.TailExpr -> addOccurrence(exitPoint.e)
+                is ExitPoint.TailStatement -> Unit
             }
         }
-        return false
+
+        val fnOrLambda = target.ancestors.firstOrNull { it is RsFunction || it is RsLambdaExpr }
+        when (fnOrLambda) {
+            is RsFunction -> ExitPoint.process(fnOrLambda, sink)
+            is RsLambdaExpr -> ExitPoint.process(fnOrLambda, sink)
+        }
     }
 }
+

@@ -37,14 +37,16 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "try!(Err(()))", "return 0")
 
-    fun `test highlight panic macro as return`() = doTest("""
+    fun `test highlight diverging macros as return`() = doTest("""
         fn main() {
             if true {
                 panic!("test")
+            } else {
+                unimplemented!()
             }
             /*caret*/return 0;
         }
-    """, "panic!(\"test\")", "return 0")
+    """, "panic!(\"test\")", "unimplemented!()", "return 0")
 
     fun `test highlight ? operator as return`() = doTest("""
         fn main() {
