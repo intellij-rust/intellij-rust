@@ -248,7 +248,14 @@ data class CargoProjectImpl(
     @TestOnly
     fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)
 
-    fun refresh(): CompletableFuture<CargoProjectImpl> = refreshStdlib().thenCompose { it.refreshWorkspace() }
+    fun refresh(): CompletableFuture<CargoProjectImpl> {
+        if (!projectDirectory.exists()) {
+            return CompletableFuture.completedFuture(copy(
+                stdlibStatus = UpdateStatus.UpdateFailed("Project directory does not exist"))
+            )
+        }
+        return refreshStdlib().thenCompose { it.refreshWorkspace() }
+    }
 
     private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
         val rustup = toolchain?.rustup(projectDirectory)
