@@ -25,6 +25,20 @@ class RsFormatterTest : RsFormatterTestBase() {
         doTest()
     }
 
+    fun `test pub`() = doTextTest("""
+        pub ( crate ) struct S1;
+
+        pub ( super ) struct S2;
+
+        pub ( in foo :: bar ) struct S3;
+    """, """
+        pub (crate) struct S1;
+
+        pub (super) struct S2;
+
+        pub (in foo::bar) struct S3;
+    """)
+
     fun `test align incomplete chain`() = doTextTest("""
         fn main() {
             frobnicate()
