@@ -9,7 +9,7 @@ language: java
 jdk: oraclejdk8
 
 env:
-  - RUST_VERSION=nightly-2017-11-06 ORG_GRADLE_PROJECT_ideaVersion=173.3531.6 # modified by script
+  - RUST_VERSION=nightly-2017-11-12 ORG_GRADLE_PROJECT_ideaVersion=173.3622.25 # modified by script
   - RUST_VERSION=1.20.0 ORG_GRADLE_PROJECT_ideaVersion=2017.2.5
 
 install: true
