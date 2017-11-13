@@ -67,9 +67,11 @@ fun createTraitMembersChooser(impl: RsImplItem)
     return allMembers to mandatoryMembers
 }
 
-private fun showChooser(all: Collection<RsTraitMemberChooserMember>,
-                        selected: Collection<RsTraitMemberChooserMember>,
-                        project: Project): Collection<RsTraitMemberChooserMember> {
+private fun showChooser(
+    all: Collection<RsTraitMemberChooserMember>,
+    selected: Collection<RsTraitMemberChooserMember>,
+    project: Project
+): Collection<RsTraitMemberChooserMember> {
     val chooser = MemberChooser(all.toTypedArray(), true, true, project)
     chooser.apply {
         title = "Implement Members"
@@ -77,7 +79,7 @@ private fun showChooser(all: Collection<RsTraitMemberChooserMember>,
         setCopyJavadocVisible(false)
     }
     chooser.show()
-    return chooser.selectedElements ?: listOf()
+    return chooser.selectedElements ?: emptyList()
 }
 
 fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, members: RsMembers) {
