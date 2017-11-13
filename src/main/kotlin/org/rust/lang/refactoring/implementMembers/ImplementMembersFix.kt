@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator.fixes
+package org.rust.lang.refactoring.implementMembers
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.core.overrideImplement.generateTraitMembers
+import org.rust.lang.refactoring.implementMembers.generateTraitMembers
 import org.rust.lang.core.psi.RsImplItem
 
 /**
