@@ -40,7 +40,7 @@ Common tasks are
 
 Note the `:` in front of the task name. The repository contains two independent
 plugins for Rust and TOML, which are organized as gradle subprojects. Running
-`./gradlew :task` executes the task only for Rust plugin, `:toml:task` will run
+`./gradlew :task` executes the task only for Rust plugin, `:intellij-toml:task` will run
 the task for TOML and `./gradlew task` will do for both.
 
 
