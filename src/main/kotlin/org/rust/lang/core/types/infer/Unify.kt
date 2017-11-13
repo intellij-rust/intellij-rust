@@ -78,6 +78,8 @@ class UnificationTable<K : Node, V> {
         return newRootKey
     }
 
+    fun findRoot(key: K): K = get(key).key
+
     fun findValue(key: K): V? = get(key).value
 
     fun unifyVarVar(key1: K, key2: K): K? {
