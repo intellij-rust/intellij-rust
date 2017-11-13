@@ -8,6 +8,7 @@ package org.rust.lang.refactoring
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.refactoring.introduceVariable.findCandidateExpressionsToExtract
 
 class RsNameSuggestionsKtTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
@@ -113,8 +114,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
     private fun doTest(@Language("Rust") before: String, action: (Set<String>) -> Unit) {
         InlineFile(before).withCaret()
         openFileInEditor("main.rs")
-        val refactoring = RsIntroduceVariableRefactoring(myFixture.project, myFixture.editor, myFixture.file as RsFile)
-        val expr = refactoring.possibleTargets().first()
+        val expr = findCandidateExpressionsToExtract(myFixture.editor, myFixture.file as RsFile).first()
         action(expr.suggestNames())
     }
 
