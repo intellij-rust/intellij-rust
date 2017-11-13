@@ -13,17 +13,36 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.TraitImplementationInfo
 import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 
-fun findMembersToImplement(impl: RsImplItem)
-    : TraitImplementationInfo? {
+fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
+    check(!ApplicationManager.getApplication().isWriteAccessAllowed)
+    val implInfo = findMembersToImplement(impl)
+    if (implInfo == null) {
+        if (editor != null) {
+            HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
+        }
+        return
+    }
+
+    val chosen = showTraitMemberChooser(implInfo, impl.project)
+    if (chosen.isEmpty()) return
+    runWriteAction {
+        insertNewTraitMembers(chosen, impl.members!!)
+    }
+}
+
+private fun findMembersToImplement(impl: RsImplItem): TraitImplementationInfo? {
+    checkReadAccessAllowed()
+
     val trait = impl.traitRef?.resolveToTrait ?: return null
     val implInfo = TraitImplementationInfo.create(trait, impl) ?: return null
     if (implInfo.declared.isEmpty()) return null
     return implInfo
 }
 
-fun insertNewTraitMembers(selected: Collection<RsNamedElement>, members: RsMembers) {
+private fun insertNewTraitMembers(selected: Collection<RsNamedElement>, members: RsMembers) {
     checkWriteAccessAllowed()
     if (selected.isEmpty()) return
 
@@ -38,18 +57,4 @@ fun insertNewTraitMembers(selected: Collection<RsNamedElement>, members: RsMembe
         templateImpl.rbrace?.prevSibling,
         lastMethodOrBrace
     )
-}
-
-fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
-    check(!ApplicationManager.getApplication().isWriteAccessAllowed)
-    val implInfo = findMembersToImplement(impl) ?: run {
-        if (editor != null) {
-            HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
-        }
-        return
-    }
-    val chooserSelected = showTraitMemberChooser(implInfo, impl.project)
-    runWriteAction {
-        insertNewTraitMembers(chooserSelected, impl.members!!)
-    }
 }
