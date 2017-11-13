@@ -11,9 +11,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.childOfType
-import org.rust.lang.refactoring.implementMembers.RsTraitMemberChooserMember
-import org.rust.lang.refactoring.implementMembers.createTraitMembersChooser
-import org.rust.lang.refactoring.implementMembers.insertNewTraitMembers
 
 class ImplementMembersFixTest : RsTestBase() {
     override fun isWriteActionRequired() = true
@@ -234,7 +231,7 @@ class ImplementMembersFixTest : RsTestBase() {
         checkByText(code.trimIndent(), expected.trimIndent()) {
             val impl = myFixture.file.childOfType<RsImplItem>()
                 ?: fail("Caret is not in an impl block")
-            val (all, default) = createTraitMembersChooser(impl)
+            val (all, default) = findMembersToImplement(impl)
                 ?: fail("No members are available")
 
             TestCase.assertEquals(all.map { it.formattedText() }, chooser.map { it.member })

@@ -52,7 +52,7 @@ class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: 
     fun formattedText() = text
 }
 
-fun createTraitMembersChooser(impl: RsImplItem)
+fun findMembersToImplement(impl: RsImplItem)
     : Pair<List<RsTraitMemberChooserMember>, List<RsTraitMemberChooserMember>>? {
     val trait = impl.traitRef?.resolveToTrait ?: return null
     val traitName = trait.name ?: return null
@@ -101,7 +101,7 @@ fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, memb
 
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     check(!ApplicationManager.getApplication().isWriteAccessAllowed)
-    val (all, selected) = createTraitMembersChooser(impl) ?: run {
+    val (all, selected) = findMembersToImplement(impl) ?: run {
         if (editor != null) {
             HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
         }
