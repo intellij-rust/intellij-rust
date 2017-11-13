@@ -32,7 +32,7 @@ fun showOccurrencesChooser(
     occurrences: List<RsExpr>,
     callback: (List<RsExpr>) -> Unit
 ) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode && occurrences.size > 1) {
         callback(MOCK!!.chooseOccurrences(expr, occurrences))
     } else {
         OccurrencesChooser.simpleChooser<RsExpr>(editor)

@@ -13,17 +13,12 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFile
 
 class RsIntroduceVariableHandler : RefactoringActionHandler {
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
         if (file !is RsFile) return
-        doRefactoring(editor, project, file)
-    }
-
-    fun doRefactoring(editor: Editor, project: Project, file: RsFile, expr: RsExpr? = null) {
-        val exprs = if (expr == null) findCandidateExpressionsToExtract(editor, file) else listOf(expr)
+        val exprs = findCandidateExpressionsToExtract(editor, file)
 
         when (exprs.size) {
             0 -> {
