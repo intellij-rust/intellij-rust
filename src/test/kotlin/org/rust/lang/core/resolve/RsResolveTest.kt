@@ -857,4 +857,16 @@ class RsResolveTest : RsResolveTestBase() {
             match () { NONE => NONE }
         }                     //^
     """)
+
+    fun `test match enum path`() = checkByCode("""
+        enum Enum { Var1, Var2 }
+                  //X
+        fn main() {
+            match Enum::Var1 {
+                Enum::Var1 => {}
+                    //^
+                _ => {}
+            }
+        }
+    """)
 }
