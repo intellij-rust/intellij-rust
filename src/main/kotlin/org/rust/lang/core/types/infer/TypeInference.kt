@@ -226,10 +226,25 @@ class RsInferenceContext {
         }
     }
 
-    private fun combineTyVar(inner1: TyInfer.TyVar, ty2: Ty): Boolean {
+    private fun combineTyVar(ty1: TyInfer.TyVar, ty2: Ty): Boolean {
         when (ty2) {
-            is TyInfer.TyVar -> varUnificationTable.unifyVarVar(inner1, ty2)
-            else -> varUnificationTable.unifyVarValue(inner1, ty2)
+            is TyInfer.TyVar -> varUnificationTable.unifyVarVar(ty1, ty2)
+            else -> {
+                val ty1r = varUnificationTable.findRoot(ty1)
+                val isTy2ContainsTy1 = ty2.visitWith(object : TypeVisitor {
+                    override fun invoke(ty: Ty): Boolean = when {
+                        ty is TyInfer.TyVar && varUnificationTable.findRoot(ty) == ty1r -> true
+                        ty.hasTyInfer -> ty.superVisitWith(this)
+                        else -> false
+                    }
+                })
+                if (isTy2ContainsTy1) {
+                    // "E0308 cyclic type of infinite size"
+                    varUnificationTable.unifyVarValue(ty1r, TyUnknown)
+                } else {
+                    varUnificationTable.unifyVarValue(ty1r, ty2)
+                }
+            }
         }
         return true
     }
