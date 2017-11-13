@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.PathUtil
+import org.rust.ide.RsConstants
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsFile
@@ -57,13 +58,18 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
 
         // We use case-insensitive name as a key, because certain file systems
         // are case-insensitive. It will work correctly with case-sensitive fs
-        // because we of the resolv check we do in [getSuperFor]
+        // because we of the resolve check we do in [getSuperFor]
         private fun key(mod: RsFile): String? = mod.modName?.toLowerCase()
 
         private fun key(mod: RsModDeclItem): String? {
             val pathAttribute = mod.pathAttribute
             return if (pathAttribute != null) {
-                FileUtil.getNameWithoutExtension(PathUtil.getFileName(pathAttribute))
+                val fileName = PathUtil.getFileName(pathAttribute)
+                if (fileName == RsConstants.MOD_RS_FILE)
+                    // Use the name of the parent directory for files named mod.rs
+                    PathUtil.getFileName(PathUtil.getParentPath(pathAttribute))
+                else
+                    FileUtil.getNameWithoutExtension(fileName)
             } else {
                 mod.name
             }?.toLowerCase()

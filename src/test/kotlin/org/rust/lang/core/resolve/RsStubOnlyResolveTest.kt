@@ -126,6 +126,45 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub fn quux() {}
     """)
 
+    fun `test resolve explicit mod path mod rs`() = stubOnlyResolve("""
+    //- main.rs
+        #[path = "sub/mod.rs"]
+        mod foo;
+
+        fn quux() {}
+    //- sub/mod.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+       }
+    """)
+
+    fun `test resolve explicit mod path mod rs 2`() = stubOnlyResolve("""
+    //- main.rs
+        #[path = "sub/bar/mod.rs"]
+        mod foo;
+
+        fn quux() {}
+    //- sub/bar/mod.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+       }
+    """)
+
+    fun `test resolve explicit mod path mod rs windows path separator`() = stubOnlyResolve("""
+    //- main.rs
+        #[path = "sub\\bar\\mod.rs"]
+        mod foo;
+
+        fn quux() {}
+    //- sub/bar/mod.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+       }
+    """)
+
     fun testUseFromChild() = stubOnlyResolve("""
     //- main.rs
         use child::{foo};
