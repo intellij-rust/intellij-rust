@@ -9,8 +9,10 @@ import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
+import org.jetbrains.annotations.TestOnly
 import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsFunction
@@ -51,16 +53,45 @@ fun showTraitMemberChooser(
     implInfo: TraitImplementationInfo,
     project: Project
 ): Collection<RsNamedElement> {
+
     val base = MemberChooserObjectBase(implInfo.traitName, implInfo.trait.getIcon(0))
-
     val all = implInfo.declared.map { RsTraitMemberChooserMember(base, it) }
-    val selected = all.filter { it.member in implInfo.missingImplementations }
+    val selectedByDefault = all.filter { it.member in implInfo.missingImplementations }
+    val chooser = if (ApplicationManager.getApplication().isUnitTestMode) MOCK!! else memberChooserDialog
+    return chooser(project, all, selectedByDefault).map { it.member }
+}
 
+typealias TraitMemberChooser = (
+    project: Project,
+    all: List<RsTraitMemberChooserMember>,
+    selectedByDefault: List<RsTraitMemberChooserMember>
+) -> List<RsTraitMemberChooserMember>
+
+private val memberChooserDialog: TraitMemberChooser = { project, all, selectedByDefault ->
     val chooser = MemberChooser(all.toTypedArray(), true, true, project).apply {
         title = "Implement Members"
-        selectElements(selected.toTypedArray())
+        selectElements(selectedByDefault.toTypedArray())
         setCopyJavadocVisible(false)
     }
     chooser.show()
-    return (chooser.selectedElements ?: emptyList()).map { it.member }
+    chooser.selectedElements.orEmpty()
+}
+
+private var MOCK: TraitMemberChooser? = null
+@TestOnly
+fun withMockTraitMemberChooser(
+    mock: TraitMemberChooser,
+    f: () -> Unit
+) {
+    MOCK = { project, all, selectedByDefault ->
+        val result = mock(project, all, selectedByDefault)
+        MOCK = null
+        result
+    }
+    try {
+        f()
+        check(MOCK == null) { "Selector was not called" }
+    } finally {
+        MOCK = null
+    }
 }

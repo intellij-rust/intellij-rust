@@ -25,6 +25,7 @@ class ImplementMembersFix(
     override fun getFamilyName(): String = text
 
     override fun startInWriteAction(): Boolean = false
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement = currentFile
 
     override fun invoke(
         project: Project,
