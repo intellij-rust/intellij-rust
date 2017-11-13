@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator.fixes
+package org.rust.lang.refactoring.implementMembers
 
 import org.intellij.lang.annotations.Language
 import org.rust.ide.annotator.RsAnnotatorTestBase
@@ -19,7 +19,7 @@ class ImplementMembersFixAvailabilityTest : RsAnnotatorTestBase() {
         impl T for S/*caret*/ {}
     """)
 
-    fun checkFixAvailable(fixName: String, @Language("Rust") code: String ) {
+    private fun checkFixAvailable(fixName: String, @Language("Rust") code: String ) {
         InlineFile(code)
         myFixture.findSingleIntention(fixName)
     }
