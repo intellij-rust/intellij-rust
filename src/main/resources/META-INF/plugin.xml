@@ -153,7 +153,7 @@
         <!-- Implement methods -->
 
         <codeInsight.implementMethod language="Rust"
-                                     implementationClass="org.rust.ide.core.overrideImplement.ImplementMembersHandler"/>
+                                     implementationClass="org.rust.lang.refactoring.implementMembers.ImplementMembersHandler"/>
 
         <!-- Completion -->
 

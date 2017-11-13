@@ -17,7 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.fixes.AddSelfFix
 import org.rust.ide.annotator.fixes.AddUnsafeFix
-import org.rust.ide.annotator.fixes.ImplementMembersFix
+import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.annotator.fixes.SurroundWithUnsafeFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*

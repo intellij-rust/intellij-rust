@@ -3,17 +3,55 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.core.overrideImplement
+package org.rust.lang.refactoring.implementMembers
 
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.ext.childOfType
 
-class ImplementMembersFixTest : RsTestBase() {
-    override fun isWriteActionRequired() = true
+
+class ImplementMembersHandlerTest : RsTestBase() {
+    fun `test available via override shortcut`() = invokeVia {
+        myFixture.performEditorAction("ImplementMethods")
+    }
+
+    fun `test available via quick fix`() = invokeVia {
+        val action = myFixture.findSingleIntention("Implement members")
+        myFixture.launchAction(action)
+    }
+
+    private fun invokeVia(actionInvoker: () -> Unit) {
+        checkByText("""
+            trait T { fn f1(); }
+            struct S;
+            impl T /*caret*/for S {}
+        """, """
+            trait T { fn f1(); }
+            struct S;
+            impl T for S {
+                fn f1() {
+                    unimplemented!()
+                }
+            }
+        """) {
+            withMockTraitMemberChooser({ _, all, _ -> all }) {
+                actionInvoker()
+            }
+        }
+    }
+
+
+    fun `test not available outside of impl`() {
+        InlineFile("""
+            trait T { fn f1(); }
+            struct /*caret*/S;
+            impl T for S {}
+        """)
+        val presentation = myFixture.testAction(ActionManagerEx.getInstanceEx().getAction("ImplementMethods"))
+        check(!presentation.isEnabled)
+        check(myFixture.filterAvailableIntentions("Implement members").isEmpty())
+    }
 
     fun `test implement methods`() = doTest("""
         trait T {
@@ -23,7 +61,7 @@ class ImplementMembersFixTest : RsTestBase() {
             fn f4() {}
         }
         struct S;
-        impl T for S {}
+        impl T for S {/*caret*/}
     """, listOf(
         ImplementMemberSelection("f1()", true, true),
         ImplementMemberSelection("f2()", true, false),
@@ -56,7 +94,7 @@ class ImplementMembersFixTest : RsTestBase() {
             unsafe fn f4() {}
         }
         struct S;
-        impl T for S {}
+        impl T for S {/*caret*/}
     """, listOf(
         ImplementMemberSelection("f1()", true, true),
         ImplementMemberSelection("f2()", true, false),
@@ -90,7 +128,7 @@ class ImplementMembersFixTest : RsTestBase() {
             fn f5(a: f64, b: bool) -> (i8, u8);
         }
         struct S;
-        impl T for S {}
+        impl T for S {/*caret*/}
     """, listOf(
         ImplementMemberSelection("f1(a: i8, b: i16, c: i32, d: i64)", true),
         ImplementMemberSelection("f2(a: (i32, u32))", true),
@@ -137,7 +175,7 @@ class ImplementMembersFixTest : RsTestBase() {
             type T4 = f64;
         }
         struct S;
-        impl T for S {}
+        impl T for S {/*caret*/}
     """, listOf(
         ImplementMemberSelection("T1", true, true),
         ImplementMemberSelection("T2", true, false),
@@ -165,7 +203,7 @@ class ImplementMembersFixTest : RsTestBase() {
             const C4: &'static str = "bar";
         }
         struct S;
-        impl T for S {}
+        impl T for S {/*caret*/}
     """, listOf(
         ImplementMemberSelection("C1: i32", true, true),
         ImplementMemberSelection("C2: f64", true, false),
@@ -195,7 +233,7 @@ class ImplementMembersFixTest : RsTestBase() {
             const C2: f64 = 4.2;
         }
         struct S;
-        impl T for S {}
+        impl T for S {/*caret*/}
     """, listOf(
         ImplementMemberSelection("f1()", true),
         ImplementMemberSelection("T1", true),
@@ -204,7 +242,7 @@ class ImplementMembersFixTest : RsTestBase() {
         ImplementMemberSelection("T2", false),
         ImplementMemberSelection("C2: f64", false)
 
-    ),"""
+    ), """
         trait T {
             fn f1();
             type T1;
@@ -224,20 +262,20 @@ class ImplementMembersFixTest : RsTestBase() {
         }
     """)
 
+    private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
+
     private fun doTest(@Language("Rust") code: String,
                        chooser: List<ImplementMemberSelection>,
                        @Language("Rust") expected: String) {
 
         checkByText(code.trimIndent(), expected.trimIndent()) {
-            val impl = myFixture.file.childOfType<RsImplItem>()
-                ?: fail("Caret is not in an impl block")
-            val (all, default) = createTraitMembersChooser(impl)
-                ?: fail("No members are available")
-
-            TestCase.assertEquals(all.map { it.formattedText() }, chooser.map { it.member })
-            TestCase.assertEquals(default.map { it.formattedText() }, chooser.filter { it.byDefault }.map { it.member })
-            insertNewTraitMembers(extractSelected(all, chooser), impl.members!!)
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(myFixture.editor.document)
+            withMockTraitMemberChooser({ _, all, selectedByDefault ->
+                TestCase.assertEquals(all.map { it.formattedText() }, chooser.map { it.member })
+                TestCase.assertEquals(selectedByDefault.map { it.formattedText() }, chooser.filter { it.byDefault }.map { it.member })
+                extractSelected(all, chooser)
+            }) {
+                myFixture.performEditorAction("ImplementMethods")
+            }
         }
     }
 
@@ -246,10 +284,4 @@ class ImplementMembersFixTest : RsTestBase() {
         return all.filter { selected.contains(it.formattedText()) }
     }
 
-    private fun fail(message: String): Nothing {
-        TestCase.fail(message)
-        error("Test failed with message: \"$message\"")
-    }
-
-    private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 }
