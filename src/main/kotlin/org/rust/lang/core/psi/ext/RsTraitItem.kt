@@ -95,6 +95,8 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
 
 class TraitImplementationInfo private constructor(
+    val trait: RsTraitItem,
+    val traitName: String,
     traitMembers: RsMembers,
     implMembers: RsMembers,
     // Macros can add methods
@@ -125,10 +127,11 @@ class TraitImplementationInfo private constructor(
 
     companion object {
         fun create(trait: RsTraitItem, impl: RsImplItem): TraitImplementationInfo? {
+            val traitName = trait.name ?: return null
             val traitMembers = trait.members ?: return null
             val implMembers = impl.members ?: return null
             val hasMacros = implMembers.macroCallList.isNotEmpty()
-            return TraitImplementationInfo(traitMembers, implMembers, hasMacros)
+            return TraitImplementationInfo(trait, traitName, traitMembers, implMembers, hasMacros)
         }
     }
 }

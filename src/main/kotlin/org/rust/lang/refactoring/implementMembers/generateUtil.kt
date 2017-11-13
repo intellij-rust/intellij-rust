@@ -51,27 +51,23 @@ class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: 
 }
 
 fun findMembersToImplement(impl: RsImplItem)
-    : Pair<List<RsTraitMemberChooserMember>, List<RsTraitMemberChooserMember>>? {
+    : TraitImplementationInfo? {
     val trait = impl.traitRef?.resolveToTrait ?: return null
-    val traitName = trait.name ?: return null
-
-    val base = MemberChooserObjectBase(traitName, trait.getIcon(0))
     val implInfo = TraitImplementationInfo.create(trait, impl) ?: return null
-    val mandatoryMembers = implInfo.missingImplementations.map { RsTraitMemberChooserMember(base, it) }
-    val allMembers = implInfo.declared.map { RsTraitMemberChooserMember(base, it) }
-
-    if (allMembers.isEmpty()) return null
-
-    return allMembers to mandatoryMembers
+    if (implInfo.declared.isEmpty()) return null
+    return implInfo
 }
 
 private fun showChooser(
-    all: Collection<RsTraitMemberChooserMember>,
-    selected: Collection<RsTraitMemberChooserMember>,
+    implInfo: TraitImplementationInfo,
     project: Project
 ): Collection<RsTraitMemberChooserMember> {
-    val chooser = MemberChooser(all.toTypedArray(), true, true, project)
-    chooser.apply {
+    val base = MemberChooserObjectBase(implInfo.traitName, implInfo.trait.getIcon(0))
+
+    val all = implInfo.declared.map { RsTraitMemberChooserMember(base, it) }
+    val selected = all.filter { it.member in implInfo.missingImplementations }
+
+    val chooser = MemberChooser(all.toTypedArray(), true, true, project).apply {
         title = "Implement Members"
         selectElements(selected.toTypedArray())
         setCopyJavadocVisible(false)
@@ -99,13 +95,13 @@ fun insertNewTraitMembers(selected: Collection<RsTraitMemberChooserMember>, memb
 
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     check(!ApplicationManager.getApplication().isWriteAccessAllowed)
-    val (all, selected) = findMembersToImplement(impl) ?: run {
+    val implInfo = findMembersToImplement(impl) ?: run {
         if (editor != null) {
             HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
         }
         return
     }
-    val chooserSelected = showChooser(all, selected, impl.project)
+    val chooserSelected = showChooser(implInfo, impl.project)
     runWriteAction {
         insertNewTraitMembers(chooserSelected, impl.members!!)
     }
