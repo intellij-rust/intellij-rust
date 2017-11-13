@@ -5,189 +5,164 @@
 
 package org.rust.lang.refactoring
 
+import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsFile
+import org.rust.lang.refactoring.introduceVariable.IntroduceVariableUi
+import org.rust.lang.refactoring.introduceVariable.withMockIntroduceVariableTargetExpressionChooser
+
 
 class RsIntroduceVariableHandlerTest : RsTestBase() {
-    override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
-
-    fun testExpression() = doTest("""
+    fun `test expression`() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
-        }""", """
+        }
+    """, listOf("10", "5 + 10", "foo(5 + 10)"), 0, """
         fn hello() {
             let i = 10;
             foo(5 + i);
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(0, 3)
-        ref.replaceElementForAllExpr(expr, listOf(expr))
-    }
+        }
+    """)
 
-    fun testExplicitSelectionWorks() {
-        myFixture.configureByText("main.rs", """
-            fn main() { 1 + <selection>1</selection>;}
-        """)
-        refactoring().getTarget(0, 1)
-    }
+    fun `test caret just after the expression`() = doTest("""
+        fn main() {
+            1/*caret*/;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let i = 1;
+        }
+    """)
 
-    fun testMultipleOccurrences() = doTest("""
+    fun `test top level in block`() = doTest("""
+        fn main() {
+            let _ = {
+                1/*caret*/
+            };
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let _ = {
+                let i = 1;
+            };
+        }
+    """)
+
+    fun `test explicit selection works`() = doTest("""
+        fn main() {
+            1 + <selection>1</selection>;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let i = 1;
+            1 + i;
+        }
+    """)
+
+    fun `test replace occurrences forward`() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
             foo(5 + 10);
         }
-
-        fn foo(x: Int) {
-
-        }""", """
+    """, listOf("10", "5 + 10", "foo(5 + 10)"), 1, """
         fn hello() {
             let x = 5 + 10;
             foo(x);
             foo(x);
         }
+    """, replaceAll = true)
 
-        fn foo(x: Int) {
-
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(1, 3)
-        val occurrences = findOccurrences(expr)
-        ref.replaceElementForAllExpr(expr, occurrences)
-    }
-
-    fun testMultipleOccurrences2() = doTest("""
+    fun `test replace occurrences backward`() = doTest("""
         fn main() {
             let a = 1;
             let b = a + 1;
-            let c = a +/*caret*/ 1;
-        }""", """
+            let c = a + /*caret*/1;
+        }
+    """, listOf("1", "a + 1"), 1, """
         fn main() {
             let a = 1;
             let x = a + 1;
             let b = x;
             let c = x;
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(0, 1)
-        val occurrences = findOccurrences(expr)
-        ref.replaceElementForAllExpr(expr, occurrences)
-    }
+        }
+    """, replaceAll = true)
 
-
-    fun testCaretAfterElement() = doTest("""
-        fn main() {
-            1/*caret*/;
-        }""", """
-        fn main() {
-            let i = 1;
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(0, 1)
-        ref.replaceElement(expr, listOf(expr))
-    }
-
-    fun testTopLevelInBlock() = doTest("""
-        fn main() {
-            let _ = {
-                1/*caret*/
-            };
-        }""", """
-        fn main() {
-            let _ = {
-                let i = 1;
-            };
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(0, 1)
-        ref.replaceElement(expr, listOf(expr))
-    }
-
-    fun testStatement() = doTest("""
+    fun `test statement`() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
-        }""", """
+        }
+    """, listOf("10", "5 + 10", "foo(5 + 10)"), 2 , """
         fn hello() {
             let foo = foo(5 + 10);
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(2, 3)
-        ref.replaceElement(expr, listOf(expr))
-    }
+        }
+    """)
 
-    fun testMatch() = doTest("""
+    fun `test match`() = doTest("""
         fn bar() {
             ma/*caret*/tch 5 {
                 2 => 2,
                 _ => 8,
             };
-        }""", """
+        }
+    """, emptyList(), 0, """
         fn bar() {
             let i = match 5 {
                 2 => 2,
                 _ => 8,
             };
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(0, 1)
-        ref.replaceElement(expr, listOf(expr))
-    }
+        }
+    """)
 
-    fun testFile() = doTest("""
+    fun `test file`() = doTest("""
         fn read_fle() -> Result<Vec<String, io::Error>> {
             File::op/*caret*/en("res/input.txt")?
-        }""", """
+        }
+    """, listOf("File::open(\"res/input.txt\")", "File::open(\"res/input.txt\")?"), 1, """
         fn read_fle() -> Result<Vec<String, io::Error>> {
             let x = File::open("res/input.txt")?;
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(1, 2)
-        ref.replaceElement(expr, listOf(expr))
-    }
+        }
+    """)
 
-    fun testRefMut() = doTest("""
+    fun `test ref mut`() = doTest("""
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
 
             file.read_to_string(&mut String:/*caret*/:new())
-        }""", """
+        }
+    """, listOf("String::new()", "&mut String::new()", "file.read_to_string(&mut String::new())"), 0, """
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
             let mut string = String::new();
 
             file.read_to_string(&mut string)
-        }""")
-    {
-        val ref = refactoring()
-        val expr = ref.getTarget(0, 3)
-        ref.replaceElement(expr, listOf(expr))
-    }
-
-    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {
-        InlineFile(before).withCaret()
-        openFileInEditor("main.rs")
-        action()
-        myFixture.checkResult(after)
-    }
-
-    private fun refactoring(): RsIntroduceVariableRefactoring =
-        RsIntroduceVariableRefactoring(project, myFixture.editor, myFixture.file as RsFile)
-
-    fun RsIntroduceVariableRefactoring.getTarget(idx: Int, total: Int): RsExpr {
-        check(idx < total) { "Can't select $idx target out of $total" }
-        val targets = possibleTargets()
-        check(targets.size == total) {
-            "Expected $total targets, got ${targets.size}:\n\n${targets.map { it.text }.joinToString("\n\n")}"
         }
-        return targets[idx]
+    """)
+
+    private fun doTest(
+        @Language("Rust") before: String,
+        expressions: List<String>,
+        target: Int,
+        @Language("Rust") after: String,
+        replaceAll: Boolean = false
+    ) {
+        checkByText(before, after) {
+            var shownTargetChooser = false
+            withMockIntroduceVariableTargetExpressionChooser(object : IntroduceVariableUi {
+                override fun chooseTarget(exprs: List<RsExpr>): RsExpr {
+                    shownTargetChooser = true
+                    TestCase.assertEquals(exprs.map { it.text }, expressions)
+                    return exprs[target]
+                }
+
+                override fun chooseOccurrences(expr: RsExpr, occurrences: List<RsExpr>): List<RsExpr> =
+                    if (replaceAll) occurrences else listOf(expr)
+            }) {
+                myFixture.performEditorAction("IntroduceVariable")
+                if (expressions.isNotEmpty() && !shownTargetChooser) {
+                    error("Didn't shown chooser")
+                }
+            }
+        }
     }
 }

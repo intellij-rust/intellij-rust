@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.refactoring.RsIntroduceVariableHandler
+import org.rust.lang.refactoring.introduceVariable.RsIntroduceVariableHandler
 
 class RsPostfixTemplateProvider : PostfixTemplateProvider {
     private val templates: Set<PostfixTemplate> = setOf(
