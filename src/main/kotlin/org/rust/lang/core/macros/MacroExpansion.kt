@@ -20,12 +20,13 @@ fun expandMacro(call: RsMacroCall): ExpansionResult? {
     val lazyStaticCall = parseLazyStaticCall(arg) ?: return null
     return RsCodeFragmentFactory(ctx.project)
         .createExpandedItem<RsConstant>(
-            "static ${lazyStaticCall.identifier}: ${lazyStaticCall.type} = &${lazyStaticCall.expr};",
+            "${if (lazyStaticCall.pub) "pub " else ""}static ${lazyStaticCall.identifier}: ${lazyStaticCall.type} = &${lazyStaticCall.expr};",
             ctx
         )
 }
 
 private data class LazyStaticCall(
+    val pub: Boolean,
     val identifier: String,
     val type: String,
     val expr: String
@@ -33,6 +34,7 @@ private data class LazyStaticCall(
 
 private fun parseLazyStaticCall(tt: RsTt): LazyStaticCall? {
     // static ref FOO: Foo = Foo::new();
+    val pub = tt.firstToken(RsElementTypes.PUB) != null
     val ident = tt.firstToken(RsElementTypes.IDENTIFIER) ?: return null
     val colon = tt.firstToken(RsElementTypes.COLON) ?: return null
     val eq = tt.firstToken(RsElementTypes.EQ) ?: return null
@@ -48,7 +50,7 @@ private fun parseLazyStaticCall(tt: RsTt): LazyStaticCall? {
     if (exprStart >= exprEnd) return null
     val exprText = tt.text.substring(exprStart, exprEnd)
 
-    return LazyStaticCall(ident.text, typeText, exprText)
+    return LazyStaticCall(pub, ident.text, typeText, exprText)
 }
 
 

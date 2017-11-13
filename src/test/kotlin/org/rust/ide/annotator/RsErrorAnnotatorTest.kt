@@ -798,6 +798,18 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         fn main() {}
     """)
 
+    fun `test should annotate lazy statics E0603`() = checkErrors("""
+        mod m {
+            lazy_static! { pub static ref BLA: () = {}; }
+            lazy_static! { static ref BLOP: () = {}; }
+        }
+
+        use m::BLA;
+        use <error>m::BLOP</error>;
+
+        fn main() { }
+    """)
+
     fun `test should not annotate public methods E0624`() = checkErrors("""
         mod some_module {
             pub struct Foo;
