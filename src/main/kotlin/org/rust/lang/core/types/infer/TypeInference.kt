@@ -25,6 +25,7 @@ import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.zipValues
 
@@ -240,6 +241,7 @@ class RsInferenceContext {
                 })
                 if (isTy2ContainsTy1) {
                     // "E0308 cyclic type of infinite size"
+                    TypeInferenceMarks.cyclicType.hit()
                     varUnificationTable.unifyVarValue(ty1r, TyUnknown)
                 } else {
                     varUnificationTable.unifyVarValue(ty1r, ty2)
@@ -1266,3 +1268,7 @@ data class TyWithObligations<out T>(
 
 fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
     TyWithObligations(value, obligations + addObligations)
+
+object TypeInferenceMarks {
+    val cyclicType = Testmark("cyclicType")
+}

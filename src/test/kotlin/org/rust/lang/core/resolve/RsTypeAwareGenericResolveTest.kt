@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.rust.lang.core.psi.ext.ArithmeticOp
+import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     fun testFn() = checkByCode("""
@@ -752,16 +753,18 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/1927
-    fun `test no stack overflow with cyclic type of infinite size`() = checkByCode("""
-        struct S<T>(T);
-        fn foo<T>() -> T { unimplemented!() }
-        fn unify<T>(_: T, _: T) { unimplemented!() }
-        fn main() {
-            let a = foo();
-            let b = S(a);
-            unify(a, b);
-            b.bar();
-            //^ unresolved
-        }
-    """)
+    fun `test no stack overflow with cyclic type of infinite size`() = TypeInferenceMarks.cyclicType.checkHit {
+        checkByCode("""
+            struct S<T>(T);
+            fn foo<T>() -> T { unimplemented!() }
+            fn unify<T>(_: T, _: T) { unimplemented!() }
+            fn main() {
+                let a = foo();
+                let b = S(a);
+                unify(a, b);
+                b.bar();
+                //^ unresolved
+            }
+        """)
+    }
 }

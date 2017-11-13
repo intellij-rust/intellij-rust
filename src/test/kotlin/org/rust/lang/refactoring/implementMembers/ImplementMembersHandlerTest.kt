@@ -48,8 +48,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
             struct /*caret*/S;
             impl T for S {}
         """)
-        val presentation = myFixture.testAction(ActionManagerEx.getInstanceEx().getAction("ImplementMethods"))
-        check(!presentation.isEnabled)
+        ImplementMembersMarks.noImplInHandler.checkHit {
+            val presentation = myFixture.testAction(ActionManagerEx.getInstanceEx().getAction("ImplementMethods"))
+            check(!presentation.isEnabled)
+        }
         check(myFixture.filterAvailableIntentions("Implement members").isEmpty())
     }
 
