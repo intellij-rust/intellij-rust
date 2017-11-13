@@ -30,10 +30,10 @@ import java.util.*
 /**
  * Introduce variable refactoring entry point.
  *
- * [RsLocalVariableHandler] handles all the asynchronous user interaction, while
+ * [RsIntroduceVariableHandler] handles all the asynchronous user interaction, while
  * [RsIntroduceVariableRefactoring] does actual computations.
  */
-class RsLocalVariableHandler : RefactoringActionHandler {
+class RsIntroduceVariableHandler : RefactoringActionHandler {
 
     /**
      * Entry point for the ui, can't be called in unit tests.

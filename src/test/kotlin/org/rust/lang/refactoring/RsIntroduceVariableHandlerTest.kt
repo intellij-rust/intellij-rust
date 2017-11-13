@@ -10,7 +10,7 @@ import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFile
 
-class RsLocalVariableHandlerTest : RsTestBase() {
+class RsIntroduceVariableHandlerTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
 
     fun testExpression() = doTest("""
