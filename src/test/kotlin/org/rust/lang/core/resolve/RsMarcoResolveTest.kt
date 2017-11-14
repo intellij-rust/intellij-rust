@@ -107,7 +107,7 @@ class RsMacroResolveTest : RsResolveTestBase() {
             foo_bar!();
             //^ unresolved
         }
-    """)
+    """, NameResolutionTestmarks.missingMacroUse)
 
     fun `test resolve macro missing macro_use mod`() = checkByCode("""
         // Missing #[macro_use] here
@@ -120,7 +120,7 @@ class RsMacroResolveTest : RsResolveTestBase() {
                 //^ unresolved
             }
         }
-    """)
+    """, NameResolutionTestmarks.missingMacroUse)
 
     // More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest]
 }

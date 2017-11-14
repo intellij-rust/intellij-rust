@@ -62,7 +62,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     //- lib.rs
         // Missing #[macro_export] here
         macro_rules! foo_bar { () => {} }
-    """)
+    """, NameResolutionTestmarks.missingMacroExport)
 
     fun `test macro rules missing macro_use`() = stubOnlyResolve("""
     //- main.rs
@@ -75,7 +75,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     //- lib.rs
         #[macro_export]
         macro_rules! foo_bar { () => {} }
-    """)
+    """, NameResolutionTestmarks.missingMacroUse)
 
     fun `test macro rules in mod 1`() = stubOnlyResolve("""
     //- main.rs

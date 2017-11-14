@@ -15,6 +15,8 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroExport
+import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
 import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
@@ -383,9 +385,14 @@ val RsFile.exportedCrateMacros: List<RsMacroDefinition>
         CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
     }
 
+fun Testmark.hitOnFalse(b: Boolean): Boolean {
+    if (!b) hit()
+    return b
+}
+
 private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> {
     val macros: MutableList<RsMacroDefinition> = scope.macroDefinitionList
-        .filter { !needExport || it.hasMacroExport }
+        .filter { !needExport || missingMacroExport.hitOnFalse(it.hasMacroExport) }
         .toMutableList()
 
     if (needExport) {
@@ -399,14 +406,14 @@ private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<
             macros.addAll(internalMacros.filter { reexport.contains(it.name) })
         }
     } else {
-        for (crate in scope.externCrateItemList.filter { it.hasMacroUse }) {
+        for (crate in scope.externCrateItemList.filter { missingMacroUse.hitOnFalse(it.hasMacroUse) }) {
             val mod = crate.reference.resolve() as? RsFile ?: continue
             macros.addAll(mod.exportedCrateMacros)
         }
     }
 
     // We do not care about the #[macro_use] attribute when searching for exported macros
-    for (modDecl in scope.modDeclItemList.filter { needExport || it.hasMacroUse }) {
+    for (modDecl in scope.modDeclItemList.filter { needExport || missingMacroUse.hitOnFalse(it.hasMacroUse) }) {
         val mod = modDecl.reference.resolve() ?: continue
         if (mod is RsMod) {
             macros.addAll(exportedCrateMacros(mod, needExport))
@@ -414,7 +421,7 @@ private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<
     }
 
     // We do not care about the #[macro_use] attribute when searching for exported macros
-    for (mod in scope.modItemList.filter { needExport || it.hasMacroUse }) {
+    for (mod in scope.modItemList.filter { needExport || missingMacroUse.hitOnFalse(it.hasMacroUse) }) {
         macros.addAll(exportedCrateMacros(mod, needExport))
     }
     return macros
@@ -912,4 +919,6 @@ private fun isSuperChain(path: RsPath): Boolean {
 
 object NameResolutionTestmarks {
     val shadowingStdCrates = Testmark("shadowingStdCrates")
+    val missingMacroExport = Testmark("missingMacroExport")
+    val missingMacroUse = Testmark("missingMacroUse")
 }
