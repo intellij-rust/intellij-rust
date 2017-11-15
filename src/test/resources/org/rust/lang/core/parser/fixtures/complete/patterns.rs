@@ -15,4 +15,5 @@ fn patterns() {
     let m!(x) = 92;
 
     let <i32>::foo ... <i32>::bar = 92;
+    let Option::None = None;
 }

@@ -82,7 +82,7 @@
     elementType(".+BinExpr") = BinaryExpr
     elementType(".+BinOp") = BinaryOp
 
-    extends("Pat(Wild|Ref|Tup|Vec|Macro|Struct|Enum|Ident|Range|Uniq|QualPath)") = Pat
+    extends("Pat(Wild|Ref|Tup|Vec|Macro|Struct|Enum|Ident|Range|Uniq|QualPath|Const)") = Pat
 
     generateTokenAccessors=true
 
@@ -388,6 +388,7 @@ Pat ::= PatWild
       | PatStruct
       | PatEnum
       | PatIdent
+      | (PatConst !'...')
       | PatRange
       | PatUniq
 
@@ -412,8 +413,8 @@ PatEnum   ::= PathGenericArgsWithColonsNoTypeQual '(' SeqPat ')'
 private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
 private PatField_with_recover ::= PatField (',' | & '}')
 
-PatRange ::= LitOrPath [ '...' LitOrPath ]
-private LitOrPath ::= LitExpr | PathExpr | &('-' LitExpr) UnaryExpr
+PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
+PatRange ::= PatConst '...' PatConst { pin = 2 }
 
 PatTup ::= '(' SeqPat ')'
 PatVec ::= '[' SeqPat ']'

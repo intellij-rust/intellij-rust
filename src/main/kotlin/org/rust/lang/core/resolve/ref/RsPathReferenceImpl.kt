@@ -8,13 +8,8 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsPathExpr
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsGenericDeclaration
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectPathResolveVariants
@@ -43,15 +38,16 @@ class RsPathReferenceImpl(
     override fun advancedResolve(): BoundElement<RsElement>? =
         advancedMultiResolve().firstOrNull()
 
-    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
-        advancedMultiResolve().toTypedArray()
-
-    override fun multiResolve(): List<RsNamedElement> =
-        advancedMultiResolve().mapNotNull { it.element as? RsNamedElement }
-
     override fun advancedMultiResolve(): List<BoundElement<RsElement>> =
         (element.parent as? RsPathExpr)?.let { it.inference?.getResolvedPath(it)?.map { BoundElement(it) } }
             ?: advancedCachedMultiResolve()
+
+    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
+        return (if (element.parentOfType<RsPatConst>() != null) resolvePath(element) else advancedMultiResolve()).toTypedArray()
+    }
+
+    override fun multiResolve(): List<RsNamedElement> =
+        multiResolve(false).mapNotNull { it.element as? RsNamedElement }
 
     private fun advancedCachedMultiResolve(): List<BoundElement<RsElement>> {
         return ResolveCache.getInstance(element.project)
