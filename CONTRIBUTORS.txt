@@ -21,6 +21,7 @@ Falkenfighter
 farodin91
 framlog
 greg-kargin
+Guillaume Eveillard
 HeyLey
 himikof
 HybridEidolon
