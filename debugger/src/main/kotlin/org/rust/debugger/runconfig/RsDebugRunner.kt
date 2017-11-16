@@ -146,6 +146,7 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
                             .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
                             .filter { (target, profile) ->
                                 target.cleanKind == CargoWorkspace.TargetKind.BIN
+                                    || target.cleanKind == CargoWorkspace.TargetKind.TEST
                                     || (target.cleanKind == CargoWorkspace.TargetKind.LIB && profile.test)
                             }
                             .flatMap { it.filenames }
