@@ -825,7 +825,7 @@ AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Exp
 StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
 StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
 
-BlockExpr ::= [ unsafe &'{' ] SimpleBlock
+BlockExpr ::= OuterAttr* [ unsafe &'{' ] SimpleBlock
 
 
 private AtomExpr ::= LitExpr
@@ -888,11 +888,11 @@ CastExpr ::= Expr (as | ':')  ScalarTypeReference
 
 TryExpr ::= Expr '?'
 
-UnaryExpr ::= (box | '-' | '*' | '!' | '&' mut?) Expr
+UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' mut?) Expr
 
-LambdaExpr ::= move? LambdaParameters RetType? AnyExpr
+LambdaExpr ::= OuterAttr* move? LambdaParameters RetType? AnyExpr
 
-StructLiteral ::= <<checkStructAllowed>> PathGenericArgsWithColonsNoTypeQual StructLiteralBody
+StructLiteral ::= <<checkStructAllowed>> OuterAttr* PathGenericArgsWithColonsNoTypeQual StructLiteralBody
 
 StructLiteralBody ::= '{' StructLiteralField_with_recover* ('..'  AnyExpr)? '}' { pin = 1 }
 
@@ -909,24 +909,24 @@ private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
 
 private StructLiteralField_recover ::= !(identifier | ',' | '}' | '..' | '#')
 
-PathExpr ::= PathGenericArgsWithColons
+PathExpr ::= OuterAttr* PathGenericArgsWithColons
 
-WhileExpr ::= LabelDecl? while Condition SimpleBlock {
+WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
   pin = 'while'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
 }
 Condition ::= [ let Pat '=' ] NoStructLitExpr
 
-LoopExpr ::= LabelDecl? loop SimpleBlock {
+LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
   pin = 'loop'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
 }
 
-ContExpr ::= continue Label?
+ContExpr ::= OuterAttr* continue Label?
 
-BreakExpr ::= break Label? AnyExpr?
+BreakExpr ::= OuterAttr* break Label? AnyExpr?
 
-ForExpr ::= LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
+ForExpr ::= OuterAttr* LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
   pin = 'for'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
 }
@@ -940,7 +940,7 @@ Label ::= QUOTE_IDENTIFIER {
   mixin = "org.rust.lang.core.psi.ext.RsLabelImplMixin"
 }
 
-MatchExpr ::= match NoStructLitExpr MatchBody { pin = 'match'}
+MatchExpr ::= OuterAttr* match NoStructLitExpr MatchBody { pin = 'match'}
 MatchBody ::= '{' MatchArm* '}' { pin = 1 }
 MatchArm ::= OuterAttr* Pat ('|' Pat)* MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
   pin = 2
@@ -949,12 +949,12 @@ MatchArm ::= OuterAttr* Pat ('|' Pat)* MatchArmGuard? '=>' StmtModeExpr (',' | (
 private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}')
 MatchArmGuard ::= if AnyExpr
 
-IfExpr ::= if Condition SimpleBlock ElseBranch? { pin = 'if' }
+IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? { pin = 'if' }
 ElseBranch ::= else ( IfExpr | SimpleBlock )
 
-RetExpr ::= return Expr?
+RetExpr ::= OuterAttr* return Expr?
 
-UnitExpr ::= '(' ')'
+UnitExpr ::= OuterAttr* '(' ')'
 
 fake TupleExpr ::= '(' AnyExpr+ ')'
 fake ParenExpr ::= '(' AnyExpr ')'
@@ -962,11 +962,11 @@ fake ParenExpr ::= '(' AnyExpr ')'
 // XXX: without the `pin`, upper rules won't work, GK can change element type
 // of the frame only if it already has some type
 // https://github.com/JetBrains/Grammar-Kit/blob/d716ade658c1f8e1f84bd0d61764c9949a7df5f2/src/org/intellij/grammar/parser/GeneratedParserUtilBase.java#L656
-TupleOrParenExpr ::= '(' AnyExpr (TupleExprUpper | ParenExprUpper) { pin = 1 }
+TupleOrParenExpr ::= OuterAttr* '(' AnyExpr (TupleExprUpper | ParenExprUpper) { pin = 2 }
 upper TupleExprUpper ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')' { elementType = TupleExpr}
 upper ParenExprUpper ::= ')' { elementType = ParenExpr }
 
-ArrayExpr ::= '[' ArrayInitializer ']' { pin = 1 }
+ArrayExpr ::= OuterAttr* '[' ArrayInitializer ']' { pin = 2 }
 private ArrayInitializer ::= [ AnyExpr ( ';' AnyExpr | (',' AnyExpr)* ','? ) ]
 
 fake RangeExpr ::= Expr? ('..' | '...') Expr?
@@ -995,11 +995,12 @@ MethodCall ::= identifier ColonTypeArgumentList? ValueArgumentList {
   mixin = "org.rust.lang.core.psi.ext.RsMethodCallImplMixin"
 }
 
-LitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL
-          | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
-          | CHAR_LITERAL | BYTE_LITERAL
-          | INTEGER_LITERAL | FLOAT_LITERAL
-          | BOOL_LITERAL
+LitExpr ::= OuterAttr*
+  (STRING_LITERAL | BYTE_STRING_LITERAL
+  | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
+  | CHAR_LITERAL | BYTE_LITERAL
+  | INTEGER_LITERAL | FLOAT_LITERAL
+  | BOOL_LITERAL)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Macros
@@ -1105,7 +1106,7 @@ private meta any_braces ::=
 { pin = 1 }
 
 // Macro wrappers
-MacroExpr ::= MacroCallNoSemicolons
+MacroExpr ::= OuterAttr* MacroCallNoSemicolons
 PatMacro ::= MacroCallNoSemicolons
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1134,14 +1135,14 @@ private BlockElement_recover ::= !('}' | Item_first | Expr_first | let | ';')
 
 Stmt ::= LetDecl | EmptyStmt | never ';'
 
-ExprStmtOrLastExpr ::= OuterAttr? StmtModeExpr (ExprStmtUpper | LastExprUpper)
+ExprStmtOrLastExpr ::= StmtModeExpr (ExprStmtUpper | LastExprUpper)
 
 upper ExprStmtUpper ::= ';' | () <<isBlock>> !('}') { elementType = ExprStmt }
 upper LastExprUpper ::= () &'}' { elementType = Expr pin = 1 }
 
-fake ExprStmt ::= OuterAttr? AnyExpr ';'? { extends = Stmt }
+fake ExprStmt ::= AnyExpr ';'? { extends = Stmt }
 
-LetDecl ::= OuterAttr? let Pat TypeAscription? [ '=' AnyExpr ] ';' {
+LetDecl ::= OuterAttr* let Pat TypeAscription? [ '=' AnyExpr ] ';' {
   extends = Stmt
   pin = "let"
 }

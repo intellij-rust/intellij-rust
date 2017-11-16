@@ -46,6 +46,8 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun testIssue320() = doTest(true)
     fun testDieselMacros() = doTest(true)
 
+    fun testAttrsInExprs() = doTest(true)
+
     override fun checkResult(targetDataName: String?, file: PsiFile?) {
         super.checkResult(targetDataName, file)
         check(!hasError(file!!)){
