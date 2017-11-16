@@ -92,7 +92,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         fn hello() {
             foo(5 + /*caret*/10);
         }
-    """, listOf("10", "5 + 10", "foo(5 + 10)"), 2 , """
+    """, listOf("10", "5 + 10", "foo(5 + 10)"), 2, """
         fn hello() {
             let foo = foo(5 + 10);
         }
@@ -136,6 +136,25 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
             let mut string = String::new();
 
             file.read_to_string(&mut string)
+        }
+    """)
+
+    fun `test tuple`() = doTest("""
+        fn foo((a, b): (u32, u32)) {}
+        fn bar() -> (u32, u32) {
+            (1, 2)
+        }
+        fn main() {
+            foo(/*caret*/bar());
+        }
+    """, listOf("bar()", "foo(bar())"), 0, """
+        fn foo((a, b): (u32, u32)) {}
+        fn bar() -> (u32, u32) {
+            (1, 2)
+        }
+        fn main() {
+            let bar = bar();
+            foo(bar);
         }
     """)
 

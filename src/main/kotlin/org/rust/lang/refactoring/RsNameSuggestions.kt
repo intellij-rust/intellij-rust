@@ -12,6 +12,7 @@ import org.rust.ide.inspections.toSnakeCase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import java.util.*
@@ -27,11 +28,14 @@ import java.util.*
  */
 fun RsExpr.suggestNames(): LinkedHashSet<String> {
     val names = LinkedHashSet<String>()
-    nameForType(this)?.let { names.addAll(rustNameUtil(it)) }
-    val parent = this.parent
 
+    if(!isTuple(this)) {
+        nameForType(this)?.let { names.addAll(rustNameUtil(it)) }
+    }
+
+    val parent = this.parent
     val foundNames = when {
-        this.isArgument() -> rustNameUtil(nameForArgument())
+        this.isArgument() && !isTuple(this) -> rustNameUtil(nameForArgument())
         this is RsCallExpr -> nameForCall(this).flatMap(::rustNameUtil)
         parent is RsStructLiteralField -> rustNameUtil(parent.identifier.text)
         else -> emptyList()
@@ -98,3 +102,5 @@ fun findNamesInLocalScope(expr: PsiElement): List<String> {
 private fun PsiElement.isArgument() = this.parent is RsValueArgumentList
 
 private fun rustNameUtil(name: String) = NameUtil.getSuggestionsByName(name, "", "", false, false, false).map { it.toSnakeCase(false) }
+
+private fun isTuple(expr: RsExpr) = expr.type is TyTuple
