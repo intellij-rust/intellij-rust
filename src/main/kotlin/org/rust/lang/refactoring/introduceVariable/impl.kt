@@ -6,7 +6,6 @@
 package org.rust.lang.refactoring.introduceVariable
 
 import com.intellij.codeInsight.PsiEquivalenceUtil
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -17,7 +16,7 @@ import org.rust.ide.utils.findExpressionInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.parentOfType
-import org.rust.lang.refactoring.suggestNames
+import org.rust.openapiext.runWriteCommandAction
 import java.util.*
 
 
@@ -83,17 +82,18 @@ private class ExpressionReplacer(
      *         or the statement surrounding the entire expression if it already had a semicolon.
      */
     fun inlineLet(project: Project, editor: Editor, expr: RsExpr, elementToReplace: PsiElement) {
-        var newNameElem: RsPatBinding? = null
-        val suggestNames = expr.suggestNames()
-        WriteCommandAction.runWriteCommandAction(project) {
-            val statement = psiFactory.createLetDeclaration(suggestNames.firstName(), expr)
+        val suggestedNames = expr.suggestedNames()
+        val nameElem: RsPatBinding? = project.runWriteCommandAction {
+            val statement = psiFactory.createLetDeclaration(suggestedNames.default, expr)
             val newStatement = elementToReplace.replace(statement)
-
-            newNameElem = moveEditorToNameElement(newStatement)
+            moveEditorToNameElement(newStatement)
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        newNameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(suggestNames) }
+        if (nameElem != null) {
+            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
+                .performInplaceRefactoring(suggestedNames.all)
+        }
     }
 
 
@@ -101,20 +101,20 @@ private class ExpressionReplacer(
         val anchor = findAnchor(exprs.minBy { it.textRange.startOffset } ?: chosenExpr)
             ?: return
 
-        val suggestNames = chosenExpr.suggestNames()
+        val suggestedNames = chosenExpr.suggestedNames()
+        val (let, name) = createLet(suggestedNames.default) ?: return
 
-        val (let, name) = createLet(suggestNames.firstName()) ?: return
-
-        var nameElem: RsPatBinding? = null
-
-        WriteCommandAction.runWriteCommandAction(project) {
+        val nameElem: RsPatBinding? = project.runWriteCommandAction {
             val newElement = introduceLet(project, anchor, let)
             exprs.forEach { it.replace(name) }
-            nameElem = moveEditorToNameElement(newElement)
+            moveEditorToNameElement(newElement)
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        nameElem?.let { RustInPlaceVariableIntroducer(it, editor, project, "choose a variable", emptyArray()).performInplaceRefactoring(suggestNames) }
+        if (nameElem != null) {
+            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
+                .performInplaceRefactoring(suggestedNames.all)
+        }
     }
 
     /**
@@ -184,8 +184,6 @@ private fun findOccurrences(expr: RsExpr): List<RsExpr> {
     block.acceptChildren(visitor)
     return visitor.foundOccurrences
 }
-
-private fun LinkedHashSet<String>.firstName() = this.firstOrNull() ?: "x"
 
 private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RsPatBinding::class.java)
 
