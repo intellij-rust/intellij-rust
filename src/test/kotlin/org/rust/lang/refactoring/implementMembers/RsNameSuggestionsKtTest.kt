@@ -3,17 +3,19 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.refactoring
+package org.rust.lang.refactoring.implementMembers
 
+import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.refactoring.introduceVariable.findCandidateExpressionsToExtract
+import org.rust.lang.refactoring.introduceVariable.suggestedNames
 
 class RsNameSuggestionsKtTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
 
-    fun testArgumentNames() = doTest("""
+    fun `test argument names`() = doTest("""
         fn foo(a: i32, veryCoolVariableName: i32) {
             a + b
         }
@@ -21,11 +23,11 @@ class RsNameSuggestionsKtTest : RsTestBase() {
         fn bar() {
             foo(4, 10/*caret*/)
         }
-    """) {
-        checkSuggestions(it, "i", "name", "variable_name", "cool_variable_name", "very_cool_variable_name")
-    }
+    """,
+        listOf("i", "name", "variable_name", "cool_variable_name", "very_cool_variable_name")
+    )
 
-    fun testNonDirectArgumentNames() = doTest("""
+    fun `test non direct argument names`() = doTest("""
         fn foo(a: i32, veryCoolVariableName: i32) {
             a + b
         }
@@ -33,12 +35,12 @@ class RsNameSuggestionsKtTest : RsTestBase() {
         fn bar() {
             foo(4, 1/*caret*/0 + 2)
         }
-    """) {
-        checkSuggestions(it, "i")
-    }
+    """,
+        listOf("i")
+    )
 
 
-    fun testFunctionNames() = doTest("""
+    fun `test function names`() = doTest("""
         fn foo(a: i32, veryCoolVariableName: i32) -> i32 {
             a + b
         }
@@ -46,39 +48,39 @@ class RsNameSuggestionsKtTest : RsTestBase() {
         fn bar() {
             f/*caret*/oo(4, 10 + 2)
         }
-    """) {
-        checkSuggestions(it, "i", "foo")
-    }
+    """,
+        listOf("i", "foo")
+    )
 
-    fun testStringNew() = doTest("""
+    fun `test string new`() = doTest("""
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
 
             file.read_to_string(&mut String:/*caret*/:new())?;
-    }""") {
-        checkSuggestions(it, "string", "new")
-    }
+    }""",
+        listOf("string")
+    )
 
-    fun testLocalNames() = doTest("""
+    fun `test local names`() = doTest("""
         fn foo() {
             let string = "hi";
             let b = String:/*caret*/:new();
         }
-    """) {
-        checkSuggestions(it, "new")
-    }
+    """,
+        listOf()
+    )
 
-    fun testFunctionCallAsArgument() = doTest("""
+    fun `test function call as argument`() = doTest("""
         fn foo(board_size: i32) {}
 
         fn bar() {
             foo(Default::de/*caret*/fault());
         }
-    """) {
-        checkSuggestions(it, "size", "board_size")
-    }
+    """,
+        listOf("size", "board_size")
+    )
 
-    fun testStructLiteral() = doTest("""
+    fun `test struct literal`() = doTest("""
         struct Foo {
             bar: i32,
             baz: i32,
@@ -89,11 +91,11 @@ class RsNameSuggestionsKtTest : RsTestBase() {
                 Foo{bar: 5, baz: 1/*caret*/0}
             }
         }
-        """) {
-        checkSuggestions(it, "i", "baz")
-    }
+    """,
+        listOf("i", "baz")
+    )
 
-    fun testGenericPath() = doTest("""
+    fun `test generic path`() = doTest("""
         struct Foo<T> {
             t: T,
         }
@@ -107,18 +109,32 @@ class RsNameSuggestionsKtTest : RsTestBase() {
         fn bar() {
             Foo:/*caret*/:<i32>::new(10)
         }
-        """) {
-        checkSuggestions(it, "f", "foo", "new")
-    }
+        """,
+        listOf("foo")
+    )
 
-    private fun doTest(@Language("Rust") before: String, action: (Set<String>) -> Unit) {
+    fun `test don't blow up on non-nominal type`() = doTest("""
+        fn main() {
+            (1, 2, 3)/*caret*/
+        }
+    """,
+        listOf()
+    )
+
+    fun `test don't blow up on non-trivial parameter name`() = doTest("""
+        fn foo((x, y): (i32, i32)) {}
+        fn main() {
+            foo((0, /*caret*/ 1))
+        }
+    """,
+        listOf()
+    )
+
+    private fun doTest(@Language("Rust") before: String, expected: List<String>) {
         InlineFile(before).withCaret()
         openFileInEditor("main.rs")
         val expr = findCandidateExpressionsToExtract(myFixture.editor, myFixture.file as RsFile).first()
-        action(expr.suggestNames())
-    }
-
-    private fun checkSuggestions(actual: Set<String>, vararg expected: String) {
-        check(actual == expected.toSet())
+        val suggestedNames = expr.suggestedNames()
+        TestCase.assertEquals(expected, suggestedNames.all.toList())
     }
 }

@@ -26,13 +26,16 @@ class RsNamesValidator : NamesValidator {
         }
     }
 
-    private fun getLexerType(text: String): IElementType? {
-        val lexer = RsLexer()
-        lexer.start(text)
-        return if (lexer.tokenEnd == text.length) lexer.tokenType else null
-    }
 
     companion object {
         val PredefinedLifetimes = arrayOf("'static")
     }
+}
+
+fun isValidRustVariableIdentifier(name: String): Boolean = getLexerType(name) == IDENTIFIER
+
+private fun getLexerType(text: String): IElementType? {
+    val lexer = RsLexer()
+    lexer.start(text)
+    return if (lexer.tokenEnd == text.length) lexer.tokenType else null
 }
