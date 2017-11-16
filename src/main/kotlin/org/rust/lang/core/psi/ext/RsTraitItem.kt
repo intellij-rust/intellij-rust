@@ -116,6 +116,10 @@ class TraitImplementationInfo private constructor(
         declared.filter { it.isAbstract }.filter { it.name !in implementedByName }
     else emptyList()
 
+    val alreadyImplemented: List<RsAbstractable> =  if (!hasMacros)
+        declared.filter { it.isAbstract }.filter { it.name in implementedByName }
+    else emptyList()
+
     val nonExistentInTrait: List<RsAbstractable> = implemented.filter { it.name !in declaredByName }
 
     val implementationToDeclaration: List<Pair<RsAbstractable, RsAbstractable>> =

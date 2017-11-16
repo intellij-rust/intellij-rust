@@ -264,6 +264,35 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test do not implement methods already present`() = doTest("""
+        trait T {
+            fn f1();
+            fn f2();
+            fn f3() {}
+        }
+        struct S;
+        impl T for S {
+            fn f1() { }
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("f2()", true, true),
+        ImplementMemberSelection("f3()", false, false)
+    ), """
+        trait T {
+            fn f1();
+            fn f2();
+            fn f3() {}
+        }
+        struct S;
+        impl T for S {
+            fn f1() { }
+            fn f2() {
+                unimplemented!()
+            }
+        }
+    """)
+
     private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 
     private fun doTest(@Language("Rust") code: String,
