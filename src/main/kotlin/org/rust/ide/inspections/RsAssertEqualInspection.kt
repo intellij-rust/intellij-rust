@@ -75,19 +75,17 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
             val factory = RsPsiFactory(project)
             val newAssert = factory.createExpression("$assertName!()") as RsCallExpr
 
-            val argPair = comparedAssertArgs(assertArgument) ?: return null
+            val (first, second) = comparedAssertArgs(assertArgument) ?: return null
 
             val args: MutableList<PsiElement> = mutableListOf(
-                argPair.first,
+                first,
                 factory.createComma(),
-                argPair.second
+                second
             )
 
-            if (assertArgument.formatMacroArgList.isNotEmpty()) {
-                for (arg: PsiElement in assertArgument.formatMacroArgList) {
-                    args.add(factory.createComma())
-                    args.add(arg)
-                }
+            for (arg: PsiElement in assertArgument.formatMacroArgList) {
+                args.add(factory.createComma())
+                args.add(arg)
             }
 
             addArguments(args, newAssert.valueArgumentList.lparen, newAssert.valueArgumentList)
