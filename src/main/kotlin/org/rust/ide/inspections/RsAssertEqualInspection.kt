@@ -53,9 +53,9 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val macro = descriptor.psiElement as RsMacroCall
             val assertArg = macro.assertMacroArgument!!
-            val argPair = comparedAssertArgs(assertArg) ?: return
 
-            macro.replace(buildAssert(project, "$assertName!()", argPair))
+            val newAssert = buildAssert(project, assertArg) ?: return
+            macro.replace(newAssert)
         }
 
         private fun comparedAssertArgs(arg: RsAssertMacroArgument): Pair<RsExpr, RsExpr>? {
@@ -71,12 +71,23 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
             }
         }
 
-        private fun buildAssert(project: Project, str: String, argPair: Pair<PsiElement, PsiElement>): PsiElement {
+        private fun buildAssert(project: Project, assertArgument: RsAssertMacroArgument): PsiElement? {
             val factory = RsPsiFactory(project)
-            val newAssert = factory.createExpression(str) as RsCallExpr
-            val args: MutableList<PsiElement> = mutableListOf(argPair.first)
-            args.add(factory.createComma())
-            args.add(argPair.second)
+            val newAssert = factory.createExpression("$assertName!()") as RsCallExpr
+
+            val (first, second) = comparedAssertArgs(assertArgument) ?: return null
+
+            val args: MutableList<PsiElement> = mutableListOf(
+                first,
+                factory.createComma(),
+                second
+            )
+
+            for (arg: PsiElement in assertArgument.formatMacroArgList) {
+                args.add(factory.createComma())
+                args.add(arg)
+            }
+
             addArguments(args, newAssert.valueArgumentList.lparen, newAssert.valueArgumentList)
             return newAssert
         }

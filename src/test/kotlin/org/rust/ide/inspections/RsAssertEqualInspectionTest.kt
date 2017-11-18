@@ -38,6 +38,20 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """)
 
+    fun `test simple assert_eq fix with format_args`() = checkFixByText("Convert to assert_eq!", """
+        fn main() {
+            let x = 10;
+            let y = 10;
+            <weak_warning descr="assert!(a == b) can be assert_eq!(a, b)">assert!(x == y, "format {}", 0<caret>)</weak_warning>;
+        }
+    """, """
+        fn main() {
+            let x = 10;
+            let y = 10;
+            assert_eq!(x, y, "format {}", 0);
+        }
+    """)
+
     fun `test simple assert_ne fix`() = checkFixByText("Convert to assert_ne!", """
         fn main() {
             let x = 10;
@@ -67,6 +81,20 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
 
         fn main() {
             assert_ne!(answer(), 50);
+        }
+    """)
+
+    fun `test simple assert_ne fix with format_args`() = checkFixByText("Convert to assert_ne!", """
+        fn main() {
+            let x = 10;
+            let y = 10;
+            <weak_warning descr="assert!(a == b) can be assert_eq!(a, b)">assert!(x != y, "format {}", 0<caret>)</weak_warning>;
+        }
+    """, """
+        fn main() {
+            let x = 10;
+            let y = 10;
+            assert_ne!(x, y, "format {}", 0);
         }
     """)
 }
