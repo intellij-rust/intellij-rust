@@ -11,6 +11,7 @@ import org.rust.TestProject
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.fileTree
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.resolve.NameResolutionTestmarks
 
 class CargoProjectResolveTest : RustWithToolchainTestBase() {
 
@@ -31,7 +32,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")
 
-    fun `test resolve external library`() = buildProject {
+    fun `test resolve external library which hides std crate`() = buildProject {
         toml("Cargo.toml", """
             [package]
             name = "intellij-rust-test"
@@ -50,6 +51,47 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             """)
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")
+
+    fun `test resolve external library which hides std crate in dependency`() {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+                foo = { path = "./foo" }
+            """)
+
+            dir("src") {
+                rust("lib.rs", "")
+            }
+
+            dir("foo") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "foo"
+                    version = "0.1.0"
+                    authors = []
+
+                    [dependencies]
+                    libc = "=0.2.30"
+                """)
+
+                dir("src") {
+                    rust("lib.rs", """
+                        extern crate libc;
+                        use libc::int8_t;
+                                  //^
+                    """)
+                }
+            }
+        }
+        NameResolutionTestmarks.shadowingStdCrates.checkHit {
+            testProject.checkReferenceIsResolved<RsPath>("foo/src/lib.rs")
+        }
+    }
 
     fun `test resolve local package`() = buildProject {
         toml("Cargo.toml", """

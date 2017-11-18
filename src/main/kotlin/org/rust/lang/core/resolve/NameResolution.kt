@@ -23,6 +23,7 @@ import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.openapiext.Testmark
 import org.rust.openapiext.toPsiFile
 import java.util.*
 
@@ -176,10 +177,13 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
     if (processPackage(pkg)) return true
     val explicitDepsFirst = pkg.dependencies.sortedBy {
         when (it.origin) {
-            PackageOrigin.WORKSPACE -> 0
-            PackageOrigin.DEPENDENCY -> 1
-            PackageOrigin.STDLIB -> 2
-            PackageOrigin.TRANSITIVE_DEPENDENCY -> 3
+            PackageOrigin.WORKSPACE,
+            PackageOrigin.DEPENDENCY,
+            PackageOrigin.TRANSITIVE_DEPENDENCY -> {
+                NameResolutionTestmarks.shadowingStdCrates.hit()
+                0
+            }
+            PackageOrigin.STDLIB -> 1
         }
     }
     for (p in explicitDepsFirst) {
@@ -907,4 +911,9 @@ private class LazyScopeEntry(
 private fun isSuperChain(path: RsPath): Boolean {
     val qual = path.path
     return (path.referenceName == "super" || path.referenceName == "self") && (qual == null || isSuperChain(qual))
+}
+
+
+object NameResolutionTestmarks {
+    val shadowingStdCrates = Testmark("shadowingStdCrates")
 }
