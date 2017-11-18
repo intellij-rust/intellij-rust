@@ -26,6 +26,8 @@ import javax.swing.Icon
 
 val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 
+val RsTraitItem.isSizedTrait: Boolean get() = langAttribute == "sized"
+
 val RsTraitItem.isStdDerivable: Boolean get() {
     val derivableTrait = STD_DERIVABLE_TRAITS[name] ?: return false
     return containingCargoPackage?.origin == PackageOrigin.STDLIB &&

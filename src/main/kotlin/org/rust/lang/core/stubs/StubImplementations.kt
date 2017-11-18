@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 107
+        override fun getStubVersion(): Int = 108
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -698,26 +698,29 @@ class RsPathStub(
 
 class RsTypeParameterStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?
+    override val name: String?,
+    val isSized: Boolean
 ) : StubBase<RsTypeParameter>(parent, elementType),
     RsNamedStub {
 
     object Type : RsStubElementType<RsTypeParameterStub, RsTypeParameter>("TYPE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsTypeParameterStub(parentStub, this,
-                dataStream.readNameAsString()
+                dataStream.readNameAsString(),
+                dataStream.readBoolean()
             )
 
         override fun serialize(stub: RsTypeParameterStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
+                writeBoolean(stub.isSized)
             }
 
         override fun createPsi(stub: RsTypeParameterStub): RsTypeParameter =
             RsTypeParameterImpl(stub, this)
 
         override fun createStub(psi: RsTypeParameter, parentStub: StubElement<*>?) =
-            RsTypeParameterStub(parentStub, this, psi.name)
+            RsTypeParameterStub(parentStub, this, psi.name, psi.isSized)
 
         override fun indexStub(stub: RsTypeParameterStub, sink: IndexSink) {
             // NOP

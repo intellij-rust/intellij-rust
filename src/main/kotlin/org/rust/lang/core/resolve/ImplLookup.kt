@@ -67,6 +67,9 @@ class ImplLookup(
     private val copyTrait: RsTraitItem? by lazy(NONE) {
         RsNamedElementIndex.findDerivableTraits(project, "Copy").firstOrNull()
     }
+    private val sizedTrait: RsTraitItem? by lazy(NONE) {
+        RsLangItemIndex.findLangItem(project, "sized")
+    }
     private val derefTraitAndTarget: Pair<RsTraitItem, RsTypeAlias>? = run {
         val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
         findAssociatedType(trait, "Target")?.let { trait to it }
@@ -221,16 +224,23 @@ class ImplLookup(
         }
     }
 
-    private fun assembleCandidates(ref: TraitRef): Set<SelectionCandidate> = buildSet {
-        addAll(assembleImplCandidates(ref))
-        addAll(assembleDerivedCandidates(ref))
-        if (ref.selfTy is TyFunction && ref.trait.element in fnTraits) add(SelectionCandidate.Closure)
-        if (ref.selfTy is TyTypeParameter) {
-            val bound = ref.selfTy.getTraitBoundsTransitively().find { it.element == ref.trait.element }
-            if (bound != null) add(SelectionCandidate.TypeParameter(bound))
+    private fun assembleCandidates(ref: TraitRef): Set<SelectionCandidate> {
+        val element = ref.trait.element
+        if (element == sizedTrait) {
+            return sizedTraitCandidates(ref.selfTy, element)
         }
-        getHardcodedImpls(ref.selfTy).find { it.element == ref.trait.element }
-            ?.let { add(SelectionCandidate.TypeParameter(it)) }
+
+        return buildSet {
+            addAll(assembleImplCandidates(ref))
+            addAll(assembleDerivedCandidates(ref))
+            if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
+            if (ref.selfTy is TyTypeParameter) {
+                val bound = ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
+                if (bound != null) add(SelectionCandidate.TypeParameter(bound))
+            }
+            getHardcodedImpls(ref.selfTy).find { it.element == element }
+                ?.let { add(SelectionCandidate.TypeParameter(it)) }
+        }
     }
 
     private fun assembleImplCandidates(ref: TraitRef): List<SelectionCandidate> {
@@ -260,6 +270,16 @@ class ImplLookup(
             .filter { it.isStdDerivable }
             .filter { it == ref.trait.element }
             .map { SelectionCandidate.DerivedTrait(it) }
+    }
+
+    private fun sizedTraitCandidates(ty: Ty, sizedTrait: RsTraitItem): Set<SelectionCandidate> {
+        if (!ty.isSized()) return emptySet()
+        val candidate = if (ty is TyTypeParameter) {
+            SelectionCandidate.TypeParameter(sizedTrait.withSubst())
+        } else {
+            SelectionCandidate.DerivedTrait(sizedTrait)
+        }
+        return setOf(candidate)
     }
 
     private fun confirmCandidate(
@@ -434,7 +454,13 @@ class ImplLookup(
         return ref.asFunctionType
     }
 
-    fun isCopy(ty: Ty): Boolean = findImplsAndTraits(ty).any { it == copyTrait }
+    fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(copyTrait)
+    fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(sizedTrait)
+
+    private fun Ty.isTraitImplemented(trait: RsTraitItem?): Boolean {
+        if (trait == null) return false
+        return select(TraitRef(this, trait.withSubst())).ok() != null
+    }
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
         get() {
