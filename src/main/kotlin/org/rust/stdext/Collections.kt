@@ -5,32 +5,31 @@
 
 package org.rust.stdext
 
+@Suppress("UNCHECKED_CAST")
+fun <T> buildList(builder: (CollectionBuilder<T>).() -> Unit): List<T> =
+    buildCollection(mutableListOf(), builder) as List<T>
 
-fun <T> buildList(builder: (ListBuilder<T>).() -> Unit): List<T> {
-    val result = mutableListOf<T>()
-    object : ListBuilder<T> {
+@Suppress("UNCHECKED_CAST")
+fun <T> buildSet(builder: (CollectionBuilder<T>).() -> Unit): Set<T> =
+    buildCollection(mutableSetOf(), builder) as Set<T>
+
+private fun <T> buildCollection(result: MutableCollection<T>,
+                                builder: (CollectionBuilder<T>).() -> Unit): MutableCollection<T> {
+    object : CollectionBuilder<T> {
         override fun add(item: T) {
             result.add(item)
         }
 
-        override fun addAll(items: List<T>) {
+        override fun addAll(items: Collection<T>) {
             result.addAll(items)
         }
     }.builder()
     return result
 }
 
-interface ListBuilder<in T> {
+interface CollectionBuilder<in T> {
     fun add(item: T)
-    fun addAll(items: List<T>)
-}
-
-fun <T> concatLists(vararg lists: Collection<T>): List<T> {
-    val result = ArrayList<T>(lists.sumBy { it.size })
-    for (list in lists) {
-        result.addAll(list)
-    }
-    return result
+    fun addAll(items: Collection<T>)
 }
 
 fun makeBitMask(bitToSet: Int): Int = 1 shl bitToSet
