@@ -968,4 +968,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
 
         use foo::Bar;
     """)
+
+    fun `test function args should implement Sized trait E0277`() = checkErrors("""
+        fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
+        fn foo2(bar: i32) {}
+    """)
+
+    fun `test function return type should implement Sized trait E0277`() = checkErrors("""
+        fn foo1() -> <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error> { unimplemented!() }
+        fn foo2() -> i32 { unimplemented!() }
+    """)
+
+    fun `test trait method can have arg with Self type E0277`() = checkErrors("""
+        trait Foo {
+            fn foo(x: Self);
+        }
+    """)
+
+    fun `test trait method can return Self type E0277`() = checkErrors("""
+        trait Foo {
+            fn foo() -> Self;
+        }
+    """)
 }
