@@ -15,13 +15,11 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
-import org.rust.ide.annotator.fixes.AddSelfFix
-import org.rust.ide.annotator.fixes.AddUnsafeFix
-import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
-import org.rust.ide.annotator.fixes.SurroundWithUnsafeFix
+import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
 
@@ -493,7 +491,8 @@ sealed class RsDiagnostic(
             ERROR,
             E0277,
             header = escapeString("the trait bound `$ty: std::marker::Sized` is not satisfied"),
-            description = escapeString("`$ty` does not have a constant size known at compile-time")
+            description = escapeString("`$ty` does not have a constant size known at compile-time"),
+            fixes = listOf(ConvertToReferenceFix(element), ConvertToBoxFix(element))
         )
     }
 }
