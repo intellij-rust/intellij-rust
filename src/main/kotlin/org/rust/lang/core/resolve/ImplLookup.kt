@@ -21,8 +21,7 @@ import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 import org.rust.openapiext.ProjectCache
-import org.rust.stdext.buildList
-import org.rust.stdext.concatLists
+import org.rust.stdext.buildSet
 import kotlin.LazyThreadSafetyMode.NONE
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
@@ -68,6 +67,9 @@ class ImplLookup(
     private val copyTrait: RsTraitItem? by lazy(NONE) {
         RsNamedElementIndex.findDerivableTraits(project, "Copy").firstOrNull()
     }
+    private val sizedTrait: RsTraitItem? by lazy(NONE) {
+        RsLangItemIndex.findLangItem(project, "sized")
+    }
     private val derefTraitAndTarget: Pair<RsTraitItem, RsTypeAlias>? = run {
         val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
         findAssociatedType(trait, "Target")?.let { trait to it }
@@ -91,24 +93,27 @@ class ImplLookup(
             return _ctx!!
         }
 
-    fun findImplsAndTraits(ty: Ty): Collection<RsTraitOrImpl> {
+    fun findImplsAndTraits(ty: Ty): Set<RsTraitOrImpl> {
         return findImplsAndTraitsCache.getOrPut(project, freshen(ty)) { rawFindImplsAndTraits(ty) }
     }
 
-    private fun rawFindImplsAndTraits(ty: Ty): Collection<RsTraitOrImpl> {
-        return when (ty) {
-            is TyTypeParameter -> ty.getTraitBoundsTransitively().map { it.element }
-            is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy.map { it.element }
+    private fun rawFindImplsAndTraits(ty: Ty): Set<RsTraitOrImpl> {
+        val implsAndTraits = mutableSetOf<RsTraitOrImpl>()
+        when (ty) {
+            is TyTypeParameter -> ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { it.element }
+            is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy.mapTo(implsAndTraits) { it.element }
             is TyFunction -> {
-                findSimpleImpls(ty) + fnTraits
+                implsAndTraits += findSimpleImpls(ty)
+                implsAndTraits += fnTraits
             }
-            is TyUnknown -> emptyList()
-            else -> concatLists(
-                findDerivedTraits(ty),
-                getHardcodedImpls(ty).map { it.element },
-                findSimpleImpls(ty)
-            )
+            is TyUnknown -> Unit
+            else -> {
+                implsAndTraits += findDerivedTraits(ty)
+                implsAndTraits += findSimpleImpls(ty)
+                getHardcodedImpls(ty).mapTo(implsAndTraits) { it.element }
+            }
         }
+        return implsAndTraits
     }
 
     private fun findDerivedTraits(ty: Ty): Collection<RsTraitItem> {
@@ -219,16 +224,23 @@ class ImplLookup(
         }
     }
 
-    private fun assembleCandidates(ref: TraitRef): List<SelectionCandidate> = buildList {
-        addAll(assembleImplCandidates(ref))
-        addAll(assembleDerivedCandidates(ref))
-        if (ref.selfTy is TyFunction && ref.trait.element in fnTraits) add(SelectionCandidate.Closure)
-        if (ref.selfTy is TyTypeParameter) {
-            val bound = ref.selfTy.getTraitBoundsTransitively().find { it.element == ref.trait.element }
-            if (bound != null) add(SelectionCandidate.TypeParameter(bound))
+    private fun assembleCandidates(ref: TraitRef): Set<SelectionCandidate> {
+        val element = ref.trait.element
+        if (element == sizedTrait) {
+            return sizedTraitCandidates(ref.selfTy, element)
         }
-        getHardcodedImpls(ref.selfTy).find { it.element == ref.trait.element }
-            ?.let { add(SelectionCandidate.TypeParameter(it)) }
+
+        return buildSet {
+            addAll(assembleImplCandidates(ref))
+            addAll(assembleDerivedCandidates(ref))
+            if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
+            if (ref.selfTy is TyTypeParameter) {
+                val bound = ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
+                if (bound != null) add(SelectionCandidate.TypeParameter(bound))
+            }
+            getHardcodedImpls(ref.selfTy).find { it.element == element }
+                ?.let { add(SelectionCandidate.TypeParameter(it)) }
+        }
     }
 
     private fun assembleImplCandidates(ref: TraitRef): List<SelectionCandidate> {
@@ -258,6 +270,16 @@ class ImplLookup(
             .filter { it.isStdDerivable }
             .filter { it == ref.trait.element }
             .map { SelectionCandidate.DerivedTrait(it) }
+    }
+
+    private fun sizedTraitCandidates(ty: Ty, sizedTrait: RsTraitItem): Set<SelectionCandidate> {
+        if (!ty.isSized()) return emptySet()
+        val candidate = if (ty is TyTypeParameter) {
+            SelectionCandidate.TypeParameter(sizedTrait.withSubst())
+        } else {
+            SelectionCandidate.DerivedTrait(sizedTrait)
+        }
+        return setOf(candidate)
     }
 
     private fun confirmCandidate(
@@ -432,7 +454,13 @@ class ImplLookup(
         return ref.asFunctionType
     }
 
-    fun isCopy(ty: Ty): Boolean = findImplsAndTraits(ty).any { it == copyTrait }
+    fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(copyTrait)
+    fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(sizedTrait)
+
+    private fun Ty.isTraitImplemented(trait: RsTraitItem?): Boolean {
+        if (trait == null) return false
+        return select(TraitRef(this, trait.withSubst())).ok() != null
+    }
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
         get() {
@@ -448,7 +476,7 @@ class ImplLookup(
             ImplLookup(psi.project, StdKnownItems.relativeTo(psi))
 
         private val findImplsAndTraitsCache =
-            ProjectCache<Ty, Collection<RsTraitOrImpl>>("findImplsAndTraitsCache")
+            ProjectCache<Ty, Set<RsTraitOrImpl>>("findImplsAndTraitsCache")
 
         private val traitSelectionCache =
             ProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("traitSelectionCache")

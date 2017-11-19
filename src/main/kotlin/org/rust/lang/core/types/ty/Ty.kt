@@ -7,11 +7,14 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.util.BitUtil
 import org.rust.lang.core.psi.RsTypeParameter
+import org.rust.lang.core.psi.ext.namedFields
+import org.rust.lang.core.psi.ext.positionalFields
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.type
 
 typealias Substitution = Map<TyTypeParameter, Ty>
 val emptySubstitution: Substitution = emptyMap()
@@ -85,3 +88,29 @@ fun mergeFlags(element: BoundElement<*>): TypeFlags =
 
 fun mergeFlags(tys: List<Ty>): TypeFlags =
     tys.fold(0) { a, b -> a or b.flags }
+
+tailrec fun Ty.isSized(): Boolean {
+    return when (this) {
+        is TyPrimitive,
+        is TyReference,
+        is TyPointer,
+        is TyArray,
+        is TyEnum,
+        is TyFunction -> true
+        is TySlice, is TyTraitObject -> false
+        is TyTypeParameter -> isSized
+        is TyStruct -> {
+            val namedFields = item.namedFields
+            val tupleFields = item.positionalFields
+            val typeRef = when {
+                namedFields.isNotEmpty() -> namedFields.last().typeReference
+                tupleFields.isNotEmpty() -> tupleFields.last().typeReference
+                else -> null
+            }
+            val type = typeRef?.type?.substitute(typeParameterValues) ?: return true
+            type.isSized()
+        }
+        is TyTuple -> types.last().isSized()
+        else -> true
+    }
+}

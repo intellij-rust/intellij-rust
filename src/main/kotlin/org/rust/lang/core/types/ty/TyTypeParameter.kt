@@ -6,6 +6,7 @@
 package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.tyToString
+import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeParameter
@@ -13,9 +14,11 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
+import org.rust.lang.core.types.type
 
 class TyTypeParameter private constructor(
     val parameter: TypeParameter,
+    val isSized: Boolean,
     boundsSupplier: () -> Collection<BoundElement<RsTraitItem>>
 ) : Ty(HAS_TY_TYPE_PARAMETER_MASK) {
 
@@ -58,15 +61,21 @@ class TyTypeParameter private constructor(
     }
 
     companion object {
-        private val self = TyTypeParameter(Self, { emptyList() })
+        private val self = TyTypeParameter(Self, isSized = false) { emptyList() }
 
         fun self(): TyTypeParameter = self
 
-        fun self(trait: RsTraitOrImpl): TyTypeParameter =
-            TyTypeParameter(Self, { listOfNotNull(trait.implementedTrait) })
+        fun self(item: RsTraitOrImpl): TyTypeParameter {
+            val isSized = when (item) {
+                is RsTraitItem -> item.implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait  }
+                is RsImplItem -> item.typeReference?.type?.isSized() == true
+                else -> error("item must be instance of `RsTraitItem` or `RsImplItem`")
+            }
+            return TyTypeParameter(Self, isSized) { listOfNotNull(item.implementedTrait) }
+        }
 
         fun named(parameter: RsTypeParameter): TyTypeParameter =
-            TyTypeParameter(Named(parameter)) { bounds(parameter) }
+            TyTypeParameter(Named(parameter), parameter.isSized) { bounds(parameter) }
 
         fun associated(target: RsTypeAlias): TyTypeParameter =
             associated(self(), target)
@@ -80,10 +89,16 @@ class TyTypeParameter private constructor(
         fun associated(type: Ty, trait: RsTraitItem, target: RsTypeAlias): TyTypeParameter {
             return TyTypeParameter(
                 AssociatedType(type, trait, target),
-                { emptyList() } )
+                // TODO: support associated type bounds
+                isSized = true
+            ) { emptyList() }
         }
     }
 }
 
 private fun bounds(parameter: RsTypeParameter): List<BoundElement<RsTraitItem>> =
-    parameter.bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+    parameter.bounds.mapNotNull {
+        val trait = it.bound.traitRef?.resolveToBoundTrait ?: return@mapNotNull null
+        // if `T: ?Sized` then T doesn't have `Sized` bound
+        if (!trait.element.isSizedTrait || parameter.isSized) trait else null
+    }
