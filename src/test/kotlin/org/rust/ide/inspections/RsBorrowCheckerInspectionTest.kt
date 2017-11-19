@@ -5,8 +5,6 @@
 
 package org.rust.ide.inspections
 
-import org.junit.ComparisonFailure
-
 class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection(), useStdLib = true) {
 
     fun `test mutable used at ref mutable method call (self)`() = checkByText("""
@@ -307,18 +305,15 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         }
     """)
 
-    fun `test &mut on function`() = expect<ComparisonFailure> {
-        checkByText("""
+    fun `test &mut on function`() = checkByText("""
         fn foo() {}
 
         fn main() {
             let local = &mut foo;
         }
     """)
-    }
 
-    fun `test &mut on method`() = expect<ComparisonFailure> {
-        checkByText("""
+    fun `test &mut on method`() = checkByText("""
         struct A {}
         impl A {
             fn foo(&mut self) {}
@@ -328,5 +323,4 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let local = &mut A::foo;
         }
     """)
-    }
 }
