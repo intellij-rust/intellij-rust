@@ -47,7 +47,7 @@ class TyTypeParameter private constructor(
     interface TypeParameter {
         val name: String?
     }
-    private object Self : TypeParameter {
+    object Self : TypeParameter {
         override val name: String? get() = "Self"
     }
 

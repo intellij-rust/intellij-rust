@@ -21,8 +21,7 @@ import org.rust.lang.core.psi.impl.RsMembersImpl
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.types.inference
-import org.rust.lang.core.types.ty.TyPointer
-import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
@@ -305,6 +304,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             if (!it.experimental) it.addToHolder(holder)
         }
         checkDuplicates(holder, fn)
+        checkTypesAreSized(holder, fn)
     }
 
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
@@ -458,4 +458,30 @@ private fun isValidSelfSuperPrefix(path: RsPath): Boolean {
         return q.self != null || q.`super` != null
     }
     return true
+}
+
+private fun checkTypesAreSized(holder: AnnotationHolder, fn: RsFunction) {
+    val arguments = fn.valueParameterList?.valueParameterList.orEmpty()
+    val retType = fn.retType
+    if (arguments.isEmpty() && retType == null) return
+
+    val owner = fn.owner
+
+    fun isError(ty: Ty): Boolean = !ty.isSized() &&
+        // Self type in trait method is not an error
+        !(owner is RsFunctionOwner.Trait && ty is TyTypeParameter && ty.parameter is TyTypeParameter.Self)
+
+    for (arg in arguments) {
+        val typeReference = arg.typeReference ?: continue
+        val ty = typeReference.type
+        if (isError(ty)) {
+            RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
+        }
+    }
+
+    val typeReference = retType?.typeReference ?: return
+    val ty = typeReference.type
+    if (isError(ty)) {
+        RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
+    }
 }
