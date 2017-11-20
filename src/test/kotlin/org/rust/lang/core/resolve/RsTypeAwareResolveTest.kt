@@ -604,4 +604,38 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             let a: S = T::foo();
         }               //^
     """)
+
+    fun `test resolve impl Trait method`() = checkByCode("""
+        trait Trait {
+            fn bar(self);
+        }     //X
+        fn foo() -> impl Trait { unimplemented!() }
+        fn main() {
+            foo().bar();
+        }       //^
+    """)
+
+    fun `test resolve impl Trait1+Trait2 method of Trait1`() = checkByCode("""
+        trait Trait1 {
+            fn bar(self);
+        }     //X
+        trait Trait2 { fn baz(self); }
+        fn foo() -> impl Trait1+Trait2 { unimplemented!() }
+        fn main() {
+            foo().bar();
+                //^
+        }
+    """)
+
+    fun `test resolve impl Trait1+Trait2 method of Trait2`() = checkByCode("""
+        trait Trait1 { fn bar(self); }
+        trait Trait2 {
+            fn baz(self);
+        }     //X
+        fn foo() -> impl Trait1+Trait2 { unimplemented!() }
+        fn main() {
+            foo().baz();
+                //^
+        }
+    """)
 }

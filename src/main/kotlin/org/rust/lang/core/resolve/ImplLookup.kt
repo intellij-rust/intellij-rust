@@ -106,6 +106,7 @@ class ImplLookup(
                 implsAndTraits += findSimpleImpls(ty)
                 implsAndTraits += fnTraits
             }
+            is TyAnon -> ty.traits.mapTo(implsAndTraits) { it.element }
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty)

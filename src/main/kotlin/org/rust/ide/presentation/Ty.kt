@@ -67,6 +67,7 @@ private fun render(
             is TyInfer.FloatVar -> float
         }
         is FreshTyInfer -> "<fresh>" // really should never be displayed; debug only
+        is TyAnon -> ty.traits.map { it.element.name ?: anonymous }.joinToString("+", "impl ")
         else -> error("unreachable")
     }
 }
