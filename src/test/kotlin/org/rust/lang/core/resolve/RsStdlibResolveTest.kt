@@ -5,11 +5,13 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.lang.core.types.infer.TypeInferenceMarks
+
 class RsStdlibResolveTest : RsResolveTestBase() {
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
-    fun testResolveFs() = stubOnlyResolve("""
+    fun `test resolve fs`() = stubOnlyResolve("""
     //- main.rs
         use std::fs::File;
                     //^ ...libstd/fs.rs
@@ -17,7 +19,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {}
     """)
 
-    fun testResolveCollections() = stubOnlyResolve("""
+    fun `test resolve collections`() = stubOnlyResolve("""
     //- main.rs
         use std::collections::Bound;
                              //^ ...lib.rs
@@ -25,7 +27,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {}
     """)
 
-    fun testResolveCore() = stubOnlyResolve("""
+    fun `test resolve core`() = stubOnlyResolve("""
     //- main.rs
         // FromStr is defined in `core` and reexported in `std`
         use std::str::FromStr;
@@ -34,7 +36,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() { }
     """)
 
-    fun testResolvePrelude() = stubOnlyResolve("""
+    fun `test resolve prelude`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let _ = String::new();
@@ -42,7 +44,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testResolvePreludeInModule() = stubOnlyResolve("""
+    fun `test resolve prelude in module`() = stubOnlyResolve("""
     //- main.rs
         mod tests {
             fn test() {
@@ -52,7 +54,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testResolveBox() = stubOnlyResolve("""
+    fun `test resolve box`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let _ = Box::new(92);
@@ -80,7 +82,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                   //^ unresolved
     """)
 
-    fun testResolveOption() = stubOnlyResolve("""
+    fun `test resolve option`() = stubOnlyResolve("""
     //- main.rs
         fn f(i: i32) -> Option<i32> {}
 
@@ -421,7 +423,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test ? operator`() = checkByCode("""
+    fun `test ? operator with result`() = checkByCode("""
         struct S { field: u32 }
                     //X
         fn foo() -> Result<S, ()> { unimplemented!() }
@@ -432,6 +434,20 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             //^
         }
     """)
+
+    fun `test try operator with option`() = TypeInferenceMarks.questionOperator.checkHit {
+        checkByCode("""
+            struct S { field: u32 }
+                        //X
+            fn foo() -> Option<S> { unimplemented!() }
+
+            fn main() {
+                let s = foo()?;
+                s.field;
+                //^
+            }
+        """)
+    }
 
     fun `test try! macro`() = checkByCode("""
         struct S { field: u32 }
