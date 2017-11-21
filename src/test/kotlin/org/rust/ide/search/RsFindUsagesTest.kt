@@ -5,8 +5,8 @@
 
 package org.rust.ide.search
 
+import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.ide.actions.mover.line
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 
@@ -174,4 +174,6 @@ class RsFindUsagesTest : RsTestBase() {
         val MARKER = "// - "
         val COMPARE_SEPARATOR = " | "
     }
+
+    val PsiElement.line: Int? get() = containingFile.viewProvider.document?.getLineNumber(textRange.startOffset)
 }
