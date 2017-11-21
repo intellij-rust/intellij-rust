@@ -1,9 +1,3 @@
-#![allow(dead_code)]    #![cfg(test)]
-    #![foo]
-
-
-
-#![bar]
 
 
 
@@ -11,52 +5,7 @@ use std::fmt; // Import the `fmt` module.
 
 
 
-#[allow(dead_code)] #[cfg(test)]
-#[foo] struct Rectangle {
 
-
-    p1: Point, p2: Point,
-    p3: Point,
-
-    p4: Point, p5: Point,
-
-
-    p6: Point, p7: Point
-
-
-}
-
-
-
-
-#[baz] /* x */
-#[allow(dead_code)]/* a */    #[cfg(test)]       /* b */ #[foo] /* c */ enum Person {
-
-
-    // An `enum` may either be `unit-like`,
-    Skinny, Fat,
-
-
-
-    // like tuple structs,
-    Height(i32), Weight(i32),
-
-
-
-    // or like structures.
-    Info {
-
-
-        name: String,
-
-
-        height: i32
-
-
-    }
-
-
-}
 
 
 
@@ -116,16 +65,7 @@ struct List(Vec<i32>);
 
 
 
-#[abra]
-
-
-
-#[kada]
-
-
-
-
-#[bra]    fn main() {
+    fn main() {
     let v = List(vec![1, 2, 3]);// foo
     println!("{}", v);   // bar
 
@@ -137,10 +77,6 @@ struct List(Vec<i32>);
 
 fn many_stmts() { let a = { let inner = 3; (inner * inner) };}
 
-struct Foo { }
-enum Moo { }
-mod Bar { }
-extern { }
 
 fn closures() {
     let square = ( |i:  i32 | i  *  i );
