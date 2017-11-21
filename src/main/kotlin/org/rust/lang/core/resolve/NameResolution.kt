@@ -338,7 +338,7 @@ fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project)
 }
 
 fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolveProcessor): Boolean {
-    val definition = ref.parentOfType<RsMacroDefinitionCase>() ?: return false
+    val definition = ref.ancestorStrict<RsMacroDefinitionCase>() ?: return false
     val simple = definition.macroPattern.descendantsOfType<RsMacroBinding>()
         .toList()
 
@@ -346,7 +346,7 @@ fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolvePro
 }
 
 fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProcessor): Boolean {
-    if (element.parentOfType<RsMetaItem>()?.referenceName != "derive") return false
+    if (element.ancestorStrict<RsMetaItem>()?.referenceName != "derive") return false
     val traitName = element.referenceName
     val traits = RsNamedElementIndex.findDerivableTraits(element.project, traitName)
     return processAll(traits, processor)
@@ -366,7 +366,7 @@ fun processMacroDeclarations(scope: RsElement, processor: RsResolveProcessor): B
 
 fun processBinaryOpVariants(element: RsBinaryOp, operator: OverloadableBinaryOperator,
                             processor: RsResolveProcessor): Boolean {
-    val binaryExpr = element.parentOfType<RsBinaryExpr>() ?: return false
+    val binaryExpr = element.ancestorStrict<RsBinaryExpr>() ?: return false
     val rhsType = binaryExpr.right?.type ?: return false
     val lhsType = binaryExpr.left.type
     val lookup = ImplLookup.relativeTo(element)

@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.declaration
 
@@ -41,8 +41,8 @@ class AddMutableFix(binding: RsNamedElement) : LocalQuickFixAndIntentionActionOn
 fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = true) {
     when (binding) {
         is RsPatBinding -> {
-            val tuple = binding.parentOfType<RsPatTup>()
-            val parameter = binding.parentOfType<RsValueParameter>()
+            val tuple = binding.ancestorStrict<RsPatTup>()
+            val parameter = binding.ancestorStrict<RsValueParameter>()
             if (tuple != null && parameter != null) {
                 return
             }

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.isSelf
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 /**
  * Removes the curly braces on singleton imports, changing from this
@@ -37,7 +37,7 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RemoveCurlyBracesIntention.Context? {
-        val useItem = element.parentOfType<RsUseItem>() ?: return null
+        val useItem = element.ancestorStrict<RsUseItem>() ?: return null
         val useItemPath = useItem.path ?: return null
         val useGlobList = useItem.useGlobList ?: return null
         if (useGlobList.children.size != 1) return null

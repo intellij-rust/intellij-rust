@@ -16,7 +16,7 @@ class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<Rs
     override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsTypeParameterList? {
-        val genericParams = element.parentOfType<RsTypeParameterList>() ?: return null
+        val genericParams = element.ancestorStrict<RsTypeParameterList>() ?: return null
         val hasTypeBounds = genericParams.typeParameterList.any { it.typeParamBounds != null }
         val hasLifetimeBounds = genericParams.lifetimeParameterList.any { it.lifetimeParamBounds != null }
         return if (hasTypeBounds || hasLifetimeBounds) genericParams else null
@@ -27,7 +27,7 @@ class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<Rs
         val typeBounds = ctx.typeParameterList
         val whereClause = RsPsiFactory(project).createWhereClause(lifetimeBounds, typeBounds)
 
-        val declaration = ctx.parentOfType<RsGenericDeclaration>() ?: return
+        val declaration = ctx.ancestorStrict<RsGenericDeclaration>() ?: return
         val addedClause = declaration.addWhereClause(whereClause) ?: return
         val offset = addedClause.textOffset + whereClause.textLength
         editor.caretModel.moveToOffset(offset)

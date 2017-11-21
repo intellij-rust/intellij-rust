@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.isStarImport
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 /**
  * Adds curly braces to singleton imports, changing from this
@@ -38,7 +38,7 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val useItem = element.parentOfType<RsUseItem>() ?: return null
+        val useItem = element.ancestorStrict<RsUseItem>() ?: return null
         val semicolon = useItem.semicolon ?: return null
         val path = useItem.path ?: return null
         if (useItem.useGlobList != null || useItem.isStarImport) return null

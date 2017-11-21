@@ -14,8 +14,8 @@ import com.jetbrains.cidr.execution.debugger.evaluation.CidrMemberValue
 import org.rust.lang.core.psi.RsCodeFragmentFactory
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
-import org.rust.lang.core.psi.ext.parentOfType
 
 class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper(process) {
     override fun computeSourcePosition(value: CidrMemberValue): XSourcePosition? = null
@@ -39,7 +39,7 @@ class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper
 }
 
 private fun resolveToDeclaration(ctx: PsiElement?, name: String): PsiElement? {
-    val composite = ctx?.getNextNonCommentSibling()?.parentOfType<RsElement>(strict = false)
+    val composite = ctx?.getNextNonCommentSibling()?.ancestorOrSelf<RsElement>()
         ?: return null
     val path = RsCodeFragmentFactory(composite.project).createPath(name, composite)
         ?: return null

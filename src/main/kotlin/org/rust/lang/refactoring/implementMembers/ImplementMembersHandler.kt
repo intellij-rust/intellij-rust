@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.openapiext.Testmark
 
 class ImplementMembersHandler : LanguageCodeInsightActionHandler {
@@ -19,7 +19,7 @@ class ImplementMembersHandler : LanguageCodeInsightActionHandler {
         if (file !is RsFile) return false
 
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
-        val classOrObject = elementAtCaret?.parentOfType<RsImplItem>(strict = false)
+        val classOrObject = elementAtCaret?.ancestorOrSelf<RsImplItem>()
         return if (classOrObject == null) {
             ImplementMembersMarks.noImplInHandler.hit()
             false
@@ -32,7 +32,7 @@ class ImplementMembersHandler : LanguageCodeInsightActionHandler {
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
-        val implItem = elementAtCaret?.parentOfType<RsImplItem>(strict = false)
+        val implItem = elementAtCaret?.ancestorOrSelf<RsImplItem>()
             ?: error("No impl trait item")
         generateTraitMembers(implItem, editor)
     }

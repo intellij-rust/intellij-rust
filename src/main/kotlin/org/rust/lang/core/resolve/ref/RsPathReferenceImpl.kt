@@ -43,7 +43,7 @@ class RsPathReferenceImpl(
             ?: advancedCachedMultiResolve()
 
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
-        return (if (element.parentOfType<RsPatConst>() != null) resolvePath(element) else advancedMultiResolve()).toTypedArray()
+        return (if (element.ancestorStrict<RsPatConst>() != null) resolvePath(element) else advancedMultiResolve()).toTypedArray()
     }
 
     override fun multiResolve(): List<RsNamedElement> =

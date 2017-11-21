@@ -24,17 +24,26 @@ val PsiElement.elementType: IElementType
     // XXX: be careful not to switch to AST
     get() = if (this is RsFile) RsFileStub.Type else PsiUtilCore.getElementType(this)
 
-inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = true, minStartOffset: Int = -1): T? =
-    PsiTreeUtil.getParentOfType(this, T::class.java, strict, minStartOffset)
 
-inline fun <reified T : PsiElement> PsiElement.parentOfType(strict: Boolean = true, stopAt: Class<out PsiElement>): T? =
-    PsiTreeUtil.getParentOfType(this, T::class.java, strict, stopAt)
+inline fun <reified T : PsiElement> PsiElement.ancestorStrict(): T? =
+    PsiTreeUtil.getParentOfType(this, T::class.java, /* strict */ true)
 
-inline fun <reified T : PsiElement> PsiElement.contextOfType(strict: Boolean = true): T? =
-    PsiTreeUtil.getContextOfType(this, T::class.java, strict)
+inline fun <reified T : PsiElement> PsiElement.ancestorOrSelf(): T? =
+    PsiTreeUtil.getParentOfType(this, T::class.java, /* strict */ false)
 
-inline fun <reified T : PsiElement> PsiElement.childOfType(strict: Boolean = true): T? =
-    PsiTreeUtil.findChildOfType(this, T::class.java, strict)
+inline fun <reified T : PsiElement> PsiElement.ancestorOrSelf(stopAt: Class<out PsiElement>): T? =
+    PsiTreeUtil.getParentOfType(this, T::class.java, /* strict */ false, stopAt)
+
+
+/**
+ * Same as [ancestorStrict], but with "fake" parent links. See [org.rust.lang.core.macros.ExpansionResult].
+ */
+inline fun <reified T : PsiElement> PsiElement.contextOfType(): T? =
+    PsiTreeUtil.getContextOfType(this, T::class.java, /* strict */ true)
+
+
+inline fun <reified T : PsiElement> PsiElement.descendantOfTypeStrict(): T? =
+    PsiTreeUtil.findChildOfType(this, T::class.java, /* strict */ true)
 
 inline fun <reified T : PsiElement> PsiElement.descendantsOfType(): Collection<T> =
     PsiTreeUtil.findChildrenOfType(this, T::class.java)

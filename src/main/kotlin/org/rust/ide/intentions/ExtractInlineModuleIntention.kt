@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.getOrCreateModuleFile
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 //TODO: make context more precise here
 class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
@@ -21,7 +21,7 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     override fun getText() = "Extract inline module"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? {
-        val mod = element.parentOfType<RsModItem>() ?: return null
+        val mod = element.ancestorStrict<RsModItem>() ?: return null
         if (mod.`super`?.ownsDirectory != true) return null
         return mod
 

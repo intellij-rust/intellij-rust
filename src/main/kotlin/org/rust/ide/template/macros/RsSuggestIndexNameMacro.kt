@@ -11,14 +11,14 @@ import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.macro.MacroBase
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.resolve.processLocalVariables
 import java.util.*
 
 class RsSuggestIndexNameMacro : MacroBase("rustSuggestIndexName", "rustSuggestIndexName()") {
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext, quick: Boolean): Result? {
         if (params.isNotEmpty()) return null
-        val pivot = context.psiElementAtStartOffset?.parentOfType<RsElement>() ?: return null
+        val pivot = context.psiElementAtStartOffset?.ancestorStrict<RsElement>() ?: return null
         val pats = getPatBindingNamesVisibleAt(pivot)
         return ('i'..'z')
             .map(Char::toString)

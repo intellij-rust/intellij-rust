@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsStmt
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 fun findExpressionAtCaret(file: RsFile, offset: Int): RsExpr? {
     val expr = file.expressionAtOffset(offset)
@@ -29,7 +29,7 @@ fun findExpressionAtCaret(file: RsFile, offset: Int): RsExpr? {
 }
 
 private fun RsFile.expressionAtOffset(offset: Int): RsExpr? =
-    findElementAt(offset)?.parentOfType<RsExpr>(strict = false)
+    findElementAt(offset)?.ancestorOrSelf()
 
 
 /**
@@ -42,7 +42,7 @@ fun findExpressionInRange(file: PsiFile, startOffset: Int, endOffset: Int): RsEx
 
     // Get common expression parent.
     var parent = PsiTreeUtil.findCommonParent(element1, element2) ?: return null
-    parent = parent.parentOfType<RsExpr>(strict = false) ?: return null
+    parent = parent.ancestorOrSelf<RsExpr>() ?: return null
 
     // If our parent's deepest first child is element1 and deepest last - element 2,
     // then is is completely within selection, so this is our sought expression.
@@ -64,7 +64,7 @@ fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Arra
 
     // Find parent of selected statement list (syntactically only RsBlock is possible)
     val parent = PsiTreeUtil.findCommonParent(element1, element2)
-        ?.parentOfType<RsBlock>(strict = false)
+        ?.ancestorOrSelf<RsBlock>()
         ?: return emptyArray()
 
     // Find edge direct children of parent within selection.

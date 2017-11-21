@@ -11,14 +11,14 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.utils.simplifyBooleanExpression
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class SimplifyBooleanExpressionIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText() = "Simplify boolean expression"
     override fun getFamilyName() = "Simplify boolean expression"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? =
-        element.parentOfType<RsExpr>()
+        element.ancestorStrict<RsExpr>()
             ?.ancestors
             ?.takeWhile { it is RsExpr }
             ?.map { it as RsExpr }

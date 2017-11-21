@@ -14,8 +14,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.ext.RsItemElement
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class RsInspectionSuppressor : InspectionSuppressor {
     override fun getSuppressActions(element: PsiElement?, toolId: String): Array<out SuppressQuickFix> = arrayOf(
@@ -44,7 +45,7 @@ class RsInspectionSuppressor : InspectionSuppressor {
 
         override fun getContainer(context: PsiElement?): PsiElement? {
             if (context == null) return null
-            return context.parentOfType<RsItemElement>(strict = false)
+            return context.ancestorOrSelf<RsItemElement>()
         }
     }
 }

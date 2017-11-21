@@ -14,7 +14,7 @@ import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.ext.CARGO_WORKSPACE
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
-import org.rust.lang.core.psi.ext.childOfType
+import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 import org.rust.openapiext.toPsiFile
 
 
@@ -38,7 +38,7 @@ class RsCodeFragmentFactory(val project: Project) {
     inline fun <reified I : ExpansionResult> createExpandedItem(code: String, context: RsElement): I? {
         return PsiFileFactory.getInstance(project)
             .createFileFromText("MACRO.rs", RsFileType, code)
-            .childOfType<I>()
+            .descendantOfTypeStrict<I>()
             ?.apply { setContext(context) }
     }
 }

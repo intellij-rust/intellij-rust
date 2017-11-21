@@ -13,7 +13,7 @@ import com.intellij.psi.*
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.openapiext.toPsiFile
 import kotlin.text.Charsets.UTF_8
@@ -124,7 +124,7 @@ class TestProject(
 
     inline fun <reified T : PsiElement> findElementInFile(path: String): T {
         val element = doFindElementInFile(path)
-        return element.parentOfType()
+        return element.ancestorStrict()
             ?: error("No parent of type ${T::class.java} for ${element.text}")
     }
 

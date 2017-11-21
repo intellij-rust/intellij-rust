@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type
 
 
-// Unit tests for various `parentOfType` like utilities,
+// Unit tests for various `ancestorStrict` like utilities,
 // which use `instanceof` under the hood and thus sensitive
 // to PSI structure
 class RsPsiStructureTest : RsTestBase() {
@@ -131,7 +131,7 @@ class RsPsiStructureTest : RsTestBase() {
     private inline fun <reified E : RsElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
         val element = PsiFileFactory.getInstance(project)
             .createFileFromText("main.rs", RsFileType, code)
-            .childOfType<E>() ?: error("No ${E::class.java} in\n$code")
+            .descendantOfTypeStrict<E>() ?: error("No ${E::class.java} in\n$code")
 
         callback(element)
     }

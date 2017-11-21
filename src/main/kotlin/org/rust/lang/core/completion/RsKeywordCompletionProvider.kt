@@ -10,7 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.returnType
 import org.rust.lang.core.types.ty.TyUnit
 
@@ -39,7 +39,7 @@ private fun addInsertionHandler(keyword: String, builder: LookupElementBuilder, 
     val suffix = when (keyword) {
         in ALWAYS_NEEDS_SPACE -> " "
         "return" -> {
-            val fn = parameters.position.parentOfType<RsFunction>() ?: return builder
+            val fn = parameters.position.ancestorStrict<RsFunction>() ?: return builder
             if (fn.returnType !is TyUnit) " " else ";"
         }
         else -> return builder

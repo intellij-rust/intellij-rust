@@ -203,7 +203,7 @@ class RsPsiFactory(private val project: Project) {
     private inline fun <reified T : RsElement> createFromText(code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, code)
-            .childOfType<T>()
+            .descendantOfTypeStrict<T>()
 
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling

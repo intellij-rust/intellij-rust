@@ -53,7 +53,7 @@ class RsExpressionAnnotator : Annotator {
             }
         } else {
             if (calculateMissingFields(body, decl).isNotEmpty()) {
-                val structNameRange = literal.childOfType<RsPath>()?.textRange
+                val structNameRange = literal.descendantOfTypeStrict<RsPath>()?.textRange
                 if (structNameRange != null) {
                     val annotation = holder.createErrorAnnotation(structNameRange, "Some fields are missing")
                     annotation.registerFix(AddStructFieldsFix(literal), body.parent.textRange)

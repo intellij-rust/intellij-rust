@@ -35,7 +35,7 @@ import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.fileTreeFromText
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import java.nio.file.Paths
 import java.util.*
 
@@ -161,7 +161,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
             Triple(myFixture.file.findElementAt(elementOffset)!!, data, elementOffset)
         }
-        val element = elementAtMarker.parentOfType<T>(strict = false)
+        val element = elementAtMarker.ancestorOrSelf<T>()
             ?: error("No ${T::class.java.simpleName} at ${elementAtMarker.text}")
         return Triple(element, data, offset)
     }

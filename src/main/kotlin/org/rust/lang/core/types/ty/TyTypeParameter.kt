@@ -81,7 +81,7 @@ class TyTypeParameter private constructor(
             associated(self(), target)
 
         private fun associated(type: Ty, target: RsTypeAlias): TyTypeParameter {
-            val trait = target.parentOfType<RsTraitItem>()
+            val trait = target.ancestorStrict<RsTraitItem>()
                 ?: error("Tried to construct an associated type from RsTypeAlias declared out of a trait")
             return associated(type, trait, target)
         }
