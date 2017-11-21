@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.lang.core.types.infer.TypeInferenceMarks
+
 class RsStdlibResolveTest : RsResolveTestBase() {
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
@@ -421,7 +423,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test ? operator`() = checkByCode("""
+    fun `test ? operator with result`() = checkByCode("""
         struct S { field: u32 }
                     //X
         fn foo() -> Result<S, ()> { unimplemented!() }
@@ -432,6 +434,20 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             //^
         }
     """)
+
+    fun `test try operator with option`() = TypeInferenceMarks.questionOperator.checkHit {
+        checkByCode("""
+            struct S { field: u32 }
+                        //X
+            fn foo() -> Option<S> { unimplemented!() }
+
+            fn main() {
+                let s = foo()?;
+                s.field;
+                //^
+            }
+        """)
+    }
 
     fun `test try! macro`() = checkByCode("""
         struct S { field: u32 }

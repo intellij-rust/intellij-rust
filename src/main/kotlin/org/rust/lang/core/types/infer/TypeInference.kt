@@ -976,14 +976,17 @@ private class RsFnInferenceContext(
         }
     }
 
-    private fun inferTryExprType(expr: RsTryExpr, expected: Ty?): Ty {
-        // See RsMacroExpr where we handle the try! macro in a similar way
-        val base = expr.expr.inferType(expected)
+    private fun inferTryExprType(expr: RsTryExpr, expected: Ty?): Ty =
+        inferTryExprOrMacroType(expr.expr, expected, allowOption = true)
 
-        return if (base is TyEnum && base.item == items.findResultItem())
-            base.typeArguments.firstOrNull() ?: TyUnknown
-        else
-            TyUnknown
+    private fun inferTryExprOrMacroType(arg: RsExpr, expected: Ty?, allowOption: Boolean): Ty {
+        val base = arg.inferType(expected) as? TyEnum ?: return TyUnknown
+        //TODO: make it work with generic `std::ops::Try` trait
+        if (base.item == items.findResultItem() || (allowOption && base.item == items.findOptionItem())) {
+            TypeInferenceMarks.questionOperator.hit()
+            return base.typeArguments.firstOrNull() ?: TyUnknown
+        }
+        return TyUnknown
     }
 
     private fun inferRangeType(expr: RsRangeExpr): Ty {
@@ -1033,22 +1036,18 @@ private class RsFnInferenceContext(
     }
 
     private fun inferMacroExprType(expr: RsMacroExpr): Ty {
+        val tryArg = expr.macroCall.tryMacroArgument
+        if (tryArg != null) {
+            // See RsTryExpr where we handle the ? expression in a similar way
+            return inferTryExprOrMacroType(tryArg.expr, null, allowOption = false)
+        }
+
         inferChildExprsRecursively(expr.macroCall)
         val vecArg = expr.macroCall.vecMacroArgument
         if (vecArg != null) {
             val elementTypes = vecArg.exprList.map { ctx.getExprType(it) }
             val elementType = getMoreCompleteType(elementTypes)
             return items.findVecForElementTy(elementType)
-        }
-
-        val tryArg = expr.macroCall.tryMacroArgument
-        if (tryArg != null) {
-            // See RsTryExpr where we handle the ? expression in a similar way
-            val base = ctx.getExprType(tryArg.expr)
-            return if (base is TyEnum && base.item == items.findResultItem())
-                base.typeArguments.firstOrNull() ?: TyUnknown
-            else
-                TyUnknown
         }
 
         val name = expr.macroCall.macroName ?: return TyUnknown
@@ -1271,4 +1270,5 @@ fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
 
 object TypeInferenceMarks {
     val cyclicType = Testmark("cyclicType")
+    val questionOperator = Testmark("questionOperator")
 }
