@@ -8,6 +8,7 @@ package org.rust.lang.core.types
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Substitution
@@ -22,7 +23,7 @@ import org.rust.lang.core.types.ty.substituteInValues
 data class BoundElement<out E : RsElement>(
     val element: E,
     val subst: Substitution = emptySubstitution
-) : ResolveResult {
+) : ResolveResult, TypeFoldable<BoundElement<E>> {
     override fun getElement(): PsiElement = element
     override fun isValidResult(): Boolean = true
 
@@ -32,10 +33,10 @@ data class BoundElement<out E : RsElement>(
     fun substitute(subst: Substitution) =
         BoundElement(element, this.subst.substituteInValues(subst))
 
-    fun foldWith(folder: TypeFolder) =
+    override fun superFoldWith(folder: TypeFolder): BoundElement<E> =
         BoundElement(element, this.subst.foldValues(folder))
 
-    fun visitWith(visitor: TypeVisitor): Boolean =
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
         subst.values.any(visitor)
 }
 

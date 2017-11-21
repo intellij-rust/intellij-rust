@@ -15,6 +15,7 @@ import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectPathResolveVariants
 import org.rust.lang.core.resolve.processPathResolveVariants
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -53,7 +54,11 @@ class RsPathReferenceImpl(
         return ResolveCache.getInstance(element.project)
             .resolveWithCaching(this, Resolver,
                 /* needToPreventRecursion = */ true,
-                /* incompleteCode = */ false).orEmpty()
+                /* incompleteCode = */ false)
+            .orEmpty()
+            // We can store a fresh `TyInfer.TyVar` to the cache for `_` path parameter (like `Vec<_>`), but
+            // TyVar is mutable type, so we must copy it after retrieving from the cache
+            .map { it.foldTyInferWith { if (it is TyInfer.TyVar) TyInfer.TyVar(it.origin) else it } }
     }
 
     private object Resolver : ResolveCache.AbstractResolver<RsPathReferenceImpl, List<BoundElement<RsElement>>> {
