@@ -85,7 +85,7 @@ class RsLookupElementTest : RsTestBase() {
         }
     """, tailText = null, typeText = "expr")
 
-    fun `test marco definition`() = check("""
+    fun `test macro definition`() = check("""
         macro_rules! test { () => () }
                      //^
     """, tailText = "!", typeText = null)
