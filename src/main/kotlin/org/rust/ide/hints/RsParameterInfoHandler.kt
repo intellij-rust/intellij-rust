@@ -13,7 +13,7 @@ import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsValueArgumentList
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.stdext.buildList
 
 /**
@@ -89,13 +89,13 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
     }
 
     private fun findElementForParameterInfo(contextElement: PsiElement) =
-        contextElement.parentOfType<RsValueArgumentList>()
+        contextElement.ancestorStrict<RsValueArgumentList>()
 
     /**
      * Finds index of the argument in the given place
      */
     private fun findArgumentIndex(place: PsiElement): Int {
-        val callArgs = place.parentOfType<RsValueArgumentList>() ?: return INVALID_INDEX
+        val callArgs = place.ancestorStrict<RsValueArgumentList>() ?: return INVALID_INDEX
         val descr = RsArgumentsDescription.findDescription(callArgs) ?: return INVALID_INDEX
         var index = -1
         if (descr.arguments.isNotEmpty()) {

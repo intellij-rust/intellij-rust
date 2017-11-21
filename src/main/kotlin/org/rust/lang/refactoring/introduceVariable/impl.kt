@@ -14,8 +14,8 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer
 import org.rust.ide.utils.findExpressionAtCaret
 import org.rust.ide.utils.findExpressionInRange
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.parentOfType
 import org.rust.openapiext.runWriteCommandAction
 import java.util.*
 
@@ -153,7 +153,7 @@ private class ExpressionReplacer(
  * An anchor point is surrounding element before the block scope, which is used to scope the insertion of the new let binding.
  */
 private fun findAnchor(expr: PsiElement): PsiElement? {
-    val block = expr.parentOfType<RsBlock>(strict = false)
+    val block = expr.ancestorOrSelf<RsBlock>()
         ?: return null
 
     var anchor = expr
@@ -180,7 +180,7 @@ private fun findOccurrences(expr: RsExpr): List<RsExpr> {
         }
     }
 
-    val block = expr.parentOfType<RsBlock>(strict = false) ?: return emptyList()
+    val block = expr.ancestorOrSelf<RsBlock>() ?: return emptyList()
     block.acceptChildren(visitor)
     return visitor.foundOccurrences
 }

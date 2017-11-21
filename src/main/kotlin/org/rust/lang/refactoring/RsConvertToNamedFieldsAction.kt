@@ -19,7 +19,7 @@ import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTupleFields
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
     override fun isAvailableInEditorOnly(): Boolean = true
@@ -52,13 +52,13 @@ class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
 }
 
 private fun findTupleStructBody(element: PsiElement): RsTupleFields? {
-    val parent = element.parentOfType<RsTupleFields>(strict = false)
+    val parent = element.ancestorOrSelf<RsTupleFields>()
     if (parent != null) return parent
 
-    val struct = element.parentOfType<RsStructItem>(strict = false)
+    val struct = element.ancestorOrSelf<RsStructItem>()
     if (struct != null) return struct.tupleFields
 
-    val enumVariant = element.parentOfType<RsEnumVariant>(strict = false)
+    val enumVariant = element.ancestorOrSelf<RsEnumVariant>()
     if (enumVariant != null) return enumVariant.tupleFields
 
     return null

@@ -12,14 +12,14 @@ import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText() = "Add braces to lambda expression"
     override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? {
-        val lambdaExpr = element.parentOfType<RsLambdaExpr>() ?: return null
+        val lambdaExpr = element.ancestorStrict<RsLambdaExpr>() ?: return null
         val body = lambdaExpr.expr ?: return null
         return if (body !is RsBlockExpr) body else null
     }

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.types.ty.TyEnum
 import org.rust.lang.core.types.type
@@ -21,7 +21,7 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
     override fun getFamilyName(): String = "Fill match arms"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val matchExpr = element.parentOfType<RsMatchExpr>() ?: return null
+        val matchExpr = element.ancestorStrict<RsMatchExpr>() ?: return null
         if (!matchExpr.matchBody?.matchArmList.isNullOrEmpty()) return null
         val type = matchExpr.expr?.type as? TyEnum ?: return null
         // TODO: check enum variants can be used without enum name qualifier

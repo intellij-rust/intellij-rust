@@ -32,7 +32,7 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val binExpr = element.parentOfType<RsBinaryExpr>() ?: return null
+        val binExpr = element.ancestorStrict<RsBinaryExpr>() ?: return null
         val opType = binExpr.operatorType
         if (opType is LogicOp) {
             setTextForElement(binExpr)

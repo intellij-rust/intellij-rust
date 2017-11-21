@@ -153,7 +153,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
-        binding.parentOfType<RsValueParameterList>()?.let { checkDuplicates(holder, binding, it, recursively = true) }
+        binding.ancestorStrict<RsValueParameterList>()?.let { checkDuplicates(holder, binding, it, recursively = true) }
     }
 
     private fun checkPath(holder: AnnotationHolder, path: RsPath) {
@@ -164,7 +164,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
 
         if (path.self != null && path.parent !is RsPath && path.parent !is RsUseItem) {
-            val function = path.parentOfType<RsFunction>()
+            val function = path.ancestorStrict<RsFunction>()
             if (function == null) {
                 holder.createErrorAnnotation(path, "self value is not available in this context")
                 return

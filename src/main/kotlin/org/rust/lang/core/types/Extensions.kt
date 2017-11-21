@@ -38,7 +38,7 @@ val RsFunction.inference: RsInferenceResult
     })
 
 val PsiElement.inference: RsInferenceResult?
-    get() = (parentOfType<RsItemElement>() as? RsFunction)?.inference
+    get() = (ancestorStrict<RsItemElement>() as? RsFunction)?.inference
 
 val RsPatBinding.type: Ty
     get() = inference?.getBindingType(this) ?: TyUnknown
@@ -75,7 +75,7 @@ val RsExpr.isMutable: Boolean get() {
             val type = this.type
             if (type is TyReference) return type.mutability.isMut
 
-            val letExpr = declaration.parentOfType<RsLetDecl>()
+            val letExpr = declaration.ancestorStrict<RsLetDecl>()
             if (letExpr != null && letExpr.eq == null) return true
             if (type is TyUnknown) return DEFAULT_MUTABILITY
             if (declaration is RsEnumVariant) return true

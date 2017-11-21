@@ -23,7 +23,7 @@ class RsTraitMethodImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
         if (!(el is RsFunction && el.owner.isTraitImpl)) return
 
         val traitMethod = el.superMethod ?: return
-        val trait = traitMethod.parentOfType<RsTraitItem>() ?: return
+        val trait = traitMethod.ancestorStrict<RsTraitItem>() ?: return
 
         val action: String
         val icon: Icon

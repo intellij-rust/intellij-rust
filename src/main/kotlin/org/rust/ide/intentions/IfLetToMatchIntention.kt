@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention.Context>() {
     override fun getText(): String = "Convert if let statement to match"
@@ -29,7 +29,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         //1) Check that we have an if statement
-        var ifStatement = element.parentOfType<RsIfExpr>() ?: return null
+        var ifStatement = element.ancestorStrict<RsIfExpr>() ?: return null
 
         // We go up in the tree to detect cases like `... else if let Some(value) = x { ... }`
         // and select the correct if statement

@@ -13,7 +13,7 @@ import org.rust.ide.inspections.fixes.RemoveMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.mutability
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.selfParameter
 
 class RsVariableMutableInspection : RsLocalInspectionTool() {
@@ -22,7 +22,7 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
             override fun visitPatBinding(o: RsPatBinding) {
                 if (!o.mutability.isMut) return
-                val block = o.parentOfType<RsBlock>() ?: o.parentOfType<RsFunction>() ?: return
+                val block = o.ancestorStrict<RsBlock>() ?: o.ancestorStrict<RsFunction>() ?: return
                 if (ReferencesSearch.search(o, LocalSearchScope(block))
                     .asSequence()
                     .any { checkOccurrenceNeedMutable(it.element.parent) }) return

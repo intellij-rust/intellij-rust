@@ -15,7 +15,7 @@ import com.intellij.patterns.VirtualFilePattern
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.intellij.lang.annotations.Language
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.toml.lang.psi.*
 
 
@@ -60,7 +60,7 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
 
     private val TomlKey.topLevelTable: TomlKeyValueOwner?
         get() {
-            val table = parentOfType<TomlKeyValueOwner>() ?: return null
+            val table = ancestorStrict<TomlKeyValueOwner>() ?: return null
             if (table.parent !is TomlFile) return null
             return table
         }

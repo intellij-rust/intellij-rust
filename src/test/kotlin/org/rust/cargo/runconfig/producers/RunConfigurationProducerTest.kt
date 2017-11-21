@@ -25,7 +25,7 @@ import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.openapiext.toXmlString
 import java.nio.file.Paths
 
@@ -242,7 +242,7 @@ class RunConfigurationProducerTest : RsTestBase() {
 
     private inline fun <reified T : PsiElement> checkOnElement() {
         val configurationContext = ConfigurationContext(
-            myFixture.file.findElementAt(myFixture.caretOffset)?.parentOfType<T>(strict = false)
+            myFixture.file.findElementAt(myFixture.caretOffset)?.ancestorOrSelf<T>()
         )
 
         val configurations = configurationContext.configurationsFromContext.orEmpty().map { it.configuration }

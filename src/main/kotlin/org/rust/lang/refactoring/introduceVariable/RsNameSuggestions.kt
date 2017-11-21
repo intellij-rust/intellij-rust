@@ -7,11 +7,12 @@ package org.rust.lang.refactoring.introduceVariable
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.toSnakeCase
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyStructOrEnumBase
 import org.rust.lang.core.types.ty.TyTraitObject
@@ -46,7 +47,7 @@ fun RsExpr.suggestedNames(): SuggestedNames {
 
     val parent = this.parent
     if (parent is RsValueArgumentList) {
-        val call = parent.parentOfType<RsCallExpr>()?.let { CallInfo.resolve(it) }
+        val call = parent.ancestorStrict<RsCallExpr>()?.let { CallInfo.resolve(it) }
         if (call != null) {
             val paramName = call.parameters
                 .getOrNull(parent.exprList.indexOf(this))
@@ -90,8 +91,8 @@ private fun nameForCall(expr: RsCallExpr): List<String> {
 }
 
 private fun findNamesInLocalScope(expr: PsiElement): List<String> {
-    val blockScope = expr.parentOfType<RsBlock>(strict = false)
-    val letDecls = PsiTreeUtil.findChildrenOfType(blockScope, RsLetDecl::class.java)
+    val blockScope = expr.ancestorOrSelf<RsBlock>()
+    val letDecls = blockScope?.descendantsOfType<RsLetDecl>().orEmpty()
 
     return letDecls.mapNotNull { it.pat?.text }
 }

@@ -17,7 +17,7 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.cargoWorkspace
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.openapiext.toPsiFile
 
 class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
@@ -39,7 +39,7 @@ class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCo
     ): Boolean {
         val location = context.location ?: return false
         val target = findBinaryTarget(location) ?: return false
-        val fn = location.psiElement.parentOfType<RsFunction>()
+        val fn = location.psiElement.ancestorStrict<RsFunction>()
         val source = if (fn != null && isMainFunction(fn)) fn else context.psiLocation?.containingFile
         sourceElement.set(source)
 

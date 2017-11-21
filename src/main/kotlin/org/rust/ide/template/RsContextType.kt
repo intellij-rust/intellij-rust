@@ -18,7 +18,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import kotlin.reflect.KClass
 
 sealed class RsContextType(
@@ -77,7 +77,7 @@ sealed class RsContextType(
         override fun isInContext(element: PsiElement): Boolean =
             // Structs can't be nested or contain other expressions,
             // so it is ok to look for any Struct ancestor.
-            element.parentOfType<RsStructItem>() != null
+            element.ancestorStrict<RsStructItem>() != null
     }
 
     class Mod : RsContextType("RUST_MOD", "Module", Item::class) {
@@ -88,7 +88,7 @@ sealed class RsContextType(
 
     class Attribute : RsContextType("RUST_ATTRIBUTE", "Attribute", Item::class) {
         override fun isInContext(element: PsiElement): Boolean =
-            element.parentOfType<RsAttr>() != null
+            element.ancestorStrict<RsAttr>() != null
     }
 
     companion object {

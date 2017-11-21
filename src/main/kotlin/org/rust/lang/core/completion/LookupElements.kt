@@ -77,7 +77,7 @@ fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
             .withInsertHandler({ context: InsertionContext, _: LookupElement -> appendSemicolon(context) })
 
         is RsEnumVariant -> base
-            .withTypeText(element.parentOfType<RsEnumItem>()?.name ?: "")
+            .withTypeText(element.ancestorStrict<RsEnumItem>()?.name ?: "")
             .withTailText(when {
                 element.blockFields != null -> " { ... }"
                 element.tupleFields != null ->
@@ -149,13 +149,13 @@ private val InsertionContext.alreadyHasCallParens: Boolean
 
 private val InsertionContext.alreadyHasPatternParens: Boolean
     get() {
-        val pat = file.findElementAt(startOffset)!!.parentOfType<RsPatEnum>()
+        val pat = file.findElementAt(startOffset)!!.ancestorStrict<RsPatEnum>()
             ?: return false
         return pat.path.textRange.contains(startOffset)
     }
 
 private val RsFunction.extraTailText: String
-    get() = parentOfType<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
+    get() = ancestorStrict<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
 
 
 fun InsertionContext.nextCharIs(c: Char): Boolean =

@@ -79,7 +79,7 @@ sealed class RsDiagnostic(
         private val message: String
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation {
-            val block = element.parentOfType<RsBlock>()?.parent
+            val block = element.ancestorStrict<RsBlock>()?.parent
             val fixes = mutableListOf<LocalQuickFix>(SurroundWithUnsafeFix(element as RsExpr))
             if (block != null) fixes.add(AddUnsafeFix(block))
             return PreparedAnnotation(

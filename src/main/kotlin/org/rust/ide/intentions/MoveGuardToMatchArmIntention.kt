@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsMatchArmGuard
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.parentMatchArm
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMatchArmIntention.Context>() {
     override fun getText(): String = "Move guard inside the match arm"
@@ -25,7 +25,7 @@ class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMat
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val guard = element.parentOfType<RsMatchArmGuard>() ?: return null
+        val guard = element.ancestorStrict<RsMatchArmGuard>() ?: return null
         val armBody = guard.parentMatchArm.expr ?: return null
         return Context(guard, armBody)
     }

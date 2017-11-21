@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.isAssocFn
 import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
@@ -73,8 +73,8 @@ class RsExtractFunctionConfig private constructor(
             val last = elements.last()
 
             // check element should be a part of one block
-            val fn = first.parentOfType<RsFunction>() ?: return null
-            if (fn != last.parentOfType<RsFunction>()) return null
+            val fn = first.ancestorStrict<RsFunction>() ?: return null
+            if (fn != last.ancestorStrict<RsFunction>()) return null
 
             val letBindings = fn.descendantsOfType<RsPatBinding>().filter { it.textOffset <= end }
 

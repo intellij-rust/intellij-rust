@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.ext.isRef
 import org.rust.lang.core.psi.ext.mutability
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.typeElement
 
 /**
@@ -41,7 +41,7 @@ open class SetMutableIntention : RsElementBaseIntentionAction<SetMutableIntentio
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val refType = element.parentOfType<RsRefLikeType>() ?: return null
+        val refType = element.ancestorStrict<RsRefLikeType>() ?: return null
         if (!refType.isRef) return null
         val baseType = refType.typeReference.typeElement as? RsBaseType ?: return null
         if (refType.mutability.isMut == mutable) return null

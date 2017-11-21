@@ -35,7 +35,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
     override fun getFamilyName() = text
 
     private fun resolveMatchExpression(element: PsiElement): RsBinaryExpr? {
-        val base = element.parentOfType<RsBinaryExpr>() ?: return null
+        val base = element.ancestorStrict<RsBinaryExpr>() ?: return null
         if (base.left !is RsBinaryExpr) {
             return resolveMatchExpression(base) ?: base
         }
@@ -100,5 +100,5 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
     private inline fun <reified T : RsElement> createFromText(project: Project, code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, code)
-            .childOfType<T>()
+            .descendantOfTypeStrict<T>()
 }

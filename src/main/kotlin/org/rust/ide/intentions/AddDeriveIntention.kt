@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.findOuterAttr
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Context>() {
     override fun getFamilyName() = "Add derive clause"
@@ -25,7 +25,7 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val item = element.parentOfType<RsStructOrEnumItemElement>() ?: return null
+        val item = element.ancestorStrict<RsStructOrEnumItemElement>() ?: return null
         val keyword = when (item) {
             is RsStructItem -> item.vis ?: item.struct
             is RsEnumItem -> item.vis ?: item.enum

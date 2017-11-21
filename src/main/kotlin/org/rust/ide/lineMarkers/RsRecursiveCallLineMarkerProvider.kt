@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.FunctionUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.resolve.ref.RsReference
 import java.util.*
 
@@ -60,6 +60,6 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
 
     private val RsReference.isRecursive: Boolean get() {
         val def = resolve()
-        return def != null && element.parentOfType<RsFunction>() == def
+        return def != null && element.ancestorStrict<RsFunction>() == def
     }
 }

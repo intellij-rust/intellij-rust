@@ -14,7 +14,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve.ref.RsUseGlobReferenceImpl
 import org.rust.lang.core.stubs.RsUseGlobStub
 
-val RsUseGlob.parentUseItem: RsUseItem get() = parentOfType<RsUseItem>()!!
+val RsUseGlob.parentUseItem: RsUseItem get() = ancestorStrict<RsUseItem>()!!
 
 
 val RsUseGlob.isSelf: Boolean get() = referenceName == "self"

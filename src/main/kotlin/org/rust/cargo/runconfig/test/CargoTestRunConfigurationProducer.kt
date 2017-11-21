@@ -73,7 +73,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
             if (base is T) return base
             if (!climbUp) return null
-            return base.parentOfType(strict = false)
+            return base.ancestorOrSelf()
         }
     }
 }

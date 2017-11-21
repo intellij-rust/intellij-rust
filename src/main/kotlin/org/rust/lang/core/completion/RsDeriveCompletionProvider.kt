@@ -20,7 +20,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.isStdDerivable
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
@@ -34,7 +34,7 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                                 context: ProcessingContext?,
                                 result: CompletionResultSet) {
 
-        val owner = parameters.position.parentOfType<RsStructOrEnumItemElement>()
+        val owner = parameters.position.ancestorStrict<RsStructOrEnumItemElement>()
             ?: return
         val alreadyDerived = ImplLookup.relativeTo(owner)
             .findImplsAndTraits(owner.declaredType)

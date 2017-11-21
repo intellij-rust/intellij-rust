@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
     override fun getText() = "Convert match statement to if let"
@@ -24,7 +24,7 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val matchExpr = element.parentOfType<RsMatchExpr>() ?: return null
+        val matchExpr = element.ancestorStrict<RsMatchExpr>() ?: return null
         val matchTarget = matchExpr.expr ?: return null
         val matchBody = matchExpr.matchBody ?: return null
         val matchArmList = matchBody.matchArmList

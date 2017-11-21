@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.parentOfType
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -23,7 +23,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
     override fun getText() = "Specify type explicitly"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val letDecl = element.parentOfType<RsLetDecl>() ?: return null
+        val letDecl = element.ancestorStrict<RsLetDecl>() ?: return null
         if(letDecl.typeReference != null) {
             return null
         }

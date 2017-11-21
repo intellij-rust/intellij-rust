@@ -16,7 +16,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsFunction? {
-        val fn = element.parentOfType<RsFunction>(stopAt = RsBlock::class.java) ?: return null
+        val fn = element.ancestorOrSelf<RsFunction>(stopAt = RsBlock::class.java) ?: return null
 
         if ((fn.retType?.typeReference as? RsRefLikeType)?.lifetime != null) return null
 
@@ -69,7 +69,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
                 val type = param.typeReference?.typeElement
                 type is RsRefLikeType && type.isRef
             }
-        return (selfAfg + params).filterNotNull()
+        return selfAfg + params
     }
 
     private val PsiElement.lifetime: RsLifetime? get() =
