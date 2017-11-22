@@ -668,15 +668,8 @@ private class RsFnInferenceContext(
                 map
             }
         }
-        instantiateBounds(element.bounds, map)
+        ctx.instantiateBounds(element.bounds, map).forEach(fulfill::registerPredicateObligation)
         return map
-    }
-
-    private fun instantiateBounds(bounds: List<TraitRef>, subst: Map<TyTypeParameter, Ty>) {
-        bounds.asSequence()
-                .map { it.substitute(subst) }
-                .map(this::normalizeAssociatedTypesIn)
-                .forEach { fulfill.registerPredicateObligation(Obligation(Predicate.Trait(it))) }
     }
 
     private fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T): T {

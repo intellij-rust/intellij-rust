@@ -300,11 +300,8 @@ class ImplLookup(
             is SelectionCandidate.Impl -> {
                 ctx.combineTraitRefs(ref, candidate.ref)
                 val candidateSubst = candidate.subst + mapOf(TyTypeParameter.self() to ref.selfTy)
-                val obligations = candidate.item.bounds.asSequence()
-                    .map { it.substitute(candidateSubst) }
-                    .map { ctx.normalizeAssociatedTypesIn(it, recursionDepth) }
-                    .flatMap { it.obligations.asSequence() + Obligation(newRecDepth, Predicate.Trait(it.value)) }
-                    .toList()
+                ctx.instantiateBounds(candidate.item.bounds, candidateSubst)
+                val obligations = ctx.instantiateBounds(candidate.item.bounds, candidateSubst).toList()
                 Selection(candidate.item, obligations, candidateSubst)
             }
             is SelectionCandidate.DerivedTrait -> Selection(candidate.item, emptyList())
