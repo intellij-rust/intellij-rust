@@ -22,7 +22,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         applyQuickFix("Create module file")
     }
 
-    fun testPaths() = checkErrors("""
+    fun `test paths`() = checkErrors("""
         fn main() {
             let ok = self::super::super::foo;
             let ok = super::foo::bar;
@@ -36,7 +36,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testInvalidChainComparison() = checkErrors("""
+    fun `test invalid chain comparison`() = checkErrors("""
         fn foo(x: i32) {
             <error descr="Chained comparison operator require parentheses">1 < x < 3</error>;
             <error descr="Chained comparison operator require parentheses">1 > x < 3</error>;
@@ -49,7 +49,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testValidChainComparison() = checkErrors("""
+    fun `test valid chain comparison`() = checkErrors("""
         fn foo(x: i32, y: bool) {
             let _ = 1 < x && x < 10;
             let _ = 1 < x || x < 10;
@@ -58,7 +58,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0046_AbsentMethodInTraitImpl() = checkErrors("""
+    fun `test absent method in trait impl E0046`() = checkErrors("""
         trait TError {
             fn bar();
             fn baz();
@@ -69,7 +69,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0046_NotApplied() = checkErrors("""
+    fun `test not applied E0046`() = checkErrors("""
         trait T {
             fn foo() {}
             fn bar();
@@ -79,7 +79,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0046_IgnoreMacros() = checkErrors("""
+    fun `test ignore macros E0046`() = checkErrors("""
         trait T { fn foo(&self); }
 
         macro_rules! impl_foo {
@@ -91,7 +91,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         impl T for S { impl_foo!(); }
     """)
 
-    fun testE0050_IncorrectParamsNumberInTraitImpl() = checkErrors("""
+    fun `test incorrect params number in trait impl E0050`() = checkErrors("""
         trait T {
             fn ok_foo();
             fn ok_bar(a: u32, b: f64);
@@ -111,7 +111,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0060_InvalidParametersNumberInVariadicFunctions() = checkErrors("""
+    fun `test invalid parameters number in variadic functions E0060`() = checkErrors("""
         extern {
             fn variadic_1(p1: u32, ...);
             fn variadic_2(p1: u32, p2: u32, ...);
@@ -127,7 +127,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0061_InvalidParametersNumberInFreeFunctions() = checkErrors("""
+    fun `test invalid parameters number in free functions E0061`() = checkErrors("""
         fn par_0() {}
         fn par_1(p: bool) {}
         fn par_3(p1: u32, p2: f64, p3: &'static str) {}
@@ -144,7 +144,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0061_InvalidParametersNumberInAssocFunction() = checkErrors("""
+    fun `test invalid parameters number in assoc function E0061`() = checkErrors("""
         struct Foo;
         impl Foo {
             fn par_0() {}
@@ -160,7 +160,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0061_InvalidParametersNumberInImplMethods() = checkErrors("""
+    fun `test invalid parameters number in impl methods E0061`() = checkErrors("""
         struct Foo;
         impl Foo {
             fn par_0(&self) {}
@@ -178,7 +178,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0061_InvalidParametersNumberInTupleStructs() = checkErrors("""
+    fun `test invalid parameters number in tuple structs E0061`() = checkErrors("""
         struct Foo0();
         struct Foo1(u8);
         fn main() {
@@ -190,7 +190,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0061_InvalidParametersNumberInTupleEnumVariants() = checkErrors("""
+    fun `test invalid parameters number in tuple enum variants E0061`() = checkErrors("""
         enum Foo {
             VAR0(),
             VAR1(u8)
@@ -204,7 +204,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0061_RespectsCfgAttribute() = checkErrors("""
+    fun `test respects cfg attribute E0061`() = checkErrors("""
         struct Foo;
         impl Foo {
             #[cfg(windows)]
@@ -221,7 +221,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
 
     // We would like to cover such cases, but the resolve engine has some flaws at the moment,
     // so just ignore trait implementations to remove false positives
-    fun testE0061_IgnoresTraitImplementations() = checkErrors("""
+    fun `test ignores trait implementations E0061`() = checkErrors("""
         trait Foo1 { fn foo(&self); }
         trait Foo2 { fn foo(&self, a: u8); }
         struct Bar;
@@ -239,7 +239,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test E0069 empty return`() = checkErrors("""
+    fun `test empty return E0069`() = checkErrors("""
         fn ok1() { return; }
         fn ok2() -> () { return; }
         fn ok3() -> u32 {
@@ -255,7 +255,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test E0121 type placeholder in signatures`() = checkErrors("""
+    fun `test type placeholder in signatures E0121`() = checkErrors("""
         fn ok(_: &'static str) {
             let four = |x: _| 4;
             let _ = match (8, 3) { (_, _) => four(1) };
@@ -274,7 +274,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         static FOO: <error>_</error> = 42;
     """)
 
-    fun testE0124_NameDuplicationInStruct() = checkErrors("""
+    fun `test name duplication in struct E0124`() = checkErrors("""
         struct S {
             no_dup: bool,
             <error descr="Field `dup` is already declared [E0124]">dup</error>: f64,
@@ -293,7 +293,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0185_SelfInImplNotInTrait() = checkErrors("""
+    fun `test self in impl not in trait E0185`() = checkErrors("""
         trait T {
             fn ok_foo(&self, x: u32);
             fn ok_bar(&mut self);
@@ -313,7 +313,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0186_SelfInTraitNotInImpl() = checkErrors("""
+    fun `test self in trait not in impl E0186`() = checkErrors("""
         trait T {
             fn ok_foo(&self, x: u32);
             fn ok_bar(&mut self);
@@ -333,7 +333,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `testE0198 Negative impls for traits`() = checkErrors("""
+    fun `test negative impls for traits E0198`() = checkErrors("""
         struct Foo;
         struct Foo2;
 
@@ -346,7 +346,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         unsafe impl !<error descr="Negative implementations are not unsafe [E0198]">Bar2</error> for Foo2 { }
     """)
 
-    fun `testE0199 Only safe impls for safe traits`() = checkErrors("""
+    fun `test only safe impls for safe traits E0199`() = checkErrors("""
         struct Foo;
         struct Foo2;
 
@@ -356,7 +356,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         impl Bar for Foo2 { }
     """)
 
-    fun `testE0200 Only unsafe impls for unsafe traits`() = checkErrors("""
+    fun `test only unsafe impls for unsafe traits E0200`() = checkErrors("""
         struct Foo;
         struct Foo2;
 
@@ -366,7 +366,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         impl <error descr="The trait `Bar` requires an `unsafe impl` declaration [E0200]">Bar</error> for Foo2 { }
     """)
 
-    fun testE0201_NameDuplicationInImpl() = checkErrors("""
+    fun `test name duplication in impl E0201`() = checkErrors("""
         struct Foo;
         impl Foo {
             fn fn_unique() {}
@@ -390,7 +390,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test E0261 undeclared lifetimes`() = checkErrors("""
+    fun `test undeclared lifetimes E0261`() = checkErrors("""
         fn foo<'a, 'b>(x: &'a u32, f: &'b Fn(&'b u8) -> &'b str) -> &'a u32 { x }
         const FOO: for<'a> fn(&'a u32) -> &'a u32 = foo_func;
         struct Struct<'a> { s: &'a str }
@@ -405,12 +405,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test E0261 not applied to static lifetimes`() = checkErrors("""
+    fun `test not applied to static lifetimes E0261`() = checkErrors("""
         const ZERO: &'static u32 = &0;
         fn foo(a: &'static str) {}
     """)
 
-    fun testE0263_LifetimeNameDuplicationInGenericParams() = checkErrors("""
+    fun `test lifetime name duplication in generic params E0263`() = checkErrors("""
         fn foo<'a, 'b>(x: &'a str, y: &'b str) { }
         struct Str<'a, 'b> { a: &'a u32, b: &'b f64 }
         impl<'a, 'b> Str<'a, 'b> {}
@@ -424,7 +424,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         trait Tr<<error>'a</error>, 'b, <error>'a</error>> {}
     """)
 
-    fun testE0403_NameDuplicationInGenericParams() = checkErrors("""
+    fun `test name duplication in generic params E0403`() = checkErrors("""
         fn sub<T, P>() {}
         struct Str<T, P> { t: T, p: P }
         impl<T, P> Str<T, P> {}
@@ -438,7 +438,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         trait Tr< <error>T</error>, <error>T</error>, P> { fn foo(t: T) -> P; }
     """)
 
-    fun testE0407_UnknownMethodInTraitImpl() = checkErrors("""
+    fun `test unknown method in trait impl E0407`() = checkErrors("""
         trait T {
             fn foo();
         }
@@ -448,7 +448,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0415_NameDuplicationInParamList() = checkErrors("""
+    fun `test name duplication in param list E0415`() = checkErrors("""
         fn foo(x: u32, X: u32) {}
         fn bar<T>(T: T) {}
 
@@ -458,7 +458,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         fn tuples(<error>a</error>: u8, (b, (<error>a</error>, c)): (u16, (u32, u64))) {}
     """)
 
-    fun `test E0426 undeclared label`() = checkErrors("""
+    fun `test undeclared label E0426`() = checkErrors("""
         fn ok() {
             'foo: loop { break 'foo }
             'bar: while true { continue 'bar }
@@ -475,7 +475,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_NameDuplicationInCodeBlock() = checkErrors("""
+    fun `test name duplication in code block E0428`() = checkErrors("""
         fn abc() {
             const UNIQUE_CONST: i32 = 10;
             static UNIQUE_STATIC: f64 = 0.72;
@@ -495,7 +495,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_NameDuplicationInEnum() = checkErrors("""
+    fun `test name duplication in enum E0428`() = checkErrors("""
         enum Directions {
             NORTH,
             <error descr="Enum variant `SOUTH` is already declared [E0428]">SOUTH</error> { distance: f64 },
@@ -505,7 +505,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_NameDuplicationInForeignMod() = checkErrors("""
+    fun `test name duplication in foreign mod E0428`() = checkErrors("""
         extern "C" {
             static mut UNIQUE: u16;
             fn unique();
@@ -518,7 +518,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_NameDuplicationInFile() = checkErrors("""
+    fun `test name duplication in file E0428`() = checkErrors("""
         const UNIQUE_CONST: i32 = 10;
         static UNIQUE_STATIC: f64 = 0.72;
         fn unique_fn() {}
@@ -536,7 +536,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         mod    <error descr="A type named `Dup` has already been defined in this module [E0428]">Dup</error> {}
     """)
 
-    fun testE0428_NameDuplicationInModule() = checkErrors("""
+    fun `test name duplication in module E0428`() = checkErrors("""
         mod foo {
             const UNIQUE_CONST: i32 = 10;
             static UNIQUE_STATIC: f64 = 0.72;
@@ -556,7 +556,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_NameDuplicationInTrait() = checkErrors("""
+    fun `test name duplication in trait E0428`() = checkErrors("""
         trait T {
             type NO_DUP_T;
             const NO_DUP_C: u8;
@@ -573,7 +573,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_RespectsNamespaces() = checkErrors("""
+    fun `test respects namespaces E0428`() = checkErrors("""
         mod m {
             // Consts and types are in different namespaces
             type  NO_C_DUP = bool;
@@ -596,7 +596,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_IgnoresLocalBindings() = checkErrors("""
+    fun `test ignores local bindings E0428`() = checkErrors("""
         mod no_dup {
             fn no_dup() {
                 let no_dup: bool = false;
@@ -607,7 +607,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_IgnoresInnerContainers() = checkErrors("""
+    fun `test ignores inner containers E0428`() = checkErrors("""
         mod foo {
             const NO_DUP: u8 = 4;
             fn f() {
@@ -621,7 +621,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0428_RespectsCfgAttribute() = checkErrors("""
+    fun `test respects cfg attribute E0428`() = checkErrors("""
         mod opt {
             #[cfg(not(windows))] mod foo {}
             #[cfg(windows)]     mod foo {}
@@ -631,7 +631,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testE0449_UnnecessaryPub() = checkErrors("""
+    fun `test unnecessary pub E0449`() = checkErrors("""
         <error descr="Unnecessary visibility qualifier [E0449]">pub</error> extern "C" { }
 
         pub struct S {
@@ -678,7 +678,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         const C: () = <error descr="self value is not available in this context">self</error>;
     """)
 
-    fun `testE0424 ignore non static`() = checkErrors("""
+    fun `test ignore non static E0424`() = checkErrors("""
         struct Foo;
 
         impl Foo {
@@ -688,7 +688,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `testE0424 ignore module path`() = checkErrors("""
+    fun `test ignore module path E0424`() = checkErrors("""
         fn foo() {
         }
 
@@ -697,7 +697,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `testE0424 ignore use self with parens`() = checkErrors("""
+    fun `test ignore use self with parens E0424`() = checkErrors("""
         fn foo() {}
         fn bat() {}
         fn bar() {
@@ -967,5 +967,27 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
 
         use foo::Bar;
+    """)
+
+    fun `test function args should implement Sized trait E0277`() = checkErrors("""
+        fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
+        fn foo2(bar: i32) {}
+    """)
+
+    fun `test function return type should implement Sized trait E0277`() = checkErrors("""
+        fn foo1() -> <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error> { unimplemented!() }
+        fn foo2() -> i32 { unimplemented!() }
+    """)
+
+    fun `test trait method can have arg with Self type E0277`() = checkErrors("""
+        trait Foo {
+            fn foo(x: Self);
+        }
+    """)
+
+    fun `test trait method can return Self type E0277`() = checkErrors("""
+        trait Foo {
+            fn foo() -> Self;
+        }
     """)
 }
