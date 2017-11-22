@@ -190,6 +190,21 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }                         //^ <Self as A>::Item
     """)
 
+    fun `test impl Trait`() = testType("""
+        trait Trait { }
+
+        fn foo() -> impl Trait { unimplemented!() }
+                  //^ impl Trait
+    """)
+
+    fun `test impl Trait1+Trait2`() = testType("""
+        trait Trait1 { }
+        trait Trait2 { }
+
+        fn foo() -> impl Trait1+Trait2 { unimplemented!() }
+                  //^ impl Trait1+Trait2
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
