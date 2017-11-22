@@ -242,6 +242,10 @@ class ImplLookup(
                 val bound = ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
                 if (bound != null) add(SelectionCandidate.TypeParameter(bound))
             }
+            if (ref.selfTy is TyTraitObject) {
+                BoundElement(ref.selfTy.trait).flattenHierarchy.find { it.element == ref.trait.element }
+                    ?.let { add(SelectionCandidate.TypeParameter(it)) }
+            }
             getHardcodedImpls(ref.selfTy).find { it.element == element }
                 ?.let { add(SelectionCandidate.TypeParameter(it)) }
         }

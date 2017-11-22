@@ -146,11 +146,11 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
     """)
 
     fun `test trait bound satisfied for trait`() = checkByCode("""
-        // TODO: should resolve to Tr2
         // #[lang = "sized"]
         // trait Sized {}
         trait Tr1 { fn some_fn(&self) {} }
         trait Tr2 { fn some_fn(&self) {} }
+                     //X
         trait Bound1 {}
         trait Bound2 {}
         trait ChildOfBound2 : Bound2 {}
@@ -159,7 +159,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         impl<T: Bound2 + ?Sized> Tr2 for S<T> { }
         fn f(v: &S<ChildOfBound2>) {
             v.some_fn();
-            //^ unresolved
+            //^
         }
     """)
 
