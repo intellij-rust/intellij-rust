@@ -8,11 +8,10 @@ package org.rust.cargo.commands
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.fileTree
-import org.rust.openapiext.pathAsPath
 
 class CargoFmtTest : RustWithToolchainTestBase() {
 
-    fun testCargoFmt() {
+    fun `test cargo fmt`() {
         fileTree {
             toml("Cargo.toml", """
                 [package]

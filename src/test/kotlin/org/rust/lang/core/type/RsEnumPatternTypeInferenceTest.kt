@@ -6,7 +6,7 @@
 package org.rust.lang.core.type
 
 class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
-    fun testEnumPattern() = testExpr("""
+    fun `test enum pattern`() = testExpr("""
         enum E {
             X
         }
@@ -17,7 +17,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testEnumPatternWithUnnamedArgs() = testExpr("""
+    fun `test enum pattern with unnamed args`() = testExpr("""
         enum E {
             X(i32, i16)
         }
@@ -30,7 +30,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testEnumPatternWithNamedArgs() = testExpr("""
+    fun `test enum pattern with named args`() = testExpr("""
         enum E {
             X { _1: i32, _2: i64 }
         }
@@ -43,7 +43,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testEnumTupleOutOfBounds() = testExpr("""
+    fun `test enum tuple out of bounds`() = testExpr("""
         enum E {
             V(i32, i32)
         }
@@ -55,7 +55,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testStructTuple() = testExpr("""
+    fun `test struct tuple`() = testExpr("""
         struct Centimeters(f64);
         struct Inches(i32);
 
@@ -69,7 +69,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testBindingWithPat() = testExpr("""
+    fun `test binding with pat`() = testExpr("""
         struct S { x: i32, y: i32 }
 
         enum Result {
@@ -84,7 +84,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testBindingWithPatFailure1() = testExpr("""
+    fun `test binding with pat failure 1`() = testExpr("""
         struct S { x: i32, y: i32 }
 
         enum Result {
@@ -99,7 +99,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testBindingWithPatFailure2() = testExpr("""
+    fun `test binding with pat failure 2`() = testExpr("""
         struct S { x: i32, y: i32 }
 
         enum Result {

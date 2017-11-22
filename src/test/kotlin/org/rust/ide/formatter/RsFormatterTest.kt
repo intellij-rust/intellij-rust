@@ -10,17 +10,17 @@ import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.RsLanguage
 
 class RsFormatterTest : RsFormatterTestBase() {
-    fun testBlocks() = doTest()
-    fun testItems() = doTest()
-    fun testExpressions() = doTest()
-    fun testArgumentAlignment() = doTest()
-    fun testArgumentIndent() = doTest()
-    fun testTraits() = doTest()
-    fun testTupleAlignment() = doTest()
-    fun testChainCallAlignmentOff() = doTest()
-    fun testChainCallIndent() = doTest()
+    fun `test blocks`() = doTest()
+    fun `test items`() = doTest()
+    fun `test expressions`() = doTest()
+    fun `test argument alignment`() = doTest()
+    fun `test argument indent`() = doTest()
+    fun `test traits`() = doTest()
+    fun `test tuple alignment`() = doTest()
+    fun `test chain call alignment off`() = doTest()
+    fun `test chain call indent`() = doTest()
 
-    fun testChainCallAlignment() {
+    fun `test chain call alignment`() {
         common().ALIGN_MULTILINE_CHAINED_METHODS = true
         doTest()
     }
@@ -53,27 +53,27 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    fun testAlignParamsOff() {
+    fun `test align params off`() {
         common().ALIGN_MULTILINE_PARAMETERS = false
         doTest()
     }
 
-    fun testAlignParamsInCallsOff() {
+    fun `test align params in calls off`() {
         common().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false
         doTest()
     }
 
-    fun testAlignRetOff() {
+    fun `test align ret off`() {
         custom().ALIGN_RET_TYPE = false
         doTest()
     }
 
-    fun testAlignWhereOn() {
+    fun `test align where on`() {
         custom().ALIGN_WHERE_CLAUSE = true
         doTest()
     }
 
-    fun testAlignWhereBoundsOff() {
+    fun `test align where bounds off`() {
         custom().ALIGN_WHERE_BOUNDS = false
         doTextTest("""
             impl moo {
@@ -90,40 +90,40 @@ class RsFormatterTest : RsFormatterTestBase() {
         """)
     }
 
-    fun testAlignTypeParamsOn() {
+    fun `test align type params on`() {
         custom().ALIGN_TYPE_PARAMS = true
         doTest()
     }
 
-    fun testMinNumberOfBlankLines() {
+    fun `test min number of blank lines`() {
         custom().MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS = 2
         doTest()
     }
 
-    fun testAlignReturnType() = doTest()
+    fun `test align return type`() = doTest()
 
-    fun testAllowOneLineMatchOff() = doTest()
-    fun testAllowOneLineMatch() {
+    fun `test allow one line match off`() = doTest()
+    fun `test allow one line match`() {
         custom().ALLOW_ONE_LINE_MATCH = true
         doTest()
     }
 
-    fun testMacroUse() = doTest()
-    fun testAttributes() = doTest()
+    fun `test macro use`() = doTest()
+    fun `test attributes`() = doTest()
 
     // FIXME: this test is way too big
-    fun testSpacing() = doTest()
+    fun `test spacing`() = doTest()
 
-    fun testIssue451() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
-    fun testIssue526() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/526
-    fun testIssue569() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/569
+    fun `test issue451`() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/451
+    fun `test issue526`() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/526
+    fun `test issue569`() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/569
 
     // https://github.com/intellij-rust/intellij-rust/issues/543
-    fun testIssue543a() = checkNotChanged("""
+    fun `test issue543a`() = checkNotChanged("""
         pub type TeraResult<T> = Result<T, TeraError>;
     """)
 
-    fun testIssue543b() = checkNotChanged("""
+    fun `test issue543b`() = checkNotChanged("""
         impl_rdp! {
             grammar! {
                 expression = _{ paren ~ expression? }
@@ -132,7 +132,7 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    fun testIssue543c() = checkNotChanged("""
+    fun `test issue543c`() = checkNotChanged("""
         fn main() {
             if previous_end < token.start {
                 space_tokens.push((
@@ -143,11 +143,11 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    fun testElse() = doTest()
+    fun `test else`() = doTest()
 
-    fun testIssue654() = doTest()
+    fun `test issue654`() = doTest()
 
-    fun testUseRoot() = doTest() // https://github.com/intellij-rust/intellij-rust/issues/746
+    fun `test use root`() = doTest() // https://github.com/intellij-rust/intellij-rust/issues/746
 
     fun `test special macros`() = doTextTest("""
         fn main() {
@@ -197,7 +197,7 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    fun testImportGlobAlignment() = doTextTest("""
+    fun `test import glob alignment`() = doTextTest("""
         use piston_window::{Button,
         Transformed};
     """, """

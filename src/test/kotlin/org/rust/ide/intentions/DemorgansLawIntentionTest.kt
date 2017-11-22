@@ -7,7 +7,7 @@ package org.rust.ide.intentions
 
 class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
 
-    fun testOr() = doAvailableTest("""
+    fun `test or`() = doAvailableTest("""
         fn main() {
             if a /*caret*/|| b {}
         }
@@ -17,7 +17,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testOrNot() = doAvailableTest("""
+    fun `test or not`() = doAvailableTest("""
         fn main() {
             if !(a /*caret*/|| b) {}
         }
@@ -27,7 +27,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testNotOr() = doAvailableTest("""
+    fun `test not or`() = doAvailableTest("""
         fn main() {
             if !a /*caret*/|| !b {}
         }
@@ -37,7 +37,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testComplex1() = doAvailableTest("""
+    fun `test complex 1`() = doAvailableTest("""
         fn main() {
             if (a && b && c) /*caret*/|| d {}
         }
@@ -47,7 +47,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testReverseComplex1() = doAvailableTest("""
+    fun `test reverse complex 1`() = doAvailableTest("""
         fn main() {
             if !(!(a && b && c) /*caret*/&& !d) {}
         }
@@ -57,7 +57,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testComplex2() = doAvailableTest("""
+    fun `test complex 2`() = doAvailableTest("""
         fn main() {
             if (20 >= 50) /*caret*/&& 40 != 20 {}
         }
@@ -67,7 +67,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testReverseComplex2() = doAvailableTest("""
+    fun `test reverse complex 2`() = doAvailableTest("""
         fn main() {
             if !((20 < 50) /*caret*/|| 40 == 20) {}
         }
@@ -77,7 +77,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testComplex3() = doAvailableTest("""
+    fun `test complex 3`() = doAvailableTest("""
         fn main() {
             if !(2 + 2 == 2 /*caret*/&& (foo.bar() || !(78 < 90 || 90 > 78)) || (20 >= 50 && ((40 != 20)))) {}
         }
@@ -87,7 +87,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testReverseComplex3() = doAvailableTest("""
+    fun `test reverse complex 3`() = doAvailableTest("""
         fn main() {
             if !(!(2 + 2 != 2 /*caret*/|| !(foo.bar() || !(78 < 90 || 90 > 78))) || (!(20 < 50 || !((40 != 20))))) {}
         }
@@ -97,7 +97,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testComplex4() = doAvailableTest("""
+    fun `test complex 4`() = doAvailableTest("""
         fn main() {
             if 20 >= 50 /*caret*/&& 40 != 20 {}
         }
@@ -107,7 +107,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testReverseComplex4() = doAvailableTest("""
+    fun `test reverse complex 4`() = doAvailableTest("""
         fn main() {
             if !(20 < 50 /*caret*/|| 40 == 20) {}
         }
@@ -117,7 +117,7 @@ class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
         }
     """)
 
-    fun testConstant() = doAvailableTest("""
+    fun `test constant`() = doAvailableTest("""
         fn main() {
             let _ = b /*caret*/|| true;
         }

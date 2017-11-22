@@ -18,17 +18,17 @@ class RsCommenterTest : RsTestBase() {
         myFixture.checkResultByFile(fileName.replace(".rs", "_after.rs"), true)
     }
 
-    fun testSingleLine() = doTest(IdeActions.ACTION_COMMENT_LINE)
-    fun testMultiLine() = doTest(IdeActions.ACTION_COMMENT_LINE)
-    fun testSingleLineBlock() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
-    fun testMultiLineBlock() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
+    fun `test single line`() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun `test multi line`() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun `test single line block`() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
+    fun `test multi line block`() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
 
-    fun testSingleLineUncomment() = doTest(IdeActions.ACTION_COMMENT_LINE)
-    fun testMultiLineUncomment() = doTest(IdeActions.ACTION_COMMENT_LINE)
-    fun testSingleLineBlockUncomment() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
-    fun testMultiLineBlockUncomment() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
+    fun `test single line uncomment`() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun `test multi line uncomment`() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun `test single line block uncomment`() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
+    fun `test multi line block uncomment`() = doTest(IdeActions.ACTION_COMMENT_BLOCK)
 
-    fun testSingleLineUncommentWithSpace() = doTest(IdeActions.ACTION_COMMENT_LINE)
-    fun testNestedBlockComments() = doTest(IdeActions.ACTION_COMMENT_BLOCK) // FIXME
-    fun testIndentedSingleLineComment() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun `test single line uncomment with space`() = doTest(IdeActions.ACTION_COMMENT_LINE)
+    fun `test nested block comments`() = doTest(IdeActions.ACTION_COMMENT_BLOCK) // FIXME
+    fun `test indented single line comment`() = doTest(IdeActions.ACTION_COMMENT_LINE)
 }

@@ -6,32 +6,32 @@
 package org.rust.lang.core.completion
 
 class RsPartialParseCompletionTest : RsCompletionTestBase() {
-    fun testMatch() = @Suppress("DEPRECATION") checkSingleCompletion("tokenizer", """
+    fun `test match`() = @Suppress("DEPRECATION") checkSingleCompletion("tokenizer", """
             pub fn parse(tokenizer: lexer::Tokenizer) -> ast::Expr {
                 match tok/*caret*/
             }
     """)
 
-    fun testIfLet() = @Suppress("DEPRECATION") checkSingleCompletion("tokenizer", """
+    fun `test if let`() = @Suppress("DEPRECATION") checkSingleCompletion("tokenizer", """
         pub fn parse(tokenizer: lexer::Tokenizer) -> ast::Expr {
             if let Some(_) = tok/*caret*/
         }
     """)
 
-    fun testWhileLet() = @Suppress("DEPRECATION") checkSingleCompletion("numbers", """
+    fun `test while let`() = @Suppress("DEPRECATION") checkSingleCompletion("numbers", """
         fn main() {
             let numbers = vec![1, 2, 3].iter();
             while let Some(_) = num/*caret*/
         }
     """)
 
-    fun testIf() = @Suppress("DEPRECATION") checkSingleCompletion("quuz", """
+    fun `test if`() = @Suppress("DEPRECATION") checkSingleCompletion("quuz", """
         fn foo(quuz: bool) {
             if qu/*caret*/
         }
     """)
 
-    fun testWhile() = @Suppress("DEPRECATION") checkSingleCompletion("condition", """
+    fun `test while`() = @Suppress("DEPRECATION") checkSingleCompletion("condition", """
         fn foo() {
             let condition: bool = true;
 
@@ -39,7 +39,7 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testTypeParams() = @Suppress("DEPRECATION") checkSingleCompletion("Walrus", """
+    fun `test type params`() = @Suppress("DEPRECATION") checkSingleCompletion("Walrus", """
         struct Walrus {
             stomach: Vec<()>
         }
@@ -47,19 +47,19 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         fn make_walrus() -> Result<(), Wal/*caret*/
     """)
 
-    fun testImpl() = @Suppress("DEPRECATION") checkSingleCompletion("AutomatonTrait", """
+    fun `test impl`() = @Suppress("DEPRECATION") checkSingleCompletion("AutomatonTrait", """
         trait AutomatonTrait { }
 
         impl Auto/*caret*/
     """)
 
-    fun testImpl2() = @Suppress("DEPRECATION") checkSingleCompletion("AutomatonStruct", """
+    fun `test impl 2`() = @Suppress("DEPRECATION") checkSingleCompletion("AutomatonStruct", """
         struct AutomatonStruct { }
 
         impl Auto/*caret*/
     """)
 
-    fun testImpl3() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
+    fun `test impl 3`() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
         trait Automaton { }
 
         struct FooBar;
@@ -67,7 +67,7 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         impl Automaton for Foo/*caret*/
     """)
 
-    fun testLet() = @Suppress("DEPRECATION") checkSingleCompletion("Spam", """
+    fun `test let`() = @Suppress("DEPRECATION") checkSingleCompletion("Spam", """
         struct Spam;
 
         fn main() {
@@ -76,7 +76,7 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testImplMethodType() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
+    fun `test impl method type`() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
         pub struct FooBar;
 
         struct S;
@@ -90,7 +90,7 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testStructField() = @Suppress("DEPRECATION") checkSingleCompletion("foobar", """
+    fun `test struct field 1`() = @Suppress("DEPRECATION") checkSingleCompletion("foobar", """
         struct S {
             foobar: i32,
             frobnicator: i32,
@@ -104,19 +104,19 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testStatic() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
+    fun `test static`() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
         struct FooBar;
 
         static C: Foo/*caret*/
     """)
 
-    fun testConst() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
+    fun `test const`() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
         struct FooBar;
 
         const C: Foo/*caret*/
     """)
 
-    fun testUseGlobs() = @Suppress("DEPRECATION") checkSingleCompletion("quux", """
+    fun `test use globs`() = @Suppress("DEPRECATION") checkSingleCompletion("quux", """
         use self::m::{foo, qu/*caret*/ bar};
 
         mod m {
@@ -126,7 +126,7 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testTupleStruct() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
+    fun `test tuple struct`() = @Suppress("DEPRECATION") checkSingleCompletion("FooBar", """
         type FooBar = ();
         struct S(Fo/*caret*/)
     """)
@@ -151,7 +151,7 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         executeSoloCompletion()
     }
 
-    fun `test struct field`() = @Suppress("DEPRECATION") checkSingleCompletion("bar", """
+    fun `test struct field 2`() = @Suppress("DEPRECATION") checkSingleCompletion("bar", """
         struct S { foo: i32, bar: i32}
         fn main() { let _ = S { foo: 2, .ba/*caret*/ } }
     """)

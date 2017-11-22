@@ -10,7 +10,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase() {
-    fun testIntentionHasDocumentation() {
+    fun `test intention has documentation`() {
         val directory = "intentionDescriptions/${intention.javaClass.simpleName}"
         val files = listOf("before.rs.template", "after.rs.template", "description.html")
         for (file in files) {

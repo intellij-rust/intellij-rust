@@ -6,12 +6,12 @@
 package org.rust.ide.intentions
 
 class SetMutableIntentionTest : RsIntentionTestBase(SetMutableIntention()) {
-    fun testSetMutableVariable() = doAvailableTest(
+    fun `test set mutable variable`() = doAvailableTest(
         """ fn main() { let var: &i3/*caret*/2 = 52; } """,
         """ fn main() { let var: &mut i3/*caret*/2 = 52; } """
     )
 
-    fun testSetMutableParameter() = doAvailableTest(
+    fun `test set mutable parameter`() = doAvailableTest(
         """ fn func(param: &i3/*caret*/2) {} """,
         """ fn func(param: &mut i3/*caret*/2) {} """
     )

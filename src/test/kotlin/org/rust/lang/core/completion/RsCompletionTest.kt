@@ -369,7 +369,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         use Spam::Quux/*caret*/;
     """)
 
-    fun testEnumVariant() = doSingleCompletion("""
+    fun `test enum variant`() = doSingleCompletion("""
         enum Foo { BARBOO, BAZBAR }
         fn main() { let _ = Foo::BAZ/*caret*/ }
     """, """
@@ -377,7 +377,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { let _ = Foo::BAZBAR/*caret*/ }
     """)
 
-    fun testEnumVariantWithTupleFields() = doSingleCompletion("""
+    fun `test enum variant with tuple fields`() = doSingleCompletion("""
         enum Foo { BARBAZ(f64) }
         fn main() { let _ = Foo::BAR/*caret*/ }
     """, """
@@ -385,7 +385,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { let _ = Foo::BARBAZ(/*caret*/) }
     """)
 
-    fun testEnumVariantWithTupleFieldsInUseBlock() = doSingleCompletion("""
+    fun `test enum variant with tuple fields in use block`() = doSingleCompletion("""
         enum Foo { BARBAZ(f64) }
         fn main() { use Foo::BAR/*caret*/ }
     """, """
@@ -393,7 +393,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { use Foo::BARBAZ/*caret*/ }
     """)
 
-    fun testEnumVariantWithBlockFields() = doSingleCompletion("""
+    fun `test enum variant with block fields`() = doSingleCompletion("""
         enum Foo { BARBAZ { foo: f64 } }
         fn main() { let _ = Foo::BAR/*caret*/ }
     """, """
@@ -401,7 +401,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { let _ = Foo::BARBAZ {/*caret*/} }
     """)
 
-    fun testEnumVariantWithBlockFieldsInUseBlock() = doSingleCompletion("""
+    fun `test enum variant with block fields in use block`() = doSingleCompletion("""
         enum Foo { BARBAZ { foo: f64 } }
         fn main() { use Foo::BAR/*caret*/ }
     """, """
@@ -409,7 +409,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { use Foo::BARBAZ/*caret*/ }
     """)
 
-    fun testTypeNamespaceIsCompletedForPathHead() = doSingleCompletion("""
+    fun `test type namespace is completed for path head`() = doSingleCompletion("""
         struct FooBar { f: i32 }
 
         fn main() { Foo/*caret*/ }
@@ -420,7 +420,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     // issue #1182
-    fun testAssociatedTypeCompletion() = doSingleCompletion("""
+    fun `test associated type completion`() = doSingleCompletion("""
         trait Foo {
             type Bar;
             fn foo(bar: Self::Ba/*caret*/);

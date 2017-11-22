@@ -28,7 +28,7 @@ class RsStubAccessTest : RsTestBase() {
         myFixture.copyDirectoryToProject(".", "src")
     }
 
-    fun testPresentationDoesNotNeedAst() {
+    fun `test presentation does not need ast`() {
         processStubsWithoutAstAccess<RsNamedElement> { element ->
             element.getIcon(0)
             element.getIcon(Iconable.ICON_FLAG_VISIBILITY)
@@ -41,11 +41,11 @@ class RsStubAccessTest : RsTestBase() {
         }
     }
 
-    fun testGettingReferenceDoesNotNeedAst() {
+    fun `test getting reference does not need ast`() {
         processStubsWithoutAstAccess<RsElement> { it.reference }
     }
 
-    fun testParentWorksCorrectlyForStubbedElements() {
+    fun `test parent works correctly for stubbed elements`() {
         val parentsByStub: MutableMap<PsiElement, PsiElement> = HashMap()
         try {
             LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {

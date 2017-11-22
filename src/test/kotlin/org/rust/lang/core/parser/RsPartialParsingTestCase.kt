@@ -13,19 +13,19 @@ import com.intellij.psi.PsiFile
  */
 class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
 
-    fun testFn() = doTest(true)
-    fun testUseItem() = doTest(true)
-    fun testShifts() = doTest(true)
-    fun testStructPat() = doTest(true)
-    fun testStructDef() = doTest(true)
-    fun testEnumVis() = doTest(true)
-    fun testImplBody() = doTest(true)
-    fun testTraitBody() = doTest(true)
-    fun testMatchExpr() = doTest(true)
-    fun testStructExprFields() = doTest(true)
-    fun testHrtbForLifetimes() = doTest(true)
-    fun testNoLifetimeBoundsInGenericArgs() = doTest(true)
-    fun testRequireCommas() = doTest(true)
+    fun `test fn`() = doTest(true)
+    fun `test use item`() = doTest(true)
+    fun `test shifts`() = doTest(true)
+    fun `test struct pat`() = doTest(true)
+    fun `test struct def`() = doTest(true)
+    fun `test enum vis`() = doTest(true)
+    fun `test impl body`() = doTest(true)
+    fun `test trait body`() = doTest(true)
+    fun `test match expr`() = doTest(true)
+    fun `test struct expr fields`() = doTest(true)
+    fun `test hrtb for lifetimes`() = doTest(true)
+    fun `test no lifetime bounds in generic args`() = doTest(true)
+    fun `test require commas`() = doTest(true)
 
     override fun checkResult(targetDataName: String?, file: PsiFile) {
         check(hasError(file)) {

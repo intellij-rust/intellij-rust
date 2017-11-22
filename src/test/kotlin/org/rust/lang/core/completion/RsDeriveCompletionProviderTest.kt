@@ -13,7 +13,7 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
-    fun testCompleteOnStruct() = doSingleCompletion("""
+    fun `test complete on struct`() = doSingleCompletion("""
         #[derive(Debu/*caret*/)]
         struct Test {
             foo: u8
@@ -25,7 +25,7 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testCompleteOnEnum() = doSingleCompletion("""
+    fun `test complete on enum`() = doSingleCompletion("""
         #[derive(Debu/*caret*/)]
         enum Test {
             Something
@@ -69,28 +69,28 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
         }
     """)
 
-    fun testDoesntCompleteOnFn() = checkNoCompletion("""
+    fun `test doesnt complete on fn`() = checkNoCompletion("""
         #[foo(PartialE/*caret*/)]
         fn foo() { }
     """)
 
-    fun testDoesntCompleteOnMod() = checkNoCompletion("""
+    fun `test doesnt complete on mod`() = checkNoCompletion("""
         #[foo(PartialE/*caret*/)]
         mod foo { }
     """)
 
-    fun testDoesntCompleteNonDeriveAttr() = checkNoCompletion("""
+    fun `test doesnt complete non derive attr`() = checkNoCompletion("""
         #[foo(PartialE/*caret*/)]
         enum Test { Something }
     """)
 
-    fun testDoesntCompleteInnerAttr() = checkNoCompletion("""
+    fun `test doesnt complete inner attr`() = checkNoCompletion("""
         mod bar {
             #![derive(PartialE/*caret*/)]
         }
     """)
 
-    fun testDoesntCompleteAlreadyDerived() = checkNoCompletion("""
+    fun `test doesnt complete already derived`() = checkNoCompletion("""
         #[derive(Debug, Debu/*caret*/)]
         enum Test { Something }
     """)

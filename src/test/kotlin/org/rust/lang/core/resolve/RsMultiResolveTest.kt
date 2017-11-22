@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.ext.RsReferenceElement
 
 
 class RsMultiResolveTest : RsResolveTestBase() {
-    fun testStructExpr() = doTest("""
+    fun `test struct expr`() = doTest("""
         struct S { foo: i32, foo: () }
         fn main() {
             let _ = S { foo: 1 };
@@ -18,7 +18,7 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testFieldExpr() = doTest("""
+    fun `test field expr`() = doTest("""
         struct S { foo: i32, foo: () }
         fn f(s: S) {
             s.foo
@@ -26,7 +26,7 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testUseMultiReference() = doTest("""
+    fun `test use multi reference`() = doTest("""
         use m::foo;
               //^
 
@@ -37,7 +37,7 @@ class RsMultiResolveTest : RsResolveTestBase() {
     """)
 
     //FIXME: should resolve to a single  non ref method!
-    fun testNonInherentImpl2() = doTest("""
+    fun `test non inherent impl 2`() = doTest("""
         trait T { fn foo(&self) { println!("Hello"); } }
 
         struct S;

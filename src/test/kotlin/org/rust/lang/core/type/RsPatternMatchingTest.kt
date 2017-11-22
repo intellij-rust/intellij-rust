@@ -6,7 +6,7 @@
 package org.rust.lang.core.type
 
 class RsPatternMatchingTest : RsTypificationTestBase() {
-    fun testIfLetPattern() = testExpr("""
+    fun `test if let pattern`() = testExpr("""
         enum E { L(i32), R(bool) }
         fn main() {
             let _ = if let E::L(x) = E::R(false) { x } else { x };
@@ -14,7 +14,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testWhileLetPattern() = testExpr("""
+    fun `test while let pattern`() = testExpr("""
         enum E { L(i32), R(bool) }
         fn main() {
             let e = E::L(92);
@@ -24,7 +24,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testLetTypeAscription() = testExpr("""
+    fun `test let type ascription`() = testExpr("""
         struct S;
         struct T;
 
@@ -35,7 +35,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testLetInitExpr() = testExpr("""
+    fun `test let init expr`() = testExpr("""
         struct S;
         struct T;
 
@@ -46,7 +46,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testNestedStructPattern() = testExpr("""
+    fun `test nested struct pattern`() = testExpr("""
         struct S;
         struct T {
             s: S
@@ -59,7 +59,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testBracedEnumVariant() = testExpr("""
+    fun `test braced enum variant`() = testExpr("""
         enum E { S { foo: i32 }}
 
         fn main() {
@@ -68,7 +68,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }                           //^ i32
     """)
 
-    fun testFnArgumentPattern() = testExpr("""
+    fun `test fn argument pattern`() = testExpr("""
         struct S;
         struct T;
 
@@ -78,7 +78,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testClosureArgument() = testExpr("""
+    fun `test closure argument`() = testExpr("""
         fn main() {
             let _ = |x: ()| {
                 x
@@ -87,7 +87,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testRefPattern() = testExpr("""
+    fun `test ref pattern`() = testExpr("""
         struct Vec;
 
         fn bar(vr: &Vec) {
@@ -97,7 +97,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testRefPattern2() = testExpr("""
+    fun `test ref pattern 2`() = testExpr("""
         struct Vec;
 
         fn bar(vr: Vec) {
@@ -107,7 +107,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testMutRefPattern() = testExpr("""
+    fun `test mut ref pattern`() = testExpr("""
         struct Vec;
 
         fn bar(vr: &mut Vec) {
@@ -117,7 +117,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testMutRefPattern2() = testExpr("""
+    fun `test mut ref pattern 2`() = testExpr("""
         struct Vec;
 
         fn bar(vr: Vec) {
@@ -127,7 +127,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testTupleOutOfBounds() = testExpr("""
+    fun `test tuple out of bounds`() = testExpr("""
         fn main() {
             let (_, _, x) = (1, 2);
             x
@@ -135,14 +135,14 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testLiteralPattern() = testExpr("""
+    fun `test literal pattern`() = testExpr("""
     fn main() {
         let x: (i32, String) = unimplemented!();
         match x { (x, "foo") => x }
     }                         //^ i32
     """)
 
-    fun testGenericTupleStructPattern() = testExpr("""
+    fun `test generic tuple struct pattern`() = testExpr("""
         struct S<T>(T);
         fn main() {
             let s = S(123);
@@ -151,7 +151,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericStructPattern() = testExpr("""
+    fun `test generic struct pattern`() = testExpr("""
         struct S<T> { s: T }
         fn main() {
             let s = S { s: 123 };
@@ -160,7 +160,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericEnumTupleStructPattern() = testExpr("""
+    fun `test generic enum tuple struct pattern`() = testExpr("""
         enum E<T1, T2> { L(T1), R { r: T2 } }
         fn foo(e: E<i32, bool>) {
             match e {
@@ -171,7 +171,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericEnumStructPattern() = testExpr("""
+    fun `test generic enum struct pattern`() = testExpr("""
         enum E<T1, T2> { L(T1), R { r: T2 } }
         fn foo(e: E<i32, bool>) {
             match e {

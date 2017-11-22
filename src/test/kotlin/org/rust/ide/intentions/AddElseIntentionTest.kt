@@ -13,7 +13,7 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
         }
     """)
 
-    fun testFullIfElse() = doUnavailableTest("""
+    fun `test full if else`() = doUnavailableTest("""
         fn foo(a: i32, b: i32) {
             if a == b {
                 println!("Equally");/*caret*/
@@ -23,7 +23,7 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
         }
     """)
 
-    fun testSimple() = doAvailableTest("""
+    fun `test simple`() = doAvailableTest("""
         fn foo(a: i32, b: i32) {
             if a == b {
                 println!("Equally");/*caret*/
@@ -51,7 +51,7 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
         }
     """)
 
-    fun testNested1() = doAvailableTest("""
+    fun `test nested 1`() = doAvailableTest("""
         fn main() {
             if true {
                 if true {
@@ -69,7 +69,7 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
         }
     """)
 
-    fun testNested2() = doAvailableTest("""
+    fun `test nested 2`() = doAvailableTest("""
         fn main() {
             if true {
                 if true {
@@ -87,7 +87,7 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
         }
     """)
 
-    fun testReformat() = doAvailableTest("""
+    fun `test reformat`() = doAvailableTest("""
         fn main() {
             if true {
             /*caret*/

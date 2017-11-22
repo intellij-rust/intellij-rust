@@ -7,9 +7,9 @@ package org.rust.ide.formatter
 
 class RsSingleImportRemoveBracesFormatProcessorTest : RsFormatterTestBase() {
 
-    fun testRemoveBracesIfSingleImport() = doTextTest("use getopts::{optopt};", "use getopts::optopt;")
+    fun `test remove braces if single import`() = doTextTest("use getopts::{optopt};", "use getopts::optopt;")
 
-    fun testWontRemoveBracesIfMultiImport() = checkNotChanged(
+    fun `test wont remove braces if multi import`() = checkNotChanged(
         "use getopts::{optopt, optarg};"
     )
 
@@ -17,7 +17,7 @@ class RsSingleImportRemoveBracesFormatProcessorTest : RsFormatterTestBase() {
         "use getopts::{self};"
     )
 
-    fun testRemoveBracesWithMultipleImports() = doTextTest(
+    fun `test remove braces with multiple imports`() = doTextTest(
         """
         use getopts::{optopt};
         use std::io::{self, Read, Write};

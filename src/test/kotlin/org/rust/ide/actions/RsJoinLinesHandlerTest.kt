@@ -11,7 +11,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
     fun `test blank file1`() = doTestRaw("/*caret*/\n\n", "/*caret*/\n")
     fun `test blank file2`() = doTestRaw("\n/*caret*/\n", "\n/*caret*/")
 
-    fun testNoEscape() = doTest("""
+    fun `test no escape`() = doTest("""
         fn main() {
             "Hello<caret>,
              World"
@@ -22,7 +22,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
-    fun testNewlineEscape() = doTest("""
+    fun `test newline escape`() = doTest("""
         fn main() {
             "He<caret>llo, \
              World"
@@ -33,7 +33,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
-    fun testEscapedNewlineEscape() = doTest("""
+    fun `test escaped newline escape`() = doTest("""
         fn main() {
             "He<caret>llo, \\
              World"
@@ -44,7 +44,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
-    fun testEscapedButNotEscapedInFactNewlineEscape() = doTest("""
+    fun `test escaped but not escaped in fact newline escape`() = doTest("""
         fn main() {
             "He<caret>llo, \\\
              World"
@@ -55,7 +55,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
-    fun testTwoEscapedBackslashes() = doTest("""
+    fun `test two escaped backslashes`() = doTest("""
         fn main() {
             "He<caret>llo, \\\\
              World"
@@ -66,7 +66,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
-    fun testNoIndent() = doTest("""
+    fun `test no indent`() = doTest("""
         fn main() {
             "Hel<caret>lo,
         World"
@@ -77,7 +77,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
-    fun testOnlyNewlineEscape() = doTest("""
+    fun `test only newline escape`() = doTest("""
         fn main() {
             "<caret>\
             "
@@ -88,7 +88,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
-    fun testOuterDocComment() = doTest("""
+    fun `test outer doc comment`() = doTest("""
         /// Hello<caret>
         /// Docs
         fn foo() {}
@@ -97,14 +97,14 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         fn foo() {}
     """)
 
-    fun testInnerDocComment() = doTest("""
+    fun `test inner doc comment`() = doTest("""
         //! Hello<caret>
         //! Docs
     """, """
         //! Hello<caret> Docs
     """)
 
-    fun testOuterDocCommentNotComment() = doTest("""
+    fun `test outer doc comment not comment`() = doTest("""
         /// Hello<caret>
         fn foo() {}
     """, """

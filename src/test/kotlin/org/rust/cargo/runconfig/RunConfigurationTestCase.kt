@@ -18,9 +18,8 @@ import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.fileTree
 
 class RunConfigurationTestCase : RustWithToolchainTestBase() {
-    override val dataPath = "src/test/resources/org/rust/cargo/runconfig/fixtures"
 
-    fun testApplicationConfiguration() {
+    fun `test application configuration`() {
         fileTree {
             toml("Cargo.toml", """
                 [package]

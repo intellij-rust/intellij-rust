@@ -6,7 +6,7 @@
 package org.rust.ide.intentions
 
 class WrapLambdaExprIntentionTest : RsIntentionTestBase(WrapLambdaExprIntention()) {
-    fun testAvailableWrapBraces() = doAvailableTest(
+    fun `test available wrap braces`() = doAvailableTest(
         """
         fn main() {
             |x| x /*caret*/* x
@@ -22,7 +22,7 @@ class WrapLambdaExprIntentionTest : RsIntentionTestBase(WrapLambdaExprIntention(
         """
     )
 
-    fun testUnavailableWrapBraces() = doUnavailableTest(
+    fun `test unavailable wrap braces`() = doUnavailableTest(
         """
         fn main() {
             |x| {/*caret*/ let a = 3; }

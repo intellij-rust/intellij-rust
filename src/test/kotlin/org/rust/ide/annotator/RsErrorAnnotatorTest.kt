@@ -10,14 +10,14 @@ import org.rust.fileTreeFromText
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
-    fun testInvalidModuleDeclarations() = doTest("helper.rs")
+    fun `test invalid module declarations`() = doTest("helper.rs")
 
-    fun testCreateFileQuickFix() = checkByDirectory {
+    fun `test create file quick fix`() = checkByDirectory {
         openFileInEditor("mod.rs")
         applyQuickFix("Create module file")
     }
 
-    fun testCreateFileAndExpandModuleQuickFix() = checkByDirectory {
+    fun `test create file and expand module quick fix`() = checkByDirectory {
         openFileInEditor("foo.rs")
         applyQuickFix("Create module file")
     }

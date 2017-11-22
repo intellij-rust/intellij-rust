@@ -6,7 +6,7 @@
 package org.rust.lang.core.type
 
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
-    fun testFunctionCall() = testExpr("""
+    fun `test function call`() = testExpr("""
         struct S;
 
         fn new() -> S { S }
@@ -18,7 +18,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testUnitFunctionCall() = testExpr("""
+    fun `test unit function call`() = testExpr("""
         fn foo() {}
         fn main() {
             let x = foo();
@@ -27,7 +27,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testStaticMethodCall() = testExpr("""
+    fun `test static method call`() = testExpr("""
         struct S;
         struct T;
         impl S { fn new() -> T { T } }
@@ -39,7 +39,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testBlockExpr() = testExpr("""
+    fun `test block expr`() = testExpr("""
         struct S;
 
         fn foo() -> S {}
@@ -50,7 +50,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testUnitBlockExpr() = testExpr("""
+    fun `test unit block expr`() = testExpr("""
         struct S;
 
         fn foo() -> S {}
@@ -61,7 +61,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testEmptyBlockExpr() = testExpr("""
+    fun `test empty block expr`() = testExpr("""
         fn main() {
             let x = {};
             x
@@ -69,7 +69,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testTypeParameters() = testExpr("""
+    fun `test type parameters`() = testExpr("""
         fn foo<FOO>(foo: FOO) {
             let bar = foo;
             bar
@@ -77,7 +77,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testUnitIf() = testExpr("""
+    fun `test unit if`() = testExpr("""
         fn main() {
             let x = if true { 92 };
             x
@@ -85,7 +85,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testIf() = testExpr("""
+    fun `test if`() = testExpr("""
         fn main() {
             let x = if true { 92 } else { 62 };
             x
@@ -217,7 +217,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testWhile() = testExpr("""
+    fun `test while`() = testExpr("""
         fn main() {
             let x = while false { 92 };
             x
@@ -225,7 +225,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testFor() = testExpr("""
+    fun `test for`() = testExpr("""
         fn main() {
             let x = for _ in 62..92 {};
             x
@@ -233,56 +233,56 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testParenthesis() = testExpr("""
+    fun `test parenthesis`() = testExpr("""
         fn main() {
             (false);
           //^ bool
         }
     """)
 
-    fun testBoolTrue() = testExpr("""
+    fun `test bool true`() = testExpr("""
         fn main() {
             let a = true;
                      //^ bool
         }
     """)
 
-    fun testBoolFalse() = testExpr("""
+    fun `test bool false`() = testExpr("""
         fn main() {
             let a = false;
                       //^ bool
         }
     """)
 
-    fun testChar() = testExpr("""
+    fun `test char`() = testExpr("""
         fn main() {
             let a = 'A';
                    //^ char
         }
     """)
 
-    fun testByteChar() = testExpr("""
+    fun `test byte char`() = testExpr("""
         fn main() {
             let a = b'A';
                     //^ u8
         }
     """)
 
-    fun testByteStr() = testExpr("""
+    fun `test byte str`() = testExpr("""
         fn main() {
             let a = b"ABC";
                     //^ &[u8; 3]
         }
     """)
 
-    fun testStrRef() = testExpr("""
+    fun `test str ref`() = testExpr("""
         fn main() {
             let a = "Hello";
                        //^ &str
         }
     """)
 
-    fun testNever() = testExpr("""
+    fun `test never`() = testExpr("""
         fn never() -> ! { unimplemented!() }
         fn main() {
             let a = never();
@@ -311,7 +311,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ !
     """)
 
-    fun testEnumVariantA() = testExpr("""
+    fun `test enum variant A`() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
             (E::A(92))
@@ -319,7 +319,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testEnumVariantB() = testExpr("""
+    fun `test enum variant B`() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
             (E::B { val: 92 })
@@ -327,7 +327,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testEnumVariantC() = testExpr("""
+    fun `test enum variant C`() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
             (E::C)
@@ -335,7 +335,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testMatchExpr() = testExpr("""
+    fun `test match expr`() = testExpr("""
         struct S;
 
         enum E { A(S), B }
@@ -349,13 +349,13 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ &S
     """)
 
-    fun testParens() = testExpr("""
+    fun `test parens`() = testExpr("""
         type T = (i32);
         fn foo(x: T) { x }
                      //^ i32
     """)
 
-    fun testNoStackOverflow1() = testExpr("""
+    fun `test no stack overflow 1`() = testExpr("""
         pub struct P<T: ?Sized> { ptr: Box<T> }
 
         #[allow(non_snake_case)]
@@ -370,7 +370,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testNoStackOverflow2() = testExpr("""
+    fun `test no stack overflow 2`() = testExpr("""
         fn foo(S: S){
             let x = S;
             x.foo()
@@ -388,7 +388,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                         //^ isize
     """)
 
-    fun testBinOperatorsBool() {
+    fun `test bin operators bool`() {
         val cases = listOf(
             Pair("1 == 2", "bool"),
             Pair("1 != 2", "bool"),

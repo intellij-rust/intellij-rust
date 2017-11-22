@@ -35,28 +35,28 @@ class RunConfigurationProducerTest : RsTestBase() {
     // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setRawWorkspace].
     override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
 
-    fun testExecutableProducerWorksForBin() {
+    fun `test executable producer works for bin`() {
         testProject {
             bin("hello", "src/main.rs").open()
         }
         checkOnTopLevel<RsFile>()
     }
 
-    fun testExecutableProducerWorksForExample() {
+    fun `test executable producer works for example`() {
         testProject {
             example("hello", "example/hello.rs").open()
         }
         checkOnLeaf()
     }
 
-    fun testExecutableProducerDisabledForLib() {
+    fun `test executable producer disabled for lib`() {
         testProject {
             lib("hello", "src/lib.rs").open()
         }
         checkOnLeaf()
     }
 
-    fun testExecutableProducerRemembersContext() {
+    fun `test executable producer remembers context`() {
         testProject {
             bin("foo", "bin/foo.rs")
             bin("bar", "bin/bar.rs")
@@ -69,7 +69,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         doTestRemembersContext(CargoExecutableRunConfigurationProducer(), ctx1, ctx2)
     }
 
-    fun testTestProducerWorksForAnnotatedFunctions() {
+    fun `test test producer works for annotated functions`() {
         testProject {
             lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
         }
@@ -88,14 +88,14 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnTopLevel<RsFunction>()
     }
 
-    fun testTestProducerDisableForNonAnnotatedFunctions() {
+    fun `test test producer disable for non annotated functions`() {
         testProject {
             lib("foo", "src/lib.rs", "fn test_foo() { <caret>assert!(true); }").open()
         }
         checkOnLeaf()
     }
 
-    fun testTestProducerRemembersContext() {
+    fun `test test producer remembers context`() {
         testProject {
             lib("foo", "src/lib.rs", """
                 #[test]
@@ -115,7 +115,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         doTestRemembersContext(CargoTestRunConfigurationProducer(), ctx1, ctx2)
     }
 
-    fun testTestProducerWorksForModules() {
+    fun `test test producer works for modules`() {
         testProject {
             lib("foo", "src/lib.rs", """
                 mod foo {
@@ -130,14 +130,14 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnTopLevel<RsMod>()
     }
 
-    fun testTestProducerWorksForFiles() {
+    fun `test test producer works for files`() {
         testProject {
             test("foo", "tests/foo.rs").open()
         }
         checkOnElement<RsFile>()
     }
 
-    fun testTestProducerWorksForRootModule() {
+    fun `test test producer works for root module`() {
         testProject {
             lib("foo", "src/lib.rs", """
                 #[test] fn bar() {}
@@ -150,7 +150,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnLeaf()
     }
 
-    fun testMeaningfulConfigurationName() {
+    fun `test meaningful configuration name`() {
         testProject {
             lib("foo", "src/lib.rs", "mod bar;")
             file("src/bar/mod.rs", """
@@ -164,14 +164,14 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnLeaf()
     }
 
-    fun testTestProducerAddsBinName() {
+    fun `test test producer adds bin name`() {
         testProject {
             bin("foo", "src/bin/foo.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
         }
         checkOnLeaf()
     }
 
-    fun testMainFnIsMoreSpecificThanTestMod() {
+    fun `test main fn is more specific than test mod`() {
         testProject {
             bin("foo", "src/main.rs", """
                 fn main() { <caret> }
@@ -183,7 +183,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnLeaf()
     }
 
-    fun testMainModAndTestModHaveSameSpecificity() {
+    fun `test main mod and test mod have same specificity`() {
         testProject {
             bin("foo", "src/main.rs", """
                 fn main() {}
@@ -195,7 +195,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnLeaf()
     }
 
-    fun testHyphenInNameWorks() {
+    fun `test hyphen in name works`() {
         testProject {
             example("hello-world", "example/hello.rs").open()
         }

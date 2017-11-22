@@ -6,7 +6,7 @@
 package org.rust.ide.intentions
 
 class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
-    fun testSimple() = doAvailableTest("""
+    fun `test simple`() = doAvailableTest("""
     fn main() {
         if let Some(value) = x {/*caret*/
 
@@ -20,7 +20,7 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
     }
     """)
 
-    fun testSimpleElse() = doAvailableTest("""
+    fun `test simple else`() = doAvailableTest("""
     fn main() {
         if let Some(val) = x {
 
@@ -37,7 +37,7 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
     }
     """)
 
-    fun testElseIf() = doAvailableTest("""
+    fun `test else if`() = doAvailableTest("""
     fn main() {
         if let A(value) = x {
 
@@ -54,7 +54,7 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
     }
     """)
 
-    fun testElseIfElse() = doAvailableTest("""
+    fun `test else if else`() = doAvailableTest("""
     fn main() {
         if let A(value) = x {
             /*caret*/
@@ -75,7 +75,7 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
     """
     )
 
-    fun testTrackbackIf() = doAvailableTest("""
+    fun `test trackback if`() = doAvailableTest("""
     fn main() {
         if let A(value) = x {
 
@@ -96,7 +96,7 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
     """
     )
 
-    fun testApplyOnSametarget() = doUnavailableTest("""
+    fun `test apply on same target`() = doUnavailableTest("""
     fn main() {
         if let A(value) = x {
 

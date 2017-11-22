@@ -6,14 +6,14 @@
 package org.rust.ide.annotator
 
 class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
-    fun testE0379_ConstTraitFunction() = checkErrors("""
+    fun `test E0379 const trait function`() = checkErrors("""
         trait Foo {
             fn foo();
             <error descr="Trait functions cannot be declared const [E0379]">const</error> fn bar();
         }
     """)
 
-    fun testImplAssocFunction() = checkErrors("""
+    fun `test impl assoc function`() = checkErrors("""
         struct Person<D> { data: D }
         impl<D> Person<D> {
             #[inline]
@@ -30,7 +30,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testImplMethod() = checkErrors("""
+    fun `test impl method`() = checkErrors("""
         struct Person<D> { data: D }
         impl<D> Person<D> {
             #[inline]
@@ -47,7 +47,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testTraitAssocFunction() = checkErrors("""
+    fun `test trait assoc function`() = checkErrors("""
         trait Animal<T> {
             #[inline]
             unsafe fn feed<'a>(food: T, d: &'a str, _: bool, f32) -> Option<f64> where T: Sized {
@@ -63,7 +63,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testTraitMethod() = checkErrors("""
+    fun `test trait method`() = checkErrors("""
         trait Animal<T> {
             #[inline]
             fn feed<'a>(&mut self, food: T, d: &'a str, _: bool, f32) -> Option<f64> where T: Sized {
@@ -79,7 +79,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testForeignFunction() = checkErrors("""
+    fun `test foreign function`() = checkErrors("""
         extern {
             #[cold]
             pub fn full(len: size_t, ...) -> size_t;
@@ -95,11 +95,11 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testUnionTuple() = checkErrors("""
+    fun `test union tuple`() = checkErrors("""
         union U<error descr="Union cannot be tuple-like">(i32, f32)</error>;
     """)
 
-    fun testTypeAliasFree() = checkErrors("""
+    fun `test type alias free`() = checkErrors("""
         type Int = i32;
         pub type UInt = u32;
         type Maybe<T> = Option<T>;
@@ -110,7 +110,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         type Show<error descr="Type `Show` cannot have type parameter bounds">: Display</error> = u32;
     """)
 
-    fun testTypeAliasInTrait() = checkErrors("""
+    fun `test type alias in trait`() = checkErrors("""
         trait Computer {
             type Int;
             type Long = i64;
@@ -123,7 +123,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testTypeAliasInTraitImpl() = checkErrors("""
+    fun `test type alias in trait impl`() = checkErrors("""
             trait Vehicle {
                 type Engine;
                 type Control;
@@ -143,7 +143,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
             }
     """)
 
-    fun testConstFree() = checkErrors("""
+    fun `test const free`() = checkErrors("""
         const FOO: u32 = 42;
         pub const PUB_FOO: u32 = 41;
         static S_FOO: bool = true;
@@ -155,7 +155,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         <error descr="Static constant `DEF_BAR` cannot have the `default` qualifier">default</error> static DEF_BAR: u16 = 9;
     """)
 
-    fun testConstInTrait() = checkErrors("""
+    fun `test const in trait`() = checkErrors("""
         trait Foo {
             const FOO_1: u16 = 10;
             const FOO_2: f64;
@@ -166,7 +166,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testConstInImpl() = checkErrors("""
+    fun `test const in impl`() = checkErrors("""
         struct Foo;
         impl Foo {
             const FOO: u32 = 109;
@@ -178,7 +178,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testConstInExtern() = checkErrors("""
+    fun `test const in extern`() = checkErrors("""
         extern "C" {
             static mut FOO: u32;
             pub static mut PUB_FOO: u8;
@@ -190,7 +190,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testFunction() = checkErrors("""
+    fun `test function`() = checkErrors("""
         #[inline]
         pub const unsafe fn full<'a, T>(id: u32, name: &'a str, data: &T, _: &mut FnMut(Display)) -> Option<u32> where T: Sized {
             None
@@ -206,7 +206,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         <error>default</error> fn two_errors(<error>u8</error>, a: i16) {}
     """)
 
-    fun testE0202_TypeAliasInInherentImpl() = checkErrors("""
+    fun `test E0202 type alias in inherent impl`() = checkErrors("""
         struct Foo;
         impl Foo {
             <error descr="Associated types are not allowed in inherent impls [E0202]">type Long = i64;</error>

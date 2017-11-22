@@ -12,8 +12,8 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
 
     override fun getFileExtension() = "rs"
 
-    fun testAll() = doTest()
-    fun testTraits() = doTest()
+    fun `test all`() = doTest()
+    fun `test traits`() = doTest()
 
     fun `test line breaks between top-level items`() = doTextTest("""
         struct Foo { }
