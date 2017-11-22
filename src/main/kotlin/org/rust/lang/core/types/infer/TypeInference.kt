@@ -358,6 +358,17 @@ class RsInferenceContext {
         return TyWithObligations(normTy, obligations)
     }
 
+    fun instantiateBounds(
+        bounds: List<TraitRef>,
+        subst: Map<TyTypeParameter, Ty> = emptySubstitution,
+        recursionDepth: Int = 0
+    ): Sequence<Obligation> {
+        return bounds.asSequence()
+            .map { it.substitute(subst) }
+            .map { normalizeAssociatedTypesIn(it, recursionDepth) }
+            .flatMap { it.obligations.asSequence() + Obligation(recursionDepth, Predicate.Trait(it.value)) }
+    }
+
     override fun toString(): String {
         return "RsInferenceContext(bindings=$bindings, exprTypes=$exprTypes)"
     }
@@ -625,7 +636,7 @@ private class RsFnInferenceContext(
                     else -> emptySubstitution to null
                 }
 
-                typeParameters += instantiateBounds(element, selfTy, typeParameters)
+                typeParameters = instantiateBounds(element, selfTy, typeParameters)
                 typeParameters
             }
             is RsEnumVariant -> instantiateBounds(element.parentEnum)
@@ -648,12 +659,11 @@ private class RsFnInferenceContext(
         element: RsGenericDeclaration,
         selfTy: Ty? = null,
         typeParameters: Substitution = emptySubstitution
-    ): Map<TyTypeParameter, Ty> {
+    ): Substitution {
         val map = run {
             val map = typeParameters + element.generics.associate { it to ctx.typeVarForParam(it) }
             if (selfTy != null) {
-                map.substituteInValues(mapOf(TyTypeParameter.self() to selfTy)) +
-                    (TyTypeParameter.self() to selfTy)
+                map + (TyTypeParameter.self() to selfTy)
             } else {
                 map
             }
@@ -759,9 +769,23 @@ private class RsFnInferenceContext(
             } else {
                 // Resolve method ambiguity
                 // 1. filter traits that are not imported
-                variants.filter {
+                val filtered1 = variants.filter {
                     val trait = it.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem ?: return@filter true
                     lookup.isTraitVisibleFrom(trait, methodCall)
+                }
+                if (filtered1.size < 2) {
+                    filtered1
+                } else {
+                    // 2. Try to select all obligations for each impl
+                    filtered1.filter { callee ->
+                        val impl = callee.impl ?: return@filter true
+                        val ff = FulfillmentContext(ctx, lookup)
+                        val typeParameters = impl.generics.associate { it to ctx.typeVarForParam(it) }
+                        ctx.instantiateBounds(impl.bounds, typeParameters)
+                            .forEach(ff::registerPredicateObligation)
+                        impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
+                        ctx.probe { ff.selectAllOrError() }
+                    }
                 }
             }
             // If we failed to resolve ambiguity just write the all possible methods

@@ -84,6 +84,11 @@ class ObligationForest {
         Error,
     }
 
+    data class ProcessObligationsResult(
+        val hasErrors: Boolean,
+        val stalled: Boolean
+    )
+
     class Node(val obligation: PendingPredicateObligation) {
         var state: NodeState = NodeState.Pending
     }
@@ -98,7 +103,11 @@ class ObligationForest {
         nodes.add(Node(obligation))
     }
 
-    fun processObligations(processor: (PendingPredicateObligation) -> ProcessPredicateResult): Boolean {
+    fun processObligations(
+        processor: (PendingPredicateObligation) -> ProcessPredicateResult,
+        breakOnFirstError: Boolean = false
+    ): ProcessObligationsResult {
+        var hasErrors = false
         var stalled = true
         for (index in 0 until nodes.size) {
             val node = nodes[index]
@@ -115,13 +124,19 @@ class ObligationForest {
                     }
                 }
                 is ProcessPredicateResult.Err -> {
+                    hasErrors = true
                     stalled = false
                     node.state = NodeState.Error
+                    if (breakOnFirstError) return ProcessObligationsResult(hasErrors, stalled)
                 }
             }
         }
 
-        return stalled
+        if (!stalled) {
+            nodes.removeIf { it.state != NodeState.Pending }
+        }
+
+        return ProcessObligationsResult(hasErrors, stalled)
     }
 }
 
@@ -140,7 +155,16 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
     }
 
     fun selectWherePossible() {
-        while (!obligations.processObligations(this::processPredicate)) {}
+        while (!obligations.processObligations(this::processPredicate).stalled) {}
+    }
+
+    fun selectAllOrError(): Boolean {
+        do {
+            val res = obligations.processObligations(this::processPredicate, breakOnFirstError = true)
+            if (res.hasErrors) return false
+        } while (!res.stalled)
+
+        return pendingObligations.count() == 0
     }
 
     private fun processPredicate(pendingObligation: PendingPredicateObligation): ProcessPredicateResult {

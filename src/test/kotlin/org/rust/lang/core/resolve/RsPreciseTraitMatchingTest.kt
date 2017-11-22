@@ -129,9 +129,9 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
     """)
 
     fun `test trait bound satisfied for struct`() = checkByCode("""
-        // TODO: should resolve to Tr2
         trait Tr1 { fn some_fn(&self) {} }
         trait Tr2 { fn some_fn(&self) {} }
+                     //X
         trait Bound1 {}
         trait Bound2 {}
         struct S<T> { value: T }
@@ -141,7 +141,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         impl Bound2 for S0 {}
         fn main(v: S<S0>) {
             v.some_fn();
-            //^ unresolved
+            //^
         }
     """)
 
@@ -164,9 +164,9 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
     """)
 
     fun `test trait bound satisfied for other bound`() = checkByCode("""
-        //TODO: should resolve to Tr2
         trait Tr1 { fn some_fn(&self) {} }
         trait Tr2 { fn some_fn(&self) {} }
+                     //X
         trait Bound1 {}
         trait Bound2 {}
         struct S<T> { value: T }
@@ -177,7 +177,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         impl<T: Bound2> S1<T> {
             fn f(&self, t: S<T>) {
                 t.some_fn();
-                //^ unresolved
+                //^
             }
         }
     """)
