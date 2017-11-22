@@ -1253,25 +1253,26 @@ val RsGenericDeclaration.bounds: List<TraitRef>
     })
 
 private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
-    val whereBounds = this.whereClause?.wherePredList.orEmpty()
+    val whereBounds = this.whereClause?.wherePredList.orEmpty().asSequence()
         .flatMap {
             val (element, subst) = (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve()
-                ?: return@flatMap emptyList<TraitRef>()
+                ?: return@flatMap emptySequence<TraitRef>()
             val selfTy = ((element as? RsTypeDeclarationElement)?.declaredType as? TyTypeParameter)
                 ?.substitute(subst)
-                ?: return@flatMap emptyList<TraitRef>()
-            it.typeParamBounds?.polyboundList.orEmpty()
-                .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-                .map { TraitRef(selfTy, it) }
+                ?: return@flatMap emptySequence<TraitRef>()
+            it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
         }
 
-    return typeParameters.flatMap {
+    return (typeParameters.asSequence().flatMap {
         val selfTy = TyTypeParameter.named(it)
-        it.typeParamBounds?.polyboundList.orEmpty()
-            .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-            .map { TraitRef(selfTy, it) }
-    } + whereBounds
+        it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
+    } + whereBounds).toList()
 }
+
+private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()
+    .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+    .filter { !it.element.isSizedTrait }
+    .map { TraitRef(selfTy, it) }
 
 private val threadLocalGuard: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
