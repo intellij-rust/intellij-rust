@@ -6,12 +6,15 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
+import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
+import org.rust.lang.core.resolve.ref.resolvePath
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
@@ -471,6 +474,12 @@ class ImplLookup(
             val outputType = (subst[outputParam] ?: TyUnit)
             return TyFunction(argumentTypes, outputType)
         }
+
+    fun isTraitVisibleFrom(trait: RsTraitItem, scope: RsElement): Boolean {
+        val name = trait.name ?: return true
+        val path = RsPsiFactory(project).tryCreatePath(name)?.apply { setContext(scope) } ?: return true
+        return resolvePath(path, this).any { it.element == trait }
+    }
 
     companion object {
         fun relativeTo(psi: RsElement): ImplLookup =

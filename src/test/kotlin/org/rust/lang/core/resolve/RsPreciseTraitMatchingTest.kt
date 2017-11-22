@@ -200,4 +200,48 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             //^
         }
     """)
+
+    fun `test method defined in out of scope trait 1`() = checkByCode("""
+        struct S;
+
+        mod a {
+            use super::S;
+            pub trait A { fn foo(&self){} }
+                           //X
+            impl A for S {}
+        }
+
+        mod b {
+            use super::S;
+            pub trait B { fn foo(&self){} }
+            impl B for S {}
+        }
+
+        fn main() {
+            use a::A;
+            S.foo();
+        }   //^
+    """)
+
+    fun `test method defined in out of scope trait 2`() = checkByCode("""
+        struct S;
+
+        mod a {
+            use super::S;
+            pub trait A { fn foo(&self){} }
+            impl A for S {}
+        }
+
+        mod b {
+            use super::S;
+            pub trait B { fn foo(&self){} }
+                           //X
+            impl B for S {}
+        }
+
+        fn main() {
+            use b::B;
+            S.foo();
+        }   //^
+    """)
 }

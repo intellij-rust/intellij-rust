@@ -752,9 +752,24 @@ private class RsFnInferenceContext(
     private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall): Ty {
         val receiverRes = resolveTypeVarsWithObligations(receiver)
         val argExprs = methodCall.valueArgumentList.exprList
-        val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
-        ctx.writeResolvedMethod(methodCall, variants.map { it.element })
-        val callee = /* resolveAmbiguity(variants.map { it.element }) ?: */ variants.firstOrNull()
+        val callee = run {
+            val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
+            val filteredVariants = if (variants.size < 2) {
+                variants
+            } else {
+                // Resolve method ambiguity
+                // 1. filter traits that are not imported
+                variants.filter {
+                    val trait = it.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem ?: return@filter true
+                    lookup.isTraitVisibleFrom(trait, methodCall)
+                }
+            }
+            // If we failed to resolve ambiguity just write the all possible methods
+            val variantsForDisplay = (filteredVariants.takeIf { it.size == 1 } ?: variants).map { it.element }
+            ctx.writeResolvedMethod(methodCall, variantsForDisplay)
+
+            filteredVariants.firstOrNull() ?: variants.firstOrNull()
+        }
         if (callee == null) {
             val methodType = unknownTyFunction(argExprs.size)
             inferArgumentTypes(methodType.paramTypes, argExprs)
