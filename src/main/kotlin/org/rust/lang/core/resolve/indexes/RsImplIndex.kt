@@ -20,7 +20,6 @@ import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.type
 import org.rust.openapiext.getElements
 
 class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
@@ -38,13 +37,6 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
                 ?: return emptyList()
 
             val impls = getElements(KEY, fingerprint, project, GlobalSearchScope.allScope(project))
-                .filter { impl ->
-                    val ty = impl.typeReference?.type
-                    // Addition class check is a temporal solution to filter impls for type parameter
-                    // with the same name
-                    // struct S; impl<S: Tr1> Tr2 for S {}
-                    ty != null && ty.javaClass == target.javaClass
-                }
             val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, GlobalSearchScope.allScope(project))
             return impls + freeImpls
         }
