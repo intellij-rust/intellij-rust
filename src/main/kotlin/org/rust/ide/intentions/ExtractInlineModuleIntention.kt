@@ -5,15 +5,14 @@
 
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.getOrCreateModuleFile
-import org.rust.lang.core.psi.ext.ancestorStrict
 
 //TODO: make context more precise here
 class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
@@ -21,10 +20,9 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     override fun getText() = "Extract inline module"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? {
-        val mod = element.ancestorStrict<RsModItem>() ?: return null
+        val mod = element.ancestorOrSelf<RsModItem>() ?: return null
         if (mod.`super`?.ownsDirectory != true) return null
         return mod
-
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsModItem) {
@@ -37,7 +35,6 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
         val endElement = ctx.rbrace?.prevSibling ?: return
 
         modFile.addRange(startElement, endElement)
-        ReformatCodeProcessor(project, modFile, null, false).run()
 
         ctx.delete()
     }

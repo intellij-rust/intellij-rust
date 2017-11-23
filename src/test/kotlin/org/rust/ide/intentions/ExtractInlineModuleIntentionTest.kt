@@ -5,17 +5,63 @@
 
 package org.rust.ide.intentions
 
+import org.rust.FileTree
+import org.rust.fileTree
 import org.rust.lang.RsTestBase
 
 class ExtractInlineModuleIntentionTest : RsTestBase() {
     override val dataPath = "org/rust/ide/intentions/fixtures/"
 
-    fun `test valid extract inline module`() = extractInlineModule()
+    fun `test valid extract inline module`() = doTest(
+        fileTree {
+            rust("main.rs", """
+                mod /*caret*/foo {
+                    // function
+                    fn a() {}
+                }
 
-    fun `test invalid extract inline module`() = extractInlineModule()
+                fn main() {}
+            """)
+        },
+        fileTree {
+            rust("main.rs", """
+                mod foo;
 
-    private fun extractInlineModule() = checkByDirectory {
-        openFileInEditor("main.rs")
+                fn main() {}
+            """)
+            rust("foo.rs", """
+                // function
+                fn a() {}
+            """)
+        }
+    )
+
+    fun `test invalid extract inline module`() {
+        doTest(fileTree {
+            rust("main.rs", """
+                mod foo {
+                    // function
+                    fn a() {}
+                }
+
+                fn /*caret*/main() {}
+            """)
+        }, fileTree {
+            rust("main.rs", """
+                mod foo {
+                    // function
+                    fn a() {}
+                }
+
+                fn main() {}
+            """)
+        })
+    }
+
+    private fun doTest(before: FileTree, after: FileTree) {
+        val testProject = before.create()
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
         myFixture.launchAction(ExtractInlineModuleIntention())
+        after.assertEquals(myFixture.findFileInTempDir("."))
     }
 }
