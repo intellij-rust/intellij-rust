@@ -27,7 +27,7 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
             rust("main.rs", """
                 extern crate libc;
                 use libc::int8_t;
-                           //^
+                   //^
             """)
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")
