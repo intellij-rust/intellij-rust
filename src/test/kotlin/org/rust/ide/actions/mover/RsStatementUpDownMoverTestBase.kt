@@ -10,12 +10,20 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
 abstract class RsStatementUpDownMoverTestBase : RsTestBase() {
-    fun moveBothDirectionTest(@Language("Rust") down: String, @Language("Rust") up: String) {
-        checkByText(up, down) {
-            myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
-        }
-        checkByText(down, up) {
+    fun moveDown(@Language("Rust") before: String, @Language("Rust") after: String) {
+        checkByText(before.trimIndent() + "\n", after.trimIndent() + "\n") {
             myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION)
         }
+    }
+
+    fun moveUp(@Language("Rust") before: String, @Language("Rust") after: String) {
+        checkByText(before.trimIndent() + "\n", after.trimIndent() + "\n") {
+            myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
+        }
+    }
+
+    fun moveDownAndBackUp(@Language("Rust") down: String, @Language("Rust") up: String) {
+        moveDown(down, up)
+        moveUp(up, down)
     }
 }

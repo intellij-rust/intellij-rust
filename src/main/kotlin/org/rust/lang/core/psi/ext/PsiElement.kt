@@ -7,6 +7,7 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
@@ -15,7 +16,9 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
 
-val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) { it.parent }
+val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) {
+    if (it is PsiFile) null else it.parent
+}
 
 /**
  * Extracts node's element type
