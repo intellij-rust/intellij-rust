@@ -15,7 +15,7 @@ class RsWithWhileSurrounder : RsStatementsSurrounderBase.BlockWithCondition<RsWh
     override fun getTemplateDescription(): String = "while { }"
 
     override fun createTemplate(project: Project): Pair<RsWhileExpr, RsBlock> {
-        val w = RsPsiFactory(project).createExpression("while a {\n}") as RsWhileExpr
+        val w = RsPsiFactory(project).createExpression("while a {}") as RsWhileExpr
         return w to w.block!!
     }
 

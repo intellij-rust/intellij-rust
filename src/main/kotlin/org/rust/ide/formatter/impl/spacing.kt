@@ -8,6 +8,7 @@ package org.rust.ide.formatter.impl
 import com.intellij.formatting.ASTBlock
 import com.intellij.formatting.Block
 import com.intellij.formatting.Spacing
+import com.intellij.formatting.Spacing.createKeepingFirstColumnSpacing
 import com.intellij.formatting.Spacing.createSpacing
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.lang.ASTNode
@@ -20,6 +21,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
+import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.RsItemElement
@@ -148,6 +150,9 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spacing? {
     if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2, ctx).apply {
         when {
+            elementType2 == RustParserDefinition.EOL_COMMENT ->
+                return createKeepingFirstColumnSpacing(1, Int.MAX_VALUE, true, ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
+
         // #[attr]\n<comment>\n => #[attr] <comment>\n etc.
             psi1 is RsOuterAttr && psi2 is PsiComment
             -> return createSpacing(1, 1, 0, true, 0)

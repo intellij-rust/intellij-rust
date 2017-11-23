@@ -15,7 +15,7 @@ class RsWithForSurrounder : RsStatementsSurrounderBase.BlockWithCondition<RsForE
     override fun getTemplateDescription(): String = "for { }"
 
     override fun createTemplate(project: Project): Pair<RsForExpr, RsBlock> {
-        val f = RsPsiFactory(project).createExpression("for a in b {\n}") as RsForExpr
+        val f = RsPsiFactory(project).createExpression("for a in b {}") as RsForExpr
         return f to f.block!!
     }
 

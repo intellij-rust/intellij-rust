@@ -15,7 +15,7 @@ class RsWithIfSurrounder : RsStatementsSurrounderBase.BlockWithCondition<RsIfExp
     override fun getTemplateDescription(): String = "if { }"
 
     override fun createTemplate(project: Project): Pair<RsIfExpr, RsBlock> {
-        val i = RsPsiFactory(project).createExpression("if a {\n}") as RsIfExpr
+        val i = RsPsiFactory(project).createExpression("if a {}") as RsIfExpr
         return i to i.block!!
     }
 

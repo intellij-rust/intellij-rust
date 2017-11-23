@@ -350,6 +350,30 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test keep comments on the first line`() = doTextTest("""
+        fn main() {
+            match x {
+        // should be kept on the first column
+                1 => (),
+           // should be indented properly
+                2 => (),
+                // is already ok
+                3 => (),
+            }
+        }
+    """, """
+        fn main() {
+            match x {
+        // should be kept on the first column
+                1 => (),
+                // should be indented properly
+                2 => (),
+                // is already ok
+                3 => (),
+            }
+        }
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
 

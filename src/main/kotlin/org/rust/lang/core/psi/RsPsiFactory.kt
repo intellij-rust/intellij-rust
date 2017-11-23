@@ -214,8 +214,10 @@ class RsPsiFactory(private val project: Project) {
     fun createColon(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.colon!!
 
-    fun createNewline(): PsiElement =
-        PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
+    fun createNewline(): PsiElement = createWhitespace("\n")
+
+    fun createWhitespace(ws: String): PsiElement =
+        PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(ws)
 
     fun createUnsafeKeyword(): PsiElement =
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
