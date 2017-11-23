@@ -112,26 +112,10 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test trait bound not satisfied`() = checkByCode("""
-        //TODO: this should be unresolved
-        trait Tr1 { fn some_fn(&self) {} }
-                        //X
-        trait Bound1 {}
-        trait Bound2 {}
-        struct S<T> { value: T }
-        impl<T: Bound1> Tr1 for S<T> {}
-        struct S0;
-        impl Bound2 for S0 {}
-        fn main(v: S<S0>) {
-            v.some_fn();
-            //^
-        }
-    """)
-
     fun `test trait bound satisfied for struct`() = checkByCode("""
-        // TODO: should resolve to Tr2
         trait Tr1 { fn some_fn(&self) {} }
         trait Tr2 { fn some_fn(&self) {} }
+                     //X
         trait Bound1 {}
         trait Bound2 {}
         struct S<T> { value: T }
@@ -141,32 +125,32 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         impl Bound2 for S0 {}
         fn main(v: S<S0>) {
             v.some_fn();
-            //^ unresolved
+            //^
         }
     """)
 
     fun `test trait bound satisfied for trait`() = checkByCode("""
-        // TODO: should resolve to Tr2
-        // #[lang = "sized"]
-        // trait Sized {}
+        #[lang = "sized"]
+        trait Sized {}
         trait Tr1 { fn some_fn(&self) {} }
         trait Tr2 { fn some_fn(&self) {} }
+                     //X
         trait Bound1 {}
         trait Bound2 {}
         trait ChildOfBound2 : Bound2 {}
-        struct S<T : ?Sized> { value: T }
+        struct S<T: ?Sized> { value: T }
         impl<T: Bound1 + ?Sized> Tr1 for S<T> { }
         impl<T: Bound2 + ?Sized> Tr2 for S<T> { }
         fn f(v: &S<ChildOfBound2>) {
             v.some_fn();
-            //^ unresolved
+            //^
         }
     """)
 
     fun `test trait bound satisfied for other bound`() = checkByCode("""
-        //TODO: should resolve to Tr2
         trait Tr1 { fn some_fn(&self) {} }
         trait Tr2 { fn some_fn(&self) {} }
+                     //X
         trait Bound1 {}
         trait Bound2 {}
         struct S<T> { value: T }
@@ -177,27 +161,52 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         impl<T: Bound2> S1<T> {
             fn f(&self, t: S<T>) {
                 t.some_fn();
-                //^ unresolved
+                //^
             }
         }
     """)
 
-    fun `test auto deref only for impls`() = checkByCode("""
-        //TODO: should be unresolved
-        struct A;
-        struct B;
-        #[lang = "deref"]
-        trait Deref { type Target; }
-        impl Deref for A { type Target = B; }
+    fun `test method defined in out of scope trait 1`() = checkByCode("""
+        struct S;
 
-        trait Tr {}
-        impl Tr for B {}
-        struct S<T>(T);
-        impl<T: Tr> S<T> { fn bar(&self) {} }
-                            //X
-        fn foo(a: S<A>) {
-            a.bar();
-            //^
+        mod a {
+            use super::S;
+            pub trait A { fn foo(&self){} }
+                           //X
+            impl A for S {}
         }
+
+        mod b {
+            use super::S;
+            pub trait B { fn foo(&self){} }
+            impl B for S {}
+        }
+
+        fn main() {
+            use a::A;
+            S.foo();
+        }   //^
+    """)
+
+    fun `test method defined in out of scope trait 2`() = checkByCode("""
+        struct S;
+
+        mod a {
+            use super::S;
+            pub trait A { fn foo(&self){} }
+            impl A for S {}
+        }
+
+        mod b {
+            use super::S;
+            pub trait B { fn foo(&self){} }
+                           //X
+            impl B for S {}
+        }
+
+        fn main() {
+            use b::B;
+            S.foo();
+        }   //^
     """)
 }

@@ -358,6 +358,17 @@ class RsInferenceContext {
         return TyWithObligations(normTy, obligations)
     }
 
+    fun instantiateBounds(
+        bounds: List<TraitRef>,
+        subst: Map<TyTypeParameter, Ty> = emptySubstitution,
+        recursionDepth: Int = 0
+    ): Sequence<Obligation> {
+        return bounds.asSequence()
+            .map { it.substitute(subst) }
+            .map { normalizeAssociatedTypesIn(it, recursionDepth) }
+            .flatMap { it.obligations.asSequence() + Obligation(recursionDepth, Predicate.Trait(it.value)) }
+    }
+
     override fun toString(): String {
         return "RsInferenceContext(bindings=$bindings, exprTypes=$exprTypes)"
     }
@@ -625,7 +636,7 @@ private class RsFnInferenceContext(
                     else -> emptySubstitution to null
                 }
 
-                typeParameters += instantiateBounds(element, selfTy, typeParameters)
+                typeParameters = instantiateBounds(element, selfTy, typeParameters)
                 typeParameters
             }
             is RsEnumVariant -> instantiateBounds(element.parentEnum)
@@ -648,25 +659,17 @@ private class RsFnInferenceContext(
         element: RsGenericDeclaration,
         selfTy: Ty? = null,
         typeParameters: Substitution = emptySubstitution
-    ): Map<TyTypeParameter, Ty> {
+    ): Substitution {
         val map = run {
             val map = typeParameters + element.generics.associate { it to ctx.typeVarForParam(it) }
             if (selfTy != null) {
-                map.substituteInValues(mapOf(TyTypeParameter.self() to selfTy)) +
-                    (TyTypeParameter.self() to selfTy)
+                map + (TyTypeParameter.self() to selfTy)
             } else {
                 map
             }
         }
-        instantiateBounds(element.bounds, map)
+        ctx.instantiateBounds(element.bounds, map).forEach(fulfill::registerPredicateObligation)
         return map
-    }
-
-    private fun instantiateBounds(bounds: List<TraitRef>, subst: Map<TyTypeParameter, Ty>) {
-        bounds.asSequence()
-                .map { it.substitute(subst) }
-                .map(this::normalizeAssociatedTypesIn)
-                .forEach { fulfill.registerPredicateObligation(Obligation(Predicate.Trait(it))) }
     }
 
     private fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T): T {
@@ -752,9 +755,38 @@ private class RsFnInferenceContext(
     private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall): Ty {
         val receiverRes = resolveTypeVarsWithObligations(receiver)
         val argExprs = methodCall.valueArgumentList.exprList
-        val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
-        ctx.writeResolvedMethod(methodCall, variants.map { it.element })
-        val callee = /* resolveAmbiguity(variants.map { it.element }) ?: */ variants.firstOrNull()
+        val callee = run {
+            val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
+            val filteredVariants = if (variants.size < 2) {
+                variants
+            } else {
+                // Resolve method ambiguity
+                // 1. filter traits that are not imported
+                val filtered1 = variants.filter {
+                    val trait = it.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem ?: return@filter true
+                    lookup.isTraitVisibleFrom(trait, methodCall)
+                }
+                if (filtered1.size < 2) {
+                    filtered1
+                } else {
+                    // 2. Try to select all obligations for each impl
+                    filtered1.filter { callee ->
+                        val impl = callee.impl ?: return@filter true
+                        val ff = FulfillmentContext(ctx, lookup)
+                        val typeParameters = impl.generics.associate { it to ctx.typeVarForParam(it) }
+                        ctx.instantiateBounds(impl.bounds, typeParameters)
+                            .forEach(ff::registerPredicateObligation)
+                        impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
+                        ctx.probe { ff.selectAllOrError() }
+                    }
+                }
+            }
+            // If we failed to resolve ambiguity just write the all possible methods
+            val variantsForDisplay = (filteredVariants.takeIf { it.size == 1 } ?: variants).map { it.element }
+            ctx.writeResolvedMethod(methodCall, variantsForDisplay)
+
+            filteredVariants.firstOrNull() ?: variants.firstOrNull()
+        }
         if (callee == null) {
             val methodType = unknownTyFunction(argExprs.size)
             inferArgumentTypes(methodType.paramTypes, argExprs)
@@ -1214,25 +1246,26 @@ val RsGenericDeclaration.bounds: List<TraitRef>
     })
 
 private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
-    val whereBounds = this.whereClause?.wherePredList.orEmpty()
+    val whereBounds = this.whereClause?.wherePredList.orEmpty().asSequence()
         .flatMap {
             val (element, subst) = (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve()
-                ?: return@flatMap emptyList<TraitRef>()
+                ?: return@flatMap emptySequence<TraitRef>()
             val selfTy = ((element as? RsTypeDeclarationElement)?.declaredType as? TyTypeParameter)
                 ?.substitute(subst)
-                ?: return@flatMap emptyList<TraitRef>()
-            it.typeParamBounds?.polyboundList.orEmpty()
-                .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-                .map { TraitRef(selfTy, it) }
+                ?: return@flatMap emptySequence<TraitRef>()
+            it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
         }
 
-    return typeParameters.flatMap {
+    return (typeParameters.asSequence().flatMap {
         val selfTy = TyTypeParameter.named(it)
-        it.typeParamBounds?.polyboundList.orEmpty()
-            .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-            .map { TraitRef(selfTy, it) }
-    } + whereBounds
+        it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
+    } + whereBounds).toList()
 }
+
+private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()
+    .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+    .filter { !it.element.isSizedTrait }
+    .map { TraitRef(selfTy, it) }
 
 private val threadLocalGuard: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
