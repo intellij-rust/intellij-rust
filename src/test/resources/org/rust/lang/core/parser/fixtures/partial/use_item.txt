@@ -1,7 +1,7 @@
 FILE
-  PsiComment(<EOL_COMMENT>)('// #1')
-  PsiWhiteSpace('\n')
   RsUseItemImpl(USE_ITEM)
+    PsiComment(<EOL_COMMENT>)('// #1')
+    PsiWhiteSpace('\n')
     PsiElement(use)('use')
     PsiWhiteSpace(' ')
     RsPathImpl(PATH)

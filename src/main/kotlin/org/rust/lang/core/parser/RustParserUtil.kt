@@ -5,12 +5,16 @@
 
 package org.rust.lang.core.parser
 
-import com.intellij.lang.*
+import com.intellij.lang.LighterASTNode
+import com.intellij.lang.PsiBuilder
+import com.intellij.lang.PsiBuilderUtil
+import com.intellij.lang.WhitespacesAndCommentsBinder
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.util.Key
+import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
 import com.intellij.util.BitUtil
+import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
@@ -64,8 +68,23 @@ object RustParserUtil : GeneratedParserUtilBase() {
     private val DEFAULT_FLAGS: Int = STRUCT_ALLOWED or TYPE_QUAL_ALLOWED
 
     @JvmField
-    val DOC_COMMENT_BINDER: WhitespacesAndCommentsBinder = WhitespacesBinders.leadingCommentsBinder(
-        TokenSet.create(OUTER_BLOCK_DOC_COMMENT, OUTER_EOL_DOC_COMMENT))
+    val ADJACENT_LINE_COMMENTS = WhitespacesAndCommentsBinder { tokens, _, getter ->
+        var candidate = tokens.size
+        for (i in 0 until tokens.size) {
+            val token = tokens[i]
+            if (OUTER_BLOCK_DOC_COMMENT == token || OUTER_EOL_DOC_COMMENT == token) {
+                candidate = minOf(candidate, i)
+                break
+            }
+            if (EOL_COMMENT == token) {
+                candidate = minOf(candidate, i)
+            }
+            if (TokenType.WHITE_SPACE == token && "\n\n" in getter[i]) {
+                candidate = tokens.size
+            }
+        }
+        candidate
+    }
 
     //
     // Helpers

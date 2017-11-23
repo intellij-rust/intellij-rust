@@ -377,7 +377,7 @@ Function ::= OuterAttr*
   mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
 }
 
 Pat ::= PatWild
@@ -442,13 +442,13 @@ Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscr
                  "org.rust.lang.core.macros.ExpansionResult" ]
   mixin = "org.rust.lang.core.psi.ext.RsConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstantStub"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 UseItem ::= AttrsAndVis use UsePath ';' {
   pin = "use"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsUseItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsUseItemStub"
@@ -496,7 +496,7 @@ Alias ::= as identifier {
 
 ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
   pin = "identifier"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement" ]
@@ -507,7 +507,7 @@ ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
 
 ModItem ::= AttrsAndVis mod identifier '{' InnerAttr* Items '}' {
   pin = 4
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsMod"
@@ -519,7 +519,7 @@ ModItem ::= AttrsAndVis mod identifier '{' InnerAttr* Items '}' {
 
 ModDeclItem ::= AttrsAndVis mod identifier ';' {
   pin = 'identifier' // make sure `ModDeclItem` goes **after** `ModItem`
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement" ]
@@ -529,7 +529,7 @@ ModDeclItem ::= AttrsAndVis mod identifier ';' {
 }
 
 ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsForeignModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -546,7 +546,7 @@ private ForeignDecl ::= Constant | Function
 StructItem ::= AttrsAndVis (struct | union) identifier TypeParameterList?
                ( TupleStructTail | BlockStructTail | UnitStructTail ) {
   pin = 2
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsStructOrEnumItemElement"
                  "org.rust.lang.core.psi.ext.RsFieldsOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsStructItemImplMixin"
@@ -560,7 +560,7 @@ private BlockStructTail ::= WhereClause? BlockFields
 
 EnumItem ::= AttrsAndVis enum identifier TypeParameterList? WhereClause? EnumBody {
   pin = "enum"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = "org.rust.lang.core.psi.ext.RsStructOrEnumItemElement"
   mixin = "org.rust.lang.core.psi.ext.RsEnumItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsEnumItemStub"
@@ -576,7 +576,7 @@ EnumBody ::= '{' [ <<comma_separated_list EnumVariant>> ] '}' {
 
 EnumVariant ::= OuterAttr* identifier VariantArgs? {
   pin = 2
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
@@ -606,7 +606,7 @@ VariantDiscriminant ::= '=' AnyExpr { pin = 1 }
 
 FieldDecl ::= AttrsAndVis identifier TypeAscription {
   pin = 2
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsVisibilityOwner"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
@@ -623,7 +623,7 @@ TupleFieldDecl ::= AttrsAndVis TypeReference {
   mixin = "org.rust.lang.core.psi.ext.RsTupleFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   recoverWhile = TupleField_recover
 }
 private TupleField_recover ::= !(')' | ',')
@@ -635,7 +635,7 @@ private TupleField_recover ::= !(')' | ',')
 
 TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamBounds? WhereClause? Members {
   pin = "trait"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsItemElement"
@@ -649,7 +649,7 @@ TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamB
 
 ImplItem ::= AttrsAndVis default_? unsafe? impl TypeParameterList? ( TraitImpl | InherentImpl ) WhereClause? Members {
   pin = "impl"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
@@ -771,7 +771,7 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsTypeAliasImplMixin"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   stubClass = "org.rust.lang.core.stubs.RsTypeAliasStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1013,7 +1013,7 @@ MacroDefinition ::= AttrsAndVis "macro_rules" '!' identifier MacroDefinitionBody
   extends = "org.rust.lang.core.psi.ext.RsMacroDefinitionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroDefinitionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   pin = 2
 }
 
@@ -1048,7 +1048,7 @@ MacroExpansionReferenceGroup ::= '$' '(' MacroExpansionContents ')'
 MacroCall ::= MacroHead <<macroSemicolon>> {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   pin = 2
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroCallStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1057,7 +1057,7 @@ MacroCall ::= MacroHead <<macroSemicolon>> {
 MacroCallNoSemicolons ::= MacroHead {
   pin = 2
   elementType = MacroCall
-  hooks = [ leftBinder = "DOC_COMMENT_BINDER" ]
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
 }
 
 private MacroHead ::= AttrsAndVis &(identifier '!') (SpecialMacro | identifier '!' identifier? MacroArgument)
