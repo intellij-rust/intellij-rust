@@ -171,17 +171,10 @@ private fun filterMessage(file: PsiFile, document: Document, message: RustcMessa
     // The compiler message lines and columns are 1 based while intellij idea are 0 based
     val startOffset = toOffset(span.line_start, span.column_start)
     val endOffset = toOffset(span.line_end, span.column_end)
-    var textRange = if (startOffset != null && endOffset != null && startOffset < endOffset) {
+    val textRange = if (startOffset != null && endOffset != null && startOffset < endOffset) {
         TextRange(startOffset, endOffset)
     } else {
         return null
-    }
-
-    if ("function is never used" in message.message) {
-        val fn = PsiTreeUtil.findElementOfClassAtOffset(file, textRange.startOffset, RsFunction::class.java, false)
-        if (fn != null && fn.textRange.endOffset == textRange.endOffset) {
-            textRange = fn.identifier.textRange
-        }
     }
 
     val tooltip = with(ArrayList<String>()) {

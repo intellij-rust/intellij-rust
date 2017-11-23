@@ -30,19 +30,6 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
         }
     """)
 
-    fun `test fixes up unused function span`() {
-        // BACKCOMPAT: Rust 1.20
-        // Nightly Rust produces nice spans here without our intervention
-        if (ApplicationManager.getApplication().isEAP) return
-        doTest("""
-            fn <weak_warning>foo</weak_warning>() {
-                let _ = 46 * 2;
-            }
-
-            fn main() {}
-        """)
-    }
-
     fun `test highlights from other files do not interfer`() {
         fileTree {
             toml("Cargo.toml", """
