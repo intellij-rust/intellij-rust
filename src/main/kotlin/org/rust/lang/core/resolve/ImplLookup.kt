@@ -194,17 +194,32 @@ class ImplLookup(
      */
     fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> {
         if (recursionDepth > DEFAULT_RECURSION_LIMIT) return SelectionResult.Err()
-        return traitSelectionCache.getOrPut(project, freshen(ref)) { selectCandidate(ref) }
-            .map { confirmCandidate(ref, recursionDepth, it) }
+        return traitSelectionCache.getOrPut(project, freshen(ref)) { selectCandidate(ref, recursionDepth) }
+            .map { confirmCandidate(ref, it, recursionDepth) }
     }
 
-    private fun selectCandidate(ref: TraitRef): SelectionResult<SelectionCandidate> {
+    private fun selectCandidate(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
         val candidates = assembleCandidates(ref)
 
         return when (candidates.size) {
             0 -> SelectionResult.Err()
             1 -> SelectionResult.Ok(candidates.single())
-            else -> SelectionResult.Ambiguous()
+            else -> {
+                val filtered = candidates.filter {
+                    ctx.probe {
+                        val obligation = confirmCandidate(ref, it, recursionDepth).nestedObligations
+                        val ff = FulfillmentContext(ctx, this)
+                        obligation.forEach(ff::registerPredicateObligation)
+                        ff.selectAllOrError()
+                    }
+                }
+
+                when (filtered.size) {
+                    0 -> SelectionResult.Err()
+                    1 -> SelectionResult.Ok(filtered.single())
+                    else -> SelectionResult.Ambiguous()
+                }
+            }
         }
     }
 
@@ -292,16 +307,15 @@ class ImplLookup(
 
     private fun confirmCandidate(
         ref: TraitRef,
-        recursionDepth: Int = 0,
-        candidate: SelectionCandidate
+        candidate: SelectionCandidate,
+        recursionDepth: Int
     ): Selection {
         val newRecDepth = recursionDepth + 1
         return when (candidate) {
             is SelectionCandidate.Impl -> {
                 ctx.combineTraitRefs(ref, candidate.ref)
                 val candidateSubst = candidate.subst + mapOf(TyTypeParameter.self() to ref.selfTy)
-                ctx.instantiateBounds(candidate.item.bounds, candidateSubst)
-                val obligations = ctx.instantiateBounds(candidate.item.bounds, candidateSubst).toList()
+                val obligations = ctx.instantiateBounds(candidate.item.bounds, candidateSubst, newRecDepth).toList()
                 Selection(candidate.item, obligations, candidateSubst)
             }
             is SelectionCandidate.DerivedTrait -> Selection(candidate.item, emptyList())
