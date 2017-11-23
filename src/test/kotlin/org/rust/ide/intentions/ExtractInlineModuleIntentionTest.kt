@@ -36,6 +36,30 @@ class ExtractInlineModuleIntentionTest : RsTestBase() {
         }
     )
 
+    fun `test extracting module preserves attributes and visibility`() = ExtractInlineModuleIntention.Testmarks.copyAttrs.checkHit {
+        doTest(
+            fileTree {
+                rust("main.rs", """
+                #[cfg(test)]
+                pub(in super) mod /*caret*/tests {
+                    #[test]
+                    fn foo() {}
+                }
+            """)
+            },
+            fileTree {
+                rust("main.rs", """
+                #[cfg(test)]
+                pub(in super) mod tests;
+            """)
+                rust("tests.rs", """
+                #[test]
+                fn foo() {}
+            """)
+            }
+        )
+    }
+
     fun `test invalid extract inline module`() {
         doTest(fileTree {
             rust("main.rs", """

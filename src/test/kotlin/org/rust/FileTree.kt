@@ -8,6 +8,7 @@ package org.rust
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -100,9 +101,8 @@ class FileTree(private val rootDirectory: Entry.Directory) {
                 when (entry) {
                     is Entry.File -> {
                         check(!a.isDirectory)
-                        val actualText = String(a.contentsToByteArray(), UTF_8)
-                        val equalText = entry.text == actualText || entry.text + "\n" == actualText
-                        check(equalText) {
+                        val actualText = convertLineSeparators(String(a.contentsToByteArray(), UTF_8))
+                        check(entry.text.trimEnd() == actualText.trimEnd()) {
                             "Expected:\n${entry.text}\nGot:\n$actualText"
                         }
                     }

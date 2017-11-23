@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.getOrCreateModuleFile
+import org.rust.openapiext.Testmark
 
 //TODO: make context more precise here
 class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
@@ -29,6 +30,12 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
         val modName = ctx.name ?: return
         var decl = RsPsiFactory(project).createModDeclItem(modName)
         decl = ctx.parent?.addBefore(decl, ctx) as? RsModDeclItem ?: return
+
+        if (ctx.firstChild != ctx.mod) {
+            Testmarks.copyAttrs.hit()
+            decl.addRangeBefore(ctx.firstChild, ctx.mod.prevSibling, decl.mod)
+        }
+
         val modFile = decl.getOrCreateModuleFile() ?: return
 
         val startElement = ctx.lbrace.nextSibling ?: return
@@ -37,5 +44,9 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
         modFile.addRange(startElement, endElement)
 
         ctx.delete()
+    }
+
+    object Testmarks {
+        val copyAttrs = Testmark("copyAttrs")
     }
 }
