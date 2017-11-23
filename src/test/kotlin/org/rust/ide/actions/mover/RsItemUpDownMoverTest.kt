@@ -16,9 +16,11 @@ class RsItemUpDownMoverTest : RsStatementUpDownMoverTestBase() {
 
     fun `test step comment`() = doTest("""
         /*item*/
+
         //EOF
     """, """
         //EOF
+
         /*item*/
     """)
 

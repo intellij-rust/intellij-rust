@@ -12,11 +12,11 @@ import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.psi.RS_COMMENTS
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.elementType
 
 class RsInspectionSuppressor : InspectionSuppressor {
     override fun getSuppressActions(element: PsiElement?, toolId: String): Array<out SuppressQuickFix> = arrayOf(
@@ -28,11 +28,11 @@ class RsInspectionSuppressor : InspectionSuppressor {
         element.ancestors.filterIsInstance<RsItemElement>()
             .any { isSuppressedByComment(it, toolId) }
 
-    private fun isSuppressedByComment(element: PsiElement, toolId: String): Boolean {
-        val comment = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace::class.java) as? PsiComment
-            ?: return false
-        val matcher = SuppressionUtil.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(comment.text)
-        return matcher.matches() && SuppressionUtil.isInspectionToolIdMentioned(matcher.group(1), toolId)
+    private fun isSuppressedByComment(element: RsItemElement, toolId: String): Boolean {
+        return element.leadingComments().any { comment ->
+            val matcher = SuppressionUtil.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(comment.text)
+            matcher.matches() && SuppressionUtil.isInspectionToolIdMentioned(matcher.group(1), toolId)
+        }
     }
 
     private class SuppressInspectionFix(
@@ -50,3 +50,6 @@ class RsInspectionSuppressor : InspectionSuppressor {
     }
 }
 
+private fun RsItemElement.leadingComments(): Sequence<PsiComment>
+    = generateSequence(firstChild) { psi -> psi.nextSibling.takeIf { it.elementType in RS_COMMENTS || it is PsiWhiteSpace } }
+    .filterIsInstance<PsiComment>()

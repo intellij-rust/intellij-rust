@@ -69,3 +69,16 @@ macro_rules! makro {
 ///
 ///
 fn blanks() {}
+
+// A blank line after non-doc comment detaches it from item.
+
+// This multi-line
+// non-doc comment should be attached as well
+/// Blank lines after doc comments do not matter
+
+fn foo() {}
+
+
+/// Non-doc comments after a doc comment do not matter.
+// Like this one!
+fn bar() {}
