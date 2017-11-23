@@ -315,8 +315,7 @@ class ImplLookup(
             is SelectionCandidate.Impl -> {
                 ctx.combineTraitRefs(ref, candidate.ref)
                 val candidateSubst = candidate.subst + mapOf(TyTypeParameter.self() to ref.selfTy)
-                ctx.instantiateBounds(candidate.item.bounds, candidateSubst)
-                val obligations = ctx.instantiateBounds(candidate.item.bounds, candidateSubst).toList()
+                val obligations = ctx.instantiateBounds(candidate.item.bounds, candidateSubst, newRecDepth).toList()
                 Selection(candidate.item, obligations, candidateSubst)
             }
             is SelectionCandidate.DerivedTrait -> Selection(candidate.item, emptyList())
