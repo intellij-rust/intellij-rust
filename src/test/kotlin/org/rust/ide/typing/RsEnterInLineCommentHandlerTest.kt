@@ -8,24 +8,24 @@ package org.rust.ide.typing
 class RsEnterInLineCommentHandlerTest : RsTypingTestBase() {
     override val dataPath = "org/rust/ide/typing/lineComment/fixtures"
 
-    fun testBeforeLineComment() = doTest()
-    fun testInLineComment() = doTest()
-    fun testAfterLineComment() = doTest()
-    fun testInBlockComment() = doTest()
-    fun testInOuterDocComment() = doTest()
-    fun testAfterOuterDocComment() = doTest()
-    fun testInInnerDocComment() = doTest()
-    fun testAfterInnerDocComment() = doTest()
-    fun testAfterModuleComment() = doTest()
+    fun `test before line comment`() = doTest()
+    fun `test in line comment`() = doTest()
+    fun `test after line comment`() = doTest()
+    fun `test in block comment`() = doTest()
+    fun `test in outer doc comment`() = doTest()
+    fun `test after outer doc comment`() = doTest()
+    fun `test in inner doc comment`() = doTest()
+    fun `test after inner doc comment`() = doTest()
+    fun `test after module comment`() = doTest()
 
-    fun testDirectlyAfterToken() = doTest()
-    fun testInsideToken() = doTest()
+    fun `test directly after token`() = doTest()
+    fun `test inside token`() = doTest()
 
-    fun testInsideCommentDirectlyBeforeNextToken() = doTest()
-    fun testInsideCommentInsideToken() = doTest()
+    fun `test inside comment directly before next token`() = doTest()
+    fun `test inside comment inside token`() = doTest()
 
-    fun testAtFileBeginning() = doTest()
-    fun testInsideStringLiteral() = doTest()
+    fun `test at file beginning`() = doTest()
+    fun `test inside string literal`() = doTest()
 
-    fun testIssue578() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/578
+    fun `test issue578`() = doTest()   // https://github.com/intellij-rust/intellij-rust/issues/578
 }

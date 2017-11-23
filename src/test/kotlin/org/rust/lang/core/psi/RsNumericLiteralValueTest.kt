@@ -40,7 +40,7 @@ class RsNumericLiteralValueTest(private val constructor: (String) -> RsLiteralKi
 
 class RsNumericLiteralValueFuzzyTest {
     @Test
-    fun testFuzzyFloats() {
+    fun `test fuzzy floats`() {
         repeat(10000) {
             doTest(randomLiteral())
         }

@@ -6,7 +6,7 @@
 package org.rust.ide.intentions
 
 class RemoveParenthesesFromExprIntentionTest : RsIntentionTestBase(RemoveParenthesesFromExprIntention()) {
-    fun testRemoveParenthesesFromExpr() = doAvailableTest("""
+    fun `test remove parentheses from expr`() = doAvailableTest("""
         fn test() {
             let a = (4 + 3/*caret*/);
         }

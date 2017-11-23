@@ -62,20 +62,20 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testDontPutStdInStd() = stubOnlyResolve("""
+    fun `test don't put std in std`() = stubOnlyResolve("""
     //- main.rs
         use std::std;
                 //^ unresolved
     """)
 
-    fun testNoCoreExcludesCore() = stubOnlyResolve("""
+    fun `test no core excludes core`() = stubOnlyResolve("""
     //- main.rs
         #![no_std]
         use core::core;
                   //^ unresolved
     """)
 
-    fun testNoCoreExcludesStd() = stubOnlyResolve("""
+    fun `test no core excludes std`() = stubOnlyResolve("""
     //- main.rs
         #![no_std]
         use core::std;
@@ -96,7 +96,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testPreludeVisibility1() = stubOnlyResolve("""
+    fun `test prelude visibility 1`() = stubOnlyResolve("""
     //- main.rs
         mod m { }
 
@@ -104,7 +104,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                       //^ unresolved
     """)
 
-    fun testPreludeVisibility2() = stubOnlyResolve("""
+    fun `test prelude visibility 2`() = stubOnlyResolve("""
     //- main.rs
         mod m { }
 

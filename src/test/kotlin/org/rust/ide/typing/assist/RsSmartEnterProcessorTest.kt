@@ -38,13 +38,13 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         myFixture.checkResultByFile("$fileName".replace(".rs", "_after.rs"), true)
     }
 
-    fun testFixSimpleMethodCall() = doTest()
-    fun testFixNestedMethodCall() = doTest()
-    fun testFixMethodCallWithStringLiteral() = doTest()
-    fun testFixMethodCallMultipleLines() = doTest()
-    fun testFixWhitespaceAndSemicolon() = doTest()
-    fun testFixSemicolonAfterDeclaration() = doTest()
-    fun testFixDeclarationWithCall() = doTest()
-    fun testFixMatchInLet() = doTest()
-    fun testFixCallInStmt() = doTest()
+    fun `test fix simple method call`() = doTest()
+    fun `test fix nested method call`() = doTest()
+    fun `test fix method call with string literal`() = doTest()
+    fun `test fix method call multiple lines`() = doTest()
+    fun `test fix whitespace and semicolon`() = doTest()
+    fun `test fix semicolon after declaration`() = doTest()
+    fun `test fix declaration with call`() = doTest()
+    fun `test fix match in let`() = doTest()
+    fun `test fix call in stmt`() = doTest()
 }

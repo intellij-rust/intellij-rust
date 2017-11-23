@@ -7,7 +7,7 @@ package org.rust.lang.core.resolve
 
 class RsResolveTest : RsResolveTestBase() {
 
-    fun testFunctionArgument() = checkByCode("""
+    fun `test function argument`() = checkByCode("""
         fn foo(x: i32, y: f64) -> f64 {
                      //X
             y
@@ -15,7 +15,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testLocals() = checkByCode("""
+    fun `test locals`() = checkByCode("""
         fn foo() {
             let z = 92;
               //X
@@ -24,7 +24,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testShadowing() = checkByCode("""
+    fun `test shadowing`() = checkByCode("""
         fn foo() {
             let z = 92;
             let z = 42;
@@ -34,7 +34,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testNestedPatterns() = checkByCode("""
+    fun `test nested patterns`() = checkByCode("""
         enum E { Variant(i32, i32) }
 
         struct S { field: E }
@@ -47,7 +47,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testRefPattern() = checkByCode("""
+    fun `test ref pattern`() = checkByCode("""
         fn main() {
             let x = 92;
             if let Some(&y) = Some(&x) {
@@ -58,7 +58,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testClosure() = checkByCode("""
+    fun `test closure`() = checkByCode("""
         fn main() { (0..10).map(|x|  {
                                //X
               x
@@ -66,7 +66,7 @@ class RsResolveTest : RsResolveTestBase() {
         })}
     """)
 
-    fun testMatch() = checkByCode("""
+    fun `test match`() = checkByCode("""
         fn main() {
             match Some(92) {
                 Some(i) => {
@@ -79,7 +79,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testLet() = checkByCode("""
+    fun `test let`() = checkByCode("""
         fn f(i: i32) -> Option<i32> {}
 
         fn bar() {
@@ -93,14 +93,14 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testLetCycle1() = checkByCode("""
+    fun `test let cycle 1`() = checkByCode("""
         fn main() {
             let x = { x };
                     //^ unresolved
         }
     """)
 
-    fun testLetCycle2() = checkByCode("""
+    fun `test let cycle 2`() = checkByCode("""
         fn main() {
             let x = 92;
               //X
@@ -109,14 +109,14 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testLetCycle3() = checkByCode("""
+    fun `test let cycle 3`() = checkByCode("""
         fn main() {
             if let Some(x) = x { }
                            //^ unresolved
         }
     """)
 
-    fun testIfLet1() = checkByCode("""
+    fun `test if let 1`() = checkByCode("""
         fn main() {
             if let Some(i) = Some(92) {
                       //X
@@ -126,7 +126,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testIfLet2() = checkByCode("""
+    fun `test if let 2`() = checkByCode("""
         fn main() {
             if let Some(i) =  Some(92) { }
             i;
@@ -146,7 +146,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testWhileLet1() = checkByCode("""
+    fun `test while let 1`() = checkByCode("""
         fn main() {
             while let Some(i) = Some(92) {
                          //X
@@ -156,7 +156,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testWhileLet2() = checkByCode("""
+    fun `test while let 2`() = checkByCode("""
         fn main() {
             while let Some(i) = Some(92) { }
             i;
@@ -164,7 +164,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testFor() = checkByCode("""
+    fun `test for`() = checkByCode("""
         fn main() {
             for x in 0..10 {
               //X
@@ -174,7 +174,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testForNoLeak() = checkByCode("""
+    fun `test for no leak`() = checkByCode("""
         fn main() {
             for x in x { }
                    //^ unresolved
@@ -261,7 +261,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testTraitMethodArgument() = checkByCode("""
+    fun `test trait method argument`() = checkByCode("""
         trait T {
             fn foo(x: i32) {
                  //X
@@ -271,7 +271,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testImplMethodArgument() = checkByCode("""
+    fun `test impl method argument`() = checkByCode("""
         impl T {
             fn foo(x: i32) {
                  //X
@@ -281,7 +281,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testStructPatterns1() = checkByCode("""
+    fun `test struct patterns 1`() = checkByCode("""
         #[derive(Default)]
         struct S { foo: i32 }
 
@@ -293,7 +293,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testStructPatterns2() = checkByCode("""
+    fun `test struct patterns 2`() = checkByCode("""
         #[derive(Default)]
         struct S { foo: i32 }
 
@@ -305,7 +305,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testModItems1() = checkByCode("""
+    fun `test mod items 1`() = checkByCode("""
         mod m {
             fn main() {
                 foo()
@@ -317,7 +317,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testModItems2() = checkByCode("""
+    fun `test mod items 2`() = checkByCode("""
         mod bar {
             pub fn foo() {}
                    //X
@@ -335,7 +335,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testModItems3() = checkByCode("""
+    fun `test mod items 3`() = checkByCode("""
         mod bar {
             pub fn foo() {}
         }
@@ -352,7 +352,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testModItems4() = checkByCode("""
+    fun `test mod items 4`() = checkByCode("""
         mod bar {
             pub fn foo() {}
         }
@@ -370,7 +370,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testModItems5() = checkByCode("""
+    fun `test mod items 5`() = checkByCode("""
         mod bar {
             pub fn foo() {}
         }
@@ -387,7 +387,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testNestedModule() = checkByCode("""
+    fun `test nested module`() = checkByCode("""
         mod a {
             mod b {
                 mod c {
@@ -403,7 +403,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testSelf() = checkByCode("""
+    fun `test self`() = checkByCode("""
         //X
         fn foo() {}
 
@@ -413,7 +413,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testSelf2() = checkByCode("""
+    fun `test self 2`() = checkByCode("""
         fn foo() {}
           //X
 
@@ -423,7 +423,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testSelfIdentifier() = checkByCode("""
+    fun `test self identifier`() = checkByCode("""
         struct S;
 
         impl S {
@@ -435,7 +435,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testSuper() = checkByCode("""
+    fun `test super`() = checkByCode("""
         fn foo() {}
            //X
 
@@ -447,7 +447,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testNestedSuper() = checkByCode("""
+    fun `test nested super`() = checkByCode("""
         mod foo {
             mod bar {
                 fn main() {
@@ -461,7 +461,7 @@ class RsResolveTest : RsResolveTestBase() {
          //X
     """)
 
-    fun testFormatPositional() = checkByCode("""
+    fun `test format positional`() = checkByCode("""
         fn main() {
             let x = 92;
               //X
@@ -470,7 +470,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testFormatNamed() = checkByCode("""
+    fun `test format named`() = checkByCode("""
         fn main() {
             let x = 92;
             let y = 62;
@@ -480,7 +480,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testEnumVariant1() = checkByCode("""
+    fun `test enum variant 1`() = checkByCode("""
         enum E { X }
                //X
 
@@ -490,12 +490,12 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testEnumVariant2() = checkByCode("""
+    fun `test enum variant 2`() = checkByCode("""
         enum E { X, Y(X) }
                     //^ unresolved
     """)
 
-    fun testLocalFn() = checkByCode("""
+    fun `test local fn`() = checkByCode("""
         fn main() {
             foo();
            //^
@@ -525,7 +525,7 @@ class RsResolveTest : RsResolveTestBase() {
     """)
 
 
-    fun testEnumField() = checkByCode("""
+    fun `test enum field`() = checkByCode("""
         enum E { X { foo: i32 } }
                      //X
         fn main() {
@@ -534,7 +534,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testEnumStructPattern() = checkByCode("""
+    fun `test enum struct pattern`() = checkByCode("""
         enum E {
             B { f: i32 }
           //X
@@ -548,7 +548,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testNonGlobalPathWithColons() = checkByCode("""
+    fun `test non global path with colons`() = checkByCode("""
         mod m {
             pub struct Matrix<T> { data: Vec<T> }
                       //X
@@ -560,7 +560,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testTypeAlias() = checkByCode("""
+    fun `test type alias`() = checkByCode("""
         type Foo = usize;
            //X
 
@@ -572,7 +572,7 @@ class RsResolveTest : RsResolveTestBase() {
                                //^
     """)
 
-    fun testTrait() = checkByCode("""
+    fun `test trait`() = checkByCode("""
         trait Foo { }
              //X
 
@@ -581,7 +581,7 @@ class RsResolveTest : RsResolveTestBase() {
             //^
     """)
 
-    fun testForeignFn() = checkByCode("""
+    fun `test foreign fn`() = checkByCode("""
         extern "C" { fn foo(); }
                        //X
 
@@ -591,7 +591,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testForeignStatic() = checkByCode("""
+    fun `test foreign static`() = checkByCode("""
         extern "C" { static FOO: i32; }
                             //X
 
@@ -601,7 +601,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testTraitSelfType() = checkByCode("""
+    fun `test trait Self type`() = checkByCode("""
         trait T {
             //X
             fn create() -> Self;
@@ -609,19 +609,19 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testUnionDef() = checkByCode("""
+    fun `test union def`() = checkByCode("""
         union U { f: f64, u: u64 }
             //X
         fn foo(u: U) { }
                 //^
     """)
 
-    fun testUnbound() = checkByCode("""
+    fun `test unbound`() = checkByCode("""
         fn foo() { y }
                  //^ unresolved
     """)
 
-    fun testOrdering() = checkByCode("""
+    fun `test ordering`() = checkByCode("""
         fn foo() {
             z;
           //^ unresolved
@@ -629,7 +629,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testModBoundary() = checkByCode("""
+    fun `test mod boundary`() = checkByCode("""
         mod a {
             fn foo() {}
             mod b {
@@ -641,7 +641,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testFollowPath() = checkByCode("""
+    fun `test follow path`() = checkByCode("""
         fn main() {
             let x = 92;
             foo::x;
@@ -649,7 +649,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testSelfInStatic() = checkByCode("""
+    fun `test self in static`() = checkByCode("""
         struct S;
 
         impl S {
@@ -658,7 +658,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testWrongSelf() = checkByCode("""
+    fun `test wrong self`() = checkByCode("""
         fn foo() {}
 
         fn main() {
@@ -669,7 +669,7 @@ class RsResolveTest : RsResolveTestBase() {
 
     // We resolve this, although this usage of `super` is invalid.
     // Annotator will highlight it as an error.
-    fun testWrongSuper() = checkByCode("""
+    fun `test wrong super`() = checkByCode("""
         fn foo() {}
           //X
         mod inner {
@@ -680,7 +680,7 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testFunctionIsNotModule() = checkByCode("""
+    fun `test function is not module`() = checkByCode("""
         fn foo(bar: usize) {}
 
         fn main() {

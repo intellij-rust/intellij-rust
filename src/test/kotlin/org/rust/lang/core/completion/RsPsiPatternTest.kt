@@ -12,32 +12,32 @@ import org.rust.lang.RsTestBase
 import org.rust.lang.core.RsPsiPattern
 
 class RsPsiPatternTest : RsTestBase() {
-    fun testOnStructAttr() = testPattern("""
+    fun `test on struct attr`() = testPattern("""
         #[foo]
         //^
         struct Bar;
     """, RsPsiPattern.onStruct)
 
-    fun testOnTraitAttr() = testPattern("""
+    fun `test on trait attr`() = testPattern("""
         #[foo]
         //^
         trait Foo {}
     """, RsPsiPattern.onTrait)
 
-    fun testOnFnAttr() = testPattern("""
+    fun `test on fn attr`() = testPattern("""
         #[foo]
         //^
         fn bar() {
         }
     """, RsPsiPattern.onFn)
 
-    fun testOnTupleStructAttr() = testPattern("""
+    fun `test on tuple struct attr`() = testPattern("""
         #[foo]
         //^
         struct Bar(u8, u8);
     """, RsPsiPattern.onTupleStruct)
 
-    fun testOnAnyItemStructAttr() = testPattern("""
+    fun `test on any item struct attr`() = testPattern("""
         #[foo]
         //^
         struct Bar {
@@ -45,13 +45,13 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun testOnAnyItemStaticAttr() = testPattern("""
+    fun `test on any item static attr`() = testPattern("""
         #[foo]
         //^
         static BAR: u8 = 1;
     """, RsPsiPattern.onAnyItem)
 
-    fun testOnAnyItemEnumAttr() = testPattern("""
+    fun `test on any item enum attr`() = testPattern("""
         #[foo]
         //^
         enum Bar {
@@ -60,39 +60,39 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun testOnAnyItemFnAttr() = testPattern("""
+    fun `test on any item fn attr`() = testPattern("""
         #[foo]
         //^
         fn bar() {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun testOnAnyItemModAttr() = testPattern("""
+    fun `test on any item mod attr`() = testPattern("""
         #[foo]
         //^
         mod bar {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun testOnAnyItemTraitAttr() = testPattern("""
+    fun `test on any item trait attr`() = testPattern("""
         #[foo]
         //^
         trait Bar {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun testOnAnyItemCrateAttr() = testPattern("""
+    fun `test on any item crate attr`() = testPattern("""
         #![foo]
          //^
     """, RsPsiPattern.onAnyItem)
 
-    fun testOnCrateAttr() = testPattern("""
+    fun `test on crate attr`() = testPattern("""
         #![foo]
          //^
         struct Foo(u8, u8);
     """, RsPsiPattern.onCrate)
 
-    fun testOnDropFnAttr() = testPattern("""
+    fun `test on drop fn attr`() = testPattern("""
         struct HasDrop;
 
         impl Drop for HasDrop {
@@ -104,7 +104,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onDropFn)
 
-    fun testOnEnumAttr() = testPattern("""
+    fun `test on enum attr`() = testPattern("""
         #[foo]
         //^
         enum Foo {
@@ -113,7 +113,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onEnum)
 
-    fun testOnExternBlockAttr() = testPattern("""
+    fun `test on extern block attr`() = testPattern("""
         #[foo]
         //^
         extern {
@@ -121,7 +121,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onExternBlock)
 
-    fun testOnExternBlockDeclAttr() = testPattern("""
+    fun `test on extern block decl attr`() = testPattern("""
         extern {
             #[foo]
             //^
@@ -129,7 +129,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onExternBlockDecl)
 
-    fun testOnExternCrateAttr() = testPattern("""
+    fun `test on extern crate attr`() = testPattern("""
         #[foo]
         //^
         extern crate bar;
@@ -142,32 +142,32 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onMacroDefinition)
 
-    fun testOnModAttr() = testPattern("""
+    fun `test on mod attr`() = testPattern("""
         #[foo]
         //^
         mod bar {
         }
     """, RsPsiPattern.onMod)
 
-    fun testOnModAttr2() = testPattern("""
+    fun `test on mod attr 2`() = testPattern("""
         #[foo]
         //^
         mod bar;
     """, RsPsiPattern.onMod)
 
-    fun testOnStaticAttr() = testPattern("""
+    fun `test on static attr`() = testPattern("""
         #[foo]
         //^
         static BAR: u8 = 5;
     """, RsPsiPattern.onStatic)
 
-    fun testOnStaticMutAttr() = testPattern("""
+    fun `test on static mut attr`() = testPattern("""
         #[foo]
         //^
         static mut BAR: u8 = 5;
     """, RsPsiPattern.onStaticMut)
 
-    fun testOnTestFnAttr() = testPattern("""
+    fun `test on test fn attr`() = testPattern("""
         #[test]
         #[foo]
         //^
@@ -176,95 +176,95 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onTestFn)
 
-    fun testOnStmtBeginning() = testPattern("""
+    fun `test on stmt beginning`() = testPattern("""
         //^
     """, RsPsiPattern.onStatementBeginning)
 
-    fun testOnStmtBeginningWithinMod() = testPattern("""
+    fun `test on stmt beginning within mod`() = testPattern("""
         mod foo {    }
                 //^
     """, RsPsiPattern.onStatementBeginning)
 
-    fun testOnStmtBeginningAfterOtherStmt() = testPattern("""
+    fun `test on stmt beginning after other stmt`() = testPattern("""
         extern crate foo;
                        //^
     """, RsPsiPattern.onStatementBeginning)
 
-    fun testOnStmtBeginningAfterBlock() = testPattern("""
+    fun `test on stmt beginning after block`() = testPattern("""
         mod foo {}
                 //^
     """, RsPsiPattern.onStatementBeginning)
 
-    fun testOnStmtBeginningIgnoresComments() = testPattern("""
+    fun `test on stmt beginning ignores comments`() = testPattern("""
         const A: u8 = 3; /* three */    /* it's greater than two */
                                     //^
     """, RsPsiPattern.onStatementBeginning)
 
-    fun testOnStmtBeginningNegativeWhenFollowsVisible() = testPatternNegative("""
+    fun `test on stmt beginning negative when follows visible`() = testPatternNegative("""
         abc
           //^
     """, RsPsiPattern.onStatementBeginning)
 
-    fun testOnStmtBeginningNegativeInMiddleOfOtherStmt() = testPatternNegative("""
+    fun `test on stmt beginning negative in middle of other stmt`() = testPatternNegative("""
         mod abc {}
              //^
     """, RsPsiPattern.onStatementBeginning)
 
-    fun testOnStmtBeginningWithWords() = testPattern("""
+    fun `test on stmt beginning with words`() = testPattern("""
         word2
             //^
     """, RsPsiPattern.onStatementBeginning("word1", "word2"))
 
-    fun testOnStmtBeginningWithWordsNegativeWhenWordDoesntFit() = testPatternNegative("""
+    fun `test on stmt beginning with words negative when word doesnt fit`() = testPatternNegative("""
         word3
             //^
     """, RsPsiPattern.onStatementBeginning("word1", "word2"))
 
-    fun testOnStmtBeginningWithWordsNegativeAtVeryBeginning() = testPatternNegative("   \n//^", RsPsiPattern.onStatementBeginning("word1"))
+    fun `test on stmt beginning with words negative at very beginning`() = testPatternNegative("   \n//^", RsPsiPattern.onStatementBeginning("word1"))
 
-    fun testInAnyLoopWithinFor() = testPattern("""
+    fun `test in any loop within for`() = testPattern("""
         fn foo() {
             for _ in 1..5 { }
                          //^
         }
     """, RsPsiPattern.inAnyLoop)
 
-    fun testInAnyLoopWithinWhile() = testPattern("""
+    fun `test in any loop within while`() = testPattern("""
         fn foo() {
             while true { }
                       //^
         }
     """, RsPsiPattern.inAnyLoop)
 
-    fun testInAnyLoopWithinLoop() = testPattern("""
+    fun `test in any loop within loop`() = testPattern("""
         fn foo() {
             loop { }
                 //^
         }
     """, RsPsiPattern.inAnyLoop)
 
-    fun testInAnyLoopWithinForNestedBlock() = testPattern("""
+    fun `test in any loop within for nested block`() = testPattern("""
         fn foo() {
             for _ in 1..5 {{ }}
                           //^
         }
     """, RsPsiPattern.inAnyLoop)
 
-    fun testInAnyLoopNegativeBeforeBlock() = testPatternNegative("""
+    fun `test in any loop negative before block`() = testPatternNegative("""
         fn foo() {
             for _ in 1..5 {}
                      //^
         }
     """, RsPsiPattern.inAnyLoop)
 
-    fun testInAnyLoopNegativeAfterBlock() = testPatternNegative("""
+    fun `test in any loop negative after block`() = testPatternNegative("""
         fn foo() {
             while true {}   // Infinite loop
                        //^
         }
     """, RsPsiPattern.inAnyLoop)
 
-    fun testInAnyLoopNegativeInsideClosure() = testPatternNegative("""
+    fun `test in any loop negative inside closure`() = testPatternNegative("""
         fn foo() {
             while true { let _ = |x| { x + 1 }; }   // Infinite loop
                                        //^

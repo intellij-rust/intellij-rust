@@ -12,7 +12,7 @@ import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
  */
 class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
-    fun testImpl() = doTestByText("""
+    fun `test impl`() = doTestByText("""
         trait Foo {         // - Has implementations
             fn foo(&self);
             fn bar(&self) {
@@ -28,7 +28,7 @@ class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    fun testIconPosition() = doTestByText("""
+    fun `test icon position`() = doTestByText("""
         trait Foo {         // - Has implementations
             fn foo(&self);
         }

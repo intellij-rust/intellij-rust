@@ -12,7 +12,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
-    fun testNoFields() = checkBothQuickFix("""
+    fun `test no fields`() = checkBothQuickFix("""
         struct S { foo: i32, bar: f64 }
 
         fn main() {
@@ -26,7 +26,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testNoComma() = checkBothQuickFix("""
+    fun `test no comma`() = checkBothQuickFix("""
         struct S { a: i32, b: String }
 
         fn main() {
@@ -40,7 +40,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         }
         """)
 
-    fun testWithComma() = checkBothQuickFix("""
+    fun `test with comma`() = checkBothQuickFix("""
         struct S { a: i32, b: String }
 
         fn main() {
@@ -54,7 +54,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         }
         """)
 
-    fun testSomeExistingFields() = checkBothQuickFix("""
+    fun `test some existing fields`() = checkBothQuickFix("""
         struct S { a: i32, b: i32, c: i32, d: i32 }
 
         fn main() {
@@ -76,7 +76,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testFirstFieldIsAddedFirst() = checkBothQuickFix("""
+    fun `test first field is added first`() = checkBothQuickFix("""
         struct S { a: i32, b: i32 }
 
         fn main() {
@@ -90,7 +90,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testLastFieldIsAddedLast() = checkBothQuickFix("""
+    fun `test last field is added last`() = checkBothQuickFix("""
         struct S { a: i32, b: i32 }
 
         fn main() {
@@ -104,7 +104,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testPreservesOrder() = checkBothQuickFix("""
+    fun `test preserves order`() = checkBothQuickFix("""
         struct S { a: i32, b: i32, c: i32, d: i32, e: i32}
 
         fn main() {

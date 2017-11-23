@@ -22,7 +22,7 @@ class RsCompletionAutoPopupTest : RsCompletionTestBase() {
     override fun runInDispatchThread(): Boolean = false
 
 
-    fun testPathAutoPopup() {
+    fun `test path auto popup`() {
         val tester = CompletionAutoPopupTester(myFixture)
         myFixture.configureByText("main.rs", """
             enum Foo { Bar, Baz}

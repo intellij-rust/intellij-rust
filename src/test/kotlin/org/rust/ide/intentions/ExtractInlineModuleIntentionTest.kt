@@ -10,9 +10,9 @@ import org.rust.lang.RsTestBase
 class ExtractInlineModuleIntentionTest : RsTestBase() {
     override val dataPath = "org/rust/ide/intentions/fixtures/"
 
-    fun testValidExtractInlineModule() = extractInlineModule()
+    fun `test valid extract inline module`() = extractInlineModule()
 
-    fun testInvalidExtractInlineModule() = extractInlineModule()
+    fun `test invalid extract inline module`() = extractInlineModule()
 
     private fun extractInlineModule() = checkByDirectory {
         openFileInEditor("main.rs")

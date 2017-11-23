@@ -6,7 +6,7 @@
 package org.rust.ide.annotator
 
 class RsLiteralAnnotatorTest : RsAnnotatorTestBase() {
-    fun testCharLiteralLength() = checkErrors("""
+    fun `test char literal length`() = checkErrors("""
         fn main() {
             let ch1 = <error descr="empty char literal">''</error>;
             let ch2 = <error descr="too many characters in char literal">'abrakadabra'</error>;
@@ -16,7 +16,7 @@ class RsLiteralAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testLiteralSuffixes() = checkErrors("""
+    fun `test literal suffixes`() = checkErrors("""
         fn main() {
             let lit1 = <error descr="string literal with a suffix is invalid">"test"u8</error>;
             let lit2 = <error descr="char literal with a suffix is invalid">'c'u8</error>;
@@ -27,7 +27,7 @@ class RsLiteralAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testLiteralUnclosedQuotes() = checkErrors("""
+    fun `test literal unclosed quotes`() = checkErrors("""
         fn main() {
             let ch1 = <error descr="unclosed char literal">'1</error>;
             let ch2 = <error descr="unclosed byte literal">b'1</error>;

@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
-    fun testFn() = checkByCode("""
+    fun `test fn`() = checkByCode("""
         fn foo<T>() -> T {
              //X
             let x: T = unimplemented!();
@@ -17,7 +17,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             }
     """)
 
-    fun testImplMethod() = checkByCode("""
+    fun `test impl method`() = checkByCode("""
         struct S;
 
         impl S {
@@ -28,7 +28,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testTraitMethod() = checkByCode("""
+    fun `test trait method`() = checkByCode("""
         trait T {
             fn f<Param>()
                 //X
@@ -37,7 +37,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testStruct() = checkByCode("""
+    fun `test struct`() = checkByCode("""
         struct S<Thing> {
                 //X
             field: Vec<Thing>
@@ -45,7 +45,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testEnum() = checkByCode("""
+    fun `test enum`() = checkByCode("""
         enum E<T> {
              //X
             V(T)
@@ -53,7 +53,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testTrait() = checkByCode("""
+    fun `test trait`() = checkByCode("""
         trait T<Param> {
                 //X
             fn new() -> Param;
@@ -61,7 +61,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testImpl() = checkByCode("""
+    fun `test impl`() = checkByCode("""
         struct S<T> { field: T }
 
         impl<T> S<T> {
@@ -71,7 +71,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testTypeAlias() = checkByCode("""
+    fun `test type alias`() = checkByCode("""
         use std::result;
 
         pub type Result<T> =
@@ -80,14 +80,14 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
                          //^
     """)
 
-    fun testNoLeakInEnum() = checkByCode("""
+    fun `test no leak in enum`() = checkByCode("""
         enum E<T> { X }
 
         fn main() { let _ = E::T; }
                              //^ unresolved
     """)
 
-    fun testNoLeakInStruct() = checkByCode("""
+    fun `test no leak in struct`() = checkByCode("""
         struct S<T>;
 
         fn main() { let _: S::T = unreachable!(); }

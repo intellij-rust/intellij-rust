@@ -6,31 +6,31 @@
 package org.rust.ide.intentions
 
 class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntention()) {
-    fun testUnavailable1() = doUnavailableTest(
+    fun `test unavailable`() = doUnavailableTest(
         """
         fn bar/*caret*/(x: i32) -> i32 {}
         """
     )
 
-    fun testUnavailableBlockBody() = doUnavailableTest(
+    fun `test unavailable block body`() = doUnavailableTest(
         """
         fn bar(x: &i32) {/*caret*/}
         """
     )
 
-    fun testUnavailableNoArgs() = doUnavailableTest(
+    fun `test unavailable no args`() = doUnavailableTest(
         """
         fn bar(/*caret*/) {}
         """
     )
 
-    fun testUnavailableUnElided() = doUnavailableTest(
+    fun `test unavailable un elided`() = doUnavailableTest(
         """
         fn bar<'a>(x: &'a /*caret*/ i32) {}
         """
     )
 
-    fun testSimple() = doAvailableTest(
+    fun `test simple`() = doAvailableTest(
         """
         fn foo(p: &/*caret*/ i32) -> & i32 { p }
         """
@@ -40,7 +40,7 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         """
     )
 
-    fun testGenericType() = doAvailableTest(
+    fun `test generic type`() = doAvailableTest(
         """
         fn foo<T>(p1:/*caret*/ &i32, p2: T) -> & i32 { p }
         """
@@ -50,7 +50,7 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         """
     )
 
-    fun testUnknown() = doAvailableTest(
+    fun `test unknown`() = doAvailableTest(
         """
         fn foo(p1: &i32,/*caret*/ p2: &i32) -> &i32 { p2 }
         """
@@ -60,7 +60,7 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         """
     )
 
-    fun testMethodDecl() = doAvailableTest(
+    fun `test method decl`() = doAvailableTest(
         """
         trait Foo {
             fn /*caret*/bar(&self, x: &i32, y: &i32, x: i32) -> &i32;
@@ -74,7 +74,7 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         """
     )
 
-    fun testMethodImpl() = doAvailableTest(
+    fun `test method impl`() = doAvailableTest(
         """
         trait Foo {
             fn bar(&self, x: &i32, y: &i32, x: i32) -> &i32;

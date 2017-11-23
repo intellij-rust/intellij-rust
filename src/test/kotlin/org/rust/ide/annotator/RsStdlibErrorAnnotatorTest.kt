@@ -15,7 +15,7 @@ class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase() {
         projectDescriptor.setUp(myFixture)
     }
 
-    fun testE0428_RespectsCrateAliases() = checkErrors("""
+    fun `test E0428 respects crate aliases`() = checkErrors("""
         extern crate libc as libc_alias;
         mod libc {}
 
@@ -24,7 +24,7 @@ class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase() {
         mod alloc {}
     """)
 
-    fun testE0463_UnknownCrate() = checkErrors("""
+    fun `test E0463 unknown crate`() = checkErrors("""
         extern crate alloc;
 
         <error descr="Can't find crate for `litarvan` [E0463]">extern crate litarvan;</error>

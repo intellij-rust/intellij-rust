@@ -13,19 +13,19 @@ import org.rust.lang.core.psi.RsFile
 
 class RsLookupElementTest : RsTestBase() {
     private val `$` = '$'
-    fun testFn() = check("""
+    fun `test fn`() = check("""
         fn foo(x: i32) -> Option<String> {}
           //^
     """, tailText = "(x: i32)", typeText = "Option<String>")
 
-    fun testTraitMethod() = check("""
+    fun `test trait method`() = check("""
         trait T {
             fn foo(&self, x: i32) {}
               //^
         }
     """, tailText = "(&self, x: i32)", typeText = "()")
 
-    fun testTraitByMethod() = check("""
+    fun `test trait by method`() = check("""
         trait T {
             fn foo(&self, x: i32);
         }
@@ -38,42 +38,42 @@ class RsLookupElementTest : RsTestBase() {
         }
     """, tailText = "(&self, x: i32) of T", typeText = "()")
 
-    fun testConsItem() = check("""
+    fun `test cons item`() = check("""
         const C: S = unimplemented!();
             //^
     """, typeText = "S")
 
-    fun testStaticItem() = check("""
+    fun `test static item`() = check("""
         static C: S = unimplemented!();
              //^
     """, typeText = "S")
 
-    fun testTupleStruct() = check("""
+    fun `test tuple struct`() = check("""
         struct S(f32, i64);
              //^
     """, tailText = "(f32, i64)")
 
-    fun testStruct() = check("""
+    fun `test struct`() = check("""
         struct S { field: String }
              //^
     """, tailText = " { ... }")
 
-    fun testEnum() = check("""
+    fun `test enum`() = check("""
         enum E { X, Y }
            //^
     """)
 
-    fun testEnumStructVariant() = check("""
+    fun `test enum struct variant`() = check("""
         enum E { X {} }
                //^
     """, tailText = " { ... }", typeText = "E")
 
-    fun testEnumTupleVariant() = check("""
+    fun `test enum tuple variant`() = check("""
         enum E { X(i32, String) }
                //^
     """, tailText = "(i32, String)", typeText = "E")
 
-    fun testField() = check("""
+    fun `test field`() = check("""
         struct S { field: String }
                    //^
     """, typeText = "String")
@@ -90,7 +90,7 @@ class RsLookupElementTest : RsTestBase() {
                      //^
     """, tailText = "!", typeText = null)
 
-    fun testMod() {
+    fun `test mod`() {
         myFixture.configureByText("foo.rs", "")
         val lookup = createLookupElement((myFixture.file as RsFile), "foo")
         val presentation = LookupElementPresentation()

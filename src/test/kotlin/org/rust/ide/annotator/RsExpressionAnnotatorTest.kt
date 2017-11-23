@@ -6,9 +6,8 @@
 package org.rust.ide.annotator
 
 class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
-    override val dataPath = "org/rust/ide/annotator/fixtures/expressions"
 
-    fun testUnnecessaryParens() = checkWarnings("""
+    fun `test unnecessary parens`() = checkWarnings("""
 
         struct S { f: i32 }
 
@@ -44,7 +43,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
         """)
 
 
-    fun testStructExpr() = checkWarnings("""
+    fun `test struct expr`() = checkWarnings("""
 
         #[derive(Default)]
         struct S {
@@ -105,7 +104,7 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun testUnion() = checkWarnings("""
+    fun `test union`() = checkWarnings("""
         union U { a: i32, b: f32 }
 
         fn main() {

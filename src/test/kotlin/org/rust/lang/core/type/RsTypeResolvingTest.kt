@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.types.type
 
 class RsTypeResolvingTest : RsTypificationTestBase() {
-    fun testPath() = testType("""
+    fun `test path`() = testType("""
         struct Spam;
 
         fn main() {
@@ -19,14 +19,14 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testUnit() = testType("""
+    fun `test unit`() = testType("""
         fn main() {
             let _: () = ();
                  //^ ()
         }
     """)
 
-    fun testTuple() = testType("""
+    fun `test tuple`() = testType("""
         struct S;
         struct T;
         fn main() {
@@ -36,7 +36,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
     """)
 
     // TODO `<S as T>::Assoc` should be unified to `S`
-    fun testQualifiedPath() = testType("""
+    fun `test qualified path`() = testType("""
         trait T {
             type Assoc;
         }
@@ -53,7 +53,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testEnum() = testType("""
+    fun `test enum`() = testType("""
         enum E { X }
 
         fn main() {
@@ -62,7 +62,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testTypeItem() = testType("""
+    fun `test type item`() = testType("""
         enum E { X }
 
         type A = E;
@@ -73,7 +73,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testSelfType() = testType("""
+    fun `test Self type`() = testType("""
         struct S;
         trait T { fn new() -> Self; }
 
@@ -81,82 +81,82 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                                   //^ Self
     """)
 
-    fun testPrimitiveBool() = testType("""
+    fun `test primitive bool`() = testType("""
         type T = bool;
                   //^ bool
     """)
 
-    fun testPrimitiveChar() = testType("""
+    fun `test primitive char`() = testType("""
         type T = char;
                   //^ char
     """)
 
-    fun testPrimitiveF32() = testType("""
+    fun `test primitive f32`() = testType("""
         type T = f32;
                  //^ f32
     """)
 
-    fun testPrimitiveF64() = testType("""
+    fun `test primitive f64`() = testType("""
         type T = f64;
                  //^ f64
     """)
 
-    fun testPrimitiveI8() = testType("""
+    fun `test primitive i8`() = testType("""
         type T = i8;
                 //^ i8
     """)
 
-    fun testPrimitiveI16() = testType("""
+    fun `test primitive i16`() = testType("""
         type T = i16;
                  //^ i16
     """)
 
-    fun testPrimitiveI32() = testType("""
+    fun `test primitive i32`() = testType("""
         type T = i32;
                  //^ i32
     """)
 
-    fun testPrimitiveI64() = testType("""
+    fun `test primitive i64`() = testType("""
         type T = i64;
                  //^ i64
     """)
 
-    fun testPrimitiveISize() = testType("""
+    fun `test primitive isize`() = testType("""
         type T = isize;
                    //^ isize
     """)
 
-    fun testPrimitiveU8() = testType("""
+    fun `test primitive u8`() = testType("""
         type T = u8;
                 //^ u8
     """)
 
-    fun testPrimitiveU16() = testType("""
+    fun `test primitive u16`() = testType("""
         type T = u16;
                  //^ u16
     """)
 
-    fun testPrimitiveU32() = testType("""
+    fun `test primitive u32`() = testType("""
         type T = u32;
                  //^ u32
     """)
 
-    fun testPrimitiveU64() = testType("""
+    fun `test primitive u64`() = testType("""
         type T = u64;
                  //^ u64
     """)
 
-    fun testPrimitiveUSize() = testType("""
+    fun `test primitive usize`() = testType("""
         type T = usize;
                    //^ usize
     """)
 
-    fun testPrimitiveStr() = testType("""
+    fun `test primitive str`() = testType("""
         type T = str;
                  //^ str
     """)
 
-    fun testPrimitiveStrRef() = testType("""
+    fun `test primitive str ref`() = testType("""
         type T = &'static str;
                  //^ &str
     """)

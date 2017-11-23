@@ -6,7 +6,7 @@
 package org.rust.lang.core.type
 
 class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
-    fun testGenericField() = testExpr("""
+    fun `test generic field`() = testExpr("""
         struct S<T> { field: T }
 
         fn foo(s: S<f64>) {
@@ -16,7 +16,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericFieldReference() = testExpr("""
+    fun `test generic field reference`() = testExpr("""
         struct S<'a, T> { field: &'a T }
 
         fn foo(s: S<'static, f64>) {
@@ -26,7 +26,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testNestedGenericField() = testExpr("""
+    fun `test nested generic field`() = testExpr("""
         struct A<T> { field: T }
         struct B<S> { field: S }
 
@@ -37,7 +37,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testNestedGenericField2() = testExpr("""
+    fun `test nested generic field 2`() = testExpr("""
         struct S<T> { field: T }
 
         fn foo(s: S<S<u64>>) {
@@ -47,7 +47,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericArray() = testExpr("""
+    fun `test generic array`() = testExpr("""
         struct S<T> { field: [T; 1] }
 
         fn foo(s: S<f64>) {
@@ -57,7 +57,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericSlice() = testExpr("""
+    fun `test generic slice`() = testExpr("""
         struct S<T: 'static> { field: &'static [T] }
 
         fn foo(s: S<f64>) {
@@ -67,7 +67,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericConstPtr() = testExpr("""
+    fun `test generic const ptr`() = testExpr("""
         struct S<T> { field: *const T }
 
         fn foo(s: S<f64>) {
@@ -77,7 +77,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericMutPtr() = testExpr("""
+    fun `test generic mut ptr`() = testExpr("""
         struct S<T> { field: *mut T }
 
         fn foo(s: S<f64>) {
@@ -87,7 +87,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericMethod() = testExpr("""
+    fun `test generic method`() = testExpr("""
         struct B<T> { field: T }
 
         impl<T> B<T> {
@@ -101,7 +101,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testTwoParameters() = testExpr("""
+    fun `test two parameters`() = testExpr("""
          enum Result<T, E> { Ok(T), Err(E)}
          impl<T, E> Result<T, E> {
              fn unwrap(self) -> T { unimplemented!() }
@@ -114,7 +114,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
          }
     """)
 
-    fun testParamSwap() = testExpr("""
+    fun `test param swap`() = testExpr("""
         struct S<A, B> { a: A, b: B}
 
         impl<X, Y> S<Y, X> {
@@ -128,7 +128,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testParamRepeat() = testExpr("""
+    fun `test param repeat`() = testExpr("""
         struct S<A, B> { a: A, b: B}
 
         impl <T> S<T, T> {
@@ -142,7 +142,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testPartialSpec() = testExpr("""
+    fun `test partial spec`() = testExpr("""
         struct S<A, B> { a: A, b: B}
 
         impl <T> S<i32, T> {
@@ -156,7 +156,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericFunction() = testExpr("""
+    fun `test generic function`() = testExpr("""
         fn f<T>(t: T) -> T { t }
 
         fn main() {
@@ -166,7 +166,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericFunction2() = testExpr("""
+    fun `test generic function 2`() = testExpr("""
         fn f<T2, T1>(t1: T1, t2: T2) -> (T1, T2) { (t1, t2) }
 
         fn main() {
@@ -176,7 +176,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericFunction3() = testExpr("""
+    fun `test generic function 3`() = testExpr("""
         fn f<T>(t: T) -> T { t }
 
         fn main() {
@@ -186,7 +186,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericFunctionPointer() = testExpr("""
+    fun `test generic function pointer`() = testExpr("""
         fn f<T>(t: T) -> T { t }
 
         fn main() {
@@ -197,7 +197,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericFunctionPointer2() = testExpr("""
+    fun `test generic function pointer 2`() = testExpr("""
         fn f<T1, T2>(t1: T1, t2: T2) -> (T1, T2) { (t1, t2) }
 
         fn main() {
@@ -208,7 +208,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testStaticMethod() = testExpr("""
+    fun `test static method`() = testExpr("""
         struct S<A> { value: A }
         impl<B> S<B> {
             fn new(t: B) -> S<B> { S {value: t} }
@@ -221,7 +221,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testRecursiveType() = testExpr("""
+    fun `test recursive type`() = testExpr("""
         struct S<T> {
             rec: S<T>,
             field: T
@@ -234,7 +234,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testSelfType() = testExpr("""
+    fun `test Self type`() = testExpr("""
         trait T {
             fn foo(&self) { self; }
                             //^ &Self
@@ -380,7 +380,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testTupleStructExpression() = testExpr("""
+    fun `test tuple struct expression`() = testExpr("""
         struct S<T> (T);
         fn main() {
             let x = S(5u16);
@@ -427,7 +427,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericAlias() = testExpr("""
+    fun `test generic alias`() = testExpr("""
         struct S1<T>(T);
         struct S3<T1, T2, T3>(T1, T2, T3);
 
@@ -440,7 +440,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericStructArg() = testExpr("""
+    fun `test generic struct arg`() = testExpr("""
         struct Foo<F>(F);
         fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }
         fn main() {
@@ -450,7 +450,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericEnumArg() = testExpr("""
+    fun `test generic enum arg`() = testExpr("""
         enum Foo<F> { V(F) }
         fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }
         fn main() {
@@ -460,7 +460,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericTupleArg() = testExpr("""
+    fun `test generic tuple arg`() = testExpr("""
         fn foo<T, F>(xs: (T, F)) -> F { unimplemented!() }
         fn main() {
             let x = foo((123, "str"));
@@ -469,7 +469,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericReferenceArg() = testExpr("""
+    fun `test generic reference arg`() = testExpr("""
         fn foo<T>(xs: &T) -> T { unimplemented!() }
         fn main() {
             let x = foo(&8u64);
@@ -478,7 +478,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericPointerArg() = testExpr("""
+    fun `test generic pointer arg`() = testExpr("""
         fn foo<T>(xs: *const T) -> T { unimplemented!() }
         fn main() {
             let x = foo(&8u16 as *const u16);
@@ -487,7 +487,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericArrayArg() = testExpr("""
+    fun `test generic array arg`() = testExpr("""
         fn foo<T>(xs: [T; 4]) -> T { unimplemented!() }
         fn main() {
             let x = foo([1, 2, 3, 4]);
@@ -496,7 +496,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericSliceArg() = testExpr("""
+    fun `test generic slice arg`() = testExpr("""
         fn foo<T>(xs: &[T]) -> T { unimplemented!() }
         fn main() {
             let slice: &[&str] = &["foo", "bar"];
@@ -506,7 +506,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testComplexGenericArg() = testExpr("""
+    fun `test complex generic arg`() = testExpr("""
         struct Foo<T1, T2>(T1, T2);
         enum Bar<T3, T4> { V(T3, T4) }
         struct FooBar<T5, T6>(T5, T6);
@@ -519,7 +519,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testArrayToSlice() = testExpr("""
+    fun `test array to slice`() = testExpr("""
         fn foo<T>(xs: &[T]) -> T { unimplemented!() }
         fn main() {
             let x = foo(&[1, 2, 3]);
@@ -528,7 +528,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testArrayToSlice2() = testExpr("""
+    fun `test array to slice 2`() = testExpr("""
         fn foo<T>(xs: &[T]) -> T { unimplemented!() }
         fn main() {
             let a = [1, 2, 3];
@@ -538,7 +538,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericStructMethodArg() = testExpr("""
+    fun `test generic struct method arg`() = testExpr("""
         struct Foo<F>(F);
         struct Bar<B>(B);
         impl<T1> Foo<T1> {
@@ -551,7 +551,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericEnumMethodArg() = testExpr("""
+    fun `test generic enum method arg`() = testExpr("""
         struct Foo<F>(F);
         enum Bar<B> { V(B) }
         impl<T1> Foo<T1> {
@@ -564,7 +564,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericTupleMethodArg() = testExpr("""
+    fun `test generic tuple method arg`() = testExpr("""
         struct Foo<F>(F);
         impl<T1> Foo<T1> {
             fn foo<T2, T3>(&self, xs: (T2, T3)) -> (T1, T2, T3) { unimplemented!() }
@@ -576,7 +576,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericReferenceMethodArg() = testExpr("""
+    fun `test generic reference method arg`() = testExpr("""
         struct Foo<F>(F);
         impl<T1> Foo<T1> {
             fn foo<T2>(&self, xs: &T2) -> (T2, T1) { unimplemented!() }
@@ -588,7 +588,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericPointerMethodArg() = testExpr("""
+    fun `test generic pointer method arg`() = testExpr("""
         struct Foo<F>(F);
         impl<T1> Foo<T1> {
             fn foo<T2>(&self, xs: *const T2) -> (T2, T1) { unimplemented!() }
@@ -600,7 +600,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericArrayMethodArg() = testExpr("""
+    fun `test generic array method arg`() = testExpr("""
         struct Foo<F>(F);
         impl<T1> Foo<T1> {
             fn foo<T2>(&self, xs: [T2; 4]) -> (T2, T1) { unimplemented!() }
@@ -612,7 +612,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testGenericSliceMethodArg() = testExpr("""
+    fun `test generic slice method arg`() = testExpr("""
         struct Foo<F>(F);
         impl<T1> Foo<T1> {
             fn foo<T2>(&self, xs: &[T2]) -> (T2, T1) { unimplemented!() }
@@ -625,7 +625,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun testComplexGenericMethodArg() = testExpr("""
+    fun `test complex generic method arg`() = testExpr("""
         struct Foo<T1, T2>(T1, T2);
         enum Bar<T3, T4> { V(T3, T4) }
         struct FooBar<T5>(T5);

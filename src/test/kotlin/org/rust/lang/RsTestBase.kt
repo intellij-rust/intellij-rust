@@ -292,7 +292,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         @JvmStatic
         fun camelOrWordsToSnake(name: String): String {
-            if (' ' in name) return name.replace(" ", "_")
+            if (' ' in name) return name.trim().replace(" ", "_")
 
             return name.split("(?=[A-Z])".toRegex()).joinToString("_", transform = String::toLowerCase)
         }

@@ -8,7 +8,7 @@ package org.rust.ide.typing
 class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
     override val dataPath = "org/rust/ide/typing/rawHashes/fixtures"
 
-    fun testSimpleOpen() = doTest("""
+    fun `test simple open`() = doTest("""
         fn main() {
             r#<caret>#"aaa"##
         }
@@ -18,7 +18,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testSimpleClose() = doTest("""
+    fun `test simple close`() = doTest("""
         fn main() {
             r##"aaa"#<caret>#
         }
@@ -28,7 +28,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testBeforeR() = doTest("""
+    fun `test before r`() = doTest("""
         fn main() {
             <caret>r##"aaa"##
         }
@@ -38,7 +38,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testAfterR() = doTest("""
+    fun `test after r`() = doTest("""
         fn main() {
             r<caret>##"aaa"##
         }
@@ -48,7 +48,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testBeforeQuote() = doTest("""
+    fun `test before quote`() = doTest("""
         fn main() {
             r##<caret>"aaa"##
         }
@@ -58,7 +58,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testAfterQuote() = doTest("""
+    fun `test after quote`() = doTest("""
         fn main() {
             r##"aaa"<caret>##
         }
@@ -68,7 +68,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testAtEnd() = doTest("""
+    fun `test at end`() = doTest("""
         fn main() {
             r##"aaa"##<caret>
         }
@@ -78,7 +78,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testAtTotalEnd() = doTest("""
+    fun `test at total end`() = doTest("""
         // Caret at EOL is important here!
         fn main() {
             r##"aaa"##<caret>""", """
@@ -87,7 +87,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
             r###"aaa"###<caret>"""
     )
 
-    fun testInsideValue() = doTest("""
+    fun `test inside value`() = doTest("""
         fn main() {
             r##"<caret>"##
         }
@@ -97,7 +97,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testNoQuotes() = doTest("""
+    fun `test no quotes`() = doTest("""
         fn main() {
             r<caret>"aaa"
         }
@@ -108,7 +108,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
     """)
 
 
-    fun testNoQuotes2() = doTest("""
+    fun `test no quotes 2`() = doTest("""
         fn main() {
             r"aaa"<caret>
         }
@@ -118,7 +118,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testMulticursor() = doTest("""
+    fun `test multicursor`() = doTest("""
         fn main() {
             r"aa"<caret>;
             r##"aa"#<caret>#;
@@ -132,7 +132,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
         }
     """)
 
-    fun testByteLiteral() = doTest("""
+    fun `test byte literal`() = doTest("""
         fn main() {
             br#<caret>#"aaa"##
         }
@@ -143,7 +143,7 @@ class RsRawLiteralHashesBalancerTest : RsTypingTestBase() {
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/817
-    fun testDontMessupBrokenLiteral() = doTestByText("""
+    fun `test don't messup broken literal`() = doTestByText("""
         static CHILD_TEMPLATE: &'static str = r<caret>"
         {% extends "parent.html" %}
         ";

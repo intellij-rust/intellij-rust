@@ -6,7 +6,7 @@
 package org.rust.lang.core.resolve
 
 class RsNamespaceResolveTest : RsResolveTestBase() {
-    fun testModAndFn() = checkByCode("""
+    fun `test mod and fn`() = checkByCode("""
         mod test {
            //X
             pub struct Test {
@@ -22,7 +22,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testModFnInner() = checkByCode("""
+    fun `test mod fn inner`() = checkByCode("""
         mod m { fn bar() {} }
                   //X
 
@@ -32,7 +32,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
                               //^
     """)
 
-    fun testModFnInnerInner() = checkByCode("""
+    fun `test mod fn inner inner`() = checkByCode("""
         mod outer {
             mod m { fn bar() {} }
                       //X
@@ -44,7 +44,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
                                      //^
     """)
 
-    fun testTypeAndConst() = checkByCode("""
+    fun `test type and const`() = checkByCode("""
         struct T { }
              //X
         const T: i32 = 0;
@@ -55,14 +55,14 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testFnStruct() = checkByCode("""
+    fun `test fn struct`() = checkByCode("""
         struct P { }
              //X
         fn P() -> P { }
                 //^
     """)
 
-    fun testStaticIsNotType() = checkByCode("""
+    fun `test static is not type`() = checkByCode("""
         static S: u8  = 0;
         fn main() {
             let _: S = unimplemented!();
@@ -70,7 +70,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testPath() = checkByCode("""
+    fun `test path`() = checkByCode("""
         mod m {
             fn foo() {}
         }
@@ -81,7 +81,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testUseFn() = checkByCode("""
+    fun `test use fn`() = checkByCode("""
         use m::foo;
         mod m {
             fn foo() {}
@@ -98,7 +98,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testUseMod() = checkByCode("""
+    fun `test use mod`() = checkByCode("""
         use m::foo;
         mod m {
             fn foo() {}
@@ -115,7 +115,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testUseModGlob() = checkByCode("""
+    fun `test use mod glob`() = checkByCode("""
         use m::{foo};
         mod m {
             fn foo() {}
@@ -132,7 +132,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun testUseFnGlob() = checkByCode("""
+    fun `test use fn glob`() = checkByCode("""
         use m::{foo};
         mod m {
             fn foo() {}

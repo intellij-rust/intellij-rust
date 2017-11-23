@@ -6,7 +6,7 @@
 package org.rust.lang.core.resolve
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
-    fun testChildMod() = stubOnlyResolve("""
+    fun `test child mod`() = stubOnlyResolve("""
     //- main.rs
         mod child;
 
@@ -19,7 +19,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub fn foo() {}
     """)
 
-    fun testNestedChildMod() = stubOnlyResolve("""
+    fun `test nested child mod`() = stubOnlyResolve("""
     //- main.rs
         mod inner {
             pub mod child;
@@ -34,7 +34,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn foo() {}
     """)
 
-    fun testModDecl() = stubOnlyResolve("""
+    fun `test mod decl`() = stubOnlyResolve("""
     //- main.rs
         mod foo;
            //^ foo.rs
@@ -45,7 +45,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         // Empty file
     """)
 
-    fun testModDecl2() = stubOnlyResolve("""
+    fun `test mod decl 2`() = stubOnlyResolve("""
     //- foo/mod.rs
         use bar::Bar;
                 //^ bar.rs
@@ -60,7 +60,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         struct Bar {}
     """)
 
-    fun testModDeclPath() = stubOnlyResolve("""
+    fun `test mod decl path`() = stubOnlyResolve("""
     //- main.rs
         #[path = "bar/baz/foo.rs"]
         mod foo;
@@ -81,7 +81,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         #[path] mod bar;
     """)
 
-    fun testModDeclPathSuper() = stubOnlyResolve("""
+    fun `test mod decl path super`() = stubOnlyResolve("""
     //- bar/baz/quux.rs
         fn quux() {
             super::main();
@@ -94,7 +94,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn main(){}
     """)
 
-    fun testModRelative() = stubOnlyResolve("""
+    fun `test mod relative`() = stubOnlyResolve("""
     //- main.rs
         mod sub;
 
@@ -110,7 +110,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     """)
 
-    fun testModRelative2() = stubOnlyResolve("""
+    fun `test mod relative 2`() = stubOnlyResolve("""
     //- main.rs
         mod sub;
 
@@ -165,7 +165,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
        }
     """)
 
-    fun testUseFromChild() = stubOnlyResolve("""
+    fun `test use from child`() = stubOnlyResolve("""
     //- main.rs
         use child::{foo};
         mod child;
@@ -178,7 +178,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub fn foo() {}
     """)
 
-    fun testUseGlobalPath() {
+    fun `test use global path`() {
         stubOnlyResolve("""
         //- foo.rs
             fn main() {
@@ -197,7 +197,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     // We resolve mod_decls even if the parent module does not own a directory and mod_decl should not be allowed.
     // This way, we don't need to know the set of crate roots for resolve, which helps indexing.
     // The `mod_decl not allowed here` error is then reported by an annotator.
-    fun testModDeclNotOwn() = stubOnlyResolve("""
+    fun `test mod decl not own`() = stubOnlyResolve("""
     //- foo.rs
         pub mod bar;
 
@@ -213,7 +213,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         // Empty file
     """)
 
-    fun testModDeclWrongPath() = stubOnlyResolve("""
+    fun `test mod decl wrong path`() = stubOnlyResolve("""
     //- main.rs
         #[path = "foo/bar/baz/rs"]
         mod foo;
@@ -222,7 +222,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn main() {}
     """)
 
-    fun testModDeclCycle() = stubOnlyResolve("""
+    fun `test mod decl cycle`() = stubOnlyResolve("""
     //- foo.rs
         use quux;
             //^ unresolved
@@ -239,7 +239,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         mod baz;
     """)
 
-    fun testFunctionType() = stubOnlyResolve("""
+    fun `test function type`() = stubOnlyResolve("""
     //- main.rs
         mod foo;
 

@@ -113,7 +113,7 @@ class RsPsiStructureTest : RsTestBase() {
         }
     """)
 
-    fun testShortTypeExpr(@Language("Rust") code: String) {
+    private fun testShortTypeExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()
         check(expr.type.shortPresentableText == expectedType)

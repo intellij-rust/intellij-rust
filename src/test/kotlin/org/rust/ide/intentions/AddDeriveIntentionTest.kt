@@ -7,14 +7,14 @@ package org.rust.ide.intentions
 
 class AddDeriveIntentionTest : RsIntentionTestBase(AddDeriveIntention()) {
 
-    fun testAddDeriveStruct() = doAvailableTest("""
+    fun `test add derive struct`() = doAvailableTest("""
         struct Te/*caret*/st {}
     """, """
         #[derive(/*caret*/)]
         struct Test {}
     """)
 
-    fun testAddDerivePubStruct() = doAvailableTest("""
+    fun `test add derive pub struct`() = doAvailableTest("""
         pub struct Te/*caret*/st {}
     """, """
         #[derive(/*caret*/)]
@@ -22,7 +22,7 @@ class AddDeriveIntentionTest : RsIntentionTestBase(AddDeriveIntention()) {
     """)
 
     // FIXME: there is something weird with enum re-formatting, for some reason it adds more indentation
-    fun testAddDeriveEnum() = doAvailableTest("""
+    fun `test add derive enum`() = doAvailableTest("""
         enum Test /*caret*/{
             Something
         }
@@ -33,7 +33,7 @@ class AddDeriveIntentionTest : RsIntentionTestBase(AddDeriveIntention()) {
 }
     """)
 
-    fun testAddDeriveExistingAttr() = doAvailableTest("""
+    fun `test add derive existing attr`() = doAvailableTest("""
         #[derive(Something)]
         struct Test/*caret*/ {}
     """, """

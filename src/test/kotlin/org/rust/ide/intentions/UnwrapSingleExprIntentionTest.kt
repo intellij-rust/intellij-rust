@@ -10,7 +10,7 @@ import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
 
 class UnwrapSingleExprIntentionTest : RsTestBase() {
-    fun testAvailableLambdaUnwrapBracesSingleExpression() = doAvailableTest(
+    fun `test available lambda unwrap braces single expression`() = doAvailableTest(
         """
         fn main() {
             {
@@ -26,7 +26,7 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
-    fun testAvailableLambdaUnwrapBraces() = doAvailableTest(
+    fun `test available lambda unwrap braces`() = doAvailableTest(
         """
         fn main() {
             |x| { x *<caret> x }
@@ -40,7 +40,7 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
-    fun testAvailableUnwrapBracesSingleExpressionIf() = doAvailableTest(
+    fun `test available unwrap braces single expression if`() = doAvailableTest(
         """
         fn main() {
             let a = {
@@ -64,7 +64,7 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
-    fun testAvailableLambdaUnwrapBracesSingleStatement() = doUnavailableTest(
+    fun `test available lambda unwrap braces single statement`() = doUnavailableTest(
         """
         fn main() {
             {
@@ -74,7 +74,7 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
-    fun testUnavailableUnwrapBraces() = doUnavailableTest(
+    fun `test unavailable unwrap braces`() = doUnavailableTest(
         """
         fn main() {
             |x| { let a = 3; x *<caret> a
@@ -82,7 +82,7 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
-    fun testUnavailableUnwrapBracesLet() = doUnavailableTest(
+    fun `test unavailable unwrap braces let`() = doUnavailableTest(
         """
         fn main() {
             {
@@ -92,7 +92,7 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
-    fun testUnavailableUnwrapBracesUnsafe() = doUnavailableTest(
+    fun `test unavailable unwrap braces unsafe`() = doUnavailableTest(
         """
         fn main() {
             let wellThen = unsafe<caret> { magic() };

@@ -67,7 +67,7 @@ class RsBraceMatcherTest : RsTestBase() {
         }
     }
 
-    fun testNoMatch() {
+    fun `test no match`() {
         noMatch("let a = 4 <caret>< 5 && 2 > 1;")
         noMatch("let a = (2 <caret>< 3 || 3 > 2);")
         noMatch("fn foo() { let _ = 1 <caret>< 2; let _ = 1 > 2;}")

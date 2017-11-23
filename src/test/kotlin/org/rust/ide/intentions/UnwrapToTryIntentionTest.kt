@@ -6,7 +6,7 @@
 package org.rust.ide.intentions
 
 class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
-    fun testAvailable1() = doAvailableTest("""
+    fun `test available 1`() = doAvailableTest("""
         fn main() {
             let a = a.unwrap/*caret*/();
         }
@@ -16,7 +16,7 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
         }
     """)
 
-    fun testAvailable2() = doAvailableTest("""
+    fun `test available 2`() = doAvailableTest("""
         fn main() {
             let a = Ok(12).unwrap/*caret*/();
         }
@@ -26,7 +26,7 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
         }
     """)
 
-    fun testAvailable3() = doAvailableTest("""
+    fun `test available 3`() = doAvailableTest("""
         fn main() {
             let a = (a + b).unwrap/*caret*/();
         }
@@ -36,7 +36,7 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
         }
     """)
 
-    fun testAvailable4() = doAvailableTest("""
+    fun `test available 4`() = doAvailableTest("""
         fn main() {
             let a = a + b.unwrap/*caret*/();
         }
@@ -46,7 +46,7 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
         }
     """)
 
-    fun testAvailable5() = doAvailableTest("""
+    fun `test available 5`() = doAvailableTest("""
         fn main() {
             let a = a.unwrap/*caret*/().to_string();
         }
@@ -56,7 +56,7 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
         }
     """)
 
-    fun testAvailable6() = doAvailableTest("""
+    fun `test available 6`() = doAvailableTest("""
         fn main() {
             let a = a.unwrap().unwrap/*caret*/().unwrap();
         }
@@ -66,7 +66,7 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
         }
     """)
 
-    fun testAvailable7() = doAvailableTest("""
+    fun `test available 7`() = doAvailableTest("""
         fn main() {
             let a = a.unwrap  /*caret*/  ();
         }
@@ -76,7 +76,7 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
         }
     """)
 
-    fun testAvailable8() = doAvailableTest("""
+    fun `test available 8`() = doAvailableTest("""
         fn main() {
             let a = a.unwrap(b.unwrap(/*caret*/));
         }
@@ -86,31 +86,31 @@ class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
         }
     """)
 
-    fun testUnavailable1() = doUnavailableTest("""
+    fun `test unavailable 1`() = doUnavailableTest("""
         fn main() {
             let a = a.foo/*caret*/();
         }
     """)
 
-    fun testUnavailable2() = doUnavailableTest("""
+    fun `test unavailable 2`() = doUnavailableTest("""
         fn main() {
             let a = a.unwrap::<>/*caret*/();
         }
     """)
 
-    fun testUnavailable3() = doUnavailableTest("""
+    fun `test unavailable 3`() = doUnavailableTest("""
         fn main() {
             let a = a.unwrap::<i32>/*caret*/();
         }
     """)
 
-    fun testUnavailable4() = doUnavailableTest("""
+    fun `test unavailable 4`() = doUnavailableTest("""
         fn main() {
             let a = a.unwrap/*caret*/(12);
         }
     """)
 
-    fun testUnavailable5() = doUnavailableTest("""
+    fun `test unavailable 5`() = doUnavailableTest("""
         fn main() {
             let a = a.unwrap/*caret*/;
         }
