@@ -331,6 +331,41 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test method with same name on different deref levels`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct A;
+        struct B;
+
+        impl Deref for A { type Target = B; }
+
+        impl B { fn foo(&self) {} }
+        impl A { fn foo(&self) {} }
+                  //X
+        fn main() {
+            A.foo();
+        }   //^
+    """)
+
+    //FIXME: should resolve to a single "non ref" method!
+    fun `test non inherent impl 2`() = checkByCode("""
+        trait T { fn foo(&self) { println!("Hello"); } }
+
+        struct S;
+
+        impl T for S { fn foo(&self) { println!("non ref"); } }
+
+        impl<'a> T for &'a S { fn foo(&self) { println!("ref"); } }
+                                 //X
+
+        fn main() {
+            let x: &S = &S;
+            x.foo()
+              //^
+        }
+    """)
+
     fun `test indexing`() = checkByCode("""
         #[lang = "index"]
         trait Index<Idx: ?Sized> {

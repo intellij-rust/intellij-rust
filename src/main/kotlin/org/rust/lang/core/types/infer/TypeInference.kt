@@ -28,6 +28,7 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
+import org.rust.stdext.singleOr
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.zipValues
 
@@ -829,6 +830,11 @@ private class RsFnInferenceContext(
                 .forEach(ff::registerPredicateObligation)
             impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
             ctx.probe { ff.selectAllOrError() }
+        }.singleOr { filtered ->
+            // 3. Pick result on the first deref level if single
+            // TODO this is not how compiler actually work, see `test non inherent impl 2`
+            val first = filtered.first()
+            filtered.takeWhile { it.derefCount == first.derefCount }
         }.singleOrNull()
     }
 

@@ -36,24 +36,6 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }
     """)
 
-    //FIXME: should resolve to a single  non ref method!
-    fun `test non inherent impl 2`() = doTest("""
-        trait T { fn foo(&self) { println!("Hello"); } }
-
-        struct S;
-
-        impl T for S { fn foo(&self) { println!("non ref"); } }
-
-        impl<'a> T for &'a S { fn foo(&self) { println!("ref"); } }
-                                 //X
-
-        fn main() {
-            let x: &S = &S;
-            x.foo()
-              //^
-        }
-    """)
-
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code)
         val ref = findElementInEditor<RsReferenceElement>().reference

@@ -41,3 +41,8 @@ inline fun <T> List<T>.singleOrFilter(predicate: (T) -> Boolean): List<T> = when
     size < 2 -> this
     else -> filter(predicate)
 }
+
+inline fun <T> List<T>.singleOr(function: (List<T>) -> List<T>): List<T> = when {
+    size < 2 -> this
+    else -> function(this)
+}
