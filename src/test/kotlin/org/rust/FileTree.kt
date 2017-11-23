@@ -6,21 +6,22 @@
 package org.rust
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.ext.RsReferenceElement
-import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.openapiext.toPsiFile
 import kotlin.text.Charsets.UTF_8
 
-fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree {
-    return FileTree(FileTreeBuilderImpl().apply { builder() }.intoDirectory())
-}
+fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree =
+    FileTree(FileTreeBuilderImpl().apply { builder() }.intoDirectory())
 
 fun fileTreeFromText(@Language("Rust") text: String): FileTree {
     val fileSeparator = """^\s* //- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
@@ -100,8 +101,8 @@ class FileTree(private val rootDirectory: Entry.Directory) {
                 when (entry) {
                     is Entry.File -> {
                         check(!a.isDirectory)
-                        val actualText = String(a.contentsToByteArray(), UTF_8)
-                        check(entry.text == actualText) {
+                        val actualText = convertLineSeparators(String(a.contentsToByteArray(), UTF_8))
+                        check(entry.text.trimEnd() == actualText.trimEnd()) {
                             "Expected:\n${entry.text}\nGot:\n$actualText"
                         }
                     }
@@ -110,6 +111,7 @@ class FileTree(private val rootDirectory: Entry.Directory) {
             }
         }
 
+        FileDocumentManager.getInstance().saveAllDocuments()
         go(rootDirectory, baseDir)
     }
 }
