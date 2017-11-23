@@ -177,6 +177,18 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test keeps comment after block`() = doTextTest("""
+        fn main() {
+            let bum = || { // does stuff
+        };
+        }
+    """, """
+        fn main() {
+            let bum = || { // does stuff
+            };
+        }
+    """)
+
     fun `test multiline blocks`() = doTextTest("""
         struct S1 { f: i32 }
         struct S2 {

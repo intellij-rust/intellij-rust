@@ -14,7 +14,7 @@ class RsWithBlockSurrounder : RsStatementsSurrounderBase.SimpleBlock<RsBlockExpr
     override fun getTemplateDescription(): String = "{}"
 
     override fun createTemplate(project: Project): Pair<RsBlockExpr, RsBlock> {
-        val block = RsPsiFactory(project).createBlockExpr("\n")
+        val block = RsPsiFactory(project).createBlockExpr("")
         return block to block.block
     }
 }
