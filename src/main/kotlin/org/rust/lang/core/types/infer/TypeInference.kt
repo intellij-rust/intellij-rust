@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolvePath
@@ -27,6 +28,7 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
+import org.rust.stdext.singleOrFilter
 import org.rust.stdext.zipValues
 
 fun inferTypesIn(fn: RsFunction): RsInferenceResult =
@@ -757,35 +759,12 @@ private class RsFnInferenceContext(
         val argExprs = methodCall.valueArgumentList.exprList
         val callee = run {
             val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
-            val filteredVariants = if (variants.size < 2) {
-                variants
-            } else {
-                // Resolve method ambiguity
-                // 1. filter traits that are not imported
-                val filtered1 = variants.filter {
-                    val trait = it.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem ?: return@filter true
-                    lookup.isTraitVisibleFrom(trait, methodCall)
-                }
-                if (filtered1.size < 2) {
-                    filtered1
-                } else {
-                    // 2. Try to select all obligations for each impl
-                    filtered1.filter { callee ->
-                        val impl = callee.impl ?: return@filter true
-                        val ff = FulfillmentContext(ctx, lookup)
-                        val typeParameters = impl.generics.associate { it to ctx.typeVarForParam(it) }
-                        ctx.instantiateBounds(impl.bounds, typeParameters)
-                            .forEach(ff::registerPredicateObligation)
-                        impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
-                        ctx.probe { ff.selectAllOrError() }
-                    }
-                }
-            }
+            val callee = pickSingleMethod(variants, methodCall)
             // If we failed to resolve ambiguity just write the all possible methods
-            val variantsForDisplay = (filteredVariants.takeIf { it.size == 1 } ?: variants).map { it.element }
+            val variantsForDisplay = (callee?.let(::listOf) ?: variants).map { it.element }
             ctx.writeResolvedMethod(methodCall, variantsForDisplay)
 
-            filteredVariants.firstOrNull() ?: variants.firstOrNull()
+            callee ?: variants.firstOrNull()
         }
         if (callee == null) {
             val methodType = unknownTyFunction(argExprs.size)
@@ -834,6 +813,23 @@ private class RsFnInferenceContext(
         inferArgumentTypes(methodType.paramTypes.drop(1), argExprs)
 
         return methodType.retType
+    }
+
+    private fun pickSingleMethod(variants: List<MethodCallee>, methodCall: RsMethodCall): MethodCallee? {
+        return variants.singleOrFilter {
+            // 1. filter traits that are not imported
+            val trait = it.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem ?: return@singleOrFilter true
+            lookup.isTraitVisibleFrom(trait, methodCall)
+        }.singleOrFilter { callee ->
+            // 2. Try to select all obligations for each impl
+            val impl = callee.impl ?: return@singleOrFilter true
+            val ff = FulfillmentContext(ctx, lookup)
+            val typeParameters = impl.generics.associate { it to ctx.typeVarForParam(it) }
+            ctx.instantiateBounds(impl.bounds, typeParameters)
+                .forEach(ff::registerPredicateObligation)
+            impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
+            ctx.probe { ff.selectAllOrError() }
+        }.singleOrNull()
     }
 
     private fun unknownTyFunction(arity: Int): TyFunction =
