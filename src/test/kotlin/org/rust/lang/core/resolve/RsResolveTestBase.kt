@@ -11,6 +11,7 @@ import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.openapiext.Testmark
 
 abstract class RsResolveTestBase : RsTestBase() {
     open protected fun checkByCode(@Language("Rust") code: String) {
@@ -41,6 +42,9 @@ abstract class RsResolveTestBase : RsTestBase() {
 
         check(resolved == target)
     }
+
+    protected fun checkByCode(@Language("Rust") code: String, mark: Testmark) =
+        mark.checkHit { checkByCode(code) }
 
     protected fun stubOnlyResolve(@Language("Rust") code: String) {
         val testProject = fileTreeFromText(code)

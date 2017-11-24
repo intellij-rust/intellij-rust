@@ -435,19 +435,17 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test try operator with option`() = TypeInferenceMarks.questionOperator.checkHit {
-        checkByCode("""
-            struct S { field: u32 }
-                        //X
-            fn foo() -> Option<S> { unimplemented!() }
+    fun `test try operator with option`() = checkByCode("""
+        struct S { field: u32 }
+                    //X
+        fn foo() -> Option<S> { unimplemented!() }
 
-            fn main() {
-                let s = foo()?;
-                s.field;
-                //^
-            }
-        """)
-    }
+        fn main() {
+            let s = foo()?;
+            s.field;
+            //^
+        }
+    """, TypeInferenceMarks.questionOperator)
 
     fun `test try! macro`() = checkByCode("""
         struct S { field: u32 }

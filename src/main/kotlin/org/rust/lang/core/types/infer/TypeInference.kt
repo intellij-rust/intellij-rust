@@ -28,8 +28,8 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
-import org.rust.stdext.singleOr
 import org.rust.stdext.singleOrFilter
+import org.rust.stdext.singleOrLet
 import org.rust.stdext.zipValues
 
 fun inferTypesIn(fn: RsFunction): RsInferenceResult =
@@ -76,6 +76,7 @@ class RsInferenceContext {
     private val resolvedMethods: MutableMap<RsMethodCall, List<RsFunction>> = HashMap()
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = HashMap()
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
+    private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger.Kind> =
@@ -147,11 +148,15 @@ class RsInferenceContext {
     private fun performPathsRefinement(lookup: ImplLookup) {
         for ((path, traitRef) in pathRefinements) {
             val fnName = resolvedPaths[path]?.firstOrNull()?.let { (it as? RsFunction)?.name }
-            val ok = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()
-            if (ok != null) {
-                val fn = ok.impl.members?.functionList?.find { it.name == fnName }
-                if (fn != null) resolvedPaths[path] = listOf(fn)
-            }
+            lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()
+                ?.impl?.members?.functionList?.find { it.name == fnName }
+                ?.let { resolvedPaths[path] = listOf(it) }
+        }
+        for ((call, traitRef) in methodRefinements) {
+            val fnName = resolvedMethods[call]?.firstOrNull()?.name
+            lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()
+                ?.impl?.members?.functionList?.find { it.name == fnName }
+                ?.let { resolvedMethods[call] = listOf(it) }
         }
     }
 
@@ -185,6 +190,10 @@ class RsInferenceContext {
 
     fun registerPathRefinement(path: RsPathExpr, traitRef: TraitRef) {
         pathRefinements.add(Pair(path, traitRef))
+    }
+
+    fun registerMethodRefinement(path: RsMethodCall, traitRef: TraitRef) {
+        methodRefinements.add(Pair(path, traitRef))
     }
 
     fun extractBindings(pattern: RsPat?, baseType: Ty) {
@@ -572,7 +581,7 @@ private class RsFnInferenceContext(
         ctx.writePath(expr, variants)
         val qualifier = path.path
         if (variants.size > 1 && qualifier != null) {
-            val resolved = resolveAmbiguity(variants.map { it.element })
+            val resolved = collapseToTrait(variants.map { it.element })
             if (resolved != null) {
                 // TODO remap subst
                 return instantiatePath(BoundElement(resolved, variants.first().subst), expr, tryRefinePath = true)
@@ -583,11 +592,16 @@ private class RsFnInferenceContext(
     }
 
     /** This works for `String::from` where multiple impls of `From` trait found for `String` */
-    private fun resolveAmbiguity(elements: List<RsNamedElement>): RsFunction? {
+    private fun collapseToTrait(elements: List<RsNamedElement>): RsFunction? {
         if (elements.size <= 1) return null
 
         val traits = elements.mapNotNull {
-            ((it as? RsFunction)?.owner as? RsFunctionOwner.Impl)?.impl?.traitRef?.resolveToTrait
+            val owner = (it as? RsFunction)?.owner
+            when (owner) {
+                is RsFunctionOwner.Impl -> owner.impl.traitRef?.resolveToTrait
+                is RsFunctionOwner.Trait -> owner.trait
+                else -> null
+            }
         }
 
         if (traits.size == elements.size && traits.toSet().size == 1) {
@@ -788,7 +802,19 @@ private class RsFnInferenceContext(
                 val trait = (callee.element.owner as RsFunctionOwner.Trait).trait
                 receiverRes.getTraitBoundsTransitively().find { it.element == trait }?.subst ?: emptySubstitution
             }
-            else -> emptySubstitution
+            else -> {
+                // Method has been resolved to a trait, so we should add a predicate
+                // `Self : Trait<Args>` to select args and also refine method path if possible.
+                // Method path refinement needed if there are multiple impls of the same trait to the same type
+                val trait = (callee.element.owner as RsFunctionOwner.Trait).trait
+                val typeParameters = instantiateBounds(trait)
+                val boundTrait = BoundElement(trait, trait.generics.associateBy { it })
+                    .substitute(typeParameters)
+                val traitRef = TraitRef(receiverRes, boundTrait)
+                fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
+                if (true /*variants.size > 1*/) ctx.registerMethodRefinement(methodCall, traitRef)
+                typeParameters
+            }
         }
 
         typeParameters += instantiateBounds(callee.element, callee.selfTy, typeParameters)
@@ -817,12 +843,14 @@ private class RsFnInferenceContext(
     }
 
     private fun pickSingleMethod(variants: List<MethodCallee>, methodCall: RsMethodCall): MethodCallee? {
-        return variants.singleOrFilter {
+        val filtered = variants.singleOrFilter {
             // 1. filter traits that are not imported
+            TypeInferenceMarks.methodPickTraitScope.hit()
             val trait = it.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem ?: return@singleOrFilter true
             lookup.isTraitVisibleFrom(trait, methodCall)
         }.singleOrFilter { callee ->
-            // 2. Try to select all obligations for each impl
+            // 2. Filter methods by trait bounds (try to select all obligations for each impl)
+            TypeInferenceMarks.methodPickCheckBounds.hit()
             val impl = callee.impl ?: return@singleOrFilter true
             val ff = FulfillmentContext(ctx, lookup)
             val typeParameters = impl.generics.associate { it to ctx.typeVarForParam(it) }
@@ -830,12 +858,34 @@ private class RsFnInferenceContext(
                 .forEach(ff::registerPredicateObligation)
             impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
             ctx.probe { ff.selectAllOrError() }
-        }.singleOr { filtered ->
-            // 3. Pick result on the first deref level if single
+        }.singleOrLet { list ->
+            // 3. Pick results on the first deref level
             // TODO this is not how compiler actually work, see `test non inherent impl 2`
-            val first = filtered.first()
-            filtered.takeWhile { it.derefCount == first.derefCount }
-        }.singleOrNull()
+            TypeInferenceMarks.methodPickDerefOrder.hit()
+            val first = list.first()
+            list.takeWhile { it.derefCount == first.derefCount }
+        }
+
+        return when (filtered.size) {
+            0 -> null
+            1 -> filtered.single()
+            else -> {
+                // 4. Try to collapse multiple resolved methods of the same trait, e.g.
+                // ```rust
+                // trait Foo<T> { fn foo(&self, _: T) {} }
+                // impl Foo<Bar> for S { fn foo(&self, _: Bar) {} }
+                // impl Foo<Baz> for S { fn foo(&self, _: Baz) {} }
+                // ```
+                // In this case we `filtered` list contains 2 function defined in 2 impls.
+                // We want to collapse them to the single function defined in the trait.
+                // Specific impl will be selected later according to the method parameter type.
+                val first = filtered.first()
+                collapseToTrait(filtered.map { it.element })?.let {
+                    TypeInferenceMarks.methodPickCollapseTraits.hit()
+                    MethodCallee(first.name, it, null, first.selfTy, first.derefCount)
+                }
+            }
+        }
     }
 
     private fun unknownTyFunction(arity: Int): TyFunction =
@@ -1306,4 +1356,8 @@ fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
 object TypeInferenceMarks {
     val cyclicType = Testmark("cyclicType")
     val questionOperator = Testmark("questionOperator")
+    val methodPickTraitScope = Testmark("methodPickTraitScope")
+    val methodPickCheckBounds = Testmark("methodPickCheckBounds")
+    val methodPickDerefOrder = Testmark("methodPickDerefOrder")
+    val methodPickCollapseTraits = Testmark("methodPickCollapseTraits")
 }

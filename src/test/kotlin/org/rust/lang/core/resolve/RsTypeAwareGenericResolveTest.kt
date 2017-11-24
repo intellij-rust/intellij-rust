@@ -346,7 +346,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         fn main() {
             A.foo();
         }   //^
-    """)
+    """, TypeInferenceMarks.methodPickDerefOrder)
 
     //FIXME: should resolve to a single "non ref" method!
     fun `test non inherent impl 2`() = checkByCode("""
@@ -364,7 +364,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             x.foo()
               //^
         }
-    """)
+    """, TypeInferenceMarks.methodPickDerefOrder)
 
     fun `test indexing`() = checkByCode("""
         #[lang = "index"]
@@ -731,16 +731,16 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
-    // TODO should resolves to T<S2>
     fun `test resolve method call with multiple impls of the same trait`() = checkByCode("""
         struct S; struct S1; struct S2;
         trait T<A> { fn foo(&self, _: A); }
         impl T<S1> for S { fn foo(&self, _: S1) {} }
         impl T<S2> for S { fn foo(&self, _: S2) {} }
+                            //X
         fn main() {
             S.foo(S2)
-        }    //^ unresolved
-    """)
+        }    //^
+    """, TypeInferenceMarks.methodPickCollapseTraits)
 
     fun `test resolve UFCS method call with multiple impls of the same trait`() = checkByCode("""
         struct S; struct S1; struct S2;
@@ -775,6 +775,23 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }    //^
     """)
 
+    fun `test method with multiple impls of the same trait on multiple deref levels`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct A;
+        struct B;
+        impl Deref for A { type Target = B; }
+        trait Tr<T1, T2> { fn foo(&self, t: T1) -> T2 { unimplemented!() } }
+        impl Tr<u8, i8> for A { fn foo(&self, t: u8) -> i8 { unimplemented!() } }
+        impl Tr<u16, i16> for A { fn foo(&self, t: u16) -> i16 { unimplemented!() } }
+                                   //X
+        impl Tr<u32, i32> for B { fn foo(&self, t: u32) -> i32 { unimplemented!() } }
+        fn main() {
+            A.foo(0u16);
+        }    //^
+    """, TypeInferenceMarks.methodPickCollapseTraits)
+
     // https://github.com/intellij-rust/intellij-rust/issues/1649
     fun `test issue 1649`() = checkByCode("""
         trait Foo {}
@@ -791,18 +808,16 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/1927
-    fun `test no stack overflow with cyclic type of infinite size`() = TypeInferenceMarks.cyclicType.checkHit {
-        checkByCode("""
-            struct S<T>(T);
-            fn foo<T>() -> T { unimplemented!() }
-            fn unify<T>(_: T, _: T) { unimplemented!() }
-            fn main() {
-                let a = foo();
-                let b = S(a);
-                unify(a, b);
-                b.bar();
-                //^ unresolved
-            }
-        """)
-    }
+    fun `test no stack overflow with cyclic type of infinite size`() = checkByCode("""
+        struct S<T>(T);
+        fn foo<T>() -> T { unimplemented!() }
+        fn unify<T>(_: T, _: T) { unimplemented!() }
+        fn main() {
+            let a = foo();
+            let b = S(a);
+            unify(a, b);
+            b.bar();
+            //^ unresolved
+        }
+    """, TypeInferenceMarks.cyclicType)
 }

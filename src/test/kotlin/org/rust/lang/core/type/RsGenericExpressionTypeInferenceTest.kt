@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.type
 
+import org.rust.lang.core.types.infer.TypeInferenceMarks
+
 class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test generic field`() = testExpr("""
         struct S<T> { field: T }
@@ -1049,7 +1051,6 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }                       //^ u8
     """)
 
-    // TODO should be u8
     fun `test infer method arg with multiple impls of the same trait`() = testExpr("""
         pub trait Tr<T> { fn foo(&self, _: T); }
         struct S; struct S1;
@@ -1057,8 +1058,8 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl Tr<u8> for S { fn foo(&self, _: u8) {} }
         fn main() {
             S.foo(0)
-        }       //^ i32
-    """)
+        }       //^ u8
+    """, TypeInferenceMarks.methodPickCollapseTraits)
 
     fun `test infer method arg with multiple impls of the same trait UFCS`() = testExpr("""
         pub trait Tr<T> { fn foo(&self, _: T); }
@@ -1070,6 +1071,27 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             Tr::foo(&a, 0);
         }             //^ u8
     """)
+
+    fun `test infer method arg with multiple impls of the same trait on multiple deref levels`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct A;
+        struct B;
+
+        impl Deref for A { type Target = B; }
+
+        trait Tr<T1, T2> { fn foo(&self, t: T1) -> T2 { unimplemented!() } }
+
+        impl Tr<u8, i8> for A {}
+        impl Tr<u16, i16> for A {}
+        impl Tr<u32, i32> for B {}
+
+        fn main() {
+            let a = A.foo(0u16);
+            a;
+        } //^ i16
+    """, TypeInferenceMarks.methodPickCollapseTraits)
 
     fun `test infer type by reference coercion`() = testExpr("""
         #[lang = "deref"]

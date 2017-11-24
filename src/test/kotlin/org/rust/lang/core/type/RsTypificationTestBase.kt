@@ -11,12 +11,19 @@ import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.type
+import org.rust.openapiext.Testmark
 
 abstract class RsTypificationTestBase : RsTestBase() {
     protected fun testExpr(@Language("Rust") code: String, description: String = "") {
         InlineFile(code)
         check(description)
     }
+
+    protected fun testExpr(
+        @Language("Rust") code: String,
+        mark: Testmark,
+        description: String = ""
+    ) = mark.checkHit { testExpr(code, description) }
 
     protected fun stubOnlyTypeInfer(@Language("Rust") code: String, description: String = "") {
         val testProject = fileTreeFromText(code)
