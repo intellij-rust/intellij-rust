@@ -87,7 +87,9 @@ data class MethodCallee(
      */
     val impl: RsImplItem?,
     /** The receiver type after possible derefs performed */
-    val selfTy: Ty
+    val selfTy: Ty,
+    /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
+    val derefCount: Int
 ) : ScopeEntry {
     /** Legacy subst. Do not really used */
     override val subst: Substitution

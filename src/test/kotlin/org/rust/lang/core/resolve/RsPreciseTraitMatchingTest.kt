@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.lang.core.types.infer.TypeInferenceMarks
+
 class RsPreciseTraitMatchingTest : RsResolveTestBase() {
     fun `test method in specialized trait impl for struct`() = checkByCode("""
         trait Tr { fn some_fn(&self); }
@@ -127,7 +129,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             v.some_fn();
             //^
         }
-    """)
+    """, TypeInferenceMarks.methodPickCheckBounds)
 
     fun `test trait bound satisfied for trait`() = checkByCode("""
         #[lang = "sized"]
@@ -145,7 +147,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             v.some_fn();
             //^
         }
-    """)
+    """, TypeInferenceMarks.methodPickCheckBounds)
 
     fun `test trait bound satisfied for other bound`() = checkByCode("""
         trait Tr1 { fn some_fn(&self) {} }
@@ -164,7 +166,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
                 //^
             }
         }
-    """)
+    """, TypeInferenceMarks.methodPickCheckBounds)
 
     fun `test method defined in out of scope trait 1`() = checkByCode("""
         struct S;
@@ -186,7 +188,7 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             use a::A;
             S.foo();
         }   //^
-    """)
+    """, TypeInferenceMarks.methodPickTraitScope)
 
     fun `test method defined in out of scope trait 2`() = checkByCode("""
         struct S;
@@ -208,5 +210,5 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             use b::B;
             S.foo();
         }   //^
-    """)
+    """, TypeInferenceMarks.methodPickTraitScope)
 }
