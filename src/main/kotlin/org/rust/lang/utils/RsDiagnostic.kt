@@ -582,7 +582,7 @@ fun RsDiagnostic.addToHolder(holder: ProblemsHolder) {
 private fun Severity.toProblemHighlightType(): ProblemHighlightType = when (this) {
     INFO -> ProblemHighlightType.INFORMATION
     WARN -> ProblemHighlightType.WEAK_WARNING
-    ERROR -> ProblemHighlightType.ERROR
+    ERROR -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 }
 
 private fun Severity.toHighlightSeverity(): HighlightSeverity = when (this) {
