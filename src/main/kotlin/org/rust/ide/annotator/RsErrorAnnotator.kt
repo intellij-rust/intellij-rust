@@ -72,8 +72,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkReferenceIsPublic(element: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
         val ref = element.reference.resolve() as? RsVisibilityOwner ?: return
         if (ref.isPublic) return
-        val refMod = ref.contextOfType<RsMod>() ?: return
-        val oMod = o.contextOfType<RsMod>() ?: return
+        val refMod = ref.contextStrict<RsMod>() ?: return
+        val oMod = o.contextStrict<RsMod>() ?: return
         if (refMod == oMod) return
         if (oMod.superMods.contains(refMod)) return
         val memberImpls = ref.parent as? RsMembersImpl
