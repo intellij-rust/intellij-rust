@@ -322,7 +322,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test enum variant B`() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
-            (E::B { val: 92 })
+            (E::B { val: false })
           //^ E
         }
     """)
@@ -701,8 +701,8 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test tuple expr with more types than expected`() = testExpr("""
         fn main() {
-            let a: (u8) = (1, 2);
-        }                   //^ i32
+            let a: (u8,) = (1, 2);
+        }                    //^ i32
     """)
 
     fun `test argument expr of unresolved method`() = testExpr("""
@@ -782,15 +782,15 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test infer lambda parameters rvalue from lvalue fn pointer`() = testExpr("""
         fn main() {
-            let a: fn(u8) = |x| x;
-        }                     //^ u8
+            let a: fn(u8) = |x| { x; };
+        }                       //^ u8
     """)
 
     fun `test infer excess explicit lambda parameter`() = testExpr("""
         fn main() {
             let a: fn(u8) = |x, y: u8| y;
         }                            //^ u8
-    """)
+    """, allowErrors = true)
 
     fun `test infer const inside a function`() = testExpr("""
         fn main() {
