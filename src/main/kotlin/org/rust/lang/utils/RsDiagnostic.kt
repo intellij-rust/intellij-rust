@@ -497,11 +497,6 @@ sealed class RsDiagnostic(
     }
 }
 
-private class AnnotationHeader(
-    val plainText: String,
-    val html: String
-)
-
 enum class RsErrorCode {
     E0046, E0050, E0060, E0061, E0069,
     E0121, E0124, E0133, E0185, E0186, E0198, E0199,
@@ -596,12 +591,6 @@ private fun simpleHeader(error: RsErrorCode, description: String): String =
 
 private fun htmlHeader(error: RsErrorCode, description: String): String =
     "$description [<a href='${error.infoUrl}'>${error.code}</a>]"
-
-private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
-    val expectedTyS = escapeString(expectedTy.toString())
-    val actualTyS = escapeString(actualTy.toString())
-    return "expected $expectedTyS, found $actualTyS"
-}
 
 private fun pluralise(count: Int, singular: String, plural: String): String =
     if (count == 1) singular else plural
