@@ -14,13 +14,13 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.panel
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.ide.newProject.ui.RsNewProjectPanel
 import org.rust.openapiext.pathAsPath
 import javax.swing.JComponent
 
@@ -29,27 +29,21 @@ class CargoConfigurationWizardStep private constructor(
     private val projectDescriptor: ProjectDescriptor? = null
 ) : ModuleWizardStep() {
 
-    private val rustProjectSettings = RustProjectSettingsPanel()
-    private val createBinaryCheckbox = JBCheckBox(null, true)
+    private val newProjectPanel = RsNewProjectPanel(showProjectTypeCheckbox = projectDescriptor == null)
 
     override fun getComponent(): JComponent = panel {
-        rustProjectSettings.attachTo(this)
-        if (projectDescriptor == null) {
-            row("Use a binary (application) template:") { createBinaryCheckbox() }
-        }
+        newProjectPanel.attachTo(this)
     }
 
-    override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)
+    override fun disposeUIResources() = Disposer.dispose(newProjectPanel)
 
     override fun updateDataModel() {
-        ConfigurationUpdater.data = rustProjectSettings.data
+        val data = newProjectPanel.data
+        ConfigurationUpdater.data = data.settings
 
         val projectBuilder = context.projectBuilder
         if (projectBuilder is RsModuleBuilder) {
-            projectBuilder.configurationData = RsModuleBuilder.ConfigurationData(
-                rustProjectSettings.data,
-                createBinaryCheckbox.isSelected
-            )
+            projectBuilder.configurationData = data
             projectBuilder.addModuleConfigurationUpdater(ConfigurationUpdater)
         } else {
             projectDescriptor?.modules?.firstOrNull()?.addConfigurationUpdater(ConfigurationUpdater)
@@ -58,7 +52,7 @@ class CargoConfigurationWizardStep private constructor(
 
     @Throws(ConfigurationException::class)
     override fun validate(): Boolean {
-        rustProjectSettings.validateSettings()
+        newProjectPanel.validateSettings()
         return true
     }
 

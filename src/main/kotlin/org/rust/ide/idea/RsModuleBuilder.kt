@@ -16,18 +16,13 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
-import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.ide.newProject.ConfigurationData
 
 /**
  * Builder which is used when a new project or module is created and not imported from source.
  */
 class RsModuleBuilder : ModuleBuilder() {
-
-    data class ConfigurationData(
-        val settings: RustProjectSettingsPanel.Data,
-        val createBinary: Boolean
-    )
 
     override fun getModuleType(): ModuleType<*>? = RsModuleType.INSTANCE
 

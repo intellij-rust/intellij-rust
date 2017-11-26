@@ -39,6 +39,10 @@
 
         <!-- Rust -->
 
+        <!-- Project Creation -->
+
+        <directoryProjectGenerator implementation="org.rust.ide.newProject.RsDirectoryProjectGenerator"/>
+
         <!-- File-type Factory -->
 
         <fileTypeFactory implementation="org.rust.lang.RsFileTypeFactory"/>

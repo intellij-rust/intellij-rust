@@ -21,7 +21,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JLabel
 
-class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get(".")) : Disposable {
+class RustProjectSettingsPanel(
+    private val cargoProjectDir: Path = Paths.get("."),
+    private val updateListener: (() -> Unit)? = null
+) : Disposable {
     data class Data(
         val toolchain: RustToolchain?,
         val explicitPathToStdlib: String?
@@ -114,6 +117,7 @@ class RustProjectSettingsPanel(private val cargoProjectDir: Path = Paths.get("."
                     toolchainVersion.text = rustcVersion.parsedVersion
                     toolchainVersion.foreground = JBColor.foreground()
                 }
+                updateListener?.invoke()
             }
         )
     }
