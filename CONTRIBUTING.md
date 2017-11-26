@@ -145,6 +145,7 @@ change. Common tags are:
   * RUN for run configurations
   * QDOC for quick documentation
   * PERF for performance optimizations
+  * PRJ for project creation changes 
 
 
   * CARGO for cargo-related changes
