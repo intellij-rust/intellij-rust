@@ -138,7 +138,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     if (modDecl.isLocal) return false
 
     for (file in dir.files) {
-        if (file == modDecl.containingFile.originalFile || file.name == RsMod.MOD_RS) continue
+        if (file == modDecl.contextualFile.originalFile || file.name == RsMod.MOD_RS) continue
         val mod = file.rustMod ?: continue
         val fileName = FileUtil.getNameWithoutExtension(file.name)
         val modDeclName = modDecl.referenceName

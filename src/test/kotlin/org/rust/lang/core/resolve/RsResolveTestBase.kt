@@ -81,4 +81,7 @@ abstract class RsResolveTestBase : RsTestBase() {
             }
         }
     }
+
+    protected fun stubOnlyResolve(@Language("Rust") code: String, mark: Testmark) =
+        mark.checkHit { stubOnlyResolve(code) }
 }

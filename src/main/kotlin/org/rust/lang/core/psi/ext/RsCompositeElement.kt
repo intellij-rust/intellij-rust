@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 
@@ -28,7 +27,7 @@ interface RsElement : PsiElement {
 val CARGO_WORKSPACE = Key.create<CargoWorkspace>("CARGO_WORKSPACE")
 val RsElement.cargoWorkspace: CargoWorkspace?
     get() {
-        val psiFile = containingFile.originalFile
+        val psiFile = contextualFile.originalFile
         psiFile.getUserData(CARGO_WORKSPACE)?.let { return it }
         val vFile = psiFile.virtualFile ?: return null
         return project.cargoProjects.findProjectForFile(vFile)?.workspace
@@ -39,7 +38,7 @@ val RsElement.containingCargoTarget: CargoWorkspace.Target?
     get() {
         val ws = cargoWorkspace ?: return null
         val root = crateRoot ?: return null
-        val file = root.containingFile.originalFile.virtualFile ?: return null
+        val file = root.contextualFile.originalFile.virtualFile ?: return null
         return ws.findTargetByCrateRoot(file)
     }
 
@@ -47,7 +46,7 @@ val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containing
 
 abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
     override val containingMod: RsMod
-        get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
+        get() = contextStrict()
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
@@ -61,7 +60,7 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val containingMod: RsMod
-        get() = PsiTreeUtil.getStubOrPsiParentOfType(this, RsMod::class.java)
+        get() = contextStrict()
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
