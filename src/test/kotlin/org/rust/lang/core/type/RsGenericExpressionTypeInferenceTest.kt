@@ -1039,7 +1039,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             foo(S(X, a), S(Y, 1u8));
             a
         } //^ u8
-    """)
+    """, allowErrors = true)
 
     fun `test infer static method arg with multiple impls of the same trait`() = testExpr("""
         pub trait From<T> { fn from(_: T) -> Self; }
