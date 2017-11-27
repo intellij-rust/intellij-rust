@@ -158,13 +158,13 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
         while (!obligations.processObligations(this::processPredicate).stalled) {}
     }
 
-    fun selectAllOrError(): Boolean {
+    fun selectUntilError(): Boolean {
         do {
             val res = obligations.processObligations(this::processPredicate, breakOnFirstError = true)
             if (res.hasErrors) return false
         } while (!res.stalled)
 
-        return pendingObligations.count() == 0
+        return true
     }
 
     private fun processPredicate(pendingObligation: PendingPredicateObligation): ProcessPredicateResult {
