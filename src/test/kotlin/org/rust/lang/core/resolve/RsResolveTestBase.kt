@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.openapiext.Testmark
@@ -27,20 +28,12 @@ abstract class RsResolveTestBase : RsTestBase() {
             return
         }
 
-        val resolved = refElement.reference.resolve()
-        if (resolved == null) {
-            val multiResolve = refElement.reference.multiResolve()
-            check(multiResolve.size != 1)
-            if (multiResolve.isEmpty()) {
-                fail("Failed to resolve ${refElement.text}")
-            } else {
-                fail("Failed to resolve ${refElement.text}, multiple variants:\n${multiResolve.joinToString()}")
-            }
-        }
-
+        val resolved = refElement.checkedResolve()
         val target = findElementInEditor<RsNamedElement>("X")
 
-        check(resolved == target)
+        check(resolved == target) {
+            "$refElement `${refElement.text}` should resolve to $target, was $resolved instead"
+        }
     }
 
     protected fun checkByCode(@Language("Rust") code: String, mark: Testmark) =
@@ -64,8 +57,7 @@ abstract class RsResolveTestBase : RsTestBase() {
             return
         }
 
-        val element = reference.reference.resolve()
-            ?: error("Failed to resolve ${reference.text}")
+        val element = reference.checkedResolve()
         val actualResolveFile = element.containingFile.virtualFile
 
         if (resolveFile.startsWith("...")) {
@@ -79,6 +71,18 @@ abstract class RsResolveTestBase : RsTestBase() {
             check(actualResolveFile == expectedResolveFile) {
                 "Should resolve to ${expectedResolveFile.path}, was ${actualResolveFile.path} instead"
             }
+        }
+    }
+}
+
+private fun RsReferenceElement.checkedResolve(): RsElement {
+    return reference.resolve() ?: run {
+        val multiResolve = reference.multiResolve()
+        check(multiResolve.size != 1)
+        if (multiResolve.isEmpty()) {
+            error("Failed to resolve $text")
+        } else {
+            error("Failed to resolve $text, multiple variants:\n${multiResolve.joinToString()}")
         }
     }
 }

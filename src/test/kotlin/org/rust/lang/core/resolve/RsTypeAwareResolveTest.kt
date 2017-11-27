@@ -456,7 +456,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test slice resolve UFCS`() = expect<AssertionFailedError> {
+    fun `test slice resolve UFCS`() = expect<IllegalStateException> {
         checkByCode("""
         impl<T> [T] {
             fn foo(&self) {}
