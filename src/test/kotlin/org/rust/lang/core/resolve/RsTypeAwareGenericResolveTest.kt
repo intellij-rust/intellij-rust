@@ -792,6 +792,22 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }    //^
     """, TypeInferenceMarks.methodPickCollapseTraits)
 
+    fun `test method with multiple impls of the same trait on 2nd deref level`() = checkByCode("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct A;
+        struct B;
+        impl Deref for A { type Target = B; }
+        trait Tr<T1, T2> { fn foo(&self, t: T1) -> T2 { unimplemented!() } }
+        impl Tr<u8, i8> for B { fn foo(&self, t: u8) -> i8 { unimplemented!() } }
+        impl Tr<u16, i16> for B { fn foo(&self, t: u16) -> i16 { unimplemented!() } }
+                                   //X
+        fn main() {
+            A.foo(0u16);
+        }    //^
+    """, TypeInferenceMarks.methodPickCollapseTraits)
+
     // https://github.com/intellij-rust/intellij-rust/issues/1649
     fun `test issue 1649`() = checkByCode("""
         trait Foo {}
