@@ -118,7 +118,6 @@ class Cargo(
         val cmdLine = GeneralCommandLine(cargoExecutable)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(commandLine.workingDirectory)
-            .withEnvironment(CargoConstants.RUSTC_ENV_VAR, rustExecutable.toString())
             .withEnvironment("TERM", "ansi")
             .withRedirectErrorStream(true)
 
