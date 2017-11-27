@@ -42,7 +42,18 @@ Release notes live in [intellij-rust.github.io](https://github.com/intellij-rust
 To write notes, run `./changelog.py` to generate template in `_posts`. 
 Go thorough bors merge commits since the latest release and write about them in 
 appropriate section. Don't forget to mention every contributor using `by [@username]` syntax.
-Run `./changelog.py -c` to generate links to contributors' GitHub profiles. 
 
-After committing and pushing the changelog, update the link in `plugin.xml` and schedule 
-an alpha build via TeamCity. 
+After finishing with release notes, execute `./gradlew makeRelease` tasks. It'll do the following things:
+
+* add links to the release notes
+* commit and push release notes to intellij-rust.github.io
+* update changelog in `plugin.xml` and push "Changelog" commit to master branch of intellij-rust
+* checkout "nightly" branch, advance versions of EAP idea an nightly rust, and push this branch
+
+
+Then:
+
+* Hit Run on https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_UploadAlphaRust, make
+  sure to select the changeset with "Changelog" commit.
+
+* Send and r+ PR which bumps nightly.  
