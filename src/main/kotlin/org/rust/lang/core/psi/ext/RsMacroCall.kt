@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.macros.expandMacro
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacroCall
@@ -40,7 +41,7 @@ val RsMacroCall.macroName: String? get() {
     return referenceName
 }
 
-val RsMacroCall.expansion: PsiElement?
+val RsMacroCall.expansion: List<ExpansionResult>?
     get() = CachedValuesManager.getCachedValue(this, {
         CachedValueProvider.Result.create(expandMacro(this), PsiModificationTracker.MODIFICATION_COUNT)
     })

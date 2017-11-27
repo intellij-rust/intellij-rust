@@ -84,9 +84,8 @@ fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, proces
     return processFieldDeclarations(structOrEnumVariant, processor)
 }
 
-fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsMethodResolveProcessor): Boolean {
-    return processMethodDeclarationsWithDeref(lookup, receiverType, processor)
-}
+fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsMethodResolveProcessor): Boolean =
+    processMethodDeclarationsWithDeref(lookup, receiverType, processor)
 
 fun processUseGlobResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Boolean {
     val useItem = glob.parentUseItem
@@ -471,14 +470,13 @@ private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespa
          * which are not implemented.
          */
         fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsNamedElement>): Boolean {
-            val element = traitOrImpl
-            val impl = element as? RsImplItem
-            val directlyImplemented = element.members?.let { accessor(it) }.orEmpty()
+            val impl = traitOrImpl as? RsImplItem
+            val directlyImplemented = traitOrImpl.members?.let { accessor(it) }.orEmpty()
             if (directlyImplemented.any { inherentProcessor(it, impl) }) return true
 
-            if (element is RsImplItem) {
+            if (traitOrImpl is RsImplItem) {
                 val direct = directlyImplemented.map { it.name }.toSet()
-                val membersFromTrait = element.implementedTrait?.element?.members ?: return false
+                val membersFromTrait = traitOrImpl.implementedTrait?.element?.members ?: return false
                 for (member in accessor(membersFromTrait)) {
                     if (member.name !in direct && inherentProcessor(member, impl)) return true
                 }
@@ -516,7 +514,12 @@ private fun processItemOrEnumVariantDeclarations(scope: RsElement, ns: Set<Names
     return false
 }
 
-private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, originalProcessor: RsResolveProcessor, withPrivateImports: Boolean): Boolean {
+private fun processItemDeclarations(
+    scope: RsItemsOwner,
+    ns: Set<Namespace>,
+    originalProcessor: RsResolveProcessor,
+    withPrivateImports: Boolean
+): Boolean {
     val (starImports, itemImports) = scope.useItemList
         .filter { it.isPublic || withPrivateImports }
         .partition { it.isStarImport }
@@ -607,9 +610,9 @@ private fun processItemDeclarations(scope: RsItemsOwner, ns: Set<Namespace>, ori
     }
 
     for (macro in scope.macroCallList) {
-        val item = macro.expansion as? RsNamedElement ?: continue
-        val name = item.name ?: continue
-        if (processor(name, item)) return true
+        for (item in macro.expansion.orEmpty().filterIsInstance<RsNamedElement>()) {
+            if (item.namespaces.intersect(ns).isNotEmpty() && processor(item)) return true
+        }
     }
 
     fun processMultiResolveWithNs(name: String, ref: RsReference, processor: RsResolveProcessor): Boolean {
@@ -843,13 +846,11 @@ private fun walkUp(
     return false
 }
 
-private operator fun RsResolveProcessor.invoke(name: String, e: RsElement, subst: Substitution = emptySubstitution): Boolean {
-    return this(SimpleScopeEntry(name, e, subst))
-}
+private operator fun RsResolveProcessor.invoke(name: String, e: RsElement, subst: Substitution = emptySubstitution): Boolean =
+    this(SimpleScopeEntry(name, e, subst))
 
-private fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean {
-    return this(LazyScopeEntry(name, lazy(e)))
-}
+private fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean =
+    this(LazyScopeEntry(name, lazy(e)))
 
 private operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     val name = e.name ?: return false
@@ -873,13 +874,6 @@ private fun processAllWithSubst(
     subst: Substitution,
     processor: RsResolveProcessor
 ): Boolean {
-    for (e in elements) {
-        if (processor(BoundElement(e, subst))) return true
-    }
-    return false
-}
-
-private fun processAllBound(elements: Collection<RsNamedElement>, subst: Substitution, processor: RsResolveProcessor): Boolean {
     for (e in elements) {
         if (processor(BoundElement(e, subst))) return true
     }
