@@ -12,7 +12,6 @@ object CargoConstants {
     const val LOCK_FILE = "Cargo.lock"
     const val BUILD_RS_FILE = "build.rs"
 
-    const val RUSTC_ENV_VAR = "RUSTC"
     const val RUST_BACTRACE_ENV_VAR = "RUST_BACKTRACE"
 
     object ProjectLayout {
