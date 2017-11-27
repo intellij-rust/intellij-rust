@@ -12,6 +12,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.jvm.tasks.Jar
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.file.Path
 import kotlin.concurrent.thread
 
 buildscript {
@@ -212,28 +213,70 @@ project(":intellij-toml") {
     }
 }
 
-task("advanceSnapshot") {
+task("makeRelease") {
     doLast {
-        val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/LATEST-EAP-SNAPSHOT/BUILD-LATEST-EAP-SNAPSHOT.txt")
-        val ideaVersion = versionUrl.openStream().bufferedReader().readLine().trim()
-        println("\n    NEW IDEA: $ideaVersion\n")
-
-        "rustup update nightly".execute()
-        val version = "rustup run nightly rustc --version".execute()
-        val date = """\d\d\d\d-\d\d-\d\d""".toRegex().find(version)!!.value
-        val rustVersion = "nightly-$date"
-        println("\n    NEW RUST: $rustVersion\n")
-
-        val travisYml = File(rootProject.projectDir, ".travis.yml")
-        val updated = travisYml.readLines().joinToString("\n") { line ->
-            if ("modified by script" in line) {
-                "  - RUST_VERSION=$rustVersion ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion # modified by script"
-            } else {
-                line
-            }
-        }
-        travisYml.writeText(updated)
+        val newChangelog = commitChangelog()
+        val newChangelogPath = newChangelog
+            .replace(".markdown", "")
+            .replaceFirst("-", "/").replaceFirst("-", "/").replaceFirst("-", "/")
+        val pluginXml = File("./src/main/resources/META-INF/plugin.xml")
+        val oldText = pluginXml.readText()
+        val newText = oldText.replace(
+            """https://intellij-rust\.github\.io/(.*)\.html""".toRegex(),
+            "https://intellij-rust.github.io/$newChangelogPath.html"
+        )
+        pluginXml.writeText(newText)
+        "git add .".execute()
+        "git commit -am Changelog".execute()
+        "git push".execute()
+        commitNightly()
     }
+}
+
+fun commitChangelog(): String {
+    val website = "../intellij-rust.github.io"
+    val lastPost = File("$website/_posts").listFiles()
+        .map { it.name }
+        .sorted()
+        .last()
+    val postNumber = lastPost.substringAfterLast("-").substringBefore(".").toInt()
+    "python3 changelog.py -c".execute(website)
+    "git add .".execute(website)
+    listOf("git", "commit", "-am", "Changelog $postNumber").execute(website)
+    println()
+    "git show HEAD".execute(website)
+    println("Does ^^ look right? Answer `yes` to push changes\n")
+    val yes = readLine()!!.trim() == "yes"
+    if (!yes) error("Human says no")
+    "git push".execute(website)
+    return lastPost
+}
+
+fun commitNightly() {
+    val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/LATEST-EAP-SNAPSHOT/BUILD-LATEST-EAP-SNAPSHOT.txt")
+    val ideaVersion = versionUrl.openStream().bufferedReader().readLine().trim()
+    println("\n    NEW IDEA: $ideaVersion\n")
+
+    "rustup update nightly".execute()
+    val version = "rustup run nightly rustc --version".execute()
+    val date = """\d\d\d\d-\d\d-\d\d""".toRegex().find(version)!!.value
+    val rustVersion = "nightly-$date"
+    println("\n    NEW RUST: $rustVersion\n")
+
+    val travisYml = File(rootProject.projectDir, ".travis.yml")
+    val updated = travisYml.readLines().joinToString("\n") { line ->
+        if ("modified by script" in line) {
+            "  - RUST_VERSION=$rustVersion ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion # modified by script"
+        } else {
+            line
+        }
+    }
+    travisYml.writeText(updated)
+    "git branch -Df nightly".execute(ignoreExitCode = true)
+    "git checkout -b nightly".execute()
+    "git add .travis.yml".execute()
+    listOf("git", "commit", "-am", ":arrow_up: nightly IDEA & rust").execute()
+    "git push".execute()
 }
 
 fun prop(name: String): String =
@@ -254,8 +297,13 @@ val SourceSet.kotlin: SourceDirectorySet
 fun SourceSet.kotlin(action: SourceDirectorySet.() -> Unit) =
     kotlin.action()
 
-fun String.execute(): String {
-    val process = ProcessBuilder(split(" "))
+
+fun String.execute(wd: String? = null, ignoreExitCode: Boolean = false): String =
+    split(" ").execute(wd, ignoreExitCode)
+
+fun List<String>.execute(wd: String? = null, ignoreExitCode: Boolean = false): String {
+    val process = ProcessBuilder(this)
+        .also { pb -> wd?.let { pb.directory(File(it)) } }
         .start()
     var result = ""
     val errReader = thread { process.errorStream.bufferedReader().forEachLine { println(it) } }
@@ -268,5 +316,6 @@ fun String.execute(): String {
     process.waitFor()
     outReader.join()
     errReader.join()
+    if (process.exitValue() != 0 && !ignoreExitCode) error("Non-zero exit status for `$this`")
     return result
 }
