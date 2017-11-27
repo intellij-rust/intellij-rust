@@ -220,7 +220,7 @@ class ImplLookup(
                     else -> {
                         // basic specialization
                         filtered.singleOrNull {
-                            it !is SelectionCandidate.Impl || it.ref.selfTy !is TyInfer.TyVar
+                            it !is SelectionCandidate.Impl || it.formalSelfTy !is TyTypeParameter
                         }?.let {
                             TypeInferenceMarks.traitSelectionSpecialization.hit()
                             SelectionResult.Ok(it)
@@ -277,20 +277,13 @@ class ImplLookup(
     private fun assembleImplCandidates(ref: TraitRef): List<SelectionCandidate> {
         return RsImplIndex.findPotentialImpls(project, ref.selfTy)
             .mapNotNull { impl ->
-                val boundTrait = impl.implementedTrait ?: return@mapNotNull null
-                if (boundTrait.element != ref.trait.element) return@mapNotNull null
-                val subst = impl.generics.associate { it to ctx.typeVarForParam(it) }
-                val formalSelfTy = impl.typeReference?.type?.substitute(subst) ?: return@mapNotNull null
-                val boundSubst = boundTrait.substitute(subst).subst.mapValues { (k, v) ->
-                    if (k == v && v is TyTypeParameter && v.parameter is TyTypeParameter.Named) {
-                        v.parameter.parameter.typeReference?.type?.substitute(subst) ?: v
-                    } else {
-                        v
-                    }
-                }.substituteInValues(mapOf(TyTypeParameter.self() to ref.selfTy))
-                val implTraitRef = TraitRef(formalSelfTy, BoundElement(boundTrait.element, boundSubst))
+                val formalTraitRef = impl.implementedTrait ?: return@mapNotNull null
+                if (formalTraitRef.element != ref.trait.element) return@mapNotNull null
+                val formalSelfTy = impl.typeReference?.type ?: return@mapNotNull null
+                val (_, implTraitRef) =
+                    prepareSubstAndTraitRefRaw(ctx, impl.generics, formalSelfTy, formalTraitRef, ref.selfTy)
                 if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return@mapNotNull null
-                SelectionCandidate.Impl(impl, subst, implTraitRef)
+                SelectionCandidate.Impl(impl, formalSelfTy, formalTraitRef)
             }
     }
 
@@ -321,10 +314,11 @@ class ImplLookup(
         val newRecDepth = recursionDepth + 1
         return when (candidate) {
             is SelectionCandidate.Impl -> {
-                ctx.combineTraitRefs(ref, candidate.ref)
-                val candidateSubst = candidate.subst + mapOf(TyTypeParameter.self() to ref.selfTy)
-                val obligations = ctx.instantiateBounds(candidate.item.bounds, candidateSubst, newRecDepth).toList()
-                Selection(candidate.item, obligations, candidateSubst)
+                val (subst, preparedRef) = candidate.prepareSubstAndTraitRef(ctx, ref.selfTy)
+                ctx.combineTraitRefs(ref, preparedRef)
+                val candidateSubst = subst + mapOf(TyTypeParameter.self() to ref.selfTy)
+                val obligations = ctx.instantiateBounds(candidate.impl.bounds, candidateSubst, newRecDepth).toList()
+                Selection(candidate.impl, obligations, candidateSubst)
             }
             is SelectionCandidate.DerivedTrait -> Selection(candidate.item, emptyList())
             is SelectionCandidate.Closure -> {
@@ -551,21 +545,45 @@ private sealed class SelectionCandidate {
     /**
      * ```
      * impl<A, B> Foo<A> for Bar<B> {}
-     * |   |      |
-     * |   |      ref
+     * |   |      |          |
+     * |   |      |          formalSelfTy
+     * |   |      formalTrait
      * |   subst
-     * item
+     * impl
      * ```
      */
     data class Impl(
-        val item: RsImplItem,
-        val subst: Substitution,
-        val ref: TraitRef
-    ) : SelectionCandidate()
+        val impl: RsImplItem,
+        // We can always extract these values from impl, but it's better to cache them
+        val formalSelfTy: Ty,
+        val formalTrait: BoundElement<RsTraitItem>
+    ) : SelectionCandidate() {
+        fun prepareSubstAndTraitRef(ctx: RsInferenceContext, selfTy: Ty): Pair<Substitution, TraitRef> =
+            prepareSubstAndTraitRefRaw(ctx, impl.generics, formalSelfTy, formalTrait, selfTy)
+    }
 
     data class DerivedTrait(val item: RsTraitItem) : SelectionCandidate()
     data class TypeParameter(val bound: BoundElement<RsTraitItem>) : SelectionCandidate()
     object Closure : SelectionCandidate()
+}
+
+private fun prepareSubstAndTraitRefRaw(
+    ctx: RsInferenceContext,
+    generics: List<TyTypeParameter>,
+    formalSelfTy: Ty,
+    formalTrait: BoundElement<RsTraitItem>,
+    selfTy: Ty
+): Pair<Substitution, TraitRef> {
+    val subst = generics.associate { it to ctx.typeVarForParam(it) }
+    val boundSubst = formalTrait.substitute(subst).subst.mapValues { (k, v) ->
+        if (k == v && k.parameter is TyTypeParameter.Named) {
+            // Default type parameter values `trait Tr<T=Foo> {}`
+            k.parameter.parameter.typeReference?.type?.substitute(subst) ?: v
+        } else {
+            v
+        }
+    }.substituteInValues(mapOf(TyTypeParameter.self() to selfTy))
+    return subst to TraitRef(formalSelfTy.substitute(subst), BoundElement(formalTrait.element, boundSubst))
 }
 
 private fun RsTraitItem.substAssocType(assoc: String, ty: Ty?): BoundElement<RsTraitItem> {
