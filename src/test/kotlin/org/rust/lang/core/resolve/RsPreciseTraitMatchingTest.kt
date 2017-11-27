@@ -168,6 +168,25 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         }
     """, TypeInferenceMarks.methodPickCheckBounds)
 
+    fun `test allow ambiguous trait bounds for postponed selection`() = checkByCode("""
+        trait Into<A> { fn into(&self) -> A; }
+        trait From<B> { fn from(_: B) -> Self; }
+        impl<T, U> Into<U> for T where U: From<T>
+        {
+            fn into(self) -> U { U::from(self) }
+        }    //X
+
+        struct S1;
+        struct S2;
+        impl From<S1> for S2 { fn from(_: B) -> Self { unimplemented!() }
+}
+        fn main() {
+            let a = (&S1).into();
+                        //^
+            let _: S2 = a;
+        }
+    """)
+
     fun `test method defined in out of scope trait 1`() = checkByCode("""
         struct S;
 

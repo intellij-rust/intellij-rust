@@ -857,7 +857,7 @@ private class RsFnInferenceContext(
             ctx.instantiateBounds(impl.bounds, typeParameters)
                 .forEach(ff::registerPredicateObligation)
             impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
-            ctx.probe { ff.selectAllOrError() }
+            ctx.probe { ff.selectUntilError() }
         }.singleOrLet { list ->
             // 3. Pick results on the first deref level
             // TODO this is not how compiler actually work, see `test non inherent impl 2`

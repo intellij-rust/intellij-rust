@@ -495,4 +495,11 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             S.into();
         }   //^ a.rs
     """, TypeInferenceMarks.methodPickTraitScope)
+
+    fun `test &str into String`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let _: String = "".into();
+        }                    //^ ...convert.rs
+    """)
 }

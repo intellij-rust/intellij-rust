@@ -210,7 +210,7 @@ class ImplLookup(
                         val obligation = confirmCandidate(ref, it, recursionDepth).nestedObligations
                         val ff = FulfillmentContext(ctx, this)
                         obligation.forEach(ff::registerPredicateObligation)
-                        ff.selectAllOrError()
+                        ff.selectUntilError()
                     }
                 }
 
