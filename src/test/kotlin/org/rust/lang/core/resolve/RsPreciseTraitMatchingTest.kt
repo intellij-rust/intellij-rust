@@ -211,4 +211,15 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             S.foo();
         }   //^
     """, TypeInferenceMarks.methodPickTraitScope)
+
+    fun `test specialization simple`() = checkByCode("""
+        trait Tr { fn foo(&self); }
+        struct S;
+        impl<T> Tr for T { fn foo(&self) {} }
+        impl Tr for S { fn foo(&self) {} }
+                         //X
+        fn main() {
+            S.foo();
+        }   //^
+    """, TypeInferenceMarks.traitSelectionSpecialization)
 }

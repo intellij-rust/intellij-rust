@@ -217,7 +217,15 @@ class ImplLookup(
                 when (filtered.size) {
                     0 -> SelectionResult.Err()
                     1 -> SelectionResult.Ok(filtered.single())
-                    else -> SelectionResult.Ambiguous()
+                    else -> {
+                        // basic specialization
+                        filtered.singleOrNull {
+                            it !is SelectionCandidate.Impl || it.ref.selfTy !is TyInfer.TyVar
+                        }?.let {
+                            TypeInferenceMarks.traitSelectionSpecialization.hit()
+                            SelectionResult.Ok(it)
+                        } ?: SelectionResult.Ambiguous()
+                    }
                 }
             }
         }

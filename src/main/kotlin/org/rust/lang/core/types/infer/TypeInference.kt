@@ -1360,4 +1360,5 @@ object TypeInferenceMarks {
     val methodPickCheckBounds = Testmark("methodPickCheckBounds")
     val methodPickDerefOrder = Testmark("methodPickDerefOrder")
     val methodPickCollapseTraits = Testmark("methodPickCollapseTraits")
+    val traitSelectionSpecialization = Testmark("traitSelectionSpecialization")
 }
