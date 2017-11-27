@@ -770,9 +770,9 @@ private class RsFnInferenceContext(
     }
 
     private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall): Ty {
-        val receiverRes = resolveTypeVarsWithObligations(receiver)
         val argExprs = methodCall.valueArgumentList.exprList
         val callee = run {
+            val receiverRes = resolveTypeVarsWithObligations(receiver)
             val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
             val callee = pickSingleMethod(variants, methodCall)
             // If we failed to resolve ambiguity just write the all possible methods
@@ -798,9 +798,9 @@ private class RsFnInferenceContext(
                     typeParameters
                 }
             }
-            receiverRes is TyTypeParameter -> {
+            callee.selfTy is TyTypeParameter -> {
                 val trait = (callee.element.owner as RsFunctionOwner.Trait).trait
-                receiverRes.getTraitBoundsTransitively().find { it.element == trait }?.subst ?: emptySubstitution
+                callee.selfTy.getTraitBoundsTransitively().find { it.element == trait }?.subst ?: emptySubstitution
             }
             else -> {
                 // Method has been resolved to a trait, so we should add a predicate
@@ -810,7 +810,7 @@ private class RsFnInferenceContext(
                 val typeParameters = instantiateBounds(trait)
                 val boundTrait = BoundElement(trait, trait.generics.associateBy { it })
                     .substitute(typeParameters)
-                val traitRef = TraitRef(receiverRes, boundTrait)
+                val traitRef = TraitRef(callee.selfTy, boundTrait)
                 fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
                 if (true /*variants.size > 1*/) ctx.registerMethodRefinement(methodCall, traitRef)
                 typeParameters
@@ -1360,4 +1360,5 @@ object TypeInferenceMarks {
     val methodPickCheckBounds = Testmark("methodPickCheckBounds")
     val methodPickDerefOrder = Testmark("methodPickDerefOrder")
     val methodPickCollapseTraits = Testmark("methodPickCollapseTraits")
+    val traitSelectionSpecialization = Testmark("traitSelectionSpecialization")
 }

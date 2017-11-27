@@ -138,7 +138,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     if (modDecl.isLocal) return false
 
     for (file in dir.files) {
-        if (file == modDecl.containingFile.originalFile || file.name == RsMod.MOD_RS) continue
+        if (file == modDecl.contextualFile.originalFile || file.name == RsMod.MOD_RS) continue
         val mod = file.rustMod ?: continue
         val fileName = FileUtil.getNameWithoutExtension(file.name)
         val modDeclName = modDecl.referenceName
@@ -260,7 +260,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     }
 
     // Paths in use items are implicitly global.
-    if (path.hasColonColon || path.contextOfType<RsUseItem>() != null) {
+    if (path.hasColonColon || path.contextStrict<RsUseItem>() != null) {
         if (crateRoot != null) {
             if (processItemOrEnumVariantDeclarations(crateRoot, ns, processor)) return true
         }
