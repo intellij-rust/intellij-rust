@@ -59,7 +59,6 @@ class RsMacroResolveTest : RsResolveTestBase() {
     fun `test resolve macro mod lower`() = checkByCode("""
         macro_rules! foo_bar { () => () }
         //X
-        #[macro_use]
         mod b {
             fn main() {
                 foo_bar!();
@@ -68,23 +67,9 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test resolve macro unresolved`() = checkByCode("""
-        mod a {
-            #[macro_export]
-            macro_rules! foo_bar { () => () }
-        }
-        mod b {
-            fn main() {
-                foo_bar!();
-                //^ unresolved
-            }
-        }
-    """)
-
     fun `test resolve macro mod`() = checkByCode("""
         #[macro_use]
         mod a {
-            #[macro_export]
             macro_rules! foo_bar { () => () }
             //X
         }
@@ -96,8 +81,36 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test unresolve macro no export`() = checkByCode("""
+    // Macros are scoped by lexical order
+    // see https://github.com/intellij-rust/intellij-rust/issues/1474
+    fun `test resolve macro mod wrong order`() = expect<IllegalStateException> {
+        checkByCode("""
+        mod b {
+            fn main() {
+                foo_bar!();
+                //^ unresolved
+            }
+        }
         #[macro_use]
+        mod a {
+            macro_rules! foo_bar { () => () }
+        }
+    """)
+    }
+
+    fun `test resolve macro missing macro_use`() = checkByCode("""
+        // Missing #[macro_use] here
+        mod a {
+            macro_rules! foo_bar { () => () }
+        }
+        fn main() {
+            foo_bar!();
+            //^ unresolved
+        }
+    """, NameResolutionTestmarks.missingMacroUse)
+
+    fun `test resolve macro missing macro_use mod`() = checkByCode("""
+        // Missing #[macro_use] here
         mod a {
             macro_rules! foo_bar { () => () }
         }
@@ -107,5 +120,7 @@ class RsMacroResolveTest : RsResolveTestBase() {
                 //^ unresolved
             }
         }
-    """)
+    """, NameResolutionTestmarks.missingMacroUse)
+
+    // More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest]
 }

@@ -306,10 +306,8 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     """)
 
     fun `test resolve macro`() = checkByCode("""
-        #[macro_export]
         macro_rules! foo_bar { () => () }
         //X
-        #[macro_use]
         mod b {
             fn main() {
                 foo_bar!();
@@ -325,6 +323,17 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     //- main.rs
         macro_rules! foo_bar { () => () }
         mod b;
+        fn main() {}
+    """)
+
+    fun `test resolve macro multi file 2`() = stubOnlyResolve("""
+    //- b.rs
+        macro_rules! foo_bar { () => () }
+    //- main.rs
+        #[macro_use]
+        mod b;
+        foo_bar!();
+        //^ b.rs
         fn main() {}
     """)
 }
