@@ -36,6 +36,14 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { frobnicate()/*caret*/ }
     """)
 
+    fun `test function call before remainder of identifier`() = doSingleCompletion("""
+        fn frobnicate() {}
+        fn main() { frob/*caret*/cate() }
+    """, """
+        fn frobnicate() {}
+        fn main() { frobnicate()/*caret*/ }
+    """)
+
     fun `test tuple struct with parens`() = doSingleCompletion("""
         struct Frobnicate(i32, String);
         fn main() { Frob/*caret*/() }
