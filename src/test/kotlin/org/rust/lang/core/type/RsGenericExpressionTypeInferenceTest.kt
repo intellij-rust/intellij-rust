@@ -1121,4 +1121,23 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             b;
         } //^ u8
     """)
+
+    fun `test generic 'impl Trait' method`() = testExpr("""
+        trait Tr<A> { fn foo(&self) -> A { unimplemented!() } }
+        fn new() -> impl Tr<u8> { unimplemented!() }
+        fn main() {
+            let a = new().foo();
+            a;
+        } //^ u8
+    """)
+
+    fun `test generic 'impl Trait' bound`() = testExpr("""
+        trait Tr<A> {}
+        fn new() -> impl Tr<u8> { unimplemented!() }
+        fn foo<B, C>(_: &B) -> C where B: Tr<C> + ?Sized { unimplemented!() }
+        fn main() {
+            let a = foo(&new());
+            a;
+        } //^ u8
+    """)
 }

@@ -109,7 +109,7 @@ class ImplLookup(
                 implsAndTraits += findSimpleImpls(ty)
                 implsAndTraits += fnTraits
             }
-            is TyAnon -> ty.traits.mapTo(implsAndTraits) { it.element }
+            is TyAnon -> ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { it.element }
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty)
@@ -253,24 +253,27 @@ class ImplLookup(
 
     private fun assembleCandidates(ref: TraitRef): Set<SelectionCandidate> {
         val element = ref.trait.element
-        if (element == sizedTrait) {
-            return sizedTraitCandidates(ref.selfTy, element)
-        }
-
-        return buildSet {
-            addAll(assembleImplCandidates(ref))
-            addAll(assembleDerivedCandidates(ref))
-            if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
-            if (ref.selfTy is TyTypeParameter) {
-                val bound = ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
-                if (bound != null) add(SelectionCandidate.TypeParameter(bound))
+        return when {
+            element == sizedTrait -> sizedTraitCandidates(ref.selfTy, element)
+            ref.selfTy is TyTypeParameter -> {
+                ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
+                    ?.let { setOf(SelectionCandidate.TypeParameter(it)) } ?: emptySet()
             }
-            if (ref.selfTy is TyTraitObject) {
-                ref.selfTy.trait.flattenHierarchy.find { it.element == ref.trait.element }
+            ref.selfTy is TyAnon -> {
+                ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
+                    ?.let { setOf(SelectionCandidate.TypeParameter(it)) } ?: emptySet()
+            }
+            else -> buildSet {
+                addAll(assembleImplCandidates(ref))
+                addAll(assembleDerivedCandidates(ref))
+                if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
+                if (ref.selfTy is TyTraitObject) {
+                    ref.selfTy.trait.flattenHierarchy.find { it.element == ref.trait.element }
+                        ?.let { add(SelectionCandidate.TypeParameter(it)) }
+                }
+                getHardcodedImpls(ref.selfTy).find { it.element == element }
                     ?.let { add(SelectionCandidate.TypeParameter(it)) }
             }
-            getHardcodedImpls(ref.selfTy).find { it.element == element }
-                ?.let { add(SelectionCandidate.TypeParameter(it)) }
         }
     }
 
