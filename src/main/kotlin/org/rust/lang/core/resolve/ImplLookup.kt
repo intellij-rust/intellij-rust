@@ -104,7 +104,7 @@ class ImplLookup(
         val implsAndTraits = mutableSetOf<RsTraitOrImpl>()
         when (ty) {
             is TyTypeParameter -> ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { it.element }
-            is TyTraitObject -> BoundElement(ty.trait).flattenHierarchy.mapTo(implsAndTraits) { it.element }
+            is TyTraitObject -> ty.trait.flattenHierarchy.mapTo(implsAndTraits) { it.element }
             is TyFunction -> {
                 implsAndTraits += findSimpleImpls(ty)
                 implsAndTraits += fnTraits
@@ -266,7 +266,7 @@ class ImplLookup(
                 if (bound != null) add(SelectionCandidate.TypeParameter(bound))
             }
             if (ref.selfTy is TyTraitObject) {
-                BoundElement(ref.selfTy.trait).flattenHierarchy.find { it.element == ref.trait.element }
+                ref.selfTy.trait.flattenHierarchy.find { it.element == ref.trait.element }
                     ?.let { add(SelectionCandidate.TypeParameter(it)) }
             }
             getHardcodedImpls(ref.selfTy).find { it.element == element }

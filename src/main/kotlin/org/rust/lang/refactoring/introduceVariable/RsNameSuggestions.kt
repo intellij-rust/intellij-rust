@@ -42,7 +42,7 @@ fun RsExpr.suggestedNames(): SuggestedNames {
         is TyInteger -> names.addName("i")
         is TyTypeParameter -> names.addName(type.name)
         is TyStructOrEnumBase -> names.addName(type.item.name)
-        is TyTraitObject -> names.addName(type.trait.name)
+        is TyTraitObject -> names.addName(type.trait.element.name)
     }
 
     val parent = this.parent
