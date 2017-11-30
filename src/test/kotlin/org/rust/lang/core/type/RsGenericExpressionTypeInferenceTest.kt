@@ -1122,6 +1122,25 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test inherited generic trait object method`() = testExpr("""
+        trait Tr1<A> { fn foo(&self) -> A { unimplemented!() } }
+        trait Tr2<B>: Tr1<B> {}
+        fn bar(a: &Tr2<u8>) {
+            let b = a.foo();
+            b;
+        } //^ u8
+    """)
+
+    fun `test inherited generic trait object bound`() = testExpr("""
+        trait Tr1<A> {}
+        trait Tr2<D>: Tr1<D> {}
+        fn foo<B, C>(_: &B) -> C where B: Tr1<C> + ?Sized { unimplemented!() }
+        fn bar(a: &Tr2<u8>) {
+            let b = foo(a);
+            b;
+        } //^ u8
+    """)
+
     fun `test generic 'impl Trait' method`() = testExpr("""
         trait Tr<A> { fn foo(&self) -> A { unimplemented!() } }
         fn new() -> impl Tr<u8> { unimplemented!() }
@@ -1137,6 +1156,46 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<B, C>(_: &B) -> C where B: Tr<C> + ?Sized { unimplemented!() }
         fn main() {
             let a = foo(&new());
+            a;
+        } //^ u8
+    """)
+
+    fun `test inherited generic 'impl Trait' method`() = testExpr("""
+        trait Tr1<A> { fn foo(&self) -> A { unimplemented!() } }
+        trait Tr2<B>: Tr1<B> {}
+        fn new() -> impl Tr2<u8> { unimplemented!() }
+        fn main() {
+            let a = new().foo();
+            a;
+        } //^ u8
+    """)
+
+    fun `test inherited generic 'impl Trait' bound`() = testExpr("""
+        trait Tr1<A> {}
+        trait Tr2<D>: Tr1<D> {}
+        fn new() -> impl Tr2<u8> { unimplemented!() }
+        fn foo<B, C>(_: B) -> C where B: Tr1<C> { unimplemented!() }
+        fn main() {
+            let a = foo(new());
+            a;
+        } //^ u8
+    """)
+
+    fun `test inherited generic type parameter method`() = testExpr("""
+        trait Tr1<A> { fn foo(&self) -> A { unimplemented!() } }
+        trait Tr2<B>: Tr1<B> {}
+        fn bar<T: Tr2<u8>>(t: T) {
+            let a = t.foo();
+            a;
+        } //^ u8
+    """)
+
+    fun `test inherited generic type parameter bound`() = testExpr("""
+        trait Tr1<A> {}
+        trait Tr2<D>: Tr1<D> {}
+        fn foo<B, C>(_: B) -> C where B: Tr1<C> { unimplemented!() }
+        fn bar<T: Tr2<u8>>(t: T) {
+            let a = foo(t);
             a;
         } //^ u8
     """)

@@ -41,7 +41,7 @@ val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitI
         if (boundTrait.element in visited) return
         visited += boundTrait.element
         result += boundTrait
-        boundTrait.element.superTraits.forEach(::dfs)
+        boundTrait.element.superTraits.forEach { dfs(it.substitute(boundTrait.subst)) }
     }
     dfs(this)
 
