@@ -7,6 +7,9 @@ package org.rust.lang.core.resolve
 
 
 class RsMacroExpansionResolveTest: RsResolveTestBase() {
+    @Suppress("PrivatePropertyName")
+    private val `$` = '$'
+
     fun `test lazy static`() = checkByCode("""
         #[macro_use]
         extern crate lazy_static;
@@ -22,5 +25,75 @@ class RsMacroExpansionResolveTest: RsResolveTestBase() {
         fn main() {
             FOO.bar()
         }      //^
+    """)
+
+    fun `test expand items star`() = checkByCode("""
+        macro_rules! if_std {
+            ($`$`($`$`i:item)*) => ($`$`(
+                #[cfg(feature = "use_std")]
+                $`$`i
+            )*)
+        }
+
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }     //X
+
+        if_std! {
+            fn foo() -> Foo { Foo }
+        }
+
+        fn main() {
+            foo().bar()
+        }       //^
+
+    """)
+
+    fun `test expand items star with reexport`() = checkByCode("""
+        macro_rules! if_std {
+            ($`$`($`$`i:item)*) => ($`$`(
+                #[cfg(feature = "use_std")]
+                $`$`i
+            )*)
+        }
+
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }     //X
+
+        if_std! {
+            use Foo as Bar;
+        }
+
+        fn main() {
+            Bar.bar()
+        }      //^
+
+    """)
+
+    fun `test expand items star with reexport from expansion`() = checkByCode("""
+        macro_rules! if_std {
+            ($`$`($`$`i:item)*) => ($`$`(
+                #[cfg(feature = "use_std")]
+                $`$`i
+            )*)
+        }
+
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }     //X
+
+        if_std! {
+            fn foo() -> Foo { Foo }
+            use foo as bar;
+        }
+
+        fn main() {
+            bar().bar()
+        }        //^
+
     """)
 }

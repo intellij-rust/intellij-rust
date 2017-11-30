@@ -6,6 +6,8 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.Key
+import com.intellij.psi.StubBasedPsiElement
+import com.intellij.psi.stubs.PsiFileStub
 import org.rust.lang.core.psi.ext.RsElement
 
 /**
@@ -20,6 +22,10 @@ interface ExpansionResult : RsElement {
     companion object {
         fun getContextImpl(psi: ExpansionResult): RsElement {
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
+            if (psi is StubBasedPsiElement<*>) {
+                val stub = psi.stub
+                if (stub != null) return stub.parentStub.psi as RsElement
+            }
             (psi.parent as? RsElement)?.let { return it }
             error("Parent for ExpansionResult $psi is not RsElement")
         }

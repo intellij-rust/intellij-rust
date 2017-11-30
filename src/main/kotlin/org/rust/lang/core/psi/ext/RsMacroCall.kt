@@ -28,17 +28,17 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>, RsM
     override fun getReference(): RsReference = RsMacroCallReferenceImpl(this)
 
     override val referenceName: String
-        get() = referenceNameElement.text
+        get() = macroName
 
     override val referenceNameElement: PsiElement
         get() = findChildByType(IDENTIFIER)!!
 
 }
 
-val RsMacroCall.macroName: String? get() {
+val RsMacroCall.macroName: String get() {
     val stub = stub
     if (stub != null) return stub.macroName
-    return referenceName
+    return referenceNameElement.text
 }
 
 val RsMacroCall.expansion: List<ExpansionResult>?

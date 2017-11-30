@@ -109,23 +109,6 @@ class RsFile(
     override val macroDefinitionList: List<RsMacroDefinition> get() = itemsCache.macroDefinitionList
     override val macroCallList: List<RsMacroCall> get() = itemsCache.macroCallList
 
-    private class ItemsCache(
-        val functionList: List<RsFunction>,
-        val modItemList: List<RsModItem>,
-        val constantList: List<RsConstant>,
-        val structItemList: List<RsStructItem>,
-        val enumItemList: List<RsEnumItem>,
-        val implItemList: List<RsImplItem>,
-        val traitItemList: List<RsTraitItem>,
-        val typeAliasList: List<RsTypeAlias>,
-        val useItemList: List<RsUseItem>,
-        val modDeclItemList: List<RsModDeclItem>,
-        val externCrateItemList: List<RsExternCrateItem>,
-        val foreignModItemList: List<RsForeignModItem>,
-        val macroDefinitionList: List<RsMacroDefinition>,
-        val macroCallList: List<RsMacroCall>
-    )
-
     @Volatile
     private var _itemsCache: ItemsCache? = null
 
@@ -140,6 +123,49 @@ class RsFile(
             if (cached != null) return cached
             // Might calculate cache twice concurrently, but that's ok.
             // Can't race with subtreeChanged.
+            cached = ItemsCache.build { add ->
+                val stub = stub
+                if (stub != null) {
+                    stub.childrenStubs.forEach { add(it.psi) }
+                } else {
+                    var child = firstChild
+                    while (child != null) {
+                        add(child)
+                        child = child.nextSibling
+                    }
+                }
+            }
+            _itemsCache = cached
+            return cached
+        }
+}
+
+
+val PsiFile.rustMod: RsMod? get() = this as? RsFile
+
+val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
+val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
+
+
+class ItemsCache(
+    val functionList: List<RsFunction> = mutableListOf(),
+    val modItemList: List<RsModItem> = mutableListOf(),
+    val constantList: List<RsConstant> = mutableListOf(),
+    val structItemList: List<RsStructItem> = mutableListOf(),
+    val enumItemList: List<RsEnumItem> = mutableListOf(),
+    val implItemList: List<RsImplItem> = mutableListOf(),
+    val traitItemList: List<RsTraitItem> = mutableListOf(),
+    val typeAliasList: List<RsTypeAlias> = mutableListOf(),
+    val useItemList: List<RsUseItem> = mutableListOf(),
+    val modDeclItemList: List<RsModDeclItem> = mutableListOf(),
+    val externCrateItemList: List<RsExternCrateItem> = mutableListOf(),
+    val foreignModItemList: List<RsForeignModItem> = mutableListOf(),
+    val macroDefinitionList: List<RsMacroDefinition> = mutableListOf(),
+    val macroCallList: List<RsMacroCall> = mutableListOf()
+) {
+
+    companion object {
+        fun build(builder: (add: (PsiElement) -> Unit) -> Unit): ItemsCache {
             val functionList = mutableListOf<RsFunction>()
             val modItemList = mutableListOf<RsModItem>()
             val constantList = mutableListOf<RsConstant>()
@@ -174,18 +200,8 @@ class RsFile(
                 }
             }
 
-            val stub = stub
-            if (stub != null) {
-                stub.childrenStubs.forEach { add(it.psi) }
-            } else {
-                var child = firstChild
-                while (child != null) {
-                    add(child)
-                    child = child.nextSibling
-                }
-            }
-
-            cached = ItemsCache(
+            builder(::add)
+            return ItemsCache(
                 functionList,
                 modItemList,
                 constantList,
@@ -201,14 +217,6 @@ class RsFile(
                 macroDefinitionList,
                 macroCallList
             )
-            _itemsCache = cached
-
-            return cached
         }
+    }
 }
-
-
-val PsiFile.rustMod: RsMod? get() = this as? RsFile
-
-val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
-val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType

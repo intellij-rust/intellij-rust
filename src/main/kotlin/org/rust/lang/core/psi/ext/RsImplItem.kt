@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getPresentation
+import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
@@ -65,4 +66,6 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
     override val isUnsafe: Boolean get() = unsafe != null
+
+    override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
 }

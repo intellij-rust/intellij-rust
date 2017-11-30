@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.*
+import com.intellij.util.SmartList
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.*
@@ -27,6 +28,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.toPsiFile
+import org.rust.stdext.chain
 import java.util.*
 
 // IntelliJ Rust name resolution algorithm.
@@ -529,7 +531,13 @@ private fun processItemDeclarations(
     originalProcessor: RsResolveProcessor,
     withPrivateImports: Boolean
 ): Boolean {
-    val (starImports, itemImports) = scope.useItemList
+    val macroItems = ItemsCache.build { add ->
+        for (macro in scope.macroCallList) {
+            macro.expansion?.forEach { add(it) }
+        }
+    }
+
+    val (starImports, itemImports) = scope.useItemList.chain(macroItems.useItemList)
         .filter { it.isPublic || withPrivateImports }
         .partition { it.isStarImport }
 
@@ -546,23 +554,23 @@ private fun processItemDeclarations(
 
 
     // Unit like structs are both types and values
-    for (struct in scope.structItemList) {
+    for (struct in scope.structItemList.chain(macroItems.structItemList)) {
         if (struct.namespaces.intersect(ns).isNotEmpty() && processor(struct)) {
             return true
         }
     }
 
     if (Namespace.Types in ns) {
-        for (modDecl in scope.modDeclItemList) {
+        for (modDecl in scope.modDeclItemList.chain(macroItems.modDeclItemList)) {
             val name = modDecl.name ?: continue
             val mod = modDecl.reference.resolve() ?: continue
             if (processor(name, mod)) return true
         }
 
-        if (processAll(scope.enumItemList, processor)
-            || processAll(scope.modItemList, processor)
-            || processAll(scope.traitItemList, processor)
-            || processAll(scope.typeAliasList, processor)) {
+        if (processAll(scope.enumItemList.chain(macroItems.enumItemList), processor)
+            || processAll(scope.modItemList.chain(macroItems.modItemList), processor)
+            || processAll(scope.traitItemList.chain(macroItems.traitItemList), processor)
+            || processAll(scope.typeAliasList.chain(macroItems.typeAliasList), processor)) {
             return true
         }
 
@@ -601,27 +609,21 @@ private fun processItemDeclarations(
     }
 
     if (Namespace.Values in ns) {
-        if (processAll(scope.functionList, processor)
-            || processAll(scope.constantList, processor)) {
+        if (processAll(scope.functionList.chain(macroItems.functionList), processor)
+            || processAll(scope.constantList.chain(macroItems.constantList), processor)) {
             return true
         }
     }
 
-    for (fmod in scope.foreignModItemList) {
+    for (fmod in scope.foreignModItemList.chain(macroItems.foreignModItemList)) {
         if (processAll(fmod.functionList, processor)) return true
         if (processAll(fmod.constantList, processor)) return true
     }
 
-    for (crate in scope.externCrateItemList) {
+    for (crate in scope.externCrateItemList.chain(macroItems.externCrateItemList)) {
         val name = crate.alias?.name ?: crate.name ?: continue
         val mod = crate.reference.resolve() ?: continue
         if (processor(name, mod)) return true
-    }
-
-    for (macro in scope.macroCallList) {
-        for (item in macro.expansion.orEmpty().filterIsInstance<RsNamedElement>()) {
-            if (item.namespaces.intersect(ns).isNotEmpty() && processor(item)) return true
-        }
     }
 
     fun processMultiResolveWithNs(name: String, ref: RsReference, processor: RsResolveProcessor): Boolean {
@@ -871,7 +873,10 @@ private operator fun RsResolveProcessor.invoke(e: BoundElement<RsNamedElement>):
     return this(SimpleScopeEntry(name, e.element, e.subst))
 }
 
-private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean {
+private fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean =
+    processAll(elements.asSequence(), processor)
+
+private fun processAll(elements: Sequence<RsNamedElement>, processor: RsResolveProcessor): Boolean {
     for (e in elements) {
         if (processor(e)) return true
     }

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsModItemStub
 import javax.swing.Icon
@@ -47,6 +48,7 @@ abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
     override val outerAttrList: List<RsOuterAttr>
         get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
 
+    override fun getContext() = ExpansionResult.getContextImpl(this)
 }
 
 val RsModItem.hasMacroUse: Boolean get() =
