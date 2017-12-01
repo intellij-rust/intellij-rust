@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.RsElementTypes.UNION
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsPsiImplUtil
@@ -45,4 +46,6 @@ abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStu
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
+
+    override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
 }

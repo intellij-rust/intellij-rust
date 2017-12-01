@@ -34,10 +34,4 @@ class RsCodeFragmentFactory(val project: Project) {
             setContext(context)
             containingFile?.putUserData(CARGO_WORKSPACE, context.cargoWorkspace)
         }
-
-    inline fun <reified I : ExpansionResult> createExpandedItem(code: String): I? {
-        return PsiFileFactory.getInstance(project)
-            .createFileFromText("MACRO.rs", RsFileType, code)
-            .descendantOfTypeStrict()
-    }
 }

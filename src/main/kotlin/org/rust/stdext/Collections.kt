@@ -46,3 +46,10 @@ inline fun <T> List<T>.singleOrLet(function: (List<T>) -> List<T>): List<T> = wh
     size < 2 -> this
     else -> function(this)
 }
+
+fun <T> List<T>.chain(other: List<T>): Sequence<T> =
+    when {
+        other.isEmpty() -> this.asSequence()
+        this.isEmpty() -> other.asSequence()
+        else -> this.asSequence() + other.asSequence()
+    }

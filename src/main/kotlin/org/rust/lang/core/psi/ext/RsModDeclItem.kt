@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsPsiImplUtil
@@ -57,6 +58,8 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RsIcons.MODULE)
 
     override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
+
+    override fun getContext() = ExpansionResult.getContextImpl(this)
 }
 
 val RsModDeclItem.hasMacroUse: Boolean get() =

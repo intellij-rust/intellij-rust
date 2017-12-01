@@ -8,15 +8,16 @@ package org.rust.lang.core.macros
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 import org.rust.lang.core.psi.ext.elementType
 
 fun expandLazyStatic(call: RsMacroCall): ExpansionResult? {
     val arg = call.macroArgument?.tt ?: return null
     val lazyStaticCall = parseLazyStaticCall(arg) ?: return null
-    return RsCodeFragmentFactory(call.project)
-        .createExpandedItem<RsConstant>(
-            "${if (lazyStaticCall.pub) "pub " else ""}static ${lazyStaticCall.identifier}: ${lazyStaticCall.type} = &${lazyStaticCall.expr};"
-        )
+    val text = "${if (lazyStaticCall.pub) "pub " else ""}static ${lazyStaticCall.identifier}: ${lazyStaticCall.type} = &${lazyStaticCall.expr};"
+    return RsPsiFactory(call.project)
+        .createFile(text)
+        .descendantOfTypeStrict<RsConstant>()
 }
 
 private data class LazyStaticCall(
