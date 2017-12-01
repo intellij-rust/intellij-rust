@@ -19,7 +19,7 @@ class RsPsiFactory(private val project: Project) {
             .createFileFromText("DUMMY.rs", RsFileType, text) as RsFile
 
     fun createMacroDefinitionBody(text: String): RsMacroDefinitionBody? = createFromText(
-        "macro rules m! $text"
+        "macro_rules! m $text"
     )
 
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
