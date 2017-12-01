@@ -80,7 +80,7 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
                 check(commandLine.workDirectory != null) {
                     "LLDB requires working directory"
                 }
-                val runParameters = RsDebugRunParameters(commandLine)
+                val runParameters = RsDebugRunParameters(environment.project, commandLine)
                 XDebuggerManager.getInstance(environment.project)
                     .startSession(environment, object : XDebugProcessConfiguratorStarter() {
                         override fun start(session: XDebugSession): XDebugProcess =
@@ -160,7 +160,7 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
                                 promise.setResult(null)
                             }
                             binaries.size > 1 -> {
-                                project.showErrorDialog("More then one binary produced. " +
+                                project.showErrorDialog("More than one binary produced. " +
                                     "Please specify `--bin`, `--lib` or `--test` flag explicitly.")
                                 promise.setResult(null)
                             }
