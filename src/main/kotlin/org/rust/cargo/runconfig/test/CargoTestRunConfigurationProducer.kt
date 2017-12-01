@@ -65,7 +65,7 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
                 "Test ${mod.modName}"
             val testPath = mod.crateRelativePath.configPath() ?: ""
             val target = mod.containingCargoTarget ?: return null
-            if (!mod.functionList.any { it.isTest }) return null
+            if (!hasTestFunction(mod)) return null
 
             return TestConfig(mod, testName, testPath, target, false)
         }
@@ -74,6 +74,19 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
             if (base is T) return base
             if (!climbUp) return null
             return base.ancestorOrSelf()
+        }
+
+        private fun hasTestFunction(mod: RsMod): Boolean {
+            var result = false
+            mod.processExpandedItems { item ->
+                if (item is RsFunction && item.isTest) {
+                    result = true
+                    true
+                } else {
+                    false
+                }
+            }
+            return result
         }
     }
 }

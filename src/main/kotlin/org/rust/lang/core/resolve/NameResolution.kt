@@ -27,8 +27,8 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.toPsiFile
-import org.rust.stdext.chain
 import java.util.*
+import kotlin.collections.HashSet
 
 // IntelliJ Rust name resolution algorithm.
 // Collapse all methods (`ctrl shift -`) to get a bird's eye view.
@@ -392,40 +392,40 @@ fun Testmark.hitOnFalse(b: Boolean): Boolean {
 }
 
 private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> {
-    val macros: MutableList<RsMacroDefinition> = scope.macroDefinitionList
-        .filter { !needExport || missingMacroExport.hitOnFalse(it.hasMacroExport) }
-        .toMutableList()
+    val result = mutableListOf<RsMacroDefinition>()
+    loop@ for (item in scope.itemsAndMacros) {
+        when (item) {
+            is RsMacroDefinition ->
+                if (!needExport || missingMacroExport.hitOnFalse(item.hasMacroExport)) result += item
 
-    if (needExport) {
-        for (crate in scope.externCrateItemList) {
-            val reexport = crate.findOuterAttr("macro_reexport")
-                ?.metaItem?.metaItemArgs?.metaItemList
-                ?.mapNotNull { it.referenceName } ?: continue
-            val mod = crate.reference.resolve() as? RsFile ?: continue
-            val internalMacros = mod.exportedCrateMacros
+            is RsExternCrateItem ->
+                if (needExport) {
+                    val reexport = item.findOuterAttr("macro_reexport")
+                        ?.metaItem?.metaItemArgs?.metaItemList
+                        ?.mapNotNull { it.referenceName } ?: continue@loop
+                    val mod = item.reference.resolve() as? RsFile ?: continue@loop
+                    val internalMacros = mod.exportedCrateMacros
+                    result.addAll(internalMacros.filter { reexport.contains(it.name) })
+                } else if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+                    val mod = item.reference.resolve() as? RsFile ?: continue@loop
+                    result.addAll(mod.exportedCrateMacros)
+                }
 
-            macros.addAll(internalMacros.filter { reexport.contains(it.name) })
-        }
-    } else {
-        for (crate in scope.externCrateItemList.filter { missingMacroUse.hitOnFalse(it.hasMacroUse) }) {
-            val mod = crate.reference.resolve() as? RsFile ?: continue
-            macros.addAll(mod.exportedCrateMacros)
+            is RsModDeclItem ->
+                if (needExport || missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+                    val mod = item.reference.resolve() ?: continue@loop
+                    if (mod is RsMod) {
+                        result.addAll(exportedCrateMacros(mod, needExport))
+                    }
+                }
+
+            is RsModItem ->
+                if (needExport || missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+                    result.addAll(exportedCrateMacros(item, needExport))
+                }
         }
     }
-
-    // We do not care about the #[macro_use] attribute when searching for exported macros
-    for (modDecl in scope.modDeclItemList.filter { needExport || missingMacroUse.hitOnFalse(it.hasMacroUse) }) {
-        val mod = modDecl.reference.resolve() ?: continue
-        if (mod is RsMod) {
-            macros.addAll(exportedCrateMacros(mod, needExport))
-        }
-    }
-
-    // We do not care about the #[macro_use] attribute when searching for exported macros
-    for (mod in scope.modItemList.filter { needExport || missingMacroUse.hitOnFalse(it.hasMacroUse) }) {
-        macros.addAll(exportedCrateMacros(mod, needExport))
-    }
-    return macros
+    return result
 }
 
 private fun processItemMacroDeclarations(
@@ -530,49 +530,54 @@ private fun processItemDeclarations(
     originalProcessor: RsResolveProcessor,
     withPrivateImports: Boolean
 ): Boolean {
-    val macroItems = ItemsCache.build { add ->
-        for (macro in scope.macroCallList) {
-            macro.expansion?.forEach { add(it) }
-        }
+    val starImports = mutableListOf<RsUseItem>()
+    val itemImports = mutableListOf<RsUseItem>()
+
+    val directlyDeclaredNames = HashSet<String>()
+    val processor = { e: ScopeEntry ->
+        directlyDeclaredNames += e.name
+        originalProcessor(e)
     }
 
-    val (starImports, itemImports) = scope.useItemList.chain(macroItems.useItemList)
-        .filter { it.isPublic || withPrivateImports }
-        .partition { it.isStarImport }
+    fun processItem(item: RsItemElement): Boolean {
+        when (item) {
+            is RsUseItem ->
+                if (item.isPublic || withPrivateImports) {
+                    (if (item.isStarImport) starImports else itemImports) += item
+                }
 
-    // Handle shadowing of `use::*`, but only if star imports are present
-    val directlyDeclaredNames = mutableSetOf<String>()
-    val processor = if (starImports.isEmpty()) {
-        originalProcessor
-    } else {
-        { e: ScopeEntry ->
-            directlyDeclaredNames += e.name
-            originalProcessor(e)
+        // Unit like structs are both types and values
+            is RsStructItem ->
+                if (item.namespaces.intersect(ns).isNotEmpty() && processor(item)) return true
+
+            is RsModDeclItem -> if (Namespace.Types in ns) {
+                val name = item.name ?: return false
+                val mod = item.reference.resolve() ?: return false
+                if (processor(name, mod)) return true
+            }
+
+            is RsEnumItem, is RsModItem, is RsTraitItem, is RsTypeAlias ->
+                if (Namespace.Types in ns && processor(item as RsNamedElement)) return true
+
+            is RsFunction, is RsConstant ->
+                if (Namespace.Values in ns && processor(item as RsNamedElement)) return true
+
+            is RsForeignModItem ->
+                if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
+
+            is RsExternCrateItem -> {
+                val name = item.alias?.name ?: item.name ?: return false
+                val mod = item.reference.resolve() ?: return false
+                if (processor(name, mod)) return true
+            }
         }
+        return false
     }
 
+    if (scope.processExpandedItems(::processItem)) return true
 
-    // Unit like structs are both types and values
-    for (struct in scope.structItemList.chain(macroItems.structItemList)) {
-        if (struct.namespaces.intersect(ns).isNotEmpty() && processor(struct)) {
-            return true
-        }
-    }
 
     if (Namespace.Types in ns) {
-        for (modDecl in scope.modDeclItemList.chain(macroItems.modDeclItemList)) {
-            val name = modDecl.name ?: continue
-            val mod = modDecl.reference.resolve() ?: continue
-            if (processor(name, mod)) return true
-        }
-
-        if (processAll(scope.enumItemList.chain(macroItems.enumItemList), processor)
-            || processAll(scope.modItemList.chain(macroItems.modItemList), processor)
-            || processAll(scope.traitItemList.chain(macroItems.traitItemList), processor)
-            || processAll(scope.typeAliasList.chain(macroItems.typeAliasList), processor)) {
-            return true
-        }
-
         if (scope is RsFile && scope.isCrateRoot) {
             val pkg = scope.containingCargoPackage
 
@@ -589,40 +594,16 @@ private fun processItemDeclarations(
                 // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
                 // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
                 when (scope.attributes) {
-                    RsFile.Attributes.NONE -> {
-                        if (processor.lazy("std") { findStdMod("std") }) {
-                            return true
-                        }
-                    }
-                    RsFile.Attributes.NO_STD -> {
-                        if (processor.lazy("core") { findStdMod("core") }) {
-                            return true
-                        }
-                    }
-                    RsFile.Attributes.NO_CORE -> {
-                    }
+                    RsFile.Attributes.NONE ->
+                        if (processor.lazy("std") { findStdMod("std") }) return true
+
+                    RsFile.Attributes.NO_STD ->
+                        if (processor.lazy("core") { findStdMod("core") }) return true
+
+                    RsFile.Attributes.NO_CORE -> Unit
                 }
             }
         }
-
-    }
-
-    if (Namespace.Values in ns) {
-        if (processAll(scope.functionList.chain(macroItems.functionList), processor)
-            || processAll(scope.constantList.chain(macroItems.constantList), processor)) {
-            return true
-        }
-    }
-
-    for (fmod in scope.foreignModItemList.chain(macroItems.foreignModItemList)) {
-        if (processAll(fmod.functionList, processor)) return true
-        if (processAll(fmod.constantList, processor)) return true
-    }
-
-    for (crate in scope.externCrateItemList.chain(macroItems.externCrateItemList)) {
-        val name = crate.alias?.name ?: crate.name ?: continue
-        val mod = crate.reference.resolve() ?: continue
-        if (processor(name, mod)) return true
     }
 
     fun processMultiResolveWithNs(name: String, ref: RsReference, processor: RsResolveProcessor): Boolean {

@@ -5,22 +5,49 @@
 
 package org.rust.lang.core.psi.ext
 
-import org.rust.lang.core.psi.*
+import com.intellij.psi.stubs.StubElement
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.RsModItem
 
-interface RsItemsOwner : RsElement {
-    val functionList: List<RsFunction>
-    val modItemList: List<RsModItem>
-    val constantList: List<RsConstant>
-    val structItemList: List<RsStructItem>
-    val enumItemList: List<RsEnumItem>
-    val implItemList: List<RsImplItem>
-    val traitItemList: List<RsTraitItem>
-    val typeAliasList: List<RsTypeAlias>
-    val useItemList: List<RsUseItem>
-    val modDeclItemList: List<RsModDeclItem>
-    val externCrateItemList: List<RsExternCrateItem>
-    val foreignModItemList: List<RsForeignModItem>
-    val macroDefinitionList: List<RsMacroDefinition>
-    val macroCallList: List<RsMacroCall>
+interface RsItemsOwner : RsElement
+
+val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
+    get() {
+        val stubChildren: List<StubElement<*>>? = run {
+            when (this) {
+                is RsFile -> {
+                    val stub = stub
+                    if (stub != null) return@run stub.childrenStubs
+                }
+                is RsModItem -> {
+                    val stub = stub
+                    if (stub != null) return@run stub.childrenStubs
+                }
+            }
+            null
+        }
+
+        return if (stubChildren != null) {
+            stubChildren.asSequence().map { it.psi }
+        } else {
+            generateSequence(firstChild) { it.nextSibling }
+        }.filterIsInstance<RsElement>()
+    }
+
+fun RsItemsOwner.processExpandedItems(f: (RsItemElement) -> Boolean): Boolean {
+    for (psi in itemsAndMacros) {
+        when (psi) {
+            is RsMacroCall ->
+                for (expanded in psi.expansion.orEmpty()) {
+                    if (expanded is RsItemElement && f(expanded)) return true
+                }
+
+            is RsItemElement ->
+                if (f(psi)) return true
+        }
+    }
+
+    return false
 }
 
