@@ -14,6 +14,14 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
 
 class RsPsiFactory(private val project: Project) {
+    fun createFile(text: String): RsFile =
+        PsiFileFactory.getInstance(project)
+            .createFileFromText("DUMMY.rs", RsFileType, text) as RsFile
+
+    fun createMacroDefinitionBody(text: String): RsMacroDefinitionBody? = createFromText(
+        "macro rules m! $text"
+    )
+
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
         return createFromText<RsFunction>("fn main(&${if (mutable) "mut " else ""}self){}")?.selfParameter
             ?: error("Failed to create self element")
@@ -201,9 +209,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     private inline fun <reified T : RsElement> createFromText(code: String): T? =
-        PsiFileFactory.getInstance(project)
-            .createFileFromText("DUMMY.rs", RsFileType, code)
-            .descendantOfTypeStrict<T>()
+        createFile(code).descendantOfTypeStrict()
 
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling

@@ -7,7 +7,6 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.StubBasedPsiElement
-import com.intellij.psi.stubs.PsiFileStub
 import org.rust.lang.core.psi.ext.RsElement
 
 /**

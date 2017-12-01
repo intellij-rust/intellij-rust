@@ -5,17 +5,12 @@
 
 package org.rust.lang.core.macros
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.RsFileType
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsMacroDefinition
-import org.rust.lang.core.psi.RsMacroDefinitionBody
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 import org.rust.lang.core.psi.ext.macroName
 
 fun expandMacro(call: RsMacroCall): List<ExpansionResult>? {
@@ -31,27 +26,17 @@ fun expandMacro(call: RsMacroCall): List<ExpansionResult>? {
     return result
 }
 
-fun createMacroExpansionFile(project: Project, text: String): RsFile {
-    return PsiFileFactory.getInstance(project)
-        .createFileFromText("EXPANSION_MACRO.rs", RsFileType, text)
-        as RsFile
-}
-
-inline fun <reified I : RsElement> createInMemoryPsi(project: Project, code: String): I? {
-    return createMacroExpansionFile(project, code)
-        .descendantOfTypeStrict()
-}
-
-private val RsMacroDefinition.body: RsMacroDefinitionBody?
+private val RsMacroDefinition.macroDefinitionBodyStubbed: RsMacroDefinitionBody?
     get() {
         val stub = stub ?: return macroDefinitionBody
         val text = stub.macroBody ?: return null
-        return createInMemoryPsi(project, "macro_rules m! $text")
+        return RsPsiFactory(project).createMacroDefinitionBody(text)
     }
 
 private fun expandMacro(def: RsMacroDefinition, call: RsMacroCall): List<ExpansionResult>? {
-    val case = def.body?.
-        macroDefinitionCaseList?.singleOrNull()
+    val case = def.macroDefinitionBodyStubbed
+        ?.macroDefinitionCaseList
+        ?.singleOrNull()
         ?: return null
 
     val patGroup = case.macroPattern.macroBindingGroupList.singleOrNull()
@@ -94,9 +79,8 @@ fun parseBodyAsItemList(call: RsMacroCall): List<RsElement>? {
     return PsiTreeUtil.getChildrenOfTypeAsList(file, RsElement::class.java)
 }
 
-private fun PsiElement.braceListBodyText(): CharSequence? {
-    return textBetweenParens(firstChild, lastChild)
-}
+private fun PsiElement.braceListBodyText(): CharSequence? =
+    textBetweenParens(firstChild, lastChild)
 
 private fun PsiElement.textBetweenParens(bra: PsiElement?, ket: PsiElement?): CharSequence? {
     if (bra == null || ket == null || bra == ket) return null
