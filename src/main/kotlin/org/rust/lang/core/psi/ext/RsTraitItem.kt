@@ -35,13 +35,12 @@ val RsTraitItem.isStdDerivable: Boolean get() {
 }
 
 val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {
-    val result = mutableSetOf<BoundElement<RsTraitItem>>()
+    val result = mutableListOf<BoundElement<RsTraitItem>>()
     val visited = mutableSetOf<RsTraitItem>()
     fun dfs(boundTrait: BoundElement<RsTraitItem>) {
-        if (boundTrait.element in visited) return
-        visited += boundTrait.element
+        if (!visited.add(boundTrait.element)) return
         result += boundTrait
-        boundTrait.element.superTraits.forEach(::dfs)
+        boundTrait.element.superTraits.forEach { dfs(it.substitute(boundTrait.subst)) }
     }
     dfs(this)
 

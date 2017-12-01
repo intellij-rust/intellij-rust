@@ -55,12 +55,9 @@ private fun render(
         render(ty.referenced, level, unknown, anonymous, integer, float)
         }"
         is TyPointer -> "*${if (ty.mutability.isMut) "mut" else "const"} ${r(ty.referenced)}"
-        is TyTraitObject -> ty.trait.name ?: anonymous
         is TyTypeParameter -> ty.name ?: anonymous
-        is TyStructOrEnumBase -> {
-            val name = ty.item.name ?: return anonymous
-            name + if (ty.typeArguments.isEmpty()) "" else ty.typeArguments.joinToString(", ", "<", ">", transform = r)
-        }
+        is TyTraitObject -> (ty.trait.element.name ?: return anonymous) + formatTypeArguments(ty.typeArguments, r)
+        is TyStructOrEnumBase -> (ty.item.name ?: return anonymous) + formatTypeArguments(ty.typeArguments, r)
         is TyInfer -> when (ty) {
             is TyInfer.TyVar -> "_"
             is TyInfer.IntVar -> integer
@@ -71,3 +68,6 @@ private fun render(
         else -> error("unreachable")
     }
 }
+
+private fun formatTypeArguments(typeArguments: List<Ty>, r: (Ty) -> String) =
+    if (typeArguments.isEmpty()) "" else typeArguments.joinToString(", ", "<", ">", transform = r)

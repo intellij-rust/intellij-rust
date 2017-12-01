@@ -788,36 +788,40 @@ private class RsFnInferenceContext(
         }
 
         val impl = callee.impl
-        var typeParameters = when {
-            impl != null -> {
-                val typeParameters = instantiateBounds(impl)
-                impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
-                if (callee.element.owner is RsFunctionOwner.Trait) {
-                    impl.traitRef?.resolveToBoundTrait?.substitute(typeParameters)?.subst ?: emptySubstitution
-                } else {
+        var typeParameters = if (impl != null) {
+            val typeParameters = instantiateBounds(impl)
+            impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
+            if (callee.element.owner is RsFunctionOwner.Trait) {
+                impl.traitRef?.resolveToBoundTrait?.substitute(typeParameters)?.subst ?: emptySubstitution
+            } else {
+                typeParameters
+            }
+        } else {
+            // Method has been resolved to a trait, so we should add a predicate
+            // `Self : Trait<Args>` to select args and also refine method path if possible.
+            // Method path refinement needed if there are multiple impls of the same trait to the same type
+            val trait = (callee.element.owner as RsFunctionOwner.Trait).trait
+            when (callee.selfTy) {
+            // All these branches except `else` are optimization, they can be removed without loss of functionality
+                is TyTypeParameter -> callee.selfTy.getTraitBoundsTransitively()
+                    .find { it.element == trait }?.subst ?: emptySubstitution
+                is TyAnon -> callee.selfTy.getTraitBoundsTransitively()
+                    .find { it.element == trait }?.subst ?: emptySubstitution
+                is TyTraitObject -> callee.selfTy.trait.flattenHierarchy
+                    .find { it.element == trait }?.subst ?: emptySubstitution
+                else -> {
+                    val typeParameters = instantiateBounds(trait)
+                    val boundTrait = BoundElement(trait, trait.generics.associateBy { it })
+                        .substitute(typeParameters)
+                    val traitRef = TraitRef(callee.selfTy, boundTrait)
+                    fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
+                    ctx.registerMethodRefinement(methodCall, traitRef)
                     typeParameters
                 }
             }
-            callee.selfTy is TyTypeParameter -> {
-                val trait = (callee.element.owner as RsFunctionOwner.Trait).trait
-                callee.selfTy.getTraitBoundsTransitively().find { it.element == trait }?.subst ?: emptySubstitution
-            }
-            else -> {
-                // Method has been resolved to a trait, so we should add a predicate
-                // `Self : Trait<Args>` to select args and also refine method path if possible.
-                // Method path refinement needed if there are multiple impls of the same trait to the same type
-                val trait = (callee.element.owner as RsFunctionOwner.Trait).trait
-                val typeParameters = instantiateBounds(trait)
-                val boundTrait = BoundElement(trait, trait.generics.associateBy { it })
-                    .substitute(typeParameters)
-                val traitRef = TraitRef(callee.selfTy, boundTrait)
-                fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
-                if (true /*variants.size > 1*/) ctx.registerMethodRefinement(methodCall, traitRef)
-                typeParameters
-            }
         }
 
-        typeParameters += instantiateBounds(callee.element, callee.selfTy, typeParameters)
+        typeParameters = instantiateBounds(callee.element, callee.selfTy, typeParameters)
 
         val fnSubst = run {
             val typeArguments = methodCall.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }

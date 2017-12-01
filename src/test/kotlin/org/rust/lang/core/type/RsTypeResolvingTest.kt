@@ -190,6 +190,13 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }                         //^ <Self as A>::Item
     """)
 
+    fun `test generic trait object`() = testType("""
+        trait Trait<A> {}
+
+        fn foo(_: &Trait<u8>) { unimplemented!() }
+                  //^ Trait<u8>
+    """)
+
     fun `test impl Trait`() = testType("""
         trait Trait { }
 
