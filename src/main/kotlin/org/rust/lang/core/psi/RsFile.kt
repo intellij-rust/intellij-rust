@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.ext.*
@@ -79,7 +78,7 @@ class RsFile(
         }
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsInnerAttr::class.java)
+        get() = childrenOfType()
 
     val attributes: Attributes
         get() {

@@ -35,13 +35,14 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>, RsM
 
 }
 
-val RsMacroCall.macroName: String get() {
-    val stub = stub
-    if (stub != null) return stub.macroName
-    return referenceNameElement.text
-}
+val RsMacroCall.macroName: String
+    get() {
+        val stub = stub
+        if (stub != null) return stub.macroName
+        return referenceNameElement.text
+    }
 
 val RsMacroCall.expansion: List<ExpansionResult>?
-    get() = CachedValuesManager.getCachedValue(this, {
+    get() = CachedValuesManager.getCachedValue(this) {
         CachedValueProvider.Result.create(expandMacro(this), PsiModificationTracker.MODIFICATION_COUNT)
-    })
+    }

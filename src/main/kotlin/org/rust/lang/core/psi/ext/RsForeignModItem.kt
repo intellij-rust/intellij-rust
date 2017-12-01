@@ -21,7 +21,7 @@ abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStu
     constructor(stub: RsPlaceholderStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
     override val outerAttrList: List<RsOuterAttr>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, RsOuterAttr::class.java)
+        get() = childrenOfType()
 
     override val isPublic: Boolean get() = false // visibility does not affect foreign mods
 

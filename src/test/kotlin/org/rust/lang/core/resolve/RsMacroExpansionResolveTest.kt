@@ -5,11 +5,9 @@
 
 package org.rust.lang.core.resolve
 
+private const val `$` = '$'
 
-class RsMacroExpansionResolveTest: RsResolveTestBase() {
-    @Suppress("PrivatePropertyName")
-    private val `$` = '$'
-
+class RsMacroExpansionResolveTest : RsResolveTestBase() {
     fun `test lazy static`() = checkByCode("""
         #[macro_use]
         extern crate lazy_static;

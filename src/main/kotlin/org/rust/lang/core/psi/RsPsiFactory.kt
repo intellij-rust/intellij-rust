@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
 
 class RsPsiFactory(private val project: Project) {
-    fun createFile(text: String): RsFile =
+    fun createFile(text: CharSequence): RsFile =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, text) as RsFile
 
