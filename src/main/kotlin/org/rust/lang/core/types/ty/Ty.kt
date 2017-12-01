@@ -23,6 +23,7 @@ val emptySubstitution: Substitution = emptyMap()
 typealias TypeFlags = Int
 const val HAS_TY_INFER_MASK: Int = 1
 const val HAS_TY_TYPE_PARAMETER_MASK: Int = 2
+const val HAS_TY_PROJECTION_MASK: Int = 4
 
 /**
  * Represents both a type, like `i32` or `S<Foo, Bar>`, as well
@@ -74,10 +75,13 @@ val Ty.hasTyInfer
 val Ty.hasTyTypeParameters
     get(): Boolean = BitUtil.isSet(flags, HAS_TY_TYPE_PARAMETER_MASK)
 
-fun Substitution.substituteInValues(map: Substitution): Substitution =
+val Ty.hasTyProjection
+    get(): Boolean = BitUtil.isSet(flags, HAS_TY_PROJECTION_MASK)
+
+fun <K, V : TypeFoldable<V>> Map<K, V>.substituteInValues(map: Substitution): Map<K, V> =
     mapValues { (_, value) -> value.substitute(map) }
 
-fun Substitution.foldValues(folder: TypeFolder): Substitution =
+fun <K, V : TypeFoldable<V>> Map<K, V>.foldValues(folder: TypeFolder): Map<K, V> =
     mapValues { (_, value) -> value.foldWith(folder) }
 
 fun Substitution.get(psi: RsTypeParameter): Ty? {
@@ -85,7 +89,7 @@ fun Substitution.get(psi: RsTypeParameter): Ty? {
 }
 
 fun mergeFlags(element: BoundElement<*>): TypeFlags =
-    element.subst.values.fold(0) { a, b -> a or b.flags }
+    element.subst.values.fold(0) { a, b -> a or b.flags } or element.assoc.values.fold(0) { a, b -> a or b.flags }
 
 fun mergeFlags(tys: List<Ty>): TypeFlags =
     tys.fold(0) { a, b -> a or b.flags }

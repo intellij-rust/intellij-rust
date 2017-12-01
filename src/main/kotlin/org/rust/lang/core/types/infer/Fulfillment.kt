@@ -5,14 +5,12 @@
 
 package org.rust.lang.core.types.infer
 
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.SelectionResult
-import org.rust.lang.core.resolve.withSubst
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInfer
+import org.rust.lang.core.types.ty.TyProjection
 
 sealed class Predicate: TypeFoldable<Predicate> {
     /** where T : Bar<A,B,C> */
@@ -26,19 +24,17 @@ sealed class Predicate: TypeFoldable<Predicate> {
 
     /** where <T as TraitRef>::Name == X */
     data class Projection(
-        val selfTy: Ty,
-        val trait: RsTraitItem,
-        val target: RsTypeAlias,
+        val projectionTy: TyProjection,
         val ty: Ty
     ): Predicate() {
         override fun superFoldWith(folder: TypeFolder): Projection =
-            Projection(selfTy.foldWith(folder), trait, target, ty.foldWith(folder))
+            Projection(projectionTy.foldWith(folder) as TyProjection, ty.foldWith(folder))
 
         override fun superVisitWith(visitor: TypeVisitor): Boolean =
-            selfTy.visitWith(visitor) || ty.visitWith(visitor)
+            projectionTy.visitWith(visitor) || ty.visitWith(visitor)
 
         override fun toString(): String =
-            "<$selfTy as ${trait.name}>::${target.name} == $ty"
+            "$projectionTy == $ty"
     }
 
     /** where `T1 == T2` */
@@ -200,13 +196,8 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
                 return ProcessPredicateResult.Ok()
             }
             is Predicate.Projection -> {
-                val selfTy = predicate.selfTy
-                if (selfTy is TyInfer) return ProcessPredicateResult.NoChanges
-                val result = lookup.selectProjection(
-                    TraitRef(selfTy, predicate.trait.withSubst()), // TODO use subst
-                    predicate.target,
-                    obligation.recursionDepth
-                )
+                if (predicate.projectionTy.type is TyInfer) return ProcessPredicateResult.NoChanges
+                val result = lookup.selectProjection(predicate.projectionTy, obligation.recursionDepth)
                 return when (result) {
                     is SelectionResult.Err -> ProcessPredicateResult.Err
                     is SelectionResult.Ambiguous -> ProcessPredicateResult.NoChanges

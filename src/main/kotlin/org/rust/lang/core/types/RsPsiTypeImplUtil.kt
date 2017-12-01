@@ -21,7 +21,7 @@ object RsPsiTypeImplUtil {
         if (typeReference != null) return typeReference.type
         return when (psi.owner) {
             is RsAbstractableOwner.Free -> TyUnknown
-            is RsAbstractableOwner.Trait -> TyTypeParameter.associated(psi)
+            is RsAbstractableOwner.Trait -> TyProjection.valueOf(psi)
             is RsAbstractableOwner.Impl -> TyUnknown
             is RsAbstractableOwner.Foreign -> TyUnknown
         }

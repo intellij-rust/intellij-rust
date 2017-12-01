@@ -378,16 +378,10 @@ class RsInferenceContext(
 
     fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T, recursionDepth: Int = 0): TyWithObligations<T> {
         val obligations = mutableListOf<Obligation>()
-        val normTy = ty.foldTyTypeParameterWith {
-            val p = it.parameter
-            if (p is TyTypeParameter.AssociatedType) {
-                val selfTy = p.type
-                val tyVar = typeVarForParam(it)
-                obligations.add(Obligation(recursionDepth + 1, Predicate.Projection(selfTy, p.trait, p.target, tyVar)))
-                tyVar
-            } else {
-                it
-            }
+        val normTy = ty.foldTyProjectionWith {
+            val tyVar = TyInfer.TyVar(it)
+            obligations.add(Obligation(recursionDepth + 1, Predicate.Projection(it, tyVar)))
+            tyVar
         }
 
         return TyWithObligations(normTy, obligations)
@@ -1441,7 +1435,7 @@ private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
         .flatMap {
             val (element, subst) = (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve()
                 ?: return@flatMap emptySequence<TraitRef>()
-            val selfTy = ((element as? RsTypeDeclarationElement)?.declaredType as? TyTypeParameter)
+            val selfTy = ((element as? RsTypeDeclarationElement)?.declaredType)
                 ?.substitute(subst)
                 ?: return@flatMap emptySequence<TraitRef>()
             it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)

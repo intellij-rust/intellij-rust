@@ -37,11 +37,11 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
             is TyTypeParameter -> {
                 when (parameter) {
                     is TyTypeParameter.Named -> parameter.parameter
-                    is TyTypeParameter.AssociatedType -> parameter.target
                     // TODO: support self type parameter
                     else -> null
                 }
             }
+            is TyProjection -> target
             is TyReference -> referenced.baseTypeDeclaration()
             is TyPointer -> referenced.baseTypeDeclaration()
             is TyArray -> base.baseTypeDeclaration()
