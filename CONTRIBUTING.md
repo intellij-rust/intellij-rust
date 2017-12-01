@@ -135,6 +135,7 @@ change. Common tags are:
   * TY for type inference
   * COMP for code completion
   * STUB for PSI stubs
+  * MACRO for macro expansion
   
   
   * FMT for formatter
