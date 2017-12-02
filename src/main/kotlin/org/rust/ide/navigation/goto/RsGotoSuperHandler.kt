@@ -12,9 +12,13 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsModDeclItem
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.itemsAndMacros
+import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.superMethod
 
 class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
     override fun startInWriteAction() = false
@@ -46,7 +50,6 @@ fun gotoSuperTarget(source: PsiElement): NavigatablePsiElement? {
 
     val mod = modOrMethod as RsMod
     val superMod = mod.`super` ?: return null
-    return superMod.modDeclItemList.orEmpty()
-        .find { it.reference.resolve() == mod }
+    return superMod.itemsAndMacros.filterIsInstance<RsModDeclItem>().find { it.reference.resolve() == mod }
         ?: superMod
 }

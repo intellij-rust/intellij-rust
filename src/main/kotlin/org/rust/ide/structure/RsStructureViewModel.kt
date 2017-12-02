@@ -15,9 +15,7 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.NavigatablePsiElement
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.buildList
 
 class RsStructureViewModel(editor: Editor?, file: RsFile) : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
@@ -68,19 +66,18 @@ private class RsStructureViewElement(
                     }
                 }
                 is RsMod -> buildList {
-                    addAll(psi.enumItemList)
-                    addAll(psi.functionList)
-                    addAll(psi.implItemList)
-                    addAll(psi.modDeclItemList)
-                    addAll(psi.modItemList)
-                    addAll(psi.constantList)
-                    addAll(psi.structItemList)
-                    addAll(psi.traitItemList)
-                    addAll(psi.typeAliasList)
-                    addAll(psi.macroDefinitionList)
-                    val foreignModItemList = psi.foreignModItemList
-                    addAll(foreignModItemList.flatMap { it.functionList })
-                    addAll(foreignModItemList.flatMap { it.constantList })
+                    for (item in psi.itemsAndMacros) {
+                        when (item) {
+                            is RsMacroDefinition, is RsFunction, is RsModDeclItem, is RsModItem,
+                            is RsStructOrEnumItemElement, is RsTraitOrImpl, is RsTypeAlias, is RsConstant ->
+                                add(item)
+
+                            is RsForeignModItem -> {
+                                addAll(item.functionList)
+                                addAll(item.constantList)
+                            }
+                        }
+                    }
                 }
                 is RsStructItem -> psi.blockFields?.fieldDeclList.orEmpty()
                 is RsEnumVariant -> psi.blockFields?.fieldDeclList.orEmpty()
