@@ -19,7 +19,7 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
 
         override fun visitMacroCall(o: RsMacroCall) {
-            val macroName = o.macroName ?: return
+            val macroName = o.macroName
             val assertMacroArg = o.assertMacroArgument ?: return
             if (macroName != "assert") return
 
