@@ -9,9 +9,12 @@ import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.RsVis
 import javax.swing.Icon
 
-interface RsVisibilityOwner : RsElement {
-    val vis: RsVis?
+interface RsVisible : RsElement {
     val isPublic: Boolean
+}
+
+interface RsVisibilityOwner : RsVisible {
+    val vis: RsVis?
 }
 
 fun RsVisibilityOwner.iconWithVisibility(flags: Int, icon: Icon): Icon =

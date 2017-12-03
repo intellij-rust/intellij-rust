@@ -47,19 +47,7 @@ class RsFile(
         return super.setName(nameWithExtension)
     }
 
-    override val `super`: RsMod?
-        get() {
-            // XXX: without this we'll close over `thisFile`, and it's verboten
-            // to store references to PSI inside `CachedValueProvider` other than
-            // the key PSI element
-            val originalFile = originalFile
-            return CachedValuesManager.getCachedValue(originalFile, {
-                CachedValueProvider.Result.create(
-                    RsModulesIndex.getSuperFor(originalFile),
-                    PsiModificationTracker.MODIFICATION_COUNT
-                )
-            })
-        }
+    override val `super`: RsMod? get() = declaration?.containingMod
 
     override val modName: String? = if (name != RsMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
 
@@ -77,6 +65,11 @@ class RsFile(
             return cargoWorkspace?.isCrateRoot(file) ?: false
         }
 
+    override val isPublic: Boolean get() {
+        if (isCrateRoot) return true
+        return declaration?.isPublic == true
+    }
+
     override val innerAttrList: List<RsInnerAttr>
         get() = childrenOfType()
 
@@ -88,6 +81,19 @@ class RsFile(
             if (queryAttributes.hasAtomAttribute("no_std")) return Attributes.NO_STD
             return Attributes.NONE
         }
+
+    val declaration: RsModDeclItem? get() {
+        // XXX: without this we'll close over `thisFile`, and it's verboten
+        // to store references to PSI inside `CachedValueProvider` other than
+        // the key PSI element
+        val originalFile = originalFile
+        return CachedValuesManager.getCachedValue(originalFile, {
+            CachedValueProvider.Result.create(
+                RsModulesIndex.getDeclarationFor(originalFile),
+                PsiModificationTracker.MODIFICATION_COUNT
+            )
+        })
+    }
 
     enum class Attributes {
         NO_CORE, NO_STD, NONE

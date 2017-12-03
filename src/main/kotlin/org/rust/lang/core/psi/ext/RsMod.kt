@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.psi.PsiDirectory
 import java.util.*
 
-interface RsMod : RsQualifiedNamedElement, RsItemsOwner {
+interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
     /**
      *  Returns a parent module (`super::` in paths).
      *
