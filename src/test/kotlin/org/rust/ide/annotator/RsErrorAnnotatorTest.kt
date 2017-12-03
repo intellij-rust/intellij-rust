@@ -5,8 +5,6 @@
 
 package org.rust.ide.annotator
 
-import org.junit.ComparisonFailure
-
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
@@ -631,24 +629,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test macro mod fn no E0428`() = expect<ComparisonFailure> {
-        checkErrors("""
+    fun `test macro mod fn no E0428`() = checkErrors("""
         macro_rules! example {
             () => ()
         }
         mod example { }
         fn example() { }
     """)
-    }
 
-    fun `test macro struct no E0428`() = expect<ComparisonFailure> {
-        checkErrors("""
+    fun `test macro struct no E0428`() = checkErrors("""
         macro_rules! example {
             () => ()
         }
         struct example { }
     """)
-    }
 
     fun `test duplicate macro no E0428`() = checkErrors("""
         macro_rules! example {
