@@ -736,7 +736,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
         fn main() {
             let f = some_module::Foo;
-            f.<error>method</error>();
+            f.<error descr="Method `method` is private [E0624]">method</error>();
         }
     """)
 
@@ -845,7 +845,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
         fn main() {
             let f = some_module::Foo::new();
-            f.<error>x</error>;// error: field `x` of struct `some_module::Foo` is private
+            f.<error descr="Field `x` of struct `some_module::Foo` is private [E0616]">x</error>;
         }
     """)
 
@@ -920,7 +920,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             const BAR: u32 = 0x_a_bad_1dea_u32;
         }
 
-        use <error>foo::BAR</error>;
+        use <error descr="Constant `foo::BAR` is private [E0603]">foo::BAR</error>;
     """)
 
     fun `test not const outside scope E0603`() = checkErrors("""
@@ -936,7 +936,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             fn bar() {}
         }
 
-        use <error>foo::bar</error>;
+        use <error descr="Function `foo::bar` is private [E0603]">foo::bar</error>;
     """)
 
     fun `test not fn outside scope E0603`() = checkErrors("""
@@ -952,7 +952,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             struct Bar;
         }
 
-        use <error>foo::Bar</error>;
+        use <error descr="Struct `foo::Bar` is private [E0603]">foo::Bar</error>;
     """)
 
     fun `test struct fn outside scope E0603`() = checkErrors("""
@@ -971,7 +971,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         //- main.rs
             mod foo;
 
-            use <error>foo::bar</error>::Foo;
+            use <error descr="Module `foo::bar` is private [E0603]">foo::bar</error>::Foo;
     """)
 
     fun `test module is public E0603`() = checkDontTouchAstInOtherFiles("""
