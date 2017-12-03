@@ -89,11 +89,25 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             }
         }
 
-        val error = when (ref) {
-            is RsFieldLookup -> RsDiagnostic.AccessError(ref, RsErrorCode.E0616)
-            is RsMethodCall -> RsDiagnostic.AccessError(ref.identifier, RsErrorCode.E0624)
-            is RsPath -> RsDiagnostic.AccessError(ref, RsErrorCode.E0603)
-            else -> return
+        val error = when {
+            element is RsFieldDecl -> {
+                val structName = element.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
+                RsDiagnostic.StructFieldAccessError(ref, ref.referenceName, structName)
+            }
+            ref is RsMethodCall -> RsDiagnostic.AccessError(ref.identifier, RsErrorCode.E0624, "Method")
+            else -> {
+                val itemType = when (element) {
+                    is RsMod -> "Module"
+                    is RsConstant -> "Constant"
+                    is RsFunction -> "Function"
+                    is RsStructItem -> "Struct"
+                    is RsEnumItem -> "Enum"
+                    is RsTraitItem -> "Trait"
+                    is RsTypeAlias -> "Type alias"
+                    else -> "Item"
+                }
+                RsDiagnostic.AccessError(ref, RsErrorCode.E0603, itemType)
+            }
         }
         error.addToHolder(holder)
     }
