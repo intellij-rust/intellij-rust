@@ -7,7 +7,7 @@ package org.rust.ide.annotator
 
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
-import org.rust.FileTree
+import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 
 abstract class RsAnnotatorTestBase : RsTestBase() {
@@ -36,8 +36,8 @@ abstract class RsAnnotatorTestBase : RsTestBase() {
         @Language("Rust") after: String
     ) = checkByText(before, after) { applyQuickFix(fixName) }
 
-    protected fun checkDontTouchAstInOtherFiles(fileTree: FileTree, checkInfo: Boolean = false, filePath: String? = null) {
-        fileTree.create()
+    protected fun checkDontTouchAstInOtherFiles(@Language("Rust") text: String, checkInfo: Boolean = false, filePath: String? = null) {
+        fileTreeFromText(text).create()
         myFixture.configureFromTempProjectFile("main.rs")
 
         (myFixture as CodeInsightTestFixtureImpl) // meh
