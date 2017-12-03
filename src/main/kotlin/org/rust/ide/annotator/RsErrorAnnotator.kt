@@ -17,7 +17,6 @@ import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.impl.RsMembersImpl
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.types.inference
@@ -69,25 +68,31 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         checkReferenceIsPublic(field, o, holder)
     }
 
-    private fun checkReferenceIsPublic(element: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
-        val ref = element.reference.resolve() as? RsVisibilityOwner ?: return
-        if (ref.isPublic) return
-        val refMod = ref.contextStrict<RsMod>() ?: return
+    private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
+        val element = ref.reference.resolve() as? RsVisible ?: return
+        if (element.isPublic) return
+        val elementMod = element.contextOrSelf<RsMod>() ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
-        if (refMod == oMod) return
-        if (oMod.superMods.contains(refMod)) return
-        val memberImpls = ref.parent as? RsMembersImpl
-        if (memberImpls != null) {
-            val parent = memberImpls.context ?: return
-            when (parent) {
-                is RsImplItem -> if (parent.traitRef != null) return
-                is RsTraitItem -> return
+        if (oMod.superMods.contains(elementMod)) return
+
+        if (element is RsMod) {
+            // direct child module can be private
+            if (element.`super` == oMod) return
+        } else {
+            val members = element.parent as? RsMembers
+            if (members != null) {
+                val parent = members.context ?: return
+                when (parent) {
+                    is RsImplItem -> if (parent.traitRef != null) return
+                    is RsTraitItem -> return
+                }
             }
         }
-        val error = when (element) {
-            is RsFieldLookup -> RsDiagnostic.AccessError(element, RsErrorCode.E0616)
-            is RsMethodCall -> RsDiagnostic.AccessError(element.identifier, RsErrorCode.E0624)
-            is RsPath -> RsDiagnostic.AccessError(element, RsErrorCode.E0603)
+
+        val error = when (ref) {
+            is RsFieldLookup -> RsDiagnostic.AccessError(ref, RsErrorCode.E0616)
+            is RsMethodCall -> RsDiagnostic.AccessError(ref.identifier, RsErrorCode.E0624)
+            is RsPath -> RsDiagnostic.AccessError(ref, RsErrorCode.E0603)
             else -> return
         }
         error.addToHolder(holder)
