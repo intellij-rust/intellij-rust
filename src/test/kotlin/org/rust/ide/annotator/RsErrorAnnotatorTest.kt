@@ -5,6 +5,8 @@
 
 package org.rust.ide.annotator
 
+import org.junit.ComparisonFailure
+
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
@@ -626,6 +628,34 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
 
             #[cfg(windows)] fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
             fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
+        }
+    """)
+
+    fun `test macro mod fn no E0428`() = expect<ComparisonFailure> {
+        checkErrors("""
+        macro_rules! example {
+            () => ()
+        }
+        mod example { }
+        fn example() { }
+    """)
+    }
+
+    fun `test macro struct no E0428`() = expect<ComparisonFailure> {
+        checkErrors("""
+        macro_rules! example {
+            () => ()
+        }
+        struct example { }
+    """)
+    }
+
+    fun `test duplicate macro no E0428`() = checkErrors("""
+        macro_rules! example {
+            () => ()
+        }
+        macro_rules! example {
+            () => ()
         }
     """)
 
