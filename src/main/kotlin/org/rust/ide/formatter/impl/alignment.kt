@@ -10,7 +10,7 @@ import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.lang.core.psi.RsElementTypes.*
 
 fun RsFmtBlock.getAlignmentStrategy(): RsAlignmentStrategy = when (node.elementType) {
-    TUPLE_EXPR, VALUE_ARGUMENT_LIST, in SPECIAL_MACRO_ARGS, USE_GLOB_LIST ->
+    TUPLE_EXPR, VALUE_ARGUMENT_LIST, in SPECIAL_MACRO_ARGS, USE_GROUP ->
         RsAlignmentStrategy.wrap()
             .alignIf { child, parent, _ ->
                 // Do not align if we have only one argument as this may lead to

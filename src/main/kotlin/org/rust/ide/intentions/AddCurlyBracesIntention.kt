@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.isStarImport
 import org.rust.lang.core.psi.ext.ancestorStrict
 
@@ -32,7 +33,7 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
     override fun getFamilyName() = text
 
     class Context(
-        val useItem: RsUseItem,
+        val useSpeck: RsUseSpeck,
         val path: RsPath,
         val semicolon: PsiElement
     )
@@ -40,9 +41,10 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val useItem = element.ancestorStrict<RsUseItem>() ?: return null
         val semicolon = useItem.semicolon ?: return null
-        val path = useItem.path ?: return null
-        if (useItem.useGlobList != null || useItem.isStarImport) return null
-        return Context(useItem, path, semicolon)
+        val useSpeck = useItem.useSpeck ?: return null
+        val path = useSpeck.path ?: return null
+        if (useSpeck.useGroup != null || useSpeck.isStarImport) return null
+        return Context(useSpeck, path, semicolon)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
@@ -50,15 +52,15 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
 
         // Create a new use item that contains a glob list that we can use.
         // Then extract from it the glob list and the double colon.
-        val newUseItem = RsPsiFactory(project).createUseItem("dummy::{${identifier.text}}")
-        val newGlobList = newUseItem.useGlobList ?: return
-        val newColonColon = newUseItem.coloncolon ?: return
+        val newUseSpeck = RsPsiFactory(project).createUseSpeck("dummy::{${identifier.text}}")
+        val newGroup = newUseSpeck.useGroup ?: return
+        val newColonColon = newUseSpeck.coloncolon ?: return
 
-        val alias = ctx.useItem.alias
+        val alias = ctx.useSpeck.alias
 
         // If there was an alias before, insert it into the new glob item
         if (alias != null) {
-            val newGlobItem = newGlobList.children[0]
+            val newGlobItem = newGroup.children[0]
             newGlobItem.addAfter(alias, newGlobItem.lastChild)
         }
 
@@ -74,8 +76,8 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
         alias?.delete()
 
         // Insert the double colon and glob list into the use item
-        ctx.useItem.addBefore(newColonColon, ctx.semicolon)
-        ctx.useItem.addBefore(newGlobList, ctx.semicolon)
+        ctx.useSpeck.addBefore(newColonColon, ctx.semicolon)
+        ctx.useSpeck.addBefore(newGroup, ctx.semicolon)
 
         editor.caretModel.moveToOffset(ctx.semicolon.textRange.startOffset - 1)
     }

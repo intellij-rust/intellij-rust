@@ -446,7 +446,7 @@ Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscr
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-UseItem ::= AttrsAndVis use UsePath ';' {
+UseItem ::= AttrsAndVis use UseSpeck ';' {
   pin = "use"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement" ]
@@ -462,30 +462,25 @@ UseItem ::= AttrsAndVis use UsePath ';' {
 //  foo::bar::{self, foo};
 //  foo::{};
 //  ::foo::*;
-private UsePath ::= '::'? UseProjection
-                  | PathWithoutTypes [ Alias | '::' UseProjection ]
+UseSpeck ::= PathWithoutTypes [ Alias | '::' UseSpeckProjection ]
+           | '::'? UseSpeckProjection {
+  extends = "org.rust.lang.core.psi.ext.RsUseSpeckImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsUseSpeckStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-private UseProjection ::= UseGlobList | '*'
-
-UseGlobList ::= '{' UseGlob_with_recover* '}' {
+private UseSpeckProjection ::= '*' | UseGroup
+UseGroup ::= '{' UseSpeck_with_recover* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-UseGlob ::= (identifier | self) Alias? {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsUseGlobImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RsUseGlobStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-private UseGlob_with_recover ::= !'}' UseGlob (',' | &'}') {
+private UseSpeck_with_recover ::= !'}' UseSpeck (','|&'}') {
   pin = 1
-  recoverWhile = UseGlob_recover
+  recoverWhile = UseSpeck_recover
 }
-private UseGlob_recover ::= !('}' | self | identifier)
+private UseSpeck_recover ::= !('}' | self | identifier | '::' | '*' )
 
 Alias ::= as identifier {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]

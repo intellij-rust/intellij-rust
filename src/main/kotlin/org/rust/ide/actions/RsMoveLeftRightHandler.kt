@@ -24,7 +24,7 @@ class RsMoveLeftRightHandler : MoveElementLeftRightHandler() {
             is RsTupleFields -> element.tupleFieldDeclList
             is RsTypeParamBounds -> element.polyboundList
             is RsTypeParameterList -> element.lifetimeParameterList + element.typeParameterList
-            is RsUseGlobList -> element.useGlobList
+            is RsUseGroup -> element.useSpeckList
             is RsValueArgumentList -> element.exprList
             is RsValueParameterList -> element.valueParameterList
             is RsVecMacroArgument -> if (element.semicolon == null) element.exprList else emptyList()
