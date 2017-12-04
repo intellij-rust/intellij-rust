@@ -122,6 +122,10 @@ class RsPsiFactory(private val project: Project) {
         createFromText("use $text;")
             ?: error("Failed to create use item from text: `$text`")
 
+    fun createUseSpeck(text: String): RsUseSpeck =
+        createFromText("use $text;")
+            ?: error("Failed to create use item from text: `$text`")
+
     fun createMembers(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>, traitConstants: List<RsConstant>): RsMembers {
         val members = (
             traitConstants.map { "    const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +

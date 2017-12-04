@@ -73,7 +73,7 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
         override fun visitMatchBody(o: RsMatchBody) = fold(o)
 
-        override fun visitUseGlobList(o: RsUseGlobList) = fold(o)
+        override fun visitUseGroup(o: RsUseGroup) = fold(o)
 
         override fun visitMembers(o: RsMembers) = foldBetween(o, o.lbrace, o.rbrace)
 

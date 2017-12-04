@@ -12,8 +12,6 @@ import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsUseItemStub
 
-val RsUseItem.isStarImport: Boolean get() = stub?.isStarImport ?: (mul != null) // I hate operator precedence
-
 abstract class RsUseItemImplMixin : RsStubbedElementImpl<RsUseItemStub>, RsUseItem {
 
     constructor (node: ASTNode) : super(node)

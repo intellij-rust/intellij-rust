@@ -11,11 +11,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.RsUseGlob
+import org.rust.lang.core.psi.RsUseGroup
+import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.getNextNonCommentSibling
-import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
-import org.rust.lang.core.psi.ext.isSelf
 
 /**
  * Pre format processor ensuring that if an import statement only contains a single import from a crate that
@@ -41,7 +39,7 @@ class RsSingleImportRemoveBracesFormatProcessor : PreFormatProcessor {
                     super.visitElement(element)
                 }
 
-                if (element is RsUseGlob && removeBracesAroundSingleImport(element)) {
+                if (element is RsUseGroup && removeBracesAroundSingleImport(element)) {
                     numRemovedBraces += 2
                 }
             }
@@ -49,20 +47,36 @@ class RsSingleImportRemoveBracesFormatProcessor : PreFormatProcessor {
         return range.grown(-numRemovedBraces)
     }
 
-    fun removeBracesAroundSingleImport(element: RsUseGlob): Boolean {
-        if (element.elementType != RsElementTypes.USE_GLOB) return false
-        if (element.children.size > 1) return false
-
-        val leftBrace = element.getPrevNonCommentSibling() ?: return false
-        val rightBrace = element.getNextNonCommentSibling() ?: return false
-        if (leftBrace.elementType == RsElementTypes.LBRACE &&
-            rightBrace.elementType == RsElementTypes.RBRACE &&
-            !element.isSelf) {
-            leftBrace.delete()
-            rightBrace.delete()
-            return true
-        }
-
-        return false
+    fun removeBracesAroundSingleImport(group: RsUseGroup): Boolean {
+        val (lbrace, rbrace) = group.asTrivial ?: return false
+        lbrace.delete()
+        rbrace.delete()
+        return true
     }
 }
+
+
+data class TrivialUseGroup(
+    val lbrace: PsiElement,
+    val rbrace: PsiElement,
+    val name: String
+)
+
+val RsUseGroup.asTrivial: TrivialUseGroup?
+    get() {
+        val lbrace = lbrace
+        val rbrace = rbrace ?: return null
+        if (!(lbrace.elementType == RsElementTypes.LBRACE && rbrace.elementType == RsElementTypes.RBRACE)) {
+            return null
+        }
+        val speck = useSpeckList.singleOrNull() ?: return null
+        if (!speck.isIdentifier) return null
+        return TrivialUseGroup(lbrace, rbrace, speck.text)
+    }
+
+private val RsUseSpeck.isIdentifier: Boolean
+    get() {
+        val path = path
+        if (!(path != null && path == firstChild && path == lastChild)) return false
+        return (path.identifier != null && path.path == null && path.coloncolon == null)
+    }

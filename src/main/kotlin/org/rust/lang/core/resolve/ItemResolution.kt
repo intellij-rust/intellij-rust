@@ -36,8 +36,8 @@ fun processItemDeclarations(
     originalProcessor: RsResolveProcessor,
     withPrivateImports: Boolean
 ): Boolean {
-    val starImports = mutableListOf<RsUseItem>()
-    val itemImports = mutableListOf<RsUseItem>()
+    val starImports = mutableListOf<RsUseSpeck>()
+    val itemImports = mutableListOf<RsUseSpeck>()
 
     val directlyDeclaredNames = HashSet<String>()
     val processor = { e: ScopeEntry ->
@@ -49,7 +49,10 @@ fun processItemDeclarations(
         when (item) {
             is RsUseItem ->
                 if (item.isPublic || withPrivateImports) {
-                    (if (item.isStarImport) starImports else itemImports) += item
+                    val rootSpeck = item.useSpeck ?: return false
+                    forEachLeafSpeck(rootSpeck) { speck ->
+                        (if (speck.isStarImport) starImports else itemImports) += speck
+                    }
                 }
 
         // Unit like structs are both types and values
@@ -112,29 +115,19 @@ fun processItemDeclarations(
         }
     }
 
-    for (use in itemImports) {
-        val globList = use.useGlobList
-        if (globList == null) {
-            val path = use.path ?: continue
-            val name = use.alias?.name ?: path.referenceName ?: continue
-            if (processMultiResolveWithNs(name, ns, path.reference, processor)) return true
-        } else {
-            for (glob in globList.useGlobList) {
-                val name = glob.alias?.name
-                    ?: (if (glob.isSelf) use.path?.referenceName else null)
-                    ?: glob.referenceName
-                    ?: continue
-                if (processMultiResolveWithNs(name, ns, glob.reference, processor)) return true
-            }
-        }
+    for (speck in itemImports) {
+        check(speck.useGroup == null)
+        val path = speck.path ?: continue
+        val name = speck.nameInScope ?: continue
+        if (processMultiResolveWithNs(name, ns, path.reference, processor)) return true
     }
 
     if (originalProcessor(ScopeEvent.STAR_IMPORTS)) {
         return false
     }
-    for (use in starImports) {
-        val basePath = use.path
-        val mod = (if (basePath != null) basePath.reference.resolve() else use.crateRoot)
+    for (speck in starImports) {
+        val basePath = speck.path
+        val mod = (if (basePath != null) basePath.reference.resolve() else speck.crateRoot)
             ?: continue
 
         val found = processItemOrEnumVariantDeclarations(mod, ns,
@@ -145,6 +138,16 @@ fun processItemDeclarations(
     }
 
     return false
+}
+
+private val RsUseSpeck.nameInScope: String? get() {
+    alias?.name?.let { return it }
+    val baseName = path?.referenceName ?: return null
+    if (baseName == "self") {
+        NameResolutionTestmarks.selfInGroupName.hit()
+        return qualifier?.referenceName
+    }
+    return baseName
 }
 
 private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsReference, processor: RsResolveProcessor): Boolean {
@@ -176,4 +179,9 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
         if (processor(name, element)) return true
     }
     return false
+}
+
+fun forEachLeafSpeck(root: RsUseSpeck, consumer: (RsUseSpeck) -> Unit) {
+    val group = root.useGroup
+    if (group == null) consumer(root) else group.useSpeckList.forEach { forEachLeafSpeck(it, consumer) }
 }

@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 110
+        override fun getStubVersion(): Int = 111
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -94,8 +94,8 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "FIELD_DECL" -> RsFieldDeclStub.Type
     "ALIAS" -> RsAliasStub.Type
 
-    "USE_GLOB_LIST" -> RsPlaceholderStub.Type("USE_GLOB_LIST", ::RsUseGlobListImpl)
-    "USE_GLOB" -> RsUseGlobStub.Type
+    "USE_SPECK" -> RsUseSpeckStub.Type
+    "USE_GROUP" -> RsPlaceholderStub.Type("USE_GROUP", ::RsUseGroupImpl)
 
     "PATH" -> RsPathStub.Type
     "TYPE_QUAL" -> RsPlaceholderStub.Type("TYPE_QUAL", ::RsTypeQualImpl)
@@ -175,8 +175,7 @@ class RsExternCrateItemStub(
 
 class RsUseItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val isPublic: Boolean,
-    val isStarImport: Boolean
+    override val isPublic: Boolean
 ) : RsElementStub<RsUseItem>(parent, elementType),
     RsVisibilityStub {
 
@@ -184,21 +183,19 @@ class RsUseItemStub(
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsUseItemStub(parentStub, this,
-                dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
 
         override fun serialize(stub: RsUseItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeBoolean(stub.isPublic)
-                writeBoolean(stub.isStarImport)
             }
 
         override fun createPsi(stub: RsUseItemStub) =
             RsUseItemImpl(stub, this)
 
         override fun createStub(psi: RsUseItem, parentStub: StubElement<*>?) =
-            RsUseItemStub(parentStub, this, psi.isPublic, psi.isStarImport)
+            RsUseItemStub(parentStub, this, psi.isPublic)
 
         override fun indexStub(stub: RsUseItemStub, sink: IndexSink) {
             //NOP
@@ -206,6 +203,34 @@ class RsUseItemStub(
     }
 }
 
+class RsUseSpeckStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val isStarImport: Boolean
+) : RsElementStub<RsUseSpeck>(parent, elementType) {
+
+    object Type : RsStubElementType<RsUseSpeckStub, RsUseSpeck>("USE_SPECK") {
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsUseSpeckStub(parentStub, this,
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RsUseSpeckStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeBoolean(stub.isStarImport)
+            }
+
+        override fun createPsi(stub: RsUseSpeckStub) =
+            RsUseSpeckImpl(stub, this)
+
+        override fun createStub(psi: RsUseSpeck, parentStub: StubElement<*>?) =
+            RsUseSpeckStub(parentStub, this, psi.isStarImport)
+
+        override fun indexStub(stub: RsUseSpeckStub, sink: IndexSink) {
+            //NOP
+        }
+    }
+}
 
 class RsStructItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
@@ -624,35 +649,6 @@ class RsAliasStub(
             }
 
         override fun indexStub(stub: RsAliasStub, sink: IndexSink) {
-            //NOP
-        }
-    }
-}
-
-
-class RsUseGlobStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val referenceName: String
-) : StubBase<RsUseGlob>(parent, elementType) {
-
-    object Type : RsStubElementType<RsUseGlobStub, RsUseGlob>("USE_GLOB") {
-        override fun createPsi(stub: RsUseGlobStub) =
-            RsUseGlobImpl(stub, this)
-
-        override fun createStub(psi: RsUseGlob, parentStub: StubElement<*>?) =
-            RsUseGlobStub(parentStub, this, psi.referenceName)
-
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsUseGlobStub(parentStub, this,
-                dataStream.readName()!!.string
-            )
-
-        override fun serialize(stub: RsUseGlobStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeName(stub.referenceName)
-            }
-
-        override fun indexStub(stub: RsUseGlobStub, sink: IndexSink) {
             //NOP
         }
     }

@@ -15,9 +15,6 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
     override fun getUsageType(element: PsiElement?): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
 
     override fun getUsageType(element: PsiElement?, targets: Array<out UsageTarget>): UsageType? {
-        if (element is RsUseGlob) {
-            return UsageType("use")
-        }
         val parent = element?.goUp<RsPath>() ?: return null
         if (parent is RsBaseType) {
             val context = parent.goUp<RsBaseType>()
@@ -43,7 +40,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
             }
         }
         return when (parent) {
-            is RsUseItem -> UsageType("use")
+            is RsUseSpeck -> UsageType("use")
             is RsStructLiteral -> UsageType("init struct")
             is RsStructLiteralField -> UsageType("init field")
             is RsTraitRef -> UsageType("trait ref")
@@ -60,7 +57,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
         }
     }
 
-    inline fun <reified T : PsiElement> PsiElement.goUp(): PsiElement {
+    private inline fun <reified T : PsiElement> PsiElement.goUp(): PsiElement {
         var context = this
         while (context is T) {
             context = context.parent

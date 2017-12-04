@@ -34,7 +34,7 @@ val BRACK_DELIMITED_BLOCKS = orSet(ts(ARRAY_TYPE, ARRAY_EXPR), SPECIAL_MACRO_ARG
 val BRACK_LISTS = orSet(BRACK_DELIMITED_BLOCKS, ts(INDEX_EXPR))
 
 val BLOCK_LIKE = ts(BLOCK, BLOCK_FIELDS, STRUCT_LITERAL_BODY, MATCH_BODY, ENUM_BODY, MEMBERS)
-val BRACE_LISTS = orSet(ts(USE_GLOB_LIST), SPECIAL_MACRO_ARGS)
+val BRACE_LISTS = orSet(ts(USE_GROUP), SPECIAL_MACRO_ARGS)
 val BRACE_DELIMITED_BLOCKS = orSet(BLOCK_LIKE, BRACE_LISTS)
 
 val ANGLE_DELIMITED_BLOCKS = ts(TYPE_PARAMETER_LIST, TYPE_ARGUMENT_LIST, FOR_LIFETIMES)
@@ -105,7 +105,7 @@ fun ASTNode.treeNonWSNext(): ASTNode? {
 }
 
 data class CommaList(val listElement: IElementType, val openingBrace: IElementType, val closingBrace: IElementType) {
-    val needsSpaceBeforeClosingBrace: Boolean get() = closingBrace == RBRACE && listElement != USE_GLOB_LIST
+    val needsSpaceBeforeClosingBrace: Boolean get() = closingBrace == RBRACE && listElement != USE_GROUP
 
     companion object {
         fun forElement(elementType: IElementType): CommaList? {
@@ -116,7 +116,7 @@ data class CommaList(val listElement: IElementType, val openingBrace: IElementTy
             CommaList(BLOCK_FIELDS, LBRACE, RBRACE),
             CommaList(STRUCT_LITERAL_BODY, LBRACE, RBRACE),
             CommaList(ENUM_BODY, LBRACE, RBRACE),
-            CommaList(USE_GLOB_LIST, LBRACE, RBRACE),
+            CommaList(USE_GROUP, LBRACE, RBRACE),
 
             CommaList(TUPLE_FIELDS, LPAREN, RPAREN),
             CommaList(VALUE_PARAMETER_LIST, LPAREN, RPAREN),

@@ -115,7 +115,7 @@ class RsUseResolveTest : RsResolveTestBase() {
 
         pub mod bar { }
                //X
-    """)
+    """, NameResolutionTestmarks.selfInGroup)
 
     fun `test view path glob self fn`() = checkByCode("""
         fn f() {}
@@ -158,7 +158,7 @@ class RsUseResolveTest : RsResolveTestBase() {
                     //^
             }
         }
-    """)
+    """, NameResolutionTestmarks.selfInGroupName)
 
     fun `test use glob alias`() = checkByCode("""
         mod foo {
@@ -402,6 +402,14 @@ class RsUseResolveTest : RsResolveTestBase() {
                     //^
     """)
 
+    fun `test nested groups`() = checkByCode("""
+        mod a { pub mod b { pub mod c { pub fn foo() {} } } }
+                                              //X
+        use a::{b::{c::foo}};
+        fn main() { foo() }
+                   //^
+    """)
+
     fun `test no use`() = checkByCode("""
         fn foo() { }
 
@@ -537,5 +545,18 @@ class RsUseResolveTest : RsResolveTestBase() {
             use super::MyError;
             fn bar() -> MyError { MyError::SomeError }
         }                                   //^
+    """)
+
+    fun `test can't import methods`() = checkByCode("""
+        mod m {
+            pub enum E {}
+
+            impl E {
+                pub fn foo() {}
+            }
+        }
+
+        use self::m::E::foo;
+                        //^ unresolved
     """)
 }

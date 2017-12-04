@@ -31,7 +31,7 @@ fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
                 .withInsertHandler({ ctx, _ ->
                     val offset = ctx.tailOffset - 1
                     val inSelfParam = PsiTreeUtil.findElementOfClassAtOffset(ctx.file, offset, RsSelfParameter::class.java, false) != null
-                    if (!(ctx.isInGlob || inSelfParam)) {
+                    if (!(ctx.isInUseGroup || inSelfParam)) {
                         ctx.addSuffix("::")
                     }
                 })
@@ -53,7 +53,7 @@ fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
                 val curUseItem = context.getItemOfType<RsUseItem>()
                 if (curUseItem != null) {
                     val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
-                    if (!(hasSemicolon || context.isInGlob)) {
+                    if (!(hasSemicolon || context.isInUseGroup)) {
                         context.addSuffix(";")
                     }
                     return@handler
@@ -131,7 +131,7 @@ private fun appendSemicolon(context: InsertionContext) {
     val curUseItem = context.getItemOfType<RsUseItem>()
     if (curUseItem != null) {
         val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
-        if (!(hasSemicolon || context.isInGlob)) {
+        if (!(hasSemicolon || context.isInUseGroup)) {
             context.addSuffix(";")
         }
     }
@@ -141,8 +141,8 @@ private fun appendSemicolon(context: InsertionContext) {
 private inline fun <reified T : RsItemElement> InsertionContext.getItemOfType(strict: Boolean = false): T? =
     PsiTreeUtil.findElementOfClassAtOffset(this.file, this.tailOffset - 1, T::class.java, strict)
 
-private val InsertionContext.isInGlob: Boolean
-    get() = PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, RsUseGlobList::class.java, false) != null
+private val InsertionContext.isInUseGroup: Boolean
+    get() = PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, RsUseGroup::class.java, false) != null
 
 private val InsertionContext.alreadyHasCallParens: Boolean
     get() = nextCharIs('(')
