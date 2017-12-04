@@ -393,19 +393,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test can't import methods`() = checkByCode("""
-        mod m {
-            pub enum E {}
-
-            impl E {
-                pub fn foo() {}
-            }
-        }
-
-        use self::m::E::foo;
-                        //^ unresolved
-    """)
-
     fun `test match enum tuple variant`() = checkByCode("""
         enum E { V(S) }
         struct S;

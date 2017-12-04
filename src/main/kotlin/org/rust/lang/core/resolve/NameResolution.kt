@@ -17,18 +17,15 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroExport
 import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
+import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
 import org.rust.lang.core.resolve.ref.MethodCallee
-import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
-import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.toPsiFile
-import java.util.*
-import kotlin.collections.HashSet
 
 // IntelliJ Rust name resolution algorithm.
 // Collapse all methods (`ctrl shift -`) to get a bird's eye view.
@@ -89,22 +86,6 @@ fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, proces
 
 fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsMethodResolveProcessor): Boolean =
     processMethodDeclarationsWithDeref(lookup, receiverType, processor)
-
-fun processUseGlobResolveVariants(glob: RsUseGlob, processor: RsResolveProcessor): Boolean {
-    val useItem = glob.parentUseItem
-    val basePath = useItem.path
-    val baseItem = (if (basePath != null)
-        basePath.reference.resolve()
-    else
-    // `use ::{foo, bar}`
-        glob.crateRoot) ?: return false
-
-    if (processor("self", baseItem)) return true
-
-    return processItemOrEnumVariantDeclarations(baseItem, TYPES_N_VALUES, processor,
-        withPrivateImports = basePath != null && isSuperChain(basePath)
-    )
-}
 
 /**
  * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
@@ -194,13 +175,23 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
     return false
 }
 
+private val RsPath.qualifier: RsPath? get() {
+    path?.let { return it }
+    var ctx = context
+    while (ctx is RsPath) {
+        ctx = ctx.context
+    }
+    return (ctx as? RsUseSpeck)?.qualifier
+}
+
 fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    val qualifier = path.path
+
+    val qualifier = path.qualifier
     val typeQual = path.typeQual
     val parent = path.context
     val ns = when (parent) {
         is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
-        is RsUseItem -> if (parent.isStarImport) TYPES else TYPES_N_VALUES
+        is RsUseSpeck -> if (parent.isStarImport) TYPES else TYPES_N_VALUES
         is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
         else -> TYPES_N_VALUES
     }
@@ -216,8 +207,12 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             val s = base.`super`
             if (s != null && processor("super", s)) return true
         }
+        if (parent is RsUseSpeck && path.path == null) {
+            selfInGroup.hit()
+            if (processor("self", base)) return true
+        }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
-        if (base is RsTypeDeclarationElement && parent !is RsUseItem) {
+        if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) {
             // Foo::<Bar>::baz
             val selfTy = run {
                 val realSubst = if (qualifier.typeArgumentList != null) {
@@ -686,4 +681,6 @@ object NameResolutionTestmarks {
     val shadowingStdCrates = Testmark("shadowingStdCrates")
     val missingMacroExport = Testmark("missingMacroExport")
     val missingMacroUse = Testmark("missingMacroUse")
+    val selfInGroup = Testmark("selfInGroup")
+    val selfInGroupName = Testmark("selfInGroupName")
 }

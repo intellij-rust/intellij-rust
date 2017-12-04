@@ -162,7 +162,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             return
         }
 
-        if (path.self != null && path.parent !is RsPath && path.parent !is RsUseItem) {
+        if (path.self != null && path.parent !is RsPath && path.parent !is RsUseSpeck) {
             val function = path.ancestorStrict<RsFunction>()
             if (function == null) {
                 holder.createErrorAnnotation(path, "self value is not available in this context")
