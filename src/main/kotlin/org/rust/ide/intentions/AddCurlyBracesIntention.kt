@@ -76,8 +76,8 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
         alias?.delete()
 
         // Insert the double colon and glob list into the use item
-        ctx.useSpeck.addBefore(newColonColon, ctx.semicolon)
-        ctx.useSpeck.addBefore(newGroup, ctx.semicolon)
+        ctx.useSpeck.add(newColonColon)
+        ctx.useSpeck.add(newGroup)
 
         editor.caretModel.moveToOffset(ctx.semicolon.textRange.startOffset - 1)
     }

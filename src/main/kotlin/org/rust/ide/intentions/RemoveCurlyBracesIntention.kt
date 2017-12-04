@@ -25,6 +25,7 @@ import org.rust.lang.core.psi.ext.ancestorStrict
  * import std::mem;
  * ```
  */
+// TODO: this really should reuse code from RsSingleImportRemoveBracesFormatProcessor.
 class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBracesIntention.Context>() {
     override fun getText() = "Remove curly braces"
     override fun getFamilyName() = text
@@ -52,12 +53,13 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (useSpeck, path, globList, name) = ctx
+        val (useSpeck, path, useGroup, name) = ctx
 
         // Save the cursor position, adjusting for curly brace removal
         val caret = editor.caretModel.offset
         val newOffset = when {
-            caret < useSpeck.textOffset -> caret
+            caret < useGroup.textRange.startOffset -> caret
+            caret < useGroup.textRange.endOffset -> caret - 1
             else -> caret - 2
         }
 
@@ -72,7 +74,7 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
         newSubPath.replace(path.copy())
         path.replace(newPath)
         useSpeck.coloncolon?.delete()
-        globList.delete()
+        useGroup.delete()
 
         editor.caretModel.moveToOffset(newOffset)
     }
