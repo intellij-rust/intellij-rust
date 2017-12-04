@@ -1,0 +1,179 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.lang.core.resolve
+
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.openapiext.toPsiFile
+import java.util.*
+
+fun processItemOrEnumVariantDeclarations(
+    scope: RsElement,
+    ns: Set<Namespace>,
+    processor: RsResolveProcessor,
+    withPrivateImports: Boolean = false
+): Boolean {
+    when (scope) {
+        is RsEnumItem -> {
+            if (processAll(scope.enumBody?.enumVariantList.orEmpty(), processor)) return true
+        }
+        is RsMod -> {
+            if (processItemDeclarations(scope, ns, processor, withPrivateImports)) return true
+        }
+    }
+
+    return false
+}
+
+
+fun processItemDeclarations(
+    scope: RsItemsOwner,
+    ns: Set<Namespace>,
+    originalProcessor: RsResolveProcessor,
+    withPrivateImports: Boolean
+): Boolean {
+    val starImports = mutableListOf<RsUseItem>()
+    val itemImports = mutableListOf<RsUseItem>()
+
+    val directlyDeclaredNames = HashSet<String>()
+    val processor = { e: ScopeEntry ->
+        directlyDeclaredNames += e.name
+        originalProcessor(e)
+    }
+
+    fun processItem(item: RsItemElement): Boolean {
+        when (item) {
+            is RsUseItem ->
+                if (item.isPublic || withPrivateImports) {
+                    (if (item.isStarImport) starImports else itemImports) += item
+                }
+
+        // Unit like structs are both types and values
+            is RsStructItem ->
+                if (item.namespaces.intersect(ns).isNotEmpty() && processor(item)) return true
+
+            is RsModDeclItem -> if (Namespace.Types in ns) {
+                val name = item.name ?: return false
+                val mod = item.reference.resolve() ?: return false
+                if (processor(name, mod)) return true
+            }
+
+            is RsEnumItem, is RsModItem, is RsTraitItem, is RsTypeAlias ->
+                if (Namespace.Types in ns && processor(item as RsNamedElement)) return true
+
+            is RsFunction, is RsConstant ->
+                if (Namespace.Values in ns && processor(item as RsNamedElement)) return true
+
+            is RsForeignModItem ->
+                if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
+
+            is RsExternCrateItem -> {
+                val name = item.alias?.name ?: item.name ?: return false
+                val mod = item.reference.resolve() ?: return false
+                if (processor(name, mod)) return true
+            }
+        }
+        return false
+    }
+
+    if (scope.processExpandedItems(::processItem)) return true
+
+
+    if (Namespace.Types in ns) {
+        if (scope is RsFile && scope.isCrateRoot) {
+            val pkg = scope.containingCargoPackage
+
+            if (pkg != null) {
+                val findStdMod = { name: String ->
+                    val crate = pkg.findDependency(name)?.crateRoot
+                    crate?.toPsiFile(scope.project)?.rustMod
+                }
+
+                // Rust injects implicit `extern crate std` in every crate root module unless it is
+                // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
+                // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
+                //
+                // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
+                // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
+                when (scope.attributes) {
+                    RsFile.Attributes.NONE ->
+                        if (processor.lazy("std") { findStdMod("std") }) return true
+
+                    RsFile.Attributes.NO_STD ->
+                        if (processor.lazy("core") { findStdMod("core") }) return true
+
+                    RsFile.Attributes.NO_CORE -> Unit
+                }
+            }
+        }
+    }
+
+    for (use in itemImports) {
+        val globList = use.useGlobList
+        if (globList == null) {
+            val path = use.path ?: continue
+            val name = use.alias?.name ?: path.referenceName ?: continue
+            if (processMultiResolveWithNs(name, ns, path.reference, processor)) return true
+        } else {
+            for (glob in globList.useGlobList) {
+                val name = glob.alias?.name
+                    ?: (if (glob.isSelf) use.path?.referenceName else null)
+                    ?: glob.referenceName
+                    ?: continue
+                if (processMultiResolveWithNs(name, ns, glob.reference, processor)) return true
+            }
+        }
+    }
+
+    if (originalProcessor(ScopeEvent.STAR_IMPORTS)) {
+        return false
+    }
+    for (use in starImports) {
+        val basePath = use.path
+        val mod = (if (basePath != null) basePath.reference.resolve() else use.crateRoot)
+            ?: continue
+
+        val found = processItemOrEnumVariantDeclarations(mod, ns,
+            { it.name !in directlyDeclaredNames && originalProcessor(it) },
+            withPrivateImports = basePath != null && isSuperChain(basePath)
+        )
+        if (found) return true
+    }
+
+    return false
+}
+
+private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsReference, processor: RsResolveProcessor): Boolean {
+    // XXX: use items can legitimately resolve in both namespaces.
+    // Because we must be lazy, we don't know up front how many times we
+    // need to call the `processor`, so we need to calculate this lazily
+    // if the processor scrutinizes at least the first element.
+
+    // XXX: there are two `cfg`ed `boxed` modules in liballoc, so
+    // we apply "first in the namespace wins" heuristic.
+    var variants: List<RsNamedElement> = emptyList()
+    val visitedNamespaces = EnumSet.noneOf(Namespace::class.java)
+    if (processor.lazy(name) {
+        variants = ref.multiResolve()
+            .filterIsInstance<RsNamedElement>()
+            .filter { ns.intersect(it.namespaces).isNotEmpty() }
+        val first = variants.firstOrNull()
+        if (first != null) {
+            visitedNamespaces.addAll(first.namespaces)
+        }
+        first
+    }) {
+        return true
+    }
+    // `variants` will be populated if processor looked at the corresponding element
+    for (element in variants.drop(1)) {
+        if (element.namespaces.all { it in visitedNamespaces }) continue
+        visitedNamespaces.addAll(element.namespaces)
+        if (processor(name, element)) return true
+    }
+    return false
+}
