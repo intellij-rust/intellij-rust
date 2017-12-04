@@ -6,6 +6,7 @@
 package org.rust.ide.navigation.goto
 
 import com.intellij.lang.CodeInsightActions
+import junit.framework.Assert
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsLanguage
@@ -72,17 +73,45 @@ class RsGotoSuperHandlerTest : RsTestBase() {
         }
     """)
 
-    fun testOnFileLevel() {
-        fileTreeFromText("""
-            //- foo.rs
-            /*caret*/    // only comment
+    fun `test on file level`() = checkNavigationInFiles("""
+        //- foo.rs
+        /*caret*/    // only comment
 
-            //- main.rs
-                mod foo;
-        """).createAndOpenFileWithCaretMarker()
+        //- main.rs
+            mod foo;
+        """, expected = "mod foo;")
 
+    fun `test with path attribute`() = checkNavigationInFiles("""
+        //- foo.rs
+        /*caret*/    // only comment
+
+        //- main.rs
+            #[path="foo.rs"]
+            mod bar;
+
+    """, expected = """
+        #[path="foo.rs"]
+        mod bar;
+    """)
+
+    fun `test with path attribute in module`() = checkNavigationInFiles("""
+        //- foo/qqq.rs
+        /*caret*/    // only comment
+
+        //- main.rs
+        mod foo {
+            #[path="qqq.rs"]
+            mod bar;
+        }
+    """, expected = """
+        #[path="qqq.rs"]
+            mod bar;
+    """)
+
+    private fun checkNavigationInFiles(@Language("Rust") fileTreeText: String, expected: String) {
+        fileTreeFromText(fileTreeText).createAndOpenFileWithCaretMarker()
         val target = gotoSuperTarget(myFixture.file)
-        check(target?.text == "mod foo;")
+        assertEquals(expected.trimIndent(), target?.text)
     }
 
     private fun checkNavigation(@Language("Rust") before: String, @Language("Rust") after: String) {
