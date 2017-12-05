@@ -5,8 +5,6 @@
 
 package org.rust.ide.annotator
 
-import org.rust.fileTreeFromText
-
 class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
@@ -706,8 +704,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test don't touch AST in other files`() = checkDontTouchAstInOtherFiles(
-        fileTreeFromText("""
+    fun `test don't touch AST in other files`() = checkDontTouchAstInOtherFiles("""
         //- main.rs
             mod m;
             use m::*;
@@ -728,7 +725,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             pub trait T {}
             pub struct S {}
         """)
-    )
 
     fun `test a private item was used outside of its scope E0624`() = checkErrors("""
         mod some_module {
@@ -740,7 +736,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
         fn main() {
             let f = some_module::Foo;
-            f.<error>method</error>();
+            f.<error descr="Method `method` is private [E0624]">method</error>();
         }
     """)
 
@@ -849,7 +845,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
         fn main() {
             let f = some_module::Foo::new();
-            f.<error>x</error>;// error: field `x` of struct `some_module::Foo` is private
+            f.<error descr="Field `x` of struct `some_module::Foo` is private [E0616]">x</error>;
         }
     """)
 
@@ -899,8 +895,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test should not annotate super mod E0624`() = checkDontTouchAstInOtherFiles(
-        fileTreeFromText("""
+    fun `test should not annotate super mod E0624`() = checkDontTouchAstInOtherFiles("""
         //- m/mod.rs
             use S;
             fn bar() {
@@ -918,18 +913,17 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
                     S { x:1 }
                 }
             }
-        """), filePath = "m/mod.rs"
-    )
+        """, filePath = "m/mod.rs")
 
-    fun `test const outside scope E0603`()  = checkErrors("""
+    fun `test const outside scope E0603`() = checkErrors("""
         mod foo {
             const BAR: u32 = 0x_a_bad_1dea_u32;
         }
 
-        use <error>foo::BAR</error>;
+        use <error descr="Constant `foo::BAR` is private [E0603]">foo::BAR</error>;
     """)
 
-    fun `test not const outside scope E0603`()  = checkErrors("""
+    fun `test not const outside scope E0603`() = checkErrors("""
         mod foo {
             pub const BAR: u32 = 0x_a_bad_1dea_u32;
         }
@@ -937,15 +931,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         use foo::BAR;
     """)
 
-    fun `test fn outside scope E0603`()  = checkErrors("""
+    fun `test fn outside scope E0603`() = checkErrors("""
         mod foo {
             fn bar() {}
         }
 
-        use <error>foo::bar</error>;
+        use <error descr="Function `foo::bar` is private [E0603]">foo::bar</error>;
     """)
 
-    fun `test not fn outside scope E0603`()  = checkErrors("""
+    fun `test not fn outside scope E0603`() = checkErrors("""
         mod foo {
             pub fn bar() {}
         }
@@ -953,20 +947,42 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         use foo::bar;
     """)
 
-    fun `test struct outside scope E0603`()  = checkErrors("""
+    fun `test struct outside scope E0603`() = checkErrors("""
         mod foo {
             struct Bar;
         }
 
-        use <error>foo::Bar</error>;
+        use <error descr="Struct `foo::Bar` is private [E0603]">foo::Bar</error>;
     """)
 
-    fun `test struct fn outside scope E0603`()  = checkErrors("""
+    fun `test struct fn outside scope E0603`() = checkErrors("""
         mod foo {
             pub struct Bar;
         }
 
         use foo::Bar;
+    """)
+
+    fun `test module is private E0603`() = checkDontTouchAstInOtherFiles("""
+        //- foo/mod.rs
+            mod bar;
+        //- foo/bar.rs
+            pub struct Foo;
+        //- main.rs
+            mod foo;
+
+            use <error descr="Module `foo::bar` is private [E0603]">foo::bar</error>::Foo;
+    """)
+
+    fun `test module is public E0603`() = checkDontTouchAstInOtherFiles("""
+        //- foo/mod.rs
+            pub mod bar;
+        //- foo/bar.rs
+            pub struct Foo;
+        //- main.rs
+            mod foo;
+
+            use foo::bar::Foo;
     """)
 
     fun `test function args should implement Sized trait E0277`() = checkErrors("""

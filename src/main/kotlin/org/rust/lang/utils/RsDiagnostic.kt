@@ -51,25 +51,26 @@ sealed class RsDiagnostic(
 
     class AccessError(
         element: PsiElement,
-        private val error: RsErrorCode
+        private val errorCode: RsErrorCode,
+        private val itemType: String
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
-            error,
-            errorText(element.parent, element)
+            errorCode,
+            "$itemType `${escapeString(element.text)}` is private"
         )
+    }
 
-        private fun errorText(field: PsiElement, struct: PsiElement): String {
-            val fieldS = escapeString(field.toString())
-            val structS = escapeString(struct.toString())
-            val typeS = when (error) {
-                E0616 -> "field"
-                E0624 -> "method"
-                E0603 -> "path"
-                else -> "item"
-            }
-            return "$typeS `$fieldS` of struct `$structS` is private"
-        }
+    class StructFieldAccessError(
+        element: PsiElement,
+        private val fieldName: String,
+        private val structName: String
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0616,
+            "Field `${escapeString(fieldName)}` of struct `${escapeString(structName)}` is private"
+        )
     }
 
     class UnsafeError(

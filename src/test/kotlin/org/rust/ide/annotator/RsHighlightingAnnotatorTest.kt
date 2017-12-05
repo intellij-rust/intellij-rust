@@ -5,8 +5,6 @@
 
 package org.rust.ide.annotator
 
-import org.rust.fileTreeFromText
-
 class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
 
     fun `test attributes`() = checkInfo("""
@@ -126,8 +124,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test dont touch ast in other files`() = checkDontTouchAstInOtherFiles(
-        fileTreeFromText("""
+    fun `test dont touch ast in other files`() = checkDontTouchAstInOtherFiles("""
         //- main.rs
             mod aux;
 
@@ -137,7 +134,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
 
         //- aux.rs
             pub struct S;
-        """),
+        """,
         checkInfo = true
     )
 }
