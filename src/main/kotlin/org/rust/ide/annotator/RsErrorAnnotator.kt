@@ -71,21 +71,18 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
         val element = ref.reference.resolve() as? RsVisible ?: return
         if (element.isPublic) return
-        val elementMod = element.contextOrSelf<RsMod>() ?: return
+        val elementMod = (if (element is RsMod) element.`super` else element.contextStrict()) ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
+        // We have access to any item in any super module of `oMod`
+        // Note: `oMod.superMods` contains `oMod`
         if (oMod.superMods.contains(elementMod)) return
 
-        if (element is RsMod) {
-            // direct child module can be private
-            if (element.`super` == oMod) return
-        } else {
-            val members = element.parent as? RsMembers
-            if (members != null) {
-                val parent = members.context ?: return
-                when (parent) {
-                    is RsImplItem -> if (parent.traitRef != null) return
-                    is RsTraitItem -> return
-                }
+        val members = element.parent as? RsMembers
+        if (members != null) {
+            val parent = members.context ?: return
+            when (parent) {
+                is RsImplItem -> if (parent.traitRef != null) return
+                is RsTraitItem -> return
             }
         }
 
