@@ -27,6 +27,9 @@ class RsFoldingBuilderTest : RsTestBase() {
     fun `test use glob list`() = doTest()
     fun `test comments`() = doTest()
     fun `test one liner function`() = doTest()
+    fun `test uses`() = doTest()
+    fun `test mods`() = doTest()
+    fun `test crates`() = doTest()
 
     private fun doTest() {
         myFixture.testFolding("$testDataPath/$fileName")

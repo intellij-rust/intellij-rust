@@ -27,8 +27,8 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.LBRACE
-import org.rust.lang.core.psi.RsElementTypes.RBRACE
+import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import org.rust.lang.core.rightSiblings
@@ -40,6 +40,9 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         when {
             node.elementType == LBRACE -> " { "
             node.elementType == RBRACE -> " }"
+            node.elementType == USE_ITEM -> "/* uses */"
+            node.psi is RsModDeclItem -> "/* mods */"
+            node.psi is RsExternCrateItem -> "/* crates */"
             node.psi is PsiComment -> "/* ... */"
             else -> "{...}"
         }
@@ -48,8 +51,11 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         if (root !is RsFile) return emptyArray()
 
         val descriptors: MutableList<FoldingDescriptor> = ArrayList()
+        val usingRanges: MutableList<TextRange> = ArrayList()
+        val modsRanges: MutableList<TextRange> = ArrayList()
+        val cratesRanges: MutableList<TextRange> = ArrayList()
         val rightMargin = CodeStyleSettingsManager.getSettings(root.project).getRightMargin(RsLanguage)
-        val visitor = FoldingVisitor(descriptors, rightMargin)
+        val visitor = FoldingVisitor(descriptors, usingRanges, modsRanges, cratesRanges, rightMargin)
         PsiTreeUtil.processElements(root) { it.accept(visitor); true }
 
         return descriptors.toTypedArray()
@@ -57,6 +63,9 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
     private class FoldingVisitor(
         private val descriptors: MutableList<FoldingDescriptor>,
+        private val usesRanges: MutableList<TextRange>,
+        private val modsRanges: MutableList<TextRange>,
+        private val cratesRanges: MutableList<TextRange>,
         val rightMargin: Int
     ) : RsVisitor() {
 
@@ -80,7 +89,6 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         override fun visitModItem(o: RsModItem) = foldBetween(o, o.lbrace, o.rbrace)
 
         override fun visitMacroArgument(o: RsMacroArgument) = foldBetween(o, o.lbrace, o.rbrace)
-
 
         override fun visitComment(comment: PsiComment) {
             when (comment.tokenType) {
@@ -134,6 +142,44 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
             descriptors += FoldingDescriptor(rbrace.node, range2, group)
 
             return true
+        }
+
+        override fun visitUseItem(o: RsUseItem) {
+            foldRepeatingItems(o, usesRanges)
+        }
+
+        override fun visitModDeclItem(o: RsModDeclItem) {
+            foldRepeatingItems(o, modsRanges)
+        }
+
+        override fun visitExternCrateItem(o: RsExternCrateItem) {
+            foldRepeatingItems(o, cratesRanges)
+        }
+
+        private inline fun <reified T> foldRepeatingItems(startNode: T, ranges: MutableList<TextRange>) {
+            if (isInRangesAlready(ranges, startNode as PsiElement)) return
+
+            var lastNode: PsiElement? = null
+            var tmpNode: PsiElement? = startNode
+
+            while (tmpNode is T || tmpNode is PsiWhiteSpace) {
+                tmpNode = tmpNode.getNextNonCommentSibling()
+                if (tmpNode is T)
+                    lastNode = tmpNode
+            }
+
+            if (lastNode == startNode) return
+
+            if (lastNode != null) {
+                val range = TextRange(startNode.textRange.startOffset, lastNode.textRange.endOffset)
+                descriptors += FoldingDescriptor(startNode.node, range)
+                ranges.add(range)
+            }
+        }
+
+        private fun isInRangesAlready(ranges: MutableList<TextRange>, element: PsiElement?): Boolean {
+            if (element == null) return false
+            return !ranges.filter { x -> x.contains(element.textOffset) }.isEmpty()
         }
     }
 
