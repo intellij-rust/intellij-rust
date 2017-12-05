@@ -38,16 +38,11 @@ abstract class RsAnnotatorTestBase : RsTestBase() {
 
     protected fun checkDontTouchAstInOtherFiles(@Language("Rust") text: String, checkInfo: Boolean = false, filePath: String? = null) {
         fileTreeFromText(text).create()
-        myFixture.configureFromTempProjectFile("main.rs")
-
+        val testFilePath = filePath ?: "main.rs"
         (myFixture as CodeInsightTestFixtureImpl) // meh
-            .setVirtualFileFilter { !it.path.endsWith("main.rs") }
-        if (filePath == null) {
-            myFixture.testHighlighting(false, checkInfo, false)
-        } else {
-            myFixture.testHighlighting(false, checkInfo, false, filePath)
-        }
+                    .setVirtualFileFilter { !it.path.endsWith(testFilePath) }
+
+        myFixture.configureFromTempProjectFile(testFilePath)
+        myFixture.testHighlighting(false, checkInfo, false)
     }
-
 }
-
