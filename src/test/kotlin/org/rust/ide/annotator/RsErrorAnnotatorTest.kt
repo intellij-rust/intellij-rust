@@ -985,6 +985,75 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
             use foo::bar::Foo;
     """)
 
+    fun `test access to sibling not public module E0603`() = checkErrors("""
+        mod foo {
+            pub struct Foo;
+        }
+        mod bar {
+            use foo::Foo;
+        }
+    """)
+
+    fun `test access to sibling not public module with file structure E0603`() = checkDontTouchAstInOtherFiles("""
+        //- main.rs
+            mod foo;
+            mod bar;
+        //- foo.rs
+            pub struct Foo;
+        //- bar.rs
+            use foo::Foo;
+    """, filePath = "bar.rs")
+
+    fun `test access to sibling module of some ancestor module E0603`() = checkErrors("""
+        mod foo {
+            pub struct Foo;
+        }
+        mod bar {
+            mod baz {
+                use foo::Foo;
+            }
+        }
+    """)
+
+    fun `test access to sibling module of some ancestor module with file structure E0603`() = checkDontTouchAstInOtherFiles("""
+        //- main.rs
+            mod foo;
+            mod bar;
+        //- foo.rs
+            pub struct Foo;
+        //- bar.rs
+            mod baz {
+                use foo::Foo;
+            }
+    """, filePath = "bar.rs")
+
+    fun `test complex access to module E0603`() = checkErrors("""
+        mod foo {
+            mod qwe {
+                pub struct Foo;
+            }
+        }
+        mod bar {
+            mod baz {
+                use <error descr="Module `foo::qwe` is private [E0603]">foo::qwe</error>::Foo;
+            }
+        }
+    """)
+
+    fun `test complex access to module with file structure E0603`() = checkDontTouchAstInOtherFiles("""
+        //- main.rs
+            mod foo;
+            mod bar;
+        //- foo/mod.rs
+            mod qwe;
+        //- foo/qwe.rs
+            pub struct Foo;
+        //- bar/mod.rs
+            mod baz;
+        //- bar/baz.rs
+            use <error descr="Module `foo::qwe` is private [E0603]">foo::qwe</error>::Foo;
+    """, filePath = "bar/baz.rs")
+
     fun `test function args should implement Sized trait E0277`() = checkErrors("""
         fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
         fn foo2(bar: i32) {}
