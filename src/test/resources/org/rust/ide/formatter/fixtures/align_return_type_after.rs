@@ -18,7 +18,7 @@ fn foo(
 
 fn foo(
     x: i32,
-    y: String
+    y: String,
 ) -> String {
     y + x.to_string()
 }

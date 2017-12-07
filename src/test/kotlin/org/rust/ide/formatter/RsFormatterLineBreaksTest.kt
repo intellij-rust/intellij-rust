@@ -124,8 +124,8 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
             Info {
                 name: String,
 
-                height: i32
-            }
+                height: i32,
+            },
         }
     """)
 
@@ -153,7 +153,7 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
             p5: Point,
 
             p6: Point,
-            p7: Point
+            p7: Point,
         }
     """)
 
@@ -227,8 +227,8 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
             V { f: i32 },
             X {
                 f: i32,
-                x: i32
-            }
+                x: i32,
+            },
         }
 
         trait Empty { /*bla-bla-bla*/ }

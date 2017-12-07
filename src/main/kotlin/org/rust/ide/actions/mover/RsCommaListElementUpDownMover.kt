@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.formatter.processors.addTrailingCommaForElement
+import org.rust.ide.formatter.processors.isLastElement
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.ext.ancestorPairs
 import org.rust.lang.core.psi.ext.elementType
@@ -53,7 +54,9 @@ class RsCommaListElementUpDownMover : RsLineMover() {
         for (element in listOfNotNull(info.toMove.firstElement, info.toMove.lastElement, info.toMove2.firstElement)) {
             val list = element.parent
             val commaList = CommaList.forElement(list.elementType) ?: continue
-            commaList.addTrailingCommaForElement(list, element)
+            if (commaList.isLastElement(list, element)) {
+                commaList.addTrailingCommaForElement(list)
+            }
         }
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     }

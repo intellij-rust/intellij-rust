@@ -17,6 +17,7 @@ import org.rust.ide.formatter.rust
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsTrailingCommaFormatProcessor : PostFormatProcessor {
@@ -39,28 +40,23 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
                 super.visitElement(element)
                 if (!helper.isElementFullyInRange(element)) return
                 val commaList = CommaList.forElement(element.elementType) ?: return
-                if (fixSingleLineBracedBlock(element, commaList)) {
-                    helper.updateResultRange(1, 0)
+                when {
+                    commaList.removeTrailingComma(element) -> helper.updateResultRange(1, 0)
+                    commaList.addTrailingCommaForElement(element) -> helper.updateResultRange(0, 1)
                 }
             }
         })
 
         return helper
     }
-
-    companion object {
-        /**
-         * Delete trailing comma in one-line blocks
-         */
-        fun fixSingleLineBracedBlock(block: PsiElement, commaList: CommaList): Boolean {
-            if (PostFormatProcessorHelper.isMultiline(block)) return false
-            return commaList.removeTrailingComma(block)
-        }
-    }
 }
 
+/**
+ * Delete trailing comma in one-line blocks
+ */
 fun CommaList.removeTrailingComma(list: PsiElement): Boolean {
     check(list.elementType == this.list)
+    if (PostFormatProcessorHelper.isMultiline(list)) return false
     val rbrace = list.lastChild
     if (rbrace.elementType != closingBrace) return false
     val comma = rbrace.getPrevNonCommentSibling() ?: return false
@@ -72,13 +68,32 @@ fun CommaList.removeTrailingComma(list: PsiElement): Boolean {
     }
 }
 
-fun CommaList.addTrailingCommaForElement(list: PsiElement, element: PsiElement): Boolean {
+fun CommaList.addTrailingCommaForElement(list: PsiElement): Boolean {
+    check(list.elementType == this.list)
+    if (!PostFormatProcessorHelper.isMultiline(list)) return false
+    val rbrace = list.lastChild
+    if (rbrace.elementType != closingBrace) return false
+
+    val lastElement = rbrace.getPrevNonCommentSibling() ?: return false
+    if (!isElement(lastElement)) return false
+
+    val trailingSpace = list.node.chars.subSequence(
+        lastElement.startOffsetInParent + lastElement.textLength,
+        rbrace.startOffsetInParent
+    )
+    if (!trailingSpace.contains('\n')) return false
+
+    if (list.firstChild.getNextNonCommentSibling() == lastElement) return false
+
+    val comma = RsPsiFactory(list.project).createComma()
+    list.addAfter(comma, lastElement)
+    return true
+}
+
+fun CommaList.isLastElement(list: PsiElement, element: PsiElement): Boolean {
     check(list.elementType == this.list && isElement(element))
     val rbrace = list.lastChild
     if (rbrace.elementType != closingBrace) return false
-    val lastChild = rbrace.getPrevNonCommentSibling() ?: return false
-    if (lastChild != element) return false
-    val comma = RsPsiFactory(list.project).createComma()
-    list.addAfter(comma,element)
-    return true
+    val lastElement = rbrace.getPrevNonCommentSibling() ?: return false
+    return lastElement == element
 }
