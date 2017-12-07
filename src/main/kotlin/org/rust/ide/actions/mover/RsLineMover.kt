@@ -25,28 +25,38 @@ abstract class RsLineMover : LineMover() {
         val psiRange = StatementUpDownMover.getElementRange(editor, file, originalRange) ?: return false
         if (psiRange.first == null || psiRange.second == null) return false
 
-        val firstItem = findMovableAncestor(psiRange.first) ?: return false
-        val lastItem = findMovableAncestor(psiRange.second) ?: return false
-        val sibling = StatementUpDownMover.firstNonWhiteElement(
+        val firstItem = findMovableAncestor(psiRange.first, RangeEndpoint.START) ?: return false
+        val lastItem = findMovableAncestor(psiRange.second, RangeEndpoint.END) ?: return false
+        var sibling = StatementUpDownMover.firstNonWhiteElement(
             if (down) lastItem.nextSibling else firstItem.prevSibling,
             down
         )
+        if (sibling != null) sibling = fixupSibling(sibling, down)
         // Either reached last sibling, or jumped over multi-line whitespace
         if (sibling == null) {
             info.toMove2 = null
             return true
         }
+
         info.toMove = LineRange(firstItem, lastItem)
         info.toMove2 = findTargetLineRange(sibling, down)
         return true
     }
 
-    abstract protected fun findMovableAncestor(psi: PsiElement): PsiElement?
+    abstract protected fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement?
     abstract protected fun findTargetLineRange(sibling: PsiElement, down: Boolean): LineRange?
+    open protected fun fixupSibling(sibling: PsiElement, down: Boolean): PsiElement? = sibling
 
     companion object {
-        fun isMovingOutOfBlock(sibling: PsiElement, down: Boolean): Boolean =
+        enum class RangeEndpoint {
+            START, END
+        }
+
+        fun isMovingOutOfBraceBlock(sibling: PsiElement, down: Boolean): Boolean =
             sibling.elementType == (if (down) RsElementTypes.RBRACE else RsElementTypes.LBRACE)
+
+        fun isMovingOutOfParenBlock(sibling: PsiElement, down: Boolean): Boolean =
+            sibling.elementType == (if (down) RsElementTypes.RPAREN else RsElementTypes.LPAREN)
     }
 }
 

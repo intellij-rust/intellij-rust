@@ -11,11 +11,11 @@ import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 class RsMatchArmUpDownMover : RsLineMover() {
-    override fun findMovableAncestor(psi: PsiElement): PsiElement? =
+    override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
         psi.ancestorOrSelf<RsMatchArm>()
 
     override fun findTargetLineRange(sibling: PsiElement, down: Boolean): LineRange? {
-        if (isMovingOutOfBlock(sibling, down)) {
+        if (isMovingOutOfBraceBlock(sibling, down)) {
             UpDownMoverTestMarks.moveOutOfMatch.hit()
             return null
         }
