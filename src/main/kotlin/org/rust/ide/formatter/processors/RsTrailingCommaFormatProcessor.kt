@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.formatter.rust
 import org.rust.lang.core.psi.RsElementTypes.COMMA
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
@@ -53,17 +54,31 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
          */
         fun fixSingleLineBracedBlock(block: PsiElement, commaList: CommaList): Boolean {
             if (PostFormatProcessorHelper.isMultiline(block)) return false
-            val rbrace = block.lastChild
-            if (rbrace.elementType != commaList.closingBrace) return false
-            val comma = rbrace.getPrevNonCommentSibling() ?: return false
-
-            return if (comma.elementType == COMMA) {
-                comma.delete()
-                true
-            } else {
-                false
-            }
+            return commaList.removeTrailingComma(block)
         }
     }
 }
 
+fun CommaList.removeTrailingComma(list: PsiElement): Boolean {
+    check(list.elementType == this.list)
+    val rbrace = list.lastChild
+    if (rbrace.elementType != closingBrace) return false
+    val comma = rbrace.getPrevNonCommentSibling() ?: return false
+    return if (comma.elementType == COMMA) {
+        comma.delete()
+        true
+    } else {
+        false
+    }
+}
+
+fun CommaList.addTrailingCommaForElement(list: PsiElement, element: PsiElement): Boolean {
+    check(list.elementType == this.list && isElement(element))
+    val rbrace = list.lastChild
+    if (rbrace.elementType != closingBrace) return false
+    val lastChild = rbrace.getPrevNonCommentSibling() ?: return false
+    if (lastChild != element) return false
+    val comma = RsPsiFactory(list.project).createComma()
+    list.addAfter(comma,element)
+    return true
+}

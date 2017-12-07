@@ -18,7 +18,7 @@ import org.rust.openapiext.Testmark
 
 
 abstract class RsLineMover : LineMover() {
-    final override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
+    override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
         if (file !is RsFile && super.checkAvailable(editor, file, info, down)) return false
         @Suppress("USELESS_ELVIS") // NotNull annotation is wrong :(
         val originalRange = info.toMove ?: return false
@@ -39,12 +39,21 @@ abstract class RsLineMover : LineMover() {
         }
 
         info.toMove = LineRange(firstItem, lastItem)
-        info.toMove2 = findTargetLineRange(sibling, down)
+        info.toMove.firstElement = firstItem
+        info.toMove.lastElement = lastItem
+
+        val target = findTargetElement(sibling, down)
+        if (target == null) {
+            info.toMove2 = null
+            return true
+        }
+        info.toMove2 = LineRange(target)
+        info.toMove2.firstElement = target
         return true
     }
 
     abstract protected fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement?
-    abstract protected fun findTargetLineRange(sibling: PsiElement, down: Boolean): LineRange?
+    abstract protected fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement?
     open protected fun fixupSibling(sibling: PsiElement, down: Boolean): PsiElement? = sibling
 
     companion object {

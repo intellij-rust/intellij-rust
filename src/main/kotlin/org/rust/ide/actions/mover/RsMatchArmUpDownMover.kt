@@ -14,11 +14,11 @@ class RsMatchArmUpDownMover : RsLineMover() {
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
         psi.ancestorOrSelf<RsMatchArm>()
 
-    override fun findTargetLineRange(sibling: PsiElement, down: Boolean): LineRange? {
+    override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
         if (isMovingOutOfBraceBlock(sibling, down)) {
             UpDownMoverTestMarks.moveOutOfMatch.hit()
             return null
         }
-        return LineRange(sibling)
+        return sibling
     }
 }

@@ -20,6 +20,14 @@ val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) {
     if (it is PsiFile) null else it.parent
 }
 
+val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>> get() {
+    val parent = this.parent ?: return emptySequence()
+    return generateSequence(Pair(this, parent)) { (_, parent) ->
+        val grandPa = parent.parent
+        if (parent is PsiFile || grandPa == null) null else parent to grandPa
+    }
+}
+
 /**
  * Extracts node's element type
  */

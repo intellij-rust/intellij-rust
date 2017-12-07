@@ -5,7 +5,7 @@
 
 package org.rust.ide.actions.mover
 
-class RsParamOrArgUpDownMoverTest : RsStatementUpDownMoverTestBase() {
+class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
     fun `test function parameter`() = moveDownAndBackUp("""
         fn foo(
             /*caret*/x: i32,
@@ -18,7 +18,7 @@ class RsParamOrArgUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         ) { }
     """)
 
-    fun `test function parameter withoutComma`() = moveUp("""
+    fun `test function parameter adds comma 1`() = moveUp("""
         fn foo(
             x: i32,
             /*caret*/y: i32
@@ -27,6 +27,18 @@ class RsParamOrArgUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         fn foo(
             /*caret*/y: i32,
             x: i32,
+        ) { }
+    """)
+
+    fun `test function parameter adds comma 2`() = moveDown("""
+        fn foo(
+            /*caret*/ x: i32,
+            y: i32
+        ) { }
+    """, """
+        fn foo(
+            y: i32,
+            /*caret*/x: i32,
         ) { }
     """)
 
@@ -71,7 +83,7 @@ class RsParamOrArgUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
-    fun `test function argument without comma 1`() = moveUp("""
+    fun `test function argument adds comma 1`() = moveUp("""
         fn main() {
             foo(
                 x,
@@ -87,7 +99,7 @@ class RsParamOrArgUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
-    fun `test function argument without comma 2`() = moveDown("""
+    fun `test function argument adds comma 2`() = moveDown("""
         fn main() {
             foo(
                 /*caret*/x,
@@ -113,4 +125,50 @@ class RsParamOrArgUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         """
         moveDownAndBackUp(code, code)
     }
+
+    fun `test prevent step out of use group`() {
+        val code = """
+            use foo::{
+                /*caret*/foo
+            };
+        """
+        moveDownAndBackUp(code, code)
+    }
+
+    fun `test move struct fields`() = moveDownAndBackUp("""
+        struct S {
+            foo: u32,/*caret*/
+            bar: u32,
+        }
+    """, """
+        struct S {
+            bar: u32,
+            foo: u32,/*caret*/
+        }
+    """)
+
+    fun `test move struct adds comma 1`() = moveDown("""
+        struct S {
+            foo: u32,/*caret*/
+            bar: u32
+        }
+    """, """
+        struct S {
+            bar: u32,
+            foo: u32,/*caret*/
+        }
+    """)
+
+    fun `test move struct adds comma 2`() = moveUp("""
+        struct S {
+            foo: u32,
+            /*caret*/bar: u32
+        }
+    """, """
+        struct S {
+            /*caret*/bar: u32,
+            foo: u32,
+        }
+    """)
+
 }
