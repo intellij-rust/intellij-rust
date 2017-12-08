@@ -56,9 +56,10 @@ fun showTraitMemberChooser(
 
     val base = MemberChooserObjectBase(implInfo.traitName, implInfo.trait.getIcon(0))
     val all = implInfo.declared.map { RsTraitMemberChooserMember(base, it) }
-    val selectedByDefault = all.filter { it.member in implInfo.missingImplementations }
+    val nonImplemented = all.filter { it.member !in implInfo.alreadyImplemented }
+    val selectedByDefault = nonImplemented.filter { it.member in implInfo.missingImplementations }
     val chooser = if (ApplicationManager.getApplication().isUnitTestMode) MOCK!! else memberChooserDialog
-    return chooser(project, all, selectedByDefault).map { it.member }
+    return chooser(project, nonImplemented, selectedByDefault).map { it.member }
 }
 
 typealias TraitMemberChooser = (
