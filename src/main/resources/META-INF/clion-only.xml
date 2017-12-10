@@ -8,4 +8,11 @@
         <programRunner implementation="org.rust.debugger.runconfig.RsDebugRunner"/>
         <xdebugger.breakpointType implementation="org.rust.debugger.RsLineBreakpointType"/>
     </extensions>
+
+    <actions>
+        <reference id="Rust.NewProject">
+            <add-to-group group-id="WelcomeScreen.QuickStart"/>
+        </reference>
+    </actions>
+
 </idea-plugin>
