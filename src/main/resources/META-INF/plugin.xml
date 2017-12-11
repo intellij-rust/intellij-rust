@@ -606,6 +606,11 @@
     </application-components>
 
     <actions>
+        <action id="Rust.NewProject"
+                class="org.rust.ide.actions.RsNewProjectAction"
+                text="New Rust Project"
+                description="Create new Rust project"/>
+
         <action id="Rust.NewRustFile"
                 class="org.rust.ide.actions.RsCreateFileAction"
                 text="Rust File"
