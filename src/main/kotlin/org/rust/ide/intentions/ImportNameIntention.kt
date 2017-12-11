@@ -123,7 +123,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         val elementCrate = item.crateRoot
 
         val externCrateItems = mod.childrenOfType<RsExternCrateItem>()
-        var lastExternCreateItem = externCrateItems.maxBy { it.textOffset }
+        var lastExternCrateItem = externCrateItems.maxBy { it.textOffset }
 
         val psiFactory = RsPsiFactory(project)
 
@@ -132,18 +132,19 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         } else {
             // if crate of importing element differs from current crate
             // we need to add new extern crate item
-            val createName = elementCrate?.containingCargoTarget?.normName ?: return@runWriteCommandAction
-            if (createName == AutoInjectedCrates.std) {
+            val target = elementCrate?.containingCargoTarget ?: return@runWriteCommandAction
+            val crateName = target.normName
+            if (target.pkg.origin == PackageOrigin.STDLIB && crateName == AutoInjectedCrates.std) {
                 // but if crate of imported element is `std`
                 // we don't add corresponding extern crate item manually
                 // because it will be done by compiler implicitly
                 Testmarks.autoInjectedCrate.hit()
             } else {
-                val needAddExternCrateItem = externCrateItems.none { it.identifier.text == createName }
+                val needAddExternCrateItem = externCrateItems.none { it.reference.resolve() == elementCrate }
                 if (needAddExternCrateItem) {
-                    val externCrateItem = psiFactory.createExternCrateItem(createName)
-                    lastExternCreateItem = if (lastExternCreateItem != null) {
-                        mod.addAfter(externCrateItem, lastExternCreateItem)
+                    val externCrateItem = psiFactory.createExternCrateItem(crateName)
+                    lastExternCrateItem = if (lastExternCrateItem != null) {
+                        mod.addAfter(externCrateItem, lastExternCrateItem)
                     } else {
                         val insertedItem = mod.addBefore(externCrateItem, mod.firstItem())
                         mod.addAfter(psiFactory.createNewline(), mod.firstItem())
@@ -157,11 +158,11 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
 
         val lastUseItem = mod.childrenOfType<RsUseItem>().maxBy { it.textOffset }
         val useItem = psiFactory.createUseItem(usePath)
-        val anchor = lastUseItem ?: lastExternCreateItem
+        val anchor = lastUseItem ?: lastExternCrateItem
 
         if (anchor != null) {
             val insertedUseItem = mod.addAfter(useItem, anchor)
-            if (anchor == lastExternCreateItem) {
+            if (anchor == lastExternCrateItem) {
                 mod.addBefore(psiFactory.createNewline(), insertedUseItem)
             }
         } else {
