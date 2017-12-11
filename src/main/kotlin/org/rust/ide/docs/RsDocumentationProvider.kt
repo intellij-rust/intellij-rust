@@ -20,9 +20,9 @@ import org.rust.lang.doc.documentationAsHtml
 class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? = when (element) {
+        is RsTypeParameter -> pre { generateDoc(element) }
         is RsDocAndAttributeOwner -> generateDoc(element)
         is RsPatBinding -> pre { generateDoc(element) }
-        is RsTypeParameter -> pre { generateDoc(element) }
         else -> null
     }
 

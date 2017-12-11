@@ -102,6 +102,12 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         }         //^ usize
     """)
 
+    fun `test usize with outer attribute`() = testExpr("""
+        fn main() {
+            let a = #[foo] 42usize;
+        }                //^ usize
+    """)
+
     fun `test infer rvalue from lvalue integer`() = testExpr("""
         fn main() {
             let a: u8 = 1;

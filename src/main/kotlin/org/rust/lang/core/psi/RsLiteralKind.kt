@@ -7,7 +7,6 @@ package org.rust.lang.core.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiErrorElement
 import org.rust.lang.core.lexer.RustEscapesLexer
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.utils.unescapeRust
@@ -106,12 +105,10 @@ sealed class RsLiteralKind(val node: ASTNode) {
 }
 
 val RsLitExpr.kind: RsLiteralKind? get() {
-    val literal = firstChild
-    if (literal is PsiErrorElement) return null
-    return RsLiteralKind.fromAstNode(literal.node)
-        ?: error("Unknown literal: $firstChild (`$text`)")
+    val literalAstNode = this.node.findChildByType(RS_LITERALS) ?: return null
+    return RsLiteralKind.fromAstNode(literalAstNode)
+        ?: error("Unknown literal: $literalAstNode (`$text`)")
 }
-
 
 fun offsetsForNumber(node: ASTNode): LiteralOffsets {
     val (start, digits) = when (node.text.take(2)) {

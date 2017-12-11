@@ -303,7 +303,8 @@ TypeParameterList ::= '<' <<list_element (LifetimeParameter | TypeParameter)>>* 
 private LifetimesParams ::= <<list_element LifetimeParameter>>*
 
 LifetimeParameter ::= OuterAttr* QUOTE_IDENTIFIER LifetimeParamBounds? {
-  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsLifetimeParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsLifetimeParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -313,7 +314,8 @@ LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)*
 
 TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
+                 "org.rust.lang.core.psi.ext.RsTypeDeclarationElement"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsTypeParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
