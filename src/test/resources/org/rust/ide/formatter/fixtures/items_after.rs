@@ -8,7 +8,7 @@ pub mod m {
 
     pub struct S {
         foo: i32,
-        pub bar: i32
+        pub bar: i32,
     }
 
     impl S {

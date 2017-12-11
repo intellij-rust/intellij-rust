@@ -12,8 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.annotator.calculateMissingFields
-import org.rust.ide.formatter.processors.RsTrailingCommaFormatProcessor
 import org.rust.ide.formatter.impl.CommaList
+import org.rust.ide.formatter.processors.removeTrailingComma
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.elementType
@@ -88,9 +88,8 @@ class AddStructFieldsFix(
 
         if (postProcess) structLiteral = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(structLiteral)
 
-        RsTrailingCommaFormatProcessor.fixSingleLineBracedBlock(
-            structLiteral,
-            CommaList.forElement(structLiteral.elementType)!!)
+        CommaList.forElement(structLiteral.elementType)!!
+            .removeTrailingComma(structLiteral)
 
         return Pair(firstAdded, structLiteral)
     }

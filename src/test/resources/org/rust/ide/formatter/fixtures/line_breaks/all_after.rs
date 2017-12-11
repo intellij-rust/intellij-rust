@@ -91,7 +91,7 @@ fn misc() {
     let point: Point = Point {
         x: 0.3,
 
-        y: 0.4
+        y: 0.4,
     };
 
     match p {

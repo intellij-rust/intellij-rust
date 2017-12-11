@@ -29,14 +29,14 @@ class RsItemUpDownMover : RsLineMover() {
         RsElementTypes.TYPE_ALIAS
     )
 
-    override fun findMovableAncestor(psi: PsiElement): PsiElement? =
+    override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
         psi.ancestors.find { it.elementType in movableItems }
 
-    override fun findTargetLineRange(sibling: PsiElement, down: Boolean): LineRange? {
-        if (isMovingOutOfBlock(sibling, down) && sibling.parent is RsMembers) {
+    override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
+        if (isMovingOutOfBraceBlock(sibling, down) && sibling.parent is RsMembers) {
             UpDownMoverTestMarks.moveOutOfImpl.hit()
             return null
         }
-        return LineRange(sibling)
+        return sibling
     }
 }

@@ -73,4 +73,50 @@ class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
             foo.bar(1, 2);
         }
     """)
+
+    fun `test adds trailing commas in multiline blocks blocks`() = doTextTest("""
+        struct T1(
+            i32
+        );
+
+        struct T2(
+            i32,
+            i32
+        );
+
+        fn f(
+            x: i32,
+            y: i32
+        ) {
+            foo(
+                1
+            );
+            foo.bar(
+                1,
+                2
+            );
+        }
+    """, """
+        struct T1(
+            i32
+        );
+
+        struct T2(
+            i32,
+            i32,
+        );
+
+        fn f(
+            x: i32,
+            y: i32,
+        ) {
+            foo(
+                1
+            );
+            foo.bar(
+                1,
+                2,
+            );
+        }
+    """)
 }

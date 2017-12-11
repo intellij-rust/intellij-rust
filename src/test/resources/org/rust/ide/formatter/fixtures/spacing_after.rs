@@ -45,7 +45,7 @@ enum Message {
 
 enum Foo {
     Bar = 123,
-    Baz = 0
+    Baz = 0,
 }
 
 pub struct Vec<T> {
