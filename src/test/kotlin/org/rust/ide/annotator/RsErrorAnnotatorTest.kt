@@ -643,6 +643,30 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test macro mod fn no E0428`() = checkErrors("""
+        macro_rules! example {
+            () => ()
+        }
+        mod example { }
+        fn example() { }
+    """)
+
+    fun `test macro struct no E0428`() = checkErrors("""
+        macro_rules! example {
+            () => ()
+        }
+        struct example { }
+    """)
+
+    fun `test duplicate macro no E0428`() = checkErrors("""
+        macro_rules! example {
+            () => ()
+        }
+        macro_rules! example {
+            () => ()
+        }
+    """)
+
     fun `test unnecessary pub E0449`() = checkErrors("""
         <error descr="Unnecessary visibility qualifier [E0449]">pub</error> extern "C" { }
 
