@@ -17,7 +17,7 @@ install: true
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
-  - rustfmt --help || cargo install rustfmt --force
+  - rustfmt --help || cargo install +nightly rustfmt-nightly --force
   - ./check-license.sh
   - ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon
   - ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
