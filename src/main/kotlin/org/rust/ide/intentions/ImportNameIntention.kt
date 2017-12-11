@@ -6,17 +6,32 @@
 package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.psi.PsiElement
+import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.ui.popup.list.PopupListElementRenderer
+import com.intellij.util.ui.UIUtil
+import org.rust.cargo.icons.CargoIcons
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.runWriteCommandAction
+import java.awt.BorderLayout
+import java.awt.Component
+import javax.swing.*
 
 class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Context>(), HighPriorityAction {
+
     override fun getText() = "Import"
     override fun getFamilyName() = text
 
@@ -63,34 +78,45 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
 
         if (candidates.size == 1) {
             importItem(project, candidates.first(), path)
+        } else {
+            chooseItemAndImport(project, editor, candidates, path)
         }
-
-        // Here we should do the most complicated things
-        // First, if there are multiple candidates, we should display a choose dialog (see AddImportAction:97)
-        // Then we should calculate path to the found item. It is the most complicated step because of re-exports.
-        // We can easily find out an absolute path in a crate module structure, but this will make little sense
-        // if the name is re-exported. For example:
-        // ```rust
-        // mod a {
-        //     mod b1 {
-        //         pub struct S;
-        //     }
-        //     pub mod b2 {
-        //         pub use super::b1::S;
-        //     }
-        // }
-        // use a::b2::S;
-        // ```
-        // Or even it can be re-exported with another name `pub use super::b1::S as S1;`
-        //
-        // I don't completely know what to do with this, may be create another index for re-exports,
-        // but we can start with the trivial case where actual path == path in module structure
-        // (check it by visibility)
-        //
-        // Finally, we should place `use $path;` to the current file
     }
 
-    private fun importItem(project: Project, item: RsQualifiedNamedElement, originalPath: RsPath) {
+    private fun chooseItemAndImport(project: Project, editor: Editor, items: List<RsQualifiedNamedElement>, originalPath: RsPath) {
+        // TODO: sort items in popup
+        val step = object : BaseListPopupStep<RsQualifiedNamedElement>("Item to Import", items) {
+            override fun isAutoSelectionEnabled(): Boolean = false
+            override fun isSpeedSearchEnabled(): Boolean = true
+            override fun hasSubstep(selectedValue: RsQualifiedNamedElement?): Boolean = false
+
+            override fun onChosen(selectedValue: RsQualifiedNamedElement?, finalChoice: Boolean): PopupStep<*>? {
+                if (selectedValue == null) return PopupStep.FINAL_CHOICE
+                return doFinalStep { importItem(project, selectedValue, originalPath) }
+            }
+
+            override fun getTextFor(value: RsQualifiedNamedElement): String = value.qualifiedName!!
+
+            override fun getIconFor(value: RsQualifiedNamedElement): Icon? = value.getIcon(0)
+        }
+        val popup = object : ListPopupImpl(step) {
+            override fun getListElementRenderer(): ListCellRenderer<*> {
+                val baseRenderer = super.getListElementRenderer() as PopupListElementRenderer<Any>
+                val psiRenderer = RsElementCellRenderer()
+                return ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
+                    val panel = JPanel(BorderLayout())
+                    baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+                    panel.add(baseRenderer.nextStepLabel, BorderLayout.EAST)
+                    panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus))
+                    panel
+                }
+            }
+        }
+        NavigationUtil.hidePopupIfDumbModeStarts(popup, project)
+        popup.showInBestPositionFor(editor)
+    }
+
+    private fun importItem(project: Project, item: RsQualifiedNamedElement, originalPath: RsPath) = project.runWriteCommandAction {
         val mod = originalPath.containingMod
 
         val pathCrate = originalPath.crateRoot
@@ -106,7 +132,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         } else {
             // if crate of importing element differs from current crate
             // we need to add new extern crate item
-            val createName = elementCrate?.containingCargoTarget?.normName ?: return
+            val createName = elementCrate?.containingCargoTarget?.normName ?: return@runWriteCommandAction
             if (createName == AutoInjectedCrates.std) {
                 // but if crate of imported element is `std`
                 // we don't add corresponding extern crate item manually
@@ -127,7 +153,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
             }
 
             item.qualifiedName
-        } ?: return
+        } ?: return@runWriteCommandAction
 
         val lastUseItem = mod.childrenOfType<RsUseItem>().maxBy { it.textOffset }
         val useItem = psiFactory.createUseItem(usePath)
@@ -146,7 +172,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
 
     data class Context(
         val path: RsPath,
-        val candidates: Collection<RsQualifiedNamedElement>
+        val candidates: List<RsQualifiedNamedElement>
     )
 
     object Testmarks {
@@ -159,4 +185,38 @@ private fun RsItemsOwner.firstItem(): RsElement = itemsAndMacros.first()
 private tailrec fun getBasePath(path: RsPath): RsPath {
     val qualifier = path.path
     return if (qualifier == null) path else getBasePath(qualifier)
+}
+
+private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
+
+    private val rightRender: LibraryCellRender = LibraryCellRender()
+
+    override fun getRightCellRenderer(value: Any?): DefaultListCellRenderer? = rightRender
+}
+
+private class LibraryCellRender : DefaultListCellRenderer() {
+    override fun getListCellRendererComponent(list: JList<*>, value: Any?, index: Int,
+                                              isSelected: Boolean, cellHasFocus: Boolean): Component {
+        val component = super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus)
+        val textWithIcon = textWithIcon(value)
+        if (textWithIcon != null) {
+            text = textWithIcon.first
+            icon = textWithIcon.second
+        }
+
+        border = BorderFactory.createEmptyBorder(0, 0, 0, 2)
+        horizontalTextPosition = SwingConstants.LEFT
+        background = if (isSelected) UIUtil.getListSelectionBackground() else UIUtil.getListBackground()
+        foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
+        return component
+    }
+
+    private fun textWithIcon(value: Any?): Pair<String, Icon>? {
+        val pkg= (value as? RsElement)?.containingCargoPackage ?: return null
+        return when (pkg.origin) {
+            PackageOrigin.STDLIB -> pkg.normName to RsIcons.RUST
+            PackageOrigin.DEPENDENCY, PackageOrigin.TRANSITIVE_DEPENDENCY -> pkg.normName to CargoIcons.ICON
+            else -> null
+        }
+    }
 }
