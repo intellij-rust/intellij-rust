@@ -40,6 +40,8 @@ abstract class RunCargoCommandActionBase(icon: Icon) : AnAction(icon) {
     protected fun runCommand(project: Project, cargoCommandLine: CargoCommandLine) {
         val runConfiguration = createRunConfiguration(project, cargoCommandLine)
         val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
+        //BACKCOMPAT: 2017.2
+        @Suppress("DEPRECATION")
         ProgramRunnerUtil.executeConfiguration(project, runConfiguration, executor)
     }
 

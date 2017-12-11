@@ -27,6 +27,8 @@ class RsProjectTasksRunner : ProjectTaskRunner() {
             val runnerAndConfigurationSettings = RunManager.getInstance(project)
                 .createCargoCommandRunConfiguration(cmd)
             val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
+            //BACKCOMPAT: 2017.2
+            @Suppress("DEPRECATION")
             ProgramRunnerUtil.executeConfiguration(project, runnerAndConfigurationSettings, executor)
         }
     }

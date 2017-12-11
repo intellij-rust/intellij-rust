@@ -1138,7 +1138,7 @@ private class RsFnInferenceContext(
             return items.findVecForElementTy(elementType)
         }
 
-        val name = expr.macroCall.macroName ?: return TyUnknown
+        val name = expr.macroCall.macroName
         return when {
             "print" in name || "assert" in name -> TyUnit
             name == "format" -> items.findStringTy()
