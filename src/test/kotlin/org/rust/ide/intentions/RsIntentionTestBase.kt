@@ -25,9 +25,9 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
     }
 
     protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
-        InlineFile(before).withCaret()
+        InlineFile(before.trimIndent()).withCaret()
         myFixture.launchAction(intention)
-        myFixture.checkResult(replaceCaretMarker(after))
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
     protected fun doUnavailableTest(@Language("Rust") before: String) {
