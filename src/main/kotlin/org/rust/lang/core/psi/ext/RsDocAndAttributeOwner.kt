@@ -99,17 +99,16 @@ class QueryAttributes(
             .singleOrNull()
 
     val langAttribute: String?
-        get() = getStringAttribute("lang")
+        get() = getStringAttributes("lang").firstOrNull()
 
     val deriveAttributes: Sequence<RsMetaItem>
         get() = attrsByName("derive")
 
-    private fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
+    // `#[attributeName = "Xxx"]`
+    private fun getStringAttributes(attributeName: String): Sequence<String?> = attrsByName(attributeName).map { it.value }
 
     val metaItems: Sequence<RsMetaItem>
         get() = attributes.mapNotNull { it.metaItem }
-
-    private fun attrByName(name: String) = metaItems.find { it.referenceName == name }
 
     /**
      * Get a sequence of all attributes named [name]
