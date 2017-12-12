@@ -304,4 +304,23 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             test(&mut s);
         }
     """)
+
+    fun `test &mut on function`() = checkByText("""
+        fn foo() {}
+
+        fn main() {
+            let local = &mut foo;
+        }
+    """)
+
+    fun `test &mut on method`() = checkByText("""
+        struct A {}
+        impl A {
+            fn foo(&mut self) {}
+        }
+
+        fn main() {
+            let local = &mut A::foo;
+        }
+    """)
 }
