@@ -271,6 +271,24 @@ class RsStructureViewTest : RsTestBase() {
         pub struct Foo;
     """, "Foo", true)
 
+    fun `test template types impl`() = doTest("""
+        struct A<K> { }
+
+        impl<K: Ord> A<K> {
+            pub fn aaa() {}
+        }
+        impl<K: Display> A<K> {
+            pub fn bbb() {}
+        }
+    """, """
+        -main.rs
+         A
+         -A<K: Ord>
+          aaa()
+         -A<K: Display>
+          bbb()
+    """)
+
     private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
         myFixture.configureByText("main.rs", code)
         val psi = myFixture.file.children.mapNotNull { it as? RsElement }.first()
