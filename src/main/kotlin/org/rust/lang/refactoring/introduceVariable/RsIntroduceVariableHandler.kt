@@ -14,6 +14,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.core.psi.RsFile
+import org.rust.openapiext.Testmark
 
 class RsIntroduceVariableHandler : RefactoringActionHandler {
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
@@ -43,3 +44,6 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
     }
 }
 
+object IntroduceVariableTestmarks {
+    val invalidNamePart = Testmark("invalidNamePart")
+}
