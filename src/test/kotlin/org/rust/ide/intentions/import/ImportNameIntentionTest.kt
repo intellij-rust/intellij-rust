@@ -3,7 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions
+package org.rust.ide.intentions.import
+
+import org.rust.ide.intentions.RsIntentionTestBase
 
 class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
 

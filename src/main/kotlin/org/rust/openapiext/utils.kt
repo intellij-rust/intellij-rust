@@ -107,3 +107,5 @@ class CachedVirtualFile(private val url: String) {
         return file
     }
 }
+
+val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTestMode

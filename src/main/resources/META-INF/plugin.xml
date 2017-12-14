@@ -528,7 +528,7 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.ImportNameIntention</className>
+            <className>org.rust.ide.intentions.import.ImportNameIntention</className>
             <category>Rust</category>
         </intentionAction>
 

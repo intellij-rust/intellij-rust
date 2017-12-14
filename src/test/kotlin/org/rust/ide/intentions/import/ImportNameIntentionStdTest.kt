@@ -3,9 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions
+package org.rust.ide.intentions.import
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.rust.ide.intentions.RsIntentionTestBase
 
 class ImportNameIntentionStdTest : RsIntentionTestBase(ImportNameIntention()) {
 
