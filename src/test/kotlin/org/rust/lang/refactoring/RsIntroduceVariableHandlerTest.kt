@@ -9,8 +9,10 @@ import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.refactoring.introduceVariable.IntroduceVariableTestmarks
 import org.rust.lang.refactoring.introduceVariable.IntroduceVariableUi
 import org.rust.lang.refactoring.introduceVariable.withMockIntroduceVariableTargetExpressionChooser
+import org.rust.openapiext.Testmark
 
 
 class RsIntroduceVariableHandlerTest : RsTestBase() {
@@ -158,6 +160,29 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test tuple struct`() = doTest("""
+        pub struct NodeType(pub u32);
+
+        pub struct Token {
+            pub ty: NodeType,
+        }
+
+        fn main(t: Token) {
+            foo(t./*caret*/ty)
+        }
+    """, listOf("t.ty", "foo(t.ty)"), 0, """
+        pub struct NodeType(pub u32);
+
+        pub struct Token {
+            pub ty: NodeType,
+        }
+
+        fn main(t: Token) {
+            let node_type = t.ty;
+            foo(node_type)
+        }
+    """, mark = IntroduceVariableTestmarks.invalidNamePart)
+
     private fun doTest(
         @Language("Rust") before: String,
         expressions: List<String>,
@@ -166,21 +191,40 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         replaceAll: Boolean = false
     ) {
         checkByText(before, after) {
-            var shownTargetChooser = false
-            withMockIntroduceVariableTargetExpressionChooser(object : IntroduceVariableUi {
-                override fun chooseTarget(exprs: List<RsExpr>): RsExpr {
-                    shownTargetChooser = true
-                    TestCase.assertEquals(exprs.map { it.text }, expressions)
-                    return exprs[target]
-                }
+            doIntroduce(expressions, target, replaceAll)
+        }
+    }
 
-                override fun chooseOccurrences(expr: RsExpr, occurrences: List<RsExpr>): List<RsExpr> =
-                    if (replaceAll) occurrences else listOf(expr)
-            }) {
-                myFixture.performEditorAction("IntroduceVariable")
-                if (expressions.isNotEmpty() && !shownTargetChooser) {
-                    error("Didn't shown chooser")
-                }
+    private fun doTest(
+        @Language("Rust") before: String,
+        expressions: List<String>,
+        target: Int,
+        @Language("Rust") after: String,
+        replaceAll: Boolean = false,
+        mark: Testmark
+    ) {
+        checkByText(before, after) {
+            mark.checkHit {
+                doIntroduce(expressions, target, replaceAll)
+            }
+        }
+    }
+
+    private fun doIntroduce(expressions: List<String>, target: Int, replaceAll: Boolean) {
+        var shownTargetChooser = false
+        withMockIntroduceVariableTargetExpressionChooser(object : IntroduceVariableUi {
+            override fun chooseTarget(exprs: List<RsExpr>): RsExpr {
+                shownTargetChooser = true
+                TestCase.assertEquals(exprs.map { it.text }, expressions)
+                return exprs[target]
+            }
+
+            override fun chooseOccurrences(expr: RsExpr, occurrences: List<RsExpr>): List<RsExpr> =
+                if (replaceAll) occurrences else listOf(expr)
+        }) {
+            myFixture.performEditorAction("IntroduceVariable")
+            if (expressions.isNotEmpty() && !shownTargetChooser) {
+                error("Didn't shown chooser")
             }
         }
     }

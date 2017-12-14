@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.resolve.hitOnFalse
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyStructOrEnumBase
 import org.rust.lang.core.types.ty.TyTraitObject
@@ -74,7 +75,7 @@ private val uselessNames = listOf("new", "default")
 private fun LinkedHashSet<String>.addName(name: String?) {
     if (name == null || name in uselessNames || !isValidRustVariableIdentifier(name)) return
     NameUtil.getSuggestionsByName(name, "", "", false, false, false)
-        .filter { it !in uselessNames }
+        .filter { it !in uselessNames && IntroduceVariableTestmarks.invalidNamePart.hitOnFalse(isValidRustVariableIdentifier(it)) }
         .mapTo(this) { it.toSnakeCase(false) }
 }
 
