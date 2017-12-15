@@ -5,7 +5,9 @@
 
 package org.rust.ide.intentions.import
 
+import org.intellij.lang.annotations.Language
 import org.rust.ide.intentions.RsIntentionTestBase
+import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 
 class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
 
@@ -204,4 +206,60 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
             let x = Foo/*caret*/;
         }
     """)
+
+    fun `test multiple import`() = doAvailableTestWithMultipleChoice("""
+        mod foo {
+            pub struct Foo;
+            pub mod bar {
+                pub struct Foo;
+            }
+        }
+
+        mod baz {
+            pub struct Foo;
+            mod qwe {
+                pub struct Foo;
+            }
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """, setOf("::foo::Foo", "::foo::bar::Foo", "::baz::Foo"), "::foo::bar::Foo", """
+        use foo::bar::Foo;
+
+        mod foo {
+            pub struct Foo;
+            pub mod bar {
+                pub struct Foo;
+            }
+        }
+
+        mod baz {
+            pub struct Foo;
+            mod qwe {
+                pub struct Foo;
+            }
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """)
+
+
+    private fun doAvailableTestWithMultipleChoice(@Language("Rust") before: String,
+                                                  expectedElements: Set<String>,
+                                                  choice: String,
+                                                  @Language("Rust") after: String) {
+        withMockImportItemUi(object : ImportItemUi {
+            override fun chooseItem(items: List<RsQualifiedNamedElement>, callback: (RsQualifiedNamedElement) -> Unit) {
+                val actualItems = items.mapNotNullTo(HashSet()) { it.crateRelativePath }
+                assertEquals(expectedElements, actualItems)
+                val selectedValue = items.find { it.crateRelativePath == choice }
+                    ?: error("Can't find `$choice` in `$actualItems`")
+                callback(selectedValue)
+            }
+        }) { doAvailableTest(before, after) }
+    }
 }
