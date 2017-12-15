@@ -280,6 +280,9 @@ class RsStructureViewTest : RsTestBase() {
         impl<K: Display> A<K> {
             pub fn bbb() {}
         }
+        impl<K: Display + Ord> A<K> {
+            pub fn ccc() {}
+        }
     """, """
         -main.rs
          A
@@ -287,6 +290,8 @@ class RsStructureViewTest : RsTestBase() {
           aaa()
          -A<K: Display>
           bbb()
+         -A<K: Display + Ord>
+          ccc()
     """)
 
     private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
