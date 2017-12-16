@@ -19,9 +19,7 @@ import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.lang.core.psi.ext.qualifiedName
 import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout
 import java.awt.Component
@@ -32,8 +30,8 @@ private var MOCK: ImportItemUi? = null
 fun showItemsToImportChooser(
     project: Project,
     editor: Editor,
-    items: List<RsQualifiedNamedElement>,
-    callback: (RsQualifiedNamedElement) -> Unit
+    items: List<ImportCandidate>,
+    callback: (ImportCandidate) -> Unit
 ) {
     val itemImportUi = if (isUnitTestMode) {
         MOCK ?: error("You should set mock ui via `withMockImportItemUi`")
@@ -54,25 +52,25 @@ fun withMockImportItemUi(mockUi: ImportItemUi, action: () -> Unit) {
 }
 
 interface ImportItemUi {
-    fun chooseItem(items: List<RsQualifiedNamedElement>, callback: (RsQualifiedNamedElement) -> Unit)
+    fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit)
 }
 
 private class PopupImportItemUi(private val project: Project, private val editor: Editor) : ImportItemUi {
 
-    override fun chooseItem(items: List<RsQualifiedNamedElement>, callback: (RsQualifiedNamedElement) -> Unit) {
+    override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
         // TODO: sort items in popup
-        val step = object : BaseListPopupStep<RsQualifiedNamedElement>("Item to Import", items) {
+        val step = object : BaseListPopupStep<ImportCandidate>("Item to Import", items) {
             override fun isAutoSelectionEnabled(): Boolean = false
             override fun isSpeedSearchEnabled(): Boolean = true
-            override fun hasSubstep(selectedValue: RsQualifiedNamedElement?): Boolean = false
+            override fun hasSubstep(selectedValue: ImportCandidate?): Boolean = false
 
-            override fun onChosen(selectedValue: RsQualifiedNamedElement?, finalChoice: Boolean): PopupStep<*>? {
+            override fun onChosen(selectedValue: ImportCandidate?, finalChoice: Boolean): PopupStep<*>? {
                 if (selectedValue == null) return PopupStep.FINAL_CHOICE
                 return doFinalStep { callback(selectedValue) }
             }
 
-            override fun getTextFor(value: RsQualifiedNamedElement): String = value.qualifiedName!!
-            override fun getIconFor(value: RsQualifiedNamedElement): Icon? = value.getIcon(0)
+            override fun getTextFor(value: ImportCandidate): String = value.info.usePath
+            override fun getIconFor(value: ImportCandidate): Icon? = value.item.getIcon(0)
         }
         val popup = object : ListPopupImpl(step) {
             override fun getListElementRenderer(): ListCellRenderer<*> {
@@ -82,7 +80,8 @@ private class PopupImportItemUi(private val project: Project, private val editor
                     val panel = JPanel(BorderLayout())
                     baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
                     panel.add(baseRenderer.nextStepLabel, BorderLayout.EAST)
-                    panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus))
+                    val item = (value as? ImportCandidate)?.item
+                    panel.add(psiRenderer.getListCellRendererComponent(list, item, index, isSelected, cellHasFocus))
                     panel
                 }
             }
@@ -117,7 +116,7 @@ private class LibraryCellRender : DefaultListCellRenderer() {
     }
 
     private fun textWithIcon(value: Any?): Pair<String, Icon>? {
-        val pkg= (value as? RsElement)?.containingCargoPackage ?: return null
+        val pkg = (value as? RsElement)?.containingCargoPackage ?: return null
         return when (pkg.origin) {
             PackageOrigin.STDLIB -> pkg.normName to RsIcons.RUST
             PackageOrigin.DEPENDENCY, PackageOrigin.TRANSITIVE_DEPENDENCY -> pkg.normName to CargoIcons.ICON

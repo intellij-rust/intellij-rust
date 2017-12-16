@@ -7,7 +7,6 @@ package org.rust.ide.intentions.import
 
 import org.intellij.lang.annotations.Language
 import org.rust.ide.intentions.RsIntentionTestBase
-import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 
 class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
 
@@ -225,7 +224,7 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
         fn main() {
             let f = Foo/*caret*/;
         }
-    """, setOf("::foo::Foo", "::foo::bar::Foo", "::baz::Foo"), "::foo::bar::Foo", """
+    """, setOf("foo::Foo", "foo::bar::Foo", "baz::Foo"), "foo::bar::Foo", """
         use foo::bar::Foo;
 
         mod foo {
@@ -247,16 +246,15 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
         }
     """)
 
-
     private fun doAvailableTestWithMultipleChoice(@Language("Rust") before: String,
                                                   expectedElements: Set<String>,
                                                   choice: String,
                                                   @Language("Rust") after: String) {
         withMockImportItemUi(object : ImportItemUi {
-            override fun chooseItem(items: List<RsQualifiedNamedElement>, callback: (RsQualifiedNamedElement) -> Unit) {
-                val actualItems = items.mapNotNullTo(HashSet()) { it.crateRelativePath }
+            override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
+                val actualItems = items.mapTo(HashSet()) { it.info.usePath }
                 assertEquals(expectedElements, actualItems)
-                val selectedValue = items.find { it.crateRelativePath == choice }
+                val selectedValue = items.find { it.info.usePath == choice }
                     ?: error("Can't find `$choice` in `$actualItems`")
                 callback(selectedValue)
             }

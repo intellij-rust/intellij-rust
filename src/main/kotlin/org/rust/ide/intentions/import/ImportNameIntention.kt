@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.intentions.RsElementBaseIntentionAction
@@ -37,32 +38,38 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         // TODO: support reexports
         val candidates = RsNamedElementIndex.findElementsByName(project, basePath.referenceName)
             .filterIsInstance<RsQualifiedNamedElement>()
-            .filter { (it as? RsVisible)?.isVisibleIn(pathSuperMods) ?: false }
+            .mapNotNull {
+                val info = (it as? RsVisible)?.canBeImported(pathSuperMods) ?: return@mapNotNull null
+                ImportCandidate(it, info)
+            }
         if (candidates.isEmpty()) return null
         return Context(path, candidates)
     }
 
-    // Semantic signature of method is `RsVisible.isVisibleIn(mod: RsMod)`
+    // Semantic signature of method is `RsVisible.canBeImported(mod: RsMod)`
     // but in our case `mod` is always same and `mod` needs only to get set of its super mods
     // so we pass `superMods` instead of `mod` for optimization
-    private fun RsVisible.isVisibleIn(superMods: Set<RsMod>): Boolean {
-        val parentMod = (if (this is RsMod) `super` else containingMod) ?: return false
+    private fun RsVisible.canBeImported(superMods: Set<RsMod>): ImportInfo? {
+        val parentMod = (if (this is RsMod) `super` else containingMod) ?: return null
         val ourSuperMods = parentMod.superMods
 
         // try to find latest common ancestor module of `parentMod` and `mod` in module tree
         // we need to do it because we can use direct child items of any super mod with any visibility
         val lca = ourSuperMods.find { it in superMods }
 
-        val shouldBePublicMods = if (lca == null) {
-            if (!isPublic) return false
-            ourSuperMods
+        val (shouldBePublicMods, importInfo) = if (lca == null) {
+            if (!isPublic) return null
+            val usePath = (this as? RsQualifiedNamedElement)?.qualifiedName ?: return null
+            val target = containingCargoTarget ?: return null
+            ourSuperMods to ImportInfo.ExternCrateImportInfo(usePath, ourSuperMods.last(), target)
         } else {
+            val usePath = (this as? RsQualifiedNamedElement)?.crateRelativePath?.removePrefix("::") ?: return null
             // if current item is direct child of some ancestor of `mod` then it can be not public
-            if (parentMod == lca) return true
-            if (!isPublic) return false
-            ourSuperMods.takeWhile { it != lca }.dropLast(1)
+            if (parentMod == lca) return ImportInfo.LocalImportInfo(usePath)
+            if (!isPublic) return null
+            ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(usePath)
         }
-        return shouldBePublicMods.all { it.isPublic }
+        return if (shouldBePublicMods.all { it.isPublic }) return importInfo else null
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
@@ -75,29 +82,24 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         }
     }
 
-    private fun chooseItemAndImport(project: Project, editor: Editor, items: List<RsQualifiedNamedElement>, originalPath: RsPath) {
+    private fun chooseItemAndImport(project: Project, editor: Editor, items: List<ImportCandidate>, originalPath: RsPath) {
         showItemsToImportChooser(project, editor, items) { selectedValue ->
             importItem(project, selectedValue, originalPath)
         }
     }
 
-    private fun importItem(project: Project, item: RsQualifiedNamedElement, originalPath: RsPath) = project.runWriteCommandAction {
+    private fun importItem(project: Project, candidate: ImportCandidate, originalPath: RsPath): Unit = project.runWriteCommandAction {
         val mod = originalPath.containingMod
-
-        val pathCrate = originalPath.crateRoot
-        val elementCrate = item.crateRoot
 
         val externCrateItems = mod.childrenOfType<RsExternCrateItem>()
         var lastExternCrateItem = externCrateItems.maxBy { it.textOffset }
 
         val psiFactory = RsPsiFactory(project)
 
-        val usePath = if (pathCrate == elementCrate) {
-            item.crateRelativePath?.removePrefix("::")
-        } else {
-            // if crate of importing element differs from current crate
-            // we need to add new extern crate item
-            val target = elementCrate?.containingCargoTarget ?: return@runWriteCommandAction
+        // if crate of importing element differs from current crate
+        // we need to add new extern crate item
+        if (candidate.info is ImportInfo.ExternCrateImportInfo) {
+            val (_, crateMod, target) = candidate.info
             val crateName = target.normName
             if (target.pkg.origin == PackageOrigin.STDLIB && crateName == AutoInjectedCrates.std) {
                 // but if crate of imported element is `std`
@@ -105,7 +107,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
                 // because it will be done by compiler implicitly
                 Testmarks.autoInjectedCrate.hit()
             } else {
-                val needAddExternCrateItem = externCrateItems.none { it.reference.resolve() == elementCrate }
+                val needAddExternCrateItem = externCrateItems.none { it.reference.resolve() == crateMod }
                 if (needAddExternCrateItem) {
                     val externCrateItem = psiFactory.createExternCrateItem(crateName)
                     lastExternCrateItem = if (lastExternCrateItem != null) {
@@ -117,12 +119,10 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
                     } as RsExternCrateItem?
                 }
             }
-
-            item.qualifiedName
-        } ?: return@runWriteCommandAction
+        }
 
         val lastUseItem = mod.childrenOfType<RsUseItem>().maxBy { it.textOffset }
-        val useItem = psiFactory.createUseItem(usePath)
+        val useItem = psiFactory.createUseItem(candidate.info.usePath)
         val anchor = lastUseItem ?: lastExternCrateItem
 
         if (anchor != null) {
@@ -138,13 +138,28 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
 
     data class Context(
         val path: RsPath,
-        val candidates: List<RsQualifiedNamedElement>
+        val candidates: List<ImportCandidate>
     )
 
     object Testmarks {
         val autoInjectedCrate = Testmark("autoInjectedCrate")
     }
 }
+
+sealed class ImportInfo {
+
+    abstract val usePath: String
+
+    data class LocalImportInfo(override val usePath: String): ImportInfo()
+
+    data class ExternCrateImportInfo(
+        override val usePath: String,
+        val externCrateMod: RsMod,
+        val target: CargoWorkspace.Target
+    ) : ImportInfo()
+}
+
+data class ImportCandidate(val item: RsQualifiedNamedElement, val info: ImportInfo)
 
 private fun RsItemsOwner.firstItem(): RsElement = itemsAndMacros.first()
 
