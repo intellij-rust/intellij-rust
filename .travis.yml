@@ -17,7 +17,12 @@ install: true
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
-  - rustfmt --help || cargo install +nightly rustfmt-nightly --force
+  - |
+    if ! rustfmt --help; then
+        rustup install nightly
+        export LD_LIBRARY_PATH=$(rustup run nightly rustc --print sysroot)/lib:$LD_LIBRARY_PATH
+        cargo +nightly install rustfmt-nightly --force
+    fi
   - ./check-license.sh
   - ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon
   - ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
