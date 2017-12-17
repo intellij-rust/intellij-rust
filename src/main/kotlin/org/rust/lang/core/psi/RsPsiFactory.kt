@@ -254,6 +254,11 @@ class RsPsiFactory(private val project: Project) {
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
 
+    fun createCastExpr(expr: RsExpr, typeText: String): RsCastExpr = when (expr) {
+        is RsBinaryExpr -> createExpressionOfType("(${expr.text}) as $typeText")
+        else -> createExpressionOfType("${expr.text} as $typeText")
+    }
+
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E
             ?: error("Failed to create ${E::class.simpleName} from `$text`")
