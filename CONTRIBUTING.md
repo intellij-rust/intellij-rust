@@ -147,6 +147,7 @@ change. Common tags are:
   * QDOC for quick documentation
   * PERF for performance optimizations
   * PRJ for project creation changes 
+  * ACT for actions
 
 
   * CARGO for cargo-related changes
