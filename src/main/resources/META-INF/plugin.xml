@@ -116,6 +116,8 @@
         // `ctrl+alt+b`
         <definitionsScopedSearch implementation="org.rust.ide.navigation.goto.RsImplsSearch"/>
         <gotoTargetRendererProvider implementation="org.rust.ide.navigation.goto.RsGotoTargetRendererProvider"/>
+        // `ctrl+shift+b`
+        <typeDeclarationProvider implementation="org.rust.ide.navigation.goto.RsTypeDeclarationProvider"/>
 
         <!-- Hints -->
 
