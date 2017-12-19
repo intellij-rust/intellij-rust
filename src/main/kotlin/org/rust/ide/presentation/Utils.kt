@@ -71,7 +71,10 @@ private fun buildTemplateImplTypeName(psi: RsImplItem): String? {
             typeBounds.mapNotNullTo(boundsList) { it.bound.traitRef?.path?.referenceName }
         }
         val boundsString = boundsList.joinToString(separator = " + ")
-        paramsList.add("$name: $boundsString")
+        when (boundsString.isEmpty()) {
+            true -> paramsList.add(name)
+            false -> paramsList.add("$name: $boundsString")
+        }
     }
     if (paramsList.isEmpty()) return null
     val paramsString = paramsList.joinToString(prefix = "<", postfix = ">", separator = ", ")
