@@ -295,6 +295,32 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test negative trait bound`() = doTextTest("""
+        struct Foo<T:  ?  Sized> {
+            a: T,
+        }
+
+        impl<T> Foo<T>
+            where T: Bar +  ?  Sized {
+            fn foo<U: Bar +  ?  Sized>(a: &U) {}
+        }
+
+        impl<T:  ?  Sized > Foo<T>
+        {}
+    """, """
+        struct Foo<T: ?Sized> {
+            a: T,
+        }
+
+        impl<T> Foo<T>
+            where T: Bar + ?Sized {
+            fn foo<U: Bar + ?Sized>(a: &U) {}
+        }
+
+        impl<T: ?Sized> Foo<T>
+        {}
+    """)
+
     fun `test spaces in reverse turbofish paths`() = doTextTest("""
         enum E<T> {
             X(< T :: BindTransport  as  IntoFuture > :: Future),
