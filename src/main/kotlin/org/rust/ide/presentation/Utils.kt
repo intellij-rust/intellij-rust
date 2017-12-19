@@ -61,19 +61,39 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
 }
 
 private fun buildTemplateImplTypeName(psi: RsImplItem): String? {
-    val paramsList = mutableListOf<String>()
-    val baseName = psi.typeReference?.baseType?.name ?: return null
-    for (typeParameter in psi.typeParameters) {
-        val name = typeParameter.name ?: continue
-        val typeBounds = typeParameter.typeParamBounds?.childrenOfType<RsPolybound>()
+
+    val populatePolyboundsMap = fun(type: String, typeBounds: List<RsPolybound>?, map: LinkedHashMap<String, MutableList<String>>): Unit {
         val boundsList = mutableListOf<String>()
         if (typeBounds != null) {
             typeBounds.mapNotNullTo(boundsList) { it.bound.traitRef?.path?.referenceName }
         }
-        val boundsString = boundsList.joinToString(separator = " + ")
+        if (map.containsKey(type))
+            map[type]!!.addAll(boundsList)
+        else
+            map.put(type, boundsList)
+    }
+
+    val boundsMap = LinkedHashMap<String, MutableList<String>>()
+    val baseName = psi.typeReference?.baseType?.name ?: return null
+    for (typeParameter in psi.typeParameters) {
+        val name = typeParameter.name ?: continue
+        populatePolyboundsMap(name, typeParameter.typeParamBounds?.childrenOfType<RsPolybound>(), boundsMap)
+    }
+
+    val wherePredList = psi.whereClause?.wherePredList
+    if (wherePredList != null) {
+        for (whereParam in wherePredList) {
+            val name = whereParam.typeReference?.baseType?.name ?: continue
+            populatePolyboundsMap(name, whereParam.typeParamBounds?.childrenOfType<RsPolybound>(), boundsMap)
+        }
+    }
+
+    val paramsList = mutableListOf<String>()
+    for ((key, value) in boundsMap) {
+        val boundsString = value.joinToString(separator = " + ")
         when (boundsString.isEmpty()) {
-            true -> paramsList.add(name)
-            false -> paramsList.add("$name: $boundsString")
+            true -> paramsList.add(key)
+            false -> paramsList.add("$key: $boundsString")
         }
     }
     if (paramsList.isEmpty()) return null
