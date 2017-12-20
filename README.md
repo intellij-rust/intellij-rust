@@ -35,7 +35,7 @@ Frequently asked questions, a.k.a. "Where is Rust SDK?", are on the [website] :)
 
 ## TOML
 
-If you are looking for the TOML plugin, see [toml] directory.
+If you are looking for the TOML plugin, see [intellij-toml] directory.
 
 ## Compatible IDEs
 
@@ -56,7 +56,7 @@ with [help wanted].
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [ARCHITECTURE.md]: ARCHITECTURE.md
 [TeamCity]: https://teamcity.jetbrains.com/guestAuth/repository/download/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/.lastSuccessful/intellij-rust-0.2.0.{build.number}.zip
-[toml]: toml/
+[intellij-toml]: intellij-toml/
 
 <!-- Badges -->
 [gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
