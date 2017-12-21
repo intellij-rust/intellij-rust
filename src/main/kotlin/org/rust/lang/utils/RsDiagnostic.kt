@@ -19,9 +19,12 @@ import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyInfer
+import org.rust.lang.core.types.ty.TyNumeric
 import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
+import org.rust.stdext.buildList
 
 sealed class RsDiagnostic(
     val element: PsiElement,
@@ -35,12 +38,19 @@ sealed class RsDiagnostic(
         private val expectedTy: Ty,
         private val actualTy: Ty
     ) : RsDiagnostic(element, experimental = true) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0308,
-            "mismatched types",
-            expectedFound(expectedTy, actualTy)
-        )
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                E0308,
+                "mismatched types",
+                expectedFound(expectedTy, actualTy),
+                fixes = buildList {
+                    if (expectedTy is TyNumeric && isActualTyNumeric()) add(AddAsTyFix(element, expectedTy))
+                }
+            )
+        }
+
+        private fun isActualTyNumeric() = actualTy is TyNumeric || actualTy is TyInfer.IntVar || actualTy is TyInfer.FloatVar
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
             val expectedTyS = escapeString(expectedTy.toString())
