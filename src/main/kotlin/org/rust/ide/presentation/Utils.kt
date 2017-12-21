@@ -61,31 +61,16 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
 }
 
 private fun buildTemplateImplTypeName(psi: RsImplItem): String? {
-
-    val populatePolyboundsMap = fun(type: String, typeBounds: List<RsPolybound>?, map: LinkedHashMap<String, MutableList<String>>): Unit {
-        val boundsList = mutableListOf<String>()
-        if (typeBounds != null) {
-            typeBounds.mapNotNullTo(boundsList) { it.bound.traitRef?.path?.referenceName }
-        }
-        if (map.containsKey(type))
-            map[type]!!.addAll(boundsList)
-        else
-            map.put(type, boundsList)
-    }
-
     val boundsMap = LinkedHashMap<String, MutableList<String>>()
     val baseName = psi.typeReference?.baseType?.name ?: return null
     for (typeParameter in psi.typeParameters) {
         val name = typeParameter.name ?: continue
-        populatePolyboundsMap(name, typeParameter.typeParamBounds?.childrenOfType<RsPolybound>(), boundsMap)
-    }
-
-    val wherePredList = psi.whereClause?.wherePredList
-    if (wherePredList != null) {
-        for (whereParam in wherePredList) {
-            val name = whereParam.typeReference?.baseType?.name ?: continue
-            populatePolyboundsMap(name, whereParam.typeParamBounds?.childrenOfType<RsPolybound>(), boundsMap)
-        }
+        val boundsList = mutableListOf<String>()
+        typeParameter.bounds.mapNotNullTo(boundsList) { it.bound.traitRef?.path?.referenceName }
+        if (boundsMap.containsKey(name))
+            boundsMap[name]!!.addAll(boundsList)
+        else
+            boundsMap.put(name, boundsList)
     }
 
     val paramsList = mutableListOf<String>()
@@ -96,6 +81,7 @@ private fun buildTemplateImplTypeName(psi: RsImplItem): String? {
             false -> paramsList.add("$key: $boundsString")
         }
     }
+
     if (paramsList.isEmpty()) return null
     val paramsString = paramsList.joinToString(prefix = "<", postfix = ">", separator = ", ")
     return "$baseName$paramsString"
