@@ -442,8 +442,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test struct with alias 1`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test struct with alias 1`() = testExpr("""
         struct S<T> { a: T }
         type T1 = S<u8>;
         type T2 = T1;
@@ -451,10 +450,8 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             T2 { a: 1 }
         } //^ S<u8>
     """)
-    }
 
-    fun `test struct with alias 2`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test struct with alias 2`() = testExpr("""
         struct S<T> { a: T }
         type T1<U> = S<U>;
         type T2 = T1<u8>;
@@ -462,10 +459,8 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             T2 { a: 1 }
         } //^ S<u8>
     """)
-    }
 
-    fun `test struct with alias 3`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test struct with alias 3`() = testExpr("""
         struct S<T> { a: T }
         type T1<U> = S<U>;
         type T2<V> = T1<V>;
@@ -473,7 +468,6 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             T2 { a: 1u8 }
         } //^ S<u8>
     """)
-    }
 
     fun `test generic struct arg`() = testExpr("""
         struct Foo<F>(F);

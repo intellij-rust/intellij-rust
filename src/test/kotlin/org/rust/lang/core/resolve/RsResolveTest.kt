@@ -535,8 +535,7 @@ class RsResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
-    fun `test struct field with alias`() = expect<IllegalStateException> {
-        checkByCode("""
+    fun `test struct field with alias`() = checkByCode("""
         struct S { foo: i32 }
                   //X
         type T1 = S;
@@ -545,7 +544,6 @@ class RsResolveTest : RsResolveTestBase() {
             let _ = T2 { foo: 92 };
         }              //^
     """)
-    }
 
     fun `test enum field`() = checkByCode("""
         enum E { X { foo: i32 } }

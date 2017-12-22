@@ -714,7 +714,15 @@ private class RsFnInferenceContext(
             return TyUnknown
         }
 
-        val (element, subst) = boundElement
+        var (element, subst) = boundElement
+
+        // Resolve potential type aliases
+        while (element is RsTypeAlias) {
+            val resolved = (element.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve()
+            element = resolved?.element ?: return TyUnknown
+            subst = resolved.subst.substituteInValues(subst)
+        }
+
         val genericDecl: RsGenericDeclaration = when (element) {
             is RsStructItem -> element
             is RsEnumVariant -> element.parentEnum
