@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package org.rust.ide.lineMarkers
 
 import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
 
 /**
  * Tests for Trait member (const, fn, type) Implementation Line Marker
  */
-class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
+class RsTraitItemImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
     fun `test impl`() = doTestByText("""
         trait Foo {         // - Has implementations

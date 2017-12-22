@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package org.rust.ide.lineMarkers
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
@@ -20,7 +20,7 @@ import javax.swing.Icon
 /**
  * Annotates the implementation of a trait members (const, fn, type) with an icon on the gutter.
  */
-class RsTraitMethodImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
+class RsTraitItemImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
     override fun collectNavigationMarkers(el: PsiElement, result: MutableCollection<in RelatedItemLineMarkerInfo<PsiElement>>) {
         if (el !is RsAbstractable) return
 

@@ -136,7 +136,7 @@
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.lineMarkers.RsRecursiveCallLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
-                                        implementationClass="org.rust.ide.annotator.RsTraitMethodImplLineMarkerProvider"/>
+                                        implementationClass="org.rust.ide.lineMarkers.RsTraitItemImplLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.lineMarkers.RsCrateDocLineMarkerProvider"/>
 
