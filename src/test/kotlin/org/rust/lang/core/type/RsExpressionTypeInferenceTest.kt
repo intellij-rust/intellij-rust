@@ -725,6 +725,18 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }        //^ i32
     """)
 
+    fun `test struct with alias`() = expect<IllegalStateException> {
+        testExpr("""
+        struct S;
+        type T1 = S;
+        type T2 = T1;
+        fn main() {
+            T2 { }
+        } //^ S
+    """)
+    }
+    // More struct alias tests in [RsGenericExpressionTypeInferenceTest]
+
     fun `test index expr of unresolved path`() = testExpr("""
         fn main() {
             a[1]
