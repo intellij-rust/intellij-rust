@@ -22,43 +22,91 @@ const val KEYWORD_PRIORITY = 10.0
 private const val MACRO_PRIORITY = -0.1
 
 fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
-    val base = LookupElementBuilder.create(element, scopeName)
-        .withIcon(if (element is RsFile) RsIcons.MODULE else element.getIcon(0))
+    val base = element.getLookupElementBuilder(scopeName)
+        .withInsertHandler { context: InsertionContext, _ -> getInsertHandler(element, scopeName, context) }
 
-    return when (element) {
+    if (element is RsMacroDefinition) return base.withPriority(MACRO_PRIORITY)
+
+    return base
+}
+
+
+fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
+    PrioritizedLookupElement.withPriority(this, priority)
+
+private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementBuilder {
+    val base = LookupElementBuilder.create(this, scopeName)
+        .withIcon(if (this is RsFile) RsIcons.MODULE else this.getIcon(0))
+
+    return when (this) {
         is RsMod -> if (scopeName == "self" || scopeName == "super") {
             base.withTailText("::")
-                .withInsertHandler({ ctx, _ ->
-                    val offset = ctx.tailOffset - 1
-                    val inSelfParam = PsiTreeUtil.findElementOfClassAtOffset(ctx.file, offset, RsSelfParameter::class.java, false) != null
-                    if (!(ctx.isInUseGroup || inSelfParam)) {
-                        ctx.addSuffix("::")
-                    }
-                })
         } else {
             base
         }
 
         is RsConstant -> base
-            .withTypeText(element.typeReference?.text)
-            .withInsertHandler({ context: InsertionContext, _ -> appendSemicolon(context) })
-        is RsFieldDecl -> base.withTypeText(element.typeReference?.text)
-        is RsTraitItem -> base.withInsertHandler({ context: InsertionContext, _ -> appendSemicolon(context) })
+            .withTypeText(typeReference?.text)
+        is RsFieldDecl -> base.withTypeText(typeReference?.text)
+        is RsTraitItem -> base
 
         is RsFunction -> base
-            .withTypeText(element.retType?.typeReference?.text ?: "()")
-            .withTailText(element.valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
-            .appendTailText(element.extraTailText, true)
-            .withInsertHandler handler@ { context: InsertionContext, _: LookupElement ->
-                val curUseItem = context.getItemOfType<RsUseItem>()
-                if (curUseItem != null) {
-                    val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
-                    if (!(hasSemicolon || context.isInUseGroup)) {
-                        context.addSuffix(";")
-                    }
-                    return@handler
-                }
+            .withTypeText(retType?.typeReference?.text ?: "()")
+            .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
+            .appendTailText(extraTailText, true)
 
+        is RsStructItem -> base
+            .withTailText(when {
+                blockFields != null -> " { ... }"
+                tupleFields != null -> tupleFields!!.text
+                else -> ""
+            })
+
+        is RsEnumVariant -> base
+            .withTypeText(ancestorStrict<RsEnumItem>()?.name ?: "")
+            .withTailText(when {
+                blockFields != null -> " { ... }"
+                tupleFields != null ->
+                    tupleFields!!.tupleFieldDeclList.joinToString(prefix = "(", postfix = ")") { it.typeReference.text }
+                else -> ""
+            })
+
+        is RsPatBinding -> base
+            .withTypeText(type.let {
+                when (it) {
+                    is TyUnknown -> ""
+                    else -> it.toString()
+                }
+            })
+
+        is RsMacroBinding -> base.withTypeText(fragmentSpecifier)
+
+        is RsMacroDefinition -> base.withTailText("!")
+
+        else -> base
+    }
+}
+
+private fun getInsertHandler(element: RsElement, scopeName: String, context: InsertionContext) {
+    val curUseItem = context.getItemOfType<RsUseItem>()
+    when (element) {
+
+        is RsMod -> if (scopeName == "self" || scopeName == "super") {
+            val offset = context.tailOffset - 1
+            val inSelfParam = PsiTreeUtil.findElementOfClassAtOffset(context.file, offset, RsSelfParameter::class.java, false) != null
+            if (!(context.isInUseGroup || inSelfParam)) {
+                context.addSuffix("::")
+            }
+        }
+
+        is RsConstant -> appendSemicolon(context, curUseItem)
+        is RsTraitItem -> appendSemicolon(context, curUseItem)
+        is RsStructItem -> appendSemicolon(context, curUseItem)
+
+        is RsFunction -> {
+            if (curUseItem != null) {
+                appendSemicolon(context, curUseItem);
+            } else {
                 if (!context.alreadyHasCallParens) {
                     context.document.insertString(context.selectionEndOffset, "()")
                 }
@@ -67,68 +115,36 @@ fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
                     AutoPopupController.getInstance(element.project)?.autoPopupParameterInfo(context.editor, element)
                 }
             }
+        }
 
-        is RsStructItem -> base
-            .withTailText(when {
-                element.blockFields != null -> " { ... }"
-                element.tupleFields != null -> element.tupleFields!!.text
-                else -> ""
-            })
-            .withInsertHandler({ context: InsertionContext, _: LookupElement -> appendSemicolon(context) })
-
-        is RsEnumVariant -> base
-            .withTypeText(element.ancestorStrict<RsEnumItem>()?.name ?: "")
-            .withTailText(when {
-                element.blockFields != null -> " { ... }"
-                element.tupleFields != null ->
-                    element.tupleFields!!.tupleFieldDeclList.joinToString(prefix = "(", postfix = ")") { it.typeReference.text }
-                else -> ""
-            })
-            .withInsertHandler handler@ { context, _ ->
-                if (context.getItemOfType<RsUseItem>() != null) return@handler
+        is RsEnumVariant -> {
+            if (curUseItem == null) {
                 val (text, shift) = when {
                     element.tupleFields != null -> Pair("()", 1)
                     element.blockFields != null -> Pair(" {}", 2)
-                    else -> return@handler
+                    else -> Pair("", 0)
                 }
                 if (!(context.alreadyHasPatternParens || context.alreadyHasCallParens)) {
                     context.document.insertString(context.selectionEndOffset, text)
                 }
                 EditorModificationUtil.moveCaretRelatively(context.editor, shift)
             }
-
-        is RsPatBinding -> base
-            .withTypeText(element.type.let {
-                when (it) {
-                    is TyUnknown -> ""
-                    else -> it.toString()
-                }
-            })
-
-        is RsMacroBinding -> base.withTypeText(element.fragmentSpecifier)
+        }
 
         is RsMacroDefinition -> {
             val parens = when (element.name) {
                 "vec" -> "[]"
                 else -> "()"
             }
-            base
-                .withTailText("!")
-                .withInsertHandler { context: InsertionContext, _: LookupElement ->
-                    context.document.insertString(context.selectionEndOffset, "!$parens")
-                    EditorModificationUtil.moveCaretRelatively(context.editor, 2)
-                }
-                .withPriority(MACRO_PRIORITY)
+            context.document.insertString(context.selectionEndOffset, "!$parens")
+            EditorModificationUtil.moveCaretRelatively(context.editor, 2)
         }
-        else -> base
+
     }
 }
 
-fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
-    PrioritizedLookupElement.withPriority(this, priority)
 
-private fun appendSemicolon(context: InsertionContext) {
-    val curUseItem = context.getItemOfType<RsUseItem>()
+private fun appendSemicolon(context: InsertionContext, curUseItem: RsUseItem?) {
     if (curUseItem != null) {
         val hasSemicolon = curUseItem.lastChild!!.elementType == RsElementTypes.SEMICOLON
         if (!(hasSemicolon || context.isInUseGroup)) {
@@ -136,7 +152,6 @@ private fun appendSemicolon(context: InsertionContext) {
         }
     }
 }
-
 
 private inline fun <reified T : RsItemElement> InsertionContext.getItemOfType(strict: Boolean = false): T? =
     PsiTreeUtil.findElementOfClassAtOffset(this.file, this.tailOffset - 1, T::class.java, strict)
