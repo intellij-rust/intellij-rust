@@ -26,19 +26,51 @@ class RsGotoSuperHandlerTest : RsTestBase() {
         }
     """)
 
-    fun `test method declataion from impl`() = checkNavigation("""
+    fun `test method declaration from impl`() = checkNavigation("""
         trait T {
-             fn foo(); // <- should go here
+            fn foo(); // <- should go here
         }
         impl T for () {
             fn foo/*caret*/() {}
         }
     """, """
         trait T {
-             fn /*caret*/foo(); // <- should go here
+            fn /*caret*/foo(); // <- should go here
         }
         impl T for () {
             fn foo() {}
+        }
+    """)
+
+    fun `test constant declaration from impl`() = checkNavigation("""
+        trait T {
+            const Z: u32; // <- should go here
+        }
+        impl T for () {
+            const /*caret*/Z: u32 = 1;
+        }
+    """, """
+        trait T {
+            const /*caret*/Z: u32; // <- should go here
+        }
+        impl T for () {
+            const Z: u32 = 1;
+        }
+    """)
+
+    fun `test type alias declaration from impl`() = checkNavigation("""
+        trait T {
+             type Z; // <- should go here
+        }
+        impl T for () {
+            type /*caret*/Z = ();
+        }
+    """, """
+        trait T {
+             type /*caret*/Z; // <- should go here
+        }
+        impl T for () {
+            type Z = ();
         }
     """)
 
