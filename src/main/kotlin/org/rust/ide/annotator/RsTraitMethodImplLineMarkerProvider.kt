@@ -22,7 +22,7 @@ class RsTraitMethodImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
     override fun collectNavigationMarkers(el: PsiElement, result: MutableCollection<in RelatedItemLineMarkerInfo<PsiElement>>) {
         if (!(el is RsFunction && el.owner.isTraitImpl)) return
 
-        val traitMethod = el.superMethod ?: return
+        val traitMethod = el.superItem ?: return
         val trait = traitMethod.ancestorStrict<RsTraitItem>() ?: return
 
         val action: String

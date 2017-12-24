@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.ext.superMethod
+import org.rust.lang.core.psi.ext.superItem
 
 class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
     override fun startInWriteAction() = false
@@ -40,7 +40,7 @@ fun gotoSuperTarget(source: PsiElement): NavigatablePsiElement? {
 
     if (modOrMethod is RsFunction) {
         return if (modOrMethod.owner.isTraitImpl) {
-            modOrMethod.superMethod
+            modOrMethod.superItem
         } else {
             gotoSuperTarget(modOrMethod.parent)
         }

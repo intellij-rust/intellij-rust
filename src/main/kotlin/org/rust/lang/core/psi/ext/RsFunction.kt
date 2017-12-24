@@ -74,14 +74,6 @@ val RsFunction.owner: RsFunctionOwner get() {
     }
 }
 
-
-val RsFunction.superMethod: RsFunction? get() {
-    val rustImplItem = ancestorStrict<RsImplItem>() ?: return null
-    val superTrait = rustImplItem.traitRef?.resolveToTrait ?: return null
-
-    return superTrait.members?.functionList.orEmpty().find { it.name == this.name }
-}
-
 val RsFunction.valueParameters: List<RsValueParameter>
     get() = valueParameterList?.valueParameterList.orEmpty()
 
