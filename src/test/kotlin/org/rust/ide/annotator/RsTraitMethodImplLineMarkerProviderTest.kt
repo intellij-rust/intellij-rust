@@ -8,7 +8,7 @@ package org.rust.ide.annotator
 import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
 
 /**
- * Tests for Trait Method Implementation Line Marker
+ * Tests for Trait member (const, fn, type) Implementation Line Marker
  */
 class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
@@ -29,10 +29,10 @@ class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
             }
             fn bar(&self) { // - Overrides method in `Foo`
             }
-            type T1 = ();
-            type T2 = ();
-            const C1: u32 = 1;
-            const C2: u32 = 1;
+            type T1 = (); // - Implements type in `Foo`
+            type T2 = (); // - Overrides type in `Foo`
+            const C1: u32 = 1; // - Implements constant in `Foo`
+            const C2: u32 = 1; // - Overrides constant in `Foo`
         }
     """)
 
@@ -66,11 +66,11 @@ class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
             }
 
             type
-            T1
+            T1 // - Implements type in `Foo`
             = ();
 
             const
-            C1
+            C1 // - Implements constant in `Foo`
             : u32 = 1;
         }
     """)
