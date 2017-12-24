@@ -1,0 +1,9 @@
+<spot>use foo::Foo</spot>;
+
+mod foo {
+    pub struct Foo;
+}
+
+fn main() {
+    let f = <spot>Foo</spot>;
+}

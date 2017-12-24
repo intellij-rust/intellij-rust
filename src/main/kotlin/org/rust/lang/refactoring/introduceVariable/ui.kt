@@ -5,13 +5,13 @@
 
 package org.rust.lang.refactoring.introduceVariable
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Pass
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.RsExpr
+import org.rust.openapiext.isUnitTestMode
 
 
 fun showIntroduceVariableTargetExpressionChooser(
@@ -19,7 +19,7 @@ fun showIntroduceVariableTargetExpressionChooser(
     exprs: List<RsExpr>,
     callback: (RsExpr) -> Unit
 ) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (isUnitTestMode) {
         callback(MOCK!!.chooseTarget(exprs))
     } else {
         IntroduceTargetChooser.showChooser(editor, exprs, callback.asPass, { it.text })
@@ -32,7 +32,7 @@ fun showOccurrencesChooser(
     occurrences: List<RsExpr>,
     callback: (List<RsExpr>) -> Unit
 ) {
-    if (ApplicationManager.getApplication().isUnitTestMode && occurrences.size > 1) {
+    if (isUnitTestMode && occurrences.size > 1) {
         callback(MOCK!!.chooseOccurrences(expr, occurrences))
     } else {
         OccurrencesChooser.simpleChooser<RsExpr>(editor)

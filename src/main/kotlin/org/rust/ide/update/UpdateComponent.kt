@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.HttpRequests
 import org.jdom.JDOMException
 import org.rust.lang.core.psi.isRustFile
+import org.rust.openapiext.isUnitTestMode
 import java.io.IOException
 import java.net.URLEncoder
 import java.net.UnknownHostException
@@ -32,7 +33,7 @@ class UpdateComponent : ApplicationComponent, Disposable {
     override fun getComponentName(): String = javaClass.name
 
     override fun initComponent() {
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
+        if (!isUnitTestMode) {
             EditorFactory.getInstance().addEditorFactoryListener(EDITOR_LISTENER, this)
         }
     }

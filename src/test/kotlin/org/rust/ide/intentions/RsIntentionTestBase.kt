@@ -7,7 +7,9 @@ package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.intellij.lang.annotations.Language
+import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
+import org.rust.openapiext.Testmark
 
 abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase() {
     fun `test intention has documentation`() {
@@ -25,10 +27,21 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
     }
 
     protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
-        InlineFile(before).withCaret()
+        InlineFile(before.trimIndent()).withCaret()
         myFixture.launchAction(intention)
-        myFixture.checkResult(replaceCaretMarker(after))
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
+
+    protected fun doAvailableTestWithFileTree(@Language("Rust") fileStructureBefore: String, @Language("Rust") openedFileAfter: String) {
+        fileTreeFromText(fileStructureBefore).createAndOpenFileWithCaretMarker()
+        myFixture.launchAction(intention)
+        myFixture.checkResult(replaceCaretMarker(openedFileAfter.trimIndent()))
+    }
+
+    protected fun doAvailableTest(@Language("Rust") before: String,
+                                  @Language("Rust") after: String,
+                                  testmark: Testmark) =
+        testmark.checkHit { doAvailableTest(before, after) }
 
     protected fun doUnavailableTest(@Language("Rust") before: String) {
         InlineFile(before).withCaret()

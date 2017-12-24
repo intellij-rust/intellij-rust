@@ -29,8 +29,8 @@ class AddDeriveIntentionTest : RsIntentionTestBase(AddDeriveIntention()) {
     """, """
         #[derive(/*caret*/)]
         enum Test {
-    Something
-}
+            Something
+        }
     """)
 
     fun `test add derive existing attr`() = doAvailableTest("""
@@ -38,6 +38,6 @@ class AddDeriveIntentionTest : RsIntentionTestBase(AddDeriveIntention()) {
         struct Test/*caret*/ {}
     """, """
         #[derive(Something/*caret*/)]
-struct Test {}
+        struct Test {}
     """)
 }

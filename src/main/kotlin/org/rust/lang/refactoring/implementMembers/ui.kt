@@ -9,7 +9,6 @@ import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
 import org.jetbrains.annotations.TestOnly
@@ -19,6 +18,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.TraitImplementationInfo
+import org.rust.openapiext.isUnitTestMode
 import javax.swing.JTree
 
 
@@ -58,7 +58,7 @@ fun showTraitMemberChooser(
     val all = implInfo.declared.map { RsTraitMemberChooserMember(base, it) }
     val nonImplemented = all.filter { it.member !in implInfo.alreadyImplemented }
     val selectedByDefault = nonImplemented.filter { it.member in implInfo.missingImplementations }
-    val chooser = if (ApplicationManager.getApplication().isUnitTestMode) MOCK!! else memberChooserDialog
+    val chooser = if (isUnitTestMode) MOCK!! else memberChooserDialog
     return chooser(project, nonImplemented, selectedByDefault).map { it.member }
 }
 
