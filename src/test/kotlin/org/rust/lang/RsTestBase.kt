@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,11 +28,11 @@ import org.rust.FileTree
 import org.rust.TestProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.project.workspace.CargoWorkspaceData
-import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import java.nio.file.Paths
@@ -248,7 +247,9 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 name = name,
                 version = "0.0.1",
                 targets = listOf(
-                    CargoWorkspaceData.Target(source?.let { FileUtil.join(contentRoot, it) } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
+                    // don't use `FileUtil.join` here because it uses `File.separator`
+                    // which is system dependent although all other code uses `/` as separator
+                    CargoWorkspaceData.Target(source?.let { "$contentRoot/$it" } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
                 ),
                 source = source,
                 origin = PackageOrigin.DEPENDENCY
