@@ -9,8 +9,10 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
@@ -22,9 +24,22 @@ abstract class TyStructOrEnumBase(flags: TypeFlags) : Ty(flags) {
     abstract val item: RsStructOrEnumItemElement
 }
 
+private fun RsFieldsOwner.canBeCopyable(): Boolean {
+    return blockFields?.fieldDeclList?.all {
+        it.typeReference?.type?.isCopyable ?: false
+    } ?: tupleFields?.tupleFieldDeclList?.all {
+        it.typeReference.type.isCopyable
+    } ?: true
+}
+
 class TyStruct private constructor(
     private val boundElement: BoundElement<RsStructItem>
 ) : TyStructOrEnumBase(mergeFlags(boundElement)) {
+
+    override val isCopyable: Boolean get() {
+        val lookup = ImplLookup.relativeTo(boundElement.element)
+        return lookup.isCopy(this) && !lookup.isDrop(this) && boundElement.element.canBeCopyable()
+    }
 
     override val item: RsStructItem
         get() = boundElement.element
@@ -60,6 +75,12 @@ class TyStruct private constructor(
 class TyEnum private constructor(
     private val boundElement: BoundElement<RsEnumItem>
 ) : TyStructOrEnumBase(mergeFlags(boundElement)) {
+
+    override val isCopyable: Boolean get() {
+        val lookup = ImplLookup.relativeTo(boundElement.element)
+        return lookup.isCopy(this) && !lookup.isDrop(this)
+            && item.enumBody?.enumVariantList?.all { it.canBeCopyable() } ?: true
+    }
 
     override val item: RsEnumItem
         get() = boundElement.element

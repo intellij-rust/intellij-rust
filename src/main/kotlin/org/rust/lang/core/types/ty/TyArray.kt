@@ -17,4 +17,6 @@ class TyArray(val base: Ty, val size: Long?) : Ty(base.flags) {
         base.visitWith(visitor)
 
     override fun toString(): String = tyToString(this)
+
+    override val isCopyable = base.isCopyable
 }

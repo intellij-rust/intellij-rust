@@ -86,7 +86,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsTryExpr -> RsColor.Q_OPERATOR
     is RsTraitRef -> RsColor.TRAIT
 
-    is RsEnumItem -> RsColor.ENUM
+    is RsEnumItem -> if (element.isCopyable) RsColor.ENUM_COPYABLE else RsColor.ENUM
     is RsEnumVariant -> RsColor.ENUM_VARIANT
     is RsExternCrateItem -> RsColor.CRATE
     is RsFieldDecl -> RsColor.FIELD
@@ -108,7 +108,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
             else -> null
         }
     }
-    is RsStructItem -> RsColor.STRUCT
+    is RsStructItem -> if (element.isCopyable) RsColor.STRUCT_COPYABLE else RsColor.STRUCT
     is RsTraitItem -> RsColor.TRAIT
     is RsTypeAlias -> RsColor.TYPE_ALIAS
     is RsTypeParameter -> RsColor.TYPE_PARAMETER

@@ -41,6 +41,8 @@ abstract class TyPrimitive : Ty() {
             }
         }
     }
+
+    override val isCopyable = true
 }
 
 object TyBool : TyPrimitive() {

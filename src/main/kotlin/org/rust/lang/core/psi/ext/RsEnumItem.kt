@@ -12,6 +12,8 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsPsiImplUtil
+import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.stubs.RsEnumItemStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
@@ -35,3 +37,5 @@ abstract class RsEnumItemImplMixin : RsStubbedNamedElementImpl<RsEnumItemStub>, 
 
     override fun getContext() = ExpansionResult.getContextImpl(this)
 }
+
+val RsEnumItem.isCopyable: Boolean get() = declaredType.isCopyable

@@ -49,6 +49,11 @@ abstract class Ty(val flags: TypeFlags = 0): TypeFoldable<Ty> {
      * User visible string representation of a type
      */
     abstract override fun toString(): String
+
+    /**
+     * Whether this type can be copied by bits
+     */
+    open val isCopyable = false
 }
 
 enum class Mutability {

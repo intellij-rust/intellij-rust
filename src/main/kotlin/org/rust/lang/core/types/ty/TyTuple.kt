@@ -18,5 +18,7 @@ data class TyTuple(val types: List<Ty>) : Ty(mergeFlags(types)) {
         types.any(visitor)
 
     override fun toString(): String = tyToString(this)
+
+    override val isCopyable = types.all { it.isCopyable }
 }
 

@@ -17,4 +17,6 @@ data class TyPointer(val referenced: Ty, val mutability: Mutability) : Ty(refere
         referenced.visitWith(visitor)
 
     override fun toString() = "*${if (mutability.isMut) "mut" else "const"} $referenced"
+
+    override val isCopyable = true
 }
