@@ -43,7 +43,7 @@ object RsIcons {
 
     val TRAIT = AllIcons.Nodes.Interface!!
     val STRUCT = AllIcons.Nodes.Class!!
-    val TYPE = AllIcons.Nodes.Class!!
+    val TYPE = IconLoader.getIcon("/icons/nodes/typeAlias.png")
     val IMPL = AllIcons.Nodes.AbstractClass!!
     val ENUM = AllIcons.Nodes.Enum!!
 
