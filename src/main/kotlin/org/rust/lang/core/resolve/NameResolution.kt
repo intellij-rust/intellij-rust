@@ -80,7 +80,13 @@ fun processFieldExprResolveVariants(
 }
 
 fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
-    val structOrEnumVariant = field.parentStructLiteral.path.reference.resolve() as? RsFieldsOwner ?: return false
+    var resolved = field.parentStructLiteral.path.reference.resolve()
+
+    // Resolve potential type aliases
+    while (resolved is RsTypeAlias) {
+        resolved = (resolved.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve()
+    }
+    val structOrEnumVariant = resolved as? RsFieldsOwner ?: return false
     return processFieldDeclarations(structOrEnumVariant, processor)
 }
 

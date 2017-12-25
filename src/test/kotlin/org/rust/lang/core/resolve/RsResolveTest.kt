@@ -495,6 +495,17 @@ class RsResolveTest : RsResolveTestBase() {
                     //^ unresolved
     """)
 
+    // Enum variants behind an alias are not resolved
+    // https://github.com/rust-lang/rust/issues/26264
+    // https://github.com/rust-lang/rfcs/issues/2218
+    fun `test enum variant with alias`() = checkByCode("""
+        enum E { A }
+        type T1 = E;
+        fn main() {
+            let _ = T1::A;
+        }             //^ unresolved
+    """)
+
     fun `test local fn`() = checkByCode("""
         fn main() {
             foo();
@@ -524,6 +535,15 @@ class RsResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
+    fun `test struct field with alias`() = checkByCode("""
+        struct S { foo: i32 }
+                  //X
+        type T1 = S;
+        type T2 = T1;
+        fn main() {
+            let _ = T2 { foo: 92 };
+        }              //^
+    """)
 
     fun `test enum field`() = checkByCode("""
         enum E { X { foo: i32 } }
