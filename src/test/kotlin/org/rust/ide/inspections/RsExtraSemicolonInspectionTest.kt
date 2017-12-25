@@ -11,8 +11,10 @@ class RsExtraSemicolonInspectionTest : RsInspectionsTestBase(RsExtraSemicolonIns
         fn foo() { 92; }
     """)
 
-    fun `test not applicable for let`() = checkByText("""
-        fn foo() -> i32 { let x = 92; }
+    fun `test applicable for let`() = checkByText("""
+        fn foo() -> i32 {
+        <warning descr="Function returns () instead of i32">let x = 92;<caret></warning>
+        }
     """)
 
     fun `test not applicable with explicit return`() = checkByText("""

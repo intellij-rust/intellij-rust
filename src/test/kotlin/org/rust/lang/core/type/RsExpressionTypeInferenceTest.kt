@@ -81,7 +81,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = if true { 92 };
             x
-          //^ ()
+          //^ i32
         }
     """)
 
@@ -810,4 +810,18 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             a
         } //^ <unknown>
     """)
+
+    fun `test if should infer '!' when diverge`() = testExpr("""
+        fn main() {
+            let a = if true { return; } else { return; };
+            a
+        } //^ !
+        """)
+
+    fun `test if should infer '()' when it has an empty block`() = testExpr("""
+        fn main() {
+            let a = if true { return; } else if false {  } else { return };
+            a
+        } //^ ()
+        """)
 }
