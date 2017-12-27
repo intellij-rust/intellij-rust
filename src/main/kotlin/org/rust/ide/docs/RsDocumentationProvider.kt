@@ -72,22 +72,22 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
     val rawLines = when (this) {
         is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
+        is RsStructOrEnumItemElement, is RsTraitItem -> listOfNotNull(presentableQualifiedModName)
         is RsFunction -> {
             val owner = owner
             when (owner) {
-                is RsFunctionOwner.Foreign, is RsFunctionOwner.Free -> listOfNotNull(presentableQualifiedModName)
-                is RsFunctionOwner.Impl ->
-                    listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
+                is RsFunctionOwner.Foreign,
+                is RsFunctionOwner.Free -> listOfNotNull(presentableQualifiedModName)
+                is RsFunctionOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
                 is RsFunctionOwner.Trait -> owner.trait.declarationText
             }
         }
-        is RsStructOrEnumItemElement, is RsTraitItem -> listOfNotNull(presentableQualifiedModName)
         is RsTypeAlias -> {
             val owner = owner
             when (owner) {
+                is RsTypeAliasOwner.Free -> listOfNotNull(presentableQualifiedModName)
                 is RsTypeAliasOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
                 is RsTypeAliasOwner.Trait -> owner.trait.declarationText
-                is RsTypeAliasOwner.Free -> listOfNotNull(presentableQualifiedModName)
             }
         }
         else -> listOfNotNull(presentableQualifiedName)
@@ -118,8 +118,7 @@ private fun RsDocAndAttributeOwner.signature(usePreTag: Boolean): String {
             retType?.generateDocumentation(buffer)
             listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
         }
-        // All these types extend RsTypeBearingItemElement and RsGenericDeclaration interfaces
-        // so all casts are safe
+        // All these types extend RsItemElement and RsGenericDeclaration interfaces so all casts are safe
         is RsStructOrEnumItemElement, is RsTraitItem, is RsTypeAlias -> {
             val name = name
             if (name != null) {
