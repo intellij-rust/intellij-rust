@@ -6,7 +6,10 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.util.EmptyQuery
+import com.intellij.util.Query
 import org.rust.lang.core.psi.*
+import org.rust.openapiext.mapQuery
 
 interface RsAbstractable : RsNamedElement, PsiNameIdentifierOwner {
     val isAbstract: Boolean
@@ -57,3 +60,14 @@ val RsAbstractable.superItem: RsAbstractable?
             else -> error("unreachable")
         }
     }
+
+fun RsAbstractable.searchForImplementations(): Query<RsItemElement> {
+    val rustTraitItem = ancestorStrict<RsTraitItem>() ?: return EmptyQuery()
+    val traitImpls = rustTraitItem.searchForImplementations()
+    return when (this) {
+        is RsConstant -> traitImpls.mapQuery { it.members?.constantList?.find { it.name == this.name } }
+        is RsFunction -> traitImpls.mapQuery { it.members?.functionList?.find { it.name == this.name } }
+        is RsTypeAlias -> traitImpls.mapQuery { it.members?.typeAliasList?.find { it.name == this.name } }
+        else -> error("unreachable")
+    }
+}
