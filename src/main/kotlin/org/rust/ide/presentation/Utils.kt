@@ -31,7 +31,7 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
             append(xs.joinToString(", "))
             append(')')
         }
-        append(presentableName(psi))
+        append(presentableNameForStruct(psi))
         when (psi) {
             is RsFunction -> {
                 appendCommaList(psi.valueParameters.mapNotNull { it.typeReference?.text })
@@ -60,7 +60,26 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
     return PresentationData(presentation, null, icon, null)
 }
 
+// Detailed presentation for various places in the application
 private fun presentableName(psi: RsElement): String? = when (psi) {
+    is RsAbstractable -> {
+        val o = psi.owner
+        if (o is RsAbstractableOwner.Impl) {
+            val typeName = o.impl.typeReference?.type?.toString()
+            val traitName = o.impl.traitRef?.path?.referenceName
+            when {
+                typeName == null -> "${psi.name}" //TODO
+                traitName == null -> "$typeName::${psi.name}"
+                else -> "$traitName::${psi.name} for $typeName"
+            }
+        } else
+            psi.name
+    }
+    else -> presentableNameForStruct(psi)
+}
+
+// Short presentation for display in the struct viewer
+private fun presentableNameForStruct(psi: RsElement): String? = when (psi) {
     is RsNamedElement -> psi.name
     is RsImplItem -> {
         val typeName = psi.typeReference?.type?.toString()

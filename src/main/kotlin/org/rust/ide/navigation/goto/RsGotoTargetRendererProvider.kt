@@ -10,16 +10,25 @@ import com.intellij.codeInsight.navigation.GotoTargetRendererProvider
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.ext.RsAbstractable
+import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsGotoTargetRendererProvider : GotoTargetRendererProvider {
     override fun getRenderer(element: PsiElement, gotoData: GotoTargetHandler.GotoData): PsiElementListCellRenderer<*>? {
-        if (element is RsImplItem) return ImplRenderer()
-        return null
+        return when (element) {
+            is RsImplItem,
+            is RsAbstractable -> NamedElementRenderer()
+            else -> null
+        }
     }
 
-    private class ImplRenderer : PsiElementListCellRenderer<RsImplItem>() {
-        override fun getContainerText(element: RsImplItem, name: String?): String? = element.presentation?.locationString
-        override fun getElementText(element: RsImplItem): String? = element.presentation?.presentableText
+    // The default renderer just shows the element name
+    // This would not be helpful in many cases
+    // So replace it with our own renderer
+    // TODO reword...
+    private class NamedElementRenderer : PsiElementListCellRenderer<RsNamedElement>() {
+        override fun getContainerText(element: RsNamedElement, name: String?): String? = element.presentation?.locationString
+        override fun getElementText(element: RsNamedElement): String? = element.presentation?.presentableText
         override fun getIconFlags(): Int = 0
     }
 }
