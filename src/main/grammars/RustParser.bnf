@@ -1044,7 +1044,8 @@ MacroExpansionReferenceGroup ::= '$' '(' MacroExpansionContents ')'
 
 
 MacroCall ::= MacroHead <<macroSemicolon>> {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"]
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"

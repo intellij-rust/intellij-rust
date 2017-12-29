@@ -212,8 +212,7 @@ class RsAttributeTest : RsTestBase() {
         }
         """, Outer)
 
-    fun `test macro call`() = expect<IllegalStateException> {
-        doTest("""
+    fun `test macro call`() = doTest("""
         macro_rules! makro {
             () => { };
         }
@@ -222,7 +221,6 @@ class RsAttributeTest : RsTestBase() {
         makro!();
         //^
         """, Outer)
-    }
 
     fun `test let statement`() = expect<IllegalStateException> {
         doTest2<RsStmt>("""
