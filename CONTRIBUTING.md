@@ -40,7 +40,7 @@ Common tasks are
 
 Note the `:` in front of the task name. The repository contains two independent
 plugins for Rust and TOML, which are organized as gradle subprojects. Running
-`./gradlew :task` executes the task only for Rust plugin, `:toml:task` will run
+`./gradlew :task` executes the task only for Rust plugin, `:intellij-toml:task` will run
 the task for TOML and `./gradlew task` will do for both.
 
 
@@ -173,13 +173,13 @@ All test classes are placed in the `src/test/kotlin` directory. There are two
 ways of providing fixtures for the tests. The first one is to put Rust files
 in `src/test/resources`.
 
-In the example below `RustFormatterTest.kt` is the test class, `blocks.rs` is
+In the example below `RsFormatterTest.kt` is the test class, `blocks.rs` is
 the fixture for the initial state and `blocks_after.rs` is the fixture for the
 final state. It is good practice to put fixtures in the same package as tests.
 
      +-- src/test/kotlin
      |    +-- org/rust/ide/formatter
-     |        +-- RustFormatterTest.kt
+     |        +-- RsFormatterTest.kt
      |
      +-- src/test/resources
          +-- org/rust/ide/formatter
@@ -236,9 +236,9 @@ complex tests. An example of a fixture with a caret:
 Test classes are JUnit and written in Kotlin. They specify the resource path in
 which fixtures are found and contain a number of test methods. Test methods
 follow a simple convention: their name is the initial fixture name camel-cased.
-For example, `RustFormatterTest.kt` would look like:
+For example, `RsFormatterTest.kt` would look like:
 
-    class RustFormatterTest: FormatterTestCase() {
+    class RsFormatterTest : FormatterTestCase() {
         override fun getTestDataPath() = "src/test/resources"
         override fun getFileExtension() = "rs"
 

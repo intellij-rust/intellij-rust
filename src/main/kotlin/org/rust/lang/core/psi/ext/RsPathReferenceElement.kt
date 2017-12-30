@@ -7,6 +7,6 @@ package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.resolve.ref.RsPathReference
 
-interface RsPathReferenceElement : RsReferenceElement{
+interface RsPathReferenceElement : RsReferenceElement {
     override fun getReference(): RsPathReference
 }
