@@ -13,10 +13,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.intentions.RsElementBaseIntentionAction
-import org.rust.lang.core.psi.RsExternCrateItem
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsUseItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.ty.TyPrimitive
@@ -37,11 +34,14 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         val pathSuperMods = HashSet(pathMod.superMods)
         // TODO: support reexports
         val candidates = RsNamedElementIndex.findElementsByName(project, basePath.referenceName)
+            .asSequence()
             .filterIsInstance<RsQualifiedNamedElement>()
-            .mapNotNull {
-                val info = (it as? RsVisible)?.canBeImported(pathSuperMods) ?: return@mapNotNull null
-                ImportCandidate(it, info)
-            }
+            .filter { basePath != path || !(it is RsMod || it is RsModDeclItem || it.parent is RsMembers) }
+            .mapNotNull { item -> (item as? RsVisible)?.canBeImported(pathSuperMods)?.let { ImportCandidate(item, it) } }
+            // check that result after import can be resolved and resolved element is suitable
+            // if no, don't add it in candidate list
+            .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info) }
+            .toList()
         if (candidates.isEmpty()) return null
         return Context(path, candidates)
     }
@@ -56,20 +56,27 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         // try to find latest common ancestor module of `parentMod` and `mod` in module tree
         // we need to do it because we can use direct child items of any super mod with any visibility
         val lca = ourSuperMods.find { it in superMods }
+        val crateRelativePath = (this as? RsQualifiedNamedElement)?.crateRelativePath?.removePrefix("::") ?: return null
 
         val (shouldBePublicMods, importInfo) = if (lca == null) {
             if (!isPublic) return null
-            val usePath = (this as? RsQualifiedNamedElement)?.qualifiedName ?: return null
             val target = containingCargoTarget ?: return null
-            ourSuperMods to ImportInfo.ExternCrateImportInfo(usePath, ourSuperMods.last(), target)
+            ourSuperMods to ImportInfo.ExternCrateImportInfo(ourSuperMods.last(), target, crateRelativePath)
         } else {
-            val usePath = (this as? RsQualifiedNamedElement)?.crateRelativePath?.removePrefix("::") ?: return null
             // if current item is direct child of some ancestor of `mod` then it can be not public
-            if (parentMod == lca) return ImportInfo.LocalImportInfo(usePath)
+            if (parentMod == lca) return ImportInfo.LocalImportInfo(crateRelativePath)
             if (!isPublic) return null
-            ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(usePath)
+            ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(crateRelativePath)
         }
         return if (shouldBePublicMods.all { it.isPublic }) return importInfo else null
+    }
+
+    private fun RsPath.canBeResolvedToSuitableItem(project: Project, context: RsMod, info: ImportInfo): Boolean {
+        val externCrateName = if (info is ImportInfo.ExternCrateImportInfo && !info.target.isStd) info.target.normName else null
+        val path = RsCodeFragmentFactory(project)
+            .createPathInTmpMod(context, this, info.usePath, externCrateName) ?: return false
+        val element = path.reference.resolve() ?: return false
+        return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
@@ -99,15 +106,15 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         // if crate of importing element differs from current crate
         // we need to add new extern crate item
         if (candidate.info is ImportInfo.ExternCrateImportInfo) {
-            val (_, crateMod, target) = candidate.info
+            val target = candidate.info.target
             val crateName = target.normName
-            if (target.pkg.origin == PackageOrigin.STDLIB && crateName == AutoInjectedCrates.std) {
+            if (target.isStd) {
                 // but if crate of imported element is `std`
                 // we don't add corresponding extern crate item manually
                 // because it will be done by compiler implicitly
                 Testmarks.autoInjectedCrate.hit()
             } else {
-                val needAddExternCrateItem = externCrateItems.none { it.reference.resolve() == crateMod }
+                val needAddExternCrateItem = externCrateItems.none { it.reference.resolve() == candidate.info.externCrateMod }
                 if (needAddExternCrateItem) {
                     val externCrateItem = psiFactory.createExternCrateItem(crateName)
                     lastExternCrateItem = if (lastExternCrateItem != null) {
@@ -150,18 +157,23 @@ sealed class ImportInfo {
 
     abstract val usePath: String
 
-    data class LocalImportInfo(override val usePath: String): ImportInfo()
+    class LocalImportInfo(override val usePath: String): ImportInfo()
 
-    data class ExternCrateImportInfo(
-        override val usePath: String,
+    class ExternCrateImportInfo(
         val externCrateMod: RsMod,
-        val target: CargoWorkspace.Target
-    ) : ImportInfo()
+        val target: CargoWorkspace.Target,
+        crateRelativePath: String
+    ) : ImportInfo() {
+        override val usePath: String = "${target.normName}::$crateRelativePath"
+    }
 }
 
 data class ImportCandidate(val item: RsQualifiedNamedElement, val info: ImportInfo)
 
 private fun RsItemsOwner.firstItem(): RsElement = itemsAndMacros.first()
+
+private val CargoWorkspace.Target.isStd: Boolean
+    get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.std
 
 private tailrec fun getBasePath(path: RsPath): RsPath {
     val qualifier = path.path

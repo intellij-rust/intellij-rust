@@ -130,6 +130,14 @@ class RsPsiFactory(private val project: Project) {
         createFromText("extern crate $crateName;")
             ?: error("Failed to create extern crate item from text: `$crateName`")
 
+    fun createModItem(modName: String, modText: String): RsModItem {
+        val text = """
+            mod $modName {
+                $modText
+            }"""
+        return createFromText(text) ?: error("Failed to create mod item from text: $modText")
+    }
+
     fun createMembers(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>, traitConstants: List<RsConstant>): RsMembers {
         val members = (
             traitConstants.map { "    const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +
