@@ -557,7 +557,7 @@
         <toolWindow id="Cargo"
                     anchor="right"
                     factoryClass="org.rust.cargo.project.CargoToolWindowFactory"
-                    icon="/icons/rust.png"/>
+                    icon="/icons/tool-window.svg"/>
 
         <additionalLibraryRootsProvider
             implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
