@@ -31,7 +31,7 @@ val channel = prop("publishChannel")
 
 plugins {
     idea
-    kotlin("jvm") version "1.2.0"
+    kotlin("jvm") version "1.2.10"
     id("org.jetbrains.intellij") version "0.2.17"
     id("de.undercouch.download") version "3.2.0"
 }
