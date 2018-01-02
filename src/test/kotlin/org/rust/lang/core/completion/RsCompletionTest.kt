@@ -546,4 +546,15 @@ class RsCompletionTest : RsCompletionTestBase() {
             fn main() { private_m/*caret*/ }
         }
     """)
+
+    fun `test hidden macro is hidden in other module multiple doc attributes`() = checkNoCompletion("""
+        #[doc="No problems with"]
+        #[doc(hidden)]
+        #[doc="explicit docs"]
+        macro_rules! private_macro {}
+
+        mod inner {
+            fn main() { private_m/*caret*/ }
+        }
+    """)
 }

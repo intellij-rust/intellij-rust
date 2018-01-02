@@ -74,17 +74,22 @@ class QueryAttributes(
         return hasAttribute("cfg")
     }
 
-    fun hasAttribute(attributeName: String) = metaItems.any { it.referenceName == attributeName }
-
-    fun hasAtomAttribute(attributeName: String): Boolean {
-        val attr = attrByName(attributeName)
-        return attr != null && (!attr.hasEq && attr.metaItemArgs == null)
+    // `#[attributeName]`, `#[attributeName(arg)]`, `#[attributeName = "Xxx"]`
+    fun hasAttribute(attributeName: String): Boolean {
+        val attrs = attrsByName(attributeName)
+        return attrs.any()
     }
 
+    // `#[attributeName]`
+    fun hasAtomAttribute(attributeName: String): Boolean {
+        val attrs = attrsByName(attributeName)
+        return attrs.any { !it.hasEq && it.metaItemArgs == null }
+    }
+
+    // `#[attributeName(arg)]`
     fun hasAttributeWithArg(attributeName: String, arg: String): Boolean {
-        val attr = attrByName(attributeName) ?: return false
-        val args = attr.metaItemArgs ?: return false
-        return args.metaItemList.any { it.referenceName == arg }
+        val attrs = attrsByName(attributeName)
+        return attrs.any { it.metaItemArgs?.metaItemList?.any { it.referenceName == arg } ?: false }
     }
 
     fun lookupStringValueForKey(key: String): String? =
@@ -94,17 +99,21 @@ class QueryAttributes(
             .singleOrNull()
 
     val langAttribute: String?
-        get() = getStringAttribute("lang")
+        get() = getStringAttributes("lang").firstOrNull()
 
-    val deriveAttribute: RsMetaItem?
-        get() = attrByName("derive")
+    val deriveAttributes: Sequence<RsMetaItem>
+        get() = attrsByName("derive")
 
-    private fun getStringAttribute(attributeName: String): String? = attrByName(attributeName)?.value
+    // `#[attributeName = "Xxx"]`
+    private fun getStringAttributes(attributeName: String): Sequence<String?> = attrsByName(attributeName).map { it.value }
 
     val metaItems: Sequence<RsMetaItem>
         get() = attributes.mapNotNull { it.metaItem }
 
-    private fun attrByName(name: String) = metaItems.find { it.referenceName == name }
+    /**
+     * Get a sequence of all attributes named [name]
+     */
+    private fun attrsByName(name: String): Sequence<RsMetaItem> = metaItems.filter { it.referenceName == name }
 
     override fun toString(): String =
         "QueryAttributes(${attributes.joinToString { it.text }})"
