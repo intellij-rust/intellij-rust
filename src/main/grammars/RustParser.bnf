@@ -519,6 +519,7 @@ ModDeclItem ::= AttrsAndVis mod identifier ';' {
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsItemElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsModDeclItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsModDeclItemStub"

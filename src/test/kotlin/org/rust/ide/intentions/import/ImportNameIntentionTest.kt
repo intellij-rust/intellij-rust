@@ -30,6 +30,26 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
         }
     """)
 
+    fun `test import enum variant`() = doAvailableTest("""
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            Foo::A/*caret*/;
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            Foo::A/*caret*/;
+        }
+    """)
+
     fun `test import function`() = doAvailableTest("""
         mod foo {
             pub fn bar() -> i32 { unimplemented!() }
@@ -47,6 +67,32 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
 
         fn main() {
             let f = bar/*caret*/();
+        }
+    """)
+
+    fun `test import function method`() = doAvailableTest("""
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                pub fn foo() {}
+            }
+        }
+
+        fn main() {
+            Foo::foo/*caret*/();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                pub fn foo() {}
+            }
+        }
+
+        fn main() {
+            Foo::foo/*caret*/();
         }
     """)
 
@@ -203,6 +249,136 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
 
         fn foo() {
             let x = Foo/*caret*/;
+        }
+    """)
+
+    fun `test import module declared via module declaration`() = doAvailableTestWithFileTree("""
+        //- foo/bar.rs
+        fn foo_bar() {}
+        //- main.rs
+        mod foo {
+            pub mod bar;
+        }
+        fn main() {
+            bar::foo_bar/*caret*/();
+        }
+    """, """
+        use foo::bar;
+
+        mod foo {
+            pub mod bar;
+        }
+        fn main() {
+            bar::foo_bar/*caret*/();
+        }
+    """)
+
+    fun `test filter import candidates 1`() = doAvailableTest("""
+        mod foo1 {
+            pub fn bar() {}
+        }
+
+        mod foo2 {
+            pub mod bar {
+                pub fn foo_bar() {}
+            }
+        }
+
+        fn main() {
+            bar/*caret*/();
+        }
+    """, """
+        use foo1::bar;
+
+        mod foo1 {
+            pub fn bar() {}
+        }
+
+        mod foo2 {
+            pub mod bar {
+                pub fn foo_bar() {}
+            }
+        }
+
+        fn main() {
+            bar/*caret*/();
+        }
+    """)
+
+    fun `test filter import candidates 2`() = doAvailableTest("""
+        mod foo1 {
+            pub fn bar() {}
+        }
+
+        mod foo2 {
+            pub mod bar {
+                pub fn foo_bar() {}
+            }
+        }
+
+        fn main() {
+            bar::foo_bar/*caret*/();
+        }
+    """, """
+        use foo2::bar;
+
+        mod foo1 {
+            pub fn bar() {}
+        }
+
+        mod foo2 {
+            pub mod bar {
+                pub fn foo_bar() {}
+            }
+        }
+
+        fn main() {
+            bar::foo_bar/*caret*/();
+        }
+    """)
+
+    fun `test filter members without owner prefix`() = doUnavailableTest("""
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                pub fn foo() {}
+            }
+        }
+
+        fn main() {
+            foo/*caret*/();
+        }
+    """)
+
+    fun `test don't try to import item if it can't be resolved`() = doUnavailableTest("""
+        mod foo {
+            pub mod bar {
+            }
+        }
+        fn main() {
+            bar::foo_bar/*caret*/();
+        }
+    """)
+
+    fun `test don't import trait method`() = doUnavailableTest("""
+        mod foo {
+            pub trait Bar {
+                fn bar();
+            }
+        }
+        fn main() {
+            Bar::bar/*caret*/();
+        }
+    """)
+
+    fun `test don't import trait const`() = doUnavailableTest("""
+        mod foo {
+            pub trait Bar {
+                const BAR: i32;
+            }
+        }
+        fn main() {
+            Bar::BAR/*caret*/();
         }
     """)
 
