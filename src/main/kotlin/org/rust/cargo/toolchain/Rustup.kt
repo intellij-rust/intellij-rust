@@ -45,7 +45,7 @@ class Rustup(
     }
 
     fun getStdlibFromSysroot(): VirtualFile? {
-        val timeoutMs = 5000
+        val timeoutMs = 10000
         val sysroot = GeneralCommandLine(rustc)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
