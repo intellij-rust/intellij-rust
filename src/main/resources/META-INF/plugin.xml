@@ -108,6 +108,9 @@
         <lang.smartEnterProcessor language="Rust"
                                   implementationClass="org.rust.ide.typing.assist.RsSmartEnterProcessor"/>
 
+        <!--Imports-->
+        <lang.importOptimizer language="Rust" implementationClass="org.rust.lang.refactoring.RsImportOptimizer" />
+
         <!-- Navigation -->
 
         <gotoClassContributor implementation="org.rust.ide.navigation.goto.RsClassNavigationContributor"/>
