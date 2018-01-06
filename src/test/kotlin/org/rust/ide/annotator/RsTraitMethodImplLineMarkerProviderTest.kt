@@ -29,17 +29,41 @@ class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
     """)
 
     fun `test icon position`() = doTestByText("""
-        trait Foo {         // - Has implementations
-            fn foo(&self);
+        trait
+        Foo // - Has implementations
+        {
+            fn
+            foo
+            (&self);
+
+            type
+            T1
+            ;
+
+            const
+            C1
+            : u32;
         }
-        struct Bar {} // - Has implementations
+        struct
+        Bar // - Has implementations
+        {}
         impl Foo for Bar {
             ///
             /// Documentation
             ///
             #[warn(non_camel_case_types)]
-            fn foo(&self) { // - Implements method in `Foo`
+            fn
+            foo // - Implements method in `Foo`
+            (&self) {
             }
+
+            type
+            T1
+            = ();
+
+            const
+            C1
+            : u32 = 1;
         }
     """)
 }

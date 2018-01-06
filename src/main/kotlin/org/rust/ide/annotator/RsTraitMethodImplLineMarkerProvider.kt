@@ -40,6 +40,6 @@ class RsTraitMethodImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
             .setTargets(listOf(traitMethod))
             .setTooltipText("$action method in `${trait.name}`")
 
-        result.add(builder.createLineMarkerInfo(el.fn))
+        result.add(builder.createLineMarkerInfo(el.identifier))
     }
 }
