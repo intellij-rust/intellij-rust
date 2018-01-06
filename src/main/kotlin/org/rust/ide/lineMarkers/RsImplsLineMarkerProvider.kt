@@ -12,12 +12,11 @@ import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.psi.PsiElement
 import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.RsEnumItem
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.searchForImplementations
 import org.rust.lang.core.psi.ext.union
+import org.rust.openapiext.mapQuery
 
 /**
  * Annotates trait declaration with an icon on the gutter that allows to jump to
@@ -49,14 +48,29 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
     }
 
     companion object {
-        fun implsQuery(psi: PsiElement): Query<RsImplItem>? {
+        fun implsQuery(psi: PsiElement): Query<RsItemElement>? {
             val parent = psi.parent
+            // Necessary because RsImplItem contains a RsMembers which contains the actual items
+            val parent3 = parent.parent?.parent
             return when  {
                 // For performance reasons (see LineMarkerProvider.getLineMarkerInfo)
                 // we need to add the line marker only to leaf elements
-                parent is RsTraitItem && parent.identifier == psi -> parent.searchForImplementations()
-                parent is RsStructItem && parent.identifier == psi -> parent.searchForImplementations()
-                parent is RsEnumItem && parent.identifier == psi -> parent.searchForImplementations()
+                parent is RsTraitItem && parent.identifier == psi -> parent.searchForImplementations().mapQuery { it }
+                parent is RsConstant && parent.identifier == psi && parent3 is RsTraitItem &&
+                    parent3.members?.constantList?.contains(parent) ?: false -> {
+                    parent.searchForImplementations()
+                }
+                parent is RsFunction && parent.identifier == psi && parent3 is RsTraitItem &&
+                    parent3.members?.functionList?.contains(parent) ?: false -> {
+                    parent.searchForImplementations()
+                }
+                parent is RsTypeAlias && parent.identifier == psi && parent3 is RsTraitItem &&
+                    parent3.members?.typeAliasList?.contains(parent) ?: false -> {
+                    parent.searchForImplementations()
+                }
+                parent is RsStructItem && parent.identifier == psi ->
+                    parent.searchForImplementations().mapQuery { it }
+                parent is RsEnumItem && parent.identifier == psi -> parent.searchForImplementations().mapQuery { it }
                 else -> return null
             }
         }
