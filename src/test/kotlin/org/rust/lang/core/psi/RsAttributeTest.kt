@@ -78,15 +78,13 @@ class RsAttributeTest : RsTestBase() {
         //^
         """, Outer)
 
-    fun `test extern`() = expect<IllegalStateException> {
-        doTest2<RsForeignModItem>("""
+    fun `test extern`() = doTest2<RsForeignModItem>("""
         #[outer]
         extern {
         //^
             #![inner]
         }
         """, Both)
-    }
 
     fun `test trait`() = doTest("""
         #[outer]
