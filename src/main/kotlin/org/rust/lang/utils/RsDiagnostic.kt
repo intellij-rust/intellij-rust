@@ -18,6 +18,10 @@ import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.fixes.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.withSubst
+import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyNumeric
@@ -45,12 +49,23 @@ sealed class RsDiagnostic(
                 "mismatched types",
                 expectedFound(expectedTy, actualTy),
                 fixes = buildList {
-                    if (expectedTy is TyNumeric && isActualTyNumeric()) add(AddAsTyFix(element, expectedTy))
+                    if (expectedTy is TyNumeric && isActualTyNumeric()) {
+                        add(AddAsTyFix(element, expectedTy))
+                    } else if (isFromActualImplForExpected(element)) {
+                        add(ConvertToTyUsingFromTraitFix(element, expectedTy))
+                    }
                 }
             )
         }
 
         private fun isActualTyNumeric() = actualTy is TyNumeric || actualTy is TyInfer.IntVar || actualTy is TyInfer.FloatVar
+
+        private fun isFromActualImplForExpected(element: PsiElement): Boolean {
+            val items = StdKnownItems.relativeTo(element as? RsElement ?: return false)
+            val lookup = ImplLookup(element.project, items)
+            val fromTrait = items.findFromTrait() ?: return false
+            return lookup.select(TraitRef(expectedTy, fromTrait.withSubst(actualTy))).ok() != null
+        }
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
             val expectedTyS = escapeString(expectedTy.toString())

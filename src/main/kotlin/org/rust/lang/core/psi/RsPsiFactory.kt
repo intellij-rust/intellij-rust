@@ -271,6 +271,9 @@ class RsPsiFactory(private val project: Project) {
         else -> createExpressionOfType("${expr.text} as $typeText")
     }
 
+    fun createAssocFunctionCall(typeText: String, methodNameText: String, arguments: Iterable<RsExpr>): RsCallExpr =
+        createExpressionOfType("$typeText::$methodNameText(${arguments.joinToString { it.text }})")
+
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E
             ?: error("Failed to create ${E::class.simpleName} from `$text`")

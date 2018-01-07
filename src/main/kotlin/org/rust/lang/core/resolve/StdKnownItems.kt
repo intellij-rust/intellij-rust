@@ -80,6 +80,9 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findOrdTrait(): RsTraitItem? =
         findCoreItem("cmp::Ord") as? RsTraitItem
 
+    fun findFromTrait(): RsTraitItem? =
+        findCoreItem("convert::From") as? RsTraitItem
+
     companion object {
         private val stdKnownItemsCache =
             ProjectCache<Pair<CargoWorkspace, String>, Optional<RsNamedElement>>("stdKnownItemsCache")

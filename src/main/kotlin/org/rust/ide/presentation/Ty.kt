@@ -13,6 +13,7 @@ val Ty.insertionSafeText: String
     get() = render(this, level = Int.MAX_VALUE, unknown = "_", anonymous = "_", integer = "_", float = "_")
 
 fun tyToString(ty: Ty) = render(ty, Int.MAX_VALUE)
+fun tyToStringWithoutTypeArgs(ty: Ty) = render(ty, Int.MAX_VALUE, includeTypeArguments = false)
 
 private fun render(
     ty: Ty,
@@ -20,7 +21,8 @@ private fun render(
     unknown: String = "<unknown>",
     anonymous: String = "<anonymous>",
     integer: String = "{integer}",
-    float: String = "{float}"
+    float: String = "{float}",
+    includeTypeArguments: Boolean = true
 ): String {
     check(level >= 0)
     if (ty is TyUnknown) return unknown
@@ -56,15 +58,17 @@ private fun render(
         }"
         is TyPointer -> "*${if (ty.mutability.isMut) "mut" else "const"} ${r(ty.referenced)}"
         is TyTypeParameter -> ty.name ?: anonymous
-        is TyTraitObject -> (ty.trait.element.name ?: return anonymous) + formatTypeArguments(ty.typeArguments, r)
-        is TyStructOrEnumBase -> (ty.item.name ?: return anonymous) + formatTypeArguments(ty.typeArguments, r)
+        is TyTraitObject -> (ty.trait.element.name ?: return anonymous) +
+            if (includeTypeArguments) formatTypeArguments(ty.typeArguments, r) else ""
+        is TyStructOrEnumBase -> (ty.item.name ?: return anonymous) +
+            if (includeTypeArguments) formatTypeArguments(ty.typeArguments, r) else ""
         is TyInfer -> when (ty) {
             is TyInfer.TyVar -> "_"
             is TyInfer.IntVar -> integer
             is TyInfer.FloatVar -> float
         }
         is FreshTyInfer -> "<fresh>" // really should never be displayed; debug only
-        is TyAnon -> ty.traits.map { it.element.name ?: anonymous }.joinToString("+", "impl ")
+        is TyAnon -> ty.traits.joinToString("+", "impl ") { it.element.name ?: anonymous }
         else -> error("unreachable")
     }
 }

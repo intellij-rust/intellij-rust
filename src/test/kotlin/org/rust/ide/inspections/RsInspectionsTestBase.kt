@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
@@ -50,6 +51,16 @@ abstract class RsInspectionsTestBase(
         myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn)
         applyQuickFix(fixName)
         myFixture.checkResult(after)
+    }
+
+    protected fun checkFixIsUnavailable(
+        fixName: String,
+        @Language("Rust") text: String,
+        checkWarn: Boolean = true, checkInfo: Boolean = false, checkWeakWarn: Boolean = false
+    ) {
+        checkByText(text, checkWarn, checkInfo, checkWeakWarn)
+        TestCase.assertTrue("Fix $fixName should not be possible to apply.",
+            myFixture.filterAvailableIntentions(fixName).isEmpty())
     }
 
 }
