@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 111
+        override fun getStubVersion(): Int = 112
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -135,6 +135,8 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "META_ITEM" -> RsMetaItemStub.Type
     "META_ITEM_ARGS" -> RsPlaceholderStub.Type("META_ITEM_ARGS", ::RsMetaItemArgsImpl)
+
+    "BLOCK" -> RsPlaceholderStub.Type("BLOCK", ::RsBlockImpl)
 
     else -> error("Unknown element $name")
 }

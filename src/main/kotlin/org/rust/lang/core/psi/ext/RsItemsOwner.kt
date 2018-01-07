@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.stubs.StubElement
+import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsModItem
@@ -23,6 +24,10 @@ val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
                 is RsModItem -> {
                     val stub = stub
                     if (stub != null) return@run stub.childrenStubs
+                }
+                is RsBlock -> {
+                    val stub = stub
+                    if(stub != null) return@run stub.childrenStubs
                 }
             }
             null
