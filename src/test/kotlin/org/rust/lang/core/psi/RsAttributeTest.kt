@@ -88,15 +88,13 @@ class RsAttributeTest : RsTestBase() {
         """, Both)
     }
 
-    fun `test trait`() = expect<IllegalStateException> {
-        doTest("""
+    fun `test trait`() = doTest("""
         #[outer]
         trait T {
         //^
             #![inner]
         }
         """, Outer)
-    }
 
     fun `test struct`() = doTest("""
         #[outer]
