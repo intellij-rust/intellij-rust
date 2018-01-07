@@ -44,7 +44,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     }
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsInnerAttr::class.java)
+        get() = members?.innerAttrList ?: emptyList()
 
     override val associatedTypesTransitively: Collection<RsTypeAlias>
         get() = CachedValuesManager.getCachedValue(this, {

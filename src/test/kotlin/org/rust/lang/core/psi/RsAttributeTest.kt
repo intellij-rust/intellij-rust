@@ -143,8 +143,7 @@ class RsAttributeTest : RsTestBase() {
         }
         """, Outer)
 
-    fun `test impl`() = expect<IllegalStateException> {
-        doTest("""
+    fun `test impl`() = doTest("""
         struct S { }
         #[outer]
         impl S {
@@ -152,10 +151,8 @@ class RsAttributeTest : RsTestBase() {
             #![inner]
         }
         """, Both)
-    }
 
-    fun `test impl trait`() = expect<IllegalStateException> {
-        doTest("""
+    fun `test impl trait`() = doTest("""
         struct S { }
         trait T { }
         #[outer]
@@ -164,7 +161,6 @@ class RsAttributeTest : RsTestBase() {
             #![inner]
         }
         """, Both)
-    }
 
     fun `test fn`() = doTest("""
         #[outer]
