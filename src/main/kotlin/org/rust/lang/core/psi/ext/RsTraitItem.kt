@@ -72,9 +72,6 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     override val innerAttrList: List<RsInnerAttr>
         get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsInnerAttr::class.java)
 
-    override val outerAttrList: List<RsOuterAttr>
-        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
-
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.TRAIT)
 
