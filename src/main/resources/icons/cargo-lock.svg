@@ -1,0 +1,24 @@
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <g opacity=".8">
+  <g fill="#ebb02b" stroke="#bf8a0d">
+   <rect x="2.5" y="7.5" width="6" height="6" opacity="1"/>
+   <rect x="8.5" y="7.5" width="6" height="6" opacity="1"/>
+   <rect x="8.5" y="1.5" width="6" height="6" opacity="1"/>
+  </g>
+  <g fill="#ebbb59">
+   <rect x="5" y="13" width="1" height="1" opacity="1"/>
+   <rect x="5" y="7" width="1" height="1" opacity="1"/>
+   <rect x="11" y="7" width="1" height="1" opacity="1"/>
+   <rect x="11" y="1" width="1" height="1" opacity="1"/>
+  </g>
+  <circle cx="11.5" cy="10.5" r="2" fill="none" opacity="1" stroke="#725108"/>
+  <g fill="#82633d">
+   <rect x="2" y="14" width="2" height="2" opacity="1"/>
+   <rect x="7" y="14" width="3" height="2" opacity="1"/>
+   <rect x="13" y="14" width="2" height="2" opacity="1"/>
+   <rect x="2" y="14" width="13" height="1" opacity="1"/>
+  </g>
+  <path d="m3 2c-0.554 0-1 0.446-1 1v2c0 0.554 0.446 1 1 1h3c0.554 0 1-0.446 1-1v-2c0-0.554-0.446-1-1-1h-3zm1.5 1.59961c0.277 0 0.5 0.313372 0.5 0.701172 0 0.3878-0.223 0.699219-0.5 0.699219s-0.5-0.311419-0.5-0.699219c0-0.3878 0.223-0.701172 0.5-0.701172z" fill="#6dac35" opacity="1"/>
+  <path d="m4.2168 0.466797c-0.554 0-1 0.446-1 1v1.06641c0 0.0814945 0.0286489 0.152771 0.046875 0.228516h2.47266c0.0182261-0.0757446 0.046875-0.147021 0.046875-0.228516v-1.06641c0-0.554-0.446-1-1-1h-0.566406z" fill="none" opacity="1" stroke="#6dac35" stroke-width=".934719"/>
+ </g>
+</svg>

@@ -21,20 +21,20 @@ import javax.swing.Icon
 object RsIcons {
     // Logos
 
-    val RUST = IconLoader.getIcon("/icons/rust.png")
+    val RUST = IconLoader.getIcon("/icons/rust.svg")
 
     // File types
 
-    val RUST_FILE = IconLoader.getIcon("/icons/rust-file.png")
-    val MAIN_RS = IconLoader.getIcon("/icons/main-rs.png")
-    val MOD_RS = IconLoader.getIcon("/icons/mod-rs.png")
+    val RUST_FILE = IconLoader.getIcon("/icons/rust-file.svg")
+    val MAIN_RS = IconLoader.getIcon("/icons/main-rs.svg")
+    val MOD_RS = IconLoader.getIcon("/icons/mod-rs.svg")
 
     // Marks
 
     val FINAL_MARK = AllIcons.Nodes.FinalMark!!
     val STATIC_MARK = AllIcons.Nodes.StaticMark!!
     val TEST_MARK = AllIcons.Nodes.JunitTestMark!!
-    val DOCS_MARK = IconLoader.getIcon("/icons/docsrs.png")
+    val DOCS_MARK = IconLoader.getIcon("/icons/docsrs.svg")
 
     // Source code elements
 
@@ -43,17 +43,17 @@ object RsIcons {
 
     val TRAIT = AllIcons.Nodes.Interface!!
     val STRUCT = AllIcons.Nodes.Class!!
-    val TYPE = IconLoader.getIcon("/icons/nodes/typeAlias.png")
+    val TYPE = IconLoader.getIcon("/icons/nodes/typeAlias.svg")
     val IMPL = AllIcons.Nodes.AbstractClass!!
     val ENUM = AllIcons.Nodes.Enum!!
 
     val METHOD = AllIcons.Nodes.Method!!
-    val FUNCTION = IconLoader.getIcon("/icons/nodes/function.png")
+    val FUNCTION = IconLoader.getIcon("/icons/nodes/function.svg")
     val ASSOC_FUNCTION = FUNCTION.addStaticMark()
     val MACRO = AllIcons.General.ExclMark!!
 
     val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod!!
-    val ABSTRACT_FUNCTION = IconLoader.getIcon("/icons/nodes/abstractFunction.png")
+    val ABSTRACT_FUNCTION = IconLoader.getIcon("/icons/nodes/abstractFunction.svg")
     val ABSTRACT_ASSOC_FUNCTION = ABSTRACT_FUNCTION.addStaticMark()
 
     val ATTRIBUTE = AllIcons.Nodes.Annotationtype!!
@@ -62,7 +62,7 @@ object RsIcons {
     val FIELD = AllIcons.Nodes.Field!!
     val MUT_BINDING = AllIcons.Nodes.Variable!!
     val BINDING = MUT_BINDING.addFinalMark()
-    val GLOBAL_BINDING = IconLoader.getIcon("/icons/nodes/globalBinding.png")
+    val GLOBAL_BINDING = IconLoader.getIcon("/icons/nodes/globalBinding.svg")
     val CONSTANT = GLOBAL_BINDING.addFinalMark()
     val MUT_STATIC = GLOBAL_BINDING.addStaticMark()
     val STATIC = MUT_STATIC.addFinalMark()
