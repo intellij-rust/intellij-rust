@@ -219,15 +219,16 @@ task("makeRelease") {
         val newChangelogPath = newChangelog
             .replace(".markdown", "")
             .replaceFirst("-", "/").replaceFirst("-", "/").replaceFirst("-", "/")
-        val pluginXml = File("./src/main/resources/META-INF/plugin.xml")
+        val pluginXmlPath = "./src/main/resources/META-INF/plugin.xml"
+        val pluginXml = File(pluginXmlPath)
         val oldText = pluginXml.readText()
         val newText = oldText.replace(
             """https://intellij-rust\.github\.io/(.*)\.html""".toRegex(),
             "https://intellij-rust.github.io/$newChangelogPath.html"
         )
         pluginXml.writeText(newText)
-        "git add .".execute()
-        "git commit -am Changelog".execute()
+        "git add $pluginXmlPath".execute()
+        "git commit -m Changelog".execute()
         "git push".execute()
         commitNightly()
     }
@@ -241,8 +242,8 @@ fun commitChangelog(): String {
         .last()
     val postNumber = lastPost.substringAfterLast("-").substringBefore(".").toInt()
     "python3 changelog.py -c".execute(website)
-    "git add .".execute(website)
-    listOf("git", "commit", "-am", "Changelog $postNumber").execute(website)
+    "git add _posts/$lastPost".execute(website)
+    listOf("git", "commit", "-m", "Changelog $postNumber").execute(website)
     println()
     "git show HEAD".execute(website)
     println("Does ^^ look right? Answer `yes` to push changes\n")
@@ -275,7 +276,7 @@ fun commitNightly() {
     "git branch -Df nightly".execute(ignoreExitCode = true)
     "git checkout -b nightly".execute()
     "git add .travis.yml".execute()
-    listOf("git", "commit", "-am", ":arrow_up: nightly IDEA & rust").execute()
+    listOf("git", "commit", "-m", ":arrow_up: nightly IDEA & rust").execute()
     "git push".execute()
 }
 
