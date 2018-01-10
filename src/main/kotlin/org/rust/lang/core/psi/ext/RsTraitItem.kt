@@ -124,8 +124,7 @@ class TraitImplementationInfo private constructor(
 
 
     private fun RsMembers.abstractable(): List<RsAbstractable> =
-        PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsAbstractable::class.java)
-            .filter { it.name != null }
+        stubChildrenOfType<RsAbstractable>().filter { it.name != null }
 
     companion object {
         fun create(trait: RsTraitItem, impl: RsImplItem): TraitImplementationInfo? {

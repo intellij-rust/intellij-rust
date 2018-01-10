@@ -22,10 +22,10 @@ abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStu
     constructor(stub: RsPlaceholderStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsInnerAttr::class.java)
+        get() = stubChildrenOfType()
 
     override val outerAttrList: List<RsOuterAttr>
-        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
+        get() = stubChildrenOfType()
 
     override val isPublic: Boolean get() = false // visibility does not affect foreign mods
 
