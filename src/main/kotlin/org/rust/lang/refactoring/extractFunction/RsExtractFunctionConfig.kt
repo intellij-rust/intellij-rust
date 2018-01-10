@@ -14,10 +14,7 @@ import org.rust.ide.utils.findStatementsInRange
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.psi.ext.isAssocFn
-import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
@@ -41,17 +38,41 @@ class ReturnValue(val expression: String?, val type: Ty) {
     }
 }
 
+class Parameter(val name: String, val type: Ty? = null) {
+    companion object {
+        fun direct(value: RsPatBinding): Parameter {
+            return Parameter(value.referenceName, value.type)
+        }
+
+        fun self(value: String): Parameter {
+            return Parameter(value)
+        }
+    }
+
+    val text: String
+        get() = if (type != null) {
+            "$name: ${type.insertionSafeText}"
+        } else {
+            name
+        }
+}
+
 class RsExtractFunctionConfig private constructor(
     val containingFunction: RsFunction,
     val elements: List<PsiElement>,
     val returnValue: ReturnValue? = null,
     var name: String = "",
     var visibilityLevelPublic: Boolean = false,
-    val needsSelf: Boolean
+    val parameters: List<Parameter>
 ) {
+    private val parametersText: String
+        get() = parameters.joinToString(",") { it.text }
+    val argumentsText: String
+        get() = parameters.filter { it.type != null }.joinToString(",") { it.name }
+
     val signature: String
         get() {
-            var signature = "fn $name(${if (needsSelf) "self" else ""})"
+            var signature = "fn $name($parametersText)"
             if (returnValue != null) {
                 signature += " -> ${returnValue.type.insertionSafeText}"
             }
@@ -76,26 +97,42 @@ class RsExtractFunctionConfig private constructor(
             val fn = first.ancestorStrict<RsFunction>() ?: return null
             if (fn != last.ancestorStrict<RsFunction>()) return null
 
-            val letBindings = fn.descendantsOfType<RsPatBinding>().filter { it.textOffset <= end }
+            val letBindings = fn.descendantsOfType<RsPatBinding>()
+                .filter { it.textOffset <= end }
 
-            val innerBinding = letBindings.filter { it.textOffset >= start }
+            val parameters = letBindings
+                .filter { it.textOffset <= start }
                 .filter {
                     ReferencesSearch.search(it, LocalSearchScope(fn))
-                        .asSequence()
+                        .any { ref -> ref.element.textOffset in start..end }
+                }
+                .map { Parameter.direct(it) }
+                .toMutableList()
+
+            val innerBindings = letBindings
+                .filter { it.textOffset >= start }
+                .filter {
+                    ReferencesSearch.search(it, LocalSearchScope(fn))
                         .any { ref -> ref.element.textOffset > end }
                 }
 
-            val returnValue = when (innerBinding.size) {
+            val returnValue = when (innerBindings.size) {
                 0 -> if (last is RsExpr) ReturnValue.direct(last) else null
-                1 -> ReturnValue.namedValue(innerBinding[0])
-                else -> ReturnValue.tupleNamedValue(innerBinding)
+                1 -> ReturnValue.namedValue(innerBindings[0])
+                else -> ReturnValue.tupleNamedValue(innerBindings)
+            }
+            val selfParameter = fn.selfParameter
+            if (fn.owner.isImplOrTrait && selfParameter != null) {
+                val used = ReferencesSearch.search(selfParameter, LocalSearchScope(fn))
+                    .any { ref -> ref.element.textOffset in start..end }
+                if (used) parameters.add(0, Parameter.self(selfParameter.text))
             }
 
             return RsExtractFunctionConfig(
                 fn,
                 elements,
                 returnValue = returnValue,
-                needsSelf = fn.owner.isImplOrTrait && !fn.isAssocFn
+                parameters = parameters
             )
         }
     }

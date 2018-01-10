@@ -58,11 +58,12 @@ class RsExtractFunctionHandlerAction(
         if (config.returnValue?.expression != null) {
             stmt += "let ${config.returnValue.expression} = "
         }
-        stmt += if (config.needsSelf) {
-            "self.${config.name}()"
+        val firstParameter = config.parameters.firstOrNull();
+        stmt += if (firstParameter != null && firstParameter.name.endsWith("self") && firstParameter.type == null) {
+            "self.${config.name}(${config.argumentsText})"
         } else {
             val type = (config.containingFunction.owner as? RsFunctionOwner.Impl)?.impl?.typeReference?.text
-            "${if (type != null) "$type::" else ""}${config.name}()"
+            "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
         }
         val element = if (config.returnValue == null || config.returnValue.expression != null ) {
             stmt += ";"
