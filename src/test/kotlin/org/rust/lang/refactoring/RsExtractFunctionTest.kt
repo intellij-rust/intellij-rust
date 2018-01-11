@@ -5,11 +5,11 @@
 
 package org.rust.lang.refactoring
 
-import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
+import org.rust.lang.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
-import org.rust.lang.refactoring.extractFunction.RsExtractFunctionHandlerAction
+import org.rust.lang.refactoring.extractFunction.withMockExtractFunctionUi
 
 
 class RsExtractFunctionTest : RsTestBase() {
@@ -514,25 +514,20 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
-    private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String, pub: Boolean, name: String) {
-        checkByText(code, excepted) {
-            val start = myFixture.editor?.selectionModel?.selectionStart ?: fail("No start selection")
-            val end = myFixture.editor?.selectionModel?.selectionEnd ?: fail("No end selection")
-
-            val config = RsExtractFunctionConfig.create(myFixture.file, start, end)!!
-            config.name = name
-            config.visibilityLevelPublic = pub
-
-            RsExtractFunctionHandlerAction(
-                project,
-                myFixture.file,
-                config
-            ).execute()
+    private fun doTest(@Language("Rust") code: String,
+                       @Language("Rust") excepted: String,
+                       pub: Boolean,
+                       name: String) {
+        withMockExtractFunctionUi(object : ExtractFunctionUi {
+            override fun extract(config: RsExtractFunctionConfig, callback: () -> Unit) {
+                config.name = name
+                config.visibilityLevelPublic = pub
+                callback()
+            }
+        }) {
+            checkByText(code, excepted) {
+                myFixture.performEditorAction("ExtractMethod")
+            }
         }
-    }
-
-    private fun fail(message: String): Nothing {
-        TestCase.fail(message)
-        error("Test failed with message: \"$message\"")
     }
 }
