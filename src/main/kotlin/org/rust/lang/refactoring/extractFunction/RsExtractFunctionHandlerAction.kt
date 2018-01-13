@@ -13,6 +13,7 @@ import com.intellij.psi.PsiParserFacade
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsFunctionOwner
 import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.types.ty.TyTypeParameter
 
 class RsExtractFunctionHandlerAction(
     project: Project?,
@@ -61,7 +62,12 @@ class RsExtractFunctionHandlerAction(
         stmt += if (firstParameter != null && firstParameter.name.endsWith("self") && firstParameter.type == null) {
             "self.${config.name}(${config.argumentsText})"
         } else {
-            val type = (config.containingFunction.owner as? RsFunctionOwner.Impl)?.impl?.typeReference?.text
+            val owner = config.containingFunction.owner
+            val type = when (owner) {
+                is RsFunctionOwner.Impl -> owner.impl.typeReference?.text
+                is RsFunctionOwner.Trait -> TyTypeParameter.Self.name
+                else -> null
+            }
             "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
         }
         val element = if (config.returnValue == null || config.returnValue.expression != null ) {

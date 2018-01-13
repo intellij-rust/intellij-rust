@@ -514,6 +514,28 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    fun `test extract a function in a trait`() = doTest("""
+            trait Foo {
+                fn foo(&self) {
+                    let b = 1;
+                    <selection>println!("{}", b);</selection>
+                }
+            }
+        """, """
+            trait Foo {
+                fn foo(&self) {
+                    let b = 1;
+                    Self::bar(b);
+                }
+
+                fn bar(b: i32) {
+                    println!("{}", b);
+                }
+            }
+        """,
+        false,
+        "bar")
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String,
                        pub: Boolean,
