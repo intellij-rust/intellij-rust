@@ -21,9 +21,13 @@ enum class RsConstantKind {
     CONST
 }
 
+val RsConstant.isMut: Boolean get() = stub?.isMut ?: (mut != null)
+
+val RsConstant.isConst: Boolean get() = stub?.isConst ?: (const != null)
+
 val RsConstant.kind: RsConstantKind get() = when {
-    mut != null -> RsConstantKind.MUT_STATIC
-    const != null -> RsConstantKind.CONST
+    isMut -> RsConstantKind.MUT_STATIC
+    isConst -> RsConstantKind.CONST
     else -> RsConstantKind.STATIC
 }
 
@@ -53,7 +57,7 @@ val RsConstant.owner: RsConstantOwner get() {
 val RsConstant.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 
-val RsConstant.mutability: Mutability get() = Mutability.valueOf(mut != null)
+val RsConstant.mutability: Mutability get() = Mutability.valueOf(isMut)
 
 abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, RsConstant {
     constructor(node: ASTNode) : super(node)

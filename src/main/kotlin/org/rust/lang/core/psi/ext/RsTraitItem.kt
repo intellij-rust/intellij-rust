@@ -69,12 +69,6 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
     constructor(stub: RsTraitItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val innerAttrList: List<RsInnerAttr>
-        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsInnerAttr::class.java)
-
-    override val outerAttrList: List<RsOuterAttr>
-        get() = PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsOuterAttr::class.java)
-
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.TRAIT)
 
@@ -130,8 +124,7 @@ class TraitImplementationInfo private constructor(
 
 
     private fun RsMembers.abstractable(): List<RsAbstractable> =
-        PsiTreeUtil.getStubChildrenOfTypeAsList(this, RsAbstractable::class.java)
-            .filter { it.name != null }
+        stubChildrenOfType<RsAbstractable>().filter { it.name != null }
 
     companion object {
         fun create(trait: RsTraitItem, impl: RsImplItem): TraitImplementationInfo? {

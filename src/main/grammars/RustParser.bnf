@@ -370,7 +370,6 @@ Function ::= OuterAttr*
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
@@ -528,7 +527,8 @@ ModDeclItem ::= AttrsAndVis mod identifier ';' {
 
 ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
-  implements = [ "org.rust.lang.core.psi.ext.RsItemElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsForeignModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -650,6 +650,7 @@ ImplItem ::= AttrsAndVis default_? unsafe? impl TypeParameterList? ( TraitImpl |
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
+                 "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsImplItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsImplItemStub"
@@ -1044,7 +1045,8 @@ MacroExpansionReferenceGroup ::= '$' '(' MacroExpansionContents ')'
 
 
 MacroCall ::= MacroHead <<macroSemicolon>> {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"]
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
@@ -1114,6 +1116,9 @@ PatMacro ::= MacroCallNoSemicolons
 fake Block ::= '{' InnerAttr* (Item | Stmt)* Expr? '}' {
   pin = 1
   implements = "org.rust.lang.core.psi.ext.RsItemsOwner"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 SimpleBlock ::= '{' BlockElement* '}' {

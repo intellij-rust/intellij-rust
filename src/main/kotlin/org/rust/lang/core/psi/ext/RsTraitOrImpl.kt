@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.BoundElement
 
-interface RsTraitOrImpl : RsItemElement, RsInnerAttributeOwner, RsGenericDeclaration {
+interface RsTraitOrImpl : RsItemElement, RsGenericDeclaration {
     val members: RsMembers?
 
     val implementedTrait: BoundElement<RsTraitItem>?

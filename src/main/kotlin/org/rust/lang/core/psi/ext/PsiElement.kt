@@ -62,6 +62,8 @@ inline fun <reified T : PsiElement> PsiElement.contextOrSelf(): T? =
 inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> =
     PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
 
+inline fun <reified T : PsiElement> PsiElement.stubChildrenOfType(): List<T> =
+    PsiTreeUtil.getStubChildrenOfTypeAsList(this, T::class.java)
 
 inline fun <reified T : PsiElement> PsiElement.descendantOfTypeStrict(): T? =
     PsiTreeUtil.findChildOfType(this, T::class.java, /* strict */ true)

@@ -16,8 +16,11 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LoggedErrorProcessor
 import org.apache.log4j.Logger
 import org.rust.lang.RsTestBase
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsInnerAttributeOwner
 import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.RsOuterAttributeOwner
 import java.util.*
 
 class RsStubAccessTest : RsTestBase() {
@@ -43,6 +46,17 @@ class RsStubAccessTest : RsTestBase() {
 
     fun `test getting reference does not need ast`() {
         processStubsWithoutAstAccess<RsElement> { it.reference }
+    }
+
+    fun `test inner outer attributes does not need ast`() {
+        processStubsWithoutAstAccess<RsElement> { element ->
+            if (element is RsInnerAttributeOwner && element !is RsFile) {
+                element.innerAttrList
+            }
+            if (element is RsOuterAttributeOwner) {
+                element.outerAttrList
+            }
+        }
     }
 
     fun `test parent works correctly for stubbed elements`() {
