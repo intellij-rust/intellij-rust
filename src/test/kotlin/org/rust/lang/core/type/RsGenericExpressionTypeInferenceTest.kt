@@ -382,6 +382,37 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test struct update syntax`() = testExpr("""
+        struct S<T> {
+            f: T,
+        }
+        impl<T> S<T> {
+            fn new(v: T) -> Self {
+                S { f: v }
+            }
+        }
+        fn main() {
+            let a = S { ..S::new(1u8) };
+            a;
+          //^ S<u8>
+        }
+    """)
+
+    fun `test struct update syntax 2`() = testExpr("""
+        struct S<T> {
+            f: T,
+        }
+        impl<T> S<T> {
+            fn new() -> Self {
+                S { f: 0 }
+            }
+        }
+        fn main() {
+            let a = S::<u8> { ..S::new() };
+                                    //^ S<u8>
+        }
+    """)
+
     fun `test tuple struct expression`() = testExpr("""
         struct S<T> (T);
         fn main() {

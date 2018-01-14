@@ -573,6 +573,41 @@ class RsResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
+    fun `test struct update syntax`() = checkByCode("""
+        struct S {
+            f1: u32,
+            f2: u8,
+        }
+        impl S {
+            fn new() -> Self {
+             //X
+                S { f1: 0, f2: 0 }
+            }
+        }
+        fn main() {
+            let a = S { f1: 1, ..S::new() };
+        }                         //^
+    """)
+
+    fun `test struct update syntax Default`() = checkByCode("""
+        trait Default {
+            fn default() -> Self;
+        }
+        struct S {
+            f1: u32,
+            f2: u8,
+        }
+        impl Default for S {
+            fn default() -> Self {
+             //X
+                S { f1: 0, f2: 0 }
+            }
+        }
+        fn main() {
+            let a = S { f1: 1, ..Default::default() };
+        }                               //^
+    """)
+
     fun `test enum field`() = checkByCode("""
         enum E { X { foo: i32 } }
                      //X
