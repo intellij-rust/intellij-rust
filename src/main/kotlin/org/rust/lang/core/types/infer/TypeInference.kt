@@ -1010,6 +1010,7 @@ private class RsFnInferenceContext(
                 ctx.extractBindings(pat, matchingExprTy)
             }
             arm.expr?.inferType(expected)
+            arm.matchArmGuard?.expr?.inferType(TyBool)
         }
 
         return getMoreCompleteType(arms.mapNotNull { it.expr?.let(ctx::getExprType) })
