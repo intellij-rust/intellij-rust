@@ -158,7 +158,7 @@ class RsUseResolveTest : RsResolveTestBase() {
                     //^
             }
         }
-    """, NameResolutionTestmarks.selfInGroupName)
+    """)
 
     fun `test use glob alias`() = checkByCode("""
         mod foo {

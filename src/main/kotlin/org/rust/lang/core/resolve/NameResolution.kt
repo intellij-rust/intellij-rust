@@ -688,5 +688,4 @@ object NameResolutionTestmarks {
     val missingMacroExport = Testmark("missingMacroExport")
     val missingMacroUse = Testmark("missingMacroUse")
     val selfInGroup = Testmark("selfInGroup")
-    val selfInGroupName = Testmark("selfInGroupName")
 }
