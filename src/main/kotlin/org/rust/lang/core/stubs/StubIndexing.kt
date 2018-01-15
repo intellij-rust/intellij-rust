@@ -13,6 +13,7 @@ import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.stubs.index.RsGotoClassIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
+import org.rust.lang.core.stubs.index.RsReexportIndex
 
 fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
     indexNamedStub(stub)
@@ -68,6 +69,10 @@ fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
 
 fun IndexSink.indexMacroDefinition(stub: RsMacroDefinitionStub) {
     indexNamedStub(stub)
+}
+
+fun IndexSink.indexUseSpeck(stub: RsUseSpeckStub) {
+    RsReexportIndex.index(stub, this)
 }
 
 private fun IndexSink.indexNamedStub(stub: RsNamedStub) {
