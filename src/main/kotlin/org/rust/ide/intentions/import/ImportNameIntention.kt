@@ -48,7 +48,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
 
         val candidates = (explicitItems + reexportedItems)
             .filter { basePath != path || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers) }
-            .mapNotNull { importItem -> importItem.canBeImported(pathSuperMods)?.let { ImportCandidate(importItem.item, it) } }
+            .mapNotNull { importItem -> importItem.canBeImported(pathSuperMods)?.let { ImportCandidate(importItem, it) } }
             // check that result after import can be resolved and resolved element is suitable
             // if no, don't add it in candidate list
             .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info) }
@@ -178,7 +178,7 @@ sealed class ImportItem(val item: RsQualifiedNamedElement) {
     abstract val containingCargoTarget: CargoWorkspace.Target?
 
     class ReexportedItem(
-        private val useSpeck: RsUseSpeck,
+        val useSpeck: RsUseSpeck,
         item: RsQualifiedNamedElement
     ) : ImportItem(item) {
         override val parentMod: RsMod? get() = useSpeck.containingMod
@@ -211,7 +211,7 @@ sealed class ImportInfo {
     }
 }
 
-data class ImportCandidate(val item: RsQualifiedNamedElement, val info: ImportInfo)
+data class ImportCandidate(val importItem: ImportItem, val info: ImportInfo)
 
 private fun RsItemsOwner.firstItem(): RsElement = itemsAndMacros.first()
 
