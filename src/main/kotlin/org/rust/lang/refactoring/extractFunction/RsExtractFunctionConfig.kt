@@ -65,14 +65,22 @@ class RsExtractFunctionConfig private constructor(
     var visibilityLevelPublic: Boolean = false,
     val parameters: List<Parameter>
 ) {
+
+    private val typeParametersText: String
+        get() = containingFunction.typeParameters.filter {
+            val type = it.declaredType
+            returnValue?.type.hasType(type) || parameters.any { it.type.hasType(type) }
+        }.takeIf { it.isNotEmpty() }?.joinToString(separator = ",", prefix = "<", postfix = ">") { it.text } ?: ""
+
     private val parametersText: String
         get() = parameters.joinToString(",") { it.text }
+
     val argumentsText: String
         get() = parameters.filter { it.type != null }.joinToString(",") { it.name }
 
     val signature: String
         get() {
-            var signature = "fn $name($parametersText)"
+            var signature = "fn $name$typeParametersText($parametersText)"
             if (returnValue != null) {
                 signature += " -> ${returnValue.type.insertionSafeText}"
             }
@@ -138,3 +146,7 @@ class RsExtractFunctionConfig private constructor(
     }
 }
 
+private fun Ty?.hasType(type: Ty): Boolean {
+    if (this == null) return false
+    return this == type || this.typeParameterValues.values.contains(type)
+}

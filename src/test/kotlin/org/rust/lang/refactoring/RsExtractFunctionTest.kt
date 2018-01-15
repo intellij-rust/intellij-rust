@@ -15,6 +15,8 @@ import org.rust.lang.refactoring.extractFunction.withMockExtractFunctionUi
 class RsExtractFunctionTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/extract_function/"
 
+    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
+
     fun `test extract a function without parameters and a return value`() = doTest("""
             fn main() {
                 <selection>println!("test");
@@ -531,6 +533,62 @@ class RsExtractFunctionTest : RsTestBase() {
                 fn bar(b: i32) {
                     println!("{}", b);
                 }
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with generic parameters`() = doTest("""
+            fn foo<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) {
+                <selection>a;
+                b;
+                c;
+                d;
+                println!("test")</selection>
+            }
+        """, """
+            fn foo<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) {
+                bar(a, b, c, d)
+            }
+
+            fn bar<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) -> () {
+                a;
+                b;
+                c;
+                d;
+                println!("test")
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with generic parameters and a return generic value`() = doTest("""
+            fn foo<T: Default>() -> T {
+                <selection>T::default()</selection>
+            }
+        """, """
+            fn foo<T: Default>() -> T {
+                bar()
+            }
+
+            fn bar<T: Default>() -> T {
+                T::default()
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with generic parameters and a return generic option value`() = doTest("""
+            fn foo<T: Default>() -> Option<T> {
+                <selection>Some(T::default())</selection>
+            }
+        """, """
+            fn foo<T: Default>() -> Option<T> {
+                bar()
+            }
+
+            fn bar<T: Default>() -> Option<T> {
+                Some(T::default())
             }
         """,
         false,
