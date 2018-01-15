@@ -711,6 +711,8 @@ private class RsFnInferenceContext(
             for (field in expr.structLiteralBody.structLiteralFieldList) {
                 field.expr?.inferType()
             }
+            // Handle struct update syntax { ..expression }
+            expr.structLiteralBody.expr?.inferType()
             return TyUnknown
         }
 
@@ -739,6 +741,9 @@ private class RsFnInferenceContext(
         }.substitute(typeParameters)
 
         inferStructTypeArguments(expr, typeParameters)
+
+        // Handle struct update syntax { ..expression }
+        expr.structLiteralBody.expr?.inferTypeCoercableTo(type)
 
         return type
     }
@@ -1010,6 +1015,7 @@ private class RsFnInferenceContext(
                 ctx.extractBindings(pat, matchingExprTy)
             }
             arm.expr?.inferType(expected)
+            arm.matchArmGuard?.expr?.inferType(TyBool)
         }
 
         return getMoreCompleteType(arms.mapNotNull { it.expr?.let(ctx::getExprType) })

@@ -735,6 +735,48 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
     // More struct alias tests in [RsGenericExpressionTypeInferenceTest]
 
+    fun `test struct update syntax`() = testExpr("""
+        struct S {
+            f1: u32,
+            f2: u8,
+        }
+        impl S {
+            fn new() -> Self {
+                S { f1: 0, f2: 0 }
+            }
+        }
+        fn main() {
+            let a = S { f1: 1, ..S::new() };
+        }                            //^ S
+    """)
+
+    fun `test struct update syntax Default`() = testExpr("""
+        trait Default {
+            fn default() -> Self;
+        }
+        struct S {
+            f1: u32,
+            f2: u8,
+        }
+        impl Default for S {
+            fn default() -> Self {
+                S { f1: 0, f2: 0 }
+            }
+        }
+        fn main() {
+            let a = S { f1: 1, ..Default::default() };
+        }                                      //^ S
+    """)
+
+    fun `test struct update syntax Default on unknown type`() = testExpr("""
+        trait Default {
+            fn default() -> Self;
+        }
+        fn main() {
+            let a = UnknownStruct { f1: 1, ..Default::default() };
+        }                                                  //^ Self
+    """)
+
     fun `test index expr of unresolved path`() = testExpr("""
         fn main() {
             a[1]

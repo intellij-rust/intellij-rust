@@ -79,6 +79,34 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test match if`() = checkByCode("""
+        fn main() {
+            let a = true;
+              //X
+            match Some(92) {
+                Some(i) if a => {
+                         //^
+                    i
+                }
+                _ => 0
+            };
+        }
+    """)
+
+    fun `test match if 2`() = checkByCode("""
+        fn main() {
+            match Some(92) {
+                Some(i)
+                   //X
+                        if i < 5 => {
+                         //^
+                    i
+                }
+                _ => 0
+            };
+        }
+    """)
+
     fun `test let`() = checkByCode("""
         fn f(i: i32) -> Option<i32> {}
 
@@ -543,6 +571,41 @@ class RsResolveTest : RsResolveTestBase() {
         fn main() {
             let _ = T2 { foo: 92 };
         }              //^
+    """)
+
+    fun `test struct update syntax`() = checkByCode("""
+        struct S {
+            f1: u32,
+            f2: u8,
+        }
+        impl S {
+            fn new() -> Self {
+             //X
+                S { f1: 0, f2: 0 }
+            }
+        }
+        fn main() {
+            let a = S { f1: 1, ..S::new() };
+        }                         //^
+    """)
+
+    fun `test struct update syntax Default`() = checkByCode("""
+        trait Default {
+            fn default() -> Self;
+        }
+        struct S {
+            f1: u32,
+            f2: u8,
+        }
+        impl Default for S {
+            fn default() -> Self {
+             //X
+                S { f1: 0, f2: 0 }
+            }
+        }
+        fn main() {
+            let a = S { f1: 1, ..Default::default() };
+        }                               //^
     """)
 
     fun `test enum field`() = checkByCode("""
