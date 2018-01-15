@@ -100,6 +100,84 @@ class UnwrapSingleExprIntentionTest : RsTestBase() {
         """
     )
 
+    fun `test available unwrap braces single expression match`() = doAvailableTest(
+        """
+        fn main() {
+            match x {
+                0 => {
+                    prin<caret>tln!("x = 0")
+                }
+            }
+        }
+        """,
+        """
+        fn main() {
+            match x {
+                0 => prin<caret>tln!("x = 0"),
+            }
+        }
+        """
+    )
+
+    fun `test available unwrap braces match with caret before`() = doAvailableTest(
+        """
+        fn main() {
+            match x {
+                0 => <caret>{
+                    println!("x = 0")
+                }
+            }
+        }
+        """,
+        """
+        fn main() {
+            match x {
+                0 => <caret>println!("x = 0"),
+            }
+        }
+        """
+    )
+
+    fun `test available unwrap braces match with caret after`() = doAvailableTest(
+        """
+        fn main() {
+            match x {
+                0 => {
+                    println!("x = 0")
+                }<caret>
+            }
+        }
+        """,
+        """
+        fn main() {
+            match x {
+                0 => println!("x = 0")<caret>,
+            }
+        }
+        """
+    )
+
+    fun `test available unwrap braces multiple expression match`() = doAvailableTest(
+        """
+        fn main() {
+            match x {
+                0 => <caret>{
+                    println!("x = 0")
+                }
+                _ => println!("x != 0")
+            }
+        }
+        """,
+        """
+        fn main() {
+            match x {
+                0 => <caret>println!("x = 0"),
+                _ => println!("x != 0")
+            }
+        }
+        """
+    )
+
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         myFixture.configureByText(RsFileType, before)
         myFixture.launchAction(UnwrapSingleExprIntention())
