@@ -12,8 +12,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.childrenOfType
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.openapiext.runWriteCommandAction
 
 class RsImportOptimizer : ImportOptimizer {
     override fun supports(file: PsiFile?): Boolean = file is RsFile
@@ -40,8 +38,9 @@ class RsImportOptimizer : ImportOptimizer {
             if (useSpeckList.size < 2) return
             useSpeckList.forEach { optimizeUseSpeck(psiFactory, it) }
             val sortedList = useSpeckList
-                .sortedWith(compareByDescending<RsUseSpeck>{ it.path?.self?.text }.thenBy { it.pathText })
+                .sortedWith(compareBy<RsUseSpeck> { it.path?.self == null }.thenBy { it.pathText })
                 .map { it.copy() }
+
             useSpeckList.zip(sortedList).forEach { it.first.replace(it.second) }
         }
 
@@ -56,8 +55,7 @@ class RsImportOptimizer : ImportOptimizer {
 
         private fun replaceOrder(file: RsMod, uses: Collection<RsUseItem>) {
             val first = file.childrenOfType<RsElement>()
-                .filter { it !is RsExternCrateItem }
-                .firstOrNull() ?: return
+                .firstOrNull { it !is RsExternCrateItem } ?: return
             val psiFactory = RsPsiFactory(file.project)
             val sortedUses = uses
                 .sortedBy { it.useSpeck?.pathText }
@@ -68,7 +66,6 @@ class RsImportOptimizer : ImportOptimizer {
             for (importPath in sortedUses) {
                 file.addBefore(importPath, first)
             }
-            uses.lastOrNull()?.nextSibling?.delete()
             uses.forEach { it.delete() }
         }
     }

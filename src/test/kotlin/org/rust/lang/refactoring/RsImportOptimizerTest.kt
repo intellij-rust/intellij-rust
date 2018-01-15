@@ -5,7 +5,6 @@
 
 package org.rust.lang.refactoring
 
-import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
 import org.rust.lang.RsTestBase
 
@@ -75,7 +74,7 @@ class RsImportOptimizerTest: RsTestBase() {
     """, """
         use bar::bar;
         use foo::bar;
-        
+
     """)
 
     fun `test sort alphabetical with multiple layer of groups`() = doTest("""
