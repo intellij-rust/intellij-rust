@@ -12,15 +12,15 @@ class ImportNameIntentionStdTest : RsIntentionTestBase(ImportNameIntention()) {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
 
-    fun `test import struct from std crate`() = doAvailableTest("""
-        fn foo<T: Read/*caret*/>(t: T) {}
+    fun `test import item from std crate`() = doAvailableTest("""
+        fn foo<T: io::Read/*caret*/>(t: T) {}
     """, """
-        use std::io::Read;
+        use std::io;
 
-        fn foo<T: Read/*caret*/>(t: T) {}
+        fn foo<T: io::Read/*caret*/>(t: T) {}
     """, ImportNameIntention.Testmarks.autoInjectedCrate)
 
-    fun `test import struct from not std crate`() = doAvailableTestWithFileTree("""
+    fun `test import item from not std crate`() = doAvailableTestWithFileTree("""
         //- dep-lib/lib.rs
         pub mod foo {
             pub struct Bar;

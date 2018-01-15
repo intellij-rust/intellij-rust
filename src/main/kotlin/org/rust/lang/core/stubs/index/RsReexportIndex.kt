@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.stubs.index
 
+import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
@@ -14,6 +16,7 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.nameInScope
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsUseSpeckStub
+import org.rust.openapiext.getElements
 
 class RsReexportIndex : StringStubIndexExtension<RsUseSpeck>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -30,5 +33,8 @@ class RsReexportIndex : StringStubIndexExtension<RsUseSpeck>() {
             val name = useSpeck.nameInScope ?: return
             sink.occurrence(KEY, name)
         }
+
+        fun findReexportsByName(project: Project, target: String): Collection<RsUseSpeck> =
+            getElements(KEY, target, project, GlobalSearchScope.allScope(project))
     }
 }
