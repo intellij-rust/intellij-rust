@@ -267,7 +267,10 @@ fun commitNightly() {
     val travisYml = File(rootProject.projectDir, ".travis.yml")
     val updated = travisYml.readLines().joinToString("\n") { line ->
         if ("modified by script" in line) {
-            "  - RUST_VERSION=$rustVersion ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion # modified by script"
+            if ("ORG_GRADLE_PROJECT_ideaVersion" in line)
+                "    - RUST_VERSION=\$NIGHTLY_RUST_VERSION ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion # modified by script"
+            else
+                "    - NIGHTLY_RUST_VERSION=$rustVersion # modified by script"
         } else {
             line
         }
