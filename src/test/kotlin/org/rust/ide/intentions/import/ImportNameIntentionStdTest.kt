@@ -69,4 +69,16 @@ class ImportNameIntentionStdTest : RsIntentionTestBase(ImportNameIntention()) {
 
         fn foo(t: Bar/*caret*/) {}
     """)
+
+    fun `test import reexported item from stdlib`() = doAvailableTest("""
+        fn main() {
+            let duration = Duration/*caret*/::from_secs(2);
+        }
+    """, """
+        use std::time::Duration;
+
+        fn main() {
+            let duration = Duration/*caret*/::from_secs(2);
+        }
+    """, ImportNameIntention.Testmarks.autoInjectedCrate)
 }
