@@ -32,8 +32,11 @@ import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
 import org.rust.stdext.zipValues
 
-fun inferTypesIn(fn: RsFunction): RsInferenceResult =
-    RsInferenceContext().run { preventRecursion { infer(fn) } }
+fun inferTypesIn(fn: RsFunction): RsInferenceResult {
+    val items = StdKnownItems.relativeTo(fn)
+    val lookup = ImplLookup(fn.project, items)
+    return preventRecursion { lookup.ctx.infer(fn) }
+}
 
 /**
  * [RsInferenceResult] is an immutable per-function map
@@ -69,7 +72,11 @@ class RsInferenceResult(
 /**
  * A mutable object, which is filled while we walk function body top down.
  */
-class RsInferenceContext {
+class RsInferenceContext(
+    val lookup: ImplLookup,
+    val items: StdKnownItems
+) {
+    val fulfill: FulfillmentContext = FulfillmentContext(this, lookup)
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
     private val resolvedPaths: MutableMap<RsPathExpr, List<RsElement>> = HashMap()
@@ -124,10 +131,8 @@ class RsInferenceContext {
 
         val block = fn.block
         if (block != null) {
-            val items = StdKnownItems.relativeTo(fn)
-            val lookup = ImplLookup(fn.project, items, this)
-            val fctx = RsFnInferenceContext(this, lookup, items)
-            fctx.inferBlockType(block)
+            val fctx = RsFnInferenceContext(this, fn.returnType)
+            fctx.inferFnBody(block)
 
             fctx.selectObligationsWherePossible()
             exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
@@ -388,10 +393,11 @@ class RsInferenceContext {
 
 private class RsFnInferenceContext(
     private val ctx: RsInferenceContext,
-    private val lookup: ImplLookup,
-    private val items: StdKnownItems
+    private val returnTy: Ty
 ) {
-    private val fulfill: FulfillmentContext = FulfillmentContext(ctx, lookup)
+    private val lookup get() = ctx.lookup
+    private val items get() = ctx.items
+    private val fulfill get() = ctx.fulfill
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
 
     private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
@@ -404,15 +410,21 @@ private class RsFnInferenceContext(
         fulfill.selectWherePossible()
     }
 
-    fun inferBlockType(block: RsBlock): Ty =
-        block.inferType()
+    fun inferFnBody(block: RsBlock): Ty =
+        block.inferTypeCoercableTo(returnTy)
 
-    private fun RsBlock.inferType(expected: Ty? = null): Ty {
+    fun inferLambdaBody(expr: RsExpr): Ty =
+        if (expr is RsBlockExpr) inferFnBody(expr.block) else expr.inferTypeCoercableTo(returnTy)
+
+    private fun RsBlock.inferTypeCoercableTo(expected: Ty): Ty =
+        inferType(expected, true)
+
+    private fun RsBlock.inferType(expected: Ty? = null, coerce: Boolean = false): Ty {
         var isDiverging = false
         for (stmt in stmtList) {
             isDiverging = processStatement(stmt) || isDiverging
         }
-        val type = expr?.inferType(expected) ?: TyUnit
+        val type = (if (coerce) expr?.inferTypeCoercableTo(expected!!) else expr?.inferType(expected)) ?: TyUnit
         return if (isDiverging) TyNever else type
     }
 
@@ -1182,9 +1194,12 @@ private class RsFnInferenceContext(
             ctx.extractBindings(actualArg.pat, paramTy)
             paramTy
         }.toList()
+        val retTy = expr.retType?.typeReference?.type
+            ?: expectedFnTy.retType.takeIf { it != TyUnknown }
+            ?: TyInfer.TyVar()
 
-        val inferredRetTy = expr.expr?.inferType()
-        return TyFunction(paramTypes, inferredRetTy ?: expectedFnTy.retType)
+        expr.expr?.let { RsFnInferenceContext(ctx, retTy).inferLambdaBody(it) }
+        return TyFunction(paramTypes, retTy)
     }
 
     private fun deduceLambdaType(expected: Ty): TyFunction? {
@@ -1236,7 +1251,7 @@ private class RsFnInferenceContext(
     }
 
     private fun inferRetExprType(expr: RsRetExpr): Ty {
-        expr.expr?.inferType()
+        expr.expr?.inferTypeCoercableTo(returnTy)
         return TyNever
     }
 

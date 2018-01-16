@@ -862,4 +862,61 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             a
         } //^ <unknown>
     """)
+
+    fun `test infer return expr from fn return type`() = testExpr("""
+        fn foo() -> u8 {
+            return 0;
+        }        //^ u8
+    """)
+
+    fun `test infer tail expr from fn return type`() = testExpr("""
+        fn foo() -> u8 {
+            0
+        } //^ u8
+    """)
+
+    fun `test infer return expr from explicit closure return type`() = testExpr("""
+        fn main() {
+            || -> u8 {
+                return 0;
+            };       //^ u8
+        }
+    """)
+
+    fun `test infer tail expr from explicit closure return type`() = testExpr("""
+        fn main() {
+            || -> u8 {
+                0
+            };//^ u8
+        }
+    """)
+
+    fun `test infer return expr from expected closure return type`() = testExpr("""
+        fn main() {
+            let _: fn() -> u8 = || {
+                return 0;
+            };       //^ u8
+        }
+    """)
+
+    fun `test infer return expr from another return expr in closure`() = testExpr("""
+        fn main() {
+            || {
+                if 2 > 1 {
+                    return 0;
+                } else { //^ u8
+                    return 1u8;
+                }
+            };
+        }
+    """)
+
+    fun `test infer return expr from inferred-later closure return type`() = testExpr("""
+        fn main() {
+            let a = || {
+                return 0;
+            };       //^ u8
+            let b: u8 = a();
+        }
+    """)
 }
