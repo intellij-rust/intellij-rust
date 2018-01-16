@@ -353,9 +353,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test integer unification block`() = testExpr("""
         fn main() {
-        let a = 0;
-              //^ u8
-        let b: u8 = { a };
+            let a = 0;
+                  //^ u8
+            let b: u8 = { a };
         }
     """)
 
@@ -369,24 +369,24 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test integer unification if else 2`() = testExpr("""
         fn main() {
-        let a = 0;
-              //^ u8
+            let a = 0;
+                  //^ u8
             let b: u8 = if true { 1 } else { a };
         }
     """)
 
     fun `test integer unification if else 3`() = testExpr("""
         fn main() {
-        let a = 0;
-              //^ u8
+            let a = 0;
+                  //^ u8
             let b: u8 = if true { 1 } else if true { a } else { 1 };
         }
     """)
 
     fun `test integer unification match`() = testExpr("""
         fn main() {
-        let a = 0;
-              //^ u8
+            let a = 0;
+                  //^ u8
             let b: u8 = match true {
                 true => a,
                 false => 1,

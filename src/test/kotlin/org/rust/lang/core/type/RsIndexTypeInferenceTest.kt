@@ -21,7 +21,7 @@ class RsIndexTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S) {
             let x = s[0];
-            x
+            x;
           //^ i32
         }
     """)
@@ -38,7 +38,7 @@ class RsIndexTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<i64>) {
             let x = s[0];
-            x
+            x;
           //^ i64
         }
     """)
@@ -56,7 +56,7 @@ class RsIndexTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<i32, f64>) {
             let x = s[Key(10)];
-            x
+            x;
           //^ f64
         }
     """)
@@ -80,7 +80,7 @@ class RsIndexTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S) {
             let x = s[0i64];
-            x
+            x;
           //^ i32
         }
     """)
@@ -97,7 +97,7 @@ class RsIndexTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: Vec<i32>) {
             let x = s[0];
-            x
+            x;
           //^ i32
         }
     """)
@@ -113,7 +113,7 @@ class RsIndexTypeInferenceTest : RsTypificationTestBase() {
         fn foo(v: Vec<u32>) -> u32 {
             let p = &v;
             let m = p[0];
-            m
+            m;
           //^ u32
         }
     """)

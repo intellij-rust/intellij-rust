@@ -79,7 +79,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(r: Result) {
             let Result::Ok(s @ S { x, .. }) = r;
-            s
+            s;
           //^ S
         }
     """)
@@ -94,7 +94,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(r: Result) {
             let Result::Ok(s @ S { j /* non-existing field */ }) = r;
-            s
+            s;
           //^ S
         }
     """)
@@ -109,7 +109,7 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(r: Result) {
             let Result::Ok(s @ S { x /* missing fields */ }) = r;
-            s
+            s;
           //^ S
         }
     """)

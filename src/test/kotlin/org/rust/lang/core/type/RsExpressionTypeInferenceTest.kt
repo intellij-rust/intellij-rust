@@ -45,7 +45,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo() -> S {}
         fn main() {
             let x = { foo() };
-            x
+            x;
           //^ S
         }
     """)
@@ -88,7 +88,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test if`() = testExpr("""
         fn main() {
             let x = if true { 92 } else { 62 };
-            x
+            x;
           //^ i32
         }
     """)
@@ -96,14 +96,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test if else with return 1`() = testExpr("""
         fn main() {
             let a = if true { return } else { 1 };
-            a
+            a;
         } //^ i32
     """)
 
     fun `test if else with return 2`() = testExpr("""
         fn main() {
             let a = if true { return } else if true { return } else { 1 };
-            a
+            a;
         } //^ i32
     """)
 
@@ -113,14 +113,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 true => return,
                 false => 1,
             };
-            a
+            a;
         } //^ i32
     """)
 
     fun `test loop`() = testExpr("""
         fn main() {
             let x = loop { break; };
-            x
+            x;
           //^ ()
         }
     """)
@@ -128,7 +128,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test endless loop`() = testExpr("""
         fn main() {
             let x = loop { };
-            x
+            x;
           //^ !
         }
     """)
@@ -136,7 +136,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test loop break value`() = testExpr("""
         fn main() {
             let x = loop { break 7; };
-            x
+            x;
           //^ i32
         }
     """)
@@ -146,7 +146,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let x = loop {
                 if v { break 7; }
             };
-            x
+            x;
           //^ i32
         }
     """)
@@ -160,7 +160,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                     break 0u32;
                 }
             };
-            x
+            x;
           //^ u32
         }
     """)
@@ -171,7 +171,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 loop { break "bar"; }
                 break 7;
             };
-            x
+            x;
           //^ i32
         }
     """)
@@ -186,7 +186,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                     }
                 }
             };
-            x
+            x;
           //^ u32
         }
     """)
@@ -198,7 +198,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                     if v { break 'outer "bar"; }
                     break 7;
                 };
-                y
+                y;
               //^ i32
             };
         }
@@ -212,7 +212,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                     break 7;
                 }
             };
-            x
+            x;
           //^ u32
         }
     """)
@@ -314,7 +314,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test enum variant A`() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
-            (E::A(92))
+            (E::A(92));
           //^ E
         }
     """)
@@ -322,7 +322,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test enum variant B`() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
-            (E::B { val: false })
+            (E::B { val: false });
           //^ E
         }
     """)
@@ -330,7 +330,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test enum variant C`() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
-            (E::C)
+            (E::C);
           //^ E
         }
     """)
@@ -345,13 +345,13 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 E::A(ref x) => x,
                 E::B => panic!(),
             };
-            s
+            s;
         } //^ &S
     """)
 
     fun `test parens`() = testExpr("""
         type T = (i32);
-        fn foo(x: T) { x }
+        fn foo(x: T) { x; }
                      //^ i32
     """)
 
@@ -365,7 +365,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let x = P(92);
-            x
+            x;
           //^ P<i32>
         }
     """)
@@ -404,7 +404,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             testExpr("""
                 fn main() {
                     let x = ${case.first};
-                    x
+                    x;
                   //^ ${case.second}
                 }
                 """
@@ -429,7 +429,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let y = 42;
             let x = &y as *const i32;
-            x
+            x;
           //^ *const i32
         }
     """)
@@ -438,7 +438,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let y = 42;
             let x = &y as i64;
-            x
+            x;
           //^ i64
         }
     """)
@@ -452,8 +452,8 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test pointer deref`() = testExpr("""
         fn main() {
             let x : *const i32;
-            let y = *x; // it should be in unsafe
-            y
+            let y = unsafe { *x };
+            y;
           //^ i32
         }
     """)
@@ -467,14 +467,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(a: A) {
             let b = *a;
-            b
+            b;
         } //^ B
     """)
 
     fun `test slice type`() = testExpr("""
         fn main() {
             let x : [i32];
-            x
+            x;
           //^ [i32]
         }
     """)
@@ -482,7 +482,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test array type`() = testExpr("""
         fn main() {
             let x : [i32; 8];
-            x
+            x;
           //^ [i32; 8]
         }
     """)
@@ -490,7 +490,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test array type2`() = testExpr("""
         fn main() {
             let x : [bool; 8];
-            x
+            x;
           //^ [bool; 8]
         }
     """)
@@ -498,7 +498,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test array type3`() = testExpr("""
         fn main() {
             let x : [bool; 8usize];
-            x
+            x;
           //^ [bool; 8]
         }
     """)
@@ -506,14 +506,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test array expression type1`() = testExpr("""
         fn main() {
             let x = [""];
-            x
+            x;
         } //^ [&str; 1]
     """)
 
     fun `test array expression type2`() = testExpr("""
         fn main() {
             let x = [1, 2, 3];
-            x
+            x;
           //^ [i32; 3]
         }
     """)
@@ -521,7 +521,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test array expression type3`() = testExpr("""
         fn main() {
             let x = [0; 8];
-            x
+            x;
           //^ [i32; 8]
         }
     """)
@@ -529,7 +529,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test array expression type4`() = testExpr("""
         fn main() {
             let x = [0; 8usize];
-            x
+            x;
           //^ [i32; 8]
         }
     """)
@@ -537,7 +537,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test array expression type5`() = testExpr("""
         fn main() {
             let x = [1, 2u16, 3];
-            x
+            x;
           //^ [u16; 3]
         }
     """)
@@ -547,7 +547,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         const COUNT: usize = 2;
         fn main() {
             let x = [1; COUNT];
-            x
+            x;
           //^ [i32; <unknown>]
         }
     """)
@@ -556,7 +556,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         const COUNT: i32 = 2;
         fn main() {
             let x = [1; COUNT];
-            x
+            x;
           //^ [i32; <unknown>]
         }
     """)
@@ -565,7 +565,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test binary expr as array size`() = testExpr("""
         fn main() {
             let x = [1; 2 + 3];
-            x
+            x;
           //^ [i32; <unknown>]
         }
     """)
@@ -573,7 +573,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test negative binary expr as array size`() = testExpr("""
         fn main() {
             let x = [1; 2 - 3];
-            x
+            x;
           //^ [i32; <unknown>]
         }
     """)
@@ -583,7 +583,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         const COUNT: usize = 2;
         fn main() {
             let x = [1; (2 * COUNT + 3) << (4 / 2)];
-            x
+            x;
           //^ [i32; <unknown>]
         }
     """)
@@ -721,7 +721,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test unresolved field expr`() = testExpr("""
         struct S;
         fn main() {
-            S { f: 1 }
+            S { f: 1 };
         }        //^ i32
     """)
 
@@ -730,7 +730,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         type T1 = S;
         type T2 = T1;
         fn main() {
-            T2 { }
+            T2 { };
         } //^ S
     """)
     // More struct alias tests in [RsGenericExpressionTypeInferenceTest]
@@ -793,7 +793,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             loop {
                 break 1;
-            }       //^ i32
+            };      //^ i32
         }
     """)
 
@@ -807,7 +807,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             loop {
                 break 1;
-            } //^ !
+            };//^ !
         }
     """)
 
@@ -828,7 +828,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test infer lambda type with explicit parameters`() = testExpr("""
         fn main() {
             let a = |x: u8| x;
-            a
+            a;
         } //^ fn(u8) -> u8
     """)
 
