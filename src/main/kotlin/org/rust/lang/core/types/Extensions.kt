@@ -16,10 +16,7 @@ import org.rust.lang.core.types.infer.RsInferenceResult
 import org.rust.lang.core.types.infer.inferOutOfFnExpressionType
 import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.infer.inferTypesIn
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyReference
-import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.recursionGuard
 
 
@@ -45,6 +42,20 @@ val RsPatBinding.type: Ty
 
 val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: inferOutOfFnExpressionType(this)
+
+// `RsExpr.type` for `RsRetExpr` is always `TyNever`
+val RsRetExpr.type: Ty
+    get() = expr?.type ?: TyUnit
+
+val RsStmt.type: Ty
+    get() = when (this) {
+        is RsLetDecl -> TyUnit
+        is RsExprStmt -> inference?.getReturnType(this) ?: TyUnit
+        else -> TyUnknown
+    }
+
+// Treat `RsBlock` as a special `RsExpr`
+val RsBlock.type: Ty get() = inference?.getExprType(this) ?: TyUnit
 
 val RsExpr.declaration: RsElement?
     get() = when (this) {

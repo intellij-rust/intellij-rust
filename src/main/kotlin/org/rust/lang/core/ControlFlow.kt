@@ -17,7 +17,7 @@ sealed class ExitPoint {
     class TryExpr(val e: RsExpr) : ExitPoint() // `?` or `try!`
     class DivergingExpr(val e: RsExpr) : ExitPoint()
     class TailExpr(val e: RsExpr) : ExitPoint()
-    class TailStatement(val stmt: RsExprStmt) : ExitPoint()
+    class TailStatement(val stmt: RsStmt) : ExitPoint()
 
     companion object {
         fun process(fn: RsFunction, sink: (ExitPoint) -> Unit) = fn.block?.acceptChildren(ExitPointVisitor(sink))
@@ -56,15 +56,32 @@ private class ExitPointVisitor(
         }
     }
 
-    override fun visitExprStmt(o: RsExprStmt) {
+    override fun visitStmt(o: RsStmt) {
         o.acceptChildren(this)
         val block = o.parent as? RsBlock ?: return
         if (!(block.expr == null && block.stmtList.lastOrNull() == o)) return
+        if (!o.isInTailPosition) return
         val parent = block.parent
-        if ((parent is RsFunction || parent is RsExpr && parent.isInTailPosition) && o.expr.type != TyNever) {
-            sink(ExitPoint.TailStatement(o))
+        when (o) {
+            is RsExprStmt -> {
+                if ((parent is RsFunction || parent is RsExpr) && o.expr.type != TyNever) {
+                    sink(ExitPoint.TailStatement(o))
+                }
+            }
+            is RsLetDecl -> if (o.isInTailPosition) sink(ExitPoint.TailStatement(o))
         }
     }
+
+    private val RsStmt.isInTailPosition: Boolean
+        get() {
+            for (ancestor in ancestors) {
+                when (ancestor) {
+                    is RsFunction, is RsLambdaExpr -> return true
+                    else -> if (ancestor is RsExpr && ancestor.parent is RsMatchExpr) return false
+                }
+            }
+            return false
+        }
 
     private val RsExpr.isInTailPosition: Boolean
         get() {

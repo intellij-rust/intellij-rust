@@ -28,6 +28,7 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
+import org.rust.stdext.chain
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
 import org.rust.stdext.zipValues
@@ -41,14 +42,18 @@ fun inferTypesIn(fn: RsFunction): RsInferenceResult =
  */
 class RsInferenceResult(
     private val bindings: Map<RsPatBinding, Ty>,
-    private val exprTypes: Map<RsExpr, Ty>,
+    private val exprTypes: Map<RsElement, Ty>,
+    private val returnTypes: Map<RsElement, Ty>,
     private val resolvedPaths: Map<RsPathExpr, List<RsElement>>,
     private val resolvedMethods: Map<RsMethodCall, List<RsFunction>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
     val diagnostics: List<RsDiagnostic>
 ) {
-    fun getExprType(expr: RsExpr): Ty =
+    fun getExprType(expr: RsElement): Ty =
         exprTypes[expr] ?: TyUnknown
+
+    fun getReturnType(node: RsElement): Ty =
+        returnTypes[node] ?: TyUnit
 
     fun getBindingType(binding: RsPatBinding): Ty =
         bindings[binding] ?: TyUnknown
@@ -71,7 +76,8 @@ class RsInferenceResult(
  */
 class RsInferenceContext {
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
-    private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
+    private val exprTypes: MutableMap<RsElement, Ty> = HashMap()
+    private val returnTypes: MutableMap<RsElement, Ty> = HashMap()
     private val resolvedPaths: MutableMap<RsPathExpr, List<RsElement>> = HashMap()
     private val resolvedMethods: MutableMap<RsMethodCall, List<RsFunction>> = HashMap()
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = HashMap()
@@ -132,11 +138,12 @@ class RsInferenceContext {
             fctx.selectObligationsWherePossible()
             exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
             bindings.replaceAll { _, ty -> fullyResolve(ty) }
+            returnTypes.replaceAll { _, ty -> fullyResolve(ty) }
 
             performPathsRefinement(lookup)
         }
 
-        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics)
+        return RsInferenceResult(bindings, exprTypes, returnTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics)
     }
 
     private fun extractParameterBindings(fn: RsFunction) {
@@ -164,7 +171,15 @@ class RsInferenceContext {
         return exprTypes[expr] ?: TyUnknown
     }
 
-    fun isTypeInferred(expr: RsExpr): Boolean {
+    fun getReturnType(node: RsElement): Ty? {
+        return returnTypes[node]
+    }
+
+    fun writeReturnTy(node: RsElement, ty: Ty) {
+        returnTypes[node] = ty
+    }
+
+    fun isTypeInferred(expr: RsElement): Boolean {
         return exprTypes.containsKey(expr)
     }
 
@@ -172,7 +187,7 @@ class RsInferenceContext {
         return bindings[binding] ?: TyUnknown
     }
 
-    fun writeTy(psi: RsExpr, ty: Ty) {
+    fun writeTy(psi: RsElement, ty: Ty) {
         exprTypes[psi] = ty
     }
 
@@ -408,33 +423,49 @@ private class RsFnInferenceContext(
         block.inferType()
 
     private fun RsBlock.inferType(expected: Ty? = null): Ty {
-        var isDiverging = false
         for (stmt in stmtList) {
-            isDiverging = processStatement(stmt) || isDiverging
+            processStatement(stmt)
         }
-        val type = expr?.inferType(expected) ?: TyUnit
-        return if (isDiverging) TyNever else type
+        if (stmtList.isEmpty() && expr == null) return TyUnit
+        val tempTys = stmtList.mapNotNull { ctx.getReturnType(it) }
+        val tys = expr?.inferType(expected).let { tempTys.plus(it ?: TyUnit) }
+        if (tys.isEmpty()) {
+            return TyUnit
+        }
+        val ty = getMoreCompleteType(tys)
+        if (tempTys.isNotEmpty()) {
+            // we can treat `ty` as the type of those `RsRetExpr`s
+            // since rustc should panic otherwise
+            ctx.writeReturnTy(this, ty)
+        }
+        ctx.writeTy(this, ty)
+        return ty
     }
 
-    // returns true if expr is always diverging
-    private fun processStatement(psi: RsStmt): Boolean = when (psi) {
-        is RsLetDecl -> {
-            val explicitTy = psi.typeReference?.type
-            val inferredTy = explicitTy
-                ?.let { psi.expr?.inferTypeCoercableTo(it) }
-                ?: psi.expr?.inferType()
-                ?: TyUnknown
-            ctx.extractBindings(psi.pat, explicitTy ?: inferredTy)
-            inferredTy == TyNever
+    private fun processStatement(psi: RsStmt) {
+        when (psi) {
+            is RsLetDecl -> {
+                val explicitTy = psi.typeReference?.type
+                val inferredTy = explicitTy
+                    ?.let { psi.expr?.inferTypeCoercableTo(it) }
+                    ?: psi.expr?.inferType()
+                    ?: TyUnknown
+                ctx.extractBindings(psi.pat, explicitTy ?: inferredTy)
+            }
+            is RsExprStmt -> {
+                psi.expr.inferType()
+                val ty = ctx.getReturnType(psi.expr)
+                ty?.let { ctx.writeReturnTy(psi, it) }
+            }
+            else -> { /* NULL */ }
         }
-        is RsExprStmt -> psi.expr.inferType() == TyNever
-        else -> false
     }
 
     private fun RsExpr.inferType(expected: Ty? = null): Ty {
-        if (ctx.isTypeInferred(this)) error("Trying to infer expression type twice")
+        if (ctx.isTypeInferred(this))
+            error("Trying to infer expression type twice")
 
-        val ty = when (this) {
+        var ty = when (this) {
             is RsPathExpr -> inferPathExprType(this)
             is RsStructLiteral -> inferStructLiteralType(this)
             is RsTupleExpr -> inferRsTupleExprType(this, expected)
@@ -968,6 +999,7 @@ private class RsFnInferenceContext(
 
     private fun inferLoopExprType(expr: RsLoopExpr): Ty {
         expr.block?.inferType()
+        expr.block?.let { ctx.getReturnType(it)?.let { ctx.writeReturnTy(expr, it) } }
         val returningTypes = mutableListOf<Ty>()
         val label = expr.labelDecl?.name
 
@@ -998,12 +1030,14 @@ private class RsFnInferenceContext(
         val exprTy = expr.expr?.inferType() ?: TyUnknown
         ctx.extractBindings(expr.pat, lookup.findIteratorItemType(exprTy)?.register() ?: TyUnknown)
         expr.block?.inferType()
+        expr.block?.let { ctx.getReturnType(it)?.let { ctx.writeReturnTy(expr, it) } }
         return TyUnit
     }
 
     private fun inferWhileExprType(expr: RsWhileExpr): Ty {
         expr.condition?.let { ctx.extractBindings(it.pat, it.expr.inferType()) }
         expr.block?.inferType()
+        expr.block?.let { ctx.getReturnType(it)?.let { ctx.writeReturnTy(expr, it) } }
         return TyUnit
     }
 
@@ -1054,7 +1088,22 @@ private class RsFnInferenceContext(
             blockTys.add(elseBranch.ifExpr?.inferType(expected))
             blockTys.add(elseBranch.block?.inferType(expected))
         }
-        return if (expr.elseBranch == null) TyUnit else getMoreCompleteType(blockTys.filterNotNull())
+        val rtys = listOf<Ty>()
+            .plus(expr.block?.let(ctx::getReturnType))
+            .plus(elseBranch?.ifExpr?.let(ctx::getReturnType))
+            .plus(elseBranch?.block?.let(ctx::getReturnType))
+        val rty = getMoreCompleteType(rtys.filterNotNull())
+        if (TyUnknown != rty) {
+            ctx.writeReturnTy(expr, rty)
+        }
+
+        val ty = getMoreCompleteType(blockTys.filterNotNull())
+        return if (TyUnit == ty) {
+            elseBranch?.ifExpr?.let {
+                if (TyNever == blockTys[1] && rtys[0] != null) TyNever
+                else TyUnit
+            } ?: (if (rtys.filterNotNull().size < blockTys.filterNotNull().size) TyUnit else TyNever)
+        } else ty
     }
 
     private fun inferBinaryExprType(expr: RsBinaryExpr): Ty {
@@ -1184,6 +1233,10 @@ private class RsFnInferenceContext(
         }.toList()
 
         val inferredRetTy = expr.expr?.inferType()
+        // TODO: do we need these code?
+        // if (expr.expr != null && expr.expr!! is RsBlockExpr) {
+        //     ctx.getReturnType(expr.expr!!)?.let { ctx.writeReturnTy(expr, it) }
+        // }
         return TyFunction(paramTypes, inferredRetTy ?: expectedFnTy.retType)
     }
 
@@ -1236,7 +1289,8 @@ private class RsFnInferenceContext(
     }
 
     private fun inferRetExprType(expr: RsRetExpr): Ty {
-        expr.expr?.inferType()
+        val ty = expr.expr?.inferType() ?: TyUnit
+        ctx.writeReturnTy(expr, ty)
         return TyNever
     }
 
@@ -1248,11 +1302,12 @@ private class RsFnInferenceContext(
     // TODO should be replaced with coerceMany
     private fun getMoreCompleteType(types: List<Ty>): Ty {
         if (types.isEmpty()) return TyUnknown
-        return types.reduce { acc, ty -> getMoreCompleteType(acc, ty) }
+        return types.reduce { acc, ty -> getMoreCompleteType(acc, ty)!! }
     }
 
     // TODO should be replaced with coerceMany
-    fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty = when (ty1) {
+    fun getMoreCompleteType(ty1: Ty?, ty2: Ty): Ty? = when (ty1) {
+        null -> ty2
         is TyNever -> ty2
         is TyUnknown -> if (ty2 !is TyNever) ty2 else TyUnknown
         else -> {
