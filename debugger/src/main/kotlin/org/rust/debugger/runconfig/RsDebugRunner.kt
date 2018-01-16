@@ -28,12 +28,13 @@ import com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CargoMetadata.CrateType
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
@@ -145,9 +146,12 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
                             .mapNotNull { if (it.isJsonObject) it.asJsonObject else null }
                             .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
                             .filter { (target, profile) ->
-                                target.cleanKind == CargoWorkspace.TargetKind.BIN
-                                    || target.cleanKind == CargoWorkspace.TargetKind.TEST
-                                    || (target.cleanKind == CargoWorkspace.TargetKind.LIB && profile.test)
+                                val kind = target.cleanKind
+                                kind == TargetKind.BIN
+                                    // TODO: support cases when crate types list contains not only binary
+                                    || kind == TargetKind.EXAMPLE && target.cleanCrateTypes.singleOrNull() == CrateType.BIN
+                                    || kind == TargetKind.TEST
+                                    || (kind == TargetKind.LIB && profile.test)
                             }
                             .flatMap { it.filenames.filter { !it.endsWith(".dSYM") } } // FIXME: correctly launch debug binaries for macos
                     }
@@ -161,7 +165,7 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
                             }
                             binaries.size > 1 -> {
                                 project.showErrorDialog("More than one binary produced. " +
-                                    "Please specify `--bin`, `--lib` or `--test` flag explicitly.")
+                                    "Please specify `--bin`, `--lib`, `--test` or `--example` flag explicitly.")
                                 promise.setResult(null)
                             }
                             else -> promise.setResult(Binary(Paths.get(binaries.single())))
