@@ -21,6 +21,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.withSubst
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInfer
@@ -51,8 +52,15 @@ sealed class RsDiagnostic(
                 fixes = buildList {
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
-                    } else if (isFromActualImplForExpected(element)) {
-                        add(ConvertToTyUsingFromTraitFix(element, expectedTy))
+                    } else  if (element is RsElement){
+                        val items = StdKnownItems.relativeTo(element)
+                        val lookup = ImplLookup(element.project, items)
+                        if (isFromActualImplForExpected(items, lookup)) {
+                            add(ConvertToTyUsingFromTraitFix(element, expectedTy))
+                        }
+                        if (isToOwnedImplWithExcpectedForActual(items, lookup)) {
+                            add(ConvertToOwnedTyFix(element))
+                        }
                     }
                 }
             )
@@ -60,11 +68,16 @@ sealed class RsDiagnostic(
 
         private fun isActualTyNumeric() = actualTy is TyNumeric || actualTy is TyInfer.IntVar || actualTy is TyInfer.FloatVar
 
-        private fun isFromActualImplForExpected(element: PsiElement): Boolean {
-            val items = StdKnownItems.relativeTo(element as? RsElement ?: return false)
-            val lookup = ImplLookup(element.project, items)
+        private fun isFromActualImplForExpected(items: StdKnownItems, lookup: ImplLookup): Boolean {
             val fromTrait = items.findFromTrait() ?: return false
             return lookup.select(TraitRef(expectedTy, fromTrait.withSubst(actualTy))).ok() != null
+        }
+
+        private fun isToOwnedImplWithExcpectedForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
+            val toOwnedTrait = items.findToOwnedTrait() ?: return false
+            val result = lookup.selectProjection(TraitRef(actualTy, BoundElement(toOwnedTrait)),
+                toOwnedTrait.associatedTypesTransitively.find { it.name == "Owned" } ?: return false)
+            return expectedTy == result.ok()?.value
         }
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
