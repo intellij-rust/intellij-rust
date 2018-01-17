@@ -16,6 +16,7 @@ import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
+import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.runWriteCommandAction
@@ -32,31 +33,48 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         if (basePath.reference.resolve() != null) return null
         val pathMod = path.containingMod
         val pathSuperMods = HashSet(pathMod.superMods)
-        // TODO: support reexports
-        val candidates = RsNamedElementIndex.findElementsByName(project, basePath.referenceName)
+
+        val explicitItems = RsNamedElementIndex.findElementsByName(project, basePath.referenceName)
             .asSequence()
             .filterIsInstance<RsQualifiedNamedElement>()
-            .filter { basePath != path || !(it is RsMod || it is RsModDeclItem || it.parent is RsMembers) }
-            .mapNotNull { item -> (item as? RsVisible)?.canBeImported(pathSuperMods)?.let { ImportCandidate(item, it) } }
+            .map { ImportItem.ExplicitItem(it) }
+
+        val reexportedItems = RsReexportIndex.findReexportsByName(project, basePath.referenceName)
+            .asSequence()
+            .mapNotNull {
+                val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
+                ImportItem.ReexportedItem(it, item)
+            }
+
+        val candidates = (explicitItems + reexportedItems)
+            .filter { basePath != path || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers) }
+            .mapNotNull { importItem -> importItem.canBeImported(pathSuperMods)?.let { ImportCandidate(importItem, it) } }
             // check that result after import can be resolved and resolved element is suitable
             // if no, don't add it in candidate list
             .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info) }
             .toList()
+
         if (candidates.isEmpty()) return null
         return Context(path, candidates)
     }
 
-    // Semantic signature of method is `RsVisible.canBeImported(mod: RsMod)`
+    // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)`
     // but in our case `mod` is always same and `mod` needs only to get set of its super mods
     // so we pass `superMods` instead of `mod` for optimization
-    private fun RsVisible.canBeImported(superMods: Set<RsMod>): ImportInfo? {
-        val parentMod = (if (this is RsMod) `super` else containingMod) ?: return null
+    private fun ImportItem.canBeImported(superMods: Set<RsMod>): ImportInfo? {
+        if (item !is RsVisible) return null
+
+        val parentMod = parentMod ?: return null
         val ourSuperMods = parentMod.superMods
 
         // try to find latest common ancestor module of `parentMod` and `mod` in module tree
         // we need to do it because we can use direct child items of any super mod with any visibility
         val lca = ourSuperMods.find { it in superMods }
-        val crateRelativePath = (this as? RsQualifiedNamedElement)?.crateRelativePath?.removePrefix("::") ?: return null
+        val crateRelativePath = crateRelativePath ?: return null
+        val isPublic = when (this) {
+            is ImportItem.ExplicitItem -> item.isPublic
+            is ImportItem.ReexportedItem -> true
+        }
 
         val (shouldBePublicMods, importInfo) = if (lca == null) {
             if (!isPublic) return null
@@ -153,6 +171,31 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
     }
 }
 
+sealed class ImportItem(val item: RsQualifiedNamedElement) {
+
+    abstract val parentMod: RsMod?
+    abstract val crateRelativePath: String?
+    abstract val containingCargoTarget: CargoWorkspace.Target?
+
+    class ReexportedItem(
+        val useSpeck: RsUseSpeck,
+        item: RsQualifiedNamedElement
+    ) : ImportItem(item) {
+        override val parentMod: RsMod? get() = useSpeck.containingMod
+        override val containingCargoTarget: CargoWorkspace.Target? get() = useSpeck.containingCargoTarget
+        override val crateRelativePath: String? get() {
+            val modulePath = parentMod?.crateRelativePath?.removePrefix("::") ?: return null
+            val name = useSpeck.nameInScope ?: return null
+            return "$modulePath::$name"
+        }
+    }
+    class ExplicitItem(item: RsQualifiedNamedElement) : ImportItem(item) {
+        override val parentMod: RsMod? get() = if (item is RsMod) item.`super` else item.containingMod
+        override val containingCargoTarget: CargoWorkspace.Target? get() = item.containingCargoTarget
+        override val crateRelativePath: String? get() = item.crateRelativePath?.removePrefix("::")
+    }
+}
+
 sealed class ImportInfo {
 
     abstract val usePath: String
@@ -168,7 +211,7 @@ sealed class ImportInfo {
     }
 }
 
-data class ImportCandidate(val item: RsQualifiedNamedElement, val info: ImportInfo)
+data class ImportCandidate(val importItem: ImportItem, val info: ImportInfo)
 
 private fun RsItemsOwner.firstItem(): RsElement = itemsAndMacros.first()
 

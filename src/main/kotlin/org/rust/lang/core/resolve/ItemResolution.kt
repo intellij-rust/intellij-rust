@@ -140,16 +140,6 @@ fun processItemDeclarations(
     return false
 }
 
-private val RsUseSpeck.nameInScope: String? get() {
-    alias?.name?.let { return it }
-    val baseName = path?.referenceName ?: return null
-    if (baseName == "self") {
-        NameResolutionTestmarks.selfInGroupName.hit()
-        return qualifier?.referenceName
-    }
-    return baseName
-}
-
 private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsReference, processor: RsResolveProcessor): Boolean {
     // XXX: use items can legitimately resolve in both namespaces.
     // Because we must be lazy, we don't know up front how many times we

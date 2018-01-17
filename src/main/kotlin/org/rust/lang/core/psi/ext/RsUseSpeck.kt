@@ -16,6 +16,16 @@ val RsUseSpeck.isStarImport: Boolean get() = stub?.isStarImport ?: (mul != null)
 val RsUseSpeck.qualifier: RsPath? get() =
     (context as? RsUseGroup)?.parentUseSpeck?.path
 
+val RsUseSpeck.nameInScope: String? get() {
+    if (useGroup != null) return null
+    alias?.name?.let { return it }
+    val baseName = path?.referenceName ?: return null
+    if (baseName == "self") {
+        return qualifier?.referenceName
+    }
+    return baseName
+}
+
 abstract class RsUseSpeckImplMixin : RsStubbedElementImpl<RsUseSpeckStub>, RsUseSpeck {
     constructor (node: ASTNode) : super(node)
     constructor (stub: RsUseSpeckStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)

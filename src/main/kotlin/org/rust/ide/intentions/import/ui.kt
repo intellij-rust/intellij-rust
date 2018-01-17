@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.psi.PsiElement
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.UIUtil
@@ -18,8 +19,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.psi.ext.nameInScope
 import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout
 import java.awt.Component
@@ -70,7 +70,7 @@ private class PopupImportItemUi(private val project: Project, private val editor
             }
 
             override fun getTextFor(value: ImportCandidate): String = value.info.usePath
-            override fun getIconFor(value: ImportCandidate): Icon? = value.item.getIcon(0)
+            override fun getIconFor(value: ImportCandidate): Icon? = value.importItem.item.getIcon(0)
         }
         val popup = object : ListPopupImpl(step) {
             override fun getListElementRenderer(): ListCellRenderer<*> {
@@ -80,8 +80,8 @@ private class PopupImportItemUi(private val project: Project, private val editor
                     val panel = JPanel(BorderLayout())
                     baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
                     panel.add(baseRenderer.nextStepLabel, BorderLayout.EAST)
-                    val item = (value as? ImportCandidate)?.item
-                    panel.add(psiRenderer.getListCellRendererComponent(list, item, index, isSelected, cellHasFocus))
+                    val importItem = (value as? ImportCandidate)?.importItem
+                    panel.add(psiRenderer.getListCellRendererComponent(list, importItem, index, isSelected, cellHasFocus))
                     panel
                 }
             }
@@ -95,32 +95,62 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
 
     private val rightRender: LibraryCellRender = LibraryCellRender()
 
+    private var importItem: ImportItem? = null
+
     override fun getRightCellRenderer(value: Any?): DefaultListCellRenderer? = rightRender
-}
 
-private class LibraryCellRender : DefaultListCellRenderer() {
-    override fun getListCellRendererComponent(list: JList<*>, value: Any?, index: Int,
-                                              isSelected: Boolean, cellHasFocus: Boolean): Component {
-        val component = super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus)
-        val textWithIcon = textWithIcon(value)
-        if (textWithIcon != null) {
-            text = textWithIcon.first
-            icon = textWithIcon.second
+    override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
+        val realValue = if (value is ImportItem) {
+            // Generally, it's rather hacky but I don't know another way
+            // how to use functionality of `PsiElementListCellRenderer`
+            // and pass additional info with psi element at same time
+            importItem = value
+            value.item
+        } else {
+            value
         }
-
-        border = BorderFactory.createEmptyBorder(0, 0, 0, 2)
-        horizontalTextPosition = SwingConstants.LEFT
-        background = if (isSelected) UIUtil.getListSelectionBackground() else UIUtil.getListBackground()
-        foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
-        return component
+        return super.getListCellRendererComponent(list, realValue, index, isSelected, cellHasFocus)
     }
 
-    private fun textWithIcon(value: Any?): Pair<String, Icon>? {
-        val pkg = (value as? RsElement)?.containingCargoPackage ?: return null
-        return when (pkg.origin) {
-            PackageOrigin.STDLIB -> pkg.normName to RsIcons.RUST
-            PackageOrigin.DEPENDENCY, PackageOrigin.TRANSITIVE_DEPENDENCY -> pkg.normName to CargoIcons.ICON
-            else -> null
+    override fun getElementText(element: PsiElement): String {
+        return (importItem as? ImportItem.ReexportedItem)?.useSpeck?.nameInScope ?: super.getElementText(element)
+    }
+
+    override fun getContainerText(element: PsiElement, name: String): String? {
+        val importItem = importItem
+        return if (importItem != null) {
+            val crateName = importItem.containingCargoTarget?.normName ?: return null
+            val modulePath = importItem.parentMod?.crateRelativePath?.removePrefix("::") ?: return null
+            "($crateName::$modulePath)"
+        } else {
+            super.getContainerText(element, name)
+        }
+    }
+
+    private inner class LibraryCellRender : DefaultListCellRenderer() {
+        override fun getListCellRendererComponent(list: JList<*>, value: Any?, index: Int,
+                                                  isSelected: Boolean, cellHasFocus: Boolean): Component {
+            val component = super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus)
+            val textWithIcon = textWithIcon()
+            if (textWithIcon != null) {
+                text = textWithIcon.first
+                icon = textWithIcon.second
+            }
+
+            border = BorderFactory.createEmptyBorder(0, 0, 0, 2)
+            horizontalTextPosition = SwingConstants.LEFT
+            background = if (isSelected) UIUtil.getListSelectionBackground() else UIUtil.getListBackground()
+            foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
+            return component
+        }
+
+        private fun textWithIcon(): Pair<String, Icon>? {
+            val pkg = importItem?.containingCargoTarget?.pkg ?: return null
+            return when (pkg.origin) {
+                PackageOrigin.STDLIB -> pkg.normName to RsIcons.RUST
+                PackageOrigin.DEPENDENCY, PackageOrigin.TRANSITIVE_DEPENDENCY -> pkg.normName to CargoIcons.ICON
+                else -> null
+            }
         }
     }
 }

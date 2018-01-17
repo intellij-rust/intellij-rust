@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 113
+        override fun getStubVersion(): Int = 114
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -228,9 +228,7 @@ class RsUseSpeckStub(
         override fun createStub(psi: RsUseSpeck, parentStub: StubElement<*>?) =
             RsUseSpeckStub(parentStub, this, psi.isStarImport)
 
-        override fun indexStub(stub: RsUseSpeckStub, sink: IndexSink) {
-            //NOP
-        }
+        override fun indexStub(stub: RsUseSpeckStub, sink: IndexSink) = sink.indexUseSpeck(stub)
     }
 }
 

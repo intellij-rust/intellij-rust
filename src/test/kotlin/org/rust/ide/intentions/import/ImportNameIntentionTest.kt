@@ -382,6 +382,150 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
         }
     """)
 
+    fun `test import reexported item`() = doAvailableTest("""
+        mod foo {
+            mod bar {
+                pub struct Bar;
+            }
+
+            pub use self::bar::Bar;
+        }
+
+        fn main() {
+            Bar/*caret*/;
+        }
+    """, """
+        use foo::Bar;
+
+        mod foo {
+            mod bar {
+                pub struct Bar;
+            }
+
+            pub use self::bar::Bar;
+        }
+
+        fn main() {
+            Bar/*caret*/;
+        }
+    """)
+
+    fun `test import reexported item with alias`() = doAvailableTest("""
+        mod foo {
+            mod bar {
+                pub struct Bar;
+            }
+
+            pub use self::bar::Bar as Foo;
+        }
+
+        fn main() {
+            Foo/*caret*/;
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            mod bar {
+                pub struct Bar;
+            }
+
+            pub use self::bar::Bar as Foo;
+        }
+
+        fn main() {
+            Foo/*caret*/;
+        }
+    """)
+
+    fun `test import reexported item via use group`() = doAvailableTest("""
+        mod foo {
+            mod bar {
+                pub struct Baz;
+                pub struct Qwe;
+            }
+
+            pub use self::bar::{Baz, Qwe};
+        }
+
+        fn main() {
+            let a = Baz/*caret*/;
+        }
+    """, """
+        use foo::Baz;
+
+        mod foo {
+            mod bar {
+                pub struct Baz;
+                pub struct Qwe;
+            }
+
+            pub use self::bar::{Baz, Qwe};
+        }
+
+        fn main() {
+            let a = Baz/*caret*/;
+        }
+    """)
+
+    fun `test import reexported item via 'self'`() = doAvailableTest("""
+        mod foo {
+            mod bar {
+                pub struct Baz;
+            }
+
+            pub use self::bar::Baz::{self};
+        }
+
+        fn main() {
+            let a = Baz/*caret*/;
+        }
+    """, """
+        use foo::Baz;
+
+        mod foo {
+            mod bar {
+                pub struct Baz;
+            }
+
+            pub use self::bar::Baz::{self};
+        }
+
+        fn main() {
+            let a = Baz/*caret*/;
+        }
+    """)
+
+    fun `test import reexported item with complex reexport`() = doAvailableTest("""
+        mod foo {
+            mod bar {
+                pub struct Baz;
+                pub struct Qwe;
+            }
+
+            pub use self::bar::{Baz as Foo, Qwe};
+        }
+
+        fn main() {
+            let a = Foo/*caret*/;
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            mod bar {
+                pub struct Baz;
+                pub struct Qwe;
+            }
+
+            pub use self::bar::{Baz as Foo, Qwe};
+        }
+
+        fn main() {
+            let a = Foo/*caret*/;
+        }
+    """)
+
     fun `test multiple import`() = doAvailableTestWithMultipleChoice("""
         mod foo {
             pub struct Foo;
@@ -415,6 +559,58 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
             mod qwe {
                 pub struct Foo;
             }
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """)
+
+    fun `test multiple import with reexports`() = doAvailableTestWithMultipleChoice("""
+        mod foo {
+            pub struct Foo;
+        }
+
+        mod bar {
+            mod baz {
+                pub struct Foo;
+            }
+
+            pub use self::baz::Foo;
+        }
+
+        mod qwe {
+            mod xyz {
+                pub struct Bar;
+            }
+
+            pub use self::xyz::Bar as Foo;
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """, setOf("foo::Foo", "bar::Foo", "qwe::Foo"), "qwe::Foo", """
+        use qwe::Foo;
+
+        mod foo {
+            pub struct Foo;
+        }
+
+        mod bar {
+            mod baz {
+                pub struct Foo;
+            }
+
+            pub use self::baz::Foo;
+        }
+
+        mod qwe {
+            mod xyz {
+                pub struct Bar;
+            }
+
+            pub use self::xyz::Bar as Foo;
         }
 
         fn main() {
