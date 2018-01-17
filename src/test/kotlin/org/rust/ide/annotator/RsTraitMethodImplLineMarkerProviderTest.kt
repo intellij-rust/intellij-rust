@@ -18,6 +18,10 @@ class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
             fn bar(&self) {
                 self.foo();
             }
+            type T1;
+            type T2 = ();
+            const C1: u32;
+            const C2: u32 = 1;
         }
         struct Bar {} // - Has implementations
         impl Foo for Bar {
@@ -25,6 +29,10 @@ class RsTraitMethodImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
             }
             fn bar(&self) { // - Overrides method in `Foo`
             }
+            type T1 = ();
+            type T2 = ();
+            const C1: u32 = 1;
+            const C2: u32 = 1;
         }
     """)
 
