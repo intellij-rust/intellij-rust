@@ -1,0 +1,21 @@
+struct Struct {
+    i: i32
+}
+
+trait Trait {
+    fn test1(&self) -> i32;
+    fn test2(&self) -> i32;
+    fn test3(&self) -> i32;
+}
+
+impl Trait for Struct {
+    <spot>fn test1(&self) -> i32 {
+        self.i
+    }
+    fn test2(&self) -> i32 {
+        self.i * 2
+    }
+    fn test3(&self) -> i32 {
+        self.i * 3
+    }</spot>
+}

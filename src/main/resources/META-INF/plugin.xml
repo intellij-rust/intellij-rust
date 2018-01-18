@@ -404,6 +404,11 @@
                          enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsExperimentalChecksInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Different impl methods order from the trait"
+                         enabledByDefault="false" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsSortImplTraitMethodsInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
@@ -524,6 +529,10 @@
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.import.ImportNameIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.SortImplTraitMethodsIntention</className>
             <category>Rust</category>
         </intentionAction>
 
