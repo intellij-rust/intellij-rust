@@ -592,7 +592,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test tuple field`() = testExpr("""
         fn main() {
             let x = (1, "foo").1;
-            x
+            x;
           //^ &str
         }
     """)
@@ -601,7 +601,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test tuple out of bound field`() = testExpr("""
         fn main() {
             let x = (1, "foo").2;
-            x
+            x;
           //^ <unknown>
         }
     """)
@@ -610,7 +610,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test tuple incorrect field`() = testExpr("""
         fn main() {
             let x = (1, "foo").1departure_code;
-            x
+            x;
           //^ <unknown>
         }
     """)

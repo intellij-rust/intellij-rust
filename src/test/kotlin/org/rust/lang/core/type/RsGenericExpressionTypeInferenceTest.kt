@@ -561,7 +561,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let slice: &[&str] = &["foo", "bar"];
             let x = foo(slice);
-            x
+            x;
           //^ &str
         }
     """)
@@ -574,7 +574,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<F1, F2, F3, F4>(x: FooBar<Foo<F1, F2>, Bar<F3, F4>>) -> (Bar<F4, F1>, Foo<F3, F2>) { unimplemented!() }
         fn main() {
             let x = foo(FooBar(Foo(123, "foo"), Bar::V([0.0; 3], (0, false))));
-            x
+            x;
           //^ (Bar<(i32, bool), i32>, Foo<[f64; 3], &str>)
         }
     """)
