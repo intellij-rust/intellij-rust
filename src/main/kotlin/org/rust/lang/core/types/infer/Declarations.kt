@@ -60,7 +60,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
         }
 
         is RsImplTraitType -> {
-            TyAnon(type.polyboundList.mapNotNull { it.bound.traitRef?.resolveToBoundTrait })
+            TyAnon(type, type.polyboundList.mapNotNull { it.bound.traitRef?.resolveToBoundTrait })
         }
         else -> TyUnknown
     }

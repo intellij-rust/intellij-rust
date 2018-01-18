@@ -281,7 +281,7 @@ class RsInferenceContext {
     }
 
     private fun combineTypesNoVars(ty1: Ty, ty2: Ty): Boolean {
-        return when {
+        return ty1 === ty2 || when {
             ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> true
             ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> true
             ty1 is TyReference && ty2 is TyReference && ty1.mutability == ty2.mutability -> {
@@ -301,6 +301,7 @@ class RsInferenceContext {
                 combinePairs(zipValues(ty1.typeParameterValues, ty2.typeParameterValues))
             }
             ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> true
+            ty1 is TyAnon && ty2 is TyAnon && ty1.definition == ty2.definition -> true
             ty1 is TyNever || ty2 is TyNever -> true
             else -> false
         }
