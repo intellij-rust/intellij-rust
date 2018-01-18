@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.ext.resolveToTrait
 
 class SortImplTraitMethodsIntention : RsElementBaseIntentionAction<RsImplItem>() {
 
-    override fun getText() = "Sort methods in the same order as in the trait"
+    override fun getText() = "Apply same method order"
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsImplItem? {
@@ -41,9 +41,7 @@ class SortImplTraitMethodsIntention : RsElementBaseIntentionAction<RsImplItem>()
             val traitMethods = implItem.traitRef?.resolveToTrait?.members?.functionList ?: return false
 
             if (implMethods.size != traitMethods.size) return false
-            if (traitMethods.zip(implMethods).all { it.first.name == it.second.name }) return false
-
-            return true
+            return traitMethods.zip(implMethods).any { it.first.name != it.second.name }
         }
     }
 }
