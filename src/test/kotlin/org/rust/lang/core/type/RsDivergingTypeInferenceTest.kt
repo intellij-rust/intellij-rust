@@ -42,4 +42,18 @@ class RsDivergingTypeInferenceTest : RsTypificationTestBase() {
             full
         }  //^ u32
     """)
+
+    fun `test closure with divergence`() = testExpr("""
+        fn main() {
+            let f = || {
+                if 2 > 1 {
+                    return 1;
+                }
+                unreachable!();
+            };
+            let a = f();
+            a;
+          //^ i32
+        }
+    """)
 }

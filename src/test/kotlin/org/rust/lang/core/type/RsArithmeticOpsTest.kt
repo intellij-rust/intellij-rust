@@ -26,7 +26,7 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
 
         fn foo(lhs: Foo, rhs: Foo) {
             let x = lhs $sign rhs;
-            x
+            x;
           //^ Foo
         }
         """
@@ -49,7 +49,7 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
 
         fn foo(lhs: Foo, rhs: Foo) {
             let x = lhs $sign rhs;
-            x
+            x;
           //^ Foo
         }
         """
@@ -73,7 +73,7 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
 
         fn foo(lhs: Foo, rhs: i32) {
             let x = lhs $sign rhs;
-            x
+            x;
           //^ Bar
         }
         """
@@ -103,7 +103,7 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
 
         fn foo(lhs: Foo, rhs: i32) {
             let x = lhs $sign rhs;
-            x
+            x;
           //^ FooBar
         }
         """
@@ -128,7 +128,7 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
 
         fn foo(lhs: Foo<i32>, rhs: Bar) {
             let x = lhs $sign rhs;
-            x
+            x;
           //^ FooBar<i32>
         }
         """

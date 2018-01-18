@@ -64,7 +64,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
 
         fn main() {
             let x: E = unimplemented!();
-            match x { E::S { foo } => foo }
+            match x { E::S { foo } => foo };
         }                           //^ i32
     """)
 
@@ -138,7 +138,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
     fun `test literal pattern`() = testExpr("""
     fn main() {
         let x: (i32, String) = unimplemented!();
-        match x { (x, "foo") => x }
+        match x { (x, "foo") => x };
     }                         //^ i32
     """)
 
@@ -155,7 +155,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         struct S<T> { s: T }
         fn main() {
             let s = S { s: 123 };
-            match s { S { s: x } => x }
+            match s { S { s: x } => x };
                                   //^ i32
         }
     """)
@@ -167,7 +167,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
                 E::L(x) => x,
                          //^ i32
                 E::R { r: x } => x
-            }
+            };
         }
     """)
 
@@ -178,7 +178,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
                 E::L(x) => x,
                 E::R { r: x } => x
                                //^ bool
-            }
+            };
         }
     """)
 }
