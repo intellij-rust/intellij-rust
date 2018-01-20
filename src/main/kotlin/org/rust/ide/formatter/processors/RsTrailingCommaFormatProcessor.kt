@@ -31,6 +31,8 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
     }
 
     private fun doProcess(source: PsiElement, settings: CodeStyleSettings, range: TextRange? = null): PostFormatProcessorHelper {
+        // BACKCOMPAT: 2017.3
+        @Suppress("DEPRECATION")
         val helper = PostFormatProcessorHelper(settings)
         helper.resultTextRange = range
         if (settings.rust.PRESERVE_PUNCTUATION) return helper
