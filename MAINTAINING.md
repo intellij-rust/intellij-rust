@@ -32,6 +32,28 @@ they are confident that the PR is in a good state.
 
 Note `--distribution-type all`.
 
+### New IDE version
+
+While supporting new IDE version we should check all UI components manually
+because we don't have UI tests yet.
+Especially it's important if it's major IDE update 
+because major platform updates can bring a lot of changes.
+
+#### Common places
+* New rust project
+* Import rust project
+* Rust preferences (in *Languages & Frameworks*)
+* Cargo toolbar
+* Run configuration
+
+
+#### Specific places
+* Notifications (see `MissingToolchainNotificationProvider`)
+* `Run Cargo Command` action
+* `Implement Members` refactoring
+* `Introduce Variable` refactoring
+* `Extract Function` refactoring
+* `Import` intention/inspection  
 
 ## Releases
 
