@@ -82,6 +82,15 @@ private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
                 is RsFunctionOwner.Trait -> owner.trait.declarationText
             }
         }
+        is RsConstant -> {
+            val owner = owner
+            when (owner) {
+                is RsConstantOwner.Foreign,
+                is RsConstantOwner.Free -> listOfNotNull(presentableQualifiedModName)
+                is RsConstantOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
+                is RsConstantOwner.Trait -> owner.trait.declarationText
+            }
+        }
         is RsTypeAlias -> {
             val owner = owner
             when (owner) {
@@ -117,6 +126,14 @@ private fun RsDocAndAttributeOwner.signature(usePreTag: Boolean): String {
             valueParameterList?.generateDocumentation(buffer)
             retType?.generateDocumentation(buffer)
             listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+        }
+        is RsConstant -> {
+            val buffer = StringBuilder()
+            declarationModifiers.joinTo(buffer, " ", "", " ")
+            buffer.b { it += name }
+            typeReference?.generateDocumentation(buffer, ": ")
+            expr?.generateDocumentation(buffer, " = ")
+            listOf(buffer.toString())
         }
         // All these types extend RsItemElement and RsGenericDeclaration interfaces so all casts are safe
         is RsStructOrEnumItemElement, is RsTraitItem, is RsTypeAlias -> {
@@ -180,6 +197,7 @@ private val RsItemElement.declarationModifiers: List<String> get() {
         }
         is RsStructItem -> modifiers += "struct"
         is RsEnumItem -> modifiers += "enum"
+        is RsConstant -> modifiers += "const"
         is RsTypeAlias -> modifiers += "type"
         is RsTraitItem -> {
             if (isUnsafe) {

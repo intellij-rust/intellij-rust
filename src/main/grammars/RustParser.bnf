@@ -437,7 +437,8 @@ BindingMode ::= ref mut? | mut
 
 Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';' {
   pin = 'identifier'
-  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+  implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.macros.ExpansionResult" ]
