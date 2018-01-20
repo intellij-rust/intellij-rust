@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.isNullOrEmpty
+import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -71,6 +72,10 @@ class RsInferenceResult(
 
     override fun toString(): String =
         "RsInferenceResult(bindings=$bindings, exprTypes=$exprTypes)"
+
+    @TestOnly
+    fun isExprTypeInferred(expr: RsExpr): Boolean =
+        expr in exprTypes
 }
 
 /**

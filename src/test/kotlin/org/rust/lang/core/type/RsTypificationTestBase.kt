@@ -22,6 +22,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
         InlineFile(code)
         check(description)
         if (!allowErrors) checkNoInferenceErrors()
+        checkAllExpressionsTypified()
     }
 
     protected fun testExpr(
@@ -59,8 +60,24 @@ abstract class RsTypificationTestBase : RsTestBase() {
         if (errors.isNotEmpty()) {
             error(
                 errors.joinToString("\n", "Detected errors during type inference: \n") {
-                    "\tAt `${it.first.text}` ${it.second.errorCode.code} ${it.second.header} | ${it.second.description}"
+                    "\tAt `${it.first.text}` (line ${it.first.lineNumber}) " +
+                        "${it.second.errorCode.code} ${it.second.header} | ${it.second.description}"
                 }
+            )
+        }
+    }
+
+    private fun checkAllExpressionsTypified() {
+        val notTypifiedExprs = myFixture.file.descendantsOfType<RsExpr>().filter { expr ->
+            expr.inference?.isExprTypeInferred(expr) == false
+        }
+        if (notTypifiedExprs.isNotEmpty()) {
+            error(
+                notTypifiedExprs.joinToString(
+                    "\n",
+                    "Some expressions are not typified during type inference: \n",
+                    "\nNote: All `RsExpr`s must be typified during type inference"
+                ) { "\tAt `${it.text}` (line ${it.lineNumber})" }
             )
         }
     }
