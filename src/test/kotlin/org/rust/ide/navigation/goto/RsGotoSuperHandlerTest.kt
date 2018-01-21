@@ -6,7 +6,6 @@
 package org.rust.ide.navigation.goto
 
 import com.intellij.lang.CodeInsightActions
-import junit.framework.Assert
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsLanguage

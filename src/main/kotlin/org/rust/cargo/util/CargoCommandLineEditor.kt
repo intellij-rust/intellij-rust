@@ -36,7 +36,7 @@ class CargoCommandLineEditor(
     }
 
     override fun setText(text: String?) {
-        textField.text = text
+        textField.setText(text)
     }
 
     override fun getText(): String = textField.text
