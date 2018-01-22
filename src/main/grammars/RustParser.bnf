@@ -70,6 +70,7 @@
         TYPE_KW   = 'type'
         UNION     = 'union_kw'
         DEFAULT   = 'default_kw'
+        AUTO      = 'auto_kw'
 
         SHEBANG_LINE = 'shebang_line'
         RESERVED_KEYWORD = 'reserved_keyword'
@@ -214,6 +215,7 @@ VisRestriction ::= '(' ( crate | ((&(self ')' | super ')') | in) PathWithoutType
 //XXX: don't use contextual keywords in recover, because they remap tokens.
 private default_ ::= <<defaultKeyword>>
 private union ::= <<unionKeyword>>
+private auto ::= <<autoKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
 
@@ -236,7 +238,8 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
   recoverWhile = Item_recover
 }
-private Item_first ::= '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait | static | TYPE_KW | impl | "union" | "default"
+private Item_first ::= '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
+  | static | TYPE_KW | impl | "union" | "default" | "auto"
 private Item_recover ::= !('}' | Item_first )
 
 private Items ::= Item_with_recover*
@@ -631,7 +634,7 @@ private TupleField_recover ::= !(')' | ',')
 // Trait & Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-TraitItem ::= AttrsAndVis unsafe? trait identifier TypeParameterList? TypeParamBounds? WhereClause? Members {
+TraitItem ::= AttrsAndVis unsafe? auto? trait identifier TypeParameterList? TypeParamBounds? WhereClause? Members {
   pin = "trait"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"

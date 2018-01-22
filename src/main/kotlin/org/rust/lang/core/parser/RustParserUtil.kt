@@ -240,6 +240,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun unionKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "union", UNION)
 
+    @JvmStatic
+    fun autoKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "auto", AUTO)
 
     private @JvmStatic
     fun     collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
