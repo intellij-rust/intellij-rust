@@ -129,6 +129,9 @@ other files do.
 Consider prefixing commit with a `TAG:` which describes the area of the
 change. Common tags are:
 
+<details>
+<summary>Tags list</summary>
+
   * GRAM for changes to `.bnf` files
   * PSI for other PSI related changes
   * RES for name resolution
@@ -148,12 +151,14 @@ change. Common tags are:
   * PERF for performance optimizations
   * PRJ for project creation changes 
   * ACT for actions
+  * DBG for debugger
 
 
   * CARGO for cargo-related changes
   * GRD for build changes
   * T for tests
   * DOC for documentation
+</details>
 
 Try to keep the summary line of a commit message under 50 characters.
 
