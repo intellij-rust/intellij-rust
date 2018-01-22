@@ -10,7 +10,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.type
@@ -51,7 +51,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
     }
 
     private fun checkNoInferenceErrors() {
-        val errors = myFixture.file.descendantsOfType<RsFunction>().asSequence()
+        val errors = myFixture.file.descendantsOfType<RsInferenceContextOwner>().asSequence()
             .flatMap { it.inference.diagnostics.asSequence() }
             .map { it.element to it.prepare() }
             .filter { it.second.severity == Severity.ERROR }

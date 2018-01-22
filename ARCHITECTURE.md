@@ -173,7 +173,8 @@ file. See `com.intellij.psi.util.CachedValuesManager` and
 Type inference is implemented in `org.rust.lang.core.types.infer` package. It is
 mostly modeled after rustc type checking.
 
-All inference happens at a function level. We walk function body top
+All inference happens at a function/constant level (at a PSI element that
+implements `RsInferenceContextOwner`). We walk function/constant body top
 down, processing every expression and statement. The aim is to
 construct a map from expressions to their types
 (`RsInferenceResult`). 

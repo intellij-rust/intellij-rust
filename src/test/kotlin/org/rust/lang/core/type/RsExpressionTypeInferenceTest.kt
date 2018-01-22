@@ -850,6 +850,24 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }                //^ i32
     """)
 
+    fun `test infer complex expr in const`() = testExpr("""
+        struct S { f: u8 }
+        const X: i32 = (**&&S { f: 0 }).f as i32;
+                                      //^ u8
+    """)
+
+    fun `test infer complex expr in array size`() = testExpr("""
+        struct S { f: u8 }
+        const X: [u8; S { f: 1 }.f as usize] = [0];
+                               //^ u8
+    """)
+
+    fun `test infer complex expr in enum variant discriminant`() = testExpr("""
+        struct S { f: u8 }
+        enum Foo { BAR = S { f: 1 }.f as isize }
+                                  //^ u8
+    """)
+
     fun `test infer static inside a function`() = testExpr("""
         fn main() {
             static X: i32 = 1;

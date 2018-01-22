@@ -18,6 +18,18 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
         }
     """)
 
+    fun `test typecheck in constant`() = checkByText("""
+        const A: u8 = <error>1u16</error>;
+    """)
+
+    fun `test typecheck in array size`() = checkByText("""
+        const A: [u8; <error>1u8</error>] = [0];
+    """)
+
+    fun `test typecheck in enum variant discriminant`() = checkByText("""
+        enum Foo { BAR = <error>1u8</error> }
+    """)
+
     fun `test type mismatch E0308 coerce ptr mutability`() = checkByText("""
         fn fn_const(p: *const u8) { }
         fn fn_mut(p: *mut u8) { }
