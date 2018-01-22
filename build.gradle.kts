@@ -280,7 +280,7 @@ fun commitNightly() {
     "git checkout -b nightly".execute()
     "git add .travis.yml".execute()
     listOf("git", "commit", "-m", ":arrow_up: nightly IDEA & rust").execute()
-    "git push".execute()
+    "git push origin nightly".execute()
 }
 
 fun prop(name: String): String =
