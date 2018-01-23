@@ -294,6 +294,28 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    fun `test extract a function in impl for generic types`() = doTest("""
+            struct S<T>(T);
+            impl<T> S<T> {
+                fn foo() {
+                    <selection>println!("Hello!");</selection>
+                }
+            }
+        """, """
+            struct S<T>(T);
+            impl<T> S<T> {
+                fn foo() {
+                    <S<T>>::bar();
+                }
+
+                fn bar() {
+                    println!("Hello!");
+                }
+            }
+        """,
+        false,
+        "bar")
+
     fun `test extract a function with the parameter self`() = doTest("""
             struct S;
             impl S {
@@ -589,6 +611,76 @@ class RsExtractFunctionTest : RsTestBase() {
 
             fn bar<T: Default>() -> Option<T> {
                 Some(T::default())
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with generic parameters and where clauses`() = doTest("""
+            trait Trait1 {}
+            trait Trait2 {}
+            trait Trait3 {}
+            fn foo<T, U>(t: T, u: U) where T: Trait1 + Trait2, U: Trait3 {
+                <selection>t;
+                u;
+                println!("test")</selection>
+            }
+        """, """
+            trait Trait1 {}
+            trait Trait2 {}
+            trait Trait3 {}
+            fn foo<T, U>(t: T, u: U) where T: Trait1 + Trait2, U: Trait3 {
+                bar(t, u)
+            }
+
+            fn bar<T, U>(t: T, u: U) -> () where T: Trait1 + Trait2, U: Trait3 {
+                t;
+                u;
+                println!("test")
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with boundary generic parameters`() = doTest("""
+            trait Foo<T> {}
+            trait Bar<T> {}
+            fn foo<T, F: Foo<T>, B: Bar<F>>(b: B) {
+                <selection>b;</selection>
+            }
+        """, """
+            trait Foo<T> {}
+            trait Bar<T> {}
+            fn foo<T, F: Foo<T>, B: Bar<F>>(b: B) {
+                bar(b);
+            }
+
+            fn bar<T, F: Foo<T>, B: Bar<F>>(b: B) {
+                b;
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with boundary generic parameters and where clauses`() = doTest("""
+            trait Foo<T> {}
+            trait Bar<T> {}
+            trait Baz<T> {}
+            fn foo<T, U, F: Foo<T>, B>(b: B, u: U) where B: Bar<F> + Baz<F> {
+                <selection>b;</selection>
+                u;
+            }
+        """, """
+            trait Foo<T> {}
+            trait Bar<T> {}
+            trait Baz<T> {}
+            fn foo<T, U, F: Foo<T>, B>(b: B, u: U) where B: Bar<F> + Baz<F> {
+                bar(b);
+                u;
+            }
+
+            fn bar<T, F: Foo<T>, B>(b: B) where B: Bar<F> + Baz<F> {
+                b;
             }
         """,
         false,

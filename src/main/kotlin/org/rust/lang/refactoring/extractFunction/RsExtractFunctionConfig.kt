@@ -14,6 +14,7 @@ import org.rust.ide.utils.findStatementsInRange
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTuple
@@ -66,11 +67,42 @@ class RsExtractFunctionConfig private constructor(
     val parameters: List<Parameter>
 ) {
 
+    private val typeParameters: List<RsTypeParameter>
+        get() {
+            val bounds = containingFunction.typeParameters.map {
+                it.declaredType to it.bounds.flatMap {
+                    it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList ?: emptyList()
+                }.mapNotNull { it.type }
+            }.toMap()
+            return containingFunction.typeParameters.filter {
+                val typeParameter = it.declaredType
+                (parameters.mapNotNull { it.type } + listOf(returnValue).mapNotNull { it?.type }).any {
+                    it.types().contains(typeParameter) || it.dependTypes(bounds).contains(typeParameter)
+                }
+            }
+        }
+
     private val typeParametersText: String
-        get() = containingFunction.typeParameters.filter {
-            val type = it.declaredType
-            returnValue?.type.hasType(type) || parameters.any { it.type.hasType(type) }
-        }.takeIf { it.isNotEmpty() }?.joinToString(separator = ",", prefix = "<", postfix = ">") { it.text } ?: ""
+        get() = typeParameters
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(separator = ",", prefix = "<", postfix = ">") { it.text }
+            ?: ""
+
+    private val whereClausesText: String
+        get() {
+            val whereTypes = containingFunction.whereClause?.wherePredList?.mapNotNull {
+                it.typeReference?.type
+            } ?: return ""
+            return typeParameters
+                .mapNotNull {
+                    if (!whereTypes.contains(it.declaredType) || it.bounds.isEmpty())
+                        null
+                    else
+                        "${it.text}:${it.bounds.joinToString("+") { it.text }}"
+                }.takeIf { it.isNotEmpty() }
+                ?.joinToString(separator = ",", prefix = " where ")
+                ?: ""
+        }
 
     private val parametersText: String
         get() = parameters.joinToString(",") { it.text }
@@ -79,19 +111,20 @@ class RsExtractFunctionConfig private constructor(
         get() = parameters.filter { it.type != null }.joinToString(",") { it.name }
 
     val signature: String
-        get() {
-            var signature = "fn $name$typeParametersText($parametersText)"
-            if (returnValue != null) {
-                signature += " -> ${returnValue.type.insertionSafeText}"
-            }
+        get() = buildString {
             if (visibilityLevelPublic) {
-                signature = "pub " + signature
+                append("pub ")
             }
+            append("fn $name$typeParametersText($parametersText)")
+            if (returnValue != null) {
+                append(" -> ${returnValue.type.insertionSafeText}")
+            }
+            append(whereClausesText)
             val stmts = elements.map { it.text }.toMutableList()
             if (returnValue?.expression != null) {
                 stmts.add(returnValue.expression)
             }
-            return signature + "{\n${stmts.joinToString(separator = "\n")}\n}"
+            append("{\n${stmts.joinToString(separator = "\n")}\n}")
         }
 
     companion object {
@@ -146,7 +179,17 @@ class RsExtractFunctionConfig private constructor(
     }
 }
 
-private fun Ty?.hasType(type: Ty): Boolean {
-    if (this == null) return false
-    return this == type || this.typeParameterValues.values.contains(type)
+private fun Ty.types(): List<Ty> = if (typeParameterValues.values.isEmpty())
+    listOf(this)
+else
+    listOf(this) + typeParameterValues.values.flatMap { it.types() }
+
+private fun Ty.dependTypes(bounds: Map<Ty, List<Ty>>, last: List<Ty> = emptyList()): List<Ty> {
+    val types = bounds[this]
+    return if (types == null || types.isEmpty())
+        emptyList()
+    else
+        types + types.flatMap {
+            if (last.contains(it)) emptyList() else it.dependTypes(bounds, last + types)
+        }
 }
