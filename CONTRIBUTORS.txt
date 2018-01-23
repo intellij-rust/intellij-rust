@@ -25,6 +25,7 @@ Filippok
 framlog
 greg-kargin
 Guillaume Eveillard
+harrisjt
 HeyLey
 himikof
 HybridEidolon
