@@ -286,7 +286,7 @@ class RsInferenceContext(
     }
 
     private fun combineTypesNoVars(ty1: Ty, ty2: Ty): Boolean {
-        return when {
+        return ty1 === ty2 || when {
             ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> true
             ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> true
             ty1 is TyReference && ty2 is TyReference && ty1.mutability == ty2.mutability -> {
@@ -306,6 +306,7 @@ class RsInferenceContext(
                 combinePairs(zipValues(ty1.typeParameterValues, ty2.typeParameterValues))
             }
             ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> true
+            ty1 is TyAnon && ty2 is TyAnon && ty1.definition == ty2.definition -> true
             ty1 is TyNever || ty2 is TyNever -> true
             else -> false
         }
@@ -448,13 +449,13 @@ private class RsFnInferenceContext(
 
         val ty = when (this) {
             is RsPathExpr -> inferPathExprType(this)
-            is RsStructLiteral -> inferStructLiteralType(this)
+            is RsStructLiteral -> inferStructLiteralType(this, expected)
             is RsTupleExpr -> inferRsTupleExprType(this, expected)
             is RsParenExpr -> this.expr.inferType(expected)
             is RsUnitExpr -> TyUnit
             is RsCastExpr -> inferCastExprType(this)
-            is RsCallExpr -> inferCallExprType(this)
-            is RsDotExpr -> inferDotExprType(this)
+            is RsCallExpr -> inferCallExprType(this, expected)
+            is RsDotExpr -> inferDotExprType(this, expected)
             is RsLitExpr -> inferLitExprType(this, expected)
             is RsBlockExpr -> this.block.inferType(expected)
             is RsIfExpr -> inferIfExprType(this, expected)
@@ -717,7 +718,7 @@ private class RsFnInferenceContext(
         }
     }
 
-    private fun inferStructLiteralType(expr: RsStructLiteral): Ty {
+    private fun inferStructLiteralType(expr: RsStructLiteral, expected: Ty?): Ty {
         val boundElement = expr.path.reference.advancedResolve()
         if (boundElement == null) {
             for (field in expr.structLiteralBody.structLiteralFieldList) {
@@ -745,6 +746,7 @@ private class RsFnInferenceContext(
 
         val typeParameters = instantiateBounds(genericDecl)
         unifySubst(subst, typeParameters)
+        if (expected != null) unifySubst(typeParameters, expected.typeParameterValues)
 
         val type = when (element) {
             is RsStructItem -> element.declaredType
@@ -783,18 +785,19 @@ private class RsFnInferenceContext(
         return expr.typeReference.type
     }
 
-    private fun inferCallExprType(expr: RsCallExpr): Ty {
+    private fun inferCallExprType(expr: RsCallExpr, expected: Ty?): Ty {
         val ty = resolveTypeVarsWithObligations(expr.expr.inferType()) // or error
         val argExprs = expr.valueArgumentList.exprList
         // `struct S; S();`
         if (ty is TyStructOrEnumBase && argExprs.isEmpty()) return ty
 
         val calleeType = lookup.asTyFunction(ty)?.register() ?: unknownTyFunction(argExprs.size)
+        if (expected != null) ctx.combineTypes(expected, calleeType.retType)
         inferArgumentTypes(calleeType.paramTypes, argExprs)
         return calleeType.retType
     }
 
-    private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall): Ty {
+    private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall, expected: Ty?): Ty {
         val argExprs = methodCall.valueArgumentList.exprList
         val callee = run {
             val receiverRes = resolveTypeVarsWithObligations(receiver)
@@ -864,6 +867,7 @@ private class RsFnInferenceContext(
         val methodType = (callee.element.typeOfValue)
             .substitute(typeParameters)
             .foldWith(this::normalizeAssociatedTypesIn) as TyFunction
+        if (expected != null) ctx.combineTypes(expected, methodType.retType)
         // drop first element of paramTypes because it's `self` param
         // and it doesn't have value in `methodCall.valueArgumentList.exprList`
         inferArgumentTypes(methodType.paramTypes.drop(1), argExprs)
@@ -967,12 +971,12 @@ private class RsFnInferenceContext(
         return raw.substitute(receiver.typeParameterValues)
     }
 
-    private fun inferDotExprType(expr: RsDotExpr): Ty {
+    private fun inferDotExprType(expr: RsDotExpr, expected: Ty?): Ty {
         val receiver = expr.expr.inferType()
         val methodCall = expr.methodCall
         val fieldLookup = expr.fieldLookup
         return when {
-            methodCall != null -> inferMethodCallExprType(receiver, methodCall)
+            methodCall != null -> inferMethodCallExprType(receiver, methodCall, expected)
             fieldLookup != null -> inferFieldExprType(receiver, fieldLookup)
             else -> TyUnknown
         }

@@ -1258,4 +1258,50 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ u8
     """)
+
+    fun `test reference coercion inside tuple struct init (or fn call)`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Wrapper<T>(T);
+        struct RefWrapper<'a, T : 'a>(&'a T);
+        impl<T> Deref for Wrapper<T> { type Target = T; }
+
+        fn main() {
+            let _: RefWrapper<u8> = RefWrapper(&Wrapper(0));
+        }                                             //^ u8
+    """)
+
+    fun `test reference coercion inside struct init`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Wrapper<T> { f: T }
+        struct RefWrapper<'a, T : 'a> { f: &'a T };
+        impl<T> Deref for Wrapper<T> { type Target = T; }
+
+        fn main() {
+            let _: RefWrapper<u8> = RefWrapper { f: &Wrapper { f: 0 } };
+        }                                                       //^ u8
+    """)
+
+    fun `test reference coercion inside method call`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Wrapper<T>(T);
+        struct RefWrapper<'a, T : 'a>(&'a T);
+        impl<T> Deref for Wrapper<T> { type Target = T; }
+
+        struct A;
+        impl A {
+            fn ref_wrapper<'a, T : 'a>(&self, t: &'a T) -> RefWrapper<'a, T> {
+                RefWrapper(t)
+            }
+        }
+
+        fn main() {
+            let _: RefWrapper<u8> = A.ref_wrapper(&Wrapper(0));
+        }                                                //^ u8
+    """)
 }

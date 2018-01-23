@@ -122,4 +122,19 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
             let x = Foo { v: [10, 20] };
         }
     """)
+
+    // issue 1753
+    fun `test no type mismatch E0308 on struct argument reference coercion`() = checkByText("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Wrapper<T>(T);
+        struct RefWrapper<'a, T : 'a>(&'a T);
+
+        impl<T> Deref for Wrapper<T> { type Target = T; }
+
+        fn foo(w: &Wrapper<u32>) {
+            let _: RefWrapper<u32> = RefWrapper(w);
+        }
+    """)
 }
