@@ -731,6 +731,19 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test impl for reference of type parameter`() = checkByCode("""
+        trait Foo {
+            fn foo(&self) {}
+              //X
+        }
+        impl<T> Foo for &T {}
+        struct Bar;
+        fn main() {
+            (&Bar).foo();
+                 //^
+        }
+    """)
+
     fun `test resolve method call with multiple impls of the same trait`() = checkByCode("""
         struct S; struct S1; struct S2;
         trait T<A> { fn foo(&self, _: A); }

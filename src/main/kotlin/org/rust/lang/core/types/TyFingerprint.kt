@@ -25,20 +25,27 @@ data class TyFingerprint constructor(
         val TYPE_PARAMETER_FINGERPRINT = TyFingerprint("#T")
 
         // Keep in sync with Declarations-inferTypeReferenceType
-        fun create(ref: RsTypeReference): TyFingerprint? {
+        fun create(ref: RsTypeReference, typeParameters: List<String>): TyFingerprint? {
             val type = ref.typeElement
             return when (type) {
                 is RsTupleType -> TyFingerprint("(tuple)")
                 is RsBaseType -> when {
                     type.isUnit -> TyFingerprint("()")
                     type.isNever -> TyFingerprint("!")
-                    else -> type.name?.let(::TyFingerprint)
+                    else -> {
+                        val name = type.name ?: return null
+                        if (name in typeParameters) {
+                            TYPE_PARAMETER_FINGERPRINT
+                        } else {
+                            TyFingerprint(name)
+                        }
+                    }
                 }
                 is RsRefLikeType -> {
                     if (type.isPointer)
                         TyFingerprint("*T")
                     else
-                        create(type.typeReference)
+                        create(type.typeReference, typeParameters)
                 }
                 is RsArrayType -> TyFingerprint("[T]")
                 is RsFnPointerType -> TyFingerprint("fn()")

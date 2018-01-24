@@ -11,10 +11,7 @@ import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.ext.name
-import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
@@ -44,19 +41,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
         fun index(stub: RsImplItemStub, sink: IndexSink) {
             val impl = stub.psi
             val typeRef = impl.typeReference ?: return
-            val type = typeRef.typeElement
-
-            val key = if (type is RsBaseType) {
-                val typeParam = impl.typeParameters.find { it.name == type.name }
-                if (typeParam != null) {
-                    TyFingerprint.TYPE_PARAMETER_FINGERPRINT
-                } else {
-                    TyFingerprint.create(typeRef)
-                }
-            } else {
-                TyFingerprint.create(typeRef)
-            }
-
+            val key = TyFingerprint.create(typeRef, impl.typeParameters.mapNotNull { it.name })
             if (key != null) {
                 sink.occurrence(KEY, key)
             }
