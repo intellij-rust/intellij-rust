@@ -2,14 +2,22 @@ struct Struct {
     i: i32
 }
 
+struct T;
+
 trait Trait {
+    const ID1: i32;
+    const ID2: i32;
+    type T1;
+    type T2;
     fn test1(&self) -> i32;
     fn test2(&self) -> i32;
     fn test3(&self) -> i32;
 }
 
 impl Trait for Struct {
-    <spot>fn test3(&self) -> i32 {
+    <spot>type T2 = T;
+    const ID2: i32 = 2;
+    fn test3(&self) -> i32 {
         self.i * 3
     }
     fn test1(&self) -> i32 {
@@ -17,5 +25,7 @@ impl Trait for Struct {
     }
     fn test2(&self) -> i32 {
         self.i * 2
-    }</spot>
+    }
+    type T1 = T;
+    const ID1: i32 = 1;</spot>
 }

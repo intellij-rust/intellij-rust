@@ -405,9 +405,9 @@
                          implementationClass="org.rust.ide.inspections.RsExperimentalChecksInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
-                         displayName="Different impl methods order from the trait"
+                         displayName="Different impl member order from the trait"
                          enabledByDefault="false" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsSortImplTraitMethodsInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsSortImplTraitMembersInspection"/>
 
         <!-- Surrounders -->
 
@@ -532,7 +532,7 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.SortImplTraitMethodsIntention</className>
+            <className>org.rust.ide.intentions.SortImplTraitMembersIntention</className>
             <category>Rust</category>
         </intentionAction>
 
