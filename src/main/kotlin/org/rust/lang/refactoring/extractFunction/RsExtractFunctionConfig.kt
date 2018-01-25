@@ -69,11 +69,11 @@ class RsExtractFunctionConfig private constructor(
 
     private val typeParameters: List<RsTypeParameter>
         get() {
-            val bounds = containingFunction.typeParameters.map {
+            val bounds = containingFunction.typeParameters.associate {
                 it.declaredType to it.bounds.flatMap {
                     it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList ?: emptyList()
                 }.mapNotNull { it.type }
-            }.toMap()
+            }
             return containingFunction.typeParameters.filter {
                 val typeParameter = it.declaredType
                 (parameters.mapNotNull { it.type } + listOf(returnValue).mapNotNull { it?.type }).any {
