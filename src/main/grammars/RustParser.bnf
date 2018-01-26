@@ -377,7 +377,8 @@ Function ::= OuterAttr*
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
-                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner" ]
+                 "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsFunctionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFunctionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -443,6 +444,7 @@ Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscr
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
                  "org.rust.lang.core.macros.ExpansionResult" ]
   mixin = "org.rust.lang.core.psi.ext.RsConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstantStub"
@@ -603,7 +605,10 @@ TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-VariantDiscriminant ::= '=' AnyExpr { pin = 1 }
+VariantDiscriminant ::= '=' AnyExpr {
+  pin = 1
+  implements = "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
+}
 
 FieldDecl ::= AttrsAndVis identifier TypeAscription {
   pin = 2
@@ -707,7 +712,7 @@ TypeReference ::= TypeReferenceInner {
 ScalarTypeReference ::= ScalarTypeReferenceInner { elementType = TypeReference }
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsTypeElement" "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsArrayTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

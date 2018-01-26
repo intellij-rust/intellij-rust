@@ -32,7 +32,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
             override fun visitBaseType(o: RsBaseType) = checkBaseType(holder, o)
-            override fun visitConstant(o: RsConstant) = checkDuplicates(holder, o)
+            override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
             override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkDuplicates(holder, o)
             override fun visitEnumItem(o: RsEnumItem) = checkDuplicates(holder, o)
@@ -58,6 +58,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnaryExpr(holder, o)
             override fun visitExternCrateItem(o: RsExternCrateItem) = checkExternCrate(holder, o)
             override fun visitDotExpr(o: RsDotExpr) = checkDotExpr(holder, o)
+            override fun visitArrayType(o: RsArrayType) = collectDiagnostics(holder, o)
+            override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(holder, o)
         }
 
         element.accept(visitor)
@@ -325,12 +327,21 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    private fun checkConstant(holder: AnnotationHolder, element: RsConstant) {
+        collectDiagnostics(holder, element)
+        checkDuplicates(holder, element)
+    }
+
     private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
-        for (it in fn.inference.diagnostics) {
-            if (!it.experimental) it.addToHolder(holder)
-        }
+        collectDiagnostics(holder, fn)
         checkDuplicates(holder, fn)
         checkTypesAreSized(holder, fn)
+    }
+
+    private fun collectDiagnostics(holder: AnnotationHolder, element: RsInferenceContextOwner) {
+        for (it in element.inference.diagnostics) {
+            if (!it.experimental) it.addToHolder(holder)
+        }
     }
 
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {

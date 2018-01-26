@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.RsInferenceResult
-import org.rust.lang.core.types.infer.inferOutOfFnExpressionType
 import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.infer.inferTypesIn
 import org.rust.lang.core.types.ty.Ty
@@ -32,19 +31,19 @@ val RsTypeElement.lifetimeElidable: Boolean get() {
     return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
 }
 
-val RsFunction.inference: RsInferenceResult
+val RsInferenceContextOwner.inference: RsInferenceResult
     get() = CachedValuesManager.getCachedValue(this, {
         CachedValueProvider.Result.create(inferTypesIn(this), PsiModificationTracker.MODIFICATION_COUNT)
     })
 
 val PsiElement.inference: RsInferenceResult?
-    get() = (ancestorStrict<RsItemElement>() as? RsFunction)?.inference
+    get() = ancestorOrSelf<RsInferenceContextOwner>()?.inference
 
 val RsPatBinding.type: Ty
     get() = inference?.getBindingType(this) ?: TyUnknown
 
 val RsExpr.type: Ty
-    get() = inference?.getExprType(this) ?: inferOutOfFnExpressionType(this)
+    get() = inference?.getExprType(this) ?: TyUnknown
 
 val RsExpr.declaration: RsElement?
     get() = when (this) {

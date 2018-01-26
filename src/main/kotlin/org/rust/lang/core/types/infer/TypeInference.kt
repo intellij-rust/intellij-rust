@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.infer
 
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -28,14 +29,16 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
+import org.rust.openapiext.recursionGuard
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
 import org.rust.stdext.zipValues
 
-fun inferTypesIn(fn: RsFunction): RsInferenceResult {
-    val items = StdKnownItems.relativeTo(fn)
-    val lookup = ImplLookup(fn.project, items)
-    return preventRecursion { lookup.ctx.infer(fn) }
+fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
+    val items = StdKnownItems.relativeTo(element)
+    val lookup = ImplLookup(element.project, items)
+    return recursionGuard(element, Computable { lookup.ctx.infer(element) })
+        ?: error("Can not run nested type inference")
 }
 
 /**
@@ -126,20 +129,30 @@ class RsInferenceContext(
         }
     }
 
-    fun infer(fn: RsFunction): RsInferenceResult {
-        extractParameterBindings(fn)
-
-        val block = fn.block
-        if (block != null) {
-            val fctx = RsFnInferenceContext(this, fn.returnType)
-            fctx.inferFnBody(block)
-
-            fctx.selectObligationsWherePossible()
-            exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
-            bindings.replaceAll { _, ty -> fullyResolve(ty) }
-
-            performPathsRefinement(lookup)
+    fun infer(element: RsInferenceContextOwner): RsInferenceResult {
+        if (element is RsFunction) {
+            extractParameterBindings(element)
+            val fctx = RsFnInferenceContext(this, element.returnType)
+            element.block?.let { fctx.inferFnBody(it) }
+        } else {
+            val (retTy, expr) = when (element) {
+                is RsConstant -> element.typeReference?.type to element.expr
+                is RsArrayType -> TyInteger(TyInteger.Kind.usize) to element.expr
+                is RsVariantDiscriminant -> TyInteger(TyInteger.Kind.isize) to element.expr
+                else -> error("Type inference is not implemented for PSI element of type " +
+                        "`${element.javaClass}` that implement `RsInferenceContextOwner`")
+            }
+            if (expr != null) {
+                RsFnInferenceContext(this, retTy ?: TyUnknown).inferLambdaBody(expr)
+            }
         }
+
+        fulfill.selectWherePossible()
+
+        exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
+        bindings.replaceAll { _, ty -> fullyResolve(ty) }
+
+        performPathsRefinement(lookup)
 
         return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics)
     }
@@ -1355,21 +1368,6 @@ private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orE
     .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
     .filter { !it.element.isSizedTrait }
     .map { TraitRef(selfTy, it) }
-
-private val threadLocalGuard: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
-
-/**
- * This function asserts that code inside a lambda don't call itself recursively.
- */
-private inline fun <T> preventRecursion(action: () -> T): T {
-    if (threadLocalGuard.get()) error("Can not run nested type inference")
-    threadLocalGuard.set(true)
-    try {
-        return action()
-    } finally {
-        threadLocalGuard.set(false)
-    }
-}
 
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =
     this + generateSequence { TyUnknown }
