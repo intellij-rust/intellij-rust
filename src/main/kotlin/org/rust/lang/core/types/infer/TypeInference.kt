@@ -512,9 +512,6 @@ private class RsFnInferenceContext(
                 TyUnknown::class.java,
                 TyInfer.TyVar::class.java,
                 TyTypeParameter::class.java,
-                // TODO TyReference ignored because we actually ignore deref level on method call and so
-                // TODO sometimes substitute a wrong receiver. This should be fixed as soon as possible
-                TyReference::class.java,
                 TyTraitObject::class.java
             )
 

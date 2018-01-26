@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import org.junit.ComparisonFailure
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -48,9 +47,7 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
         }
     """)
 
-    // TODO In TypeInference.coerceResolved() we currently ignore type errors when references are involved
-    fun `test type mismatch E0308 coerce reference to ptr`() = expect<ComparisonFailure> {
-        checkByText("""
+    fun `test type mismatch E0308 coerce reference to ptr`() = checkByText("""
         fn fn_const(p: *const u8) { }
         fn fn_mut(p: *mut u8) { }
 
@@ -63,7 +60,6 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
             fn_mut(mut_u8);
         }
     """)
-    }
 
     fun `test type mismatch E0308 struct`() = checkByText("""
         struct X; struct Y;
