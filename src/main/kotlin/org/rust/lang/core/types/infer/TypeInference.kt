@@ -132,8 +132,8 @@ class RsInferenceContext(
 
     fun infer(element: RsInferenceContextOwner): RsInferenceResult {
         if (element is RsFunction) {
-            extractParameterBindings(element)
             val fctx = RsFnInferenceContext(this, element.returnType)
+            fctx.extractParameterBindings(element)
             element.block?.let { fctx.inferFnBody(it) }
         } else {
             val (retTy, expr) = when (element) {
@@ -156,12 +156,6 @@ class RsInferenceContext(
         performPathsRefinement(lookup)
 
         return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics)
-    }
-
-    private fun extractParameterBindings(fn: RsFunction) {
-        for (param in fn.valueParameters) {
-            extractBindings(param.pat, param.typeReference?.type ?: TyUnknown)
-        }
     }
 
     private fun performPathsRefinement(lookup: ImplLookup) {
@@ -195,8 +189,12 @@ class RsInferenceContext(
         return resolvedPaths[expr]
     }
 
-    fun writeTy(psi: RsExpr, ty: Ty) {
+    fun writeExprTy(psi: RsExpr, ty: Ty) {
         exprTypes[psi] = ty
+    }
+
+    fun writeBindingTy(psi: RsPatBinding, ty: Ty) {
+        bindings[psi] = ty
     }
 
     fun writePath(path: RsPathExpr, resolved: List<BoundElement<RsElement>>) {
@@ -217,10 +215,6 @@ class RsInferenceContext(
 
     fun registerMethodRefinement(path: RsMethodCall, traitRef: TraitRef) {
         methodRefinements.add(Pair(path, traitRef))
-    }
-
-    fun extractBindings(pattern: RsPat?, baseType: Ty) {
-        if (pattern != null) bindings += collectBindings(pattern, baseType)
     }
 
     fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
@@ -435,7 +429,7 @@ private class RsFnInferenceContext(
     fun inferLambdaBody(expr: RsExpr): Ty =
         if (expr is RsBlockExpr) {
             // skipping diverging procession for lambda body
-            ctx.writeTy(expr, returnTy)
+            ctx.writeExprTy(expr, returnTy)
             inferFnBody(expr.block)
         } else {
             expr.inferTypeCoercableTo(returnTy)
@@ -461,7 +455,7 @@ private class RsFnInferenceContext(
                 ?.let { psi.expr?.inferTypeCoercableTo(it) }
                 ?: psi.expr?.inferType()
                 ?: TyUnknown
-            ctx.extractBindings(psi.pat, explicitTy ?: inferredTy)
+            psi.pat?.extractBindings(explicitTy ?: inferredTy)
             inferredTy == TyNever
         }
         is RsExprStmt -> psi.expr.inferType() == TyNever
@@ -501,7 +495,7 @@ private class RsFnInferenceContext(
             else -> TyUnknown
         }
 
-        ctx.writeTy(this, ty)
+        ctx.writeExprTy(this, ty)
         return ty
     }
 
@@ -1032,13 +1026,13 @@ private class RsFnInferenceContext(
 
     private fun inferForExprType(expr: RsForExpr): Ty {
         val exprTy = expr.expr?.inferType() ?: TyUnknown
-        ctx.extractBindings(expr.pat, lookup.findIteratorItemType(exprTy)?.register() ?: TyUnknown)
+        expr.pat?.extractBindings(lookup.findIteratorItemType(exprTy)?.register() ?: TyUnknown)
         expr.block?.inferType()
         return TyUnit
     }
 
     private fun inferWhileExprType(expr: RsWhileExpr): Ty {
-        expr.condition?.let { ctx.extractBindings(it.pat, it.expr.inferType()) }
+        expr.condition?.let { it.pat?.extractBindings(it.expr.inferType()) ?: it.expr.inferType(TyBool) }
         expr.block?.inferType()
         return TyUnit
     }
@@ -1048,7 +1042,7 @@ private class RsFnInferenceContext(
         val arms = expr.matchBody?.matchArmList.orEmpty()
         for (arm in arms) {
             for (pat in arm.patList) {
-                ctx.extractBindings(pat, matchingExprTy)
+                pat.extractBindings(matchingExprTy)
             }
             arm.expr?.inferType(expected)
             arm.matchArmGuard?.expr?.inferType(TyBool)
@@ -1082,7 +1076,7 @@ private class RsFnInferenceContext(
         TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable)
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {
-        expr.condition?.let { ctx.extractBindings(it.pat, it.expr.inferType(TyBool)) }
+        expr.condition?.let { it.pat?.extractBindings(it.expr.inferType()) ?: it.expr.inferType(TyBool) }
         val blockTys = mutableListOf<Ty?>()
         blockTys.add(expr.block?.inferType(expected))
         val elseBranch = expr.elseBranch
@@ -1215,7 +1209,7 @@ private class RsFnInferenceContext(
         val extendedArgs = expectedFnTy.paramTypes.asSequence().infiniteWithTyUnknown()
         val paramTypes = extendedArgs.zip(params.asSequence()).map { (expectedArg, actualArg) ->
             val paramTy = actualArg.typeReference?.type ?: expectedArg
-            ctx.extractBindings(actualArg.pat, paramTy)
+            actualArg.pat?.extractBindings(paramTy)
             paramTy
         }.toList()
         val retTy = expr.retType?.typeReference?.type
@@ -1303,6 +1297,87 @@ private class RsFnInferenceContext(
     fun <T> TyWithObligations<T>.register(): T {
         obligations.forEach(fulfill::registerPredicateObligation)
         return value
+    }
+
+    fun extractParameterBindings(fn: RsFunction) {
+        for (param in fn.valueParameters) {
+            param.pat?.extractBindings(param.typeReference?.type ?: TyUnknown)
+        }
+    }
+
+    private fun RsPat.extractBindings(type: Ty) {
+        when (this) {
+            is RsPatWild -> {}
+            is RsPatConst -> expr.inferTypeCoercableTo(type)
+            is RsPatRef -> pat.extractBindings((type as? TyReference)?.referenced ?: TyUnknown)
+            is RsPatRange -> patConstList.forEach { it.expr.inferTypeCoercableTo(type) }
+            is RsPatIdent -> {
+                val patBinding = patBinding
+                val bindingType = if (patBinding.isRef) TyReference(type, patBinding.mutability) else type
+                ctx.writeBindingTy(patBinding, bindingType)
+                pat?.extractBindings(type)
+            }
+            is RsPatTup -> {
+                val types = (type as? TyTuple)?.types.orEmpty()
+                for ((idx, p) in patList.withIndex()) {
+                    p.extractBindings(types.getOrElse(idx, { TyUnknown }))
+                }
+            }
+            is RsPatEnum -> {
+                // the type might actually be either a tuple variant of enum, or a tuple struct.
+                val ref = path.reference.resolve()
+                val tupleFields = (ref as? RsFieldsOwner)?.tupleFields
+                    ?: (type as? TyStruct)?.item?.tupleFields
+                    ?: return
+
+                for ((idx, p) in patList.withIndex()) {
+                    val fieldType = tupleFields.tupleFieldDeclList
+                        .getOrNull(idx)
+                        ?.typeReference
+                        ?.type
+                        ?.substitute(type.typeParameterValues)
+                        ?: TyUnknown
+                    p.extractBindings(fieldType)
+                }
+            }
+            is RsPatStruct -> {
+                val struct = path.reference.resolve() as? RsFieldsOwner
+                    ?: (type as? TyStruct)?.item
+                    ?: return
+
+                val structFields = struct.blockFields?.fieldDeclList?.associateBy { it.name }.orEmpty()
+                for (patField in patFieldList) {
+                    val fieldPun = patField.patBinding
+                    val fieldName = if (fieldPun != null) {
+                        // Foo { bar }
+                        fieldPun.identifier.text
+                    } else {
+                        patField.identifier?.text
+                            ?: error("`pat_field` may be either `pat_binding` or should contain identifier! ${patField.text}")
+                    }
+                    val fieldType = structFields[fieldName]
+                        ?.typeReference
+                        ?.type
+                        ?.substitute(type.typeParameterValues)
+                        ?: TyUnknown
+                    patField.pat?.extractBindings(fieldType)
+                    if (fieldPun != null) {
+                        ctx.writeBindingTy(fieldPun, fieldType)
+                    }
+                }
+            }
+            is RsPatVec -> {
+                val elementType = when (type) {
+                    is TyArray -> type.base
+                    is TySlice -> type.elementType
+                    else -> TyUnknown
+                }
+                patList.forEach { it.extractBindings(elementType) }
+            }
+            else -> {
+                // not yet handled
+            }
+        }
     }
 }
 

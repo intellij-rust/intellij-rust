@@ -8,8 +8,13 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectPathResolveVariants
@@ -44,11 +49,11 @@ class RsPathReferenceImpl(
             ?: advancedCachedMultiResolve()
 
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
-        return (if (element.ancestorStrict<RsPatConst>() != null) resolvePath(element) else advancedMultiResolve()).toTypedArray()
+        return advancedMultiResolve().toTypedArray()
     }
 
     override fun multiResolve(): List<RsNamedElement> =
-        multiResolve(false).mapNotNull { it.element as? RsNamedElement }
+        advancedMultiResolve().mapNotNull { it.element as? RsNamedElement }
 
     private fun advancedCachedMultiResolve(): List<BoundElement<RsElement>> {
         return ResolveCache.getInstance(element.project)
