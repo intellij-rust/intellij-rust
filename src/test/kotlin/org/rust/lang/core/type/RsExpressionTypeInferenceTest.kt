@@ -893,6 +893,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test lambda body typified`() = testExpr("""
+        fn main() {
+            || { 0 };
+        }    //^ i32
+    """)
+
     fun `test infer return expr from explicit closure return type`() = testExpr("""
         fn main() {
             || -> u8 {

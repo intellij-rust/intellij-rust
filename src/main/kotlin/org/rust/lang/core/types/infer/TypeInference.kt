@@ -428,7 +428,13 @@ private class RsFnInferenceContext(
         block.inferTypeCoercableTo(returnTy)
 
     fun inferLambdaBody(expr: RsExpr): Ty =
-        if (expr is RsBlockExpr) inferFnBody(expr.block) else expr.inferTypeCoercableTo(returnTy)
+        if (expr is RsBlockExpr) {
+            // skipping diverging procession for lambda body
+            ctx.writeTy(expr, returnTy)
+            inferFnBody(expr.block)
+        } else {
+            expr.inferTypeCoercableTo(returnTy)
+        }
 
     private fun RsBlock.inferTypeCoercableTo(expected: Ty): Ty =
         inferType(expected, true)
