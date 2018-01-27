@@ -11,8 +11,9 @@ import com.intellij.openapi.project.Project
 import org.rust.ide.annotator.fixes.updateMutable
 import org.rust.lang.core.psi.RsPatBinding
 
-class RemoveMutableFix(val patBinding: RsPatBinding) : LocalQuickFix {
+class RemoveMutableFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val patBinding = descriptor.psiElement as? RsPatBinding ?: return
         updateMutable(project, patBinding, false)
     }
 

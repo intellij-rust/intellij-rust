@@ -30,7 +30,7 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
                 holder.registerProblem(
                     o,
                     "Variable `${o.identifier.text}` does not need to be mutable",
-                    *arrayOf(RemoveMutableFix(o))
+                    RemoveMutableFix()
                 )
             }
         }

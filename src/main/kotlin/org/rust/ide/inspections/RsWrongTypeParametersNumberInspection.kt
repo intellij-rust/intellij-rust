@@ -57,7 +57,7 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
 
         val problemText = "Wrong number of type parameters: expected ${data.expectedText}, found $nArguments [${data.code}]"
         if (data.fix) {
-            holder.registerProblem(o, problemText, RemoveTypeParameter(o))
+            holder.registerProblem(o, problemText, RemoveTypeParameter())
         } else {
             holder.registerProblem(o, problemText)
         }
