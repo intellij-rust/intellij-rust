@@ -19,6 +19,7 @@ import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
 import org.rust.lang.core.resolve.ref.resolvePath
+import org.rust.lang.core.stubs.RsStubLiteralType
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.selfType
@@ -576,28 +577,28 @@ private class RsFnInferenceContext(
     }
 
     fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
-        val kind = expr.kind
-        return when (kind) {
-            is RsLiteralKind.Boolean -> TyBool
-            is RsLiteralKind.Char -> if (kind.isByte) TyInteger(TyInteger.Kind.u8) else TyChar
-            is RsLiteralKind.String -> {
-                if (kind.isByte) {
-                    TyReference(TyArray(TyInteger(TyInteger.Kind.u8), kind.offsets.value?.length?.toLong() ?: 0), IMMUTABLE)
+        val stubType = expr.stubType
+        return when (stubType) {
+            is RsStubLiteralType.Boolean -> TyBool
+            is RsStubLiteralType.Char -> if (stubType.isByte) TyInteger(TyInteger.Kind.u8) else TyChar
+            is RsStubLiteralType.String -> {
+                if (stubType.isByte) {
+                    TyReference(TyArray(TyInteger(TyInteger.Kind.u8), stubType.length), IMMUTABLE)
                 } else {
                     TyReference(TyStr, IMMUTABLE)
                 }
             }
-            is RsLiteralKind.Integer -> {
-                val ty = TyInteger.fromSuffixedLiteral(expr.integerLiteral!!)
+            is RsStubLiteralType.Integer -> {
+                val ty = stubType.kind?.let(::TyInteger)
                 ty ?: when (expected) {
                     is TyInteger -> expected
-                    is TyChar -> TyInteger(TyInteger.Kind.u8)
+                    TyChar -> TyInteger(TyInteger.Kind.u8)
                     is TyPointer, is TyFunction -> TyInteger(TyInteger.Kind.usize)
                     else -> TyInfer.IntVar()
                 }
             }
-            is RsLiteralKind.Float -> {
-                val ty = TyFloat.fromSuffixedLiteral(expr.floatLiteral!!)
+            is RsStubLiteralType.Float -> {
+                val ty = stubType.kind?.let(::TyFloat)
                 ty ?: (expected?.takeIf { it is TyFloat } ?: TyInfer.FloatVar())
             }
             null -> TyUnknown

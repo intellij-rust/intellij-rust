@@ -15,6 +15,8 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
+import org.rust.lang.core.types.ty.TyFloat
+import org.rust.lang.core.types.ty.TyInteger
 import org.rust.stdext.makeBitMask
 
 
@@ -31,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 117
+        override fun getStubVersion(): Int = 118
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -1050,6 +1052,7 @@ class RsBinaryOpStub(
 
 class RsLitExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val type: RsStubLiteralType?,
     val integerLiteralValue: String?
 ) : RsPlaceholderStub(parent, elementType) {
     object Type : RsStubElementType<RsLitExprStub, RsLitExpr>("LIT_EXPR") {
@@ -1058,16 +1061,58 @@ class RsLitExprStub(
             createStubIfParentIsStub(node) && node.psi.parent?.parent !is RsFunction
 
         override fun serialize(stub: RsLitExprStub, dataStream: StubOutputStream) {
+            stub.type.serialize(dataStream)
             dataStream.writeUTFFastAsNullable(stub.integerLiteralValue)
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsLitExprStub =
-            RsLitExprStub(parentStub, this, dataStream.readUTFFastAsNullable())
+            RsLitExprStub(parentStub, this, RsStubLiteralType.deserialize(dataStream), dataStream.readUTFFastAsNullable())
 
         override fun createStub(psi: RsLitExpr, parentStub: StubElement<*>?): RsLitExprStub =
-            RsLitExprStub(parentStub, this, psi.integerLiteralValue)
+            RsLitExprStub(parentStub, this, psi.stubType, psi.integerLiteralValue)
 
         override fun createPsi(stub: RsLitExprStub): RsLitExpr = RsLitExprImpl(stub, this)
+    }
+}
+
+sealed class RsStubLiteralType(val typeOrdinal: Int) {
+    object Boolean : RsStubLiteralType(0)
+    class Char(val isByte: kotlin.Boolean) : RsStubLiteralType(1)
+    class String(val length: Long?, val isByte: kotlin.Boolean) : RsStubLiteralType(2)
+    class Integer(val kind: TyInteger.Kind?) : RsStubLiteralType(3)
+    class Float(val kind: TyFloat.Kind?) : RsStubLiteralType(4)
+
+    companion object {
+        fun deserialize(dataStream: StubInputStream): RsStubLiteralType? {
+            with (dataStream) {
+                val ordinal = readInt()
+                return when (ordinal) {
+                    0 -> RsStubLiteralType.Boolean
+                    1 -> RsStubLiteralType.Char(readBoolean())
+                    2 -> RsStubLiteralType.String(readLong(), readBoolean())
+                    3 -> RsStubLiteralType.Integer(readEnumAsNullable<TyInteger.Kind>())
+                    4 -> RsStubLiteralType.Float(readEnumAsNullable<TyFloat.Kind>())
+                    else -> null
+                }
+            }
+        }
+    }
+}
+
+private fun RsStubLiteralType?.serialize(dataStream: StubOutputStream) {
+    if (this == null) {
+        dataStream.writeInt(-1)
+        return
+    }
+    dataStream.writeInt(typeOrdinal)
+    when (this) {
+        is RsStubLiteralType.Char -> dataStream.writeBoolean(isByte)
+        is RsStubLiteralType.String -> {
+            dataStream.writeLong(length ?: 0)
+            dataStream.writeBoolean(isByte)
+        }
+        is RsStubLiteralType.Integer -> dataStream.writeEnum(kind)
+        is RsStubLiteralType.Float -> dataStream.writeEnum(kind)
     }
 }
 
@@ -1076,9 +1121,6 @@ private fun StubInputStream.readUTFFastAsNullable(): String? {
     val hasValue = readBoolean()
     return if (hasValue) readUTFFast() else null
 }
-
-private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
-private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readByte().toInt()]
 private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
     if (value == null) {
         writeBoolean(false)
@@ -1086,4 +1128,11 @@ private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
         writeBoolean(true)
         writeUTFFast(value)
     }
+}
+
+private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E?) = writeByte(e?.ordinal ?: -1)
+private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readByte().toInt()]
+private inline fun <reified E : Enum<E>> StubInputStream.readEnumAsNullable(): E? {
+    val ordinal = readByte().toInt()
+    return if (ordinal < 0) null else enumValues<E>()[ordinal]
 }
