@@ -191,6 +191,10 @@ class RsInferenceContext(
         return bindings[binding] ?: TyUnknown
     }
 
+    fun getResolvedPaths(expr: RsPathExpr): List<RsElement>? {
+        return resolvedPaths[expr]
+    }
+
     fun writeTy(psi: RsExpr, ty: Ty) {
         exprTypes[psi] = ty
     }
@@ -606,10 +610,9 @@ private class RsFnInferenceContext(
     }
 
     private fun inferPathExprType(expr: RsPathExpr): Ty {
-        val path = expr.path
-        val variants = resolvePath(path).mapNotNull { it.downcast<RsNamedElement>() }
+        val variants = resolvePath(expr.path, lookup).mapNotNull { it.downcast<RsNamedElement>() }
         ctx.writePath(expr, variants)
-        val qualifier = path.path
+        val qualifier = expr.path.path
         if (variants.size > 1 && qualifier != null) {
             val resolved = collapseToTrait(variants.map { it.element })
             if (resolved != null) {
@@ -1256,7 +1259,7 @@ private class RsFnInferenceContext(
                 ?: expr.initializer?.inferType()
                 ?: return TySlice(TyUnknown)
             expr.sizeExpr?.inferType(TyInteger(TyInteger.Kind.usize))
-            val size = calculateArraySize(expr.sizeExpr)
+            val size = calculateArraySize(expr.sizeExpr) { ctx.getResolvedPaths(it)?.singleOrNull() }
             elementType to size
         } else {
             val elementTypes = expr.arrayElements?.map { it.inferType(expectedElemTy) }

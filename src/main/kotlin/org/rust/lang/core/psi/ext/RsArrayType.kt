@@ -15,7 +15,9 @@ val RsArrayType.arraySize: Long? get() = calculateArraySize(expr)
 
 private const val MAX_EXPR_DEPTH: Int = 64
 
-fun calculateArraySize(expr: RsExpr?): Long? {
+private val defaultExprPathResolver: (RsPathExpr) -> RsElement? = { it.path.reference.resolve() }
+
+fun calculateArraySize(expr: RsExpr?, pathExprResolver: ((RsPathExpr) -> RsElement?) = defaultExprPathResolver): Long? {
 
     fun eval(expr: RsExpr?, depth: Int): Long? {
         // To prevent SO we restrict max depth of expression
@@ -26,7 +28,7 @@ fun calculateArraySize(expr: RsExpr?): Long? {
                 ?.toLongOrNull()
                 ?.notNegativeOrNull()
             is RsPathExpr -> {
-                val const = expr.path.reference.resolve() as? RsConstant ?: return null
+                val const = pathExprResolver(expr) as? RsConstant ?: return null
                 if (!const.isConst) return null
                 val path = (const.typeReference?.typeElement as? RsBaseType)?.path ?: return null
                 val integerType = TyPrimitive.fromPath(path) as? TyInteger ?: return null
