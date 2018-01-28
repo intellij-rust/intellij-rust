@@ -7,12 +7,16 @@ environment:
   # use the most aggressive compressing because .gradle is HUGE
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: -t7z -m0=lzma2 -mx=9
   JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+  NIGHTLY_RUST_VERSION: nightly-2018-01-21
 
 install:
   - appveyor DownloadFile https://win.rustup.rs -FileName rustup-init.exe
   - rustup-init.exe -y
   - set PATH=C:\Users\appveyor\.cargo\bin;%PATH%
-  - rustfmt --help || cargo install rustfmt --force
+  - rustup install %NIGHTLY_RUST_VERSION%
+  - for /f "delims=*" %%a in ('rustup run %NIGHTLY_RUST_VERSION% rustc --print sysroot') do (set NIGHTLY_RUST_SYSROOT=%%a)
+  - set PATH=%NIGHTLY_RUST_SYSROOT%/lib/rustlib/x86_64-pc-windows-msvc/lib/;%PATH%
+  - cargo +%NIGHTLY_RUST_VERSION% install rustfmt-nightly --force
 
 build_script:
   - gradlew.bat assemble testClasses --no-daemon
