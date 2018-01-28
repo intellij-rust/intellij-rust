@@ -31,7 +31,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 115
+        override fun getStubVersion(): Int = 116
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -1039,8 +1039,18 @@ class RsMetaItemStub(
 }
 
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
-private fun StubInputStream.readUTFFastAsNullable(): String? = readUTFFast().let { if (it == "") null else it }
+private fun StubInputStream.readUTFFastAsNullable(): String? {
+    val hasValue = readBoolean()
+    return if (hasValue) readUTFFast() else null
+}
 
 private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
 private fun <E : Enum<E>> StubInputStream.readEnum(values: Array<E>) = values[readByte().toInt()]
-private fun StubOutputStream.writeUTFFastAsNullable(value: String?) = writeUTFFast(value ?: "")
+private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
+    if (value == null) {
+        writeBoolean(false)
+    } else {
+        writeBoolean(true)
+        writeUTFFast(value)
+    }
+}
