@@ -406,7 +406,7 @@
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Different impl member order from the trait"
-                         enabledByDefault="false" level="WEAK WARNING"
+                         enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsSortImplTraitMembersInspection"/>
 
         <!-- Surrounders -->
@@ -529,10 +529,6 @@
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.import.ImportNameIntention</className>
-            <category>Rust</category>
-        </intentionAction>
-        <intentionAction>
-            <className>org.rust.ide.intentions.SortImplTraitMembersIntention</className>
             <category>Rust</category>
         </intentionAction>
 
