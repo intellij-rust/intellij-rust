@@ -11,6 +11,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.descendantsOfType
 
 
@@ -19,19 +20,16 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
     fun testFnOneArg() = checkByText<RsCallExpr>("""
         fn foo(arg: u32) {}
         fn main() { foo(/*caret*/0); }
-                    //^
     """, "arg:", 0)
 
     fun testFnTwoArg() = checkByText<RsCallExpr>("""
         fn foo(arg: u32, arg2: u32) {}
         fn main() { foo(0, /*caret*/1); }
-                    //^
     """, "arg2:", 1)
 
     fun `test arg out of bounds`() = checkByText<RsCallExpr>("""
         fn foo(arg: u32) {}
         fn main() { foo(0, /*caret*/1); }
-                    //^
     """, "<none>", -1)
 
     fun testMethodTwoArg() = checkByText<RsMethodCall>("""
@@ -42,7 +40,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s = S;
             s.foo(0, /*caret*/1);
-        }    //^
+        }
     """, "arg2:", 1)
 
     fun testStructFnArg() = checkByText<RsCallExpr>("""
@@ -53,14 +51,14 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s = S;
             S::foo(s, /*caret*/0);
-        }    //^
+        }
     """, "arg:", 1)
 
     fun testLetDecl() = checkByText<RsLetDecl>("""
         struct S;
         fn main() {
             let s/*caret*/ = S;
-        }  //^
+        }
     """, ": S", 0, smart = false)
 
     fun `test smart hint don't show redundant hints`() = checkNoHint<RsLetDecl>("""
@@ -85,7 +83,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         struct S;
         fn main() {
             let (s/*caret*/,c) = (S,S);
-        }  //^
+        }
     """, ": S", 0)
 
     fun `test smart hint same parameter name`() = checkByText<RsCallExpr>("""
@@ -93,7 +91,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let arg = 0;
             foo(arg, /*caret*/1);
-        } //^
+        }
     """, "arg2:", 0)
 
     fun `test smart hint method start with set`() = checkNoHint<RsMethodCall>("""
@@ -179,8 +177,40 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn with_s<F: Fn(S)>(f: F) {}
         fn main() {
             with_s(|s/*caret*/| s.bar())
-        }         //^
+        }
     """, ": S", 0)
+
+    fun `test lambda type should not show if defined`() = checkNoHint<RsLambdaExpr>("""
+        #[lang = "fn_once"]
+        trait FnOnce<Args> { type Output; }
+
+        #[lang = "fn_mut"]
+        trait FnMut<Args>: FnOnce<Args> { }
+
+        #[lang = "fn"]
+        trait Fn<Args>: FnMut<Args> { }
+        struct S;
+        fn with_s<F: Fn(S)>(f: F) {}
+        fn main() {
+            with_s(|s: S| s.bar())
+        }
+    """)
+
+    fun `test lambda type should show after an defined type correct`() = checkByText<RsLambdaExpr>("""
+        #[lang = "fn_once"]
+        trait FnOnce<Args> { type Output; }
+
+        #[lang = "fn_mut"]
+        trait FnMut<Args>: FnOnce<Args> { }
+
+        #[lang = "fn"]
+        trait Fn<Args>: FnMut<Args> { }
+        struct S;
+        fn foo<T: Fn(S, S, (S, S)) -> ()>(action: T) {}
+        fn main() {
+            foo(|x, y: S, z/*caret*/| {});
+        }
+    """, ": (S, S)", 1)
 
     fun `test don't render horrendous types in their full glory`() = checkByText<RsLetDecl>("""
         struct S<T, U>;
@@ -198,7 +228,6 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x);
-               //^
         }
     """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
 
@@ -213,7 +242,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
 
         fn main() {
             for s/*caret*/ in I { }
-        }  //^
+        }
     """, ": S", 0)
 
     fun `test don't touch ast`() {
@@ -250,7 +279,9 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
     inline private fun <reified T : PsiElement> checkByText(@Language("Rust") code: String, hint: String, pos: Int, smart: Boolean = true) {
         InlineFile(code)
         HintType.SMART_HINTING.set(smart)
-        val target = findElementInEditor<T>("^")
+
+        val target = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
+            ?.ancestorOrSelf<T>() ?: Companion.fail("Should find parent")
         val inlays = RsInlayParameterHintsProvider().getParameterHints(target)
         if (pos != -1) {
             check(pos < inlays.size) {
