@@ -6,7 +6,7 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsTypeAliasOwner
+import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.types.ty.*
 
@@ -20,9 +20,10 @@ object RsPsiTypeImplUtil {
         val typeReference = psi.typeReference
         if (typeReference != null) return typeReference.type
         return when (psi.owner) {
-            is RsTypeAliasOwner.Free -> TyUnknown
-            is RsTypeAliasOwner.Trait -> TyTypeParameter.associated(psi)
-            is RsTypeAliasOwner.Impl -> TyUnknown
+            is RsAbstractableOwner.Free -> TyUnknown
+            is RsAbstractableOwner.Trait -> TyTypeParameter.associated(psi)
+            is RsAbstractableOwner.Impl -> TyUnknown
+            is RsAbstractableOwner.Foreign -> TyUnknown
         }
     }
     fun declaredType(psi: RsImplItem): Ty = TyTypeParameter.self(psi)

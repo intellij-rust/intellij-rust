@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiParserFacade
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.RsFunctionOwner
+import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
 
 class RsExtractFunctionHandlerAction(
@@ -32,7 +32,7 @@ class RsExtractFunctionHandlerAction(
 
         val function = psiFactory.createFunction(config)
         when {
-            owner is RsFunctionOwner.Impl && !owner.isInherent -> {
+            owner is RsAbstractableOwner.Impl && !owner.isInherent -> {
                 val beforeNewline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
                 val afterNewline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
                 val type = owner.impl.typeReference!!
@@ -63,8 +63,8 @@ class RsExtractFunctionHandlerAction(
         } else {
             val owner = config.containingFunction.owner
             val type = when (owner) {
-                is RsFunctionOwner.Impl -> owner.impl.typeReference?.text
-                is RsFunctionOwner.Trait -> "Self"
+                is RsAbstractableOwner.Impl -> owner.impl.typeReference?.text
+                is RsAbstractableOwner.Trait -> "Self"
                 else -> null
             }
             "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"

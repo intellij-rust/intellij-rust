@@ -91,8 +91,8 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsExternCrateItem -> RsColor.CRATE
     is RsFieldDecl -> RsColor.FIELD
     is RsFunction -> when (element.owner) {
-        is RsFunctionOwner.Foreign, is RsFunctionOwner.Free -> RsColor.FUNCTION
-        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl ->
+        is RsAbstractableOwner.Foreign, is RsAbstractableOwner.Free -> RsColor.FUNCTION
+        is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl ->
             if (element.isAssocFn) RsColor.ASSOC_FUNCTION else RsColor.METHOD
     }
     is RsMethodCall -> RsColor.METHOD

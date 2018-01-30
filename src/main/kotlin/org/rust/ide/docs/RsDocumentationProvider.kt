@@ -73,30 +73,13 @@ private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
     val rawLines = when (this) {
         is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
         is RsStructOrEnumItemElement, is RsTraitItem -> listOfNotNull(presentableQualifiedModName)
-        is RsFunction -> {
+        is RsAbstractable -> {
             val owner = owner
             when (owner) {
-                is RsFunctionOwner.Foreign,
-                is RsFunctionOwner.Free -> listOfNotNull(presentableQualifiedModName)
-                is RsFunctionOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
-                is RsFunctionOwner.Trait -> owner.trait.declarationText
-            }
-        }
-        is RsConstant -> {
-            val owner = owner
-            when (owner) {
-                is RsConstantOwner.Foreign,
-                is RsConstantOwner.Free -> listOfNotNull(presentableQualifiedModName)
-                is RsConstantOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
-                is RsConstantOwner.Trait -> owner.trait.declarationText
-            }
-        }
-        is RsTypeAlias -> {
-            val owner = owner
-            when (owner) {
-                is RsTypeAliasOwner.Free -> listOfNotNull(presentableQualifiedModName)
-                is RsTypeAliasOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
-                is RsTypeAliasOwner.Trait -> owner.trait.declarationText
+                is RsAbstractableOwner.Foreign,
+                is RsAbstractableOwner.Free -> listOfNotNull(presentableQualifiedModName)
+                is RsAbstractableOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
+                is RsAbstractableOwner.Trait -> owner.trait.declarationText
             }
         }
         else -> listOfNotNull(presentableQualifiedName)

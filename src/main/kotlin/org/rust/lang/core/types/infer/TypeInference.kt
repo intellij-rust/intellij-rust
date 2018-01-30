@@ -610,8 +610,8 @@ private class RsFnInferenceContext(
         val traits = elements.mapNotNull {
             val owner = (it as? RsFunction)?.owner
             when (owner) {
-                is RsFunctionOwner.Impl -> owner.impl.traitRef?.resolveToTrait
-                is RsFunctionOwner.Trait -> owner.trait
+                is RsAbstractableOwner.Impl -> owner.impl.traitRef?.resolveToTrait
+                is RsAbstractableOwner.Trait -> owner.trait
                 else -> null
             }
         }
@@ -645,13 +645,13 @@ private class RsFnInferenceContext(
             is RsFunction -> {
                 val owner = element.owner
                 var (typeParameters, selfTy) = when (owner) {
-                    is RsFunctionOwner.Impl -> {
+                    is RsAbstractableOwner.Impl -> {
                         val typeParameters = instantiateBounds(owner.impl)
                         val selfTy = owner.impl.typeReference?.type?.substitute(typeParameters) ?: TyUnknown
                         subst[TyTypeParameter.self()]?.let { ctx.combineTypes(selfTy, it) }
                         typeParameters to selfTy
                     }
-                    is RsFunctionOwner.Trait -> {
+                    is RsAbstractableOwner.Trait -> {
                         val typeParameters = instantiateBounds(owner.trait)
                         // UFCS - add predicate `Self : Trait<Args>`
                         val selfTy = subst[TyTypeParameter.self()] ?: ctx.typeVarForParam(TyTypeParameter.self())
@@ -816,7 +816,7 @@ private class RsFnInferenceContext(
         var typeParameters = if (impl != null) {
             val typeParameters = instantiateBounds(impl)
             impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
-            if (callee.element.owner is RsFunctionOwner.Trait) {
+            if (callee.element.owner is RsAbstractableOwner.Trait) {
                 impl.traitRef?.resolveToBoundTrait?.substitute(typeParameters)?.subst ?: emptySubstitution
             } else {
                 typeParameters
@@ -825,7 +825,7 @@ private class RsFnInferenceContext(
             // Method has been resolved to a trait, so we should add a predicate
             // `Self : Trait<Args>` to select args and also refine method path if possible.
             // Method path refinement needed if there are multiple impls of the same trait to the same type
-            val trait = (callee.element.owner as RsFunctionOwner.Trait).trait
+            val trait = (callee.element.owner as RsAbstractableOwner.Trait).trait
             when (callee.selfTy) {
             // All these branches except `else` are optimization, they can be removed without loss of functionality
                 is TyTypeParameter -> callee.selfTy.getTraitBoundsTransitively()
@@ -1286,8 +1286,8 @@ private val RsSelfParameter.typeOfValue: Ty
     get() {
         val owner = parentFunction.owner
         var selfType = when (owner) {
-            is RsFunctionOwner.Impl -> owner.impl.selfType
-            is RsFunctionOwner.Trait -> owner.trait.selfType
+            is RsAbstractableOwner.Impl -> owner.impl.selfType
+            is RsAbstractableOwner.Trait -> owner.trait.selfType
             else -> return TyUnknown
         }
 
