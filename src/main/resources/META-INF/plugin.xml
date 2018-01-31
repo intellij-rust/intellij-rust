@@ -407,6 +407,11 @@
                          enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsExperimentalChecksInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Different impl member order from the trait"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsSortImplTraitMembersInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
