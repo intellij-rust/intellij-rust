@@ -41,6 +41,42 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         }
     """)
 
+    fun `test empty`() = checkFixIsUnavailable("Apply same member order", """
+        trait Foo {
+        }
+
+        <caret>impl Foo for () {
+        }
+    """)
+
+    fun `test empty impl`() = checkFixIsUnavailable("Apply same member order", """
+        trait Foo {
+            type x;
+        }
+
+        <error descr="Not all trait items implemented, missing: `x` [E0046]"><caret>impl Foo for ()</error> {
+        }
+    """)
+
+    fun `test empty trait`() = checkFixIsUnavailable("Apply same member order", """
+        trait Foo {
+        }
+
+        <caret>impl Foo for () {
+            type <error descr="Method `x` is not a member of trait `Foo` [E0407]">x</error> = ();
+        }
+    """)
+
+
+    fun `test different impl`() = checkFixIsUnavailable("Apply same member order", """
+        trait Foo {
+            type x;
+        }
+        <error descr="Not all trait items implemented, missing: `x` [E0046]"><caret>impl Foo for ()</error> {
+            type <error descr="Method `y` is not a member of trait `Foo` [E0407]">y</error> = ();
+        }
+    """)
+
     fun `test different order`() = checkFixByText("Apply same member order", """
         struct Struct {
             i: i32

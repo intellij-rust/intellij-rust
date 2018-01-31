@@ -5,10 +5,11 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsTraitOrImpl
@@ -17,42 +18,44 @@ import org.rust.lang.core.psi.ext.resolveToTrait
 
 class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
-        override fun visitImplItem(implItem: RsImplItem) {
-            val traitItems = targetItems(implItem.traitRef?.resolveToTrait).takeIf { it.isNotEmpty() } ?: return
-            val implItems = targetItems(implItem).takeIf { it.isNotEmpty() } ?: return
-            if (traitItems.size != implItems.size) return
-            if (traitItems.zip(implItems).all { it.first.isSameItem(it.second) }) return
+        override fun visitImplItem(impl: RsImplItem) {
+            val trait = impl.traitRef?.resolveToTrait ?: return
+            if (sortedImplItems(impl.items(), trait.items()) == null) return
             holder.registerProblem(
-                implItem,
+                impl,
                 "Different impl member order from the trait",
-                SortImplTraitMembersFix(traitItems, implItems)
+                SortImplTraitMembersFix(impl, trait)
             )
         }
     }
 
-    private fun targetItems(item: RsTraitOrImpl?): List<RsItemElement> {
-        val children = item?.members?.children
-        return children?.mapNotNull {
-            if (it is RsFunction || it is RsConstant || it is RsTypeAlias) it as? RsItemElement else null
-        }?.takeIf { it.size == children.size } ?: emptyList()
+    companion object {
+        private fun sortedImplItems(implItems: List<RsItemElement>, traitItems: List<RsItemElement>): List<RsItemElement>? {
+            val implItemMap = implItems.associate { it.key() to it }
+            val sortedImplItems = traitItems.mapNotNull { implItemMap[it.key()] }
+            if (sortedImplItems.size != implItems.size || sortedImplItems == implItems) return null
+            return sortedImplItems
+        }
     }
 
-    private class SortImplTraitMembersFix(
-        private val traitItems: List<RsItemElement>,
-        private val implItems: List<RsItemElement>
-    ) : LocalQuickFix {
-        override fun getName() = "Apply same member order"
+    private class SortImplTraitMembersFix(impl: RsImplItem, trait: RsTraitItem) : LocalQuickFixOnPsiElement(impl, trait) {
+        override fun getText() = "Apply same member order"
 
         override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val implItemMap = implItems.associate { it.name + it.elementType to it }
-            val sortedImplItems = traitItems.mapNotNull { implItemMap[it.name + it.elementType]?.copy() }
+        override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+            val implItems = (startElement as? RsImplItem)?.items() ?: return
+            val traitItems = (endElement as? RsTraitItem)?.items() ?: return
+            val sortedImplItems = sortedImplItems(implItems, traitItems)?.map { it.copy() } ?: return
             traitItems.zip(implItems).forEachIndexed { index, (traitItem, implItem) ->
-                if (!traitItem.isSameItem(implItem)) implItem.replace(sortedImplItems[index])
+                if (traitItem.key() != implItem.key()) implItem.replace(sortedImplItems[index])
             }
         }
     }
 }
 
-private fun RsItemElement.isSameItem(other: RsItemElement): Boolean = name == other.name && elementType == other.elementType
+private fun RsTraitOrImpl.items(): List<RsItemElement> = members?.children?.mapNotNull {
+    if (it is RsFunction || it is RsConstant || it is RsTypeAlias) it as? RsItemElement else null
+} ?: emptyList()
+
+private fun RsItemElement.key() = name to elementType
