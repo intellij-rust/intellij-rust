@@ -506,7 +506,7 @@ private fun checkTypesAreSized(holder: AnnotationHolder, fn: RsFunction) {
 
     fun isError(ty: Ty): Boolean = !ty.isSized() &&
         // Self type in trait method is not an error
-        !(owner is RsFunctionOwner.Trait && ty is TyTypeParameter && ty.parameter is TyTypeParameter.Self)
+        !(owner is RsAbstractableOwner.Trait && ty is TyTypeParameter && ty.parameter is TyTypeParameter.Self)
 
     for (arg in arguments) {
         val typeReference = arg.typeReference ?: continue

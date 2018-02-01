@@ -191,7 +191,7 @@ class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitFunction(el: RsFunction) {
-                if (el.owner is RsFunctionOwner.Free) {
+                if (el.owner is RsAbstractableOwner.Free) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -202,7 +202,7 @@ class RsMethodNamingInspection : RsSnakeCaseNamingInspection("Method") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitFunction(el: RsFunction) = when (el.owner) {
-                is RsFunctionOwner.Trait, is RsFunctionOwner.Impl -> inspect(el.identifier, holder)
+                is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> inspect(el.identifier, holder)
                 else -> Unit
             }
         }
@@ -255,7 +255,7 @@ class RsTypeAliasNamingInspection : RsCamelCaseNamingInspection("Type", "Type al
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.owner is RsTypeAliasOwner.Free) {
+                if (el.owner is RsAbstractableOwner.Free) {
                     inspect(el.identifier, holder)
                 }
             }
@@ -266,7 +266,7 @@ class RsAssocTypeNamingInspection : RsCamelCaseNamingInspection("Type", "Associa
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.owner is RsTypeAliasOwner.Trait) {
+                if (el.owner is RsAbstractableOwner.Trait) {
                     inspect(el.identifier, holder, false)
                 }
             }

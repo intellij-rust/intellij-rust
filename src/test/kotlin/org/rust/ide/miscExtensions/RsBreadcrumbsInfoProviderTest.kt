@@ -24,6 +24,8 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
             impl S<S> for X<T> {}
             impl T for (i32, i32) {}
             macro_rules! foo {}
+            const C: u32 = 1;
+            type TA = u32;
         """)
 
         val actual = myFixture.file.descendantsOfType<RsElement>()
@@ -40,6 +42,8 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
             S for X
             T for (i32, i32)
             foo!
+            C
+            TA
         """.trimIndent()
 
         UsefulTestCase.assertSameLines(expected, actual)

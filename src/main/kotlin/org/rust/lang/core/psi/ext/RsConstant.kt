@@ -31,29 +31,6 @@ val RsConstant.kind: RsConstantKind get() = when {
     else -> RsConstantKind.STATIC
 }
 
-sealed class RsConstantOwner {
-    object Free : RsConstantOwner()
-    object Foreign : RsConstantOwner()
-    class Trait(val trait: RsTraitItem) : RsConstantOwner()
-    class Impl(val impl: RsImplItem) : RsConstantOwner()
-}
-
-val RsConstant.owner: RsConstantOwner get() {
-    return when (parent) {
-        is RsItemsOwner -> RsConstantOwner.Free
-        is RsForeignModItem -> RsConstantOwner.Foreign
-        is RsMembers -> {
-            val grandDad = parent.parent
-            when (grandDad) {
-                is RsTraitItem -> RsConstantOwner.Trait(grandDad)
-                is RsImplItem -> RsConstantOwner.Impl(grandDad)
-                else -> error("unreachable")
-            }
-        }
-        else -> error("Unexpected constant parent: $parent")
-    }
-}
-
 val RsConstant.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 
@@ -73,6 +50,8 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
     override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
     override val isAbstract: Boolean get() = expr == null
+
+    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
 }

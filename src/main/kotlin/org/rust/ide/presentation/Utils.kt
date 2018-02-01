@@ -90,7 +90,7 @@ fun breadcrumbName(e: RsElement): String? {
     return when (e) {
         is RsMacroDefinition -> e.name?.let { "$it!" }
 
-        is RsModItem, is RsStructOrEnumItemElement, is RsTraitItem, is RsConstant ->
+        is RsModItem, is RsStructOrEnumItemElement, is RsTraitItem, is RsConstant, is RsTypeAlias ->
             (e as RsNamedElement).name
 
         is RsImplItem -> {

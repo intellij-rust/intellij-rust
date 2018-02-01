@@ -52,10 +52,11 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
         fun implsQuery(psi: PsiElement): Query<RsImplItem>? {
             val parent = psi.parent
             return when  {
-                parent is RsTraitItem && parent.trait == psi -> parent.searchForImplementations()
-                parent is RsStructItem && (parent.struct == psi || parent.union == psi) ->
-                    parent.searchForImplementations()
-                parent is RsEnumItem && parent.enum == psi -> parent.searchForImplementations()
+                // For performance reasons (see LineMarkerProvider.getLineMarkerInfo)
+                // we need to add the line marker only to leaf elements
+                parent is RsTraitItem && parent.identifier == psi -> parent.searchForImplementations()
+                parent is RsStructItem && parent.identifier == psi -> parent.searchForImplementations()
+                parent is RsEnumItem && parent.identifier == psi -> parent.searchForImplementations()
                 else -> return null
             }
         }

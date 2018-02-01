@@ -13,10 +13,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.RsAbstractable
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.ext.superMethod
+import org.rust.lang.core.psi.ext.superItem
 
 class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
     override fun startInWriteAction() = false
@@ -32,21 +32,21 @@ class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
 
 // public for testing
 fun gotoSuperTarget(source: PsiElement): NavigatablePsiElement? {
-    val modOrMethod = PsiTreeUtil.getNonStrictParentOfType(
+    val modOrAbstractable = PsiTreeUtil.getNonStrictParentOfType(
         source,
-        RsFunction::class.java,
+        RsAbstractable::class.java,
         RsMod::class.java
     ) ?: return null
 
-    if (modOrMethod is RsFunction) {
-        return if (modOrMethod.owner.isTraitImpl) {
-            modOrMethod.superMethod
+    if (modOrAbstractable is RsAbstractable) {
+        return if (modOrAbstractable.owner.isTraitImpl) {
+            modOrAbstractable.superItem
         } else {
-            gotoSuperTarget(modOrMethod.parent)
+            gotoSuperTarget(modOrAbstractable.parent)
         }
     }
 
-    val mod = modOrMethod as RsMod
+    val mod = modOrAbstractable as RsMod
     return when (mod) {
         is RsFile -> mod.declaration
         else -> mod.`super`

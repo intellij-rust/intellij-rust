@@ -46,42 +46,6 @@ val RsFunction.abiName: String? get() {
     return stub?.abiName ?: abi?.stringLiteral?.text
 }
 
-sealed class RsFunctionOwner {
-    object Free : RsFunctionOwner()
-    object Foreign : RsFunctionOwner()
-    class Trait(val trait: RsTraitItem) : RsFunctionOwner()
-    class Impl(val impl: RsImplItem, val isInherent: Boolean) : RsFunctionOwner()
-
-    val isInherentImpl: Boolean get() = this is Impl && isInherent
-    val isTraitImpl: Boolean get() = this is Impl && !isInherent
-    val isImplOrTrait: Boolean get() = this is Impl || this is Trait
-}
-
-val RsFunction.owner: RsFunctionOwner get() {
-    val stub = stub
-    val stubOnlyParent = if (stub != null) stub.parentStub.psi else parent
-    return when (stubOnlyParent) {
-        is RsForeignModItem -> RsFunctionOwner.Foreign
-        is RsMembers -> {
-            val traitOrImpl = parent.parent
-            when (traitOrImpl) {
-                is RsImplItem -> RsFunctionOwner.Impl(traitOrImpl, isInherent = traitOrImpl.traitRef == null)
-                is RsTraitItem -> RsFunctionOwner.Trait(traitOrImpl)
-                else -> error("unreachable")
-            }
-        }
-        else -> RsFunctionOwner.Free
-    }
-}
-
-
-val RsFunction.superMethod: RsFunction? get() {
-    val rustImplItem = ancestorStrict<RsImplItem>() ?: return null
-    val superTrait = rustImplItem.traitRef?.resolveToTrait ?: return null
-
-    return superTrait.members?.functionList.orEmpty().find { it.name == this.name }
-}
-
 val RsFunction.valueParameters: List<RsValueParameter>
     get() = valueParameterList?.valueParameterList.orEmpty()
 
@@ -93,9 +57,9 @@ val RsFunction.default: PsiElement?
 
 val RsFunction.title: String
     get() = when (owner) {
-        is RsFunctionOwner.Free -> "Function `$name`"
-        is RsFunctionOwner.Foreign -> "Foreign function `$name`"
-        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl ->
+        is RsAbstractableOwner.Free -> "Function `$name`"
+        is RsAbstractableOwner.Foreign -> "Foreign function `$name`"
+        is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl ->
             if (isAssocFn) "Associated function `$name`" else "Method `$name`"
     }
 
@@ -124,10 +88,10 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         get() = block?.innerAttrList.orEmpty()
 
     override fun getIcon(flags: Int): Icon = when (owner) {
-        is RsFunctionOwner.Free, is RsFunctionOwner.Foreign ->
+        is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
             if (isTest) RsIcons.FUNCTION.addTestMark() else RsIcons.FUNCTION
 
-        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl -> when {
+        is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> when {
             isAssocFn && isAbstract -> RsIcons.ABSTRACT_ASSOC_FUNCTION
             isAssocFn -> RsIcons.ASSOC_FUNCTION
             isAbstract -> RsIcons.ABSTRACT_METHOD
