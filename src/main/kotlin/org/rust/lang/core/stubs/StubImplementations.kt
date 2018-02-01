@@ -15,6 +15,8 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
+import org.rust.lang.core.types.ty.TyFloat
+import org.rust.lang.core.types.ty.TyInteger
 import org.rust.stdext.makeBitMask
 
 
@@ -31,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 116
+        override fun getStubVersion(): Int = 118
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -42,7 +44,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsFileStub {
-            return RsFileStub(null, dataStream.readEnum(RsFile.Attributes.values()))
+            return RsFileStub(null, dataStream.readEnum())
         }
 
         override fun getExternalId(): String = "Rust.file"
@@ -138,6 +140,37 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "BLOCK" -> RsPlaceholderStub.Type("BLOCK", ::RsBlockImpl)
 
+    "BINARY_OP" -> RsBinaryOpStub.Type
+
+    "ARRAY_EXPR" -> RsPlaceholderStub.Type("ARRAY_EXPR", ::RsArrayExprImpl)
+    "BINARY_EXPR" -> RsPlaceholderStub.Type("BINARY_EXPR", ::RsBinaryExprImpl)
+    "BLOCK_EXPR" -> RsPlaceholderStub.Type("BLOCK_EXPR", ::RsBlockExprImpl)
+    "BREAK_EXPR" -> RsPlaceholderStub.Type("BREAK_EXPR", ::RsBreakExprImpl)
+    "CALL_EXPR" -> RsPlaceholderStub.Type("CALL_EXPR", ::RsCallExprImpl)
+    "CAST_EXPR" -> RsPlaceholderStub.Type("CAST_EXPR", ::RsCastExprImpl)
+    "CONT_EXPR" -> RsPlaceholderStub.Type("CONT_EXPR", ::RsContExprImpl)
+    "DOT_EXPR" -> RsPlaceholderStub.Type("DOT_EXPR", ::RsDotExprImpl)
+    "EXPR_STMT_OR_LAST_EXPR" -> RsPlaceholderStub.Type("EXPR_STMT_OR_LAST_EXPR", ::RsExprStmtOrLastExprImpl)
+    "FOR_EXPR" -> RsPlaceholderStub.Type("FOR_EXPR", ::RsForExprImpl)
+    "IF_EXPR" -> RsPlaceholderStub.Type("IF_EXPR", ::RsIfExprImpl)
+    "INDEX_EXPR" -> RsPlaceholderStub.Type("INDEX_EXPR", ::RsIndexExprImpl)
+    "LAMBDA_EXPR" -> RsPlaceholderStub.Type("LAMBDA_EXPR", ::RsLambdaExprImpl)
+    "LIT_EXPR" -> RsLitExprStub.Type
+    "LOOP_EXPR" -> RsPlaceholderStub.Type("LOOP_EXPR", ::RsLoopExprImpl)
+    "MACRO_EXPR" -> RsPlaceholderStub.Type("MACRO_EXPR", ::RsMacroExprImpl)
+    "MATCH_EXPR" -> RsPlaceholderStub.Type("MATCH_EXPR", ::RsMatchExprImpl)
+    "PAREN_EXPR" -> RsPlaceholderStub.Type("PAREN_EXPR", ::RsParenExprImpl)
+    "PATH_EXPR" -> RsPlaceholderStub.Type("PATH_EXPR", ::RsPathExprImpl)
+    "RANGE_EXPR" -> RsPlaceholderStub.Type("RANGE_EXPR", ::RsRangeExprImpl)
+    "RET_EXPR" -> RsPlaceholderStub.Type("RET_EXPR", ::RsRetExprImpl)
+    "STRUCT_LITERAL" -> RsPlaceholderStub.Type("STRUCT_LITERAL", ::RsStructLiteralImpl)
+    "TRY_EXPR" -> RsPlaceholderStub.Type("TRY_EXPR", ::RsTryExprImpl)
+    "TUPLE_EXPR" -> RsPlaceholderStub.Type("TUPLE_EXPR", ::RsTupleExprImpl)
+    "TUPLE_OR_PAREN_EXPR" -> RsPlaceholderStub.Type("TUPLE_OR_PAREN_EXPR", ::RsTupleOrParenExprImpl)
+    "UNARY_EXPR" -> RsPlaceholderStub.Type("UNARY_EXPR", ::RsUnaryExprImpl)
+    "UNIT_EXPR" -> RsPlaceholderStub.Type("UNIT_EXPR", ::RsUnitExprImpl)
+    "WHILE_EXPR" -> RsPlaceholderStub.Type("WHILE_EXPR", ::RsWhileExprImpl)
+
     else -> error("Unknown element $name")
 }
 
@@ -198,10 +231,6 @@ class RsUseItemStub(
 
         override fun createStub(psi: RsUseItem, parentStub: StubElement<*>?) =
             RsUseItemStub(parentStub, this, psi.isPublic)
-
-        override fun indexStub(stub: RsUseItemStub, sink: IndexSink) {
-            //NOP
-        }
     }
 }
 
@@ -324,11 +353,6 @@ class RsEnumVariantStub(
 
         override fun createStub(psi: RsEnumVariant, parentStub: StubElement<*>?) =
             RsEnumVariantStub(parentStub, this, psi.name)
-
-
-        override fun indexStub(stub: RsEnumVariantStub, sink: IndexSink) {
-            // NOP
-        }
     }
 }
 
@@ -653,10 +677,6 @@ class RsAliasStub(
             with(dataStream) {
                 writeName(stub.name)
             }
-
-        override fun indexStub(stub: RsAliasStub, sink: IndexSink) {
-            //NOP
-        }
     }
 }
 
@@ -690,10 +710,6 @@ class RsPathStub(
                 writeBoolean(stub.hasColonColon)
                 writeBoolean(stub.hasCself)
             }
-
-        override fun indexStub(stub: RsPathStub, sink: IndexSink) {
-            //NOP
-        }
     }
 }
 
@@ -723,10 +739,6 @@ class RsTypeParameterStub(
 
         override fun createStub(psi: RsTypeParameter, parentStub: StubElement<*>?) =
             RsTypeParameterStub(parentStub, this, psi.name, psi.isSized)
-
-        override fun indexStub(stub: RsTypeParameterStub, sink: IndexSink) {
-            // NOP
-        }
     }
 }
 
@@ -755,10 +767,6 @@ class RsValueParameterStub(
 
         override fun createStub(psi: RsValueParameter, parentStub: StubElement<*>?) =
             RsValueParameterStub(parentStub, this, psi.patText, psi.typeReferenceText)
-
-        override fun indexStub(stub: RsValueParameterStub, sink: IndexSink) {
-            // NOP
-        }
     }
 }
 
@@ -790,10 +798,6 @@ class RsSelfParameterStub(
 
         override fun createStub(psi: RsSelfParameter, parentStub: StubElement<*>?) =
             RsSelfParameterStub(parentStub, this, psi.mutability.isMut, psi.isRef, psi.isExplicitType)
-
-        override fun indexStub(stub: RsSelfParameterStub, sink: IndexSink) {
-            // NOP
-        }
     }
 }
 
@@ -830,9 +834,6 @@ class RsRefLikeTypeStub(
                 psi.isRef,
                 psi.isPointer
             )
-
-        override fun indexStub(stub: RsRefLikeTypeStub, sink: IndexSink) {
-        }
     }
 }
 
@@ -864,9 +865,6 @@ class RsBaseTypeStub private constructor(
 
         override fun createStub(psi: RsBaseType, parentStub: StubElement<*>?) =
             RsBaseTypeStub(parentStub, this, Variant.fromPsi(psi))
-
-        override fun indexStub(stub: RsBaseTypeStub, sink: IndexSink) {
-        }
     }
 
     private enum class Variant {
@@ -890,7 +888,6 @@ class RsBaseTypeStub private constructor(
 
 class RsArrayTypeStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val arraySize: Long,
     val isSlice: Boolean
 ) : StubBase<RsArrayType>(parent, elementType) {
 
@@ -899,21 +896,17 @@ class RsArrayTypeStub(
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsArrayTypeStub(parentStub, this, dataStream.readLong(), dataStream.readBoolean())
+            RsArrayTypeStub(parentStub, this, dataStream.readBoolean())
 
         override fun serialize(stub: RsArrayTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            writeLong(stub.arraySize)
-            writeBoolean(stub.isSlice)
+            dataStream.writeBoolean(stub.isSlice)
         }
 
         override fun createPsi(stub: RsArrayTypeStub) =
             RsArrayTypeImpl(stub, this)
 
         override fun createStub(psi: RsArrayType, parentStub: StubElement<*>?) =
-            RsArrayTypeStub(parentStub, this, psi.arraySize ?: -1L, psi.isSlice)
-
-        override fun indexStub(stub: RsArrayTypeStub, sink: IndexSink) {
-        }
+            RsArrayTypeStub(parentStub, this, psi.isSlice)
     }
 }
 
@@ -939,9 +932,6 @@ class RsLifetimeParameterStub(
             with(dataStream) {
                 writeName(stub.name)
             }
-
-        override fun indexStub(stub: RsLifetimeParameterStub, sink: IndexSink) {
-        }
     }
 }
 
@@ -1038,14 +1028,99 @@ class RsMetaItemStub(
     }
 }
 
+class RsBinaryOpStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val op: String
+) : StubBase<RsBinaryOp>(parent, elementType) {
+    object Type : RsStubElementType<RsBinaryOpStub, RsBinaryOp>("BINARY_OP") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
+
+        override fun serialize(stub: RsBinaryOpStub, dataStream: StubOutputStream) {
+            dataStream.writeUTFFast(stub.op)
+        }
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsBinaryOpStub =
+            RsBinaryOpStub(parentStub, this, dataStream.readUTFFast())
+
+        override fun createStub(psi: RsBinaryOp, parentStub: StubElement<*>?): RsBinaryOpStub =
+            RsBinaryOpStub(parentStub, this, psi.op)
+
+        override fun createPsi(stub: RsBinaryOpStub): RsBinaryOp = RsBinaryOpImpl(stub, this)
+    }
+}
+
+class RsLitExprStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val type: RsStubLiteralType?,
+    val integerLiteralValue: String?
+) : RsPlaceholderStub(parent, elementType) {
+    object Type : RsStubElementType<RsLitExprStub, RsLitExpr>("LIT_EXPR") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean =
+            createStubIfParentIsStub(node) && node.psi.parent?.parent !is RsFunction
+
+        override fun serialize(stub: RsLitExprStub, dataStream: StubOutputStream) {
+            stub.type.serialize(dataStream)
+            dataStream.writeUTFFastAsNullable(stub.integerLiteralValue)
+        }
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsLitExprStub =
+            RsLitExprStub(parentStub, this, RsStubLiteralType.deserialize(dataStream), dataStream.readUTFFastAsNullable())
+
+        override fun createStub(psi: RsLitExpr, parentStub: StubElement<*>?): RsLitExprStub =
+            RsLitExprStub(parentStub, this, psi.stubType, psi.integerLiteralValue)
+
+        override fun createPsi(stub: RsLitExprStub): RsLitExpr = RsLitExprImpl(stub, this)
+    }
+}
+
+sealed class RsStubLiteralType(val typeOrdinal: Int) {
+    object Boolean : RsStubLiteralType(0)
+    class Char(val isByte: kotlin.Boolean) : RsStubLiteralType(1)
+    class String(val length: Long?, val isByte: kotlin.Boolean) : RsStubLiteralType(2)
+    class Integer(val kind: TyInteger.Kind?) : RsStubLiteralType(3)
+    class Float(val kind: TyFloat.Kind?) : RsStubLiteralType(4)
+
+    companion object {
+        fun deserialize(dataStream: StubInputStream): RsStubLiteralType? {
+            with (dataStream) {
+                val ordinal = readInt()
+                return when (ordinal) {
+                    0 -> RsStubLiteralType.Boolean
+                    1 -> RsStubLiteralType.Char(readBoolean())
+                    2 -> RsStubLiteralType.String(readLong(), readBoolean())
+                    3 -> RsStubLiteralType.Integer(readEnumAsNullable<TyInteger.Kind>())
+                    4 -> RsStubLiteralType.Float(readEnumAsNullable<TyFloat.Kind>())
+                    else -> null
+                }
+            }
+        }
+    }
+}
+
+private fun RsStubLiteralType?.serialize(dataStream: StubOutputStream) {
+    if (this == null) {
+        dataStream.writeInt(-1)
+        return
+    }
+    dataStream.writeInt(typeOrdinal)
+    when (this) {
+        is RsStubLiteralType.Char -> dataStream.writeBoolean(isByte)
+        is RsStubLiteralType.String -> {
+            dataStream.writeLong(length ?: 0)
+            dataStream.writeBoolean(isByte)
+        }
+        is RsStubLiteralType.Integer -> dataStream.writeEnum(kind)
+        is RsStubLiteralType.Float -> dataStream.writeEnum(kind)
+    }
+}
+
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
 private fun StubInputStream.readUTFFastAsNullable(): String? {
     val hasValue = readBoolean()
     return if (hasValue) readUTFFast() else null
 }
-
-private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
-private fun <E : Enum<E>> StubInputStream.readEnum(values: Array<E>) = values[readByte().toInt()]
 private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
     if (value == null) {
         writeBoolean(false)
@@ -1053,4 +1128,11 @@ private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
         writeBoolean(true)
         writeUTFFast(value)
     }
+}
+
+private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E?) = writeByte(e?.ordinal ?: -1)
+private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readByte().toInt()]
+private inline fun <reified E : Enum<E>> StubInputStream.readEnumAsNullable(): E? {
+    val ordinal = readByte().toInt()
+    return if (ordinal < 0) null else enumValues<E>()[ordinal]
 }

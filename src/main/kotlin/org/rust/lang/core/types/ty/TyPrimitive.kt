@@ -64,15 +64,17 @@ abstract class TyNumeric : TyPrimitive()
 
 data class TyInteger(val kind: Kind) : TyNumeric() {
     companion object {
-        fun fromSuffixedLiteral(literal: PsiElement): TyInteger? =
-            Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyInteger)
-
         val DEFAULT_KIND = Kind.i32
     }
 
     enum class Kind {
         u8, u16, u32, u64, u128, usize,
-        i8, i16, i32, i64, i128, isize
+        i8, i16, i32, i64, i128, isize;
+
+        companion object {
+            fun fromSuffixedLiteral(literal: PsiElement): Kind? =
+                Kind.values().find { literal.text.endsWith(it.name) }
+        }
     }
 
     override fun toString(): String = tyToString(this)
@@ -80,13 +82,17 @@ data class TyInteger(val kind: Kind) : TyNumeric() {
 
 data class TyFloat(val kind: Kind) : TyNumeric() {
     companion object {
-        fun fromSuffixedLiteral(literal: PsiElement): TyFloat? =
-            Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyFloat)
-
         val DEFAULT_KIND = Kind.f64
     }
 
-    enum class Kind { f32, f64 }
+    enum class Kind {
+        f32, f64;
+
+        companion object {
+            fun fromSuffixedLiteral(literal: PsiElement): Kind? =
+                Kind.values().find { literal.text.endsWith(it.name) }
+        }
+    }
 
     override fun toString(): String = tyToString(this)
 }

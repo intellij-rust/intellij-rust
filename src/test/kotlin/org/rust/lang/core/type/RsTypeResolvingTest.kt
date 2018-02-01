@@ -166,6 +166,45 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                //^ fn(i32) -> i32
     """)
 
+    fun `test array`() = testType("""
+        type T = [i32; 2];
+               //^ [i32; 2]
+    """)
+
+    fun `test array with expr`() = testType("""
+        type T = [i32; 2 + 2];
+               //^ [i32; 4]
+    """)
+
+    fun `test array with const`() = testType("""
+        const COUNT: usize = 2;
+        type T = [i32; COUNT];
+               //^ [i32; 2]
+    """)
+
+    fun `test array with complex size`() = testType("""
+        const COUNT: usize = 2;
+        type T = [i32; (2 * COUNT + 3) << (4 / 2)];
+               //^ [i32; 28]
+    """)
+
+    fun `test array with negative size`() = testType("""
+        type T = [i32; 2 - 3];
+               //^ [i32; <unknown>]
+    """)
+
+    fun `test array with not usize size expr`() = testType("""
+        const COUNT: i32 = 2;
+        type T = [i32; COUNT];
+               //^ [i32; <unknown>]
+    """)
+
+    fun `test array with recursive expr`() = testType("""
+        const COUNT: usize = 2 + COUNT;
+        type T = [i32; COUNT];
+               //^ [i32; <unknown>]
+    """)
+
     fun `test associated types for impl`() = testType("""
         trait A {
             type Item;

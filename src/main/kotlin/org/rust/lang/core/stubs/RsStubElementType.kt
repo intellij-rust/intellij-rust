@@ -7,6 +7,7 @@ package org.rust.lang.core.stubs
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IStubFileElementType
 import org.rust.lang.RsLanguage
@@ -17,6 +18,8 @@ abstract class RsStubElementType<StubT : StubElement<*>, PsiT : RsElement>(
 ) : IStubElementType<StubT, PsiT>(debugName, RsLanguage) {
 
     final override fun getExternalId(): String = "rust.${super.toString()}"
+
+    override fun indexStub(stub: StubT, sink: IndexSink) {}
 
     protected fun createStubIfParentIsStub(node: ASTNode): Boolean {
         val parent = node.treeParent
