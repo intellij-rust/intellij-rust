@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 118
+        override fun getStubVersion(): Int = 119
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -142,34 +142,34 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "BINARY_OP" -> RsBinaryOpStub.Type
 
-    "ARRAY_EXPR" -> RsPlaceholderStub.Type("ARRAY_EXPR", ::RsArrayExprImpl)
-    "BINARY_EXPR" -> RsPlaceholderStub.Type("BINARY_EXPR", ::RsBinaryExprImpl)
-    "BLOCK_EXPR" -> RsPlaceholderStub.Type("BLOCK_EXPR", ::RsBlockExprImpl)
-    "BREAK_EXPR" -> RsPlaceholderStub.Type("BREAK_EXPR", ::RsBreakExprImpl)
-    "CALL_EXPR" -> RsPlaceholderStub.Type("CALL_EXPR", ::RsCallExprImpl)
-    "CAST_EXPR" -> RsPlaceholderStub.Type("CAST_EXPR", ::RsCastExprImpl)
-    "CONT_EXPR" -> RsPlaceholderStub.Type("CONT_EXPR", ::RsContExprImpl)
-    "DOT_EXPR" -> RsPlaceholderStub.Type("DOT_EXPR", ::RsDotExprImpl)
-    "EXPR_STMT_OR_LAST_EXPR" -> RsPlaceholderStub.Type("EXPR_STMT_OR_LAST_EXPR", ::RsExprStmtOrLastExprImpl)
-    "FOR_EXPR" -> RsPlaceholderStub.Type("FOR_EXPR", ::RsForExprImpl)
-    "IF_EXPR" -> RsPlaceholderStub.Type("IF_EXPR", ::RsIfExprImpl)
-    "INDEX_EXPR" -> RsPlaceholderStub.Type("INDEX_EXPR", ::RsIndexExprImpl)
-    "LAMBDA_EXPR" -> RsPlaceholderStub.Type("LAMBDA_EXPR", ::RsLambdaExprImpl)
+    "ARRAY_EXPR" -> RsExprStub.Type("ARRAY_EXPR", ::RsArrayExprImpl)
+    "BINARY_EXPR" -> RsExprStub.Type("BINARY_EXPR", ::RsBinaryExprImpl)
+    "BLOCK_EXPR" -> RsExprStub.Type("BLOCK_EXPR", ::RsBlockExprImpl)
+    "BREAK_EXPR" -> RsExprStub.Type("BREAK_EXPR", ::RsBreakExprImpl)
+    "CALL_EXPR" -> RsExprStub.Type("CALL_EXPR", ::RsCallExprImpl)
+    "CAST_EXPR" -> RsExprStub.Type("CAST_EXPR", ::RsCastExprImpl)
+    "CONT_EXPR" -> RsExprStub.Type("CONT_EXPR", ::RsContExprImpl)
+    "DOT_EXPR" -> RsExprStub.Type("DOT_EXPR", ::RsDotExprImpl)
+    "EXPR_STMT_OR_LAST_EXPR" -> RsExprStub.Type("EXPR_STMT_OR_LAST_EXPR", ::RsExprStmtOrLastExprImpl)
+    "FOR_EXPR" -> RsExprStub.Type("FOR_EXPR", ::RsForExprImpl)
+    "IF_EXPR" -> RsExprStub.Type("IF_EXPR", ::RsIfExprImpl)
+    "INDEX_EXPR" -> RsExprStub.Type("INDEX_EXPR", ::RsIndexExprImpl)
+    "LAMBDA_EXPR" -> RsExprStub.Type("LAMBDA_EXPR", ::RsLambdaExprImpl)
     "LIT_EXPR" -> RsLitExprStub.Type
-    "LOOP_EXPR" -> RsPlaceholderStub.Type("LOOP_EXPR", ::RsLoopExprImpl)
-    "MACRO_EXPR" -> RsPlaceholderStub.Type("MACRO_EXPR", ::RsMacroExprImpl)
-    "MATCH_EXPR" -> RsPlaceholderStub.Type("MATCH_EXPR", ::RsMatchExprImpl)
-    "PAREN_EXPR" -> RsPlaceholderStub.Type("PAREN_EXPR", ::RsParenExprImpl)
-    "PATH_EXPR" -> RsPlaceholderStub.Type("PATH_EXPR", ::RsPathExprImpl)
-    "RANGE_EXPR" -> RsPlaceholderStub.Type("RANGE_EXPR", ::RsRangeExprImpl)
-    "RET_EXPR" -> RsPlaceholderStub.Type("RET_EXPR", ::RsRetExprImpl)
-    "STRUCT_LITERAL" -> RsPlaceholderStub.Type("STRUCT_LITERAL", ::RsStructLiteralImpl)
-    "TRY_EXPR" -> RsPlaceholderStub.Type("TRY_EXPR", ::RsTryExprImpl)
-    "TUPLE_EXPR" -> RsPlaceholderStub.Type("TUPLE_EXPR", ::RsTupleExprImpl)
-    "TUPLE_OR_PAREN_EXPR" -> RsPlaceholderStub.Type("TUPLE_OR_PAREN_EXPR", ::RsTupleOrParenExprImpl)
-    "UNARY_EXPR" -> RsPlaceholderStub.Type("UNARY_EXPR", ::RsUnaryExprImpl)
-    "UNIT_EXPR" -> RsPlaceholderStub.Type("UNIT_EXPR", ::RsUnitExprImpl)
-    "WHILE_EXPR" -> RsPlaceholderStub.Type("WHILE_EXPR", ::RsWhileExprImpl)
+    "LOOP_EXPR" -> RsExprStub.Type("LOOP_EXPR", ::RsLoopExprImpl)
+    "MACRO_EXPR" -> RsExprStub.Type("MACRO_EXPR", ::RsMacroExprImpl)
+    "MATCH_EXPR" -> RsExprStub.Type("MATCH_EXPR", ::RsMatchExprImpl)
+    "PAREN_EXPR" -> RsExprStub.Type("PAREN_EXPR", ::RsParenExprImpl)
+    "PATH_EXPR" -> RsExprStub.Type("PATH_EXPR", ::RsPathExprImpl)
+    "RANGE_EXPR" -> RsExprStub.Type("RANGE_EXPR", ::RsRangeExprImpl)
+    "RET_EXPR" -> RsExprStub.Type("RET_EXPR", ::RsRetExprImpl)
+    "STRUCT_LITERAL" -> RsExprStub.Type("STRUCT_LITERAL", ::RsStructLiteralImpl)
+    "TRY_EXPR" -> RsExprStub.Type("TRY_EXPR", ::RsTryExprImpl)
+    "TUPLE_EXPR" -> RsExprStub.Type("TUPLE_EXPR", ::RsTupleExprImpl)
+    "TUPLE_OR_PAREN_EXPR" -> RsExprStub.Type("TUPLE_OR_PAREN_EXPR", ::RsTupleOrParenExprImpl)
+    "UNARY_EXPR" -> RsExprStub.Type("UNARY_EXPR", ::RsUnaryExprImpl)
+    "UNIT_EXPR" -> RsExprStub.Type("UNIT_EXPR", ::RsUnitExprImpl)
+    "WHILE_EXPR" -> RsExprStub.Type("WHILE_EXPR", ::RsWhileExprImpl)
 
     else -> error("Unknown element $name")
 }
@@ -1047,6 +1047,28 @@ class RsBinaryOpStub(
             RsBinaryOpStub(parentStub, this, psi.op)
 
         override fun createPsi(stub: RsBinaryOpStub): RsBinaryOp = RsBinaryOpImpl(stub, this)
+    }
+}
+
+class RsExprStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+) : RsPlaceholderStub(parent, elementType) {
+    class Type<PsiT : RsElement>(
+        debugName: String,
+        private val psiCtor: (RsPlaceholderStub, IStubElementType<*, *>) -> PsiT
+    ) : RsStubElementType<RsPlaceholderStub, PsiT>(debugName) {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean =
+            createStubIfParentIsStub(node) && node.psi.parent?.parent !is RsFunction
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?)
+            = RsPlaceholderStub(parentStub, this)
+
+        override fun serialize(stub: RsPlaceholderStub, dataStream: StubOutputStream) {}
+
+        override fun createPsi(stub: RsPlaceholderStub) = psiCtor(stub, this)
+
+        override fun createStub(psi: PsiT, parentStub: StubElement<*>?) = RsPlaceholderStub(parentStub, this)
     }
 }
 
