@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 119
+        override fun getStubVersion(): Int = 120
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -1107,7 +1107,7 @@ sealed class RsStubLiteralType(val typeOrdinal: Int) {
     companion object {
         fun deserialize(dataStream: StubInputStream): RsStubLiteralType? {
             with (dataStream) {
-                val ordinal = readInt()
+                val ordinal = readByte().toInt()
                 return when (ordinal) {
                     0 -> RsStubLiteralType.Boolean
                     1 -> RsStubLiteralType.Char(readBoolean())
@@ -1123,10 +1123,10 @@ sealed class RsStubLiteralType(val typeOrdinal: Int) {
 
 private fun RsStubLiteralType?.serialize(dataStream: StubOutputStream) {
     if (this == null) {
-        dataStream.writeInt(-1)
+        dataStream.writeByte(-1)
         return
     }
-    dataStream.writeInt(typeOrdinal)
+    dataStream.writeByte(typeOrdinal)
     when (this) {
         is RsStubLiteralType.Char -> dataStream.writeBoolean(isByte)
         is RsStubLiteralType.String -> {
