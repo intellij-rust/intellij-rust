@@ -585,6 +585,20 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test Self-related item lookup`() = checkByCode("""
+        struct S;
+        impl S {
+            fn new() -> S { S }
+        }    //X
+
+        trait T { fn x(); }
+        impl T for S {
+            fn x() {
+                Self::new();
+            }       //^
+        }
+    """)
+
     fun `test struct update syntax`() = checkByCode("""
         struct S {
             f1: u32,
