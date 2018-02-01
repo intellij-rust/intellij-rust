@@ -77,6 +77,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test if condition`() = testExpr("""
+        fn main() {
+            if true {};
+        }    //^ bool
+    """)
+
     fun `test unit if`() = testExpr("""
         fn main() {
             let x = if true { 92 };
@@ -215,6 +221,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             x;
           //^ u32
         }
+    """)
+
+    fun `test while condition`() = testExpr("""
+        fn main() {
+            while true {};
+        }       //^ bool
     """)
 
     fun `test while`() = testExpr("""
