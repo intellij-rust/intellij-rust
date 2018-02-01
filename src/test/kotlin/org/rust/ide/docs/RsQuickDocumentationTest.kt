@@ -473,6 +473,18 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <p>Documented</p>
     """)
 
+    fun `test static`() = doTest("""
+        fn main() {
+            /// Documented
+            static AWESOME: i32 = 1;
+                 //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>static <b>AWESOME</b>: i32 = 1</pre>
+        <p>Documented</p>
+    """)
+
     fun `test trait const`() = doTest("""
         trait MyTrait {
             /// Documented

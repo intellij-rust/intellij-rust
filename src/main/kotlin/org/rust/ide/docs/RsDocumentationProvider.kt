@@ -180,7 +180,7 @@ private val RsItemElement.declarationModifiers: List<String> get() {
         }
         is RsStructItem -> modifiers += "struct"
         is RsEnumItem -> modifiers += "enum"
-        is RsConstant -> modifiers += "const"
+        is RsConstant -> modifiers += if (isConst) "const" else "static"
         is RsTypeAlias -> modifiers += "type"
         is RsTraitItem -> {
             if (isUnsafe) {
