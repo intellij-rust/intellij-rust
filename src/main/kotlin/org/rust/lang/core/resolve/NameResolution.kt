@@ -84,7 +84,14 @@ fun processFieldExprResolveVariants(
 }
 
 fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
-    var resolved = field.parentStructLiteral.path.reference.resolve()
+    val path = field.parentStructLiteral.path
+    var resolved = path.reference.resolve()?.let { resolved ->
+        if (resolved is RsImplItem && path.hasCself) {
+            (resolved.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve()
+        } else {
+            resolved
+        }
+    }
 
     // Resolve potential type aliases
     while (resolved is RsTypeAlias) {
