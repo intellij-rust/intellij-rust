@@ -573,6 +573,18 @@ class RsResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
+    fun `test struct field Self`() = checkByCode("""
+        struct S { foo: i32 }
+                  //X
+        impl S {
+            fn new() -> Self {
+                Self {
+                    foo: 0
+                } //^
+            }
+        }
+    """)
+
     fun `test struct update syntax`() = checkByCode("""
         struct S {
             f1: u32,
