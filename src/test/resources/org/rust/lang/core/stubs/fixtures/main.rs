@@ -18,15 +18,31 @@ pub struct S {
     g: u32
 }
 
+impl S {
+    fn do_something(&mut self) {
+    }
+    //TODO also do self and other types
+}
+
 enum E {
     Ok,
     Error((u32, u8))
+}
+
+impl E {
+    fn do_something(&mut self) {
+    }
 }
 
 #[repr(C)]
 union U {
     f1: u32,
     f2: f32,
+}
+
+impl U {
+    fn do_something(&mut self) {
+    }
 }
 
 trait T {

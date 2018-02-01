@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.stubs
 
+import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,14 +33,16 @@ class RsStubAccessTest : RsTestBase() {
     }
 
     fun `test presentation does not need ast`() {
-        processStubsWithoutAstAccess<RsNamedElement> { element ->
+        processStubsWithoutAstAccess<RsElement> { element ->
             element.getIcon(0)
             element.getIcon(Iconable.ICON_FLAG_VISIBILITY)
-            element.name
-            element.presentation?.let {
-                it.locationString
-                it.presentableText
-                it.getIcon(false)
+            if (element is NavigationItem) {
+                element.name
+                element.presentation?.let {
+                    it.locationString
+                    it.presentableText
+                    it.getIcon(false)
+                }
             }
         }
     }
