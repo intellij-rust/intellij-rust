@@ -13,22 +13,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.JBColor
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.content.ContentFactory
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.panel
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
+import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JList
 import javax.swing.ListSelectionModel
-
 
 class CargoToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -105,11 +100,7 @@ private class CargoToolWindow(
     }
     val selectedProject: CargoProject? get() = projectList.selectedValue
 
-    val content = panel {
-        row {
-            projectList(CCFlags.push, CCFlags.grow)
-        }
-    }
+    val content: JComponent = ScrollPaneFactory.createScrollPane(projectList, 0)
 
     init {
         with(project.messageBus.connect()) {
