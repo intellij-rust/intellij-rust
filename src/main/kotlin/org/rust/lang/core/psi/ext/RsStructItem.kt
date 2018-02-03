@@ -13,9 +13,12 @@ import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.RsElementTypes.UNION
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsPsiImplUtil
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.stubs.RsStructItemStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.type
 import javax.swing.Icon
 
 val RsStructItem.union: PsiElement?
@@ -31,6 +34,8 @@ val RsStructItem.kind: RsStructKind get() {
     val hasUnion = stub?.isUnion ?: (union != null)
     return if (hasUnion) RsStructKind.UNION else RsStructKind.STRUCT
 }
+
+val RsStructItem.isCopyable: Boolean get() = declaredType.isCopyable
 
 abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStub>, RsStructItem {
 

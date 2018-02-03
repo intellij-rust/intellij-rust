@@ -69,6 +69,9 @@ class ImplLookup(
     private val copyTrait: RsTraitItem? by lazy(NONE) {
         RsNamedElementIndex.findDerivableTraits(project, "Copy").firstOrNull()
     }
+    private val dropTrait: RsTraitItem? by lazy(NONE) {
+        RsLangItemIndex.findLangItem(project, "drop")
+    }
     private val sizedTrait: RsTraitItem? by lazy(NONE) {
         RsLangItemIndex.findLangItem(project, "sized")
     }
@@ -475,6 +478,7 @@ class ImplLookup(
         return ref.asFunctionType
     }
 
+    fun isDrop(ty: Ty): Boolean = ty.isTraitImplemented(dropTrait)
     fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(copyTrait)
     fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(sizedTrait)
 

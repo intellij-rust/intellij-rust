@@ -32,9 +32,11 @@ enum class RsColor(humanName: String, val default: TextAttributesKey) {
 
     CRATE("Crate", Default.IDENTIFIER),
     STRUCT("Struct", Default.CLASS_NAME),
+    STRUCT_COPYABLE("Copyable struct", Default.MARKUP_TAG),
     TRAIT("Trait", Default.INTERFACE_NAME),
     MODULE("Module", Default.IDENTIFIER),
     ENUM("Enum", Default.CLASS_NAME),
+    ENUM_COPYABLE("Copyable enum", Default.MARKUP_TAG),
     ENUM_VARIANT("Enum variant", Default.STATIC_FIELD),
     TYPE_ALIAS("Type alias", Default.CLASS_NAME),
 

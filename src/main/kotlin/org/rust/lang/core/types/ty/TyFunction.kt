@@ -18,4 +18,6 @@ data class TyFunction(val paramTypes: List<Ty>, val retType: Ty) : Ty(mergeFlags
         paramTypes.any(visitor) || retType.visitWith(visitor)
 
     override fun toString(): String = tyToString(this)
+
+    override val isCopyable = true
 }

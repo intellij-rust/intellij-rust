@@ -18,4 +18,6 @@ data class TyReference(val referenced: Ty, val mutability: Mutability) : Ty(refe
         referenced.visitWith(visitor)
 
     override fun toString(): String = tyToString(this)
+
+    override val isCopyable = !mutability.isMut
 }

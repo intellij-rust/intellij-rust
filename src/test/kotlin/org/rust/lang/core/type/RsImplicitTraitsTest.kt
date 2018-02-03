@@ -15,6 +15,7 @@ import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.type
 
 class RsImplicitTraitsTest : RsTypificationTestBase() {
+    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test primitive types are Sized`() = checkPrimitiveTypes("Sized")
 
@@ -76,7 +77,7 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
     """)
 
     fun `test tuple with DST field is not Sized`() = doTest("""
-        fn foo() -> Box<(i32, [i32])> { unimplemented!() }
+        fn foo() -> Box<(i32, [i32])> { unimplemented!(); }
                       //^ !Sized
     """)
 
@@ -135,6 +136,72 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test primitive types are Copy`() = checkPrimitiveTypes("Copy")
+
+    fun `test slice impl Copy inference`() = doTest("""
+        struct S;
+        fn foo() -> &[S] { unimplemented!() }
+                   //^ !Copy
+    """)
+
+    fun `test ptr impl Copy inference`() = doTest("""
+        fn foo() -> *const String { unimplemented!() }
+                  //^ Copy
+    """)
+
+    fun `test reference impl Copy inference 1`() = doTest("""
+        fn foo() -> &i32 { unimplemented!() }
+                  //^ Copy
+    """)
+
+    fun `test reference impl Copy inference 2`() = doTest("""
+        fn foo() -> &mut i32 { unimplemented!() }
+                  //^ !Copy
+    """)
+
+    fun `test struct impl Copy inference`() = doTest("""
+        #[derive(Copy, Clone)]
+        struct S{}
+
+        #[derive(Copy, Clone)]
+        struct C {
+            a: i32,
+            s: S
+        }
+        fn foo() -> C { unimplemented!() }
+                  //^ Copy
+    """)
+
+    fun `test enum impl Copy inference`() = doTest("""
+        struct String;
+        #[derive(Copy, Clone)]
+        enum Message {
+            Quit,
+            ChangeColor(i32, i32, i32),
+            Move { x: i32, y: i32 },
+            Write(String),
+        }
+        fn foo() -> Message { unimplemented!() }
+                  //^ !Copy
+    """)
+
+    fun `test union impl Copy interface`() = doTest("""
+        #[derive(Copy, Clone)]
+        union U{f1: i32, f2: f64}
+        fn foo() -> U { unimplemented!() }
+                  //^ Copy
+    """)
+
+    fun `test structs with drop impl`() = doTest("""
+        #[derive(Copy, Clone)]
+        struct S {}
+        impl Drop for S {
+            fn drop(&mut self) {t }
+        }
+        fn foo() -> U { unimplemented!() }
+                  //^ !Copy
+    """)
+
     private fun checkPrimitiveTypes(traitName: String) {
         val allIntegers = TyInteger.Kind.values().map { TyInteger(it) }.toTypedArray()
         val allFloats = TyFloat.Kind.values().map { TyFloat(it) }.toTypedArray()
@@ -147,14 +214,7 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
     }
 
     private fun doTest(@Language("Rust") code: String) {
-        val fullTestCode = """
-            #[lang = "sized"]
-            pub trait Sized {}
-
-            $code
-        """
-
-        InlineFile(fullTestCode)
+        InlineFile(code)
 
         val (typeRef, data) = findElementAndDataInEditor<RsTypeReference>()
         val (traitName, mustHaveImpl) = if (data.startsWith('!')) {
@@ -163,8 +223,14 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
             data to true
         }
 
-        val lookup = ImplLookup.relativeTo(typeRef)
-        val hasImpl = lookup.isSized(typeRef.type)
+        val hasImpl = when (traitName) {
+            "Sized" -> {
+                val lookup = ImplLookup.relativeTo(typeRef)
+                lookup.isSized(typeRef.type)
+            }
+            "Copy" -> typeRef.type.isCopyable
+            else -> Companion.fail("unrecognized trait name: $traitName")
+        }
 
         check(mustHaveImpl == hasImpl) {
             "Expected: `${typeRef.type}` ${if (mustHaveImpl) "has" else "doesn't have" } impl of `$traitName` trait"
