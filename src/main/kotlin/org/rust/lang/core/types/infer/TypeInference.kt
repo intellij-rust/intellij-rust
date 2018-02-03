@@ -460,7 +460,7 @@ private class RsFnInferenceContext(
                 ?.let { psi.expr?.inferTypeCoercableTo(it) }
                 ?: psi.expr?.inferType()
                 ?: TyUnknown
-            psi.pat?.extractBindings(explicitTy ?: inferredTy)
+            psi.pat?.extractBindings(explicitTy ?: resolveTypeVarsWithObligations(inferredTy))
             inferredTy == TyNever
         }
         is RsExprStmt -> psi.expr.inferType() == TyNever
@@ -1043,7 +1043,7 @@ private class RsFnInferenceContext(
     }
 
     private fun inferMatchExprType(expr: RsMatchExpr, expected: Ty?): Ty {
-        val matchingExprTy = expr.expr?.inferType() ?: TyUnknown
+        val matchingExprTy = resolveTypeVarsWithObligations(expr.expr?.inferType() ?: TyUnknown)
         val arms = expr.matchBody?.matchArmList.orEmpty()
         for (arm in arms) {
             for (pat in arm.patList) {

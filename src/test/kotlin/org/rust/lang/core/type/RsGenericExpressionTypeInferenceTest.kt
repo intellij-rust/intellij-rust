@@ -1304,4 +1304,24 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let _: RefWrapper<u8> = A.ref_wrapper(&Wrapper(0));
         }                                                //^ u8
     """)
+
+    fun `test type variable resolved for let pattern matching`() = testExpr("""
+        struct X;
+        fn foo<T>(_: T) -> T { unimplemented!() }
+        fn main () {
+            let (a,) = foo((X,));
+            a;
+        } //^ X
+    """)
+
+    fun `test type variable resolved for pattern matching`() = testExpr("""
+        struct X;
+        fn foo<T>(_: T) -> T { unimplemented!() }
+        fn main () {
+            match foo((X,)) {
+                (a,) => { a; }
+                _ => {} //^ X
+            }
+        }
+    """)
 }
