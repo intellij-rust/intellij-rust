@@ -108,7 +108,10 @@ abstract class RsInspectionsTestBase(
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
-    private fun configureByText(text: String) = InlineFile(text.trimIndent()).withCaret()
+    private fun configureByText(text: String) {
+        InlineFile(text.trimIndent())
+    }
+
     private fun configureByFileTree(text: String) {
         fileTreeFromText(text).createAndOpenFileWithCaretMarker()
     }

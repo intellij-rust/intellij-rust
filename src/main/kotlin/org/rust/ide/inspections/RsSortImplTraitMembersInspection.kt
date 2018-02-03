@@ -5,11 +5,10 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsTraitOrImpl
@@ -24,7 +23,7 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
             holder.registerProblem(
                 impl,
                 "Different impl member order from the trait",
-                SortImplTraitMembersFix(impl, trait)
+                SortImplTraitMembersFix()
             )
         }
     }
@@ -38,14 +37,14 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
         }
     }
 
-    private class SortImplTraitMembersFix(impl: RsImplItem, trait: RsTraitItem) : LocalQuickFixOnPsiElement(impl, trait) {
-        override fun getText() = "Apply same member order"
+    private class SortImplTraitMembersFix : LocalQuickFix {
+        override fun getFamilyName() = "Apply same member order"
 
-        override fun getFamilyName() = name
-
-        override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-            val implItems = (startElement as? RsImplItem)?.items() ?: return
-            val traitItems = (endElement as? RsTraitItem)?.items() ?: return
+        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+            val impl = descriptor.psiElement as? RsImplItem ?: return
+            val trait = impl.traitRef?.resolveToTrait ?: return
+            val implItems = impl.items()
+            val traitItems = trait.items()
             val sortedImplItems = sortedImplItems(implItems, traitItems)?.map { it.copy() } ?: return
             traitItems.zip(implItems).forEachIndexed { index, (traitItem, implItem) ->
                 if (traitItem.key() != implItem.key()) implItem.replace(sortedImplItems[index])
