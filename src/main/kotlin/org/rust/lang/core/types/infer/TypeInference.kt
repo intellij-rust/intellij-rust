@@ -419,7 +419,9 @@ private class RsFnInferenceContext(
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
 
     private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
+        if (!ty.hasTyInfer) return ty
         val tyRes = ctx.resolveTypeVarsIfPossible(ty)
+        if (!tyRes.hasTyInfer) return tyRes
         selectObligationsWherePossible()
         return ctx.resolveTypeVarsIfPossible(tyRes)
     }
