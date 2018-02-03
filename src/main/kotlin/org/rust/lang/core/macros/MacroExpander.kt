@@ -59,13 +59,13 @@ class MacroExpander(project: Project) {
         }
 
     private fun parseBodyAsItemList(call: RsMacroCall): List<RsElement>? {
-        val text = call.macroArgument?.braceListBodyText() ?: return null
+        val text = (call.stub?.braceListBodyText ?: call.macroArgument?.braceListBodyText()) ?: return null
         val file = psiFactory.createFile(text) as? RsFile ?: return null
         return file.childrenOfType()
     }
 }
 
-private fun PsiElement.braceListBodyText(): CharSequence? =
+fun PsiElement.braceListBodyText(): CharSequence? =
     textBetweenParens(firstChild, lastChild)
 
 private fun PsiElement.textBetweenParens(bra: PsiElement?, ket: PsiElement?): CharSequence? {

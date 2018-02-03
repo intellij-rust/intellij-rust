@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
 import com.intellij.util.BitUtil
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.braceListBodyText
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
@@ -33,7 +34,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 120
+        override fun getStubVersion(): Int = 999
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -972,7 +973,8 @@ class RsMacroDefinitionStub(
 
 class RsMacroCallStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val macroName: String
+    val macroName: String,
+    val braceListBodyText: String?
 ) : StubBase<RsMacroCall>(parent, elementType) {
 
     object Type : RsStubElementType<RsMacroCallStub, RsMacroCall>("MACRO_CALL") {
@@ -980,19 +982,21 @@ class RsMacroCallStub(
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacroCallStub(parentStub, this,
-                dataStream.readNameAsString()!!
+                dataStream.readNameAsString()!!,
+                dataStream.readUTFFastAsNullable()
             )
 
         override fun serialize(stub: RsMacroCallStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.macroName)
+                writeUTFFastAsNullable(stub.braceListBodyText)
             }
 
         override fun createPsi(stub: RsMacroCallStub): RsMacroCall =
             RsMacroCallImpl(stub, this)
 
         override fun createStub(psi: RsMacroCall, parentStub: StubElement<*>?) =
-            RsMacroCallStub(parentStub, this, psi.macroName)
+            RsMacroCallStub(parentStub, this, psi.macroName, psi.braceListBodyText()?.toString())
 
         override fun indexStub(stub: RsMacroCallStub, sink: IndexSink) = Unit
     }
