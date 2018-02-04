@@ -55,7 +55,7 @@ class RsImportOptimizer : ImportOptimizer {
 
         private fun replaceOrder(file: RsMod, uses: Collection<RsUseItem>) {
             val first = file.childrenOfType<RsElement>()
-                .firstOrNull { it !is RsExternCrateItem } ?: return
+                .firstOrNull { it !is RsExternCrateItem && it !is RsInnerAttr } ?: return
             val psiFactory = RsPsiFactory(file.project)
             val sortedUses = uses
                 .sortedBy { it.useSpeck?.pathText }
