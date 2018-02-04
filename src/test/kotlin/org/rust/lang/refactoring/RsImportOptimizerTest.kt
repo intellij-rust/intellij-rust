@@ -16,7 +16,7 @@ class RsImportOptimizerTest: RsTestBase() {
         use foo;
     """)
 
-    fun `test should be at the beginnging`() = doTest("""
+    fun `test should be at the beginning`() = doTest("""
         //! test
         extern crate log;
 
@@ -29,6 +29,34 @@ class RsImportOptimizerTest: RsTestBase() {
         use foo;
 
         fn test() {}
+
+    """)
+
+    fun `test should be after inner attributes 1`() = doTest("""
+        #![allow(non_snake_case)]
+        extern crate log;
+
+        use foo;
+        use bar;
+    """, """
+        #![allow(non_snake_case)]
+        extern crate log;
+
+        use bar;
+        use foo;
+
+    """)
+
+    fun `test should be after inner attributes 2`() = doTest("""
+        #![allow(non_snake_case)]
+
+        use foo;
+        use bar;
+    """, """
+        #![allow(non_snake_case)]
+
+        use bar;
+        use foo;
 
     """)
 
@@ -138,8 +166,7 @@ class RsImportOptimizerTest: RsTestBase() {
     """, """
         #[macro_use]
         pub use /*comment*/ std::mem;
-    """
-    )
+    """)
 
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String){
         checkByText(code.trimIndent(), excepted.trimIndent()) {
