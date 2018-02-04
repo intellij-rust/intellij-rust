@@ -1101,8 +1101,8 @@ sealed class RsStubLiteralType(val typeOrdinal: Int) {
     object Boolean : RsStubLiteralType(0)
     class Char(val isByte: kotlin.Boolean) : RsStubLiteralType(1)
     class String(val length: Long?, val isByte: kotlin.Boolean) : RsStubLiteralType(2)
-    class Integer(val kind: TyInteger.Kind?) : RsStubLiteralType(3)
-    class Float(val kind: TyFloat.Kind?) : RsStubLiteralType(4)
+    class Integer(val kind: TyInteger?) : RsStubLiteralType(3)
+    class Float(val kind: TyFloat?) : RsStubLiteralType(4)
 
     companion object {
         fun deserialize(dataStream: StubInputStream): RsStubLiteralType? {
@@ -1112,8 +1112,8 @@ sealed class RsStubLiteralType(val typeOrdinal: Int) {
                     0 -> RsStubLiteralType.Boolean
                     1 -> RsStubLiteralType.Char(readBoolean())
                     2 -> RsStubLiteralType.String(readLong(), readBoolean())
-                    3 -> RsStubLiteralType.Integer(readEnumAsNullable<TyInteger.Kind>())
-                    4 -> RsStubLiteralType.Float(readEnumAsNullable<TyFloat.Kind>())
+                    3 -> RsStubLiteralType.Integer(TyInteger.VALUES.getOrNull(readByte().toInt()))
+                    4 -> RsStubLiteralType.Float(TyFloat.VALUES.getOrNull(readByte().toInt()))
                     else -> null
                 }
             }
@@ -1133,8 +1133,8 @@ private fun RsStubLiteralType?.serialize(dataStream: StubOutputStream) {
             dataStream.writeLong(length ?: 0)
             dataStream.writeBoolean(isByte)
         }
-        is RsStubLiteralType.Integer -> dataStream.writeEnum(kind)
-        is RsStubLiteralType.Float -> dataStream.writeEnum(kind)
+        is RsStubLiteralType.Integer -> dataStream.writeByte(kind?.ordinal ?: -1)
+        is RsStubLiteralType.Float -> dataStream.writeByte(kind?.ordinal ?: -1)
     }
 }
 
@@ -1154,7 +1154,3 @@ private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
 
 private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E?) = writeByte(e?.ordinal ?: -1)
 private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readByte().toInt()]
-private inline fun <reified E : Enum<E>> StubInputStream.readEnumAsNullable(): E? {
-    val ordinal = readByte().toInt()
-    return if (ordinal < 0) null else enumValues<E>()[ordinal]
-}

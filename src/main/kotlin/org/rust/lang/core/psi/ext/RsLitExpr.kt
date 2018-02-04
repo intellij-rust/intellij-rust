@@ -21,8 +21,8 @@ val RsLitExpr.stubType: RsStubLiteralType? get() {
         is RsLiteralKind.Boolean ->  RsStubLiteralType.Boolean
         is RsLiteralKind.Char -> RsStubLiteralType.Char(kind.isByte)
         is RsLiteralKind.String -> RsStubLiteralType.String(kind.offsets.value?.length?.toLong(), kind.isByte)
-        is RsLiteralKind.Integer -> RsStubLiteralType.Integer(TyInteger.Kind.fromSuffixedLiteral(integerLiteral!!))
-        is RsLiteralKind.Float -> RsStubLiteralType.Float(TyFloat.Kind.fromSuffixedLiteral(floatLiteral!!))
+        is RsLiteralKind.Integer -> RsStubLiteralType.Integer(TyInteger.fromSuffixedLiteral(integerLiteral!!))
+        is RsLiteralKind.Float -> RsStubLiteralType.Float(TyFloat.fromSuffixedLiteral(floatLiteral!!))
         else -> null
     }
 }

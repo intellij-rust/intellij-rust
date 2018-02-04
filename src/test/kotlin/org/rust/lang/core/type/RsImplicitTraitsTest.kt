@@ -136,8 +136,8 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
     """)
 
     private fun checkPrimitiveTypes(traitName: String) {
-        val allIntegers = TyInteger.Kind.values().map { TyInteger(it) }.toTypedArray()
-        val allFloats = TyFloat.Kind.values().map { TyFloat(it) }.toTypedArray()
+        val allIntegers = TyInteger.VALUES.toTypedArray()
+        val allFloats = TyFloat.VALUES.toTypedArray()
         for (ty in listOf(TyBool, TyChar, *allIntegers, *allFloats)) {
             doTest("""
                 fn foo() -> $ty { unimplemented!() }

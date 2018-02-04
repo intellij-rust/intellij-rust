@@ -24,7 +24,7 @@ fun calculateArraySize(expr: RsExpr?, pathExprResolver: ((RsPathExpr) -> RsEleme
         if (depth >= MAX_EXPR_DEPTH) return null
         return when (expr) {
             is RsLitExpr -> expr.integerLiteralValue
-                ?.removeSuffix(TyInteger.Kind.usize.name)
+                ?.removeSuffix(TyInteger.USize.name)
                 ?.toLongOrNull()
                 ?.notNegativeOrNull()
             is RsPathExpr -> {
@@ -32,7 +32,7 @@ fun calculateArraySize(expr: RsExpr?, pathExprResolver: ((RsPathExpr) -> RsEleme
                 if (!const.isConst) return null
                 val path = (const.typeReference?.typeElement as? RsBaseType)?.path ?: return null
                 val integerType = TyPrimitive.fromPath(path) as? TyInteger ?: return null
-                if (integerType.kind == TyInteger.Kind.usize) eval(const.expr, depth + 1) else null
+                if (integerType == TyInteger.USize) eval(const.expr, depth + 1) else null
             }
             is RsParenExpr -> eval(expr.expr, depth + 1)
             is RsBinaryExpr -> {

@@ -95,9 +95,9 @@ class RsInferenceContext(
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
 
-    private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger.Kind> =
+    private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> =
         UnificationTable()
-    private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat.Kind> =
+    private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> =
         UnificationTable()
     private val varUnificationTable: UnificationTable<TyInfer.TyVar, Ty> =
         UnificationTable()
@@ -143,8 +143,8 @@ class RsInferenceContext(
         } else {
             val (retTy, expr) = when (element) {
                 is RsConstant -> element.typeReference?.type to element.expr
-                is RsArrayType -> TyInteger(TyInteger.Kind.usize) to element.expr
-                is RsVariantDiscriminant -> TyInteger(TyInteger.Kind.isize) to element.expr
+                is RsArrayType -> TyInteger.USize to element.expr
+                is RsVariantDiscriminant -> TyInteger.ISize to element.expr
                 else -> error("Type inference is not implemented for PSI element of type " +
                         "`${element.javaClass}` that implement `RsInferenceContextOwner`")
             }
@@ -289,12 +289,12 @@ class RsInferenceContext(
         when (ty1) {
             is TyInfer.IntVar -> when (ty2) {
                 is TyInfer.IntVar -> intUnificationTable.unifyVarVar(ty1, ty2)
-                is TyInteger -> intUnificationTable.unifyVarValue(ty1, ty2.kind)
+                is TyInteger -> intUnificationTable.unifyVarValue(ty1, ty2)
                 else -> return false
             }
             is TyInfer.FloatVar -> when (ty2) {
                 is TyInfer.FloatVar -> floatUnificationTable.unifyVarVar(ty1, ty2)
-                is TyFloat -> floatUnificationTable.unifyVarValue(ty1, ty2.kind)
+                is TyFloat -> floatUnificationTable.unifyVarValue(ty1, ty2)
                 else -> return false
             }
             is TyInfer.TyVar -> error("unreachable")
@@ -348,8 +348,8 @@ class RsInferenceContext(
         if (ty !is TyInfer) return ty
 
         return when (ty) {
-            is TyInfer.IntVar -> intUnificationTable.findValue(ty)?.let(::TyInteger) ?: ty
-            is TyInfer.FloatVar -> floatUnificationTable.findValue(ty)?.let(::TyFloat) ?: ty
+            is TyInfer.IntVar -> intUnificationTable.findValue(ty) ?: ty
+            is TyInfer.FloatVar -> floatUnificationTable.findValue(ty) ?: ty
             is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(this::shallowResolve) ?: ty
         }
     }
@@ -363,8 +363,8 @@ class RsInferenceContext(
             if (ty !is TyInfer) return ty
 
             return when (ty) {
-                is TyInfer.IntVar -> TyInteger(intUnificationTable.findValue(ty) ?: TyInteger.DEFAULT_KIND)
-                is TyInfer.FloatVar -> TyFloat(floatUnificationTable.findValue(ty) ?: TyFloat.DEFAULT_KIND)
+                is TyInfer.IntVar -> intUnificationTable.findValue(ty) ?: TyInteger.DEFAULT
+                is TyInfer.FloatVar -> floatUnificationTable.findValue(ty) ?: TyFloat.DEFAULT
                 is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(::go) ?: ty.origin ?: TyUnknown
             }
         }
@@ -585,25 +585,25 @@ private class RsFnInferenceContext(
         val stubType = expr.stubType
         return when (stubType) {
             is RsStubLiteralType.Boolean -> TyBool
-            is RsStubLiteralType.Char -> if (stubType.isByte) TyInteger(TyInteger.Kind.u8) else TyChar
+            is RsStubLiteralType.Char -> if (stubType.isByte) TyInteger.U8 else TyChar
             is RsStubLiteralType.String -> {
                 if (stubType.isByte) {
-                    TyReference(TyArray(TyInteger(TyInteger.Kind.u8), stubType.length), IMMUTABLE)
+                    TyReference(TyArray(TyInteger.U8, stubType.length), IMMUTABLE)
                 } else {
                     TyReference(TyStr, IMMUTABLE)
                 }
             }
             is RsStubLiteralType.Integer -> {
-                val ty = stubType.kind?.let(::TyInteger)
+                val ty = stubType.kind
                 ty ?: when (expected) {
                     is TyInteger -> expected
-                    TyChar -> TyInteger(TyInteger.Kind.u8)
-                    is TyPointer, is TyFunction -> TyInteger(TyInteger.Kind.usize)
+                    TyChar -> TyInteger.U8
+                    is TyPointer, is TyFunction -> TyInteger.USize
                     else -> TyInfer.IntVar()
                 }
             }
             is RsStubLiteralType.Float -> {
-                val ty = stubType.kind?.let(::TyFloat)
+                val ty = stubType.kind
                 ty ?: (expected?.takeIf { it is TyFloat } ?: TyInfer.FloatVar())
             }
             null -> TyUnknown
@@ -1259,7 +1259,7 @@ private class RsFnInferenceContext(
                 ?.let { expr.initializer?.inferTypeCoercableTo(expectedElemTy) }
                 ?: expr.initializer?.inferType()
                 ?: return TySlice(TyUnknown)
-            expr.sizeExpr?.inferType(TyInteger(TyInteger.Kind.usize))
+            expr.sizeExpr?.inferType(TyInteger.USize)
             val size = calculateArraySize(expr.sizeExpr) { ctx.getResolvedPaths(it).singleOrNull() }
             elementType to size
         } else {

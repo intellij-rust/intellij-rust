@@ -23,11 +23,10 @@ abstract class TyPrimitive : Ty() {
             if (path.hasColonColon) return null
             val name = path.referenceName
 
-            val integerKind = TyInteger.Kind.values().find { it.name == name }
-            if (integerKind != null) return TyInteger(integerKind)
-
-            val floatKind = TyFloat.Kind.values().find { it.name == name }
-            if (floatKind != null) return TyFloat(floatKind)
+            TyInteger.VALUES.find { it.name == name }
+                ?.let { return it }
+            TyFloat.VALUES.find { it.name == name }
+                ?.let { return it }
 
             return when (name) {
                 "bool" -> TyBool
@@ -62,37 +61,47 @@ object TyStr : TyPrimitive() {
 
 abstract class TyNumeric : TyPrimitive()
 
-data class TyInteger(val kind: Kind) : TyNumeric() {
+sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
     companion object {
-        val DEFAULT_KIND = Kind.i32
-    }
+        val DEFAULT = TyInteger.I32
+        val VALUES = listOf(U8, U16, U32, U64, U128, USize, I8, I16, I32, I64, I128, ISize)
 
-    enum class Kind {
-        u8, u16, u32, u64, u128, usize,
-        i8, i16, i32, i64, i128, isize;
-
-        companion object {
-            fun fromSuffixedLiteral(literal: PsiElement): Kind? =
-                Kind.values().find { literal.text.endsWith(it.name) }
+        fun fromSuffixedLiteral(literal: PsiElement): TyInteger? {
+            val text = literal.text
+            return VALUES.find { text.endsWith(it.name) }
         }
     }
+
+    object U8: TyInteger("u8", 0)
+    object U16: TyInteger("u16", 1)
+    object U32: TyInteger("u32", 2)
+    object U64: TyInteger("u64", 3)
+    object U128: TyInteger("u128", 4)
+    object USize : TyInteger("usize", 5)
+
+    object I8: TyInteger("i8", 6)
+    object I16: TyInteger("i16", 7)
+    object I32: TyInteger("i32", 8)
+    object I64: TyInteger("i64", 9)
+    object I128: TyInteger("i128", 10)
+    object ISize: TyInteger("isize", 11)
 
     override fun toString(): String = tyToString(this)
 }
 
-data class TyFloat(val kind: Kind) : TyNumeric() {
+sealed class TyFloat(val name: String, val ordinal: Int) : TyNumeric() {
     companion object {
-        val DEFAULT_KIND = Kind.f64
-    }
+        val DEFAULT = TyFloat.F64
+        val VALUES = listOf(F32, F64)
 
-    enum class Kind {
-        f32, f64;
-
-        companion object {
-            fun fromSuffixedLiteral(literal: PsiElement): Kind? =
-                Kind.values().find { literal.text.endsWith(it.name) }
+        fun fromSuffixedLiteral(literal: PsiElement): TyFloat? {
+            val text = literal.text
+            return VALUES.find { text.endsWith(it.name) }
         }
     }
+
+    object F32: TyFloat("f32", 0)
+    object F64: TyFloat("f64", 1)
 
     override fun toString(): String = tyToString(this)
 }
