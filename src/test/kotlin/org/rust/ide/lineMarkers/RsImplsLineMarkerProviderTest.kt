@@ -38,8 +38,12 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         /// Documentation
         ///
         #[warn(non_camel_case_types)]
-        trait Foo {}                // - Has implementations
-        struct Bar {}               // - Has implementations
+        trait
+        Foo // - Has implementations
+        {}
+        struct
+        Bar // - Has implementations
+        {}
         impl Foo for Bar {}
     """)
 }

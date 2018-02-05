@@ -17,29 +17,6 @@ import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
 import javax.swing.Icon
 
-sealed class RsTypeAliasOwner {
-    object Free: RsTypeAliasOwner()
-    class Trait(val trait: RsTraitItem): RsTypeAliasOwner()
-    class Impl(val impl: RsImplItem): RsTypeAliasOwner()
-}
-
-val RsTypeAlias.owner: RsTypeAliasOwner get() {
-    val stub = stub
-    val stubOnlyParent = if (stub != null) stub.parentStub.psi else parent
-    return when (stubOnlyParent) {
-        is RsMembers -> {
-            val grandDad = parent.parent
-            when (grandDad) {
-                is RsTraitItem -> RsTypeAliasOwner.Trait(grandDad)
-                is RsImplItem -> RsTypeAliasOwner.Impl(grandDad)
-                else -> error("unreachable")
-            }
-        }
-        else -> RsTypeAliasOwner.Free
-    }
-}
-
-
 val RsTypeAlias.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 

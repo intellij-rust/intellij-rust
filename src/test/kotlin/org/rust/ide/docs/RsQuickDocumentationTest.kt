@@ -461,15 +461,55 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <p>Documented</p>
     """)
 
-    fun testTraitConst() = doTest("""
+    fun `test const`() = doTest("""
+        fn main() {
+            /// Documented
+            const AWESOME: i32 = 1;
+                //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>const <b>AWESOME</b>: i32 = 1</pre>
+        <p>Documented</p>
+    """)
+
+    fun `test static`() = doTest("""
+        fn main() {
+            /// Documented
+            static AWESOME: i32 = 1;
+                 //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>static <b>AWESOME</b>: i32 = 1</pre>
+        <p>Documented</p>
+    """)
+
+    fun `test trait const`() = doTest("""
         trait MyTrait {
             /// Documented
             const AWESOME: i32;
                 //^
         }
     """, """
-        <pre>AWESOME</pre>
+        <pre>test_package::MyTrait</pre>
+        <pre>const <b>AWESOME</b>: i32</pre>
         <p>Documented</p>
+    """)
+
+    fun `test impl assoc const`() = doTest("""
+        trait Trait {
+            const AWESOME: u8;
+        }
+        struct Foo(i32);
+        impl Trait for Foo {
+            const AWESOME: u8 = 42;
+                //^
+        }
+    """, """
+        <pre>test_package</pre>
+        <pre>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a></pre>
+        <pre>const <b>AWESOME</b>: u8 = 42</pre>
     """)
 
     fun `test trait method`() = doTest("""

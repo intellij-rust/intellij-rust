@@ -2,7 +2,7 @@
     <id>org.toml.lang</id>
     <name>Toml</name>
     <version>0.0.1</version>
-    <idea-version since-build="162" until-build="173.*"/>
+    <idea-version since-build="162" until-build="181.*"/>
 
     <vendor url="https://github.com/intellij-rust/intellij-rust"/>
 
@@ -21,6 +21,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
+        <fileTypeDetector implementation="org.toml.lang.TomlFileTypeDetector"/>
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
         <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
         <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.ide.TomlHighlighterFactory"/>

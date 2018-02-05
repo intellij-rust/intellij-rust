@@ -330,5 +330,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         return testProject
     }
 
+    protected val PsiElement.lineNumber: Int
+        get() = myFixture.getDocument(myFixture.file).getLineNumber(textOffset)
 }
 

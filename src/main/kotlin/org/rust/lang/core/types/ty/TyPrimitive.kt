@@ -7,12 +7,8 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.tyToString
-import org.rust.lang.core.psi.RsArrayExpr
-import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsVariantDiscriminant
 import org.rust.lang.core.psi.ext.hasColonColon
-import org.rust.lang.core.psi.ext.sizeExpr
 
 /**
  * These are "atomic" ty (not type constructors, singletons).
@@ -27,11 +23,10 @@ abstract class TyPrimitive : Ty() {
             if (path.hasColonColon) return null
             val name = path.referenceName
 
-            val integerKind = TyInteger.Kind.values().find { it.name == name }
-            if (integerKind != null) return TyInteger(integerKind)
-
-            val floatKind = TyFloat.Kind.values().find { it.name == name }
-            if (floatKind != null) return TyFloat(floatKind)
+            TyInteger.VALUES.find { it.name == name }
+                ?.let { return it }
+            TyFloat.VALUES.find { it.name == name }
+                ?.let { return it }
 
             return when (name) {
                 "bool" -> TyBool
@@ -66,68 +61,47 @@ object TyStr : TyPrimitive() {
 
 abstract class TyNumeric : TyPrimitive()
 
-class TyInteger(val kind: Kind) : TyNumeric() {
+sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
     companion object {
-        fun fromSuffixedLiteral(literal: PsiElement): TyInteger? =
-            Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyInteger)
+        val DEFAULT = TyInteger.I32
+        val VALUES = listOf(U8, U16, U32, U64, U128, USize, I8, I16, I32, I64, I128, ISize)
 
-        fun fromLiteral(literal: PsiElement): TyInteger {
-            val kind = Kind.values().find { literal.text.endsWith(it.name) }
-                ?: inferKind(literal)
-
-            return TyInteger(kind ?: DEFAULT_KIND)
+        fun fromSuffixedLiteral(literal: PsiElement): TyInteger? {
+            val text = literal.text
+            return VALUES.find { text.endsWith(it.name) }
         }
-
-        /**
-         * Tries to infer the kind of an unsuffixed integer literal by its context.
-         * Fall back to the default kind if can't infer.
-         */
-        private fun inferKind(literal: PsiElement): Kind? {
-            val expr = literal.parent as? RsLitExpr ?: return null
-            return when {
-                expr.isArraySize -> Kind.usize
-                expr.isEnumVariantDiscriminant -> Kind.isize
-                else -> null
-            }
-        }
-
-        private val RsLitExpr.isArraySize: Boolean get() = (parent as? RsArrayExpr)?.sizeExpr == this
-        private val RsLitExpr.isEnumVariantDiscriminant: Boolean get() = parent is RsVariantDiscriminant
-
-        val DEFAULT_KIND = Kind.i32
     }
 
-    enum class Kind {
-        u8, u16, u32, u64, u128, usize,
-        i8, i16, i32, i64, i128, isize
-    }
+    object U8: TyInteger("u8", 0)
+    object U16: TyInteger("u16", 1)
+    object U32: TyInteger("u32", 2)
+    object U64: TyInteger("u64", 3)
+    object U128: TyInteger("u128", 4)
+    object USize : TyInteger("usize", 5)
 
-    // Ignore `isKindWeak` for the purposes of equality
-    override fun equals(other: Any?): Boolean = other is TyInteger && other.kind == kind
-    override fun hashCode(): Int = kind.hashCode()
+    object I8: TyInteger("i8", 6)
+    object I16: TyInteger("i16", 7)
+    object I32: TyInteger("i32", 8)
+    object I64: TyInteger("i64", 9)
+    object I128: TyInteger("i128", 10)
+    object ISize: TyInteger("isize", 11)
 
     override fun toString(): String = tyToString(this)
 }
 
-class TyFloat(val kind: Kind) : TyNumeric() {
+sealed class TyFloat(val name: String, val ordinal: Int) : TyNumeric() {
     companion object {
-        fun fromSuffixedLiteral(literal: PsiElement): TyFloat? =
-            Kind.values().find { literal.text.endsWith(it.name) }?.let(::TyFloat)
+        val DEFAULT = TyFloat.F64
+        val VALUES = listOf(F32, F64)
 
-        fun fromLiteral(literal: PsiElement): TyFloat {
-            val kind = Kind.values().find { literal.text.endsWith(it.name) }
-
-            return TyFloat(kind ?: DEFAULT_KIND)
+        fun fromSuffixedLiteral(literal: PsiElement): TyFloat? {
+            val text = literal.text
+            return VALUES.find { text.endsWith(it.name) }
         }
-
-        val DEFAULT_KIND = Kind.f64
     }
 
-    enum class Kind { f32, f64 }
-
-    // Ignore `isKindWeak` for the purposes of equality
-    override fun equals(other: Any?): Boolean = other is TyFloat && other.kind == kind
-    override fun hashCode(): Int = kind.hashCode()
+    object F32: TyFloat("f32", 0)
+    object F64: TyFloat("f64", 1)
 
     override fun toString(): String = tyToString(this)
 }

@@ -144,7 +144,7 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         }                                          //^ u8
     """)
 
-    fun `test infer match rvalue from lvalue 3`() = testExpr("""
+    fun `test infer match rvalue from lvalue`() = testExpr("""
         fn main() {
             let a: u8 = match true {
                 true => 1,
@@ -353,9 +353,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test integer unification block`() = testExpr("""
         fn main() {
-        let a = 0;
-              //^ u8
-        let b: u8 = { a };
+            let a = 0;
+                  //^ u8
+            let b: u8 = { a };
         }
     """)
 
@@ -369,27 +369,113 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test integer unification if else 2`() = testExpr("""
         fn main() {
-        let a = 0;
-              //^ u8
+            let a = 0;
+                  //^ u8
             let b: u8 = if true { 1 } else { a };
         }
     """)
 
     fun `test integer unification if else 3`() = testExpr("""
         fn main() {
-        let a = 0;
-              //^ u8
+            let a = 0;
+                  //^ u8
             let b: u8 = if true { 1 } else if true { a } else { 1 };
         }
     """)
 
     fun `test integer unification match`() = testExpr("""
         fn main() {
-        let a = 0;
-              //^ u8
+            let a = 0;
+                  //^ u8
             let b: u8 = match true {
                 true => a,
                 false => 1,
+            };
+        }
+    """)
+
+    fun `test unify match pattern const`() = testExpr("""
+        fn main() {
+            match 0u8 {
+                0 => {},
+              //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern ref`() = testExpr("""
+        fn main() {
+            match &0u8 {
+                &0 => {},
+               //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern range`() = testExpr("""
+        fn main() {
+            match 0u8 {
+                0...1 => {},
+              //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern tuple`() = testExpr("""
+        fn main() {
+            match (0u8,) {
+                (0,) => {},
+               //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern struct`() = testExpr("""
+        struct S<T>{ f: T }
+        fn main() {
+            let a = S { f: 0u8 };
+            match a {
+                S { f: 0 } => {},
+                     //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern tuple struct`() = testExpr("""
+        struct S<T>(T);
+        fn main() {
+            match S(0u8) {
+                S(0) => {},
+                //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern array`() = testExpr("""
+        #![feature(slice_patterns)]
+        fn main() {
+            match [1u8, 2] {
+                [1, _] => {},
+               //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern slice`() = testExpr("""
+        #![feature(slice_patterns)]
+        fn main() {
+            let a: &[u8] = &[1, 2];
+            match a {
+                &[1, _] => {},
+                //^ u8
+                _ => {},
             };
         }
     """)

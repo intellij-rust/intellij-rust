@@ -51,8 +51,7 @@ const val DEFAULT_RECURSION_LIMIT = 64
 
 class ImplLookup(
     private val project: Project,
-    private val items: StdKnownItems,
-    private var _ctx: RsInferenceContext? = null
+    private val items: StdKnownItems
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
@@ -90,11 +89,9 @@ class ImplLookup(
         findAssociatedType(trait, "Item")?.let { trait to it }
     }
 
-    private val ctx: RsInferenceContext
-        get() {
-            if (_ctx == null) _ctx = RsInferenceContext()
-            return _ctx!!
-        }
+    val ctx: RsInferenceContext by lazy(NONE) {
+        RsInferenceContext(this, items)
+    }
 
     fun findImplsAndTraits(ty: Ty): Set<RsTraitOrImpl> {
         return findImplsAndTraitsCache.getOrPut(project, freshen(ty)) { rawFindImplsAndTraits(ty) }

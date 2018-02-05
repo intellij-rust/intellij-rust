@@ -72,22 +72,14 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
     val rawLines = when (this) {
         is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
-        is RsFunction -> {
-            val owner = owner
-            when (owner) {
-                is RsFunctionOwner.Foreign, is RsFunctionOwner.Free -> listOfNotNull(presentableQualifiedModName)
-                is RsFunctionOwner.Impl ->
-                    listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
-                is RsFunctionOwner.Trait -> owner.trait.declarationText
-            }
-        }
         is RsStructOrEnumItemElement, is RsTraitItem -> listOfNotNull(presentableQualifiedModName)
-        is RsTypeAlias -> {
+        is RsAbstractable -> {
             val owner = owner
             when (owner) {
-                is RsTypeAliasOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
-                is RsTypeAliasOwner.Trait -> owner.trait.declarationText
-                is RsTypeAliasOwner.Free -> listOfNotNull(presentableQualifiedModName)
+                is RsAbstractableOwner.Foreign,
+                is RsAbstractableOwner.Free -> listOfNotNull(presentableQualifiedModName)
+                is RsAbstractableOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
+                is RsAbstractableOwner.Trait -> owner.trait.declarationText
             }
         }
         else -> listOfNotNull(presentableQualifiedName)
@@ -118,8 +110,15 @@ private fun RsDocAndAttributeOwner.signature(usePreTag: Boolean): String {
             retType?.generateDocumentation(buffer)
             listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
         }
-        // All these types extend RsTypeBearingItemElement and RsGenericDeclaration interfaces
-        // so all casts are safe
+        is RsConstant -> {
+            val buffer = StringBuilder()
+            declarationModifiers.joinTo(buffer, " ", "", " ")
+            buffer.b { it += name }
+            typeReference?.generateDocumentation(buffer, ": ")
+            expr?.generateDocumentation(buffer, " = ")
+            listOf(buffer.toString())
+        }
+        // All these types extend RsItemElement and RsGenericDeclaration interfaces so all casts are safe
         is RsStructOrEnumItemElement, is RsTraitItem, is RsTypeAlias -> {
             val name = name
             if (name != null) {
@@ -181,6 +180,7 @@ private val RsItemElement.declarationModifiers: List<String> get() {
         }
         is RsStructItem -> modifiers += "struct"
         is RsEnumItem -> modifiers += "enum"
+        is RsConstant -> modifiers += if (isConst) "const" else "static"
         is RsTypeAlias -> modifiers += "type"
         is RsTraitItem -> {
             if (isUnsafe) {

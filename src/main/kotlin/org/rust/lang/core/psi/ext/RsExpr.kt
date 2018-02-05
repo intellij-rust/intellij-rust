@@ -7,7 +7,6 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.*
 
 /**
  * Extracts [RsLitExpr] raw value
@@ -141,43 +140,40 @@ sealed class ArithmeticAssignmentOp(
     }
 }
 
-val RsBinaryOp.operator: PsiElement
-    get() = requireNotNull(node.findChildByType(RS_BINARY_OPS)) { "guaranteed to be not-null by parser" }.psi
+val RsBinaryOp.operatorType: BinaryOperator get() = when (op) {
+    "+" -> ArithmeticOp.ADD
+    "-" -> ArithmeticOp.SUB
+    "*" -> ArithmeticOp.MUL
+    "/" -> ArithmeticOp.DIV
+    "%" -> ArithmeticOp.REM
+    "&" -> ArithmeticOp.BIT_AND
+    "|" -> ArithmeticOp.BIT_OR
+    "^" -> ArithmeticOp.BIT_XOR
+    "<<" -> ArithmeticOp.SHL
+    ">>" -> ArithmeticOp.SHR
 
-val RsBinaryOp.operatorType: BinaryOperator get() = when (operator.elementType) {
-    PLUS -> ArithmeticOp.ADD
-    MINUS -> ArithmeticOp.SUB
-    MUL -> ArithmeticOp.MUL
-    DIV -> ArithmeticOp.DIV
-    REM -> ArithmeticOp.REM
-    AND -> ArithmeticOp.BIT_AND
-    OR -> ArithmeticOp.BIT_OR
-    XOR -> ArithmeticOp.BIT_XOR
-    LTLT -> ArithmeticOp.SHL
-    GTGT -> ArithmeticOp.SHR
+    "&&" -> LogicOp.AND
+    "||" -> LogicOp.OR
 
-    ANDAND -> LogicOp.AND
-    OROR -> LogicOp.OR
+    "==" -> EqualityOp.EQ
+    "!=" -> EqualityOp.EXCLEQ
 
-    EQEQ -> EqualityOp.EQ
-    EXCLEQ -> EqualityOp.EXCLEQ
+    ">" -> ComparisonOp.GT
+    "<" -> ComparisonOp.LT
+    "<=" -> ComparisonOp.LTEQ
+    ">=" -> ComparisonOp.GTEQ
 
-    GT -> ComparisonOp.GT
-    LT -> ComparisonOp.LT
-    LTEQ -> ComparisonOp.LTEQ
-    GTEQ -> ComparisonOp.GTEQ
-
-    EQ -> AssignmentOp.EQ
-    ANDEQ -> ArithmeticAssignmentOp.ANDEQ
-    OREQ -> ArithmeticAssignmentOp.OREQ
-    PLUSEQ -> ArithmeticAssignmentOp.PLUSEQ
-    MINUSEQ -> ArithmeticAssignmentOp.MINUSEQ
-    MULEQ -> ArithmeticAssignmentOp.MULEQ
-    DIVEQ -> ArithmeticAssignmentOp.DIVEQ
-    REMEQ -> ArithmeticAssignmentOp.REMEQ
-    XOREQ -> ArithmeticAssignmentOp.XOREQ
-    GTGTEQ -> ArithmeticAssignmentOp.GTGTEQ
-    LTLTEQ -> ArithmeticAssignmentOp.LTLTEQ
+    "=" -> AssignmentOp.EQ
+    "&=" -> ArithmeticAssignmentOp.ANDEQ
+    "|=" -> ArithmeticAssignmentOp.OREQ
+    "+=" -> ArithmeticAssignmentOp.PLUSEQ
+    "-=" -> ArithmeticAssignmentOp.MINUSEQ
+    "*=" -> ArithmeticAssignmentOp.MULEQ
+    "/=" -> ArithmeticAssignmentOp.DIVEQ
+    "%=" -> ArithmeticAssignmentOp.REMEQ
+    "^=" -> ArithmeticAssignmentOp.XOREQ
+    ">>=" -> ArithmeticAssignmentOp.GTGTEQ
+    "<<=" -> ArithmeticAssignmentOp.LTLTEQ
 
     else -> error("Unknown binary operator type: `$text`")
 }

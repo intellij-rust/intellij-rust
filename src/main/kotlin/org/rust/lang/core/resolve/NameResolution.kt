@@ -118,7 +118,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 
     val explicitPath = modDecl.pathAttribute
     if (explicitPath != null) {
-        val vFile = dir.virtualFile.findFileByRelativePath(explicitPath.replace('\\', '/')) ?: return false
+        val vFile = dir.virtualFile.findFileByRelativePath(FileUtil.toSystemIndependentName(explicitPath)) ?: return false
         val mod = vFile.toPsiFile(modDecl.project)?.rustMod ?: return false
 
         val name = modDecl.name ?: return false
@@ -688,5 +688,4 @@ object NameResolutionTestmarks {
     val missingMacroExport = Testmark("missingMacroExport")
     val missingMacroUse = Testmark("missingMacroUse")
     val selfInGroup = Testmark("selfInGroup")
-    val selfInGroupName = Testmark("selfInGroupName")
 }

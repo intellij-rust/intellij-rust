@@ -36,22 +36,22 @@ class RsSyntaxErrorsAnnotator : Annotator {
 
 private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
     when (fn.owner) {
-        is RsFunctionOwner.Free -> {
+        is RsAbstractableOwner.Free -> {
             require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
             deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
         }
-        is RsFunctionOwner.Trait -> {
+        is RsAbstractableOwner.Trait -> {
             deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
             deny(fn.vis, holder, "${fn.title} cannot have the `pub` qualifier")
             fn.const?.let { RsDiagnostic.ConstTraitFnError(it).addToHolder(holder) }
         }
-        is RsFunctionOwner.Impl -> {
+        is RsAbstractableOwner.Impl -> {
             require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
             if (fn.default != null) {
                 deny(fn.vis, holder, "Default ${fn.title.firstLower} cannot have the `pub` qualifier")
             }
         }
-        is RsFunctionOwner.Foreign -> {
+        is RsAbstractableOwner.Foreign -> {
             deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
             deny(fn.block, holder, "${fn.title} cannot have a body")
             deny(fn.const, holder, "${fn.title} cannot have the `const` qualifier")
@@ -71,18 +71,18 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
     val title = "Type `${ta.identifier.text}`"
     val owner = ta.owner
     when (owner) {
-        is RsTypeAliasOwner.Free -> {
+        is RsAbstractableOwner.Free -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
             deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
             require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
         }
-        is RsTypeAliasOwner.Trait -> {
+        is RsAbstractableOwner.Trait -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
             deny(ta.vis, holder, "$title cannot have the `pub` qualifier")
             deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
             deny(ta.whereClause, holder, "$title cannot have `where` clause")
         }
-        is RsTypeAliasOwner.Impl -> {
+        is RsAbstractableOwner.Impl -> {
             if (owner.impl.`for` == null) {
                 RsDiagnostic.AssociatedTypeInInherentImplError(ta).addToHolder(holder)
             } else {
@@ -98,21 +98,21 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
 private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
     val title = if (const.static != null) "Static constant `${const.identifier.text}`" else "Constant `${const.identifier.text}`"
     when (const.owner) {
-        is RsConstantOwner.Free -> {
+        is RsAbstractableOwner.Free -> {
             deny(const.default, holder, "$title cannot have the `default` qualifier")
             require(const.expr, holder, "$title must have a value", const)
         }
-        is RsConstantOwner.Foreign -> {
+        is RsAbstractableOwner.Foreign -> {
             deny(const.default, holder, "$title cannot have the `default` qualifier")
             require(const.static, holder, "Only static constants are allowed in extern blocks", const.const)
             deny(const.expr, holder, "Static constants in extern blocks cannot have values", const.eq, const.expr)
         }
-        is RsConstantOwner.Trait -> {
+        is RsAbstractableOwner.Trait -> {
             deny(const.vis, holder, "$title cannot have the `pub` qualifier")
             deny(const.default, holder, "$title cannot have the `default` qualifier")
             deny(const.static, holder, "Static constants are not allowed in traits")
         }
-        is RsConstantOwner.Impl -> {
+        is RsAbstractableOwner.Impl -> {
             deny(const.static, holder, "Static constants are not allowed in impl blocks")
             require(const.expr, holder, "$title must have a value", const)
         }
@@ -122,14 +122,14 @@ private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
 private fun checkValueParameterList(holder: AnnotationHolder, params: RsValueParameterList) {
     val fn = params.parent as? RsFunction ?: return
     when (fn.owner) {
-        is RsFunctionOwner.Free -> {
+        is RsAbstractableOwner.Free -> {
             deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
             deny(params.dotdotdot, holder, "${fn.title} cannot be variadic")
         }
-        is RsFunctionOwner.Trait, is RsFunctionOwner.Impl -> {
+        is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> {
             deny(params.dotdotdot, holder, "${fn.title} cannot be variadic")
         }
-        RsFunctionOwner.Foreign -> {
+        RsAbstractableOwner.Foreign -> {
             deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
             checkDot3Parameter(holder, params.dotdotdot)
         }
@@ -150,12 +150,12 @@ private fun checkDot3Parameter(holder: AnnotationHolder, dot3: PsiElement?) {
 private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
     val fn = param.parent.parent as? RsFunction ?: return
     when (fn.owner) {
-        is RsFunctionOwner.Free,
-        is RsFunctionOwner.Impl,
-        is RsFunctionOwner.Foreign -> {
+        is RsAbstractableOwner.Free,
+        is RsAbstractableOwner.Impl,
+        is RsAbstractableOwner.Foreign -> {
             require(param.pat, holder, "${fn.title} cannot have anonymous parameters", param)
         }
-        is RsFunctionOwner.Trait -> {
+        is RsAbstractableOwner.Trait -> {
             denyType<RsPatTup>(param.pat, holder, "${fn.title} cannot have tuple parameters", param)
             if (param.pat == null) {
                 val annotation = holder

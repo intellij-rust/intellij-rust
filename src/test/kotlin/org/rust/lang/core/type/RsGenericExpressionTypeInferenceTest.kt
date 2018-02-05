@@ -13,7 +13,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<f64>) {
             let x = s.field;
-            x
+            x;
           //^ f64
         }
     """)
@@ -23,7 +23,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<'static, f64>) {
             let x = s.field;
-            x
+            x;
           //^ &f64
         }
     """)
@@ -34,7 +34,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: A<B<f64>>) {
             let x = s.field.field;
-            x
+            x;
           //^ f64
         }
     """)
@@ -44,7 +44,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<S<u64>>) {
             let x = s.field.field;
-            x
+            x;
           //^ u64
         }
     """)
@@ -54,7 +54,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<f64>) {
             let x = s.field;
-            x
+            x;
           //^ [f64; 1]
         }
     """)
@@ -64,7 +64,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<f64>) {
             let x = s.field;
-            x
+            x;
           //^ &[f64]
         }
     """)
@@ -74,7 +74,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<f64>) {
             let x = s.field;
-            x
+            x;
           //^ *const f64
         }
     """)
@@ -84,7 +84,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<f64>) {
             let x = s.field;
-            x
+            x;
           //^ *mut f64
         }
     """)
@@ -98,7 +98,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: B<i32>) {
             let x = s.unwrap();
-            x
+            x;
           //^ i32
         }
     """)
@@ -111,7 +111,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
          fn foo(r: Result<(u32, u32), ()>) {
              let x = r.unwrap();
-             x
+             x;
            //^ (u32, u32)
          }
     """)
@@ -125,7 +125,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn f(s: S<i32, ()>) {
             let x = s.swap();
-            x
+            x;
           //^ ((), i32)
         }
     """)
@@ -139,7 +139,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn f(s: S<i32, i32>) {
             let x = s.foo();
-            x
+            x;
           //^ (i32, i32)
         }
     """)
@@ -153,7 +153,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn f(s: S<i32, ()>) {
             let x = s.foo();
-            x
+            x;
           //^ ()
         }
     """)
@@ -163,7 +163,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let a = f(0i32);
-            a
+            a;
           //^ i32
         }
     """)
@@ -173,7 +173,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let a = f(0u8, 1u16);
-            a
+            a;
           //^ (u8, u16)
         }
     """)
@@ -183,7 +183,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let a = f::<u8>(1);
-            a
+            a;
           //^ u8
         }
     """)
@@ -194,7 +194,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let f = f::<u8>;
             let r = f(1);
-            r
+            r;
           //^ u8
         }
     """)
@@ -205,7 +205,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let f = f::<u8, _>;
             let r = f(1, 2);
-            r
+            r;
           //^ (u8, i32)
         }
     """)
@@ -218,7 +218,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let a = S::new(0i32);
-            a.value
+            a.value;
             //^ i32
         }
     """)
@@ -231,7 +231,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn foo(s: S<char>) {
             let x = s.rec.field;
-            x
+            x;
           //^ char
         }
     """)
@@ -329,7 +329,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T> { a: T }
         fn main() {
             let x = S { a: 5u16 };
-            x.a
+            x.a;
             //^ u16
         }
     """)
@@ -339,7 +339,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T> { a: T, b: T }
         fn main() {
             let x = S { a: X, b: unimplemented!() };
-            x.b
+            x.b;
             //^ X
         }
     """)
@@ -349,7 +349,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T> { a: T, b: T }
         fn main() {
             let x = S { a: 0, b: 1u8 };
-            x.a
+            x.a;
             //^ u8
         }
     """)
@@ -359,7 +359,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T1, T2> { a: T1, b: T2 }
         fn main() {
             let x = S { a: X, b: Y };
-            (x.a, x.b)
+            (x.a, x.b);
           //^ (X, Y)
         }
     """)
@@ -368,7 +368,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T> {a: T}
         fn main() {
             let x = S::<u8>{a: 1};
-            x.a
+            x.a;
             //^ u8
         }
     """)
@@ -377,8 +377,39 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T1, T2> {a: T1, b: T2}
         fn main() {
             let x = S::<u8, _>{a: 1, b: 2};
-            (x.a, x.b)
+            (x.a, x.b);
           //^ (u8, i32)
+        }
+    """)
+
+    fun `test struct update syntax`() = testExpr("""
+        struct S<T> {
+            f: T,
+        }
+        impl<T> S<T> {
+            fn new(v: T) -> Self {
+                S { f: v }
+            }
+        }
+        fn main() {
+            let a = S { ..S::new(1u8) };
+            a;
+          //^ S<u8>
+        }
+    """)
+
+    fun `test struct update syntax 2`() = testExpr("""
+        struct S<T> {
+            f: T,
+        }
+        impl<T> S<T> {
+            fn new() -> Self {
+                S { f: 0 }
+            }
+        }
+        fn main() {
+            let a = S::<u8> { ..S::new() };
+                                    //^ S<u8>
         }
     """)
 
@@ -386,7 +417,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T> (T);
         fn main() {
             let x = S(5u16);
-            x.0
+            x.0;
             //^ u16
         }
     """)
@@ -395,7 +426,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T> (T);
         fn main() {
             let x = S::<u8>(1);
-            x.0
+            x.0;
             //^ u8
         }
     """)
@@ -404,7 +435,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T1, T2> (T1, T2);
         fn main() {
             let x = S::<u8, _>(1, 2);
-            (x.0, x.1)
+            (x.0, x.1);
           //^ (u8, i32)
         }
     """)
@@ -413,7 +444,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<T>(T);
         fn main() {
             let f = S::<u8>;
-            f(1).0
+            f(1).0;
         }      //^ u8
     """)
 
@@ -424,7 +455,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let x = Foo::<u16>::new();
-            x
+            x;
           //^ Foo<u16>
         }
     """)
@@ -437,7 +468,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         type B = A<u16, u8>;
 
         fn f(b: B) {
-            (b.0, (b.1).0, ((b.2).0).0)
+            (b.0, (b.1).0, ((b.2).0).0);
           //^ (u8, u16, u8)
         }
     """)
@@ -447,7 +478,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         type T1 = S<u8>;
         type T2 = T1;
         fn main() {
-            T2 { a: 1 }
+            T2 { a: 1 };
         } //^ S<u8>
     """)
 
@@ -456,7 +487,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         type T1<U> = S<U>;
         type T2 = T1<u8>;
         fn main() {
-            T2 { a: 1 }
+            T2 { a: 1 };
         } //^ S<u8>
     """)
 
@@ -465,7 +496,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         type T1<U> = S<U>;
         type T2<V> = T1<V>;
         fn main() {
-            T2 { a: 1u8 }
+            T2 { a: 1u8 };
         } //^ S<u8>
     """)
 
@@ -474,7 +505,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }
         fn main() {
             let x = foo(Foo(123));
-            x
+            x;
           //^ i32
         }
     """)
@@ -484,7 +515,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }
         fn main() {
             let x = foo(Foo::V(123));
-            x
+            x;
           //^ i32
         }
     """)
@@ -493,7 +524,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T, F>(xs: (T, F)) -> F { unimplemented!() }
         fn main() {
             let x = foo((123, "str"));
-            x
+            x;
           //^ &str
         }
     """)
@@ -502,7 +533,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T>(xs: &T) -> T { unimplemented!() }
         fn main() {
             let x = foo(&8u64);
-            x
+            x;
           //^ u64
         }
     """)
@@ -511,7 +542,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T>(xs: *const T) -> T { unimplemented!() }
         fn main() {
             let x = foo(&8u16 as *const u16);
-            x
+            x;
           //^ u16
         }
     """)
@@ -520,7 +551,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T>(xs: [T; 4]) -> T { unimplemented!() }
         fn main() {
             let x = foo([1, 2, 3, 4]);
-            x
+            x;
           //^ i32
         }
     """)
@@ -530,7 +561,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let slice: &[&str] = &["foo", "bar"];
             let x = foo(slice);
-            x
+            x;
           //^ &str
         }
     """)
@@ -543,7 +574,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<F1, F2, F3, F4>(x: FooBar<Foo<F1, F2>, Bar<F3, F4>>) -> (Bar<F4, F1>, Foo<F3, F2>) { unimplemented!() }
         fn main() {
             let x = foo(FooBar(Foo(123, "foo"), Bar::V([0.0; 3], (0, false))));
-            x
+            x;
           //^ (Bar<(i32, bool), i32>, Foo<[f64; 3], &str>)
         }
     """)
@@ -552,7 +583,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T>(xs: &[T]) -> T { unimplemented!() }
         fn main() {
             let x = foo(&[1, 2, 3]);
-            x
+            x;
           //^ i32
         }
     """)
@@ -562,7 +593,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let a = [1, 2, 3];
             let x = foo(&a);
-            x
+            x;
           //^ i32
         }
     """)
@@ -575,7 +606,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let x = Foo("foo").foo(Bar(123));
-            x
+            x;
           //^ (&str, i32)
         }
     """)
@@ -588,7 +619,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let x = Foo(0.0).foo(Bar::V("bar"));
-            x
+            x;
           //^ (f64, &str)
         }
     """)
@@ -600,7 +631,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let x = Foo(123).foo((true, "str"));
-            x
+            x;
           //^ (i32, bool, &str)
         }
     """)
@@ -612,7 +643,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let x = Foo((1, 2)).foo(&8u64);
-            x
+            x;
           //^ (u64, (i32, i32))
         }
     """)
@@ -624,7 +655,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let x = Foo("foo").foo(&8u16 as *const u16);
-            x
+            x;
           //^ (u16, &str)
         }
     """)
@@ -636,7 +667,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let x = Foo(0.0).foo([1, 2, 3, 4]);
-            x
+            x;
           //^ (i32, f64)
         }
     """)
@@ -649,7 +680,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let slice: &[&str] = &["foo", "bar"];
             let x = Foo(64u8).foo(slice);
-            x
+            x;
           //^ (&str, u8)
         }
     """)
@@ -664,7 +695,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let x = Foo(123, "foo").foo(FooBar(Bar::V([0.0; 3], (0, false))));
-            x
+            x;
           //^ (Bar<(i32, bool), i32>, Foo<[f64; 3], &str>)
         }
     """)
@@ -676,7 +707,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn bar<A, B: Tr<A>>(b: B) -> A { b.foo() }
         fn main() {
             let a = bar(S(1));
-            a
+            a;
         } //^ i32
     """)
 
@@ -687,7 +718,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn bar<E, F, G: Tr<(E, F)>>(b: G) -> (E, F) { b.foo() }
         fn main() {
             let a = bar(S((1u8, 1u16)));
-            a
+            a;
         } //^ (u8, u16)
     """)
 
@@ -717,7 +748,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl<D> Tr<D> for S<D> {}
         fn main() {
             let a = S(X).wrap().wrap().wrap();
-            a
+            a;
         } //^ S<S<S<S<X>>>>
     """)
 
@@ -728,7 +759,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl<D> Tr<D> for S<D> {}
         fn main() {
             let a = (&S(X)).wrap().wrap().wrap();
-            a
+            a;
         } //^ S<S<S<S<X>>>>
     """)
 
@@ -739,7 +770,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl<D> Tr<D> for S<D> { fn wrap(self) -> S<Self> where Self: Sized { unimplemented!() } }
         fn main() {
             let a = S(X).wrap().wrap().wrap();
-            a
+            a;
         } //^ S<S<S<S<X>>>>
     """)
 
@@ -758,7 +789,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let a = S1(X).wrap().wrap().wrap().fold();
-            a
+            a;
         } //^ X
     """)
 
@@ -771,7 +802,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl Tr for X { type Item = u8; }
         fn main() {
             let a = S(X).foo();
-            a
+            a;
         } //^ u8
     """)
 
@@ -784,7 +815,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl Tr for X { type Item = u8; }
         fn main() {
             let a = S(X).foo();
-            a
+            a;
         } //^ u8
     """)
 
@@ -799,7 +830,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl Tr2 for X {}
         fn main() {
             let a = S(X).foo();
-            a
+            a;
         } //^ u8
     """)
 
@@ -814,7 +845,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl Tr2 for X {}
         fn main() {
             let a = S(X).foo();
-            a
+            a;
         } //^ u8
     """)
 
@@ -829,7 +860,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         impl Tr for Y { type Item = u16; }
         fn main() {
             let a = S(X, Y).foo();
-            a
+            a;
         } //^ (u8, u16)
     """)
 
@@ -849,7 +880,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let a = S1(X).wrap().wrap().wrap().fold();
-            a
+            a;
         } //^ X
     """)
 
@@ -873,7 +904,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let a = S1(X).wrap().wrap().wrap().fold();
-            a
+            a;
         } //^ X
     """)
 
@@ -910,7 +941,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn foo<T: Tr>(t: T) {
             let a = t.bar();
-            a
+            a;
         } //^ <T as Tr>::Item
     """)
 
@@ -923,7 +954,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn foo<T: Tr>(t: T) -> T::Item { unimplemented!() }
         fn main() {
             let x = foo(S);
-            x
+            x;
           //^ i32
         }
     """)
@@ -939,9 +970,10 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             where T1: Tr,
                   T1::Item: Tr2<T2>,
         { unimplemented!() }
+
         fn main() {
             let x = foo(S2);
-            x
+            x;
           //^ i32
         }
     """)
@@ -951,14 +983,14 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn main() {
             let a: S<_> = S(0i32);
-            a
+            a;
         } //^ S<i32>
     """)
 
     fun `test simple unification 1`() = testExpr("""
         fn main() {
             let a: _ = 0i32;
-            a
+            a;
         } //^ i32
     """)
 
@@ -997,14 +1029,14 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         struct S<A, B> {a: A, b: B}
         fn main() {
             let a: S<u8, _> = S::<_, u16> {a: 0, b: 1};
-            a
+            a;
         } //^ S<u8, u16>
     """)
 
     fun `test unify struct fields`() = testExpr("""
         struct S<A> {a: A, b: A}
         fn main() {
-            S {a: 0, b: 1u8}
+            S {a: 0, b: 1u8};
         }       //^ u8
     """)
 
@@ -1032,7 +1064,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = collect::<S<_>>();
             let c = collect();
             foo(c);
-            (a, b, c)
+            (a, b, c);
         } //^ (S<i32>, S<i32>, S<i32>)
     """)
 
@@ -1053,7 +1085,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = it.collect::<S<_>>();
             let c = it.collect();
             foo(c);
-            (a, b, c)
+            (a, b, c);
         } //^ (S<X>, S<X>, S<X>)
     """)
 
@@ -1064,7 +1096,7 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let a = 0;
             foo(S(X, a), S(Y, 1u8));
-            a
+            a;
         } //^ u8
     """, allowErrors = true)
 
@@ -1225,5 +1257,71 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = foo(t);
             a;
         } //^ u8
+    """)
+
+    fun `test reference coercion inside tuple struct init (or fn call)`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Wrapper<T>(T);
+        struct RefWrapper<'a, T : 'a>(&'a T);
+        impl<T> Deref for Wrapper<T> { type Target = T; }
+
+        fn main() {
+            let _: RefWrapper<u8> = RefWrapper(&Wrapper(0));
+        }                                             //^ u8
+    """)
+
+    fun `test reference coercion inside struct init`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Wrapper<T> { f: T }
+        struct RefWrapper<'a, T : 'a> { f: &'a T };
+        impl<T> Deref for Wrapper<T> { type Target = T; }
+
+        fn main() {
+            let _: RefWrapper<u8> = RefWrapper { f: &Wrapper { f: 0 } };
+        }                                                       //^ u8
+    """)
+
+    fun `test reference coercion inside method call`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Wrapper<T>(T);
+        struct RefWrapper<'a, T : 'a>(&'a T);
+        impl<T> Deref for Wrapper<T> { type Target = T; }
+
+        struct A;
+        impl A {
+            fn ref_wrapper<'a, T : 'a>(&self, t: &'a T) -> RefWrapper<'a, T> {
+                RefWrapper(t)
+            }
+        }
+
+        fn main() {
+            let _: RefWrapper<u8> = A.ref_wrapper(&Wrapper(0));
+        }                                                //^ u8
+    """)
+
+    fun `test type variable resolved for let pattern matching`() = testExpr("""
+        struct X;
+        fn foo<T>(_: T) -> T { unimplemented!() }
+        fn main () {
+            let (a,) = foo((X,));
+            a;
+        } //^ X
+    """)
+
+    fun `test type variable resolved for pattern matching`() = testExpr("""
+        struct X;
+        fn foo<T>(_: T) -> T { unimplemented!() }
+        fn main () {
+            match foo((X,)) {
+                (a,) => { a; }
+                _ => {} //^ X
+            }
+        }
     """)
 }

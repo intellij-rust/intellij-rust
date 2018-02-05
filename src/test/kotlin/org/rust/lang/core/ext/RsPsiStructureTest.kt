@@ -20,34 +20,34 @@ import org.rust.lang.core.types.type
 // which use `instanceof` under the hood and thus sensitive
 // to PSI structure
 class RsPsiStructureTest : RsTestBase() {
-    private fun checkFunctionOwner(cond: (RsFunctionOwner) -> Boolean, @Language("Rust") code: String) =
+    private fun checkFunctionOwner(cond: (RsAbstractableOwner) -> Boolean, @Language("Rust") code: String) =
         checkElement<RsFunction>(code) { check(cond(it.owner)) }
 
-    fun `test function role free`() = checkFunctionOwner({ it is RsFunctionOwner.Free }, "fn main() {}")
-    fun `test function role foreign`() = checkFunctionOwner({ it is RsFunctionOwner.Foreign }, "extern { fn foo(); }")
-    fun `test function role trait method`() = checkFunctionOwner({ it is RsFunctionOwner.Trait }, "trait S { fn foo() {} }")
+    fun `test function role free`() = checkFunctionOwner({ it is RsAbstractableOwner.Free }, "fn main() {}")
+    fun `test function role foreign`() = checkFunctionOwner({ it is RsAbstractableOwner.Foreign }, "extern { fn foo(); }")
+    fun `test function role trait method`() = checkFunctionOwner({ it is RsAbstractableOwner.Trait }, "trait S { fn foo() {} }")
     fun `test function role inherent impl method`() =
-        checkFunctionOwner({ it is RsFunctionOwner.Impl && it.isInherentImpl }, "impl S { fn foo() {} }")
+        checkFunctionOwner({ it is RsAbstractableOwner.Impl && it.isInherentImpl }, "impl S { fn foo() {} }")
 
     fun `test function role trait impl method`() =
-        checkFunctionOwner({ it is RsFunctionOwner.Impl && it.isTraitImpl }, "impl S for T { fn foo() {} }")
+        checkFunctionOwner({ it is RsAbstractableOwner.Impl && it.isTraitImpl }, "impl S for T { fn foo() {} }")
 
-    private fun checkTypeAliasOwner(cond: (RsTypeAliasOwner) -> Boolean, @Language("Rust") code: String) =
+    private fun checkTypeAliasOwner(cond: (RsAbstractableOwner) -> Boolean, @Language("Rust") code: String) =
         checkElement<RsTypeAlias>(code) { check(cond(it.owner)) }
 
-    fun `test type alias role free 1`() = checkTypeAliasOwner({ it is RsTypeAliasOwner.Free }, "type T = ();")
-    fun `test type alias role free 2`() = checkTypeAliasOwner({ it is RsTypeAliasOwner.Free }, "fn main() { type T = (); }")
-    fun `test type alias role impl method`() = checkTypeAliasOwner({ it is RsTypeAliasOwner.Impl }, "impl S for X { type T = (); }")
-    fun `test type alias role trait method`() = checkTypeAliasOwner({ it is RsTypeAliasOwner.Trait }, "trait S { type T; }")
+    fun `test type alias role free 1`() = checkTypeAliasOwner({ it is RsAbstractableOwner.Free }, "type T = ();")
+    fun `test type alias role free 2`() = checkTypeAliasOwner({ it is RsAbstractableOwner.Free }, "fn main() { type T = (); }")
+    fun `test type alias role impl method`() = checkTypeAliasOwner({ it is RsAbstractableOwner.Impl }, "impl S for X { type T = (); }")
+    fun `test type alias role trait method`() = checkTypeAliasOwner({ it is RsAbstractableOwner.Trait }, "trait S { type T; }")
 
-    private fun checkConstantRole(cond: (RsConstantOwner) -> Boolean, @Language("Rust") code: String) =
+    private fun checkConstantRole(cond: (RsAbstractableOwner) -> Boolean, @Language("Rust") code: String) =
         checkElement<RsConstant>(code) { check(cond(it.owner)) }
 
-    fun `test constant role free 1`() = checkConstantRole({ it is RsConstantOwner.Free }, "const C: () = ();")
-    fun `test constant role free 2`() = checkConstantRole({ it is RsConstantOwner.Free }, "fn main() { const C: () = (); }")
-    fun `test constant role foreign`() = checkConstantRole({ it is RsConstantOwner.Foreign }, "extern { static C: (); }")
-    fun `test constant role impl method`() = checkConstantRole({ it is RsConstantOwner.Impl }, "impl S for X { const C: () = (); }")
-    fun `test constant role trait method`() = checkConstantRole({ it is RsConstantOwner.Trait }, "trait S { const C: () = (); }")
+    fun `test constant role free 1`() = checkConstantRole({ it is RsAbstractableOwner.Free }, "const C: () = ();")
+    fun `test constant role free 2`() = checkConstantRole({ it is RsAbstractableOwner.Free }, "fn main() { const C: () = (); }")
+    fun `test constant role foreign`() = checkConstantRole({ it is RsAbstractableOwner.Foreign }, "extern { static C: (); }")
+    fun `test constant role impl method`() = checkConstantRole({ it is RsAbstractableOwner.Impl }, "impl S for X { const C: () = (); }")
+    fun `test constant role trait method`() = checkConstantRole({ it is RsAbstractableOwner.Trait }, "trait S { const C: () = (); }")
 
     fun `test trait implementation info`() = checkElement<RsImplItem>("""
         trait T {

@@ -10,7 +10,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.type
@@ -22,6 +22,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
         InlineFile(code)
         check(description)
         if (!allowErrors) checkNoInferenceErrors()
+        checkAllExpressionsTypified()
     }
 
     protected fun testExpr(
@@ -51,7 +52,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
     }
 
     private fun checkNoInferenceErrors() {
-        val errors = myFixture.file.descendantsOfType<RsFunction>().asSequence()
+        val errors = myFixture.file.descendantsOfType<RsInferenceContextOwner>().asSequence()
             .flatMap { it.inference.diagnostics.asSequence() }
             .map { it.element to it.prepare() }
             .filter { it.second.severity == Severity.ERROR }
@@ -59,8 +60,24 @@ abstract class RsTypificationTestBase : RsTestBase() {
         if (errors.isNotEmpty()) {
             error(
                 errors.joinToString("\n", "Detected errors during type inference: \n") {
-                    "\tAt `${it.first.text}` ${it.second.errorCode.code} ${it.second.header} | ${it.second.description}"
+                    "\tAt `${it.first.text}` (line ${it.first.lineNumber}) " +
+                        "${it.second.errorCode.code} ${it.second.header} | ${it.second.description}"
                 }
+            )
+        }
+    }
+
+    private fun checkAllExpressionsTypified() {
+        val notTypifiedExprs = myFixture.file.descendantsOfType<RsExpr>().filter { expr ->
+            expr.inference?.isExprTypeInferred(expr) == false
+        }
+        if (notTypifiedExprs.isNotEmpty()) {
+            error(
+                notTypifiedExprs.joinToString(
+                    "\n",
+                    "Some expressions are not typified during type inference: \n",
+                    "\nNote: All `RsExpr`s must be typified during type inference"
+                ) { "\tAt `${it.text}` (line ${it.lineNumber})" }
             )
         }
     }

@@ -5,10 +5,11 @@
 
 package org.rust.ide.inspections.fixes
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringFactory
 
@@ -19,15 +20,15 @@ import com.intellij.refactoring.RefactoringFactory
  * @param fixName The name to use for the fix instead of the default one to better fit the inspection.
  */
 class RenameFix(
-    val element: PsiNamedElement,
+    element: PsiNamedElement,
     val newName: String,
     val fixName: String = "Rename to `$newName`"
-) : LocalQuickFix {
-    override fun getName() = fixName
+) : LocalQuickFixOnPsiElement(element) {
+    override fun getText() = fixName
     override fun getFamilyName() = "Rename element"
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) =
+    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
         ApplicationManager.getApplication().invokeLater {
-            RefactoringFactory.getInstance(project).createRename(element, newName).run()
+            RefactoringFactory.getInstance(project).createRename(startElement, newName).run()
         }
 }

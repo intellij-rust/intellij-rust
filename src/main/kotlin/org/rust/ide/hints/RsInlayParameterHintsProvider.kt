@@ -98,9 +98,9 @@ enum class HintType(desc: String, enabled: Boolean) {
             val element = elem as? RsLambdaExpr ?: return emptyList()
             val type = element.type as? TyFunction ?: return emptyList()
             return element.valueParameterList.valueParameterList
-                .mapIndexed { index, parameter -> type.paramTypes.getOrNull(index) to parameter.textRange.endOffset }
-                .filter { it.first != null }
-                .map { InlayInfo(": ${it.first}", it.second) }
+                .mapIndexed { index, parameter -> type.paramTypes.getOrNull(index) to parameter }
+                .filter { it.first != null && it.second.typeReference == null }
+                .map { InlayInfo(": ${it.first}", it.second.textRange.endOffset) }
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsLambdaExpr

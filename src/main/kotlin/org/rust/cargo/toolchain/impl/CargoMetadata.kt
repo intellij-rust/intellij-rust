@@ -98,7 +98,14 @@ object CargoMetadata {
         /**
          * Path to the root module of the crate (aka crate root)
          */
-        val src_path: String
+        val src_path: String,
+
+        /**
+         * List of crate types
+         *
+         * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
+         */
+        val crate_types: List<String>
     ) {
         val cleanKind: TargetKind
             get() = when (kind.singleOrNull()) {
@@ -113,8 +120,31 @@ object CargoMetadata {
                     else
                         TargetKind.UNKNOWN
             }
-    }
 
+        val cleanCrateTypes: List<CrateType>
+            get() = crate_types.map {
+                when (it) {
+                    "bin" -> CrateType.BIN
+                    "lib" -> CrateType.LIB
+                    "dylib" -> CrateType.DYLIB
+                    "staticlib" -> CrateType.STATICLIB
+                    "cdylib" -> CrateType.CDYLIB
+                    "rlib" -> CrateType.RLIB
+                    "proc-macro" -> CrateType.PROC_MACRO
+                    else -> CrateType.UNKNOWN
+                }
+            }
+        }
+
+    /**
+     * Represents possible variants of generated artifact binary
+     * corresponded to `--crate-type` compiler attribute
+     *
+     * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
+     */
+    enum class CrateType {
+        BIN, LIB, DYLIB, STATICLIB, CDYLIB, RLIB, PROC_MACRO, UNKNOWN
+    }
 
     /**
      * A rooted graph of dependencies, represented as adjacency list

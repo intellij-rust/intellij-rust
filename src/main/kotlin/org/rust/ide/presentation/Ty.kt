@@ -33,8 +33,8 @@ private fun render(
             is TyUnit -> "()"
             is TyNever -> "!"
             is TyStr -> "str"
-            is TyInteger -> ty.kind.toString()
-            is TyFloat -> ty.kind.toString()
+            is TyInteger -> ty.name
+            is TyFloat -> ty.name
             else -> error("unreachable")
         }
     }

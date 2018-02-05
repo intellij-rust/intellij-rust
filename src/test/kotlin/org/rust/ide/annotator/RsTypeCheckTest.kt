@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import org.junit.ComparisonFailure
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -16,6 +15,18 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
         fn main () {
             let _: u8 = <error>1u16</error>;
         }
+    """)
+
+    fun `test typecheck in constant`() = checkByText("""
+        const A: u8 = <error>1u16</error>;
+    """)
+
+    fun `test typecheck in array size`() = checkByText("""
+        const A: [u8; <error>1u8</error>] = [0];
+    """)
+
+    fun `test typecheck in enum variant discriminant`() = checkByText("""
+        enum Foo { BAR = <error>1u8</error> }
     """)
 
     fun `test type mismatch E0308 coerce ptr mutability`() = checkByText("""
@@ -36,9 +47,7 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
         }
     """)
 
-    // TODO In TypeInference.coerceResolved() we currently ignore type errors when references are involved
-    fun `test type mismatch E0308 coerce reference to ptr`() = expect<ComparisonFailure> {
-        checkByText("""
+    fun `test type mismatch E0308 coerce reference to ptr`() = checkByText("""
         fn fn_const(p: *const u8) { }
         fn fn_mut(p: *mut u8) { }
 
@@ -51,7 +60,6 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
             fn_mut(mut_u8);
         }
     """)
-    }
 
     fun `test type mismatch E0308 struct`() = checkByText("""
         struct X; struct Y;
@@ -120,6 +128,21 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
 
         fn main() {
             let x = Foo { v: [10, 20] };
+        }
+    """)
+
+    // issue 1753
+    fun `test no type mismatch E0308 on struct argument reference coercion`() = checkByText("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Wrapper<T>(T);
+        struct RefWrapper<'a, T : 'a>(&'a T);
+
+        impl<T> Deref for Wrapper<T> { type Target = T; }
+
+        fn foo(w: &Wrapper<u32>) {
+            let _: RefWrapper<u32> = RefWrapper(w);
         }
     """)
 }

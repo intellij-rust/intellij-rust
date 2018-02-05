@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
 
 class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
-    override fun getText() = "Add else branch to is if statement"
+    override fun getText() = "Add else branch to this if statement"
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsIfExpr? {

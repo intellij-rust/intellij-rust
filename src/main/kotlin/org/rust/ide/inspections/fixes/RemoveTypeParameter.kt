@@ -11,12 +11,13 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 
-class RemoveTypeParameter(val element: RsElement) : LocalQuickFix {
+class RemoveTypeParameter : LocalQuickFix {
 
     override fun getName() = "Remove all type parameters"
     override fun getFamilyName() = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val element = descriptor.psiElement as? RsElement ?: return
         val typeArgumentList = when (element) {
             is RsMethodCall -> element.typeArgumentList
             is RsCallExpr -> (element.expr as RsPathExpr?)?.path?.typeArgumentList

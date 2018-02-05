@@ -31,7 +31,7 @@ val channel = prop("publishChannel")
 
 plugins {
     idea
-    kotlin("jvm") version "1.2.10"
+    kotlin("jvm") version "1.2.20"
     id("org.jetbrains.intellij") version "0.2.17"
     id("de.undercouch.download") version "3.2.0"
 }
@@ -105,7 +105,7 @@ project(":") {
     intellij {
         pluginName = "intellij-rust"
 //        alternativeIdePath = "deps/clion-$clionVersion"
-        setPlugins("org.toml.lang:0.2.0.9")
+        setPlugins(project(":intellij-toml"))
     }
 
     repositories {
@@ -280,7 +280,7 @@ fun commitNightly() {
     "git checkout -b nightly".execute()
     "git add .travis.yml".execute()
     listOf("git", "commit", "-m", ":arrow_up: nightly IDEA & rust").execute()
-    "git push".execute()
+    "git push origin nightly".execute()
 }
 
 fun prop(name: String): String =

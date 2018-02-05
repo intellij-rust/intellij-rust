@@ -9,13 +9,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2018/01/09/changelog-64.html">
-                 https://intellij-rust.github.io/2018/01/09/changelog-64.html
+        <a href="https://intellij-rust.github.io/2018/01/22/changelog-65.html">
+                 https://intellij-rust.github.io/2018/01/22/changelog-65.html
     ]]>
     </change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="172" until-build="173.*"/>
+    <idea-version since-build="172" until-build="181.*"/>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
@@ -101,6 +101,9 @@
         <lang.smartEnterProcessor language="Rust"
                                   implementationClass="org.rust.ide.typing.assist.RsSmartEnterProcessor"/>
 
+        <!--Imports-->
+        <lang.importOptimizer language="Rust" implementationClass="org.rust.lang.refactoring.RsImportOptimizer" />
+
         <!-- Navigation -->
 
         <gotoClassContributor implementation="org.rust.ide.navigation.goto.RsClassNavigationContributor"/>
@@ -136,7 +139,7 @@
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.lineMarkers.RsRecursiveCallLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
-                                        implementationClass="org.rust.ide.annotator.RsTraitMethodImplLineMarkerProvider"/>
+                                        implementationClass="org.rust.ide.lineMarkers.RsTraitItemImplLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.lineMarkers.RsCrateDocLineMarkerProvider"/>
 
@@ -404,6 +407,11 @@
                          enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsExperimentalChecksInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Different impl member order from the trait"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsSortImplTraitMembersInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
@@ -565,6 +573,7 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsModulesIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsNamedElementIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
+        <stubIndex implementation="org.rust.lang.core.stubs.index.RsReexportIndex"/>
 
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsLangItemIndex"/>

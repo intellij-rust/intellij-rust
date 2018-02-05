@@ -59,5 +59,5 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
         return CANNOT_JOIN
     }
 
-    override fun tryJoinLines(document: Document?, file: PsiFile?, start: Int, end: Int): Int = CANNOT_JOIN
+    override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int): Int = CANNOT_JOIN
 }

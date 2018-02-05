@@ -165,6 +165,84 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
        }
     """)
 
+    fun `test module path`() = stubOnlyResolve("""
+    //- main.rs
+        #[path="aaa"]
+        mod foo {
+            mod bar;
+        }
+
+        fn quux() {}
+    //- aaa/bar.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+        }
+    """)
+
+    fun `test module path 2`() = stubOnlyResolve("""
+    //- main.rs
+        #[path="aaa/bbb"]
+        mod foo {
+            mod bar;
+        }
+
+        fn quux() {}
+    //- aaa/bbb/bar.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+        }
+    """)
+
+    fun `test module path 3`() = stubOnlyResolve("""
+    //- main.rs
+        #[path="aaa/bbb"]
+        mod foo {
+            #[path="ccc.rs"]
+            mod bar;
+        }
+
+        fn quux() {}
+    //- aaa/bbb/ccc.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+        }
+    """)
+
+    fun `test empty module path`() = stubOnlyResolve("""
+    //- main.rs
+        #[path=""]
+        mod foo {
+            #[path="bbb.rs"]
+            mod bar;
+        }
+
+        fn quux() {}
+    //- bbb.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+        }
+    """)
+
+    fun `test relative module path`() = stubOnlyResolve("""
+    //- main.rs
+        #[path="./aaa"]
+        mod foo {
+            mod bar;
+        }
+
+        fn quux() {}
+
+    //- aaa/bar.rs
+        fn foo() {
+            ::quux();
+            //^ main.rs
+        }
+    """)
+
     fun `test use from child`() = stubOnlyResolve("""
     //- main.rs
         use child::{foo};
