@@ -9,7 +9,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Query
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
@@ -103,15 +102,15 @@ class TraitImplementationInfo private constructor(
     val declared = traitMembers.abstractable()
     private val implemented = implMembers.abstractable()
     private val declaredByName = declared.associateBy { it.name!! }
-    private val implementedByName = implemented.associateBy { it.name!! }
+    private val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }
 
 
     val missingImplementations: List<RsAbstractable> = if (!hasMacros)
-        declared.filter { it.isAbstract }.filter { it.name !in implementedByName }
+        declared.filter { it.isAbstract }.filter { it.name to it.elementType !in implementedByNameAndType }
     else emptyList()
 
     val alreadyImplemented: List<RsAbstractable> =  if (!hasMacros)
-        declared.filter { it.isAbstract }.filter { it.name in implementedByName }
+        declared.filter { it.isAbstract }.filter { it.name to it.elementType in implementedByNameAndType }
     else emptyList()
 
     val nonExistentInTrait: List<RsAbstractable> = implemented.filter { it.name !in declaredByName }
