@@ -642,44 +642,50 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
-    fun `test extract a function with boundary generic parameters`() = doTest("""
+    fun `test extract a function with bounded generic parameters`() = doTest("""
             trait Foo<T> {}
             trait Bar<T> {}
-            fn foo<T, F: Foo<T>, B: Bar<F>>(b: B) {
+            trait Baz<T> {}
+            fn foo<T, F: Foo<T>, B: Bar<Baz<F>>>(b: B) {
                 <selection>b;</selection>
             }
         """, """
             trait Foo<T> {}
             trait Bar<T> {}
-            fn foo<T, F: Foo<T>, B: Bar<F>>(b: B) {
+            trait Baz<T> {}
+            fn foo<T, F: Foo<T>, B: Bar<Baz<F>>>(b: B) {
                 bar(b);
             }
 
-            fn bar<T, F: Foo<T>, B: Bar<F>>(b: B) {
+            fn bar<T, F: Foo<T>, B: Bar<Baz<F>>>(b: B) {
                 b;
             }
         """,
         false,
         "bar")
 
-    fun `test extract a function with boundary generic parameters and where clauses`() = doTest("""
+    fun `test extract a function with bounded generic parameters and where clauses`() = doTest("""
+            trait T1 {}
+            trait T2 {}
             trait Foo<T> {}
             trait Bar<T> {}
             trait Baz<T> {}
-            fn foo<T, U, F: Foo<T>, B>(b: B, u: U) where B: Bar<F> + Baz<F> {
+            fn foo<T: T1, U, F: Foo<T>, B>(b: B, u: U) where T: T2, B: Bar<F> + Baz<F> {
                 <selection>b;</selection>
                 u;
             }
         """, """
+            trait T1 {}
+            trait T2 {}
             trait Foo<T> {}
             trait Bar<T> {}
             trait Baz<T> {}
-            fn foo<T, U, F: Foo<T>, B>(b: B, u: U) where B: Bar<F> + Baz<F> {
+            fn foo<T: T1, U, F: Foo<T>, B>(b: B, u: U) where T: T2, B: Bar<F> + Baz<F> {
                 bar(b);
                 u;
             }
 
-            fn bar<T, F: Foo<T>, B>(b: B) where B: Bar<F> + Baz<F> {
+            fn bar<T: T1, F: Foo<T>, B>(b: B) where T: T2, B: Bar<F> + Baz<F> {
                 b;
             }
         """,

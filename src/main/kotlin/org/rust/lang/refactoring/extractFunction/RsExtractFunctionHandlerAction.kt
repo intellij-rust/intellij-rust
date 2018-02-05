@@ -64,8 +64,9 @@ class RsExtractFunctionHandlerAction(
             val owner = config.containingFunction.owner
             val type = when (owner) {
                 is RsAbstractableOwner.Impl -> {
-                    val text = owner.impl.typeReference?.text
-                    if (owner.impl.typeParameterList == null) text else "<$text>"
+                    owner.impl.typeReference?.text?.let {
+                        if (owner.impl.typeParameterList == null) it else "<$it>"
+                    }
                 }
                 is RsAbstractableOwner.Trait -> "Self"
                 else -> null

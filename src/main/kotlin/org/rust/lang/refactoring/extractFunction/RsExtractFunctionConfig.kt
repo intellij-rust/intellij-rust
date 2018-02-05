@@ -67,43 +67,6 @@ class RsExtractFunctionConfig private constructor(
     val parameters: List<Parameter>
 ) {
 
-    private val typeParameters: List<RsTypeParameter>
-        get() {
-            val bounds = containingFunction.typeParameters.associate {
-                it.declaredType to it.bounds.flatMap {
-                    it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList ?: emptyList()
-                }.mapNotNull { it.type }
-            }
-            return containingFunction.typeParameters.filter {
-                val typeParameter = it.declaredType
-                (parameters.mapNotNull { it.type } + listOf(returnValue).mapNotNull { it?.type }).any {
-                    it.types().contains(typeParameter) || it.dependTypes(bounds).contains(typeParameter)
-                }
-            }
-        }
-
-    private val typeParametersText: String
-        get() = typeParameters
-            .takeIf { it.isNotEmpty() }
-            ?.joinToString(separator = ",", prefix = "<", postfix = ">") { it.text }
-            ?: ""
-
-    private val whereClausesText: String
-        get() {
-            val whereTypes = containingFunction.whereClause?.wherePredList?.mapNotNull {
-                it.typeReference?.type
-            } ?: return ""
-            return typeParameters
-                .mapNotNull {
-                    if (!whereTypes.contains(it.declaredType) || it.bounds.isEmpty())
-                        null
-                    else
-                        "${it.text}:${it.bounds.joinToString("+") { it.text }}"
-                }.takeIf { it.isNotEmpty() }
-                ?.joinToString(separator = ",", prefix = " where ")
-                ?: ""
-        }
-
     private val parametersText: String
         get() = parameters.joinToString(",") { it.text }
 
@@ -126,6 +89,45 @@ class RsExtractFunctionConfig private constructor(
             }
             append("{\n${stmts.joinToString(separator = "\n")}\n}")
         }
+
+    private val typeParametersText: String
+        get() {
+            val typeParams = typeParameters()
+            if (typeParams.isEmpty()) return ""
+            return typeParams.joinToString(separator = ",", prefix = "<", postfix = ">") { it.text }
+        }
+
+    private val whereClausesText: String
+        get() {
+            val wherePredList = containingFunction.whereClause?.wherePredList ?: return ""
+            if (wherePredList.isEmpty()) return ""
+            val typeParams = typeParameters().map { it.declaredType }
+            if (typeParams.isEmpty()) return ""
+            val filtered = wherePredList.filter { typeParams.contains(it.typeReference?.type) }
+            if (filtered.isEmpty()) return ""
+            return filtered.joinToString(separator = ",", prefix = " where ") { it.text }
+        }
+
+    private fun typeParameters(): List<RsTypeParameter> {
+        val bounds = typeParameterBounds()
+        val paramAndReturnTypes = (parameters.mapNotNull { it.type } + listOf(returnValue).mapNotNull { it?.type })
+        return containingFunction.typeParameters.filter {
+            val typeParameter = it.declaredType
+            paramAndReturnTypes.any {
+                it.types().contains(typeParameter) || it.dependTypes(bounds).contains(typeParameter)
+            }
+        }
+    }
+
+    private fun typeParameterBounds(): Map<Ty, List<Ty>> {
+        return containingFunction.typeParameters.associate {
+            val type = it.declaredType
+            val bounds = it.bounds.flatMap {
+                it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList?.flatMap { it.type.types() } ?: emptyList()
+            }
+            type to bounds
+        }
+    }
 
     companion object {
         fun create(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
@@ -179,17 +181,29 @@ class RsExtractFunctionConfig private constructor(
     }
 }
 
-private fun Ty.types(): List<Ty> = if (typeParameterValues.values.isEmpty())
-    listOf(this)
-else
-    listOf(this) + typeParameterValues.values.flatMap { it.types() }
+private fun Ty.types(): List<Ty> {
+    val types = mutableListOf<Ty>()
 
-private fun Ty.dependTypes(bounds: Map<Ty, List<Ty>>, last: List<Ty> = emptyList()): List<Ty> {
-    val types = bounds[this]
-    return if (types == null || types.isEmpty())
-        emptyList()
-    else
-        types + types.flatMap {
-            if (last.contains(it)) emptyList() else it.dependTypes(bounds, last + types)
-        }
+    fun collect(type: Ty) {
+        types.add(type)
+        type.typeParameterValues.values.forEach { collect(it) }
+    }
+
+    collect(this)
+
+    return types
+}
+
+private fun Ty.dependTypes(boundMap: Map<Ty, List<Ty>>): List<Ty> {
+    val types = mutableListOf<Ty>()
+
+    fun collect(type: Ty) {
+        val bounds = boundMap[type]?.filter { !types.contains(it) } ?: return
+        types.addAll(bounds)
+        bounds.forEach { collect(it) }
+    }
+
+    collect(this)
+
+    return types
 }
