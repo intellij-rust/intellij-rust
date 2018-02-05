@@ -228,4 +228,17 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
     """, """
         use foo::{bar, baz/*caret*/};
     """)
+
+    fun `test join unsafe expression block`() = doTest("""
+        fn test() {
+            /*caret*/let a = unsafe {
+                foo()
+            };
+        }
+    """, """
+        fn test() {
+            let a = unsafe {/*caret*/ foo()
+            };
+        }
+    """)
 }
