@@ -10,9 +10,9 @@ jdk: oraclejdk8
 
 env:
   global:
-    - NIGHTLY_RUST_VERSION=nightly-2018-01-21 # modified by script
+    - NIGHTLY_RUST_VERSION=nightly-2018-02-04 # modified by script
   matrix:
-    - RUST_VERSION=$NIGHTLY_RUST_VERSION ORG_GRADLE_PROJECT_ideaVersion=181.2784.28 # modified by script
+    - RUST_VERSION=$NIGHTLY_RUST_VERSION ORG_GRADLE_PROJECT_ideaVersion=181.3263.15 # modified by script
     - RUST_VERSION=1.20.0 ORG_GRADLE_PROJECT_ideaVersion=2017.2.5
 
 install: true
