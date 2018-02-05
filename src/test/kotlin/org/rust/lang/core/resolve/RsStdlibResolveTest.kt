@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsStdlibResolveTest : RsResolveTestBase() {
@@ -312,14 +313,18 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test Instant minus Duration`() = stubOnlyResolve("""
-    //- main.rs
-        use std::time::{Duration, Instant};
-        fn main() {
-            (Instant::now() - Duration::from_secs(3)).elapsed();
-                                                      //^ ...time/mod.rs
-        }
-    """)
+    fun `test Instant minus Duration`() {
+        val path = if (isEap()) "time.rs" else "time/mod.rs"
+
+        stubOnlyResolve("""
+        //- main.rs
+            use std::time::{Duration, Instant};
+            fn main() {
+                (Instant::now() - Duration::from_secs(3)).elapsed();
+                                                          //^ ...$path
+            }
+        """)
+    }
 
     fun `test resolve assignment operator`() = stubOnlyResolve("""
     //- main.rs
@@ -330,14 +335,18 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test resolve arithmetic operator`() = stubOnlyResolve("""
-    //- main.rs
-        use std::time::{Duration, Instant};
-        fn main() {
-            let x = Instant::now() - Duration::from_secs(3);
-                                 //^ ...time/mod.rs
-        }
-    """)
+    fun `test resolve arithmetic operator`() {
+        val path = if (isEap()) "time.rs" else "time/mod.rs"
+
+        stubOnlyResolve("""
+        //- main.rs
+            use std::time::{Duration, Instant};
+            fn main() {
+                let x = Instant::now() - Duration::from_secs(3);
+                                     //^ ...$path
+            }
+        """)
+    }
 
     fun `test autoderef Rc`() = stubOnlyResolve("""
     //- main.rs
@@ -515,4 +524,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             let _: String = "".into();
         }                    //^ ...convert.rs
     """)
+
+    // BACKCOMPAT: Rust 1.23
+    private fun isEap(): Boolean = ApplicationInfoEx.getInstanceEx().isEAP
 }
