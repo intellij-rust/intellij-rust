@@ -72,13 +72,13 @@ class ImportNameIntentionStdTest : RsIntentionTestBase(ImportNameIntention()) {
 
     fun `test import reexported item from stdlib`() = doAvailableTest("""
         fn main() {
-            let duration = Duration/*caret*/::from_secs(2);
+            let mutex = Mutex/*caret*/::new(Vec::new());
         }
     """, """
-        use std::time::Duration;
+        use std::sync::Mutex;
 
         fn main() {
-            let duration = Duration/*caret*/::from_secs(2);
+            let mutex = Mutex/*caret*/::new(Vec::new());
         }
     """, ImportNameIntention.Testmarks.autoInjectedCrate)
 }
