@@ -15,6 +15,4 @@ data class TyPointer(val referenced: Ty, val mutability: Mutability) : Ty(refere
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         referenced.visitWith(visitor)
-
-    override fun toString() = "*${if (mutability.isMut) "mut" else "const"} $referenced"
 }

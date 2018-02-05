@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types.ty
 
-import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.types.infer.Node
 import org.rust.lang.core.types.infer.NodeOrValue
 import org.rust.lang.core.types.infer.VarValue
@@ -18,8 +17,6 @@ sealed class TyInfer : Ty(HAS_TY_INFER_MASK) {
     ) : TyInfer(), Node
     class IntVar(override var parent: NodeOrValue = VarValue(null, 0)) : TyInfer(), Node
     class FloatVar(override var parent: NodeOrValue = VarValue(null, 0)) : TyInfer(), Node
-
-    override fun toString(): String = tyToString(this)
 }
 
 /** Used for caching only */
@@ -27,6 +24,4 @@ sealed class FreshTyInfer : Ty() {
     data class TyVar(val id: Int) : FreshTyInfer()
     data class IntVar(val id: Int) : FreshTyInfer()
     data class FloatVar(val id: Int) : FreshTyInfer()
-
-    override fun toString(): String = tyToString(this)
 }

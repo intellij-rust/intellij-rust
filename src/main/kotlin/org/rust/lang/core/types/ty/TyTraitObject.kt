@@ -6,7 +6,6 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.BoundElement
@@ -32,8 +31,6 @@ data class TyTraitObject(val trait: BoundElement<RsTraitItem>) : Ty(mergeFlags(t
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         trait.visitWith(visitor)
-
-    override fun toString(): String = tyToString(this)
 
     companion object {
         fun valueOf(trait: RsTraitItem): TyTraitObject {
