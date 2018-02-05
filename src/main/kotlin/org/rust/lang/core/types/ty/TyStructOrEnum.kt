@@ -6,7 +6,6 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -47,8 +46,6 @@ class TyStruct private constructor(
     override fun hashCode(): Int =
         boundElement.hashCode()
 
-    override fun toString(): String = tyToString(this)
-
     companion object {
         fun valueOf(struct: RsStructItem): TyStruct {
             val item = CompletionUtil.getOriginalOrSelf(struct)
@@ -81,8 +78,6 @@ class TyEnum private constructor(
 
     override fun hashCode(): Int =
         boundElement.hashCode()
-
-    override fun toString(): String = tyToString(this)
 
     companion object {
         fun valueOf(enum: RsEnumItem): TyEnum {

@@ -6,7 +6,6 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.psi.PsiElement
-import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.hasColonColon
 
@@ -38,26 +37,16 @@ abstract class TyPrimitive : Ty() {
     }
 }
 
-object TyBool : TyPrimitive() {
-    override fun toString(): String = tyToString(this)
-}
+object TyBool : TyPrimitive()
 
-object TyChar : TyPrimitive() {
-    override fun toString(): String = tyToString(this)
-}
+object TyChar : TyPrimitive()
 
-object TyUnit : TyPrimitive() {
-    override fun toString(): String = tyToString(this)
-}
+object TyUnit : TyPrimitive()
 
 /** The `!` type. E.g. `unimplemented!()` */
-object TyNever : TyPrimitive() {
-    override fun toString(): String = tyToString(this)
-}
+object TyNever : TyPrimitive()
 
-object TyStr : TyPrimitive() {
-    override fun toString(): String = tyToString(this)
-}
+object TyStr : TyPrimitive()
 
 abstract class TyNumeric : TyPrimitive()
 
@@ -85,8 +74,6 @@ sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
     object I64: TyInteger("i64", 9)
     object I128: TyInteger("i128", 10)
     object ISize: TyInteger("isize", 11)
-
-    override fun toString(): String = tyToString(this)
 }
 
 sealed class TyFloat(val name: String, val ordinal: Int) : TyNumeric() {
@@ -102,6 +89,4 @@ sealed class TyFloat(val name: String, val ordinal: Int) : TyNumeric() {
 
     object F32: TyFloat("f32", 0)
     object F64: TyFloat("f64", 1)
-
-    override fun toString(): String = tyToString(this)
 }

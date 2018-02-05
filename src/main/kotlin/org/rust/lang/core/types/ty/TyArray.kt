@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types.ty
 
-import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 
@@ -15,6 +14,4 @@ class TyArray(val base: Ty, val size: Long?) : Ty(base.flags) {
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         base.visitWith(visitor)
-
-    override fun toString(): String = tyToString(this)
 }

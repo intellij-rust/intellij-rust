@@ -5,8 +5,4 @@
 
 package org.rust.lang.core.types.ty
 
-import org.rust.ide.presentation.tyToString
-
-object TyUnknown : Ty() {
-    override fun toString(): String = tyToString(this)
-}
+object TyUnknown : Ty()

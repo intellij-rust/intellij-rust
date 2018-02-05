@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types.ty
 
-import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsImplTraitType
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.flattenHierarchy
@@ -18,6 +17,4 @@ data class TyAnon(val definition: RsImplTraitType, val traits: List<BoundElement
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         traits.flatMap { it.flattenHierarchy }
-
-    override fun toString(): String = tyToString(this)
 }

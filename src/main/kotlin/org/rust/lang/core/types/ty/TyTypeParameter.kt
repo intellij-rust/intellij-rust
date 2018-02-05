@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types.ty
 
-import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
@@ -41,8 +40,6 @@ class TyTypeParameter private constructor(
         (parameter as? AssociatedType)?.type?.visitWith(visitor) ?: false
 
     val name: String? get() = parameter.name
-
-    override fun toString(): String = tyToString(this)
 
     interface TypeParameter {
         val name: String?

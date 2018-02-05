@@ -6,6 +6,7 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.util.BitUtil
+import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
@@ -48,7 +49,7 @@ abstract class Ty(val flags: TypeFlags = 0): TypeFoldable<Ty> {
     /**
      * User visible string representation of a type
      */
-    abstract override fun toString(): String
+    final override fun toString(): String = tyToString(this)
 }
 
 enum class Mutability {

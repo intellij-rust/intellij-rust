@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types.ty
 
-import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 
@@ -16,6 +15,4 @@ data class TyReference(val referenced: Ty, val mutability: Mutability) : Ty(refe
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         referenced.visitWith(visitor)
-
-    override fun toString(): String = tyToString(this)
 }
