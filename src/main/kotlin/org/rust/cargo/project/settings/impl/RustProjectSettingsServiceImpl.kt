@@ -42,7 +42,7 @@ class RustProjectSettingsServiceImpl(
 
     override var data: RustProjectSettingsService.Data
         get() {
-            state = state
+            val state = state
             return RustProjectSettingsService.Data(
                 toolchain = state.toolchainHomeDirectory?.let { RustToolchain(Paths.get(it)) },
                 autoUpdateEnabled = state.autoUpdateEnabled,
