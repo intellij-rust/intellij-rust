@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsTraitOrImpl
@@ -19,9 +20,11 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitImplItem(impl: RsImplItem) {
             val trait = impl.traitRef?.resolveToTrait ?: return
+            val typeRef = impl.typeReference ?: return
             if (sortedImplItems(impl.items(), trait.items()) == null) return
+            val textRange = TextRange(0, typeRef.startOffsetInParent + typeRef.textLength)
             holder.registerProblem(
-                impl,
+                impl, textRange,
                 "Different impl member order from the trait",
                 SortImplTraitMembersFix()
             )
