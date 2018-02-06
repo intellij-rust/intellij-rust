@@ -62,7 +62,7 @@ class RsProjectConfigurable(
 
         rustProjectSettings.data = RustProjectSettingsPanel.Data(
             toolchain = toolchain,
-            explicitPathToStdlib = settings.explicitPathToStdlib
+            explicitPathToRustSource = settings.explicitPathToRustSource
         )
         expandMacros = settings.expandMacros
 
@@ -82,7 +82,7 @@ class RsProjectConfigurable(
         val currentData = settings.data
         settings.data = currentData.copy(
             toolchain = rustProjectSettings.data.toolchain,
-            explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib,
+            explicitPathToRustSource = rustProjectSettings.data.explicitPathToRustSource,
             expandMacros = expandMacros
         )
     }
@@ -91,7 +91,7 @@ class RsProjectConfigurable(
         val data = rustProjectSettings.data
         if (hintProvider.supportedOptions.any { checkboxForOption(it).isSelected != it.get() }) return true
         return data.toolchain?.location != settings.toolchain?.location
-            || data.explicitPathToStdlib != settings.explicitPathToStdlib
+            || data.explicitPathToRustSource != settings.explicitPathToRustSource
             || expandMacros != settings.expandMacros
     }
 

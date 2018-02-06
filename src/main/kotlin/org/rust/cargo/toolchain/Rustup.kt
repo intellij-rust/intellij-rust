@@ -27,14 +27,14 @@ class Rustup(
         class Err(val error: String) : DownloadResult<Nothing>()
     }
 
-    fun downloadStdlib(): DownloadResult<VirtualFile> {
+    fun downloadRustSource(): DownloadResult<VirtualFile> {
         val downloadProcessOutput = GeneralCommandLine(rustup)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "add", "rust-src")
             .execute(null)
 
         return if (downloadProcessOutput?.isSuccess == true) {
-            val sources = getStdlibFromSysroot() ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
+            val sources = getRustSourceFromSysroot() ?: return DownloadResult.Err("Failed to find Rust source in sysroot")
             fullyRefreshDirectory(sources)
             DownloadResult.Ok(sources)
         } else {
@@ -58,7 +58,7 @@ class Rustup(
         }
     }
 
-    fun getStdlibFromSysroot(): VirtualFile? {
+    fun getRustSourceFromSysroot(): VirtualFile? {
         val sysroot = toolchain.getSysroot(projectDirectory) ?: return null
         val fs = LocalFileSystem.getInstance()
         return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))

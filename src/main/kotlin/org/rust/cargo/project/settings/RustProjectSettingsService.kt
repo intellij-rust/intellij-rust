@@ -17,7 +17,7 @@ interface RustProjectSettingsService {
         // Usually, we use `rustup` to find stdlib automatically,
         // but if one does not use rustup, it's possible to
         // provide path to stdlib explicitly.
-        val explicitPathToStdlib: String?,
+        val explicitPathToRustSource: String?,
         val useCargoCheckForBuild: Boolean,
         val useCargoCheckAnnotator: Boolean,
         val compileAllTargets: Boolean,
@@ -29,10 +29,10 @@ interface RustProjectSettingsService {
     var data: Data
 
     val toolchain: RustToolchain? get() = data.toolchain
-    var explicitPathToStdlib: String?
-        get() = data.explicitPathToStdlib
+    var explicitPathToRustSource: String?
+        get() = data.explicitPathToRustSource
         set(value) {
-            data = data.copy(explicitPathToStdlib = value)
+            data = data.copy(explicitPathToRustSource = value)
         }
     val autoUpdateEnabled: Boolean get() = data.autoUpdateEnabled
     val useCargoCheckForBuild: Boolean get() = data.useCargoCheckForBuild

@@ -63,7 +63,7 @@ class CargoConfigurationWizardStep private constructor(
             if (data != null) {
                 module.project.rustSettings.data = module.project.rustSettings.data.copy(
                     toolchain = data.toolchain,
-                    explicitPathToStdlib = data.explicitPathToStdlib
+                    explicitPathToRustSource = data.explicitPathToRustSource
                 )
             }
             // We don't use SDK, but let's inherit one to reduce the amount of

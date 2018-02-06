@@ -25,7 +25,7 @@ class RustProjectSettingsServiceImpl(
     data class State(
         var toolchainHomeDirectory: String? = null,
         var autoUpdateEnabled: Boolean = true,
-        var explicitPathToStdlib: String? = null,
+        var explicitPathToRustSource: String? = null,
         var useCargoCheckForBuild: Boolean = true,
         var useCargoCheckAnnotator: Boolean = false,
         var compileAllTargets: Boolean = true,
@@ -50,7 +50,7 @@ class RustProjectSettingsServiceImpl(
             return RustProjectSettingsService.Data(
                 toolchain = state.toolchainHomeDirectory?.let { RustToolchain(Paths.get(it)) },
                 autoUpdateEnabled = state.autoUpdateEnabled,
-                explicitPathToStdlib = state.explicitPathToStdlib,
+                explicitPathToRustSource = state.explicitPathToRustSource,
                 useCargoCheckForBuild = state.useCargoCheckForBuild,
                 useCargoCheckAnnotator = state.useCargoCheckAnnotator,
                 compileAllTargets = state.compileAllTargets,
@@ -63,7 +63,7 @@ class RustProjectSettingsServiceImpl(
             val newState = State(
                 toolchainHomeDirectory = value.toolchain?.location?.systemIndependentPath,
                 autoUpdateEnabled = value.autoUpdateEnabled,
-                explicitPathToStdlib = value.explicitPathToStdlib,
+                explicitPathToRustSource = value.explicitPathToRustSource,
                 useCargoCheckForBuild = value.useCargoCheckForBuild,
                 useCargoCheckAnnotator = value.useCargoCheckAnnotator,
                 compileAllTargets = value.compileAllTargets,

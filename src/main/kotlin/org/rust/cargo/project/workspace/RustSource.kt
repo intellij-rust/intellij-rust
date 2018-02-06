@@ -16,7 +16,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.StdLibType
 import org.rust.ide.notifications.showBalloon
 
-class StandardLibrary private constructor(
+class RustSource private constructor(
     val crates: List<StdCrate>
 ) {
 
@@ -31,15 +31,15 @@ class StandardLibrary private constructor(
     }
 
     companion object {
-        fun fromPath(path: String): StandardLibrary? =
+        fun fromPath(path: String): RustSource? =
             LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(it) }
 
-        fun fromFile(sources: VirtualFile): StandardLibrary? {
+        fun fromFile(sources: VirtualFile): RustSource? {
             if (!sources.isDirectory) return null
             val srcDir = if (sources.name == "src") sources else sources.findChild("src")
                 ?: return null
 
-            val stdlib = AutoInjectedCrates.stdlibCrates.mapNotNull { libInfo ->
+            val rustSource = AutoInjectedCrates.stdlibCrates.mapNotNull { libInfo ->
                 val packageSrcDir = srcDir.findFileByRelativePath(libInfo.srcDir)
                 val libFile = packageSrcDir?.findChild("lib.rs")
                 if (packageSrcDir != null && libFile != null)
@@ -47,8 +47,8 @@ class StandardLibrary private constructor(
                 else
                     null
             }
-            if (stdlib.isEmpty()) return null
-            return StandardLibrary(stdlib)
+            if (rustSource.isEmpty()) return null
+            return RustSource(rustSource)
         }
     }
 }

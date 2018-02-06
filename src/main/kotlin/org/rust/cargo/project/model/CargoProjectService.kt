@@ -85,11 +85,11 @@ interface CargoProject {
     val rustcInfo: RustcInfo?
 
     val workspaceStatus: UpdateStatus
-    val stdlibStatus: UpdateStatus
+    val rustSourceStatus: UpdateStatus
     val rustcInfoStatus: UpdateStatus
 
     val mergedStatus: UpdateStatus get() = workspaceStatus
-        .merge(stdlibStatus)
+        .merge(rustSourceStatus)
         .merge(rustcInfoStatus)
 
     sealed class UpdateStatus(private val priority: Int) {

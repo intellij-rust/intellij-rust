@@ -22,13 +22,13 @@ import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.project.workspace.RustSource
 import org.rust.lang.core.psi.isNotRustFile
 
 /**
- * Warn user if rust toolchain or standard library is not properly configured.
+ * Warn user if Rust toolchain or Rust source is not properly configured.
  *
- * Try to fix this automatically (toolchain from PATH, standard library from the last project)
+ * Try to fix this automatically (toolchain from PATH, Rust source from the last project)
  * and if not successful show the actual notification to the user.
  */
 class MissingToolchainNotificationProvider(
@@ -74,11 +74,11 @@ class MissingToolchainNotificationProvider(
             return createNoCargoProjectForFilePanel()
 
         val workspace = cargoProject.workspace ?: return null
-        if (!workspace.hasStandardLibrary) {
+        if (!workspace.hasRustSource) {
             // If rustup is not null, the WorkspaceService will use it
-            // to add stdlib automatically. This happens asynchronously,
+            // to add Rust source automatically. This happens asynchronously,
             // so we can't reliably say here if that succeeded or not.
-            if (!toolchain.isRustupAvailable) return createLibraryAttachingPanel()
+            if (!toolchain.isRustupAvailable) return createAttachRustSourcePanel()
         }
 
         return null
@@ -112,17 +112,17 @@ class MissingToolchainNotificationProvider(
             }
         }
 
-    private fun createLibraryAttachingPanel(): EditorNotificationPanel =
+    private fun createAttachRustSourcePanel(): EditorNotificationPanel =
         EditorNotificationPanel().apply {
-            setText("Can not attach stdlib sources automatically without rustup.")
+            setText("Can not attach Rust sources automatically without rustup.")
             createActionLabel("Attach manually") {
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                val stdlib = FileChooser.chooseFile(descriptor, this, project, null) ?: return@createActionLabel
-                if (StandardLibrary.fromFile(stdlib) != null) {
-                    project.rustSettings.explicitPathToStdlib = stdlib.path
+                val rustSource = FileChooser.chooseFile(descriptor, this, project, null) ?: return@createActionLabel
+                if (RustSource.fromFile(rustSource) != null) {
+                    project.rustSettings.explicitPathToRustSource = rustSource.path
                 } else {
                     project.showBalloon(
-                        "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
+                        "Invalid Rust source path: `${rustSource.presentableUrl}`",
                         NotificationType.ERROR
                     )
                 }

@@ -41,7 +41,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.project.workspace.RustSource
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.ide.notifications.showBalloon
@@ -262,10 +262,10 @@ data class CargoProjectImpl(
     override val manifest: Path,
     private val projectService: CargoProjectsServiceImpl,
     private val rawWorkspace: CargoWorkspace? = null,
-    private val stdlib: StandardLibrary? = null,
+    private val rustSource: RustSource? = null,
     override val rustcInfo: RustcInfo? = null,
     override val workspaceStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
-    override val stdlibStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
+    override val rustSourceStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : CargoProject {
 
@@ -274,8 +274,8 @@ data class CargoProjectImpl(
     private val toolchain get() = project.toolchain
     override val workspace: CargoWorkspace? = run {
         val rawWorkspace = rawWorkspace ?: return@run null
-        val stdlib = stdlib ?: return@run rawWorkspace
-        rawWorkspace.withStdlib(stdlib)
+        val rustSource = this@CargoProjectImpl.rustSource ?: return@run rawWorkspace
+        rawWorkspace.withRustSource(rustSource)
     }
 
     override val presentableName: String
@@ -299,32 +299,32 @@ data class CargoProjectImpl(
     fun refresh(): CompletableFuture<CargoProjectImpl> {
         if (!projectDirectory.exists()) {
             return CompletableFuture.completedFuture(copy(
-                stdlibStatus = UpdateStatus.UpdateFailed("Project directory does not exist"))
+                rustSourceStatus = UpdateStatus.UpdateFailed("Project directory does not exist"))
             )
         }
         return refreshRustcInfo()
-            .thenCompose { it.refreshStdlib() }
+            .thenCompose { it.refreshRustSource() }
             .thenCompose { it.refreshWorkspace() }
     }
 
-    private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
+    private fun refreshRustSource(): CompletableFuture<CargoProjectImpl> {
         val rustup = toolchain?.rustup(projectDirectory)
         if (rustup == null) {
-            val explicitPath = project.rustSettings.explicitPathToStdlib
-            val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
+            val explicitPath = project.rustSettings.explicitPathToRustSource
+            val lib = explicitPath?.let { RustSource.fromPath(it) }
             val result = when {
-                explicitPath == null -> TaskResult.Err<StandardLibrary>("no explicit stdlib or rustup found")
-                lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
+                explicitPath == null -> TaskResult.Err<RustSource>("rustup not found or path to Rust source not explicitly configured")
+                lib == null -> TaskResult.Err("invalid Rust source path: $explicitPath")
                 else -> TaskResult.Ok(lib)
             }
-            return CompletableFuture.completedFuture(withStdlib(result))
+            return CompletableFuture.completedFuture(withRustSource(result))
         }
-        return fetchStdlib(project, projectService.taskQueue, rustup).thenApply(this::withStdlib)
+        return fetchRustSource(project, projectService.taskQueue, rustup).thenApply(this::withRustSource)
     }
 
-    private fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
-        is TaskResult.Ok -> copy(stdlib = result.value, stdlibStatus = UpdateStatus.UpToDate)
-        is TaskResult.Err -> copy(stdlibStatus = UpdateStatus.UpdateFailed(result.reason))
+    private fun withRustSource(result: TaskResult<RustSource>): CargoProjectImpl = when (result) {
+        is TaskResult.Ok -> copy(rustSource = result.value, rustSourceStatus = UpdateStatus.UpToDate)
+        is TaskResult.Err -> copy(rustSourceStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
     private fun refreshWorkspace(): CompletableFuture<CargoProjectImpl> {
@@ -409,20 +409,20 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
     }
 }
 
-private fun fetchStdlib(
+private fun fetchRustSource(
     project: Project,
     queue: BackgroundTaskQueue,
     rustup: Rustup
-): CompletableFuture<TaskResult<StandardLibrary>> {
-    return runAsyncTask(project, queue, "Getting Rust stdlib") {
+): CompletableFuture<TaskResult<RustSource>> {
+    return runAsyncTask(project, queue, "Getting Rust source") {
         progress.isIndeterminate = true
-        val download = rustup.downloadStdlib()
+        val download = rustup.downloadRustSource()
         when (download) {
             is Rustup.DownloadResult.Ok -> {
-                val lib = StandardLibrary.fromFile(download.value)
+                val lib = RustSource.fromFile(download.value)
                 if (lib == null) {
                     err("" +
-                        "corrupted standard library: ${download.value.presentableUrl}"
+                        "corrupted Rust source: ${download.value.presentableUrl}"
                     )
                 } else {
                     ok(lib)

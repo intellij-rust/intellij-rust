@@ -19,7 +19,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Package
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.project.workspace.RustSource
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import java.nio.file.Paths
@@ -71,7 +71,7 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
     private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
 
     private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
-    val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.value }
+    val stdlib by lazy { (rustup?.downloadRustSource() as? Rustup.DownloadResult.Ok)?.value }
 
     override val skipTestReason: String?
         get() {
@@ -89,8 +89,8 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
         }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib)
+        val stdlib = RustSource.fromFile(stdlib!!)!!
+        return delegate.testCargoProject(module, contentRoot).withRustSource(stdlib)
     }
 
     override fun setUp(fixture: CodeInsightTestFixture) {

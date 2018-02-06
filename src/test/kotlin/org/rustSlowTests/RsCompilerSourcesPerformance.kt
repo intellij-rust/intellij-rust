@@ -31,7 +31,7 @@ class RsCompilerSourcesPerformance : RsTestBase() {
 //        }
 //    }
 
-    fun `test parsing standard library sources`() {
+    fun `test parsing Rust sources`() {
         val sources = rustSrcDir()
         parseRustFiles(
             sources,

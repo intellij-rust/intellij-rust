@@ -31,8 +31,8 @@ interface CargoWorkspace {
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
-    fun withStdlib(stdlib: StandardLibrary): CargoWorkspace
-    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
+    fun withRustSource(rustSource: RustSource): CargoWorkspace
+    val hasRustSource: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     @TestOnly
     fun withEdition(edition: Edition): CargoWorkspace
@@ -131,21 +131,21 @@ private class WorkspaceImpl constructor(
         return targetByCrateRootUrl[canonicalFile.url]
     }
 
-    override fun withStdlib(stdlib: StandardLibrary): CargoWorkspace {
+    override fun withRustSource(rustSource: RustSource): CargoWorkspace {
         // This is a bit trickier than it seems required.
         // The problem is that workspace packages and targets have backlinks
         // so we have to rebuild the whole workspace from scratch instead of
-        // *just* adding in the stdlib.
+        // *just* adding in the Rust source.
 
-        val stdAll = stdlib.crates.map { it.id }.toSet()
-        val stdGated = stdlib.crates.filter { it.type == StdLibType.FEATURE_GATED }.map { it.id }.toSet()
-        val stdRoots = stdlib.crates.filter { it.type == StdLibType.ROOT }.map { it.id }.toSet()
+        val stdAll = rustSource.crates.map { it.id }.toSet()
+        val stdGated = rustSource.crates.filter { it.type == StdLibType.FEATURE_GATED }.map { it.id }.toSet()
+        val stdRoots = rustSource.crates.filter { it.type == StdLibType.ROOT }.map { it.id }.toSet()
 
         val result = WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
             packages.map { it.asPackageData() } +
-                stdlib.crates.map { it.asPackageData }
+                rustSource.crates.map { it.asPackageData }
         )
 
         run {
@@ -294,7 +294,7 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         edition = edition ?: this.edition
     )
 
-private val StandardLibrary.StdCrate.asPackageData
+private val RustSource.StdCrate.asPackageData
     get() =
         CargoWorkspaceData.Package(
             id = id,

@@ -26,7 +26,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="autoUpdateEnabled" value="false" />
               <option name="compileAllTargets" value="false" />
               <option name="expandMacros" value="false" />
-              <option name="explicitPathToStdlib" value="/stdlib" />
+              <option name="explicitPathToRustSource" value="/stdlib" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useCargoCheckAnnotator" value="true" />
               <option name="useCargoCheckForBuild" value="false" />
@@ -43,7 +43,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         check(service.data == RustProjectSettingsService.Data(
             toolchain = RustToolchain(Paths.get("/")),
             autoUpdateEnabled = false,
-            explicitPathToStdlib = "/stdlib",
+            explicitPathToRustSource = "/stdlib",
             useCargoCheckForBuild = false,
             useCargoCheckAnnotator = true,
             compileAllTargets = false,
