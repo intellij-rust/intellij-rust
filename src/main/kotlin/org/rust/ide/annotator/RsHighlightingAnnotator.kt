@@ -99,14 +99,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsModDeclItem -> RsColor.MODULE
     is RsModItem -> RsColor.MODULE
     is RsPatBinding -> {
-        val isParameter = element.ancestorStrict<RsValueParameter>() != null
-        val isMut = element.mutability.isMut || element.type.let { it is TyReference && it.mutability.isMut }
-        when {
-            isMut && isParameter -> RsColor.MUT_PARAMETER
-            isMut -> RsColor.MUT_BINDING
-            isParameter -> RsColor.PARAMETER
-            else -> null
-        }
+        if (element.ancestorStrict<RsValueParameter>() != null) RsColor.PARAMETER else null
     }
     is RsStructItem -> RsColor.STRUCT
     is RsTraitItem -> RsColor.TRAIT
