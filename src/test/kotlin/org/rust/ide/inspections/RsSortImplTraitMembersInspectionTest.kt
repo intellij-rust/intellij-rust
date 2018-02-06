@@ -94,7 +94,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             fn test3(&self) -> i32;
         }
 
-        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Trait for Struct {
+        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Trait for Struct</weak_warning> {
             type T2 = T;
             const ID2: i32 = 2;
             fn test3(&self) -> i32 {
@@ -108,7 +108,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             }
             type T1 = T;
             const ID1: i32 = 1;
-        }</weak_warning>
+        }
     """, """
         struct Struct {
             i: i32
@@ -150,11 +150,11 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             fn bar();
         }
 
-        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Foo for () {
+        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Foo for ()</weak_warning> {
             fn bar() {
             }
             type bar = ();
-        }</weak_warning>
+        }
     """, """
         trait Foo {
             type bar;
@@ -191,7 +191,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
 
         struct T;
 
-        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Trait for Struct {
+        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Trait for Struct</weak_warning> {
             type T2 = T;
             const ID2: i32 = 2;
             fn test3(&self) -> i32 {
@@ -205,7 +205,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             }
             type T1 = T;
             const ID1: i32 = 1;
-        }</weak_warning>
+        }
     """, """
         mod foo;
 
