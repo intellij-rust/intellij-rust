@@ -60,8 +60,8 @@ during import IDEA may delete `.idea/runConfigurations`, just revert changes in
 the directory if this happens.
 
 You might want to install the following plugins:
-  - Grammar Kit to get highlighting for the files with BNFish grammar.
-  - PSI viewer to view the AST of Rust files right in the IDE.
+  - Grammar-Kit to get highlighting for the files with BNFish grammar.
+  - PsiViewer to view the AST of Rust files right in the IDE.
 
 
 # Contributing
