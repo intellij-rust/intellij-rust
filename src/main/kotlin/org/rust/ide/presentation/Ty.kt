@@ -58,6 +58,7 @@ private fun render(
         }"
         is TyPointer -> "*${if (ty.mutability.isMut) "mut" else "const"} ${r(ty.referenced)}"
         is TyTypeParameter -> ty.name ?: anonymous
+        is TyProjection -> "<${ty.type} as ${ty.trait.name}>::${ty.target.name}"
         is TyTraitObject -> (ty.trait.element.name ?: return anonymous) +
             if (includeTypeArguments) formatTypeArguments(ty.typeArguments, r) else ""
         is TyStructOrEnumBase -> (ty.item.name ?: return anonymous) +

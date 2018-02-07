@@ -7,12 +7,9 @@ package org.rust.lang.core.types.ty
 
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.infer.TypeFolder
-import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.type
 
 class TyTypeParameter private constructor(
@@ -29,32 +26,18 @@ class TyTypeParameter private constructor(
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         bounds.flatMap { it.flattenHierarchy }
 
-    override fun superFoldWith(folder: TypeFolder): Ty {
-        if (parameter is AssociatedType) {
-            return associated(parameter.type.foldWith(folder), parameter.trait, parameter.target)
-        }
-        return super.superFoldWith(folder)
-    }
-
-    override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        (parameter as? AssociatedType)?.type?.visitWith(visitor) ?: false
-
     val name: String? get() = parameter.name
 
     interface TypeParameter {
         val name: String?
     }
+
     object Self : TypeParameter {
         override val name: String? get() = "Self"
     }
 
     data class Named(val parameter: RsTypeParameter) : TypeParameter {
         override val name: String? get() = parameter.name
-    }
-
-    // TODO should be a separate Ty
-    data class AssociatedType(val type: Ty, val trait: RsTraitItem, val target: RsTypeAlias) : TypeParameter {
-        override val name: String? get() = "<$type as ${trait.name}>::${target.name}"
     }
 
     companion object {
@@ -73,23 +56,6 @@ class TyTypeParameter private constructor(
 
         fun named(parameter: RsTypeParameter): TyTypeParameter =
             TyTypeParameter(Named(parameter), parameter.isSized) { bounds(parameter) }
-
-        fun associated(target: RsTypeAlias): TyTypeParameter =
-            associated(self(), target)
-
-        private fun associated(type: Ty, target: RsTypeAlias): TyTypeParameter {
-            val trait = target.ancestorStrict<RsTraitItem>()
-                ?: error("Tried to construct an associated type from RsTypeAlias declared out of a trait")
-            return associated(type, trait, target)
-        }
-
-        fun associated(type: Ty, trait: RsTraitItem, target: RsTypeAlias): TyTypeParameter {
-            return TyTypeParameter(
-                AssociatedType(type, trait, target),
-                // TODO: support associated type bounds
-                isSized = true
-            ) { emptyList() }
-        }
     }
 }
 

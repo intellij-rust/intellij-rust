@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -97,22 +98,21 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
 
         val assocTypes = run {
             if (element is RsTraitItem) {
-                val outputParam = lookup.fnOutputParam
+                val outputParam = lookup.fnOnceOutput
                 return@run if (outputArg != null && outputParam != null) {
                     mapOf(outputParam to outputArg)
                 } else {
-                    emptySubstitution
+                    emptyMap()
                 }
             }
-            emptySubstitution
+            emptyMap<RsTypeAlias, Ty>()
         }
 
         val parameters = element.typeParameters.map { TyTypeParameter.named(it) }
 
         BoundElement(element,
-            subst
-                + parameters.zip(typeArguments ?: parameters).toMap()
-                + assocTypes
+            subst + parameters.zip(typeArguments ?: parameters).toMap(),
+            assocTypes
         )
     }
 }

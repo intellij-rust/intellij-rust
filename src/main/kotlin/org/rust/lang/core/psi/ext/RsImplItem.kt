@@ -11,16 +11,17 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.macros.ExpansionResult
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsInnerAttr
+import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyTypeParameter
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
@@ -38,9 +39,9 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         val aliases = members?.typeAliasList.orEmpty().mapNotNull { typeAlias ->
             trait.members?.typeAliasList.orEmpty()
                 .find { it.name == typeAlias.name }
-                ?.let { TyTypeParameter.associated(it) to typeAlias.declaredType }
+                ?.let { it to typeAlias.declaredType }
         }.toMap()
-        return BoundElement(trait, subst + aliases)
+        return BoundElement(trait, subst, aliases)
     }
 
     override val innerAttrList: List<RsInnerAttr>

@@ -74,6 +74,16 @@ fun <T> TypeFoldable<T>.foldTyTypeParameterWith(folder: (TyTypeParameter) -> Ty)
         }
     })
 
+/** Deeply replace any [TyProjection] with the function [folder] */
+fun <T> TypeFoldable<T>.foldTyProjectionWith(folder: (TyProjection) -> Ty): T =
+    foldWith(object : TypeFolder {
+        override fun invoke(ty: Ty): Ty = when {
+            ty is TyProjection -> folder(ty)
+            ty.hasTyProjection -> ty.superFoldWith(this)
+            else -> ty
+        }
+    })
+
 /**
  * Deeply replace any [TyTypeParameter] by [subst] mapping.
  */

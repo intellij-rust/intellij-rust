@@ -9,7 +9,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Query
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
@@ -19,6 +18,7 @@ import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Ty
 import org.rust.openapiext.filterIsInstanceQuery
 import org.rust.openapiext.filterQuery

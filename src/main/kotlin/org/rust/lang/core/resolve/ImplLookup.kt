@@ -59,12 +59,9 @@ class ImplLookup(
     private val fnTraits by lazy(NONE) {
         listOf("fn", "fn_mut", "fn_once").mapNotNull { RsLangItemIndex.findLangItem(project, it) }
     }
-    private val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
+    val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
         val trait = RsLangItemIndex.findLangItem(project, "fn_once") ?: return@lazy null
         findAssociatedType(trait, "Output")
-    }
-    val fnOutputParam by lazy(NONE) {
-        fnOnceOutput?.let { TyTypeParameter.associated(it) }
     }
     private val copyTrait: RsTraitItem? by lazy(NONE) {
         RsNamedElementIndex.findDerivableTraits(project, "Copy").firstOrNull()
@@ -323,8 +320,8 @@ class ImplLookup(
             is SelectionCandidate.DerivedTrait -> Selection(candidate.item, emptyList())
             is SelectionCandidate.Closure -> {
                 // TODO hacks hacks hacks
-                val (trait, subst) = ref.trait
-                val predicate = Predicate.Equate(subst[fnOutputParam] ?: TyUnit, (ref.selfTy as TyFunction).retType)
+                val (trait, _, assoc) = ref.trait
+                val predicate = Predicate.Equate(assoc[fnOnceOutput] ?: TyUnit, (ref.selfTy as TyFunction).retType)
                 val obligations = if (predicate.ty1 != predicate.ty2) {
                     listOf(Obligation(
                         newRecDepth,
@@ -428,6 +425,15 @@ class ImplLookup(
         }
     }
 
+    fun selectProjection(
+        projectionTy: TyProjection,
+        recursionDepth: Int = 0
+    ): SelectionResult<TyWithObligations<Ty>?> = selectProjection(
+        TraitRef(projectionTy.type, projectionTy.trait.withSubst()),
+        projectionTy.target,
+        recursionDepth
+    )
+
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
         if (selfTy is TyTypeParameter) {
             return lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
@@ -447,8 +453,8 @@ class ImplLookup(
     ): Ty? {
         return subst
             .find { it.element == trait }
-            ?.subst
-            ?.get(TyTypeParameter.associated(assocType))
+            ?.assoc
+            ?.get(assocType)
     }
 
     fun findOverloadedOpImpl(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): RsTraitOrImpl? {
@@ -485,10 +491,10 @@ class ImplLookup(
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
         get() {
-            val outputParam = fnOutputParam ?: return null
+            val outputParam = fnOnceOutput ?: return null
             val param = element.typeParamSingle ?: return null
             val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
-            val outputType = (subst[outputParam] ?: TyUnit)
+            val outputType = (assoc[outputParam] ?: TyUnit)
             return TyFunction(argumentTypes, outputType)
         }
 
@@ -586,10 +592,10 @@ private fun prepareSubstAndTraitRefRaw(
     return subst to TraitRef(formalSelfTy.substitute(subst), BoundElement(formalTrait.element, boundSubst))
 }
 
-private fun RsTraitItem.substAssocType(assoc: String, ty: Ty?): BoundElement<RsTraitItem> {
-    val assocType = findAssociatedType(this, assoc)?.let { TyTypeParameter.associated(it) }
-    val subst = if (assocType != null && ty != null) mapOf(assocType to ty) else emptySubstitution
-    return BoundElement(this, subst)
+private fun RsTraitItem.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> {
+    val assocType = findAssociatedType(this, assocName)
+    val assoc = if (assocType != null && ty != null) mapOf(assocType to ty) else emptyMap()
+    return BoundElement(this, assoc = assoc)
 }
 
 private fun Substitution.valueByName(name: String): Ty =
@@ -598,7 +604,7 @@ private fun Substitution.valueByName(name: String): Ty =
 private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty {
     return impl.associatedTypesTransitively
         .find { it.name == name }
-        ?.let { it.typeReference?.type ?: TyTypeParameter.associated(it) }
+        ?.let { it.typeReference?.type ?: TyProjection.valueOf(it) }
         ?: TyUnknown
 }
 
