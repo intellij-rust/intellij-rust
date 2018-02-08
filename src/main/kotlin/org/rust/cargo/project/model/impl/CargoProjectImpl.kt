@@ -40,10 +40,7 @@ import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.ide.notifications.showBalloon
-import org.rust.openapiext.TaskResult
-import org.rust.openapiext.modules
-import org.rust.openapiext.pathAsPath
-import org.rust.openapiext.runAsyncTask
+import org.rust.openapiext.*
 import org.rust.stdext.AsyncValue
 import org.rust.stdext.joinAll
 import java.nio.file.Path
@@ -262,6 +259,8 @@ data class CargoProjectImpl(
             rootDirCache.set(file)
             return file
         }
+
+    override val workspaceRootDir: VirtualFile? by CachedVirtualFile(workspace?.workspaceRootPath?.toUri()?.toString())
 
     @TestOnly
     fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)

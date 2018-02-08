@@ -42,7 +42,13 @@ object CargoMetadata {
         /**
          * Ids of packages that are members of the cargo workspace
          */
-        val workspace_members: List<String>?
+        val workspace_members: List<String>?,
+
+        /**
+         * Path to workspace root folder. Can be null for old cargo version
+         */
+        // BACKCOMPAT: Rust 1.23: use not nullable type here
+        val workspace_root: String?
     )
 
 
@@ -193,7 +199,8 @@ object CargoMetadata {
             project.packages.mapNotNull { it.clean(fs, it.id in members) },
             project.resolve.nodes.associate { (id, dependencies) ->
                 id to dependencies.toSet()
-            }
+            },
+            project.workspace_root
         )
     }
 

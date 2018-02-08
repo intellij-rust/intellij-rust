@@ -67,6 +67,7 @@ val Project.cargoProjects get() = service<CargoProjectsService>()
 interface CargoProject {
     val manifest: Path
     val rootDir: VirtualFile?
+    val workspaceRootDir: VirtualFile?
 
     val presentableName: String
     val workspace: CargoWorkspace?

@@ -16,7 +16,8 @@ typealias PackageId = String
  */
 data class CargoWorkspaceData(
     val packages: List<Package>,
-    val dependencies: Map<PackageId, Set<PackageId>>
+    val dependencies: Map<PackageId, Set<PackageId>>,
+    val workspaceRoot: String? = null
 ) {
     data class DependencyNode(
         val packageIndex: Int,
