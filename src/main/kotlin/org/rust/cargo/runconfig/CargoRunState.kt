@@ -41,7 +41,7 @@ class CargoRunState(
         consoleBuilder = CargoConsoleBuilder(environment.project, scope)
 
         consoleBuilder.addFilter(RsExplainFilter())
-        val dir = cargoProject?.rootDir
+        val dir = cargoProject?.workspaceRootDir ?: cargoProject?.rootDir
         if (dir != null) {
             consoleBuilder.addFilter(RsConsoleFilter(environment.project, dir))
             consoleBuilder.addFilter(RsPanicFilter(environment.project, dir))
