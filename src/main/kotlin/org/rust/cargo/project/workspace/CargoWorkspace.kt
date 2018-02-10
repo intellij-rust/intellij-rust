@@ -22,6 +22,8 @@ interface CargoWorkspace {
     val manifestPath: Path
     val contentRoot: Path get() = manifestPath.parent
 
+    val workspaceRootPath: Path?
+
     val packages: Collection<Package>
     fun findPackage(name: String): Package? = packages.find { it.name == name }
 
@@ -83,6 +85,7 @@ interface CargoWorkspace {
 
 private class WorkspaceImpl(
     override val manifestPath: Path,
+    override val workspaceRootPath: Path?,
     packagesData: Collection<CargoWorkspaceData.Package>
 ) : CargoWorkspace {
     override val packages: List<PackageImpl> = packagesData.map { pkg ->
@@ -116,6 +119,7 @@ private class WorkspaceImpl(
 
         val result = WorkspaceImpl(
             manifestPath,
+            workspaceRootPath,
             packages.map { it.asPackageData } +
                 stdlib.crates.map { it.asPackageData }
         )
@@ -152,7 +156,8 @@ private class WorkspaceImpl(
             // are used only for tests), then `X`, and then `P`s tests. So we need to
             // handle cycles here.
 
-            val result = WorkspaceImpl(manifestPath, data.packages)
+            val workspaceRootPath = data.workspaceRoot?.let { Paths.get(it) }
+            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages)
             // Fill package dependencies
             run {
                 val idToPackage = result.packages.associateBy { it.id }

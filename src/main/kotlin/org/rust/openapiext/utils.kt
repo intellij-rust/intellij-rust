@@ -96,10 +96,11 @@ fun Element.toXmlString() = JDOMUtil.writeElement(this)
 fun elementFromXmlString(xml: String): org.jdom.Element =
     SAXBuilder().build(xml.byteInputStream()).rootElement
 
-class CachedVirtualFile(private val url: String) {
+class CachedVirtualFile(private val url: String?) {
     private val cache = AtomicReference<VirtualFile>()
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): VirtualFile? {
+        if (url == null) return null
         val cached = cache.get()
         if (cached != null && cached.isValid) return cached
         val file = VirtualFileManager.getInstance().findFileByUrl(url)
