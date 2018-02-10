@@ -14,6 +14,7 @@ import org.rust.ide.utils.findStatementsInRange
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTuple
@@ -65,26 +66,68 @@ class RsExtractFunctionConfig private constructor(
     var visibilityLevelPublic: Boolean = false,
     val parameters: List<Parameter>
 ) {
+
     private val parametersText: String
         get() = parameters.joinToString(",") { it.text }
+
     val argumentsText: String
         get() = parameters.filter { it.type != null }.joinToString(",") { it.name }
 
     val signature: String
-        get() {
-            var signature = "fn $name($parametersText)"
-            if (returnValue != null) {
-                signature += " -> ${returnValue.type.insertionSafeText}"
-            }
+        get() = buildString {
             if (visibilityLevelPublic) {
-                signature = "pub " + signature
+                append("pub ")
             }
+            append("fn $name$typeParametersText($parametersText)")
+            if (returnValue != null) {
+                append(" -> ${returnValue.type.insertionSafeText}")
+            }
+            append(whereClausesText)
             val stmts = elements.map { it.text }.toMutableList()
             if (returnValue?.expression != null) {
                 stmts.add(returnValue.expression)
             }
-            return signature + "{\n${stmts.joinToString(separator = "\n")}\n}"
+            append("{\n${stmts.joinToString(separator = "\n")}\n}")
         }
+
+    private val typeParametersText: String
+        get() {
+            val typeParams = typeParameters()
+            if (typeParams.isEmpty()) return ""
+            return typeParams.joinToString(separator = ",", prefix = "<", postfix = ">") { it.text }
+        }
+
+    private val whereClausesText: String
+        get() {
+            val wherePredList = containingFunction.whereClause?.wherePredList ?: return ""
+            if (wherePredList.isEmpty()) return ""
+            val typeParams = typeParameters().map { it.declaredType }
+            if (typeParams.isEmpty()) return ""
+            val filtered = wherePredList.filter { typeParams.contains(it.typeReference?.type) }
+            if (filtered.isEmpty()) return ""
+            return filtered.joinToString(separator = ",", prefix = " where ") { it.text }
+        }
+
+    private fun typeParameters(): List<RsTypeParameter> {
+        val bounds = typeParameterBounds()
+        val paramAndReturnTypes = (parameters.mapNotNull { it.type } + listOf(returnValue).mapNotNull { it?.type })
+        return containingFunction.typeParameters.filter {
+            val typeParameter = it.declaredType
+            paramAndReturnTypes.any {
+                it.types().contains(typeParameter) || it.dependTypes(bounds).contains(typeParameter)
+            }
+        }
+    }
+
+    private fun typeParameterBounds(): Map<Ty, List<Ty>> {
+        return containingFunction.typeParameters.associate {
+            val type = it.declaredType
+            val bounds = it.bounds.flatMap {
+                it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList?.flatMap { it.type.types() } ?: emptyList()
+            }
+            type to bounds
+        }
+    }
 
     companion object {
         fun create(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
@@ -138,3 +181,29 @@ class RsExtractFunctionConfig private constructor(
     }
 }
 
+private fun Ty.types(): List<Ty> {
+    val types = mutableListOf<Ty>()
+
+    fun collect(type: Ty) {
+        types.add(type)
+        type.typeParameterValues.values.forEach { collect(it) }
+    }
+
+    collect(this)
+
+    return types
+}
+
+private fun Ty.dependTypes(boundMap: Map<Ty, List<Ty>>): List<Ty> {
+    val types = mutableListOf<Ty>()
+
+    fun collect(type: Ty) {
+        val bounds = boundMap[type]?.filter { !types.contains(it) } ?: return
+        types.addAll(bounds)
+        bounds.forEach { collect(it) }
+    }
+
+    collect(this)
+
+    return types
+}
