@@ -17,17 +17,30 @@ class RsImportOptimizer : ImportOptimizer {
     override fun supports(file: PsiFile?): Boolean = file is RsFile
 
     override fun processFile(file: PsiFile?) = Runnable {
-        execute(file as RsFile)
+        executeForUseItem(file as RsFile)
+        executeForExternCrate(file)
     }
 
-    fun execute(mod: RsMod) {
+    private fun executeForExternCrate(file: RsFile) {
+        val first = file.childrenOfType<RsElement>()
+            .firstOrNull { it !is RsInnerAttr } ?: return
+        val externCrateItems = file.childrenOfType<RsExternCrateItem>()
+        externCrateItems
+            .sortedBy { it.referenceName }
+            .mapNotNull { it.copy() as? RsExternCrateItem }
+            .forEach { file.addBefore(it, first) }
+
+        externCrateItems.forEach { it.delete() }
+    }
+
+    private fun executeForUseItem(mod: RsMod) {
         val uses = mod.childrenOfType<RsUseItem>()
         if (uses.isEmpty()) {
             return
         }
-        replaceOrder(mod, uses)
+        replaceOrderOfUseItems(mod, uses)
         val mods = mod.childrenOfType<RsMod>()
-        mods.forEach { execute(it) }
+        mods.forEach { executeForUseItem(it) }
     }
 
     companion object {
@@ -53,7 +66,7 @@ class RsImportOptimizer : ImportOptimizer {
             return true
         }
 
-        private fun replaceOrder(file: RsMod, uses: Collection<RsUseItem>) {
+        private fun replaceOrderOfUseItems(file: RsMod, uses: Collection<RsUseItem>) {
             val first = file.childrenOfType<RsElement>()
                 .firstOrNull { it !is RsExternCrateItem && it !is RsInnerAttr } ?: return
             val psiFactory = RsPsiFactory(file.project)

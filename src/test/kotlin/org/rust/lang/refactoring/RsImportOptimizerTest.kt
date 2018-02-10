@@ -16,6 +16,30 @@ class RsImportOptimizerTest: RsTestBase() {
         use foo;
     """)
 
+    fun `test extern crates should be sorted`() = doTest("""
+        extern crate b;
+        extern crate a;
+        extern crate c;
+    """, """
+        extern crate a;
+        extern crate b;
+        extern crate c;
+
+    """)
+
+    fun `test extern crates should be sorted after inner attributes`() = doTest("""
+        #![allow(non_snake_case)]
+        extern crate b;
+        extern crate a;
+        extern crate c;
+    """, """
+        #![allow(non_snake_case)]
+        extern crate a;
+        extern crate b;
+        extern crate c;
+
+    """)
+
     fun `test should be at the beginning`() = doTest("""
         //! test
         extern crate log;
