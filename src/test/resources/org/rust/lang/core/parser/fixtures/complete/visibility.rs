@@ -8,3 +8,4 @@ mod a {
         pub(in super::super) struct S6;
     }
 }
+crate struct S7;
