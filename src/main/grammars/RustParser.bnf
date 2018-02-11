@@ -208,8 +208,7 @@ TraitRef ::= PathGenericArgsWithoutColonsNoTypeQual {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Items
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-Vis ::= pub VisRestriction?
+Vis ::= crate | pub VisRestriction?
 VisRestriction ::= '(' ( crate | ((&(self ')' | super ')') | in) PathWithoutTypes) ) ')'
 
 //XXX: don't use contextual keywords in recover, because they remap tokens.
@@ -238,7 +237,7 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
   recoverWhile = Item_recover
 }
-private Item_first ::= '#' | pub | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
+private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
   | static | TYPE_KW | impl | "union" | "default" | "auto"
 private Item_recover ::= !('}' | Item_first )
 

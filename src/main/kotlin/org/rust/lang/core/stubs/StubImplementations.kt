@@ -393,7 +393,8 @@ class RsModDeclItemStub(
 
 
 class RsModItemStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    parent: StubElement<*>?,
+    elementType: IStubElementType<*, *>,
     override val name: String?,
     override val isPublic: Boolean
 ) : StubBase<RsModItem>(parent, elementType),
