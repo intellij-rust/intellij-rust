@@ -55,23 +55,26 @@ class RsPsiStructureTest : RsTestBase() {
             fn required_fn();
             fn another_required_fn();
             type RequiredType;
+            type same_name;
+            const same_name: i32;
         }
 
         struct S;
 
         impl T for S {
             fn another_required_fn() { }
+            type same_name = ();
             fn spam() {}
         }
     """) { impl ->
         val trait = impl.traitRef!!.resolveToTrait!!
         val implInfo = TraitImplementationInfo.create(trait, impl)!!
         check(implInfo.declared.map { it.name } == listOf(
-            "optional_fn", "required_fn", "another_required_fn", "RequiredType"
+            "optional_fn", "required_fn", "another_required_fn", "RequiredType", "same_name", "same_name"
         ))
 
         check(implInfo.missingImplementations.map { it.name } == listOf(
-            "required_fn", "RequiredType"
+            "required_fn", "RequiredType", "same_name"
         ))
 
         check(implInfo.nonExistentInTrait.map { it.name } == listOf(
@@ -79,7 +82,8 @@ class RsPsiStructureTest : RsTestBase() {
         ))
 
         check(implInfo.implementationToDeclaration.map { (it.first.name to it.second.name) } == listOf(
-            "another_required_fn" to "another_required_fn"
+            "another_required_fn" to "another_required_fn",
+            "same_name" to "same_name"
         ))
     }
 
