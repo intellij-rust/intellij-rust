@@ -67,6 +67,16 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test different type items have same name E0046`() = checkErrors("""
+        trait A {
+            type C;
+            const C: i32;
+        }
+        <error descr="Not all trait items implemented, missing: `C` [E0046]">impl A for ()</error> {
+            type C = ();
+        }
+    """)
+
     fun `test not applied E0046`() = checkErrors("""
         trait T {
             fn foo() {}
