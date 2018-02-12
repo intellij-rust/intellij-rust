@@ -6,9 +6,8 @@
 package org.rust.ide.intentions.import
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.rust.ide.intentions.RsIntentionTestBase
 
-class ImportNameIntentionStdTest : RsIntentionTestBase(ImportNameIntention()) {
+class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
 
@@ -81,4 +80,12 @@ class ImportNameIntentionStdTest : RsIntentionTestBase(ImportNameIntention()) {
             let mutex = Mutex/*caret*/::new(Vec::new());
         }
     """, ImportNameIntention.Testmarks.autoInjectedCrate)
+
+    fun `test module reexport in stdlib`() = doAvailableTestWithMultipleChoice("""
+        fn foo<T: Hash/*caret*/>(t: T) {}
+    """, setOf("core::hash::Hash", "std::hash::Hash"), "std::hash::Hash", """
+        use std::hash::Hash;
+
+        fn foo<T: Hash/*caret*/>(t: T) {}
+    """)
 }
