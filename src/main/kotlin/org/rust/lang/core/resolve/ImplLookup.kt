@@ -409,7 +409,7 @@ class ImplLookup(
         projectionTy: TyProjection,
         recursionDepth: Int = 0
     ): SelectionResult<TyWithObligations<Ty>?> = selectProjection(
-        TraitRef(projectionTy.type, projectionTy.trait.withSubst()),
+        projectionTy.traitRef,
         projectionTy.target,
         recursionDepth
     )
