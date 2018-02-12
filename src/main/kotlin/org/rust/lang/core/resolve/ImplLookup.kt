@@ -25,6 +25,7 @@ import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 import org.rust.openapiext.ProjectCache
 import org.rust.stdext.buildSet
+import org.rust.stdext.zipValues
 import kotlin.LazyThreadSafetyMode.NONE
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
@@ -323,37 +324,14 @@ class ImplLookup(
             is SelectionCandidate.Closure -> {
                 // TODO hacks hacks hacks
                 val (trait, _, assoc) = ref.trait
-                val predicate = Predicate.Equate(assoc[fnOnceOutput] ?: TyUnit, (ref.selfTy as TyFunction).retType)
-                val obligations = if (predicate.ty1 != predicate.ty2) {
-                    listOf(Obligation(
-                        newRecDepth,
-                        predicate
-                    ))
-                } else {
-                    emptyList()
-                }
-                Selection(trait, obligations)
+                ctx.combineTypes(assoc[fnOnceOutput] ?: TyUnit, (ref.selfTy as TyFunction).retType)
+                Selection(trait, emptyList())
             }
             is SelectionCandidate.TypeParameter -> {
-                okResultFor(candidate.bound, ref.trait.subst, recursionDepth)
+                ctx.combinePairs(zipValues(candidate.bound.subst, ref.trait.subst))
+                Selection(candidate.bound.element, emptyList())
             }
         }
-    }
-
-    private fun okResultFor(
-        impl: BoundElement<RsTraitOrImpl>,
-        subst: Substitution,
-        recursionDepth: Int
-    ): Selection {
-        val (found, foundSubst) = impl
-        return Selection(found, subst.mapNotNull { (k, ty1) ->
-            foundSubst[k]?.let { ty2 ->
-                Obligation(
-                    recursionDepth + 1,
-                    Predicate.Equate(ty1, ty2)
-                )
-            }
-        })
     }
 
     fun coercionSequence(baseTy: Ty): Sequence<Ty> {

@@ -316,7 +316,7 @@ class RsInferenceContext(
         }
     }
 
-    private fun combinePairs(pairs: List<Pair<Ty, Ty>>): Boolean {
+    fun combinePairs(pairs: List<Pair<Ty, Ty>>): Boolean {
         var canUnify = true
         for ((t1, t2) in pairs) {
             canUnify = combineTypes(t1, t2) && canUnify
