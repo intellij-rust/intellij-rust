@@ -60,7 +60,10 @@ data class Obligation(val recursionDepth: Int, var predicate: Predicate): TypeFo
         predicate.visitWith(visitor)
 }
 
-data class PendingPredicateObligation(val obligation: Obligation, val stalledOn: MutableList<Ty>)
+data class PendingPredicateObligation(
+    val obligation: Obligation,
+    val stalledOn: MutableList<Ty> = mutableListOf()
+)
 
 /**
  * [ObligationForest] is a mutable collection of obligations.
@@ -186,7 +189,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
                     is SelectionResult.Ambiguous -> ProcessPredicateResult.NoChanges
                     is SelectionResult.Ok -> {
                         return ProcessPredicateResult.Ok(impl.result.nestedObligations.map {
-                            PendingPredicateObligation(it, mutableListOf())
+                            PendingPredicateObligation(it)
                         })
                     }
                 }
@@ -197,16 +200,14 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
             }
             is Predicate.Projection -> {
                 if (predicate.projectionTy.type is TyInfer) return ProcessPredicateResult.NoChanges
-                val result = lookup.selectProjection(predicate.projectionTy, obligation.recursionDepth)
-                return when (result) {
-                    is SelectionResult.Err -> ProcessPredicateResult.Err
-                    is SelectionResult.Ambiguous -> ProcessPredicateResult.NoChanges
-                    is SelectionResult.Ok -> {
-                        val theTy = result.result ?: return ProcessPredicateResult.Err
-                        ProcessPredicateResult.Ok((theTy.obligations + Obligation(
-                            obligation.recursionDepth + 1,
-                            Predicate.Equate(theTy.value, predicate.ty)
-                        )).map {PendingPredicateObligation(it, mutableListOf()) })
+                val result = ctx.optNormalizeProjectionType(predicate.projectionTy, obligation.recursionDepth)
+                return if (result == null) {
+                    ProcessPredicateResult.NoChanges
+                } else {
+                    if (ctx.combineTypes(predicate.ty, result.value)) {
+                        ProcessPredicateResult.Ok((result.obligations).map { PendingPredicateObligation(it) })
+                    } else {
+                        ProcessPredicateResult.Err
                     }
                 }
             }
