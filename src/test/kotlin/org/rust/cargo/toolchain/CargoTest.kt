@@ -16,19 +16,19 @@ class CargoTest : RsTestBase() {
     fun `test run arguments preserved`() = checkCommandLine(
         cargo.toColoredCommandLine(CargoCommandLine("run", wd, listOf("--bin", "parity", "--", "--prune", "archive"))), """
         cmd: /usr/bin/cargo run --color=always --bin parity -- --prune archive
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe run --bin parity -- --prune archive
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
     fun `test basic command`() = checkCommandLine(
         cargo.toGeneralCommandLine(CargoCommandLine("test", wd, listOf("--all"))), """
         cmd: /usr/bin/cargo test --all -- --nocapture
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe test --all -- --nocapture
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
     fun `test propagates proxy settings`() {
@@ -44,38 +44,38 @@ class CargoTest : RsTestBase() {
         checkCommandLine(
             cargo.toGeneralCommandLine(CargoCommandLine("check", wd)), """
             cmd: /usr/bin/cargo check
-            env: RUST_BACKTRACE=full, TERM=ansi, http_proxy=http://user:pwd@host:3268/
+            env: RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268/
             """, """
             cmd: C:/usr/bin/cargo.exe check
-            env: RUST_BACKTRACE=full, TERM=ansi, http_proxy=http://user:pwd@host:3268/
+            env: RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268/
         """)
     }
 
     fun `test adds colors for common commands`() = checkCommandLine(
         cargo.toColoredCommandLine(CargoCommandLine("run", wd, listOf("--release", "--", "foo"))), """
         cmd: /usr/bin/cargo run --color=always --release -- foo
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe run --release -- foo
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
     fun `test don't add color for unknown command`() = checkCommandLine(
         cargo.toColoredCommandLine(CargoCommandLine("tree", wd)), """
         cmd: /usr/bin/cargo tree
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe tree
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
     fun `test adds nightly channel`() = checkCommandLine(
         cargo.toColoredCommandLine(CargoCommandLine("run", wd, listOf("--release", "--", "foo"), channel = RustChannel.NIGHTLY)), """
         cmd: /usr/bin/cargo +nightly run --color=always --release -- foo
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe +nightly run --release -- foo
-        env: RUST_BACKTRACE=full, TERM=ansi
+        env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
     private fun checkCommandLine(cmd: GeneralCommandLine, expected: String, expectedWin: String) {

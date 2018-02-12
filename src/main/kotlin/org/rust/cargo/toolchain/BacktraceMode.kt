@@ -13,7 +13,7 @@ enum class BacktraceMode(val index: Int, val title: String) {
     override fun toString(): String = title
 
     companion object {
-        val DEFAULT = FULL
+        val DEFAULT = SHORT
         fun fromIndex(index: Int) = BacktraceMode.values().find { it.index == index } ?: DEFAULT
     }
 }
