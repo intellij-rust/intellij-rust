@@ -313,7 +313,9 @@ class ImplLookup(
             is SelectionCandidate.Impl -> {
                 val (subst, preparedRef) = candidate.prepareSubstAndTraitRef(ctx, ref.selfTy)
                 ctx.combineTraitRefs(ref, preparedRef)
-                val candidateSubst = subst + mapOf(TyTypeParameter.self() to ref.selfTy)
+                // pre-resolve type vars to simplify caching of already inferred obligation on fulfillment
+                val candidateSubst = subst.mapValues { (_, v) -> ctx.resolveTypeVarsIfPossible(v) } +
+                    mapOf(TyTypeParameter.self() to ref.selfTy)
                 val obligations = ctx.instantiateBounds(candidate.impl.bounds, candidateSubst, newRecDepth).toList()
                 Selection(candidate.impl, obligations, candidateSubst)
             }

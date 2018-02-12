@@ -93,13 +93,15 @@ class ObligationForest {
     }
 
     private val nodes: MutableList<Node> = mutableListOf()
+    private val doneCache: MutableSet<Predicate> = HashSet()
 
     val pendingObligations: Sequence<PendingPredicateObligation> =
         nodes.asSequence().filter { it.state == NodeState.Pending }.map { it.obligation }
 
     @Suppress("UNUSED_PARAMETER") // TODO use `parent`
     fun registerObligationAt(obligation: PendingPredicateObligation, parent: Node?) {
-        nodes.add(Node(obligation))
+        if (doneCache.add(obligation.obligation.predicate))
+            nodes.add(Node(obligation))
     }
 
     fun processObligations(
