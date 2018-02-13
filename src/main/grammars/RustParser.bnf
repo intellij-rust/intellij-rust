@@ -765,14 +765,14 @@ BaseType ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons {
 }
 
 ImplicitDynTraitType ::= Polybound '+' Polybound ('+' Polybound)* {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  implements = "org.rust.lang.core.psi.ext.RsDynTraitType"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ExplicitDynTraitType ::= dyn Polybound ('+' Polybound)* {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  implements = "org.rust.lang.core.psi.ext.RsDynTraitType"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
