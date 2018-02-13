@@ -686,14 +686,15 @@ private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn 
 
 private TypeAscription ::= ':' TypeReference
 
-private TypeReferenceInner ::= ( ArrayType
+private TypeReferenceInner ::= ArrayType
                                | RefLikeType
                                | FnPointerType
-                               | BaseType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
+                               | ImplTraitType
+                               | ImplicitDynTraitType
                                | ForInType
-                               | ImplTraitType) ('+' Bound)*
+                               | BaseType
 
 private ScalarTypeReferenceInner ::= ArrayType
                                    | RefLikeType
@@ -761,6 +762,13 @@ ImplTraitType ::= impl Polybound ('+' Polybound)* {
 }
 
 BaseType ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons {
+  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+ImplicitDynTraitType ::= Polybound '+' Polybound ('+' Polybound)* {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
@@ -1239,4 +1247,4 @@ private never ::= !()
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
-private meta list_element ::= <<param>> (',' | &'>') { pin = 1 }
+private meta list_element ::= <<param>> !'+' (',' | &'>') { pin = 2 }

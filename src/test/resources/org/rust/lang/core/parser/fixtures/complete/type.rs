@@ -4,6 +4,10 @@ type FunTypeVoid = Fn();
 
 type Sum = Box<A + Copy>;
 
+type LifetimeSum = Box<'a + Copy>;
+
+type HrtbSum = &(for<'a> Trait1 + for<'b> Trait2);
+
 type FunSum = Box<Fn(f64, f64) -> f64 + Send + Sync>;
 
 type Shl = F<<i as B>::Q, T=bool>;

@@ -111,6 +111,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TUPLE_TYPE" -> RsPlaceholderStub.Type("TUPLE_TYPE", ::RsTupleTypeImpl)
     "BASE_TYPE" -> RsBaseTypeStub.Type
     "FOR_IN_TYPE" -> RsPlaceholderStub.Type("FOR_IN_TYPE", ::RsForInTypeImpl)
+    "IMPLICIT_DYN_TRAIT_TYPE" -> RsPlaceholderStub.Type("IMPLICIT_DYN_TRAIT_TYPE", ::RsImplTraitTypeImpl)
     "IMPL_TRAIT_TYPE" -> RsPlaceholderStub.Type("IMPL_TRAIT_TYPE", ::RsImplTraitTypeImpl)
 
     "VALUE_PARAMETER_LIST" -> RsPlaceholderStub.Type("VALUE_PARAMETER_LIST", ::RsValueParameterListImpl)
