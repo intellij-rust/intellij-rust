@@ -29,6 +29,8 @@ fn foo<T>(xs: Vec<T>) -> impl Iterator<Item=impl FnOnce() -> T> + Clone {
     xs.into_iter().map(|x| || x)
 }
 
+type DynTrait = dyn Trait;
+
 struct S<F>
     where F: FnMut(&mut Self, &T) -> Result<(), <Self as Encoder>::Error>;
 

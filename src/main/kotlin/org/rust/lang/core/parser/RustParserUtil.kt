@@ -243,6 +243,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun autoKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "auto", AUTO)
 
+    @JvmStatic
+    fun dynKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "dyn", DYN)
+
     private @JvmStatic
     fun     collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,

@@ -71,6 +71,7 @@
         UNION     = 'union_kw'
         DEFAULT   = 'default_kw'
         AUTO      = 'auto_kw'
+        DYN       = 'dyn_kw'
 
         SHEBANG_LINE = 'shebang_line'
         RESERVED_KEYWORD = 'reserved_keyword'
@@ -215,6 +216,7 @@ VisRestriction ::= '(' ( crate | ((&(self ')' | super ')') | in) PathWithoutType
 private default_ ::= <<defaultKeyword>>
 private union ::= <<unionKeyword>>
 private auto ::= <<autoKeyword>>
+private dyn ::= <<dynKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
 
@@ -238,7 +240,7 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   recoverWhile = Item_recover
 }
 private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
-  | static | TYPE_KW | impl | "union" | "default" | "auto"
+  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn"
 private Item_recover ::= !('}' | Item_first )
 
 private Items ::= Item_with_recover*
@@ -692,6 +694,7 @@ private TypeReferenceInner ::= ArrayType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
                                | ImplTraitType
+                               | ExplicitDynTraitType
                                | ImplicitDynTraitType
                                | ForInType
                                | BaseType
@@ -754,13 +757,6 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ImplTraitType ::= impl Polybound ('+' Polybound)* {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
 BaseType ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
@@ -772,6 +768,20 @@ ImplicitDynTraitType ::= Polybound '+' Polybound ('+' Polybound)* {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+ExplicitDynTraitType ::= dyn Polybound ('+' Polybound)* {
+  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+ImplTraitType ::= impl Polybound ('+' Polybound)* {
+  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
