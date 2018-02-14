@@ -455,7 +455,7 @@ private class RsFnInferenceContext(
             val inferredTy = explicitTy
                 ?.let { psi.expr?.inferTypeCoercableTo(it) }
                 ?: psi.expr?.inferType()
-                ?: TyUnknown
+                ?: TyInfer.TyVar()
             psi.pat?.extractBindings(explicitTy ?: resolveTypeVarsWithObligations(inferredTy))
             inferredTy == TyNever
         }

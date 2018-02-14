@@ -961,4 +961,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b: u8 = a();
         }
     """)
+
+    fun `test var lateinit`() = testExpr("""
+        fn main() {
+            let a;
+            a = 0;
+            a;
+        } //^ i32
+    """)
 }
