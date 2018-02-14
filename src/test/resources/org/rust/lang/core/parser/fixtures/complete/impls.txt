@@ -295,7 +295,7 @@ FILE
     PsiElement(for)('for')
     PsiWhiteSpace(' ')
     RsTypeReferenceImpl(TYPE_REFERENCE)
-      RsImplicitDynTraitTypeImpl(IMPLICIT_DYN_TRAIT_TYPE)
+      RsTraitTypeImpl(TRAIT_TYPE)
         RsPolyboundImpl(POLYBOUND)
           RsBoundImpl(BOUND)
             RsTraitRefImpl(TRAIT_REF)

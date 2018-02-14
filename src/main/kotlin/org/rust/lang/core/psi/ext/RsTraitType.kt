@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.psi.ext
 
-import org.rust.lang.core.psi.RsPolybound
+import org.rust.lang.core.psi.RsTraitType
 
-interface RsDynTraitType : RsTypeElement {
-    val polyboundList: List<RsPolybound>
-}
+val RsTraitType.isImpl: Boolean get() = (stub?.isImpl) ?: (impl != null)

@@ -693,9 +693,7 @@ private TypeReferenceInner ::= ArrayType
                                | FnPointerType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
-                               | ImplTraitType
-                               | ExplicitDynTraitType
-                               | ImplicitDynTraitType
+                               | TraitType
                                | ForInType
                                | BaseType
 
@@ -705,7 +703,6 @@ private ScalarTypeReferenceInner ::= ArrayType
                                    | BaseType
                                    | <<tupleOrParenType ScalarTypeReferenceInner TupleType_upper>>
                                    | ForInType
-                                   | ImplTraitType
 
 TypeReference ::= TypeReferenceInner {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -764,24 +761,12 @@ BaseType ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ImplicitDynTraitType ::= Polybound '+' Polybound ('+' Polybound)* {
-  implements = "org.rust.lang.core.psi.ext.RsDynTraitType"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-ExplicitDynTraitType ::= dyn Polybound ('+' Polybound)* {
-  implements = "org.rust.lang.core.psi.ext.RsDynTraitType"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
-ImplTraitType ::= impl Polybound ('+' Polybound)* {
+// `impl Trait` or `dyn Trait` or `Trait+'a`
+TraitType ::= (impl | dyn) Polybound ('+' Polybound)*
+            | Polybound '+' Polybound ('+' Polybound)* {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsTraitTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
