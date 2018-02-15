@@ -690,4 +690,87 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
             let a = FooBar/*caret*/;
         }
     """)
+
+    fun `test cyclic module reexports`() = doAvailableTestWithMultipleChoice("""
+        pub mod x {
+            pub struct Z;
+            pub use y;
+        }
+
+        pub mod y {
+            pub use x;
+        }
+
+        fn main() {
+            let x = Z/*caret*/;
+        }
+    """, setOf("x::Z", "y::x::Z", "x::y::x::Z"), "x::Z", """
+        use x::Z;
+
+        pub mod x {
+            pub struct Z;
+            pub use y;
+        }
+
+        pub mod y {
+            pub use x;
+        }
+
+        fn main() {
+            let x = Z/*caret*/;
+        }
+    """)
+
+    fun `test crazy cyclic module reexports`() = doAvailableTestWithMultipleChoice("""
+        pub mod x {
+            pub use u;
+            pub mod y {
+                pub use u::v;
+                pub struct Z;
+            }
+        }
+
+        pub mod u {
+            pub use x::y;
+            pub mod v {
+                pub use x;
+            }
+        }
+
+        fn main() {
+            let z = Z/*caret*/;
+        }
+    """, setOf(
+        "x::y::Z",
+        "x::u::y::Z",
+        "x::u::v::x::y::Z",
+        "x::u::y::v::x::y::Z",
+        "x::y::v::x::u::y::Z",
+        "x::y::v::x::y::Z",
+        "u::y::Z",
+        "u::v::x::y::Z",
+        "u::y::v::x::y::Z",
+        "u::v::x::u::y::Z"
+    ), "u::y::Z", """
+        use u::y::Z;
+
+        pub mod x {
+            pub use u;
+            pub mod y {
+                pub use u::v;
+                pub struct Z;
+            }
+        }
+
+        pub mod u {
+            pub use x::y;
+            pub mod v {
+                pub use x;
+            }
+        }
+
+        fn main() {
+            let z = Z/*caret*/;
+        }
+    """)
 }
