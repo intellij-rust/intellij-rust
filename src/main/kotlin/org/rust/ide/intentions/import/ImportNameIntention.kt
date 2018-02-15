@@ -48,7 +48,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
 
         val candidates = (explicitItems + reexportedItems)
             .filter { basePath != path || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers) }
-            .flatMap { it.withModuleReexports(project) }
+            .flatMap { it.withModuleReexports(project).asSequence() }
             .mapNotNull { importItem -> importItem.canBeImported(pathSuperMods)?.let { ImportCandidate(importItem, it) } }
             // check that result after import can be resolved and resolved element is suitable
             // if no, don't add it in candidate list
@@ -59,33 +59,48 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         return Context(path, candidates)
     }
 
-
-    private fun ImportItem.withModuleReexports(
-        project: Project
-    ): Sequence<ImportItem> {
-        check(this !is ImportItem.CompositeImportItem) {
+    /**
+     * Collect all possible imports using reexports of modules from original import item path
+     */
+    private fun ImportItem.withModuleReexports(project: Project): List<ImportItem> {
+        check(this is ImportItem.ExplicitItem || this is ImportItem.ReexportedItem) {
             "`ImportItem.withModuleReexports` should be called only for `ImportItem.ExplicitItem` and `ImportItem.ReexportedItem`"
         }
 
-        val superMods = superMods ?: return sequenceOf(this)
-        val reexportedItems = superMods
-            .asSequence()
-            // only public items can be reexported
-            .filter { it.isPublic }
-            .withIndex()
-            .flatMap { (index, ancestorMod) ->
-                val modName = ancestorMod.modName ?: return@flatMap sequenceOf<ImportItem>()
-                RsReexportIndex.findReexportsByName(project, modName)
-                    .asSequence()
-                    .mapNotNull {
-                        val item = it.path?.reference?.resolve() as? RsMod
-                        if (item != ancestorMod) return@mapNotNull null
-                        ImportItem.ReexportedItem(it, item)
-                    }
-                    .flatMap { it.withModuleReexports(project) }
-                    .map { ImportItem.CompositeImportItem(itemName, isPublic, it, superMods.subList(0, index + 1), item) }
-            }
-        return sequenceOf(this) + reexportedItems
+        // Contains already visited edges of module graph
+        // (useSpeck element <-> reexport edge of module graph).
+        // Only reexports can create cycles in module graph
+        // so it's enough to collect only such edges
+        val visited: MutableSet<RsUseSpeck> = HashSet()
+
+        fun ImportItem.collectImportItems(): List<ImportItem> {
+            val importItems = mutableListOf(this)
+            val superMods = superMods.orEmpty()
+            superMods
+                // only public items can be reexported
+                .filter { it.isPublic }
+                .forEachIndexed { index, ancestorMod ->
+                    val modName = ancestorMod.modName ?: return@forEachIndexed
+                    RsReexportIndex.findReexportsByName(project, modName)
+                        .mapNotNull {
+                            if (it in visited) return@mapNotNull null
+                            val reexportedMod = it.path?.reference?.resolve() as? RsMod
+                            if (reexportedMod != ancestorMod) return@mapNotNull null
+                            it to reexportedMod
+                        }
+                        .forEach { (useSpeck, reexportedMod) ->
+                            visited += useSpeck
+                            val items = ImportItem.ReexportedItem(useSpeck, reexportedMod).collectImportItems()
+                            importItems += items.map {
+                                ImportItem.CompositeImportItem(itemName, isPublic, it, superMods.subList(0, index + 1), item)
+                            }
+                            visited -= useSpeck
+                        }
+                }
+            return importItems
+        }
+
+        return collectImportItems()
     }
 
     // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)`
