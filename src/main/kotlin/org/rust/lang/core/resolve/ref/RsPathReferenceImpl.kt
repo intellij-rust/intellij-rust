@@ -43,7 +43,7 @@ class RsPathReferenceImpl(
     }
 
     override fun advancedResolve(): BoundElement<RsElement>? =
-        advancedMultiResolve().firstOrNull()
+        advancedMultiResolve().singleOrNull()
 
     override fun advancedMultiResolve(): List<BoundElement<RsElement>> =
         (element.parent as? RsPathExpr)?.let { it.inference?.getResolvedPath(it)?.map { BoundElement(it) } }
