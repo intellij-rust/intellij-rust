@@ -61,6 +61,14 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """, ": S", 0, smart = false)
 
+    fun `test let stmt without expression`() = checkByText<RsLetDecl>("""
+        struct S;
+        fn main() {
+            let s/*caret*/;
+            s = S;
+        }
+    """, ": S", 0, smart = false)
+
     fun `test smart hint don't show redundant hints`() = checkNoHint<RsLetDecl>("""
         struct S;
         struct TupleStruct(f32);
