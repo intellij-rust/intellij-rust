@@ -42,7 +42,7 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
         val useSpeck = useItem.useSpeck ?: return null
         val path = useSpeck.path ?: return null
         val useGroup = useSpeck.useGroup ?: return null
-        val (_, _, name) = useGroup.asTrivial ?: return null
+        val name = useGroup.asTrivial?.text ?: return null
 
         return Context(
             useSpeck,

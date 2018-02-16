@@ -7,13 +7,14 @@ package org.rust.ide.formatter.processors
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsUseGroup
 import org.rust.lang.core.psi.RsUseSpeck
-import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.childrenOfType
 
 /**
  * Pre format processor ensuring that if an import statement only contains a single import from a crate that
@@ -32,46 +33,31 @@ class RsSingleImportRemoveBracesFormatProcessor : PreFormatProcessor {
     override fun process(element: ASTNode, range: TextRange): TextRange {
         if (!shouldRunPunctuationProcessor(element)) return range
 
-        var numRemovedBraces = 0
+        var deletedSymbolsCount = 0
         element.psi.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 if (range.contains(element.textRange)) {
                     super.visitElement(element)
                 }
 
-                if (element is RsUseGroup && removeBracesAroundSingleImport(element)) {
-                    numRemovedBraces += 2
+                if (element is RsUseGroup) {
+                    val speck = element.asTrivial ?: return
+                    deletedSymbolsCount = element.textLength - speck.textLength
+                    element.replace(speck.copy())
                 }
             }
         })
-        return range.grown(-numRemovedBraces)
-    }
-
-    fun removeBracesAroundSingleImport(group: RsUseGroup): Boolean {
-        val (lbrace, rbrace) = group.asTrivial ?: return false
-        lbrace.delete()
-        rbrace.delete()
-        return true
+        return range.grown(-deletedSymbolsCount)
     }
 }
 
-
-data class TrivialUseGroup(
-    val lbrace: PsiElement,
-    val rbrace: PsiElement,
-    val name: String
-)
-
-val RsUseGroup.asTrivial: TrivialUseGroup?
+val RsUseGroup.asTrivial: RsUseSpeck?
     get() {
-        val lbrace = lbrace
-        val rbrace = rbrace ?: return null
-        if (!(lbrace.elementType == RsElementTypes.LBRACE && rbrace.elementType == RsElementTypes.RBRACE)) {
-            return null
-        }
+        // Do not change use-groups with comments
+        if (childrenOfType<PsiComment>().isNotEmpty()) return null
         val speck = useSpeckList.singleOrNull() ?: return null
         if (!speck.isIdentifier) return null
-        return TrivialUseGroup(lbrace, rbrace, speck.text)
+        return speck
     }
 
 private val RsUseSpeck.isIdentifier: Boolean

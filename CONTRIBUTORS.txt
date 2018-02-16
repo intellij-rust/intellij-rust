@@ -11,6 +11,7 @@ andruhon
 anton-okolelov
 ashleysommer
 atsky
+AtomicInteger
 bgourlie
 bmusin
 CGavrila
