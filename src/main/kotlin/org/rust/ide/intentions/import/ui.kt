@@ -19,7 +19,6 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.ext.nameInScope
 import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout
 import java.awt.Component
@@ -112,15 +111,13 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
         return super.getListCellRendererComponent(list, realValue, index, isSelected, cellHasFocus)
     }
 
-    override fun getElementText(element: PsiElement): String {
-        return (importItem as? ImportItem.ReexportedItem)?.useSpeck?.nameInScope ?: super.getElementText(element)
-    }
+    override fun getElementText(element: PsiElement): String = importItem?.itemName ?: super.getElementText(element)
 
     override fun getContainerText(element: PsiElement, name: String): String? {
         val importItem = importItem
         return if (importItem != null) {
             val crateName = importItem.containingCargoTarget?.normName ?: return null
-            val modulePath = importItem.parentMod?.crateRelativePath?.removePrefix("::") ?: return null
+            val modulePath = importItem.superModsCrateRelativePath ?: return null
             "($crateName::$modulePath)"
         } else {
             super.getContainerText(element, name)

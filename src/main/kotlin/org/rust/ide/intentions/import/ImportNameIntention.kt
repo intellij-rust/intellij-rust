@@ -48,6 +48,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
 
         val candidates = (explicitItems + reexportedItems)
             .filter { basePath != path || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers) }
+            .flatMap { it.withModuleReexports(project).asSequence() }
             .mapNotNull { importItem -> importItem.canBeImported(pathSuperMods)?.let { ImportCandidate(importItem, it) } }
             // check that result after import can be resolved and resolved element is suitable
             // if no, don't add it in candidate list
@@ -58,23 +59,63 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         return Context(path, candidates)
     }
 
+    /**
+     * Collect all possible imports using reexports of modules from original import item path
+     */
+    private fun ImportItem.withModuleReexports(project: Project): List<ImportItem> {
+        check(this is ImportItem.ExplicitItem || this is ImportItem.ReexportedItem) {
+            "`ImportItem.withModuleReexports` should be called only for `ImportItem.ExplicitItem` and `ImportItem.ReexportedItem`"
+        }
+
+        // Contains already visited edges of module graph
+        // (useSpeck element <-> reexport edge of module graph).
+        // Only reexports can create cycles in module graph
+        // so it's enough to collect only such edges
+        val visited: MutableSet<RsUseSpeck> = HashSet()
+
+        fun ImportItem.collectImportItems(): List<ImportItem> {
+            val importItems = mutableListOf(this)
+            val superMods = superMods.orEmpty()
+            superMods
+                // only public items can be reexported
+                .filter { it.isPublic }
+                .forEachIndexed { index, ancestorMod ->
+                    val modName = ancestorMod.modName ?: return@forEachIndexed
+                    RsReexportIndex.findReexportsByName(project, modName)
+                        .mapNotNull {
+                            if (it in visited) return@mapNotNull null
+                            val reexportedMod = it.path?.reference?.resolve() as? RsMod
+                            if (reexportedMod != ancestorMod) return@mapNotNull null
+                            it to reexportedMod
+                        }
+                        .forEach { (useSpeck, reexportedMod) ->
+                            visited += useSpeck
+                            val items = ImportItem.ReexportedItem(useSpeck, reexportedMod).collectImportItems()
+                            importItems += items.map {
+                                ImportItem.CompositeImportItem(itemName, isPublic, it, superMods.subList(0, index + 1), item)
+                            }
+                            visited -= useSpeck
+                        }
+                }
+            return importItems
+        }
+
+        return collectImportItems()
+    }
+
     // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)`
     // but in our case `mod` is always same and `mod` needs only to get set of its super mods
     // so we pass `superMods` instead of `mod` for optimization
     private fun ImportItem.canBeImported(superMods: Set<RsMod>): ImportInfo? {
         if (item !is RsVisible) return null
 
-        val parentMod = parentMod ?: return null
-        val ourSuperMods = parentMod.superMods
+        val ourSuperMods = this.superMods ?: return null
+        val parentMod = ourSuperMods.getOrNull(0) ?: return null
 
         // try to find latest common ancestor module of `parentMod` and `mod` in module tree
         // we need to do it because we can use direct child items of any super mod with any visibility
         val lca = ourSuperMods.find { it in superMods }
         val crateRelativePath = crateRelativePath ?: return null
-        val isPublic = when (this) {
-            is ImportItem.ExplicitItem -> item.isPublic
-            is ImportItem.ReexportedItem -> true
-        }
 
         val (shouldBePublicMods, importInfo) = if (lca == null) {
             if (!isPublic) return null
@@ -173,26 +214,58 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
 
 sealed class ImportItem(val item: RsQualifiedNamedElement) {
 
-    abstract val parentMod: RsMod?
-    abstract val crateRelativePath: String?
+    abstract val itemName: String?
+    abstract val isPublic: Boolean
+    abstract val superMods: List<RsMod>?
     abstract val containingCargoTarget: CargoWorkspace.Target?
 
+    val superModsCrateRelativePath: String? get() {
+        return superMods
+            ?.map { it.modName ?: return null }
+            ?.asReversed()
+            ?.drop(1)
+            ?.joinToString("::") ?: return null
+    }
+
+    val crateRelativePath: String? get() {
+        val name = itemName ?: return null
+        val modsRelativePath = superModsCrateRelativePath ?: return null
+        if (modsRelativePath.isEmpty()) return name
+        return "$modsRelativePath::$name"
+    }
+
+    class ExplicitItem(item: RsQualifiedNamedElement) : ImportItem(item) {
+        override val itemName: String? get() = item.name
+        override val isPublic: Boolean get() = (item as? RsVisible)?.isPublic == true
+        override val superMods: List<RsMod>? get() = (if (item is RsMod) item.`super` else item.containingMod)?.superMods
+        override val containingCargoTarget: CargoWorkspace.Target? get() = item.containingCargoTarget
+    }
+
     class ReexportedItem(
-        val useSpeck: RsUseSpeck,
+        private val useSpeck: RsUseSpeck,
         item: RsQualifiedNamedElement
     ) : ImportItem(item) {
-        override val parentMod: RsMod? get() = useSpeck.containingMod
+
+        override val itemName: String? get() = useSpeck.nameInScope
+        override val isPublic: Boolean get() = true
+        override val superMods: List<RsMod>? get() = useSpeck.containingMod.superMods
         override val containingCargoTarget: CargoWorkspace.Target? get() = useSpeck.containingCargoTarget
-        override val crateRelativePath: String? get() {
-            val modulePath = parentMod?.crateRelativePath?.removePrefix("::") ?: return null
-            val name = useSpeck.nameInScope ?: return null
-            return "$modulePath::$name"
-        }
     }
-    class ExplicitItem(item: RsQualifiedNamedElement) : ImportItem(item) {
-        override val parentMod: RsMod? get() = if (item is RsMod) item.`super` else item.containingMod
-        override val containingCargoTarget: CargoWorkspace.Target? get() = item.containingCargoTarget
-        override val crateRelativePath: String? get() = item.crateRelativePath?.removePrefix("::")
+
+    class CompositeImportItem(
+        override val itemName: String?,
+        override val isPublic: Boolean,
+        private val reexportedModItem: ImportItem,
+        private val explicitSuperMods: List<RsMod>,
+        item: RsQualifiedNamedElement
+    ) : ImportItem(item) {
+
+        override val superMods: List<RsMod>? get() {
+            val mods = ArrayList(explicitSuperMods)
+            mods += reexportedModItem.superMods.orEmpty()
+            return mods
+        }
+        override val containingCargoTarget: CargoWorkspace.Target? get() = reexportedModItem.containingCargoTarget
     }
 }
 

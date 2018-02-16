@@ -5,10 +5,7 @@
 
 package org.rust.ide.intentions.import
 
-import org.intellij.lang.annotations.Language
-import org.rust.ide.intentions.RsIntentionTestBase
-
-class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
+class ImportNameIntentionTest : ImportNameIntentionTestBase() {
 
     fun `test import struct`() = doAvailableTest("""
         mod foo {
@@ -526,6 +523,38 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
         }
     """)
 
+    fun `test module reexport`() = doAvailableTest("""
+        mod foo {
+            mod bar {
+                pub mod baz {
+                    pub struct FooBar;
+                }
+            }
+
+            pub use self::bar::baz;
+        }
+
+        fn main() {
+            let x = FooBar/*caret*/;
+        }
+    """, """
+        use foo::baz::FooBar;
+
+        mod foo {
+            mod bar {
+                pub mod baz {
+                    pub struct FooBar;
+                }
+            }
+
+            pub use self::bar::baz;
+        }
+
+        fn main() {
+            let x = FooBar/*caret*/;
+        }
+    """)
+
     fun `test multiple import`() = doAvailableTestWithMultipleChoice("""
         mod foo {
             pub struct Foo;
@@ -618,18 +647,130 @@ class ImportNameIntentionTest : RsIntentionTestBase(ImportNameIntention()) {
         }
     """)
 
-    private fun doAvailableTestWithMultipleChoice(@Language("Rust") before: String,
-                                                  expectedElements: Set<String>,
-                                                  choice: String,
-                                                  @Language("Rust") after: String) {
-        withMockImportItemUi(object : ImportItemUi {
-            override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
-                val actualItems = items.mapTo(HashSet()) { it.info.usePath }
-                assertEquals(expectedElements, actualItems)
-                val selectedValue = items.find { it.info.usePath == choice }
-                    ?: error("Can't find `$choice` in `$actualItems`")
-                callback(selectedValue)
+    fun `test double module reexport`() = doAvailableTestWithMultipleChoice("""
+        mod foo {
+            pub mod bar {
+                pub struct FooBar;
             }
-        }) { doAvailableTest(before, after) }
-    }
+        }
+
+        mod baz {
+            pub mod qqq {
+                pub use foo::bar;
+            }
+        }
+
+        mod xxx {
+            pub use baz::qqq;
+        }
+
+        fn main() {
+            let a = FooBar/*caret*/;
+        }
+    """, setOf("foo::bar::FooBar", "baz::qqq::bar::FooBar", "xxx::qqq::bar::FooBar"), "baz::qqq::bar::FooBar", """
+        use baz::qqq::bar::FooBar;
+
+        mod foo {
+            pub mod bar {
+                pub struct FooBar;
+            }
+        }
+
+        mod baz {
+            pub mod qqq {
+                pub use foo::bar;
+            }
+        }
+
+        mod xxx {
+            pub use baz::qqq;
+        }
+
+        fn main() {
+            let a = FooBar/*caret*/;
+        }
+    """)
+
+    fun `test cyclic module reexports`() = doAvailableTestWithMultipleChoice("""
+        pub mod x {
+            pub struct Z;
+            pub use y;
+        }
+
+        pub mod y {
+            pub use x;
+        }
+
+        fn main() {
+            let x = Z/*caret*/;
+        }
+    """, setOf("x::Z", "y::x::Z", "x::y::x::Z"), "x::Z", """
+        use x::Z;
+
+        pub mod x {
+            pub struct Z;
+            pub use y;
+        }
+
+        pub mod y {
+            pub use x;
+        }
+
+        fn main() {
+            let x = Z/*caret*/;
+        }
+    """)
+
+    fun `test crazy cyclic module reexports`() = doAvailableTestWithMultipleChoice("""
+        pub mod x {
+            pub use u;
+            pub mod y {
+                pub use u::v;
+                pub struct Z;
+            }
+        }
+
+        pub mod u {
+            pub use x::y;
+            pub mod v {
+                pub use x;
+            }
+        }
+
+        fn main() {
+            let z = Z/*caret*/;
+        }
+    """, setOf(
+        "x::y::Z",
+        "x::u::y::Z",
+        "x::u::v::x::y::Z",
+        "x::u::y::v::x::y::Z",
+        "x::y::v::x::u::y::Z",
+        "x::y::v::x::y::Z",
+        "u::y::Z",
+        "u::v::x::y::Z",
+        "u::y::v::x::y::Z",
+        "u::v::x::u::y::Z"
+    ), "u::y::Z", """
+        use u::y::Z;
+
+        pub mod x {
+            pub use u;
+            pub mod y {
+                pub use u::v;
+                pub struct Z;
+            }
+        }
+
+        pub mod u {
+            pub use x::y;
+            pub mod v {
+                pub use x;
+            }
+        }
+
+        fn main() {
+            let z = Z/*caret*/;
+        }
+    """)
 }
