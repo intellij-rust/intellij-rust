@@ -58,7 +58,7 @@ class RsImportOptimizer : ImportOptimizer {
         }
 
         private fun removeCurlyBraces(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
-            val (_, _, name) = useSpeck.useGroup?.asTrivial ?: return false
+            val name = useSpeck.useGroup?.asTrivial?.text ?: return false
             val path = useSpeck.path?.text
             val tempPath = "${if (path != null) "$path::" else ""}$name"
             val newUseSpeck = psiFactory.createUseSpeck(tempPath)
