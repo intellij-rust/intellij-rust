@@ -93,6 +93,22 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
+    fun `test import generic item`() = doAvailableTest("""
+        mod foo {
+            pub struct Foo<T>(T);
+        }
+
+        fn f<T>(foo: Foo/*caret*/<T>) {}
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo<T>(T);
+        }
+
+        fn f<T>(foo: Foo/*caret*/<T>) {}
+    """)
+
     fun `test import module`() = doAvailableTest("""
         mod foo {
             pub mod bar {

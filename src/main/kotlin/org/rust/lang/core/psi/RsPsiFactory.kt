@@ -63,7 +63,7 @@ class RsPsiFactory(private val project: Project) {
         createExpressionOfType("unsafe { $body }")
 
     fun tryCreatePath(text: String): RsPath? {
-        val path = createFromText<RsPathExpr>("const a = $text;")?.path ?: return null
+        val path = createFromText<RsPath>("fn foo(t: $text) {}") ?: return null
         if (path.text != text) return null
         return path
     }
