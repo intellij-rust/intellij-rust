@@ -9,6 +9,24 @@ class RsSingleImportRemoveBracesFormatProcessorTest : RsFormatterTestBase() {
 
     fun `test remove braces if single import`() = doTextTest("use getopts::{optopt};", "use getopts::optopt;")
 
+    fun `test remove braces if single import with alias`() =
+        doTextTest("use getopts::{A as B};", "use getopts::A as B;")
+
+    fun `test remove braces if single import with alias and comma`() =
+        doTextTest("use getopts::{A as B,};", "use getopts::A as B;")
+
+    fun `test won't remove braces if single import with alias with left comment`() =
+        checkNotChanged("use getopts::{/*comment*/A as B};")
+
+    fun `test won't remove braces if single import with alias with right comment`() =
+        checkNotChanged("use getopts::{A as B/*comment*/};")
+
+    fun `test won't remove braces if single import with alias with inner left comment`() =
+        checkNotChanged("use getopts::{A /*comment*/as B};")
+
+    fun `test won't remove braces if single import with alias with inner right comment`() =
+        checkNotChanged("use getopts::{A as /*comment*/ B};")
+
     fun `test remove braces if single import with extra comma`() =
         doTextTest("use getopts::{optopt,};", "use getopts::optopt;")
 
@@ -30,10 +48,12 @@ class RsSingleImportRemoveBracesFormatProcessorTest : RsFormatterTestBase() {
         use std::io::{self, Read, Write};
         use std::Vec::{Vec};
         use std::Vec::{Vec,};
+        use getopts::{A as B};
     """, """
         use getopts::optopt;
         use std::io::{self, Read, Write};
         use std::Vec::Vec;
         use std::Vec::Vec;
+        use getopts::A as B;
     """)
 }

@@ -11,10 +11,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
-import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsUseGroup
 import org.rust.lang.core.psi.RsUseSpeck
-import org.rust.lang.core.psi.ext.childrenOfType
+import org.rust.lang.core.psi.ext.descendantsOfType
 
 /**
  * Pre format processor ensuring that if an import statement only contains a single import from a crate that
@@ -53,10 +52,10 @@ class RsSingleImportRemoveBracesFormatProcessor : PreFormatProcessor {
 
 val RsUseGroup.asTrivial: RsUseSpeck?
     get() {
-        // Do not change use-groups with comments
-        if (childrenOfType<PsiComment>().isNotEmpty()) return null
         val speck = useSpeckList.singleOrNull() ?: return null
-        if (!speck.isIdentifier) return null
+        if (speck.alias == null && !speck.isIdentifier) return null
+        // Do not change use-groups with comments
+        if (descendantsOfType<PsiComment>().isNotEmpty()) return null
         return speck
     }
 
