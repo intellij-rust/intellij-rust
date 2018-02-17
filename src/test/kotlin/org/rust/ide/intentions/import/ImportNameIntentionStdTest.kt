@@ -101,6 +101,32 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         }
     """, ImportNameIntention.Testmarks.autoInjectedCrate)
 
+    fun `test module reexport`() = doAvailableTestWithFileTree("""
+        //- dep-lib/lib.rs
+        pub mod foo {
+            mod bar {
+                pub mod baz {
+                    pub struct FooBar;
+                }
+            }
+
+            pub use self::bar::baz;
+        }
+
+        //- main.rs
+        fn main() {
+            let x = FooBar/*caret*/;
+        }
+    """, """
+        extern crate dep_lib_target;
+
+        use dep_lib_target::foo::baz::FooBar;
+
+        fn main() {
+            let x = FooBar/*caret*/;
+        }
+    """)
+
     fun `test module reexport in stdlib`() = doAvailableTestWithMultipleChoice("""
         fn foo<T: Hash/*caret*/>(t: T) {}
     """, setOf("core::hash::Hash", "std::hash::Hash"), "std::hash::Hash", """
