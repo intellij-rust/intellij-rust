@@ -69,6 +69,26 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         fn foo(t: Bar/*caret*/) {}
     """)
 
+    fun `test insert extern crate item after inner attributes`() = doAvailableTestWithFileTree("""
+        //- main.rs
+        #![allow(non_snake_case)]
+
+        fn foo(t: Bar/*caret*/) {}
+
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub struct Bar;
+        }
+    """, """
+        #![allow(non_snake_case)]
+
+        extern crate dep_lib_target;
+
+        use dep_lib_target::foo::Bar;
+
+        fn foo(t: Bar/*caret*/) {}
+    """)
+
     fun `test import reexported item from stdlib`() = doAvailableTest("""
         fn main() {
             let mutex = Mutex/*caret*/::new(Vec::new());

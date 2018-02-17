@@ -286,7 +286,7 @@ sealed class ImportInfo {
 
 data class ImportCandidate(val importItem: ImportItem, val info: ImportInfo)
 
-private fun RsItemsOwner.firstItem(): RsElement = itemsAndMacros.first()
+private fun RsItemsOwner.firstItem(): RsElement = itemsAndMacros.first { it !is RsInnerAttr }
 
 private val CargoWorkspace.Target.isStd: Boolean
     get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.std

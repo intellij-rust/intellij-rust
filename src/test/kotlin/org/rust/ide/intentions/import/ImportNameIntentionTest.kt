@@ -142,6 +142,30 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
+    fun `test insert use item after inner attributes`() = doAvailableTest("""
+        #![allow(non_snake_case)]
+
+        mod foo {
+            pub struct Foo;
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """, """
+        #![allow(non_snake_case)]
+
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo;
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """)
+
     fun `test import item from nested module`() = doAvailableTest("""
         mod foo {
             pub mod bar {
