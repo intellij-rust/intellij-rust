@@ -103,26 +103,26 @@ class RsExtractFunctionConfig private constructor(
             if (wherePredList.isEmpty()) return ""
             val typeParams = typeParameters().map { it.declaredType }
             if (typeParams.isEmpty()) return ""
-            val filtered = wherePredList.filter { typeParams.contains(it.typeReference?.type) }
+            val filtered = wherePredList.filter { it.typeReference?.type in typeParams }
             if (filtered.isEmpty()) return ""
             return filtered.joinToString(separator = ",", prefix = " where ") { it.text }
         }
 
     private fun typeParameters(): List<RsTypeParameter> {
         val bounds = typeParameterBounds()
-        val paramAndReturnTypes = (parameters.mapNotNull { it.type } + listOf(returnValue).mapNotNull { it?.type })
-        return containingFunction.typeParameters.filter {
-            val typeParameter = it.declaredType
-            paramAndReturnTypes.any {
-                it.types().contains(typeParameter) || it.dependTypes(bounds).contains(typeParameter)
-            }
+        val paramAndReturnTypes = mutableSetOf<Ty>()
+        (parameters.mapNotNull { it.type } + listOfNotNull(returnValue?.type)).forEach {
+            paramAndReturnTypes.addAll(it.types())
+            paramAndReturnTypes.addAll(it.dependTypes(bounds))
         }
+        return containingFunction.typeParameters.filter { it.declaredType in paramAndReturnTypes }
     }
 
-    private fun typeParameterBounds(): Map<Ty, List<Ty>> {
+    private fun typeParameterBounds(): Map<Ty, Set<Ty>> {
         return containingFunction.typeParameters.associate {
             val type = it.declaredType
-            val bounds = it.bounds.flatMap {
+            val bounds = mutableSetOf<Ty>()
+            it.bounds.flatMapTo(bounds) {
                 it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList?.flatMap { it.type.types() } ?: emptyList()
             }
             type to bounds
@@ -181,8 +181,8 @@ class RsExtractFunctionConfig private constructor(
     }
 }
 
-private fun Ty.types(): List<Ty> {
-    val types = mutableListOf<Ty>()
+private fun Ty.types(): Set<Ty> {
+    val types = mutableSetOf<Ty>()
 
     fun collect(type: Ty) {
         types.add(type)
@@ -194,11 +194,11 @@ private fun Ty.types(): List<Ty> {
     return types
 }
 
-private fun Ty.dependTypes(boundMap: Map<Ty, List<Ty>>): List<Ty> {
-    val types = mutableListOf<Ty>()
+private fun Ty.dependTypes(boundMap: Map<Ty, Set<Ty>>): Set<Ty> {
+    val types = mutableSetOf<Ty>()
 
     fun collect(type: Ty) {
-        val bounds = boundMap[type]?.filter { !types.contains(it) } ?: return
+        val bounds = boundMap[type]?.filter { it !in types } ?: return
         types.addAll(bounds)
         bounds.forEach { collect(it) }
     }
