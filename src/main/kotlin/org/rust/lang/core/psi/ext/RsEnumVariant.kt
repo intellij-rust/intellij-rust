@@ -13,13 +13,16 @@ import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.stubs.RsEnumVariantStub
 import javax.swing.Icon
 
-val RsEnumVariant.parentEnum: RsEnumItem get() = parent?.parent as RsEnumItem
+val RsEnumVariant.parentEnum: RsEnumItem
+    get() = stub?.getParentStubOfType(RsEnumItem::class.java) ?: parent?.parent as RsEnumItem
 
 abstract class RsEnumVariantImplMixin : RsStubbedNamedElementImpl<RsEnumVariantStub>, RsEnumVariant {
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsEnumVariantStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon = RsIcons.ENUM_VARIANT
+
+    override val isPublic: Boolean get() = parentEnum.isPublic
 
     override val crateRelativePath: String? get() {
         val variantName = name ?: return null

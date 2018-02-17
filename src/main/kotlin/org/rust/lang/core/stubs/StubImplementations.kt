@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 123
+        override fun getStubVersion(): Int = 124
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -353,6 +353,10 @@ class RsEnumVariantStub(
 
         override fun createStub(psi: RsEnumVariant, parentStub: StubElement<*>?) =
             RsEnumVariantStub(parentStub, this, psi.name)
+
+        override fun indexStub(stub: RsEnumVariantStub, sink: IndexSink) {
+            sink.indexEnumVariant(stub)
+        }
     }
 }
 
