@@ -27,7 +27,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import enum variant`() = doAvailableTest("""
+    fun `test import enum variant 1`() = doAvailableTest("""
         mod foo {
             pub enum Foo { A }
         }
@@ -44,6 +44,26 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
 
         fn main() {
             Foo::A/*caret*/;
+        }
+    """)
+
+    fun `test import enum variant 2`() = doAvailableTest("""
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            let a = A/*caret*/;
+        }
+    """, """
+        use foo::Foo::A;
+
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            let a = A/*caret*/;
         }
     """)
 

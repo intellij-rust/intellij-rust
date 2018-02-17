@@ -219,19 +219,20 @@ sealed class ImportItem(val item: RsQualifiedNamedElement) {
     abstract val superMods: List<RsMod>?
     abstract val containingCargoTarget: CargoWorkspace.Target?
 
-    val superModsCrateRelativePath: String? get() {
-        return superMods
+    val parentCrateRelativePath: String? get() {
+        val path = superMods
             ?.map { it.modName ?: return null }
             ?.asReversed()
             ?.drop(1)
             ?.joinToString("::") ?: return null
+        return if (item is RsEnumVariant) item.parentEnum.name?.let { "$path::$it" } else path
     }
 
     val crateRelativePath: String? get() {
         val name = itemName ?: return null
-        val modsRelativePath = superModsCrateRelativePath ?: return null
-        if (modsRelativePath.isEmpty()) return name
-        return "$modsRelativePath::$name"
+        val parentPath = parentCrateRelativePath ?: return null
+        if (parentPath.isEmpty()) return name
+        return "$parentPath::$name"
     }
 
     class ExplicitItem(item: RsQualifiedNamedElement) : ImportItem(item) {
