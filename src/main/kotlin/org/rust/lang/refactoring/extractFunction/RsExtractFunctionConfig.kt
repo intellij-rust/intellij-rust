@@ -121,10 +121,11 @@ class RsExtractFunctionConfig private constructor(
     private fun typeParameterBounds(): Map<Ty, Set<Ty>> {
         return containingFunction.typeParameters.associate {
             val type = it.declaredType
-            val bounds = it.bounds.flatMap {
+            val bounds = mutableSetOf<Ty>()
+            it.bounds.flatMapTo(bounds) {
                 it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList?.flatMap { it.type.types() } ?: emptyList()
             }
-            type to bounds.toSet()
+            type to bounds
         }
     }
 
