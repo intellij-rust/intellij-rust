@@ -52,7 +52,7 @@ sealed class RsDiagnostic(
                 fixes = buildList {
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
-                    } else  if (element is RsElement){
+                    } else  if (element is RsElement) {
                         val items = StdKnownItems.relativeTo(element)
                         val lookup = ImplLookup(element.project, items)
                         if (isFromActualImplForExpected(items, lookup)) {
@@ -60,6 +60,10 @@ sealed class RsDiagnostic(
                         }
                         if (isToOwnedImplWithExcpectedForActual(items, lookup)) {
                             add(ConvertToOwnedTyFix(element))
+                        }
+                        if (expectedTy == items.findStringTy()
+                            && (isToStringImplForActual(items, lookup) || isActualTyNumeric())) {
+                            add(ConverToStringFix(element))
                         }
                     }
                 }
@@ -78,6 +82,11 @@ sealed class RsDiagnostic(
             val result = lookup.selectProjection(TraitRef(actualTy, BoundElement(toOwnedTrait)),
                 toOwnedTrait.associatedTypesTransitively.find { it.name == "Owned" } ?: return false)
             return expectedTy == result.ok()?.value
+        }
+
+        private fun isToStringImplForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
+            val toStringTrait = items.findToStringTrait() ?: return false
+            return lookup.select(TraitRef(actualTy, BoundElement(toStringTrait))).ok() != null
         }
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
