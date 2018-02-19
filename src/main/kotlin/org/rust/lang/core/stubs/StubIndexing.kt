@@ -29,6 +29,10 @@ fun IndexSink.indexEnumItem(stub: RsEnumItemStub) {
     indexGotoClass(stub)
 }
 
+fun IndexSink.indexEnumVariant(stub: RsEnumVariantStub) {
+    indexNamedStub(stub)
+}
+
 fun IndexSink.indexModDeclItem(stub: RsModDeclItemStub) {
     indexNamedStub(stub)
     RsModulesIndex.index(stub, this)

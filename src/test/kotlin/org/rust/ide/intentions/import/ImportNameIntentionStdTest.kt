@@ -69,6 +69,26 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         fn foo(t: Bar/*caret*/) {}
     """)
 
+    fun `test insert extern crate item after inner attributes`() = doAvailableTestWithFileTree("""
+        //- main.rs
+        #![allow(non_snake_case)]
+
+        fn foo(t: Bar/*caret*/) {}
+
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub struct Bar;
+        }
+    """, """
+        #![allow(non_snake_case)]
+
+        extern crate dep_lib_target;
+
+        use dep_lib_target::foo::Bar;
+
+        fn foo(t: Bar/*caret*/) {}
+    """)
+
     fun `test import reexported item from stdlib`() = doAvailableTest("""
         fn main() {
             let mutex = Mutex/*caret*/::new(Vec::new());
@@ -80,6 +100,32 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
             let mutex = Mutex/*caret*/::new(Vec::new());
         }
     """, ImportNameIntention.Testmarks.autoInjectedCrate)
+
+    fun `test module reexport`() = doAvailableTestWithFileTree("""
+        //- dep-lib/lib.rs
+        pub mod foo {
+            mod bar {
+                pub mod baz {
+                    pub struct FooBar;
+                }
+            }
+
+            pub use self::bar::baz;
+        }
+
+        //- main.rs
+        fn main() {
+            let x = FooBar/*caret*/;
+        }
+    """, """
+        extern crate dep_lib_target;
+
+        use dep_lib_target::foo::baz::FooBar;
+
+        fn main() {
+            let x = FooBar/*caret*/;
+        }
+    """)
 
     fun `test module reexport in stdlib`() = doAvailableTestWithMultipleChoice("""
         fn foo<T: Hash/*caret*/>(t: T) {}

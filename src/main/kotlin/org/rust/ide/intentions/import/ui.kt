@@ -117,8 +117,8 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
         val importItem = importItem
         return if (importItem != null) {
             val crateName = importItem.containingCargoTarget?.normName ?: return null
-            val modulePath = importItem.superModsCrateRelativePath ?: return null
-            "($crateName::$modulePath)"
+            val parentPath = importItem.parentCrateRelativePath ?: return null
+            "($crateName::$parentPath)"
         } else {
             super.getContainerText(element, name)
         }

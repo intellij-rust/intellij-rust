@@ -27,7 +27,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import enum variant`() = doAvailableTest("""
+    fun `test import enum variant 1`() = doAvailableTest("""
         mod foo {
             pub enum Foo { A }
         }
@@ -44,6 +44,26 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
 
         fn main() {
             Foo::A/*caret*/;
+        }
+    """)
+
+    fun `test import enum variant 2`() = doAvailableTest("""
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            let a = A/*caret*/;
+        }
+    """, """
+        use foo::Foo::A;
+
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            let a = A/*caret*/;
         }
     """)
 
@@ -93,6 +113,22 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
+    fun `test import generic item`() = doAvailableTest("""
+        mod foo {
+            pub struct Foo<T>(T);
+        }
+
+        fn f<T>(foo: Foo/*caret*/<T>) {}
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo<T>(T);
+        }
+
+        fn f<T>(foo: Foo/*caret*/<T>) {}
+    """)
+
     fun `test import module`() = doAvailableTest("""
         mod foo {
             pub mod bar {
@@ -136,6 +172,30 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
 
         use foo::Bar;
         use foo::Foo;
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """)
+
+    fun `test insert use item after inner attributes`() = doAvailableTest("""
+        #![allow(non_snake_case)]
+
+        mod foo {
+            pub struct Foo;
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """, """
+        #![allow(non_snake_case)]
+
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo;
+        }
 
         fn main() {
             let f = Foo/*caret*/;
