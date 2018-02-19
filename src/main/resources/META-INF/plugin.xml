@@ -627,6 +627,14 @@
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
+        <action id="Rust.Build"
+                class="org.rust.ide.actions.RsBuildAction"
+                text="Build"
+                description="Build Project"
+                icon="AllIcons.Actions.Compile"
+                use-shortcut-of="CompileDirty">
+            <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
+        </action>
 
         <action id="Rust.RsPromoteModuleToDirectoryAction"
                 class="org.rust.lang.refactoring.RsPromoteModuleToDirectoryAction"
@@ -634,6 +642,7 @@
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
+
         <action id="Rust.RsDowngradeModuleToFile"
                 class="org.rust.lang.refactoring.RsDowngradeModuleToFile"
                 text="Downgrade module to file"

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.runconfig.hasCargoProject
 
 class RefreshCargoProjectAction : AnAction() {
     init {
@@ -19,14 +20,14 @@ class RefreshCargoProjectAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val project = e.project
-        if (project == null || project.toolchain == null || project.cargoProjects.allProjects.isEmpty()) {
+        if (project == null || project.toolchain == null || !project.hasCargoProject) {
             e.presentation.isEnabled = false
         }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        if (project.toolchain == null || project.cargoProjects.allProjects.isEmpty()) {
+        if (project.toolchain == null || !project.hasCargoProject) {
             guessAndSetupRustProject(project, explicitRequest = true)
         } else {
             project.cargoProjects.refreshAllProjects()
