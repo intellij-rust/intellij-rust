@@ -1346,6 +1346,20 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ u8
     """)
 
+    fun `test aliased associated type binding in trait object`() = testExpr("""
+        trait Tr {
+            type Item;
+            fn foo(&self) -> Self::Item;
+        }
+
+        type TrAlias<T> = Tr<Item=T>;
+
+        fn foo(a: &TrAlias<u8>) {
+            let b = a.foo();
+            b;
+        } //^ u8
+    """)
+
     fun `test associated type binding in 'impl Trait'`() = testExpr("""
         trait Tr {
             type Item;
