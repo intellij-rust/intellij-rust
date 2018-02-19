@@ -8,11 +8,14 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.presentation.insertionSafeText
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
@@ -29,7 +32,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         }
         val ident = letDecl.pat as? RsPatIdent ?: return null
         val type = ident.patBinding.type
-        if (type is TyUnknown) {
+        if (type.containsTyOfClass(listOf(TyUnknown::class.java, TyInfer::class.java))) {
             return null
         }
         return Context(type, letDecl)
@@ -37,7 +40,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val factory = RsPsiFactory(project)
-        val createdType = factory.createType(ctx.type.toString())
+        val createdType = factory.createType(ctx.type.insertionSafeText)
         val letDecl = ctx.letDecl
         val colon = letDecl.addAfter(factory.createColon(), letDecl.pat)
         letDecl.addAfter(createdType, colon)
