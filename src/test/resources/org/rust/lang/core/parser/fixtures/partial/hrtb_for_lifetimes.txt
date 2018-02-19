@@ -24,11 +24,11 @@ FILE
   PsiElement(QUOTE_IDENTIFIER)(''c')
   PsiElement(>)('>')
   PsiWhiteSpace(' ')
-  PsiErrorElement:<type reference> expected, got ''a'
-    PsiElement(QUOTE_IDENTIFIER)(''a')
-  PsiElement(DUMMY_BLOCK)
-    PsiWhiteSpace(' ')
+  PsiElement(QUOTE_IDENTIFIER)(''a')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:'+' expected, got ':'
     PsiElement(:)(':')
+  PsiElement(DUMMY_BLOCK)
     PsiWhiteSpace(' ')
     PsiElement(QUOTE_IDENTIFIER)(''b')
   PsiWhiteSpace(' ')

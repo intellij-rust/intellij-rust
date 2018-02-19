@@ -236,6 +236,13 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                   //^ Trait<u8>
     """)
 
+    fun `test generic 'dyn Trait' trait object`() = testType("""
+        trait Trait<A> {}
+
+        fn foo(_: &dyn Trait<u8>) { unimplemented!() }
+                  //^ Trait<u8>
+    """)
+
     fun `test impl Trait`() = testType("""
         trait Trait { }
 

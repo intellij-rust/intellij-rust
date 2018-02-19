@@ -59,9 +59,16 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
             TyFunction(paramTypes, type.retType?.let { it.typeReference?.type ?: TyUnknown } ?: TyUnit)
         }
 
-        is RsImplTraitType -> {
-            TyAnon(type, type.polyboundList.mapNotNull { it.bound.traitRef?.resolveToBoundTrait })
+        is RsTraitType -> {
+            val bounds = type.polyboundList.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+            if (type.isImpl) {
+                TyAnon(type, bounds)
+            } else {
+                // TODO use all bounds
+                bounds.firstOrNull()?.let(::TyTraitObject) ?: TyUnknown
+            }
         }
+
         else -> TyUnknown
     }
 }

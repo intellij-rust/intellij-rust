@@ -71,6 +71,7 @@
         UNION     = 'union_kw'
         DEFAULT   = 'default_kw'
         AUTO      = 'auto_kw'
+        DYN       = 'dyn_kw'
 
         SHEBANG_LINE = 'shebang_line'
         RESERVED_KEYWORD = 'reserved_keyword'
@@ -215,6 +216,7 @@ VisRestriction ::= '(' ( crate | ((&(self ')' | super ')') | in) PathWithoutType
 private default_ ::= <<defaultKeyword>>
 private union ::= <<unionKeyword>>
 private auto ::= <<autoKeyword>>
+private dyn ::= <<dynKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
 
@@ -238,7 +240,7 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   recoverWhile = Item_recover
 }
 private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
-  | static | TYPE_KW | impl | "union" | "default" | "auto"
+  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn"
 private Item_recover ::= !('}' | Item_first )
 
 private Items ::= Item_with_recover*
@@ -686,14 +688,14 @@ private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn 
 
 private TypeAscription ::= ':' TypeReference
 
-private TypeReferenceInner ::= ( ArrayType
+private TypeReferenceInner ::= ArrayType
                                | RefLikeType
                                | FnPointerType
-                               | BaseType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
+                               | TraitType
                                | ForInType
-                               | ImplTraitType) ('+' Bound)*
+                               | BaseType
 
 private ScalarTypeReferenceInner ::= ArrayType
                                    | RefLikeType
@@ -701,7 +703,6 @@ private ScalarTypeReferenceInner ::= ArrayType
                                    | BaseType
                                    | <<tupleOrParenType ScalarTypeReferenceInner TupleType_upper>>
                                    | ForInType
-                                   | ImplTraitType
 
 TypeReference ::= TypeReferenceInner {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -753,17 +754,19 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ImplTraitType ::= impl Polybound ('+' Polybound)* {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-
 BaseType ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+// `impl Trait` or `dyn Trait` or `Trait+'a`
+TraitType ::= (impl | dyn) Polybound ('+' Polybound)*
+            | Polybound '+' Polybound ('+' Polybound)* {
+  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsTraitTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -1239,4 +1242,4 @@ private never ::= !()
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
-private meta list_element ::= <<param>> (',' | &'>') { pin = 1 }
+private meta list_element ::= <<param>> !'+' (',' | &'>') { pin = 2 }
