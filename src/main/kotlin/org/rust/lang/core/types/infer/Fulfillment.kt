@@ -60,7 +60,10 @@ data class Obligation(val recursionDepth: Int, var predicate: Predicate): TypeFo
         predicate.visitWith(visitor)
 }
 
-data class PendingPredicateObligation(val obligation: Obligation, val stalledOn: MutableList<Ty>)
+data class PendingPredicateObligation(
+    val obligation: Obligation,
+    var stalledOn: List<Ty> = emptyList()
+)
 
 /**
  * [ObligationForest] is a mutable collection of obligations.
@@ -90,13 +93,15 @@ class ObligationForest {
     }
 
     private val nodes: MutableList<Node> = mutableListOf()
+    private val doneCache: MutableSet<Predicate> = HashSet()
 
     val pendingObligations: Sequence<PendingPredicateObligation> =
         nodes.asSequence().filter { it.state == NodeState.Pending }.map { it.obligation }
 
     @Suppress("UNUSED_PARAMETER") // TODO use `parent`
     fun registerObligationAt(obligation: PendingPredicateObligation, parent: Node?) {
-        nodes.add(Node(obligation))
+        if (doneCache.add(obligation.obligation.predicate))
+            nodes.add(Node(obligation))
     }
 
     fun processObligations(
@@ -145,7 +150,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
 
     fun registerPredicateObligation(obligation: Obligation) {
         obligations.registerObligationAt(
-            PendingPredicateObligation(ctx.resolveTypeVarsIfPossible(obligation), mutableListOf()),
+            PendingPredicateObligation(ctx.resolveTypeVarsIfPossible(obligation)),
             null
         )
     }
@@ -171,7 +176,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
                 resolvedTy == it
             }
             if (nothingChanged) return ProcessPredicateResult.NoChanges
-            stalledOn.clear()
+            pendingObligation.stalledOn = emptyList()
         }
 
         obligation.predicate = ctx.resolveTypeVarsIfPossible(obligation.predicate)
@@ -183,10 +188,13 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
                 val impl = lookup.select(predicate.trait, obligation.recursionDepth)
                 return when (impl) {
                     is SelectionResult.Err -> ProcessPredicateResult.Err
-                    is SelectionResult.Ambiguous -> ProcessPredicateResult.NoChanges
+                    is SelectionResult.Ambiguous -> {
+                        pendingObligation.stalledOn = traitRefTypeVars(predicate.trait)
+                        ProcessPredicateResult.NoChanges
+                    }
                     is SelectionResult.Ok -> {
                         return ProcessPredicateResult.Ok(impl.result.nestedObligations.map {
-                            PendingPredicateObligation(it, mutableListOf())
+                            PendingPredicateObligation(it)
                         })
                     }
                 }
@@ -197,16 +205,15 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
             }
             is Predicate.Projection -> {
                 if (predicate.projectionTy.type is TyInfer) return ProcessPredicateResult.NoChanges
-                val result = lookup.selectProjection(predicate.projectionTy, obligation.recursionDepth)
-                return when (result) {
-                    is SelectionResult.Err -> ProcessPredicateResult.Err
-                    is SelectionResult.Ambiguous -> ProcessPredicateResult.NoChanges
-                    is SelectionResult.Ok -> {
-                        val theTy = result.result ?: return ProcessPredicateResult.Err
-                        ProcessPredicateResult.Ok((theTy.obligations + Obligation(
-                            obligation.recursionDepth + 1,
-                            Predicate.Equate(theTy.value, predicate.ty)
-                        )).map {PendingPredicateObligation(it, mutableListOf()) })
+                val result = ctx.optNormalizeProjectionType(predicate.projectionTy, obligation.recursionDepth)
+                return if (result == null) {
+                    pendingObligation.stalledOn = traitRefTypeVars(predicate.projectionTy.traitRef)
+                    ProcessPredicateResult.NoChanges
+                } else {
+                    if (ctx.combineTypes(predicate.ty, result.value)) {
+                        ProcessPredicateResult.Ok((result.obligations).map { PendingPredicateObligation(it) })
+                    } else {
+                        ProcessPredicateResult.Err
                     }
                 }
             }
@@ -217,6 +224,9 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
         obligations.forEach { registerPredicateObligation(it) }
         return value
     }
+
+    private fun traitRefTypeVars(ref: TraitRef): List<TyInfer> =
+        ctx.resolveTypeVarsIfPossible(ref).collectInferTys()
 }
 
 sealed class ProcessPredicateResult {

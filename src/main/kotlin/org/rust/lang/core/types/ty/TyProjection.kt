@@ -9,6 +9,8 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 
@@ -35,6 +37,14 @@ data class TyProjection private constructor(
     val trait: RsTraitItem, // TODO should be BoundElement<RsTraitItem>
     val target: RsTypeAlias
 ): Ty(type.flags or HAS_TY_PROJECTION_MASK) {
+
+    /**
+     * Extracts the underlying trait reference from this projection.
+     * For example, if this is a projection of `<T as Iterator>::Item`,
+     * then this property would return a `T: Iterator` trait reference.
+     */
+    val traitRef: TraitRef
+        get() = TraitRef(type, BoundElement(trait))
 
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyProjection(type.foldWith(folder), trait, target)

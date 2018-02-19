@@ -15,6 +15,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.SelectionResult
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
@@ -95,35 +96,21 @@ class RsInferenceContext(
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
 
-    private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> =
-        UnificationTable()
-    private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> =
-        UnificationTable()
-    private val varUnificationTable: UnificationTable<TyInfer.TyVar, Ty> =
-        UnificationTable()
+    private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> = UnificationTable()
+    private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> = UnificationTable()
+    private val varUnificationTable: UnificationTable<TyInfer.TyVar, Ty> = UnificationTable()
+    private val projectionCache: ProjectionCache = ProjectionCache()
 
-    private data class CombinedSnapshot(
-        private val intSnapshot: Snapshot,
-        private val floatSnapshot: Snapshot,
-        private val varSnapshot: Snapshot
-    ) : Snapshot {
-        override fun rollback() {
-            intSnapshot.rollback()
-            floatSnapshot.rollback()
-            varSnapshot.rollback()
-        }
-
-        override fun commit() {
-            intSnapshot.commit()
-            floatSnapshot.commit()
-            varSnapshot.commit()
-        }
+    private class CombinedSnapshot(vararg val snapshots: Snapshot) : Snapshot {
+        override fun rollback() = snapshots.forEach { it.rollback() }
+        override fun commit() = snapshots.forEach { it.commit() }
     }
 
     fun startSnapshot(): Snapshot = CombinedSnapshot(
         intUnificationTable.startSnapshot(),
         floatUnificationTable.startSnapshot(),
-        varUnificationTable.startSnapshot()
+        varUnificationTable.startSnapshot(),
+        projectionCache.startSnapshot()
     )
 
     inline fun <T> probe(action: () -> T): T {
@@ -329,7 +316,7 @@ class RsInferenceContext(
         }
     }
 
-    private fun combinePairs(pairs: List<Pair<Ty, Ty>>): Boolean {
+    fun combinePairs(pairs: List<Pair<Ty, Ty>>): Boolean {
         var canUnify = true
         for ((t1, t2) in pairs) {
             canUnify = combineTypes(t1, t2) && canUnify
@@ -376,16 +363,146 @@ class RsInferenceContext(
         return TyInfer.TyVar(ty)
     }
 
+    /** Deeply normalize projection types. See [normalizeProjectionType] */
     fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T, recursionDepth: Int = 0): TyWithObligations<T> {
         val obligations = mutableListOf<Obligation>()
         val normTy = ty.foldTyProjectionWith {
-            val tyVar = TyInfer.TyVar(it)
-            obligations.add(Obligation(recursionDepth + 1, Predicate.Projection(it, tyVar)))
-            tyVar
+            val normTy = normalizeProjectionType(it, recursionDepth)
+            obligations += normTy.obligations
+            normTy.value
         }
 
         return TyWithObligations(normTy, obligations)
     }
+
+    /**
+     * Normalize a specific projection like `<T as Trait>::Item`.
+     * The result is always a type (and possibly additional obligations).
+     * If ambiguity arises, which implies that
+     * there are unresolved type variables in the projection, we will
+     * substitute a fresh type variable `$X` and generate a new
+     * obligation `<T as Trait>::Item == $X` for later.
+     */
+    private fun normalizeProjectionType(projectionTy: TyProjection, recursionDepth: Int): TyWithObligations<Ty> {
+        return optNormalizeProjectionType(projectionTy, recursionDepth) ?: run {
+            val tyVar = TyInfer.TyVar(projectionTy)
+            val obligation = Obligation(recursionDepth + 1, Predicate.Projection(projectionTy, tyVar))
+            TyWithObligations(tyVar, listOf(obligation))
+        }
+    }
+
+    /**
+     * Normalize a specific projection like `<T as Trait>::Item`.
+     * The result is always a type (and possibly additional obligations).
+     * Returns `null` in the case of ambiguity, which indicates that there
+     * are unbound type variables.
+     */
+    fun optNormalizeProjectionType(projectionTy: TyProjection, recursionDepth: Int): TyWithObligations<Ty>? =
+        optNormalizeProjectionTypeResolved(resolveTypeVarsIfPossible(projectionTy) as TyProjection, recursionDepth)
+
+    /** See [optNormalizeProjectionType] */
+    private fun optNormalizeProjectionTypeResolved(projectionTy: TyProjection, recursionDepth: Int): TyWithObligations<Ty>? {
+        if (projectionTy.type is TyInfer) return null
+
+        val cacheResult = projectionCache.tryStart(projectionTy)
+        return when (cacheResult) {
+            ProjectionCacheEntry.Ambiguous -> {
+                // If we found ambiguity the last time, that generally
+                // means we will continue to do so until some type in the
+                // key changes (and we know it hasn't, because we just
+                // fully resolved it).
+                // TODO rustc has an exception for closure types here
+                null
+            }
+            ProjectionCacheEntry.InProgress -> {
+                // While normalized A::B we are asked to normalize A::B.
+                // TODO rustc halts the compilation immediately (panics) here
+                TyWithObligations(TyUnknown)
+            }
+            ProjectionCacheEntry.Error -> {
+                // TODO report an error. See rustc's `normalize_to_error`
+                TyWithObligations(TyUnknown)
+            }
+            is ProjectionCacheEntry.NormalizedTy -> {
+                var ty = cacheResult.ty
+                // If we find the value in the cache, then return it along
+                // with the obligations that went along with it. Note
+                // that, when using a fulfillment context, these
+                // obligations could in principle be ignored: they have
+                // already been registered when the cache entry was
+                // created (and hence the new ones will quickly be
+                // discarded as duplicated). But when doing trait
+                // evaluation this is not the case.
+                // (See rustc's https://github.com/rust-lang/rust/issues/43132 )
+                if (!hasUnresolvedTypeVars(ty.value)) {
+                    // Once we have inferred everything we need to know, we
+                    // can ignore the `obligations` from that point on.
+                    ty = TyWithObligations(ty.value)
+                    projectionCache.putTy(projectionTy, ty)
+                }
+                ty
+            }
+            null -> {
+                val selResult = lookup.selectProjection(projectionTy, recursionDepth)
+                when (selResult) {
+                    is SelectionResult.Ok -> {
+                        val result = selResult.result ?: TyWithObligations(projectionTy)
+                        projectionCache.putTy(projectionTy, pruneCacheValueObligations(result))
+                        result
+                    }
+                    is SelectionResult.Err -> {
+                        projectionCache.error(projectionTy)
+                        // TODO report an error. See rustc's `normalize_to_error`
+                        TyWithObligations(TyUnknown)
+                    }
+                    is SelectionResult.Ambiguous -> {
+                        projectionCache.ambiguous(projectionTy)
+                        null
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * If there are unresolved type variables, then we need to include
+     * any subobligations that bind them, at least until those type
+     * variables are fully resolved.
+     */
+    private fun pruneCacheValueObligations(ty: TyWithObligations<Ty>): TyWithObligations<Ty> {
+        if (!hasUnresolvedTypeVars(ty.value)) return TyWithObligations(ty.value)
+
+        // I don't completely understand why we leave the only projection
+        // predicates here, but here is the comment from rustc about it
+        //
+        // If we found a `T: Foo<X = U>` predicate, let's check
+        // if `U` references any unresolved type
+        // variables. In principle, we only care if this
+        // projection can help resolve any of the type
+        // variables found in `result.value` -- but we just
+        // check for any type variables here, for fear of
+        // indirect obligations (e.g., we project to `?0`,
+        // but we have `T: Foo<X = ?1>` and `?1: Bar<X =
+        // ?0>`).
+        //
+        // We are only interested in `T: Foo<X = U>` predicates, where
+        // `U` references one of `unresolved_type_vars`.
+        val obligations = ty.obligations
+            .filter { it.predicate is Predicate.Projection && hasUnresolvedTypeVars(it.predicate) }
+
+        return TyWithObligations(ty.value, obligations)
+    }
+
+    private fun  <T : TypeFoldable<T>> hasUnresolvedTypeVars(_ty: T): Boolean = _ty.visitWith(object : TypeVisitor {
+        override fun invoke(_ty: Ty): Boolean {
+            val ty = shallowResolve(_ty)
+            return when {
+                ty is TyInfer -> true
+                !ty.hasTyInfer -> false
+                else -> ty.superVisitWith(this)
+            }
+        }
+    })
 
     fun instantiateBounds(
         bounds: List<TraitRef>,
@@ -1465,7 +1582,7 @@ private fun unwrapParenExprs(expr: RsExpr): RsExpr {
 
 data class TyWithObligations<out T>(
     val value: T,
-    val obligations: List<Obligation>
+    val obligations: List<Obligation> = emptyList()
 )
 
 fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =

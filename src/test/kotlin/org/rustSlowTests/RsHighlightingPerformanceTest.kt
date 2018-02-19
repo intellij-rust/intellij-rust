@@ -14,8 +14,8 @@ import com.intellij.util.ui.UIUtil
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.stdext.Timings
 import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.stdext.Timings
 
 
 class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
