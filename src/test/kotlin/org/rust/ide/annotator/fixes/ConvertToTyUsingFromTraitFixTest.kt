@@ -11,7 +11,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
-    fun `test B from A when impl From A for B is available`() = checkFixByText("Convert to type B using `From` trait", """
+    fun `test B from A when impl From A for B is available`() = checkFixByText("Convert to B using `From` trait", """
         struct A{}
         struct B{}
 
@@ -31,7 +31,7 @@ class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsExperimentalChe
         }
     """)
 
-    fun `test no fix when impl From A for B is not available`() = checkFixIsUnavailable("Convert to type B using `From` trait", """
+    fun `test no fix when impl From A for B is not available`() = checkFixIsUnavailable("Convert to B using `From` trait", """
         struct A{}
         struct B{}
         struct C{}
@@ -44,7 +44,7 @@ class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsExperimentalChe
     """)
 
 
-    fun `test From impl provided by std lib`() = checkFixByText("Convert to type u32 using `From` trait", """
+    fun `test From impl provided by std lib`() = checkFixByText("Convert to u32 using `From` trait", """
         fn main () {
             let x: u32 = <error>'X'<caret></error>;
         }
@@ -54,7 +54,7 @@ class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsExperimentalChe
         }
     """)
 
-    fun `test From impl for generic type`() = checkFixByText ("Convert to type Vec<u8> using `From` trait", """
+    fun `test From impl for generic type`() = checkFixByText ("Convert to Vec<u8> using `From` trait", """
         fn main () {
             let v: Vec<u8> = <error>String::new()<caret></error>;
         }

@@ -86,6 +86,9 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findToOwnedTrait(): RsTraitItem? =
         findCoreItem("borrow::ToOwned") as? RsTraitItem
 
+    fun findToStringTrait(): RsTraitItem? =
+        findCoreItem("string::ToString") as? RsTraitItem
+
     companion object {
         private val stdKnownItemsCache =
             ProjectCache<Pair<CargoWorkspace, String>, Optional<RsNamedElement>>("stdKnownItemsCache")

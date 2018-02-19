@@ -10,21 +10,21 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.presentation.tyToStringWithoutTypeArgs
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.types.ty.Ty
 
 /**
- * For the given `expr` converts it to the type `ty` with `ty::from(expr)`
+ * For the given `expr` adds `to_string()` call. Note the fix doesn't attempt to check if adding the function call
+ * will produce a valid expression.
  */
-class ConvertToTyUsingFromTraitFix(expr: PsiElement, val ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+class ConverToStringFix(expr: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+
     override fun getFamilyName(): String = "Convert to type"
 
-    override fun getText(): String = "Convert to $ty using `From` trait"
+    override fun getText(): String = "Convert to String using `ToString` trait"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         if (startElement !is RsExpr) return
-        startElement.replace(RsPsiFactory(project).createAssocFunctionCall(tyToStringWithoutTypeArgs(ty), "from", listOf(startElement)))
+        startElement.replace(RsPsiFactory(project).createNoArgsMethodCall(startElement, "to_string"))
     }
 }
