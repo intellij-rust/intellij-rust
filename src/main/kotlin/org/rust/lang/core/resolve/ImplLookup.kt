@@ -419,6 +419,7 @@ class ImplLookup(
         return when (selfTy) {
             is TyTypeParameter -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
             is TyTraitObject -> selfTy.trait.assoc[assocType]
+            is TyAnon -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
             else -> {
                 val ty = lookupAssocTypeInSelection(res, assocType)
                     ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy), res.impl, assocType)
