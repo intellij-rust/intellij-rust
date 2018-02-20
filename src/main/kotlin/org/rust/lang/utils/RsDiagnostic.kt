@@ -23,13 +23,14 @@ import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.withSubst
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyInfer
-import org.rust.lang.core.types.ty.TyNumeric
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
 import org.rust.stdext.buildList
+
+private val REF_STR_TY = TyReference(TyStr, Mutability.IMMUTABLE)
+private val MUT_REF_STR_TY = TyReference(TyStr, Mutability.MUTABLE)
 
 sealed class RsDiagnostic(
     val element: PsiElement,
@@ -61,9 +62,17 @@ sealed class RsDiagnostic(
                         if (isToOwnedImplWithExcpectedForActual(items, lookup)) {
                             add(ConvertToOwnedTyFix(element))
                         }
-                        if (expectedTy == items.findStringTy()
+                        val stringTy = items.findStringTy()
+                        if (expectedTy == stringTy
                             && (isToStringImplForActual(items, lookup) || isActualTyNumeric())) {
-                            add(ConverToStringFix(element))
+                            add(ConvertToStringFix(element))
+                        }
+                        if (actualTy == stringTy) {
+                            if (expectedTy == REF_STR_TY) {
+                                add(ConvertToImmutableStrFix(element))
+                            } else if (expectedTy == MUT_REF_STR_TY) {
+                                add(ConvertToMutStrFix(element))
+                            }
                         }
                     }
                 }

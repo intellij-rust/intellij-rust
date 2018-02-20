@@ -17,7 +17,7 @@ import org.rust.lang.core.psi.RsPsiFactory
  * For the given `expr` adds `to_string()` call. Note the fix doesn't attempt to check if adding the function call
  * will produce a valid expression.
  */
-class ConverToStringFix(expr: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+class ConvertToStringFix(expr: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
 
     override fun getFamilyName(): String = "Convert to type"
 
