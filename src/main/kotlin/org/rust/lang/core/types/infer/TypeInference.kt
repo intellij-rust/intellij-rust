@@ -569,6 +569,7 @@ private class RsFnInferenceContext(
     private fun processStatement(psi: RsStmt): Boolean = when (psi) {
         is RsLetDecl -> {
             val explicitTy = psi.typeReference?.type
+                ?.let { normalizeAssociatedTypesIn(it) }
             val inferredTy = explicitTy
                 ?.let { psi.expr?.inferTypeCoercableTo(it) }
                 ?: psi.expr?.inferType()

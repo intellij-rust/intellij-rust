@@ -8,23 +8,18 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsPathExpr
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.collectCompletionVariants
-import org.rust.lang.core.resolve.collectPathResolveVariants
-import org.rust.lang.core.resolve.processPathResolveVariants
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.stdext.buildMap
 
 
 class RsPathReferenceImpl(
@@ -98,14 +93,27 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
 
         val assocTypes = run {
             if (element is RsTraitItem) {
-                val outputParam = lookup.fnOnceOutput
-                return@run if (outputArg != null && outputParam != null) {
-                    mapOf(outputParam to outputArg)
-                } else {
-                    emptyMap()
+                buildMap {
+                    // Iterator<Item=T>
+                    path.typeArgumentList?.assocTypeBindingList?.forEach { binding ->
+                        // We can't just use `binding.reference.resolve()` here because
+                        // resolving of an assoc type depends on a parent path resolve,
+                        // so we coming back here and entering the infinite recursion
+                        resolveAssocTypeBinding(element, binding)?.let { assoc ->
+                            binding.typeReference?.type?.let { put(assoc, it) }
+                        }
+
+                    }
+
+                    // Fn() -> T
+                    val outputParam = lookup.fnOnceOutput
+                    if (outputArg != null && outputParam != null) {
+                        put(outputParam, outputArg)
+                    }
                 }
+            } else {
+                emptyMap<RsTypeAlias, Ty>()
             }
-            emptyMap<RsTypeAlias, Ty>()
         }
 
         val parameters = element.typeParameters.map { TyTypeParameter.named(it) }
@@ -116,3 +124,7 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         )
     }
 }
+
+private fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBinding): RsTypeAlias? =
+    collectResolveVariants(binding.referenceName) { processAssocTypeVariants(trait, it) }
+        .singleOrNull() as? RsTypeAlias?
