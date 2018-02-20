@@ -10,37 +10,32 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.SEMICOLON
-import org.rust.lang.core.psi.RsMatchArm
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsRetExpr
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
-import java.util.*
 
-class RsReturnStatementFormatProcessor : PreFormatProcessor {
-    override fun process(element: ASTNode, range: TextRange): TextRange {
-        if (!shouldRunPunctuationProcessor(element)) return range
+class RsStatementSemicolonFormatProcessor : PreFormatProcessor {
+    override fun process(node: ASTNode, range: TextRange): TextRange {
+        if (!shouldRunPunctuationProcessor(node)) return range
 
-        val returnElements = ArrayList<RsRetExpr>()
-        element.psi.accept(object : PsiRecursiveElementVisitor() {
+        val elements = arrayListOf<PsiElement>()
+
+        node.psi.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 if (element.textRange in range) {
                     super.visitElement(element)
                 }
-
-                if (element is RsRetExpr && element.parent !is RsMatchArm) {
-                    returnElements.add(element)
+                if ((element is RsRetExpr && element.parent !is RsMatchArm) || element is RsBreakExpr || element is RsContExpr) {
+                    elements.add(element)
                 }
             }
         })
 
-        val nAddedSemicolons = returnElements.count { tryAddSemicolonAfterReturnExpression(it) }
-
-        return range.grown(nAddedSemicolons)
+        return range.grown(elements.count(::tryAddSemicolonAfter))
     }
 
-    private fun tryAddSemicolonAfterReturnExpression(element: RsRetExpr): Boolean {
+    private fun tryAddSemicolonAfter(element: PsiElement): Boolean {
         val nextSibling = element.getNextNonCommentSibling()
         if (nextSibling == null || nextSibling.elementType != SEMICOLON) {
             val psiFactory = RsPsiFactory(element.project)
