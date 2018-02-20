@@ -252,6 +252,15 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         if (processAllWithSubst(trait.element.members?.typeAliasList.orEmpty(), subst, processor)) return true
     }
 
+    if (isCompletion) {
+        // Complete possible associated types in a case like `Trait</*caret*/>`
+        val possibleTypeArgs = parent.parent?.parent
+        if (possibleTypeArgs is RsTypeArgumentList) {
+            val trait = (possibleTypeArgs.parent as? RsPath)?.reference?.resolve() as? RsTraitItem
+            if (trait != null && processAssocTypeVariants(trait, processor)) return true
+        }
+    }
+
     val containingMod = path.containingMod
     val crateRoot = path.crateRoot
     if (!path.hasColonColon) {
@@ -379,6 +388,16 @@ fun processBinaryOpVariants(element: RsBinaryOp, operator: OverloadableBinaryOpe
         ?.find { it.name == operator.fnName }
         ?: return false
     return processor(function)
+}
+
+fun processAssocTypeVariants(element: RsAssocTypeBinding, processor: RsResolveProcessor): Boolean {
+    val trait = element.parentPath?.reference?.resolve() as? RsTraitItem ?: return false
+    return processAssocTypeVariants(trait, processor)
+}
+
+fun processAssocTypeVariants(trait: RsTraitItem, processor: RsResolveProcessor): Boolean {
+    if (trait.associatedTypesTransitively.any { processor(it) }) return true
+    return false
 }
 
 val RsFile.exportedCrateMacros: List<RsMacroDefinition>

@@ -223,7 +223,7 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
         is RsPath -> generatePathDocumentation(this, buffer)
         is RsAssocTypeBinding -> {
             buffer += identifier.text
-            typeReference.generateDocumentation(buffer, " = ")
+            typeReference?.generateDocumentation(buffer, " = ")
         }
         is RsTraitRef -> path.generateDocumentation(buffer)
         is RsLifetimeParamBounds -> lifetimeList.joinTo(buffer, " + ", ": ") { generateDocumentation(it) }

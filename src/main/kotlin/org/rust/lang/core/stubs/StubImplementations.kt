@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 124
+        override fun getStubVersion(): Int = 125
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -120,6 +120,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TYPE_PARAMETER" -> RsTypeParameterStub.Type
     "LIFETIME_PARAMETER" -> RsLifetimeParameterStub.Type
     "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
+    "ASSOC_TYPE_BINDING" -> RsAssocTypeBindingStub.Type
 
     "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
     "POLYBOUND" -> RsPlaceholderStub.Type("POLYBOUND", ::RsPolyboundImpl)
@@ -1168,6 +1169,31 @@ private fun RsStubLiteralType?.serialize(dataStream: StubOutputStream) {
         }
         is RsStubLiteralType.Integer -> dataStream.writeByte(kind?.ordinal ?: -1)
         is RsStubLiteralType.Float -> dataStream.writeByte(kind?.ordinal ?: -1)
+    }
+}
+
+class RsAssocTypeBindingStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RsAssocTypeBinding>(parent, elementType),
+    RsNamedStub {
+
+    object Type : RsStubElementType<RsAssocTypeBindingStub, RsAssocTypeBinding>("ASSOC_TYPE_BINDING") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsAssocTypeBindingStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RsAssocTypeBindingStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
+
+        override fun createPsi(stub: RsAssocTypeBindingStub): RsAssocTypeBinding =
+            RsAssocTypeBindingImpl(stub, this)
+
+        override fun createStub(psi: RsAssocTypeBinding, parentStub: StubElement<*>?) =
+            RsAssocTypeBindingStub(parentStub, this, psi.identifier.text)
     }
 }
 
