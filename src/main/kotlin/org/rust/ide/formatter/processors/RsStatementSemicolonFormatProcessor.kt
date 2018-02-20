@@ -16,38 +16,26 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class RsStatementSemicolonFormatProcessor : PreFormatProcessor {
-    override fun process(element: ASTNode, range: TextRange): TextRange {
-        if (!shouldRunPunctuationProcessor(element)) return range
+    override fun process(node: ASTNode, range: TextRange): TextRange {
+        if (!shouldRunPunctuationProcessor(node)) return range
 
-        val returns = arrayListOf<RsRetExpr>()
-        val breaks = arrayListOf<RsBreakExpr>()
-        val continues = arrayListOf<RsContExpr>()
+        val elements = arrayListOf<PsiElement>()
 
-        element.psi.accept(object : PsiRecursiveElementVisitor() {
+        node.psi.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 if (element.textRange in range) {
                     super.visitElement(element)
                 }
-                if (element is RsRetExpr && element.parent !is RsMatchArm) {
-                    returns.add(element)
-                }
-                if (element is RsBreakExpr) {
-                    breaks.add(element)
-                }
-                if (element is RsContExpr) {
-                    continues.add(element)
+                if ((element is RsRetExpr && element.parent !is RsMatchArm) || element is RsBreakExpr || element is RsContExpr) {
+                    elements.add(element)
                 }
             }
         })
 
-        val count = returns.count(::tryAddSemicolonAfter) +
-            breaks.count(::tryAddSemicolonAfter) +
-            continues.count(::tryAddSemicolonAfter)
-
-        return range.grown(count)
+        return range.grown(elements.count(::tryAddSemicolonAfter))
     }
 
-    private fun tryAddSemicolonAfter(element: RsExpr): Boolean {
+    private fun tryAddSemicolonAfter(element: PsiElement): Boolean {
         val nextSibling = element.getNextNonCommentSibling()
         if (nextSibling == null || nextSibling.elementType != SEMICOLON) {
             val psiFactory = RsPsiFactory(element.project)
