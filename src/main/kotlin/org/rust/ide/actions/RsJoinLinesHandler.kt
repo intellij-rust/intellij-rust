@@ -22,7 +22,7 @@ import org.rust.lang.core.psi.ext.elementType
 
 class RsJoinLinesHandler : JoinLinesHandlerDelegate {
     /**
-     * Fixup lines **after** they have been join.
+     * Fixup lines **after** they have been joined.
      * See [RsJoinRawLinesHandler]
      */
     override fun tryJoinLines(document: Document, file: PsiFile, offsetNear: Int, end: Int): Int {

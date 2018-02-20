@@ -42,12 +42,18 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
         val parent = block.parent
         when (parent) {
             is RsBlockExpr -> {
-                val grandpa = parent.parent
-                val newExpr = parent.replace(expr)
-                if (grandpa is RsMatchArm && grandpa.lastChild?.elementType != COMMA) {
-                    grandpa.add(psiFactory.createComma())
+                return when {
+                    parent.unsafe != null -> CANNOT_JOIN
+                    else -> {
+                        val grandpa = parent.parent
+                        val newExpr = parent.replace(expr)
+                        if (grandpa is RsMatchArm && grandpa.lastChild?.elementType != COMMA) {
+                            grandpa.add(psiFactory.createComma())
+                        }
+                        newExpr.textRange.startOffset
+                    }
                 }
-                return newExpr.textRange.startOffset
+
             }
 
             is RsIfExpr, is RsElseBranch -> {
