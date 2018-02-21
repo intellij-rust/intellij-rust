@@ -12,8 +12,8 @@ import org.rust.lang.core.types.ty.*
 
 
 object RsPsiTypeImplUtil {
-    fun declaredType(psi: RsStructItem): Ty = TyStruct.valueOf(psi)
-    fun declaredType(psi: RsEnumItem): Ty = TyEnum.valueOf(psi)
+    fun declaredType(psi: RsStructItem): Ty = TyAdt.valueOf(psi)
+    fun declaredType(psi: RsEnumItem): Ty = TyAdt.valueOf(psi)
     fun declaredType(psi: RsTraitItem): Ty = TyTraitObject.valueOf(psi)
     fun declaredType(psi: RsTypeParameter): Ty = TyTypeParameter.named(psi)
     fun declaredType(psi: RsTypeAlias): Ty {

@@ -20,74 +20,24 @@ import org.rust.lang.core.types.type
  * "ADT" may be read as "Algebraic Data Type".
  * The name is inspired by rustc
  */
-abstract class TyAdt(flags: TypeFlags) : Ty(flags) {
-    abstract val typeArguments: List<Ty>
-
-    abstract val item: RsStructOrEnumItemElement
-}
-
-class TyStruct private constructor(
-    private val boundElement: BoundElement<RsStructItem>
-) : TyAdt(mergeFlags(boundElement)) {
-
-    override val item: RsStructItem
-        get() = boundElement.element
-
+data class TyAdt(
+    val item: RsStructOrEnumItemElement,
     override val typeParameterValues: Substitution
-        get() = boundElement.subst
+) : Ty(mergeFlags(typeParameterValues)) {
 
-    override val typeArguments: List<Ty>
+    val typeArguments: List<Ty>
         get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
 
-    override fun superFoldWith(folder: TypeFolder): TyStruct =
-        TyStruct(boundElement.foldWith(folder))
+    override fun superFoldWith(folder: TypeFolder): TyAdt =
+        TyAdt(item, typeParameterValues.foldValues(folder))
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        boundElement.visitWith(visitor)
-
-    override fun equals(other: Any?): Boolean =
-        other is TyStruct && boundElement == other.boundElement
-
-    override fun hashCode(): Int =
-        boundElement.hashCode()
+        typeParameterValues.values.any(visitor)
 
     companion object {
-        fun valueOf(struct: RsStructItem): TyStruct {
+        fun valueOf(struct: RsStructOrEnumItemElement): TyAdt {
             val item = CompletionUtil.getOriginalOrSelf(struct)
-            return TyStruct(BoundElement(item, defaultSubstitution(struct)))
-        }
-    }
-}
-
-class TyEnum private constructor(
-    private val boundElement: BoundElement<RsEnumItem>
-) : TyAdt(mergeFlags(boundElement)) {
-
-    override val item: RsEnumItem
-        get() = boundElement.element
-
-    override val typeParameterValues: Substitution
-        get() = boundElement.subst
-
-    override val typeArguments: List<Ty>
-        get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
-
-    override fun superFoldWith(folder: TypeFolder): TyEnum =
-        TyEnum(boundElement.foldWith(folder))
-
-    override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        boundElement.visitWith(visitor)
-
-    override fun equals(other: Any?): Boolean =
-        other is TyEnum && boundElement == other.boundElement
-
-    override fun hashCode(): Int =
-        boundElement.hashCode()
-
-    companion object {
-        fun valueOf(enum: RsEnumItem): TyEnum {
-            val item = CompletionUtil.getOriginalOrSelf(enum)
-            return TyEnum(BoundElement(item, defaultSubstitution(enum)))
+            return TyAdt(item, defaultSubstitution(struct))
         }
     }
 }

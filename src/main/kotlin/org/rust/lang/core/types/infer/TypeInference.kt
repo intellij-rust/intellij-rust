@@ -1231,7 +1231,7 @@ private class RsFnInferenceContext(
         inferTryExprOrMacroType(expr.expr, expected, allowOption = true)
 
     private fun inferTryExprOrMacroType(arg: RsExpr, expected: Ty?, allowOption: Boolean): Ty {
-        val base = arg.inferType(expected) as? TyEnum ?: return TyUnknown
+        val base = arg.inferType(expected) as? TyAdt ?: return TyUnknown
         //TODO: make it work with generic `std::ops::Try` trait
         if (base.item == items.findResultItem() || (allowOption && base.item == items.findOptionItem())) {
             TypeInferenceMarks.questionOperator.hit()
@@ -1446,7 +1446,7 @@ private class RsFnInferenceContext(
                 // the type might actually be either a tuple variant of enum, or a tuple struct.
                 val ref = path.reference.resolve()
                 val tupleFields = (ref as? RsFieldsOwner)?.tupleFields
-                    ?: (type as? TyStruct)?.item?.tupleFields
+                    ?: ((type as? TyAdt)?.item as? RsStructItem)?.tupleFields
                     ?: return
 
                 for ((idx, p) in patList.withIndex()) {
@@ -1461,7 +1461,7 @@ private class RsFnInferenceContext(
             }
             is RsPatStruct -> {
                 val struct = path.reference.resolve() as? RsFieldsOwner
-                    ?: (type as? TyStruct)?.item
+                    ?: ((type as? TyAdt)?.item as? RsStructItem)
                     ?: return
 
                 val structFields = struct.blockFields?.fieldDeclList?.associateBy { it.name }.orEmpty()

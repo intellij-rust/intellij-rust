@@ -70,7 +70,7 @@ fun processFieldExprResolveVariants(
     processor: RsResolveProcessor
 ): Boolean {
     for (ty in lookup.coercionSequence(receiverType)) {
-        if (ty !is TyStruct) continue
+        if (ty !is TyAdt || ty.item !is RsStructItem) continue
         if (processFieldDeclarations(ty.item, processor)) return true
     }
     if (isCompletion && processMethodDeclarationsWithDeref(lookup, receiverType, processor)) {

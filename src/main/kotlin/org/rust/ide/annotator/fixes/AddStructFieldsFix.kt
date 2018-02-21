@@ -150,13 +150,14 @@ class AddStructFieldsFix(
                     stdknownItems.findStdItem("collections", "string::String") -> factory.createExpression("String::new()")
                     stdknownItems.findStdItem("collections", "vec::Vec") -> factory.createExpression("Vec::new()")
                     else -> {
-                        if (ty is TyStruct && recursive) {
+                        val item = ty.item
+                        if (item is RsStructItem && recursive) {
                             val structLiteral = factory.createStructLiteral(ty.item.name!!)
                             fillStruct(
                                 factory,
                                 structLiteral.structLiteralBody,
-                                ty.item.namedFields,
-                                ty.item.namedFields,
+                                item.namedFields,
+                                item.namedFields,
                                 postProcess = false
                             )
                             structLiteral

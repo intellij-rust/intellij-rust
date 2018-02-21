@@ -157,7 +157,7 @@ class ImplLookup(
                     impls
                 }
             }
-            is TyStruct -> when {
+            is TyAdt -> when {
                 ty.item == items.findCoreItem("slice::Iter") -> {
                     val trait = items.findIteratorTrait() ?: return emptyList()
                     return listOf(trait.substAssocType("Item",
