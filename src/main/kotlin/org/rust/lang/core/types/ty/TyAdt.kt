@@ -15,7 +15,12 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.type
 
-abstract class TyStructOrEnumBase(flags: TypeFlags) : Ty(flags) {
+/**
+ * Represents struct/enum/union.
+ * "ADT" may be read as "Algebraic Data Type".
+ * The name is inspired by rustc
+ */
+abstract class TyAdt(flags: TypeFlags) : Ty(flags) {
     abstract val typeArguments: List<Ty>
 
     abstract val item: RsStructOrEnumItemElement
@@ -23,7 +28,7 @@ abstract class TyStructOrEnumBase(flags: TypeFlags) : Ty(flags) {
 
 class TyStruct private constructor(
     private val boundElement: BoundElement<RsStructItem>
-) : TyStructOrEnumBase(mergeFlags(boundElement)) {
+) : TyAdt(mergeFlags(boundElement)) {
 
     override val item: RsStructItem
         get() = boundElement.element
@@ -56,7 +61,7 @@ class TyStruct private constructor(
 
 class TyEnum private constructor(
     private val boundElement: BoundElement<RsEnumItem>
-) : TyStructOrEnumBase(mergeFlags(boundElement)) {
+) : TyAdt(mergeFlags(boundElement)) {
 
     override val item: RsEnumItem
         get() = boundElement.element

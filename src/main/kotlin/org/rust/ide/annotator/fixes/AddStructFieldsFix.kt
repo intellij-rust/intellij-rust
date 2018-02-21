@@ -144,7 +144,7 @@ class AddStructFieldsFix(
             is TyStr -> factory.createExpression("\"\"")
             is TyReference ->
                 defaultValueExprFor(factory, fieldDecl, ty.referenced)
-            is TyStructOrEnumBase -> {
+            is TyAdt -> {
                 when (ty.item) {
                     stdknownItems.findCoreItem("option::Option") -> factory.createExpression("None")
                     stdknownItems.findStdItem("collections", "string::String") -> factory.createExpression("String::new()")

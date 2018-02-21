@@ -306,7 +306,7 @@ class RsInferenceContext(
             ty1 is TyFunction && ty2 is TyFunction && ty1.paramTypes.size == ty2.paramTypes.size -> {
                 combinePairs(ty1.paramTypes.zip(ty2.paramTypes)) && combineTypes(ty1.retType, ty2.retType)
             }
-            ty1 is TyStructOrEnumBase && ty2 is TyStructOrEnumBase && ty1.item == ty2.item -> {
+            ty1 is TyAdt && ty2 is TyAdt && ty1.item == ty2.item -> {
                 combinePairs(zipValues(ty1.typeParameterValues, ty2.typeParameterValues))
             }
             ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> true
@@ -922,7 +922,7 @@ private class RsFnInferenceContext(
         val ty = resolveTypeVarsWithObligations(expr.expr.inferType()) // or error
         val argExprs = expr.valueArgumentList.exprList
         // `struct S; S();`
-        if (ty is TyStructOrEnumBase && argExprs.isEmpty()) return ty
+        if (ty is TyAdt && argExprs.isEmpty()) return ty
 
         val calleeType = lookup.asTyFunction(ty)?.register() ?: unknownTyFunction(argExprs.size)
         if (expected != null) ctx.combineTypes(expected, calleeType.retType)

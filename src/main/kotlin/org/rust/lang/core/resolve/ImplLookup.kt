@@ -116,7 +116,7 @@ class ImplLookup(
     }
 
     private fun findDerivedTraits(ty: Ty): Collection<RsTraitItem> {
-        return (ty as? TyStructOrEnumBase)?.item?.derivedTraits.orEmpty()
+        return (ty as? TyAdt)?.item?.derivedTraits.orEmpty()
             // select only std traits because we are sure
             // that they are resolved correctly
             .filter { it.isStdDerivable }
@@ -286,7 +286,7 @@ class ImplLookup(
     }
 
     private fun assembleDerivedCandidates(ref: TraitRef): List<SelectionCandidate> {
-        return (ref.selfTy as? TyStructOrEnumBase)?.item?.derivedTraits.orEmpty()
+        return (ref.selfTy as? TyAdt)?.item?.derivedTraits.orEmpty()
             // select only std traits because we are sure
             // that they are resolved correctly
             .filter { it.isStdDerivable }

@@ -64,7 +64,7 @@ private fun render(
         is TyProjection -> "<${ty.type} as ${ty.trait.name}>::${ty.target.name}"
         is TyTraitObject -> (ty.trait.element.name ?: return anonymous) +
             if (includeTypeArguments) formatTraitTypeArguments(ty.trait, r) else ""
-        is TyStructOrEnumBase -> (ty.item.name ?: return anonymous) +
+        is TyAdt -> (ty.item.name ?: return anonymous) +
             if (includeTypeArguments) formatTypeArguments(ty.typeArguments, r) else ""
         is TyInfer -> when (ty) {
             is TyInfer.TyVar -> "_"

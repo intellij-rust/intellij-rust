@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.resolve.hitOnFalse
 import org.rust.lang.core.types.ty.TyInteger
-import org.rust.lang.core.types.ty.TyStructOrEnumBase
+import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTraitObject
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
@@ -42,7 +42,7 @@ fun RsExpr.suggestedNames(): SuggestedNames {
     when (type) {
         is TyInteger -> names.addName("i")
         is TyTypeParameter -> names.addName(type.name)
-        is TyStructOrEnumBase -> names.addName(type.item.name)
+        is TyAdt -> names.addName(type.item.name)
         is TyTraitObject -> names.addName(type.trait.element.name)
     }
 
