@@ -329,6 +329,7 @@ class ImplLookup(
             }
             is SelectionCandidate.TypeParameter -> {
                 ctx.combinePairs(zipValues(candidate.bound.subst, ref.trait.subst))
+                ctx.combinePairs(zipValues(candidate.bound.assoc, ref.trait.assoc))
                 Selection(candidate.bound.element, emptyList())
             }
         }
@@ -415,12 +416,16 @@ class ImplLookup(
     )
 
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
-        if (selfTy is TyTypeParameter) {
-            return lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
+        return when (selfTy) {
+            is TyTypeParameter -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
+            is TyTraitObject -> selfTy.trait.assoc[assocType]
+            is TyAnon -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
+            else -> {
+                val ty = lookupAssocTypeInSelection(res, assocType)
+                    ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy), res.impl, assocType)
+                ty?.substitute(mapOf(TyTypeParameter.self() to selfTy))
+            }
         }
-        val ty = lookupAssocTypeInSelection(res, assocType) ?:
-            lookupAssocTypeInBounds(getHardcodedImpls(selfTy), res.impl, assocType)
-        return ty?.substitute(mapOf(TyTypeParameter.self() to selfTy))
     }
 
     private fun lookupAssocTypeInSelection(selection: Selection, assoc: RsTypeAlias): Ty? =

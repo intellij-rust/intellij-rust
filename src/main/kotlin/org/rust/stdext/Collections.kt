@@ -5,16 +5,20 @@
 
 package org.rust.stdext
 
+import java.util.*
+
 @Suppress("UNCHECKED_CAST")
-fun <T> buildList(builder: (CollectionBuilder<T>).() -> Unit): List<T> =
+inline fun <T> buildList(builder: (CollectionBuilder<T>).() -> Unit): List<T> =
     buildCollection(mutableListOf(), builder) as List<T>
 
 @Suppress("UNCHECKED_CAST")
-fun <T> buildSet(builder: (CollectionBuilder<T>).() -> Unit): Set<T> =
+inline fun <T> buildSet(builder: (CollectionBuilder<T>).() -> Unit): Set<T> =
     buildCollection(mutableSetOf(), builder) as Set<T>
 
-private fun <T> buildCollection(result: MutableCollection<T>,
-                                builder: (CollectionBuilder<T>).() -> Unit): MutableCollection<T> {
+inline fun <T> buildCollection(
+    result: MutableCollection<T>,
+    builder: (CollectionBuilder<T>).() -> Unit
+): MutableCollection<T> {
     object : CollectionBuilder<T> {
         override fun add(item: T) {
             result.add(item)
@@ -30,6 +34,35 @@ private fun <T> buildCollection(result: MutableCollection<T>,
 interface CollectionBuilder<in T> {
     fun add(item: T)
     fun addAll(items: Collection<T>)
+}
+
+inline fun <K, V> buildMap(builder: (MapBuilder<K, V>).() -> Unit): Map<K, V> {
+    val result = HashMap<K, V>()
+    object : MapBuilder<K, V> {
+        override fun put(key: K, value: V) {
+            result[key] = value
+        }
+
+        override fun putAll(map: Map<K, V>) {
+            result.putAll(map)
+        }
+    }.builder()
+
+    return replaceTrivialMap(result)
+}
+
+interface MapBuilder<K, in V> {
+    fun put(key: K, value: V)
+    fun putAll(map: Map<K, V>)
+}
+
+fun <K, V> replaceTrivialMap(map: Map<K, V>): Map<K, V> = when (map.size) {
+    0 -> emptyMap()
+    1 -> {
+        val entry = map.entries.single()
+        Collections.singletonMap(entry.key, entry.value)
+    }
+    else -> map
 }
 
 fun makeBitMask(bitToSet: Int): Int = 1 shl bitToSet

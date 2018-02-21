@@ -231,28 +231,43 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
 
     fun `test generic trait object`() = testType("""
         trait Trait<A> {}
-
         fn foo(_: &Trait<u8>) { unimplemented!() }
                   //^ Trait<u8>
     """)
 
     fun `test generic 'dyn Trait' trait object`() = testType("""
         trait Trait<A> {}
-
         fn foo(_: &dyn Trait<u8>) { unimplemented!() }
                   //^ Trait<u8>
     """)
 
-    fun `test impl Trait`() = testType("""
-        trait Trait { }
+    fun `test trait object with bound associated type`() = testType("""
+        trait Trait { type Item; }
+        fn foo(_: &Trait<Item=u8>) { unimplemented!() }
+                  //^ Trait<Item=u8>
+    """)
 
+    fun `test impl Trait`() = testType("""
+        trait Trait {}
         fn foo() -> impl Trait { unimplemented!() }
                   //^ impl Trait
     """)
 
+    fun `test generic impl Trait`() = testType("""
+        trait Trait<T> {}
+        fn foo() -> impl Trait<u8> { unimplemented!() }
+                  //^ impl Trait<u8>
+    """)
+
+    fun `test 'impl Trait' with bound associated type`() = testType("""
+        trait Trait { type Item; }
+        fn foo() -> impl Trait<Item=u8> { unimplemented!() }
+                  //^ impl Trait<Item=u8>
+    """)
+
     fun `test impl Trait1+Trait2`() = testType("""
-        trait Trait1 { }
-        trait Trait2 { }
+        trait Trait1 {}
+        trait Trait2 {}
 
         fn foo() -> impl Trait1+Trait2 { unimplemented!() }
                   //^ impl Trait1+Trait2

@@ -557,4 +557,20 @@ class RsCompletionTest : RsCompletionTestBase() {
             fn main() { private_m/*caret*/ }
         }
     """)
+
+    fun `test explicit associated type binding`() = doSingleCompletion("""
+        trait Tr { type Item; }
+        type T = Tr<It/*caret*/=u8>;
+    """, """
+        trait Tr { type Item; }
+        type T = Tr<Item/*caret*/=u8>;
+    """)
+
+    fun `test possible associated type binding`() = doSingleCompletion("""
+        trait Tr { type Item; }
+        type T = Tr<It/*caret*/>;
+    """, """
+        trait Tr { type Item; }
+        type T = Tr<Item/*caret*/>;
+    """)
 }

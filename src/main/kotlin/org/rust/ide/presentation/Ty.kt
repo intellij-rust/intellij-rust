@@ -5,6 +5,9 @@
 
 package org.rust.ide.presentation
 
+import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
 
 
@@ -60,7 +63,7 @@ private fun render(
         is TyTypeParameter -> ty.name ?: anonymous
         is TyProjection -> "<${ty.type} as ${ty.trait.name}>::${ty.target.name}"
         is TyTraitObject -> (ty.trait.element.name ?: return anonymous) +
-            if (includeTypeArguments) formatTypeArguments(ty.typeArguments, r) else ""
+            if (includeTypeArguments) formatTraitTypeArguments(ty.trait, r) else ""
         is TyStructOrEnumBase -> (ty.item.name ?: return anonymous) +
             if (includeTypeArguments) formatTypeArguments(ty.typeArguments, r) else ""
         is TyInfer -> when (ty) {
@@ -69,10 +72,23 @@ private fun render(
             is TyInfer.FloatVar -> float
         }
         is FreshTyInfer -> "<fresh>" // really should never be displayed; debug only
-        is TyAnon -> ty.traits.joinToString("+", "impl ") { it.element.name ?: anonymous }
+        is TyAnon -> ty.traits.joinToString("+", "impl ") {
+            (it.element.name ?: anonymous) +
+                if (includeTypeArguments) formatTraitTypeArguments(it, r) else ""
+        }
         else -> error("unreachable")
     }
 }
 
 private fun formatTypeArguments(typeArguments: List<Ty>, r: (Ty) -> String) =
     if (typeArguments.isEmpty()) "" else typeArguments.joinToString(", ", "<", ">", transform = r)
+
+private fun formatTraitTypeArguments(e: BoundElement<RsTraitItem>, r: (Ty) -> String): String {
+    val subst = e.element.typeParameters.map { r(e.subst[TyTypeParameter.named(it)] ?: TyUnknown) }
+    val assoc = e.element.associatedTypesTransitively.mapNotNull {
+        val name = it.name ?: return@mapNotNull null
+        name + "=" + r(e.assoc[it] ?: TyUnknown)
+    }
+    val visibleTypes = subst + assoc
+    return if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">")
+}

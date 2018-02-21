@@ -179,7 +179,14 @@ ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgument
 private TypeArgumentListImpl ::= '<' !'=' ( <<list_element Lifetime>>*
                                             <<list_element (!(identifier '=') TypeReference)>>*
                                             <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
-AssocTypeBinding ::= identifier '=' TypeReference
+AssocTypeBinding ::= identifier '=' TypeReference {
+  pin = 2
+  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  mixin = "org.rust.lang.core.psi.ext.RsAssocTypeBindingMixin"
+  stubClass = "org.rust.lang.core.stubs.RsAssocTypeBindingStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 
 // Paths for expressions:

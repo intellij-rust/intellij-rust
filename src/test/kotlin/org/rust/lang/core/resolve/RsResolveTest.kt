@@ -952,4 +952,36 @@ class RsResolveTest : RsResolveTestBase() {
             }
         }
     """)
+
+    fun `test associated type binding`() = checkByCode("""
+        trait Tr {
+            type Item;
+        }      //X
+        type T = Tr<Item=u8>;
+                  //^
+    """)
+
+    fun `test inherited associated type binding`() = checkByCode("""
+        trait Tr1 {
+            type Item;
+        }      //X
+        trait Tr2: Tr1 {}
+        type T = Tr2<Item=u8>;
+                   //^
+    """)
+
+    fun `test associated type binding in (wrong) non-type context (fn call)`() = checkByCode("""
+        fn foo() {}
+        fn main () {
+            foo::<Item=u8>();
+        }       //^ unresolved
+    """)
+
+    fun `test associated type binding in (wrong) non-type context (method call)`() = checkByCode("""
+        struct S;
+        impl S { fn foo(&self) {} }
+        fn main () {
+            S.foo::<Item=u8>();
+        }         //^ unresolved
+    """)
 }
