@@ -726,6 +726,62 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+        fun `test extract a function with reference parameter`() = doTest("""
+            #[derive(Copy, Clone, Debug)]
+            struct Copyable;
+
+            fn foo() {
+                let vec = vec![1, 2, 3];
+                let vec2 = vec![1, 2, 3];
+                let mut vec3 = vec![1, 2, 3];
+                let mut vec4 = vec![1, 2, 3];
+                let i = 1;
+                let c = Copyable;
+
+                <selection>println!("{}", vec.len());
+                println!("{}", vec2.len());
+                vec3.push(4);
+                vec4.push(4);
+                println!("{}", i);
+                println!("{:?}", c);</selection>
+
+                println!("{}", vec.len());
+                println!("{}", vec3.len());
+                println!("{}", i);
+                println!("{:?}", c);
+            }
+        """, """
+            #[derive(Copy, Clone, Debug)]
+            struct Copyable;
+
+            fn foo() {
+                let vec = vec![1, 2, 3];
+                let vec2 = vec![1, 2, 3];
+                let mut vec3 = vec![1, 2, 3];
+                let mut vec4 = vec![1, 2, 3];
+                let i = 1;
+                let c = Copyable;
+
+                bar(&vec, vec2, &mut vec3, vec4, i, c);
+
+                println!("{}", vec.len());
+                println!("{}", vec3.len());
+                println!("{}", i);
+                println!("{:?}", c);
+            }
+
+            fn bar(vec: &Vec<i32>, vec2: Vec<i32>, vec3: &mut Vec<i32>, mut vec4: Vec<i32>, i: i32, c: Copyable) {
+                println!("{}", vec.len());
+                println!("{}", vec2.len());
+                vec3.push(4);
+                vec4.push(4);
+                println!("{}", i);
+                println!("{:?}", c);
+            }
+        """,
+        false,
+        "bar")
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String,
                        pub: Boolean,
