@@ -16,8 +16,10 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
 
@@ -40,10 +42,11 @@ class ReturnValue(val expression: String?, val type: Ty) {
     }
 }
 
-class Parameter(val name: String, val type: Ty? = null, val mutability: Mutability = Mutability.IMMUTABLE) {
+class Parameter(val name: String, val type: Ty? = null, val mutability: Mutability = Mutability.IMMUTABLE,
+                requiredBorrowing: Boolean = false) {
     companion object {
-        fun direct(value: RsPatBinding): Parameter {
-            return Parameter(value.referenceName, value.type, value.mutability)
+        fun direct(value: RsPatBinding, requiredBorrowing: Boolean): Parameter {
+            return Parameter(value.referenceName, value.type, value.mutability, requiredBorrowing)
         }
 
         fun self(value: String): Parameter {
@@ -51,17 +54,19 @@ class Parameter(val name: String, val type: Ty? = null, val mutability: Mutabili
         }
     }
 
-    val text: String
-        get() = buildString {
-            if (type != null) {
-                if (mutability.isMut) {
-                    append("mut ")
-                }
-                append("$name: ${type.insertionSafeText}")
-            } else {
-                append(name)
-            }
-        }
+    private val mutabilityText = if (!requiredBorrowing && mutability.isMut) "mut " else ""
+
+    private val borrowingText = when {
+        requiredBorrowing -> if (mutability.isMut) "&mut " else "&"
+        else -> ""
+    }
+
+    val parameterText: String
+        get() = if (type != null) "$mutabilityText$name: $borrowingText${type.insertionSafeText}" else name
+
+    val argumentText: String
+        get() = "$borrowingText$name"
+
 }
 
 class RsExtractFunctionConfig private constructor(
@@ -74,10 +79,10 @@ class RsExtractFunctionConfig private constructor(
 ) {
 
     private val parametersText: String
-        get() = parameters.joinToString(",") { it.text }
+        get() = parameters.joinToString(",") { it.parameterText }
 
     val argumentsText: String
-        get() = parameters.filter { it.type != null }.joinToString(",") { it.name }
+        get() = parameters.filter { it.type != null }.joinToString(",") { it.argumentText }
 
     val signature: String
         get() = buildString {
@@ -150,12 +155,14 @@ class RsExtractFunctionConfig private constructor(
                 .filter { it.textOffset <= end }
 
             val parameters = letBindings
-                .filter { it.textOffset <= start }
-                .filter {
-                    ReferencesSearch.search(it, LocalSearchScope(fn))
-                        .any { ref -> ref.element.textOffset in start..end }
+                .mapNotNull {
+                    if (it.textOffset > start) return@mapNotNull null
+                    val result = ReferencesSearch.search(it, LocalSearchScope(fn))
+                    if (result.none { it.element.textOffset in start..end }) return@mapNotNull null
+                    val requiredBorrowing = result.any { it.element.textOffset > end }
+                        && it.type !is TyPrimitive && !ImplLookup.relativeTo(it).isCopy(it.type)
+                    Parameter.direct(it, requiredBorrowing)
                 }
-                .map { Parameter.direct(it) }
                 .toMutableList()
 
             val innerBindings = letBindings
