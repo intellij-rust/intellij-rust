@@ -24,7 +24,6 @@ buildscript {
     }
 }
 
-
 val CI = System.getenv("CI") != null
 
 val channel = prop("publishChannel")
@@ -113,6 +112,7 @@ project(":") {
     }
 
     dependencies {
+        compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jre8")
         compile("org.jetbrains:markdown:0.1.12") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
