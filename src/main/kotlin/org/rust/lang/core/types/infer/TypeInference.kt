@@ -307,7 +307,7 @@ class RsInferenceContext(
                 combinePairs(ty1.paramTypes.zip(ty2.paramTypes)) && combineTypes(ty1.retType, ty2.retType)
             }
             ty1 is TyAdt && ty2 is TyAdt && ty1.item == ty2.item -> {
-                combinePairs(zipValues(ty1.typeParameterValues, ty2.typeParameterValues))
+                combinePairs(ty1.typeArguments.zip(ty2.typeArguments))
             }
             ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> true
             ty1 is TyAnon && ty2 is TyAnon && ty1.definition == ty2.definition -> true

@@ -92,9 +92,6 @@ fun Substitution.get(psi: RsTypeParameter): Ty? {
 fun mergeFlags(element: BoundElement<*>): TypeFlags =
     element.subst.values.fold(0) { a, b -> a or b.flags } or element.assoc.values.fold(0) { a, b -> a or b.flags }
 
-fun mergeFlags(subst: Substitution): TypeFlags =
-    subst.values.fold(0) { a, b -> a or b.flags }
-
 fun mergeFlags(tys: List<Ty>): TypeFlags =
     tys.fold(0) { a, b -> a or b.flags }
 

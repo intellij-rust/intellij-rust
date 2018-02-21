@@ -6,11 +6,8 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import org.rust.lang.core.psi.RsEnumItem
-import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.type
@@ -20,31 +17,34 @@ import org.rust.lang.core.types.type
  * "ADT" may be read as "Algebraic Data Type".
  * The name is inspired by rustc
  */
-data class TyAdt(
+@Suppress("DataClassPrivateConstructor")
+data class TyAdt private constructor(
     val item: RsStructOrEnumItemElement,
-    override val typeParameterValues: Substitution
-) : Ty(mergeFlags(typeParameterValues)) {
-
     val typeArguments: List<Ty>
-        get() = item.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
+) : Ty(mergeFlags(typeArguments)) {
+
+    // This method is rarely called (in comparison with folding),
+    // so we can implement it in a such inefficient way
+    override val typeParameterValues: Substitution
+        get() = item.typeParameters.withIndex().associate { (i, param) ->
+            TyTypeParameter.named(param) to typeArguments.getOrElse(i) { TyUnknown }
+        }
 
     override fun superFoldWith(folder: TypeFolder): TyAdt =
-        TyAdt(item, typeParameterValues.foldValues(folder))
+        TyAdt(item, typeArguments.map { it.foldWith(folder) })
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        typeParameterValues.values.any(visitor)
+        typeArguments.any(visitor)
 
     companion object {
         fun valueOf(struct: RsStructOrEnumItemElement): TyAdt {
             val item = CompletionUtil.getOriginalOrSelf(struct)
-            return TyAdt(item, defaultSubstitution(struct))
+            return TyAdt(item, defaultTypeArguments(struct))
         }
     }
 }
 
-private fun defaultSubstitution(item: RsStructOrEnumItemElement): Substitution =
-    item.typeParameters.associate { rsTypeParameter ->
-        val tyTypeParameter = TyTypeParameter.named(rsTypeParameter)
-        val defaultType = rsTypeParameter.typeReference?.type ?: tyTypeParameter
-        tyTypeParameter to defaultType
+private fun defaultTypeArguments(item: RsStructOrEnumItemElement): List<Ty> =
+    item.typeParameters.map { param ->
+        param.typeReference?.type ?: TyTypeParameter.named(param)
     }
