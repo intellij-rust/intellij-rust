@@ -933,8 +933,7 @@ private class RsFnInferenceContext(
     private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall, expected: Ty?): Ty {
         val argExprs = methodCall.valueArgumentList.exprList
         val callee = run {
-            val receiverRes = resolveTypeVarsWithObligations(receiver)
-            val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverRes, methodCall)
+            val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
             val callee = pickSingleMethod(variants, methodCall)
             // If we failed to resolve ambiguity just write the all possible methods
             val variantsForDisplay = (callee?.let(::listOf) ?: variants).map { it.element }
@@ -1105,7 +1104,7 @@ private class RsFnInferenceContext(
     }
 
     private fun inferDotExprType(expr: RsDotExpr, expected: Ty?): Ty {
-        val receiver = expr.expr.inferType()
+        val receiver = resolveTypeVarsWithObligations(expr.expr.inferType())
         val methodCall = expr.methodCall
         val fieldLookup = expr.fieldLookup
         return when {
