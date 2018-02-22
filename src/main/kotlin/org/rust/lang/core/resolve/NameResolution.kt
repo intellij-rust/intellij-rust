@@ -8,6 +8,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.*
@@ -27,6 +28,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.hitOnFalse
 import org.rust.openapiext.toPsiFile
 
 // IntelliJ Rust name resolution algorithm.
@@ -410,18 +412,16 @@ fun processAssocTypeVariants(trait: RsTraitItem, processor: RsResolveProcessor):
     return false
 }
 
-val RsFile.exportedCrateMacros: List<RsMacroDefinition>
-    get() = CachedValuesManager.getCachedValue(this) {
-        val macros = exportedCrateMacros(this, true)
+private val EXPORTED_MACROS_KEY: Key<CachedValue<List<RsMacroDefinition>>> = Key.create("EXPORTED_MACROS_KEY")
+private val ALL_MACROS_KEY: Key<CachedValue<List<RsMacroDefinition>>> = Key.create("ALL_MACROS_KEY")
+
+private fun visibleMacroDefinitions(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> =
+    CachedValuesManager.getCachedValue(scope, if (needExport) EXPORTED_MACROS_KEY else ALL_MACROS_KEY) {
+        val macros = visibleMacroDefinitionsInternal(scope, needExport)
         CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
     }
 
-fun Testmark.hitOnFalse(b: Boolean): Boolean {
-    if (!b) hit()
-    return b
-}
-
-private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> {
+private fun visibleMacroDefinitionsInternal(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> {
     val result = mutableListOf<RsMacroDefinition>()
     loop@ for (item in scope.itemsAndMacros) {
         when (item) {
@@ -434,24 +434,24 @@ private fun exportedCrateMacros(scope: RsItemsOwner, needExport: Boolean): List<
                         ?.metaItem?.metaItemArgs?.metaItemList
                         ?.mapNotNull { it.referenceName } ?: continue@loop
                     val mod = item.reference.resolve() as? RsFile ?: continue@loop
-                    val internalMacros = mod.exportedCrateMacros
+                    val internalMacros = visibleMacroDefinitions(mod, needExport = true)
                     result.addAll(internalMacros.filter { reexport.contains(it.name) })
                 } else if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
                     val mod = item.reference.resolve() as? RsFile ?: continue@loop
-                    result.addAll(mod.exportedCrateMacros)
+                    result.addAll(visibleMacroDefinitions(mod, needExport = true))
                 }
 
             is RsModDeclItem ->
                 if (needExport || missingMacroUse.hitOnFalse(item.hasMacroUse)) {
                     val mod = item.reference.resolve() ?: continue@loop
                     if (mod is RsMod) {
-                        result.addAll(exportedCrateMacros(mod, needExport))
+                        result.addAll(visibleMacroDefinitions(mod, needExport))
                     }
                 }
 
             is RsModItem ->
                 if (needExport || missingMacroUse.hitOnFalse(item.hasMacroUse)) {
-                    result.addAll(exportedCrateMacros(item, needExport))
+                    result.addAll(visibleMacroDefinitions(item, needExport))
                 }
         }
     }
@@ -463,7 +463,7 @@ private fun processItemMacroDeclarations(
     processor: RsResolveProcessor,
     addStdCrate: Boolean = false
 ): Boolean {
-    val macros = exportedCrateMacros(scope, false)
+    val macros = visibleMacroDefinitions(scope, needExport = false)
     if (processAll(macros, processor)) return true
 
     if (addStdCrate) {
@@ -471,7 +471,7 @@ private fun processItemMacroDeclarations(
             ?.crateRoot
             ?.toPsiFile(scope.project)
             ?.rustMod
-        if (prelude is RsFile && processAll(prelude.exportedCrateMacros, processor)) return true
+        if (prelude is RsFile && processAll(visibleMacroDefinitions(prelude, needExport = true), processor)) return true
     }
     return false
 }
