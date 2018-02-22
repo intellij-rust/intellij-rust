@@ -240,6 +240,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
     """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
 
     fun `test inlay hint for loops`() = checkByText<RsForExpr>("""
+        #[lang = "std::iter::Iterator"]
         trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
         struct S;
         struct I;
