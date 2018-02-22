@@ -1325,6 +1325,18 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test type variable resolved for field lookup`() = testExpr("""
+        struct S { field: i32 }
+        fn unify<T>(_: T, _: T) {}
+        fn foo<T>() -> T { unimplemented!() }
+
+        fn main() {
+            let a = foo();
+            unify(a, S { field: 0 });
+            a.field;
+        }   //^ i32
+    """)
+
     fun `test associated type binding in trait bound`() = testExpr("""
         trait Tr { type Item; }
 
