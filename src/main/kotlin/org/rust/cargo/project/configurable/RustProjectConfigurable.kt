@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.panel
-import com.intellij.util.PlatformUtils
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
@@ -51,11 +50,9 @@ class RustProjectConfigurable(
 
     override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
-        row(label = Label("Watch Cargo.toml:")) { autoUpdateEnabledCheckbox() }
-        if (PlatformUtils.isIntelliJ()) {
-            row("Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
-        }
-        row(label = Label("Use cargo check to analyze code:")) { useCargoCheckAnnotatorCheckbox() }
+        row(label = "Watch Cargo.toml:") { autoUpdateEnabledCheckbox() }
+        row(label = "Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
+        row(label = "Use cargo check to analyze code:") { useCargoCheckAnnotatorCheckbox() }
 
         var first = true
         for (option in hintProvider.supportedOptions) {

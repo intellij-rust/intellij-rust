@@ -30,8 +30,8 @@ class RsBuildAction : AnAction() {
         private fun isSuitablePlatform(): Boolean {
             val buildNumber = ApplicationInfo.getInstance().build
             // BACKCOMPAT: 2017.3
-            // Drop check for 181 version or above
-            return !(PlatformUtils.isIntelliJ() || PlatformUtils.isCLion() && buildNumber < BUILD_181)
+            // Drop version condition for CLion
+            return !(PlatformUtils.isIntelliJ() || PlatformUtils.isAppCode() || PlatformUtils.isCLion() && buildNumber < BUILD_181)
         }
     }
 }
