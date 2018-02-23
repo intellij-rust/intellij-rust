@@ -5,8 +5,14 @@
 
 package org.rust.cargo.runconfig
 
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.openapi.project.Project
+import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -22,4 +28,18 @@ fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommand
     val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
     configuration.setFromCmd(cargoCommandLine)
     return runnerAndConfigurationSettings
+}
+
+val Project.hasCargoProject: Boolean get() = cargoProjects.allProjects.isNotEmpty()
+
+fun Project.buildProject() {
+    val command = if (rustSettings.useCargoCheckForBuild) "check" else "build"
+
+    for (cargoProject in cargoProjects.allProjects) {
+        val cmd = CargoCommandLine.forProject(cargoProject, command, listOf("--all"))
+        val runnerAndConfigurationSettings = RunManager.getInstance(this)
+            .createCargoCommandRunConfiguration(cmd)
+        val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
+        ProgramRunnerUtil.executeConfiguration(runnerAndConfigurationSettings, executor)
+    }
 }

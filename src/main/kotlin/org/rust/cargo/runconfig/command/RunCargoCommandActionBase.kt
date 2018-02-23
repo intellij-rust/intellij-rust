@@ -17,12 +17,13 @@ import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
+import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.CargoCommandLine
 import javax.swing.Icon
 
 abstract class RunCargoCommandActionBase(icon: Icon) : AnAction(icon) {
     override fun update(e: AnActionEvent) {
-        val hasCargoProject = e.project?.cargoProjects?.allProjects.orEmpty().isNotEmpty()
+        val hasCargoProject = e.project?.hasCargoProject == true
         e.presentation.isEnabledAndVisible = hasCargoProject
     }
 
