@@ -197,6 +197,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    // TODO it should not erase lifetimes
     fun `test implement constants`() = doTest("""
         trait T {
             const C1: i32;
@@ -221,7 +222,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             const C1: i32 = unimplemented!();
-            const C4: &'static str = unimplemented!();
+            const C4: &str = unimplemented!();
         }
     """)
 
@@ -243,7 +244,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         ImplementMemberSelection("f2()", false),
         ImplementMemberSelection("T2", false),
         ImplementMemberSelection("C2: f64", false)
-
     ), """
         trait T {
             fn f1();
@@ -259,6 +259,42 @@ class ImplementMembersHandlerTest : RsTestBase() {
             type T1 = ();
 
             fn f1() {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun `test implement generic trait`() = doTest("""
+        trait T<A, B> {
+            fn f1(_: A) -> A;
+            const C1: A;
+            fn f2(_: B) -> B;
+            const C2: B;
+        }
+        struct S;
+        impl T<u8, u16> for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f1(_: A) -> A", true),
+        ImplementMemberSelection("C1: A", true),
+        ImplementMemberSelection("f2(_: B) -> B", true),
+        ImplementMemberSelection("C2: B", true)
+    ), """
+        trait T<A, B> {
+            fn f1(_: A) -> A;
+            const C1: A;
+            fn f2(_: B) -> B;
+            const C2: B;
+        }
+        struct S;
+        impl T<u8, u16> for S {
+            const C1: u8 = unimplemented!();
+            const C2: u16 = unimplemented!();
+
+            fn f1(_: u8) -> u8 {
+                unimplemented!()
+            }
+
+            fn f2(_: u16) -> u16 {
                 unimplemented!()
             }
         }
