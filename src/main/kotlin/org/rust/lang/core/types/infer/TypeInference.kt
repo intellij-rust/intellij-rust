@@ -515,6 +515,17 @@ class RsInferenceContext(
             .flatMap { it.obligations.asSequence() + Obligation(recursionDepth, Predicate.Trait(it.value)) }
     }
 
+    /** Checks that [selfTy] satisfies all trait bounds of the [impl] */
+    fun canEvaluateBounds(impl: RsImplItem, selfTy: Ty): Boolean {
+        val ff = FulfillmentContext(this, lookup)
+        val subst = impl.generics.associate { it to typeVarForParam(it) }
+        return probe {
+            instantiateBounds(impl.bounds, subst).forEach(ff::registerPredicateObligation)
+            impl.typeReference?.type?.substitute(subst)?.let { combineTypes(selfTy, it) }
+            ff.selectUntilError()
+        }
+    }
+
     override fun toString(): String {
         return "RsInferenceContext(bindings=$bindings, exprTypes=$exprTypes)"
     }
@@ -1017,12 +1028,7 @@ private class RsFnInferenceContext(
             // 2. Filter methods by trait bounds (try to select all obligations for each impl)
             TypeInferenceMarks.methodPickCheckBounds.hit()
             val impl = callee.impl ?: return@singleOrFilter true
-            val ff = FulfillmentContext(ctx, lookup)
-            val typeParameters = impl.generics.associate { it to ctx.typeVarForParam(it) }
-            ctx.instantiateBounds(impl.bounds, typeParameters)
-                .forEach(ff::registerPredicateObligation)
-            impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
-            ctx.probe { ff.selectUntilError() }
+            ctx.canEvaluateBounds(impl, callee.selfTy)
         }.singleOrLet { list ->
             // 3. Pick results on the first deref level
             // TODO this is not how compiler actually work, see `test non inherent impl 2`
