@@ -9,8 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
+import org.rust.ide.presentation.insertionSafeText
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.ty.Substitution
+import org.rust.lang.core.types.ty.emptySubstitution
+import org.rust.lang.core.types.type
 import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
 
 class RsPsiFactory(private val project: Project) {
@@ -138,13 +143,18 @@ class RsPsiFactory(private val project: Project) {
         return createFromText(text) ?: error("Failed to create mod item from text: $modText")
     }
 
-    fun createMembers(traitMethods: List<RsFunction>, traitTypeAliases: List<RsTypeAlias>, traitConstants: List<RsConstant>): RsMembers {
+    fun createMembers(
+        traitMethods: List<RsFunction>,
+        traitTypeAliases: List<RsTypeAlias>,
+        traitConstants: List<RsConstant>,
+        subst: Substitution = emptySubstitution
+    ): RsMembers {
         val members = (
-            traitConstants.map { "    const ${it.identifier.text}: ${it.typeReference?.text} = unimplemented!();" } +
+            traitConstants.map { "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();" } +
                 traitTypeAliases.map { "    type ${it.name} = ();" }
             ).joinToString("\n")
 
-        val functions = traitMethods.map { "    ${it.signatureText ?: ""}{\n        unimplemented!()\n    }" }.joinToString("\n\n")
+        val functions = traitMethods.map { "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }" }.joinToString("\n\n")
         val text = "impl T for S {\n${when {
             members.isEmpty() -> functions
             functions.isEmpty() -> members
@@ -284,22 +294,24 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create ${E::class.simpleName} from `$text`")
 }
 
-private val RsFunction.signatureText: String?
-    get() {
-        val unsafe = if (isUnsafe) "unsafe " else ""
-        // We can't simply take a substring of original method declaration
-        // because of anonymous parameters.
-        val name = name ?: return null
-        val generics = typeParameterList?.text ?: ""
+private fun RsFunction.getSignatureText(subst: Substitution): String? {
+    val unsafe = if (isUnsafe) "unsafe " else ""
+    // We can't simply take a substring of original method declaration
+    // because of anonymous parameters.
+    val name = name ?: return null
+    val generics = typeParameterList?.text ?: ""
 
-        val allArguments = listOfNotNull(selfParameter?.text) + valueParameters.map {
-            // fix possible anon parameter
-            "${it.pat?.text ?: "_"}: ${it.typeReference?.text ?: "()"}"
-        }
-
-        val ret = retType?.text?.let { it + " " } ?: ""
-        val where = whereClause?.text ?: ""
-        return "${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
+    val allArguments = listOfNotNull(selfParameter?.text) + valueParameters.map {
+        // fix possible anon parameter
+        "${it.pat?.text ?: "_"}: ${it.typeReference?.substAndGetText(subst) ?: "()"}"
     }
 
+    val ret = retType?.typeReference?.substAndGetText(subst)?.let { "-> $it " } ?: ""
+    val where = whereClause?.text ?: ""
+    return "${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
+}
+
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
+
+private fun RsTypeReference.substAndGetText(subst: Substitution): String =
+    type.substitute(subst).insertionSafeText
