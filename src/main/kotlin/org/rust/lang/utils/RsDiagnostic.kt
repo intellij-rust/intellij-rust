@@ -99,10 +99,18 @@ sealed class RsDiagnostic(
         }
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
-            val expectedTyS = escapeString(expectedTy.toString())
-            val actualTyS = escapeString(actualTy.toString())
+            val expectedTyS = escapeTy(expectedTy.toString())
+            val actualTyS = escapeTy(actualTy.toString())
             return "expected `$expectedTyS`, found `$actualTyS`"
         }
+
+        // BACKCOMPAT: ???
+        // Fix for IntelliJ platform bug: https://youtrack.jetbrains.com/issue/IDEA-186991
+        // replace it with `escapeString()` after the end of support IDEs with the bug
+        private fun escapeTy(str: String): String = str
+            .replace("<", "&#60;")
+            .replace(">", "&#62;")
+            .replace("&", "&amp;")
     }
 
     class AccessError(
