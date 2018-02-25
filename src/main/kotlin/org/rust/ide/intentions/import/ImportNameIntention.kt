@@ -55,7 +55,8 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
             // check that result after import can be resolved and resolved element is suitable
             // if no, don't add it in candidate list
             .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info, attributes) }
-            .toList()
+            .groupBy { it.importItem.item }
+            .flatMap { (_, candidates) -> filterUselessImports(candidates, attributes) }
 
         if (candidates.isEmpty()) return null
         return Context(path, candidates)
@@ -149,6 +150,56 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
             .createPathInTmpMod(context, this, info.usePath, externCrateName) ?: return false
         val element = path.reference.resolve() ?: return false
         return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
+    }
+
+    private fun filterUselessImports(candidates: List<ImportCandidate>, fileAttributes: RsFile.Attributes): List<ImportCandidate> {
+        val finalCandidates = mutableListOf<ImportCandidate>()
+        val stdlibCandidates = mutableListOf<ImportCandidate>()
+        val otherCandidates = mutableListOf<ImportCandidate>()
+
+        for (candidate in candidates) {
+            when (candidate.info) {
+                is ImportInfo.LocalImportInfo -> finalCandidates += candidate
+                is ImportInfo.ExternCrateImportInfo -> {
+                    val pkg = candidate.importItem.containingCargoTarget?.pkg
+                    if (pkg?.origin == PackageOrigin.STDLIB) {
+                        stdlibCandidates += candidate
+                    } else {
+                        otherCandidates += candidate
+                    }
+                }
+            }
+        }
+
+        finalCandidates += filterStdlibCandidates(stdlibCandidates, fileAttributes)
+        finalCandidates += otherCandidates
+        return finalCandidates
+    }
+
+    private fun filterStdlibCandidates(
+        stdlibCandidates: List<ImportCandidate>,
+        fileAttributes: RsFile.Attributes
+    ): List<ImportCandidate> {
+        var hasImportWithSameAttributes = false
+        val candidateToAttributes = stdlibCandidates.map { candidate ->
+            val pkg = candidate.importItem.containingCargoTarget?.pkg
+            val attributes = when (pkg?.normName) {
+                AutoInjectedCrates.std -> RsFile.Attributes.NONE
+                AutoInjectedCrates.core -> RsFile.Attributes.NO_STD
+                else -> RsFile.Attributes.NO_CORE
+            }
+            hasImportWithSameAttributes = hasImportWithSameAttributes || attributes == fileAttributes
+            candidate to attributes
+        }
+
+        val condition: (RsFile.Attributes) -> Boolean = if (hasImportWithSameAttributes) {
+            attributes -> attributes == fileAttributes
+        } else {
+            attributes -> attributes < fileAttributes
+        }
+        return candidateToAttributes.mapNotNull { (candidate, attributes) ->
+            if (condition(attributes)) candidate else null
+        }
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
