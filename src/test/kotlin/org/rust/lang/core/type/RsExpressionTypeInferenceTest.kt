@@ -287,6 +287,34 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test byte str escape 1`() = testExpr("""
+        fn main() {
+            let a = b"\x52"; // R
+                    //^ &[u8; 1]
+        }
+    """)
+
+    fun `test byte str escape 2`() = testExpr("""
+        fn main() {
+            let a = b"\\x52"; // \x52
+                    //^ &[u8; 4]
+        }
+    """)
+
+    fun `test byte str escape 3`() = testExpr("""
+        fn main() {
+            let a = br"\x52"; // \x52
+                    //^ &[u8; 4]
+        }
+    """)
+
+    fun `test byte str escape 4`() = testExpr("""
+        fn main() {
+            let a = br##"\x52"#"##; // \x52"#
+                    //^ &[u8; 6]
+        }
+    """)
+
     fun `test str ref`() = testExpr("""
         fn main() {
             let a = "Hello";
