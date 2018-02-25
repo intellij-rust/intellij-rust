@@ -56,7 +56,7 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
             // if no, don't add it in candidate list
             .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info, attributes) }
             .groupBy { it.importItem.item }
-            .flatMap { (_, candidates) -> filterUselessImports(candidates, attributes) }
+            .flatMap { (_, candidates) -> filterForSingleItem(candidates, attributes) }
 
         if (candidates.isEmpty()) return null
         return Context(path, candidates)
@@ -152,38 +152,33 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
     }
 
-    private fun filterUselessImports(candidates: List<ImportCandidate>, fileAttributes: RsFile.Attributes): List<ImportCandidate> {
-        val finalCandidates = mutableListOf<ImportCandidate>()
-        val stdlibCandidates = mutableListOf<ImportCandidate>()
-        val otherCandidates = mutableListOf<ImportCandidate>()
+    private fun filterForSingleItem(
+        candidates: List<ImportCandidate>,
+        fileAttributes: RsFile.Attributes
+    ): List<ImportCandidate> {
+        val candidatesWithPackage = mutableListOf<Pair<ImportCandidate, CargoWorkspace.Package>>()
+
+        val stdlibCandidates = mutableListOf<Pair<ImportCandidate, CargoWorkspace.Package>>()
 
         for (candidate in candidates) {
-            when (candidate.info) {
-                is ImportInfo.LocalImportInfo -> finalCandidates += candidate
-                is ImportInfo.ExternCrateImportInfo -> {
-                    val pkg = candidate.importItem.containingCargoTarget?.pkg
-                    if (pkg?.origin == PackageOrigin.STDLIB) {
-                        stdlibCandidates += candidate
-                    } else {
-                        otherCandidates += candidate
-                    }
-                }
-            }
+            val pkg = candidate.importItem.containingCargoTarget?.pkg ?: continue
+            val container = if (pkg.origin == PackageOrigin.STDLIB) stdlibCandidates else candidatesWithPackage
+            container += candidate to pkg
         }
 
-        finalCandidates += filterStdlibCandidates(stdlibCandidates, fileAttributes)
-        finalCandidates += otherCandidates
-        return finalCandidates
+        candidatesWithPackage += filterStdlibCandidates(stdlibCandidates, fileAttributes)
+        val pkgToCandidates = candidatesWithPackage.groupBy({ (_, pkg) -> pkg }, { (candidate, _) -> candidate })
+        return pkgToCandidates.flatMap { (_, candidates) -> filterInPackage(candidates) }
     }
 
     private fun filterStdlibCandidates(
-        stdlibCandidates: List<ImportCandidate>,
+        stdlibCandidates: List<Pair<ImportCandidate, CargoWorkspace.Package>>,
         fileAttributes: RsFile.Attributes
-    ): List<ImportCandidate> {
+    ): List<Pair<ImportCandidate, CargoWorkspace.Package>> {
         var hasImportWithSameAttributes = false
         val candidateToAttributes = stdlibCandidates.map { candidate ->
-            val pkg = candidate.importItem.containingCargoTarget?.pkg
-            val attributes = when (pkg?.normName) {
+            val pkg = candidate.second
+            val attributes = when (pkg.normName) {
                 AutoInjectedCrates.std -> RsFile.Attributes.NONE
                 AutoInjectedCrates.core -> RsFile.Attributes.NO_STD
                 else -> RsFile.Attributes.NO_CORE
@@ -200,6 +195,31 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         return candidateToAttributes.mapNotNull { (candidate, attributes) ->
             if (condition(attributes)) candidate else null
         }
+    }
+
+    private fun filterInPackage(candidates: List<ImportCandidate>): List<ImportCandidate> {
+        val (simpleImports, compositeImports) = candidates.partition { it.importItem !is ImportItem.CompositeImportItem }
+
+        // If there is item reexport from some parent module of current import path
+        // we want to drop this import candidate
+        //
+        // For example, in the following case
+        //
+        // mod_a -- mod_b -- Item
+        //   \_______________/
+        //
+        // we have `mod_a::mod_b::Item` and `mod_a::Item` import candidates.
+        // `mod_a::Item` is reexport of `Item` so we don't want to add `mod_a::mod_b::Item`
+        // into final import list
+        val candidatesWithSuperMods = simpleImports.mapNotNull {
+            val superMods = it.importItem.superMods ?: return@mapNotNull null
+            it to superMods
+        }
+        val parents = candidatesWithSuperMods.mapTo(HashSet()) { (_, superMods) -> superMods[0] }
+        val filteredSimpleImports = candidatesWithSuperMods.mapNotNull { (candidate, superMods) ->
+            if (superMods.asSequence().drop(1).none { it in parents }) candidate else null
+        }
+        return filteredSimpleImports + compositeImports
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
