@@ -833,4 +833,48 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
             let z = Z/*caret*/;
         }
     """)
+
+    fun `test filter imports`() = doAvailableTestWithMultipleChoice("""
+        mod foo {
+            pub mod bar {
+                pub struct FooBar;
+            }
+
+            pub use self::bar::FooBar;
+        }
+
+        mod baz {
+            pub use foo::bar::FooBar;
+        }
+
+        mod quuz {
+            pub use foo::bar;
+        }
+
+        fn main() {
+            let x = FooBar/*caret*/;
+        }
+    """, setOf("foo::FooBar", "baz::FooBar", "quuz::bar::FooBar"), "baz::FooBar", """
+        use baz::FooBar;
+
+        mod foo {
+            pub mod bar {
+                pub struct FooBar;
+            }
+
+            pub use self::bar::FooBar;
+        }
+
+        mod baz {
+            pub use foo::bar::FooBar;
+        }
+
+        mod quuz {
+            pub use foo::bar;
+        }
+
+        fn main() {
+            let x = FooBar/*caret*/;
+        }
+    """)
 }
