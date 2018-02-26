@@ -108,6 +108,10 @@ class QueryAttributes(
     val deriveAttributes: Sequence<RsMetaItem>
         get() = attrsByName("derive")
 
+    // #[repr(u16)], #[repr(C, packed)], #[repr(simd)], #[repr(align(8))]
+    val reprAttributes: Sequence<RsMetaItem>
+        get() = attrsByName("repr")
+
     // `#[attributeName = "Xxx"]`
     private fun getStringAttributes(attributeName: String): Sequence<String?> = attrsByName(attributeName).map { it.value }
 

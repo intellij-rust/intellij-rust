@@ -22,10 +22,8 @@ abstract class TyPrimitive : Ty() {
             if (path.hasColonColon) return null
             val name = path.referenceName
 
-            TyInteger.VALUES.find { it.name == name }
-                ?.let { return it }
-            TyFloat.VALUES.find { it.name == name }
-                ?.let { return it }
+            TyInteger.fromName(name)?.let { return it }
+            TyFloat.fromName(name)?.let { return it }
 
             return when (name) {
                 "bool" -> TyBool
@@ -74,6 +72,10 @@ sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
         val VALUES: List<TyInteger> get() = TyIntegerValuesHolder.VALUES
         val NAMES: List<String> get() = TyIntegerValuesHolder.NAMES
 
+        fun fromName(name: String): TyInteger? {
+            return VALUES.find { it.name == name }
+        }
+
         fun fromSuffixedLiteral(literal: PsiElement): TyInteger? {
             val text = literal.text
             return VALUES.find { text.endsWith(it.name) }
@@ -108,6 +110,10 @@ sealed class TyFloat(val name: String, val ordinal: Int) : TyNumeric() {
         val DEFAULT: TyFloat get() = TyFloatValuesHolder.DEFAULT
         val VALUES: List<TyFloat> get() = TyFloatValuesHolder.VALUES
         val NAMES: List<String> get() = TyFloatValuesHolder.NAMES
+
+        fun fromName(name: String): TyFloat? {
+            return VALUES.find { it.name == name }
+        }
 
         fun fromSuffixedLiteral(literal: PsiElement): TyFloat? {
             val text = literal.text
