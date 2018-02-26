@@ -23,10 +23,11 @@ class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<
 
         val typeParameterList = whereClause.ancestorStrict<RsGenericDeclaration>()?.typeParameterList ?: return null
         val lifetimes = typeParameterList.lifetimeParameterList
-        val types = typeParameterList.typeParameterList.mapNotNull { it.name }
-        if (wherePredList.any { it.lifetime?.reference?.resolve() !in lifetimes && it.typeReference?.text !in types })
-            return null
-
+        val types = typeParameterList.typeParameterList
+        if (wherePredList.any {
+                it.lifetime?.reference?.resolve() !in lifetimes &&
+                    (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve() !in types
+            }) return null
         return whereClause
     }
 
