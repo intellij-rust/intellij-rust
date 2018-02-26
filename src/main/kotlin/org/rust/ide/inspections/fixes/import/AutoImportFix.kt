@@ -6,11 +6,12 @@
 package org.rust.ide.inspections.fixes.import
 
 import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.util.Consumer
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -23,12 +24,21 @@ import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.runWriteCommandAction
 
-class AutoImportFix : LocalQuickFix, HighPriorityAction {
+class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorityAction {
+
+    private var isConsumed: Boolean = false
 
     override fun getFamilyName(): String = "Import"
+    override fun getText(): String = familyName
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val path = descriptor.psiElement as? RsPath ?: return
+    public override fun isAvailable(): Boolean = super.isAvailable() && !isConsumed
+
+    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+        invoke(project)
+    }
+
+    fun invoke(project: Project) {
+        val path = startElement as? RsPath ?: return
         val (_, candidates) = findApplicableContext(project, path) ?: return
 
         if (candidates.size == 1) {
@@ -37,6 +47,7 @@ class AutoImportFix : LocalQuickFix, HighPriorityAction {
             val consumer = Consumer<DataContext> { chooseItemAndImport(project, it, candidates, path) }
             DataManager.getInstance().dataContextFromFocus.doWhenDone(consumer)
         }
+        isConsumed = true
     }
 
     private fun chooseItemAndImport(project: Project, dataContext: DataContext, items: List<ImportCandidate>, originalPath: RsPath) {
