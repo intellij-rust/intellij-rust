@@ -118,6 +118,40 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "foo")
 
+    fun `test extract input parameter from method`() = doTest("""
+            fn foo(a: i32) {
+                <selection>println!("{}", a);</selection>
+            }
+        """, """
+            fn foo(a: i32) {
+                bar(a);
+            }
+
+            fn bar(a: i32) {
+                println!("{}", a);
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract input parameter with mutability`() = doTest("""
+            fn main() {
+                let mut vec = vec![1, 2, 3];
+                <selection>vec.push(1);</selection>
+            }
+        """, """
+            fn main() {
+                let mut vec = vec![1, 2, 3];
+                foo(vec);
+            }
+
+            fn foo(mut vec: Vec<i32>) {
+                vec.push(1);
+            }
+        """,
+        false,
+        "foo")
+
     fun `test extract two input parameter`() = doTest("""
             fn main() {
                 let bar = 10i32;

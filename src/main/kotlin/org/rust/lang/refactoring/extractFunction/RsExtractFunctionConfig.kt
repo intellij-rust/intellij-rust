@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
@@ -39,10 +40,10 @@ class ReturnValue(val expression: String?, val type: Ty) {
     }
 }
 
-class Parameter(val name: String, val type: Ty? = null) {
+class Parameter(val name: String, val type: Ty? = null, val mutability: Mutability = Mutability.IMMUTABLE) {
     companion object {
         fun direct(value: RsPatBinding): Parameter {
-            return Parameter(value.referenceName, value.type)
+            return Parameter(value.referenceName, value.type, value.mutability)
         }
 
         fun self(value: String): Parameter {
@@ -51,10 +52,15 @@ class Parameter(val name: String, val type: Ty? = null) {
     }
 
     val text: String
-        get() = if (type != null) {
-            "$name: ${type.insertionSafeText}"
-        } else {
-            name
+        get() = buildString {
+            if (type != null) {
+                if (mutability.isMut) {
+                    append("mut ")
+                }
+                append("$name: ${type.insertionSafeText}")
+            } else {
+                append(name)
+            }
         }
 }
 
