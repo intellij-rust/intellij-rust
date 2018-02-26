@@ -12,7 +12,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.resolve.StdKnownItems
-import org.rust.lang.core.types.ty.TyEnum
+import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
 class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntention.Context>() {
@@ -23,12 +23,12 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val matchExpr = element.ancestorStrict<RsMatchExpr>() ?: return null
         if (!matchExpr.matchBody?.matchArmList.isNullOrEmpty()) return null
-        val type = matchExpr.expr?.type as? TyEnum ?: return null
+        val item = (matchExpr.expr?.type as? TyAdt)?.item as? RsEnumItem ?: return null
         // TODO: check enum variants can be used without enum name qualifier
-        val name = if (!isStdOptionOrResult(type.item)) {
-            type.item.name ?: return null
+        val name = if (!isStdOptionOrResult(item)) {
+            item.name ?: return null
         } else null
-        val variants = type.item.enumBody?.enumVariantList ?: return null
+        val variants = item.enumBody?.enumVariantList ?: return null
         return Context(matchExpr, name, variants)
     }
 

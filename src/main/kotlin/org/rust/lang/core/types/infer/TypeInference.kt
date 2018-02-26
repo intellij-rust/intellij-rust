@@ -306,8 +306,8 @@ class RsInferenceContext(
             ty1 is TyFunction && ty2 is TyFunction && ty1.paramTypes.size == ty2.paramTypes.size -> {
                 combinePairs(ty1.paramTypes.zip(ty2.paramTypes)) && combineTypes(ty1.retType, ty2.retType)
             }
-            ty1 is TyStructOrEnumBase && ty2 is TyStructOrEnumBase && ty1.item == ty2.item -> {
-                combinePairs(zipValues(ty1.typeParameterValues, ty2.typeParameterValues))
+            ty1 is TyAdt && ty2 is TyAdt && ty1.item == ty2.item -> {
+                combinePairs(ty1.typeArguments.zip(ty2.typeArguments))
             }
             ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> true
             ty1 is TyAnon && ty2 is TyAnon && ty1.definition == ty2.definition -> true
@@ -922,7 +922,7 @@ private class RsFnInferenceContext(
         val ty = resolveTypeVarsWithObligations(expr.expr.inferType()) // or error
         val argExprs = expr.valueArgumentList.exprList
         // `struct S; S();`
-        if (ty is TyStructOrEnumBase && argExprs.isEmpty()) return ty
+        if (ty is TyAdt && argExprs.isEmpty()) return ty
 
         val calleeType = lookup.asTyFunction(ty)?.register() ?: unknownTyFunction(argExprs.size)
         if (expected != null) ctx.combineTypes(expected, calleeType.retType)
@@ -1230,7 +1230,7 @@ private class RsFnInferenceContext(
         inferTryExprOrMacroType(expr.expr, expected, allowOption = true)
 
     private fun inferTryExprOrMacroType(arg: RsExpr, expected: Ty?, allowOption: Boolean): Ty {
-        val base = arg.inferType(expected) as? TyEnum ?: return TyUnknown
+        val base = arg.inferType(expected) as? TyAdt ?: return TyUnknown
         //TODO: make it work with generic `std::ops::Try` trait
         if (base.item == items.findResultItem() || (allowOption && base.item == items.findOptionItem())) {
             TypeInferenceMarks.questionOperator.hit()
@@ -1445,7 +1445,7 @@ private class RsFnInferenceContext(
                 // the type might actually be either a tuple variant of enum, or a tuple struct.
                 val ref = path.reference.resolve()
                 val tupleFields = (ref as? RsFieldsOwner)?.tupleFields
-                    ?: (type as? TyStruct)?.item?.tupleFields
+                    ?: ((type as? TyAdt)?.item as? RsStructItem)?.tupleFields
                     ?: return
 
                 for ((idx, p) in patList.withIndex()) {
@@ -1460,7 +1460,7 @@ private class RsFnInferenceContext(
             }
             is RsPatStruct -> {
                 val struct = path.reference.resolve() as? RsFieldsOwner
-                    ?: (type as? TyStruct)?.item
+                    ?: ((type as? TyAdt)?.item as? RsStructItem)
                     ?: return
 
                 val structFields = struct.blockFields?.fieldDeclList?.associateBy { it.name }.orEmpty()

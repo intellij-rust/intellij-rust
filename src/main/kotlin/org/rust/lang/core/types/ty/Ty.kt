@@ -7,6 +7,7 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.util.BitUtil
 import org.rust.ide.presentation.tyToString
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
@@ -100,11 +101,11 @@ tailrec fun Ty.isSized(): Boolean {
         is TyReference,
         is TyPointer,
         is TyArray,
-        is TyEnum,
         is TyFunction -> true
         is TySlice, is TyTraitObject -> false
         is TyTypeParameter -> isSized
-        is TyStruct -> {
+        is TyAdt -> {
+            val item = item as? RsStructItem ?: return true
             val namedFields = item.namedFields
             val tupleFields = item.positionalFields
             val typeRef = when {

@@ -54,8 +54,7 @@ data class TyFingerprint constructor(
         }
 
         fun create(type: Ty): TyFingerprint? = when (type) {
-            is TyStruct -> type.item.name?.let(::TyFingerprint)
-            is TyEnum -> type.item.name?.let(::TyFingerprint)
+            is TyAdt -> type.item.name?.let(::TyFingerprint)
             is TySlice, is TyArray -> TyFingerprint("[T]")
             is TyPointer -> TyFingerprint("*T")
             is TyReference -> create(type.referenced)
