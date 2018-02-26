@@ -22,9 +22,9 @@ class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<
         if (wherePredList.isEmpty()) return null
 
         val typeParameterList = whereClause.ancestorStrict<RsGenericDeclaration>()?.typeParameterList ?: return null
-        val lifetimes = typeParameterList.lifetimeParameterList.mapNotNull { it.quoteIdentifier.text }
+        val lifetimes = typeParameterList.lifetimeParameterList
         val types = typeParameterList.typeParameterList.mapNotNull { it.name }
-        if (wherePredList.any { it.lifetime?.quoteIdentifier?.text !in lifetimes && it.typeReference?.text !in types })
+        if (wherePredList.any { it.lifetime?.reference?.resolve() !in lifetimes && it.typeReference?.text !in types })
             return null
 
         return whereClause
@@ -50,8 +50,7 @@ class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<
         return buildString {
             append(name)
             if (bs.isNotEmpty()) {
-                append(":")
-                append(bs.joinToString("+") { it.text })
+                append(bs.joinToString(separator = "+", prefix = ":") { it.text })
             }
         }
     }
