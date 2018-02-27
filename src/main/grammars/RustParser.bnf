@@ -58,6 +58,7 @@
         DOT         =  '.'
         DOTDOT      =  '..'
         DOTDOTDOT   =  '...'
+        DOTDOTEQ    =  '..='
         FAT_ARROW   =  '=>'
         ARROW       =  '->'
         Q           =  '?'
@@ -401,7 +402,7 @@ Pat ::= PatWild
       | PatStruct
       | PatEnum
       | PatIdent
-      | (PatConst !('..' | '...'))
+      | (PatConst !('..' | '...' | '..='))
       | PatRange
       | PatUniq
 
@@ -427,7 +428,7 @@ private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
 private PatField_with_recover ::= PatField (',' | & '}')
 
 PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
-PatRange ::= PatConst ('..' | '...') PatConst { pin = 2 }
+PatRange ::= PatConst ('..' | '...' | '..=') PatConst { pin = 2 }
 
 PatTup ::= '(' SeqPat ')'
 PatVec ::= '[' SeqPat ']'
@@ -847,7 +848,7 @@ Expr ::= RetExpr
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
 }
 
-private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | true | false | box | QUOTE_IDENTIFIER
+private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | '..=' | true | false | box | QUOTE_IDENTIFIER
   | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
@@ -1044,12 +1045,12 @@ ArrayExpr ::= OuterAttr* '[' ArrayInitializer ']' {
 }
 private ArrayInitializer ::= [ AnyExpr ( ';' AnyExpr | (',' AnyExpr)* ','? ) ]
 
-fake RangeExpr ::= Expr? ('..' | '...') Expr? {
+fake RangeExpr ::= Expr? ('..' | '...' | '..=') Expr? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FullRangeExpr ::= Expr ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
-OpenRangeExpr ::=      ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
+FullRangeExpr ::= Expr ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) | '..=' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
+OpenRangeExpr ::=      ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) | '..=' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
 
 IndexExpr ::= Expr IndexArg {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

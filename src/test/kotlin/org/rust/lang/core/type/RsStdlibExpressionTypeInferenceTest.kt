@@ -74,6 +74,15 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test RangeToInclusive new syntax`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let x = ..=42u16;
+            x
+          //^ RangeToInclusive<u16>
+        }
+    """)
+
     fun `test RangeInclusive 1`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -87,6 +96,15 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = 0...42u16;
+            x
+          //^ RangeInclusive<u16>
+        }
+    """)
+
+    fun `test RangeInclusive new syntax`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let x = 0..=42u16;
             x
           //^ RangeInclusive<u16>
         }

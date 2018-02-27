@@ -153,6 +153,7 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "."                             { return DOT; }
   ".."                            { return DOTDOT; }
   "..."                           { return DOTDOTDOT; }
+  "..="                           { return DOTDOTEQ; }
   "="                             { return EQ; }
   "!="                            { return EXCLEQ; }
   "=="                            { return EQEQ; }
