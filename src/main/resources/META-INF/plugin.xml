@@ -531,10 +531,6 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.import.ImportNameIntention</className>
-            <category>Rust</category>
-        </intentionAction>
-        <intentionAction>
             <className>org.rust.ide.intentions.MoveTypeConstraintToParameterListIntention</className>
             <category>Rust</category>
         </intentionAction>

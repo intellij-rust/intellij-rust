@@ -28,7 +28,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
 
     private var isConsumed: Boolean = false
 
-    override fun getFamilyName(): String = "Import"
+    override fun getFamilyName(): String = NAME
     override fun getText(): String = familyName
 
     public override fun isAvailable(): Boolean = super.isAvailable() && !isConsumed
@@ -110,6 +110,9 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
     }
 
     companion object {
+
+        const val NAME = "Import"
+
         fun findApplicableContext(project: Project, path: RsPath): Context? {
             if (TyPrimitive.fromPath(path) != null) return null
             val basePath = getBasePath(path)

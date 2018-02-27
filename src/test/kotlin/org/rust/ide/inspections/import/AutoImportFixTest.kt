@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions.import
+package org.rust.ide.inspections.import
 
-class ImportNameIntentionTest : ImportNameIntentionTestBase() {
+class AutoImportFixTest : AutoImportFixTestBase() {
 
-    fun `test import struct`() = doAvailableTest("""
+    fun `test import struct`() = checkAutoImportFixByText("""
         mod foo {
             pub struct Foo;
         }
 
         fn main() {
-            let f = Foo/*caret*/;
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
         use foo::Foo;
@@ -27,13 +27,13 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import enum variant 1`() = doAvailableTest("""
+    fun `test import enum variant 1`() = checkAutoImportFixByText("""
         mod foo {
             pub enum Foo { A }
         }
 
         fn main() {
-            Foo::A/*caret*/;
+            <error descr="Unresolved reference: `Foo`">Foo::A/*caret*/</error>;
         }
     """, """
         use foo::Foo;
@@ -47,13 +47,13 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import enum variant 2`() = doAvailableTest("""
+    fun `test import enum variant 2`() = checkAutoImportFixByText("""
         mod foo {
             pub enum Foo { A }
         }
 
         fn main() {
-            let a = A/*caret*/;
+            let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
         }
     """, """
         use foo::Foo::A;
@@ -67,13 +67,13 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import function`() = doAvailableTest("""
+    fun `test import function`() = checkAutoImportFixByText("""
         mod foo {
             pub fn bar() -> i32 { unimplemented!() }
         }
 
         fn main() {
-            let f = bar/*caret*/();
+            let f = <error descr="Unresolved reference: `bar`">bar/*caret*/</error>();
         }
     """, """
         use foo::bar;
@@ -87,7 +87,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import function method`() = doAvailableTest("""
+    fun `test import function method`() = checkAutoImportFixByText("""
         mod foo {
             pub struct Foo;
             impl Foo {
@@ -96,7 +96,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            Foo::foo/*caret*/();
+            <error descr="Unresolved reference: `Foo`">Foo::foo/*caret*/</error>();
         }
     """, """
         use foo::Foo;
@@ -113,12 +113,12 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import generic item`() = doAvailableTest("""
+    fun `test import generic item`() = checkAutoImportFixByText("""
         mod foo {
             pub struct Foo<T>(T);
         }
 
-        fn f<T>(foo: Foo/*caret*/<T>) {}
+        fn f<T>(foo: <error descr="Unresolved reference: `Foo`">Foo/*caret*/<T></error>) {}
     """, """
         use foo::Foo;
 
@@ -129,7 +129,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         fn f<T>(foo: Foo/*caret*/<T>) {}
     """)
 
-    fun `test import module`() = doAvailableTest("""
+    fun `test import module`() = checkAutoImportFixByText("""
         mod foo {
             pub mod bar {
                 pub fn foo_bar() -> i32 { unimplemented!() }
@@ -137,7 +137,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let f = bar/*caret*/::foo_bar();
+            let f = <error descr="Unresolved reference: `bar`">bar/*caret*/::foo_bar</error>();
         }
     """, """
         use foo::bar;
@@ -153,7 +153,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test insert use item after existing use items`() = doAvailableTest("""
+    fun `test insert use item after existing use items`() = checkAutoImportFixByText("""
         mod foo {
             pub struct Foo;
             pub struct Bar;
@@ -162,7 +162,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         use foo::Bar;
 
         fn main() {
-            let f = Foo/*caret*/;
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
         mod foo {
@@ -178,7 +178,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test insert use item after inner attributes`() = doAvailableTest("""
+    fun `test insert use item after inner attributes`() = checkAutoImportFixByText("""
         #![allow(non_snake_case)]
 
         mod foo {
@@ -186,7 +186,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let f = Foo/*caret*/;
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
         #![allow(non_snake_case)]
@@ -202,7 +202,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import item from nested module`() = doAvailableTest("""
+    fun `test import item from nested module`() = checkAutoImportFixByText("""
         mod foo {
             pub mod bar {
                 pub struct Foo;
@@ -210,7 +210,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let f = Foo/*caret*/;
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
         use foo::bar::Foo;
@@ -226,7 +226,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test don't try to import private item`() = doUnavailableTest("""
+    fun `test don't try to import private item`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             struct Foo;
         }
@@ -236,7 +236,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test don't try to import from private mod`() = doUnavailableTest("""
+    fun `test don't try to import from private mod`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             mod bar {
                 pub struct Foo;
@@ -248,11 +248,11 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test complex module structure`() = doAvailableTest("""
+    fun `test complex module structure`() = checkAutoImportFixByText("""
         mod aaa {
             mod bbb {
                 fn foo() {
-                    let x = Foo/*caret*/;
+                    let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
                 }
             }
         }
@@ -284,12 +284,12 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test complex module structure with file modules`() = doAvailableTestWithFileTree("""
+    fun `test complex module structure with file modules`() = checkAutoImportFixByFileTree("""
         //- aaa/mod.rs
         mod bbb;
         //- aaa/bbb/mod.rs
         fn foo() {
-            let x = Foo/*caret*/;
+            let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
         //- ccc/mod.rs
         pub mod ddd;
@@ -309,7 +309,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import module declared via module declaration`() = doAvailableTestWithFileTree("""
+    fun `test import module declared via module declaration`() = checkAutoImportFixByFileTree("""
         //- foo/bar.rs
         fn foo_bar() {}
         //- main.rs
@@ -317,7 +317,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
             pub mod bar;
         }
         fn main() {
-            bar::foo_bar/*caret*/();
+            <error descr="Unresolved reference: `bar`">bar::foo_bar/*caret*/</error>();
         }
     """, """
         use foo::bar;
@@ -330,7 +330,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test filter import candidates 1`() = doAvailableTest("""
+    fun `test filter import candidates 1`() = checkAutoImportFixByText("""
         mod foo1 {
             pub fn bar() {}
         }
@@ -342,7 +342,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            bar/*caret*/();
+            <error descr="Unresolved reference: `bar`">bar/*caret*/</error>();
         }
     """, """
         use foo1::bar;
@@ -362,7 +362,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test filter import candidates 2`() = doAvailableTest("""
+    fun `test filter import candidates 2`() = checkAutoImportFixByText("""
         mod foo1 {
             pub fn bar() {}
         }
@@ -374,7 +374,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            bar::foo_bar/*caret*/();
+            <error descr="Unresolved reference: `bar`">bar::foo_bar/*caret*/</error>();
         }
     """, """
         use foo2::bar;
@@ -394,7 +394,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test filter members without owner prefix`() = doUnavailableTest("""
+    fun `test filter members without owner prefix`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             pub struct Foo;
             impl Foo {
@@ -407,7 +407,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test don't try to import item if it can't be resolved`() = doUnavailableTest("""
+    fun `test don't try to import item if it can't be resolved`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             pub mod bar {
             }
@@ -417,7 +417,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test don't import trait method`() = doUnavailableTest("""
+    fun `test don't import trait method`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             pub trait Bar {
                 fn bar();
@@ -428,7 +428,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test don't import trait const`() = doUnavailableTest("""
+    fun `test don't import trait const`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             pub trait Bar {
                 const BAR: i32;
@@ -439,7 +439,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import reexported item`() = doAvailableTest("""
+    fun `test import reexported item`() = checkAutoImportFixByText("""
         mod foo {
             mod bar {
                 pub struct Bar;
@@ -449,7 +449,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            Bar/*caret*/;
+            <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
         }
     """, """
         use foo::Bar;
@@ -467,7 +467,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import reexported item with alias`() = doAvailableTest("""
+    fun `test import reexported item with alias`() = checkAutoImportFixByText("""
         mod foo {
             mod bar {
                 pub struct Bar;
@@ -477,7 +477,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            Foo/*caret*/;
+            <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
         use foo::Foo;
@@ -495,7 +495,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import reexported item via use group`() = doAvailableTest("""
+    fun `test import reexported item via use group`() = checkAutoImportFixByText("""
         mod foo {
             mod bar {
                 pub struct Baz;
@@ -506,7 +506,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let a = Baz/*caret*/;
+            let a = <error descr="Unresolved reference: `Baz`">Baz/*caret*/</error>;
         }
     """, """
         use foo::Baz;
@@ -525,7 +525,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import reexported item via 'self'`() = doAvailableTest("""
+    fun `test import reexported item via 'self'`() = checkAutoImportFixByText("""
         mod foo {
             mod bar {
                 pub struct Baz;
@@ -535,7 +535,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let a = Baz/*caret*/;
+            let a = <error descr="Unresolved reference: `Baz`">Baz/*caret*/</error>;
         }
     """, """
         use foo::Baz;
@@ -553,7 +553,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test import reexported item with complex reexport`() = doAvailableTest("""
+    fun `test import reexported item with complex reexport`() = checkAutoImportFixByText("""
         mod foo {
             mod bar {
                 pub struct Baz;
@@ -564,7 +564,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let a = Foo/*caret*/;
+            let a = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, """
         use foo::Foo;
@@ -583,7 +583,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test module reexport`() = doAvailableTest("""
+    fun `test module reexport`() = checkAutoImportFixByText("""
         mod foo {
             mod bar {
                 pub mod baz {
@@ -595,7 +595,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let x = FooBar/*caret*/;
+            let x = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
     """, """
         use foo::baz::FooBar;
@@ -615,7 +615,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test multiple import`() = doAvailableTestWithMultipleChoice("""
+    fun `test multiple import`() = checkAutoImportFixByTextWithMultipleChoice("""
         mod foo {
             pub struct Foo;
             pub mod bar {
@@ -631,7 +631,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let f = Foo/*caret*/;
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, setOf("foo::Foo", "foo::bar::Foo", "baz::Foo"), "foo::bar::Foo", """
         use foo::bar::Foo;
@@ -655,7 +655,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test multiple import with reexports`() = doAvailableTestWithMultipleChoice("""
+    fun `test multiple import with reexports`() = checkAutoImportFixByTextWithMultipleChoice("""
         mod foo {
             pub struct Foo;
         }
@@ -677,7 +677,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let f = Foo/*caret*/;
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """, setOf("foo::Foo", "bar::Foo", "qwe::Foo"), "qwe::Foo", """
         use qwe::Foo;
@@ -707,7 +707,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test double module reexport`() = doAvailableTestWithMultipleChoice("""
+    fun `test double module reexport`() = checkAutoImportFixByTextWithMultipleChoice("""
         mod foo {
             pub mod bar {
                 pub struct FooBar;
@@ -725,7 +725,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let a = FooBar/*caret*/;
+            let a = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
     """, setOf("foo::bar::FooBar", "baz::qqq::bar::FooBar", "xxx::qqq::bar::FooBar"), "baz::qqq::bar::FooBar", """
         use baz::qqq::bar::FooBar;
@@ -751,7 +751,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test cyclic module reexports`() = doAvailableTestWithMultipleChoice("""
+    fun `test cyclic module reexports`() = checkAutoImportFixByTextWithMultipleChoice("""
         pub mod x {
             pub struct Z;
             pub use y;
@@ -762,7 +762,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let x = Z/*caret*/;
+            let x = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
     """, setOf("x::Z", "y::x::Z", "x::y::x::Z"), "x::Z", """
         use x::Z;
@@ -781,7 +781,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test crazy cyclic module reexports`() = doAvailableTestWithMultipleChoice("""
+    fun `test crazy cyclic module reexports`() = checkAutoImportFixByTextWithMultipleChoice("""
         pub mod x {
             pub use u;
             pub mod y {
@@ -798,7 +798,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let z = Z/*caret*/;
+            let z = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
     """, setOf(
         "x::y::Z",
@@ -834,7 +834,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test filter imports`() = doAvailableTestWithMultipleChoice("""
+    fun `test filter imports`() = checkAutoImportFixByTextWithMultipleChoice("""
         mod foo {
             pub mod bar {
                 pub struct FooBar;
@@ -852,7 +852,7 @@ class ImportNameIntentionTest : ImportNameIntentionTestBase() {
         }
 
         fn main() {
-            let x = FooBar/*caret*/;
+            let x = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
     """, setOf("foo::FooBar", "baz::FooBar", "quuz::bar::FooBar"), "baz::FooBar", """
         use baz::FooBar;
