@@ -19,11 +19,13 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitPath(path: RsPath) {
-                val (basePath, candidates) = AutoImportFix.findApplicableContext(holder.project, path) ?: return
-                val fix = AutoImportHintFix(path, candidates[0].info.usePath, candidates.size > 1)
+                if (path.parent is RsPath) return
                 // TODO: add inspection option to register all problems
-                holder.registerProblem(path, "Unresolved reference: `${basePath.text}`",
-                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, fix)
+                val (basePath, candidates) = AutoImportFix.findApplicableContext(holder.project, path) ?: return
+                val identifier = basePath.identifier?.text
+                val description = if (identifier == null) "Unresolved reference" else "Unresolved reference: `$identifier`"
+                val fix = AutoImportHintFix(path, candidates[0].info.usePath, candidates.size > 1)
+                holder.registerProblem(path, description, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, fix)
             }
         }
 }
