@@ -104,7 +104,7 @@ project(":") {
     intellij {
         pluginName = "intellij-rust"
 //        alternativeIdePath = "deps/clion-$clionVersion"
-        setPlugins(project(":intellij-toml"))
+        setPlugins("org.toml.lang:0.2.0.12")
     }
 
     repositories {
