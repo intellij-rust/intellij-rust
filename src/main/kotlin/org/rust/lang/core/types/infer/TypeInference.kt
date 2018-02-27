@@ -1248,7 +1248,7 @@ private class RsFnInferenceContext(
     private fun inferRangeType(expr: RsRangeExpr): Ty {
         val el = expr.exprList
         val dot2 = expr.dotdot
-        val dot3 = expr.dotdotdot
+        val dot3 = expr.dotdotdot ?: expr.dotdoteq
 
         val (rangeName, indexType) = when {
             dot2 != null && el.size == 0 -> "RangeFull" to null
