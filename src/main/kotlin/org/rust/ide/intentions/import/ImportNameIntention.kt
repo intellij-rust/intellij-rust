@@ -46,14 +46,17 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
                 ImportItem.ReexportedItem(it, item)
             }
 
+        val attributes = (path.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
+
         val candidates = (explicitItems + reexportedItems)
             .filter { basePath != path || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers) }
             .flatMap { it.withModuleReexports(project).asSequence() }
             .mapNotNull { importItem -> importItem.canBeImported(pathSuperMods)?.let { ImportCandidate(importItem, it) } }
             // check that result after import can be resolved and resolved element is suitable
             // if no, don't add it in candidate list
-            .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info) }
-            .toList()
+            .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info, attributes) }
+            .groupBy { it.importItem.item }
+            .flatMap { (_, candidates) -> filterForSingleItem(candidates, attributes) }
 
         if (candidates.isEmpty()) return null
         return Context(path, candidates)
@@ -130,12 +133,93 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         return if (shouldBePublicMods.all { it.isPublic }) return importInfo else null
     }
 
-    private fun RsPath.canBeResolvedToSuitableItem(project: Project, context: RsMod, info: ImportInfo): Boolean {
-        val externCrateName = if (info is ImportInfo.ExternCrateImportInfo && !info.target.isStd) info.target.normName else null
+    private fun RsPath.canBeResolvedToSuitableItem(
+        project: Project,
+        context: RsMod,
+        info: ImportInfo,
+        attributes: RsFile.Attributes
+    ): Boolean {
+        val externCrateName = if (info !is ImportInfo.ExternCrateImportInfo ||
+            attributes == RsFile.Attributes.NONE && info.target.isStd ||
+            attributes == RsFile.Attributes.NO_STD && info.target.isCore) {
+            null
+        } else {
+            info.target.normName
+        }
         val path = RsCodeFragmentFactory(project)
             .createPathInTmpMod(context, this, info.usePath, externCrateName) ?: return false
         val element = path.reference.resolve() ?: return false
         return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
+    }
+
+    private fun filterForSingleItem(
+        candidates: List<ImportCandidate>,
+        fileAttributes: RsFile.Attributes
+    ): List<ImportCandidate> {
+        val candidatesWithPackage = mutableListOf<Pair<ImportCandidate, CargoWorkspace.Package>>()
+
+        val stdlibCandidates = mutableListOf<Pair<ImportCandidate, CargoWorkspace.Package>>()
+
+        for (candidate in candidates) {
+            val pkg = candidate.importItem.containingCargoTarget?.pkg ?: continue
+            val container = if (pkg.origin == PackageOrigin.STDLIB) stdlibCandidates else candidatesWithPackage
+            container += candidate to pkg
+        }
+
+        candidatesWithPackage += filterStdlibCandidates(stdlibCandidates, fileAttributes)
+        val pkgToCandidates = candidatesWithPackage.groupBy({ (_, pkg) -> pkg }, { (candidate, _) -> candidate })
+        return pkgToCandidates.flatMap { (_, candidates) -> filterInPackage(candidates) }
+    }
+
+    private fun filterStdlibCandidates(
+        stdlibCandidates: List<Pair<ImportCandidate, CargoWorkspace.Package>>,
+        fileAttributes: RsFile.Attributes
+    ): List<Pair<ImportCandidate, CargoWorkspace.Package>> {
+        var hasImportWithSameAttributes = false
+        val candidateToAttributes = stdlibCandidates.map { candidate ->
+            val pkg = candidate.second
+            val attributes = when (pkg.normName) {
+                AutoInjectedCrates.std -> RsFile.Attributes.NONE
+                AutoInjectedCrates.core -> RsFile.Attributes.NO_STD
+                else -> RsFile.Attributes.NO_CORE
+            }
+            hasImportWithSameAttributes = hasImportWithSameAttributes || attributes == fileAttributes
+            candidate to attributes
+        }
+
+        val condition: (RsFile.Attributes) -> Boolean = if (hasImportWithSameAttributes) {
+            attributes -> attributes == fileAttributes
+        } else {
+            attributes -> attributes < fileAttributes
+        }
+        return candidateToAttributes.mapNotNull { (candidate, attributes) ->
+            if (condition(attributes)) candidate else null
+        }
+    }
+
+    private fun filterInPackage(candidates: List<ImportCandidate>): List<ImportCandidate> {
+        val (simpleImports, compositeImports) = candidates.partition { it.importItem !is ImportItem.CompositeImportItem }
+
+        // If there is item reexport from some parent module of current import path
+        // we want to drop this import candidate
+        //
+        // For example, in the following case
+        //
+        // mod_a -- mod_b -- Item
+        //   \_______________/
+        //
+        // we have `mod_a::mod_b::Item` and `mod_a::Item` import candidates.
+        // `mod_a::Item` is reexport of `Item` so we don't want to add `mod_a::mod_b::Item`
+        // into final import list
+        val candidatesWithSuperMods = simpleImports.mapNotNull {
+            val superMods = it.importItem.superMods ?: return@mapNotNull null
+            it to superMods
+        }
+        val parents = candidatesWithSuperMods.mapTo(HashSet()) { (_, superMods) -> superMods[0] }
+        val filteredSimpleImports = candidatesWithSuperMods.mapNotNull { (candidate, superMods) ->
+            if (superMods.asSequence().drop(1).none { it in parents }) candidate else null
+        }
+        return filteredSimpleImports + compositeImports
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
@@ -167,22 +251,27 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
         if (candidate.info is ImportInfo.ExternCrateImportInfo) {
             val target = candidate.info.target
             val crateName = target.normName
-            if (target.isStd) {
-                // but if crate of imported element is `std`
+            val attributes = originalPath.stdlibAttributes
+            when {
+                // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
                 // we don't add corresponding extern crate item manually
                 // because it will be done by compiler implicitly
-                Testmarks.autoInjectedCrate.hit()
-            } else {
-                val needAddExternCrateItem = externCrateItems.none { it.reference.resolve() == candidate.info.externCrateMod }
-                if (needAddExternCrateItem) {
-                    val externCrateItem = psiFactory.createExternCrateItem(crateName)
-                    lastExternCrateItem = if (lastExternCrateItem != null) {
-                        mod.addAfter(externCrateItem, lastExternCrateItem)
-                    } else {
-                        val insertedItem = mod.addBefore(externCrateItem, mod.firstItem())
-                        mod.addAfter(psiFactory.createNewline(), mod.firstItem())
-                        insertedItem
-                    } as RsExternCrateItem?
+                attributes == RsFile.Attributes.NONE && target.isStd -> Testmarks.autoInjectedStdCrate.hit()
+                // if crate of imported element is `core` and there is `#![no_std]`
+                // we don't add corresponding extern crate item manually for the same reason
+                attributes == RsFile.Attributes.NO_STD && target.isCore -> Testmarks.autoInjectedCoreCrate.hit()
+                else -> {
+                    val needAddExternCrateItem = externCrateItems.none { it.reference.resolve() == candidate.info.externCrateMod }
+                    if (needAddExternCrateItem) {
+                        val externCrateItem = psiFactory.createExternCrateItem(crateName)
+                        lastExternCrateItem = if (lastExternCrateItem != null) {
+                            mod.addAfter(externCrateItem, lastExternCrateItem)
+                        } else {
+                            val insertedItem = mod.addBefore(externCrateItem, mod.firstItem)
+                            mod.addAfter(psiFactory.createNewline(), mod.firstItem)
+                            insertedItem
+                        } as RsExternCrateItem?
+                    }
                 }
             }
         }
@@ -197,8 +286,8 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
                 mod.addBefore(psiFactory.createNewline(), insertedUseItem)
             }
         } else {
-            mod.addBefore(useItem, mod.firstItem())
-            mod.addAfter(psiFactory.createNewline(), mod.firstItem())
+            mod.addBefore(useItem, mod.firstItem)
+            mod.addAfter(psiFactory.createNewline(), mod.firstItem)
         }
     }
 
@@ -208,7 +297,8 @@ class ImportNameIntention : RsElementBaseIntentionAction<ImportNameIntention.Con
     )
 
     object Testmarks {
-        val autoInjectedCrate = Testmark("autoInjectedCrate")
+        val autoInjectedStdCrate = Testmark("autoInjectedStdCrate")
+        val autoInjectedCoreCrate = Testmark("autoInjectedCoreCrate")
     }
 }
 
@@ -287,10 +377,14 @@ sealed class ImportInfo {
 
 data class ImportCandidate(val importItem: ImportItem, val info: ImportInfo)
 
-private fun RsItemsOwner.firstItem(): RsElement = itemsAndMacros.first { it !is RsInnerAttr }
+private val RsPath.stdlibAttributes: RsFile.Attributes get() = (containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
+private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsInnerAttr }
 
 private val CargoWorkspace.Target.isStd: Boolean
     get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.std
+
+private val CargoWorkspace.Target.isCore: Boolean
+    get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.core
 
 private tailrec fun getBasePath(path: RsPath): RsPath {
     val qualifier = path.path

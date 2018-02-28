@@ -17,7 +17,7 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         use std::io;
 
         fn foo<T: io::Read/*caret*/>(t: T) {}
-    """, ImportNameIntention.Testmarks.autoInjectedCrate)
+    """, ImportNameIntention.Testmarks.autoInjectedStdCrate)
 
     fun `test import item from not std crate`() = doAvailableTestWithFileTree("""
         //- dep-lib/lib.rs
@@ -99,7 +99,7 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         fn main() {
             let mutex = Mutex/*caret*/::new(Vec::new());
         }
-    """, ImportNameIntention.Testmarks.autoInjectedCrate)
+    """, ImportNameIntention.Testmarks.autoInjectedStdCrate)
 
     fun `test module reexport`() = doAvailableTestWithFileTree("""
         //- dep-lib/lib.rs
@@ -127,11 +127,41 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test module reexport in stdlib`() = doAvailableTestWithMultipleChoice("""
+    fun `test module reexport in stdlib`() = doAvailableTest("""
         fn foo<T: Hash/*caret*/>(t: T) {}
-    """, setOf("core::hash::Hash", "std::hash::Hash"), "std::hash::Hash", """
+    """, """
         use std::hash::Hash;
 
         fn foo<T: Hash/*caret*/>(t: T) {}
+    """, ImportNameIntention.Testmarks.autoInjectedStdCrate)
+
+    fun `test import without std crate 1`() = doAvailableTest("""
+        #![no_std]
+
+        fn foo<T: Hash/*caret*/>(t: T) {}
+    """, """
+        #![no_std]
+
+        use core::hash::Hash;
+
+        fn foo<T: Hash/*caret*/>(t: T) {}
+    """, ImportNameIntention.Testmarks.autoInjectedCoreCrate)
+
+    fun `test import without std crate 2`() = doAvailableTest("""
+        #![no_std]
+
+        fn main() {
+            let x = Arc::new/*caret*/(123);
+        }
+    """, """
+        #![no_std]
+
+        extern crate alloc;
+
+        use alloc::arc::Arc;
+
+        fn main() {
+            let x = Arc::new/*caret*/(123);
+        }
     """)
 }

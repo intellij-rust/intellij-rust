@@ -14,8 +14,11 @@ abstract class ImportNameIntentionTestBase : RsIntentionTestBase(ImportNameInten
                                                     expectedElements: Set<String>,
                                                     choice: String,
                                                     @Language("Rust") after: String) {
+        var chooseItemWasCalled = false
+
         withMockImportItemUi(object : ImportItemUi {
             override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
+                chooseItemWasCalled = true
                 val actualItems = items.mapTo(HashSet()) { it.info.usePath }
                 assertEquals(expectedElements, actualItems)
                 val selectedValue = items.find { it.info.usePath == choice }
@@ -23,5 +26,7 @@ abstract class ImportNameIntentionTestBase : RsIntentionTestBase(ImportNameInten
                 callback(selectedValue)
             }
         }) { doAvailableTest(before, after) }
+
+        check(chooseItemWasCalled) { "`chooseItem` was not called" }
     }
 }
