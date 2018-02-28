@@ -53,7 +53,7 @@ because major platform updates can bring a lot of changes.
 * `Implement Members` refactoring
 * `Introduce Variable` refactoring
 * `Extract Function` refactoring
-* `Auto Import` quick fix  
+* `Auto Import` quick fix & options
 
 ## Releases
 
