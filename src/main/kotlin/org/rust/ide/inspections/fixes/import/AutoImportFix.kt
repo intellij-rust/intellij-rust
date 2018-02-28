@@ -144,7 +144,6 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
                 .groupBy { it.importItem.item }
                 .flatMap { (_, candidates) -> filterForSingleItem(candidates, attributes) }
 
-            if (candidates.isEmpty()) return null
             return Context(basePath, candidates)
         }
 

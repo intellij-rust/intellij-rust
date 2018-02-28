@@ -54,6 +54,7 @@ because major platform updates can bring a lot of changes.
 * `Introduce Variable` refactoring
 * `Extract Function` refactoring
 * `Auto Import` quick fix & options
+* `Unresolved Reference` inspection options
 
 ## Releases
 
