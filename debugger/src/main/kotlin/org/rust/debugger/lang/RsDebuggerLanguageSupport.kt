@@ -15,14 +15,9 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver.StandardDebu
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrDebuggerTypesHelper
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrEvaluatedValue
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.lang.RsLanguage
 
-class RsDebuggerLanguageSupportFactory : CidrDebuggerLanguageSupportFactory() {
-    companion object {
-        init {
-            CidrDebuggerLanguageSupport.registerDebuggerLanguages(RsLanguage, RUST)
-        }
-    }
+class RsDebuggerLanguageSupport : CidrDebuggerLanguageSupport() {
+    override fun getSupportedDebuggerLanguages() = setOf(RUST)
 
     override fun createEditor(profile: RunProfile): XDebuggerEditorsProvider? {
         if (profile !is CargoCommandConfiguration) return null
