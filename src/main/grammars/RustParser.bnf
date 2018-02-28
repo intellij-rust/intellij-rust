@@ -401,7 +401,7 @@ Pat ::= PatWild
       | PatStruct
       | PatEnum
       | PatIdent
-      | (PatConst !'...')
+      | (PatConst !('..' | '...'))
       | PatRange
       | PatUniq
 
@@ -427,7 +427,7 @@ private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
 private PatField_with_recover ::= PatField (',' | & '}')
 
 PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
-PatRange ::= PatConst '...' PatConst { pin = 2 }
+PatRange ::= PatConst ('..' | '...') PatConst { pin = 2 }
 
 PatTup ::= '(' SeqPat ')'
 PatVec ::= '[' SeqPat ']'
