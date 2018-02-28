@@ -307,10 +307,12 @@ class RsFormatterTest : RsFormatterTestBase() {
 
     fun `test unary minus in range patterns`() = doTextTest("""
         fn main() {
+            if let - 10 .. - 1 = - 8 {}
             if let - 10 ... - 1 = - 8 {}
         }
     """, """
         fn main() {
+            if let -10..-1 = -8 {}
             if let -10...-1 = -8 {}
         }
     """)
