@@ -1,6 +1,6 @@
 <idea-plugin>
     <extensions defaultExtensionNs="cidr.debugger">
-        <languageSupportFactory language="Rust" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupportFactory"/>
+        <languageSupport language="Rust" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupport"/>
         <editorsExtension implementation="org.rust.debugger.lang.RsDebuggerEditorsExtension"/>
         <lineBreakpointFileTypesProvider implementation="org.rust.debugger.RsLineBreakpointFileTypesProvider"/>
     </extensions>
