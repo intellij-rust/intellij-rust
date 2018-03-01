@@ -24,13 +24,7 @@ abstract class RsInspectionsTestBase(
 
     override fun getProjectDescriptor() = if (useStdLib) WithStdlibRustProjectDescriptor else super.getProjectDescriptor()
 
-    protected fun enableInspection() =
-        myFixture.enableInspections(inspection.javaClass)
-
-    protected fun doTest() {
-        enableInspection()
-        myFixture.testHighlighting(true, false, true, fileName)
-    }
+    private fun enableInspection() = myFixture.enableInspections(inspection)
 
     protected fun checkByText(
         @Language("Rust") text: String,

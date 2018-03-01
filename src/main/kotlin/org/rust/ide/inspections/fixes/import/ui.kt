@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions.import
+package org.rust.ide.inspections.fixes.import
 
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -28,14 +28,14 @@ private var MOCK: ImportItemUi? = null
 
 fun showItemsToImportChooser(
     project: Project,
-    editor: Editor,
+    dataContext: DataContext,
     items: List<ImportCandidate>,
     callback: (ImportCandidate) -> Unit
 ) {
     val itemImportUi = if (isUnitTestMode) {
         MOCK ?: error("You should set mock ui via `withMockImportItemUi`")
     } else {
-        PopupImportItemUi(project, editor)
+        PopupImportItemUi(project, dataContext)
     }
     itemImportUi.chooseItem(items, callback)
 }
@@ -54,7 +54,7 @@ interface ImportItemUi {
     fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit)
 }
 
-private class PopupImportItemUi(private val project: Project, private val editor: Editor) : ImportItemUi {
+private class PopupImportItemUi(private val project: Project, private val dataContext: DataContext) : ImportItemUi {
 
     override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
         // TODO: sort items in popup
@@ -86,7 +86,7 @@ private class PopupImportItemUi(private val project: Project, private val editor
             }
         }
         NavigationUtil.hidePopupIfDumbModeStarts(popup, project)
-        popup.showInBestPositionFor(editor)
+        popup.showInBestPositionFor(dataContext)
     }
 }
 

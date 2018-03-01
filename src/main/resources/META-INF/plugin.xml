@@ -46,6 +46,11 @@
         <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.parser.RustParserDefinition"/>
         <stubElementTypeHolder class="org.rust.lang.core.psi.RsElementTypes"/>
 
+        <!-- Code insight settings -->
+
+        <applicationService serviceInterface="org.rust.ide.settings.RsCodeInsightSettings"
+                            serviceImplementation="org.rust.ide.settings.RsCodeInsightSettings"/>
+
         <!-- Selection Handler -->
 
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsListSelectionHandler"/>
@@ -98,11 +103,14 @@
         <usageTypeProvider implementation="org.rust.ide.search.RsUsageTypeProvider"/>
 
         <!-- Smart Enter Processor -->
+
         <lang.smartEnterProcessor language="Rust"
                                   implementationClass="org.rust.ide.typing.assist.RsSmartEnterProcessor"/>
 
-        <!--Imports-->
-        <lang.importOptimizer language="Rust" implementationClass="org.rust.lang.refactoring.RsImportOptimizer" />
+        <!-- Imports -->
+
+        <lang.importOptimizer language="Rust" implementationClass="org.rust.lang.refactoring.RsImportOptimizer"/>
+        <autoImportOptionsProvider instance="org.rust.ide.settings.RsAutoImportOptions"/>
 
         <!-- Navigation -->
 
@@ -229,7 +237,7 @@
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Unresolved reference"
-                         enabledByDefault="false" level="ERROR"
+                         enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsUnresolvedReferenceInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
@@ -528,10 +536,6 @@
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.FillMatchArmsIntention</className>
-            <category>Rust</category>
-        </intentionAction>
-        <intentionAction>
-            <className>org.rust.ide.intentions.import.ImportNameIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>

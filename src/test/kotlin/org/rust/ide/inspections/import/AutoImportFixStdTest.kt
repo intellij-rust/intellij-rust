@@ -3,29 +3,30 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions.import
+package org.rust.ide.inspections.import
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.rust.ide.inspections.fixes.import.AutoImportFix
 
-class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
+class AutoImportFixStdTest : AutoImportFixTestBase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
 
-    fun `test import item from std crate`() = doAvailableTest("""
-        fn foo<T: io::Read/*caret*/>(t: T) {}
+    fun `test import item from std crate`() = checkAutoImportFixByText("""
+        fn foo<T: <error descr="Unresolved reference: `io`">io::Read/*caret*/</error>>(t: T) {}
     """, """
         use std::io;
 
         fn foo<T: io::Read/*caret*/>(t: T) {}
-    """, ImportNameIntention.Testmarks.autoInjectedStdCrate)
+    """, AutoImportFix.Testmarks.autoInjectedStdCrate)
 
-    fun `test import item from not std crate`() = doAvailableTestWithFileTree("""
+    fun `test import item from not std crate`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
         pub mod foo {
             pub struct Bar;
         }
         //- main.rs
-        fn foo(t: Bar/*caret*/) {}
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
     """, """
         extern crate dep_lib_target;
 
@@ -34,7 +35,7 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         fn foo(t: Bar/*caret*/) {}
     """)
 
-    fun `test don't insert extern crate item it is already exists`() = doAvailableTestWithFileTree("""
+    fun `test don't insert extern crate item it is already exists`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
         pub mod foo {
             pub struct Bar;
@@ -42,7 +43,7 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         //- main.rs
         extern crate dep_lib_target;
 
-        fn foo(t: Bar/*caret*/) {}
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
     """, """
         extern crate dep_lib_target;
 
@@ -51,17 +52,17 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         fn foo(t: Bar/*caret*/) {}
     """)
 
-    fun `test insert new extern crate item after existing extern crate items`() = doAvailableTestWithFileTree("""
+    fun `test insert new extern crate item after existing extern crate items`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
         pub mod foo {
             pub struct Bar;
         }
         //- main.rs
-        extern crate some_crate;
+        extern crate std;
 
-        fn foo(t: Bar/*caret*/) {}
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
     """, """
-        extern crate some_crate;
+        extern crate std;
         extern crate dep_lib_target;
 
         use dep_lib_target::foo::Bar;
@@ -69,11 +70,11 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         fn foo(t: Bar/*caret*/) {}
     """)
 
-    fun `test insert extern crate item after inner attributes`() = doAvailableTestWithFileTree("""
+    fun `test insert extern crate item after inner attributes`() = checkAutoImportFixByFileTree("""
         //- main.rs
         #![allow(non_snake_case)]
 
-        fn foo(t: Bar/*caret*/) {}
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
 
         //- dep-lib/lib.rs
         pub mod foo {
@@ -89,9 +90,9 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         fn foo(t: Bar/*caret*/) {}
     """)
 
-    fun `test import reexported item from stdlib`() = doAvailableTest("""
+    fun `test import reexported item from stdlib`() = checkAutoImportFixByText("""
         fn main() {
-            let mutex = Mutex/*caret*/::new(Vec::new());
+            let mutex = <error descr="Unresolved reference: `Mutex`">Mutex/*caret*/::new</error>(Vec::new());
         }
     """, """
         use std::sync::Mutex;
@@ -99,9 +100,9 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         fn main() {
             let mutex = Mutex/*caret*/::new(Vec::new());
         }
-    """, ImportNameIntention.Testmarks.autoInjectedStdCrate)
+    """, AutoImportFix.Testmarks.autoInjectedStdCrate)
 
-    fun `test module reexport`() = doAvailableTestWithFileTree("""
+    fun `test module reexport`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
         pub mod foo {
             mod bar {
@@ -115,7 +116,7 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
 
         //- main.rs
         fn main() {
-            let x = FooBar/*caret*/;
+            let x = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
     """, """
         extern crate dep_lib_target;
@@ -127,31 +128,31 @@ class ImportNameIntentionStdTest : ImportNameIntentionTestBase() {
         }
     """)
 
-    fun `test module reexport in stdlib`() = doAvailableTest("""
-        fn foo<T: Hash/*caret*/>(t: T) {}
+    fun `test module reexport in stdlib`() = checkAutoImportFixByText("""
+        fn foo<T: <error descr="Unresolved reference: `Hash`">Hash/*caret*/</error>>(t: T) {}
     """, """
         use std::hash::Hash;
 
         fn foo<T: Hash/*caret*/>(t: T) {}
-    """, ImportNameIntention.Testmarks.autoInjectedStdCrate)
+    """, AutoImportFix.Testmarks.autoInjectedStdCrate)
 
-    fun `test import without std crate 1`() = doAvailableTest("""
+    fun `test import without std crate 1`() = checkAutoImportFixByText("""
         #![no_std]
 
-        fn foo<T: Hash/*caret*/>(t: T) {}
+        fn foo<T: <error descr="Unresolved reference: `Hash`">Hash/*caret*/</error>>(t: T) {}
     """, """
         #![no_std]
 
         use core::hash::Hash;
 
         fn foo<T: Hash/*caret*/>(t: T) {}
-    """, ImportNameIntention.Testmarks.autoInjectedCoreCrate)
+    """, AutoImportFix.Testmarks.autoInjectedCoreCrate)
 
-    fun `test import without std crate 2`() = doAvailableTest("""
+    fun `test import without std crate 2`() = checkAutoImportFixByText("""
         #![no_std]
 
         fn main() {
-            let x = Arc::new/*caret*/(123);
+            let x = <error descr="Unresolved reference: `Arc`">Arc::new/*caret*/</error>(123);
         }
     """, """
         #![no_std]
