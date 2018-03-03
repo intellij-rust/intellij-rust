@@ -46,6 +46,7 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
             is TyPointer -> referenced.baseTypeDeclaration()
             is TyArray -> base.baseTypeDeclaration()
             is TySlice -> elementType.baseTypeDeclaration()
+            is TyAnon -> traits.firstOrNull()?.element
             else -> null
         }
     }
