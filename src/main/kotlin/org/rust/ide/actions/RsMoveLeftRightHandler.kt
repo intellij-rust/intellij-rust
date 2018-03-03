@@ -19,6 +19,7 @@ class RsMoveLeftRightHandler : MoveElementLeftRightHandler() {
             is RsLifetimeParamBounds -> element.lifetimeList
             is RsLogMacroArgument -> element.formatMacroArgList
             is RsMetaItemArgs -> element.metaItemList + element.litExprList
+            is RsTraitType -> element.polyboundList
             is RsTupleExpr -> element.exprList
             is RsTupleType -> element.typeReferenceList
             is RsTupleFields -> element.tupleFieldDeclList

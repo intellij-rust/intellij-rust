@@ -175,6 +175,18 @@ class RsMoveLeftRightHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test trait type 1`() = doRightLeftTest("""
+        fn foo(a: &(Read/*caret*/ + Sync)) {}
+    """, """
+        fn foo(a: &(Sync + Read/*caret*/)) {}
+    """)
+
+    fun `test trait type 2`() = doRightLeftTest("""
+        fn foo() -> impl Read/*caret*/ + Sync {}
+    """, """
+        fn foo() -> impl Sync + Read/*caret*/ {}
+    """)
+
     private fun doRightLeftTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         doMoveRightTest(before, after)
         doMoveLeftTest(after, before)
