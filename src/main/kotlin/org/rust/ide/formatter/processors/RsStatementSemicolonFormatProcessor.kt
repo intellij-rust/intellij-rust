@@ -26,8 +26,12 @@ class RsStatementSemicolonFormatProcessor : PreFormatProcessor {
                 if (element.textRange in range) {
                     super.visitElement(element)
                 }
-                if ((element is RsRetExpr && element.parent !is RsMatchArm) || element is RsBreakExpr || element is RsContExpr) {
-                    elements.add(element)
+
+                // no semicolons inside "match"
+                if (element.parent !is RsMatchArm) {
+                    if (element is RsRetExpr || element is RsBreakExpr || element is RsContExpr) {
+                        elements.add(element)
+                    }
                 }
             }
         })
