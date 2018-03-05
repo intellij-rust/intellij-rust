@@ -29,7 +29,10 @@ class RsMethodCallReferenceImpl(
 
     override fun getVariants(): Array<out Any> {
         val lookup = ImplLookup.relativeTo(element)
-        return collectCompletionVariants { processMethodCallExprResolveVariants(lookup, element.receiver.type, it) }
+        val receiver = element.receiver.type
+        return collectCompletionVariants {
+            processMethodCallExprResolveVariants(lookup, receiver, filterMethodCompletionVariants(it, lookup, receiver))
+        }
     }
 
     override fun multiResolve(): List<RsElement> =
@@ -45,7 +48,10 @@ class RsFieldLookupReferenceImpl(
 
     override fun getVariants(): Array<out Any> {
         val lookup = ImplLookup.relativeTo(element)
-        return collectCompletionVariants { processFieldExprResolveVariants(lookup, element.receiver.type, true, it) }
+        val receiver = element.receiver.type
+        return collectCompletionVariants {
+            processFieldExprResolveVariants(lookup, receiver, true, filterMethodCompletionVariants(it, lookup, receiver))
+        }
     }
 
     override fun multiResolve(): List<RsElement> =
@@ -105,4 +111,22 @@ private fun collectMethodResolveVariants(referenceName: String, f: (RsMethodReso
         false
     }
     return result
+}
+
+private fun filterMethodCompletionVariants(
+    processor: RsResolveProcessor,
+    lookup: ImplLookup,
+    receiver: Ty
+): RsResolveProcessor {
+    val cache = mutableMapOf<RsImplItem, Boolean>()
+    return fun(it: ScopeEntry): Boolean {
+        // 1. If not a method (actually a field) or a trait method - just process it
+        if (it !is MethodCallee || it.impl == null) return processor(it)
+        // 2. Filter methods by trait bounds (try to select all obligations for each impl)
+        // We're caching evaluation results here because we can often complete to a methods
+        // in the same impl and always have the same receiver type
+        if (cache.getOrPut(it.impl) { lookup.ctx.canEvaluateBounds(it.impl, receiver) }) return processor(it)
+
+        return false
+    }
 }
