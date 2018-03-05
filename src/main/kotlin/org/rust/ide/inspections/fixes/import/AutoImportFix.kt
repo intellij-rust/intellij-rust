@@ -117,6 +117,13 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             if (TyPrimitive.fromPath(path) != null) return null
             val basePath = getBasePath(path)
             if (basePath.reference.resolve() != null) return null
+
+            // Don't try to import path in use item
+            if (path.ancestorStrict<RsUseSpeck>() != null) {
+                Testmarks.pathInUseItem.hit()
+                return Context(basePath, emptyList())
+            }
+
             val pathMod = path.containingMod
             val pathSuperMods = HashSet(pathMod.superMods)
 
@@ -316,6 +323,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
     object Testmarks {
         val autoInjectedStdCrate = Testmark("autoInjectedStdCrate")
         val autoInjectedCoreCrate = Testmark("autoInjectedCoreCrate")
+        val pathInUseItem = Testmark("pathInUseItem")
     }
 }
 
