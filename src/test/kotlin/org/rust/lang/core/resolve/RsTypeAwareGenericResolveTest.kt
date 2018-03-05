@@ -215,6 +215,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     """)
 
     fun `test iterator for loop resolve`() = checkByCode("""
+        #[lang = "std::iter::Iterator"]
         trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
 
         struct S;
@@ -234,7 +235,9 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     """)
 
     fun `test into iterator for loop resolve`() = checkByCode("""
+        #[lang = "std::iter::Iterator"]
         trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
+        #[lang = "std::iter::IntoIterator"]
         trait IntoIterator {
             type Item;
             type IntoIter: Iterator<Item=Self::Item>;

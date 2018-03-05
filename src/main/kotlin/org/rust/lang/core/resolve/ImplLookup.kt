@@ -357,20 +357,8 @@ class ImplLookup(
     }
 
     fun findIteratorItemType(ty: Ty): TyWithObligations<Ty>? {
-        return selectProjection(iteratorTraitAndOutput ?: return legacyFindIteratorItemType(ty), ty).ok()
+        return selectProjection(iteratorTraitAndOutput ?: return null, ty).ok()
             ?: selectProjection(intoIteratorTraitAndOutput ?: return null, ty).ok()
-    }
-
-    // TODO legacy; used in tests only; should be removed
-    private fun legacyFindIteratorItemType(ty: Ty): TyWithObligations<Ty>? {
-        val impl = findImplsAndTraits(ty)
-            .find { impl ->
-                val traitName = impl.implementedTrait?.element?.name
-                traitName == "Iterator" || traitName == "IntoIterator"
-            } ?: return null
-
-        val rawType = lookupAssociatedType(impl, "Item")
-        return TyWithObligations(rawType, emptyList())
     }
 
     fun findIndexOutputType(containerType: Ty, indexType: Ty): TyWithObligations<Ty>? {

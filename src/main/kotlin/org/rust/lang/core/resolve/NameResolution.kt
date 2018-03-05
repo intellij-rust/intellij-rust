@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroExport
 import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
 import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.ref.MethodCallee
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
@@ -25,6 +26,7 @@ import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.toPsiFile
 
 // IntelliJ Rust name resolution algorithm.
@@ -339,7 +341,15 @@ fun processLocalVariables(place: RsElement, processor: (RsPatBinding) -> Unit) {
 fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project): Pair<RsNamedElement, CargoWorkspace.Package>? {
     val parts = path.split("::", limit = 2)
     if (parts.size != 2) return null
-    val pkg = workspace.findPackage(parts[0]) ?: return null
+    val pkg = workspace.findPackage(parts[0]) ?: run {
+        return if (isUnitTestMode) {
+            // Allows to set a fake path for some item in tests via
+            // lang attribute, e.g. `#[lang = "std::iter::Iterator"]`
+            RsLangItemIndex.findLangItem(project, path)?.let { it to workspace.packages.first() }
+        } else {
+            null
+        }
+    }
 
     val el = pkg.targets.asSequence()
         .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath("::${parts[1]}", it) }
