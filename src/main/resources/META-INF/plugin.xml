@@ -542,6 +542,10 @@
             <className>org.rust.ide.intentions.MoveTypeConstraintToParameterListIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.FlipBinaryExpressionIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
