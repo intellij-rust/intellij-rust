@@ -5,114 +5,41 @@
 
 package org.rust.ide.intentions
 
+import org.rust.lang.core.psi.RsElementTypes.*
+
 class FlipBinaryExpressionIntentionTest : RsIntentionTestBase(FlipBinaryExpressionIntention()) {
 
-    fun `test +`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            x /*caret*/+ y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            y /*caret*/+ x;
-        }
-    """)
+    private val targetIntention = intention as FlipBinaryExpressionIntention
 
-    fun `test *`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            x * y/*caret*/;
+    fun `test all avaiable operators`() {
+        val operators = FlipBinaryExpressionIntention.COMMUNICATIVE_OPERATORS +
+            FlipBinaryExpressionIntention.CHANGE_SEMANTICS_OPERATORS +
+            FlipBinaryExpressionIntention.COMPARISON_OPERATORS
+        operators.map {
+            when (it) {
+                GTGT -> ">>"
+                GTEQ -> ">="
+                LTLT -> "<<"
+                LTEQ -> "<="
+                OROR -> "||"
+                else -> it.toString()
+            }
+        }.forEach {
+            doTest(it)
         }
-    """, """
-        fn test(x: i32, y: i32) {
-            y * x/*caret*/;
-        }
-    """)
+    }
 
-    fun `test ||`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            /*caret*/x || y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            /*caret*/y || x;
-        }
-    """)
-
-    fun `test &&`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            /*caret*/x && y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            /*caret*/y && x;
-        }
-    """)
-
-    fun `test ==`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            /*caret*/x == y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            /*caret*/y == x;
-        }
-    """)
-
-    fun `test !=`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            /*caret*/x != y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            /*caret*/y != x;
-        }
-    """)
-
-    fun `test gt`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            /*caret*/x > y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            /*caret*/y < x;
-        }
-    """)
-
-    fun `test gt=`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            /*caret*/x >= y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            /*caret*/y <= x;
-        }
-    """)
-
-    fun `test lt`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            /*caret*/x < y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            /*caret*/y > x;
-        }
-    """)
-
-    fun `test lt=`() = doAvailableTest("""
-        fn test(x: i32, y: i32) {
-            /*caret*/x <= y;
-        }
-    """, """
-        fn test(x: i32, y: i32) {
-            /*caret*/y >= x;
-        }
-    """)
-
-    fun `test -`() = doUnavailableTest(
-        """
-        fn test(x: i32, y: i32) {
-            /*caret*/x - y;
-        }
-        """
-    )
+    fun doTest(op: String) {
+        val flippedOp = (intention as FlipBinaryExpressionIntention).flippedOp(op)
+        doAvailableTest("""
+            fn test(x: i32, y: i32) {
+                x /*caret*/$op y;
+            }
+        """, """
+            fn test(x: i32, y: i32) {
+                y /*caret*/$flippedOp x;
+            }
+        """)
+    }
 
 }
