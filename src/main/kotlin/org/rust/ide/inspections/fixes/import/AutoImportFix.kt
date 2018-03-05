@@ -58,18 +58,17 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
 
     private fun importItem(project: Project, candidate: ImportCandidate, originalPath: RsPath): Unit = project.runWriteCommandAction {
         val mod = originalPath.containingMod
-
-        val externCrateItems = mod.childrenOfType<RsExternCrateItem>()
-        var lastExternCrateItem = externCrateItems.maxBy { it.textOffset }
-
         val psiFactory = RsPsiFactory(project)
+        // depth of `mod` relative to module with `extern crate` item
+        // we uses this info to create correct relative use item path if needed
+        var relativeDepth: Int? = null
 
         // if crate of importing element differs from current crate
         // we need to add new extern crate item
         if (candidate.info is ImportInfo.ExternCrateImportInfo) {
             val target = candidate.info.target
-            val crateName = target.normName
-            val attributes = originalPath.stdlibAttributes
+            val crateRoot = originalPath.crateRoot
+            val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
             when {
                 // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
                 // we don't add corresponding extern crate item manually
@@ -79,33 +78,54 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
                 // we don't add corresponding extern crate item manually for the same reason
                 attributes == RsFile.Attributes.NO_STD && target.isCore -> Testmarks.autoInjectedCoreCrate.hit()
                 else -> {
-                    val needAddExternCrateItem = externCrateItems.none { it.reference.resolve() == candidate.info.externCrateMod }
-                    if (needAddExternCrateItem) {
-                        val externCrateItem = psiFactory.createExternCrateItem(crateName)
-                        lastExternCrateItem = if (lastExternCrateItem != null) {
-                            mod.addAfter(externCrateItem, lastExternCrateItem)
-                        } else {
-                            val insertedItem = mod.addBefore(externCrateItem, mod.firstItem)
-                            mod.addAfter(psiFactory.createNewline(), mod.firstItem)
-                            insertedItem
-                        } as RsExternCrateItem?
+                    val superModWithDepth = mod.superMods.withIndex().find { (_, superMod) ->
+                        val externCrateItems = superMod.childrenOfType<RsExternCrateItem>()
+                        externCrateItems.any { it.reference.resolve() == candidate.info.externCrateMod }
+                    }
+
+                    if (superModWithDepth == null) {
+                        crateRoot?.insertExternCrateItem(psiFactory, target.normName)
+                    } else {
+                        val (depth, superMod) = superModWithDepth
+                        if (superMod != crateRoot) {
+                            Testmarks.externCrateItemInNotCrateRoot.hit()
+                            relativeDepth = depth
+                        }
                     }
                 }
             }
         }
 
-        val lastUseItem = mod.childrenOfType<RsUseItem>().maxBy { it.textOffset }
-        val useItem = psiFactory.createUseItem(candidate.info.usePath)
-        val anchor = lastUseItem ?: lastExternCrateItem
+        val prefix = when (relativeDepth) {
+            null -> ""
+            0 -> "self::"
+            else -> "super::".repeat(relativeDepth)
+        }
+        mod.insertUseItem(psiFactory, "$prefix${candidate.info.usePath}")
+    }
 
+    private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
+        val externCrateItem = psiFactory.createExternCrateItem(crateName)
+        val lastExternCrateItem = childrenOfType<RsExternCrateItem>().lastElement
+        if (lastExternCrateItem != null) {
+            addAfter(externCrateItem, lastExternCrateItem)
+        } else {
+            addBefore(externCrateItem, firstItem)
+            addAfter(psiFactory.createNewline(), firstItem)
+        }
+    }
+
+    private fun RsMod.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
+        val useItem = psiFactory.createUseItem(usePath)
+        val anchor = childrenOfType<RsUseItem>().lastElement ?: childrenOfType<RsExternCrateItem>().lastElement
         if (anchor != null) {
-            val insertedUseItem = mod.addAfter(useItem, anchor)
-            if (anchor == lastExternCrateItem) {
-                mod.addBefore(psiFactory.createNewline(), insertedUseItem)
+            val insertedUseItem = addAfter(useItem, anchor)
+            if (anchor is RsExternCrateItem) {
+                addBefore(psiFactory.createNewline(), insertedUseItem)
             }
         } else {
-            mod.addBefore(useItem, mod.firstItem)
-            mod.addAfter(psiFactory.createNewline(), mod.firstItem)
+            addBefore(useItem, firstItem)
+            addAfter(psiFactory.createNewline(), firstItem)
         }
     }
 
@@ -324,6 +344,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
         val autoInjectedStdCrate = Testmark("autoInjectedStdCrate")
         val autoInjectedCoreCrate = Testmark("autoInjectedCoreCrate")
         val pathInUseItem = Testmark("pathInUseItem")
+        val externCrateItemInNotCrateRoot = Testmark("externCrateItemInNotCrateRoot")
     }
 }
 
@@ -402,8 +423,9 @@ sealed class ImportInfo {
 
 data class ImportCandidate(val importItem: ImportItem, val info: ImportInfo)
 
-private val RsPath.stdlibAttributes: RsFile.Attributes get() = (containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
+private val RsMod.stdlibAttributes: RsFile.Attributes get() = (containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
 private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsInnerAttr }
+private val <T: RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
 
 private val CargoWorkspace.Target.isStd: Boolean
     get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.std
