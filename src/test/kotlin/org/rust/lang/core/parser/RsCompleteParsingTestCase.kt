@@ -28,6 +28,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test precedence`() = doTest(true)
     fun `test way too many parens`() = doTest(true)
     fun `test way too many braces`() = doTest(true)
+    fun `test way too many generics`() = doTest(true)
     fun `test empty generics`() = doTest(true)
     fun `test structs`() = doTest(true)
     fun `test struct literals`() = doTest(true)

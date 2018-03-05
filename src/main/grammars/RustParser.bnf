@@ -701,9 +701,10 @@ private TypeReferenceInner ::= ArrayType
                                | FnPointerType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
-                               | TraitType
-                               | ForInType
-                               | BaseType
+                               | ExplicitTraitType
+                               // External rule to find the difference between `T` and `T+T`
+                               | <<baseOrTraitType BaseTypeInner ImplicitTraitType TraitType_upper>>
+                               | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
 
 private ScalarTypeReferenceInner ::= ArrayType
                                    | RefLikeType
@@ -762,21 +763,30 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-BaseType ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons {
+BaseType ::= BaseTypeInner {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
+private BaseTypeInner ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons
+
 // `impl Trait` or `dyn Trait` or `Trait+'a`
-TraitType ::= (impl | dyn) Polybound ('+' Polybound)*
-            | Polybound '+' Polybound ('+' Polybound)* {
+fake TraitType ::= ExplicitTraitTypeInner | ImplicitTraitTypeInner {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsTraitTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+ExplicitTraitType ::= ExplicitTraitTypeInner { elementType = TraitType }
+private ExplicitTraitTypeInner ::= (impl | dyn) Polybound ('+' Polybound)*
+
+ImplicitTraitType ::= ImplicitTraitTypeInner { elementType = TraitType }
+private ImplicitTraitTypeInner ::= Polybound ('+' Polybound)+
+
+private TraitType_upper ::= ('+' Polybound)+
 
 TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
               [ TypeParameterList WhereClause? | WhereClause | TypeParamBounds ]
