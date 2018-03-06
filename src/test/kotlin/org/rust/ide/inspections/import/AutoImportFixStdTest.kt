@@ -170,4 +170,130 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             let x = Arc::new/*caret*/(123);
         }
     """)
+
+    fun `test do not insert extern crate item`() = checkAutoImportFixByFileTree("""
+        //- dep-lib/lib.rs
+        pub struct Foo;
+
+        //- main.rs
+        extern crate dep_lib_target;
+
+        mod bar;
+        fn main() {}
+
+        //- bar.rs
+        fn bar() {
+            let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        //- main.rs
+        extern crate dep_lib_target;
+
+        mod bar;
+        fn main() {}
+
+        //- bar.rs
+        use dep_lib_target::Foo;
+
+        fn bar() {
+            let x = Foo/*caret*/;
+        }
+    """)
+
+    fun `test insert extern crate item in crate root`() = checkAutoImportFixByFileTree("""
+        //- dep-lib/lib.rs
+        pub struct Foo;
+
+        //- main.rs
+        mod bar;
+        fn main() {}
+
+        //- bar.rs
+        fn bar() {
+            let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        //- main.rs
+        extern crate dep_lib_target;
+
+        mod bar;
+        fn main() {}
+
+        //- bar.rs
+        use dep_lib_target::Foo;
+
+        fn bar() {
+            let x = Foo/*caret*/;
+        }
+    """)
+
+    fun `test insert relative use item 1`() = checkAutoImportFixByFileTree("""
+        //- dep-lib/lib.rs
+        pub struct Foo;
+
+        //- main.rs
+        mod bar;
+        fn main() {}
+
+        //- bar.rs
+        extern crate dep_lib_target;
+
+        fn bar() {
+            let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        //- dep-lib/lib.rs
+        pub struct Foo;
+
+        //- main.rs
+        mod bar;
+        fn main() {}
+
+        //- bar.rs
+        extern crate dep_lib_target;
+
+        use self::dep_lib_target::Foo;
+
+        fn bar() {
+            let x = Foo/*caret*/;
+        }
+    """, AutoImportFix.Testmarks.externCrateItemInNotCrateRoot)
+
+    fun `test insert relative use item 2`() = checkAutoImportFixByFileTree("""
+        //- dep-lib/lib.rs
+        pub struct Foo;
+
+        //- main.rs
+        mod bar;
+        fn main() {}
+
+        //- bar/mod.rs
+        extern crate dep_lib_target;
+
+        mod baz;
+
+        //- bar/baz.rs
+        fn baz() {
+            let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        //- dep-lib/lib.rs
+        pub struct Foo;
+
+        //- main.rs
+        mod bar;
+        fn main() {}
+
+        //- bar/mod.rs
+        extern crate dep_lib_target;
+
+        mod baz;
+
+        //- bar/baz.rs
+        use super::dep_lib_target::Foo;
+
+        fn baz() {
+            let x = Foo/*caret*/;
+        }
+    """, AutoImportFix.Testmarks.externCrateItemInNotCrateRoot)
 }
