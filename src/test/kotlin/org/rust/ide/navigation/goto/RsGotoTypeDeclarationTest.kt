@@ -229,6 +229,22 @@ class RsGotoTypeDeclarationTest : RsTestBase() {
         }
     """)
 
+    fun `test impl trait`() = doTest("""
+        trait Foo {}
+        fn foo() -> impl Foo { unimplemented!() }
+
+        fn main() {
+            foo/*caret*/();
+        }
+    """, """
+        trait /*caret*/Foo {}
+        fn foo() -> impl Foo { unimplemented!() }
+
+        fn main() {
+            foo();
+        }
+    """)
+
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) = checkByText(before, after) {
         myFixture.performEditorAction(ACTION_GOTO_TYPE_DECLARATION)
     }

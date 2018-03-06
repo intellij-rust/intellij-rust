@@ -72,3 +72,8 @@ class Testmark(val name: String) {
         }
     }
 }
+
+fun Testmark.hitOnFalse(b: Boolean): Boolean {
+    if (!b) hit()
+    return b
+}
