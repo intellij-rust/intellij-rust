@@ -211,6 +211,44 @@ object RustParserUtil : GeneratedParserUtilBase() {
     }
 
     @JvmStatic
+    fun baseOrTraitType(
+        b: PsiBuilder,
+        level: Int,
+        baseTypeP: Parser,
+        implicitTraitTypeP: Parser,
+        traitTypeUpperP: Parser
+    ): Boolean {
+        val baseOrTrait = enter_section_(b)
+        val polybound = enter_section_(b)
+        val bound = enter_section_(b)
+        val traitRef = enter_section_(b)
+
+        if (!baseTypeP.parse(b, level + 1)) {
+            // May be it is lifetime `'a` or `for<'a>`
+            exit_section_(b, traitRef, null, false)
+            exit_section_(b, bound, null, false)
+            exit_section_(b, polybound, null, false)
+            exit_section_(b, baseOrTrait, null, false)
+            return implicitTraitTypeP.parse(b, level)
+        }
+
+        if (!nextTokenIs(b, PLUS)) {
+            exit_section_(b, traitRef, null, true)
+            exit_section_(b, bound, null, true)
+            exit_section_(b, polybound, null, true)
+            exit_section_(b, baseOrTrait, BASE_TYPE, true)
+            return true
+        }
+
+        exit_section_(b, traitRef, TRAIT_REF, true)
+        exit_section_(b, bound, BOUND, true)
+        exit_section_(b, polybound, POLYBOUND, true)
+        val result = traitTypeUpperP.parse(b, level + 1)
+        exit_section_(b, baseOrTrait, TRAIT_TYPE, result)
+        return result
+    }
+
+    @JvmStatic
     fun gtgteqImpl(b: PsiBuilder, level: Int): Boolean = collapse(b, GTGTEQ, GT, GT, EQ)
 
     @JvmStatic
