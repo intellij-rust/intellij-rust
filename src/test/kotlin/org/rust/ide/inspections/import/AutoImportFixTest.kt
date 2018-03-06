@@ -304,6 +304,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         mod aaa;
         mod ccc;
     """, """
+        //- aaa/bbb/mod.rs
         use ccc::ddd::Foo;
 
         fn foo() {
@@ -322,6 +323,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `bar`">bar::foo_bar/*caret*/</error>();
         }
     """, """
+        //- main.rs
         use foo::bar;
 
         mod foo {

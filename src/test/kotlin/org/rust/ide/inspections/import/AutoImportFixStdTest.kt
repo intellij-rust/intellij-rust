@@ -28,6 +28,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         //- main.rs
         fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
     """, """
+        //- main.rs
         extern crate dep_lib_target;
 
         use dep_lib_target::foo::Bar;
@@ -45,6 +46,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
         fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
     """, """
+        //- main.rs
         extern crate dep_lib_target;
 
         use dep_lib_target::foo::Bar;
@@ -62,6 +64,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
         fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
     """, """
+        //- main.rs
         extern crate std;
         extern crate dep_lib_target;
 
@@ -81,6 +84,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             pub struct Bar;
         }
     """, """
+        //- main.rs
         #![allow(non_snake_case)]
 
         extern crate dep_lib_target;
@@ -119,6 +123,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             let x = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
     """, """
+        //- main.rs
         extern crate dep_lib_target;
 
         use dep_lib_target::foo::baz::FooBar;

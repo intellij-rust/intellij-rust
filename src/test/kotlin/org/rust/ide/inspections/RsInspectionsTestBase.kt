@@ -53,6 +53,7 @@ abstract class RsInspectionsTestBase(
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
         configure = this::configureByText,
+        checkAfter = this::checkByText,
         testmark = testmark)
 
     protected fun checkByFileTree(
@@ -71,16 +72,17 @@ abstract class RsInspectionsTestBase(
     protected fun checkFixByFileTree(
         fixName: String,
         @Language("Rust") before: String,
-        @Language("Rust") openedFileAfter: String,
+        @Language("Rust") after: String,
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         testmark: Testmark? = null
-    ) = checkFix(fixName, before, openedFileAfter,
+    ) = checkFix(fixName, before, after,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
         configure = this::configureByFileTree,
+        checkAfter = this::checkByFileTree,
         testmark = testmark)
 
     protected fun checkFixIsUnavailable(
@@ -135,12 +137,13 @@ abstract class RsInspectionsTestBase(
         checkInfo: Boolean,
         checkWeakWarn: Boolean,
         configure: (String) -> Unit,
+        checkAfter: (String) -> Unit,
         testmark: Testmark? = null
     ) {
         val action: () -> Unit = {
             check(before, checkWarn, checkInfo, checkWeakWarn, configure)
             applyQuickFix(fixName)
-            myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
+            checkAfter(after)
         }
         testmark?.checkHit(action) ?: action()
     }
@@ -165,5 +168,13 @@ abstract class RsInspectionsTestBase(
 
     private fun configureByFileTree(text: String) {
         fileTreeFromText(text).createAndOpenFileWithCaretMarker()
+    }
+
+    private fun checkByText(text: String) {
+        myFixture.checkResult(replaceCaretMarker(text.trimIndent()))
+    }
+
+    private fun checkByFileTree(text: String) {
+        fileTreeFromText(replaceCaretMarker(text)).check(myFixture)
     }
 }

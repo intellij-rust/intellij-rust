@@ -27,8 +27,9 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
 
     protected fun checkAutoImportFixByFileTree(
         @Language("Rust") before: String,
-        @Language("Rust") openedFileAfter: String
-    ) = doTest { checkFixByFileTree(AutoImportFix.NAME, before, openedFileAfter) }
+        @Language("Rust") after: String,
+        testmark: Testmark? = null
+    ) = doTest { checkFixByFileTree(AutoImportFix.NAME, before, after, testmark = testmark) }
 
     protected fun checkAutoImportFixByTextWithMultipleChoice(
         @Language("Rust") before: String,
