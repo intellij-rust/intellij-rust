@@ -142,10 +142,10 @@ class RsExtractFunctionTest : RsTestBase() {
         """, """
             fn main() {
                 let mut vec = vec![1, 2, 3];
-                foo(vec);
+                foo(&mut vec);
             }
 
-            fn foo(mut vec: Vec<i32>) {
+            fn foo(vec: &mut Vec<i32>) {
                 vec.push(1);
             }
         """,
@@ -732,23 +732,30 @@ class RsExtractFunctionTest : RsTestBase() {
 
             fn foo() {
                 let vec = vec![1, 2, 3];
-                let vec2 = vec![1, 2, 3];
-                let mut vec3 = vec![1, 2, 3];
-                let mut vec4 = vec![1, 2, 3];
+                let mut mut_vec = vec![1, 2, 3];
                 let i = 1;
-                let c = Copyable;
+                let f = 1.1;
+                let b = true;
+                let c = 'c';
+                let s = "str";
+                let copy = Copyable;
 
                 <selection>println!("{}", vec.len());
-                println!("{}", vec2.len());
-                vec3.push(4);
-                vec4.push(4);
+                mut_vec.push(123);
                 println!("{}", i);
-                println!("{:?}", c);</selection>
+                println!("{}", f);
+                println!("{}", b);
+                println!("{}", c);
+                println!("{}", s);
+                println!("{:?}", copy);</selection>
 
                 println!("{}", vec.len());
-                println!("{}", vec3.len());
                 println!("{}", i);
-                println!("{:?}", c);
+                println!("{}", f);
+                println!("{}", b);
+                println!("{}", c);
+                println!("{}", s);
+                println!("{:?}", copy);
             }
         """, """
             #[derive(Copy, Clone, Debug)]
@@ -756,27 +763,34 @@ class RsExtractFunctionTest : RsTestBase() {
 
             fn foo() {
                 let vec = vec![1, 2, 3];
-                let vec2 = vec![1, 2, 3];
-                let mut vec3 = vec![1, 2, 3];
-                let mut vec4 = vec![1, 2, 3];
+                let mut mut_vec = vec![1, 2, 3];
                 let i = 1;
-                let c = Copyable;
+                let f = 1.1;
+                let b = true;
+                let c = 'c';
+                let s = "str";
+                let copy = Copyable;
 
-                bar(&vec, vec2, &mut vec3, vec4, i, c);
+                bar(&vec, &mut mut_vec, i, f, b, c, s, copy);
 
                 println!("{}", vec.len());
-                println!("{}", vec3.len());
                 println!("{}", i);
-                println!("{:?}", c);
+                println!("{}", f);
+                println!("{}", b);
+                println!("{}", c);
+                println!("{}", s);
+                println!("{:?}", copy);
             }
 
-            fn bar(vec: &Vec<i32>, vec2: Vec<i32>, vec3: &mut Vec<i32>, mut vec4: Vec<i32>, i: i32, c: Copyable) {
+            fn bar(vec: &Vec<i32>, mut_vec: &mut Vec<i32>, i: i32, f: f64, b: bool, c: char, s: &str, copy: Copyable) {
                 println!("{}", vec.len());
-                println!("{}", vec2.len());
-                vec3.push(4);
-                vec4.push(4);
+                mut_vec.push(123);
                 println!("{}", i);
-                println!("{:?}", c);
+                println!("{}", f);
+                println!("{}", b);
+                println!("{}", c);
+                println!("{}", s);
+                println!("{:?}", copy);
             }
         """,
         false,

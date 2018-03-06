@@ -17,10 +17,7 @@ import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.ty.Mutability
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyPrimitive
-import org.rust.lang.core.types.ty.TyTuple
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 class ReturnValue(val expression: String?, val type: Ty) {
@@ -42,11 +39,24 @@ class ReturnValue(val expression: String?, val type: Ty) {
     }
 }
 
-class Parameter(val name: String, val type: Ty? = null, val mutability: Mutability = Mutability.IMMUTABLE,
-                requiredBorrowing: Boolean = false) {
+class Parameter(
+    val name: String,
+    val type: Ty? = null,
+    val reference: Reference = Reference.NONE
+) {
+
+    enum class Reference(val text: String) {
+        MUTABLE("&mut "), BORROWING("& "), NONE("")
+    }
+
     companion object {
         fun direct(value: RsPatBinding, requiredBorrowing: Boolean): Parameter {
-            return Parameter(value.referenceName, value.type, value.mutability, requiredBorrowing)
+            val reference = when {
+                value.mutability.isMut -> Reference.MUTABLE
+                requiredBorrowing -> Reference.BORROWING
+                else -> Reference.NONE
+            }
+            return Parameter(value.referenceName, value.type, reference)
         }
 
         fun self(value: String): Parameter {
@@ -54,19 +64,11 @@ class Parameter(val name: String, val type: Ty? = null, val mutability: Mutabili
         }
     }
 
-    private val mutabilityText = if (!requiredBorrowing && mutability.isMut) "mut " else ""
-
-    private val borrowingText = when {
-        requiredBorrowing -> if (mutability.isMut) "&mut " else "&"
-        else -> ""
-    }
-
     val parameterText: String
-        get() = if (type != null) "$mutabilityText$name: $borrowingText${type.insertionSafeText}" else name
+        get() = if (type != null) "$name: ${reference.text}${type.insertionSafeText}" else name
 
     val argumentText: String
-        get() = "$borrowingText$name"
-
+        get() = "${reference.text}$name"
 }
 
 class RsExtractFunctionConfig private constructor(
@@ -154,13 +156,16 @@ class RsExtractFunctionConfig private constructor(
             val letBindings = fn.descendantsOfType<RsPatBinding>()
                 .filter { it.textOffset <= end }
 
+            val implLookup = ImplLookup.relativeTo(fn)
             val parameters = letBindings
                 .mapNotNull {
                     if (it.textOffset > start) return@mapNotNull null
                     val result = ReferencesSearch.search(it, LocalSearchScope(fn))
                     if (result.none { it.element.textOffset in start..end }) return@mapNotNull null
                     val requiredBorrowing = result.any { it.element.textOffset > end }
-                        && it.type !is TyPrimitive && !ImplLookup.relativeTo(it).isCopy(it.type)
+                        && it.type !== TyBool && it.type !== TyChar && it.type !is TyInteger && it.type !is TyFloat
+                        && it.type !is TyReference
+                        && !implLookup.isCopy(it.type)
                     Parameter.direct(it, requiredBorrowing)
                 }
                 .toMutableList()
