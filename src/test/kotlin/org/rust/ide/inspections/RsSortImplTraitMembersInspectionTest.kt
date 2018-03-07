@@ -207,6 +207,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             const ID1: i32 = 1;
         }
     """, """
+        //- main.rs
         mod foo;
 
         use foo::Trait;

@@ -31,6 +31,17 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """, false)
 
+    fun `test reference with multiple resolve`() = checkByText("""
+        #[cfg(unix)]
+        fn foo() {}
+        #[cfg(windows)]
+        fn foo() {}
+
+        fn main() {
+            foo();
+        }
+    """, false)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val defaultValue = (inspection as RsUnresolvedReferenceInspection).ignoreWithoutQuickFix
         try {

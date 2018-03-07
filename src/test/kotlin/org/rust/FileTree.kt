@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -113,6 +114,20 @@ class FileTree(private val rootDirectory: Entry.Directory) {
 
         FileDocumentManager.getInstance().saveAllDocuments()
         go(rootDirectory, baseDir)
+    }
+
+    fun check(fixture: CodeInsightTestFixture) {
+        fun go(dir: Entry.Directory, rootPath: String) {
+            for ((name, entry) in dir.children) {
+                val path = "$rootPath/$name"
+                when (entry) {
+                    is Entry.File -> fixture.checkResult(path, entry.text, true)
+                    is Entry.Directory -> go(entry, path)
+                }
+            }
+        }
+
+        go(rootDirectory, ".")
     }
 }
 

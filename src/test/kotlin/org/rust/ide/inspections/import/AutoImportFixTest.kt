@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections.import
 
+import org.rust.ide.inspections.fixes.import.AutoImportFix
+
 class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import struct`() = checkAutoImportFixByText("""
@@ -232,7 +234,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let f = Foo/*caret*/;
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """)
 
@@ -244,7 +246,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let f = Foo/*caret*/;
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
     """)
 
@@ -302,6 +304,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         mod aaa;
         mod ccc;
     """, """
+        //- aaa/bbb/mod.rs
         use ccc::ddd::Foo;
 
         fn foo() {
@@ -320,6 +323,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `bar`">bar::foo_bar/*caret*/</error>();
         }
     """, """
+        //- main.rs
         use foo::bar;
 
         mod foo {
@@ -403,7 +407,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            foo/*caret*/();
+            <error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
         }
     """)
 
@@ -413,7 +417,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            bar::foo_bar/*caret*/();
+            <error descr="Unresolved reference: `bar`">bar::foo_bar/*caret*/</error>();
         }
     """)
 
@@ -424,7 +428,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            Bar::bar/*caret*/();
+            <error descr="Unresolved reference: `Bar`">Bar::bar/*caret*/</error>();
         }
     """)
 
@@ -435,7 +439,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            Bar::BAR/*caret*/();
+            <error descr="Unresolved reference: `Bar`">Bar::BAR/*caret*/</error>();
         }
     """)
 
@@ -614,6 +618,18 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = FooBar/*caret*/;
         }
     """)
+
+    fun `test do not import path in use item`() = checkAutoImportFixIsUnavailable("""
+        mod foo {
+            pub struct Foo;
+        }
+
+        mod bar {
+            pub struct Bar;
+        }
+
+        use foo::{Foo, <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>};
+    """, AutoImportFix.Testmarks.pathInUseItem)
 
     fun `test multiple import`() = checkAutoImportFixByTextWithMultipleChoice("""
         mod foo {

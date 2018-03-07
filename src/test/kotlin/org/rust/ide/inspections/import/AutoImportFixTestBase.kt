@@ -16,29 +16,27 @@ import org.rust.openapiext.Testmark
 
 abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferenceInspection()) {
 
-    protected fun checkAutoImportFixIsUnavailable(@Language("Rust") text: String) =
-        checkFixIsUnavailable(AutoImportFix.NAME, text)
-
-    protected fun checkAutoImportFixByText(@Language("Rust") before: String, @Language("Rust") after: String) =
-        checkFixByText(AutoImportFix.NAME, before, after)
+    protected fun checkAutoImportFixIsUnavailable(@Language("Rust") text: String, testmark: Testmark? = null) =
+        doTest { checkFixIsUnavailable(AutoImportFix.NAME, text, testmark = testmark) }
 
     protected fun checkAutoImportFixByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
-        testmark: Testmark
-    ) = testmark.checkHit { checkAutoImportFixByText(before, after) }
+        testmark: Testmark? = null
+    ) = doTest { checkFixByText(AutoImportFix.NAME, before, after, testmark = testmark) }
 
     protected fun checkAutoImportFixByFileTree(
         @Language("Rust") before: String,
-        @Language("Rust") openedFileAfter: String
-    ) = checkFixByFileTree(AutoImportFix.NAME, before, openedFileAfter)
+        @Language("Rust") after: String,
+        testmark: Testmark? = null
+    ) = doTest { checkFixByFileTree(AutoImportFix.NAME, before, after, testmark = testmark) }
 
     protected fun checkAutoImportFixByTextWithMultipleChoice(
         @Language("Rust") before: String,
         expectedElements: Set<String>,
         choice: String,
         @Language("Rust") after: String
-    ) {
+    ) = doTest {
         var chooseItemWasCalled = false
 
         withMockImportItemUi(object : ImportItemUi {
@@ -53,5 +51,15 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         }) { checkFixByText(AutoImportFix.NAME, before, after) }
 
         check(chooseItemWasCalled) { "`chooseItem` was not called" }
+    }
+
+    private inline fun doTest(action: () -> Unit) {
+        val defaultValue = (inspection as RsUnresolvedReferenceInspection).ignoreWithoutQuickFix
+        try {
+            inspection.ignoreWithoutQuickFix = false
+            action()
+        } finally {
+            inspection.ignoreWithoutQuickFix = defaultValue
+        }
     }
 }
