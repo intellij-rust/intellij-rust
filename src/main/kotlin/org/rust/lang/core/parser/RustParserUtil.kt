@@ -76,7 +76,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
                 candidate = minOf(candidate, i)
                 break
             }
-            if (EOL_COMMENT == token) {
+            if (EOL_COMMENT == token && Regex("""^//\s*region.*""").matchEntire(getter[i]) == null) {
                 candidate = minOf(candidate, i)
             }
             if (TokenType.WHITE_SPACE == token && "\n\n" in getter[i]) {

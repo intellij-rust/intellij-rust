@@ -30,6 +30,8 @@ class RsFoldingBuilderTest : RsTestBase() {
     fun `test uses`() = doTest()
     fun `test mods`() = doTest()
     fun `test crates`() = doTest()
+    fun `test custom region`() = doTest()
+    fun `test custom region without extra space`() = doTest()
 
     private fun doTest() {
         myFixture.testFolding("$testDataPath/$fileName")
