@@ -96,7 +96,8 @@ allprojects {
     }
 }
 
-val versionSuffix = if (channel.isBlank()) "" else "-$channel"
+val compatibilitySuffix = prop("compatibilitySuffix")
+val versionSuffix = if (channel.isBlank()) "-$compatibilitySuffix" else "-$compatibilitySuffix-$channel"
 
 project(":") {
     val clionVersion = prop("clionVersion")
