@@ -14,7 +14,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 @State(name = "RsCodeInsightSettings", storages = [Storage("rust.xml")])
 class RsCodeInsightSettings : PersistentStateComponent<RsCodeInsightSettings> {
 
-    var showImportPopup: Boolean = true
+    var showImportPopup: Boolean = false
 
     override fun getState(): RsCodeInsightSettings = this
 
