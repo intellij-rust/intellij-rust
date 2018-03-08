@@ -139,4 +139,18 @@ class RsStatementSemicolonFormatProcessorTest : RsFormatterTestBase() {
         """)
     }
 
+    fun `test does not add redundant semicolon`() {
+        val code = """
+        fn main() {
+            loop {
+                match Some(0) {
+                    Some(v) => break Some(v),
+                    None => break Some(0)
+                }
+            }
+        }
+    """;
+        checkNotChanged(code)
+
+    }
 }
