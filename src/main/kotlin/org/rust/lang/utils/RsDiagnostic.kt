@@ -60,12 +60,28 @@ sealed class RsDiagnostic(
                             add(ConvertToTyUsingFromTraitFix(element, expectedTy))
                         }
                         if (isToOwnedImplWithExcpectedForActual(items, lookup)) {
-                            add(ConvertToOwnedTyFix(element))
+                            add(ConvertToOwnedTyFix(element, expectedTy))
                         }
                         val stringTy = items.findStringTy()
                         if (expectedTy == stringTy
                             && (isToStringImplForActual(items, lookup) || isActualTyNumeric())) {
                             add(ConvertToStringFix(element))
+                        } else if (expectedTy is TyReference) {
+                            if (expectedTy.mutability == Mutability.IMMUTABLE) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.findBorrowTrait(), expectedTy)) {
+                                    add(ConvertToBorrowedTyFix(element, expectedTy))
+                                }
+                                if (isTraitWithTySubstImplForActual(lookup, items.findAsRefTrait(), expectedTy)) {
+                                    add(ConvertToRefTyFix(element, expectedTy))
+                                }
+                            } else if (expectedTy.mutability == Mutability.MUTABLE) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.findBorrowMutTrait(), expectedTy)){
+                                    add(ConvertToBorrowedTyWithMutFix(element, expectedTy))
+                                }
+                                if (isTraitWithTySubstImplForActual(lookup, items.findAsMutTrait(), expectedTy)) {
+                                    add(ConvertToMutTyFix(element, expectedTy))
+                                }
+                            }
                         }
                         if (actualTy == stringTy) {
                             if (expectedTy == REF_STR_TY) {
@@ -97,6 +113,9 @@ sealed class RsDiagnostic(
             val toStringTrait = items.findToStringTrait() ?: return false
             return lookup.select(TraitRef(actualTy, BoundElement(toStringTrait))).ok() != null
         }
+
+        private fun isTraitWithTySubstImplForActual(lookup: ImplLookup, trait: RsTraitItem?, ty: TyReference): Boolean =
+            trait != null && lookup.select(TraitRef(actualTy, trait.withSubst(ty.referenced))).ok() != null
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
             val expectedTyS = escapeTy(expectedTy.toString())

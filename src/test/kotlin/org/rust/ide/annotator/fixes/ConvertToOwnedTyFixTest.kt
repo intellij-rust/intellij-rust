@@ -11,7 +11,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
-    fun `test B is Owned type of A`() = checkFixByText("Convert to owned type using `ToOwned` trait","""
+    fun `test B is Owned type of A`() = checkFixByText("Convert to B using `ToOwned` trait","""
         use std::borrow::Borrow;
 
         struct A;
@@ -45,7 +45,7 @@ class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsExperimentalChecksInspec
         }
     """)
 
-    fun `test B is not Owned type of A`() = checkFixIsUnavailable("Convert to type B using `From` trait", """
+    fun `test B is not Owned type of A`() = checkFixIsUnavailable("Convert to B using `ToOwned` trait", """
         use std::borrow::Borrow;
 
         struct A;
@@ -64,7 +64,7 @@ class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsExperimentalChecksInspec
         }
     """)
 
-    fun `test no ToOwned impl for A`() = checkFixIsUnavailable("Convert to type B using `From` trait", """
+    fun `test no ToOwned impl for A`() = checkFixIsUnavailable("Convert to type B using `ToOwned` trait", """
         struct A;
         struct B;
 
