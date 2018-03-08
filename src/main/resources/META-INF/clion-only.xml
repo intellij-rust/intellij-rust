@@ -1,12 +1,12 @@
 <idea-plugin>
     <extensions defaultExtensionNs="cidr.debugger">
-        <languageSupportFactory implementation="org.rust.debugger.lang.RsDebuggerLanguageSupportFactory"
-                                order="first"/>
+        <languageSupport language="Rust" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupport"/>
+        <editorsExtension implementation="org.rust.debugger.lang.RsDebuggerEditorsExtension"/>
+        <lineBreakpointFileTypesProvider implementation="org.rust.debugger.RsLineBreakpointFileTypesProvider"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
         <programRunner implementation="org.rust.debugger.runconfig.RsDebugRunner"/>
-        <xdebugger.breakpointType implementation="org.rust.debugger.RsLineBreakpointType"/>
     </extensions>
 
     <actions>

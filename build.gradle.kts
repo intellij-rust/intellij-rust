@@ -1,3 +1,4 @@
+import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PublishTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import de.undercouch.gradle.tasks.download.Download
@@ -63,9 +64,14 @@ allprojects {
     intellij {
         version = prop("ideaVersion")
         downloadSources = !CI
-        updateSinceUntilBuild = false
+        updateSinceUntilBuild = true
         instrumentCode = false
         ideaDependencyCachePath = file("deps").absolutePath
+
+        tasks.withType<PatchPluginXmlTask> {
+            sinceBuild(prop("sinceBuild"))
+            untilBuild(prop("untilBuild"))
+        }
     }
 
     configure<GrammarKitPluginExtension> {
@@ -96,7 +102,8 @@ allprojects {
     }
 }
 
-val versionSuffix = if (channel.isBlank()) "" else "-$channel"
+val compatibilitySuffix = prop("compatibilitySuffix")
+val versionSuffix = if (channel.isBlank()) "-$compatibilitySuffix" else "-$compatibilitySuffix-$channel"
 
 project(":") {
     val clionVersion = prop("clionVersion")
