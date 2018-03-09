@@ -102,11 +102,11 @@ allprojects {
     }
 }
 
-val compatibilitySuffix = prop("compatibilitySuffix")
-val versionSuffix = if (channel.isBlank()) "-$compatibilitySuffix" else "-$compatibilitySuffix-$channel"
+val channelSuffix = if (channel.isBlank()) "" else "-$channel"
 
 project(":") {
     val clionVersion = prop("clionVersion")
+    val versionSuffix = "-${prop("compatibilitySuffix")}$channelSuffix"
     version = "0.2.0.${prop("buildNumber")}$versionSuffix"
     intellij {
         pluginName = "intellij-rust"
@@ -198,7 +198,7 @@ project(":") {
 }
 
 project(":intellij-toml") {
-    version = "0.2.0.${prop("buildNumber")}$versionSuffix"
+    version = "0.2.0.${prop("buildNumber")}$channelSuffix"
 
     val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
         source = "src/main/grammars/TomlLexer.flex"
