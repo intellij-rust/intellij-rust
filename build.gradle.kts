@@ -32,7 +32,7 @@ val channel = prop("publishChannel")
 plugins {
     idea
     kotlin("jvm") version "1.2.21"
-    id("org.jetbrains.intellij") version "0.2.18"
+    id("org.jetbrains.intellij") version "0.2.19"
     id("de.undercouch.download") version "3.2.0"
 }
 
@@ -111,7 +111,7 @@ project(":") {
     intellij {
         pluginName = "intellij-rust"
 //        alternativeIdePath = "deps/clion-$clionVersion"
-        setPlugins("org.toml.lang:0.2.0.12")
+        setPlugins(project(":intellij-toml"))
     }
 
     repositories {
