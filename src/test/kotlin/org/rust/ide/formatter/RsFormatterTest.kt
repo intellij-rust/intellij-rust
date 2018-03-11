@@ -306,9 +306,45 @@ class RsFormatterTest : RsFormatterTestBase() {
     """)
 
     fun `test unary minus in range patterns`() = doTextTest("""
-        fn main() { if let - 10 ... - 1 = - 8 {} }
+        fn main() {
+            if let - 10 .. - 1 = - 8 {}
+            if let - 10 ... - 1 = - 8 {}
+            if let - 10 ..= - 1 = - 8 {}
+        }
     """, """
-        fn main() { if let -10 ... -1 = -8 {} }
+        fn main() {
+            if let -10..-1 = -8 {}
+            if let -10...-1 = -8 {}
+            if let -10..=-1 = -8 {}
+        }
+    """)
+
+    fun `test ranges`() = doTextTest("""
+        fn main() {
+            let r =  ..  ;
+            let r =  ..  1;
+            let r = 0  ..  ;
+            let r = 0  ..  1;
+
+            let r =  ...  1;
+            let r = 0  ...  1;
+
+            let r =  ..=  1;
+            let r = 0  ..=  1;
+        }
+    """, """
+        fn main() {
+            let r = ..;
+            let r = ..1;
+            let r = 0..;
+            let r = 0..1;
+
+            let r = ...1;
+            let r = 0...1;
+
+            let r = ..=1;
+            let r = 0..=1;
+        }
     """)
 
     fun `test preserve punctuation settings`() {

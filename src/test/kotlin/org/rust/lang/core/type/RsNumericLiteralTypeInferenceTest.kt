@@ -414,10 +414,30 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test unify match pattern range`() = testExpr("""
+    fun `test unify match pattern inclusive range`() = testExpr("""
         fn main() {
             match 0u8 {
                 0...1 => {},
+              //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern inclusive range new syntax`() = testExpr("""
+        fn main() {
+            match 0u8 {
+                0..=1 => {},
+              //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern exclusive range`() = testExpr("""
+        fn main() {
+            match 0u8 {
+                0..1 => {},
               //^ u8
                 _ => {},
             };
