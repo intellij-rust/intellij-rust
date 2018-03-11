@@ -32,7 +32,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
         allowErrors: Boolean = false
     ) = mark.checkHit { testExpr(code, description, allowErrors) }
 
-    protected fun stubOnlyTypeInfer(@Language("Rust") code: String, description: String = "") {
+    protected fun stubOnlyTypeInfer(@Language("Rust") code: String, description: String = "", allowErrors: Boolean = false) {
         val testProject = fileTreeFromText(code)
             .createAndOpenFileWithCaretMarker()
 
@@ -41,6 +41,8 @@ abstract class RsTypificationTestBase : RsTestBase() {
         })
 
         check(description)
+        if (!allowErrors) checkNoInferenceErrors()
+        checkAllExpressionsTypified()
     }
 
     private fun check(description: String) {
