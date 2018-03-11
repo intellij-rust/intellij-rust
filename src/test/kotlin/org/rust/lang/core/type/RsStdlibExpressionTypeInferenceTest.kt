@@ -14,7 +14,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = ..;
-            x
+            x;
           //^ RangeFull
         }
     """)
@@ -24,7 +24,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         #![no_std]
         fn main() {
             let x = ..;
-            x
+            x;
           //^ RangeFull
         }
     """)
@@ -33,7 +33,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = 0u16..;
-            x
+            x;
           //^ RangeFrom<u16>
         }
     """)
@@ -42,7 +42,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = ..42u16;
-            x
+            x;
           //^ RangeTo<u16>
         }
     """)
@@ -51,7 +51,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = 0u16..42;
-            x
+            x;
           //^ Range<u16>
         }
     """)
@@ -60,7 +60,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = 0..42u16;
-            x
+            x;
           //^ Range<u16>
         }
     """)
@@ -69,7 +69,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = ...42u16;
-            x
+            x;
           //^ RangeToInclusive<u16>
         }
     """)
@@ -78,7 +78,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = ..=42u16;
-            x
+            x;
           //^ RangeToInclusive<u16>
         }
     """)
@@ -87,7 +87,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = 0u16...42;
-            x
+            x;
           //^ RangeInclusive<u16>
         }
     """)
@@ -96,7 +96,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = 0...42u16;
-            x
+            x;
           //^ RangeInclusive<u16>
         }
     """)
@@ -105,7 +105,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = 0..=42u16;
-            x
+            x;
           //^ RangeInclusive<u16>
         }
     """)
@@ -114,7 +114,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = vec!(1, 2u16, 4, 8);
-            x
+            x;
           //^ Vec<u16>
         }
     """)
@@ -124,7 +124,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         #![no_std]
         fn main() {
             let x = vec!(1, 2u16, 4, 8);
-            x
+            x;
           //^ Vec<u16>
         }
     """)
@@ -133,7 +133,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = format!("{} {}", "Hello", "world!");
-            x
+            x;
           //^ String
         }
     """)
@@ -143,7 +143,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         #![no_std]
         fn main() {
             let x = format!("{} {}", "Hello", "world!");
-            x
+            x;
           //^ String
         }
     """)
@@ -152,7 +152,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = format_args!("{} {}", "Hello", "world!");
-            x
+            x;
           //^ Arguments
         }
     """)
@@ -162,7 +162,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         #![no_std]
         fn main() {
             let x = format_args!("{} {}", "Hello", "world!");
-            x
+            x;
           //^ Arguments
         }
     """)
@@ -171,7 +171,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = assert!(1 != 2);
-            x
+            x;
           //^ ()
         }
     """)
@@ -180,7 +180,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = debug_assert!(1 != 2);
-            x
+            x;
           //^ ()
         }
     """)
@@ -189,7 +189,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = assert_eq!(1 + 1, 2);
-            x
+            x;
           //^ ()
         }
     """)
@@ -198,7 +198,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = assert_ne!(1, 2);
-            x
+            x;
           //^ ()
         }
     """)
@@ -207,7 +207,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = debug_assert_eq!(1 + 1, 2);
-            x
+            x;
           //^ ()
         }
     """)
@@ -216,7 +216,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = debug_assert_ne!(1, 2);
-            x
+            x;
           //^ ()
         }
     """)
@@ -225,7 +225,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = print!("Something went wrong");
-            x
+            x;
           //^ ()
         }
     """)
@@ -234,7 +234,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = println!("Something went wrong");
-            x
+            x;
           //^ ()
         }
     """)
@@ -243,7 +243,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = eprint!("Something went wrong");
-            x
+            x;
           //^ ()
         }
     """)
@@ -252,7 +252,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = eprintln!("Something went wrong");
-            x
+            x;
           //^ ()
         }
     """)
@@ -262,7 +262,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     //- main.rs
         fn main() {
             let x = warn!("Something went wrong");
-            x
+            x;
           //^ ()
         }
     """)
@@ -283,7 +283,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
 
         fn bar(foo: Foo) {
             let foo2 = foo.clone();
-            foo2
+            foo2;
            //^ Foo
         }
     """)
@@ -298,7 +298,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
                 .map(|x| S(x))
                 .map(|x| x.0)
                 .next().unwrap();
-            a
+            a;
           //^ String
         }
     """)
@@ -313,7 +313,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
                 .filter(|x| x > 10)
                 .filter(|x| x % 2 == 0)
                 .next().unwrap();
-            a
+            a;
           //^ i32
         }
     """)
@@ -325,7 +325,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             let test: Vec<i32> = Vec::new();
             let a = test.iter()
                 .next().unwrap();
-            a
+            a;
           //^ &i32
         }
     """)
@@ -337,7 +337,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             let mut test: Vec<i32> = Vec::new();
             let a = test.iter_mut()
                 .next().unwrap();
-            a
+            a;
           //^ &mut i32
         }
     """)
@@ -349,7 +349,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let vec = vec![1, 2, 3];
             let b: Vec<_> = vec.into_iter().collect();
-            b
+            b;
           //^ Vec<i32>
         }
     """)
@@ -361,7 +361,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let vec = vec![1, 2, 3];
             let b = vec.into_iter().collect::<Vec<_>>();
-            b
+            b;
           //^ Vec<i32>
         }
     """)
@@ -373,7 +373,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let mut vec = Vec::new();
             vec.push(1);
-            vec
+            vec;
           //^ Vec<i32>
         }
     """)
@@ -404,7 +404,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
                     //- main.rs
                     fn foo(lhs: $numeric, rhs: $numeric) {
                         let x = lhs $sign rhs;
-                        x
+                        x;
                       //^ $numeric
                     }
                 """)
