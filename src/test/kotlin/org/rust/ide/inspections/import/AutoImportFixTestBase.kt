@@ -8,10 +8,6 @@ package org.rust.ide.inspections.import
 import org.intellij.lang.annotations.Language
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
-import org.rust.ide.inspections.fixes.import.AutoImportFix
-import org.rust.ide.inspections.fixes.import.ImportCandidate
-import org.rust.ide.inspections.fixes.import.ImportItemUi
-import org.rust.ide.inspections.fixes.import.withMockImportItemUi
 import org.rust.openapiext.Testmark
 
 abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferenceInspection()) {

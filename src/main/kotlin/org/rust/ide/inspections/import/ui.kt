@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.fixes.import
+package org.rust.ide.inspections.import
 
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.DefaultPsiElementCellRenderer

@@ -5,8 +5,6 @@
 
 package org.rust.ide.inspections.import
 
-import org.rust.ide.inspections.fixes.import.AutoImportFix
-
 class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import struct`() = checkAutoImportFixByText("""

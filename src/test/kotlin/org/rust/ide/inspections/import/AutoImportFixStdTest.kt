@@ -6,7 +6,6 @@
 package org.rust.ide.inspections.import
 
 import com.intellij.testFramework.LightProjectDescriptor
-import org.rust.ide.inspections.fixes.import.AutoImportFix
 
 class AutoImportFixStdTest : AutoImportFixTestBase() {
 
