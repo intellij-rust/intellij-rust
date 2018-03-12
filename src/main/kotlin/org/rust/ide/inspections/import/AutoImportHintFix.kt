@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.fixes.import
+package org.rust.ide.inspections.import
 
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.codeInsight.hint.HintManager
