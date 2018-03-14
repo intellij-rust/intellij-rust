@@ -959,6 +959,22 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test fn return associated type with generic trait bound`() = testExpr("""
+        trait SliceIndex<T> { type Output; }
+        struct S1; struct S2;
+        struct X; struct Y;
+        fn get1<I: SliceIndex<S1>>(index: I) -> I::Output { unimplemented!() }
+        fn get2<I: SliceIndex<S2>>(index: I) -> <I as SliceIndex<S2>>::Output
+            { unimplemented!() }
+        impl SliceIndex<S1> for usize { type Output = X; }
+        impl SliceIndex<S2> for usize { type Output = Y; }
+        fn main() {
+            let a = get1(0usize);
+            let b = get2(0usize);
+            (a, b);
+        } //^ (X, Y)
+    """)
+
     fun `test associated type bound`() = testExpr("""
         trait Tr { type Item; }
         trait Tr2<A> {}

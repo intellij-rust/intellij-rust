@@ -497,8 +497,7 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
 
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsMethodResolveProcessor): Boolean {
     return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
-        val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, subst, impl) ->
-            assert(subst.isEmpty())
+        val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, _, impl) ->
             element is RsFunction && !element.isAssocFn && processor(MethodCallee(name, element, impl, ty, i))
         }
         processAssociatedItems(lookup, ty, VALUES, methodProcessor)
@@ -506,13 +505,24 @@ private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty,
 }
 
 private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespace>, processor: (AssocItemScopeEntry) -> Boolean): Boolean {
+    val traitBounds = (type as? TyTypeParameter)?.getTraitBoundsTransitively()
     val visitedInherent = mutableSetOf<String>()
     fun processTraitOrImpl(traitOrImpl: RsTraitOrImpl, inherent: Boolean): Boolean {
-        fun inherentProcessor(entry: RsNamedElement, impl: RsImplItem?): Boolean {
+        fun inherentProcessor(entry: RsNamedElement): Boolean {
             val name = entry.name ?: return false
             if (inherent) visitedInherent.add(name)
             if (!inherent && name in visitedInherent) return false
-            return processor(AssocItemScopeEntry(name, entry, emptySubstitution, impl))
+
+            val subst = if (traitBounds != null && traitOrImpl is RsTraitItem) {
+                // Retrieve trait subst for associated type like
+                // trait SliceIndex<T> { type Output; }
+                // fn get<I: : SliceIndex<S>>(index: I) -> I::Output
+                // Resulting subst will contains mapping T => S
+                traitBounds.find { it.element == traitOrImpl }?.subst ?: emptySubstitution
+            } else {
+                emptySubstitution
+            }
+            return processor(AssocItemScopeEntry(name, entry, subst, traitOrImpl as? RsImplItem))
         }
 
         /**
@@ -520,15 +530,14 @@ private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespa
          * which are not implemented.
          */
         fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsNamedElement>): Boolean {
-            val impl = traitOrImpl as? RsImplItem
             val directlyImplemented = traitOrImpl.members?.let { accessor(it) }.orEmpty()
-            if (directlyImplemented.any { inherentProcessor(it, impl) }) return true
+            if (directlyImplemented.any { inherentProcessor(it) }) return true
 
             if (traitOrImpl is RsImplItem) {
                 val direct = directlyImplemented.map { it.name }.toSet()
                 val membersFromTrait = traitOrImpl.implementedTrait?.element?.members ?: return false
                 for (member in accessor(membersFromTrait)) {
-                    if (member.name !in direct && inherentProcessor(member, impl)) return true
+                    if (member.name !in direct && inherentProcessor(member)) return true
                 }
             }
 
