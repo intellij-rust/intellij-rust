@@ -599,6 +599,17 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test method of Self type`() = checkByCode("""
+        struct S;
+        impl S {
+            fn foo(a: Self) { a.bar() }
+        }                     //^
+
+        trait T { fn bar(&self) {} }
+                   //X
+        impl T for S {}
+    """)
+
     fun `test struct update syntax`() = checkByCode("""
         struct S {
             f1: u32,
