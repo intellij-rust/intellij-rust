@@ -205,6 +205,15 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                //^ [i32; <unknown>]
     """)
 
+    fun `test associated type`() = testType("""
+        trait Trait<T> {
+            type Item;
+        }
+        fn foo<B: Trait<u8>>(_: B) {
+            let a: B::Item;
+        }           //^ <B as Trait<u8>>::Item
+    """)
+
     fun `test associated types for impl`() = testType("""
         trait A {
             type Item;

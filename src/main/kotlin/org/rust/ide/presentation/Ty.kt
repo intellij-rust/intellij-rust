@@ -61,7 +61,9 @@ private fun render(
         }"
         is TyPointer -> "*${if (ty.mutability.isMut) "mut" else "const"} ${r(ty.referenced)}"
         is TyTypeParameter -> ty.name ?: anonymous
-        is TyProjection -> "<${ty.type} as ${ty.trait.name}>::${ty.target.name}"
+        is TyProjection -> "<${ty.type} as ${ty.trait.element.name ?: return anonymous}${
+        if (includeTypeArguments) formatTraitTypeArguments(ty.trait, r, includeAssoc = false) else ""
+        }>::${ty.target.name}"
         is TyTraitObject -> (ty.trait.element.name ?: return anonymous) +
             if (includeTypeArguments) formatTraitTypeArguments(ty.trait, r) else ""
         is TyAdt -> (ty.item.name ?: return anonymous) +
@@ -83,11 +85,19 @@ private fun render(
 private fun formatTypeArguments(typeArguments: List<Ty>, r: (Ty) -> String) =
     if (typeArguments.isEmpty()) "" else typeArguments.joinToString(", ", "<", ">", transform = r)
 
-private fun formatTraitTypeArguments(e: BoundElement<RsTraitItem>, r: (Ty) -> String): String {
+private fun formatTraitTypeArguments(
+    e: BoundElement<RsTraitItem>,
+    r: (Ty) -> String,
+    includeAssoc: Boolean = true
+): String {
     val subst = e.element.typeParameters.map { r(e.subst[TyTypeParameter.named(it)] ?: TyUnknown) }
-    val assoc = e.element.associatedTypesTransitively.mapNotNull {
-        val name = it.name ?: return@mapNotNull null
-        name + "=" + r(e.assoc[it] ?: TyUnknown)
+    val assoc = if (includeAssoc) {
+        e.element.associatedTypesTransitively.mapNotNull {
+            val name = it.name ?: return@mapNotNull null
+            name + "=" + r(e.assoc[it] ?: TyUnknown)
+        }
+    } else {
+        emptyList()
     }
     val visibleTypes = subst + assoc
     return if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">")
