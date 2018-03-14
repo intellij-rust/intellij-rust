@@ -30,7 +30,13 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
             val (target, subst) = boundElement
 
             when {
-                target is RsTraitOrImpl && type.isCself -> TyTypeParameter.self(target)
+                target is RsTraitOrImpl && type.isCself -> {
+                    if (target is RsImplItem) {
+                        target.typeReference?.type ?: TyUnknown
+                    } else {
+                        TyTypeParameter.self(target)
+                    }
+                }
                 target is RsTraitItem -> TyTraitObject(boundElement.downcast()!!)
                 else -> (target as? RsTypeDeclarationElement ?: return TyUnknown).declaredType.substitute(subst)
             }
