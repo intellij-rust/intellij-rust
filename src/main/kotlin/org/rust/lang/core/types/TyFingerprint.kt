@@ -23,34 +23,39 @@ data class TyFingerprint constructor(
     companion object {
 
         val TYPE_PARAMETER_FINGERPRINT = TyFingerprint("#T")
+        private val ANY_INTEGER_FINGERPRINT = TyFingerprint("{integer}")
+        private val ANY_FLOAT_FINGERPRINT = TyFingerprint("{float}")
 
         // Keep in sync with Declarations-inferTypeReferenceType
-        fun create(ref: RsTypeReference, typeParameters: List<String>): TyFingerprint? {
+        fun create(ref: RsTypeReference, typeParameters: List<String>): List<TyFingerprint> {
             val type = ref.typeElement
-            return when (type) {
+            val fingerprint = when (type) {
                 is RsTupleType -> TyFingerprint("(tuple)")
                 is RsBaseType -> when {
                     type.isUnit -> TyFingerprint("()")
                     type.isNever -> TyFingerprint("!")
                     else -> {
-                        val name = type.name ?: return null
-                        if (name in typeParameters) {
-                            TYPE_PARAMETER_FINGERPRINT
-                        } else {
-                            TyFingerprint(name)
+                        val name = type.name ?: return emptyList()
+                        when (name) {
+                            in typeParameters -> TYPE_PARAMETER_FINGERPRINT
+                            in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
+                            in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
+                            else -> TyFingerprint(name)
                         }
                     }
                 }
                 is RsRefLikeType -> {
-                    if (type.isPointer)
+                    if (type.isPointer) {
                         TyFingerprint("*T")
-                    else
-                        create(type.typeReference, typeParameters)
+                    } else {
+                        return create(type.typeReference, typeParameters)
+                    }
                 }
                 is RsArrayType -> TyFingerprint("[T]")
                 is RsFnPointerType -> TyFingerprint("fn()")
-                else -> null
+                else -> return emptyList()
             }
+            return listOf(fingerprint)
         }
 
         fun create(type: Ty): TyFingerprint? = when (type) {
@@ -61,6 +66,8 @@ data class TyFingerprint constructor(
             is TyTuple -> TyFingerprint("(tuple)")
             is TyPrimitive -> TyFingerprint(type.toString())
             is TyFunction -> TyFingerprint("fn()")
+            is TyInfer.IntVar -> ANY_INTEGER_FINGERPRINT
+            is TyInfer.FloatVar -> ANY_FLOAT_FINGERPRINT
             else -> null
         }
     }

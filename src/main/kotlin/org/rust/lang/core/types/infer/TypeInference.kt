@@ -402,7 +402,7 @@ class RsInferenceContext(
 
     /** See [optNormalizeProjectionType] */
     private fun optNormalizeProjectionTypeResolved(projectionTy: TyProjection, recursionDepth: Int): TyWithObligations<Ty>? {
-        if (projectionTy.type is TyInfer) return null
+        if (projectionTy.type is TyInfer.TyVar) return null
 
         val cacheResult = projectionCache.tryStart(projectionTy)
         return when (cacheResult) {

@@ -1384,4 +1384,26 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             b;
         } //^ u8
     """)
+
+    fun `test select trait from unconstrained integer`() = testExpr("""
+        struct X;
+        trait Tr<A> {}
+        impl Tr<X> for u8 {}
+        fn foo<B: Tr<C>, C>(_: B) -> C { unimplemented!() }
+        fn main() {
+            let a = foo(0);
+            a;
+        } //^ X
+    """)
+
+    fun `test select projection from unconstrained integer`() = testExpr("""
+        struct X;
+        trait Tr { type Item; }
+        impl Tr for u8 { type Item = X; }
+        fn foo<B: Tr>(_: B) -> B::Item { unimplemented!() }
+        fn main() {
+            let a = foo(0);
+            a;
+        } //^ X
+    """)
 }
