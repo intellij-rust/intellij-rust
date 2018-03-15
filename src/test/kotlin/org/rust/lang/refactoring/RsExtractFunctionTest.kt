@@ -726,35 +726,75 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
-        fun `test extract a function with reference parameter`() = doTest("""
-            #[derive(Copy, Clone, Debug)]
-            struct Copyable;
-
+    fun `test extract a function with passing primitive`() = doTest("""
             fn foo() {
-                let vec = vec![1, 2, 3];
-                let mut mut_vec = vec![1, 2, 3];
                 let i = 1;
                 let f = 1.1;
                 let b = true;
                 let c = 'c';
+
+                <selection>println!("{}", i);
+                println!("{}", f);
+                println!("{}", b);
+                println!("{}", c);</selection>
+
+                println!("{}", i);
+                println!("{}", f);
+                println!("{}", b);
+                println!("{}", c);
+            }
+        """, """
+            fn foo() {
+                let i = 1;
+                let f = 1.1;
+                let b = true;
+                let c = 'c';
+
+                bar(i, f, b, c);
+
+                println!("{}", i);
+                println!("{}", f);
+                println!("{}", b);
+                println!("{}", c);
+            }
+
+            fn bar(i: i32, f: f64, b: bool, c: char) {
+                println!("{}", i);
+                println!("{}", f);
+                println!("{}", b);
+                println!("{}", c);
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with passing reference`() = doTest("""
+            fn foo() {
                 let s = "str";
+                <selection>println!("{}", s);</selection>
+                println!("{}", s);
+            }
+        """, """
+            fn foo() {
+                let s = "str";
+                bar(s);
+                println!("{}", s);
+            }
+
+            fn bar(s: &str) {
+                println!("{}", s);
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with passing copy trait`() = doTest("""
+            #[derive(Copy, Clone, Debug)]
+            struct Copyable;
+
+            fn foo() {
                 let copy = Copyable;
-
-                <selection>println!("{}", vec.len());
-                mut_vec.push(123);
-                println!("{}", i);
-                println!("{}", f);
-                println!("{}", b);
-                println!("{}", c);
-                println!("{}", s);
-                println!("{:?}", copy);</selection>
-
-                println!("{}", vec.len());
-                println!("{}", i);
-                println!("{}", f);
-                println!("{}", b);
-                println!("{}", c);
-                println!("{}", s);
+                <selection>println!("{:?}", copy);</selection>
                 println!("{:?}", copy);
             }
         """, """
@@ -762,35 +802,105 @@ class RsExtractFunctionTest : RsTestBase() {
             struct Copyable;
 
             fn foo() {
-                let vec = vec![1, 2, 3];
-                let mut mut_vec = vec![1, 2, 3];
-                let i = 1;
-                let f = 1.1;
-                let b = true;
-                let c = 'c';
-                let s = "str";
                 let copy = Copyable;
-
-                bar(&vec, &mut mut_vec, i, f, b, c, s, copy);
-
-                println!("{}", vec.len());
-                println!("{}", i);
-                println!("{}", f);
-                println!("{}", b);
-                println!("{}", c);
-                println!("{}", s);
+                bar(copy);
                 println!("{:?}", copy);
             }
 
-            fn bar(vec: &Vec<i32>, mut_vec: &mut Vec<i32>, i: i32, f: f64, b: bool, c: char, s: &str, copy: Copyable) {
-                println!("{}", vec.len());
-                mut_vec.push(123);
-                println!("{}", i);
-                println!("{}", f);
-                println!("{}", b);
-                println!("{}", c);
-                println!("{}", s);
+            fn bar(copy: Copyable) {
                 println!("{:?}", copy);
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with passing by &`() = doTest("""
+            fn foo() {
+                let vec = vec![1, 2, 3];
+                let vec2 = vec![1, 2, 3];
+
+                <selection>println!("{}", vec.len());
+                println!("{}", vec2.len());</selection>
+
+                println!("{}", vec.len());
+            }
+        """, """
+            fn foo() {
+                let vec = vec![1, 2, 3];
+                let vec2 = vec![1, 2, 3];
+
+                bar(&vec, vec2);
+
+                println!("{}", vec.len());
+            }
+
+            fn bar(vec: &Vec<i32>, vec2: Vec<i32>) {
+                println!("{}", vec.len());
+                println!("{}", vec2.len());
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with passing by &mut`() = doTest("""
+            fn foo() {
+                let mut vec = vec![1, 2, 3];
+                let mut vec2 = vec![1, 2, 3];
+
+                <selection>vec.push(123);
+                vec2.push(123);</selection>
+
+                println!("{}", vec.len());
+            }
+        """, """
+            fn foo() {
+                let mut vec = vec![1, 2, 3];
+                let mut vec2 = vec![1, 2, 3];
+
+                bar(&mut vec, &mut vec2);
+
+                println!("{}", vec.len());
+            }
+
+            fn bar(vec: &mut Vec<i32>, vec2: &mut Vec<i32>) {
+                vec.push(123);
+                vec2.push(123);
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract a function with passing by mut`() = doTest("""
+            fn test(mut v: Vec<i32>) {}
+            fn test2(v: &mut Vec<i32>) {}
+            fn test3(v: Vec<i32>) {}
+
+            fn foo() {
+                let mut vec = vec![1, 2, 3];
+                let mut vec2 = vec![1, 2, 3];
+                let vec3 = vec![1, 2, 3];
+
+                <selection>test(vec);
+                test2(&mut vec2);
+                test3(vec3);</selection>
+            }
+        """, """
+            fn test(mut v: Vec<i32>) {}
+            fn test2(v: &mut Vec<i32>) {}
+            fn test3(v: Vec<i32>) {}
+
+            fn foo() {
+                let mut vec = vec![1, 2, 3];
+                let mut vec2 = vec![1, 2, 3];
+                let vec3 = vec![1, 2, 3];
+
+                bar(vec, vec2, vec3);
+            }
+
+            fn bar(mut vec: Vec<i32>, mut vec2: Vec<i32>, vec3: Vec<i32>) {
+                test(vec);
+                test2(&mut vec2);
+                test3(vec3);
             }
         """,
         false,
