@@ -572,6 +572,44 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }      //^
     """)
 
+    fun `test impl trait for integer`() = checkByCode("""
+        trait T { fn foo(self); }
+        impl T for u8 { fn foo(self) {} }
+                         //X
+        fn main() {
+            0.foo();
+        }   //^
+    """)
+
+    fun `test impl trait for float`() = checkByCode("""
+        trait T { fn foo(self); }
+        impl T for f32 { fn foo(self) {} }
+                          //X
+        fn main() {
+            0.0.foo();
+        }     //^
+    """)
+
+    fun `test impl trait for integer reference`() = checkByCode("""
+        trait T { fn foo(self); }
+        impl T for &u8 { fn foo(self) {} }
+                         //X
+        fn main() {
+            (&0).foo();
+        }      //^
+    """)
+
+    // TODO should be resolved to i32
+    fun `test multiple impl trait for integer`() = checkByCode("""
+        trait T { fn foo(self); }
+                   //X
+        impl T for u8 { fn foo(self) {} }
+        impl T for i32 { fn foo(self) {} }
+        fn main() {
+            0.foo();
+        }   //^
+    """)
+
     fun `test resolve UFCS method call`() = checkByCode("""
         struct S;
         trait T { fn foo(&self); }

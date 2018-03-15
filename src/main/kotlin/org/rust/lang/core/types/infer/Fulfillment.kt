@@ -184,7 +184,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
 
         when (predicate) {
             is Predicate.Trait -> {
-                if (predicate.trait.selfTy is TyInfer) return ProcessPredicateResult.NoChanges
+                if (predicate.trait.selfTy is TyInfer.TyVar) return ProcessPredicateResult.NoChanges
                 val impl = lookup.select(predicate.trait, obligation.recursionDepth)
                 return when (impl) {
                     is SelectionResult.Err -> ProcessPredicateResult.Err
@@ -204,7 +204,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
                 return ProcessPredicateResult.Ok()
             }
             is Predicate.Projection -> {
-                if (predicate.projectionTy.type is TyInfer) return ProcessPredicateResult.NoChanges
+                if (predicate.projectionTy.type is TyInfer.TyVar) return ProcessPredicateResult.NoChanges
                 val result = ctx.optNormalizeProjectionType(predicate.projectionTy, obligation.recursionDepth)
                 return if (result == null) {
                     pendingObligation.stalledOn = traitRefTypeVars(predicate.projectionTy.traitRef)

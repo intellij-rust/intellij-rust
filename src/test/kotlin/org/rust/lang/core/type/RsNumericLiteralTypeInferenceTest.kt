@@ -499,4 +499,20 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
             };
         }
     """)
+
+    fun `test unify unconstrained integer receiver with impl type`() = testExpr("""
+        trait T { fn foo(self); }
+        impl T for u8 { fn foo(self) {} }
+        fn main() {
+            0.foo();
+        } //^ u8
+    """)
+
+    fun `test unify unconstrained float receiver with impl type`() = testExpr("""
+        trait T { fn foo(self); }
+        impl T for f32 { fn foo(self) {} }
+        fn main() {
+            0.0.foo();
+        } //^ f32
+    """)
 }
