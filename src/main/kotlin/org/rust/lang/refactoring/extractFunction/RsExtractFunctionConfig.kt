@@ -11,10 +11,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.utils.findStatementsInRange
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsPatBinding
-import org.rust.lang.core.psi.RsTypeParameter
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.ty.*
@@ -42,21 +39,23 @@ class ReturnValue(val expression: String?, val type: Ty) {
 class Parameter(
     val name: String,
     val type: Ty? = null,
-    val reference: Reference = Reference.NONE
+    val reference: Reference = Reference.NONE,
+    isMutableValue: Boolean = false
 ) {
 
     enum class Reference(val text: String) {
-        MUTABLE("&mut "), BORROWING("& "), NONE("")
+        MUTABLE("&mut "), IMMUTABLE("& "), NONE("")
     }
 
     companion object {
-        fun direct(value: RsPatBinding, requiredBorrowing: Boolean): Parameter {
+        fun direct(value: RsPatBinding, requiredBorrowing: Boolean, requiredMutableValue: Boolean): Parameter {
             val reference = when {
+                requiredMutableValue -> Reference.NONE
                 value.mutability.isMut -> Reference.MUTABLE
-                requiredBorrowing -> Reference.BORROWING
+                requiredBorrowing -> Reference.IMMUTABLE
                 else -> Reference.NONE
             }
-            return Parameter(value.referenceName, value.type, reference)
+            return Parameter(value.referenceName, value.type, reference, requiredMutableValue)
         }
 
         fun self(value: String): Parameter {
@@ -64,8 +63,10 @@ class Parameter(
         }
     }
 
+    private val mut = if (isMutableValue) "mut " else ""
+
     val parameterText: String
-        get() = if (type != null) "$name: ${reference.text}${type.insertionSafeText}" else name
+        get() = if (type != null) "$mut$name: ${reference.text}${type.insertionSafeText}" else name
 
     val argumentText: String
         get() = "${reference.text}$name"
@@ -162,11 +163,21 @@ class RsExtractFunctionConfig private constructor(
                     if (it.textOffset > start) return@mapNotNull null
                     val result = ReferencesSearch.search(it, LocalSearchScope(fn))
                     if (result.none { it.element.textOffset in start..end }) return@mapNotNull null
+
                     val requiredBorrowing = result.any { it.element.textOffset > end }
                         && it.type !== TyBool && it.type !== TyChar && it.type !is TyInteger && it.type !is TyFloat
                         && it.type !is TyReference
                         && !implLookup.isCopy(it.type)
-                    Parameter.direct(it, requiredBorrowing)
+
+                    val requiredMutableValue = it.mutability.isMut && result.any {
+                        val element = it.element
+                        if (element.textOffset !in start..end) return@any false
+                        if (element.ancestorStrict<RsValueArgumentList>() == null) return@any false
+                        val unaryExpr = element.ancestorStrict<RsUnaryExpr>()
+                        unaryExpr == null || unaryExpr.operatorType == UnaryOperator.REF_MUT
+                    }
+
+                    Parameter.direct(it, requiredBorrowing, requiredMutableValue)
                 }
                 .toMutableList()
 
