@@ -703,8 +703,9 @@ private TypeReferenceInner ::= ArrayType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
                                | ExplicitTraitType
+                               | TrivialBaseType
                                // External rule to find the difference between `T` and `T+T`
-                               | <<baseOrTraitType BaseTypeInner ImplicitTraitType TraitType_upper>>
+                               | <<baseOrTraitType PathGenericArgsWithoutColons ImplicitTraitType TraitType_upper>>
                                | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
 
 private ScalarTypeReferenceInner ::= ArrayType
@@ -764,14 +765,15 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-BaseType ::= BaseTypeInner {
+BaseType ::= TrivialBaseTypeInner | PathGenericArgsWithoutColons {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private BaseTypeInner ::= '(' ')' | '_' | '!' | PathGenericArgsWithoutColons
+TrivialBaseType ::= TrivialBaseTypeInner { elementType = BaseType }
+private TrivialBaseTypeInner ::= '(' ')' | '_' | '!'
 
 // `impl Trait` or `dyn Trait` or `Trait+'a`
 fake TraitType ::= ExplicitTraitTypeInner | ImplicitTraitTypeInner {
