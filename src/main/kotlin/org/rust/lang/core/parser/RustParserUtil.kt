@@ -214,7 +214,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun baseOrTraitType(
         b: PsiBuilder,
         level: Int,
-        baseTypeP: Parser,
+        pathP: Parser,
         implicitTraitTypeP: Parser,
         traitTypeUpperP: Parser
     ): Boolean {
@@ -223,7 +223,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         val bound = enter_section_(b)
         val traitRef = enter_section_(b)
 
-        if (!baseTypeP.parse(b, level + 1)) {
+        if (!pathP.parse(b, level + 1)) {
             // May be it is lifetime `'a` or `for<'a>`
             exit_section_(b, traitRef, null, false)
             exit_section_(b, bound, null, false)
