@@ -84,7 +84,14 @@ fun processFieldExprResolveVariants(
 }
 
 fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
-    var resolved = field.parentStructLiteral.path.reference.resolve()
+    val path = field.parentStructLiteral.path
+    var resolved = path.reference.resolve()?.let { resolved ->
+        if (resolved is RsImplItem && path.hasCself) {
+            (resolved.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve()
+        } else {
+            resolved
+        }
+    }
 
     // Resolve potential type aliases
     while (resolved is RsTypeAlias) {
@@ -224,7 +231,10 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         if (processItemOrEnumVariantDeclarations(base, ns, processor, isSuperChain(qualifier))) return true
         if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) {
             // Foo::<Bar>::baz
-            val selfTy = run {
+            val selfTy = if (base is RsImplItem && qualifier.hasCself) {
+                // impl S { fn foo() { Self::bar() } }
+                base.typeReference?.type ?: TyUnknown
+            } else {
                 val realSubst = if (qualifier.typeArgumentList != null) {
                     // If the path contains explicit type arguments `Foo::<_, Bar, _>::baz`
                     // it means that all possible `TyInfer` has already substituted (with `_`)

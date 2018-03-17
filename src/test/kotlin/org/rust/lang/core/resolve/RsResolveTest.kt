@@ -573,6 +573,43 @@ class RsResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
+    fun `test struct field Self`() = checkByCode("""
+        struct S { foo: i32 }
+                  //X
+        impl S {
+            fn new() -> Self {
+                Self {
+                    foo: 0
+                } //^
+            }
+        }
+    """)
+
+    fun `test Self-related item lookup`() = checkByCode("""
+        struct S;
+        impl S {
+            fn new() -> S { S }
+        }    //X
+
+        trait T { fn x(); }
+        impl T for S {
+            fn x() {
+                Self::new();
+            }       //^
+        }
+    """)
+
+    fun `test method of Self type`() = checkByCode("""
+        struct S;
+        impl S {
+            fn foo(a: Self) { a.bar() }
+        }                     //^
+
+        trait T { fn bar(&self) {} }
+                   //X
+        impl T for S {}
+    """)
+
     fun `test struct update syntax`() = checkByCode("""
         struct S {
             f1: u32,

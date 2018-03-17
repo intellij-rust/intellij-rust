@@ -211,11 +211,11 @@ class RsGotoTypeDeclarationTest : RsTestBase() {
         }
     """, """
         trait Foo {
-            type /*caret*/Bar;
+            type Bar;
             fn foo(&self) -> Self::Bar;
         }
         struct Baz;
-        struct Qwe;
+        struct /*caret*/Qwe;
         impl Foo for Baz {
             type Bar = Qwe;
 
