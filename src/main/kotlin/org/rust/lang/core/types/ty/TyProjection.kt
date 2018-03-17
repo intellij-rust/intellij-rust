@@ -34,7 +34,7 @@ import org.rust.lang.core.types.infer.TypeVisitor
 @Suppress("DataClassPrivateConstructor")
 data class TyProjection private constructor(
     val type: Ty,
-    val trait: RsTraitItem, // TODO should be BoundElement<RsTraitItem>
+    val trait: BoundElement<RsTraitItem>,
     val target: RsTypeAlias
 ): Ty(type.flags or HAS_TY_PROJECTION_MASK) {
 
@@ -44,10 +44,10 @@ data class TyProjection private constructor(
      * then this property would return a `T: Iterator` trait reference.
      */
     val traitRef: TraitRef
-        get() = TraitRef(type, BoundElement(trait))
+        get() = TraitRef(type, trait)
 
     override fun superFoldWith(folder: TypeFolder): Ty =
-        TyProjection(type.foldWith(folder), trait, target)
+        TyProjection(type.foldWith(folder), trait.foldWith(folder), target)
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         type.visitWith(visitor)
@@ -55,7 +55,7 @@ data class TyProjection private constructor(
     companion object {
         private fun valueOf(type: Ty, target: RsTypeAlias): TyProjection = TyProjection(
             type,
-            (target.owner as? RsAbstractableOwner.Trait)?.trait
+            (target.owner as? RsAbstractableOwner.Trait)?.trait?.withDefaultSubst()
                 ?: error("Tried to construct an associated type from RsTypeAlias declared out of a trait"),
             target
         )

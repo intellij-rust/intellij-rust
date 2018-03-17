@@ -35,10 +35,13 @@ data class TyTraitObject(val trait: BoundElement<RsTraitItem>) : Ty(mergeFlags(t
     companion object {
         fun valueOf(trait: RsTraitItem): TyTraitObject {
             val item = CompletionUtil.getOriginalOrSelf(trait)
-            return TyTraitObject(BoundElement(item, defaultSubstitution(item)))
+            return TyTraitObject(item.withDefaultSubst())
         }
     }
 }
+
+fun RsTraitItem.withDefaultSubst(): BoundElement<RsTraitItem> =
+    BoundElement(this, defaultSubstitution(this))
 
 private fun defaultSubstitution(item: RsTraitItem): Substitution =
     item.typeParameters.associate { rsTypeParameter ->
