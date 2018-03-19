@@ -8,6 +8,7 @@ package org.rust.openapiext
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -110,3 +111,5 @@ class CachedVirtualFile(private val url: String?) {
 }
 
 val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTestMode
+
+fun saveAllDocuments() = FileDocumentManager.getInstance().saveAllDocuments()

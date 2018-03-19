@@ -12,11 +12,13 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.ui.Messages
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.openapiext.pathAsPath
+import org.rust.openapiext.saveAllDocuments
 
 
 class AttachCargoProjectAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
+        saveAllDocuments()
         val descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
             .withFileFilter { it.name == RustToolchain.CARGO_TOML }
             .withTitle("Select Cargo.toml")
