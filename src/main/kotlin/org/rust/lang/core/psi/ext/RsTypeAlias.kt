@@ -20,6 +20,16 @@ import javax.swing.Icon
 val RsTypeAlias.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 
+fun RsTypeAlias.baseType(): RsElement? {
+    var base: RsElement? = this
+    val visited = mutableSetOf<RsElement>(this)
+    while (base is RsTypeAlias) {
+        base = (base.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve() ?: return null
+        if (base in visited) return null
+        visited += base
+    }
+    return base
+}
 
 abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>, RsTypeAlias {
 
