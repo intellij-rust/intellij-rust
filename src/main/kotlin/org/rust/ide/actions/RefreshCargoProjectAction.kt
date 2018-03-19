@@ -11,6 +11,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.hasCargoProject
+import org.rust.openapiext.saveAllDocuments
 
 class RefreshCargoProjectAction : AnAction() {
     init {
@@ -27,6 +28,7 @@ class RefreshCargoProjectAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
+        saveAllDocuments()
         if (project.toolchain == null || !project.hasCargoProject) {
             guessAndSetupRustProject(project, explicitRequest = true)
         } else {
