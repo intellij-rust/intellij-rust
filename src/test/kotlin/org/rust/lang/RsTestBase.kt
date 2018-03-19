@@ -187,6 +187,12 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
             private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
             val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
+            val isNightly by lazy {
+                toolchain
+                    ?.queryVersionsSync()
+                    ?.rustc
+                    ?.nightlyCommitHash != null
+            }
 
             override val skipTestReason: String?
                 get() {

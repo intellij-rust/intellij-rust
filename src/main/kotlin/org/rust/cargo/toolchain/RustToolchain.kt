@@ -5,6 +5,7 @@
 
 package org.rust.cargo.toolchain
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -27,8 +28,11 @@ data class RustToolchain(val location: Path) {
 
     fun queryVersions(): VersionInfo {
         checkIsBackgroundThread()
-        return VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
+        return queryVersionsSync()
     }
+
+    @VisibleForTesting
+    fun queryVersionsSync(): VersionInfo = VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
 
     fun rawCargo(): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC))
