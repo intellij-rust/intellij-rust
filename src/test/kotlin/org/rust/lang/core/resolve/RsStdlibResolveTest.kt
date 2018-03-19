@@ -5,10 +5,12 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsStdlibResolveTest : RsResolveTestBase() {
+
+    // BACKCOMPAT: Rust 1.24.1
+    private var isNightly: Boolean = projectDescriptor.isNightly
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
@@ -314,7 +316,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     """)
 
     fun `test Instant minus Duration`() {
-        val path = if (isEap()) "time.rs" else "time/mod.rs"
+        val path = if (isNightly) "time.rs" else "time/mod.rs"
 
         stubOnlyResolve("""
         //- main.rs
@@ -336,7 +338,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     """)
 
     fun `test resolve arithmetic operator`() {
-        val path = if (isEap()) "time.rs" else "time/mod.rs"
+        val path = if (isNightly) "time.rs" else "time/mod.rs"
 
         stubOnlyResolve("""
         //- main.rs
@@ -524,7 +526,4 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             let _: String = "".into();
         }                    //^ ...convert.rs
     """)
-
-    // BACKCOMPAT: Rust 1.23
-    private fun isEap(): Boolean = ApplicationInfoEx.getInstanceEx().isEAP
 }
