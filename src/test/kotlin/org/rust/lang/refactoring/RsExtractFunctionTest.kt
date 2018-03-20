@@ -815,28 +815,36 @@ class RsExtractFunctionTest : RsTestBase() {
         "bar")
 
     fun `test extract a function with passing by &`() = doTest("""
+            fn f(a: &Vec<i32>) {}
+
             fn foo() {
                 let vec = vec![1, 2, 3];
                 let vec2 = vec![1, 2, 3];
+                let vec3 = vec![1, 2, 3];
 
                 <selection>println!("{}", vec.len());
-                println!("{}", vec2.len());</selection>
+                println!("{}", vec2.len());
+                f(&vec3);</selection>
 
                 println!("{}", vec.len());
             }
         """, """
+            fn f(a: &Vec<i32>) {}
+
             fn foo() {
                 let vec = vec![1, 2, 3];
                 let vec2 = vec![1, 2, 3];
+                let vec3 = vec![1, 2, 3];
 
-                bar(&vec, vec2);
+                bar(&vec, vec2, &vec3);
 
                 println!("{}", vec.len());
             }
 
-            fn bar(vec: &Vec<i32>, vec2: Vec<i32>) {
+            fn bar(vec: &Vec<i32>, vec2: Vec<i32>, vec3: &Vec<i32>) {
                 println!("{}", vec.len());
                 println!("{}", vec2.len());
+                f(&vec3);
             }
         """,
         false,
@@ -873,34 +881,28 @@ class RsExtractFunctionTest : RsTestBase() {
     fun `test extract a function with passing by mut`() = doTest("""
             fn test(mut v: Vec<i32>) {}
             fn test2(v: &mut Vec<i32>) {}
-            fn test3(v: Vec<i32>) {}
 
             fn foo() {
                 let mut vec = vec![1, 2, 3];
                 let mut vec2 = vec![1, 2, 3];
-                let vec3 = vec![1, 2, 3];
 
                 <selection>test(vec);
-                test2(&mut vec2);
-                test3(vec3);</selection>
+                test2(&mut vec2);</selection>
             }
         """, """
             fn test(mut v: Vec<i32>) {}
             fn test2(v: &mut Vec<i32>) {}
-            fn test3(v: Vec<i32>) {}
 
             fn foo() {
                 let mut vec = vec![1, 2, 3];
                 let mut vec2 = vec![1, 2, 3];
-                let vec3 = vec![1, 2, 3];
 
-                bar(vec, vec2, vec3);
+                bar(vec, &mut vec2);
             }
 
-            fn bar(mut vec: Vec<i32>, mut vec2: Vec<i32>, vec3: Vec<i32>) {
+            fn bar(mut vec: Vec<i32>, mut vec2: &mut Vec<i32>) {
                 test(vec);
                 test2(&mut vec2);
-                test3(vec3);
             }
         """,
         false,

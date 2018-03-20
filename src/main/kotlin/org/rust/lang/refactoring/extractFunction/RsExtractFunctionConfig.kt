@@ -50,7 +50,7 @@ class Parameter(
     companion object {
         fun direct(value: RsPatBinding, requiredBorrowing: Boolean, requiredMutableValue: Boolean): Parameter {
             val reference = when {
-                requiredMutableValue -> Reference.NONE
+                requiredMutableValue -> if (requiredBorrowing) Reference.MUTABLE else Reference.NONE
                 value.mutability.isMut -> Reference.MUTABLE
                 requiredBorrowing -> Reference.IMMUTABLE
                 else -> Reference.NONE
@@ -162,19 +162,24 @@ class RsExtractFunctionConfig private constructor(
                 .mapNotNull {
                     if (it.textOffset > start) return@mapNotNull null
                     val result = ReferencesSearch.search(it, LocalSearchScope(fn))
-                    if (result.none { it.element.textOffset in start..end }) return@mapNotNull null
 
-                    val requiredBorrowing = result.any { it.element.textOffset > end }
-                        && it.type !== TyBool && it.type !== TyChar && it.type !is TyInteger && it.type !is TyFloat
+                    val targets = result.filter { it.element.textOffset in start..end }
+                    if (targets.isEmpty()) return@mapNotNull null
+
+                    val hasRefOperator = targets.any {
+                        val operatorType = (it.element.ancestorStrict<RsUnaryExpr>())?.operatorType
+                        operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT
+                    }
+                    val requiredBorrowing = hasRefOperator || result.any { it.element.textOffset > end }
+                        // We manually check primitive types because of ImplLookup.isCopy does not support them
+                        && it.type != TyBool && it.type != TyChar && it.type !is TyInteger && it.type !is TyFloat
                         && it.type !is TyReference
                         && !implLookup.isCopy(it.type)
 
-                    val requiredMutableValue = it.mutability.isMut && result.any {
-                        val element = it.element
-                        if (element.textOffset !in start..end) return@any false
-                        if (element.ancestorStrict<RsValueArgumentList>() == null) return@any false
-                        val unaryExpr = element.ancestorStrict<RsUnaryExpr>()
-                        unaryExpr == null || unaryExpr.operatorType == UnaryOperator.REF_MUT
+                    val requiredMutableValue = it.mutability.isMut && targets.any {
+                        if (it.element.ancestorStrict<RsValueArgumentList>() == null) return@any false
+                        val operatorType = it.element.ancestorStrict<RsUnaryExpr>()?.operatorType
+                        operatorType == null || operatorType == UnaryOperator.REF_MUT
                     }
 
                     Parameter.direct(it, requiredBorrowing, requiredMutableValue)
