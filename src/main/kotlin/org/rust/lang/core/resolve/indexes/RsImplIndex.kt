@@ -41,10 +41,8 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
         fun index(stub: RsImplItemStub, sink: IndexSink) {
             val impl = stub.psi
             val typeRef = impl.typeReference ?: return
-            val key = TyFingerprint.create(typeRef, impl.typeParameters.mapNotNull { it.name })
-            if (key != null) {
-                sink.occurrence(KEY, key)
-            }
+            TyFingerprint.create(typeRef, impl.typeParameters.mapNotNull { it.name })
+                .forEach { sink.occurrence(KEY, it) }
         }
 
         private val KEY: StubIndexKey<TyFingerprint, RsImplItem> =

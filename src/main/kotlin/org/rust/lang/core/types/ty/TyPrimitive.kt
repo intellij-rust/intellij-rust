@@ -54,6 +54,7 @@ sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
     companion object {
         val DEFAULT = TyInteger.I32
         val VALUES = listOf(U8, U16, U32, U64, U128, USize, I8, I16, I32, I64, I128, ISize)
+        val NAMES = VALUES.map { it.name }
 
         fun fromSuffixedLiteral(literal: PsiElement): TyInteger? {
             val text = literal.text
@@ -80,6 +81,7 @@ sealed class TyFloat(val name: String, val ordinal: Int) : TyNumeric() {
     companion object {
         val DEFAULT = TyFloat.F64
         val VALUES = listOf(F32, F64)
+        val NAMES = VALUES.map { it.name }
 
         fun fromSuffixedLiteral(literal: PsiElement): TyFloat? {
             val text = literal.text
