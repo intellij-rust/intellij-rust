@@ -361,7 +361,7 @@ ForLifetimes ::= for '<' LifetimesParams '>'
 
 ExternAbi ::= extern STRING_LITERAL?
 
-RetType ::= '->' TypeReference {
+RetType ::= '->' TypeReferenceNoImplicitTraitType {
   pin = 1
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -708,6 +708,15 @@ private TypeReferenceInner ::= ArrayType
                                | <<baseOrTraitType PathGenericArgsWithoutColons ImplicitTraitType TraitType_upper>>
                                | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
 
+private TypeReferenceNoImplicitTraitTypeInner ::= ArrayType
+                               | RefLikeType
+                               | FnPointerType
+                               // External rule to find the difference between `(T)` and `(T,)`
+                               | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
+                               | ExplicitTraitType
+                               | BaseType
+                               | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
+
 private ScalarTypeReferenceInner ::= ArrayType
                                    | RefLikeType
                                    | FnPointerType
@@ -721,6 +730,7 @@ TypeReference ::= TypeReferenceInner {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
+TypeReferenceNoImplicitTraitType ::= TypeReferenceNoImplicitTraitTypeInner { elementType = TypeReference }
 ScalarTypeReference ::= ScalarTypeReferenceInner { elementType = TypeReference }
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
