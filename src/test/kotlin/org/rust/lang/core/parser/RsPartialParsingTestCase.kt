@@ -23,7 +23,7 @@ class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
     fun `test trait body`() = doTest(true)
     fun `test match expr`() = doTest(true)
     fun `test struct expr fields`() = doTest(true)
-    fun `test hrtb for lifetimes`() = doTest(true)
+    fun `test types`() = doTest(true)
     fun `test no lifetime bounds in generic args`() = doTest(true)
     fun `test require commas`() = doTest(true)
 

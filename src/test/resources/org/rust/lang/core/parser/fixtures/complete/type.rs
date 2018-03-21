@@ -9,6 +9,8 @@ type LifetimeSum = Box<'a + Copy>;
 type HrtbSum = &(for<'a> Trait1 + for<'b> Trait2);
 
 type FunSum = Box<Fn(f64, f64) -> f64 + Send + Sync>;
+type FunSum2 = Box<Fn() -> () + Send>;
+type FunRetDynTrait = Box<Fn() -> dyn Trait + Send>;
 
 type Shl = F<<i as B>::Q, T=bool>;
 type Shr = Vec<Vec<f64>>;

@@ -35,3 +35,23 @@ FILE
   PsiElement(DUMMY_BLOCK)
     PsiElement({)('{')
     PsiElement(})('}')
+  PsiWhiteSpace('\n\n')
+  RsTypeAliasImpl(TYPE_ALIAS)
+    PsiElement(type)('type')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('T')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    RsTypeReferenceImpl(TYPE_REFERENCE)
+      RsBaseTypeImpl(BASE_TYPE)
+        PsiElement(()('(')
+        PsiElement())(')')
+    PsiErrorElement:';' expected, got '+'
+      <empty list>
+  PsiWhiteSpace(' ')
+  PsiElement(+)('+')
+  PsiWhiteSpace(' ')
+  PsiElement(identifier)('A')
+  PsiErrorElement:'!' expected, got ';'
+    PsiElement(;)(';')
