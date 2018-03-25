@@ -274,6 +274,15 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test array indexing`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            let xs = ["foo", "bar"];
+            xs[0].len();
+                 //^ ...str.rs
+        }
+    """)
+
     fun `test vec indexing`() = stubOnlyResolve("""
     //- main.rs
         fn foo(xs: Vec<String>) {
