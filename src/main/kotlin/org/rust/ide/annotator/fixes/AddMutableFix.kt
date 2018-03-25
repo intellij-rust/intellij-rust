@@ -43,6 +43,7 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
         is RsPatBinding -> {
             val tuple = binding.ancestorStrict<RsPatTup>()
             val parameter = binding.ancestorStrict<RsValueParameter>()
+
             if (tuple != null && parameter != null) {
                 return
             }
@@ -54,7 +55,8 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
                 parameter.replace(newParameterExpr)
                 return
             }
-            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable)
+            val isRefBinding = (binding.bindingMode?.ref) != null
+            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable,isRefBinding)
             binding.replace(newPatBinding)
         }
         is RsSelfParameter -> {
