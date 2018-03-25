@@ -42,6 +42,17 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """, false)
 
+    fun `test do not highlight generic params`() = checkByText("""
+        mod foo_bar {
+            pub struct Foo<T>(T);
+            pub struct Bar<T>(T);
+        }
+
+        fn foo<T>() -> <error descr="Unresolved reference: `Foo`">Foo</error><<error descr="Unresolved reference: `Bar`">Bar</error><T>> {
+            unimplemented!()
+        }
+    """)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val defaultValue = (inspection as RsUnresolvedReferenceInspection).ignoreWithoutQuickFix
         try {
