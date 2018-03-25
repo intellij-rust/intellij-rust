@@ -134,8 +134,8 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
         const val NAME = "Import"
 
         fun findApplicableContext(project: Project, path: RsPath): Context? {
-            if (TyPrimitive.fromPath(path) != null) return null
             val basePath = getBasePath(path)
+            if (TyPrimitive.fromPath(basePath) != null) return null
             if (basePath.reference.multiResolve().isNotEmpty()) return null
 
             // Don't try to import path in use item
