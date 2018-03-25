@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isRef
 import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.declaration
 
@@ -55,8 +56,7 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
                 parameter.replace(newParameterExpr)
                 return
             }
-            val isRefBinding = (binding.bindingMode?.ref) != null
-            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable, isRefBinding)
+            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable = mutable, ref = binding.isRef)
             binding.replace(newPatBinding)
         }
         is RsSelfParameter -> {

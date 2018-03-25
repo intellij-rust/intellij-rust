@@ -272,7 +272,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createPatBinding(name: String, mutable: Boolean = false, ref: Boolean = false): RsPatBinding =
-        (createStatement("let ${if (ref) "ref " else ""}${if (mutable) "mut " else ""}$name = 10;") as RsLetDecl).pat
+        (createStatement("let ${"ref ".iff(ref)}${"mut ".iff(mutable)}$name = 10;") as RsLetDecl).pat
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
 
