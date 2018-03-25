@@ -56,7 +56,7 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
                 return
             }
             val isRefBinding = (binding.bindingMode?.ref) != null
-            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable,isRefBinding)
+            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable, isRefBinding)
             binding.replace(newPatBinding)
         }
         is RsSelfParameter -> {
