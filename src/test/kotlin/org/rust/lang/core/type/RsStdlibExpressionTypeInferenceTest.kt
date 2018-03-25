@@ -391,6 +391,16 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test array indexing`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let xs = ["foo", "bar"];
+            let x = xs[0];
+            x;
+          //^ &str
+        }
+    """)
+
     fun `test all binary ops with all numeric types`() {
         val numericTypes = listOf(
             "usize", "u8", "u16", "u32", "u64", "u128",

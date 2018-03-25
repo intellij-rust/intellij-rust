@@ -110,7 +110,7 @@ class RsIndexTypeInferenceTest : RsTypificationTestBase() {
             fn index(&self, index: usize) -> &T { unimplemented!() }
         }
 
-        fn foo(v: Vec<u32>) -> u32 {
+        fn foo(v: Vec<u32>) {
             let p = &v;
             let m = p[0];
             m;
