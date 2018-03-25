@@ -120,7 +120,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub struct Foo<T>(T);
         }
 
-        fn f<T>(foo: <error descr="Unresolved reference: `Foo`">Foo/*caret*/<T></error>) {}
+        fn f<T>(foo: <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error><T>) {}
     """, """
         use foo::Foo;
 

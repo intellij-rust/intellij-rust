@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.inspections.fixes.import.AutoImportFix
 import org.rust.ide.inspections.fixes.import.AutoImportHintFix
@@ -40,8 +41,11 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                         AutoImportFix(path)
                     }
                 }
+
+                // Don't highlight generic parameters
+                val range = TextRange(0, path.typeArgumentList?.startOffsetInParent ?: path.textLength)
                 holder.registerProblem(path, description,
-                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, *listOfNotNull(fix).toTypedArray())
+                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, range, *listOfNotNull(fix).toTypedArray())
             }
         }
 
