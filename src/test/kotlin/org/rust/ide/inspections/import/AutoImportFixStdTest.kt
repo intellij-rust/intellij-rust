@@ -296,4 +296,17 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             let x = Foo/*caret*/;
         }
     """, AutoImportFix.Testmarks.externCrateItemInNotCrateRoot)
+
+    fun `test do not try to highlight primitive types`() = checkAutoImportFixIsUnavailable("""
+        pub trait Zero<N> {
+            fn zero() -> N;
+        }
+        impl Zero<f32> for f32 {
+            fn zero() -> f32 { 0f32 }
+        }
+
+        fn main() {
+            let x = f32/*error*/::zero();
+        }
+    """)
 }
