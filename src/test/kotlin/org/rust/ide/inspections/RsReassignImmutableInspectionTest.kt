@@ -162,4 +162,19 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
         }
     """)
 
+    fun `test E0384 fix let ref at reassign `() = checkFixByText("Make `test` mutable", """
+        fn main() {
+            let mut a = 5;
+            let mut b = 6;
+            let ref test = a;
+            <error>test<caret> = &b</error>;
+        }
+            """, """
+        fn main() {
+            let mut a = 5;
+            let mut b = 6;
+            let ref mut test = a;
+            test = &b;
+        }
+            """)
 }

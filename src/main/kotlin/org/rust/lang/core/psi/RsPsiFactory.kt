@@ -271,8 +271,8 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create parameter element")
     }
 
-    fun createPatBinding(name: String, mutable: Boolean = false): RsPatBinding =
-        (createStatement("let ${if (mutable) "mut " else ""}$name = 10;") as RsLetDecl).pat
+    fun createPatBinding(name: String, mutable: Boolean = false, ref: Boolean = false): RsPatBinding =
+        (createStatement("let ${"ref ".iff(ref)}${"mut ".iff(mutable)}$name = 10;") as RsLetDecl).pat
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
 
