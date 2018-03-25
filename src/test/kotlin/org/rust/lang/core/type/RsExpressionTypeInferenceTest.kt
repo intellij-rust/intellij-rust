@@ -779,6 +779,16 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             T2 { };
         } //^ S
     """)
+
+    fun `test cyclic type aliases`() = testExpr("""
+        type Foo = Bar;
+        type Bar = Foo;
+        fn main() {
+            let x = Foo { x: 123 };
+            x;
+          //^ <unknown>
+        }
+    """)
     // More struct alias tests in [RsGenericExpressionTypeInferenceTest]
 
     fun `test struct update syntax`() = testExpr("""
