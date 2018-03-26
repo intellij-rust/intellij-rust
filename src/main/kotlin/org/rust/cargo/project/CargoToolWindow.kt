@@ -35,7 +35,7 @@ class CargoToolWindowFactory : ToolWindowFactory {
     }
 }
 
-private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
+class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
     private val cargoTab = CargoToolWindow(project)
 
     init {
@@ -43,6 +43,8 @@ private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(tru
         cargoTab.toolbar.setTargetComponent(this)
         setContent(cargoTab.content)
     }
+
+    val selectedProject: CargoProject? get() = cargoTab.selectedProject
 
     override fun getData(dataId: String): Any? {
         if (DetachCargoProjectAction.CARGO_PROJECT_TO_DETACH.`is`(dataId)) {

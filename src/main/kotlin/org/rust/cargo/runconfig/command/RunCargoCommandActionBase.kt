@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowManager
+import org.rust.cargo.project.CargoToolWindowPanel
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
@@ -35,10 +37,19 @@ abstract class RunCargoCommandActionBase(icon: Icon) : AnAction(icon) {
             ?.let { cargoProjects.findProjectForFile(it) }
             ?.let { return it }
 
-        return cargoProjects.allProjects.firstOrNull()
+        val cargoPanel = ToolWindowManager.getInstance(e.project!!)
+            ?.getToolWindow("Cargo")
+            ?.contentManager
+            ?.getContent(0)?.component as? CargoToolWindowPanel
+
+
+        return cargoPanel?.selectedProject ?: cargoProjects.allProjects.firstOrNull()
     }
 
-    protected fun runCommand(project: Project, cargoCommandLine: CargoCommandLine) {
+    protected fun runCommand(project: Project, cargoCommandLine: CargoCommandLine, cargoProject: CargoProject) {
+        cargoCommandLine.name +=
+            if (project.cargoProjects.allProjects.size > 1) " [" + cargoProject.presentableName + "]" else ""
+
         val runConfiguration = createRunConfiguration(project, cargoCommandLine)
         val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
         ProgramRunnerUtil.executeConfiguration(runConfiguration, executor)
