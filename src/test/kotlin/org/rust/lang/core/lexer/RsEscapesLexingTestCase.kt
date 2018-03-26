@@ -26,6 +26,7 @@ class RsEscapesLexingTestCase : RsLexingTestCaseBase() {
     fun testInvalidUnicodeEscapes() = doTest()
     fun testMixed() = doTest()
     fun testMixedQuoted() = doTest()
+    fun testUnderscoreInUnicodeEscapes() = doTest()
 
     fun testFuzzy() {
         val lexers = ESCAPABLE_LITERALS_TOKEN_SET.types.map { RustEscapesLexer.of(it) }

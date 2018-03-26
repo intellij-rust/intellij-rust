@@ -119,7 +119,7 @@ OCT_LITERAL = "0o" [0-7_]*
 BIN_LITERAL = "0b" [01_]*
 
 
-CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a-fA-F0-9]* "}"? )? ( \' {SUFFIX}? | \\ )? )
+CHAR_LITERAL   = ( \' ( [^\\\'\r\n] | \\[^\r\n] | "\\x" [a-fA-F0-9]+ | "\\u{" [a-fA-F0-9][a-fA-F0-9_]* "}"? )? ( \' {SUFFIX}? | \\ )? )
                | ( \' [\p{xidcontinue}]* \' {SUFFIX}? )
 STRING_LITERAL = \" ( [^\\\"] | \\[^] )* ( \" {SUFFIX}? | \\ )?
 
