@@ -79,7 +79,7 @@ private fun decodeEscape(esc: String): String = when (esc) {
         assert(esc[0] == '\\')
         when (esc[1]) {
             'x' -> Integer.parseInt(esc.substring(2), 16).toChar().toString()
-            'u' -> Integer.parseInt(esc.substring(3, esc.length - 1), 16).toChar().toString()
+            'u' -> Integer.parseInt(esc.substring(3, esc.length - 1).filter { it != '_' }, 16).toChar().toString()
             '\r', '\n' -> ""
             else -> error("unreachable")
         }

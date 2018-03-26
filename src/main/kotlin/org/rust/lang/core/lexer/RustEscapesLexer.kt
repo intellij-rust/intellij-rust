@@ -108,7 +108,7 @@ class RustEscapesLexer private constructor(
         // FIXME(mkaput): I'm not sure if this max codepoint is correct.
         // I've found it by playing with Rust Playground, so it matches rustc behaviour, but it has
         // nothing to do with the Rust Reference (I've expected 0x7fffff or something similar).
-        bufferSequence.substring(start,end).count { it != '_' } in UNICODE_ESCAPE_MIN_LENGTH..UNICODE_ESCAPE_MAX_LENGTH &&
+        bufferSequence.substring(start, end).count { it != '_' } in UNICODE_ESCAPE_MIN_LENGTH..UNICODE_ESCAPE_MAX_LENGTH &&
             bufferSequence.startsWith("\\u{", start) && bufferSequence[end - 1] == '}' &&
             testCodepointRange(start + 3, end - 1, 0x10ffff)
 
