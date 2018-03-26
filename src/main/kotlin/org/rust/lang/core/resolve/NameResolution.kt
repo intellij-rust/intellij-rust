@@ -94,8 +94,8 @@ fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, proces
     }
 
     // Resolve potential type aliases
-    while (resolved is RsTypeAlias) {
-        resolved = (resolved.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve()
+    if (resolved is RsTypeAlias) {
+        resolved = resolved.baseType()
     }
     val structOrEnumVariant = resolved as? RsFieldsOwner ?: return false
     return processFieldDeclarations(structOrEnumVariant, processor)

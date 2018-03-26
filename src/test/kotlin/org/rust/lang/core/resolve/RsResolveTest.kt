@@ -573,6 +573,16 @@ class RsResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
+    fun `test cyclic type aliases`() = checkByCode("""
+        type Foo = Bar;
+        type Bar = Foo;
+
+        fn main() {
+            let x = Foo { foo: 123 };
+                        //^ unresolved
+        }
+    """)
+
     fun `test struct field Self`() = checkByCode("""
         struct S { foo: i32 }
                   //X
