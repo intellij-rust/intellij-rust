@@ -126,7 +126,7 @@ OuterAttr ::= '#'     '[' MetaItem ']' {
 }
 private OuterAttr_first ::= '#'
 
-MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] {
+MetaItem ::= identifier [ '=' (LitExpr | PathIdent) | MetaItemArgs ] {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMetaItemStub"
@@ -143,9 +143,9 @@ MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')' {
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private PathIdent ::= !("union" identifier) identifier | self | super | 'Self'
+private PathIdentInner ::= !("union" identifier) identifier | self | super | 'Self'
 
-fake Path ::= (Path '::' | '::' | TypeQual)? PathIdent PathTypeArguments? {
+fake Path ::= (Path '::' | '::' | TypeQual)? PathIdentInner PathTypeArguments? {
   implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
                  "org.rust.lang.core.macros.ExpansionResult" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
@@ -156,7 +156,9 @@ private Path_first ::= identifier | self | 'Self' | super | '::' | '<'
 
 private PathImpl ::= PathStart PathSegment*
 
-PathStart ::= ('::' | <<checkTypeQualAllowed>> TypeQual)? PathIdent PathTypeArguments? { elementType = Path }
+PathIdent ::= PathIdentInner { elementType = Path }
+
+PathStart ::= ('::' | <<checkTypeQualAllowed>> TypeQual)? PathIdentInner PathTypeArguments? { elementType = Path }
 //    <T as Foo>::bar::baz::<i32>
 //    ^~~~~~~~~~~^ TypeQual
 TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
@@ -165,7 +167,7 @@ TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-left PathSegment ::= '::' PathIdent PathTypeArguments? { elementType = Path }
+left PathSegment ::= '::' PathIdentInner PathTypeArguments? { elementType = Path }
 
 private PathTypeArguments ::= <<isPathMode 'COLONS'>> ColonTypeArgumentList
                             | <<isPathMode 'NO_COLONS '>> ( TypeArgumentList | PathParameters RetType? ) // Fn(i32) -> i32 sugar
