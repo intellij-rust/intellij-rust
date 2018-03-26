@@ -21,6 +21,8 @@ data class CargoCommandLine(
     val nocapture: Boolean = true
 ) {
 
+    // to pass different name to RunConfiguration if necessary
+    var name = command
 
     fun withDoubleDashFlag(arg: String): CargoCommandLine {
         val (pre, post) = splitOnDoubleDash()
