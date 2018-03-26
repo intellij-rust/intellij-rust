@@ -47,3 +47,8 @@ give_me_struct! {
 
 #[post("/", data = "<todo_form>")]
 fn string_value() {}
+
+const C: i32 = 0;
+
+#[cfg(attr(value = C))]
+fn const_value() {}
