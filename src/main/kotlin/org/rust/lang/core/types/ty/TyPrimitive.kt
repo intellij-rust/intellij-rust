@@ -51,10 +51,28 @@ object TyStr : TyPrimitive()
 abstract class TyNumeric : TyPrimitive()
 
 sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
-    companion object {
+
+    // This fixes NPE caused by java classes initialization order. Details:
+    // Kotlin `object`s compile into java classes with `INSTANCE` static field
+    // and `companion object` fields compile into static field of the host class.
+    // Our objects (`U8`, `U16` etc) are extend `TyInteger` class.
+    // In java, parent classes are initialized first. So, if we accessing,
+    // for example, `U8` object first, we really accessing `U8.INSTANCE` field,
+    // that requests to initialize `U8` class, that requests to initialize
+    // `TyInteger` before. Then, when we initializing `TyInteger`, `U8` is not
+    // initialized and `U8.INSTANCE` is null. So if `VALUES` is a field of
+    // `TyInteger` class, it will be filled with null value instead of `U8`
+    // We fixing it by moving fields from `companion object` an independent object
+    private object TyIntegerValuesHolder {
         val DEFAULT = TyInteger.I32
         val VALUES = listOf(U8, U16, U32, U64, U128, USize, I8, I16, I32, I64, I128, ISize)
         val NAMES = VALUES.map { it.name }
+    }
+
+    companion object {
+        val DEFAULT: TyInteger get() = TyIntegerValuesHolder.DEFAULT
+        val VALUES: List<TyInteger> get() = TyIntegerValuesHolder.VALUES
+        val NAMES: List<String> get() = TyIntegerValuesHolder.NAMES
 
         fun fromSuffixedLiteral(literal: PsiElement): TyInteger? {
             val text = literal.text
@@ -78,10 +96,18 @@ sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
 }
 
 sealed class TyFloat(val name: String, val ordinal: Int) : TyNumeric() {
-    companion object {
+
+    // See TyIntegerValuesHolder
+    private object TyFloatValuesHolder {
         val DEFAULT = TyFloat.F64
         val VALUES = listOf(F32, F64)
         val NAMES = VALUES.map { it.name }
+    }
+
+    companion object {
+        val DEFAULT: TyFloat get() = TyFloatValuesHolder.DEFAULT
+        val VALUES: List<TyFloat> get() = TyFloatValuesHolder.VALUES
+        val NAMES: List<String> get() = TyFloatValuesHolder.NAMES
 
         fun fromSuffixedLiteral(literal: PsiElement): TyFloat? {
             val text = literal.text
