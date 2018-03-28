@@ -51,9 +51,9 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
     fun `test highlight ? operator as return`() = doTest("""
         fn main() {
             if true {
-                Err(())/*caret*/?
+                Err(())?
             }
-            return 0;
+            return/*caret*/ 0;
         }
     """, "?", "return 0")
 
@@ -65,8 +65,8 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
         fn main() {
             let s = S;
-            s.foo()/*caret*/?.bar().foo()?;
-            return 0;
+            s.foo()?.bar().foo()?;
+            return/*caret*/ 0;
         }
     """, "?", "?", "return 0")
 
