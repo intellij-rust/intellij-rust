@@ -23,7 +23,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
-import org.rust.lang.core.resolve.withSubst
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.*
@@ -59,29 +58,23 @@ sealed class RsDiagnostic(
                     } else  if (element is RsElement) {
                         val items = StdKnownItems.relativeTo(element)
                         val lookup = ImplLookup(element.project, items)
-                        if (isFromActualImplForExpected(items, lookup)) {
+                        val canAddFromFix = isFromActualImplForExpected(items, lookup)
+                        if (canAddFromFix) {
                             add(ConvertToTyUsingFromTraitFix(element, expectedTy))
                         }
                         if (expectedTy is TyAdt && expectedTy.item == items.findResultItem()) {
-                            val expOkTy = expectedTy.typeArguments.get(0)
-                            val expErrTy = expectedTy.typeArguments.get(1)
+                            val (expOkTy, expErrTy) = expectedTy.typeArguments
                             val resultErrTy = errTyOfTryFromActualImplForTy(expOkTy, items, lookup)
                             if (resultErrTy != null && resultErrTy == expErrTy) {
                                 add(ConvertToTyUsingTryFromTraitFix(element, expOkTy))
                             }
-                        } else {
+                        } else if (!canAddFromFix) {
                             val resultErrTy = errTyOfTryFromActualImplForTy(expectedTy, items, lookup)
-                            // this currently won't suggest "TryFrom fix" when `convert::Infallible` is an `Error` type;
-                            // this is partially because ImplLookup.select seem to always find:
-                            // `impl<T, U> TryFrom<U> for T where T: From<U>` even when the corresponding impl From
-                            // doesn't exist;
-                            // but also for the actual cases when the `impl From` exists we will just suggest regular
-                            // "From fix"
-                            if (resultErrTy != null && resultErrTy != items.findInfallibleTy()) {
+                            if (resultErrTy != null) {
                                 add(ConvertToTyUsingTryFromTraitAndUnpackFix(element, expectedTy, resultErrTy))
                             }
                         }
-                        if (isToOwnedImplWithExcpectedForActual(items, lookup)) {
+                        if (isToOwnedImplWithExpectedForActual(items, lookup)) {
                             add(ConvertToOwnedTyFix(element, expectedTy))
                         }
                         val stringTy = items.findStringTy()
@@ -121,30 +114,30 @@ sealed class RsDiagnostic(
 
         private fun isFromActualImplForExpected(items: StdKnownItems, lookup: ImplLookup): Boolean {
             val fromTrait = items.findFromTrait() ?: return false
-            return lookup.select(TraitRef(expectedTy, fromTrait.withSubst(actualTy))).ok() != null
+            return lookup.canSelect(TraitRef(expectedTy, fromTrait.withSubst(actualTy)))
         }
 
         private fun errTyOfTryFromActualImplForTy(ty: Ty, items: StdKnownItems, lookup: ImplLookup): Ty? {
             val fromTrait = items.findTryFromTrait() ?: return null
-            val result = lookup.selectProjection(TraitRef(ty, fromTrait.withSubst(actualTy)),
+            val result = lookup.selectProjectionStrict(TraitRef(ty, fromTrait.withSubst(actualTy)),
                 fromTrait.associatedTypesTransitively.find { it.name == "Error"} ?: return null)
             return result.ok()?.value
         }
 
-        private fun isToOwnedImplWithExcpectedForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
+        private fun isToOwnedImplWithExpectedForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
             val toOwnedTrait = items.findToOwnedTrait() ?: return false
-            val result = lookup.selectProjection(TraitRef(actualTy, BoundElement(toOwnedTrait)),
-                toOwnedTrait.associatedTypesTransitively.find { it.name == "Owned" } ?: return false)
+            val result = lookup.selectProjectionStrictWithDeref(TraitRef(actualTy, BoundElement(toOwnedTrait)),
+                toOwnedTrait.findAssociatedType("Owned") ?: return false)
             return expectedTy == result.ok()?.value
         }
 
         private fun isToStringImplForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
             val toStringTrait = items.findToStringTrait() ?: return false
-            return lookup.select(TraitRef(actualTy, BoundElement(toStringTrait))).ok() != null
+            return lookup.canSelectWithDeref(TraitRef(actualTy, BoundElement(toStringTrait)))
         }
 
         private fun isTraitWithTySubstImplForActual(lookup: ImplLookup, trait: RsTraitItem?, ty: TyReference): Boolean =
-            trait != null && lookup.select(TraitRef(actualTy, trait.withSubst(ty.referenced))).ok() != null
+            trait != null && lookup.canSelectWithDeref(TraitRef(actualTy, trait.withSubst(ty.referenced)))
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
             return "expected `${expectedTy.escaped}`, found `${actualTy.escaped}`"

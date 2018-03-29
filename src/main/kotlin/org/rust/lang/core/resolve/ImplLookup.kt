@@ -62,7 +62,7 @@ class ImplLookup(
     }
     val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
         val trait = RsLangItemIndex.findLangItem(project, "fn_once") ?: return@lazy null
-        findAssociatedType(trait, "Output")
+        trait.findAssociatedType("Output")
     }
     private val copyTrait: RsTraitItem? by lazy(NONE) {
         RsNamedElementIndex.findDerivableTraits(project, "Copy").firstOrNull()
@@ -72,19 +72,19 @@ class ImplLookup(
     }
     private val derefTraitAndTarget: Pair<RsTraitItem, RsTypeAlias>? = run {
         val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
-        findAssociatedType(trait, "Target")?.let { trait to it }
+        trait.findAssociatedType("Target")?.let { trait to it }
     }
     private val indexTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
         val trait = RsLangItemIndex.findLangItem(project, "index") ?: return@lazy null
-        findAssociatedType(trait, "Output")?.let { trait to it }
+        trait.findAssociatedType("Output")?.let { trait to it }
     }
     private val iteratorTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
         val trait = items.findIteratorTrait() ?: return@lazy null
-        findAssociatedType(trait, "Item")?.let { trait to it }
+        trait.findAssociatedType("Item")?.let { trait to it }
     }
     private val intoIteratorTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
         val trait = items.findCoreItem("iter::IntoIterator") as? RsTraitItem ?: return@lazy null
-        findAssociatedType(trait, "Item")?.let { trait to it }
+        trait.findAssociatedType("Item")?.let { trait to it }
     }
 
     val ctx: RsInferenceContext by lazy(NONE) {
@@ -182,15 +182,42 @@ class ImplLookup(
     }
 
     /**
+     * Checks that trait can be successfully selected on any deref level.
+     * E.g. for type `&&T` it try to select trait for `&&T`, `&T` and `T` types
+     * See [select]
+     */
+    fun canSelectWithDeref(ref: TraitRef, recursionDepth: Int = 0): Boolean =
+        coercionSequence(ref.selfTy)
+            .any { canSelect(TraitRef(it, ref.trait), recursionDepth) }
+
+    /** Checks that trait can be successfully selected. See [select] */
+    fun canSelect(ref: TraitRef, recursionDepth: Int = 0): Boolean =
+        selectStrictWithoutConfirm(ref, recursionDepth).isOk()
+
+    /** Same as [select], but strictly evaluates all obligations (checks trait bounds) of impls */
+    fun selectStrict(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
+        selectStrictWithoutConfirm(ref, recursionDepth).map { confirmCandidate(ref, it, recursionDepth) }
+
+    private fun selectStrictWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
+        val result = selectWithoutConfirm(ref, recursionDepth)
+        val candidate = result.ok() ?: return result.map { error("unreachable") }
+        // TODO optimize it. Obligations may be already evaluated, so we don't need to re-evaluated it
+        if (!canEvaluateObligations(ref, candidate, recursionDepth)) return SelectionResult.Err()
+        return result
+    }
+
+    /**
      * If the TraitRef is a something like
      *     `T : Foo<U>`
      * here we select an impl of the trait `Foo<U>` for the type `T`, i.e.
      *     `impl Foo<U> for T {}`
      */
-    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> {
+    fun select(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
+        selectWithoutConfirm(ref, recursionDepth).map { confirmCandidate(ref, it, recursionDepth) }
+
+    private fun selectWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
         if (recursionDepth > DEFAULT_RECURSION_LIMIT) return SelectionResult.Err()
         return traitSelectionCache.getOrPut(project, freshen(ref)) { selectCandidate(ref, recursionDepth) }
-            .map { confirmCandidate(ref, it, recursionDepth) }
     }
 
     private fun selectCandidate(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
@@ -201,12 +228,7 @@ class ImplLookup(
             1 -> SelectionResult.Ok(candidates.single())
             else -> {
                 val filtered = candidates.filter {
-                    ctx.probe {
-                        val obligation = confirmCandidate(ref, it, recursionDepth).nestedObligations
-                        val ff = FulfillmentContext(ctx, this)
-                        obligation.forEach(ff::registerPredicateObligation)
-                        ff.selectUntilError()
-                    }
+                    canEvaluateObligations(ref, it, recursionDepth)
                 }
 
                 when (filtered.size) {
@@ -243,6 +265,15 @@ class ImplLookup(
                     is TyInfer.FloatVar -> FreshTyInfer.FloatVar(counter++)
                 }
             }
+        }
+    }
+
+    private fun canEvaluateObligations(ref: TraitRef, candidate: SelectionCandidate, recursionDepth: Int): Boolean {
+        return ctx.probe {
+            val obligation = confirmCandidate(ref, candidate, recursionDepth).nestedObligations
+            val ff = FulfillmentContext(ctx, this)
+            obligation.forEach(ff::registerPredicateObligation)
+            ff.selectUntilError()
         }
     }
 
@@ -368,7 +399,7 @@ class ImplLookup(
     fun findArithmeticBinaryExprOutputType(lhsType: Ty, rhsType: Ty, op: ArithmeticOp): TyWithObligations<Ty>? {
         val traitAndOutput = binOpsTraitAndOutputCache.getOrPut(op) {
             val trait = RsLangItemIndex.findLangItem(project, op.itemName, op.modName) ?: return@getOrPut null
-            findAssociatedType(trait, "Output")?.let { trait to it }
+            trait.findAssociatedType("Output")?.let { trait to it }
         } ?: return null
         return selectProjection(traitAndOutput, lhsType, rhsType).ok()
     }
@@ -402,6 +433,28 @@ class ImplLookup(
         projectionTy.target,
         recursionDepth
     )
+
+    fun selectProjectionStrict(
+        ref: TraitRef,
+        assocType: RsTypeAlias,
+        recursionDepth: Int = 0
+    ): SelectionResult<TyWithObligations<Ty>?> {
+        return selectStrict(ref, recursionDepth).map {
+            lookupAssociatedType(ref.selfTy, it, assocType)
+                ?.let { ctx.normalizeAssociatedTypesIn(it, recursionDepth) }
+                ?.withObligations(it.nestedObligations)
+        }
+    }
+
+    fun selectProjectionStrictWithDeref(
+        ref: TraitRef,
+        assocType: RsTypeAlias,
+        recursionDepth: Int = 0
+    ): SelectionResult<TyWithObligations<Ty>?> =
+        coercionSequence(ref.selfTy)
+            .map { selectProjectionStrict(TraitRef(it, ref.trait), assocType, recursionDepth) }
+            .firstOrNull { it.isOk() }
+            ?: SelectionResult.Err()
 
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
         return when (selfTy) {
@@ -498,6 +551,8 @@ sealed class SelectionResult<out T> {
 
     fun ok(): T? = (this as? Ok<T>)?.result
 
+    fun isOk(): Boolean = this is Ok<T>
+
     inline fun <R> map(action: (T) -> R): SelectionResult<R> = when (this) {
         is SelectionResult.Err -> SelectionResult.Err()
         is SelectionResult.Ambiguous -> SelectionResult.Ambiguous()
@@ -510,15 +565,6 @@ data class Selection(
     val nestedObligations: List<Obligation>,
     val subst: Substitution = emptySubstitution
 )
-
-fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
-    val subst1 = typeParameterList?.typeParameterList?.withIndex()?.associate { (i, par) ->
-        val param = TyTypeParameter.named(par)
-        param to (subst.getOrNull(i) ?: param)
-    }
-
-    return BoundElement(this, subst1 ?: emptySubstitution)
-}
 
 private sealed class SelectionCandidate {
     /**
@@ -566,7 +612,7 @@ private fun prepareSubstAndTraitRefRaw(
 }
 
 private fun RsTraitItem.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> {
-    val assocType = findAssociatedType(this, assocName)
+    val assocType = this.findAssociatedType(assocName)
     val assoc = if (assocType != null && ty != null) mapOf(assocType to ty) else emptyMap()
     return BoundElement(this, assoc = assoc)
 }
@@ -580,9 +626,6 @@ private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty {
         ?.let { it.typeReference?.type ?: TyProjection.valueOf(it) }
         ?: TyUnknown
 }
-
-private fun findAssociatedType(baseTrait: RsTraitItem, name: String): RsTypeAlias? =
-    baseTrait.associatedTypesTransitively.find { it.name == name }
 
 private fun <T : Ty> T.withObligations(obligations: List<Obligation> = emptyList()): TyWithObligations<T> =
     TyWithObligations(this, obligations)
