@@ -65,6 +65,9 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findArgumentsTy(): Ty =
         findCoreTy("fmt::Arguments")
 
+    fun findInfallibleTy(): Ty =
+        findCoreTy("convert::Infallible")
+
     fun findOptionItem(): RsNamedElement? =
         findCoreItem("option::Option")
 
@@ -88,6 +91,9 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
 
     fun findFromTrait(): RsTraitItem? =
         findCoreItem("convert::From") as? RsTraitItem
+
+    fun findTryFromTrait(): RsTraitItem? =
+        findCoreItem("convert::TryFrom") as? RsTraitItem
 
     fun findBorrowTrait(): RsTraitItem? =
         findCoreItem("borrow::Borrow") as? RsTraitItem
