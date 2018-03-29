@@ -5,12 +5,16 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.util.text.SemVer
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsStdlibResolveTest : RsResolveTestBase() {
 
     // BACKCOMPAT: Rust 1.24.1
-    private var isNightly: Boolean = projectDescriptor.isNightly
+    private var isOldRust: Boolean = run {
+        val currentVersion =  projectDescriptor.rustcVersion?.semver ?: error("Can't get rust version")
+        currentVersion < RUST_1_25
+    }
 
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
@@ -325,7 +329,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     """)
 
     fun `test Instant minus Duration`() {
-        val path = if (isNightly) "time.rs" else "time/mod.rs"
+        val path = if (!isOldRust) "time.rs" else "time/mod.rs"
 
         stubOnlyResolve("""
         //- main.rs
@@ -347,7 +351,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     """)
 
     fun `test resolve arithmetic operator`() {
-        val path = if (isNightly) "time.rs" else "time/mod.rs"
+        val path = if (!isOldRust) "time.rs" else "time/mod.rs"
 
         stubOnlyResolve("""
         //- main.rs
@@ -535,4 +539,8 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             let _: String = "".into();
         }                    //^ ...convert.rs
     """)
+
+    companion object {
+        private val RUST_1_25 = SemVer.parseFromText("1.25.0")!!
+    }
 }
