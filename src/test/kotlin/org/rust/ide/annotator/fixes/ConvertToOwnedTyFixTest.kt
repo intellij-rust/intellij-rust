@@ -5,10 +5,10 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.RsTypeCheckInspection
 
-class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) {
+class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test B is Owned type of A`() = checkFixByText("Convert to B using `ToOwned` trait","""

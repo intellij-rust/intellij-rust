@@ -340,7 +340,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun collectDiagnostics(holder: AnnotationHolder, element: RsInferenceContextOwner) {
         for (it in element.inference.diagnostics) {
-            if (!it.experimental) it.addToHolder(holder)
+            if (it.inspectionClass == javaClass) it.addToHolder(holder)
         }
     }
 
