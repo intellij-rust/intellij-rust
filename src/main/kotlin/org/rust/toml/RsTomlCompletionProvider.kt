@@ -130,6 +130,12 @@ exclude = ["path1", "path/to/dir2"]
 [dependencies]
 foo = { git = 'https://github.com/example/foo' }
 
+[dev-dependencies]
+tempdir = "0.3"
+
+[build-dependencies]
+gcc = "0.3"
+
 [lib]
 name = "foo"
 path = "src/lib.rs"
