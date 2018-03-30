@@ -145,4 +145,10 @@ class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) 
             let _: RefWrapper<u32> = RefWrapper(w);
         }
     """)
+
+    fun `test E0614 type cannot be dereferenced`() = checkByText("""
+        fn main() {
+            let _ = <error>*0</error>;
+        }
+    """)
 }

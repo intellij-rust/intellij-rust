@@ -209,8 +209,12 @@ class RsInferenceContext(
         methodRefinements.add(Pair(path, traitRef))
     }
 
+    fun addDiagnostic(diagnostic: RsDiagnostic) {
+        diagnostics.add(diagnostic)
+    }
+
     fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
-        diagnostics.add(RsDiagnostic.TypeError(expr, expected, actual))
+        addDiagnostic(RsDiagnostic.TypeError(expr, expected, actual))
     }
 
     fun canCombineTypes(ty1: Ty, ty2: Ty): Boolean {
@@ -1203,7 +1207,9 @@ private class RsFnInferenceContext(
                 // expectation must NOT be used for deref
                 val base = innerExpr.inferType()
                 val deref = lookup.deref(base)
-                // TODO if (deref == null) emit E0614
+                if (deref == null) {
+                    ctx.addDiagnostic(RsDiagnostic.DerefError(expr, base))
+                }
                 deref ?: TyUnknown
             }
             UnaryOperator.MINUS -> innerExpr.inferType(expected)
