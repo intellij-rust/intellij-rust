@@ -647,7 +647,9 @@ private class RsFnInferenceContext(
                 TyUnknown::class.java,
                 TyInfer.TyVar::class.java,
                 TyTypeParameter::class.java,
-                TyTraitObject::class.java
+                TyProjection::class.java,
+                TyTraitObject::class.java,
+                TyAnon::class.java
             )
 
             if (!expected.containsTyOfClass(ignoredTys) && !inferred.containsTyOfClass(ignoredTys)) {
