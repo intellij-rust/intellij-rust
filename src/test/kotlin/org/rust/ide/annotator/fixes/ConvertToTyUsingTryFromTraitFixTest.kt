@@ -5,10 +5,11 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.RsTypeCheckInspection
 
-class ConvertToTyUsingTryFromTraitFixTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) {
+
+class ConvertToTyUsingTryFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test B from A when impl TryFrom A for B is available`() = checkFixByText("Convert to Bb using `TryFrom` trait", """

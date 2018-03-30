@@ -5,12 +5,12 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.RsTypeCheckInspection
 
 abstract class ConvertToTyUsingTraitFixTestBase(
     isExpectedMut: Boolean, private val trait: String, private val method: String, private val imports: String = ""
-) : RsInspectionsTestBase(RsExperimentalChecksInspection()) {
+) : RsInspectionsTestBase(RsTypeCheckInspection()) {
     private val ref = if (isExpectedMut) "&mut " else "&"
     private val fixName = "Convert to ${ref}A using `$trait` trait"
 

@@ -3,14 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package org.rust.ide.inspections
 
-import org.rust.ide.inspections.RsExperimentalChecksInspection
-import org.rust.ide.inspections.RsInspectionsTestBase
-
-// Typecheck errors are currently shown via disabled by default inspection,
-// but should be shown via error annotator when will be complete
-class RsTypeCheckTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) {
+class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
     fun `test type mismatch E0308 primitive`() = checkByText("""
         fn main () {
             let _: u8 = <error>1u16</error>;

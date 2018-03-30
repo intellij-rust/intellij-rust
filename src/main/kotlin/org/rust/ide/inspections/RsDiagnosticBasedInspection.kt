@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.types.inference
 import org.rust.lang.utils.addToHolder
 
-class RsExperimentalChecksInspection : RsLocalInspectionTool() {
+abstract class RsDiagnosticBasedInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitFunction(o: RsFunction) = collectDiagnostics(holder, o)
         override fun visitConstant(o: RsConstant) = collectDiagnostics(holder, o)
@@ -21,7 +21,11 @@ class RsExperimentalChecksInspection : RsLocalInspectionTool() {
 
     private fun collectDiagnostics(holder: ProblemsHolder, element: RsInferenceContextOwner) {
         for (it in element.inference.diagnostics) {
-            if (it.experimental) it.addToHolder(holder)
+            if (it.inspectionClass == javaClass) it.addToHolder(holder)
         }
     }
 }
+
+class RsExperimentalChecksInspection : RsDiagnosticBasedInspection()
+
+class RsTypeCheckInspection : RsDiagnosticBasedInspection()

@@ -15,7 +15,10 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
+import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
+import org.rust.ide.inspections.RsExperimentalChecksInspection
+import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -35,7 +38,7 @@ private val MUT_REF_STR_TY = TyReference(TyStr, Mutability.MUTABLE)
 sealed class RsDiagnostic(
     val element: PsiElement,
     val endElement: PsiElement? = null,
-    val experimental: Boolean = false
+    val inspectionClass: Class<*> = RsErrorAnnotator::class.java
 ) {
     abstract fun prepare(): PreparedAnnotation
 
@@ -43,7 +46,7 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val expectedTy: Ty,
         private val actualTy: Ty
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element, inspectionClass = RsTypeCheckInspection::class.java) {
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
                 ERROR,
@@ -144,18 +147,19 @@ sealed class RsDiagnostic(
             trait != null && lookup.select(TraitRef(actualTy, trait.withSubst(ty.referenced))).ok() != null
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
-            val expectedTyS = escapeTy(expectedTy.toString())
-            val actualTyS = escapeTy(actualTy.toString())
-            return "expected `$expectedTyS`, found `$actualTyS`"
+            return "expected `${expectedTy.escaped}`, found `${actualTy.escaped}`"
         }
+    }
 
-        // BACKCOMPAT: ???
-        // Fix for IntelliJ platform bug: https://youtrack.jetbrains.com/issue/IDEA-186991
-        // replace it with `escapeString()` after the end of support IDEs with the bug
-        private fun escapeTy(str: String): String = str
-            .replace("<", "&#60;")
-            .replace(">", "&#62;")
-            .replace("&", "&amp;")
+    class DerefError(
+        element: PsiElement,
+        val ty: Ty
+    ) : RsDiagnostic(element, inspectionClass = RsExperimentalChecksInspection::class.java) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0614,
+            "type ${ty.escaped} cannot be dereferenced"
+        )
     }
 
     class AccessError(
@@ -629,7 +633,7 @@ enum class RsErrorCode {
     E0308, E0379,
     E0403, E0407, E0415, E0424, E0426, E0428, E0449, E0463,
     E0569,
-    E0603, E0616, E0624;
+    E0603, E0614, E0616, E0624;
 
     val code: String
         get() = toString()
@@ -727,3 +731,13 @@ private val RsSelfParameter.canonicalDecl: String
         if (mutability.isMut) append("mut ")
         append("self")
     }
+
+// BACKCOMPAT: ???
+// Fix for IntelliJ platform bug: https://youtrack.jetbrains.com/issue/IDEA-186991
+// replace it with `escapeString()` after the end of support IDEs with the bug
+private fun escapeTy(str: String): String = str
+    .replace("<", "&#60;")
+    .replace(">", "&#62;")
+    .replace("&", "&amp;")
+
+private val Ty.escaped get() = escapeTy(toString())
