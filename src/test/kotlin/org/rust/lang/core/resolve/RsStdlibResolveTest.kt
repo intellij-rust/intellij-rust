@@ -11,7 +11,7 @@ import org.rust.lang.core.types.infer.TypeInferenceMarks
 class RsStdlibResolveTest : RsResolveTestBase() {
 
     // BACKCOMPAT: Rust 1.24.1
-    private var isOldRust: Boolean = run {
+    private val isOldRust by lazy {
         val currentVersion =  projectDescriptor.rustcVersion?.semver ?: error("Can't get rust version")
         currentVersion < RUST_1_25
     }
