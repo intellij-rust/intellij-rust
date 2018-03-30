@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsModItem
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 
 interface RsItemsOwner : RsElement
 
@@ -40,19 +41,28 @@ val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
         }.filterIsInstance<RsElement>()
     }
 
-fun RsItemsOwner.processExpandedItems(f: (RsItemElement) -> Boolean): Boolean {
+fun RsItemsOwner.processExpandedItems(processor: (RsItemElement) -> Boolean): Boolean {
     for (psi in itemsAndMacros) {
         when (psi) {
             is RsMacroCall ->
-                for (expanded in psi.expansion.orEmpty()) {
-                    if (expanded is RsItemElement && f(expanded)) return true
-                }
+                if (processMacroCall(psi, processor, 0)) return true
 
             is RsItemElement ->
-                if (f(psi)) return true
+                if (processor(psi)) return true
         }
     }
 
     return false
 }
 
+fun processMacroCall(call: RsMacroCall, processor: (RsItemElement) -> Boolean, recursionDepth: Int): Boolean {
+    if (recursionDepth > DEFAULT_RECURSION_LIMIT) return true
+    for (expanded in call.expansion.orEmpty()) {
+        when (expanded) {
+            is RsItemElement -> if (processor(expanded)) return true
+            is RsMacroCall -> processMacroCall(expanded, processor, recursionDepth + 1)
+        }
+    }
+
+    return false
+}

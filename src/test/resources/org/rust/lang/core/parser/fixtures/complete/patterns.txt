@@ -282,7 +282,7 @@ FILE
             PsiElement(!)('!')
             RsMacroArgumentImpl(MACRO_ARGUMENT)
               PsiElement(()('(')
-              RsTtImpl(TT)
+              RsCompactTTImpl(COMPACT_TT)
                 PsiElement(identifier)('x')
               PsiElement())(')')
         PsiWhiteSpace(' ')

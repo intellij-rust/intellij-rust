@@ -19,5 +19,5 @@ abstract class RsMacroReferenceImplMixin(node: ASTNode) : RsElementImpl(node), R
         get() = referenceNameElement.text
 
     override val referenceNameElement: PsiElement
-        get() = macroNameElement(node)!!
+        get() = metaVarIdentifier
 }
