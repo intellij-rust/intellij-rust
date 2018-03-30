@@ -208,6 +208,19 @@ class ConvertToTyUsingTryFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckIns
         }
     """)
 
+    fun `test no fix when impl TryFrom A for B is not available with simple From impl`() = checkFixIsUnavailable("Convert to Bb using `TryFrom` trait", """
+        struct Aa;
+        struct Bb;
+
+        impl From<Aa> for Bb {
+            fn from(a: Aa) -> Self { Bb }
+        }
+
+        fn main () {
+            let b: Bb = <error>Aa<caret></error>;
+        }
+    """)
+
     fun `test no fix when impl TryFrom A for B is not available`() = checkFixIsUnavailable("Convert to Bb using `TryFrom` trait", """
         #![feature(try_from)]
         use std::convert::TryFrom;

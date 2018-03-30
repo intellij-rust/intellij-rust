@@ -20,6 +20,8 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.ty.emptySubstitution
 import org.rust.openapiext.filterIsInstanceQuery
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
@@ -51,6 +53,9 @@ val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitI
 val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias>
     get() = flattenHierarchy.flatMap { it.element.members?.typeAliasList.orEmpty() }
 
+fun RsTraitItem.findAssociatedType(name: String): RsTypeAlias? =
+    associatedTypesTransitively.find { it.name == name }
+
 fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
     return ReferencesSearch.search(this, this.useScope)
         .mapQuery { it.element.parent?.parent }
@@ -61,6 +66,15 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
 private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
     val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
     return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+}
+
+fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
+    val subst1 = typeParameterList?.typeParameterList?.withIndex()?.associate { (i, par) ->
+        val param = TyTypeParameter.named(par)
+        param to (subst.getOrNull(i) ?: param)
+    }
+
+    return BoundElement(this, subst1 ?: emptySubstitution)
 }
 
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {

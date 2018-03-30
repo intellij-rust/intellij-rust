@@ -12,9 +12,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.tyToStringWithoutTypeArgs
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
-import org.rust.lang.core.resolve.withSubst
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
@@ -58,7 +58,7 @@ abstract class ConvertToTyUsingTryTraitAndUnpackFix(
     methodName: String) : ConvertToTyUsingTryTraitFix(expr, ty, traitName, methodName) {
 
     override fun addFromCall(rsPsiFactory: RsPsiFactory, startElement: RsExpr, fromCall: RsCallExpr) {
-        val parentFnRetTy = findParentFnOrCLambdaRetTy(startElement)
+        val parentFnRetTy = findParentFnOrLambdaRetTy(startElement)
         when {
             parentFnRetTy != null && isFnRetTyResultAndMatchErrTy(startElement, parentFnRetTy) ->
                 startElement.replace(rsPsiFactory.createTryExpression(fromCall))
@@ -66,7 +66,8 @@ abstract class ConvertToTyUsingTryTraitAndUnpackFix(
         }
     }
 
-    private fun findParentFnOrCLambdaRetTy(element: RsExpr): Ty? = findParentFunctionOrLambdaRsRetType(element)?.typeReference?.type
+    private fun findParentFnOrLambdaRetTy(element: RsExpr): Ty? =
+        findParentFunctionOrLambdaRsRetType(element)?.typeReference?.type
 
     private fun findParentFunctionOrLambdaRsRetType(element: RsExpr): RsRetType? {
         var parent = element.parent
