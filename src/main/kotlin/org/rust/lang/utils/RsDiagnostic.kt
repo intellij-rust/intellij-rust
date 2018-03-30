@@ -15,7 +15,10 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
+import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
+import org.rust.ide.inspections.RsExperimentalChecksInspection
+import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -35,7 +38,7 @@ private val MUT_REF_STR_TY = TyReference(TyStr, Mutability.MUTABLE)
 sealed class RsDiagnostic(
     val element: PsiElement,
     val endElement: PsiElement? = null,
-    val experimental: Boolean = false
+    val inspectionClass: Class<*> = RsErrorAnnotator::class.java
 ) {
     abstract fun prepare(): PreparedAnnotation
 
@@ -43,7 +46,7 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val expectedTy: Ty,
         private val actualTy: Ty
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element, inspectionClass = RsTypeCheckInspection::class.java) {
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
                 ERROR,
@@ -151,7 +154,7 @@ sealed class RsDiagnostic(
     class DerefError(
         element: PsiElement,
         val ty: Ty
-    ) : RsDiagnostic(element, experimental = true) {
+    ) : RsDiagnostic(element, inspectionClass = RsExperimentalChecksInspection::class.java) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0614,
