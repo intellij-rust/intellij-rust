@@ -1117,35 +1117,39 @@ MacroDefinition ::= AttrsAndVis "macro_rules" '!' identifier MacroDefinitionBody
 
 MacroDefinitionBody ::= <<any_braces (MacroDefinitionCase ';'?)*>>
 
-MacroDefinitionCase ::= MacroPattern '=>' MacroExpansion
+MacroDefinitionCase ::= MacroPattern '=>' MacroExpansion { pin = 1 }
 
 MacroPattern ::= <<any_braces MacroPatternContents >>
-private MacroPatternContents ::=
+MacroPatternContents ::=
   (MacroPattern | MacroBinding | MacroBindingGroup | <<unpairedToken>>)*
 
-MacroBinding ::= '$' <<macroIdentifier>> ':' identifier {
+MacroBinding ::= '$' MetaVarIdentifier ':' identifier {
+  pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroBindingImplMixin"
 }
-MacroBindingGroup ::= '$' '(' MacroPatternContents ')'
-
+MetaVarIdentifier ::= <<macroIdentifier>>
+MacroBindingGroup ::= '$' '(' MacroPatternContents ')' MacroBindingGroupSeparator? ('*' | '+' | '?') { pin = 2 }
+MacroBindingGroupSeparator ::= <<macroBindingGroupSeparatorToken>>
 
 MacroExpansion ::= <<any_braces MacroExpansionContents>>
 
-private MacroExpansionContents ::=
+MacroExpansionContents ::=
   (MacroExpansion | MacroReference | MacroExpansionReferenceGroup | <<unpairedToken>>)*
 
-MacroReference ::= '$' <<macroIdentifier>> {
+MacroReference ::= '$' MetaVarIdentifier {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroReferenceImplMixin"
 }
-MacroExpansionReferenceGroup ::= '$' '(' MacroExpansionContents ')'
+MacroExpansionReferenceGroup ::= '$' '(' MacroExpansionContents ')' MacroExpansionGroupSeparator? ('*' | '+' | '?') { pin = 2 }
+MacroExpansionGroupSeparator ::= <<macroBindingGroupSeparatorToken>>
 
 
 
 MacroCall ::= MacroHead <<macroSemicolon>> {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"]
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.macros.ExpansionResult" ]
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
@@ -1161,8 +1165,13 @@ MacroCallNoSemicolons ::= MacroHead {
 
 private MacroHead ::= AttrsAndVis &(identifier '!') (SpecialMacro | identifier '!' identifier? MacroArgument)
 
-MacroArgument ::= <<any_braces TT>>
-TT ::= (<<any_braces TT>> | <<unpairedToken>>)*
+MacroArgument ::= <<any_braces CompactTT>>
+// `CompactTT` differs from `TT` in that it does not create an additional `TT` nodes for each unpaired token
+CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
+
+// Used only manually in (external) macro matching code
+//noinspection BnfUnusedRule
+TT ::= <<any_braces TT*>> | <<unpairedToken>>
 
 
 private SpecialMacro ::= TryMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro
@@ -1260,6 +1269,7 @@ EmptyStmt ::= ';' { extends = Stmt }
 // Utils
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Keep in sync with `collapsedTokenType`
 private gtgteq ::= <<gtgteqImpl>>  | never GTGTEQ { name = ">>=" }
 private gtgt   ::= <<gtgtImpl>>    | never GTGT   { name = ">>" }
 private gteq   ::= <<gteqImpl>>    | never GTEQ   { name = ">=" }

@@ -347,7 +347,7 @@ FILE
         PsiElement(!)('!')
         RsMacroArgumentImpl(MACRO_ARGUMENT)
           PsiElement(()('(')
-          RsTtImpl(TT)
+          RsCompactTTImpl(COMPACT_TT)
             <empty list>
           PsiElement())(')')
         PsiElement(;)(';')

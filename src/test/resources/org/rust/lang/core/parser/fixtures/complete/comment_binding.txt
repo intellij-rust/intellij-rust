@@ -225,6 +225,8 @@ FILE
       RsMacroDefinitionCaseImpl(MACRO_DEFINITION_CASE)
         RsMacroPatternImpl(MACRO_PATTERN)
           PsiElement(()('(')
+          RsMacroPatternContentsImpl(MACRO_PATTERN_CONTENTS)
+            <empty list>
           PsiElement())(')')
         PsiWhiteSpace(' ')
         PsiElement(=>)('=>')
@@ -232,6 +234,8 @@ FILE
         RsMacroExpansionImpl(MACRO_EXPANSION)
           PsiElement({)('{')
           PsiWhiteSpace(' ')
+          RsMacroExpansionContentsImpl(MACRO_EXPANSION_CONTENTS)
+            <empty list>
           PsiElement(})('}')
       PsiElement(;)(';')
       PsiWhiteSpace('\n')

@@ -59,14 +59,15 @@ class Testmark(val name: String) {
     }
 
     @TestOnly
-    fun checkHit(f: () -> Unit) {
+    fun <T> checkHit(f: () -> T): T {
         check(state == 0)
         try {
             state = 1
-            f()
+            val result = f()
             if (state != 2) {
                 fail("Testmark `$name` not hit")
             }
+            return result
         } finally {
             state = 0
         }

@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-private const val `$` = '$'
-
 class RsMacroExpansionResolveTest : RsResolveTestBase() {
     fun `test lazy static`() = checkByCode("""
         #[macro_use]
@@ -25,11 +23,33 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         }      //^
     """)
 
+    fun `test expand item`() = checkByCode("""
+        macro_rules! if_std {
+            ($ i:item) => (
+                #[cfg(feature = "use_std")]
+                $ i
+            )
+        }
+
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }     //X
+
+        if_std! {
+            fn foo() -> Foo { Foo }
+        }
+
+        fn main() {
+            foo().bar()
+        }       //^
+    """)
+
     fun `test expand items star`() = checkByCode("""
         macro_rules! if_std {
-            ($`$`($`$`i:item)*) => ($`$`(
+            ($ ($ i:item)*) => ($ (
                 #[cfg(feature = "use_std")]
-                $`$`i
+                $ i
             )*)
         }
 
@@ -45,14 +65,13 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             foo().bar()
         }       //^
-
     """)
 
     fun `test expand items star with reexport`() = checkByCode("""
         macro_rules! if_std {
-            ($`$`($`$`i:item)*) => ($`$`(
+            ($ ($ i:item)*) => ($ (
                 #[cfg(feature = "use_std")]
-                $`$`i
+                $ i
             )*)
         }
 
@@ -68,14 +87,13 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             Bar.bar()
         }      //^
-
     """)
 
     fun `test expand items star with reexport from expansion`() = checkByCode("""
         macro_rules! if_std {
-            ($`$`($`$`i:item)*) => ($`$`(
+            ($ ($ i:item)*) => ($ (
                 #[cfg(feature = "use_std")]
-                $`$`i
+                $ i
             )*)
         }
 
@@ -92,6 +110,54 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             bar().bar()
         }        //^
+    """)
 
+    fun `test expand items star with nested macro calls`() = checkByCode("""
+        macro_rules! if_std {
+            ($ ($ i:item)*) => ($ (
+                #[cfg(feature = "use_std")]
+                $ i
+            )*)
+        }
+
+        macro_rules! foo {
+            ($ ($ i:item)*) => ($ (
+                if_std! { $ i }
+            )*)
+        }
+
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }     //X
+
+        foo! {
+            fn foo() -> Foo { Foo }
+        }
+
+        fn main() {
+            foo().bar()
+        }       //^
+    """)
+
+    fun `test expand items star with infinite recursive nested macro calls`() = checkByCode("""
+        macro_rules! foo {
+            ($ ($ i:item)*) => ($ (
+                foo! { $ i }
+            )*)
+        }
+
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }
+
+        foo! {
+            fn foo() -> Foo { Foo }
+        }
+
+        fn main() {
+            foo().bar()
+        }       //^ unresolved
     """)
 }
