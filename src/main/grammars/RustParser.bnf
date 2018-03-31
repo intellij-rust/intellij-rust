@@ -1013,11 +1013,11 @@ MatchExpr ::= OuterAttr* match NoStructLitExpr MatchBody {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 MatchBody ::= '{' MatchArm* '}' { pin = 1 }
-MatchArm ::= OuterAttr* Pat ('|' Pat)* MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
-  pin = 2
+MatchArm ::= OuterAttr* '|'? Pat ('|' Pat)* MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
+  pin = 3
   recoverWhile = MatchArm_recover
 }
-private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}')
+private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}' | '|')
 MatchArmGuard ::= if AnyExpr
 
 IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
