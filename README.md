@@ -16,7 +16,7 @@
 ## Status
 
 This is a **work in progress**, some features are implemented partially, 
-there may be performance and stability problems.
+there may be performance problems.
 
 ## Installation & Usage
 
@@ -39,8 +39,9 @@ If you are looking for the TOML plugin, see [intellij-toml] directory.
 
 ## Compatible IDEs
 
-The plugin is compatible with any IntelliJ based IDE starting from 2017.2. 
+The plugin is compatible with any IntelliJ based IDE starting from 2017.3. 
 If you don't have any yet, try [IntelliJ IDEA Community Edition](https://www.jetbrains.com/idea/), it's free.
+If you want to use debugger, try [CLion](https://www.jetbrains.com/clion/).
 
 ## Contributing
 
