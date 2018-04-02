@@ -21,14 +21,15 @@ import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
 import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.ref.MethodCallee
+import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
-import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.hitOnFalse
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.toPsiFile
 
 // IntelliJ Rust name resolution algorithm.
@@ -84,19 +85,7 @@ fun processFieldExprResolveVariants(
 }
 
 fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
-    val path = field.parentStructLiteral.path
-    var resolved = path.reference.resolve()?.let { resolved ->
-        if (resolved is RsImplItem && path.hasCself) {
-            (resolved.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve()
-        } else {
-            resolved
-        }
-    }
-
-    // Resolve potential type aliases
-    if (resolved is RsTypeAlias) {
-        resolved = resolved.baseType()
-    }
+    val resolved = field.parentStructLiteral.path.reference.deepResolve()
     val structOrEnumVariant = resolved as? RsFieldsOwner ?: return false
     return processFieldDeclarations(structOrEnumVariant, processor)
 }

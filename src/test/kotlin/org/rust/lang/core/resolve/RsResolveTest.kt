@@ -595,6 +595,30 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test type reference inside Self struct literal`() = checkByCode("""
+        struct A;
+             //X
+        struct S { foo: A }
+        impl S {
+            fn new() -> Self {
+                Self {
+                    foo: A
+                }      //^
+            }
+        }
+    """)
+
+    fun `test type reference struct literal that resolved to non-struct type`() = checkByCode("""
+        struct A;
+             //X
+        trait Trait {}
+        fn main() {
+            Trait {
+                foo: A
+            }      //^
+        }
+    """)
+
     fun `test Self-related item lookup`() = checkByCode("""
         struct S;
         impl S {

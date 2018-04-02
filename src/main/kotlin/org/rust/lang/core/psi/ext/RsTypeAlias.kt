@@ -10,8 +10,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.ExpansionResult
-import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
+import org.rust.lang.core.psi.RsPsiImplUtil
+import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.stubs.RsTypeAliasStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
@@ -19,17 +20,6 @@ import javax.swing.Icon
 
 val RsTypeAlias.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
-
-fun RsTypeAlias.baseType(): RsElement? {
-    var base: RsElement? = this
-    val visited = mutableSetOf<RsElement>(this)
-    while (base is RsTypeAlias) {
-        base = (base.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve() ?: return null
-        if (base in visited) return null
-        visited += base
-    }
-    return base
-}
 
 abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>, RsTypeAlias {
 

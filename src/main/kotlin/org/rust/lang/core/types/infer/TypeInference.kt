@@ -17,10 +17,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.SelectionResult
 import org.rust.lang.core.resolve.StdKnownItems
-import org.rust.lang.core.resolve.ref.MethodCallee
-import org.rust.lang.core.resolve.ref.resolveFieldLookupReferenceWithReceiverType
-import org.rust.lang.core.resolve.ref.resolveMethodCallReferenceWithReceiverType
-import org.rust.lang.core.resolve.ref.resolvePath
+import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralType
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
@@ -869,32 +866,9 @@ private class RsFnInferenceContext(
     }
 
     private fun inferStructLiteralType(expr: RsStructLiteral, expected: Ty?): Ty {
-        // Extended version of `RsTypeAlias.baseType()`
-        fun resolveBaseType(typeAlias: RsTypeAlias, subst: Substitution): BoundElement<RsElement>? {
-            var base: RsElement = typeAlias
-            @Suppress("NAME_SHADOWING")
-            var subst = subst
-            val visited = mutableSetOf<RsElement>(typeAlias)
-            while (base is RsTypeAlias) {
-                val resolved = (base.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve() ?: return null
-                base = resolved.element
-                if (base in visited) return null
-                visited += base
-                subst = resolved.subst.substituteInValues(subst)
-            }
-            return BoundElement(base, subst)
-        }
+        val boundElement = expr.path.reference.advancedDeepResolve()
 
-        val boundElement = expr.path.reference.advancedResolve()
-
-        // Resolve potential type aliases
-        val baseElement = if (boundElement != null && boundElement.element is RsTypeAlias) {
-            resolveBaseType(boundElement.element, boundElement.subst)
-        } else {
-            boundElement
-        }
-
-        if (baseElement == null) {
+        if (boundElement == null) {
             for (field in expr.structLiteralBody.structLiteralFieldList) {
                 field.expr?.inferType()
             }
@@ -903,15 +877,15 @@ private class RsFnInferenceContext(
             return TyUnknown
         }
 
-        val (element, subst) = baseElement
+        val (element, subst) = boundElement
 
-        val genericDecl: RsGenericDeclaration = when (element) {
+        val genericDecl: RsGenericDeclaration? = when (element) {
             is RsStructItem -> element
             is RsEnumVariant -> element.parentEnum
-            else -> return TyUnknown
+            else -> null
         }
 
-        val typeParameters = instantiateBounds(genericDecl)
+        val typeParameters = genericDecl?.let { instantiateBounds(it) } ?: emptySubstitution
         unifySubst(subst, typeParameters)
         if (expected != null) unifySubst(typeParameters, expected.typeParameterValues)
 
