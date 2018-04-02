@@ -124,7 +124,7 @@ class RsStructureViewTest : RsTestBase() {
          -Foo
           C: i32
           query(&u32) -> Option<&u32>
-         -Foo for &str
+         -Foo for &'static str
           C: i32
           query(&u32) -> Option<&u32>
     """)
@@ -271,62 +271,85 @@ class RsStructureViewTest : RsTestBase() {
         pub struct Foo;
     """, "Foo", true)
 
-    fun `test template types impl`() = doTest("""
-        struct A<K> { }
+    fun `test generic impl`() = doTest("""
+        struct A<T> { }
 
-        impl<K: Ord> A<K> {
+        impl<T: Ord> A<T> {
             pub fn aaa() {}
         }
-        impl<K: Display> A<K> {
+        impl<T: Display> A<T> {
             pub fn bbb() {}
         }
-        impl<K: Display + Ord> A<K> {
+        impl<T: Display + Ord> A<T> {
             pub fn ccc() {}
         }
-        impl<K> A<K> {
+        impl<T> A<T> {
             pub fn ddd() {}
         }
-        impl<K> A<K> where K: Ord {
+        impl<T> A<T> where T: Ord {
             pub fn eee() {}
         }
-        impl<K> A<K> where K: Display + Ord {
+        impl<T> A<T> where T: Display + Ord {
             pub fn fff() {}
         }
-        impl<K> A<K> where K: Eq + {
+        impl<T> A<T> where T: Eq + {
             pub fn ggg() {}
         }
-        impl<K> A<K> where {
+        impl<T> A<T> where {
             pub fn hhh() {}
         }
-        impl<K> A<K> where K: {
+        impl<T> A<T> where T: {
             pub fn iii() {}
         }
-        impl<K: Ord> A<K> where K: Display {
+        impl<T: Ord> A<T> where T: Display {
             pub fn jjj() {}
+        }
+        impl<T: Ord, F> A<F> where F: Into<T> {
+            pub fn foo() {}
         }
     """, """
         -main.rs
          A
-         -A<K: Ord>
+         -A<T> where T: Ord
           aaa()
-         -A<K: Display>
+         -A<T> where T: Display
           bbb()
-         -A<K: Display + Ord>
+         -A<T> where T: Display + Ord
           ccc()
-         -A<K>
+         -A<T>
           ddd()
-         -A<K: Ord>
+         -A<T> where T: Ord
           eee()
-         -A<K: Display + Ord>
+         -A<T> where T: Display + Ord
           fff()
-         -A<K: Eq>
+         -A<T> where T: Eq
           ggg()
-         -A<K>
+         -A<T>
           hhh()
-         -A<K>
+         -A<T>
           iii()
-         -A<K: Ord + Display>
+         -A<T> where T: Ord + Display
           jjj()
+         -A<F> where T: Ord, F: Into
+          foo()
+    """)
+
+    fun `test generic trait impl`() = doTest("""
+        struct Foo<T>(T);
+        trait Bar<T> {}
+        trait Baz {}
+
+        impl<T> Foo<T> for Bar<T> {}
+        impl<T: Baz> Foo<T> for Bar<T> {}
+        impl<T: Clone, F> Foo<T> for Bar<F> where F: Ord {}
+    """, """
+        -main.rs
+         Foo
+         Bar
+         Baz
+         Foo<T> for Bar<T>
+         Foo<T> for Bar<T> where T: Baz
+         Foo<T> for Bar<F> where T: Clone, F: Ord
     """)
 
     private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
