@@ -124,7 +124,7 @@ class RsStructureViewTest : RsTestBase() {
          -Foo
           C: i32
           query(&u32) -> Option<&u32>
-         -Foo for &str
+         -Foo for &'static str
           C: i32
           query(&u32) -> Option<&u32>
     """)
@@ -270,6 +270,87 @@ class RsStructureViewTest : RsTestBase() {
     fun `test struct pub`() = doPresentationDataTest("""
         pub struct Foo;
     """, "Foo", true)
+
+    fun `test generic impl`() = doTest("""
+        struct A<T> { }
+
+        impl<T: Ord> A<T> {
+            pub fn aaa() {}
+        }
+        impl<T: Display> A<T> {
+            pub fn bbb() {}
+        }
+        impl<T: Display + Ord> A<T> {
+            pub fn ccc() {}
+        }
+        impl<T> A<T> {
+            pub fn ddd() {}
+        }
+        impl<T> A<T> where T: Ord {
+            pub fn eee() {}
+        }
+        impl<T> A<T> where T: Display + Ord {
+            pub fn fff() {}
+        }
+        impl<T> A<T> where T: Eq + {
+            pub fn ggg() {}
+        }
+        impl<T> A<T> where {
+            pub fn hhh() {}
+        }
+        impl<T> A<T> where T: {
+            pub fn iii() {}
+        }
+        impl<T: Ord> A<T> where T: Display {
+            pub fn jjj() {}
+        }
+        impl<T: Ord, F> A<F> where F: Into<T> {
+            pub fn foo() {}
+        }
+    """, """
+        -main.rs
+         A
+         -A<T> where T: Ord
+          aaa()
+         -A<T> where T: Display
+          bbb()
+         -A<T> where T: Display + Ord
+          ccc()
+         -A<T>
+          ddd()
+         -A<T> where T: Ord
+          eee()
+         -A<T> where T: Display + Ord
+          fff()
+         -A<T> where T: Eq
+          ggg()
+         -A<T>
+          hhh()
+         -A<T>
+          iii()
+         -A<T> where T: Ord + Display
+          jjj()
+         -A<F> where T: Ord, F: Into
+          foo()
+    """)
+
+    fun `test generic trait impl`() = doTest("""
+        struct Foo<T>(T);
+        trait Bar<T> {}
+        trait Baz {}
+
+        impl<T> Foo<T> for Bar<T> {}
+        impl<T: Baz> Foo<T> for Bar<T> {}
+        impl<T: Clone, F> Foo<T> for Bar<F> where F: Ord {}
+    """, """
+        -main.rs
+         Foo
+         Bar
+         Baz
+         Foo<T> for Bar<T>
+         Foo<T> for Bar<T> where T: Baz
+         Foo<T> for Bar<F> where T: Clone, F: Ord
+    """)
 
     private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
         myFixture.configureByText("main.rs", code)

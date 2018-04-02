@@ -11,8 +11,6 @@ import com.intellij.openapi.util.text.StringUtil
 import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.type
-
 
 fun getPresentation(psi: RsElement): ItemPresentation {
     val location = run {
@@ -60,18 +58,31 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
     return PresentationData(presentation, null, icon, null)
 }
 
-private fun presentableName(psi: RsElement): String? = when (psi) {
-    is RsNamedElement -> psi.name
-    is RsImplItem -> {
-        val typeName = psi.typeReference?.type?.toString()
-        val traitName = psi.traitRef?.path?.referenceName
-        when {
-            typeName == null -> null
-            traitName == null -> typeName
-            else -> "$traitName for $typeName"
+private fun presentableName(psi: RsElement): String? {
+    return when (psi) {
+        is RsNamedElement -> psi.name
+        is RsImplItem -> {
+            val type = psi.typeReference?.text ?: return null
+            val trait = psi.traitRef?.text
+            buildString {
+                if (trait != null) {
+                    append("$trait for ")
+                }
+                append(type)
+                append(typeParameterBounds(psi))
+            }
         }
+        else -> null
     }
-    else -> null
+}
+
+private fun typeParameterBounds(impl: RsImplItem): String {
+    val allBounds = impl.typeParameters.mapNotNull { param ->
+        val name = param.name ?: return@mapNotNull null
+        val bounds = param.bounds.mapNotNull { it.bound.traitRef?.path?.referenceName }
+        if (bounds.isNotEmpty()) bounds.joinToString(prefix = "$name: ", separator = " + ") else null
+    }
+    return if (allBounds.isNotEmpty()) allBounds.joinToString(prefix = " where ", separator = ", ") else ""
 }
 
 val RsDocAndAttributeOwner.presentableQualifiedName: String?
