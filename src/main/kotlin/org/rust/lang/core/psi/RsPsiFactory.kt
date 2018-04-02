@@ -12,6 +12,7 @@ import com.intellij.psi.PsiParserFacade
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.emptySubstitution
@@ -285,7 +286,7 @@ class RsPsiFactory(private val project: Project) {
         createExpressionOfType("$typeText::$methodNameText(${arguments.joinToString { it.text }})")
 
     fun createNoArgsMethodCall(expr: RsExpr, methodNameText: String): RsDotExpr = when (expr) {
-        is RsBinaryExpr, is RsCastExpr -> createExpressionOfType("(${expr.text}).$methodNameText()")
+        is RsBinaryExpr, is RsUnaryExpr, is RsCastExpr -> createExpressionOfType("(${expr.text}).$methodNameText()")
         else -> createExpressionOfType("${expr.text}.$methodNameText()")
     }
 
