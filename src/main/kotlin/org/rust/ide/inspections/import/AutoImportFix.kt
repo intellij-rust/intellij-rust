@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.fixes.import
+package org.rust.ide.inspections.import
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
@@ -159,6 +159,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
                     ImportItem.ReexportedItem(it, item)
                 }
 
+            val namespaceFilter = path.namespaceFilter
             val attributes = (path.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
 
             val candidates = (explicitItems + reexportedItems)
@@ -167,7 +168,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
                 .mapNotNull { importItem -> importItem.canBeImported(pathSuperMods)?.let { ImportCandidate(importItem, it) } }
                 // check that result after import can be resolved and resolved element is suitable
                 // if no, don't add it in candidate list
-                .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info, attributes) }
+                .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info, attributes, namespaceFilter) }
                 .groupBy { it.importItem.item }
                 .flatMap { (_, candidates) -> filterForSingleItem(candidates, attributes) }
 
@@ -249,7 +250,8 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             project: Project,
             context: RsMod,
             info: ImportInfo,
-            attributes: RsFile.Attributes
+            attributes: RsFile.Attributes,
+            namespaceFilter: (RsQualifiedNamedElement) -> Boolean
         ): Boolean {
             val externCrateName = if (info !is ImportInfo.ExternCrateImportInfo ||
                 attributes == RsFile.Attributes.NONE && info.target.isStd ||
@@ -260,7 +262,8 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             }
             val path = RsCodeFragmentFactory(project)
                 .createPathInTmpMod(context, this, info.usePath, externCrateName) ?: return false
-            val element = path.reference.resolve() ?: return false
+            val element = path.reference.resolve() as? RsQualifiedNamedElement ?: return false
+            if (!namespaceFilter(element)) return false
             return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
         }
 
@@ -422,6 +425,45 @@ sealed class ImportInfo {
 }
 
 data class ImportCandidate(val importItem: ImportItem, val info: ImportInfo)
+
+private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean get() = when (context) {
+    is RsTypeElement -> { e ->
+        when (e) {
+            is RsEnumItem,
+            is RsStructItem,
+            is RsTraitItem,
+            is RsTypeAlias -> true
+            else -> false
+        }
+    }
+    is RsPathExpr -> { e ->
+        when (e) {
+            // TODO: take into account fields type
+            is RsFieldsOwner,
+            is RsConstant,
+            is RsFunction -> true
+            is RsTypeAlias -> e.baseType() is RsFieldsOwner
+            else -> false
+        }
+    }
+    is RsTraitRef -> { e -> e is RsTraitItem }
+    is RsStructLiteral -> { e ->
+        val element = if (e is RsTypeAlias) e.baseType() else e
+        element is RsFieldsOwner && element.blockFields != null
+    }
+    is RsPatBinding -> { e ->
+        when (e) {
+            is RsEnumItem,
+            is RsEnumVariant,
+            is RsStructItem,
+            is RsTypeAlias,
+            is RsConstant,
+            is RsFunction -> true
+            else -> false
+        }
+    }
+    else -> { _ -> true }
+}
 
 private val RsMod.stdlibAttributes: RsFile.Attributes get() = (containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
 private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsInnerAttr }

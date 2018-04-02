@@ -5,8 +5,6 @@
 
 package org.rust.ide.inspections.import
 
-import org.rust.ide.inspections.fixes.import.AutoImportFix
-
 class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import struct`() = checkAutoImportFixByText("""
@@ -891,6 +889,191 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn main() {
             let x = FooBar/*caret*/;
+        }
+    """)
+
+    fun `test filter by namespace - type`() = checkAutoImportFixByText("""
+        mod struct_mod {
+            pub struct Foo { foo: i32 }
+        }
+
+        mod enum_mod {
+            pub enum Bar {
+                Foo
+            }
+        }
+
+        fn foo(x: <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>) {}
+    """, """
+        use struct_mod::Foo;
+
+        mod struct_mod {
+            pub struct Foo { foo: i32 }
+        }
+
+        mod enum_mod {
+            pub enum Bar {
+                Foo
+            }
+        }
+
+        fn foo(x: Foo/*caret*/) {}
+    """)
+
+    // should suggest only `enum_mod::Bar::Foo`
+    fun `test filter by namespace - value`() = checkAutoImportFixByTextWithMultipleChoice("""
+        mod struct_mod {
+            pub struct Foo { foo: i32 }
+        }
+
+        mod enum_mod {
+            pub enum Bar {
+                Foo
+            }
+        }
+
+        mod trait_mod {
+            pub trait Foo {}
+        }
+
+        mod type_alias_mod {
+            pub type Foo = Bar;
+            struct Bar { x: i32 }
+        }
+
+        fn main() {
+            let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, setOf("struct_mod::Foo", "enum_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_mod::Bar::Foo", """
+        use enum_mod::Bar::Foo;
+
+        mod struct_mod {
+            pub struct Foo { foo: i32 }
+        }
+
+        mod enum_mod {
+            pub enum Bar {
+                Foo
+            }
+        }
+
+        mod trait_mod {
+            pub trait Foo {}
+        }
+
+        mod type_alias_mod {
+            pub type Foo = Bar;
+            struct Bar { x: i32 }
+        }
+
+        fn main() {
+            let x = Foo/*caret*/;
+        }
+    """)
+
+    fun `test filter by namespace - trait`() = checkAutoImportFixByText("""
+        mod struct_mod {
+            pub struct Foo { foo: i32 }
+        }
+
+        mod enum_mod {
+            pub enum Bar {
+                Foo
+            }
+        }
+
+        mod trait_mod {
+            pub trait Foo {}
+        }
+
+        fn foo<T: <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>>(x: T) {}
+    """, """
+        use trait_mod::Foo;
+
+        mod struct_mod {
+            pub struct Foo { foo: i32 }
+        }
+
+        mod enum_mod {
+            pub enum Bar {
+                Foo
+            }
+        }
+
+        mod trait_mod {
+            pub trait Foo {}
+        }
+
+        fn foo<T: Foo/*caret*/>(x: T) {}
+    """)
+
+    fun `test filter by namespace - struct literal`() = checkAutoImportFixByTextWithMultipleChoice("""
+        mod struct_mod {
+            pub struct Foo;
+        }
+
+        mod block_struct_mod {
+            pub struct Foo { x: i32 }
+        }
+
+        mod enum_mod {
+            pub enum Bar {
+                Foo
+            }
+        }
+
+        mod trait_mod {
+            pub trait Foo {}
+        }
+
+        mod enum_struct_mod {
+            pub enum Bar {
+                Foo { foo: i32 }
+            }
+        }
+
+        mod type_alias_mod {
+            pub type Foo = Bar;
+            struct Bar { x: i32 }
+        }
+
+        fn main() {
+            let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error> { };
+        }
+    """, setOf("block_struct_mod::Foo", "enum_struct_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_struct_mod::Bar::Foo", """
+        use enum_struct_mod::Bar::Foo;
+
+        mod struct_mod {
+            pub struct Foo;
+        }
+
+        mod block_struct_mod {
+            pub struct Foo { x: i32 }
+        }
+
+        mod enum_mod {
+            pub enum Bar {
+                Foo
+            }
+        }
+
+        mod trait_mod {
+            pub trait Foo {}
+        }
+
+        mod enum_struct_mod {
+            pub enum Bar {
+                Foo { foo: i32 }
+            }
+        }
+
+        mod type_alias_mod {
+            pub type Foo = Bar;
+            struct Bar { x: i32 }
+        }
+
+        fn main() {
+            let x = Foo/*caret*/ { };
         }
     """)
 }
