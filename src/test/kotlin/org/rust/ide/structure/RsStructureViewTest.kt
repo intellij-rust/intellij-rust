@@ -271,6 +271,64 @@ class RsStructureViewTest : RsTestBase() {
         pub struct Foo;
     """, "Foo", true)
 
+    fun `test template types impl`() = doTest("""
+        struct A<K> { }
+
+        impl<K: Ord> A<K> {
+            pub fn aaa() {}
+        }
+        impl<K: Display> A<K> {
+            pub fn bbb() {}
+        }
+        impl<K: Display + Ord> A<K> {
+            pub fn ccc() {}
+        }
+        impl<K> A<K> {
+            pub fn ddd() {}
+        }
+        impl<K> A<K> where K: Ord {
+            pub fn eee() {}
+        }
+        impl<K> A<K> where K: Display + Ord {
+            pub fn fff() {}
+        }
+        impl<K> A<K> where K: Eq + {
+            pub fn ggg() {}
+        }
+        impl<K> A<K> where {
+            pub fn hhh() {}
+        }
+        impl<K> A<K> where K: {
+            pub fn iii() {}
+        }
+        impl<K: Ord> A<K> where K: Display {
+            pub fn jjj() {}
+        }
+    """, """
+        -main.rs
+         A
+         -A<K: Ord>
+          aaa()
+         -A<K: Display>
+          bbb()
+         -A<K: Display + Ord>
+          ccc()
+         -A<K>
+          ddd()
+         -A<K: Ord>
+          eee()
+         -A<K: Display + Ord>
+          fff()
+         -A<K: Eq>
+          ggg()
+         -A<K>
+          hhh()
+         -A<K>
+          iii()
+         -A<K: Ord + Display>
+          jjj()
+    """)
+
     private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
         myFixture.configureByText("main.rs", code)
         val psi = myFixture.file.children.mapNotNull { it as? RsElement }.first()

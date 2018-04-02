@@ -60,13 +60,42 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
     return PresentationData(presentation, null, icon, null)
 }
 
+private fun buildTemplateImplTypeName(psi: RsImplItem): String? {
+    val boundsMap = LinkedHashMap<String, MutableList<String>>()
+    val baseName = psi.typeReference?.baseType?.name ?: return null
+    for (typeParameter in psi.typeParameters) {
+        val name = typeParameter.name ?: continue
+        val boundsList = mutableListOf<String>()
+        typeParameter.bounds.mapNotNullTo(boundsList) { it.bound.traitRef?.path?.referenceName }
+        if (boundsMap.containsKey(name))
+            boundsMap[name]!!.addAll(boundsList)
+        else
+            boundsMap.put(name, boundsList)
+    }
+
+    val paramsList = mutableListOf<String>()
+    for ((key, value) in boundsMap) {
+        val boundsString = value.joinToString(separator = " + ")
+        when (boundsString.isEmpty()) {
+            true -> paramsList.add(key)
+            false -> paramsList.add("$key: $boundsString")
+        }
+    }
+
+    if (paramsList.isEmpty()) return null
+    val paramsString = paramsList.joinToString(prefix = "<", postfix = ">", separator = ", ")
+    return "$baseName$paramsString"
+}
+
 private fun presentableName(psi: RsElement): String? = when (psi) {
     is RsNamedElement -> psi.name
     is RsImplItem -> {
         val typeName = psi.typeReference?.type?.toString()
         val traitName = psi.traitRef?.path?.referenceName
+        val templateImplName = buildTemplateImplTypeName(psi)
         when {
             typeName == null -> null
+            templateImplName != null -> templateImplName
             traitName == null -> typeName
             else -> "$traitName for $typeName"
         }
