@@ -732,6 +732,16 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test Self struct literal`() = testExpr("""
+        struct S;
+        impl S {
+            fn new() {
+                let a = Self {};
+                a;
+            } //^ S
+        }
+    """)
+
     fun `test argument expr of unresolved function`() = testExpr("""
         fn main() {
             foo(1);
