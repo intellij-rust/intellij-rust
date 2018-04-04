@@ -8,7 +8,10 @@ package org.rust.lang.core.resolve
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.RsTypeDeclarationElement
+import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
@@ -17,12 +20,6 @@ import org.rust.openapiext.ProjectCache
 import java.util.*
 
 class StdKnownItems private constructor(private val absolutePathResolver: (String, String) -> RsNamedElement?) {
-    // lazy(NONE) is safe here because this class isn't shared between threads
-    private val binOps by lazy(LazyThreadSafetyMode.NONE) {
-        ArithmeticOp.values()
-            .map { findCoreItem("ops::${it.traitName}") }
-            .mapNotNull { it as? RsTraitItem }
-    }
 
     fun findStdItem(prefixNoStd: String, name: String): RsNamedElement? =
         absolutePathResolver(prefixNoStd, name)
@@ -40,8 +37,6 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
 
     fun findIteratorTrait(): RsTraitItem? =
         findCoreItem("iter::Iterator") as? RsTraitItem
-
-    fun findBinOpTraits(): List<RsTraitItem> = binOps
 
     fun findVecForElementTy(elementTy: Ty): Ty {
         val ty = findStdTy("alloc", "vec::Vec")
