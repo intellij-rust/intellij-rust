@@ -57,6 +57,17 @@ class ImplLookup(
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
     private val binOpsTraitAndOutputCache = mutableMapOf<ArithmeticOp, Pair<RsTraitItem, RsTypeAlias>?>()
+    private val arithOps by lazy(NONE) {
+        ArithmeticOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName, it.modName) }
+    }
+    private val assignArithOps by lazy(NONE) {
+        ArithmeticAssignmentOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName, it.modName) }
+    }
+    private val comparisionOps by lazy(NONE) {
+        // TODO lang attributes for cmp traits can't be collected correctly doe to `cfg_attr`
+        // TODO #[cfg_attr(stage0, lang = "ord")]
+        ComparisonOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName, it.modName) }
+    }
     private val fnTraits by lazy(NONE) {
         listOf("fn", "fn_mut", "fn_once").mapNotNull { RsLangItemIndex.findLangItem(project, it) }
     }
@@ -130,7 +141,9 @@ class ImplLookup(
                     val impls = mutableListOf<BoundElement<RsTraitItem>>()
                     if (ty is TyNumeric) {
                         // libcore/ops/arith.rs libcore/ops/bit.rs
-                        impls += items.findBinOpTraits().map { it.substAssocType("Output", ty) }
+                        impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
+                        impls += assignArithOps.map { it.withSubst(ty) }
+                        impls += comparisionOps.map { it.withSubst(ty) }
                     }
                     if (ty != TyStr) {
                         // libcore/cmp.rs
@@ -483,10 +496,13 @@ class ImplLookup(
             ?.get(assocType)
     }
 
-    fun findOverloadedOpImpl(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): RsTraitOrImpl? {
-        val trait = RsLangItemIndex.findLangItem(project, op.itemName, op.modName) ?: return null
-        return select(TraitRef(lhsType, trait.withSubst(rhsType))).ok()?.impl
+    fun selectOverloadedOp(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): SelectionResult<Selection> {
+        val trait = RsLangItemIndex.findLangItem(project, op.itemName, op.modName) ?: return SelectionResult.Err()
+        return select(TraitRef(lhsType, trait.withSubst(rhsType)))
     }
+
+    fun findOverloadedOpImpl(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): RsTraitOrImpl? =
+        selectOverloadedOp(lhsType, rhsType, op).ok()?.impl
 
     fun asTyFunction(ty: Ty): TyWithObligations<TyFunction>? {
         return (ty as? TyFunction)?.withObligations() ?: run {
@@ -611,11 +627,14 @@ private fun prepareSubstAndTraitRefRaw(
     return subst to TraitRef(formalSelfTy.substitute(subst), BoundElement(formalTrait.element, boundSubst))
 }
 
-private fun RsTraitItem.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> {
-    val assocType = this.findAssociatedType(assocName)
+private fun BoundElement<RsTraitItem>.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> {
+    val assocType = element.findAssociatedType(assocName)
     val assoc = if (assocType != null && ty != null) mapOf(assocType to ty) else emptyMap()
-    return BoundElement(this, assoc = assoc)
+    return BoundElement(element, subst, assoc)
 }
+
+private fun RsTraitItem.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> =
+    BoundElement(this).substAssocType(assocName, ty)
 
 private fun Substitution.valueByName(name: String): Ty =
     entries.find { it.key.toString() == name }?.value ?: TyUnknown

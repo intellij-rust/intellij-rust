@@ -1251,7 +1251,13 @@ private class RsFnInferenceContext(
             }
             is AssignmentOp -> {
                 val lhsType = expr.left.inferType()
-                expr.right?.inferTypeCoercableTo(lhsType)
+                if (op is OverloadableBinaryOperator) {
+                    val rhsType = expr.right?.inferType() ?: TyUnknown
+                    lookup.selectOverloadedOp(lhsType, rhsType, op).ok()?.nestedObligations
+                        ?.forEach(fulfill::registerPredicateObligation)
+                } else {
+                    expr.right?.inferTypeCoercableTo(lhsType)
+                }
                 TyUnit
             }
         }

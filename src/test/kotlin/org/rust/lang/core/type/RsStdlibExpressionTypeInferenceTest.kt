@@ -5,7 +5,10 @@
 
 package org.rust.lang.core.type
 
+import org.rust.lang.core.psi.ext.ArithmeticAssignmentOp
 import org.rust.lang.core.psi.ext.ArithmeticOp
+import org.rust.lang.core.types.ty.TyFloat
+import org.rust.lang.core.types.ty.TyInteger
 
 class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
@@ -401,24 +404,51 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test all binary ops with all numeric types`() {
-        val numericTypes = listOf(
-            "usize", "u8", "u16", "u32", "u64", "u128",
-            "isize", "i8", "i16", "i32", "i64", "i128",
-            "f32", "f64"
-        )
+    fun `test all arithmetic ops with all numeric types`() {
+        TyInteger.NAMES.permutations(ArithmeticOp.values().map { it.sign })
+            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", numeric) }
+        TyFloat.NAMES.permutations(ArithmeticOp.values().map { it.sign })
+            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", numeric) }
+    }
 
-        for (numeric in numericTypes) {
-            for ((_, _, _, sign) in ArithmeticOp.values()) {
-                stubOnlyTypeInfer("""
-                    //- main.rs
-                    fn foo(lhs: $numeric, rhs: $numeric) {
-                        let x = lhs $sign rhs;
-                        x;
-                      //^ $numeric
-                    }
-                """)
+    fun `test all arithmetic assignment ops with all numeric types`() {
+        TyInteger.NAMES.permutations(ArithmeticAssignmentOp.values().map { it.sign })
+            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", "()") }
+        TyFloat.NAMES.permutations(ArithmeticAssignmentOp.values().map { it.sign })
+            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", "()") }
+    }
+
+    // TODO lang attributes for cmp traits can't be collected correctly doe to `cfg_attr`
+    // TODO #[cfg_attr(stage0, lang = "ord")]
+//    fun `test all cmp ops with all numeric types`() {
+//        TyInteger.NAMES.permutations(ComparisonOp.values().map { it.sign })
+//            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", "bool") }
+//        TyFloat.NAMES.permutations(ComparisonOp.values().map { it.sign })
+//            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", "bool") }
+//    }
+
+    private fun <A, B> Collection<A>.permutations(other: Collection<B>): List<Pair<A, B>> {
+        val result = ArrayList<Pair<A, B>>(size*other.size)
+        for (a in this) {
+            for (b in other) {
+                result += Pair(a, b)
             }
         }
+        return result
     }
+
+    private fun doTestBinOp(
+        lhsType: String,
+        sign: String,
+        rhsLiteral: String,
+        expectedOutputType: String
+    ) = stubOnlyTypeInfer("""
+        //- main.rs
+        fn foo(lhs: $lhsType) {
+            let rhs = $rhsLiteral;
+            let x = lhs $sign rhs;
+            (x, rhs);
+          //^ ($expectedOutputType, $lhsType)
+        }
+    """)
 }
