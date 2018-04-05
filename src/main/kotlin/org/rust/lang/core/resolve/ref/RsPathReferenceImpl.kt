@@ -9,13 +9,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsGenericDeclaration
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.foldTyInferWith
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -128,3 +126,39 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
 private fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBinding): RsTypeAlias? =
     collectResolveVariants(binding.referenceName) { processAssocTypeVariants(trait, it) }
         .singleOrNull() as? RsTypeAlias?
+
+/** Resolves a reference through type aliases */
+fun RsPathReference.deepResolve(): RsElement? =
+    advancedDeepResolve()?.element
+
+/** Resolves a reference through type aliases */
+fun RsPathReference.advancedDeepResolve(): BoundElement<RsElement>? {
+    val boundElement = advancedResolve()?.let { resolved ->
+        // Resolve potential `Self` inside `impl`
+        if (resolved.element is RsImplItem && element.hasCself) {
+            (resolved.element.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve()
+        } else {
+            resolved
+        }
+    }
+
+    // Resolve potential type aliases
+    return if (boundElement != null && boundElement.element is RsTypeAlias) {
+        resolveThroughTypeAliases(boundElement)
+    } else {
+        boundElement
+    }
+}
+
+private fun resolveThroughTypeAliases(boundElement: BoundElement<RsElement>): BoundElement<RsElement>? {
+    var base: BoundElement<RsElement> = boundElement
+    val visited = mutableSetOf(boundElement.element)
+    while (base.element is RsTypeAlias) {
+        val resolved = ((base.element as RsTypeAlias).typeReference?.typeElement as? RsBaseType)
+            ?.path?.reference?.advancedResolve()
+            ?: break
+        if (!visited.add(resolved.element)) return null
+        base = resolved.substitute(base.subst)
+    }
+    return base
+}

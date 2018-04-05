@@ -7,6 +7,7 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.advancedDeepResolve
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -26,7 +27,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
 
             val primitiveType = TyPrimitive.fromPath(path)
             if (primitiveType != null) return primitiveType
-            val boundElement = path.reference.advancedResolve() ?: return TyUnknown
+            val boundElement = path.reference.advancedDeepResolve() ?: return TyUnknown
             val (target, subst) = boundElement
 
             when {

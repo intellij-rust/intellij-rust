@@ -18,6 +18,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.ty.TyPrimitive
@@ -262,7 +263,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             }
             val path = RsCodeFragmentFactory(project)
                 .createPathInTmpMod(context, this, info.usePath, externCrateName) ?: return false
-            val element = path.reference.resolve() as? RsQualifiedNamedElement ?: return false
+            val element = path.reference.deepResolve() as? RsQualifiedNamedElement ?: return false
             if (!namespaceFilter(element)) return false
             return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
         }
@@ -442,14 +443,12 @@ private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean get() =
             is RsFieldsOwner,
             is RsConstant,
             is RsFunction -> true
-            is RsTypeAlias -> e.baseType() is RsFieldsOwner
             else -> false
         }
     }
     is RsTraitRef -> { e -> e is RsTraitItem }
     is RsStructLiteral -> { e ->
-        val element = if (e is RsTypeAlias) e.baseType() else e
-        element is RsFieldsOwner && element.blockFields != null
+        e is RsFieldsOwner && e.blockFields != null
     }
     is RsPatBinding -> { e ->
         when (e) {
