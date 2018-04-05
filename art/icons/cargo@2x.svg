@@ -1,24 +1,24 @@
 <svg width="32" height="32" version="1.1" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
  <g opacity=".8">
   <g fill="#ebb02b" stroke="#bf8a0d">
-   <rect x="4.5" y="14.5" width="13" height="13" opacity="1"/>
-   <rect x="17.5" y="14.5" width="13" height="13" opacity="1"/>
-   <rect x="17.5" y="1.5" width="13" height="13" opacity="1"/>
+   <rect x="6.5" y="15" width="12.5" height="12.5" opacity="1"/>
+   <rect x="19" y="15" width="12.5" height="12.5" opacity="1"/>
+   <rect x="6.5" y="2.5" width="12.5" height="12.5" opacity="1"/>
   </g>
   <g fill="#ebbb59">
-   <rect x="10" y="26" width="2" height="2" opacity="1"/>
-   <rect x="10" y="14" width="2" height="2" opacity="1"/>
-   <rect x="23" y="13" width="2" height="2" opacity="1"/>
-   <rect x="23" y="1" width="2" height="2" opacity="1"/>
+   <rect x="24.25" y="26" width="2" height="2" opacity="1"/>
+   <rect x="11.75" y="13.5" width="2" height="2" opacity="1"/>
+   <rect x="24.25" y="14.5" width="2" height="2" opacity="1"/>
+   <rect x="11.75" y="2" width="2" height="2" opacity="1"/>
   </g>
   <g fill="#82633d">
-   <rect x="4" y="28" width="27" height="1.5" opacity="1"/>
-   <rect x="4" y="28" width="4" height="3" opacity="1"/>
-   <rect x="14" y="28" width="7" height="3" opacity="1"/>
-   <rect x="27" y="28" width="4" height="3" opacity="1"/>
+   <rect x="6" y="28" width="26" height="1.5" opacity="1"/>
+   <rect x="6" y="28" width="4" height="3" opacity="1"/>
+   <rect x="15.5" y="28" width="6.75" height="3" opacity="1"/>
+   <rect x="28" y="28" width="4" height="3" opacity="1"/>
   </g>
-  <circle cx="24" cy="21" r="4.5" fill="none" opacity="1" stroke="#725108"/>
-  <g transform="scale(.968909 1.03209)" fill="#725108" aria-label="R">
+  <circle cx="12.75" cy="21.25" r="4.25" fill="none" opacity="1" stroke="#725108"/>
+  <g transform="matrix(.915081 0 0 .997686 -10.0278 1.05)" fill="#725108" aria-label="R">
    <path d="m23.9386 20.021h0.397637q0.584526 0 0.862872-0.194842t0.278346-0.612361q0-0.413542-0.286299-0.588502-0.282322-0.174961-0.878777-0.174961h-0.373779zm0 1.00204v2.23074h-1.23268v-5.81345h1.69393q1.18496 0 1.75358 0.433425 0.568621 0.429448 0.568621 1.30822 0 0.512952-0.282322 0.914565-0.282323 0.397637-0.799251 0.62429l1.70984 2.53295h-1.36787l-1.38775-2.23074z" stroke-width="1.01795"/>
   </g>
  </g>
