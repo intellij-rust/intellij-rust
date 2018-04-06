@@ -43,6 +43,7 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
 
     override fun setUp() {
         super.setUp()
+
         if (toolchain != null) {
             project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
         }

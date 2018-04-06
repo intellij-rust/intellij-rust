@@ -156,13 +156,24 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun unpairedToken(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
-            LBRACE, RBRACE -> false
-            LPAREN, RPAREN -> false
+            LBRACE, RBRACE,
+            LPAREN, RPAREN,
             LBRACK, RBRACK -> false
             else -> {
-                b.advanceLexer()
+                collapsedTokenType(b)?.let { (tokenType, size) ->
+                    val marker = b.mark()
+                    PsiBuilderUtil.advance(b, size)
+                    marker.collapse(tokenType)
+                } ?: b.advanceLexer()
                 true
             }
+        }
+
+    @JvmStatic
+    fun macroBindingGroupSeparatorToken(b: PsiBuilder, level: Int): Boolean =
+        when (b.tokenType) {
+            PLUS, MUL, Q -> false
+            else -> unpairedToken(b, level)
         }
 
     @JvmStatic
@@ -284,8 +295,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun dynKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeyword(b, "dyn", DYN)
 
-    private @JvmStatic
-    fun     collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
+    @JvmStatic
+    private fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,
         // and when we make sure that we have desired token, we consume and collapse it.
         parts.forEachIndexed { i, tt ->
@@ -295,6 +306,37 @@ object RustParserUtil : GeneratedParserUtilBase() {
         PsiBuilderUtil.advance(b, parts.size)
         marker.collapse(tokenType)
         return true
+    }
+
+    /** Collapses contextual tokens (like &&) to a single token */
+    fun collapsedTokenType(b: PsiBuilder): Pair<IElementType, Int>? {
+        return when (b.tokenType) {
+            GT -> when (b.rawLookup(1)) {
+                GT -> when (b.rawLookup(2)) {
+                    EQ -> GTGTEQ to 3
+                    else -> GTGT to 2
+                }
+                EQ -> GTEQ to 2
+                else -> null
+            }
+            LT -> when (b.rawLookup(1)) {
+                LT -> when (b.rawLookup(2)) {
+                    EQ -> LTLTEQ to 3
+                    else -> LTLT to 2
+                }
+                EQ -> LTEQ to 2
+                else -> null
+            }
+            OR -> when (b.rawLookup(1)) {
+                OR -> OROR to 2
+                else -> null
+            }
+            AND -> when (b.rawLookup(1)) {
+                AND -> ANDAND to 2
+                else -> null
+            }
+            else -> null
+        }
     }
 
     private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean =

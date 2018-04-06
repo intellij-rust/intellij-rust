@@ -14,8 +14,6 @@ import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
-import org.rust.lang.core.types.ty.TyReference
-import org.rust.lang.core.types.type
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RsHighlightingAnnotator : Annotator {
@@ -145,7 +143,7 @@ private fun partToHighlight(element: RsElement): TextRange? {
         is RsTraitItem -> element.identifier
         is RsTypeAlias -> element.identifier
         is RsTypeParameter -> element.identifier
-        is RsMacroBinding -> element.nameElement
+        is RsMacroBinding -> element.metaVarIdentifier
         else -> null
     }
     return name?.textRange

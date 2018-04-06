@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 import org.rust.lang.core.psi.ext.elementType
 
 fun expandLazyStatic(call: RsMacroCall): ExpansionResult? {
-    val arg = call.macroArgument?.tt ?: return null
+    val arg = call.macroArgument?.compactTT ?: return null
     val lazyStaticCall = parseLazyStaticCall(arg) ?: return null
     val text = "${if (lazyStaticCall.pub) "pub " else ""}static ${lazyStaticCall.identifier}: ${lazyStaticCall.type} = &${lazyStaticCall.expr};"
     return RsPsiFactory(call.project)
@@ -27,7 +27,7 @@ private data class LazyStaticCall(
     val expr: String
 )
 
-private fun parseLazyStaticCall(tt: RsTt): LazyStaticCall? {
+private fun parseLazyStaticCall(tt: RsCompactTT): LazyStaticCall? {
     // static ref FOO: Foo = Foo::new();
     val pub = tt.firstToken(RsElementTypes.PUB) != null
     val ident = tt.firstToken(RsElementTypes.IDENTIFIER) ?: return null
@@ -48,7 +48,7 @@ private fun parseLazyStaticCall(tt: RsTt): LazyStaticCall? {
     return LazyStaticCall(pub, ident.text, typeText, exprText)
 }
 
-private fun RsTt.firstToken(type: IElementType): PsiElement? {
+private fun RsCompactTT.firstToken(type: IElementType): PsiElement? {
     var child = firstChild
     while (child != null) {
         if (child.elementType == type) return child
