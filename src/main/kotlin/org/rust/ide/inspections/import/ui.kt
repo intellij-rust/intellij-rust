@@ -79,8 +79,8 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
                     val panel = JPanel(BorderLayout())
                     baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
                     panel.add(baseRenderer.nextStepLabel, BorderLayout.EAST)
-                    val importItem = (value as? ImportCandidate)?.importItem
-                    panel.add(psiRenderer.getListCellRendererComponent(list, importItem, index, isSelected, cellHasFocus))
+                    val importCandidate = value as? ImportCandidate
+                    panel.add(psiRenderer.getListCellRendererComponent(list, importCandidate, index, isSelected, cellHasFocus))
                     panel
                 }
             }
@@ -94,31 +94,36 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
 
     private val rightRender: LibraryCellRender = LibraryCellRender()
 
-    private var importItem: ImportItem? = null
+    private var importCandidate: ImportCandidate? = null
 
     override fun getRightCellRenderer(value: Any?): DefaultListCellRenderer? = rightRender
 
     override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
-        val realValue = if (value is ImportItem) {
+        val realValue = if (value is ImportCandidate) {
             // Generally, it's rather hacky but I don't know another way
             // how to use functionality of `PsiElementListCellRenderer`
             // and pass additional info with psi element at same time
-            importItem = value
-            value.item
+            importCandidate = value
+            value.importItem.item
         } else {
             value
         }
         return super.getListCellRendererComponent(list, realValue, index, isSelected, cellHasFocus)
     }
 
-    override fun getElementText(element: PsiElement): String = importItem?.itemName ?: super.getElementText(element)
+    override fun getElementText(element: PsiElement): String = importCandidate?.importItem?.itemName ?: super.getElementText(element)
 
     override fun getContainerText(element: PsiElement, name: String): String? {
-        val importItem = importItem
-        return if (importItem != null) {
-            val crateName = importItem.containingCargoTarget?.normName ?: return null
-            val parentPath = importItem.parentCrateRelativePath ?: return null
-            "($crateName::$parentPath)"
+        val importCandidate = importCandidate
+        return if (importCandidate != null) {
+            val crateName = (importCandidate.info as? ImportInfo.ExternCrateImportInfo)?.externCrateName
+            val parentPath = importCandidate.importItem.parentCrateRelativePath ?: return null
+            val container = when {
+                crateName == null -> parentPath
+                parentPath.isEmpty() -> crateName
+                else -> "$crateName::$parentPath"
+            }
+            "($container)"
         } else {
             super.getContainerText(element, name)
         }
@@ -142,7 +147,7 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
         }
 
         private fun textWithIcon(): Pair<String, Icon>? {
-            val pkg = importItem?.containingCargoTarget?.pkg ?: return null
+            val pkg = importCandidate?.importItem?.containingCargoTarget?.pkg ?: return null
             return when (pkg.origin) {
                 PackageOrigin.STDLIB -> pkg.normName to RsIcons.RUST
                 PackageOrigin.DEPENDENCY, PackageOrigin.TRANSITIVE_DEPENDENCY -> pkg.normName to CargoIcons.ICON
