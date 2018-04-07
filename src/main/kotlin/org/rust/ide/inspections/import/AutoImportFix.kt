@@ -64,10 +64,11 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
         // we uses this info to create correct relative use item path if needed
         var relativeDepth: Int? = null
 
+        val info = candidate.info
         // if crate of importing element differs from current crate
         // we need to add new extern crate item
-        if (candidate.info is ImportInfo.ExternCrateImportInfo) {
-            val target = candidate.info.target
+        if (info is ImportInfo.ExternCrateImportInfo) {
+            val target = info.target
             val crateRoot = originalPath.crateRoot
             val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
             when {
@@ -79,18 +80,12 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
                 // we don't add corresponding extern crate item manually for the same reason
                 attributes == RsFile.Attributes.NO_STD && target.isCore -> Testmarks.autoInjectedCoreCrate.hit()
                 else -> {
-                    val superModWithDepth = mod.superMods.withIndex().find { (_, superMod) ->
-                        val externCrateItems = superMod.childrenOfType<RsExternCrateItem>()
-                        externCrateItems.any { it.reference.resolve() == candidate.info.externCrateMod }
-                    }
-
-                    if (superModWithDepth == null) {
-                        crateRoot?.insertExternCrateItem(psiFactory, target.normName)
+                    if (info.needInsertExternCrateItem) {
+                        crateRoot?.insertExternCrateItem(psiFactory, info.externCrateName)
                     } else {
-                        val (depth, superMod) = superModWithDepth
-                        if (superMod != crateRoot) {
+                        if (info.depth != null) {
                             Testmarks.externCrateItemInNotCrateRoot.hit()
-                            relativeDepth = depth
+                            relativeDepth = info.depth
                         }
                     }
                 }
@@ -102,7 +97,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             0 -> "self::"
             else -> "super::".repeat(relativeDepth)
         }
-        mod.insertUseItem(psiFactory, "$prefix${candidate.info.usePath}")
+        mod.insertUseItem(psiFactory, "$prefix${info.usePath}")
     }
 
     private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
@@ -146,7 +141,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             }
 
             val pathMod = path.containingMod
-            val pathSuperMods = HashSet(pathMod.superMods)
+            val pathSuperMods = LinkedHashSet(pathMod.superMods)
 
             val explicitItems = RsNamedElementIndex.findElementsByName(project, basePath.referenceName)
                 .asSequence()
@@ -223,7 +218,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
         // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)`
         // but in our case `mod` is always same and `mod` needs only to get set of its super mods
         // so we pass `superMods` instead of `mod` for optimization
-        private fun ImportItem.canBeImported(superMods: Set<RsMod>): ImportInfo? {
+        private fun ImportItem.canBeImported(superMods: LinkedHashSet<RsMod>): ImportInfo? {
             if (item !is RsVisible) return null
 
             val ourSuperMods = this.superMods ?: return null
@@ -237,7 +232,25 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             val (shouldBePublicMods, importInfo) = if (lca == null) {
                 if (!isPublic) return null
                 val target = containingCargoTarget ?: return null
-                ourSuperMods to ImportInfo.ExternCrateImportInfo(ourSuperMods.last(), target, crateRelativePath)
+                val externCrateMod = ourSuperMods.last()
+
+                val externCrateWithDepth = superMods.withIndex().mapNotNull { (index, superMod) ->
+                    val externCrateItem = superMod.childrenOfType<RsExternCrateItem>()
+                        .find { it.reference.resolve() == externCrateMod } ?: return@mapNotNull null
+                    val depth = if (superMod.isCrateRoot) null else index
+                    externCrateItem to depth
+                }.singleOrNull()
+
+                val (externCrateName, needInsertExternCrateItem, depth) = if (externCrateWithDepth == null) {
+                    Triple(target.normName, true, null)
+                } else {
+                    val (externCrateItem, depth) = externCrateWithDepth
+                    Triple(externCrateItem.alias?.name ?: externCrateItem.referenceName, false, depth)
+                }
+
+                val importInfo = ImportInfo.ExternCrateImportInfo(target, externCrateName,
+                    needInsertExternCrateItem, depth, crateRelativePath)
+                ourSuperMods to importInfo
             } else {
                 // if current item is direct child of some ancestor of `mod` then it can be not public
                 if (parentMod == lca) return ImportInfo.LocalImportInfo(crateRelativePath)
@@ -259,7 +272,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
                 attributes == RsFile.Attributes.NO_STD && info.target.isCore) {
                 null
             } else {
-                info.target.normName
+                info.externCrateName
             }
             val path = RsCodeFragmentFactory(project)
                 .createPathInTmpMod(context, this, info.usePath, externCrateName) ?: return false
@@ -417,11 +430,37 @@ sealed class ImportInfo {
     class LocalImportInfo(override val usePath: String): ImportInfo()
 
     class ExternCrateImportInfo(
-        val externCrateMod: RsMod,
         val target: CargoWorkspace.Target,
+        val externCrateName: String,
+        val needInsertExternCrateItem: Boolean,
+        /**
+         * Relative depth of importing path's module to module with extern crate item.
+         * Used for creation of relative use path.
+         *
+         * For example, in the following case
+         * ```rust
+         * // lib.rs from bar crate
+         * pub struct Bar {}
+         * ```
+         *
+         * ```rust
+         * // main.rs from our crate
+         * mod foo {
+         *     extern crate bar;
+         *     mod baz {
+         *          fn f(bar: Bar/*caret*/) {}
+         *     }
+         * }
+         * ```
+         *
+         * relative depth of path `Bar` is `1`, so we should add `self::` prefix to use path.
+         *
+         * Can be null if extern crate item is absent or it is in crate root.
+         */
+        val depth: Int?,
         crateRelativePath: String
     ) : ImportInfo() {
-        override val usePath: String = "${target.normName}::$crateRelativePath"
+        override val usePath: String = "$externCrateName::$crateRelativePath"
     }
 }
 
@@ -447,9 +486,7 @@ private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean get() =
         }
     }
     is RsTraitRef -> { e -> e is RsTraitItem }
-    is RsStructLiteral -> { e ->
-        e is RsFieldsOwner && e.blockFields != null
-    }
+    is RsStructLiteral -> { e -> e is RsFieldsOwner && e.blockFields != null }
     is RsPatBinding -> { e ->
         when (e) {
             is RsEnumItem,
