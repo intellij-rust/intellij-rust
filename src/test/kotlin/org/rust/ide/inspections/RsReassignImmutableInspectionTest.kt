@@ -35,10 +35,17 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
         }
     """)
 
-    fun `test E0384 assign immutbable binding later`() = checkByText("""
+    fun `test E0384 assign immutable binding later`() = checkByText("""
         fn main() {
             let x;
             x = 3;
+        }
+    """)
+
+    fun `test E0384 assign immutable binding later for reference type`() = checkByText("""
+        fn main() {
+            let x;
+            x = &42;
         }
     """)
 
