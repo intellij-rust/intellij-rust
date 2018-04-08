@@ -11,14 +11,10 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.utils.findStatementsInRange
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsPatBinding
-import org.rust.lang.core.psi.RsTypeParameter
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.ty.Mutability
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyTuple
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 class ReturnValue(val expression: String?, val type: Ty) {
@@ -40,10 +36,26 @@ class ReturnValue(val expression: String?, val type: Ty) {
     }
 }
 
-class Parameter(val name: String, val type: Ty? = null, val mutability: Mutability = Mutability.IMMUTABLE) {
+class Parameter(
+    val name: String,
+    val type: Ty? = null,
+    val reference: Reference = Reference.NONE,
+    isMutableValue: Boolean = false
+) {
+
+    enum class Reference(val text: String) {
+        MUTABLE("&mut "), IMMUTABLE("& "), NONE("")
+    }
+
     companion object {
-        fun direct(value: RsPatBinding): Parameter {
-            return Parameter(value.referenceName, value.type, value.mutability)
+        fun direct(value: RsPatBinding, requiredBorrowing: Boolean, requiredMutableValue: Boolean): Parameter {
+            val reference = when {
+                requiredMutableValue -> if (requiredBorrowing) Reference.MUTABLE else Reference.NONE
+                value.mutability.isMut -> Reference.MUTABLE
+                requiredBorrowing -> Reference.IMMUTABLE
+                else -> Reference.NONE
+            }
+            return Parameter(value.referenceName, value.type, reference, requiredMutableValue)
         }
 
         fun self(value: String): Parameter {
@@ -51,17 +63,13 @@ class Parameter(val name: String, val type: Ty? = null, val mutability: Mutabili
         }
     }
 
-    val text: String
-        get() = buildString {
-            if (type != null) {
-                if (mutability.isMut) {
-                    append("mut ")
-                }
-                append("$name: ${type.insertionSafeText}")
-            } else {
-                append(name)
-            }
-        }
+    private val mut = if (isMutableValue) "mut " else ""
+
+    val parameterText: String
+        get() = if (type != null) "$mut$name: ${reference.text}${type.insertionSafeText}" else name
+
+    val argumentText: String
+        get() = "${reference.text}$name"
 }
 
 class RsExtractFunctionConfig private constructor(
@@ -74,10 +82,10 @@ class RsExtractFunctionConfig private constructor(
 ) {
 
     private val parametersText: String
-        get() = parameters.joinToString(",") { it.text }
+        get() = parameters.joinToString(",") { it.parameterText }
 
     val argumentsText: String
-        get() = parameters.filter { it.type != null }.joinToString(",") { it.name }
+        get() = parameters.filter { it.type != null }.joinToString(",") { it.argumentText }
 
     val signature: String
         get() = buildString {
@@ -149,13 +157,33 @@ class RsExtractFunctionConfig private constructor(
             val letBindings = fn.descendantsOfType<RsPatBinding>()
                 .filter { it.textOffset <= end }
 
+            val implLookup = ImplLookup.relativeTo(fn)
             val parameters = letBindings
-                .filter { it.textOffset <= start }
-                .filter {
-                    ReferencesSearch.search(it, LocalSearchScope(fn))
-                        .any { ref -> ref.element.textOffset in start..end }
+                .mapNotNull {
+                    if (it.textOffset > start) return@mapNotNull null
+                    val result = ReferencesSearch.search(it, LocalSearchScope(fn))
+
+                    val targets = result.filter { it.element.textOffset in start..end }
+                    if (targets.isEmpty()) return@mapNotNull null
+
+                    val hasRefOperator = targets.any {
+                        val operatorType = (it.element.ancestorStrict<RsUnaryExpr>())?.operatorType
+                        operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT
+                    }
+                    val requiredBorrowing = hasRefOperator || result.any { it.element.textOffset > end }
+                        // We manually check primitive types because of ImplLookup.isCopy does not support them
+                        && it.type != TyBool && it.type != TyChar && it.type !is TyInteger && it.type !is TyFloat
+                        && it.type !is TyReference
+                        && !implLookup.isCopy(it.type)
+
+                    val requiredMutableValue = it.mutability.isMut && targets.any {
+                        if (it.element.ancestorStrict<RsValueArgumentList>() == null) return@any false
+                        val operatorType = it.element.ancestorStrict<RsUnaryExpr>()?.operatorType
+                        operatorType == null || operatorType == UnaryOperator.REF_MUT
+                    }
+
+                    Parameter.direct(it, requiredBorrowing, requiredMutableValue)
                 }
-                .map { Parameter.direct(it) }
                 .toMutableList()
 
             val innerBindings = letBindings
