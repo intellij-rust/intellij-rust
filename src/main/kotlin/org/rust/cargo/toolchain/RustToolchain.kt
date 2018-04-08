@@ -6,20 +6,15 @@
 package org.rust.cargo.toolchain
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.text.SemVer
+import org.rust.cargo.runconfig.runExecutable
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.checkIsBackgroundThread
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-
-private val LOG = Logger.getInstance(RustToolchain::class.java)
 
 data class RustToolchain(val location: Path) {
 
@@ -171,19 +166,4 @@ private object Suggestions {
 
         return sequenceOf(fromHome) + fromProgramFiles
     }
-}
-
-private fun GeneralCommandLine.runExecutable(): List<String>? {
-    val procOut = try {
-        val timeoutMs = 1000
-        CapturingProcessHandler(this).runProcess(timeoutMs)
-    } catch (e: ExecutionException) {
-        LOG.warn("Failed to run executable!", e)
-        return null
-    }
-
-    if (procOut.exitCode != 0 || procOut.isCancelled || procOut.isTimeout)
-        return null
-
-    return procOut.stdoutLines
 }
