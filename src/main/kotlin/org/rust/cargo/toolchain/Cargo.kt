@@ -23,6 +23,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.runconfig.runExecutable
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.fullyRefreshDirectory
@@ -45,6 +46,14 @@ class Cargo(
     private val cargoExecutable: Path,
     private val rustExecutable: Path
 ) {
+    fun checkSupportForBuildCheckAllTargets(): Boolean {
+        val lines = GeneralCommandLine(cargoExecutable)
+            .withParameters("help", "check")
+            .runExecutable()
+            ?: return false
+
+        return lines.any { it.contains(" --all-targets ") }
+    }
 
     /**
      * Fetch all dependencies and calculate project information.
@@ -97,9 +106,16 @@ class Cargo(
     }
 
     @Throws(ExecutionException::class)
-    fun checkProject(owner: Disposable, projectDirectory: Path): ProcessOutput =
-        CargoCommandLine("check", projectDirectory, listOf("--message-format=json", "--all"))
+    fun checkProject(owner: Disposable, projectDirectory: Path): ProcessOutput {
+        val arguments = mutableListOf("--message-format=json", "--all")
+
+        if (checkSupportForBuildCheckAllTargets()) {
+            arguments += "--all-targets"
+        }
+
+        return CargoCommandLine("check", projectDirectory, arguments)
             .execute(owner, ignoreExitCode = true)
+    }
 
     fun toColoredCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
         generalCommandLine(commandLine, true)
