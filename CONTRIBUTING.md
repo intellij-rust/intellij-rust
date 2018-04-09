@@ -152,6 +152,7 @@ change. Common tags are:
   * PRJ for project creation changes 
   * ACT for actions
   * DBG for debugger
+  * LI for language injections
 
 
   * CARGO for cargo-related changes
