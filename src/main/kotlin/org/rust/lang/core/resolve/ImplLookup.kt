@@ -135,55 +135,62 @@ class ImplLookup(
 
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
         // TODO this code should be completely removed after macros implementation
-        when (ty) {
+        return when (ty) {
             is TyPrimitive -> {
-                return primitiveTyHardcodedImplsCache.getOrPut(ty) {
-                    val impls = mutableListOf<BoundElement<RsTraitItem>>()
-                    if (ty is TyNumeric) {
-                        // libcore/ops/arith.rs libcore/ops/bit.rs
-                        impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
-                        impls += assignArithOps.map { it.withSubst(ty) }
-                        impls += comparisionOps.map { it.withSubst(ty) }
-                    }
-                    if (ty != TyStr) {
-                        // libcore/cmp.rs
-                        if (ty != TyUnit) {
-                            RsLangItemIndex.findLangItem(project, "eq")?.let {
-                                impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
-                            }
-                        }
-                        if (ty != TyUnit && ty != TyBool) {
-                            RsLangItemIndex.findLangItem(project, "ord")?.let {
-                                impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
-                            }
-                        }
-                        if (ty !is TyFloat) {
-                            items.findEqTrait()?.let { impls.add(BoundElement(it)) }
-                            if (ty != TyUnit && ty != TyBool) {
-                                items.findOrdTrait()?.let { impls.add(BoundElement(it)) }
-                            }
-                        }
-
-                    }
-                    // libcore/clone.rs
-                    items.findCloneTrait()?.let { impls.add(BoundElement(it)) }
-                    impls
+                primitiveTyHardcodedImplsCache.getOrPut(ty) {
+                    getHardcodedImplsForPrimitives(ty)
                 }
             }
             is TyAdt -> when {
                 ty.item == items.findCoreItem("slice::Iter") -> {
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item",
+                    listOf(trait.substAssocType("Item",
                         TyReference(ty.typeParameterValues.valueByName("T"), IMMUTABLE)))
                 }
                 ty.item == items.findCoreItem("slice::IterMut") -> {
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item",
+                    listOf(trait.substAssocType("Item",
                         TyReference(ty.typeParameterValues.valueByName("T"), MUTABLE)))
                 }
+                else -> emptyList()
             }
+            // Can't cache type variables
+            is TyInfer.IntVar, is TyInfer.FloatVar -> getHardcodedImplsForPrimitives(ty)
+            else -> emptyList()
         }
-        return emptyList()
+    }
+
+    private fun getHardcodedImplsForPrimitives(ty: Ty): Collection<BoundElement<RsTraitItem>> {
+        val impls = mutableListOf<BoundElement<RsTraitItem>>()
+        if (ty is TyNumeric || ty is TyInfer.IntVar || ty is TyInfer.FloatVar) {
+            // libcore/ops/arith.rs libcore/ops/bit.rs
+            impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
+            impls += assignArithOps.map { it.withSubst(ty) }
+            impls += comparisionOps.map { it.withSubst(ty) }
+        }
+        if (ty != TyStr) {
+            // libcore/cmp.rs
+            if (ty != TyUnit) {
+                RsLangItemIndex.findLangItem(project, "eq")?.let {
+                    impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
+                }
+            }
+            if (ty != TyUnit && ty != TyBool) {
+                RsLangItemIndex.findLangItem(project, "ord")?.let {
+                    impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
+                }
+            }
+            if (ty !is TyFloat && ty !is TyInfer.FloatVar) {
+                items.findEqTrait()?.let { impls.add(BoundElement(it)) }
+                if (ty != TyUnit && ty != TyBool) {
+                    items.findOrdTrait()?.let { impls.add(BoundElement(it)) }
+                }
+            }
+
+        }
+        // libcore/clone.rs
+        items.findCloneTrait()?.let { impls.add(BoundElement(it)) }
+        return impls
     }
 
     private fun findSimpleImpls(selfTy: Ty): Collection<RsImplItem> {

@@ -404,6 +404,15 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test arithmetic op with unconstrained integer`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = 2+2+2;
+            a;
+          //^ i32
+        }
+    """)
+
     fun `test all arithmetic ops with all numeric types`() {
         TyInteger.NAMES.permutations(ArithmeticOp.values().map { it.sign })
             .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", numeric) }
