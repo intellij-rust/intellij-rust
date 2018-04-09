@@ -168,6 +168,12 @@ class ImplLookup(
             impls += assignArithOps.map { it.withSubst(ty) }
             impls += comparisionOps.map { it.withSubst(ty) }
         }
+        if (ty is TyInteger || ty is TyInfer.IntVar) {
+            // libcore/num/mod.rs
+            items.findFromStrTrait()?.let {
+                impls += it.substAssocType("Err", items.findCoreTy("num::ParseIntError"))
+            }
+        }
         if (ty != TyStr) {
             // libcore/cmp.rs
             if (ty != TyUnit) {
