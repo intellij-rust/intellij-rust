@@ -7,7 +7,7 @@ package org.rust.cargo.project.model
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.rust.cargo.project.CargoToolWindowPanel.Companion.SELECTED_CARGO_PROJECT
+import org.rust.cargo.project.toolwindow.CargoToolWindowPanel.Companion.SELECTED_CARGO_PROJECT
 
 class DetachCargoProjectAction : AnAction() {
     override fun update(e: AnActionEvent) {
