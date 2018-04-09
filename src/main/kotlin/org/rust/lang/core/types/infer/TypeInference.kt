@@ -505,6 +505,10 @@ class RsInferenceContext(
         }
     })
 
+    /** Return true if [ty] was instantiated or unified with another type variable */
+    fun isTypeVarAffected(ty: TyInfer.TyVar): Boolean =
+        varUnificationTable.findRoot(ty) != ty || varUnificationTable.findValue(ty) != null
+
     fun instantiateBounds(
         bounds: List<TraitRef>,
         subst: Map<TyTypeParameter, Ty> = emptySubstitution,
@@ -1341,12 +1345,15 @@ private class RsFnInferenceContext(
             actualArg.pat?.extractBindings(paramTy)
             paramTy
         }.toList()
-        val retTy = expr.retType?.typeReference?.type
+        val expectedRetTy = expr.retType?.typeReference?.type
             ?: expectedFnTy.retType.takeIf { it != TyUnknown }
-            ?: TyInfer.TyVar()
+        val isFreshRetTy = expectedRetTy == null
+        val retTy = expectedRetTy ?: TyInfer.TyVar()
 
         expr.expr?.let { RsFnInferenceContext(ctx, retTy).inferLambdaBody(it) }
-        return TyFunction(paramTypes, retTy)
+
+        val isDefaultRetTy = isFreshRetTy && retTy is TyInfer.TyVar && !ctx.isTypeVarAffected(retTy)
+        return TyFunction(paramTypes, if (isDefaultRetTy) TyUnit else retTy)
     }
 
     private fun deduceLambdaType(expected: Ty): TyFunction? {
