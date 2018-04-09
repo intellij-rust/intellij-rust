@@ -965,6 +965,13 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }    //^ i32
     """)
 
+    fun `test lambda without explicit return`() = testExpr("""
+        fn main() {
+            let a = || {};
+            a;
+        } //^ fn()
+    """)
+
     fun `test infer return expr from explicit closure return type`() = testExpr("""
         fn main() {
             || -> u8 {
