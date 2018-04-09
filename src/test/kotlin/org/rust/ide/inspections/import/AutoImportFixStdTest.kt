@@ -308,4 +308,28 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             let x = f32/*error*/::zero();
         }
     """)
+
+    fun `test extern crate alias`() = checkAutoImportFixByFileTree("""
+        //- dep-lib/lib.rs
+        pub struct Foo;
+
+        //- main.rs
+        extern crate dep_lib_target as dep_lib;
+
+        fn main() {
+            let foo = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        //- dep-lib/lib.rs
+        pub struct Foo;
+
+        //- main.rs
+        extern crate dep_lib_target as dep_lib;
+
+        use dep_lib::Foo;
+
+        fn main() {
+            let foo = Foo/*caret*/;
+        }
+    """)
 }
