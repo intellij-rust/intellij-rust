@@ -87,6 +87,9 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findTryFromTrait(): RsTraitItem? =
         findCoreItem("convert::TryFrom") as? RsTraitItem
 
+    fun findFromStrTrait(): RsTraitItem? =
+        findCoreItem("str::FromStr") as? RsTraitItem
+
     fun findBorrowTrait(): RsTraitItem? =
         findCoreItem("borrow::Borrow") as? RsTraitItem
 

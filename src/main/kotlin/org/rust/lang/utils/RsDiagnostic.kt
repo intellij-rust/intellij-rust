@@ -58,21 +58,19 @@ sealed class RsDiagnostic(
                     } else  if (element is RsElement) {
                         val items = StdKnownItems.relativeTo(element)
                         val lookup = ImplLookup(element.project, items)
-                        val canAddFromFix = isFromActualImplForExpected(items, lookup)
-                        if (canAddFromFix) {
+                        if (isFromActualImplForExpected(items, lookup)) {
                             add(ConvertToTyUsingFromTraitFix(element, expectedTy))
-                        }
-                        if (expectedTy is TyAdt && expectedTy.item == items.findResultItem()) {
-                            val (expOkTy, expErrTy) = expectedTy.typeArguments
-                            val resultErrTy = errTyOfTryFromActualImplForTy(expOkTy, items, lookup)
-                            if (resultErrTy != null && resultErrTy == expErrTy) {
-                                add(ConvertToTyUsingTryFromTraitFix(element, expOkTy))
-                            }
-                        } else if (!canAddFromFix) {
+                        } else { // only check TryFrom if From is not available
                             val resultErrTy = errTyOfTryFromActualImplForTy(expectedTy, items, lookup)
                             if (resultErrTy != null) {
                                 add(ConvertToTyUsingTryFromTraitAndUnpackFix(element, expectedTy, resultErrTy))
                             }
+                        }
+                        // currently it's possible to have `impl FromStr` independently form `impl<'a> From<&'a str>` or
+                        // `impl<'a> TryFrom<&'a str>`, so check for FromStr even if From or TryFrom is available
+                        val resultFromStrErrTy = ifActualIsStrGetErrTyOfFromStrImplForTy(expectedTy, items, lookup)
+                        if (resultFromStrErrTy != null) {
+                            add(ConvertToTyUsingFromStrAndUnpackFix(element, expectedTy, resultFromStrErrTy))
                         }
                         if (isToOwnedImplWithExpectedForActual(items, lookup)) {
                             add(ConvertToOwnedTyFix(element, expectedTy))
@@ -96,6 +94,14 @@ sealed class RsDiagnostic(
                                 if (isTraitWithTySubstImplForActual(lookup, items.findAsMutTrait(), expectedTy)) {
                                     add(ConvertToMutTyFix(element, expectedTy))
                                 }
+                            }
+                        } else if (expectedTy is TyAdt && expectedTy.item == items.findResultItem()) {
+                            val (expOkTy, expErrTy) = expectedTy.typeArguments
+                            if (expErrTy == errTyOfTryFromActualImplForTy(expOkTy, items, lookup)) {
+                                add(ConvertToTyUsingTryFromTraitFix(element, expOkTy))
+                            }
+                            if (expErrTy == ifActualIsStrGetErrTyOfFromStrImplForTy(expOkTy, items, lookup)) {
+                                add(ConvertToTyUsingFromStrFix(element, expOkTy))
                             }
                         }
                         if (actualTy == stringTy) {
@@ -121,6 +127,14 @@ sealed class RsDiagnostic(
             val fromTrait = items.findTryFromTrait() ?: return null
             val result = lookup.selectProjectionStrict(TraitRef(ty, fromTrait.withSubst(actualTy)),
                 fromTrait.associatedTypesTransitively.find { it.name == "Error"} ?: return null)
+            return result.ok()?.value
+        }
+
+        private fun ifActualIsStrGetErrTyOfFromStrImplForTy(ty: Ty, items: StdKnownItems, lookup: ImplLookup): Ty? {
+            if (lookup.coercionSequence(actualTy).lastOrNull() != TyStr) return null
+            val fromStr = items.findFromStrTrait() ?: return null
+            val result = lookup.selectProjectionStrict(TraitRef(ty, BoundElement(fromStr)),
+                fromStr.findAssociatedType("Err") ?: return null)
             return result.ok()?.value
         }
 
