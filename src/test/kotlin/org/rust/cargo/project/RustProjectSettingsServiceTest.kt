@@ -38,7 +38,8 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
             autoUpdateEnabled = true,
             explicitPathToStdlib = "/stdlib",
             useCargoCheckForBuild = false,
-            useCargoCheckAnnotator = true
+            useCargoCheckAnnotator = true,
+            useOfflineForCargoCheck = false
         ))
     }
 }
