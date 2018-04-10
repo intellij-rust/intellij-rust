@@ -205,7 +205,8 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     if (qualifier != null) {
         val primitiveType = TyPrimitive.fromPath(qualifier)
         if (primitiveType != null) {
-            if (processAssociatedItems(lookup, primitiveType, ns, processor)) return true
+            val selfSubst = mapOf(TyTypeParameter.self() to primitiveType)
+            if (processAssociatedItemsWithSelfSubst(lookup, primitiveType, ns, selfSubst, processor)) return true
         }
 
         val (base, subst) = qualifier.reference.advancedResolve() ?: return false
@@ -239,10 +240,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             } else {
                 emptySubstitution
             }
-            val assocItemsProcessor: RsResolveProcessor = {
-                processor(it.name, it.element!!, it.subst + selfSubst)
-            }
-            if (processAssociatedItems(lookup, selfTy, ns, assocItemsProcessor)) return true
+            if (processAssociatedItemsWithSelfSubst(lookup, selfTy, ns, selfSubst, processor)) return true
         }
         return false
     }
@@ -493,7 +491,12 @@ private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty,
     }
 }
 
-private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespace>, processor: (AssocItemScopeEntry) -> Boolean): Boolean {
+private fun processAssociatedItems(
+    lookup: ImplLookup,
+    type: Ty,
+    ns: Set<Namespace>,
+    processor: (AssocItemScopeEntry) -> Boolean
+): Boolean {
     val traitBounds = (type as? TyTypeParameter)?.getTraitBoundsTransitively()
     val visitedInherent = mutableSetOf<String>()
     fun processTraitOrImpl(traitOrImpl: RsTraitOrImpl, inherent: Boolean): Boolean {
@@ -547,6 +550,19 @@ private fun processAssociatedItems(lookup: ImplLookup, type: Ty, ns: Set<Namespa
     if (inherent.any { processTraitOrImpl(it, true) }) return true
     if (traits.any { processTraitOrImpl(it, false) }) return true
     return false
+}
+
+private fun processAssociatedItemsWithSelfSubst(
+    lookup: ImplLookup,
+    type: Ty,
+    ns: Set<Namespace>,
+    selfSubst: Substitution,
+    processor: RsResolveProcessor
+): Boolean {
+    val assocItemsProcessor: RsResolveProcessor = {
+        processor(it.name, it.element!!, it.subst + selfSubst)
+    }
+    return processAssociatedItems(lookup, type, ns, assocItemsProcessor)
 }
 
 private fun processLexicalDeclarations(scope: RsElement, cameFrom: PsiElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {
