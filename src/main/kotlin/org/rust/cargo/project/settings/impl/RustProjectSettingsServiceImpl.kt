@@ -27,7 +27,8 @@ class RustProjectSettingsServiceImpl(
         var autoUpdateEnabled: Boolean = true,
         var explicitPathToStdlib: String? = null,
         var useCargoCheckForBuild: Boolean = true,
-        var useCargoCheckAnnotator: Boolean = false
+        var useCargoCheckAnnotator: Boolean = false,
+        var useOfflineForCargoCheck: Boolean = false
     )
 
     override fun getState(): State = state
@@ -48,7 +49,8 @@ class RustProjectSettingsServiceImpl(
                 autoUpdateEnabled = state.autoUpdateEnabled,
                 explicitPathToStdlib = state.explicitPathToStdlib,
                 useCargoCheckForBuild = state.useCargoCheckForBuild,
-                useCargoCheckAnnotator = state.useCargoCheckAnnotator
+                useCargoCheckAnnotator = state.useCargoCheckAnnotator,
+                useOfflineForCargoCheck = state.useOfflineForCargoCheck
             )
         }
         set(value) {
@@ -57,7 +59,8 @@ class RustProjectSettingsServiceImpl(
                 autoUpdateEnabled = value.autoUpdateEnabled,
                 explicitPathToStdlib = value.explicitPathToStdlib,
                 useCargoCheckForBuild = value.useCargoCheckForBuild,
-                useCargoCheckAnnotator = value.useCargoCheckAnnotator
+                useCargoCheckAnnotator = value.useCargoCheckAnnotator,
+                useOfflineForCargoCheck = value.useOfflineForCargoCheck
             )
             if (state != newState) {
                 state = newState

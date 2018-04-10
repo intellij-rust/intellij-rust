@@ -63,6 +63,9 @@ fun Project.buildProject() {
     if (allTargets) {
         arguments += "--all-targets"
     }
+    if (rustSettings.useOfflineForCargoCheck) {
+        arguments += "-Zoffline"
+    }
 
     for (cargoProject in cargoProjects.allProjects) {
         val cmd = CargoCommandLine.forProject(cargoProject, command, arguments)

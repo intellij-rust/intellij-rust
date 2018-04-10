@@ -19,7 +19,8 @@ interface RustProjectSettingsService {
         // provide path to stdlib explicitly.
         val explicitPathToStdlib: String?,
         val useCargoCheckForBuild: Boolean,
-        val useCargoCheckAnnotator: Boolean
+        val useCargoCheckAnnotator: Boolean,
+        val useOfflineForCargoCheck: Boolean
     )
 
     var data: Data
@@ -33,7 +34,7 @@ interface RustProjectSettingsService {
     val autoUpdateEnabled: Boolean get() = data.autoUpdateEnabled
     val useCargoCheckForBuild: Boolean get() = data.useCargoCheckForBuild
     val useCargoCheckAnnotator: Boolean get() = data.useCargoCheckAnnotator
-
+    val useOfflineForCargoCheck: Boolean get() = data.useOfflineForCargoCheck
     /*
      * Show a dialog for toolchain configuration
      */
