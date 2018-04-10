@@ -22,6 +22,9 @@ import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
+import org.rust.lang.core.types.ty.TyFloat.F32
+import org.rust.lang.core.types.ty.TyFloat.F64
+import org.rust.lang.core.types.ty.TyInteger.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.ProjectCache
 import org.rust.stdext.buildSet
@@ -49,6 +52,76 @@ private val RsTraitItem.typeParamSingle: TyTypeParameter?
         typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
 
 const val DEFAULT_RECURSION_LIMIT = 64
+
+// libcore/num/mod.rs (impl_from!)
+val HARDCODED_FROM_IMPLS_MAP: Map<TyPrimitive, List<TyPrimitive>> = run {
+    val list = listOf(
+        // Unsigned -> Unsigned
+        U8 to U16,
+        U8 to U32,
+        U8 to U64,
+        U8 to U128,
+        U8 to USize,
+        U16 to U32,
+        U16 to U64,
+        U16 to U128,
+        U32 to U64,
+        U32 to U128,
+        U64 to U128,
+
+        // Signed -> Signed
+        I8 to I16,
+        I8 to I32,
+        I8 to I64,
+        I8 to I128,
+        I8 to ISize,
+        I16 to I32,
+        I16 to I64,
+        I16 to I128,
+        I32 to I64,
+        I32 to I128,
+        I64 to I128,
+
+        // Unsigned -> Signed
+        U8 to I16,
+        U8 to I32,
+        U8 to I64,
+        U8 to I128,
+        U16 to I32,
+        U16 to I64,
+        U16 to I128,
+        U32 to I64,
+        U32 to I128,
+        U64 to I128,
+
+        // https://github.com/rust-lang/rust/pull/49305
+        U16 to USize,
+        U8 to ISize,
+        I16 to ISize,
+
+        // Signed -> Float
+        I8 to F32,
+        I8 to F64,
+        I16 to F32,
+        I16 to F64,
+        I32 to F64,
+
+        // Unsigned -> Float
+        U8 to F32,
+        U8 to F64,
+        U16 to F32,
+        U16 to F64,
+        U32 to F64,
+
+        // Float -> Float
+        F32 to F64
+    )
+    val map = mutableMapOf<TyPrimitive, MutableList<TyPrimitive>>()
+    for ((from, to) in list) {
+        map.getOrPut(to) { mutableListOf() }.add(from)
+    }
+    map
+}
 
 class ImplLookup(
     private val project: Project,
@@ -135,55 +208,73 @@ class ImplLookup(
 
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
         // TODO this code should be completely removed after macros implementation
-        when (ty) {
+        return when (ty) {
             is TyPrimitive -> {
-                return primitiveTyHardcodedImplsCache.getOrPut(ty) {
-                    val impls = mutableListOf<BoundElement<RsTraitItem>>()
-                    if (ty is TyNumeric) {
-                        // libcore/ops/arith.rs libcore/ops/bit.rs
-                        impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
-                        impls += assignArithOps.map { it.withSubst(ty) }
-                        impls += comparisionOps.map { it.withSubst(ty) }
-                    }
-                    if (ty != TyStr) {
-                        // libcore/cmp.rs
-                        if (ty != TyUnit) {
-                            RsLangItemIndex.findLangItem(project, "eq")?.let {
-                                impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
-                            }
-                        }
-                        if (ty != TyUnit && ty != TyBool) {
-                            RsLangItemIndex.findLangItem(project, "ord")?.let {
-                                impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
-                            }
-                        }
-                        if (ty !is TyFloat) {
-                            items.findEqTrait()?.let { impls.add(BoundElement(it)) }
-                            if (ty != TyUnit && ty != TyBool) {
-                                items.findOrdTrait()?.let { impls.add(BoundElement(it)) }
-                            }
-                        }
-
-                    }
-                    // libcore/clone.rs
-                    items.findCloneTrait()?.let { impls.add(BoundElement(it)) }
-                    impls
+                primitiveTyHardcodedImplsCache.getOrPut(ty) {
+                    getHardcodedImplsForPrimitives(ty)
                 }
             }
             is TyAdt -> when {
                 ty.item == items.findCoreItem("slice::Iter") -> {
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item",
+                    listOf(trait.substAssocType("Item",
                         TyReference(ty.typeParameterValues.valueByName("T"), IMMUTABLE)))
                 }
                 ty.item == items.findCoreItem("slice::IterMut") -> {
                     val trait = items.findIteratorTrait() ?: return emptyList()
-                    return listOf(trait.substAssocType("Item",
+                    listOf(trait.substAssocType("Item",
                         TyReference(ty.typeParameterValues.valueByName("T"), MUTABLE)))
                 }
+                else -> emptyList()
+            }
+            // Can't cache type variables
+            is TyInfer.IntVar, is TyInfer.FloatVar -> getHardcodedImplsForPrimitives(ty)
+            else -> emptyList()
+        }
+    }
+
+    private fun getHardcodedImplsForPrimitives(ty: Ty): Collection<BoundElement<RsTraitItem>> {
+        val impls = mutableListOf<BoundElement<RsTraitItem>>()
+        if (ty is TyNumeric || ty is TyInfer.IntVar || ty is TyInfer.FloatVar) {
+            // libcore/ops/arith.rs libcore/ops/bit.rs
+            impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
+            impls += assignArithOps.map { it.withSubst(ty) }
+            impls += comparisionOps.map { it.withSubst(ty) }
+        }
+        if (ty is TyInteger || ty is TyInfer.IntVar) {
+            // libcore/num/mod.rs
+            items.findFromStrTrait()?.let {
+                impls += it.substAssocType("Err", items.findCoreTy("num::ParseIntError"))
             }
         }
-        return emptyList()
+        HARDCODED_FROM_IMPLS_MAP[ty]?.forEach { from ->
+            items.findFromTrait()?.let { trait ->
+                impls += trait.withSubst(from)
+            }
+        }
+        if (ty != TyStr) {
+            // libcore/cmp.rs
+            if (ty != TyUnit) {
+                RsLangItemIndex.findLangItem(project, "eq")?.let {
+                    impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
+                }
+            }
+            if (ty != TyUnit && ty != TyBool) {
+                RsLangItemIndex.findLangItem(project, "ord")?.let {
+                    impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
+                }
+            }
+            if (ty !is TyFloat && ty !is TyInfer.FloatVar) {
+                items.findEqTrait()?.let { impls.add(BoundElement(it)) }
+                if (ty != TyUnit && ty != TyBool) {
+                    items.findOrdTrait()?.let { impls.add(BoundElement(it)) }
+                }
+            }
+
+        }
+        // libcore/clone.rs
+        items.findCloneTrait()?.let { impls.add(BoundElement(it)) }
+        return impls
     }
 
     private fun findSimpleImpls(selfTy: Ty): Collection<RsImplItem> {
@@ -310,8 +401,9 @@ class ImplLookup(
                     ref.selfTy.trait.flattenHierarchy.find { it.element == ref.trait.element }
                         ?.let { add(SelectionCandidate.TypeParameter(it)) }
                 }
-                getHardcodedImpls(ref.selfTy).find { it.element == element }
-                    ?.let { add(SelectionCandidate.TypeParameter(it)) }
+                getHardcodedImpls(ref.selfTy).filter { be ->
+                    be.element == element && ctx.probe { ctx.combinePairs(zipValues(be.subst, ref.trait.subst)) }
+                }.forEach { add(SelectionCandidate.TypeParameter(it)) }
             }
         }
     }
