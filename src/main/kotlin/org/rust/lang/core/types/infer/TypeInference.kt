@@ -618,7 +618,7 @@ private class RsFnInferenceContext(
             is RsMatchExpr -> inferMatchExprType(this, expected)
             is RsUnaryExpr -> inferUnaryExprType(this, expected)
             is RsBinaryExpr -> inferBinaryExprType(this)
-            is RsTryExpr -> inferTryExprType(this, expected)
+            is RsTryExpr -> inferTryExprType(this)
             is RsArrayExpr -> inferArrayType(this, expected)
             is RsRangeExpr -> inferRangeType(this)
             is RsIndexExpr -> inferIndexExprType(this)
@@ -1241,11 +1241,11 @@ private class RsFnInferenceContext(
         }
     }
 
-    private fun inferTryExprType(expr: RsTryExpr, expected: Ty?): Ty =
-        inferTryExprOrMacroType(expr.expr, expected, allowOption = true)
+    private fun inferTryExprType(expr: RsTryExpr): Ty =
+        inferTryExprOrMacroType(expr.expr, allowOption = true)
 
-    private fun inferTryExprOrMacroType(arg: RsExpr, expected: Ty?, allowOption: Boolean): Ty {
-        val base = arg.inferType(expected) as? TyAdt ?: return TyUnknown
+    private fun inferTryExprOrMacroType(arg: RsExpr, allowOption: Boolean): Ty {
+        val base = arg.inferType() as? TyAdt ?: return TyUnknown
         //TODO: make it work with generic `std::ops::Try` trait
         if (base.item == items.findResultItem() || (allowOption && base.item == items.findOptionItem())) {
             TypeInferenceMarks.questionOperator.hit()
@@ -1304,7 +1304,7 @@ private class RsFnInferenceContext(
         val tryArg = expr.macroCall.tryMacroArgument
         if (tryArg != null) {
             // See RsTryExpr where we handle the ? expression in a similar way
-            return inferTryExprOrMacroType(tryArg.expr, null, allowOption = false)
+            return inferTryExprOrMacroType(tryArg.expr, allowOption = false)
         }
 
         inferChildExprsRecursively(expr.macroCall)
