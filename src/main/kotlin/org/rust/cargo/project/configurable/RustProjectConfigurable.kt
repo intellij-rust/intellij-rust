@@ -45,6 +45,9 @@ class RustProjectConfigurable(
     private val useOfflineForCargoCheckCheckbox = JBCheckBox()
     private var useOfflineForCargoCheck: Boolean by CheckboxDelegate(useOfflineForCargoCheckCheckbox)
 
+    private val expandMacrosCheckbox = JBCheckBox()
+    private var expandMacros: Boolean by CheckboxDelegate(expandMacrosCheckbox)
+
     private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
     private val hintCheckboxes: Map<String, JBCheckBox> =
         hintProvider.supportedOptions.associate { it.id to JBCheckBox() }
@@ -57,6 +60,7 @@ class RustProjectConfigurable(
         row(label = "Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
         row(label = "Use cargo check to analyze code:") { useCargoCheckAnnotatorCheckbox() }
         row(label = "Use '-Zoffline' for cargo check (nightly only):") { useOfflineForCargoCheckCheckbox() }
+        row(label = "Expand macros (may be slow):") { expandMacrosCheckbox() }
 
         var first = true
         for (option in hintProvider.supportedOptions) {
@@ -79,6 +83,7 @@ class RustProjectConfigurable(
         useCargoCheckForBuild = settings.useCargoCheckForBuild
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
         useOfflineForCargoCheck = settings.useOfflineForCargoCheck
+        expandMacros = settings.expandMacros
 
         for (option in hintProvider.supportedOptions) {
             checkboxForOption(option).isSelected = option.get()
@@ -100,7 +105,8 @@ class RustProjectConfigurable(
             autoUpdateEnabled = autoUpdateEnabled,
             useCargoCheckForBuild = useCargoCheckForBuild,
             useCargoCheckAnnotator = useCargoCheckAnnotator,
-            useOfflineForCargoCheck = useOfflineForCargoCheck
+            useOfflineForCargoCheck = useOfflineForCargoCheck,
+            expandMacros = expandMacros
         )
     }
 
@@ -114,6 +120,7 @@ class RustProjectConfigurable(
             || useCargoCheckForBuild != settings.useCargoCheckForBuild
             || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
             || useOfflineForCargoCheck != settings.useOfflineForCargoCheck
+            || expandMacros != settings.expandMacros
     }
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
