@@ -1310,8 +1310,12 @@ private class RsFnInferenceContext(
         inferChildExprsRecursively(expr.macroCall)
         val vecArg = expr.macroCall.vecMacroArgument
         if (vecArg != null) {
-            val elementTypes = vecArg.exprList.map { ctx.getExprType(it) }
-            val elementType = getMoreCompleteType(elementTypes)
+            val elementType = if (vecArg.semicolon != null) {
+                vecArg.exprList.firstOrNull()?.inferType() ?: TyUnknown
+            } else {
+                val elementTypes = vecArg.exprList.map { ctx.getExprType(it) }
+                getMoreCompleteType(elementTypes)
+            }
             return items.findVecForElementTy(elementType)
         }
 
