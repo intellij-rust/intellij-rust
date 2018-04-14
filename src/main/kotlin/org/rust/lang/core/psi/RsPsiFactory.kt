@@ -42,8 +42,11 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create quote identifier: `$text`")
 
     fun createExpression(text: String): RsExpr =
-        createFromText("fn main() { $text; }")
+        tryCreateExpression(text)
             ?: error("Failed to create expression from text: `$text`")
+
+    fun tryCreateExpression(text: CharSequence): RsExpr? =
+        createFromText("fn main() { $text; }")
 
     fun createTryExpression(expr: RsExpr): RsTryExpr {
         val newElement = createExpressionOfType<RsTryExpr>("a?")
