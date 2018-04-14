@@ -1321,6 +1321,9 @@ private class RsFnInferenceContext(
             name == "format" -> items.findStringTy()
             name == "format_args" -> items.findArgumentsTy()
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
+            name == "write" || name == "writeln" -> {
+                (expr.macroCall.expansion?.singleOrNull() as? RsExpr)?.inferType() ?: TyUnknown
+            }
             expr.macroCall.formatMacroArgument != null || expr.macroCall.logMacroArgument != null -> TyUnit
 
             else -> TyUnknown

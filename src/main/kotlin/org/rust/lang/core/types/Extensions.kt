@@ -37,7 +37,7 @@ val RsInferenceContextOwner.inference: RsInferenceResult
     })
 
 val PsiElement.inference: RsInferenceResult?
-    get() = ancestorOrSelf<RsInferenceContextOwner>()?.inference
+    get() = contextOrSelf<RsInferenceContextOwner>()?.inference
 
 val RsPatBinding.type: Ty
     get() = inference?.getBindingType(this) ?: TyUnknown

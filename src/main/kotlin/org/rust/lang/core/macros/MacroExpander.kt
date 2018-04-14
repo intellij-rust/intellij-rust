@@ -84,16 +84,22 @@ private data class WithParent(
         subst.variables[name] ?: parent?.getVar(name)
 }
 
+private val STD_MACRO_WHITELIST = setOf("write", "writeln")
+
 class MacroExpander(val project: Project) {
     private val psiFactory = RsPsiFactory(project)
 
     fun expandMacro(def: RsMacroDefinition, call: RsMacroCall): List<ExpansionResult>? {
         // All std macros contain the only `impl`s which are not supported for now, so ignoring them
-        if (def.containingCargoTarget?.pkg?.origin == PackageOrigin.STDLIB) return null
+        if (def.containingCargoTarget?.pkg?.origin == PackageOrigin.STDLIB && def.name !in STD_MACRO_WHITELIST) {
+            return null
+        }
 
         val expandedText = expandMacroAsText(def, call) ?: return null
-        val expandedFile = psiFactory.createFile(expandedText)
-        return expandedFile.childrenOfType()
+        return when (call.context) {
+            is RsMacroExpr -> listOfNotNull(psiFactory.tryCreateExpression(expandedText))
+            else -> psiFactory.createFile(expandedText).childrenOfType()
+        }
     }
 
     private fun expandMacroAsText(def: RsMacroDefinition, call: RsMacroCall): CharSequence? {

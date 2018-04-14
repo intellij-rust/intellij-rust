@@ -45,7 +45,7 @@ val RsMacroCall.macroBody: String?
     get() {
         val stub = stub
         if (stub != null) return stub.macroBody
-        return macroArgument?.compactTT?.text
+        return macroArgument?.compactTT?.text ?: formatMacroArgument?.braceListBodyText()?.toString()
     }
 
 val RsMacroCall.expansion: List<ExpansionResult>?
