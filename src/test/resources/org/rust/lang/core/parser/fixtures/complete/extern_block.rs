@@ -8,4 +8,6 @@ extern {
 
     #[doc = "Hello"]
     pub static X: i32;
+
+    pub type Y;
 }

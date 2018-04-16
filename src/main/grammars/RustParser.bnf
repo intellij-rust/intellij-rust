@@ -551,7 +551,7 @@ ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private ForeignDecl ::= Constant | Function
+private ForeignDecl ::= Constant | Function | TypeAlias
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
