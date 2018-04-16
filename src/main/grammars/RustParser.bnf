@@ -856,7 +856,8 @@ Expr ::= RetExpr
        | UnaryExpr
        | TryExpr
        | AtomExpr {
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  implements = "org.rust.lang.core.macros.ExpansionResult"
+  mixin = "org.rust.lang.core.psi.ext.RsExprMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
 }
 
