@@ -10,12 +10,6 @@ import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsStdlibResolveTest : RsResolveTestBase() {
 
-    // BACKCOMPAT: Rust 1.24.1
-    private val isOldRust by lazy {
-        val currentVersion =  projectDescriptor.rustcVersion?.semver ?: error("Can't get rust version")
-        currentVersion < RUST_1_25
-    }
-
     override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test resolve fs`() = stubOnlyResolve("""
@@ -26,10 +20,11 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {}
     """)
 
+    // BACKCOMPAT: Rust 1.25.0
     fun `test resolve collections`() = stubOnlyResolve("""
     //- main.rs
         use std::collections::Bound;
-                             //^ ...lib.rs
+                             //^ ...lib.rs|...libcore/ops/range.rs
 
         fn main() {}
     """)
@@ -135,16 +130,18 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
+    // BACKCOMPAT: Rust 1.25.0
     fun `test inherent impl char 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() { 'Z'.is_lowercase(); }
-                      //^ .../char.rs
+                      //^ .../char.rs|...libcore/char/methods.rs
     """)
 
+    // BACKCOMPAT: Rust 1.25.0
     fun `test inherent impl char 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() { char::is_lowercase('Z'); }
-                        //^ .../char.rs
+                        //^ .../char.rs|...libcore/char/methods.rs
     """)
 
     fun `test inherent impl str 1`() = stubOnlyResolve("""
@@ -328,18 +325,15 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test Instant minus Duration`() {
-        val path = if (!isOldRust) "time.rs" else "time/mod.rs"
-
-        stubOnlyResolve("""
-        //- main.rs
-            use std::time::{Duration, Instant};
-            fn main() {
-                (Instant::now() - Duration::from_secs(3)).elapsed();
-                                                          //^ ...$path
-            }
-        """)
-    }
+    // BACKCOMPAT: Rust 1.24.1
+    fun `test Instant minus Duration`() = stubOnlyResolve("""
+    //- main.rs
+        use std::time::{Duration, Instant};
+        fn main() {
+            (Instant::now() - Duration::from_secs(3)).elapsed();
+                                                      //^ ...time.rs|...time/mod.rs
+        }
+    """)
 
     fun `test resolve assignment operator`() = stubOnlyResolve("""
     //- main.rs
@@ -350,18 +344,15 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test resolve arithmetic operator`() {
-        val path = if (!isOldRust) "time.rs" else "time/mod.rs"
-
-        stubOnlyResolve("""
-        //- main.rs
-            use std::time::{Duration, Instant};
-            fn main() {
-                let x = Instant::now() - Duration::from_secs(3);
-                                     //^ ...$path
-            }
-        """)
-    }
+    // BACKCOMPAT: Rust 1.24.1
+    fun `test resolve arithmetic operator`() = stubOnlyResolve("""
+    //- main.rs
+        use std::time::{Duration, Instant};
+        fn main() {
+            let x = Instant::now() - Duration::from_secs(3);
+                                 //^ ...time.rs|...time/mod.rs
+        }
+    """)
 
     fun `test autoderef Rc`() = stubOnlyResolve("""
     //- main.rs

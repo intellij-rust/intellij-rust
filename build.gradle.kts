@@ -10,6 +10,7 @@ import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.tasks.Jar
 import java.net.HttpURLConnection
 import java.net.URL
@@ -99,6 +100,15 @@ allprojects {
 
     java.sourceSets {
         getByName("main").java.srcDirs("src/gen")
+    }
+
+    afterEvaluate {
+        tasks.withType<AbstractTestTask> {
+            testLogging {
+                events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+                exceptionFormat = TestExceptionFormat.FULL
+            }
+        }
     }
 }
 

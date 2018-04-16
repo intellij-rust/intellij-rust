@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
@@ -15,7 +16,7 @@ import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.openapiext.Testmark
 
 abstract class RsResolveTestBase : RsTestBase() {
-    open protected fun checkByCode(@Language("Rust") code: String) {
+    protected open fun checkByCode(@Language("Rust") code: String) {
         InlineFile(code)
 
         val (refElement, data) = findElementAndDataInEditor<RsReferenceElement>("^")
@@ -47,9 +48,9 @@ abstract class RsResolveTestBase : RsTestBase() {
             !file.path.endsWith(testProject.fileWithCaret)
         })
 
-        val (reference, resolveFile) = findElementAndDataInEditor<RsReferenceElement>()
+        val (reference, resolveVariants) = findElementAndDataInEditor<RsReferenceElement>()
 
-        if (resolveFile == "unresolved") {
+        if (resolveVariants == "unresolved") {
             val element = reference.reference.resolve()
             if (element != null) {
                 error("Should not resolve ${reference.text} to ${element.text}")
@@ -60,22 +61,43 @@ abstract class RsResolveTestBase : RsTestBase() {
         val element = reference.checkedResolve()
         val actualResolveFile = element.containingFile.virtualFile
 
-        if (resolveFile.startsWith("...")) {
-            check(actualResolveFile.path.endsWith(resolveFile.drop(3))) {
-                "Should resolve to $resolveFile, was ${actualResolveFile.path} instead"
+        val resolveFiles = resolveVariants.split("|")
+        if (resolveFiles.size == 1) {
+            val result = check(actualResolveFile, resolveFiles.single())
+            if (result is ResolveResult.Err) {
+                error(result.message)
             }
         } else {
-            val expectedResolveFile = myFixture.findFileInTempDir(resolveFile)
-                ?: error("Can't find `$resolveFile` file")
-
-            check(actualResolveFile == expectedResolveFile) {
-                "Should resolve to ${expectedResolveFile.path}, was ${actualResolveFile.path} instead"
+            if (resolveFiles.none { check(actualResolveFile, it) == ResolveResult.Ok }) {
+                error("Should resolve to any of $resolveFiles, was ${actualResolveFile.path} instead")
             }
         }
     }
 
+    private fun check(actualResolveFile: VirtualFile, expectedFilePath: String): ResolveResult {
+        if (expectedFilePath.startsWith("...")) {
+            if (!actualResolveFile.path.endsWith(expectedFilePath.drop(3))) {
+                return ResolveResult.Err("Should resolve to $expectedFilePath, was ${actualResolveFile.path} instead")
+
+            }
+        } else {
+            val expectedResolveFile = myFixture.findFileInTempDir(expectedFilePath)
+                ?: return ResolveResult.Err("Can't find `$expectedFilePath` file")
+
+            if (actualResolveFile != expectedResolveFile) {
+                return ResolveResult.Err("Should resolve to ${expectedResolveFile.path}, was ${actualResolveFile.path} instead")
+            }
+        }
+        return ResolveResult.Ok
+    }
+
     protected fun stubOnlyResolve(@Language("Rust") code: String, mark: Testmark) =
         mark.checkHit { stubOnlyResolve(code) }
+
+    private sealed class ResolveResult {
+        object Ok : ResolveResult()
+        data class Err(val message: String) : ResolveResult()
+    }
 }
 
 private fun RsReferenceElement.checkedResolve(): RsElement {
