@@ -137,9 +137,10 @@ class ImplLookup(
         ArithmeticAssignmentOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName, it.modName) }
     }
     private val comparisionOps by lazy(NONE) {
-        // TODO lang attributes for cmp traits can't be collected correctly doe to `cfg_attr`
-        // TODO #[cfg_attr(stage0, lang = "ord")]
-        ComparisonOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName, it.modName) }
+        listOfNotNull (
+            items.findCoreItem("cmp::PartialOrd") as? RsTraitItem,
+            items.findCoreItem("cmp::PartialEq") as? RsTraitItem
+        )
     }
     private val fnTraits by lazy(NONE) {
         listOf("fn", "fn_mut", "fn_once").mapNotNull { RsLangItemIndex.findLangItem(project, it) }
