@@ -7,6 +7,8 @@ package org.rust.lang.core.type
 
 import org.rust.lang.core.psi.ext.ArithmeticAssignmentOp
 import org.rust.lang.core.psi.ext.ArithmeticOp
+import org.rust.lang.core.psi.ext.ComparisonOp
+import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 
@@ -436,14 +438,13 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", "()") }
     }
 
-    // TODO lang attributes for cmp traits can't be collected correctly doe to `cfg_attr`
-    // TODO #[cfg_attr(stage0, lang = "ord")]
-//    fun `test all cmp ops with all numeric types`() {
-//        TyInteger.NAMES.permutations(ComparisonOp.values().map { it.sign })
-//            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", "bool") }
-//        TyFloat.NAMES.permutations(ComparisonOp.values().map { it.sign })
-//            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", "bool") }
-//    }
+    fun `test all cmp ops with all numeric types`() {
+        val signs = EqualityOp.values().map { it.sign } + ComparisonOp.values().map { it.sign }
+        TyInteger.NAMES.permutations(signs)
+            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", "bool") }
+        TyFloat.NAMES.permutations(signs)
+            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", "bool") }
+    }
 
     private fun <A, B> Collection<A>.permutations(other: Collection<B>): List<Pair<A, B>> {
         val result = ArrayList<Pair<A, B>>(size*other.size)
