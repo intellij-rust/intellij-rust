@@ -5,18 +5,26 @@
 
 package org.rust.toml
 
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.notification.NotificationType
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.VirtualFilePattern
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.intellij.lang.annotations.Language
+import org.rust.ide.notifications.showBalloon
+import org.rust.ide.notifications.showBalloonWithoutProject
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.toml.lang.psi.*
+import java.io.IOException
+import java.net.URL
 
 
 class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -27,8 +35,8 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
         context: ProcessingContext?,
         result: CompletionResultSet
     ) {
-        val schema = cachedSchema ?:
-            TomlSchema.parse(parameters.position.project, EXAMPLE_CARGO_TOML).also { cachedSchema = it }
+        val schema = cachedSchema
+            ?: TomlSchema.parse(parameters.position.project, EXAMPLE_CARGO_TOML).also { cachedSchema = it }
 
         val key = parameters.position.parent as? TomlKey ?: return
         val table = key.topLevelTable ?: return
@@ -47,7 +55,11 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
             is TomlKeyValue -> {
                 val tableName = (table as? TomlHeaderOwner)?.header?.names?.firstOrNull()?.text
                     ?: return
-                schema.keysForTable(tableName)
+                if (isDependenciesTable(tableName)) {
+                    dependencies(parent)
+                } else {
+                    schema.keysForTable(tableName)
+                }
             }
 
             else -> return
@@ -57,6 +69,35 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
             LookupElementBuilder.create(it)
         })
     }
+
+    private fun dependencies(parent: TomlKeyValue): Collection<String> {
+        val response = try {
+            val name = CompletionUtil.getOriginalElement(parent)?.text ?: ""
+            if (name.isEmpty()) return emptyList()
+            val url = "https://crates.io/api/v1/crates?page=1&per_page=20&q=$name&sort="
+            URL(url)
+                .openStream()
+                .bufferedReader()
+                .use { it.readText() }
+        } catch (e: IOException) {
+            parent.project.showBalloon("Could not reach crates.io", NotificationType.WARNING)
+            return emptyList()
+        }
+        return Gson().fromJson(response, Crates::class.java).crates.map { "${it.name} = \"${it.maxVersion}\"" }
+    }
+
+    private fun isDependenciesTable(tableName: String): Boolean {
+        // Matches all relevant names of table, like [dependencies], [dev-dependencies],
+        // [target.'cfg(unix)'.dev-dependencies], [target.x86_64-pc-windows-gnu.dependencies]
+        return tableName.endsWith("dependencies")
+    }
+
+    data class Crates(val crates: List<CrateDescription>)
+
+    data class CrateDescription(
+        val name: String,
+        @SerializedName("max_version") val maxVersion: String
+    )
 
     private val TomlKey.topLevelTable: TomlKeyValueOwner?
         get() {
@@ -72,7 +113,6 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
                 .withParent(TomlKey::class.java)
     }
 }
-
 
 
 // Example from http://doc.crates.io/manifest.html,
