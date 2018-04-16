@@ -15,6 +15,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.Selection
 import org.rust.lang.core.resolve.SelectionResult
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.*
@@ -1218,8 +1219,19 @@ private class RsFnInferenceContext(
         val op = expr.operatorType
         return when (op) {
             is BoolOp -> {
-                expr.left.inferType()
-                expr.right?.inferType()
+                val lhsType = expr.left.inferType()
+                if (op is OverloadableBinaryOperator) {
+                    val rhsType = expr.right?.inferType() ?: TyUnknown
+                    run {
+                        // TODO replace it via `selectOverloadedOp` and share the code with `AssignmentOp`
+                        // branch when cmp ops will become a real lang items in std
+                        val trait = items.findCoreItem("cmp::${op.traitName}") as? RsTraitItem
+                            ?: return@run SelectionResult.Err<Selection>()
+                        return@run lookup.select(TraitRef(lhsType, trait.withSubst(rhsType)))
+                    }.ok()?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
+                } else {
+                    expr.right?.inferTypeCoercableTo(lhsType)
+                }
                 TyBool
             }
             is ArithmeticOp -> {
