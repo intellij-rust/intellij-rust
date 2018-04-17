@@ -239,7 +239,13 @@ private class MacroPattern private constructor(
                         MacroExpansionMarks.failMatchPatternByBindingType.hit()
                         return null
                     }
-                    map[name] = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
+                    val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
+
+                    // Wrap expressions in () to avoid problems related to operator precedence during expansion
+                    if (type == "expr")
+                        map[name] = "($text)"
+                    else
+                        map[name] = text
                 }
                 is RsMacroBindingGroup -> {
                     groups += matchGroup(psi, macroCallBody) ?: return null
