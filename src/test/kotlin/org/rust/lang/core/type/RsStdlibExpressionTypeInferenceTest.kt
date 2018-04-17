@@ -481,4 +481,15 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ Result<(), Error>
         }
     """)
+
+    fun `test write macro &mut`() = stubOnlyTypeInfer("""
+    //- main.rs
+        use std::fmt::Write;
+        fn main() {
+            let mut s = String::new();
+            let a = write!(&mut s, "text");
+            a;
+          //^ Result<(), Error>
+        }
+    """)
 }
