@@ -148,7 +148,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createMembers(members: Collection<RsAbstractable>, subst: Substitution = emptySubstitution): RsMembers {
-        val body = members.map { when (it) {
+        val body = members.joinToString(separator = "\n", transform = { when (it) {
             is RsConstant ->
                 "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
             is RsTypeAlias ->
@@ -157,7 +157,7 @@ class RsPsiFactory(private val project: Project) {
                 "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
             else ->
                 error("Unknown trait member")
-        } }.joinToString("\n")
+        } })
 
         val text = "impl T for S {$body}"
         return createFromText(text) ?: error("Failed to create an impl from text: `$text`")

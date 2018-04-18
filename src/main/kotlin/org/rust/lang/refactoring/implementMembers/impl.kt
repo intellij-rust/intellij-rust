@@ -58,27 +58,36 @@ private fun insertNewTraitMembers(selected: Collection<RsAbstractable>, existing
 
     // [1] First, check if the order of the existingMembers already implemented
     // matches the order of existingMembers in the trait declaration.
-    val existingMembersOrder = existingMembers.childrenOfType<RsAbstractable>().map {
-        existingMember -> traitMembers.indexOfFirst { it.name == existingMember.name }
-    }
+    val existingMembersWithPosInTrait = existingMembers.childrenOfType<RsAbstractable>().map {
+        existingMember -> Pair(existingMember, traitMembers.indexOfFirst {
+            it.elementType == existingMember.elementType && it.name == existingMember.name
+        })
+    }.toMutableList()
+    val existingMembersOrder = existingMembersWithPosInTrait.map { it.second }
     val areExistingMembersInTheRightOrder = existingMembersOrder == existingMembersOrder.sorted()
 
     for ((index, newMember) in newMembers.withIndex()) {
-        val posInTrait = traitMembers.indexOfFirst { it.name == newMember.name }
+        val posInTrait = traitMembers.indexOfFirst {
+            it.elementType == newMember.elementType && it.name == newMember.name
+        }
+
+        var indexedExistingMembers = existingMembersWithPosInTrait.withIndex()
 
         // If [1] does not hold, the first new member we will append at the end of the implementation.
         // All the other ones will consequently be inserted at the right position in relation to that very first one.
-        val anchor = if (!areExistingMembersInTheRightOrder && index == 0) {
-            existingMembers.childrenOfType<RsAbstractable>().lastOrNull()
-        } else {
-            existingMembers.childrenOfType<RsAbstractable>().findLast {
-                existingMember -> traitMembers.indexOfFirst { it.name == existingMember.name } < posInTrait
-            }
-        } ?: existingMembers.lbrace ?: return
+        if (areExistingMembersInTheRightOrder || index > 0) {
+            indexedExistingMembers = indexedExistingMembers.filter { it.value.second < posInTrait }
+        }
+
+        val anchor = indexedExistingMembers
+            .map { IndexedValue(it.index, it.value.first) }
+            .lastOrNull()
+            ?: IndexedValue(-1, existingMembers.lbrace) ?: return
+
+        val addedMember = existingMembers.addAfter(newMember, anchor.value) as RsAbstractable
+        existingMembersWithPosInTrait.add(anchor.index + 1, Pair(addedMember, posInTrait))
 
         // If the newly added item is a function, we add an extra line between it and each of its siblings.
-        val addedMember = existingMembers.addAfter(newMember, anchor)
-
         val previousAbstractable = addedMember.leftSiblings.find { it is RsAbstractable }
         if (previousAbstractable != null) {
             if (previousAbstractable is RsFunction || addedMember is RsFunction) {
