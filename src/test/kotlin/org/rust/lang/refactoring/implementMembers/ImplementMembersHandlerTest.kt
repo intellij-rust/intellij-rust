@@ -444,6 +444,43 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test works properly when a type alias shares the name with another member`() = doTest("""
+        trait T {
+            fn x();
+            type y;
+            const z: i32;
+            fn y();
+        }
+        struct S;
+        impl T for S {
+            const z: i32 = 20;
+
+            fn y() {}/*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("x()", true, isSelected = true),
+        ImplementMemberSelection("y", true, isSelected = true)
+    ), """
+        trait T {
+            fn x();
+            type y;
+            const z: i32;
+            fn y();
+        }
+        struct S;
+        impl T for S {
+            fn x() {
+                unimplemented!()
+            }
+
+            type y = ();
+
+            const z: i32 = 20;
+
+            fn y() {}
+        }
+    """)
+
     private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 
     private fun doTest(@Language("Rust") code: String,
