@@ -16,13 +16,15 @@ import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.ext.RsAbstractable
+import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.TraitImplementationInfo
 import org.rust.openapiext.isUnitTestMode
 import javax.swing.JTree
 
 
-class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: RsNamedElement) : ClassMember {
+class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: RsAbstractable) : ClassMember {
     private val text: String = when (member) {
         is RsFunction ->
             member.presentationInfo?.projectStructureItemText ?: ""
@@ -52,7 +54,7 @@ class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: 
 fun showTraitMemberChooser(
     implInfo: TraitImplementationInfo,
     project: Project
-): Collection<RsNamedElement> {
+): Collection<RsAbstractable> {
 
     val base = MemberChooserObjectBase(implInfo.traitName, implInfo.trait.getIcon(0))
     val all = implInfo.declared.map { RsTraitMemberChooserMember(base, it) }
