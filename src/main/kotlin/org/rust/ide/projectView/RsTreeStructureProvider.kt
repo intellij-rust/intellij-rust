@@ -31,7 +31,7 @@ class RsTreeStructureProvider : TreeStructureProvider, DumbAware {
         }
     }
 
-    override fun getData(selected: MutableCollection<AbstractTreeNode<Any>>?, dataName: String?): Any? = null
+    override fun getData(selected: Collection<AbstractTreeNode<Any>>, dataName: String?): Any? = null
 }
 
 private class RsPsiFileNode(original: PsiFileNode, viewSettings: ViewSettings?)
