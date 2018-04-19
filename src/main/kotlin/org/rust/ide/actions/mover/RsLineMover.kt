@@ -16,7 +16,6 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.openapiext.Testmark
 
-
 abstract class RsLineMover : LineMover() {
     override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
         if (file !is RsFile && super.checkAvailable(editor, file, info, down)) return false
@@ -27,6 +26,12 @@ abstract class RsLineMover : LineMover() {
 
         val firstItem = findMovableAncestor(psiRange.first, RangeEndpoint.START) ?: return false
         val lastItem = findMovableAncestor(psiRange.second, RangeEndpoint.END) ?: return false
+
+        if (!canApply(firstItem, lastItem)) {
+            info.toMove2 = null
+            return true
+        }
+
         var sibling = StatementUpDownMover.firstNonWhiteElement(
             if (down) lastItem.nextSibling else firstItem.prevSibling,
             down
@@ -52,9 +57,10 @@ abstract class RsLineMover : LineMover() {
         return true
     }
 
-    abstract protected fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement?
-    abstract protected fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement?
-    open protected fun fixupSibling(sibling: PsiElement, down: Boolean): PsiElement? = sibling
+    protected abstract fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement?
+    protected abstract fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement?
+    protected open fun fixupSibling(sibling: PsiElement, down: Boolean): PsiElement? = sibling
+    protected open fun canApply(firstMovableElement: PsiElement, secondMovableElement: PsiElement): Boolean = true
 
     companion object {
         enum class RangeEndpoint {
