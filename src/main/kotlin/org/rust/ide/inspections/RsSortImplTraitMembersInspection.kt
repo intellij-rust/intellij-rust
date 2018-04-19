@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsTraitOrImpl
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.openapiext.Testmark
 
 class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
@@ -33,9 +34,13 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
 
     companion object {
         private fun sortedImplItems(implItems: List<RsItemElement>, traitItems: List<RsItemElement>): List<RsItemElement>? {
-            val implItemMap = implItems.associate { it.key() to it }
-            val sortedImplItems = traitItems.mapNotNull { implItemMap[it.key()] }
-            if (sortedImplItems.size != implItems.size || sortedImplItems == implItems) return null
+            val traitItemMap = traitItems.withIndex().associate { it.value.key() to it.index }
+            if (implItems.any { it.key() !in traitItemMap }) {
+                Testmarks.implMemberNotInTrait.hit()
+                return null
+            }
+            val sortedImplItems = implItems.sortedBy { traitItemMap[it.key()] }
+            if (sortedImplItems == implItems) return null
             return sortedImplItems
         }
     }
@@ -48,11 +53,18 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
             val trait = impl.traitRef?.resolveToTrait ?: return
             val implItems = impl.items()
             val traitItems = trait.items()
-            val sortedImplItems = sortedImplItems(implItems, traitItems)?.map { it.copy() } ?: return
-            traitItems.zip(implItems).forEachIndexed { index, (traitItem, implItem) ->
-                if (traitItem.key() != implItem.key()) implItem.replace(sortedImplItems[index])
+
+            // As we're applying the fix, this will be non-null.
+            val sortedImplItems = sortedImplItems(implItems, traitItems) ?: return
+            implItems.zip(sortedImplItems).forEachIndexed { index, (implItem, expectedImplItem) ->
+                if (implItem.key() != expectedImplItem.key())
+                    implItem.replace(sortedImplItems[index].copy())
             }
         }
+    }
+
+    object Testmarks {
+        val implMemberNotInTrait = Testmark("implMemberNotInTrait")
     }
 }
 
