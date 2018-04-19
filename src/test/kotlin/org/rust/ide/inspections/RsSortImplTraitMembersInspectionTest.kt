@@ -67,7 +67,6 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         }
     """)
 
-
     fun `test different impl`() = checkFixIsUnavailable("Apply same member order", """
         trait Foo {
             type x;
@@ -76,6 +75,18 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             type <error descr="Method `y` is not a member of trait `Foo` [E0407]">y</error> = ();
         }
     """)
+
+    fun `test impl with unknown members`() = checkFixIsUnavailable("Apply same member order", """
+        trait Foo {
+            fn f();
+            fn g();
+        }
+        /*caret*/impl Foo for () {
+            fn g() {}
+            fn f() {}
+            fn <error descr="Method `h` is not a member of trait `Foo` [E0407]">h</error>() {}
+        }
+    """, testmark = RsSortImplTraitMembersInspection.Testmarks.implMemberNotInTrait)
 
     fun `test different order`() = checkFixByText("Apply same member order", """
         struct Struct {
@@ -141,7 +152,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
                 self.i * 3
             }
         }
-    """)
+    """, checkWeakWarn = true)
 
 
     fun `test different order with same name`() = checkFixByText("Apply same member order", """
@@ -166,7 +177,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             fn bar() {
             }
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test different order with different files`() = checkFixByFileTree("Apply same member order", """
         //- foo.rs
@@ -233,5 +244,33 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
                 self.i * 3
             }
         }
-    """)
+    """, checkWeakWarn = true)
+
+    fun `test does the right thing when the impl is missing some of the members`() = checkFixByText("Apply same member order", """
+        trait Foo {
+            type T;
+            const C: i32;
+            fn foo();
+        }
+
+        struct S;
+
+        <error descr="Not all trait items implemented, missing: `T` [E0046]"><weak_warning descr="Different impl member order from the trait">impl Foo for S/*caret*/</weak_warning></error> {
+            fn foo() { unimplemented!() }
+            const C: i32 = unimplemented!();
+        }
+    """, """
+        trait Foo {
+            type T;
+            const C: i32;
+            fn foo();
+        }
+
+        struct S;
+
+        impl Foo for S {
+            const C: i32 = unimplemented!();
+            fn foo() { unimplemented!() }
+        }
+    """, checkWeakWarn = true)
 }
