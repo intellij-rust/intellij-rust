@@ -9,6 +9,7 @@ import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.rust.ide.actions.mover.RsLineMover.Companion.RangeEndpoint
 import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.formatter.processors.addTrailingCommaForElement
 import org.rust.ide.formatter.processors.isLastElement
