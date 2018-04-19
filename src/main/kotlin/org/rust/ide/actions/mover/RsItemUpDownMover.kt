@@ -6,6 +6,7 @@
 package org.rust.ide.actions.mover
 
 import com.intellij.psi.PsiElement
+import org.rust.ide.actions.mover.RsLineMover.Companion.RangeEndpoint
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMembers
 import org.rust.lang.core.psi.ext.ancestors

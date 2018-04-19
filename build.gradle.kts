@@ -32,8 +32,8 @@ val channel = prop("publishChannel")
 
 plugins {
     idea
-    kotlin("jvm") version "1.2.30"
-    id("org.jetbrains.intellij") version "0.2.19"
+    kotlin("jvm") version "1.2.40"
+    id("org.jetbrains.intellij") version "0.3.1"
     id("de.undercouch.download") version "3.2.0"
 }
 
@@ -129,7 +129,7 @@ project(":") {
     }
 
     dependencies {
-        compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jre8")
+        compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
         compile("org.jetbrains:markdown:0.1.12") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
