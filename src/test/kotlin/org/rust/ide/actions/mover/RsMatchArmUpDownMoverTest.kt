@@ -81,7 +81,7 @@ class RsMatchArmUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
-    fun `test can't move across different match expressions`() = moveDownAndBackUp("""
+    fun `test can not move across different match expressions`() = moveDownAndBackUp("""
         fn main() {
             match x {
                 1 => {},
