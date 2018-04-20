@@ -271,7 +271,8 @@ fun commitChangelog(): String {
 }
 
 fun commitNightly() {
-    val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/LATEST-EAP-SNAPSHOT/BUILD-LATEST-EAP-SNAPSHOT.txt")
+    val ideaArtifactName = prop("ideaArtifactName")
+    val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/$ideaArtifactName/BUILD-$ideaArtifactName.txt")
     val ideaVersion = versionUrl.openStream().bufferedReader().readLine().trim()
     println("\n    NEW IDEA: $ideaVersion\n")
 
@@ -284,10 +285,8 @@ fun commitNightly() {
     val travisYml = File(rootProject.projectDir, ".travis.yml")
     val updated = travisYml.readLines().joinToString("\n") { line ->
         if ("modified by script" in line) {
-            if ("ORG_GRADLE_PROJECT_ideaVersion" in line)
-                "    - RUST_VERSION=\$NIGHTLY_RUST_VERSION ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion # modified by script"
-            else
-                "    - NIGHTLY_RUST_VERSION=$rustVersion # modified by script"
+            line.replace("""RUST_VERSION=[\w\-\.]+""".toRegex(), "RUST_VERSION=$rustVersion")
+                .replace("""ORG_GRADLE_PROJECT_ideaVersion=[\w\-\.]+""".toRegex(), "ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion")
         } else {
             line
         }
