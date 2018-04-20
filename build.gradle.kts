@@ -32,8 +32,8 @@ val channel = prop("publishChannel")
 
 plugins {
     idea
-    kotlin("jvm") version "1.2.30"
-    id("org.jetbrains.intellij") version "0.2.19"
+    kotlin("jvm") version "1.2.40"
+    id("org.jetbrains.intellij") version "0.3.1"
     id("de.undercouch.download") version "3.2.0"
 }
 
@@ -129,7 +129,7 @@ project(":") {
     }
 
     dependencies {
-        compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jre8")
+        compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
         compile("org.jetbrains:markdown:0.1.12") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
@@ -271,7 +271,8 @@ fun commitChangelog(): String {
 }
 
 fun commitNightly() {
-    val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/LATEST-EAP-SNAPSHOT/BUILD-LATEST-EAP-SNAPSHOT.txt")
+    val ideaArtifactName = prop("ideaArtifactName")
+    val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/$ideaArtifactName/BUILD-$ideaArtifactName.txt")
     val ideaVersion = versionUrl.openStream().bufferedReader().readLine().trim()
     println("\n    NEW IDEA: $ideaVersion\n")
 
@@ -284,10 +285,8 @@ fun commitNightly() {
     val travisYml = File(rootProject.projectDir, ".travis.yml")
     val updated = travisYml.readLines().joinToString("\n") { line ->
         if ("modified by script" in line) {
-            if ("ORG_GRADLE_PROJECT_ideaVersion" in line)
-                "    - RUST_VERSION=\$NIGHTLY_RUST_VERSION ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion # modified by script"
-            else
-                "    - NIGHTLY_RUST_VERSION=$rustVersion # modified by script"
+            line.replace("""RUST_VERSION=[\w\-\.]+""".toRegex(), "RUST_VERSION=$rustVersion")
+                .replace("""ORG_GRADLE_PROJECT_ideaVersion=[\w\-\.]+""".toRegex(), "ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion")
         } else {
             line
         }

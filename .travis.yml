@@ -9,23 +9,16 @@ language: java
 jdk: oraclejdk8
 
 env:
-  global:
-    - NIGHTLY_RUST_VERSION=nightly-2018-04-15 # modified by script
   matrix:
-    - RUST_VERSION=$NIGHTLY_RUST_VERSION ORG_GRADLE_PROJECT_sinceBuild=181 ORG_GRADLE_PROJECT_ideaVersion=2018.1 # modified by script
-    - RUST_VERSION=1.20.0 ORG_GRADLE_PROJECT_sinceBuild=173 ORG_GRADLE_PROJECT_ideaVersion=2017.3
+    - RUST_VERSION=nightly-2018-04-15 ORG_GRADLE_PROJECT_sinceBuild=181 ORG_GRADLE_PROJECT_ideaVersion=181.4668.14 # modified by script
+    - RUST_VERSION=1.25.0 ORG_GRADLE_PROJECT_sinceBuild=173 ORG_GRADLE_PROJECT_ideaVersion=2017.3
 
 install: true
 
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
-  - |
-    if ! rustfmt --help; then
-        rustup install $NIGHTLY_RUST_VERSION
-        export LD_LIBRARY_PATH=$(rustup run $NIGHTLY_RUST_VERSION rustc --print sysroot)/lib:$LD_LIBRARY_PATH
-        cargo +$NIGHTLY_RUST_VERSION install rustfmt-nightly --force
-    fi
+  - rustup component add rustfmt-preview
   - ./check-license.sh
   - ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon
   - ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
