@@ -26,7 +26,6 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
-import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
@@ -82,12 +81,16 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
                 check(commandLine.workDirectory != null) {
                     "LLDB requires working directory"
                 }
+                val sysroot = state.computeSysroot()
                 val runParameters = RsDebugRunParameters(environment.project, commandLine)
                 XDebuggerManager.getInstance(environment.project)
                     .startSession(environment, object : XDebugProcessConfiguratorStarter() {
                         override fun start(session: XDebugSession): XDebugProcess =
-                            CidrLocalDebugProcess(runParameters, session, state.consoleBuilder).apply {
+                            RsLocalDebugProcess(runParameters, session, state.consoleBuilder).apply {
                                 ProcessTerminatedListener.attach(processHandler, environment.project)
+                                if (sysroot != null) {
+                                    loadPrettyPrinters(sysroot)
+                                }
                                 start()
                             }
 

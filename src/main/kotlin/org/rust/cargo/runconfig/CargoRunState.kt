@@ -34,8 +34,6 @@ class CargoRunState(
         commandLine.workingDirectory
     )
 
-    fun cargo(): Cargo = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
-
     init {
         val scope = SearchScopeProvider.createSearchScope(environment.project, environment.runProfile)
         consoleBuilder = CargoConsoleBuilder(environment.project, scope)
@@ -47,6 +45,13 @@ class CargoRunState(
             consoleBuilder.addFilter(RsPanicFilter(environment.project, dir))
             consoleBuilder.addFilter(RsBacktraceFilter(environment.project, dir, cargoProject?.workspace))
         }
+    }
+
+    fun cargo(): Cargo = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
+
+    fun computeSysroot(): String? {
+        val projectDirectory = cargoProject?.manifest?.parent ?: return null
+        return toolchain.rustup(projectDirectory)?.getSysroot()
     }
 
     override fun startProcess(): ProcessHandler {
