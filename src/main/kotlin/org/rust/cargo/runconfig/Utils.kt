@@ -44,8 +44,10 @@ fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): Cargo
     else
         this
 
-fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommandLine): RunnerAndConfigurationSettings {
-    val runnerAndConfigurationSettings = createRunConfiguration(cargoCommandLine.command, CargoCommandConfigurationType().factory)
+fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommandLine, name: String? = null): RunnerAndConfigurationSettings {
+    val runnerAndConfigurationSettings =
+        createRunConfiguration(name
+            ?: cargoCommandLine.command, CargoCommandConfigurationType().factory)
     val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
     configuration.setFromCmd(cargoCommandLine)
     return runnerAndConfigurationSettings

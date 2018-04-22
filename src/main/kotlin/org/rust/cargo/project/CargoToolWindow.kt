@@ -7,6 +7,7 @@ package org.rust.cargo.project
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -18,8 +19,11 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.icons.CargoIcons
-import org.rust.cargo.project.model.*
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
+import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.guessAndSetupRustProject
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JList
@@ -35,7 +39,7 @@ class CargoToolWindowFactory : ToolWindowFactory {
     }
 }
 
-private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
+class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
     private val cargoTab = CargoToolWindow(project)
 
     init {
@@ -45,10 +49,15 @@ private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(tru
     }
 
     override fun getData(dataId: String): Any? {
-        if (DetachCargoProjectAction.CARGO_PROJECT_TO_DETACH.`is`(dataId)) {
+        if (SELECTED_CARGO_PROJECT.`is`(dataId)) {
             return cargoTab.selectedProject
         }
         return super.getData(dataId)
+    }
+
+    companion object {
+        val SELECTED_CARGO_PROJECT: DataKey<CargoProject> =
+            DataKey.create<CargoProject>("SELECTED_CARGO_PROJECT")
     }
 }
 
