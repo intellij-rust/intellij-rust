@@ -255,12 +255,12 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         struct S;
         impl T for S {
-            const C1: i32 = unimplemented!();
-            type T1 = ();
-
             fn f1() {
                 unimplemented!()
             }
+
+            type T1 = ();
+            const C1: i32 = unimplemented!();
         }
     """)
 
@@ -287,16 +287,17 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         struct S;
         impl T<u8, u16> for S {
-            const C1: u8 = unimplemented!();
-            const C2: u16 = unimplemented!();
-
             fn f1(_: u8) -> u8 {
                 unimplemented!()
             }
 
+            const C1: u8 = unimplemented!();
+
             fn f2(_: u16) -> u16 {
                 unimplemented!()
             }
+
+            const C2: u16 = unimplemented!();
         }
     """)
 
@@ -323,9 +324,160 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() { }
+
             fn f2() {
                 unimplemented!()
             }
+        }
+    """)
+
+
+    fun `test do not implement methods already present #2`() = doTest("""
+        trait T {
+            fn f1();
+            fn f2();
+            fn f3() {}
+        }
+        struct S;
+        impl T for S {
+            fn f2() { }/*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("f1()", true, true),
+        ImplementMemberSelection("f3()", false, false)
+    ), """
+        trait T {
+            fn f1();
+            fn f2();
+            fn f3() {}
+        }
+        struct S;
+        impl T for S {
+            fn f1() {
+                unimplemented!()
+            }
+
+            fn f2() { }
+        }
+    """)
+
+    fun `test honours the order of members in the definition if it's already honoured`() = doTest("""
+        trait T {
+            fn f1();
+            type T1;
+            const C1: i32;
+            fn f2() {}
+            type T2 = f64;
+        }
+        struct S;
+        impl T for S {
+            type T1 = u32;
+            fn f2() {}
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("f1()", true, isSelected = true),
+        ImplementMemberSelection("C1: i32", true, isSelected = true),
+        ImplementMemberSelection("f2()", false),
+        ImplementMemberSelection("T2", false, isSelected = true)
+    ), """
+        trait T {
+            fn f1();
+            type T1;
+            const C1: i32;
+            fn f2() {}
+            type T2 = f64;
+        }
+        struct S;
+        impl T for S {
+            fn f1() {
+                unimplemented!()
+            }
+
+            type T1 = u32;
+            const C1: i32 = unimplemented!();
+
+            fn f2() {}
+
+            type T2 = ();
+        }
+    """)
+
+    fun `test appends new members at the end in the right order if the order isn't honoured`() = doTest("""
+        trait T {
+            fn f1();
+            type T1;
+            const C1: i32;
+            fn f2() {}
+            type T2 = f64;
+        }
+        struct S;
+        impl T for S {
+            fn f2() {}
+            type T1 = u32;
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("f1()", true, isSelected = true),
+        ImplementMemberSelection("C1: i32", true, isSelected = true),
+        ImplementMemberSelection("f2()", false),
+        ImplementMemberSelection("T2", false, isSelected = true)
+    ), """
+        trait T {
+            fn f1();
+            type T1;
+            const C1: i32;
+            fn f2() {}
+            type T2 = f64;
+        }
+        struct S;
+        impl T for S {
+            fn f2() {}
+            type T1 = u32;
+
+            fn f1() {
+                unimplemented!()
+            }
+
+            const C1: i32 = unimplemented!();
+            type T2 = ();
+        }
+    """)
+
+    fun `test works properly when a type alias shares the name with another member`() = doTest("""
+        trait T {
+            fn x();
+            type y;
+            const z: i32;
+            fn y();
+        }
+        struct S;
+        impl T for S {
+            const z: i32 = 20;
+
+            fn y() {}/*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("x()", true, isSelected = true),
+        ImplementMemberSelection("y", true, isSelected = true)
+    ), """
+        trait T {
+            fn x();
+            type y;
+            const z: i32;
+            fn y();
+        }
+        struct S;
+        impl T for S {
+            fn x() {
+                unimplemented!()
+            }
+
+            type y = ();
+
+            const z: i32 = 20;
+
+            fn y() {}
         }
     """)
 
