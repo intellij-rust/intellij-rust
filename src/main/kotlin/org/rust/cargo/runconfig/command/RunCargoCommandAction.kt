@@ -8,6 +8,7 @@ package org.rust.cargo.runconfig.command
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.runconfig.ui.RunCargoCommandDialog
+import org.rust.cargo.toolchain.run
 
 class RunCargoCommandAction : RunCargoCommandActionBase(CargoIcons.ICON) {
 
@@ -17,7 +18,7 @@ class RunCargoCommandAction : RunCargoCommandActionBase(CargoIcons.ICON) {
         val dialog = RunCargoCommandDialog(project, cargoProject)
         if (!dialog.showAndGet()) return
 
-        runCommand(project, dialog.getCargoCommandLine(), cargoProject)
+        dialog.getCargoCommandLine().run(project, cargoProject)
     }
 
 }
