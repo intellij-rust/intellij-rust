@@ -28,13 +28,13 @@ import com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.toolchain.impl.CargoMetadata.CrateType
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.withWorkDirectory

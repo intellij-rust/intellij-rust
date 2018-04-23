@@ -37,6 +37,7 @@ data class CargoWorkspaceData(
     data class Target(
         val crateRootUrl: String,
         val name: String,
-        val kind: CargoWorkspace.TargetKind
+        val kind: CargoWorkspace.TargetKind,
+        val crateTypes: List<CargoWorkspace.CrateType>
     )
 }

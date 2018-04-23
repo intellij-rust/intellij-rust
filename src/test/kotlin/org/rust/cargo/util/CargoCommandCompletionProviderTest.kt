@@ -8,11 +8,12 @@ package org.rust.cargo.util
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
+import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsTestBase
 import java.nio.file.Paths
-
 
 class CargoCommandCompletionProviderTest : RsTestBase() {
     fun `test split context prefix`() {
@@ -97,10 +98,11 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
     }
 
     private val TEST_WORKSPACE = run {
-        fun target(name: String, kind: CargoWorkspace.TargetKind): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
+        fun target(name: String, kind: TargetKind, crateType: CrateType): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
             crateRootUrl = "/tmp/lib/rs",
             name = name,
-            kind = kind
+            kind = kind,
+            crateTypes = listOf(crateType)
         )
 
         fun pkg(
@@ -119,11 +121,11 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
         val pkgs = listOf(
             pkg("foo", true, listOf(
-                target("foo", CargoWorkspace.TargetKind.LIB),
-                target("bar", CargoWorkspace.TargetKind.BIN),
-                target("baz", CargoWorkspace.TargetKind.BIN)
+                target("foo", TargetKind.LIB, CrateType.LIB),
+                target("bar", TargetKind.BIN, CrateType.BIN),
+                target("baz", TargetKind.BIN, CrateType.BIN)
             )),
-            pkg("quux", false, listOf(target("quux", CargoWorkspace.TargetKind.LIB)))
+            pkg("quux", false, listOf(target("quux", TargetKind.LIB, CrateType.LIB)))
         )
         CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyMap()))
     }

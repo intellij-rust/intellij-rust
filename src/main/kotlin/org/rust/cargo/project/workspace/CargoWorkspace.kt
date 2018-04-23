@@ -63,6 +63,8 @@ interface CargoWorkspace {
         val normName: String get() = name.replace('-', '_')
 
         val kind: TargetKind
+        val crateTypes: List<CrateType>
+
         val isLib: Boolean get() = kind == TargetKind.LIB
         val isBin: Boolean get() = kind == TargetKind.BIN
         val isExample: Boolean get() = kind == TargetKind.EXAMPLE
@@ -74,6 +76,16 @@ interface CargoWorkspace {
 
     enum class TargetKind {
         LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
+    }
+
+    /**
+     * Represents possible variants of generated artifact binary
+     * corresponded to `--crate-type` compiler attribute
+     *
+     * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
+     */
+    enum class CrateType {
+        BIN, LIB, DYLIB, STATICLIB, CDYLIB, RLIB, PROC_MACRO, UNKNOWN
     }
 
     companion object {
@@ -193,7 +205,7 @@ private class PackageImpl(
     override val source: String?,
     override var origin: PackageOrigin
 ) : CargoWorkspace.Package {
-    override val targets = targetsData.map { TargetImpl(this, crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind) }
+    override val targets = targetsData.map { TargetImpl(this, crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind, crateTypes = it.crateTypes) }
 
     override val contentRoot: VirtualFile? by CachedVirtualFile(contentRootUrl)
 
@@ -211,7 +223,8 @@ private class TargetImpl(
     override val pkg: PackageImpl,
     val crateRootUrl: String,
     override val name: String,
-    override val kind: CargoWorkspace.TargetKind
+    override val kind: CargoWorkspace.TargetKind,
+    override val crateTypes: List<CargoWorkspace.CrateType>
 ) : CargoWorkspace.Target {
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
@@ -228,7 +241,12 @@ private val PackageImpl.asPackageData: CargoWorkspaceData.Package
             contentRootUrl = contentRootUrl,
             name = name,
             version = version,
-            targets = targets.map { CargoWorkspaceData.Target(crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind) },
+            targets = targets.map { CargoWorkspaceData.Target(
+                crateRootUrl = it.crateRootUrl,
+                name = it.name,
+                kind = it.kind,
+                crateTypes = it.crateTypes
+            ) },
             source = source,
             origin = origin
         )
@@ -240,7 +258,12 @@ private val StandardLibrary.StdCrate.asPackageData
             contentRootUrl = packageRootUrl,
             name = name,
             version = "",
-            targets = listOf(CargoWorkspaceData.Target(crateRootUrl = crateRootUrl, name = name, kind = CargoWorkspace.TargetKind.LIB)),
+            targets = listOf(CargoWorkspaceData.Target(
+                crateRootUrl = crateRootUrl,
+                name = name,
+                kind = CargoWorkspace.TargetKind.LIB,
+                crateTypes = listOf(CargoWorkspace.CrateType.LIB)
+            )),
             source = null,
             origin = PackageOrigin.STDLIB
         )
