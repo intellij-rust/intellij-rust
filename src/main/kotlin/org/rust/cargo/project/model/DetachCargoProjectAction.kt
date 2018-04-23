@@ -7,7 +7,7 @@ package org.rust.cargo.project.model
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.rust.cargo.project.toolwindow.CargoToolWindowPanel.Companion.SELECTED_CARGO_PROJECT
+import org.rust.cargo.project.toolwindow.CargoToolWindow
 
 class DetachCargoProjectAction : AnAction() {
     override fun update(e: AnActionEvent) {
@@ -20,6 +20,6 @@ class DetachCargoProjectAction : AnAction() {
         project.cargoProjects.detachCargoProject(cargoProject)
     }
 
-    private val AnActionEvent.cargoProject get() = dataContext.getData(SELECTED_CARGO_PROJECT)
+    private val AnActionEvent.cargoProject get() = getData(CargoToolWindow.SELECTED_CARGO_PROJECT)
 
 }

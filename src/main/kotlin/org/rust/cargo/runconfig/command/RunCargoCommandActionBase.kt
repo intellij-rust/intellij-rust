@@ -14,9 +14,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
-import org.rust.cargo.project.CargoToolWindowPanel
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -36,7 +36,7 @@ abstract class RunCargoCommandActionBase(icon: Icon) : AnAction(icon) {
             ?.let { cargoProjects.findProjectForFile(it) }
             ?.let { return it }
 
-        return e.dataContext.getData(CargoToolWindowPanel.SELECTED_CARGO_PROJECT)
+        return e.getData(CargoToolWindow.SELECTED_CARGO_PROJECT)
             ?: cargoProjects.allProjects.firstOrNull()
     }
 

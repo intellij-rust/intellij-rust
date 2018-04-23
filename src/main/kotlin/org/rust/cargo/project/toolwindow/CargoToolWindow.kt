@@ -35,7 +35,7 @@ class CargoToolWindowFactory : ToolWindowFactory {
     }
 }
 
-class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
+private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
     private val cargoTab = CargoToolWindow(project)
 
     init {
@@ -45,19 +45,14 @@ class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false
     }
 
     override fun getData(dataId: String): Any? {
-        if (SELECTED_CARGO_PROJECT.`is`(dataId)) {
+        if (CargoToolWindow.SELECTED_CARGO_PROJECT.`is`(dataId)) {
             return cargoTab.selectedProject
         }
         return super.getData(dataId)
     }
-
-    companion object {
-        val SELECTED_CARGO_PROJECT: DataKey<CargoProject> =
-            DataKey.create<CargoProject>("SELECTED_CARGO_PROJECT")
-    }
 }
 
-private class CargoToolWindow(
+class CargoToolWindow(
     private val project: Project
 ) {
     val toolbar: ActionToolbar = run {
@@ -104,4 +99,9 @@ private class CargoToolWindow(
         </body>
         </html>
     """
+
+    companion object {
+        @JvmStatic
+        val SELECTED_CARGO_PROJECT: DataKey<CargoProject> = DataKey.create<CargoProject>("SELECTED_CARGO_PROJECT")
+    }
 }
