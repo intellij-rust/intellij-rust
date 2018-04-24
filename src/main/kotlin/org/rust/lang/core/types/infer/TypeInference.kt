@@ -1535,6 +1535,16 @@ class RsFnInferenceContext(
             "print" in name || "assert" in name -> TyUnit
             name == "format" -> items.String.asTy()
             name == "format_args" -> items.Arguments.asTy()
+            name == "env" -> TyReference(TyStr, IMMUTABLE)
+            name == "option_env" -> items.findOptionForElementTy(TyReference(TyStr, IMMUTABLE))
+            name == "concat" -> TyReference(TyStr, IMMUTABLE)
+            name == "line" || name == "column" -> TyInteger.U32
+            name == "file" -> TyReference(TyStr, IMMUTABLE)
+            name == "stringify" -> TyReference(TyStr, IMMUTABLE)
+            name == "include_str" -> TyReference(TyStr, IMMUTABLE)
+            name == "include_bytes" -> TyReference(TyArray(TyInteger.U8, null), IMMUTABLE)
+            name == "module_path" -> TyReference(TyStr, IMMUTABLE)
+            name == "cfg" -> TyBool
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
             name == "write" || name == "writeln" -> {
                 (expr.macroCall.expansion?.singleOrNull() as? RsExpr)?.inferType() ?: TyUnknown
@@ -1749,6 +1759,13 @@ fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
 
 private fun KnownItems.findVecForElementTy(elementTy: Ty): Ty {
     val ty = Vec?.declaredType ?: TyUnknown
+
+    val typeParameter = ty.getTypeParameter("T") ?: return ty
+    return ty.substitute(mapOf(typeParameter to elementTy).toTypeSubst())
+}
+
+private fun KnownItems.findOptionForElementTy(elementTy: Ty): Ty {
+    val ty = Option?.declaredType ?: TyUnknown
 
     val typeParameter = ty.getTypeParameter("T") ?: return ty
     return ty.substitute(mapOf(typeParameter to elementTy).toTypeSubst())
