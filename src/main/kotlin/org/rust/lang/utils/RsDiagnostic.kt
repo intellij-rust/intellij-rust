@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
+import org.rust.ide.annotator.isMut
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.lang.core.psi.*
@@ -25,11 +26,13 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
 import org.rust.stdext.buildList
+import org.rust.stdext.buildMap
 
 private val REF_STR_TY = TyReference(TyStr, Mutability.IMMUTABLE)
 private val MUT_REF_STR_TY = TyReference(TyStr, Mutability.MUTABLE)
@@ -111,6 +114,10 @@ sealed class RsDiagnostic(
                                 add(ConvertToMutStrFix(element))
                             }
                         }
+                        val derefsRefsToExpected = derefRefPathFromActualToExpected(lookup, element)
+                        if (derefsRefsToExpected != null) {
+                            add(ConvertToTyWithDerefsRefsFix(element, expectedTy, derefsRefsToExpected))
+                        }
                     }
                 }
             )
@@ -155,6 +162,48 @@ sealed class RsDiagnostic(
 
         private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
             return "expected `${expectedTy.escaped}`, found `${actualTy.escaped}`"
+        }
+
+        /**
+         * Try to find a "path" from [actualTy] to [expectedTy] through dereferences and references.
+         *
+         * The method works by getting coercion sequence of types for the [actualTy] and sequence of the types that can
+         * lead to [expectedTy] by adding references. The "expected sequence" is represented by a list of references'
+         * mutabilities, and a map from the type X to the index i in the list such that if we apply the references from
+         * 0 (inclusive) to i (exclusive) we will get [expectedTy]. For example for [expectedTy] = `&mut&i32` we will
+         * have: [mutable, immutable] and {&mut&i32 -> 0, &i32 -> 1, i32 -> 2}. Then, using those data structures, we
+         * try to find a first type X of the "actual" sequence that is also in the "expected" sequence, and a number of
+         * dereferences to get from [actualTy] to X and references to get from X to [expectedTy]. Finally we try to
+         * check if applying the references would agree with the expression's mutability.
+         */
+        private fun derefRefPathFromActualToExpected(lookup: ImplLookup, element: RsElement): DerefRefPath? {
+            // get all the types that can lead to `expectedTy` by adding references to them
+            val expectedRefSeq: MutableList<Mutability> = mutableListOf()
+            val tyToExpectedRefSeq: Map<Ty, Int> = buildMap {
+                put(expectedTy, 0)
+                var ty = expectedTy
+                var i = 1
+                while (ty is TyReference) {
+                    expectedRefSeq.add(ty.mutability)
+                    ty = ty.referenced
+                    put(ty, i++)
+                }
+            }
+            // get all the types we can get by dereferencing `actualTy`
+            val actualCoercionSeq = lookup.coercionSequence(actualTy).toList()
+            var refSeqEnd: Int? = null
+            // for the first type X in the "actual sequence" that is also in the "expected sequence"; get the number of
+            // dereferences we need to apply to get to X from `actualTy` and number of references to get to `expectedTy`
+            val derefs = actualCoercionSeq.indexOfFirst { refSeqEnd = tyToExpectedRefSeq[it]; refSeqEnd != null }
+            val refs = expectedRefSeq.subList(0, refSeqEnd?: return null)
+            // check that mutability of references would not contradict the `element`
+            val isSuitableMutability = refs.isEmpty() || !refs.last().isMut || (element as RsExpr).isMutable &&
+                // covers cases like `let mut x: &T = ...`
+                actualCoercionSeq.subList(0, derefs + 1).all {
+                    it !is TyReference || it.mutability.isMut
+                }
+            if (!isSuitableMutability) return null
+            return DerefRefPath(derefs, refs)
         }
     }
 
