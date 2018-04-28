@@ -35,6 +35,7 @@ import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.CrateType
+import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
@@ -88,7 +89,7 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
                         override fun start(session: XDebugSession): XDebugProcess =
                             RsLocalDebugProcess(runParameters, session, state.consoleBuilder).apply {
                                 ProcessTerminatedListener.attach(processHandler, environment.project)
-                                if (sysroot != null) {
+                                if (sysroot != null && RsDebuggerSettings.getInstance().isRendersEnabled) {
                                     loadPrettyPrinters(sysroot)
                                 }
                                 start()
