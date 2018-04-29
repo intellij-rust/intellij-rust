@@ -64,8 +64,10 @@ class QueryAttributes(
     private val attributes: Sequence<RsAttr> = Sequence { (psi as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
         Sequence { (psi as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
 
+    // #[doc(hidden)]
     val isDocHidden: Boolean get() = hasAttributeWithArg("doc", "hidden")
 
+    // #[cfg(test)], #[cfg(target_has_atomic = "ptr")], #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
     fun hasCfgAttr(): Boolean {
         if (psi is RsFunction) {
             val stub = psi.stub
@@ -98,9 +100,11 @@ class QueryAttributes(
             .mapNotNull { it.value }
             .singleOrNull()
 
+    // #[lang = "copy"]
     val langAttribute: String?
         get() = getStringAttributes("lang").firstOrNull()
 
+    // #[derive(Clone)], #[derive(Copy, Clone, Debug)]
     val deriveAttributes: Sequence<RsMetaItem>
         get() = attrsByName("derive")
 
