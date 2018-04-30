@@ -1323,8 +1323,10 @@ private class RsFnInferenceContext(
         val vecArg = expr.macroCall.vecMacroArgument
         if (vecArg != null) {
             val elementType = if (vecArg.semicolon != null) {
-                vecArg.exprList.firstOrNull()?.inferType() ?: TyUnknown
+                // vec![value; repeat]
+                vecArg.exprList.firstOrNull()?.let { ctx.getExprType(it) } ?: TyUnknown
             } else {
+                // vec![value1, value2, value3]
                 val elementTypes = vecArg.exprList.map { ctx.getExprType(it) }
                 getMoreCompleteType(elementTypes)
             }
