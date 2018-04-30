@@ -56,7 +56,7 @@ with [help wanted].
 [help wanted]: https://github.com/intellij-rust/intellij-rust/labels/help%20wanted
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [ARCHITECTURE.md]: ARCHITECTURE.md
-[TeamCity]: https://teamcity.jetbrains.com/guestAuth/repository/download/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/.lastSuccessful/intellij-rust-0.2.0.{build.number}.zip
+[TeamCity]: https://teamcity.jetbrains.com/guestAuth/repository/download/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/.lastSuccessful/intellij-rust-0.2.0.{build.number}-181.zip
 [intellij-toml]: intellij-toml/
 
 <!-- Badges -->
