@@ -1055,4 +1055,13 @@ class RsResolveTest : RsResolveTestBase() {
             S.foo::<Item=u8>();
         }         //^ unresolved
     """)
+
+    fun `test raw identifier`() = checkByCode("""
+        fn foo() {
+            let r#match = 42;
+              //X
+            r#match;
+          //^
+        }
+    """)
 }
