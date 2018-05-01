@@ -428,6 +428,29 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                         //^ isize
     """)
 
+    fun `test u8 in enum variant discriminant repr()`() = testExpr("""
+        #[repr(u8)]
+        enum Foo { BAR = 32 }
+                        //^ u8
+    """)
+
+    fun `test isize in enum variant discriminant unknown repr()`() = testExpr("""
+        #[repr(unrecognized_future_attribute)]
+        enum Foo { BAR = 32 }
+                        //^ isize
+    """)
+
+    // With rustc, duplicate representation hints only produces a "warning[E0566]: conflicting representation hints"
+    // while using the last found explicit representation
+    fun `test u16 in enum variant discriminant duplicate repr()`() = testExpr("""
+        #[repr(u8)]
+        #[repr(i8, u16)]
+        #[repr(C)]
+        #[repr(unrecognized_future_attribute)]
+        enum Foo { BAR = 32 }
+                        //^ u16
+    """)
+
     fun `test bin operators bool`() {
         val cases = listOf(
             Pair("1 == 2", "bool"),
