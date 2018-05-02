@@ -28,26 +28,38 @@ fun String.unescapeRust(escapesLexer: RustEscapesLexer): String =
             }
         }
 
+fun parseRustStringCharacters(chars: String): Triple<StringBuilder, IntArray, Boolean> {
+    val outChars = StringBuilder()
+    val (offsets, success) = parseRustStringCharacters(chars, outChars)
+    return Triple(outChars, offsets, success)
+}
+
+fun parseRustStringCharacters(chars: String, outChars: StringBuilder): Pair<IntArray, Boolean> {
+    val sourceOffsets = IntArray(chars.length + 1)
+    val result = parseRustStringCharacters(chars, outChars, sourceOffsets)
+    return sourceOffsets to result
+}
+
 /**
  * Mimics [com.intellij.codeInsight.CodeInsightUtilCore.parseStringCharacters], but obeys Rust escaping rules.
  */
-fun parseRustStringCharacters(chars: String, outChars: StringBuilder): IntArray? {
-    val sourceOffsets = IntArray(chars.length + 1)
+private fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffsets: IntArray): Boolean {
     val outOffset = outChars.length
     var index = 0
     for ((type, text) in chars.tokenize(RustEscapesLexer.dummy())) {
+        // Set offset for the decoded character to the beginning of the escape sequence.
+        sourceOffsets[outChars.length - outOffset] = index
+        sourceOffsets[outChars.length - outOffset + 1] = index + 1
         when (type) {
             VALID_STRING_ESCAPE_TOKEN -> {
                 outChars.append(decodeEscape(text))
-                // Set offset for the decoded character to the beginning of the escape sequence.
-                sourceOffsets[outChars.length - outOffset - 1] = index
                 // And perform a "jump"
                 index += text.length
             }
 
             INVALID_CHARACTER_ESCAPE_TOKEN,
             INVALID_UNICODE_ESCAPE_TOKEN ->
-                return null
+                return false
 
             else -> {
                 val first = outChars.length - outOffset
@@ -62,7 +74,9 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder): IntArray?
         }
     }
 
-    return sourceOffsets
+    sourceOffsets[outChars.length - outOffset] = index
+
+    return true
 }
 
 private fun decodeEscape(esc: String): String = when (esc) {
