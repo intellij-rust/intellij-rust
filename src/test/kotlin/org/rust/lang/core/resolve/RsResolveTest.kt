@@ -1059,9 +1059,27 @@ class RsResolveTest : RsResolveTestBase() {
     fun `test raw identifier`() = checkByCode("""
         fn foo() {
             let r#match = 42;
-              //X
+                //X
             r#match;
-          //^
+            //^
+        }
+    """)
+
+    fun `test raw identifier without a declaration in the name`() = checkByCode("""
+        fn main() {
+            let x = 123;
+              //X
+            println!("{}", r#x);
+                           //^
+        }
+    """)
+
+    fun `test raw identifier with a declaration in the name`() = checkByCode("""
+        fn main() {
+            let r#x = 123;
+                //X
+            println!("{}", x);
+                         //^
         }
     """)
 }
