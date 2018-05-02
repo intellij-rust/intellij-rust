@@ -29,6 +29,7 @@ class RsHighlighter : SyntaxHighlighterBase() {
         fun map(tokenType: IElementType): RsColor? = when (tokenType) {
             IDENTIFIER -> RsColor.IDENTIFIER
             UNDERSCORE -> RsColor.IDENTIFIER
+            RAW_PREFIX -> RsColor.IDENTIFIER
 
             QUOTE_IDENTIFIER -> RsColor.LIFETIME
 
