@@ -31,6 +31,11 @@ import static com.intellij.psi.TokenType.*;
     * Dedicated nested-comment level counter
     */
   private int zzNestedCommentLevel = 0;
+
+  /**
+    * Flag for checking raw identifiers
+    */
+  private boolean zzPrevTokenIsRawPrefix = false;
 %}
 
 %{
@@ -60,6 +65,13 @@ import static com.intellij.psi.TokenType.*;
       zzPostponedMarkedPos = -1;
 
       return yycharat(0) == 'b' ? RAW_BYTE_STRING_LITERAL : RAW_STRING_LITERAL;
+  }
+
+  IElementType checkRawIdentifier(IElementType zzBaseType) {
+      boolean zzIsRawIdentifier = zzPrevTokenIsRawPrefix;
+      zzPrevTokenIsRawPrefix = false;
+
+      return zzIsRawIdentifier ? IDENTIFIER : zzBaseType;
   }
 %}
 
@@ -93,7 +105,8 @@ WHITE_SPACE      = {WHITE_SPACE_CHAR}+
 // Identifier
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-IDENTIFIER = ("r#")?[_\p{xidstart}][\p{xidcontinue}]*
+RAW_PREFIX = "r#"
+IDENTIFIER = [_\p{xidstart}][\p{xidcontinue}]*
 SUFFIX     = {IDENTIFIER}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -183,46 +196,47 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "@"                             { return AT; }
   "_"                             { return UNDERSCORE; }
   "$"                             { return DOLLAR; }
+  {RAW_PREFIX}                    { zzPrevTokenIsRawPrefix = true; return RAW_PREFIX; }
 
   "abstract"|"alignof"|"become"|"do"|"final"|"offsetof"|"override"|"priv"|"proc"|"pure"|"sizeof"|"typeof"|"unsized"|"virtual"|"yield"
-                                  { return RESERVED_KEYWORD; }
+                                  { return checkRawIdentifier(RESERVED_KEYWORD); }
 
-  "true"|"false"                  { return BOOL_LITERAL; }
-  "as"                            { return AS; }
-  "box"                           { return BOX; }
-  "break"                         { return BREAK; }
-  "const"                         { return CONST; }
-  "continue"                      { return CONTINUE; }
-  "crate"                         { return CRATE; }
-  "else"                          { return ELSE; }
-  "enum"                          { return ENUM; }
-  "extern"                        { return EXTERN; }
-  "fn"                            { return FN; }
-  "for"                           { return FOR; }
-  "if"                            { return IF; }
-  "impl"                          { return IMPL; }
-  "in"                            { return IN; }
-  "let"                           { return LET; }
-  "loop"                          { return LOOP; }
-  "macro"                         { return MACRO_KW; }
-  "match"                         { return MATCH; }
-  "mod"                           { return MOD; }
-  "move"                          { return MOVE; }
-  "mut"                           { return MUT; }
-  "pub"                           { return PUB; }
-  "ref"                           { return REF; }
-  "return"                        { return RETURN; }
-  "Self"                          { return CSELF; }
-  "self"                          { return SELF; }
-  "static"                        { return STATIC; }
-  "struct"                        { return STRUCT; }
-  "super"                         { return SUPER; }
-  "trait"                         { return TRAIT; }
-  "type"                          { return TYPE_KW; }
-  "unsafe"                        { return UNSAFE; }
-  "use"                           { return USE; }
-  "where"                         { return WHERE; }
-  "while"                         { return WHILE; }
+  "true"|"false"                  { return checkRawIdentifier(BOOL_LITERAL); }
+  "as"                            { return checkRawIdentifier(AS); }
+  "box"                           { return checkRawIdentifier(BOX); }
+  "break"                         { return checkRawIdentifier(BREAK); }
+  "const"                         { return checkRawIdentifier(CONST); }
+  "continue"                      { return checkRawIdentifier(CONTINUE); }
+  "crate"                         { return checkRawIdentifier(CRATE); }
+  "else"                          { return checkRawIdentifier(ELSE); }
+  "enum"                          { return checkRawIdentifier(ENUM); }
+  "extern"                        { return checkRawIdentifier(EXTERN); }
+  "fn"                            { return checkRawIdentifier(FN); }
+  "for"                           { return checkRawIdentifier(FOR); }
+  "if"                            { return checkRawIdentifier(IF); }
+  "impl"                          { return checkRawIdentifier(IMPL); }
+  "in"                            { return checkRawIdentifier(IN); }
+  "let"                           { return checkRawIdentifier(LET); }
+  "loop"                          { return checkRawIdentifier(LOOP); }
+  "macro"                         { return checkRawIdentifier(MACRO_KW); }
+  "match"                         { return checkRawIdentifier(MATCH); }
+  "mod"                           { return checkRawIdentifier(MOD); }
+  "move"                          { return checkRawIdentifier(MOVE); }
+  "mut"                           { return checkRawIdentifier(MUT); }
+  "pub"                           { return checkRawIdentifier(PUB); }
+  "ref"                           { return checkRawIdentifier(REF); }
+  "return"                        { return checkRawIdentifier(RETURN); }
+  "Self"                          { return checkRawIdentifier(CSELF); }
+  "self"                          { return checkRawIdentifier(SELF); }
+  "static"                        { return checkRawIdentifier(STATIC); }
+  "struct"                        { return checkRawIdentifier(STRUCT); }
+  "super"                         { return checkRawIdentifier(SUPER); }
+  "trait"                         { return checkRawIdentifier(TRAIT); }
+  "type"                          { return checkRawIdentifier(TYPE_KW); }
+  "unsafe"                        { return checkRawIdentifier(UNSAFE); }
+  "use"                           { return checkRawIdentifier(USE); }
+  "where"                         { return checkRawIdentifier(WHERE); }
+  "while"                         { return checkRawIdentifier(WHILE); }
 
   "/*"                            { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
 
@@ -230,7 +244,7 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   {OUTER_EOL_DOC}                 { return OUTER_EOL_DOC_COMMENT; }
   "//" .*                         { return EOL_COMMENT; }
 
-  {IDENTIFIER}                    { return IDENTIFIER; }
+  {IDENTIFIER}                    { return checkRawIdentifier(IDENTIFIER); }
 
   /* LITERALS */
 
