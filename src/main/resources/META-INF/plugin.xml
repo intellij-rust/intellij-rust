@@ -628,6 +628,9 @@
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsItemUpDownMover"/>
 
 
+        <multiHostInjector implementation="org.rust.ide.injected.RsRegExpInjector"/>
+
+
         <projectService serviceImplementation="org.rust.lang.core.resolve.ref.RsResolveCache"/>
 
     </extensions>
