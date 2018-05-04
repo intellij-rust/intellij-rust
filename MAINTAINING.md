@@ -45,7 +45,7 @@ because major platform updates can bring a lot of changes.
 * Rust preferences (in *Languages & Frameworks*)
 * Cargo toolbar
 * Run configuration
-
+* Debugger settings (in *Build, Execution, Deployment > Debugger > Data Views > Rust*, CLion only)
 
 #### Specific places
 * Notifications (see `MissingToolchainNotificationProvider`)

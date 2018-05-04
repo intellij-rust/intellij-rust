@@ -45,17 +45,19 @@ class Rustup(
     }
 
     fun getStdlibFromSysroot(): VirtualFile? {
+        val sysroot = getSysroot()
+        val fs = LocalFileSystem.getInstance()
+        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
+    }
+
+    fun getSysroot(): String {
         val timeoutMs = 10000
-        val sysroot = GeneralCommandLine(rustc)
+        return GeneralCommandLine(rustc)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "sysroot")
             .exec(timeoutMs)
             .stdout.trim()
-
-
-        val fs = LocalFileSystem.getInstance()
-        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
     }
 
     private fun GeneralCommandLine.exec(timeoutInMilliseconds: Int? = null): ProcessOutput {
