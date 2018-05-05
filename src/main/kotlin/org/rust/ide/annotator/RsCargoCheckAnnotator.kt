@@ -58,6 +58,8 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
             .map { parser.parse(it) }
             .filter { it.isJsonObject }
             .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
+            // Cargo can duplicate some error messages when `--all-targets` attribute is used
+            .distinct()
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {

@@ -104,6 +104,33 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
         }
     }
 
+    // https://github.com/intellij-rust/intellij-rust/issues/2503
+    fun `test unique errors`() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                file("main.rs", """
+                    fn main() {
+                        let xs = ["foo", "bar"];
+                        for x in xs {}
+                    }
+                """)
+            }
+        }.create()
+        myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
+        val highlights = myFixture.doHighlighting(HighlightSeverity.ERROR)
+            .filter { it.description == RsCargoCheckAnnotator.TEST_MESSAGE }
+        check(highlights.size == 1) {
+            "Expected only one error highlights from `RsCargoCheckAnnotator`, got:\n$highlights"
+        }
+    }
+
     private fun doTest(@Language("Rust") mainRs: String) {
         fileTree {
             toml("Cargo.toml", """
