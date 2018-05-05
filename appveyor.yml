@@ -11,7 +11,7 @@ environment:
   ORG_GRADLE_PROJECT_sinceBuild: 181
 
 install:
-  - appveyor DownloadFile https://win.rustup.rs -FileName rustup-init.exe
+  - appveyor-retry appveyor DownloadFile https://win.rustup.rs -FileName rustup-init.exe
   - rustup-init.exe -y
   - set PATH=C:\Users\appveyor\.cargo\bin;%PATH%
   - rustup component add rustfmt-preview
