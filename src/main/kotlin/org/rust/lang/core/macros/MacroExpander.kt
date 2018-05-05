@@ -126,7 +126,6 @@ class MacroExpander(val project: Project) {
         call: RsMacroCall
     ): Pair<RsMacroDefinitionCase, MacroSubstitution>? {
         val macroCallBody = createPsiBuilder(call, call.macroBody ?: return null)
-        macroCallBody.skipWhitespace() // BACKCOMPAT 2017.3 (don't sure, need to be re-checked)
         var start = macroCallBody.mark()
         return def.macroDefinitionBodyStubbed?.macroDefinitionCaseList?.asSequence()
             ?.mapNotNull { case ->
@@ -348,12 +347,6 @@ private class MacroPattern private constructor(
 
 private val RsMacroDefinitionCase.pattern: MacroPattern
     get() = MacroPattern.valueOf(macroPattern.macroPatternContents)
-
-private fun PsiBuilder.skipWhitespace() {
-    // We don't have a public `skipWhitespace` method, buf `eof` also skips whitespace.
-    // Using of `eof` to skip whitespace is a common practice.
-    eof()
-}
 
 private fun PsiBuilder.isSameToken(psi: PsiElement): Boolean {
     val (elementType, size) = collapsedTokenType(this) ?: (tokenType to 1)

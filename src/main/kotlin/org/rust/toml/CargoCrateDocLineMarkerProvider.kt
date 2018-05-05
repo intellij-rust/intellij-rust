@@ -46,6 +46,7 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
     }
 
     private fun genLineMarkerInfo(element: TomlKey, name: String, version: String?): LineMarkerInfo<PsiElement>? {
+        @Suppress("NAME_SHADOWING")
         val version = version ?: return null
         val anchor = element.bareKey
         return LineMarkerInfo(

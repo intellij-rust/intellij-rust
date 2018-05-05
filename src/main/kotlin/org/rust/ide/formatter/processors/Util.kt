@@ -5,13 +5,12 @@
 
 package org.rust.ide.formatter.processors
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.lang.ASTNode
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import org.rust.ide.formatter.rust
-
+import org.rust.ide.formatter.settings.RsCodeStyleSettings
 
 fun shouldRunPunctuationProcessor(element: ASTNode): Boolean {
     val psi = element.psi
     if (!psi.isValid) return false // EA-110296, element might be invalid for some plugins
-    return !CodeStyleSettingsManager.getInstance(psi.project).currentSettings.rust.PRESERVE_PUNCTUATION
+    return !CodeStyle.getCustomSettings(psi.containingFile, RsCodeStyleSettings::class.java).PRESERVE_PUNCTUATION
 }

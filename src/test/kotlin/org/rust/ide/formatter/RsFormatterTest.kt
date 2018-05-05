@@ -437,6 +437,6 @@ class RsFormatterTest : RsFormatterTestBase() {
     """)
 
     private fun common() = getSettings(RsLanguage)
-    private fun custom() = settings.getCustomSettings(RsCodeStyleSettings::class.java)
+    private fun custom() = settings.rust
 
 }
