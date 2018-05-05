@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.rustSettings
@@ -33,10 +32,10 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.*
 import org.rust.ide.RsConstants
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Path
 import java.util.*
 
@@ -59,6 +58,8 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
             .map { parser.parse(it) }
             .filter { it.isJsonObject }
             .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
+            // Cargo can duplicate some error messages when `--all-targets` attribute is used
+            .distinct()
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
@@ -91,14 +92,20 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
         for ((topMessage) in annotationResult.messages) {
             val message = filterMessage(file, doc, topMessage) ?: continue
-            holder.createAnnotation(message.severity, message.textRange, message.message, message.htmlTooltip)
+            // We can't control what messages cargo generates, so we can't test them well.
+            // Let's use special message for tests to distinguish annotation from `RsCargoCheckAnnotator`
+            val annotationMessage = if (isUnitTestMode) TEST_MESSAGE else message.message
+            holder.createAnnotation(message.severity, message.textRange, annotationMessage, message.htmlTooltip)
                 .apply {
-                    problemGroup = ProblemGroup { message.message }
+                    problemGroup = ProblemGroup { annotationMessage }
                     setNeedsUpdateOnTyping(true)
                 }
         }
     }
 
+    companion object {
+        const val TEST_MESSAGE = "CargoAnnotation"
+    }
 }
 
 // NB: executed asynchronously off EDT, so care must be taken not to access

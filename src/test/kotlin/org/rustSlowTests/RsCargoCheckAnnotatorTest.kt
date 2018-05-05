@@ -6,11 +6,12 @@
 package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.application.ApplicationManager
+import org.intellij.lang.annotations.Language
 import org.rust.cargo.RustWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.fileTree
+import org.rust.ide.annotator.RsCargoCheckAnnotator
 
 class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
 
@@ -26,7 +27,16 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
     fun `test highlights type errors`() = doTest("""
         struct X; struct Y;
         fn main() {
-            let _: X = <error>Y</error>;
+            let _: X = <error descr="${RsCargoCheckAnnotator.TEST_MESSAGE}">Y</error>;
+        }
+    """)
+
+    fun `test highlights errors in tests`() = doTest("""
+        fn main() {}
+
+        #[test]
+        fn test() {
+            let x: i32 = <error descr="${RsCargoCheckAnnotator.TEST_MESSAGE}">0.0</error>;
         }
     """)
 
@@ -51,9 +61,9 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
         }.create()
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
         val highlights = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING)
-        check(highlights.isEmpty(), {
+        check(highlights.isEmpty()) {
             "Did not expect any highlights, got:\n$highlights"
-        })
+        }
     }
 
     // https://github.com/intellij-rust/intellij-rust/issues/1497
@@ -89,12 +99,39 @@ class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
         myFixture.openFileInEditor(path)
 
         val highlights = myFixture.doHighlighting(HighlightSeverity.ERROR)
-        check(highlights.isEmpty(), {
+        check(highlights.isEmpty()) {
             "Did not expect any highlights, got:\n$highlights"
-        })
+        }
     }
 
-    private fun doTest(mainRs: String) {
+    // https://github.com/intellij-rust/intellij-rust/issues/2503
+    fun `test unique errors`() {
+        fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                file("main.rs", """
+                    fn main() {
+                        let xs = ["foo", "bar"];
+                        for x in xs {}
+                    }
+                """)
+            }
+        }.create()
+        myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
+        val highlights = myFixture.doHighlighting(HighlightSeverity.ERROR)
+            .filter { it.description == RsCargoCheckAnnotator.TEST_MESSAGE }
+        check(highlights.size == 1) {
+            "Expected only one error highlights from `RsCargoCheckAnnotator`, got:\n$highlights"
+        }
+    }
+
+    private fun doTest(@Language("Rust") mainRs: String) {
         fileTree {
             toml("Cargo.toml", """
                 [package]
