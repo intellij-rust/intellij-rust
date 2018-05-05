@@ -73,6 +73,7 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
             GeneralCommandLine(executablePath)
                 .withWorkDirectory(cmd.workingDirectory)
                 .withParameters(execArgs)
+                .withEnvironment(cmd.environmentVariables.envs)
         }
 
         return buildProjectAndGetBinaryArtifactPath(environment.project, buildCommand, state.cargo())
