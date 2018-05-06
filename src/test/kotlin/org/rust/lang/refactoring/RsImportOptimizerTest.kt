@@ -208,6 +208,18 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
+    fun `test sort inner modules if parent module does not have use items`() = doTest("""
+        mod baz {
+            use foo;
+            use bar;
+        }
+    """, """
+        mod baz {
+            use bar;
+            use foo;
+        }
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String){
         checkByText(code.trimIndent(), excepted.trimIndent()) {
             myFixture.performEditorAction("OptimizeImports")

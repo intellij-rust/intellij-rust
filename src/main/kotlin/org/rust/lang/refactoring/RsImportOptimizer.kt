@@ -35,10 +35,9 @@ class RsImportOptimizer : ImportOptimizer {
 
     private fun executeForUseItem(mod: RsMod) {
         val uses = mod.childrenOfType<RsUseItem>()
-        if (uses.isEmpty()) {
-            return
+        if (uses.isNotEmpty()) {
+            replaceOrderOfUseItems(mod, uses)
         }
-        replaceOrderOfUseItems(mod, uses)
         val mods = mod.childrenOfType<RsMod>()
         mods.forEach { executeForUseItem(it) }
     }
