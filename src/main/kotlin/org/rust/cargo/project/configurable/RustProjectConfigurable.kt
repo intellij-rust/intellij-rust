@@ -12,13 +12,12 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.Label
-import com.intellij.ui.layout.panel
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.ide.ui.layout
 import org.rust.lang.RsLanguage
 import org.rust.openapiext.CheckboxDelegate
 import org.rust.openapiext.pathAsPath
@@ -54,18 +53,22 @@ class RustProjectConfigurable(
 
     private fun checkboxForOption(opt: Option) = hintCheckboxes[opt.id]!!
 
-    override fun createComponent(): JComponent = panel {
+    override fun createComponent(): JComponent = layout {
         rustProjectSettings.attachTo(this)
-        row(label = "Watch Cargo.toml:") { autoUpdateEnabledCheckbox() }
-        row(label = "Use cargo check when build project:") { useCargoCheckForBuildCheckbox() }
-        row(label = "Use cargo check to analyze code:") { useCargoCheckAnnotatorCheckbox() }
-        row(label = "Use '-Zoffline' for cargo check (nightly only):") { useOfflineForCargoCheckCheckbox() }
-        row(label = "Expand macros (may be slow):") { expandMacrosCheckbox() }
-
-        var first = true
-        for (option in hintProvider.supportedOptions) {
-            row(label = Label("${option.name}:"), separated = first) { checkboxForOption(option)() }
-            first = false
+        row("Expand macros (may be slow):", expandMacrosCheckbox)
+        block("Cargo") {
+            row("Watch Cargo.toml:", autoUpdateEnabledCheckbox)
+            row("Use cargo check to analyze code:", useCargoCheckAnnotatorCheckbox)
+            row("Use cargo check when build project:", useCargoCheckForBuildCheckbox)
+            row("Use '-Zoffline' for cargo check (nightly only):", useOfflineForCargoCheckCheckbox)
+        }
+        val supportedHintOptions = hintProvider.supportedOptions
+        if (supportedHintOptions.isNotEmpty()) {
+            block("Hints") {
+                for (option in supportedHintOptions) {
+                    row("${option.name}:", checkboxForOption(option))
+                }
+            }
         }
     }
 

@@ -11,10 +11,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
-import com.intellij.ui.layout.CCFlags
-import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.ide.ui.RsLayoutBuilder
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
 import java.nio.file.Path
@@ -72,16 +71,16 @@ class RustProjectSettingsPanel(
             update()
         }
 
-    fun attachTo(layout: LayoutBuilder) = with(layout) {
+    fun attachTo(layout: RsLayoutBuilder) = with(layout) {
         data = Data(
             toolchain = RustToolchain.suggest(),
             explicitPathToStdlib = null
         )
 
-        row("Toolchain location:") { pathToToolchainField(CCFlags.pushX) }
-        row("Toolchain version:") { toolchainVersion() }
-        row("Standard library:") { pathToStdlibField() }
-        row { downloadStdlibLink() }
+        row("Toolchain location:", pathToToolchainField)
+        row("Toolchain version:", toolchainVersion)
+        row("Standard library:", pathToStdlibField)
+        row(component = downloadStdlibLink)
     }
 
     @Throws(ConfigurationException::class)

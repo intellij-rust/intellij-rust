@@ -9,8 +9,8 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.GeneratorPeerImpl
-import com.intellij.ui.layout.panel
 import org.rust.ide.newProject.ui.RsNewProjectPanel
+import org.rust.ide.ui.layout
 import javax.swing.JComponent
 
 class RsProjectGeneratorPeer : GeneratorPeerImpl<ConfigurationData>() {
@@ -25,7 +25,7 @@ class RsProjectGeneratorPeer : GeneratorPeerImpl<ConfigurationData>() {
         return super.getComponent(myLocationField, checkValid)
     }
 
-    override fun getComponent(): JComponent = panel {
+    override fun getComponent(): JComponent = layout {
         newProjectPanel.attachTo(this)
     }
 

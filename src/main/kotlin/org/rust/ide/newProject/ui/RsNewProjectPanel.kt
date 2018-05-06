@@ -8,9 +8,9 @@ package org.rust.ide.newProject.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.ide.newProject.ConfigurationData
+import org.rust.ide.ui.RsLayoutBuilder
 
 class RsNewProjectPanel(
     private val showProjectTypeCheckbox: Boolean,
@@ -22,10 +22,10 @@ class RsNewProjectPanel(
 
     val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.data, createBinaryCheckbox.isSelected)
 
-    fun attachTo(layout: LayoutBuilder) = with(layout) {
+    fun attachTo(layout: RsLayoutBuilder) = with(layout) {
         rustProjectSettings.attachTo(this)
         if (showProjectTypeCheckbox) {
-            row("Use a binary (application) template:") { createBinaryCheckbox() }
+            row("Use a binary (application) template:", createBinaryCheckbox)
         }
     }
 
