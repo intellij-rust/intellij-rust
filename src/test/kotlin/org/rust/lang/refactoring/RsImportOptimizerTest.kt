@@ -192,6 +192,34 @@ class RsImportOptimizerTest: RsTestBase() {
         pub use /*comment*/ std::mem;
     """)
 
+    fun `test do not move use items from test mod`() = doTest("""
+        use std::io::Read;
+
+        #[cfg(test)]
+        mod test {
+            use std::io::Write;
+        }
+    """, """
+        use std::io::Read;
+
+        #[cfg(test)]
+        mod test {
+            use std::io::Write;
+        }
+    """)
+
+    fun `test sort inner modules if parent module does not have use items`() = doTest("""
+        mod baz {
+            use foo;
+            use bar;
+        }
+    """, """
+        mod baz {
+            use bar;
+            use foo;
+        }
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String){
         checkByText(code.trimIndent(), excepted.trimIndent()) {
             myFixture.performEditorAction("OptimizeImports")

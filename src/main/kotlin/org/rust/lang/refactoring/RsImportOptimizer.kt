@@ -35,10 +35,9 @@ class RsImportOptimizer : ImportOptimizer {
 
     private fun executeForUseItem(mod: RsMod) {
         val uses = mod.childrenOfType<RsUseItem>()
-        if (uses.isEmpty()) {
-            return
+        if (uses.isNotEmpty()) {
+            replaceOrderOfUseItems(mod, uses)
         }
-        replaceOrderOfUseItems(mod, uses)
         val mods = mod.childrenOfType<RsMod>()
         mods.forEach { executeForUseItem(it) }
     }
@@ -68,7 +67,7 @@ class RsImportOptimizer : ImportOptimizer {
 
         private fun replaceOrderOfUseItems(file: RsMod, uses: Collection<RsUseItem>) {
             val first = file.childrenOfType<RsElement>()
-                .firstOrNull { it !is RsExternCrateItem && it !is RsInnerAttr } ?: return
+                .firstOrNull { it !is RsExternCrateItem && it !is RsAttr } ?: return
             val psiFactory = RsPsiFactory(file.project)
             val sortedUses = uses
                 .sortedBy { it.useSpeck?.pathText }
