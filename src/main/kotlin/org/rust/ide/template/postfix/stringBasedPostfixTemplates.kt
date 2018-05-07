@@ -14,10 +14,10 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.operatorType
 
-abstract class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTemplate(
-    name,
-    "$name!(exp);",
-    RsTopMostInScopeSelector(RsExpr::isBool)) {
+abstract class AssertPostfixTemplateBase(
+    name: String,
+    provider: RsPostfixTemplateProvider
+) : StringBasedPostfixTemplate(name, "$name!(exp);", RsTopMostInScopeSelector(RsExpr::isBool), provider) {
 
     override fun getTemplateString(element: PsiElement): String =
         if (element is RsBinaryExpr && element.operatorType == EqualityOp.EQ) {
@@ -29,34 +29,28 @@ abstract class AssertPostfixTemplateBase(name: String) : StringBasedPostfixTempl
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
-class AssertPostfixTemplate : AssertPostfixTemplateBase("assert")
-class DebugAssertPostfixTemplate : AssertPostfixTemplateBase("debug_assert")
+class AssertPostfixTemplate(provider: RsPostfixTemplateProvider) : AssertPostfixTemplateBase("assert", provider)
+class DebugAssertPostfixTemplate(provider: RsPostfixTemplateProvider) : AssertPostfixTemplateBase("debug_assert", provider)
 
-class LambdaPostfixTemplate : StringBasedPostfixTemplate(
-    "lambda",
-    "|| expr",
-    RsTopMostInScopeSelector({ true })) {
+class LambdaPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("lambda", "|| expr", RsTopMostInScopeSelector(), provider) {
 
     override fun getTemplateString(element: PsiElement): String = "|| ${element.text}"
 
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
-class NotPostfixTemplate : StringBasedPostfixTemplate(
-    "not",
-    "!expr",
-    RsTopMostInScopeSelector({ true })) {
+class NotPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("not", "!expr", RsTopMostInScopeSelector(), provider) {
 
     override fun getTemplateString(element: PsiElement): String = "!${element.text}"
 
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
-class MatchPostfixTemplate : StringBasedPostfixTemplate(
-    "match",
-    "match expr {...}",
-    RsTopMostInScopeSelector({ true })
-) {
+class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("match", "match expr {...}", RsTopMostInScopeSelector(), provider) {
+
     override fun getTemplateString(element: PsiElement): String = "match ${element.text} {\n\$PAT\$ => {\$END\$}\n}"
 
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
@@ -67,4 +61,3 @@ class MatchPostfixTemplate : StringBasedPostfixTemplate(
         }
     }
 }
-

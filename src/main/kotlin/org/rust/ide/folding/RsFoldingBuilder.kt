@@ -5,6 +5,7 @@
 
 package org.rust.ide.folding
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.folding.CodeFoldingSettings
 import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.FoldingBuilderEx
@@ -54,9 +55,8 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         val usingRanges: MutableList<TextRange> = ArrayList()
         val modsRanges: MutableList<TextRange> = ArrayList()
         val cratesRanges: MutableList<TextRange> = ArrayList()
-        // BACKCOMPAT: 2017.3
-        @Suppress("DEPRECATION")
-        val rightMargin = CodeStyleSettingsManager.getSettings(root.project).getRightMargin(RsLanguage)
+
+        val rightMargin = CodeStyle.getSettings(root).getRightMargin(RsLanguage)
         val visitor = FoldingVisitor(descriptors, usingRanges, modsRanges, cratesRanges, rightMargin)
         PsiTreeUtil.processElements(root) { it.accept(visitor); true }
 

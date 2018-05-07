@@ -12,23 +12,21 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.refactoring.introduceVariable.RsIntroduceVariableHandler
 import org.rust.lang.refactoring.introduceVariable.extractExpression
 
 class RsPostfixTemplateProvider : PostfixTemplateProvider {
     private val templates: Set<PostfixTemplate> = setOf(
-        AssertPostfixTemplate(),
-        DebugAssertPostfixTemplate(),
+        AssertPostfixTemplate(this),
+        DebugAssertPostfixTemplate(this),
         IfExpressionPostfixTemplate(),
         ElseExpressionPostfixTemplate(),
         WhileExpressionPostfixTemplate(),
         WhileNotExpressionPostfixTemplate(),
-        MatchPostfixTemplate(),
+        MatchPostfixTemplate(this),
         ParenPostfixTemplate(),
-        LambdaPostfixTemplate(),
-        NotPostfixTemplate(),
-        LetPostfixTemplate()
+        LambdaPostfixTemplate(this),
+        NotPostfixTemplate(this),
+        LetPostfixTemplate(this)
     )
 
     override fun getTemplates(): Set<PostfixTemplate> = templates
@@ -45,11 +43,8 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
     }
 }
 
-class LetPostfixTemplate : PostfixTemplateWithExpressionSelector(
-    "let",
-    "let name = expr;",
-    RsAllParentsSelector({ true })
-) {
+class LetPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    PostfixTemplateWithExpressionSelector(null, "let", "let name = expr;", RsAllParentsSelector(), provider) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         if (expression !is RsExpr) return
         extractExpression(editor, expression)

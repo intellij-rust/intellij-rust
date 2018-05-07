@@ -32,7 +32,7 @@ abstract class RsExprParentsSelectorBase(val pred: (RsExpr) -> Boolean) : Postfi
     abstract override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement>
 }
 
-class RsTopMostInScopeSelector(pred: (RsExpr) -> Boolean) : RsExprParentsSelectorBase(pred) {
+class RsTopMostInScopeSelector(pred: ((RsExpr) -> Boolean) = { true }) : RsExprParentsSelectorBase(pred) {
     override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         context
             .ancestors
@@ -47,7 +47,7 @@ class RsTopMostInScopeSelector(pred: (RsExpr) -> Boolean) : RsExprParentsSelecto
             .any { it is RsExpr && pred(it) }
 }
 
-class RsAllParentsSelector(pred: (RsExpr) -> Boolean) : RsExprParentsSelectorBase(pred) {
+class RsAllParentsSelector(pred: ((RsExpr) -> Boolean) = { true }) : RsExprParentsSelectorBase(pred) {
     override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         context
             .ancestors

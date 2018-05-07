@@ -50,6 +50,7 @@ class RsHighlightingMutableAnnotator : Annotator {
     private fun distinctAnnotation(element: PsiElement, ref: RsElement, holder: AnnotationHolder) {
         val color = annotationFor(ref) ?: return
         if (ref.isMut) {
+            @Suppress("NAME_SHADOWING")
             val element = partToHighlight(element)
             addHighlightingAnnotation(holder, element, color)
         }

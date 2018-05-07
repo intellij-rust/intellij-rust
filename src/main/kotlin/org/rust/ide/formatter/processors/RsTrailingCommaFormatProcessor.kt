@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
 import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.formatter.rust
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.elementType
@@ -31,9 +32,7 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
     }
 
     private fun doProcess(source: PsiElement, settings: CodeStyleSettings, range: TextRange? = null): PostFormatProcessorHelper {
-        // BACKCOMPAT: 2017.3
-        @Suppress("DEPRECATION")
-        val helper = PostFormatProcessorHelper(settings)
+        val helper = PostFormatProcessorHelper(settings.getCommonSettings(RsLanguage))
         helper.resultTextRange = range
         if (settings.rust.PRESERVE_PUNCTUATION) return helper
 
