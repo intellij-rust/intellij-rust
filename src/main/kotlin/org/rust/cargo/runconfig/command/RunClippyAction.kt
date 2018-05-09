@@ -10,6 +10,7 @@ import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.run
 
 class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
 
@@ -18,6 +19,6 @@ class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
         val toolchain = project.toolchain ?: return
         val cargoProject = getAppropriateCargoProject(e) ?: return
         val channel = if (toolchain.isRustupAvailable) RustChannel.NIGHTLY else RustChannel.DEFAULT
-        runCommand(project, CargoCommandLine.forProject(cargoProject, "clippy", channel = channel), cargoProject)
+        CargoCommandLine.forProject(cargoProject, "clippy", channel = channel).run(project, cargoProject)
     }
 }

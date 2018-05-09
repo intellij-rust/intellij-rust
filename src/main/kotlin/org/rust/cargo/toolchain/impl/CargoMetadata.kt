@@ -10,6 +10,7 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
@@ -143,16 +144,6 @@ object CargoMetadata {
         }
 
     /**
-     * Represents possible variants of generated artifact binary
-     * corresponded to `--crate-type` compiler attribute
-     *
-     * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
-     */
-    enum class CrateType {
-        BIN, LIB, DYLIB, STATICLIB, CDYLIB, RLIB, PROC_MACRO, UNKNOWN
-    }
-
-    /**
      * A rooted graph of dependencies, represented as adjacency list
      */
     data class Resolve(
@@ -223,7 +214,7 @@ object CargoMetadata {
 
         val mainFile = root.findFileByMaybeRelativePath(src_path)
 
-        return mainFile?.let { CargoWorkspaceData.Target(it.url, name, cleanKind) }
+        return mainFile?.let { CargoWorkspaceData.Target(it.url, name, cleanKind, cleanCrateTypes) }
     }
 }
 

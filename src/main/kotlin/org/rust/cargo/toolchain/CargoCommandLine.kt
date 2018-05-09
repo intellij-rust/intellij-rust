@@ -5,10 +5,18 @@
 
 package org.rust.cargo.toolchain
 
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.ProgramRunnerUtil
+import com.intellij.execution.RunManagerEx
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.EnvironmentVariablesData
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import java.nio.file.Path
 
 data class CargoCommandLine(
@@ -73,5 +81,34 @@ data class CargoCommandLine(
                 channel = channel
             )
         }
+    }
+}
+
+fun CargoWorkspace.Target.launchCommand(): String? {
+    return when (kind) {
+        CargoWorkspace.TargetKind.BIN -> "run"
+        CargoWorkspace.TargetKind.LIB -> "build"
+        CargoWorkspace.TargetKind.TEST -> "test"
+        CargoWorkspace.TargetKind.BENCH -> "bench"
+        CargoWorkspace.TargetKind.EXAMPLE -> if (crateTypes.singleOrNull() == CargoWorkspace.CrateType.BIN) "run" else "build"
+        else -> null
+    }
+}
+
+fun CargoCommandLine.run(project: Project, cargoProject: CargoProject) {
+    val runConfiguration =
+        if (project.cargoProjects.allProjects.size > 1)
+            createRunConfiguration(project, this, name = command + " [" + cargoProject.presentableName + "]")
+        else
+            createRunConfiguration(project, this)
+    val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
+    ProgramRunnerUtil.executeConfiguration(runConfiguration, executor)
+}
+
+private fun createRunConfiguration(project: Project, cargoCommandLine: CargoCommandLine, name: String? = null): RunnerAndConfigurationSettings {
+    val runManager = RunManagerEx.getInstanceEx(project)
+
+    return runManager.createCargoCommandRunConfiguration(cargoCommandLine, name).apply {
+        runManager.setTemporaryConfiguration(this)
     }
 }

@@ -28,6 +28,8 @@ import org.rust.FileTree
 import org.rust.TestProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
+import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
@@ -223,8 +225,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             name = name,
             version = "0.0.1",
             targets = listOf(
-                CargoWorkspaceData.Target("$contentRoot/main.rs", name, CargoWorkspace.TargetKind.BIN),
-                CargoWorkspaceData.Target("$contentRoot/lib.rs", name, CargoWorkspace.TargetKind.LIB)
+                CargoWorkspaceData.Target("$contentRoot/main.rs", name, TargetKind.BIN, listOf(CrateType.BIN)),
+                CargoWorkspaceData.Target("$contentRoot/lib.rs", name, TargetKind.LIB, listOf(CrateType.LIB))
             ),
             source = null,
             origin = PackageOrigin.WORKSPACE
@@ -254,7 +256,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 targets = listOf(
                     // don't use `FileUtil.join` here because it uses `File.separator`
                     // which is system dependent although all other code uses `/` as separator
-                    CargoWorkspaceData.Target(source?.let { "$contentRoot/$it" } ?: "", targetName, CargoWorkspace.TargetKind.LIB)
+                    CargoWorkspaceData.Target(source?.let { "$contentRoot/$it" } ?: "", targetName, TargetKind.LIB, listOf(CrateType.BIN))
                 ),
                 source = source,
                 origin = PackageOrigin.DEPENDENCY
