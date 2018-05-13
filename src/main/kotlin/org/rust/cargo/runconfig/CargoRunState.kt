@@ -54,6 +54,8 @@ class CargoRunState(
         return toolchain.rustup(projectDirectory)?.getSysroot()
     }
 
+    fun rustVersion(): RustToolchain.VersionInfo = toolchain.queryVersions()
+
     override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
             .toColoredCommandLine(commandLine)
