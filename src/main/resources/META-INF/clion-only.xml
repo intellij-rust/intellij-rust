@@ -9,11 +9,4 @@
         <programRunner implementation="org.rust.debugger.runconfig.RsDebugRunner"/>
         <xdebugger.settings implementation="org.rust.debugger.settings.RsDebuggerSettings"/>
     </extensions>
-
-    <actions>
-        <reference id="Rust.NewProject">
-            <add-to-group group-id="WelcomeScreen.QuickStart"/>
-        </reference>
-    </actions>
-
 </idea-plugin>
