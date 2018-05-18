@@ -6,6 +6,7 @@
 package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
@@ -28,14 +29,19 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
 
     protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
-        myFixture.launchAction(intention)
+        launchAction()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
     protected fun doAvailableTestWithFileTree(@Language("Rust") fileStructureBefore: String, @Language("Rust") openedFileAfter: String) {
         fileTreeFromText(fileStructureBefore).createAndOpenFileWithCaretMarker()
-        myFixture.launchAction(intention)
+        launchAction()
         myFixture.checkResult(replaceCaretMarker(openedFileAfter.trimIndent()))
+    }
+
+    private fun launchAction() {
+        UIUtil.dispatchAllInvocationEvents()
+        myFixture.launchAction(intention)
     }
 
     protected fun doAvailableTest(@Language("Rust") before: String,
