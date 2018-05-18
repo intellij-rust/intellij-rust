@@ -6,8 +6,8 @@
 package org.rust.ide.structure
 
 import com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
+import com.intellij.testFramework.PlatformTestUtil.expandAll
 import com.intellij.ui.RowIcon
-import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.ide.presentation.getPresentationForStructure
@@ -372,7 +372,7 @@ class RsStructureViewTest : RsTestBase() {
         val normExpected = expected.trimIndent() + "\n"
         myFixture.configureByText("main.rs", code)
         myFixture.testStructureView {
-            TreeUtil.expandAll(it.tree)
+            expandAll(it.tree)
             assertTreeEqual(it.tree, normExpected)
         }
     }
