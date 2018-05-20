@@ -1330,4 +1330,18 @@ class RsResolveTest : RsResolveTestBase() {
                      //^
         }
     """)
+
+    // During our tests, #[cfg(test)] evaluates to true
+    fun `test fn cfg`() = checkByCode("""
+        #[cfg(test)]
+        fn foo() {}
+         //X
+        #[cfg(not(test))]
+        fn foo() {}
+
+        fn main() {
+            foo();
+          //^
+        }
+    """)
 }

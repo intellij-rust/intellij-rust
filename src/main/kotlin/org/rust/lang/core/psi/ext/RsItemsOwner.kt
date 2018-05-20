@@ -70,6 +70,9 @@ private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsItemElement)
 }
 
 private fun RsElement.processItem(processor: (RsItemElement) -> Boolean): Boolean {
+    // TODO Is this necessary?
+    if (this is RsDocAndAttributeOwner && !this.queryAttributes.evaluateCfgAttr()) return false
+
     return when (this) {
         is RsMacroCall -> processExpansionRecursively { it is RsItemElement && processor(it) }
         is RsItemElement -> processor(this)

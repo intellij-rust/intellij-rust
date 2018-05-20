@@ -326,7 +326,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
         fn main() {
             let foo = Foo;
-            foo.bar(10);  // Ignore both calls
+            foo.bar<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">(10)</error>;
             foo.bar();
         }
     """)
@@ -786,10 +786,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     fun `test respects cfg attribute E0428`() = checkErrors("""
         mod opt {
             #[cfg(not(windows))] mod foo {}
-            #[cfg(windows)]     mod foo {}
+            #[cfg(windows)]      mod foo {}
 
-            #[cfg(windows)] fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
+            // During tests unix is set and we detect this duplicate
+            #[cfg(unix)] fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
             fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
+
+            // During tests windows is not set and we do not detect this duplicate
+            #[cfg(windows)] fn hello_rust() {}
+            fn hello_rust() {}
         }
     """)
 

@@ -22,6 +22,7 @@ val RsMetaItem.name: String? get() {
     return if (stub != null) stub.name else identifier?.unescapedText
 }
 
+//TODO this only returns string literal values
 val RsMetaItem.value: String? get() = litExpr?.stringValue
 
 val RsMetaItem.hasEq: Boolean get() = greenStub?.hasEq ?: (eq != null)

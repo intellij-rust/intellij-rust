@@ -63,6 +63,9 @@ fun processItemDeclarations(
     }
 
     loop@ for (item in scope.expandedItemsExceptImpls) {
+        // Ignore items (and their children) deactivated by #[cfg(...)]
+        if (!item.queryAttributes.evaluateCfgAttr()) continue@loop
+
         when (item) {
             is RsUseItem ->
                 if (item.isPublic || withPrivateImports) {
@@ -230,6 +233,8 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
 
     // XXX: there are two `cfg`ed `boxed` modules in liballoc, so
     // we apply "first in the namespace wins" heuristic.
+
+    // TODO: How to change this now that we handle #[cfg(...)] attributes?
 
     if (ns.size == 1) {
         // Optimized version for single namespace.

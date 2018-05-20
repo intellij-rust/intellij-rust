@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.SmartList
 import org.rust.lang.core.completion.createLookupElement
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
@@ -62,7 +63,11 @@ fun collectPathResolveVariants(
 
         if (e.name == referenceName) {
             val element = e.element ?: return@f false
-            result += BoundElement(element, e.subst)
+            // Check if there are any #[cfg()] attributes that disable this element
+            // HACK: do not check on RsFile as queryAttributes on RsFile would access the Psi
+            if (element is RsFile || element !is RsDocAndAttributeOwner || element.queryAttributes.evaluateCfgAttr()) {
+                result += BoundElement(element, e.subst)
+            }
         }
         false
     }
@@ -74,8 +79,13 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
     f { e ->
         if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
 
+        val element = e.element ?: return@f false
         if (e.name == referenceName) {
-            result += e.element ?: return@f false
+            // Check if there are any #[cfg()] attributes that disable this element
+            // HACK: do not check on RsFile as queryAttributes on RsFile would access the Psi
+            if (element is RsFile || element !is RsDocAndAttributeOwner || element.queryAttributes.evaluateCfgAttr()) {
+                result += element
+            }
         }
         false
     }
@@ -91,8 +101,10 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(referenceName: String,
 
         if (e.name == referenceName) {
             // de-lazying. See `RsResolveProcessor.lazy`
-            e.element ?: return@f false
-            result += e
+            val element = e.element ?: return@f false
+            if (element !is RsDocAndAttributeOwner || element.queryAttributes.evaluateCfgAttr()) {
+                result += e
+            }
         }
         false
     }
@@ -120,12 +132,16 @@ fun collectCompletionVariants(
     f { e ->
         val element = e.element ?: return@f false
         if (element is RsFunction && element.isTest) return@f false
-        result.addElement(createLookupElement(
-            element = element,
-            scopeName = e.name,
-            forSimplePath = forSimplePath,
-            expectedTy = expectedTy
-        ))
+        // Check if there are any #[cfg()] attributes that disable this element
+        // HACK: do not check on RsFile as queryAttributes on RsFile would access the Psi
+        if (element is RsFile || element !is RsDocAndAttributeOwner || element.queryAttributes.evaluateCfgAttr()) {
+            result.addElement(createLookupElement(
+                element = element,
+                scopeName = e.name,
+                forSimplePath = forSimplePath,
+                expectedTy = expectedTy
+            ))
+        }
         false
     }
 }

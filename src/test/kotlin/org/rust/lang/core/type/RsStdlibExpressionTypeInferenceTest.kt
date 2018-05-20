@@ -770,4 +770,19 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             c;
         } //^ String
     """)
+
+    // During tests we set some hardcoded cfg values like unix
+    fun `test cfg choosing`() = testExpr("""
+        #[cfg(windows)]
+        fn choose() -> u16 { }
+
+        #[cfg(unix)]
+        fn choose() -> u32 { }
+
+        fn main() {
+            let a = choose();
+            a;
+          //^ u32
+        }
+    """)
 }

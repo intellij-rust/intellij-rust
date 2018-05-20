@@ -110,5 +110,5 @@ private fun <T : RsReferenceElement> Collection<T>.findDuplicateReferences(): Co
 
 fun calculateMissingFields(expr: RsStructLiteralBody, decl: RsFieldsOwner): List<RsFieldDecl> {
     val declaredFields = expr.structLiteralFieldList.map { it.referenceName }.toSet()
-    return decl.fields.filter { it.name !in declaredFields && !it.queryAttributes.hasCfgAttr() }
+    return decl.fields.filter { it.name !in declaredFields && it.queryAttributes.evaluateCfgAttr() }
 }

@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.lang.core.psi.ext.CfgTestmarks
 
 @ExpandMacros
 class RsMacroExpansionResolveTest : RsResolveTestBase() {
@@ -31,7 +32,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             foo().bar()
         }       //^
-    """)
+    """, CfgTestmarks.evaluatesTrue)
 
     fun `test expand items star`() = checkByCode("""
         macro_rules! if_std {
@@ -53,7 +54,8 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             foo().bar()
         }       //^
-    """)
+
+    """, CfgTestmarks.evaluatesTrue)
 
     fun `test expand items star with reexport`() = checkByCode("""
         macro_rules! if_std {
@@ -75,7 +77,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             Bar.bar()
         }      //^
-    """)
+    """, CfgTestmarks.evaluatesTrue)
 
     fun `test expand items star with reexport from expansion`() = checkByCode("""
         macro_rules! if_std {
@@ -98,7 +100,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             bar().bar()
         }        //^
-    """)
+    """, CfgTestmarks.evaluatesTrue)
 
     fun `test expand items star with nested macro calls`() = checkByCode("""
         macro_rules! if_std {
@@ -126,7 +128,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             foo().bar()
         }       //^
-    """)
+    """, CfgTestmarks.evaluatesTrue)
 
     fun `test expand items star with infinite recursive nested macro calls`() = checkByCode("""
         macro_rules! foo {
