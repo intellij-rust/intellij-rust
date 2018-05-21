@@ -12,8 +12,10 @@ import com.intellij.psi.PsiParserFacade
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.ty.Mutability
+import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
+import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.emptySubstitution
 import org.rust.lang.core.types.type
@@ -288,6 +290,22 @@ class RsPsiFactory(private val project: Project) {
         else -> createExpressionOfType("${expr.text}.$methodNameText()")
     }
 
+    fun createDerefExpr(expr: RsExpr, nOfDerefs: Int = 1): RsExpr =
+        if (nOfDerefs > 0)
+            when (expr) {
+                is RsBinaryExpr, is RsCastExpr -> createExpressionOfType("${"*".repeat(nOfDerefs)}(${expr.text})")
+                else -> createExpressionOfType("${"*".repeat(nOfDerefs)}${expr.text}")
+            }
+        else expr
+
+    fun createRefExpr(expr: RsExpr, muts: List<Mutability> = listOf(IMMUTABLE)): RsExpr =
+        if (!muts.none())
+            when (expr) {
+                is RsBinaryExpr, is RsCastExpr -> createExpressionOfType("${mutsToRefs(muts)}(${expr.text})")
+                else -> createExpressionOfType("${mutsToRefs(muts)}${expr.text}")
+            }
+        else expr
+
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E
             ?: error("Failed to create ${E::class.simpleName} from `$text`")
@@ -314,3 +332,11 @@ private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
 
 private fun RsTypeReference.substAndGetText(subst: Substitution): String =
     type.substitute(subst).insertionSafeText
+
+private fun mutsToRefs(mutability: List<Mutability>): String =
+    mutability.joinToString("", "", "") {
+        when (it) {
+            IMMUTABLE -> "&"
+            MUTABLE -> "&mut "
+        }
+    }
