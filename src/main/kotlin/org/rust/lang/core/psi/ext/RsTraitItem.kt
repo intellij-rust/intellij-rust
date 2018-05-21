@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
@@ -26,6 +27,8 @@ import org.rust.openapiext.filterIsInstanceQuery
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
 import javax.swing.Icon
+
+private val LOG: Logger = Logger.getInstance(RsTraitItem::class.java)
 
 val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 
@@ -69,12 +72,17 @@ private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
 }
 
 fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
-    val subst1 = typeParameterList?.typeParameterList?.withIndex()?.associate { (i, par) ->
-        val param = TyTypeParameter.named(par)
-        param to (subst.getOrNull(i) ?: param)
+    val typeParameterList = typeParameterList?.typeParameterList.orEmpty()
+    val substitution = if (typeParameterList.size != subst.size) {
+        LOG.warn("Trait has ${typeParameterList.size} type parameters but received ${subst.size} types for substitution")
+        emptySubstitution
+    } else {
+        typeParameterList.withIndex().associate { (i, par) ->
+            val param = TyTypeParameter.named(par)
+            param to (subst.getOrNull(i) ?: param)
+        }
     }
-
-    return BoundElement(this, subst1 ?: emptySubstitution)
+    return BoundElement(this, substitution)
 }
 
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {
