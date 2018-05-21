@@ -12,11 +12,23 @@ class RsQualifiedNameProviderTest : RsQualifiedNameProviderTestBase() {
         }
 
         fn function() {}
-    """, listOf("test_package", "test_package::foo", "test_package::foo::inner_function", "test_package::function")
-    )
+    """, setOf("test_package", "test_package::foo", "test_package::foo::inner_function", "test_package::function"))
 
     fun `test struct`() = doTest("""
         struct Bar;
-    """, listOf("test_package", "test_package::Bar")
-    )
+    """, setOf("test_package", "test_package::Bar"))
+
+    fun `test trait with func`() = doTest("""
+        trait Show {
+            fn show(&self) -> String;
+        }
+""", setOf("test_package", "test_package::Show", "test_package::Show#show"))
+
+    fun `test impl with func`() = doTest("""
+        impl Show for i32 {
+            fn show(&self) -> String {
+                format!("four-byte signed {}", self)
+            }
+        }
+""", setOf("test_package", "test_package::Show#show"))
 }

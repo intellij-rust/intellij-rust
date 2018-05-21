@@ -15,19 +15,19 @@ import org.rust.lang.core.psi.ext.*
 abstract class RsQualifiedNameProviderTestBase : RsTestBase() {
     protected fun doTest(
         @Language("Rust") code: String,
-        references : List<String?>
+        references : Set<String>
     ) {
         InlineFile(code)
         qualifiedNamesForDeclarations().forEach { println(it) }
         assertEquals(references, qualifiedNamesForDeclarations())
     }
 
-    private fun qualifiedNamesForDeclarations(): List<String?> {
-        val result = ArrayList<String?>()
+    private fun qualifiedNamesForDeclarations(): Set<String> {
+        val result = mutableSetOf<String>()
         myFixture.file.accept(object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {
-                if (element as? RsQualifiedNamedElement != null) {
-                    result.add(CopyReferenceAction.elementToFqn(element))
+                if (element is RsQualifiedNamedElement) {
+                    result.add(CopyReferenceAction.elementToFqn(element) ?: "")
                 }
                 element.acceptChildren(this)
             }
