@@ -37,4 +37,10 @@ class RsQualifiedNameProviderTest : RsQualifiedNameProviderTestBase() {
             const WORLD: u32;
         }
 """, setOf("test_package", "test_package::Hello", "test_package::Hello#WORLD"))
+
+    fun `test trait with type alias`() = doTest("""
+        trait Number {
+            type Integer: i32;
+        }
+""", setOf("test_package", "test_package::Number", "test_package::Number#Integer"))
 }
