@@ -82,7 +82,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 
     override val isUnsafe: Boolean get() = this.stub?.isUnsafe ?: (unsafe != null)
 
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: String?
+        get() = owner.crateRelativePath?.plus("#$name") ?: RsPsiImplUtil.crateRelativePath(this)
 
     final override val innerAttrList: List<RsInnerAttr>
         get() = block?.innerAttrList.orEmpty()

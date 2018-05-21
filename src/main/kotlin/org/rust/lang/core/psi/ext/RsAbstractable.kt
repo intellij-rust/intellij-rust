@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.PsiNameIdentifierOwner
+import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.lang.core.psi.*
 
 interface RsAbstractable : RsNamedElement, PsiNameIdentifierOwner {
@@ -21,6 +22,13 @@ sealed class RsAbstractableOwner {
     val isInherentImpl: Boolean get() = this is Impl && isInherent
     val isTraitImpl: Boolean get() = this is Impl && !isInherent
     val isImplOrTrait: Boolean get() = this is Impl || this is Trait
+
+    val crateRelativePath: String?
+        get() = when (this) {
+            is Trait -> RsPsiImplUtil.crateRelativePath(trait)
+            is Impl -> "${impl.containingMod.crateRelativePath}::${impl.traitRef?.path?.text}"
+            else -> null
+        }
 }
 
 val RsAbstractable.owner: RsAbstractableOwner
