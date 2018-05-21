@@ -31,4 +31,10 @@ class RsQualifiedNameProviderTest : RsQualifiedNameProviderTestBase() {
             }
         }
 """, setOf("test_package", "test_package::Show#show"))
+
+    fun `test trait with constant`() = doTest("""
+        trait Hello {
+            const WORLD: u32;
+        }
+""", setOf("test_package", "test_package::Hello", "test_package::Hello#WORLD"))
 }
