@@ -9,7 +9,7 @@ class RsTryMacroInspectionTest : RsInspectionsTestBase(RsTryMacroInspection()) {
 
     fun testFix() = checkFixByText("Change try! to ?", """
         fn foo() -> Result<(), ()> {
-            <weak_warning descr="try! macro can be replaced with ? operator">try<caret>!</weak_warning>(Err(()));
+            <weak_warning descr="try! macro can be replaced with ? operator">try/*caret*/!(Err(()))</weak_warning>;
             Ok(())
         }
     """, """
@@ -17,5 +17,5 @@ class RsTryMacroInspectionTest : RsInspectionsTestBase(RsTryMacroInspection()) {
             Err(())?;
             Ok(())
         }
-    """)
+    """, checkWeakWarn = true)
 }

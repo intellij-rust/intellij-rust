@@ -9,11 +9,11 @@ class RsSimplifyPrintInspectionTest : RsInspectionsTestBase(RsSimplifyPrintInspe
 
     fun testFix() = checkFixByText("Remove unnecessary argument", """
         fn main() {
-            <weak_warning descr="println! macro invocation can be simplified">println!(""<caret>)</weak_warning>;
+            <weak_warning descr="println! macro invocation can be simplified">println!(""/*caret*/)</weak_warning>;
         }
     """, """
         fn main() {
             println!();
         }
-    """)
+    """, checkWeakWarn = true)
 }
