@@ -18,7 +18,6 @@ abstract class RsQualifiedNameProviderTestBase : RsTestBase() {
         references : Set<String>
     ) {
         InlineFile(code)
-        qualifiedNamesForDeclarations().forEach { println(it) }
         assertEquals(references, qualifiedNamesForDeclarations())
     }
 
