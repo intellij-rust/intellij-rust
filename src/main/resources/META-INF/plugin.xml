@@ -616,6 +616,11 @@
         <!-- Move Actions -->
 
         <moveLeftRightHandler language="Rust" implementationClass="org.rust.ide.actions.RsMoveLeftRightHandler"/>
+
+        <!-- Qualified Name Provider -->
+
+        <qualifiedNameProvider implementation="org.rust.ide.actions.RsQualifiedNameProvider"/>
+
         <!--NB: order is important here-->
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsCommaListElementUpDownMover"/>
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsMatchArmUpDownMover"/>
