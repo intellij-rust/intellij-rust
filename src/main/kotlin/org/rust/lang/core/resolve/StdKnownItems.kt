@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsTypeDeclarationElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
@@ -19,7 +20,10 @@ import org.rust.lang.core.types.ty.getTypeParameter
 import org.rust.openapiext.ProjectCache
 import java.util.*
 
-class StdKnownItems private constructor(private val absolutePathResolver: (String, String) -> RsNamedElement?) {
+class StdKnownItems private constructor(
+    private val absolutePathResolver: (String, String) -> RsNamedElement?,
+    private val langItemsResolver: (String, String?) -> RsTraitItem?
+) {
 
     fun findStdItem(prefixNoStd: String, name: String): RsNamedElement? =
         absolutePathResolver(prefixNoStd, name)
@@ -66,15 +70,6 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findResultItem(): RsNamedElement? =
         findCoreItem("result::Result")
 
-    fun findCloneTrait(): RsTraitItem? =
-        findCoreItem("clone::Clone") as? RsTraitItem
-
-    fun findEqTrait(): RsTraitItem? =
-        findCoreItem("cmp::Eq") as? RsTraitItem
-
-    fun findOrdTrait(): RsTraitItem? =
-        findCoreItem("cmp::Ord") as? RsTraitItem
-
     fun findAsRefTrait(): RsTraitItem? =
         findCoreItem("convert::AsRef") as? RsTraitItem
 
@@ -102,17 +97,47 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
     fun findToStringTrait(): RsTraitItem? =
         findCoreItem("string::ToString") as? RsTraitItem
 
+    fun findLangItem(langAttribute: String, modName: String? = null): RsTraitItem? =
+        langItemsResolver(langAttribute, modName)
+
+    fun findCloneTrait(): RsTraitItem? = findLangItem("clone", "clone")
+    fun findCopyTrait(): RsTraitItem? = findLangItem("copy", "marker")
+
+    fun findPartialEqTrait(): RsTraitItem? = findLangItem("eq", "cmp")
+    // `Eq` trait doesn't have own lang attribute, so use `findCoreItem` to find it
+    fun findEqTrait(): RsTraitItem? = findCoreItem("cmp::Eq") as? RsTraitItem
+
+    fun findPartialOrdTrait(): RsTraitItem? = findCoreItem("cmp::PartialOrd") as? RsTraitItem
+    // Current implementation of `Ord` trait set its lang item under `cfg` attribute (`#[cfg_attr(not(stage0), lang = "ord")]`)
+    // and we can't find it, so use `findCoreItem`
+    fun findOrdTrait(): RsTraitItem? = findCoreItem("cmp::Ord") as? RsTraitItem
+
+    fun findHashTrait(): RsTraitItem? = findCoreItem("hash::Hash") as? RsTraitItem
+
+    fun findDebugTrait(): RsTraitItem? = findLangItem("debug_trait", "fmt")
+
+    fun findDefaultTrait(): RsTraitItem? = findCoreItem("default::Default") as? RsTraitItem
+
+    fun findSizedTrait(): RsTraitItem? = findLangItem("sized", "marker")
+    fun findSyncTrait(): RsTraitItem? = findLangItem("sync", "marker")
+    fun findSendTrait(): RsTraitItem? = findLangItem("send", "marker")
+
     companion object {
         private val stdKnownItemsCache =
             ProjectCache<Pair<CargoWorkspace, String>, Optional<RsNamedElement>>("stdKnownItemsCache")
 
+        private val langItemsCache =
+            ProjectCache<String, Optional<RsTraitItem>>("langItemsCache")
+
+        private val defaultStdKnownItems = StdKnownItems({ _, _ -> null }, { _, _ -> null })
+
         fun relativeTo(psi: RsElement): StdKnownItems {
             val project = psi.project
-            val workspace = psi.cargoWorkspace ?: return StdKnownItems { _, _ -> null }
-            val crateRoot = psi.crateRoot as? RsFile ?: return StdKnownItems { _, _ -> null }
+            val workspace = psi.cargoWorkspace ?: return defaultStdKnownItems
+            val crateRoot = psi.crateRoot as? RsFile ?: return defaultStdKnownItems
             val useStdPrefix = crateRoot.attributes == RsFile.Attributes.NONE
 
-            return StdKnownItems { prefixNoStd, name ->
+            val absolutePathResolver: (String, String) -> RsNamedElement? = { prefixNoStd, name ->
                 val prefix = if (useStdPrefix) "std" else prefixNoStd
                 val path = "$prefix::$name"
                 val key = workspace to path
@@ -120,6 +145,14 @@ class StdKnownItems private constructor(private val absolutePathResolver: (Strin
                     Optional.ofNullable(resolveStringPath(path, workspace, project)?.first)
                 }.orElse(null)
             }
+
+            val langItemsResolver: (String, String?) -> RsTraitItem? = { langAttribute, modName ->
+                langItemsCache.getOrPut(project, langAttribute) {
+                    Optional.ofNullable(RsLangItemIndex.findLangItem(project, langAttribute, modName))
+                }.orElse(null)
+            }
+
+            return StdKnownItems(absolutePathResolver, langItemsResolver)
         }
     }
 }
