@@ -9,6 +9,7 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.ide.presentation.escaped
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
@@ -16,6 +17,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
+import org.rust.openapiext.Testmark
+import org.rust.openapiext.isUnitTestMode
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
 
@@ -66,6 +69,59 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             .createPath(link, context)
             ?.reference
             ?.resolve()
+    }
+
+    override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String> {
+        if (element !is RsDocAndAttributeOwner ||
+            element !is RsQualifiedNamedElement ||
+            !element.hasExternalDocumentation) return emptyList()
+
+        val cargoPackage = element.containingCargoPackage
+        val pagePrefix = when (cargoPackage?.origin) {
+            STDLIB -> STD_DOC_HOST
+            else -> if (isUnitTestMode) TEST_HOST else return emptyList()
+        }
+
+        val pagePath = RsQualifiedName.from(element)?.toUrlPath() ?: return emptyList()
+        return listOf("$pagePrefix/$pagePath")
+    }
+
+    private val RsDocAndAttributeOwner.hasExternalDocumentation: Boolean get() {
+        // items with #[doc(hidden)] attribute don't have external documentation
+        if (queryAttributes.isDocHidden) {
+            Testmarks.docHidden.hit()
+            return false
+        }
+
+        // private items don't have external documentation
+        if (this is RsVisible) {
+            if (this is RsAbstractable) {
+                val owner = owner
+                // items in
+                if ((!owner.isImplOrTrait || owner.isInherentImpl) && !isPublic) return false
+            } else {
+                if (!isPublic) return false
+            }
+        }
+
+        // macros without #[macro_export] are not public and don't have external documentation
+        if (this is RsMacroDefinition && !hasMacroExport) {
+            Testmarks.notExportedMacro.hit()
+            return false
+        }
+        // TODO: we should take into account real path of item for user, i.e. take into account reexports
+        // instead of already resolved item path
+        return containingMod.superMods.all { it.isPublic }
+    }
+
+    companion object {
+        const val STD_DOC_HOST = "https://doc.rust-lang.org"
+        const val TEST_HOST = "test://doc-host.org"
+    }
+
+    object Testmarks {
+        val docHidden = Testmark("docHidden")
+        val notExportedMacro = Testmark("notExportedMacro")
     }
 }
 
