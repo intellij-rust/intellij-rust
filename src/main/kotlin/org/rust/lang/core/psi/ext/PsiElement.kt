@@ -45,6 +45,8 @@ inline fun <reified T : PsiElement> PsiElement.ancestorOrSelf(): T? =
 inline fun <reified T : PsiElement> PsiElement.ancestorOrSelf(stopAt: Class<out PsiElement>): T? =
     PsiTreeUtil.getParentOfType(this, T::class.java, /* strict */ false, stopAt)
 
+inline fun <reified T : PsiElement> PsiElement.stubAncestorStrict(): T? =
+    PsiTreeUtil.getStubOrPsiParentOfType(this, T::class.java)
 
 /**
  * Same as [ancestorStrict], but with "fake" parent links. See [org.rust.lang.core.macros.ExpansionResult].
