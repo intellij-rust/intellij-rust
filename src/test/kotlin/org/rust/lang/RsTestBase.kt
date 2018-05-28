@@ -292,6 +292,14 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileFilter, testRootDisposable)
     }
 
+    protected fun configureByText(text: String) {
+        InlineFile(text.trimIndent())
+    }
+
+    protected fun configureByFileTree(text: String) {
+        fileTreeFromText(text).createAndOpenFileWithCaretMarker()
+    }
+
     companion object {
         // XXX: hides `Assert.fail`
         fun fail(message: String): Nothing {
