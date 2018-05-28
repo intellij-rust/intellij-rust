@@ -26,6 +26,8 @@ abstract class RsMacroDefinitionImplMixin : RsStubbedNamedElementImpl<RsMacroDef
             .getOrNull(1) // Zeroth is `macro_rules` itself
 
     override fun getIcon(flags: Int): Icon? = RsIcons.MACRO
+
+    override val crateRelativePath: String? get() = name?.let { "::$it" }
 }
 
 val RsMacroDefinition.hasMacroExport: Boolean
