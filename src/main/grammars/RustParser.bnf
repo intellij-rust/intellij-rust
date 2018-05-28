@@ -628,7 +628,8 @@ FieldDecl ::= AttrsAndVis identifier TypeAscription {
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsVisibilityOwner"
-                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
+                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1110,7 +1111,8 @@ LitExpr ::= OuterAttr*
 
 MacroDefinition ::= AttrsAndVis "macro_rules" '!' identifier MacroDefinitionBody <<macroSemicolon>>{
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
   extends = "org.rust.lang.core.psi.ext.RsMacroDefinitionImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroDefinitionStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
