@@ -162,14 +162,6 @@ abstract class RsInspectionsTestBase(
             myFixture.filterAvailableIntentions(fixName).isEmpty())
     }
 
-    private fun configureByText(text: String) {
-        InlineFile(text.trimIndent())
-    }
-
-    private fun configureByFileTree(text: String) {
-        fileTreeFromText(text).createAndOpenFileWithCaretMarker()
-    }
-
     private fun checkByText(text: String) {
         myFixture.checkResult(replaceCaretMarker(text.trimIndent()))
     }
