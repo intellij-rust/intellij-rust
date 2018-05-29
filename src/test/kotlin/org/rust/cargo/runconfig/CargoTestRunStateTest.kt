@@ -10,16 +10,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import org.rust.cargo.toolchain.CargoCommandLine
+import java.nio.file.Paths
 
 @RunWith(Parameterized::class)
 class CargoTestRunStatePatchArgsTest(
     private val input: String,
     private val expected: String
 ) {
+
+    private val wd = Paths.get("/my-crate")
     @Test
     fun test() = assertEquals(
         ParametersListUtil.parse(expected),
-        CargoTestRunState.patchArgs(ParametersListUtil.parse(input))
+        CargoTestRunState.patchArgs(CargoCommandLine("run", wd, ParametersListUtil.parse(input)))
     )
 
     companion object {

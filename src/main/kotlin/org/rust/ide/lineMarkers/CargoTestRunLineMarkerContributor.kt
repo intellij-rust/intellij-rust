@@ -14,6 +14,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
+import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.runconfig.test.CargoTestLocator
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
@@ -36,24 +37,26 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
         )
     }
 
-    private fun getTestStateIcon(sourceElement: PsiElement): Icon? {
-        val function = sourceElement as? RsFunction ?: return AllIcons.RunConfigurations.TestState.Run
-        val url = CargoTestLocator.getTestFnUrl(function);
-        val project = function.project
+    companion object {
+        fun getTestStateIcon(sourceElement: PsiElement): Icon? {
+            val function = sourceElement as? RsFunction ?: return CargoIcons.TEST
+            val url = CargoTestLocator.getTestFnUrl(function)
+            val project = function.project
 
-        val magnitude = TestStateStorage.getInstance(project).getState(url)
-            ?.let { TestIconMapper.getMagnitude(it.magnitude) }
+            val magnitude = TestStateStorage.getInstance(project).getState(url)
+                ?.let { TestIconMapper.getMagnitude(it.magnitude) }
 
-        return when (magnitude) {
-            TestStateInfo.Magnitude.PASSED_INDEX,
-            TestStateInfo.Magnitude.COMPLETE_INDEX ->
-                AllIcons.RunConfigurations.TestState.Green2
+            return when (magnitude) {
+                TestStateInfo.Magnitude.PASSED_INDEX,
+                TestStateInfo.Magnitude.COMPLETE_INDEX ->
+                    CargoIcons.TEST_GREEN
 
-            TestStateInfo.Magnitude.ERROR_INDEX,
-            TestStateInfo.Magnitude.FAILED_INDEX ->
-                AllIcons.RunConfigurations.TestState.Red2
+                TestStateInfo.Magnitude.ERROR_INDEX,
+                TestStateInfo.Magnitude.FAILED_INDEX ->
+                    CargoIcons.TEST_RED
 
-            else -> AllIcons.RunConfigurations.TestState.Run
+                else -> CargoIcons.TEST
+            }
         }
     }
 }
