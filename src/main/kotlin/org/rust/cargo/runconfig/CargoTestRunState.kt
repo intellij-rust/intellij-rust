@@ -58,7 +58,8 @@ class CargoTestRunState(
          */
         @VisibleForTesting
         fun patchArgs(cmd: CargoCommandLine): List<String> {
-            val (cargoArgs, libtestArgs) = cmd.splitOnDoubleDash().let { it.first.toMutableList() to it.second.toMutableList() }
+            val (cargoArgs, libtestArgs) = cmd.splitOnDoubleDash()
+                .let { it.first.toMutableList() to it.second.toMutableList() }
 
             val noFormatJson = "--format=json"
             val format = "--format"
@@ -68,9 +69,9 @@ class CargoTestRunState(
                 libtestArgs.add(noUnstableOptions)
                 libtestArgs.add("unstable-options")
             }
-
-            if (format in libtestArgs) {
-                val idx = libtestArgs.indexOf("--format")
+            val idx = libtestArgs.indexOf("--format")
+            val indexArgWithValue = libtestArgs.indexOfFirst { it.startsWith(format) }
+            if (idx != -1) {
                 if (idx < libtestArgs.size - 1) {
                     if (!libtestArgs[idx + 1].startsWith("-")) {
                         libtestArgs[idx + 1] = "json"
@@ -80,9 +81,8 @@ class CargoTestRunState(
                 } else {
                     libtestArgs.add("json")
                 }
-            } else if (libtestArgs.any {it.startsWith(format)}) {
-                val idx = libtestArgs.indexOfFirst { it.startsWith(format) }
-                libtestArgs[idx] = "--format=json"
+            } else if (indexArgWithValue != -1) {
+                libtestArgs[indexArgWithValue] = "--format=json"
             } else {
                 libtestArgs.add(noFormatJson)
             }

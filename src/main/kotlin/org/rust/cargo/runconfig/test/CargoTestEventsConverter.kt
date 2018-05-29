@@ -24,7 +24,6 @@ data class LibtestSuiteMessage(
             }
 
             return Gson().fromJson(json, LibtestSuiteMessage::class.java)
-                ?: error("Failed to parse LibtestSuiteMessage from $json")
         }
     }
 }
@@ -32,7 +31,8 @@ data class LibtestSuiteMessage(
 data class LibtestTestMessage(
     val type: String,
     val event: String,
-    val name: String
+    val name: String,
+    val stdout: String
 ) {
     companion object {
         fun fromJson(json: JsonObject): LibtestTestMessage? {
@@ -41,7 +41,6 @@ data class LibtestTestMessage(
             }
 
             return Gson().fromJson(json, LibtestTestMessage::class.java)
-                ?: error("Failed to parse LibtestTestMessage from $json")
         }
     }
 }
@@ -51,69 +50,72 @@ class CargoTestEventsConverter(consoleProperties: TestConsoleProperties, val tes
     private val parser = JsonParser()
     private var first = true
     override fun processServiceMessages(text: String, outputType: Key<*>, visitor: ServiceMessageVisitor): Boolean {
+
+        if (first) {
+            visitor.visitCompilationStarted(CompilationStarted("rustc"))
+            first = false
+            return true
+        }
+        if (text.trim().startsWith("finished", true)) {
+            visitor.visitCompilationFinished(CompilationFinished("rustc"))
+            return true
+        }
+        val jsonElement: JsonElement
         try {
-            if (first) {
-                visitor.visitCompilationStarted(CompilationStarted("rustc"))
-                first = false
-                return true
-            }
-            if (text.trim().startsWith("finished", true)) {
-                visitor.visitCompilationFinished(CompilationFinished("rustc"))
-                return true
-            }
-            val jsonElement = parser.parse(text)
+            jsonElement = parser.parse(text)
             if (!jsonElement.isJsonObject) return false
-            val suiteMessage = LibtestSuiteMessage.fromJson(jsonElement.asJsonObject)
-            return if (suiteMessage == null) {
-                handleTestMessage(jsonElement, visitor)
-            } else {
-                handleSuiteMessage(suiteMessage, visitor)
-            }
         } catch (es: JsonSyntaxException) {
             return false
         }
+        if (handleTestMessage(jsonElement, outputType, visitor)) return true
+        if (handleSuiteMessage(jsonElement, outputType, visitor)) return true
+        return false
     }
 
-    private fun handleSuiteMessage(suiteMessage: LibtestSuiteMessage, visitor: ServiceMessageVisitor): Boolean {
-        when (suiteMessage.event) {
-            "started" -> {
-                visitor.visitTestSuiteStarted(TestSuiteStarted(testFrameworkName))
-                val messageBuilder = ServiceMessageBuilder("testCount")
-                    .addAttribute("count", suiteMessage.test_count)
-                    .toString()
-                ServiceMessage.parse(messageBuilder)?.visit(visitor)
-            }
-            "ok" -> visitor.visitTestSuiteFinished(TestSuiteFinished(testFrameworkName))
-            "failed" -> visitor.visitTestSuiteFinished(TestSuiteFinished(testFrameworkName))
-            else -> return false
-        }
+    private fun handleSuiteMessage(jsonElement: JsonElement, outputType: Key<*>, visitor: ServiceMessageVisitor): Boolean {
+        val suiteMessage = LibtestSuiteMessage.fromJson(jsonElement.asJsonObject) ?: return false
+        val messages = createServiceMessagesFor(suiteMessage) ?: return false
+        messages
+            .map { it.toString() }
+            .forEach { super.processServiceMessages(it, outputType, visitor) }
         return true
     }
 
-    private fun handleTestMessage(jsonElement: JsonElement, visitor: ServiceMessageVisitor): Boolean {
+    private fun handleTestMessage(jsonElement: JsonElement, outputType: Key<*>, visitor: ServiceMessageVisitor): Boolean {
         val testMessage = LibtestTestMessage.fromJson(jsonElement.asJsonObject) ?: return false
-        when (testMessage.event) {
-            "started" -> {
-                val messageBuilder = ServiceMessageBuilder.testStarted(testMessage.name)
-                    .addAttribute("locationHint", CargoTestLocator.getTestFnUrl(testMessage.name))
-                    .toString()
-                ServiceMessage.parse(messageBuilder)?.visit(visitor)
-            }
-            "ok" -> visitor.visitTestFinished(TestFinished(testMessage.name, -1))
-            "failed" -> {
-                var message = ServiceMessageBuilder.testFailed(testMessage.name)
-                    .addAttribute("message", "Please look in stderr")
-                    .toString()
-                ServiceMessage.parse(message)?.visit(visitor)
+        val messages = createServiceMessagesFor(testMessage) ?: return false
 
-                message = ServiceMessageBuilder.testFinished(testMessage.name)
-                    .toString()
-
-                ServiceMessage.parse(message)?.visit(visitor)
-            }
-            "ignored" -> visitor.visitTestIgnored(TestIgnored(testMessage.name, ""))
-            else -> return false
-        }
+        messages
+            .map { it.toString() }
+            .forEach { super.processServiceMessages(it, outputType, visitor) }
         return true
     }
+
+    private fun createServiceMessagesFor(message: LibtestTestMessage): List<ServiceMessageBuilder>? =
+        when (message.event) {
+            "started" -> listOf(ServiceMessageBuilder.testStarted(message.name)
+                .addAttribute("locationHint", CargoTestLocator.getTestFnUrl(message.name)))
+            "ok" -> listOf(ServiceMessageBuilder.testFinished(message.name))
+            "failed" -> {
+                val message1 = ServiceMessageBuilder.testFailed(message.name)
+                    .addAttribute("message", message.stdout)
+
+                val message2 = ServiceMessageBuilder.testFinished(message.name)
+                listOf(message1, message2)
+            }
+            "ignored" -> listOf(ServiceMessageBuilder.testIgnored(message.name))
+            else -> null
+        }
+
+    private fun createServiceMessagesFor(message: LibtestSuiteMessage): List<ServiceMessageBuilder>? =
+        when (message.event) {
+            "started" -> {
+                val message1 = ServiceMessageBuilder.testSuiteStarted(testFrameworkName)
+                val message2 = ServiceMessageBuilder("testCount")
+                    .addAttribute("count", message.test_count)
+                listOf(message1, message2)
+            }
+            "ok", "failed" -> listOf(ServiceMessageBuilder.testSuiteFinished(testFrameworkName))
+            else -> null
+        }
 }
