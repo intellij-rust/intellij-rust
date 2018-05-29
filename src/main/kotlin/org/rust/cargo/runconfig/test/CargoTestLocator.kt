@@ -33,7 +33,7 @@ object CargoTestLocator : SMTestLocator {
     }
     fun getTestFnUrl(name: String): String = "$TEST_PROTOCOL://$name"
     fun getTestFnUrl(function: RsFunction): String {
-        return "$TEST_PROTOCOL://${function.crateRelativePath.configPath()}"
+        return getTestFnUrl(function.crateRelativePath.configPath() ?: "")
     }
 }
 
