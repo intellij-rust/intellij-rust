@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspection()) {
+class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspection(), useStdLib = true) {
     fun `test simple assert_eq fix`() = checkFixByText("Convert to assert_eq!", """
         fn main() {
             let x = 10;
@@ -97,4 +97,35 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
             assert_ne!(x, y, "format {}", 0);
         }
     """, checkWeakWarn = true)
+
+    fun `test fix unavailable when arguments do not implement Debug`() = checkFixIsUnavailable("Convert to assert_eq!", """
+        #[derive(PartialEq)]
+        struct Number(u32);
+
+        fn main() {
+            let x = Number(10);
+            let y = Number(10);
+            assert!(x == y/*caret*/);
+        }
+    """)
+
+    fun `test fix available when arguments derive Debug`() = checkFixByText("Convert to assert_ne!", """
+        #[derive(Debug, PartialEq)]
+        struct Number(u32);
+
+        fn main() {
+            let x = Number(10);
+            let y = Number(10);
+            assert!(x != y/*caret*/);
+        }
+    """, """
+        #[derive(Debug, PartialEq)]
+        struct Number(u32);
+
+        fn main() {
+            let x = Number(10);
+            let y = Number(10);
+            assert_ne!(x, y);
+        }
+    """)
 }

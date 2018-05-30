@@ -155,6 +155,9 @@ class ImplLookup(
     private val sizedTrait: RsTraitItem? by lazy(NONE) {
         RsLangItemIndex.findLangItem(project, "sized")
     }
+    private val debugTrait: RsTraitItem? by lazy(NONE) {
+        RsLangItemIndex.findLangItem(project, "debug_trait")
+    }
     private val derefTraitAndTarget: Pair<RsTraitItem, RsTypeAlias>? = run {
         val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
         trait.findAssociatedType("Target")?.let { trait to it }
@@ -236,6 +239,9 @@ class ImplLookup(
 
     private fun getHardcodedImplsForPrimitives(ty: Ty): Collection<BoundElement<RsTraitItem>> {
         val impls = mutableListOf<BoundElement<RsTraitItem>>()
+        debugTrait?.let {
+            impls.add(BoundElement(it))
+        }
         if (ty is TyNumeric || ty is TyInfer.IntVar || ty is TyInfer.FloatVar) {
             // libcore/ops/arith.rs libcore/ops/bit.rs
             impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
@@ -618,6 +624,7 @@ class ImplLookup(
 
     fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(copyTrait)
     fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(sizedTrait)
+    fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(debugTrait)
 
     private fun Ty.isTraitImplemented(trait: RsTraitItem?): Boolean {
         if (trait == null) return false
