@@ -14,6 +14,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.type
 
 class RsAssertEqualInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
@@ -24,6 +26,15 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
             if (macroName != "assert") return
 
             val expr = assertMacroArg.expr as? RsBinaryExpr ?: return
+            val leftType = expr.left.type
+            val rightType = (expr.right ?: return).type
+
+            val lookup = ImplLookup.relativeTo(expr)
+            // The `assert_eq!` macro, as opposed to `assert!`, requires both arguments to implement `core::fmt::Debug`.
+            if (!lookup.isDebug(leftType) || !lookup.isDebug(rightType)) {
+                return
+            }
+
             when (expr.operatorType) {
                 EqualityOp.EQ -> {
                     holder.registerProblem(
