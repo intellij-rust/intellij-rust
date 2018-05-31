@@ -1122,9 +1122,9 @@ MacroDefinitionBody ::= <<any_braces (MacroDefinitionCase ';'?)*>>
 
 MacroDefinitionCase ::= MacroPattern '=>' MacroExpansion { pin = 1 }
 
-MacroPattern ::= <<any_braces MacroPatternContents >>
+MacroPattern ::= <<any_braces MacroPatternContents? >>
 MacroPatternContents ::=
-  (MacroPattern | MacroBinding | MacroBindingGroup | <<unpairedToken>>)*
+  (MacroPattern | MacroBinding | MacroBindingGroup | <<unpairedToken>>)+
 
 MacroBinding ::= '$' MetaVarIdentifier ':' identifier {
   pin = 2
