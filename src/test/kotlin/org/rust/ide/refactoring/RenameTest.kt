@@ -170,13 +170,34 @@ class RenameTest : RsTestBase() {
         myFixture.renameElement(file, "mod.rs")
     }
 
+    fun `test does not rename lambda parameter shadowed in an outer comment`() = doTest("new_name", """
+        fn test() {
+            let param = 123;
+            vec!["abc"].iter().inspect(|param/*caret*/| {
+                println!("{}", param);
+                // Prints out `param`.
+            });
+            // `param` printed out.
+        }
+    """, """
+        fn test() {
+            let param = 123;
+            vec!["abc"].iter().inspect(|new_name| {
+                println!("{}", new_name);
+                // Prints out `new_name`.
+            });
+            // `param` printed out.
+        }
+    """)
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String
     ) {
         InlineFile(before).withCaret()
-        myFixture.renameElementAtCaret(newName)
+        val element = myFixture.elementAtCaret
+        myFixture.renameElement(element, newName, true, true)
         myFixture.checkResult(after)
     }
 }
