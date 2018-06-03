@@ -216,25 +216,7 @@ private class MacroPattern private constructor(
                     val type = psi.fragmentSpecifier ?: return null
 
                     val lastOffset = macroCallBody.currentOffset
-                    val adaptBuilder = GeneratedParserUtilBase.adapt_builder_(
-                        RsElementTypes.FUNCTION,
-                        macroCallBody,
-                        RustParser(),
-                        RustParser.EXTENDS_SETS_
-                    )
-                    val parsed = when (type) {
-                        "ident" -> parseIdentifier(adaptBuilder)
-                        "path" -> RustParser.PathGenericArgsWithColons(adaptBuilder, 0)
-                        "expr" -> RustParser.Expr(adaptBuilder, 0, -1)
-                        "ty" -> RustParser.TypeReference(adaptBuilder, 0)
-                        "pat" -> RustParser.Pat(adaptBuilder, 0)
-                        "stmt" -> parseStatement(adaptBuilder)
-                        "block" -> RustParser.SimpleBlock(adaptBuilder, 0)
-                        "item" -> parseItem(adaptBuilder)
-                        "meta" -> RustParser.MetaItem(adaptBuilder, 0)
-                        "tt" -> RustParser.TT(adaptBuilder, 0)
-                        else -> false
-                    }
+                    val parsed = parse(macroCallBody, type)
                     if (!parsed || lastOffset == macroCallBody.currentOffset) {
                         MacroExpansionMarks.failMatchPatternByBindingType.hit()
                         return null
@@ -259,6 +241,36 @@ private class MacroPattern private constructor(
             }
         }
         return MacroSubstitution(map, groups)
+    }
+
+    private fun parse(builder: PsiBuilder, type: String): Boolean {
+        return if (type == "ident") {
+            parseIdentifier(builder)
+        } else {
+            // we use similar logic as in org.rust.lang.core.parser.RustParser#parseLight
+            val root = RsElementTypes.FUNCTION
+            val adaptBuilder = GeneratedParserUtilBase.adapt_builder_(
+                root,
+                builder,
+                RustParser(),
+                RustParser.EXTENDS_SETS_
+            )
+            val marker = GeneratedParserUtilBase.enter_section_(adaptBuilder, 0, GeneratedParserUtilBase._COLLAPSE_, null)
+            val parsed = when (type) {
+                "path" -> RustParser.PathGenericArgsWithColons(adaptBuilder, 0)
+                "expr" -> RustParser.Expr(adaptBuilder, 0, -1)
+                "ty" -> RustParser.TypeReference(adaptBuilder, 0)
+                "pat" -> RustParser.Pat(adaptBuilder, 0)
+                "stmt" -> parseStatement(adaptBuilder)
+                "block" -> RustParser.SimpleBlock(adaptBuilder, 0)
+                "item" -> parseItem(adaptBuilder)
+                "meta" -> RustParser.MetaItem(adaptBuilder, 0)
+                "tt" -> RustParser.TT(adaptBuilder, 0)
+                else -> false
+            }
+            GeneratedParserUtilBase.exit_section_(adaptBuilder, 0, marker, root, parsed, true) { _, _ -> false }
+            parsed
+        }
     }
 
     private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder): List<MacroSubstitution>? {
