@@ -30,12 +30,12 @@ data class RustToolchain(val location: Path) {
     fun queryVersionsSync(): VersionInfo = VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
 
     fun rawCargo(): Cargo =
-        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC))
+        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), pathToExecutable(RUSTFMT))
 
     fun cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
         val hasXargoToml = cargoProjectDirectory?.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
         val cargoWrapper = if (hasXargoToml && hasExecutable(XARGO)) XARGO else CARGO
-        return Cargo(pathToExecutable(cargoWrapper), pathToExecutable(RUSTC))
+        return Cargo(pathToExecutable(cargoWrapper), pathToExecutable(RUSTC), pathToExecutable(RUSTFMT))
     }
 
     fun rustup(cargoProjectDirectory: Path): Rustup? =
@@ -62,6 +62,7 @@ data class RustToolchain(val location: Path) {
 
     companion object {
         private val RUSTC = "rustc"
+        private val RUSTFMT = "rustfmt"
         private val CARGO = "cargo"
         private val RUSTUP = "rustup"
         private val XARGO = "xargo"
