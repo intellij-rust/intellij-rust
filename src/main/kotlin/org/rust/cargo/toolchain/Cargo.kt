@@ -42,9 +42,12 @@ import java.nio.file.Path
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
+
+
 class Cargo(
     private val cargoExecutable: Path,
-    private val rustExecutable: Path
+    private val rustExecutable: Path,
+    private val rustfmtExecutable: Path
 ) {
     fun checkSupportForBuildCheckAllTargets(): Boolean {
         val lines = GeneralCommandLine(cargoExecutable)
@@ -53,6 +56,18 @@ class Cargo(
             ?: return false
 
         return lines.any { it.contains(" --all-targets ") }
+    }
+
+    data class RustfmtFlags(val emit: Boolean, val skip_children: Boolean)
+
+    private fun checkSupportForRustfmtFlags(): RustfmtFlags {
+        val lines = GeneralCommandLine(rustfmtExecutable)
+            .withParameters("-h")
+            .runExecutable()
+            ?: return RustfmtFlags(false, false)
+
+        return RustfmtFlags(lines.any { it.contains(" --emit ") },
+            lines.any { it.contains(" --skip-children ") })
     }
 
     /**
@@ -96,9 +111,21 @@ class Cargo(
 
     @Throws(ExecutionException::class)
     fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
+
+        val arguments = mutableListOf("--all", "--", file.path)
+
+        var (emit, skip_children) = checkSupportForRustfmtFlags()
+        if (!emit) {
+            arguments += "--write-mode=overwrite"
+        }
+
+        if (skip_children) {
+            arguments += "--skip-children"
+        }
+
         val cmd = CargoCommandLine(
             "fmt", file.parent.pathAsPath,
-            listOf("--all", "--", "--write-mode=overwrite", "--skip-children", file.path)
+            arguments
         )
         val result = cmd.execute(owner, listener)
         VfsUtil.markDirtyAndRefresh(true, true, true, file)
