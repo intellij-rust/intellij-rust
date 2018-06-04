@@ -19,6 +19,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
+import org.rust.cargo.runconfig.CargoTestRunState
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -92,7 +93,13 @@ class CargoCommandConfiguration(
         CargoCommandConfigurationEditor(project)
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
-        clean().ok?.let { CargoRunState(environment, it) }
+        clean().ok?.let {
+            if (command.startsWith("test") && project.toolchain?.queryVersionsSync()?.rustc?.nightlyCommitHash !=  null) {
+                CargoTestRunState(environment, it)
+            } else {
+                CargoRunState(environment, it)
+            }
+        }
 
     sealed class CleanConfiguration {
         class Ok(
