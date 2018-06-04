@@ -275,7 +275,7 @@ private class MacroPattern private constructor(
 
     private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder): List<MacroSubstitution>? {
         val groups = mutableListOf<MacroSubstitution>()
-        val pattern = MacroPattern.valueOf(group.macroPatternContents ?: return null)
+        val pattern = MacroPattern.valueOf(group.macroPatternContents)
         val separator = group.macroBindingGroupSeparator?.firstChild
         var mark: PsiBuilder.Marker? = null
 
@@ -330,8 +330,8 @@ private class MacroPattern private constructor(
         parseItemFns.any { it(b, 0) }
 
     companion object {
-        fun valueOf(psi: RsMacroPatternContents): MacroPattern =
-            MacroPattern(psi.childrenSkipWhitespaceAndComments().flatten())
+        fun valueOf(psi: RsMacroPatternContents?): MacroPattern =
+            MacroPattern(psi?.childrenSkipWhitespaceAndComments()?.flatten() ?: emptySequence())
 
         private fun Sequence<PsiElement>.flatten(): Sequence<PsiElement> = flatMap {
             when (it) {
