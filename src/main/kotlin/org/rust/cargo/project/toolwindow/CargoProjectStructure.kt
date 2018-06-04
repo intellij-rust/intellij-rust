@@ -5,12 +5,12 @@
 
 package org.rust.cargo.project.toolwindow
 
-import com.intellij.icons.AllIcons
 import com.intellij.ui.tree.BaseTreeModel
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.toolwindow.CargoProjectStructure.Node.*
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind.*
 import org.rust.cargo.project.workspace.PackageOrigin
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
@@ -77,13 +77,21 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
             is Target -> target.name
         }
 
-        // TODO: come up with icons
         val icon: Icon? get() = when (this) {
             is Project -> CargoIcons.ICON
             is WorkspaceMember -> CargoIcons.ICON
-            is Targets -> AllIcons.Nodes.Folder
-            is Target -> CargoIcons.ICON
+            is Targets -> CargoIcons.TARGETS
+            is Target -> target.icon
             else -> null
+        }
+
+        private val CargoWorkspace.Target.icon: Icon? get() = when (kind) {
+            LIB -> CargoIcons.LIB_TARGET
+            BIN -> CargoIcons.BIN_TARGET
+            TEST -> CargoIcons.TEST_TARGET
+            BENCH -> CargoIcons.BENCH_TARGET
+            EXAMPLE -> CargoIcons.EXAMPLE_TARGET
+            UNKNOWN -> null
         }
     }
 }
