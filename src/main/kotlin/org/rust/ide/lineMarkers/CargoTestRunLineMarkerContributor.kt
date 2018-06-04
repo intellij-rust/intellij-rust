@@ -18,7 +18,7 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
         if (element.elementType != IDENTIFIER) return null
         val parent = element.parent
-        val state = CargoTestRunConfigurationProducer.findTest(parent, climbUp = false) ?: return null
+        val state = CargoTestRunConfigurationProducer.findTest(arrayOf(parent), climbUp = false) ?: return null
         return Info(
             AllIcons.RunConfigurations.TestState.Run,
             Function<PsiElement, String> { state.configurationName },
