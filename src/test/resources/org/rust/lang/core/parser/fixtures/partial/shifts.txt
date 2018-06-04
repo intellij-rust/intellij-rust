@@ -93,8 +93,8 @@ FILE
             PsiWhiteSpace(' ')
             RsBinaryOpImpl(BINARY_OP)
               PsiElement(<)('<')
-          PsiErrorElement:'#', '::', <, <block expr>, <expr>, <for expr>, <loop expr>, <macro expr>, <struct literal>, <while expr>, Self, identifier, self, super or '|' expected, got '<'
-            <empty list>
+            PsiErrorElement:'#', '::', <, <block expr>, <expr>, <for expr>, <loop expr>, <macro expr>, <struct literal>, <while expr>, Self, identifier, self, super or '|' expected, got '<'
+              <empty list>
           PsiWhiteSpace(' ')
           RsBinaryOpImpl(BINARY_OP)
             PsiElement(<)('<')
@@ -131,8 +131,8 @@ FILE
             PsiWhiteSpace(' ')
             RsBinaryOpImpl(BINARY_OP)
               PsiElement(<)('<')
-          PsiErrorElement:'#', '::', <, <block expr>, <expr>, <for expr>, <loop expr>, <macro expr>, <struct literal>, <while expr>, Self, identifier, self, super or '|' expected, got '<'
-            <empty list>
+            PsiErrorElement:'#', '::', <, <block expr>, <expr>, <for expr>, <loop expr>, <macro expr>, <struct literal>, <while expr>, Self, identifier, self, super or '|' expected, got '<'
+              <empty list>
           PsiWhiteSpace(' ')
           RsBinaryOpImpl(BINARY_OP)
             PsiElement(LTEQ)('<=')

@@ -117,9 +117,9 @@ FILE
       RsPathExprImpl(PATH_EXPR)
         RsPathImpl(PATH)
           PsiElement(identifier)('quazar')
+        PsiErrorElement:'!', '&', '(', '::', ';', <add bin op>, <assign bin op>, <comp bin op>, <mul bin op>, <rel comp bin op>, '[', '^', '{', '|' or '}' expected, got ':'
+          <empty list>
       PsiElement(:)(':')
-      PsiErrorElement:<scalar type reference> expected, got '42'
-        <empty list>
       PsiWhiteSpace(' ')
       RsLitExprImpl(LIT_EXPR)
         PsiElement(INTEGER_LITERAL)('42')
