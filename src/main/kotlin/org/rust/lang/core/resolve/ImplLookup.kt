@@ -628,10 +628,11 @@ class ImplLookup(
     fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.findCopyTrait())
     fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(items.findSizedTrait())
     fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.findDebugTrait())
+    fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.findPartialEqTrait(), rhsType)
 
-    private fun Ty.isTraitImplemented(trait: RsTraitItem?): Boolean {
+    private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): Boolean {
         if (trait == null) return false
-        return canSelect(TraitRef(this, trait.withSubst()))
+        return canSelect(TraitRef(this, trait.withSubst(*subst)))
     }
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
