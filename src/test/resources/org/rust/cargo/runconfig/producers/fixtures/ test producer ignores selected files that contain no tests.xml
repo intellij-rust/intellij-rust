@@ -1,0 +1,10 @@
+<configurations>
+  <configuration name="Test foo" class="CargoCommandConfiguration">
+    <option name="channel" value="DEFAULT" />
+    <option name="command" value="test --package test-package --test foo &quot;&quot;" />
+    <option name="nocapture" value="true" />
+    <option name="backtrace" value="SHORT" />
+    <option name="workingDirectory" value="file:///my-crate" />
+    <envs />
+  </configuration>
+</configurations>
