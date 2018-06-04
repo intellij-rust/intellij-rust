@@ -5,6 +5,7 @@
 
 package org.rust.cargo.project.toolwindow
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
@@ -64,7 +65,7 @@ class CargoProjectTreeRenderer : ColoredTreeCellRenderer() {
                 append(node.name)
                 val targetKind = node.target.kind
                 if (targetKind != CargoWorkspace.TargetKind.UNKNOWN) {
-                    append(" (${targetKind.name.toLowerCase()})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+                    toolTipText = "${StringUtil.capitalize(targetKind.name.toLowerCase())} target `${node.name}`"
                 }
             }
             else -> append(node.name)
