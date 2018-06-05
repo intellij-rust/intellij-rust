@@ -106,6 +106,11 @@
 
 File ::= [ SHEBANG_LINE ] InnerAttr* Items
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Identifier
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+private Identifier ::= [ raw_prefix ] identifier
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes
@@ -126,7 +131,7 @@ OuterAttr ::= '#'     '[' MetaItem ']' {
 }
 private OuterAttr_first ::= '#'
 
-MetaItem ::= identifier [ '=' (LitExpr | PathIdent) | MetaItemArgs ] {
+MetaItem ::= Identifier [ '=' (LitExpr | PathIdent) | MetaItemArgs ] {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMetaItemStub"
@@ -143,7 +148,7 @@ MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')' {
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private PathIdentInner ::= !("union" identifier) identifier | self | super | 'Self'
+private PathIdentInner ::= !("union" Identifier) Identifier | self | super | 'Self'
 
 fake Path ::= (Path '::' | '::' | TypeQual)? PathIdentInner PathTypeArguments? {
   implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
@@ -152,7 +157,7 @@ fake Path ::= (Path '::' | '::' | TypeQual)? PathIdentInner PathTypeArguments? {
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-private Path_first ::= identifier | self | 'Self' | super | '::' | '<'
+private Path_first ::= Identifier | self | 'Self' | super | '::' | '<'
 
 private PathImpl ::= PathStart PathSegment*
 
@@ -180,9 +185,9 @@ TypeArgumentList ::= TypeArgumentListImpl {
 ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
 private TypeArgumentListImpl ::= '<' !'=' ( <<list_element Lifetime>>*
-                                            <<list_element (!(identifier '=') TypeReference)>>*
+                                            <<list_element (!(Identifier '=') TypeReference)>>*
                                             <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
-AssocTypeBinding ::= identifier '=' TypeReference {
+AssocTypeBinding ::= Identifier '=' TypeReference {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsReferenceElement" ]
@@ -249,7 +254,7 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
   recoverWhile = Item_recover
 }
-private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
+private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | Identifier | mod | trait
   | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn"
 private Item_recover ::= !('}' | Item_first )
 
@@ -306,7 +311,7 @@ PathParameters        ::= '(' [ <<comma_separated_list PathParameter>> ] ')' { p
 
 private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '...'? ] ] ')' { pin = 1 }
 
-private RestrictedPat ::= &( [ mut | '&' '&'? ] ( identifier | '_' ) ) Pat
+private RestrictedPat ::= &( [ mut | '&' '&'? ] ( Identifier | '_' ) ) Pat
 
 TypeParameterList ::= '<' <<list_element (LifetimeParameter | TypeParameter)>>* '>' {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
@@ -326,7 +331,7 @@ LifetimeParameter ::= OuterAttr* QUOTE_IDENTIFIER LifetimeParamBounds? {
 
 LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)*
 
-TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
+TypeParameter ::= OuterAttr* Identifier TypeParamBounds? [ '=' TypeReference ] {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -374,14 +379,14 @@ Function ::= OuterAttr*
              default_?
              Vis?
              const? unsafe? ExternAbi?
-             fn identifier
+             fn Identifier
              TypeParameterList?
              FnParameters
              RetType?
              WhereClause?
              (';' | InnerAttrsAndBlock)
 {
-  pin = 'identifier'
+  pin = 'Identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsGenericDeclaration"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
@@ -440,18 +445,18 @@ private SeqPat ::= Pat_with_recover* ['..' [',' Pat_with_recover+] ]
 PatRef ::= '&' mut? Pat
 
 PatWild ::= '_'
-PatBinding ::= BindingMode? identifier !'...' !'::' {
+PatBinding ::= BindingMode? Identifier !'...' !'::' {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPatBindingImplMixin"
 }
 
-PatField ::= identifier ':' Pat | box? PatBinding
+PatField ::= Identifier ':' Pat | box? PatBinding
 
 BindingMode ::= ref mut? | mut
 
-Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';' {
-  pin = 'identifier'
+Constant ::= OuterAttr* default_? Vis? (static mut? | const) Identifier TypeAscription [ '=' AnyExpr ] ';' {
+  pin = 'Identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
@@ -498,17 +503,17 @@ private UseSpeck_with_recover ::= !'}' UseSpeck (','|&'}') {
   pin = 1
   recoverWhile = UseSpeck_recover
 }
-private UseSpeck_recover ::= !('}' | self | identifier | '::' | '*' )
+private UseSpeck_recover ::= !('}' | self | Identifier | '::' | '*' )
 
-Alias ::= as identifier {
+Alias ::= as Identifier {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedNamedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsAliasStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
-  pin = "identifier"
+ExternCrateItem ::= AttrsAndVis extern crate Identifier Alias? ';' {
+  pin = "Identifier"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
@@ -518,7 +523,7 @@ ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ModItem ::= AttrsAndVis mod identifier '{' InnerAttr* Items '}' {
+ModItem ::= AttrsAndVis mod Identifier '{' InnerAttr* Items '}' {
   pin = 4
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
@@ -530,8 +535,8 @@ ModItem ::= AttrsAndVis mod identifier '{' InnerAttr* Items '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ModDeclItem ::= AttrsAndVis mod identifier ';' {
-  pin = 'identifier' // make sure `ModDeclItem` goes **after** `ModItem`
+ModDeclItem ::= AttrsAndVis mod Identifier ';' {
+  pin = 'Identifier' // make sure `ModDeclItem` goes **after** `ModItem`
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
@@ -558,7 +563,7 @@ private ForeignDecl ::= Constant | Function | TypeAlias
 // Struct & Enums
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-StructItem ::= AttrsAndVis (struct | union) identifier TypeParameterList?
+StructItem ::= AttrsAndVis (struct | union) Identifier TypeParameterList?
                ( TupleStructTail | BlockStructTail | UnitStructTail ) {
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
@@ -573,7 +578,7 @@ private TupleStructTail ::= TupleFields WhereClause? ';' { pin = 1 }
 private UnitStructTail ::= WhereClause? ';'
 private BlockStructTail ::= WhereClause? BlockFields
 
-EnumItem ::= AttrsAndVis enum identifier TypeParameterList? WhereClause? EnumBody {
+EnumItem ::= AttrsAndVis enum Identifier TypeParameterList? WhereClause? EnumBody {
   pin = "enum"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = "org.rust.lang.core.psi.ext.RsStructOrEnumItemElement"
@@ -589,7 +594,7 @@ EnumBody ::= '{' [ <<comma_separated_list EnumVariant>> ] '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-EnumVariant ::= OuterAttr* identifier VariantArgs? {
+EnumVariant ::= OuterAttr* Identifier VariantArgs? {
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
@@ -623,7 +628,7 @@ VariantDiscriminant ::= '=' AnyExpr {
   implements = "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
 }
 
-FieldDecl ::= AttrsAndVis identifier TypeAscription {
+FieldDecl ::= AttrsAndVis Identifier TypeAscription {
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
@@ -652,7 +657,7 @@ private TupleField_recover ::= !(')' | ',')
 // Trait & Impl
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-TraitItem ::= AttrsAndVis unsafe? auto? trait identifier TypeParameterList? TypeParamBounds? WhereClause? Members {
+TraitItem ::= AttrsAndVis unsafe? auto? trait Identifier TypeParameterList? TypeParamBounds? WhereClause? Members {
   pin = "trait"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsTraitOrImpl"
@@ -691,7 +696,7 @@ private Member ::= !'}' ( Function | Constant | TypeAlias | MacroCall ) {
   pin = 1
   recoverWhile = Member_recover
 }
-private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default" | '}')
+private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn | (Identifier '!') | TYPE_KW | "default" | '}')
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Types
@@ -803,10 +808,10 @@ private ImplicitTraitTypeInner ::= Polybound ('+' Polybound)+
 
 private TraitType_upper ::= ('+' Polybound)+
 
-TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
+TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW Identifier
               [ TypeParameterList WhereClause? | WhereClause | TypeParamBounds ]
               [ '=' TypeReference ] ';' {
-  pin = 'identifier'
+  pin = 'Identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
@@ -958,7 +963,7 @@ StructLiteral ::= <<checkStructAllowed>> OuterAttr* PathGenericArgsWithColonsNoT
 
 StructLiteralBody ::= '{' StructLiteralField_with_recover* ('..'  AnyExpr)? '}' { pin = 1 }
 
-StructLiteralField ::= OuterAttr* identifier [ ':' AnyExpr ] {
+StructLiteralField ::= OuterAttr* Identifier [ ':' AnyExpr ] {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsStructLiteralFieldImplMixin"
@@ -969,7 +974,7 @@ private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
   recoverWhile = StructLiteralField_recover
 }
 
-private StructLiteralField_recover ::= !(identifier | ',' | '}' | '..' | '#')
+private StructLiteralField_recover ::= !(Identifier | ',' | '}' | '..' | '#')
 
 PathExpr ::= OuterAttr* PathGenericArgsWithColons {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1084,12 +1089,12 @@ DotExpr ::= Expr '.'  MethodOrField {
 
 private MethodOrField ::= () (MethodCall | FieldLookup) { pin = 1}
 
-FieldLookup ::= identifier | INTEGER_LITERAL {
+FieldLookup ::= Identifier | INTEGER_LITERAL {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsFieldLookupImplMixin"
 }
 
-MethodCall ::= identifier ColonTypeArgumentList? ValueArgumentList {
+MethodCall ::= Identifier ColonTypeArgumentList? ValueArgumentList {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsMethodCallImplMixin"
 }
@@ -1108,7 +1113,7 @@ LitExpr ::= OuterAttr*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-MacroDefinition ::= AttrsAndVis "macro_rules" '!' identifier MacroDefinitionBody <<macroSemicolon>>{
+MacroDefinition ::= AttrsAndVis "macro_rules" '!' Identifier MacroDefinitionBody <<macroSemicolon>>{
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsMacroDefinitionImplMixin"
@@ -1126,7 +1131,7 @@ MacroPattern ::= <<any_braces MacroPatternContents >>
 MacroPatternContents ::=
   (MacroPattern | MacroBinding | MacroBindingGroup | <<unpairedToken>>)*
 
-MacroBinding ::= '$' MetaVarIdentifier ':' identifier {
+MacroBinding ::= '$' MetaVarIdentifier ':' Identifier {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroBindingImplMixin"
@@ -1166,7 +1171,7 @@ MacroCallNoSemicolons ::= MacroHead {
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
 }
 
-private MacroHead ::= AttrsAndVis &(identifier '!') (SpecialMacro | identifier '!' identifier? MacroArgument)
+private MacroHead ::= AttrsAndVis &(Identifier '!') (SpecialMacro | Identifier '!' Identifier? MacroArgument)
 
 MacroArgument ::= <<any_braces CompactTT>>
 // `CompactTT` differs from `TT` in that it does not create an additional `TT` nodes for each unpaired token
@@ -1188,7 +1193,7 @@ private FormatLikeMacro ::=
   '!' FormatMacroArgument { pin = 2 }
 
 FormatMacroArgument ::= <<any_braces [ <<comma_separated_list FormatMacroArg>> ] >>
-FormatMacroArg ::= [ identifier '=' ] AnyExpr
+FormatMacroArg ::= [ Identifier '=' ] AnyExpr
 
 
 private AssertMacro ::=
