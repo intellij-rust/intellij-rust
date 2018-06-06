@@ -58,11 +58,11 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
                     }.toTypedArray()) ?:
 
                     findElement<RsFunction>(psi[0], climbUp)?.let {
-                        TestConfig.SingleTestConfig.FunctionTestConfig.create(it)
+                        TestConfig.SingleTestConfig.create(it)
                     } ?:
 
                     findElement<RsMod>(psi[0], climbUp)?.let {
-                        TestConfig.SingleTestConfig.ModuleTestConfig.create(it)
+                        TestConfig.SingleTestConfig.create(it)
                     }
             }
 
@@ -82,53 +82,34 @@ sealed class TestConfig {
             mod.processExpandedItems { it is RsFunction && it.isTest }
     }
 
-    sealed class SingleTestConfig : TestConfig() {
-        class FunctionTestConfig(
-            override val path: String,
-            override val target: CargoWorkspace.Target,
-            override val sourceElement: RsElement
-        ) : SingleTestConfig() {
-            companion object {
-                fun create(function: RsFunction): FunctionTestConfig? {
-                    if (!function.isTest) {
-                        return null
-                    }
-                    val configPath = function.crateRelativePath.configPath() ?: return null
-                    val target = function.containingCargoTarget ?: return null
-                    return FunctionTestConfig(configPath, target, function)
+    class SingleTestConfig(override val path: String,
+                           val target: CargoWorkspace.Target,
+                           override val sourceElement: RsElement) : TestConfig() {
+        companion object {
+            fun create(element: RsQualifiedNamedElement): TestConfig? {
+                val valid = when (element) {
+                    is RsMod -> hasTestFunction(element)
+                    else -> (element as RsFunction).isTest
                 }
-            }
+                if (!valid) return null
 
-            override val configurationName: String = "Test $path"
-            override val exact = true
+                val configPath = element.crateRelativePath.configPath() ?: return null
+                val target = element.containingCargoTarget ?: return null
+                return SingleTestConfig(configPath, target, element)
+            }
         }
 
-        class ModuleTestConfig(
-            override val path: String,
-            override val target: CargoWorkspace.Target,
-            override val sourceElement: RsMod
-        ) : SingleTestConfig() {
-            companion object {
-                fun create(module: RsMod): ModuleTestConfig? {
-                    val configPath = module.crateRelativePath.configPath() ?: return null
-                    if (!hasTestFunction(module)) {
-                        return null
-                    }
-                    val target = module.containingCargoTarget ?: return null
-                    return ModuleTestConfig(configPath, target, module)
-                }
-            }
+        override val exact = sourceElement is RsFunction
 
-            override val configurationName: String
-                get() = if (sourceElement.modName == "test" || sourceElement.modName == "tests")
+        override val configurationName: String = when (sourceElement) {
+            is RsMod ->
+                if (sourceElement.modName in arrayOf("test", "tests"))
                     "Test ${sourceElement.`super`?.modName}::${sourceElement.modName}"
                 else
                     "Test ${sourceElement.modName}"
-
-            override val exact = false
+            else -> "Test $path"
         }
 
-        abstract val target: CargoWorkspace.Target
         override val targets: Array<CargoWorkspace.Target>
             get() = arrayOf(target)
     }
