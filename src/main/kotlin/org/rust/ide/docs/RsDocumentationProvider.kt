@@ -35,6 +35,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         is RsConstant -> element.presentationInfo?.quickDocumentationText
         is RsMod -> element.presentationInfo?.quickDocumentationText
         is RsItemElement -> element.header(false) + element.signature(false)
+        is RsMacroDefinition -> element.header(false) + element.signature(false)
         is RsNamedElement -> element.presentationInfo?.quickDocumentationText
         else -> null
     }
@@ -128,7 +129,9 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
     val rawLines = when (this) {
         is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
-        is RsStructOrEnumItemElement, is RsTraitItem -> listOfNotNull(presentableQualifiedModName)
+        is RsStructOrEnumItemElement,
+        is RsTraitItem,
+        is RsMacroDefinition -> listOfNotNull(presentableQualifiedModName)
         is RsAbstractable -> {
             val owner = owner
             when (owner) {
@@ -186,6 +189,7 @@ private fun RsDocAndAttributeOwner.signature(usePreTag: Boolean): String {
                 listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
             } else emptyList()
         }
+        is RsMacroDefinition -> listOf("macro <b>$name</b>")
         else -> emptyList()
     }
     val startTag = if (usePreTag) "<pre>" else ""

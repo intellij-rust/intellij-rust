@@ -519,7 +519,8 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         }
 
     """, """
-        macro_rules! <b>makro</b> [main.rs]
+        test_package
+        macro <b>makro</b>
     """)
 
     fun `test const`() = doTest("""
