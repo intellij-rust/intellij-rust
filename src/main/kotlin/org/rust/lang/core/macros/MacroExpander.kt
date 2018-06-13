@@ -205,6 +205,8 @@ private class MacroPattern private constructor(
         }
     }
 
+    private fun isEmpty() = pattern.firstOrNull() == null
+
     private fun matchPartial(macroCallBody: PsiBuilder): MacroSubstitution? {
         val map = HashMap<String, String>()
         val groups = mutableListOf<List<MacroSubstitution>>()
@@ -276,6 +278,7 @@ private class MacroPattern private constructor(
     private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder): List<MacroSubstitution>? {
         val groups = mutableListOf<MacroSubstitution>()
         val pattern = MacroPattern.valueOf(group.macroPatternContents ?: return null)
+        if (pattern.isEmpty()) return null
         val separator = group.macroBindingGroupSeparator?.firstChild
         var mark: PsiBuilder.Marker? = null
 
