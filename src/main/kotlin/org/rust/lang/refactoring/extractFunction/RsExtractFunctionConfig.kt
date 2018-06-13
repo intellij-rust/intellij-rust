@@ -171,10 +171,7 @@ class RsExtractFunctionConfig private constructor(
                         operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT
                     }
                     val requiredBorrowing = hasRefOperator || result.any { it.element.textOffset > end }
-                        // We manually check primitive types because of ImplLookup.isCopy does not support them
-                        && it.type != TyBool && it.type != TyChar && it.type !is TyInteger && it.type !is TyFloat
-                        && it.type !is TyReference
-                        && !implLookup.isCopy(it.type)
+                        && it.type !is TyReference && !implLookup.isCopy(it.type)
 
                     val requiredMutableValue = it.mutability.isMut && targets.any {
                         if (it.element.ancestorStrict<RsValueArgumentList>() == null) return@any false
