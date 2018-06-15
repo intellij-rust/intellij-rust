@@ -5,55 +5,70 @@
 
 package org.rust.lang.refactoring
 
+import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.impl.file.PsiFileImplUtil
+import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.actions.BaseRefactoringAction
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.rust.lang.RsConstants
+import org.rust.lang.RsLanguage
+import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.checkWriteAccessAllowed
 
-class RsDowngradeModuleToFile : com.intellij.refactoring.actions.BaseRefactoringAction() {
-    override fun isEnabledOnElements(elements: Array<out com.intellij.psi.PsiElement>): Boolean = elements.all { it.isDirectoryMod }
+class RsDowngradeModuleToFile : BaseRefactoringAction() {
+    override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = elements.all { it.isDirectoryMod }
 
-    override fun getHandler(dataContext: com.intellij.openapi.actionSystem.DataContext): com.intellij.refactoring.RefactoringActionHandler = org.rust.lang.refactoring.RsDowngradeModuleToFile.Handler
+    override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
 
     override fun isAvailableInEditorOnly(): Boolean = false
 
-    override fun isAvailableForLanguage(language: com.intellij.lang.Language): Boolean = language.`is`(org.rust.lang.RsLanguage)
+    override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
 
-    private object Handler : com.intellij.refactoring.RefactoringActionHandler {
-        override fun invoke(project: com.intellij.openapi.project.Project, editor: com.intellij.openapi.editor.Editor, file: com.intellij.psi.PsiFile, dataContext: com.intellij.openapi.actionSystem.DataContext?) {
-            org.rust.lang.refactoring.RsDowngradeModuleToFile.Handler.invoke(project, arrayOf(file), dataContext)
+    private object Handler : RefactoringActionHandler {
+        override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
+            invoke(project, arrayOf(file), dataContext)
         }
 
-        override fun invoke(project: com.intellij.openapi.project.Project, elements: Array<out com.intellij.psi.PsiElement>, dataContext: com.intellij.openapi.actionSystem.DataContext?) {
-            com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
+        override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
+            runWriteCommandAction(project) {
                 for (element in elements) {
-                    org.rust.lang.refactoring.contractModule(element as PsiFileSystemItem)
+                    contractModule(element as PsiFileSystemItem)
                 }
             }
         }
     }
 }
 
-private fun contractModule(fileOrDirectory: com.intellij.psi.PsiFileSystemItem) {
+private fun contractModule(fileOrDirectory: PsiFileSystemItem) {
     checkWriteAccessAllowed()
 
     val (file, dir) = when (fileOrDirectory) {
-        is org.rust.lang.core.psi.RsFile -> fileOrDirectory to fileOrDirectory.parent!!
-        is com.intellij.psi.PsiDirectory -> fileOrDirectory.children.single() as org.rust.lang.core.psi.RsFile to fileOrDirectory
+        is RsFile -> fileOrDirectory to fileOrDirectory.parent!!
+        is PsiDirectory -> fileOrDirectory.children.single() as RsFile to fileOrDirectory
         else -> error("Can contract only files and directories")
     }
 
     val dst = dir.parent!!
     val fileName = "${dir.name}.rs"
-    com.intellij.psi.impl.file.PsiFileImplUtil.setName(file, fileName)
-    com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil.doMoveFile(file, dst)
+    PsiFileImplUtil.setName(file, fileName)
+    MoveFilesOrDirectoriesUtil.doMoveFile(file, dst)
     dir.delete()
 }
 
-private val com.intellij.psi.PsiElement.isDirectoryMod: Boolean get() {
+private val PsiElement.isDirectoryMod: Boolean get() {
     return when (this) {
-        is org.rust.lang.core.psi.RsFile -> name == org.rust.lang.core.psi.ext.RsMod.Companion.MOD_RS && containingDirectory?.children?.size == 1
-        is com.intellij.psi.PsiDirectory -> {
+        is RsFile -> name == RsConstants.MOD_RS_FILE && containingDirectory?.children?.size == 1
+        is PsiDirectory -> {
             val child = children.singleOrNull()
-            child is org.rust.lang.core.psi.RsFile && child.name == org.rust.lang.core.psi.ext.RsMod.Companion.MOD_RS
+            child is RsFile && child.name == RsConstants.MOD_RS_FILE
         }
         else -> false
     }

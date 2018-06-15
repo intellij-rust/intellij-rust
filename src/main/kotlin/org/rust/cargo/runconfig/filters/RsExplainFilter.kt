@@ -8,7 +8,7 @@ package org.rust.cargo.runconfig.filters
 import com.intellij.execution.filters.BrowserHyperlinkInfo
 import com.intellij.execution.filters.Filter
 import com.intellij.openapi.project.DumbAware
-import org.rust.ide.RsConstants
+import org.rust.lang.RsConstants
 import java.util.regex.Pattern
 
 

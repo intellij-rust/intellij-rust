@@ -9,7 +9,7 @@ import com.intellij.ide.IconProvider
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.icons.CargoIcons
-import org.rust.ide.RsConstants
+import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import javax.swing.Icon

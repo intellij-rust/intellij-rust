@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroExport
@@ -127,7 +128,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     if (modDecl.isLocal) return false
 
     for (file in dir.files) {
-        if (file == modDecl.contextualFile.originalFile || file.name == RsMod.MOD_RS) continue
+        if (file == modDecl.contextualFile.originalFile || file.name == RsConstants.MOD_RS_FILE) continue
         val mod = file.rustMod ?: continue
         val fileName = FileUtil.getNameWithoutExtension(file.name)
         val modDeclName = modDecl.referenceName
@@ -141,7 +142,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     }
 
     for (d in dir.subdirectories) {
-        val mod = d.findFile(RsMod.MOD_RS)?.rustMod ?: continue
+        val mod = d.findFile(RsConstants.MOD_RS_FILE)?.rustMod ?: continue
         if (processor(d.name, mod)) return true
     }
 
