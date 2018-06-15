@@ -12,6 +12,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
+import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -73,7 +74,10 @@ class RunConfigurationProducerTest : RsTestBase() {
 
     fun `test test producer works for annotated functions`() {
         testProject {
-            lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
+            lib("foo", "src/lib.rs", """
+                #[test]
+                fn test_foo() { as/*caret*/sert!(true); }
+            """).open()
         }
         checkOnTopLevel<RsFunction>()
     }
@@ -83,7 +87,7 @@ class RunConfigurationProducerTest : RsTestBase() {
             lib("foo", "src/lib.rs", """
             mod foo_mod {
                 #[test]
-                fn test_foo() { as<caret>sert!(true); }
+                fn test_foo() { as/*caret*/sert!(true); }
             }
             """).open()
         }
@@ -92,7 +96,7 @@ class RunConfigurationProducerTest : RsTestBase() {
 
     fun `test test producer disable for non annotated functions`() {
         testProject {
-            lib("foo", "src/lib.rs", "fn test_foo() { <caret>assert!(true); }").open()
+            lib("foo", "src/lib.rs", "fn test_foo() { /*caret*/assert!(true); }").open()
         }
         checkOnLeaf()
     }
@@ -125,7 +129,7 @@ class RunConfigurationProducerTest : RsTestBase() {
 
                     #[test] fn baz() {}
 
-                    fn quux() {<caret>}
+                    fn quux() {/*caret*/}
                 }
             """).open()
         }
@@ -146,7 +150,7 @@ class RunConfigurationProducerTest : RsTestBase() {
 
                 #[test] fn baz() {}
 
-                fn quux() {<caret>}
+                fn quux() {/*caret*/}
             """).open()
         }
         checkOnLeaf()
@@ -157,7 +161,7 @@ class RunConfigurationProducerTest : RsTestBase() {
             lib("foo", "src/lib.rs", "mod bar;")
             file("src/bar/mod.rs", """
                 mod tests {
-                    fn quux() <caret>{}
+                    fn quux() /*caret*/{}
 
                     #[test] fn baz() {}
                 }
@@ -166,9 +170,27 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnLeaf()
     }
 
+    fun `test take into account path attribute`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                #[cfg(test)]
+                #[path = "foo.rs"]
+                mod test;
+            """)
+            file("src/foo.rs", """
+                #[test]
+                fn foo() {/*caret*/}
+            """).open()
+        }
+        checkOnTopLevel<RsFunction>()
+    }
+
     fun `test test producer adds bin name`() {
         testProject {
-            bin("foo", "src/bin/foo.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
+            bin("foo", "src/bin/foo.rs", """
+                #[test]
+                fn test_foo() { as/*caret*/sert!(true); }
+            """).open()
         }
         checkOnLeaf()
     }
@@ -176,7 +198,7 @@ class RunConfigurationProducerTest : RsTestBase() {
     fun `test main fn is more specific than test mod`() {
         testProject {
             bin("foo", "src/main.rs", """
-                fn main() { <caret> }
+                fn main() { /*caret*/ }
                 fn foo() {}
                 #[test]
                 fn test_foo() {}
@@ -189,7 +211,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         testProject {
             bin("foo", "src/main.rs", """
                 fn main() {}
-                fn foo() { <caret> }
+                fn foo() { /*caret*/ }
                 #[test]
                 fn test_foo() {}
             """).open()
@@ -218,7 +240,10 @@ class RunConfigurationProducerTest : RsTestBase() {
 
     fun `test test configuration uses default environment`() {
         testProject {
-            lib("foo", "src/lib.rs", "#[test]\nfn test_foo() { as<caret>sert!(true); }").open()
+            lib("foo", "src/lib.rs", """
+                #[test]
+                fn test_foo() { as/*caret*/sert!(true); }
+            """).open()
         }
 
         modifyTemplateConfiguration {
@@ -310,27 +335,27 @@ class RunConfigurationProducerTest : RsTestBase() {
         private val simpleTest = """#[test] fn test_simple() { assert_eq!(2 + 2, 5) }"""
         private val hello = """pub fn hello() -> String { return "Hello, World!".to_string() }"""
 
-        fun bin(name: String, path: String, code: String = helloWorld): TestProjectBuilder {
+        fun bin(name: String, path: String, @Language("Rust") code: String = helloWorld): TestProjectBuilder {
             addTarget(name, TargetKind.BIN, CrateType.BIN, path, code)
             return this
         }
 
-        fun example(name: String, path: String, code: String = helloWorld): TestProjectBuilder {
+        fun example(name: String, path: String, @Language("Rust") code: String = helloWorld): TestProjectBuilder {
             addTarget(name, TargetKind.EXAMPLE, CrateType.BIN, path, code)
             return this
         }
 
-        fun test(name: String, path: String, code: String = simpleTest): TestProjectBuilder {
+        fun test(name: String, path: String, @Language("Rust") code: String = simpleTest): TestProjectBuilder {
             addTarget(name, TargetKind.TEST, CrateType.BIN, path, code)
             return this
         }
 
-        fun lib(name: String, path: String, code: String = hello): TestProjectBuilder {
+        fun lib(name: String, path: String, @Language("Rust") code: String = hello): TestProjectBuilder {
             addTarget(name, TargetKind.LIB, CrateType.LIB, path, code)
             return this
         }
 
-        fun file(path: String, code: String): TestProjectBuilder {
+        fun file(path: String, @Language("Rust") code: String): TestProjectBuilder {
             addFile(path, code)
             return this
         }
@@ -389,9 +414,9 @@ class RunConfigurationProducerTest : RsTestBase() {
         }
 
         private fun addFile(path: String, code: String): File {
-            val caret = code.indexOf("<caret>")
+            val caret = code.indexOf("/*caret*/")
             val offset = if (caret == -1) null else caret
-            val cleanedCode = code.replace("<caret>", "")
+            val cleanedCode = code.replace("/*caret*/", "")
             return File(path, cleanedCode, offset).also { files.add(it) }
         }
     }
