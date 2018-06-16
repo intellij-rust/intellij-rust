@@ -22,7 +22,7 @@ buildscript {
         maven { setUrl("https://jitpack.io") }
     }
     dependencies {
-        classpath("com.github.hurricup:gradle-grammar-kit-plugin:2017.1.1")
+        classpath("com.github.hurricup:gradle-grammar-kit-plugin:2018.1.2")
     }
 }
 
@@ -32,9 +32,9 @@ val channel = prop("publishChannel")
 
 plugins {
     idea
-    kotlin("jvm") version "1.2.40"
-    id("org.jetbrains.intellij") version "0.3.1"
-    id("de.undercouch.download") version "3.2.0"
+    kotlin("jvm") version "1.2.41"
+    id("org.jetbrains.intellij") version "0.3.4"
+    id("de.undercouch.download") version "3.4.3"
 }
 
 idea {
@@ -130,7 +130,7 @@ project(":") {
 
     dependencies {
         compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-        compile("org.jetbrains:markdown:0.1.12") {
+        compile("org.jetbrains:markdown:0.1.28") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
