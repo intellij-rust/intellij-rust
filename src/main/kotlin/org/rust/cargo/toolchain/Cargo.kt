@@ -14,21 +14,18 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.runExecutable
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.openapiext.GeneralCommandLine
-import org.rust.openapiext.fullyRefreshDirectory
-import org.rust.openapiext.pathAsPath
-import org.rust.openapiext.withWorkDirectory
+import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Path
@@ -42,8 +39,6 @@ import java.nio.file.Path
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-
-
 class Cargo(
     private val cargoExecutable: Path,
     private val rustExecutable: Path,
@@ -58,11 +53,12 @@ class Cargo(
         return lines.any { it.contains(" --all-targets ") }
     }
 
-    data class RustfmtFlags(val emit: Boolean, val skip_children: Boolean)
+    data class RustfmtFlags(val emit: Boolean, val skipChildren: Boolean)
 
-    private fun checkSupportForRustfmtFlags(): RustfmtFlags {
+    private fun checkSupportForRustfmtFlags(workingDirectory: Path): RustfmtFlags {
         val lines = GeneralCommandLine(rustfmtExecutable)
             .withParameters("-h")
+            .withWorkDirectory(workingDirectory)
             .runExecutable()
             ?: return RustfmtFlags(false, false)
 
@@ -105,30 +101,33 @@ class Cargo(
             "init", path,
             listOf(crateType, "--name", name, path.toString())
         ).execute(owner)
-        check(File(directory.path, RustToolchain.Companion.CARGO_TOML).exists())
+        check(File(directory.path, RustToolchain.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)
     }
 
     @Throws(ExecutionException::class)
     fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
 
-        val arguments = mutableListOf("--all", "--", file.path)
+        val arguments = mutableListOf("--all", "--")
 
-        var (emit, skip_children) = checkSupportForRustfmtFlags()
-        if (!emit) {
-            arguments += "--write-mode=overwrite"
-        }
-
-        if (skip_children) {
+        val (emit, skipChildren) = checkSupportForRustfmtFlags(file.parent.pathAsPath)
+        arguments += if (emit) "--emit=files" else "--write-mode=overwrite"
+        if (skipChildren) {
             arguments += "--skip-children"
         }
+        arguments += file.path
 
-        val cmd = CargoCommandLine(
-            "fmt", file.parent.pathAsPath,
-            arguments
-        )
-        val result = cmd.execute(owner, listener)
-        VfsUtil.markDirtyAndRefresh(true, true, true, file)
+        val documentManager = FileDocumentManager.getInstance()
+        val document = documentManager.getDocument(file)
+        if (document != null && documentManager.isDocumentUnsaved(document)) {
+            documentManager.saveDocument(document)
+        }
+
+        val result = CargoCommandLine("fmt", file.parent.pathAsPath, arguments)
+            .execute(owner, listener)
+        // We want to refresh file synchronously only in unit test
+        // to get new text right after `reformatFile` call
+        VfsUtil.markDirtyAndRefresh(!isUnitTestMode, true, true, file)
         return result
     }
 
