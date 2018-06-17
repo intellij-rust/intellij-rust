@@ -14,6 +14,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
@@ -24,10 +25,7 @@ import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.runExecutable
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.openapiext.GeneralCommandLine
-import org.rust.openapiext.fullyRefreshDirectory
-import org.rust.openapiext.pathAsPath
-import org.rust.openapiext.withWorkDirectory
+import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Path
@@ -119,9 +117,17 @@ class Cargo(
         }
         arguments += file.path
 
+        val documentManager = FileDocumentManager.getInstance()
+        val document = documentManager.getDocument(file)
+        if (document != null && documentManager.isDocumentUnsaved(document)) {
+            documentManager.saveDocument(document)
+        }
+
         val result = CargoCommandLine("fmt", file.parent.pathAsPath, arguments)
             .execute(owner, listener)
-        VfsUtil.markDirtyAndRefresh(true, true, true, file)
+        // We want to refresh file synchronously only in unit test
+        // to get new text right after `reformatFile` call
+        VfsUtil.markDirtyAndRefresh(!isUnitTestMode, true, true, file)
         return result
     }
 
