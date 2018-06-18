@@ -17,7 +17,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsMacroDefinition
+import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.RsItemElement
@@ -28,13 +28,13 @@ import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.processMacroCallVariants
 import org.rust.lang.core.withPrevSiblingSkipping
 
-object RsMacroDefinitionCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
         val mod = parameters.position.ancestorStrict<RsMod>()
         result.addAllElements(collectCompletionVariants { variantsCollector ->
             processMacroCallVariants(parameters.position) { entry ->
                 val macro = entry.element
-                val hide = mod != null && macro is RsMacroDefinition && isHidden(macro, mod)
+                val hide = mod != null && macro is RsMacro && isHidden(macro, mod)
                 if (!hide) variantsCollector(entry) else false
             }
         }.asList())
@@ -53,6 +53,6 @@ object RsMacroDefinitionCompletionProvider : CompletionProvider<CompletionParame
                 .withLanguage(RsLanguage)
         }
 
-    private fun isHidden(macro: RsMacroDefinition, mod: RsMod): Boolean =
+    private fun isHidden(macro: RsMacro, mod: RsMod): Boolean =
         macro.queryAttributes.isDocHidden && macro.containingMod != mod
 }
