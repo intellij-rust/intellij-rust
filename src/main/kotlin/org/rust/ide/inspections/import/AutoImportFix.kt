@@ -130,7 +130,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
         const val NAME = "Import"
 
         fun findApplicableContext(project: Project, path: RsPath): Context? {
-            val basePath = getBasePath(path)
+            val basePath = path.basePath()
             if (TyPrimitive.fromPath(basePath) != null) return null
             if (basePath.reference.multiResolve().isNotEmpty()) return null
 
@@ -245,7 +245,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
                     Triple(target.normName, true, null)
                 } else {
                     val (externCrateItem, depth) = externCrateWithDepth
-                    Triple(externCrateItem.alias?.name ?: externCrateItem.referenceName, false, depth)
+                    Triple(externCrateItem.nameWithAlias, false, depth)
                 }
 
                 val importInfo = ImportInfo.ExternCrateImportInfo(target, externCrateName,
@@ -510,8 +510,3 @@ private val CargoWorkspace.Target.isStd: Boolean
 
 private val CargoWorkspace.Target.isCore: Boolean
     get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.core
-
-private tailrec fun getBasePath(path: RsPath): RsPath {
-    val qualifier = path.path
-    return if (qualifier == null) path else getBasePath(qualifier)
-}
