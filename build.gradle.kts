@@ -105,8 +105,10 @@ allprojects {
     afterEvaluate {
         tasks.withType<AbstractTestTask> {
             testLogging {
-                events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
-                exceptionFormat = TestExceptionFormat.FULL
+                if (hasProp("showTestStatus") && prop("showTestStatus").toBoolean()) {
+                    events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+                    exceptionFormat = TestExceptionFormat.FULL
+                }
             }
         }
     }
@@ -298,6 +300,8 @@ fun commitNightly() {
     listOf("git", "commit", "-m", ":arrow_up: nightly IDEA & rust").execute()
     "git push origin nightly".execute()
 }
+
+fun hasProp(name: String): Boolean = extra.has(name)
 
 fun prop(name: String): String =
     extra.properties[name] as? String
