@@ -17,6 +17,8 @@ import org.rust.lang.core.psi.ext.hasColonColon
  */
 abstract class TyPrimitive : Ty() {
 
+    abstract val name: String
+
     companion object {
         fun fromPath(path: RsPath): TyPrimitive? {
             if (path.hasColonColon) return null
@@ -35,20 +37,30 @@ abstract class TyPrimitive : Ty() {
     }
 }
 
-object TyBool : TyPrimitive()
+object TyBool : TyPrimitive() {
+    override val name: String = "bool"
+}
 
-object TyChar : TyPrimitive()
+object TyChar : TyPrimitive() {
+    override val name: String = "char"
+}
 
-object TyUnit : TyPrimitive()
+object TyUnit : TyPrimitive() {
+    override val name: String = "unit"
+}
 
 /** The `!` type. E.g. `unimplemented!()` */
-object TyNever : TyPrimitive()
+object TyNever : TyPrimitive() {
+    override val name: String = "never"
+}
 
-object TyStr : TyPrimitive()
+object TyStr : TyPrimitive() {
+    override val name: String = "str"
+}
 
 abstract class TyNumeric : TyPrimitive()
 
-sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
+sealed class TyInteger(override val name: String, val ordinal: Int) : TyNumeric() {
 
     // This fixes NPE caused by java classes initialization order. Details:
     // Kotlin `object`s compile into java classes with `INSTANCE` static field
@@ -97,7 +109,7 @@ sealed class TyInteger(val name: String, val ordinal: Int) : TyNumeric() {
     object ISize: TyInteger("isize", 11)
 }
 
-sealed class TyFloat(val name: String, val ordinal: Int) : TyNumeric() {
+sealed class TyFloat(override val name: String, val ordinal: Int) : TyNumeric() {
 
     // See TyIntegerValuesHolder
     private object TyFloatValuesHolder {
