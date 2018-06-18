@@ -35,7 +35,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         is RsConstant -> element.presentationInfo?.quickDocumentationText
         is RsMod -> element.presentationInfo?.quickDocumentationText
         is RsItemElement -> element.header(false) + element.signature(false)
-        is RsMacroDefinition -> element.header(false) + element.signature(false)
+        is RsMacro -> element.header(false) + element.signature(false)
         is RsNamedElement -> element.presentationInfo?.quickDocumentationText
         else -> null
     }
@@ -106,7 +106,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         }
 
         // macros without #[macro_export] are not public and don't have external documentation
-        if (this is RsMacroDefinition && !hasMacroExport) {
+        if (this is RsMacro && !hasMacroExport) {
             Testmarks.notExportedMacro.hit()
             return false
         }
@@ -131,7 +131,7 @@ private fun RsDocAndAttributeOwner.header(usePreTag: Boolean): String {
         is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
         is RsStructOrEnumItemElement,
         is RsTraitItem,
-        is RsMacroDefinition -> listOfNotNull(presentableQualifiedModName)
+        is RsMacro -> listOfNotNull(presentableQualifiedModName)
         is RsAbstractable -> {
             val owner = owner
             when (owner) {
@@ -189,7 +189,7 @@ private fun RsDocAndAttributeOwner.signature(usePreTag: Boolean): String {
                 listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
             } else emptyList()
         }
-        is RsMacroDefinition -> listOf("macro <b>$name</b>")
+        is RsMacro -> listOf("macro <b>$name</b>")
         else -> emptyList()
     }
     val startTag = if (usePreTag) "<pre>" else ""

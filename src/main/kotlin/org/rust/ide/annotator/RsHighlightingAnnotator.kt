@@ -76,7 +76,7 @@ class RsHighlightingAnnotator : Annotator {
 // If possible, this should use only stubs because this will be called
 // on elements in other files when highlighting references.
 private fun colorFor(element: RsElement): RsColor? = when (element) {
-    is RsMacroDefinition -> RsColor.MACRO
+    is RsMacro -> RsColor.MACRO
 
     is RsAttr -> RsColor.ATTRIBUTE
     is RsMacroCall -> RsColor.MACRO
@@ -109,7 +109,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
 }
 
 private fun partToHighlight(element: RsElement): TextRange? {
-    if (element is RsMacroDefinition) {
+    if (element is RsMacro) {
         var range = element.identifier?.textRange ?: return null
         val excl = element.excl
         if (excl != null) {
