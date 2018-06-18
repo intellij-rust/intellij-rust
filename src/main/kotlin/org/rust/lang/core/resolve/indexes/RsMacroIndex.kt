@@ -17,9 +17,11 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.hasMacroExport
+import org.rust.lang.core.resolve.NameResolutionTestmarks
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsMacroStub
 import org.rust.openapiext.getElements
+import org.rust.openapiext.hitOnFalse
 
 class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
 
@@ -42,7 +44,7 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
                 for (key in keys) {
                     val elements = getElements(KEY, key, project, GlobalSearchScope.allScope(project))
                     for (element in elements) {
-                        if (element.hasMacroExport) {
+                        if (NameResolutionTestmarks.missingMacroExport.hitOnFalse(element.hasMacroExport)) {
                             val crateRoot = element.crateRoot ?: continue
                             result.getOrPut(crateRoot, ::HashSet) += element
                         }
