@@ -76,7 +76,7 @@ allprojects {
     }
 
     configure<GrammarKitPluginExtension> {
-        grammarKitRelease = "1.5.2"
+        grammarKitRelease = "2017.1.4"
     }
 
     tasks.withType<PublishTask> {
