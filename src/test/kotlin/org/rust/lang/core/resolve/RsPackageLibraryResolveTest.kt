@@ -7,6 +7,8 @@ package org.rust.lang.core.resolve
 
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
+    override fun getProjectDescriptor() = WithDependencyRustProjectDescriptor
+
     fun `test library as crate`() = stubOnlyResolve("""
     //- main.rs
         extern crate test_package;
@@ -100,4 +102,115 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         #[macro_export]
         macro_rules! foo_bar { () => {} }
     """)
+
+    fun `test macro reexport in use item`() = stubOnlyResolve("""
+    //- lib.rs
+        #![feature(use_extern_macros)]
+
+        #[macro_use]
+        extern crate dep_lib_target;
+
+        pub use dep_lib_target::foo;
+                               //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    fun `test new macro reexport`() = stubOnlyResolve("""
+    //- lib.rs
+        #![feature(use_extern_macros)]
+
+        extern crate dep_lib_target;
+
+        pub use dep_lib_target::foo;
+
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+
+        fn main() {
+            foo!();
+            //^ dep-lib/lib.rs
+        }
+    """)
+
+    fun `test new macro reexport with crate alias`() = stubOnlyResolve("""
+    //- lib.rs
+        #![feature(use_extern_macros)]
+
+        extern crate dep_lib_target as dep_lib;
+
+        pub use dep_lib::foo;
+
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+
+        fn main() {
+            foo!();
+            //^ dep-lib/lib.rs
+        }
+    """)
+
+    fun `test new macro reexport from inner module`() = stubOnlyResolve("""
+    //- lib.rs
+        #![feature(use_extern_macros)]
+
+        extern crate dep_lib_target;
+
+        pub use dep_lib_target::foo;
+
+    //- dep-lib/lib.rs
+        mod macros;
+
+    //- dep-lib/macros.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+
+        fn main() {
+            foo!();
+            //^ dep-lib/macros.rs
+        }
+    """)
+
+    fun `test reexported macros are visible in reexporting mod`() = stubOnlyResolve("""
+    //- lib.rs
+        #![feature(use_extern_macros)]
+
+        extern crate dep_lib_target;
+
+        pub use dep_lib_target::foo;
+
+        fn bar() {
+            foo!();
+            //^ dep-lib/lib.rs
+        }
+
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """, NameResolutionTestmarks.missingMacroUse)
 }
