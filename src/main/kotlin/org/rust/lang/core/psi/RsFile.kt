@@ -76,7 +76,7 @@ class RsFile(
     }
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = childrenOfType()
+        get() = stubChildrenOfType()
 
     val attributes: Attributes
         get() {
@@ -105,7 +105,11 @@ class RsFile(
     }
 }
 
-val PsiFile.rustMod: RsMod? get() = this as? RsFile
+val PsiFile.rustFile: RsFile? get() = this as? RsFile
 
 val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
 val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
+
+// TODO: generalize it for other features
+// TODO: maybe save info about features into file stub?
+val RsFile.hasUseExternMacrosFeature: Boolean get() = queryAttributes.hasAttributeWithArg("feature", "use_extern_macros")
