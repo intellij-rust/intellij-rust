@@ -68,7 +68,7 @@ private class RsStructureViewElement(
                 is RsMod -> buildList {
                     for (item in psi.itemsAndMacros) {
                         when (item) {
-                            is RsMacroDefinition, is RsFunction, is RsModDeclItem, is RsModItem,
+                            is RsMacro, is RsFunction, is RsModDeclItem, is RsModItem,
                             is RsStructOrEnumItemElement, is RsTraitOrImpl, is RsTypeAlias, is RsConstant ->
                                 add(item)
 
