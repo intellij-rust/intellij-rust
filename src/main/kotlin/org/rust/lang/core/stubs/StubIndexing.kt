@@ -71,7 +71,7 @@ fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
     indexNamedStub(stub)
 }
 
-fun IndexSink.indexMacroDefinition(stub: RsMacroDefinitionStub) {
+fun IndexSink.indexMacro(stub: RsMacroStub) {
     indexNamedStub(stub)
 }
 
