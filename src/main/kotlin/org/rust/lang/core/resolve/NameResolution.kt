@@ -360,7 +360,7 @@ fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project)
 }
 
 fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolveProcessor): Boolean {
-    val definition = ref.ancestorStrict<RsMacroDefinitionCase>() ?: return false
+    val definition = ref.ancestorStrict<RsMacroCase>() ?: return false
     val simple = definition.macroPattern.descendantsOfType<RsMacroBinding>()
         .toList()
 
@@ -410,20 +410,20 @@ fun processAssocTypeVariants(trait: RsTraitItem, processor: RsResolveProcessor):
     return false
 }
 
-private val EXPORTED_MACROS_KEY: Key<CachedValue<List<RsMacroDefinition>>> = Key.create("EXPORTED_MACROS_KEY")
-private val ALL_MACROS_KEY: Key<CachedValue<List<RsMacroDefinition>>> = Key.create("ALL_MACROS_KEY")
+private val EXPORTED_MACROS_KEY: Key<CachedValue<List<RsMacro>>> = Key.create("EXPORTED_MACROS_KEY")
+private val ALL_MACROS_KEY: Key<CachedValue<List<RsMacro>>> = Key.create("ALL_MACROS_KEY")
 
-private fun visibleMacroDefinitions(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> =
+private fun visibleMacroDefinitions(scope: RsItemsOwner, needExport: Boolean): List<RsMacro> =
     CachedValuesManager.getCachedValue(scope, if (needExport) EXPORTED_MACROS_KEY else ALL_MACROS_KEY) {
         val macros = visibleMacroDefinitionsInternal(scope, needExport)
         CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
     }
 
-private fun visibleMacroDefinitionsInternal(scope: RsItemsOwner, needExport: Boolean): List<RsMacroDefinition> {
-    val result = mutableListOf<RsMacroDefinition>()
+private fun visibleMacroDefinitionsInternal(scope: RsItemsOwner, needExport: Boolean): List<RsMacro> {
+    val result = mutableListOf<RsMacro>()
     loop@ for (item in scope.itemsAndMacros) {
         when (item) {
-            is RsMacroDefinition ->
+            is RsMacro ->
                 if (!needExport || missingMacroExport.hitOnFalse(item.hasMacroExport)) result += item
 
             is RsExternCrateItem ->

@@ -18,7 +18,7 @@ class RsItemUpDownMover : RsLineMover() {
         RsElementTypes.TRAIT_ITEM,
         RsElementTypes.IMPL_ITEM,
         RsElementTypes.MACRO_CALL,
-        RsElementTypes.MACRO_DEFINITION,
+        RsElementTypes.MACRO,
         RsElementTypes.STRUCT_ITEM,
         RsElementTypes.ENUM_ITEM,
         RsElementTypes.MOD_ITEM,

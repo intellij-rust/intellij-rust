@@ -54,7 +54,7 @@ object RsPsiPattern {
             (elem is RsConstant) && elem.kind == RsConstantKind.MUT_STATIC
         }
 
-    val onMacroDefinition: PsiElementPattern.Capture<PsiElement> = onItem<RsMacroDefinition>()
+    val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RsMacro>()
 
     val onTupleStruct: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
         .withSuperParent(3, PlatformPatterns.psiElement().withChild(psiElement<RsTupleFields>()))
