@@ -150,6 +150,14 @@ class RsFindUsagesTest : RsTestBase() {
         }
     """)
 
+    fun `test macro call`() = doTestByText("""
+        macro_rules! foo {
+                   //^
+            () => { }
+        }
+        foo!();// - macro call
+    """)
+
     private fun doTestByText(@Language("Rust") code: String) {
         InlineFile(code)
         val source = findElementInEditor<RsNamedElement>()
