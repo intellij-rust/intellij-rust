@@ -49,5 +49,15 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
     """, """
         fn main() { vec![/*caret*/] }
     """)
+
+    fun `test macro in use item`() = doSingleCompletion("""
+       #![feature(use_extern_macros)]
+
+       pub use std::unimpl/*caret*/
+    """, """
+       #![feature(use_extern_macros)]
+
+       pub use std::unimplemented;/*caret*/
+    """)
 }
 
