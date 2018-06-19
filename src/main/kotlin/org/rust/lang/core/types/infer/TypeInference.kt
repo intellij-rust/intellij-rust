@@ -31,6 +31,7 @@ import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
 import org.rust.openapiext.recursionGuard
+import org.rust.stdext.notEmptyOrLet
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
 import org.rust.stdext.zipValues
@@ -958,7 +959,7 @@ private class RsFnInferenceContext(
         val argExprs = methodCall.valueArgumentList.exprList
         val callee = run {
             val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
-            val callee = pickSingleMethod(variants, methodCall)
+            val callee = pickSingleMethod(receiver, variants, methodCall)
             // If we failed to resolve ambiguity just write the all possible methods
             val variantsForDisplay = (callee?.let(::listOf) ?: variants).map { it.element }
             ctx.writeResolvedMethod(methodCall, variantsForDisplay)
@@ -1031,7 +1032,7 @@ private class RsFnInferenceContext(
         return methodType.retType
     }
 
-    private fun pickSingleMethod(variants: List<MethodCallee>, methodCall: RsMethodCall): MethodCallee? {
+    private fun pickSingleMethod(receiver: Ty, variants: List<MethodCallee>, methodCall: RsMethodCall): MethodCallee? {
         val filtered = variants.singleOrFilter {
             // 1. filter traits that are not imported
             TypeInferenceMarks.methodPickTraitScope.hit()
@@ -1043,11 +1044,19 @@ private class RsFnInferenceContext(
             val impl = callee.impl ?: return@singleOrFilter true
             ctx.canEvaluateBounds(impl, callee.selfTy)
         }.singleOrLet { list ->
-            // 3. Pick results on the first deref level
-            // TODO this is not how compiler actually work, see `test non inherent impl 2`
+            // 3. Pick results matching receiver type
             TypeInferenceMarks.methodPickDerefOrder.hit()
-            val first = list.first()
-            list.takeWhile { it.derefCount == first.derefCount }
+
+            fun pick(ty: Ty): List<MethodCallee> =
+                list.filter { it.element.selfParameter?.typeOfValue(it.selfTy) == ty }
+
+            // https://github.com/rust-lang/rust/blob/a646c912/src/librustc_typeck/check/method/probe.rs#L885
+            lookup.coercionSequence(receiver).mapNotNull { ty ->
+                pick(ty)
+                    .notEmptyOrLet { pick(TyReference(ty, IMMUTABLE)) }
+                    .notEmptyOrLet { pick(TyReference(ty, MUTABLE)) }
+                    .takeIf { it.isNotEmpty() }
+            }.firstOrNull() ?: emptyList()
         }
 
         return when (filtered.size) {
@@ -1552,25 +1561,26 @@ private class RsFnInferenceContext(
 private val RsSelfParameter.typeOfValue: Ty
     get() {
         val owner = parentFunction.owner
-        var selfType = when (owner) {
+        val selfType = when (owner) {
             is RsAbstractableOwner.Impl -> owner.impl.selfType
             is RsAbstractableOwner.Trait -> owner.trait.selfType
             else -> return TyUnknown
         }
 
-        if (isExplicitType) {
-            // self: Self, self: &Self, self: &mut Self, self: Box<Self>
-            val ty = this.typeReference?.type ?: TyUnknown
-            return ty.substitute(mapOf(TyTypeParameter.self() to selfType))
-        }
-
-        // self, &self, &mut self
-        if (isRef) {
-            selfType = TyReference(selfType, mutability)
-        }
-
-        return selfType
+        return typeOfValue(selfType)
     }
+
+private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
+    if (isExplicitType) {
+        // self: Self, self: &Self, self: &mut Self, self: Box<Self>
+        val ty = this.typeReference?.type ?: TyUnknown
+        return ty.substitute(mapOf(TyTypeParameter.self() to selfType))
+    }
+
+    // self, &self, &mut self
+    return if (isRef) TyReference(selfType, mutability) else selfType
+
+}
 
 private val RsFunction.typeOfValue: TyFunction
     get() {
