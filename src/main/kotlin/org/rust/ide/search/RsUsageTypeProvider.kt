@@ -25,6 +25,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
     private val METHOD_CALL = UsageType("method call")
     private val ARGUMENT = UsageType("argument")
 
+    private val MACRO_CALL = UsageType("macro call")
     private val MACRO_ARGUMENT = UsageType("macro argument")
 
     private val INIT_STRUCT = UsageType("init struct")
@@ -72,6 +73,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
             is RsMethodCall -> METHOD_CALL
             is RsMetaItem -> META_ITEM
             is RsFieldLookup -> FIELD
+            is RsMacroCall -> MACRO_CALL
             else -> {
                 val context = parent.parent
                 when (context) {
