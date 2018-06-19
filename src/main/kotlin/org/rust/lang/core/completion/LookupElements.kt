@@ -132,12 +132,16 @@ private fun getInsertHandler(element: RsElement, scopeName: String, context: Ins
         }
 
         is RsMacro -> {
-            val parens = when (element.name) {
-                "vec" -> "[]"
-                else -> "()"
+            if (curUseItem == null) {
+                val parens = when (element.name) {
+                    "vec" -> "[]"
+                    else -> "()"
+                }
+                context.document.insertString(context.selectionEndOffset, "!$parens")
+                EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+            } else {
+                appendSemicolon(context, curUseItem)
             }
-            context.document.insertString(context.selectionEndOffset, "!$parens")
-            EditorModificationUtil.moveCaretRelatively(context.editor, 2)
         }
 
     }
