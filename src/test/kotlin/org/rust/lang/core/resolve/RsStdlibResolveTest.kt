@@ -510,18 +510,18 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test method defined in out of scope trait from prelude`() = stubOnlyResolve("""
     //- a.rs
         use super::S;
-        impl Into<u8> for S { fn into(&self) -> u8 { unimplemented!() } }
+        impl Into<u8> for S { fn into(self) -> u8 { unimplemented!() } }
     //- b.rs
         use super::S;
-        pub trait B { fn into(&self) -> u8 { unimplemented!() } }
+        pub trait B where Self: Sized { fn into(self) -> u8 { unimplemented!() } }
         impl B for S {}
     //- main.rs
         mod a; mod b;
         struct S;
 
         fn main() {
-            S.into();
-        }   //^ a.rs
+            let _: u8 = S.into();
+        }               //^ a.rs
     """, TypeInferenceMarks.methodPickTraitScope)
 
     fun `test &str into String`() = stubOnlyResolve("""

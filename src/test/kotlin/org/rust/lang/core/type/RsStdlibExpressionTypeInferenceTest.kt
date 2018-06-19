@@ -492,4 +492,19 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ Result<(), Error>
         }
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/2514
+    fun `test issue 2514`() = stubOnlyTypeInfer("""
+    //- main.rs
+        struct Foo {
+            bar: Box<i32>
+        }
+
+        impl Foo {
+            fn test(&self) {
+                let b = self.bar.as_ref().clone();
+                b;
+            } //^ i32
+        }
+    """)
 }
