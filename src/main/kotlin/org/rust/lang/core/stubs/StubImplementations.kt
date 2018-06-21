@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 132
+        override fun getStubVersion(): Int = 131
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -130,7 +130,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
-    "MACRO" -> RsMacroStub.Type
+    "MACRO_DEFINITION" -> RsMacroDefinitionStub.Type
     "MACRO_CALL" -> RsMacroCallStub.Type
 
     "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
@@ -969,38 +969,38 @@ class RsLifetimeParameterStub(
     }
 }
 
-class RsMacroStub(
+class RsMacroDefinitionStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
     val macroBody: String?
-) : StubBase<RsMacro>(parent, elementType),
+) : StubBase<RsMacroDefinition>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
 
     override val isPublic: Boolean get() = true
 
-    object Type : RsStubElementType<RsMacroStub, RsMacro>("MACRO") {
+    object Type : RsStubElementType<RsMacroDefinitionStub, RsMacroDefinition>("MACRO_DEFINITION") {
         override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent is RsMod
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsMacroStub(parentStub, this,
+            RsMacroDefinitionStub(parentStub, this,
                 dataStream.readNameAsString(),
                 dataStream.readUTFFastAsNullable()
             )
 
-        override fun serialize(stub: RsMacroStub, dataStream: StubOutputStream) =
+        override fun serialize(stub: RsMacroDefinitionStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeUTFFastAsNullable(stub.macroBody)
             }
 
-        override fun createPsi(stub: RsMacroStub): RsMacro =
-            RsMacroImpl(stub, this)
+        override fun createPsi(stub: RsMacroDefinitionStub): RsMacroDefinition =
+            RsMacroDefinitionImpl(stub, this)
 
-        override fun createStub(psi: RsMacro, parentStub: StubElement<*>?) =
-            RsMacroStub(parentStub, this, psi.name, psi.macroBody?.text)
+        override fun createStub(psi: RsMacroDefinition, parentStub: StubElement<*>?) =
+            RsMacroDefinitionStub(parentStub, this, psi.name, psi.macroDefinitionBody?.text)
 
-        override fun indexStub(stub: RsMacroStub, sink: IndexSink) = sink.indexMacro(stub)
+        override fun indexStub(stub: RsMacroDefinitionStub, sink: IndexSink) = sink.indexMacroDefinition(stub)
     }
 }
 

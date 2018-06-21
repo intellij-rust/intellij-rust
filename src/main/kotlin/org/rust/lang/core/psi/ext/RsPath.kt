@@ -17,11 +17,6 @@ import org.rust.lang.core.stubs.RsPathStub
 val RsPath.hasColonColon: Boolean get() = stub?.hasColonColon ?: (coloncolon != null)
 val RsPath.hasCself: Boolean get() = stub?.hasCself ?: (cself != null)
 
-tailrec fun RsPath.basePath(): RsPath {
-    val qualifier = path
-    @Suppress("IfThenToElvis")
-    return if (qualifier == null) this else qualifier.basePath()
-}
 
 abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                                  RsPath {
