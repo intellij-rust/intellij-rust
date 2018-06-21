@@ -25,7 +25,7 @@ sealed class RsAbstractableOwner {
     val crateRelativePath: String?
         get() = when (this) {
             is Trait -> RsPsiImplUtil.crateRelativePath(trait)
-            is Impl -> impl.traitRef?.path?.text?.let { "${impl.containingMod.crateRelativePath}::$it" }
+            is Impl -> impl.typeReference?.baseType?.path?.referenceName?.let { "${impl.containingMod.crateRelativePath}::$it" }
             else -> null
         }
 }
