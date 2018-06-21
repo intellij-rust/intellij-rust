@@ -6,7 +6,6 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.PsiNameIdentifierOwner
-import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.lang.core.psi.*
 
 interface RsAbstractable : RsNamedElement, PsiNameIdentifierOwner {
@@ -26,13 +25,11 @@ sealed class RsAbstractableOwner {
     val crateRelativePath: String?
         get() = when (this) {
             is Trait -> RsPsiImplUtil.crateRelativePath(trait)
-            is Impl -> {
-                if (impl.traitRef?.path?.text == null) null
-                else "${impl.containingMod.crateRelativePath}::${impl.traitRef?.path?.text}"
-            }
+            is Impl -> impl.traitRef?.path?.text?.let { "${impl.containingMod.crateRelativePath}::$it" }
             else -> null
         }
 }
+
 
 val RsAbstractable.owner: RsAbstractableOwner
     get() {
@@ -68,3 +65,7 @@ val RsAbstractable.superItem: RsAbstractable?
             else -> error("unreachable")
         }
     }
+
+val RsAbstractable.fullCrateRelativePath: String?
+    get() = owner.crateRelativePath?.plus("::$name") ?: RsPsiImplUtil.crateRelativePath(this)
+

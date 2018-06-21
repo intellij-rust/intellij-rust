@@ -33,8 +33,7 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
 
     override val isAbstract: Boolean get() = typeReference == null
 
-    override val crateRelativePath: String?
-        get() = owner.crateRelativePath?.plus("#$name") ?: RsPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: String? get() = fullCrateRelativePath
 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
