@@ -592,7 +592,6 @@
 
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsLangItemIndex"/>
-        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsMacroIndex"/>
 
         <!-- Notification Providers -->
 

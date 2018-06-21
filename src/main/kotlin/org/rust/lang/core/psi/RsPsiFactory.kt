@@ -26,7 +26,7 @@ class RsPsiFactory(private val project: Project) {
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, text) as RsFile
 
-    fun createMacroBody(text: String): RsMacroBody? = createFromText(
+    fun createMacroDefinitionBody(text: String): RsMacroDefinitionBody? = createFromText(
         "macro_rules! m $text"
     )
 

@@ -99,7 +99,7 @@ fun breadcrumbName(e: RsElement): String? {
     fun lastComponentWithoutGenerics(path: RsPath) = path.referenceName
 
     return when (e) {
-        is RsMacro -> e.name?.let { "$it!" }
+        is RsMacroDefinition -> e.name?.let { "$it!" }
 
         is RsModItem, is RsStructOrEnumItemElement, is RsTraitItem, is RsConstant, is RsTypeAlias ->
             (e as RsNamedElement).name

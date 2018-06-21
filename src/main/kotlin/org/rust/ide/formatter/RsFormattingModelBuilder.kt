@@ -38,7 +38,7 @@ class RsFormattingModelBuilder : FormattingModelBuilder {
         ): ASTBlock {
             val type = node.elementType
 
-            if (type == MACRO_BODY || type == MACRO_ARGUMENT) {
+            if (type == MACRO_DEFINITION_BODY || type == MACRO_ARGUMENT) {
                 return RsMacroArgFmtBlock(node, alignment, indent, wrap, ctx)
             }
 
