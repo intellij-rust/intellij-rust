@@ -54,7 +54,7 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
         is RsTypeParameter -> Pair("type parameter", createDeclarationInfo(this, identifier, true))
         is RsLifetimeParameter -> Pair("lifetime", createDeclarationInfo(this, quoteIdentifier, true))
         is RsModItem -> Pair("module", createDeclarationInfo(this, identifier, false))
-        is RsMacro -> Pair("macro", createDeclarationInfo(this, nameIdentifier, false))
+        is RsMacroDefinition -> Pair("macro", createDeclarationInfo(this, nameIdentifier, false))
         is RsLabelDecl -> {
             val p = parent
             when (p) {

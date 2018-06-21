@@ -9,7 +9,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.PsiModificationTracker
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsMacroDefinition
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.macroName
 
@@ -26,7 +26,7 @@ fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<ExpansionRes
         }
         else -> {
             if (!context.project.rustSettings.expandMacros) return NULL_RESULT
-            val def = call.reference.resolve() as? RsMacro ?: return NULL_RESULT
+            val def = call.reference.resolve() as? RsMacroDefinition ?: return NULL_RESULT
             val project = context.project
             val expander = MacroExpander(project)
             val result = expander.expandMacro(def, call)

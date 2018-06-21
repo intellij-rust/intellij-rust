@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.openapiext.toPsiFile
 import java.util.*
 
 fun processItemOrEnumVariantDeclarations(
@@ -49,7 +50,7 @@ fun processItemDeclarations(
             is RsUseItem ->
                 if (item.isPublic || withPrivateImports) {
                     val rootSpeck = item.useSpeck ?: return false
-                    rootSpeck.forEachLeafSpeck { speck ->
+                    forEachLeafSpeck(rootSpeck) { speck ->
                         (if (speck.isStarImport) starImports else itemImports) += speck
                     }
                 }
@@ -87,20 +88,29 @@ fun processItemDeclarations(
 
     if (Namespace.Types in ns) {
         if (scope is RsFile && scope.isCrateRoot) {
-            // Rust injects implicit `extern crate std` in every crate root module unless it is
-            // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
-            // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
-            //
-            // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
-            // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
-            when (scope.attributes) {
-                RsFile.Attributes.NONE ->
-                    if (processor.lazy("std") { scope.findDependencyCrateRoot("std") }) return true
+            val pkg = scope.containingCargoPackage
 
-                RsFile.Attributes.NO_STD ->
-                    if (processor.lazy("core") { scope.findDependencyCrateRoot("core") }) return true
+            if (pkg != null) {
+                val findStdMod = { name: String ->
+                    val crate = pkg.findDependency(name)?.crateRoot
+                    crate?.toPsiFile(scope.project)?.rustMod
+                }
 
-                RsFile.Attributes.NO_CORE -> Unit
+                // Rust injects implicit `extern crate std` in every crate root module unless it is
+                // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
+                // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
+                //
+                // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
+                // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
+                when (scope.attributes) {
+                    RsFile.Attributes.NONE ->
+                        if (processor.lazy("std") { findStdMod("std") }) return true
+
+                    RsFile.Attributes.NO_STD ->
+                        if (processor.lazy("core") { findStdMod("core") }) return true
+
+                    RsFile.Attributes.NO_CORE -> Unit
+                }
             }
         }
     }
@@ -159,4 +169,9 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
         if (processor(name, element)) return true
     }
     return false
+}
+
+fun forEachLeafSpeck(root: RsUseSpeck, consumer: (RsUseSpeck) -> Unit) {
+    val group = root.useGroup
+    if (group == null) consumer(root) else group.useSpeckList.forEach { forEachLeafSpeck(it, consumer) }
 }

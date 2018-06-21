@@ -130,7 +130,7 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
         const val NAME = "Import"
 
         fun findApplicableContext(project: Project, path: RsPath): Context? {
-            val basePath = path.basePath()
+            val basePath = getBasePath(path)
             if (TyPrimitive.fromPath(basePath) != null) return null
             if (basePath.reference.multiResolve().isNotEmpty()) return null
 
@@ -510,3 +510,8 @@ private val CargoWorkspace.Target.isStd: Boolean
 
 private val CargoWorkspace.Target.isCore: Boolean
     get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.core
+
+private tailrec fun getBasePath(path: RsPath): RsPath {
+    val qualifier = path.path
+    return if (qualifier == null) path else getBasePath(qualifier)
+}

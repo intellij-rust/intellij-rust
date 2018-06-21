@@ -9,7 +9,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -65,13 +64,8 @@ inline fun <reified T : PsiElement> PsiElement.contextOrSelf(): T? =
 inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> =
     PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
 
-inline fun <reified T : PsiElement> PsiElement.stubChildrenOfType(): List<T> {
-    return if (this is PsiFileImpl) {
-        stub?.childrenStubs?.mapNotNull { it.psi as? T } ?: return childrenOfType()
-    } else {
-        PsiTreeUtil.getStubChildrenOfTypeAsList(this, T::class.java)
-    }
-}
+inline fun <reified T : PsiElement> PsiElement.stubChildrenOfType(): List<T> =
+    PsiTreeUtil.getStubChildrenOfTypeAsList(this, T::class.java)
 
 inline fun <reified T : PsiElement> PsiElement.descendantOfTypeStrict(): T? =
     PsiTreeUtil.findChildOfType(this, T::class.java, /* strict */ true)

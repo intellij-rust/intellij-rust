@@ -8,7 +8,7 @@ package org.rust.lang.core.completion
 import com.intellij.psi.PsiElement
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsMacroDefinition
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 
@@ -32,8 +32,8 @@ class RsCompletionPriorityTest : RsTestBase() {
         val expected = listOf(
             element<RsFunction>("foo_bar"),
             element<RsFunction>("_foo_bar"),
-            element<RsMacro>("foo_bar"),
-            element<RsMacro>("_foo_bar")
+            element<RsMacroDefinition>("foo_bar"),
+            element<RsMacroDefinition>("_foo_bar")
         )
 
         check(elements.size == expected.size)
