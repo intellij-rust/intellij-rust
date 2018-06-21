@@ -125,7 +125,7 @@ class RsQualifiedName private constructor(
                 is RsTypeAlias -> TYPE
                 is RsFunction -> FN
                 is RsConstant -> CONSTANT
-                is RsMacro -> MACRO
+                is RsMacroDefinition -> MACRO
                 is RsMod,
                 is RsModDeclItem -> MOD
                 else -> error("Unexpected type: `$this`")

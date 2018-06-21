@@ -26,11 +26,6 @@ val RsUseSpeck.nameInScope: String? get() {
     return baseName
 }
 
-fun RsUseSpeck.forEachLeafSpeck(consumer: (RsUseSpeck) -> Unit) {
-    val group = useGroup
-    if (group == null) consumer(this) else group.useSpeckList.forEach { it.forEachLeafSpeck(consumer) }
-}
-
 abstract class RsUseSpeckImplMixin : RsStubbedElementImpl<RsUseSpeckStub>, RsUseSpeck {
     constructor (node: ASTNode) : super(node)
     constructor (stub: RsUseSpeckStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)

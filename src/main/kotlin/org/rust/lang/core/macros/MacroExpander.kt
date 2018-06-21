@@ -89,7 +89,7 @@ private val STD_MACRO_WHITELIST = setOf("write", "writeln")
 class MacroExpander(val project: Project) {
     private val psiFactory = RsPsiFactory(project)
 
-    fun expandMacro(def: RsMacro, call: RsMacroCall): List<ExpansionResult>? {
+    fun expandMacro(def: RsMacroDefinition, call: RsMacroCall): List<ExpansionResult>? {
         // All std macros contain the only `impl`s which are not supported for now, so ignoring them
         if (def.containingCargoTarget?.pkg?.origin == PackageOrigin.STDLIB && def.name !in STD_MACRO_WHITELIST) {
             return null
@@ -102,7 +102,7 @@ class MacroExpander(val project: Project) {
         }
     }
 
-    private fun expandMacroAsText(def: RsMacro, call: RsMacroCall): CharSequence? {
+    private fun expandMacroAsText(def: RsMacroDefinition, call: RsMacroCall): CharSequence? {
         val (case, subst) = findMatchingPattern(def, call) ?: return null
         val macroExpansion = case.macroExpansion ?: return null
 
@@ -122,12 +122,12 @@ class MacroExpander(val project: Project) {
     }
 
     private fun findMatchingPattern(
-        def: RsMacro,
+        def: RsMacroDefinition,
         call: RsMacroCall
-    ): Pair<RsMacroCase, MacroSubstitution>? {
+    ): Pair<RsMacroDefinitionCase, MacroSubstitution>? {
         val macroCallBody = createPsiBuilder(call, call.macroBody ?: return null)
         var start = macroCallBody.mark()
-        return def.macroBodyStubbed?.macroCaseList?.asSequence()
+        return def.macroDefinitionBodyStubbed?.macroDefinitionCaseList?.asSequence()
             ?.mapNotNull { case ->
                 val subst = case.pattern.match(macroCallBody)
                 if (subst != null) {
@@ -178,13 +178,13 @@ class MacroExpander(val project: Project) {
         return sb
     }
 
-    private val RsMacro.macroBodyStubbed: RsMacroBody?
+    private val RsMacroDefinition.macroDefinitionBodyStubbed: RsMacroDefinitionBody?
         get() {
-            val stub = stub ?: return macroBody
+            val stub = stub ?: return macroDefinitionBody
             val text = stub.macroBody ?: return null
             return CachedValuesManager.getCachedValue(this) {
                 CachedValueProvider.Result.create(
-                    psiFactory.createMacroBody(text),
+                    psiFactory.createMacroDefinitionBody(text),
                     PsiModificationTracker.MODIFICATION_COUNT
                 )
             }
@@ -366,7 +366,7 @@ private class MacroPattern private constructor(
     }
 }
 
-private val RsMacroCase.pattern: MacroPattern
+private val RsMacroDefinitionCase.pattern: MacroPattern
     get() = MacroPattern.valueOf(macroPattern.macroPatternContents)
 
 private fun PsiBuilder.isSameToken(psi: PsiElement): Boolean {

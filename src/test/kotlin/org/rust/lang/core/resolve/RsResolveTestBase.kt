@@ -53,9 +53,6 @@ abstract class RsResolveTestBase : RsTestBase() {
         if (resolveVariants == "unresolved") {
             val element = reference.reference.resolve()
             if (element != null) {
-                // Turn off virtual file filter to show element text
-                // because it requires access to virtual file
-                checkAstNotLoaded(VirtualFileFilter.NONE)
                 error("Should not resolve ${reference.text} to ${element.text}")
             }
             return
