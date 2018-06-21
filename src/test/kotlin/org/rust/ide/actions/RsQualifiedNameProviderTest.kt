@@ -7,40 +7,65 @@ package org.rust.ide.actions
 
 class RsQualifiedNameProviderTest : RsQualifiedNameProviderTestBase() {
     fun `test function`() = doTest("""
+        use foo::inner_function;
         mod foo {
             pub fn inner_function() {}
         }
 
-        fn function() {}
-    """, setOf("test_package", "test_package::foo", "test_package::foo::inner_function", "test_package::function"))
+        fn main() {
+            inner_function()
+          //^
+        }
+    """, "test_package::foo::inner_function")
 
-    fun `test struct`() = doTest("""
-        struct Bar;
-    """, setOf("test_package", "test_package::Bar"))
+    fun `test fields in struct`() = doTest("""
+        struct Point {
+            x: f32,
+            y: f32,
+        }
 
-    fun `test trait with func`() = doTest("""
+        fn main() {
+            let p = Point { x: 0.3, y: 0.4 };
+            p.x;
+            //^
+        }
+    """, "test_package::Point::x")
+
+    fun `test impl with func`() = doTest("""
         trait Show {
             fn show(&self) -> String;
         }
-""", setOf("test_package", "test_package::Show", "test_package::Show::show"))
 
-    fun `test impl with func`() = doTest("""
         impl Show for i32 {
             fn show(&self) -> String {
                 format!("four-byte signed {}", self)
             }
         }
-""", setOf("test_package", "test_package::Show::show"))
 
-    fun `test trait with constant`() = doTest("""
-        trait Hello {
-            const WORLD: u32;
+        fn main() {
+           42.show();
+             //^
         }
-""", setOf("test_package", "test_package::Hello", "test_package::Hello::WORLD"))
+""", "test_package::i32::show")
+
+    fun `test struct with constant`() = doTest("""
+        struct Foo;
+
+        impl Foo {
+            const FOO: u32 = 3;
+        }
+
+        fn main() {
+            Foo::FOO;
+               //^
+        }
+""", "test_package::Foo::FOO")
 
     fun `test trait with type alias`() = doTest("""
         trait Number {
-            type Integer: i32;
+            type Kilometers;
+            fn get_kilometers(&self) -> Self::Kilometers;
+                                            //^
         }
-""", setOf("test_package", "test_package::Number", "test_package::Number::Integer"))
+""", "test_package::Number::Kilometers")
 }
