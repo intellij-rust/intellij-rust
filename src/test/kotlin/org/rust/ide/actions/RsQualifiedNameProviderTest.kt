@@ -22,7 +22,7 @@ class RsQualifiedNameProviderTest : RsQualifiedNameProviderTestBase() {
         trait Show {
             fn show(&self) -> String;
         }
-""", setOf("test_package", "test_package::Show", "test_package::Show#show"))
+""", setOf("test_package", "test_package::Show", "test_package::Show::show"))
 
     fun `test impl with func`() = doTest("""
         impl Show for i32 {
@@ -30,17 +30,17 @@ class RsQualifiedNameProviderTest : RsQualifiedNameProviderTestBase() {
                 format!("four-byte signed {}", self)
             }
         }
-""", setOf("test_package", "test_package::Show#show"))
+""", setOf("test_package", "test_package::Show::show"))
 
     fun `test trait with constant`() = doTest("""
         trait Hello {
             const WORLD: u32;
         }
-""", setOf("test_package", "test_package::Hello", "test_package::Hello#WORLD"))
+""", setOf("test_package", "test_package::Hello", "test_package::Hello::WORLD"))
 
     fun `test trait with type alias`() = doTest("""
         trait Number {
             type Integer: i32;
         }
-""", setOf("test_package", "test_package::Number", "test_package::Number#Integer"))
+""", setOf("test_package", "test_package::Number", "test_package::Number::Integer"))
 }
