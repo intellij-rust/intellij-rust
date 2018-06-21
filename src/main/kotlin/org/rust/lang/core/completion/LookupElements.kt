@@ -25,7 +25,7 @@ fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
     val base = element.getLookupElementBuilder(scopeName)
         .withInsertHandler { context: InsertionContext, _ -> getInsertHandler(element, scopeName, context) }
 
-    if (element is RsMacroDefinition) return base.withPriority(MACRO_PRIORITY)
+    if (element is RsMacro) return base.withPriority(MACRO_PRIORITY)
 
     return base
 }
@@ -81,7 +81,7 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
 
         is RsMacroBinding -> base.withTypeText(fragmentSpecifier)
 
-        is RsMacroDefinition -> base.withTailText("!")
+        is RsMacro -> base.withTailText("!")
 
         else -> base
     }
@@ -131,13 +131,17 @@ private fun getInsertHandler(element: RsElement, scopeName: String, context: Ins
             }
         }
 
-        is RsMacroDefinition -> {
-            val parens = when (element.name) {
-                "vec" -> "[]"
-                else -> "()"
+        is RsMacro -> {
+            if (curUseItem == null) {
+                val parens = when (element.name) {
+                    "vec" -> "[]"
+                    else -> "()"
+                }
+                context.document.insertString(context.selectionEndOffset, "!$parens")
+                EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+            } else {
+                appendSemicolon(context, curUseItem)
             }
-            context.document.insertString(context.selectionEndOffset, "!$parens")
-            EditorModificationUtil.moveCaretRelatively(context.editor, 2)
         }
 
     }

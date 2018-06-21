@@ -32,10 +32,6 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
     val ownedDirectory: PsiDirectory?
 
     val isCrateRoot: Boolean
-
-    companion object {
-        val MOD_RS = "mod.rs"
-    }
 }
 
 val RsMod.superMods: List<RsMod> get() {

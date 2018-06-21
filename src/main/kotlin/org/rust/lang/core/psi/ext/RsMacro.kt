@@ -10,23 +10,25 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.RsMacroDefinition
-import org.rust.lang.core.stubs.RsMacroDefinitionStub
+import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.stubs.RsMacroStub
 import javax.swing.Icon
 
-abstract class RsMacroDefinitionImplMixin : RsStubbedNamedElementImpl<RsMacroDefinitionStub>,
-                                            RsMacroDefinition {
+abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
+                                  RsMacro {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RsMacroDefinitionStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
+    constructor(stub: RsMacroStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
     override fun getNameIdentifier(): PsiElement? =
         findChildrenByType<PsiElement>(RsElementTypes.IDENTIFIER)
             .getOrNull(1) // Zeroth is `macro_rules` itself
 
     override fun getIcon(flags: Int): Icon? = RsIcons.MACRO
+
+    override val crateRelativePath: String? get() = name?.let { "::$it" }
 }
 
-val RsMacroDefinition.hasMacroExport: Boolean
+val RsMacro.hasMacroExport: Boolean
     get() = queryAttributes.hasAttribute("macro_export")

@@ -140,7 +140,7 @@ class RsPsiPatternTest : RsTestBase() {
         //^
         macro_rules! bar {
         }
-    """, RsPsiPattern.onMacroDefinition)
+    """, RsPsiPattern.onMacro)
 
     fun `test on mod attr`() = testPattern("""
         #[foo]

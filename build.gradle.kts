@@ -22,7 +22,7 @@ buildscript {
         maven { setUrl("https://jitpack.io") }
     }
     dependencies {
-        classpath("com.github.hurricup:gradle-grammar-kit-plugin:2017.1.1")
+        classpath("com.github.hurricup:gradle-grammar-kit-plugin:2018.1.2")
     }
 }
 
@@ -32,9 +32,9 @@ val channel = prop("publishChannel")
 
 plugins {
     idea
-    kotlin("jvm") version "1.2.40"
-    id("org.jetbrains.intellij") version "0.3.1"
-    id("de.undercouch.download") version "3.2.0"
+    kotlin("jvm") version "1.2.41"
+    id("org.jetbrains.intellij") version "0.3.4"
+    id("de.undercouch.download") version "3.4.3"
 }
 
 idea {
@@ -76,7 +76,7 @@ allprojects {
     }
 
     configure<GrammarKitPluginExtension> {
-        grammarKitRelease = "1.5.2"
+        grammarKitRelease = "2017.1.4"
     }
 
     tasks.withType<PublishTask> {
@@ -105,8 +105,10 @@ allprojects {
     afterEvaluate {
         tasks.withType<AbstractTestTask> {
             testLogging {
-                events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
-                exceptionFormat = TestExceptionFormat.FULL
+                if (hasProp("showTestStatus") && prop("showTestStatus").toBoolean()) {
+                    events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+                    exceptionFormat = TestExceptionFormat.FULL
+                }
             }
         }
     }
@@ -130,7 +132,7 @@ project(":") {
 
     dependencies {
         compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-        compile("org.jetbrains:markdown:0.1.12") {
+        compile("org.jetbrains:markdown:0.1.28") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
@@ -298,6 +300,8 @@ fun commitNightly() {
     listOf("git", "commit", "-m", ":arrow_up: nightly IDEA & rust").execute()
     "git push origin nightly".execute()
 }
+
+fun hasProp(name: String): Boolean = extra.has(name)
 
 fun prop(name: String): String =
     extra.properties[name] as? String

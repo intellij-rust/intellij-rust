@@ -242,7 +242,7 @@ private Item ::= Constant
                | EnumItem
                | UseItem
                | ExternCrateItem
-               | MacroDefinition
+               | Macro
                | MacroCall
 
 private Item_with_recover ::= !('}' | <<eof>>) Item {
@@ -628,7 +628,8 @@ FieldDecl ::= AttrsAndVis identifier TypeAscription {
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsVisibilityOwner"
-                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
+                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1108,19 +1109,20 @@ LitExpr ::= OuterAttr*
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-MacroDefinition ::= AttrsAndVis "macro_rules" '!' identifier MacroDefinitionBody <<macroSemicolon>>{
+Macro ::= AttrsAndVis "macro_rules" '!' identifier MacroBody <<macroSemicolon>>{
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
-  extends = "org.rust.lang.core.psi.ext.RsMacroDefinitionImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RsMacroDefinitionStub"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsMacroImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsMacroStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   pin = 2
 }
 
-MacroDefinitionBody ::= <<any_braces (MacroDefinitionCase ';'?)*>>
+MacroBody ::= <<any_braces (MacroCase ';'?)*>>
 
-MacroDefinitionCase ::= MacroPattern '=>' MacroExpansion { pin = 1 }
+MacroCase ::= MacroPattern '=>' MacroExpansion { pin = 1 }
 
 MacroPattern ::= <<any_braces MacroPatternContents >>
 MacroPatternContents ::=

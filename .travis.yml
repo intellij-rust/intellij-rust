@@ -24,7 +24,7 @@ before_script:
   - ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
 
 script:
-  - ./gradlew check -Pkotlin.incremental=false --no-daemon
+  - travis_wait ./gradlew check -Pkotlin.incremental=false --no-daemon
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:

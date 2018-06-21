@@ -30,7 +30,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.*
-import org.rust.ide.RsConstants
+import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.cargoWorkspace

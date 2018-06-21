@@ -9,8 +9,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2018/05/21/changelog-74.html">
-                 https://intellij-rust.github.io/2018/05/21/changelog-74.html
+        <a href="https://intellij-rust.github.io/2018/06/20/changelog-76.html">
+                 https://intellij-rust.github.io/2018/06/20/changelog-76.html
     ]]>
     </change-notes>
 
@@ -592,6 +592,7 @@
 
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsLangItemIndex"/>
+        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsMacroIndex"/>
 
         <!-- Notification Providers -->
 

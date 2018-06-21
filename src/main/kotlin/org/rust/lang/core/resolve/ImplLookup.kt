@@ -15,7 +15,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.ref.resolvePath
-import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.infer.*
@@ -138,8 +137,8 @@ class ImplLookup(
     }
     private val comparisionOps by lazy(NONE) {
         listOfNotNull (
-            items.findCoreItem("cmp::PartialOrd") as? RsTraitItem,
-            items.findCoreItem("cmp::PartialEq") as? RsTraitItem
+            items.findPartialOrdTrait(),
+            items.findPartialEqTrait()
         )
     }
     private val fnTraits by lazy(NONE) {
@@ -149,12 +148,7 @@ class ImplLookup(
         val trait = RsLangItemIndex.findLangItem(project, "fn_once") ?: return@lazy null
         trait.findAssociatedType("Output")
     }
-    private val copyTrait: RsTraitItem? by lazy(NONE) {
-        RsNamedElementIndex.findDerivableTraits(project, "Copy").firstOrNull()
-    }
-    private val sizedTrait: RsTraitItem? by lazy(NONE) {
-        RsLangItemIndex.findLangItem(project, "sized")
-    }
+
     private val derefTraitAndTarget: Pair<RsTraitItem, RsTypeAlias>? = run {
         val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
         trait.findAssociatedType("Target")?.let { trait to it }
@@ -236,45 +230,60 @@ class ImplLookup(
 
     private fun getHardcodedImplsForPrimitives(ty: Ty): Collection<BoundElement<RsTraitItem>> {
         val impls = mutableListOf<BoundElement<RsTraitItem>>()
+
+        fun addImpl(trait: RsTraitItem?, vararg subst: Ty) {
+            trait?.let { impls += it.withSubst(*subst) }
+        }
+
         if (ty is TyNumeric || ty is TyInfer.IntVar || ty is TyInfer.FloatVar) {
             // libcore/ops/arith.rs libcore/ops/bit.rs
             impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
             impls += assignArithOps.map { it.withSubst(ty) }
             impls += comparisionOps.map { it.withSubst(ty) }
+            // Debug (libcore/fmt/num.rs libcore/fmt/float.rs)
+            addImpl(items.findDebugTrait())
         }
         if (ty is TyInteger || ty is TyInfer.IntVar) {
             // libcore/num/mod.rs
             items.findFromStrTrait()?.let {
                 impls += it.substAssocType("Err", items.findCoreTy("num::ParseIntError"))
             }
+
+            // libcore/hash/mod.rs
+            addImpl(items.findHashTrait())
         }
         HARDCODED_FROM_IMPLS_MAP[ty]?.forEach { from ->
-            items.findFromTrait()?.let { trait ->
-                impls += trait.withSubst(from)
-            }
+            addImpl(items.findFromTrait(), from)
         }
         if (ty != TyStr) {
-            // libcore/cmp.rs
-            if (ty != TyUnit) {
-                RsLangItemIndex.findLangItem(project, "eq")?.let {
-                    impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
-                }
+            // Default (libcore/default.rs)
+            addImpl(items.findDefaultTrait())
+
+            // PatrialEq (libcore/cmp.rs)
+            if (ty != TyNever && ty != TyUnit) {
+                addImpl(items.findPartialEqTrait(), ty)
             }
-            if (ty != TyUnit && ty != TyBool) {
-                RsLangItemIndex.findLangItem(project, "ord")?.let {
-                    impls.add(BoundElement(it, it.typeParamSingle?.let { mapOf(it to ty) } ?: emptySubstitution))
-                }
+
+            // Eq (libcore/cmp.rs)
+            if (ty !is TyFloat && ty !is TyInfer.FloatVar && ty != TyNever) {
+                addImpl(items.findEqTrait())
             }
-            if (ty !is TyFloat && ty !is TyInfer.FloatVar) {
-                items.findEqTrait()?.let { impls.add(BoundElement(it)) }
-                if (ty != TyUnit && ty != TyBool) {
-                    items.findOrdTrait()?.let { impls.add(BoundElement(it)) }
+
+            // PartialOrd (libcore/cmp.rs)
+            if (ty != TyUnit && ty != TyBool && ty != TyNever) {
+                addImpl(items.findPartialOrdTrait(), ty)
+                // Ord (libcore/cmp.rs)
+                if (ty !is TyFloat && ty !is TyInfer.FloatVar) {
+                    addImpl(items.findOrdTrait())
                 }
             }
 
+            // Clone (libcore/clone.rs)
+            addImpl(items.findCloneTrait())
+            // Copy (libcore/markers.rs)
+            addImpl(items.findCopyTrait())
         }
-        // libcore/clone.rs
-        items.findCloneTrait()?.let { impls.add(BoundElement(it)) }
+
         return impls
     }
 
@@ -385,7 +394,7 @@ class ImplLookup(
     private fun assembleCandidates(ref: TraitRef): Set<SelectionCandidate> {
         val element = ref.trait.element
         return when {
-            element == sizedTrait -> sizedTraitCandidates(ref.selfTy, element)
+            element == items.findSizedTrait() -> sizedTraitCandidates(ref.selfTy, element)
             ref.selfTy is TyTypeParameter -> {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
                     ?.let { setOf(SelectionCandidate.TypeParameter(it)) } ?: emptySet()
@@ -616,12 +625,14 @@ class ImplLookup(
         return ref.asFunctionType
     }
 
-    fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(copyTrait)
-    fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(sizedTrait)
+    fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.findCopyTrait())
+    fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(items.findSizedTrait())
+    fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.findDebugTrait())
+    fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.findPartialEqTrait(), rhsType)
 
-    private fun Ty.isTraitImplemented(trait: RsTraitItem?): Boolean {
+    private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): Boolean {
         if (trait == null) return false
-        return select(TraitRef(this, trait.withSubst())).ok() != null
+        return canSelect(TraitRef(this, trait.withSubst(*subst)))
     }
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?

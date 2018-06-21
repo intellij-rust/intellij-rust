@@ -17,14 +17,14 @@ import com.intellij.psi.impl.file.PsiFileImplUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
+import org.rust.lang.RsConstants
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.RsMod
 import org.rust.openapiext.checkWriteAccessAllowed
 
 class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =
-        elements.all { it is RsFile && it.name != RsMod.MOD_RS }
+        elements.all { it is RsFile && it.name != RsConstants.MOD_RS_FILE }
 
     override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
 
@@ -55,7 +55,7 @@ class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
             val directory = file.containingDirectory?.createSubdirectory(dirName)
                 ?: error("Can't expand file: no parent directory for $file at ${file.virtualFile.path}")
             MoveFilesOrDirectoriesUtil.doMoveFile(file, directory)
-            PsiFileImplUtil.setName(file, RsMod.MOD_RS)
+            PsiFileImplUtil.setName(file, RsConstants.MOD_RS_FILE)
         }
     }
 }

@@ -665,7 +665,8 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         fn main() {
         }
     """, """
-        <pre>makro</pre>
+        <pre>test_package</pre>
+        <pre>macro <b>makro</b></pre>
         <p>Outer documentation</p>
     """)
 

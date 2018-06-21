@@ -13,8 +13,7 @@ import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.stubs.RsEnumVariantStub
 import javax.swing.Icon
 
-val RsEnumVariant.parentEnum: RsEnumItem
-    get() = stub?.getParentStubOfType(RsEnumItem::class.java) ?: parent?.parent as RsEnumItem
+val RsEnumVariant.parentEnum: RsEnumItem get() = stubAncestorStrict()!!
 
 abstract class RsEnumVariantImplMixin : RsStubbedNamedElementImpl<RsEnumVariantStub>, RsEnumVariant {
     constructor(node: ASTNode) : super(node)

@@ -90,8 +90,9 @@ sealed class RsDiagnostic(
                                 if (isTraitWithTySubstImplForActual(lookup, items.findAsRefTrait(), expectedTy)) {
                                     add(ConvertToRefTyFix(element, expectedTy))
                                 }
-                            } else if (expectedTy.mutability == Mutability.MUTABLE) {
-                                if (isTraitWithTySubstImplForActual(lookup, items.findBorrowMutTrait(), expectedTy)){
+                            } else if (expectedTy.mutability == Mutability.MUTABLE && element is RsExpr && element.isMutable
+                                && lookup.coercionSequence(actualTy).all { it !is TyReference || it.mutability.isMut }) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.findBorrowMutTrait(), expectedTy)) {
                                     add(ConvertToBorrowedTyWithMutFix(element, expectedTy))
                                 }
                                 if (isTraitWithTySubstImplForActual(lookup, items.findAsMutTrait(), expectedTy)) {

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide
+package org.rust.lang
 
 object RsConstants {
     const val MOD_RS_FILE = "mod.rs"

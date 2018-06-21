@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.ext.*
@@ -49,12 +50,16 @@ class RsFile(
 
     override val `super`: RsMod? get() = declaration?.containingMod
 
-    override val modName: String? = if (name != RsMod.MOD_RS) FileUtil.getNameWithoutExtension(name) else parent?.name
+    // We can't just return file name here because
+    // if mod declaration has `path` attribute file name differs from mod name
+    override val modName: String? get() {
+        return declaration?.name ?: if (name != RsConstants.MOD_RS_FILE) FileUtil.getNameWithoutExtension(name) else parent?.name
+    }
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.modCrateRelativePath(this)
 
     override val ownsDirectory: Boolean
-        get() = name == RsMod.MOD_RS || isCrateRoot
+        get() = name == RsConstants.MOD_RS_FILE || isCrateRoot
 
     override val ownedDirectory: PsiDirectory?
         get() = originalFile.parent
@@ -71,7 +76,7 @@ class RsFile(
     }
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = childrenOfType()
+        get() = stubChildrenOfType()
 
     val attributes: Attributes
         get() {
@@ -100,9 +105,11 @@ class RsFile(
     }
 }
 
-val PsiFile.rustMod: RsMod? get() = this as? RsFile
+val PsiFile.rustFile: RsFile? get() = this as? RsFile
 
 val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
 val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
 
-
+// TODO: generalize it for other features
+// TODO: maybe save info about features into file stub?
+val RsFile.hasUseExternMacrosFeature: Boolean get() = queryAttributes.hasAttributeWithArg("feature", "use_extern_macros")
