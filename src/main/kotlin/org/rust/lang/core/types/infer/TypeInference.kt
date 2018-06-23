@@ -136,7 +136,7 @@ class RsInferenceContext(
                     val enum = element.ancestorStrict<RsEnumItem>()
                     val reprType = enum?.queryAttributes?.reprAttributes
                         ?.flatMap { it.metaItemArgs?.metaItemList?.asSequence() ?: emptySequence() }
-                        ?.mapNotNull { TyInteger.fromName(it.referenceName) }
+                        ?.mapNotNull { it.name?.let { TyInteger.fromName(it) } }
                         ?.lastOrNull()
                         ?: TyInteger.ISize
 
