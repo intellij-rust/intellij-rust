@@ -11,6 +11,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsMetaItem
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsMetaItemStub
 
 val RsMetaItem.name: String? get() {
@@ -30,6 +31,12 @@ abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>, RsMet
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsMetaItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
+    override val referenceNameElement: PsiElement? get() = identifier
+
+    override val referenceName: String? get() = name
+
+    override fun getReference(): RsReference? = references.firstOrNull { it is RsReference } as? RsReference
 
     override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
 }

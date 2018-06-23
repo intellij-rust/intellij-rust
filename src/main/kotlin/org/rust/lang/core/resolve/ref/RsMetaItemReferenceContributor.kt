@@ -5,9 +5,7 @@
 
 package org.rust.lang.core.resolve.ref
 
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsMetaItem
@@ -31,32 +29,15 @@ private class RsDeriveTraitReferenceProvider : PsiReferenceProvider() {
 
 private class RsDeriveTraitReferenceImpl(
     element: RsMetaItem
-) : PsiPolyVariantReferenceBase<RsMetaItem>(element) {
+) : RsReferenceCached<RsMetaItem>(element) {
 
-    override fun calculateDefaultRangeInElement(): TextRange {
-        val identifier = element.identifier ?: return TextRange.EMPTY_RANGE
-        return TextRange.from(identifier.startOffsetInParent, identifier.textLength)
-    }
+    override val RsMetaItem.referenceAnchor: PsiElement? get() = element.identifier
 
     // Completion in `#[derive]` attribute is provided by `RsDeriveCompletionProvider`
     override fun getVariants(): Array<Any> = emptyArray()
 
-    override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
-        return ResolveCache.getInstance(element.project)
-            .resolveWithCaching(this, Resolver,
-                /* needToPreventRecursion = */ true,
-                /* incompleteCode = */ false)
-            .orEmpty().toTypedArray()
-    }
-
-    private fun resolveInner(): List<RsElement> {
+    override fun resolveInner(): List<RsElement> {
         val traitName = element.name ?: return emptyList()
         return collectResolveVariants(traitName) { processDeriveTraitResolveVariants(element, traitName, it) }
-    }
-
-    private object Resolver : ResolveCache.AbstractResolver<RsDeriveTraitReferenceImpl, List<PsiElementResolveResult>> {
-        override fun resolve(ref: RsDeriveTraitReferenceImpl, incompleteCode: Boolean): List<PsiElementResolveResult> {
-            return ref.resolveInner().map { PsiElementResolveResult(it) }
-        }
     }
 }
