@@ -52,3 +52,12 @@ const C: i32 = 0;
 
 #[cfg(attr(value = C))]
 fn const_value() {}
+
+#[py::class]
+fn path() {}
+
+#[cfg_attr(test, assert_instr(add_a.b))]
+fn custom_name() {}
+
+#[attr(foo::{bar, baz}, qwe)]
+fn arbitrary_token_tree() {}
