@@ -10,14 +10,14 @@ import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 
-abstract class RsReferenceCached<T : RsReferenceElement>(
+abstract class RsReferenceCached<T : RsWeakReferenceElement>(
     element: T
 ) : RsReferenceBase<T>(element),
     RsReference {
 
-    abstract protected fun resolveInner(): List<RsElement>
+    protected abstract fun resolveInner(): List<RsElement>
 
     final override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         cachedMultiResolve().toTypedArray()
