@@ -266,7 +266,7 @@ private class MacroPattern private constructor(
                 "stmt" -> parseStatement(adaptBuilder)
                 "block" -> RustParser.SimpleBlock(adaptBuilder, 0)
                 "item" -> parseItem(adaptBuilder)
-                "meta" -> RustParser.MetaItem(adaptBuilder, 0)
+                "meta" -> RustParser.MetaItemWithoutTT(adaptBuilder, 0)
                 "tt" -> RustParser.TT(adaptBuilder, 0)
                 else -> false
             }

@@ -375,12 +375,12 @@ fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolvePro
     return simple.any { processor(it) }
 }
 
-fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProcessor): Boolean {
-    if (element.ancestorStrict<RsMetaItem>()?.referenceName != "derive") return false
-    val traitName = element.referenceName
-    val traits = RsNamedElementIndex.findDerivableTraits(element.project, traitName)
-    return processAll(traits, processor)
-}
+//fun processMetaItemResolveVariants(element: RsMetaItem, processor: RsResolveProcessor): Boolean {
+//    if (element.ancestorStrict<RsMetaItem>()?.referenceName != "derive") return false
+//    val traitName = element.referenceName
+//    val traits = RsNamedElementIndex.findDerivableTraits(element.project, traitName)
+//    return processAll(traits, processor)
+//}
 
 fun processMacroCallVariants(element: PsiElement, processor: RsResolveProcessor): Boolean {
     val result = walkUp(element, { it is RsMod && it.isCrateRoot }, false) { _, scope ->
@@ -538,7 +538,7 @@ private fun reexportedMacros(item: RsExternCrateItem): List<RsMacro>? {
         .metaItem
         .metaItemArgs
         ?.metaItemList
-        ?.mapNotNull { it.referenceName }
+        ?.mapNotNull { it.name }
         ?: return emptyList()
     val mod = item.reference.resolve() as? RsFile ?: return emptyList()
     val nameToExportedMacro = exportedMacros(mod).mapNotNull {

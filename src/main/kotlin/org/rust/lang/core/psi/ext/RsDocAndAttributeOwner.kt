@@ -45,7 +45,7 @@ interface RsOuterAttributeOwner : RsDocAndAttributeOwner {
  * Find the first outer attribute with the given identifier.
  */
 fun RsOuterAttributeOwner.findOuterAttr(name: String): RsOuterAttr? =
-    outerAttrList.find { it.metaItem.referenceName == name }
+    outerAttrList.find { it.metaItem.name == name }
 
 /**
  * Returns [QueryAttributes] for given PSI element.
@@ -91,12 +91,12 @@ class QueryAttributes(
     // `#[attributeName(arg)]`
     fun hasAttributeWithArg(attributeName: String, arg: String): Boolean {
         val attrs = attrsByName(attributeName)
-        return attrs.any { it.metaItemArgs?.metaItemList?.any { it.referenceName == arg } ?: false }
+        return attrs.any { it.metaItemArgs?.metaItemList?.any { it.name == arg } ?: false }
     }
 
     fun lookupStringValueForKey(key: String): String? =
         metaItems
-            .filter { it.referenceName == key }
+            .filter { it.name == key }
             .mapNotNull { it.value }
             .singleOrNull()
 
@@ -121,7 +121,7 @@ class QueryAttributes(
     /**
      * Get a sequence of all attributes named [name]
      */
-    private fun attrsByName(name: String): Sequence<RsMetaItem> = metaItems.filter { it.referenceName == name }
+    private fun attrsByName(name: String): Sequence<RsMetaItem> = metaItems.filter { it.name == name }
 
     override fun toString(): String =
         "QueryAttributes(${attributes.joinToString { it.text }})"
