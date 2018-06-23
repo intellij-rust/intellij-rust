@@ -39,18 +39,11 @@ object RsPsiPattern {
 
     val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RsModItem>() or onItem<RsModDeclItem>()
 
-    val onStatic: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
-        .with("onStaticCondition") {
-            val elem = it.parent?.parent?.parent
-            (elem is RsConstant) && elem.kind == RsConstantKind.STATIC
-        }
+    val onStatic: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsConstant>()
+        .with("onStaticCondition") { it.kind == RsConstantKind.STATIC })
 
-
-    val onStaticMut: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
-        .with("onStaticMutCondition") {
-            val elem = it.parent?.parent?.parent
-            (elem is RsConstant) && elem.kind == RsConstantKind.MUT_STATIC
-        }
+    val onStaticMut: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsConstant>()
+        .with("onStaticMutCondition") { it.kind == RsConstantKind.MUT_STATIC })
 
     val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RsMacro>()
 
@@ -102,7 +95,7 @@ object RsPsiPattern {
 
     val error: PsiElementPattern.Capture<PsiErrorElement> = psiElement<PsiErrorElement>()
 
-    inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
+    private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(3)
     }
 
