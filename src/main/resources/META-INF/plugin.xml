@@ -163,6 +163,11 @@
         <codeInsight.implementMethod language="Rust"
                                      implementationClass="org.rust.lang.refactoring.implementMembers.ImplementMembersHandler"/>
 
+        <!-- Resolve -->
+
+        <psi.referenceContributor language="Rust"
+                                  implementation="org.rust.lang.core.resolve.ref.RsMetaItemReferenceContributor"/>
+
         <!-- Completion -->
 
         <completion.contributor language="Rust"

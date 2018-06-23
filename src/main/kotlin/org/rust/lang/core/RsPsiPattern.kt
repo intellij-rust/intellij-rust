@@ -17,10 +17,8 @@ import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.RsConstantKind
-import org.rust.lang.core.psi.ext.kind
+import org.rust.lang.core.psi.ext.*
 
 /**
  * Rust PSI tree patterns.
@@ -94,6 +92,11 @@ object RsPsiPattern {
                 psiElement<RsLoopExpr>(),
                 psiElement<RsWhileExpr>())),
             psiElement<RsLambdaExpr>())
+
+    val derivedTraitMetaItem: PsiElementPattern.Capture<RsMetaItem> =
+        psiElement<RsMetaItem>().withSuperParent(2, psiElement()
+            .withSuperParent<RsStructOrEnumItemElement>(2)
+            .with("deriveCondition") { it is RsMetaItem && it.name == "derive" })
 
     val whitespace: PsiElementPattern.Capture<PsiElement> = psiElement().whitespace()
 
