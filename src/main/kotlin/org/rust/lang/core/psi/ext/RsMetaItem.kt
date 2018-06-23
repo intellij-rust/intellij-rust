@@ -7,6 +7,8 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.stubs.RsMetaItemStub
@@ -28,4 +30,6 @@ abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>, RsMet
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsMetaItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
+    override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
 }

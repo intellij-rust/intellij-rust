@@ -128,6 +128,8 @@ private AttrUpper ::= MetaItemWithoutTT ']' |  MetaItemWithTT ']'
 private OuterAttr_first ::= '#'
 
 fake MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] | CompactTT {
+  implements = [ "org.rust.lang.core.psi.ext.RsElement"
+                 "com.intellij.psi.ContributedReferenceHost" ]
   mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMetaItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
