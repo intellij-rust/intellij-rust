@@ -12,17 +12,17 @@ import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 import org.rust.openapiext.Testmark
 
 abstract class RsResolveTestBase : RsTestBase() {
     protected open fun checkByCode(@Language("Rust") code: String) {
         InlineFile(code)
 
-        val (refElement, data) = findElementAndDataInEditor<RsReferenceElement>("^")
+        val (refElement, data) = findElementAndDataInEditor<RsWeakReferenceElement>("^")
 
         if (data == "unresolved") {
-            val resolved = refElement.reference.resolve()
+            val resolved = refElement.reference?.resolve()
             check(resolved == null) {
                 "$refElement `${refElement.text}`should be unresolved, was resolved to\n$resolved `${resolved?.text}`"
             }
@@ -48,10 +48,10 @@ abstract class RsResolveTestBase : RsTestBase() {
             !file.path.endsWith(testProject.fileWithCaret)
         })
 
-        val (reference, resolveVariants) = findElementAndDataInEditor<RsReferenceElement>()
+        val (reference, resolveVariants) = findElementAndDataInEditor<RsWeakReferenceElement>()
 
         if (resolveVariants == "unresolved") {
-            val element = reference.reference.resolve()
+            val element = reference.reference?.resolve()
             if (element != null) {
                 // Turn off virtual file filter to show element text
                 // because it requires access to virtual file
@@ -103,7 +103,8 @@ abstract class RsResolveTestBase : RsTestBase() {
     }
 }
 
-private fun RsReferenceElement.checkedResolve(): RsElement {
+private fun RsWeakReferenceElement.checkedResolve(): RsElement {
+    val reference = reference ?: error("element doesn't have reference")
     return reference.resolve() ?: run {
         val multiResolve = reference.multiResolve()
         check(multiResolve.size != 1)
