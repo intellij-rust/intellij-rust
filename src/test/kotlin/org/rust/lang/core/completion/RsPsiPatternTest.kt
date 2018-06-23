@@ -271,9 +271,15 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.inAnyLoop)
 
-    private fun <T> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
+    fun `test derived trait meta item`() = testPattern("""
+        #[derive(Debug)]
+                 //^
+        struct Foo(i32);
+    """, RsPsiPattern.derivedTraitMetaItem)
+
+    private inline fun <reified T : PsiElement> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
-        val element = findElementInEditor<PsiElement>()
+        val element = findElementInEditor<T>()
         assertTrue(pattern.accepts(element))
     }
 
