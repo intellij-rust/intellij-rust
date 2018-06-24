@@ -1168,7 +1168,7 @@ MacroCallNoSemicolons ::= MacroHead {
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
 }
 
-private MacroHead ::= AttrsAndVis &(identifier '!') (SpecialMacro | identifier '!' identifier? MacroArgument)
+private MacroHead ::= AttrsAndVis &(identifier '!') (SpecialMacro | CommonMacro)
 
 MacroArgument ::= <<any_braces CompactTT>>
 // `CompactTT` differs from `TT` in that it does not create an additional `TT` nodes for each unpaired token
@@ -1178,7 +1178,7 @@ CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
 //noinspection BnfUnusedRule
 TT ::= <<any_braces TT*>> | <<unpairedToken>>
 
-
+private CommonMacro ::= identifier '!' identifier? MacroArgument { pin = 2 }
 private SpecialMacro ::= TryMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro
 
 private TryMacro ::= "try" '!' TryMacroArgument { pin = 2 }
@@ -1206,7 +1206,7 @@ VecMacroArgument ::= <<any_braces ArrayInitializer >>
 
 private LogMacro ::=
   ( "trace" | "log" | "warn" | "debug" | "error" | "info" )
-  '!' LogMacroArgument { pin = 2 }
+  '!' LogMacroArgument
 
 LogMacroArgument ::=
   <<any_braces (('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?)>>
