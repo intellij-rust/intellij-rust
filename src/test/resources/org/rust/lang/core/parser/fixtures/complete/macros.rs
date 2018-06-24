@@ -65,4 +65,5 @@ fn foo() {
     panic!("division by zero");
 
     trace!(target: "smbc", "open_with {:?}", options);
+    debug!(log, "debug values"; "x" => 1, "y" => -1);
 }
