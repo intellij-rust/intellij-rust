@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.types.type
 import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.utils.negate
+import org.rust.openapiext.isUnitTestMode
 
 internal object RsPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
     override fun getNegatedExpression(element: PsiElement): PsiElement =
@@ -29,11 +30,19 @@ internal object RsPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
 abstract class RsExprParentsSelectorBase(val pred: (RsExpr) -> Boolean) : PostfixTemplateExpressionSelector {
     override fun getRenderer(): Function<PsiElement, String> = Function { it.text }
 
-    abstract override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement>
+    final override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> {
+        val expressions = getExpressionsInternal(context, document, offset)
+        // `PostfixTemplateWithExpressionSelector#expand` selects only one item from this list in unit tests.
+        // But in different platform versions different items are selected (of course, it's very convenient).
+        // So let's return the latest item to commit tests behavior with all platform versions
+        return if (isUnitTestMode) listOfNotNull(expressions.lastOrNull()) else expressions
+    }
+
+    protected abstract fun getExpressionsInternal(context: PsiElement, document: Document, offset: Int): List<PsiElement>
 }
 
 class RsTopMostInScopeSelector(pred: ((RsExpr) -> Boolean) = { true }) : RsExprParentsSelectorBase(pred) {
-    override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
+    override fun getExpressionsInternal(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         context
             .ancestors
             .takeWhile { it !is RsBlock && it.textRange.endOffset == context.textRange.endOffset }
@@ -48,7 +57,7 @@ class RsTopMostInScopeSelector(pred: ((RsExpr) -> Boolean) = { true }) : RsExprP
 }
 
 class RsAllParentsSelector(pred: ((RsExpr) -> Boolean) = { true }) : RsExprParentsSelectorBase(pred) {
-    override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
+    override fun getExpressionsInternal(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         context
             .ancestors
             .takeWhile { it !is RsBlock }

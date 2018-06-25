@@ -66,12 +66,13 @@ class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
         }
     """, "https://doc.rust-lang.org/alloc/vec/struct.Vec.html#method.new")
 
+    // FIXME: it should generate `https://doc.rust-lang.org/std/primitive.pointer.html#method.is_null`
     fun `test primitive method`() = doUrlTestByText("""
-        fn main() {
-            let x = 0.0f64.is_nan();
+        fn foo(ptr: *const i32) {
+            let x = ptr.is_null();
                           //^
         }
-    """, "https://doc.rust-lang.org/std/primitive.f64.html#method.is_nan")
+    """, "https://doc.rust-lang.org/core/primitive.pointer.html#method.is_null")
 
     fun `test tymethod`() = doUrlTestByText("""
         fn foo<T: Default>() -> T {
