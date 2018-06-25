@@ -21,7 +21,7 @@ val RsStructOrEnumItemElement.derivedTraits: List<RsTraitItem>
         .deriveAttributes
         .toList()
         .flatMap { it.metaItemArgs?.metaItemList ?: emptyList() }
-        .mapNotNull { it.reference.resolve() as? RsTraitItem }
+        .mapNotNull { it.reference?.resolve() as? RsTraitItem }
         .toList()
 
 

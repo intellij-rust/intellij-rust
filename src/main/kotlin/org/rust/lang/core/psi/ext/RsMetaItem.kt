@@ -7,11 +7,17 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsMetaItem
-import org.rust.lang.core.resolve.ref.RsMetaItemReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsMetaItemStub
+
+val RsMetaItem.name: String? get() {
+    val stub = stub
+    return if (stub != null) stub.name else identifier?.text
+}
 
 val RsMetaItem.value: String? get() {
     val stub = stub
@@ -19,15 +25,18 @@ val RsMetaItem.value: String? get() {
 }
 
 val RsMetaItem.hasEq: Boolean get() = stub?.hasEq ?: (eq != null)
+
 abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>, RsMetaItem {
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsMetaItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val referenceNameElement: PsiElement get() = identifier
+    override val referenceNameElement: PsiElement? get() = identifier
 
-    override val referenceName: String get() = stub?.referenceName ?: referenceNameElement.text
+    override val referenceName: String? get() = name
 
-    override fun getReference(): RsReference = RsMetaItemReferenceImpl(this)
+    override fun getReference(): RsReference? = references.firstOrNull { it is RsReference } as? RsReference
+
+    override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
 }

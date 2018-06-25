@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 132
+        override fun getStubVersion(): Int = 133
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -1037,26 +1037,26 @@ class RsMacroCallStub(
 
 class RsMetaItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val referenceName: String,
+    val name: String?,
     val hasEq: Boolean,
     val value: String?
 ) : StubBase<RsMetaItem>(parent, elementType) {
     object Type : RsStubElementType<RsMetaItemStub, RsMetaItem>("META_ITEM") {
         override fun createStub(psi: RsMetaItem, parentStub: StubElement<*>?): RsMetaItemStub =
-            RsMetaItemStub(parentStub, this, psi.referenceName, psi.eq != null, psi.litExpr?.stringLiteralValue)
+            RsMetaItemStub(parentStub, this, psi.name, psi.eq != null, psi.litExpr?.stringLiteralValue)
 
         override fun createPsi(stub: RsMetaItemStub): RsMetaItem = RsMetaItemImpl(stub, this)
 
         override fun serialize(stub: RsMetaItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
-                writeName(stub.referenceName)
+                writeName(stub.name)
                 writeBoolean(stub.hasEq)
                 writeUTFFastAsNullable(stub.value)
             }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsMetaItemStub =
             RsMetaItemStub(parentStub, this,
-                dataStream.readNameAsString()!!,
+                dataStream.readNameAsString(),
                 dataStream.readBoolean(),
                 dataStream.readUTFFastAsNullable())
 

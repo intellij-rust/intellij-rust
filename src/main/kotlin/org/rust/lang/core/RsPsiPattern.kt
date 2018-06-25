@@ -17,10 +17,8 @@ import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.RsConstantKind
-import org.rust.lang.core.psi.ext.kind
+import org.rust.lang.core.psi.ext.*
 
 /**
  * Rust PSI tree patterns.
@@ -41,18 +39,11 @@ object RsPsiPattern {
 
     val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RsModItem>() or onItem<RsModDeclItem>()
 
-    val onStatic: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
-        .with("onStaticCondition") {
-            val elem = it.parent?.parent?.parent
-            (elem is RsConstant) && elem.kind == RsConstantKind.STATIC
-        }
+    val onStatic: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsConstant>()
+        .with("onStaticCondition") { it.kind == RsConstantKind.STATIC })
 
-
-    val onStaticMut: PsiElementPattern.Capture<PsiElement> = PlatformPatterns.psiElement()
-        .with("onStaticMutCondition") {
-            val elem = it.parent?.parent?.parent
-            (elem is RsConstant) && elem.kind == RsConstantKind.MUT_STATIC
-        }
+    val onStaticMut: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsConstant>()
+        .with("onStaticMutCondition") { it.kind == RsConstantKind.MUT_STATIC })
 
     val onMacro: PsiElementPattern.Capture<PsiElement> = onItem<RsMacro>()
 
@@ -95,11 +86,16 @@ object RsPsiPattern {
                 psiElement<RsWhileExpr>())),
             psiElement<RsLambdaExpr>())
 
+    val derivedTraitMetaItem: PsiElementPattern.Capture<RsMetaItem> =
+        psiElement<RsMetaItem>().withSuperParent(2, psiElement()
+            .withSuperParent<RsStructOrEnumItemElement>(2)
+            .with("deriveCondition") { it is RsMetaItem && it.name == "derive" })
+
     val whitespace: PsiElementPattern.Capture<PsiElement> = psiElement().whitespace()
 
     val error: PsiElementPattern.Capture<PsiErrorElement> = psiElement<PsiErrorElement>()
 
-    inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
+    private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(3)
     }
 

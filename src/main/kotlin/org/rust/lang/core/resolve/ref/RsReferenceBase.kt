@@ -14,11 +14,11 @@ import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.refactoring.RsNamesValidator
 
-abstract class RsReferenceBase<T : RsReferenceElement>(
+abstract class RsReferenceBase<T : RsWeakReferenceElement>(
     element: T
 ) : PsiPolyVariantReferenceBase<T>(element),
     RsReference {
@@ -28,18 +28,21 @@ abstract class RsReferenceBase<T : RsReferenceElement>(
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         multiResolve().map { PsiElementResolveResult(it) }.toTypedArray()
 
-    abstract val T.referenceAnchor: PsiElement
+    abstract val T.referenceAnchor: PsiElement?
 
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()
 
     final override fun calculateDefaultRangeInElement(): TextRange {
-        val anchor = element.referenceAnchor
+        val anchor = element.referenceAnchor ?: return TextRange.EMPTY_RANGE
         check(anchor.parent === element)
         return TextRange.from(anchor.startOffsetInParent, anchor.textLength)
     }
 
     override fun handleElementRename(newName: String): PsiElement {
-        doRename(element.referenceNameElement, newName)
+        val referenceNameElement = element.referenceNameElement
+        if (referenceNameElement != null) {
+            doRename(referenceNameElement, newName)
+        }
         return element
     }
 

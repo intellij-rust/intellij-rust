@@ -21,6 +21,7 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.stringLiteralValue
 import org.rust.lang.doc.psi.RsDocKind
 import java.net.URI
@@ -76,7 +77,7 @@ private fun RsDocAndAttributeOwner.innerDocs(): Sequence<Pair<RsDocKind, String>
 }
 
 private val RsMetaItem.docAttr: String?
-    get() = if (identifier.text == "doc") litExpr?.stringLiteralValue else null
+    get() = if (name == "doc") litExpr?.stringLiteralValue else null
 
 private class RustDocMarkdownFlavourDescriptor(
     private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor()

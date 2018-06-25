@@ -116,23 +116,44 @@ fake Attr ::= MetaItem {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
 }
 
-InnerAttr ::= '#' '!' '[' MetaItem ']' {
+InnerAttr ::= '#' '!' '[' AttrUpper {
   extends = Attr
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-OuterAttr ::= '#'     '[' MetaItem ']' {
+OuterAttr ::= '#'     '[' AttrUpper {
   extends = Attr
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+private AttrUpper ::= MetaItemWithoutTT ']' |  MetaItemWithTT ']'
 private OuterAttr_first ::= '#'
 
-MetaItem ::= identifier [ '=' (LitExpr | PathIdent) | MetaItemArgs ] {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+fake MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] | CompactTT {
+  implements = [ "org.rust.lang.core.psi.ext.RsWeakReferenceElement"
+                 "com.intellij.psi.ContributedReferenceHost" ]
   mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMetaItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-MetaItemArgs ::= '(' [ <<comma_separated_list (MetaItem | LitExpr)>> ] ')' {
+
+// #[test]
+//   ~~~~
+// #[derive(Debug)]
+//   ~~~~~~~~~~~~~
+// #![crate_type = "lib"]
+//    ~~~~~~~~~~~~~~~~~~
+MetaItemWithoutTT ::= identifier [ '=' LitExpr | MetaItemArgs ] { elementType = MetaItem }
+
+// #[some::path]
+//   ~~~~~~~~~~
+// #[assert_instr(add_a.b)]
+//                ~~~~~~~
+// #[attr(value = C)]
+//        ~~~~~~~~~~
+// #[attr(foo::{bar, baz}, qwe())]
+//        ~~~~~~~~~~~~~~~~~~~~~~~
+MetaItemWithTT ::= CompactTT { elementType = MetaItem }
+
+MetaItemArgs ::= '(' ( [ <<comma_separated_list (LitExpr | MetaItemWithoutTT )>> ] ')' |  MetaItemWithTT ')' ) {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

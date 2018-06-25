@@ -35,6 +35,7 @@ import org.rust.lang.core.RsPsiPattern.onTrait
 import org.rust.lang.core.RsPsiPattern.onTupleStruct
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.queryAttributes
 
 object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -94,7 +95,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
 
     private val PsiElement?.attrMetaItems: Sequence<String>
         get() = if (this is RsDocAndAttributeOwner)
-            queryAttributes.metaItems.map { it.identifier.text }
+            queryAttributes.metaItems.mapNotNull { it.name }
         else
             emptySequence()
 }
