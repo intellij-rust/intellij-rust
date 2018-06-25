@@ -14,6 +14,9 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.rustFile
+import org.rust.openapiext.toPsiFile
 
 interface RsElement : PsiElement {
     /**
@@ -43,6 +46,14 @@ val RsElement.containingCargoTarget: CargoWorkspace.Target?
     }
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
+
+fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
+    return containingCargoPackage
+        ?.findDependency(dependencyName)
+        ?.crateRoot
+        ?.toPsiFile(project)
+        ?.rustFile
+}
 
 abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
     override val containingMod: RsMod
