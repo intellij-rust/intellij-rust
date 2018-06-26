@@ -21,7 +21,15 @@ sealed class RsAbstractableOwner {
     val isInherentImpl: Boolean get() = this is Impl && isInherent
     val isTraitImpl: Boolean get() = this is Impl && !isInherent
     val isImplOrTrait: Boolean get() = this is Impl || this is Trait
+
+    val crateRelativePath: String?
+        get() = when (this) {
+            is Trait -> RsPsiImplUtil.crateRelativePath(trait)
+            is Impl -> impl.typeReference?.baseType?.path?.referenceName?.let { "${impl.containingMod.crateRelativePath}::$it" }
+            else -> null
+        }
 }
+
 
 val RsAbstractable.owner: RsAbstractableOwner
     get() {
@@ -57,3 +65,7 @@ val RsAbstractable.superItem: RsAbstractable?
             else -> error("unreachable")
         }
     }
+
+val RsAbstractable.fullCrateRelativePath: String?
+    get() = owner.crateRelativePath?.plus("::$name") ?: RsPsiImplUtil.crateRelativePath(this)
+

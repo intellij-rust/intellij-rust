@@ -26,6 +26,8 @@ abstract class RsFieldDeclImplMixin : RsStubbedNamedElementImpl<RsFieldDeclStub>
 
     override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
-    // temporary solution.
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: String? get() {
+        val parent = parentStruct ?: return RsPsiImplUtil.crateRelativePath(this)
+        return RsPsiImplUtil.crateRelativePath(parent)?.plus("::$name")
+    }
 }
