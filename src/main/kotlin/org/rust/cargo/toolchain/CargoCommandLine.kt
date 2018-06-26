@@ -49,7 +49,7 @@ data class CargoCommandLine(
 
     companion object {
         fun forTargets(
-            targets: Array<CargoWorkspace.Target>,
+            targets: List<CargoWorkspace.Target>,
             command: String,
             additionalArguments: List<String> = emptyList()
         ): CargoCommandLine {
@@ -80,7 +80,7 @@ data class CargoCommandLine(
             target: CargoWorkspace.Target,
             command: String,
             additionalArguments: List<String> = emptyList()
-        ) = forTargets(arrayOf(target), command, additionalArguments)
+        ): CargoCommandLine = forTargets(listOf(target), command, additionalArguments)
 
         fun forProject(
             cargoProject: CargoProject,

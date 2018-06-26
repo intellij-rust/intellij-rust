@@ -36,35 +36,41 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
         val test = findTest(context) ?: return false
         sourceElement.set(test.sourceElement)
         configuration.name = test.configurationName
-        val commandLine = test.cargoCommandLine() ?: return false
-        val cmd = commandLine.mergeWithDefault(configuration)
+        val cmd = test.cargoCommandLine().mergeWithDefault(configuration)
         configuration.setFromCmd(cmd)
         return true
     }
 
     companion object {
         fun findTest(context: ConfigurationContext): TestConfig? {
-            val elements: Array<PsiElement> = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.dataContext)
-                ?: context.location?.psiElement?.let { arrayOf(it) } ?: return null
-            return findTest(elements)
+            val elements: Array<PsiElement>? = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.dataContext)
+                ?: context.location?.psiElement?.let { arrayOf(it) }
+            return elements?.let { findTest(it) }
         }
 
-        fun findTest(psi: Array<PsiElement>, climbUp: Boolean = true): TestConfig? =
-            when (psi.size) {
-                0 -> null
-                else ->
-                    TestConfig.MultipleFileTestConfig.create(psi.mapNotNull {
-                        findElement<RsMod>(it, climbUp)
-                    }.toTypedArray()) ?:
+        fun findTest(psi: Array<PsiElement>, climbUp: Boolean = true): TestConfig? {
+            return if (psi.isNotEmpty()) {
+                var config: TestConfig? = TestConfig.MultipleFileTestConfig.create(psi.mapNotNull {
+                    findElement<RsMod>(it, climbUp)
+                }.toTypedArray())
+                if (config != null) {
+                    return config
+                }
 
-                    findElement<RsFunction>(psi[0], climbUp)?.let {
-                        TestConfig.SingleTestConfig.create(it)
-                    } ?:
+                config = findElement<RsFunction>(psi[0], climbUp)?.let {
+                    TestConfig.SingleTestConfig.create(it)
+                }
+                if (config != null) {
+                    return config
+                }
 
-                    findElement<RsMod>(psi[0], climbUp)?.let {
-                        TestConfig.SingleTestConfig.create(it)
-                    }
+                findElement<RsMod>(psi[0], climbUp)?.let {
+                    TestConfig.SingleTestConfig.create(it)
+                }
+            } else {
+                return null
             }
+        }
 
         private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
             if (base is T) return base
@@ -74,22 +80,32 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     }
 }
 
-
-
 sealed class TestConfig {
-    companion object {
-        private fun hasTestFunction(mod: RsMod): Boolean =
-            mod.processExpandedItems { it is RsFunction && it.isTest }
-    }
+    class SingleTestConfig(
+        override val path: String,
+        val target: CargoWorkspace.Target,
+        override val sourceElement: RsElement
+    ) : TestConfig() {
+        override val exact = sourceElement is RsFunction
 
-    class SingleTestConfig(override val path: String,
-                           val target: CargoWorkspace.Target,
-                           override val sourceElement: RsElement) : TestConfig() {
+        override val configurationName: String = if (sourceElement is RsMod) {
+            if (sourceElement.modName == "test" || sourceElement.modName == "tests")
+                "Test ${sourceElement.`super`?.modName}::${sourceElement.modName}"
+            else
+                "Test ${sourceElement.modName}"
+        } else {
+            "Test $path"
+        }
+
+        override val targets: List<CargoWorkspace.Target>
+            get() = listOf(target)
+
         companion object {
             fun create(element: RsQualifiedNamedElement): TestConfig? {
                 val valid = when (element) {
                     is RsMod -> hasTestFunction(element)
-                    else -> (element as RsFunction).isTest
+                    is RsFunction -> element.isTest
+                    else -> throw Exception("expected RsMod or RsFunction")
                 }
                 if (!valid) return null
 
@@ -98,35 +114,23 @@ sealed class TestConfig {
                 return SingleTestConfig(configPath, target, element)
             }
         }
-
-        override val exact = sourceElement is RsFunction
-
-        override val configurationName: String = when (sourceElement) {
-            is RsMod ->
-                if (sourceElement.modName in arrayOf("test", "tests"))
-                    "Test ${sourceElement.`super`?.modName}::${sourceElement.modName}"
-                else
-                    "Test ${sourceElement.modName}"
-            else -> "Test $path"
-        }
-
-        override val targets: Array<CargoWorkspace.Target>
-            get() = arrayOf(target)
     }
 
     class MultipleFileTestConfig(
-        override val targets: Array<CargoWorkspace.Target>,
+        override val targets: List<CargoWorkspace.Target>,
         override val sourceElement: RsElement
     ) : TestConfig() {
+        override val configurationName: String = "Test multiple selected files"
+        override val exact = false
+        override val path: String = ""
+
         companion object {
             fun create(modules: Array<RsMod>): MultipleFileTestConfig? {
                 val modulesWithTests = modules
-                    .filter { hasTestFunction(it) }
-                    .filter { it.containingCargoTarget != null }
+                    .filter { hasTestFunction(it) && it.containingCargoTarget != null }
 
                 val targets = modulesWithTests
                     .mapNotNull { it.containingCargoTarget }
-                    .toTypedArray()
                 if (targets.size <= 1) {
                     return null
                 }
@@ -140,15 +144,11 @@ sealed class TestConfig {
                 return MultipleFileTestConfig(targets, modulesWithTests[0])
             }
         }
-
-        override val configurationName: String = "Test multiple selected files"
-        override val exact = false
-        override val path: String = ""
     }
 
     abstract val path: String
     abstract val exact: Boolean
-    abstract val targets: Array<CargoWorkspace.Target>
+    abstract val targets: List<CargoWorkspace.Target>
     abstract val configurationName: String
     abstract val sourceElement: RsElement
 
@@ -158,6 +158,11 @@ sealed class TestConfig {
             commandLine = commandLine.withDoubleDashFlag("--exact")
         }
         return commandLine
+    }
+
+    companion object {
+        private fun hasTestFunction(mod: RsMod): Boolean =
+            mod.processExpandedItems { it is RsFunction && it.isTest }
     }
 }
 
