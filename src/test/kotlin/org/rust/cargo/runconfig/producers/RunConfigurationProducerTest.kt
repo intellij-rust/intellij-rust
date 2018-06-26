@@ -12,7 +12,9 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.ide.DataManager
 import com.intellij.idea.IdeaTestApplication
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
@@ -317,10 +319,13 @@ class RunConfigurationProducerTest : RsTestBase() {
     }
 
     private fun checkOnFiles(vararg files: PsiFile) {
-        val elements = files.map { it as PsiElement }.toTypedArray()
+        Disposer.register(testRootDisposable, Disposable {
+            IdeaTestApplication.getInstance().setDataProvider(null)
+        })
+
         IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
             override fun getData(dataId: String?): Any? =
-                if (PSI_ELEMENT_ARRAY.`is`(dataId)) elements else super.getData(dataId)
+                if (PSI_ELEMENT_ARRAY.`is`(dataId)) files else super.getData(dataId)
         })
 
         val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
