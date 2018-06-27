@@ -10,6 +10,9 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubIndex
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.ide.presentation.escaped
 import org.rust.ide.presentation.presentableQualifiedName
@@ -92,12 +95,57 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
                 ?.reference
                 ?.resolve()
         } else {
-            val item = qualifiedName.childItem ?: qualifiedName.parentItem
-            // TODO: support reexports
-            val element = RsNamedElementIndex.findElementsByName(context.project, item.name)
-                    .singleOrNull { it is RsQualifiedNamedElement && RsQualifiedName.from(it) == qualifiedName }
-            if (element is RsModDeclItem) element.reference.resolve() else element
+            findElementByQualifiedName(psiManager, context, qualifiedName)
         }
+    }
+
+    private fun findElementByQualifiedName(psiManager: PsiManager, context: RsElement, qualifiedName: RsQualifiedName): PsiElement? {
+        val item = qualifiedName.childItem ?: qualifiedName.parentItem
+
+        if (item.type == RsQualifiedName.ParentItemType.CRATE) {
+            var target: CargoWorkspace.Target? = null
+
+            loop@for (pkg in context.cargoWorkspace?.packages.orEmpty()) {
+                val libTarget = pkg.libTarget
+                if (libTarget?.normName == item.name) {
+                    target = libTarget
+                    break
+                } else {
+                    for (t in pkg.targets) {
+                        if (t.normName == item.name) {
+                            target = t
+                            break@loop
+                        }
+                    }
+                }
+            }
+            val crateRoot = target?.crateRoot ?: return null
+            return psiManager.findFile(crateRoot)
+        }
+
+        val project = context.project
+        var result: RsElement? = null
+        StubIndex.getInstance().processElements(
+            RsNamedElementIndex.KEY,
+            item.name, project,
+            GlobalSearchScope.allScope(project),
+            RsNamedElement::class.java
+        ) { element ->
+            if (element is RsQualifiedNamedElement) {
+                val candidate = if (element is RsModDeclItem && item.type == RsQualifiedName.ParentItemType.MOD) {
+                    element.reference.resolve() as? RsMod ?: return@processElements true
+                } else {
+                    element
+                }
+                // TODO: support reexports
+                if (RsQualifiedName.from(candidate) == qualifiedName) {
+                    result = candidate
+                    return@processElements false
+                }
+            }
+            true
+        }
+        return result
     }
 
     override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String> {

@@ -26,6 +26,11 @@ class RsStdlibResolveLinkTest : RsTestBase() {
           //^
     """, "String", ".../string.rs")
 
+    fun `test crate fqn link`() = doTest("""
+        fn foo() {}
+          //^
+    """, "std/index.html", ".../libstd/lib.rs")
+
     fun `test mod fqn link`() = doTest("""
         fn foo() {}
           //^
