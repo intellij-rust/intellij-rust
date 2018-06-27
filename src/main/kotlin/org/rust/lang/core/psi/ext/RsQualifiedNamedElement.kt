@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.openapi.diagnostic.Logger
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ParentItemType.*
@@ -20,11 +21,12 @@ val RsQualifiedNamedElement.qualifiedName: String? get() {
     return "$cargoTarget$inCratePath"
 }
 
-class RsQualifiedName private constructor(
-    private val crateName: String,
-    private val modSegments: List<String>,
-    private val parentItem: Item,
-    private val childItem: Item?
+@Suppress("DataClassPrivateConstructor")
+data class RsQualifiedName private constructor(
+    val crateName: String,
+    val modSegments: List<String>,
+    val parentItem: Item,
+    val childItem: Item?
 ) {
 
     fun toUrlPath(): String {
@@ -41,10 +43,53 @@ class RsQualifiedName private constructor(
     }
 
     companion object {
+        
+        private val LOG: Logger = Logger.getInstance(RsQualifiedName::class.java)
+
+        @JvmStatic
+        fun from(path: String): RsQualifiedName? {
+            val segments = path.split("/")
+            if (segments.size < 2) return null
+
+            // Last segment contains info about item type and name
+            // and it should have the following structure:
+            // parentItem ( '#' childItem )?
+            val itemParts = segments.last().split("#")
+            val parentRaw = itemParts[0]
+            val childRaw = itemParts.getOrNull(1)
+
+            val parentItem = parentItem(segments[segments.lastIndex - 1], parentRaw) ?: return null
+            val childItem = if (childRaw != null) {
+                childItem(childRaw) ?: return null
+            } else {
+                null
+            }
+
+            val endModSegmentsIndex = if (parentItem.type == ParentItemType.MOD) segments.lastIndex - 1 else segments.lastIndex
+            return RsQualifiedName(segments[0], segments.subList(1, endModSegmentsIndex), parentItem, childItem)
+        }
+
+        private fun parentItem(prevSegment: String, raw: String): Item? {
+            if (raw == "index.html") {
+                return Item(prevSegment, MOD)
+            }
+            val parts = raw.split(".")
+            // We suppose that string representation of parent item has the following structure:
+            // type.Name.html
+            if (parts.size != 3 || parts.last() != "html") return null
+            val type = ParentItemType.fromString(parts[0]) ?: return null
+            return Item(parts[1], type)
+        }
+        
+        private fun childItem(raw: String): Item? {
+            val parts = raw.split(".")
+            if (parts.size != 2) return null
+            val type = ChildItemType.fromString(parts[0]) ?: return null
+            return Item(parts[1], type)
+        } 
 
         @JvmStatic
         fun from(element: RsQualifiedNamedElement): RsQualifiedName? {
-
             val parent = parentItem(element)
 
             val (parentItem, childItem) = if (parent != null) {
@@ -55,7 +100,7 @@ class RsQualifiedName private constructor(
             }
 
             val crateName = element.containingCargoTarget?.normName ?: return null
-            val modSegments = if (parentItem.type == ParentItemType.PRIMITIVE) {
+            val modSegments = if (parentItem.type == PRIMITIVE) {
                 listOf()
             } else {
                 element.containingMod.superMods
@@ -147,13 +192,13 @@ class RsQualifiedName private constructor(
         }
     }
 
-    private data class Item(val name: String, val type: ItemType) {
+    data class Item(val name: String, val type: ItemType) {
         override fun toString(): String = "$type.$name"
     }
 
-    private interface ItemType
+    interface ItemType
 
-    private enum class ParentItemType : ItemType {
+    enum class ParentItemType : ItemType {
         STRUCT,
         ENUM,
         TRAIT,
@@ -165,9 +210,29 @@ class RsQualifiedName private constructor(
         PRIMITIVE;
 
         override fun toString(): String = name.toLowerCase()
+        
+        companion object {
+
+            fun fromString(name: String): ParentItemType? {
+                return when (name) {
+                    "struct" -> STRUCT
+                    "enum" -> ENUM
+                    "trait" -> TRAIT
+                    "type" -> TYPE
+                    "fn" -> FN
+                    "constant" -> CONSTANT
+                    "macro" -> MACRO
+                    "primitive" -> PRIMITIVE
+                    else -> {
+                        LOG.warn("Unexpected parent item type: `$name`")
+                        null
+                    }
+                }
+            }
+        }
     }
 
-    private enum class ChildItemType : ItemType {
+    enum class ChildItemType : ItemType {
         VARIANT,
         STRUCTFIELD,
         ASSOCIATEDTYPE,
@@ -176,5 +241,22 @@ class RsQualifiedName private constructor(
         METHOD;
 
         override fun toString(): String = name.toLowerCase()
+        
+        companion object {
+            fun fromString(name: String): ChildItemType? {
+                return when (name) {
+                    "variant" -> VARIANT
+                    "structfield" -> STRUCTFIELD
+                    "associatedtype" -> ASSOCIATEDTYPE
+                    "associatedconstant" -> ASSOCIATEDCONSTANT
+                    "tymethod" -> TYMETHOD
+                    "method" -> METHOD
+                    else -> {
+                        LOG.warn("Unexpected child item type: `$name`")
+                        null
+                    }
+                }
+            }
+        }
     }
 }
