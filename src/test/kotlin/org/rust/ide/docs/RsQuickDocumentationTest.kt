@@ -723,7 +723,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='definition'><pre>test_package
         pub trait <b>AsRef</b>&lt;T: ?<a href="psi_element://Sized">Sized</a>&gt;</pre></div>
         <div class='content'><p>A cheap, reference-to-reference conversion.</p><p><code>AsRef</code> is very similar to, but different than, <code>Borrow</code>. See
-        <a href="../../book/borrow-and-asref.html">the book</a> for more.</p><p><strong>Note: this trait must not fail</strong>. If the conversion can fail, use a dedicated method which
+        <a href="psi_element://../book/borrow-and-asref.html">the book</a> for more.</p><p><strong>Note: this trait must not fail</strong>. If the conversion can fail, use a dedicated method which
         returns an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p><h2>Examples</h2><p>Both <code>String</code> and <code>&amp;str</code> implement <code>AsRef&lt;str&gt;</code>:</p><pre><code>fn is_hello&lt;T: AsRef&lt;str&gt;&gt;(s: T) {
            assert_eq!(&quot;hello&quot;, s.as_ref());
         }
@@ -969,6 +969,51 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='definition'><pre>test_package
         struct <b>Foo</b></pre></div>
         <div class='content'><p>Some text</p><h2>Section level 1</h2><p>Some text</p><h3>Section level 2</h3><p>Some other text</p></div>
+    """)
+
+    fun `test lang item links in doc comment`() = doTest("""
+        struct Bar;
+        /// [`Bar`]
+        ///
+        /// [`Bar`]: struct.Bar.html
+        struct Foo;
+              //^
+    """, """
+        <div class='definition'><pre>test_package
+        struct <b>Foo</b></pre></div>
+        <div class='content'><p><a href="psi_element://test_package/struct.Bar.html"><code>Bar</code></a></p></div>
+    """)
+
+    fun `test lang item links in doc comment 2`() = doTest("""
+        enum Bar { V }
+        mod foo {
+            /// [`Bar`]
+            ///
+            /// [`Bar`]: ../enum.Bar.html
+            struct Foo;
+                 //^
+        }
+    """, """
+        <div class='definition'><pre>test_package::foo
+        struct <b>Foo</b></pre></div>
+        <div class='content'><p><a href="psi_element://test_package/enum.Bar.html"><code>Bar</code></a></p></div>
+    """)
+
+    fun `test lang item links in doc comment 3`() = doTest("""
+        struct Foo;
+
+        impl Foo {
+            /// [`Foo::bar`]
+            ///
+            /// [`Foo::bar`]: #method.bar
+            fn foo(&self) {}
+              //^
+            fn bar(&self) {}
+        }
+    """, """
+        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Foo">Foo</a>
+        fn <b>foo</b>(&amp;self)</pre></div>
+        <div class='content'><p><a href="psi_element://test_package/struct.Foo.html#method.bar"><code>Foo::bar</code></a></p></div>
     """)
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
