@@ -32,8 +32,7 @@ data class RsQualifiedName private constructor(
     fun toUrlPath(): String {
         val segments = mutableListOf(crateName)
         segments += modSegments
-        val (pageName, anchor) =
-        if (parentItem.type == MOD) {
+        val (pageName, anchor) = if (parentItem.type == MOD || parentItem.type == CRATE) {
             "index.html" to ""
         } else {
             "$parentItem.html" to (if (childItem != null) "#$childItem" else "")
@@ -51,22 +50,26 @@ data class RsQualifiedName private constructor(
             val segments = path.split("/")
             if (segments.size < 2) return null
 
-            // Last segment contains info about item type and name
-            // and it should have the following structure:
-            // parentItem ( '#' childItem )?
-            val itemParts = segments.last().split("#")
-            val parentRaw = itemParts[0]
-            val childRaw = itemParts.getOrNull(1)
-
-            val parentItem = parentItem(segments[segments.lastIndex - 1], parentRaw) ?: return null
-            val childItem = if (childRaw != null) {
-                childItem(childRaw) ?: return null
+            val (parentItem, childItem) = if (segments.size == 2 && segments[1] == "index.html") {
+                Item(segments[0], ParentItemType.CRATE) to null
             } else {
-                null
+                // Last segment contains info about item type and name
+                // and it should have the following structure:
+                // parentItem ( '#' childItem )?
+                val itemParts = segments.last().split("#")
+                val parentRaw = itemParts[0]
+                val childRaw = itemParts.getOrNull(1)
+
+                val parentItem = parentItem(segments[segments.lastIndex - 1], parentRaw) ?: return null
+                val childItem = if (childRaw != null) {
+                    childItem(childRaw) ?: return null
+                } else {
+                    null
+                }
+                parentItem to childItem
             }
 
-            val endModSegmentsIndex = if (parentItem.type == ParentItemType.MOD) segments.lastIndex - 1 else segments.lastIndex
-            return RsQualifiedName(segments[0], segments.subList(1, endModSegmentsIndex), parentItem, childItem)
+            return RsQualifiedName(segments[0], segments.subList(1, segments.lastIndex), parentItem, childItem)
         }
 
         private fun parentItem(prevSegment: String, raw: String): Item? {
@@ -103,7 +106,8 @@ data class RsQualifiedName private constructor(
             val modSegments = if (parentItem.type == PRIMITIVE) {
                 listOf()
             } else {
-                element.containingMod.superMods
+                val mod = element as? RsMod ?: element.containingMod
+                mod.superMods
                     .asReversed()
                     .drop(1)
                     .map { it.modName ?: return null }
@@ -162,7 +166,7 @@ data class RsQualifiedName private constructor(
         }
 
         private fun RsQualifiedNamedElement.toParentItem(): Item? {
-            val name = name ?: return null
+            val name = ((this as? RsMod)?.modName ?: name) ?: return null
             val itemType = when (this) {
                 is RsStructItem -> STRUCT
                 is RsEnumItem -> ENUM
@@ -171,7 +175,13 @@ data class RsQualifiedName private constructor(
                 is RsFunction -> FN
                 is RsConstant -> CONSTANT
                 is RsMacro -> MACRO
-                is RsMod,
+                is RsMod -> {
+                    if (isCrateRoot) {
+                        val crateName = containingCargoTarget?.normName ?: return null
+                        return Item(crateName, CRATE)
+                    }
+                    MOD
+                }
                 is RsModDeclItem -> MOD
                 else -> error("Unexpected type: `$this`")
             }
@@ -206,8 +216,12 @@ data class RsQualifiedName private constructor(
         FN,
         CONSTANT,
         MACRO,
+        PRIMITIVE,
+        // Synthetic types - rustdoc uses different links for mods and crates items
+        // It generates `crateName/index.html` and `path/modName/index.html` links for crates and modules respectively
+        // instead of `path/type.Name.html`
         MOD,
-        PRIMITIVE;
+        CRATE;
 
         override fun toString(): String = name.toLowerCase()
         
