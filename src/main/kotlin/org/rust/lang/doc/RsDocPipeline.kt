@@ -5,6 +5,7 @@
 
 package org.rust.lang.doc
 
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SyntaxTraverser
@@ -22,10 +23,11 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
-import org.rust.lang.core.psi.ext.name
-import org.rust.lang.core.psi.ext.stringLiteralValue
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsInnerAttr
+import org.rust.lang.core.psi.RsMetaItem
+import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocKind
 import java.net.URI
 
@@ -36,10 +38,29 @@ fun RsDocAndAttributeOwner.documentation(): String? =
         .joinToString("\n")
 
 fun RsDocAndAttributeOwner.documentationAsHtml(): String? {
+    // We need some host with unique scheme to
+    //
+    // 1. make `URI#resolve` work properly somewhere in markdown to html converter implementation
+    // 2. identify relative links to language items from other links
+    //
+    // We can't use `DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL` scheme here
+    // because it contains `_` and it is invalid symbol for URI scheme
+    val tmpUriPrefix = "psi://element/"
+    val baseURI = if (this is RsQualifiedNamedElement) {
+        val path = RsQualifiedName.from(this)?.toUrlPath()
+        if (path != null) {
+            try {
+                URI.create("$tmpUriPrefix$path")
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+    } else null
     val text = documentation() ?: return null
-    val flavour = RustDocMarkdownFlavourDescriptor()
+    val flavour = RustDocMarkdownFlavourDescriptor(baseURI)
     val root = MarkdownParser(flavour).buildMarkdownTreeFromString(text)
     return HtmlGenerator(text, root, flavour).generateHtml()
+        .replace(tmpUriPrefix, DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)
 }
 
 private fun RsDocAndAttributeOwner.outerDocs(): Sequence<Pair<RsDocKind, String>> {
@@ -83,11 +104,12 @@ private val RsMetaItem.docAttr: String?
     get() = if (name == "doc") litExpr?.stringLiteralValue else null
 
 private class RustDocMarkdownFlavourDescriptor(
+    private val uri: URI? = null,
     private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor()
 ) : MarkdownFlavourDescriptor by gfm {
 
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
-        val generatingProviders = HashMap(gfm.createHtmlGeneratingProviders(linkMap, baseURI))
+        val generatingProviders = HashMap(gfm.createHtmlGeneratingProviders(linkMap, uri ?: baseURI))
         // Filter out MARKDOWN_FILE to avoid producing unnecessary <body> tags
         generatingProviders.remove(MarkdownElementTypes.MARKDOWN_FILE)
         // h1 and h2 are too large

@@ -16,6 +16,7 @@ import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.Testmark
@@ -84,10 +85,19 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun getDocumentationElementForLink(psiManager: PsiManager, link: String, context: PsiElement): PsiElement? {
         if (context !is RsElement) return null
-        return RsCodeFragmentFactory(context.project)
-            .createPath(link, context)
-            ?.reference
-            ?.resolve()
+        val qualifiedName = RsQualifiedName.from(link)
+        return if (qualifiedName == null) {
+            RsCodeFragmentFactory(context.project)
+                .createPath(link, context)
+                ?.reference
+                ?.resolve()
+        } else {
+            val item = qualifiedName.childItem ?: qualifiedName.parentItem
+            // TODO: support reexports
+            val element = RsNamedElementIndex.findElementsByName(context.project, item.name)
+                    .singleOrNull { it is RsQualifiedNamedElement && RsQualifiedName.from(it) == qualifiedName }
+            if (element is RsModDeclItem) element.reference.resolve() else element
+        }
     }
 
     override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String> {
@@ -416,6 +426,7 @@ private fun RsPath.isLinkNeeded(): Boolean {
     return !(element == null || element is RsTypeParameter)
 }
 
+// TODO: use RsQualifiedName scheme
 private fun RsPath.link(): String {
     val path = path
     val prefix = if (path != null) "${path.text.escaped}::" else typeQual?.text?.escaped
