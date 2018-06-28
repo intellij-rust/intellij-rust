@@ -635,6 +635,13 @@
         </component>
     </application-components>
 
+    <project-components>
+        <component>
+            <interface-class>org.rust.lang.core.psi.RsPsiManager</interface-class>
+            <implementation-class>org.rust.lang.core.psi.RsPsiManagerImpl</implementation-class>
+        </component>
+    </project-components>
+
     <actions>
         <action id="Rust.NewRustFile"
                 class="org.rust.ide.actions.RsCreateFileAction"
