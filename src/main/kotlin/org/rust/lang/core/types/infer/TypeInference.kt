@@ -55,6 +55,8 @@ class RsInferenceResult(
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
     val diagnostics: List<RsDiagnostic>
 ) {
+    private val timestamp: Long = System.nanoTime()
+
     fun getExprType(expr: RsExpr): Ty =
         exprTypes[expr] ?: TyUnknown
 
@@ -76,6 +78,9 @@ class RsInferenceResult(
     @TestOnly
     fun isExprTypeInferred(expr: RsExpr): Boolean =
         expr in exprTypes
+
+    @TestOnly
+    fun getTimestamp(): Long = timestamp
 }
 
 /**

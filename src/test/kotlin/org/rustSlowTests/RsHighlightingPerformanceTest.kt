@@ -9,9 +9,11 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.openapiext.fullyRefreshDirectory
@@ -65,6 +67,20 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
 
         check(modificationCount == currentPsiModificationCount()) {
             "PSI changed during resolve and highlighting, resolve might be double counted"
+        }
+
+        timings.measure("resolve_cached") {
+            refs.forEach { it.reference.resolve() }
+        }
+
+        val stmt = myFixture.file.descendantsOfType<RsFunction>().asSequence()
+            .mapNotNull { it.block?.stmtList?.lastOrNull() }.first()
+        myFixture.editor.caretModel.moveToOffset(stmt.textOffset)
+        myFixture.type("2+2;")
+        PsiDocumentManager.getInstance(project).commitAllDocuments() // process PSI modification events
+
+        timings.measure("resolve_after_typing") {
+            refs.forEach { it.reference.resolve() }
         }
 
         return timings

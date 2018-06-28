@@ -96,3 +96,6 @@ fun PsiElement?.getPrevNonCommentSibling(): PsiElement? =
  */
 fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
     PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
+
+fun RsElement.isParentOf(child: PsiElement): Boolean =
+    child.ancestors.contains(this)
