@@ -12,6 +12,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.project.Project
+import org.rust.cargo.CargoConstants.ProjectLayout.target
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -47,26 +48,39 @@ data class CargoCommandLine(
     }
 
     companion object {
-        fun forTarget(
-            target: CargoWorkspace.Target,
+        fun forTargets(
+            targets: List<CargoWorkspace.Target>,
             command: String,
             additionalArguments: List<String> = emptyList()
         ): CargoCommandLine {
-            val targetArgs = when (target.kind) {
-                CargoWorkspace.TargetKind.BIN -> listOf("--bin", target.name)
-                CargoWorkspace.TargetKind.TEST -> listOf("--test", target.name)
-                CargoWorkspace.TargetKind.EXAMPLE -> listOf("--example", target.name)
-                CargoWorkspace.TargetKind.BENCH -> listOf("--bench", target.name)
-                CargoWorkspace.TargetKind.LIB -> listOf("--lib")
-                CargoWorkspace.TargetKind.UNKNOWN -> emptyList()
+            val pkgs = targets.map { it.pkg }
+            // Make sure the selection does not span more than one package.
+            assert(pkgs.map { it.rootDirectory }.distinct().size == 1)
+            val pkg = pkgs.first()
+
+            val targetArgs = targets.flatMap { target ->
+                when (target.kind) {
+                    CargoWorkspace.TargetKind.BIN -> listOf("--bin", target.name)
+                    CargoWorkspace.TargetKind.TEST -> listOf("--test", target.name)
+                    CargoWorkspace.TargetKind.EXAMPLE -> listOf("--example", target.name)
+                    CargoWorkspace.TargetKind.BENCH -> listOf("--bench", target.name)
+                    CargoWorkspace.TargetKind.LIB -> listOf("--lib")
+                    CargoWorkspace.TargetKind.UNKNOWN -> emptyList()
+                }
             }
 
             return CargoCommandLine(
                 command,
-                workingDirectory = target.pkg.workspace.manifestPath.parent,
-                additionalArguments = listOf("--package", target.pkg.name) + targetArgs + additionalArguments
+                workingDirectory = pkg.workspace.manifestPath.parent,
+                additionalArguments = listOf("--package", pkg.name) + targetArgs + additionalArguments
             )
         }
+
+        fun forTarget(
+            target: CargoWorkspace.Target,
+            command: String,
+            additionalArguments: List<String> = emptyList()
+        ): CargoCommandLine = forTargets(listOf(target), command, additionalArguments)
 
         fun forProject(
             cargoProject: CargoProject,

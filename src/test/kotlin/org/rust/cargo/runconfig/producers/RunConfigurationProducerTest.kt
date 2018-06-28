@@ -10,9 +10,16 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.ConfigurationTypeUtil
+import com.intellij.ide.DataManager
+import com.intellij.idea.IdeaTestApplication
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import org.intellij.lang.annotations.Language
+import com.intellij.testFramework.TestDataProvider
 import org.jdom.Element
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -253,6 +260,50 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnTopLevel<RsFunction>()
     }
 
+    fun `test test producer works for multiple files`() {
+        testProject {
+            test("foo", "tests/foo.rs", """
+                #[test] fn test_foo() {}
+            """)
+
+            test("bar", "tests/bar.rs", """
+                #[test] fn test_bar() {}
+            """)
+
+            test("baz", "tests/baz.rs", """
+                #[test] fn test_baz() {}
+            """)
+        }
+
+        openFileInEditor("tests/foo.rs")
+        val file1 = myFixture.file
+        openFileInEditor("tests/baz.rs")
+        val file2 = myFixture.file
+        checkOnFiles(file1, file2)
+    }
+
+    fun `test test producer ignores selected files that contain no tests`() {
+        testProject {
+            test("foo", "tests/foo.rs", """
+                #[test] fn test_foo() {}
+            """)
+
+            test("bar", "tests/bar.rs", """
+                fn test_bar() {}
+            """)
+
+            test("baz", "tests/baz.rs", """
+                #[test] fn test_baz() {}
+            """)
+        }
+
+        openFileInEditor("tests/foo.rs")
+        val file1 = myFixture.file
+        openFileInEditor("tests/bar.rs")
+        val file2 = myFixture.file
+        checkOnFiles(file1, file2)
+    }
+
     private fun modifyTemplateConfiguration(f: CargoCommandConfiguration.() -> Unit) {
         val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
         val factory = configurationType.factory
@@ -267,11 +318,29 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnElement<PsiElement>()
     }
 
+    private fun checkOnFiles(vararg files: PsiFile) {
+        Disposer.register(testRootDisposable, Disposable {
+            IdeaTestApplication.getInstance().setDataProvider(null)
+        })
+
+        IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
+            override fun getData(dataId: String?): Any? =
+                if (PSI_ELEMENT_ARRAY.`is`(dataId)) files else super.getData(dataId)
+        })
+
+        val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
+        val configurationContext = ConfigurationContext.getFromContext(dataContext)
+        check(configurationContext)
+    }
+
     private inline fun <reified T : PsiElement> checkOnElement() {
         val configurationContext = ConfigurationContext(
             myFixture.file.findElementAt(myFixture.caretOffset)?.ancestorOrSelf<T>()
         )
+        check(configurationContext)
+    }
 
+    private fun check(configurationContext: ConfigurationContext) {
         val configurations = configurationContext.configurationsFromContext.orEmpty().map { it.configuration }
 
         val serialized = configurations.map { config ->
