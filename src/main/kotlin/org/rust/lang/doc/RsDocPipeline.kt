@@ -9,10 +9,13 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
+import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
+import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.markdown.html.SimpleTagProvider
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_COMMENT
@@ -83,8 +86,13 @@ private class RustDocMarkdownFlavourDescriptor(
     private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor()
 ) : MarkdownFlavourDescriptor by gfm {
 
-    override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?) =
-        gfm.createHtmlGeneratingProviders(linkMap, baseURI)
-            // Filter out MARKDOWN_FILE to avoid producing unnecessary <body> tags
-            .filterKeys { it != MarkdownElementTypes.MARKDOWN_FILE }
+    override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
+        val generatingProviders = HashMap(gfm.createHtmlGeneratingProviders(linkMap, baseURI))
+        // Filter out MARKDOWN_FILE to avoid producing unnecessary <body> tags
+        generatingProviders.remove(MarkdownElementTypes.MARKDOWN_FILE)
+        // h1 and h2 are too large
+        generatingProviders[MarkdownElementTypes.ATX_1] = SimpleTagProvider("h2")
+        generatingProviders[MarkdownElementTypes.ATX_2] = SimpleTagProvider("h3")
+        return generatingProviders
+    }
 }
