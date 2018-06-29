@@ -26,6 +26,7 @@ import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
 import org.rust.TestProject
+import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
@@ -187,13 +188,15 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         open val skipTestReason: String? = null
 
+        open val rustcInfo: RustcInfo? = null
+
         final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
             super.configureModule(module, model, contentEntry)
             if (skipTestReason != null) return
 
             val projectDir = contentEntry.file!!
             val ws = testCargoProject(module, projectDir.url)
-            module.project.cargoProjects.createTestProject(projectDir, ws)
+            module.project.cargoProjects.createTestProject(projectDir, ws, rustcInfo)
         }
 
         open fun setUp(fixture: CodeInsightTestFixture) {}
@@ -222,17 +225,20 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
         val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
-        val rustcVersion by lazy {
-            toolchain
-                ?.queryVersionsSync()
-                ?.rustc
-        }
 
         override val skipTestReason: String?
             get() {
                 if (rustup == null) return "No rustup"
                 if (stdlib == null) return "No stdib"
                 return null
+            }
+
+        override val rustcInfo: RustcInfo?
+            get() {
+                val toolchain = toolchain ?: return null
+                val sysroot = toolchain.getSysroot(Paths.get(".")) ?: return null
+                val rustcVersion = toolchain.queryVersions().rustc
+                return RustcInfo(sysroot, rustcVersion)
             }
 
         override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
