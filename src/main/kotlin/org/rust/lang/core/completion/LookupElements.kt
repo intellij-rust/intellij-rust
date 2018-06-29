@@ -168,7 +168,7 @@ private val InsertionContext.alreadyHasCallParens: Boolean
 
 private val InsertionContext.alreadyHasPatternParens: Boolean
     get() {
-        val pat = file.findElementAt(startOffset)!!.ancestorStrict<RsPatEnum>()
+        val pat = file.findElementAt(startOffset)!!.ancestorStrict<RsPatTupleStruct>()
             ?: return false
         return pat.path.textRange.contains(startOffset)
     }
