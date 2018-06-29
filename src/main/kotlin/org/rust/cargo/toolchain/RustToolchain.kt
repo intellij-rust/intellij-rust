@@ -5,13 +5,14 @@
 
 package org.rust.cargo.toolchain
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.text.SemVer
 import org.rust.cargo.runconfig.runExecutable
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.checkIsBackgroundThread
+import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.withWorkDirectory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -22,12 +23,21 @@ data class RustToolchain(val location: Path) {
         hasExecutable(CARGO) && hasExecutable(RUSTC)
 
     fun queryVersions(): VersionInfo {
-        checkIsBackgroundThread()
-        return queryVersionsSync()
+        if (!isUnitTestMode) {
+            checkIsBackgroundThread()
+        }
+        return VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
     }
 
-    @VisibleForTesting
-    fun queryVersionsSync(): VersionInfo = VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
+    fun getSysroot(projectDirectory: Path): String? {
+        val timeoutMs = 10000
+        val output = GeneralCommandLine(pathToExecutable(RUSTC))
+            .withCharset(Charsets.UTF_8)
+            .withWorkDirectory(projectDirectory)
+            .withParameters("--print", "sysroot")
+            .exec(timeoutMs)
+        return if (output.isSuccess) output.stdout.trim() else null
+    }
 
     fun rawCargo(): Cargo =
         Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), pathToExecutable(RUSTFMT))
@@ -40,7 +50,7 @@ data class RustToolchain(val location: Path) {
 
     fun rustup(cargoProjectDirectory: Path): Rustup? =
         if (isRustupAvailable)
-            Rustup(pathToExecutable(RUSTUP), pathToExecutable(RUSTC), cargoProjectDirectory)
+            Rustup(this, pathToExecutable(RUSTUP), cargoProjectDirectory)
         else
             null
 
