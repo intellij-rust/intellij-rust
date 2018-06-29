@@ -1500,7 +1500,7 @@ private class RsFnInferenceContext(
                     p.extractBindings(types.getOrElse(idx, { TyUnknown }))
                 }
             }
-            is RsPatEnum -> {
+            is RsPatTupleStruct -> {
                 // the type might actually be either a tuple variant of enum, or a tuple struct.
                 val ref = path.reference.resolve()
                 val tupleFields = (ref as? RsFieldsOwner)?.tupleFields

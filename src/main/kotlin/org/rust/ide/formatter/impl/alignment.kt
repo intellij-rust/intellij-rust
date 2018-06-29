@@ -55,7 +55,7 @@ fun RsFmtBlock.getAlignmentStrategy(): RsAlignmentStrategy = when (node.elementT
                     c.elementType == WHERE_CLAUSE && ctx.rustSettings.ALIGN_WHERE_CLAUSE
             }
 
-    PAT_ENUM ->
+    PAT_TUPLE_STRUCT ->
         RsAlignmentStrategy.wrap()
             .alignIf { c, p, x -> x.metLBrace && !c.isBlockDelim(p) }
             .alignIf(ctx.commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS)

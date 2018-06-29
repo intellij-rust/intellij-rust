@@ -21,7 +21,7 @@ FILE
           RsConditionImpl(CONDITION)
             PsiElement(let)('let')
             PsiWhiteSpace(' ')
-            RsPatEnumImpl(PAT_ENUM)
+            RsPatTupleStructImpl(PAT_TUPLE_STRUCT)
               RsPathImpl(PATH)
                 PsiElement(identifier)('Some')
               PsiElement(()('(')

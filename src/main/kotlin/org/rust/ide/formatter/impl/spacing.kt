@@ -129,7 +129,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .betweenInside(ts(Q), ts(BOUND), POLYBOUND).spaces(0)
 
         //== expressions
-        .beforeInside(LPAREN, PAT_ENUM).spaces(0)
+        .beforeInside(LPAREN, PAT_TUPLE_STRUCT).spaces(0)
         .beforeInside(LBRACK, INDEX_EXPR).spaces(0)
         .afterInside(VALUE_PARAMETER_LIST, LAMBDA_EXPR).spacing(1, 1, 0, true, 1)
         .between(MATCH_ARM, MATCH_ARM).spacing(1, 1, if (rustSettings.ALLOW_ONE_LINE_MATCH) 0 else 1, true, 1)
