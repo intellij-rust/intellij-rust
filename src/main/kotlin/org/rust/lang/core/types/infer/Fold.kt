@@ -99,6 +99,9 @@ fun <T> TypeFoldable<T>.containsTyOfClass(classes: List<Class<*>>): Boolean =
             if (classes.any { it.isInstance(ty) }) true else ty.superVisitWith(this)
     })
 
+fun <T> TypeFoldable<T>.containsTyOfClass(vararg classes: Class<*>): Boolean =
+    containsTyOfClass(classes.toList())
+
 fun <T> TypeFoldable<T>.collectInferTys(): List<TyInfer> {
     val list = mutableListOf<TyInfer>()
     visitWith(object : TypeVisitor {
