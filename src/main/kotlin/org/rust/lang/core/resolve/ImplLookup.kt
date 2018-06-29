@@ -413,7 +413,7 @@ class ImplLookup(
                 }
                 getHardcodedImpls(ref.selfTy).filter { be ->
                     be.element == element && ctx.probe { ctx.combinePairs(zipValues(be.subst, ref.trait.subst)) }
-                }.forEach { add(SelectionCandidate.TypeParameter(it)) }
+                }.forEach { add(SelectionCandidate.HardcodedImpl) }
             }
         }
     }
@@ -458,6 +458,8 @@ class ImplLookup(
         val newRecDepth = recursionDepth + 1
         return when (candidate) {
             is SelectionCandidate.Impl -> {
+                assert(!candidate.formalSelfTy.containsTyOfClass(TyInfer::class.java))
+                assert(!candidate.formalTrait.containsTyOfClass(TyInfer::class.java))
                 val (subst, preparedRef) = candidate.prepareSubstAndTraitRef(ctx, ref.selfTy)
                 ctx.combineTraitRefs(ref, preparedRef)
                 // pre-resolve type vars to simplify caching of already inferred obligation on fulfillment
@@ -474,9 +476,18 @@ class ImplLookup(
                 Selection(trait, emptyList())
             }
             is SelectionCandidate.TypeParameter -> {
+                assert(!candidate.bound.containsTyOfClass(TyInfer::class.java))
                 ctx.combinePairs(zipValues(candidate.bound.subst, ref.trait.subst))
                 ctx.combinePairs(zipValues(candidate.bound.assoc, ref.trait.assoc))
                 Selection(candidate.bound.element, emptyList())
+            }
+            is SelectionCandidate.HardcodedImpl -> {
+                val impl = getHardcodedImpls(ref.selfTy).first { be ->
+                    be.element == ref.trait.element && ctx.probe { ctx.combinePairs(zipValues(be.subst, ref.trait.subst)) }
+                }
+                ctx.combinePairs(zipValues(impl.subst, ref.trait.subst))
+                ctx.combinePairs(zipValues(impl.assoc, ref.trait.assoc))
+                Selection(impl.element, emptyList())
             }
         }
     }
@@ -709,6 +720,8 @@ private sealed class SelectionCandidate {
 
     data class DerivedTrait(val item: RsTraitItem) : SelectionCandidate()
     data class TypeParameter(val bound: BoundElement<RsTraitItem>) : SelectionCandidate()
+    /** @see ImplLookup.getHardcodedImpls */
+    object HardcodedImpl : SelectionCandidate()
     object Closure : SelectionCandidate()
 }
 
