@@ -59,6 +59,32 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test nested struct ref pattern 1`() = testExpr("""
+        struct S;
+        struct T {
+            s: S
+        }
+
+        fn main() {
+            let T { s: ref x } = T { s: S };
+            x;
+          //^ &S
+        }
+    """)
+
+    fun `test nested struct ref pattern 2`() = testExpr("""
+        struct S;
+        struct T {
+            s: S
+        }
+
+        fn main() {
+            let T { ref s } = T { s: S };
+            s;
+          //^ &S
+        }
+    """)
+
     fun `test braced enum variant`() = testExpr("""
         enum E { S { foo: i32 }}
 
