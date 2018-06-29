@@ -1525,21 +1525,27 @@ private class RsFnInferenceContext(
                 val structFields = struct.blockFields?.fieldDeclList?.associateBy { it.name }.orEmpty()
                 for (patField in patFieldList) {
                     val fieldPun = patField.patBinding
-                    val fieldName = if (fieldPun != null) {
-                        // Foo { bar }
-                        fieldPun.identifier.text
-                    } else {
-                        patField.identifier?.text
-                            ?: error("`pat_field` may be either `pat_binding` or should contain identifier! ${patField.text}")
+                    val bindingType = run {
+                        val fieldName = if (fieldPun != null) {
+                            // Foo { bar }
+                            fieldPun.identifier.text
+                        } else {
+                            patField.identifier?.text
+                                ?: error("`pat_field` may be either `pat_binding` or should contain identifier! ${patField.text}")
+                        }
+                        val fieldType = structFields[fieldName]
+                            ?.typeReference
+                            ?.type
+                            ?.substitute(type.typeParameterValues)
+                            ?: TyUnknown
+
+                        fieldPun?.let {
+                            if (it.isRef) TyReference(fieldType, it.mutability) else fieldType
+                        } ?: fieldType
                     }
-                    val fieldType = structFields[fieldName]
-                        ?.typeReference
-                        ?.type
-                        ?.substitute(type.typeParameterValues)
-                        ?: TyUnknown
-                    patField.pat?.extractBindings(fieldType)
+                    patField.pat?.extractBindings(bindingType)
                     if (fieldPun != null) {
-                        ctx.writeBindingTy(fieldPun, fieldType)
+                        ctx.writeBindingTy(fieldPun, bindingType)
                     }
                 }
             }
