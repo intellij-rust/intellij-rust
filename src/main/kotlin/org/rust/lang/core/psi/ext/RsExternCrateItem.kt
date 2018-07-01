@@ -38,5 +38,5 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
 
     override fun getIcon(flags: Int) = RsIcons.CRATE
 
-    override fun getContext() = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }

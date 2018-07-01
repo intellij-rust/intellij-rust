@@ -61,7 +61,7 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
-    override fun getContext() = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }
 
 val RsModDeclItem.hasMacroUse: Boolean get() =

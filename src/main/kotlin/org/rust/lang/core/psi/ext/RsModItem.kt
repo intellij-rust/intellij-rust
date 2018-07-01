@@ -8,10 +8,14 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.ExpansionResult
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsInnerAttr
+import org.rust.lang.core.psi.RsModItem
+import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsModItemStub
 import org.rust.openapiext.findFileByMaybeRelativePath
 import javax.swing.Icon
@@ -52,7 +56,7 @@ abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
     override val outerAttrList: List<RsOuterAttr>
         get() = stubChildrenOfType()
 
-    override fun getContext() = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }
 
 val RsModItem.hasMacroUse: Boolean get() =
