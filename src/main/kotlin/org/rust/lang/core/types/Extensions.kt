@@ -6,10 +6,11 @@
 package org.rust.lang.core.types
 
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.RsInferenceResult
@@ -31,10 +32,21 @@ val RsTypeElement.lifetimeElidable: Boolean get() {
     return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
 }
 
+private val TYPE_INFERENCE_KEY: Key<CachedValue<RsInferenceResult>> = Key.create("TYPE_INFERENCE_KEY")
+
 val RsInferenceContextOwner.inference: RsInferenceResult
-    get() = CachedValuesManager.getCachedValue(this, {
-        CachedValueProvider.Result.create(inferTypesIn(this), PsiModificationTracker.MODIFICATION_COUNT)
-    })
+    get() = CachedValuesManager.getCachedValue(this, TYPE_INFERENCE_KEY) {
+        val inferred = inferTypesIn(this)
+        val project = project
+
+        // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
+        // cached value will be invalidated if the modification counter is incremented.
+        if (this is RsModificationTrackerOwner) {
+            Result.create(inferred, project.rustStructureModificationTracker, modificationTracker)
+        } else {
+            Result.create(inferred, project.rustStructureModificationTracker)
+        }
+    }
 
 val PsiElement.inference: RsInferenceResult?
     get() = contextOrSelf<RsInferenceContextOwner>()?.inference

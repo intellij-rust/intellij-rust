@@ -189,5 +189,5 @@ abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsExpr {
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getContext() = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }

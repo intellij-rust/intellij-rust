@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
@@ -70,7 +71,7 @@ val RsFunction.returnType: Ty get() {
 
 val RsFunction.abi: RsExternAbi? get() = externAbi ?: (parent as? RsForeignModItem)?.externAbi
 
-abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction {
+abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction, RsModificationTrackerOwner {
 
     constructor(node: ASTNode) : super(node)
 
@@ -99,5 +100,14 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         }
     }
 
-    override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
+
+    override val modificationTracker: SimpleModificationTracker =
+        SimpleModificationTracker()
+
+    override fun incModificationCount(element: PsiElement): Boolean {
+        val shouldInc = element !is RsItemElement && block?.isParentOf(element) == true
+        if (shouldInc) modificationTracker.incModificationCount()
+        return shouldInc
+    }
 }

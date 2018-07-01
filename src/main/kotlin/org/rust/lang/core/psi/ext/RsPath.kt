@@ -38,5 +38,5 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
 
     override val referenceName: String get() = stub?.referenceName ?: referenceNameElement.text
 
-    override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }

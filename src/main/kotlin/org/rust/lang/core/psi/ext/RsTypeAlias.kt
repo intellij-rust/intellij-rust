@@ -37,5 +37,5 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
-    override fun getContext() = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }
