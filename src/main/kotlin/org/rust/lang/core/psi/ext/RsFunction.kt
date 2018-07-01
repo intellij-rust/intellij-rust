@@ -100,7 +100,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         }
     }
 
-    override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 
     override val modificationTracker: SimpleModificationTracker =
         SimpleModificationTracker()
