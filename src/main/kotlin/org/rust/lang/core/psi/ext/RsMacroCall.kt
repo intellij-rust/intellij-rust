@@ -31,7 +31,7 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>, RsM
     override val referenceNameElement: PsiElement
         get() = findChildByType(IDENTIFIER)!!
 
-    override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }
 
 val RsMacroCall.macroName: String

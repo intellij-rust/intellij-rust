@@ -6,8 +6,8 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.RsForeignModItem
 import org.rust.lang.core.psi.RsInnerAttr
@@ -29,5 +29,5 @@ abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStu
 
     override val isPublic: Boolean get() = false // visibility does not affect foreign mods
 
-    override fun getContext() = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }

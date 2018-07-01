@@ -10,8 +10,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.ExpansionResult
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsConstantStub
 import org.rust.lang.core.types.ty.Mutability
 
@@ -53,5 +54,5 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
-    override fun getContext(): RsElement = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
 }
