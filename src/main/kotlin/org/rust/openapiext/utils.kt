@@ -113,3 +113,14 @@ class CachedVirtualFile(private val url: String?) {
 val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTestMode
 
 fun saveAllDocuments() = FileDocumentManager.getInstance().saveAllDocuments()
+
+inline fun testAssert(action: () -> Boolean) {
+    testAssert(action) { "Assertion failed" }
+}
+
+inline fun testAssert(action: () -> Boolean, lazyMessage: () -> Any) {
+    if (isUnitTestMode && !action()) {
+        val message = lazyMessage()
+        throw AssertionError(message)
+    }
+}
