@@ -85,7 +85,7 @@
     elementType(".+BinExpr") = BinaryExpr
     elementType(".+BinOp") = BinaryOp
 
-    extends("Pat(Wild|Ref|Tup|Vec|Macro|Struct|TupleStruct|Ident|Range|Uniq|QualPath|Const)") = Pat
+    extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Uniq|QualPath|Const)") = Pat
 
     generateTokenAccessors=true
 
@@ -420,7 +420,7 @@ Function ::= OuterAttr*
 Pat ::= PatWild
       | PatRef
       | PatTup
-      | PatVec
+      | PatSlice
       | PatMacro
       | PatStruct
       | PatTupleStruct
@@ -454,7 +454,7 @@ PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
 PatRange ::= PatConst ('..' | '...' | '..=') PatConst { pin = 2 }
 
 PatTup ::= '(' SeqPat ')'
-PatVec ::= '[' SeqPat ']'
+PatSlice ::= '[' SeqPat ']'
 // NB: there are `[x, .. , y]` and `[x, z.. , y]`
 private SeqPat ::= Pat_with_recover* ['..' [',' Pat_with_recover+] ]
 

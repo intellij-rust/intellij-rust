@@ -1549,7 +1549,7 @@ private class RsFnInferenceContext(
                     }
                 }
             }
-            is RsPatVec -> {
+            is RsPatSlice -> {
                 val elementType = when (type) {
                     is TyArray -> type.base
                     is TySlice -> type.elementType
