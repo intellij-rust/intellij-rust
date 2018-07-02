@@ -5,8 +5,11 @@
 
 package org.rust.lang.core.psi
 
+import com.intellij.ProjectTopics
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
@@ -31,6 +34,11 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
 
     override fun projectOpened() {
         PsiManager.getInstance(project).addPsiTreeChangeListener(CacheInvalidator())
+        project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+            override fun rootsChanged(event: ModuleRootEvent?) {
+                incRustStructureModificationCount()
+            }
+        })
     }
 
     inner class CacheInvalidator : PsiTreeChangeAdapter() {
@@ -75,8 +83,12 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
             as? RsModificationTrackerOwner
 
         if (owner == null || !owner.incModificationCount(psi)) {
-            rustStructureModificationTracker.incModificationCount()
+            incRustStructureModificationCount()
         }
+    }
+
+    private fun incRustStructureModificationCount() {
+        rustStructureModificationTracker.incModificationCount()
     }
 }
 
