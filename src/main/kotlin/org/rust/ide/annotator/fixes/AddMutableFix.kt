@@ -11,9 +11,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
+import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.isRef
+import org.rust.lang.core.psi.ext.kind
 import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.declaration
 
@@ -30,7 +32,7 @@ class AddMutableFix(binding: RsNamedElement) : LocalQuickFixAndIntentionActionOn
     companion object {
         fun createIfCompatible(expr: RsExpr): AddMutableFix? {
             val declaration = expr.declaration
-            return if (declaration is RsSelfParameter || declaration is RsPatBinding) {
+            return if (declaration is RsSelfParameter || (declaration is RsPatBinding && declaration.kind is BindByValue)) {
                 AddMutableFix(declaration as RsNamedElement)
             } else {
                 null
@@ -56,7 +58,7 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
                 parameter.replace(newParameterExpr)
                 return
             }
-            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable = mutable, ref = binding.isRef)
+            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable = mutable, ref = binding.kind is BindByReference)
             binding.replace(newPatBinding)
         }
         is RsSelfParameter -> {

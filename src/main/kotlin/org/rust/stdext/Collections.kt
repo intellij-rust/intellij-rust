@@ -91,3 +91,6 @@ fun <T> List<T>.chain(other: List<T>): Sequence<T> =
         this.isEmpty() -> other.asSequence()
         else -> this.asSequence() + other.asSequence()
     }
+
+fun <T : Any> Iterator<T>.nextOrNull(): T? =
+    if (hasNext()) next() else null

@@ -53,6 +53,8 @@ enum class Mutability {
     companion object {
         fun valueOf(mutable: Boolean): Mutability =
             if (mutable) MUTABLE else IMMUTABLE
+
+        val DEFAULT_MUTABILITY = MUTABLE
     }
 }
 
