@@ -26,6 +26,7 @@ import org.rust.lang.core.types.ty.TyFloat.F64
 import org.rust.lang.core.types.ty.TyInteger.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.ProjectCache
+import org.rust.openapiext.testAssert
 import org.rust.stdext.buildSet
 import org.rust.stdext.zipValues
 import kotlin.LazyThreadSafetyMode.NONE
@@ -458,8 +459,8 @@ class ImplLookup(
         val newRecDepth = recursionDepth + 1
         return when (candidate) {
             is SelectionCandidate.Impl -> {
-                assert(!candidate.formalSelfTy.containsTyOfClass(TyInfer::class.java))
-                assert(!candidate.formalTrait.containsTyOfClass(TyInfer::class.java))
+                testAssert { !candidate.formalSelfTy.containsTyOfClass(TyInfer::class.java) }
+                testAssert { !candidate.formalTrait.containsTyOfClass(TyInfer::class.java) }
                 val (subst, preparedRef) = candidate.prepareSubstAndTraitRef(ctx, ref.selfTy)
                 ctx.combineTraitRefs(ref, preparedRef)
                 // pre-resolve type vars to simplify caching of already inferred obligation on fulfillment
@@ -476,7 +477,7 @@ class ImplLookup(
                 Selection(trait, emptyList())
             }
             is SelectionCandidate.TypeParameter -> {
-                assert(!candidate.bound.containsTyOfClass(TyInfer::class.java))
+                testAssert { !candidate.bound.containsTyOfClass(TyInfer::class.java) }
                 ctx.combinePairs(zipValues(candidate.bound.subst, ref.trait.subst))
                 ctx.combinePairs(zipValues(candidate.bound.assoc, ref.trait.assoc))
                 Selection(candidate.bound.element, emptyList())
