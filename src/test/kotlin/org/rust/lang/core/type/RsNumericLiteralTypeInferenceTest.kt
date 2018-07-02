@@ -404,6 +404,16 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test unify match pattern const with match ergonomics`() = testExpr("""
+        fn main() {
+            match &0u8 {
+                0 => {},
+              //^ u8
+                _ => {},
+            };
+        }
+    """)
+
     fun `test unify match pattern ref`() = testExpr("""
         fn main() {
             match &0u8 {
@@ -427,6 +437,16 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern inclusive range new syntax`() = testExpr("""
         fn main() {
             match 0u8 {
+                0..=1 => {},
+              //^ u8
+                _ => {},
+            };
+        }
+    """)
+
+    fun `test unify match pattern inclusive range with match ergonomics`() = testExpr("""
+        fn main() {
+            match &0u8 {
                 0..=1 => {},
               //^ u8
                 _ => {},
