@@ -113,13 +113,21 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
         }
     """)
 
-    fun `test E0384 no error in for loop over mutable`() = checkByText("""
-        struct Foo { a: u32 }
+    fun `test E0384 mut struct field`() = checkByText("""
+        struct Foo { a: i32 }
         fn main() {
-            let mut vec: Vec<Foo> = Vec::new();
-            for v in &mut vec {
-                v.a = 15;           // Must not be annotated
-            }
+            let mut foo = Foo { a: 1 };
+            let x = &mut foo;
+            x.a = 2;
+        }
+    """)
+
+    fun `test E0384 reassign ref mut`() = checkByText("""
+        fn main() {
+            let mut a = 5;
+            let mut b = 6;
+            let ref mut test = a;
+            <error>test<caret> = &mut b</error>;
         }
     """)
 
@@ -168,20 +176,4 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
             test = 32;
         }
     """)
-
-    fun `test E0384 fix let ref at reassign `() = checkFixByText("Make `test` mutable", """
-        fn main() {
-            let mut a = 5;
-            let mut b = 6;
-            let ref test = a;
-            <error>test<caret> = &b</error>;
-        }
-            """, """
-        fn main() {
-            let mut a = 5;
-            let mut b = 6;
-            let ref mut test = a;
-            test = &b;
-        }
-            """)
 }

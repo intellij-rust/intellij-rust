@@ -40,6 +40,10 @@ fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
         ?: error("Can not run nested type inference")
 }
 
+sealed class Adjustment(val target: Ty) {
+    class Deref(target: Ty) : Adjustment(target)
+}
+
 /**
  * [RsInferenceResult] is an immutable per-function map
  * from expressions to their types.
@@ -50,7 +54,8 @@ class RsInferenceResult(
     private val resolvedPaths: Map<RsPathExpr, List<RsElement>>,
     private val resolvedMethods: Map<RsMethodCall, List<RsFunction>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
-    val diagnostics: List<RsDiagnostic>
+    val diagnostics: List<RsDiagnostic>,
+    val adjustments: Map<RsExpr, List<Adjustment>>
 ) {
     private val timestamp: Long = System.nanoTime()
 
@@ -96,6 +101,7 @@ class RsInferenceContext(
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
+    val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = HashMap()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> = UnificationTable()
     private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> = UnificationTable()
@@ -159,7 +165,7 @@ class RsInferenceContext(
 
         performPathsRefinement(lookup)
 
-        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics)
+        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics, adjustments)
     }
 
     private fun performPathsRefinement(lookup: ImplLookup) {
@@ -223,6 +229,10 @@ class RsInferenceContext(
 
     fun addDiagnostic(diagnostic: RsDiagnostic) {
         diagnostics.add(diagnostic)
+    }
+
+    fun addAdjustment(expression: RsExpr, adjustment: Adjustment) {
+        adjustments.getOrPut(expression) { mutableListOf() }.add(adjustment)
     }
 
     fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
@@ -1140,6 +1150,10 @@ class RsFnInferenceContext(
             }
             return TyUnknown
         }
+        repeat(field.derefCount) {
+            ctx.addAdjustment(fieldLookup.parentDotExpr.expr, Adjustment.Deref(receiver))
+        }
+
         val fieldElement = field.element
 
         val raw = when (fieldElement) {

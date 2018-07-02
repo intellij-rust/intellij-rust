@@ -10,7 +10,10 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsSelfParameter
+import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.mutability
