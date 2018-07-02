@@ -26,6 +26,16 @@ class RsStdlibResolveLinkTest : RsTestBase() {
           //^
     """, "String", ".../string.rs")
 
+    fun `test crate fqn link`() = doTest("""
+        fn foo() {}
+          //^
+    """, "std/index.html", ".../libstd/lib.rs")
+
+    fun `test mod fqn link`() = doTest("""
+        fn foo() {}
+          //^
+    """, "std/io/index.html", ".../libstd/io/mod.rs")
+
     private fun doTest(@Language("Rust") code: String, link: String, expectedPath: String) {
         check(expectedPath.startsWith("...")) {
             "Expected path should start with '...', but '$expectedPath' was found"
