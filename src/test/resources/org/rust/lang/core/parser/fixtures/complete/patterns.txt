@@ -184,7 +184,7 @@ FILE
         PsiWhiteSpace(' ')
         RsPatRefImpl(PAT_REF)
           PsiElement(&)('&')
-          RsPatVecImpl(PAT_VEC)
+          RsPatSliceImpl(PAT_SLICE)
             PsiElement([)('[')
             RsPatIdentImpl(PAT_IDENT)
               RsPatBindingImpl(PAT_BINDING)
