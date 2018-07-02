@@ -17,7 +17,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.ty.Mutability
 
 val RsPatBinding.isRef: Boolean get() = bindingMode?.ref != null
-val RsPatBinding.mutability: Mutability get() = Mutability.valueOf(bindingMode?.mut != null)
+val RsPatBinding.mutability: Mutability get() = Mutability.valueOf(!isRef && bindingMode?.mut != null)
 val RsPatBinding.isArg: Boolean get() = parent?.parent is RsValueParameter
 
 val RsPatBinding.topLevelPattern: RsPat

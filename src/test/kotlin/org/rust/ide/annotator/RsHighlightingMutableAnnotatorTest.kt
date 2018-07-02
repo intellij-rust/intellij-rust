@@ -20,8 +20,6 @@ class RsHighlightingMutableAnnotatorTest : RsAnnotatorTestBase() {
         fn <info>main</info>() {
             let mut <info descr="Mutable binding">a</info> = 1;
             let b = <info descr="Mutable binding">a</info>;
-            let Some(ref mut <info descr="Mutable binding">c</info>) = Some(10);
-            let d = <info descr="Mutable binding">c</info>;
         }
     """)
 
