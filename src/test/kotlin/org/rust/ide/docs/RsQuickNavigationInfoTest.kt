@@ -610,14 +610,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         fn foo((val, flag): &mut (u32, bool)) { let _ = val; }
                                                        //^
     """, """
-        value parameter <b>val</b>: &lt;unknown&gt;
-    """)
-
-    fun `test value parameter 3`() = doTest("""
-        fn foo((val, flag): &mut (u32, bool)) { let _ = flag; }
-                                                        //^
-    """, """
-        value parameter <b>flag</b>: &lt;unknown&gt;
+        value parameter <b>val</b>: &amp;mut u32
     """)
 
     fun `test match arm 1`() = doTest("""

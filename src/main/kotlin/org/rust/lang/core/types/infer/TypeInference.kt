@@ -148,7 +148,7 @@ class RsInferenceContext(
                     reprType to element.expr
                 }
                 else -> error("Type inference is not implemented for PSI element of type " +
-                        "`${element.javaClass}` that implement `RsInferenceContextOwner`")
+                    "`${element.javaClass}` that implement `RsInferenceContextOwner`")
             }
             if (expr != null) {
                 RsFnInferenceContext(this, retTy ?: TyUnknown).inferLambdaBody(expr)
@@ -1483,80 +1483,82 @@ private class RsFnInferenceContext(
         }
     }
 
-    private fun RsPat.extractBindings(type: Ty) {
+    private fun RsPat.extractBindings(type: Ty, ignoreRef: Boolean = false) {
         when (this) {
             is RsPatWild -> {}
-            is RsPatConst -> expr.inferTypeCoercableTo(type)
-            is RsPatRef -> pat.extractBindings((type as? TyReference)?.referenced ?: TyUnknown)
-            is RsPatRange -> patConstList.forEach { it.expr.inferTypeCoercableTo(type) }
+            is RsPatConst -> {
+                val (derefTy, _) = type.stripReferences()
+                expr.inferTypeCoercableTo(derefTy)
+            }
+            is RsPatRef -> {
+                pat.extractBindings((type as? TyReference)?.referenced ?: TyUnknown)
+            }
+            is RsPatRange -> {
+                val (derefTy, _) = type.stripReferences()
+                patConstList.forEach { it.expr.inferTypeCoercableTo(derefTy) }
+            }
             is RsPatIdent -> {
                 val patBinding = patBinding
-                val bindingType = if (patBinding.isRef) TyReference(type, patBinding.mutability) else type
+                val bindingType = if (patBinding.isRef && !ignoreRef) TyReference(type, patBinding.mutability) else type
                 ctx.writeBindingTy(patBinding, bindingType)
                 pat?.extractBindings(type)
             }
             is RsPatTup -> {
-                val types = (type as? TyTuple)?.types.orEmpty()
+                val (derefTy, mut) = type.stripReferences()
+                val types = (derefTy as? TyTuple)?.types.orEmpty()
                 for ((idx, p) in patList.withIndex()) {
-                    p.extractBindings(types.getOrElse(idx, { TyUnknown }))
+                    p.extractBindings(types.getOrElse(idx) { TyUnknown }.toRefIfNeeded(mut), mut != null)
                 }
             }
             is RsPatTupleStruct -> {
-                // the type might actually be either a tuple variant of enum, or a tuple struct.
-                val ref = path.reference.resolve()
-                val tupleFields = (ref as? RsFieldsOwner)?.tupleFields
-                    ?: ((type as? TyAdt)?.item as? RsStructItem)?.tupleFields
+                val (derefTy, mut) = type.stripReferences()
+                val item = path.reference.resolve() as? RsFieldsOwner
+                    ?: ((derefTy as? TyAdt)?.item as? RsStructItem)
                     ?: return
 
+                val tupleFields = item.positionalFields
                 for ((idx, p) in patList.withIndex()) {
-                    val fieldType = tupleFields.tupleFieldDeclList
+                    val fieldType = tupleFields
                         .getOrNull(idx)
                         ?.typeReference
                         ?.type
-                        ?.substitute(type.typeParameterValues)
+                        ?.substitute(derefTy.typeParameterValues)
                         ?: TyUnknown
-                    p.extractBindings(fieldType)
+                    p.extractBindings(fieldType.toRefIfNeeded(mut), mut != null)
                 }
             }
             is RsPatStruct -> {
-                val struct = path.reference.resolve() as? RsFieldsOwner
-                    ?: ((type as? TyAdt)?.item as? RsStructItem)
+                val (derefTy, mut) = type.stripReferences()
+                val item = path.reference.resolve() as? RsFieldsOwner
+                    ?: ((derefTy as? TyAdt)?.item as? RsStructItem)
                     ?: return
 
-                val structFields = struct.blockFields?.fieldDeclList?.associateBy { it.name }.orEmpty()
+                val structFields = item.namedFields.associateBy { it.name }
                 for (patField in patFieldList) {
-                    val fieldPun = patField.patBinding
-                    val bindingType = run {
-                        val fieldName = if (fieldPun != null) {
-                            // Foo { bar }
-                            fieldPun.identifier.text
-                        } else {
-                            patField.identifier?.text
-                                ?: error("`pat_field` may be either `pat_binding` or should contain identifier! ${patField.text}")
-                        }
-                        val fieldType = structFields[fieldName]
-                            ?.typeReference
-                            ?.type
-                            ?.substitute(type.typeParameterValues)
-                            ?: TyUnknown
+                    val kind = patField.kind
+                    val fieldType = structFields[kind.fieldName]
+                        ?.typeReference
+                        ?.type
+                        ?.substitute(derefTy.typeParameterValues)
+                        ?: TyUnknown
 
-                        fieldPun?.let {
-                            if (it.isRef) TyReference(fieldType, it.mutability) else fieldType
-                        } ?: fieldType
-                    }
-                    patField.pat?.extractBindings(bindingType)
-                    if (fieldPun != null) {
-                        ctx.writeBindingTy(fieldPun, bindingType)
+                    when (kind) {
+                        is RsPatFieldKind.Full -> kind.pat.extractBindings(fieldType.toRefIfNeeded(mut), mut != null)
+                        is RsPatFieldKind.Shorthand -> {
+                            val bindingType = fieldType.toRefIfNeeded(if (kind.binding.isRef) kind.binding.mutability else mut)
+                            ctx.writeBindingTy(kind.binding, bindingType)
+                        }
                     }
                 }
             }
             is RsPatSlice -> {
-                val elementType = when (type) {
-                    is TyArray -> type.base
-                    is TySlice -> type.elementType
+                val (derefTy, mut) = type.stripReferences()
+                val elementType = when (derefTy) {
+                    is TyArray -> derefTy.base
+                    is TySlice -> derefTy.elementType
                     else -> TyUnknown
                 }
-                patList.forEach { it.extractBindings(elementType) }
+                patList.forEach { it.extractBindings(elementType.toRefIfNeeded(mut), mut != null) }
             }
             else -> {
                 // not yet handled
@@ -1654,6 +1656,19 @@ data class TyWithObligations<out T>(
 
 fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
     TyWithObligations(value, obligations + addObligations)
+
+private fun Ty.stripReferences(): Pair<Ty, Mutability?> {
+    var isMut = true
+    var ty = this
+    while (ty is TyReference) {
+        isMut = isMut && ty.mutability.isMut
+        ty = ty.referenced
+    }
+    return ty to (if (this is TyReference) Mutability.valueOf(isMut) else null)
+}
+
+private fun Ty.toRefIfNeeded(mut: Mutability?): Ty =
+    mut?.let { TyReference(this, mut) } ?: this
 
 object TypeInferenceMarks {
     val cyclicType = Testmark("cyclicType")
