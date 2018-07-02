@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
+import org.rust.lang.core.psi.rustStructureModificationTracker
 import java.util.concurrent.ConcurrentMap
 
 class ProjectCache<in T, R>(cacheName: String) {
@@ -26,16 +26,14 @@ class ProjectCache<in T, R>(cacheName: String) {
 
     private val cacheKey: Key<CachedValue<ConcurrentMap<T, R>>> = Key.create(cacheName)
 
-    private val provider = CachedValueProvider {
-        CachedValueProvider.Result.create(
-            ContainerUtil.newConcurrentMap<T, R>(),
-            PsiModificationTracker.MODIFICATION_COUNT
-        )
-    }
-
     fun getOrPut(project: Project, key: T, defaultValue: () -> R): R {
         val cache = CachedValuesManager.getManager(project)
-            .getCachedValue(project, cacheKey, provider, false)
+            .getCachedValue(project, cacheKey, {
+                CachedValueProvider.Result.create(
+                    ContainerUtil.newConcurrentMap<T, R>(),
+                    project.rustStructureModificationTracker
+                )
+            }, false)
         return cache.getOrPut(key) { defaultValue() }
     }
 
