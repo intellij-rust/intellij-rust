@@ -7,6 +7,7 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -26,7 +27,8 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
         }
         is RsPatIdent -> {
             val patBinding = patBinding
-            val bindingType = if (patBinding.isRef && !ignoreRef) TyReference(type, patBinding.mutability) else type
+            val kind = patBinding.kind
+            val bindingType = if (kind is BindByReference && !ignoreRef) TyReference(type, kind.mutability) else type
             fcx.writeBindingTy(patBinding, bindingType)
             pat?.extractBindings(fcx, type)
         }
@@ -72,7 +74,8 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                 when (kind) {
                     is RsPatFieldKind.Full -> kind.pat.extractBindings(fcx, fieldType.toRefIfNeeded(mut), mut != null)
                     is RsPatFieldKind.Shorthand -> {
-                        val bindingType = fieldType.toRefIfNeeded(if (kind.binding.isRef) kind.binding.mutability else mut)
+                        val bindingKind = kind.binding.kind
+                        val bindingType = fieldType.toRefIfNeeded(if (bindingKind is BindByReference) bindingKind.mutability else mut)
                         fcx.writeBindingTy(kind.binding, bindingType)
                     }
                 }
