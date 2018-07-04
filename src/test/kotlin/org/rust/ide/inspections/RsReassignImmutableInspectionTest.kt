@@ -128,7 +128,7 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
             let mut a = 5;
             let mut b = 6;
             let ref mut test = a;
-            <error>test<caret> = &b</error>;
+            <error>test<caret> = &mut b</error>;
         }
     """)
 
