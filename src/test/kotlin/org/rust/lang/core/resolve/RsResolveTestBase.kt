@@ -103,7 +103,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     }
 }
 
-private fun RsWeakReferenceElement.checkedResolve(): RsElement {
+fun RsWeakReferenceElement.checkedResolve(): RsElement {
     val reference = reference ?: error("element doesn't have reference")
     return reference.resolve() ?: run {
         val multiResolve = reference.multiResolve()

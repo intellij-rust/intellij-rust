@@ -7,7 +7,6 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
-import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
@@ -50,19 +49,17 @@ class RsPathReferenceImpl(
         advancedMultiResolve().mapNotNull { it.element as? RsNamedElement }
 
     private fun advancedCachedMultiResolve(): List<BoundElement<RsElement>> {
-        return ResolveCache.getInstance(element.project)
-            .resolveWithCaching(this, Resolver,
-                /* needToPreventRecursion = */ true,
-                /* incompleteCode = */ false)
+        return RsResolveCache.getInstance(element.project)
+            .resolveWithCaching(element, Resolver)
             .orEmpty()
             // We can store a fresh `TyInfer.TyVar` to the cache for `_` path parameter (like `Vec<_>`), but
             // TyVar is mutable type, so we must copy it after retrieving from the cache
             .map { it.foldTyInferWith { if (it is TyInfer.TyVar) TyInfer.TyVar(it.origin) else it } }
     }
 
-    private object Resolver : ResolveCache.AbstractResolver<RsPathReferenceImpl, List<BoundElement<RsElement>>> {
-        override fun resolve(ref: RsPathReferenceImpl, incompleteCode: Boolean): List<BoundElement<RsElement>> {
-            return resolvePath(ref.element)
+    private object Resolver : (RsPath) -> List<BoundElement<RsElement>> {
+        override fun invoke(element: RsPath): List<BoundElement<RsElement>> {
+            return resolvePath(element)
         }
     }
 }
