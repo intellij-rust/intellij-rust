@@ -15,9 +15,16 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.util.PsiTreeUtil.getContextOfType
+import com.intellij.util.messages.Topic
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsModificationTrackerOwner
+
+val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> = Topic.create(
+    "RUST_STRUCTURE_CHANGE_TOPIC",
+    RustStructureChangeListener::class.java,
+    Topic.BroadcastDirection.TO_PARENT
+)
 
 interface RsPsiManager {
     /**
@@ -26,6 +33,10 @@ interface RsPsiManager {
      * PSI element excluding function bodies (expressions and statements)
      */
     val rustStructureModificationTracker: ModificationTracker
+}
+
+interface RustStructureChangeListener {
+    fun rustStructureChanged()
 }
 
 class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
@@ -89,6 +100,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
 
     private fun incRustStructureModificationCount() {
         rustStructureModificationTracker.incModificationCount()
+        project.messageBus.syncPublisher(RUST_STRUCTURE_CHANGE_TOPIC).rustStructureChanged()
     }
 }
 
