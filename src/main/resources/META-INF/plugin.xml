@@ -627,6 +627,9 @@
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsMatchArmUpDownMover"/>
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsItemUpDownMover"/>
 
+
+        <projectService serviceImplementation="org.rust.lang.core.resolve.ref.RsResolveCache"/>
+
     </extensions>
 
     <application-components>
