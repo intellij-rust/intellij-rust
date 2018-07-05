@@ -147,7 +147,7 @@ class TraitImplementationInfo private constructor(
 
 
     private fun RsMembers.abstractable(): List<RsAbstractable> =
-        stubChildrenOfType<RsAbstractable>().filter { it.name != null }
+        expandedMembers.filter { it.name != null }
 
     companion object {
         fun create(trait: RsTraitItem, impl: RsImplItem): TraitImplementationInfo? {
