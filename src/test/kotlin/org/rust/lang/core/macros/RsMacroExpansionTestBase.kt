@@ -61,4 +61,19 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     ) {
         doTest(code, *expectedExpansions.map { Pair<String, Testmark?>(it, null) }.toTypedArray())
     }
+
+    fun checkSingleMacro(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
+        InlineFile(code)
+        val call = findElementInEditor<RsMacroCall>("^")
+        val expansion = call.expansion ?: error("Macro expansion failed `${call.text}`")
+        val expandedText = expansion.joinToString("\n") { it.text }
+
+        if (StringUtils.deleteWhitespace(expandedText) != StringUtils.deleteWhitespace(expectedExpansion)) {
+            throw ComparisonFailure(
+                "Macro comparision failed",
+                expectedExpansion,
+                expandedText
+            )
+        }
+    }
 }
