@@ -119,9 +119,7 @@ class TraitImplementationInfo private constructor(
     val trait: RsTraitItem,
     val traitName: String,
     traitMembers: RsMembers,
-    implMembers: RsMembers,
-    // Macros can add methods
-    hasMacros: Boolean
+    implMembers: RsMembers
 ) {
     val declared = traitMembers.abstractable()
     private val implemented = implMembers.abstractable()
@@ -129,13 +127,11 @@ class TraitImplementationInfo private constructor(
     private val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }
 
 
-    val missingImplementations: List<RsAbstractable> = if (!hasMacros)
+    val missingImplementations: List<RsAbstractable> =
         declared.filter { it.isAbstract }.filter { it.name to it.elementType !in implementedByNameAndType }
-    else emptyList()
 
-    val alreadyImplemented: List<RsAbstractable> =  if (!hasMacros)
+    val alreadyImplemented: List<RsAbstractable> =
         declared.filter { it.isAbstract }.filter { it.name to it.elementType in implementedByNameAndType }
-    else emptyList()
 
     val nonExistentInTrait: List<RsAbstractable> = implemented.filter { it.name !in declaredByName }
 
@@ -154,8 +150,7 @@ class TraitImplementationInfo private constructor(
             val traitName = trait.name ?: return null
             val traitMembers = trait.members ?: return null
             val implMembers = impl.members ?: return null
-            val hasMacros = implMembers.macroCallList.isNotEmpty()
-            return TraitImplementationInfo(trait, traitName, traitMembers, implMembers, hasMacros)
+            return TraitImplementationInfo(trait, traitName, traitMembers, implMembers)
         }
     }
 }

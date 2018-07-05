@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.StubBasedPsiElement
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 
 /**
@@ -35,6 +36,25 @@ fun ExpansionResult.setContext(context: RsElement) {
     putUserData(RS_EXPANSION_CONTEXT, context)
 }
 
+fun ExpansionResult.setExpandedFrom(call: RsMacroCall) {
+    putUserData(RS_EXPANSION_MACRO_CALL, call)
+}
+
+/** The [RsMacroCall] that expanded to this element or null if this element is not produced by a macro */
+val ExpansionResult.expandedFrom: RsMacroCall?
+    get() = getUserData(RS_EXPANSION_MACRO_CALL) as RsMacroCall?
+
+val ExpansionResult.expandedFromRecursively: RsMacroCall?
+    get() {
+        var call: RsMacroCall = expandedFrom ?: return null
+        while (true) {
+            call = call.expandedFrom ?: break
+        }
+
+        return call
+    }
+
 
 private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
+private val RS_EXPANSION_MACRO_CALL = Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 
