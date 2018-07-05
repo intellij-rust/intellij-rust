@@ -50,7 +50,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
             override fun visitTypeParameter(o: RsTypeParameter) = checkDuplicates(holder, o)
-            override fun visitLifetimeParameter(o: RsLifetimeParameter) = checkDuplicates(holder, o)
+            override fun visitLifetimeParameter(o: RsLifetimeParameter) = checkLifetimeParameter(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
@@ -192,6 +192,18 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             }
         }
         checkReferenceIsPublic(path, path, holder)
+    }
+
+    private fun checkLifetimeParameter(holder: AnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
+        checkReservedLifetimeName(holder, lifetimeParameter)
+        checkDuplicates(holder, lifetimeParameter)
+    }
+
+    private fun checkReservedLifetimeName(holder: AnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
+        val lifetimeName = lifetimeParameter.quoteIdentifier.text
+        if (lifetimeName in RESERVED_LIFETIME_NAMES) {
+            RsDiagnostic.ReservedLifetimeNameError(lifetimeParameter, lifetimeName).addToHolder(holder)
+        }
     }
 
     private fun checkVis(holder: AnnotationHolder, vis: RsVis) {
@@ -374,6 +386,10 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun hasResolve(el: RsReferenceElement): Boolean =
         !(el.reference.resolve() != null || el.reference.multiResolve().size > 1)
+
+    companion object {
+        private val RESERVED_LIFETIME_NAMES: Set<String> = setOf("'_", "'static")
+    }
 }
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
