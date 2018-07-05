@@ -160,4 +160,68 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
             foo().bar()
         }       //^ unresolved
     """)
+
+    fun `test method defined with a macro`() = checkByCode("""
+        macro_rules! foo {
+            ($ i:ident, $ j:ty) => { fn $ i(&self) -> $ j { unimplemented!() } }
+        }
+
+        struct Foo;
+        struct Bar;
+        impl Foo { foo!(foo, Bar); }
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test trait method defined with a macro`() = checkByCode("""
+        macro_rules! foo {
+            ($ i:ident, $ j:ty) => { fn $ i(&self) -> $ j { unimplemented!() } }
+        }
+
+        trait FooTrait { foo!(foo, Bar); }
+        struct Foo;
+        struct Bar;
+        impl FooTrait for Foo {}
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test method defined with a nested macro call`() = checkByCode("""
+        macro_rules! foo {
+            ($ i:ident, $ j:ty) => { fn $ i(&self) -> $ j { unimplemented!() } }
+        }
+
+        macro_rules! bar {
+            ($ i:ident, $ j:ty) => { foo!($ i, $ j); }
+        }
+
+        struct Foo;
+        struct Bar;
+        impl Foo { bar!(foo, Bar); }
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test expand impl members with infinite recursive nested macro calls`() = checkByCode("""
+        macro_rules! foo {
+            ($ i:ident, $ j:ty) => { foo!($ i, $ j) }
+        }
+
+        struct Foo;
+        struct Bar;
+        impl Foo { bar!(foo, Bar); }
+        impl Bar { fn bar(&self) {} }
+        fn main() {
+            Foo.foo().bar();
+        }           //^ unresolved
+    """)
 }

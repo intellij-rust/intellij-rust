@@ -461,4 +461,23 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
          fn foo() {}
     """)
+
+    fun `test impl members`() = checkSingleMacro("""
+        macro_rules! foo {
+            () => {
+                fn foo() {}
+                type Bar = u8;
+                const BAZ: u8 = 0;
+            }
+        }
+
+        struct S;
+        impl S {
+            foo!();
+        }  //^
+    """, """
+        fn foo() {}
+        type Bar = u8;
+        const BAZ: u8 = 0;
+    """)
 }

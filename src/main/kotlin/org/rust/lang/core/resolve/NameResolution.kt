@@ -658,11 +658,10 @@ private fun processAssociatedItems(
         }
 
         if (Namespace.Values in ns) {
-            if (processMembersWithDefaults({ it.functionList })) return true
-            if (processMembersWithDefaults({ it.constantList })) return true
+            if (processMembersWithDefaults { it.expandedMembers.functionsAndConstants }) return true
         }
         if (Namespace.Types in ns) {
-            if (processMembersWithDefaults({ it.typeAliasList })) return true
+            if (processMembersWithDefaults { it.expandedMembers.types }) return true
         }
         return false
     }
