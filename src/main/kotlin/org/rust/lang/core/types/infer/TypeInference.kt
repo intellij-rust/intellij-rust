@@ -1496,7 +1496,7 @@ private class RsFnInferenceContext(
             is RsPatIdent -> {
                 val patBinding = patBinding
                 val kind = patBinding.kind
-                val bindingType = if (kind.isRef) TyReference(type, Mutability.valueOf(kind == RsBindingModeKind.REF_MUT)) else type
+                val bindingType = if (kind is BindByReference) TyReference(type, kind.mutability) else type
                 ctx.writeBindingTy(patBinding, bindingType)
                 pat?.extractBindings(type)
             }

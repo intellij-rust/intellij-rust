@@ -16,10 +16,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.RsInferenceResult
 import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.infer.inferTypesIn
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyReference
-import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.recursionGuard
 
 
@@ -71,6 +68,62 @@ val RsTraitOrImpl.selfType: Ty get() {
         is RsTraitItem -> TyTypeParameter.self(this)
         else -> error("Unreachable")
     }
+}
+
+enum class MutabilityCategory {
+    Immutable, Declared, Inherited;
+
+    fun fromMutability(mutability: Mutability): MutabilityCategory {
+        return when (mutability) {
+            Mutability.IMMUTABLE -> MutabilityCategory.Immutable
+            Mutability.MUTABLE -> MutabilityCategory.Declared
+        }
+    }
+
+    fun inherit(): MutabilityCategory {
+        return when (this) {
+            MutabilityCategory.Immutable -> MutabilityCategory.Immutable
+            MutabilityCategory.Declared, MutabilityCategory.Inherited -> MutabilityCategory.Inherited
+        }
+    }
+
+    val isMutable: Boolean get() {
+        return when (this) {
+            MutabilityCategory.Immutable -> false
+            MutabilityCategory.Declared, MutabilityCategory.Inherited -> true
+        }
+    }
+
+    val isImmutable: Boolean get() = !isMutable
+}
+
+val RsExpr.mutabilityCategory: MutabilityCategory? get() {
+    val type = this.type
+
+    when (this) {
+        is RsUnaryExpr -> {
+            if (mul != null)
+                return this.expr?.mutabilityCategory
+        }
+
+        is RsDotExpr -> {
+            expr.mutabilityCategory?.inherit()
+        }
+
+        // is RsIndexExpr -> {}
+
+        is RsPathExpr -> {
+            // see cat_def
+            val declaration = path.reference.resolve() ?: return null
+
+            when (declaration) {
+                is RsConstant, is RsEnumVariant, is RsStructItem, is RsFunction -> return MutabilityCategory.Declared
+                // is RsPatBinding ->
+            }
+        }
+    }
+
+    return null
 }
 
 private val DEFAULT_MUTABILITY = true
