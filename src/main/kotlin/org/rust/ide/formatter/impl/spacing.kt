@@ -151,7 +151,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
 }
 
 fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spacing? {
-    if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2, ctx).apply {
+    if (child1 is ASTBlock && child2 is ASTBlock) SpacingContext.create(child1, child2, ctx)?.apply {
         when {
             elementType2 == RustParserDefinition.EOL_COMMENT ->
                 return createKeepingFirstColumnSpacing(1, Int.MAX_VALUE, true, ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)
@@ -211,9 +211,9 @@ private data class SpacingContext(val node1: ASTNode,
                                   val ncPsi2: PsiElement,
                                   val ctx: RsFmtContext) {
     companion object {
-        fun create(child1: ASTBlock, child2: ASTBlock, ctx: RsFmtContext): SpacingContext {
-            val node1 = child1.node
-            val node2 = child2.node
+        fun create(child1: ASTBlock, child2: ASTBlock, ctx: RsFmtContext): SpacingContext? {
+            val node1 = child1.node ?: return null
+            val node2 = child2.node ?: return null
             val psi1 = node1.psi
             val psi2 = node2.psi
             val elementType1 = psi1.node.elementType

@@ -71,7 +71,7 @@ class RsFmtBlock(
         // We are using dot as our representative.
         // The idea is nearly copy-pasted from Kotlin's formatter.
         if (node.elementType == DOT_EXPR) {
-            val dotIndex = children.indexOfFirst { it.node.elementType == DOT }
+            val dotIndex = children.indexOfFirst { it.node?.elementType == DOT }
             if (dotIndex != -1) {
                 val dotBlock = children[dotIndex]
                 val syntheticBlock = SyntheticRsFmtBlock(
@@ -101,7 +101,7 @@ class RsFmtBlock(
         // so we have to manually decide whether new child is before (no indent)
         // or after (normal indent) left brace node.
             node.isFlatBraceBlock -> {
-                val lbraceIndex = subBlocks.indexOfFirst { it is ASTBlock && it.node.elementType == LBRACE }
+                val lbraceIndex = subBlocks.indexOfFirst { it is ASTBlock && it.node?.elementType == LBRACE }
                 if (lbraceIndex != -1 && lbraceIndex < newChildIndex) {
                     Indent.getNormalIndent()
                 } else {
