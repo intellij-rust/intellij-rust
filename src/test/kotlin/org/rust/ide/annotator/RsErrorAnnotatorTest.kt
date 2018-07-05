@@ -479,6 +479,18 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
+    fun `test no E0407 for method defined with a macro`() = checkErrors("""
+        macro_rules! foo {
+            ($ i:ident, $ j:ty) => { fn $ i(&self) -> $ j { unimplemented!() } }
+        }
+        trait T {
+            foo!(foo, ());
+        }
+        impl T for () {
+            fn foo(&self) {}
+        }
+    """)
+
     fun `test name duplication in param list E0415`() = checkErrors("""
         fn foo(x: u32, X: u32) {}
         fn bar<T>(T: T) {}
