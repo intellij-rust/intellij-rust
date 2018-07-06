@@ -68,8 +68,8 @@ fun resolveMethodCallReferenceWithReceiverType(
     lookup: ImplLookup,
     receiverType: Ty,
     methodCall: RsMethodCall
-): List<MethodCallee> {
-    return collectMethodResolveVariants(methodCall.referenceName) {
+): List<MethodResolveVariant> {
+    return collectResolveVariants(methodCall.referenceName) {
         processMethodCallExprResolveVariants(lookup, receiverType, it)
     }
 }
@@ -78,13 +78,22 @@ fun resolveFieldLookupReferenceWithReceiverType(
     lookup: ImplLookup,
     receiverType: Ty,
     expr: RsFieldLookup
-): List<RsElement> {
+): List<FieldResolveVariant> {
     return collectResolveVariants(expr.referenceName) {
         processFieldExprResolveVariants(lookup, receiverType, false, it)
     }
 }
 
-data class MethodCallee(
+data class FieldResolveVariant(
+    override val name: String,
+    override val element: RsElement,
+    /** The receiver type after possible derefs performed */
+    val selfTy: Ty,
+    /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
+    val derefCount: Int
+) : ScopeEntry
+
+data class MethodResolveVariant(
     override val name: String,
     override val element: RsFunction,
     /**
@@ -98,12 +107,11 @@ data class MethodCallee(
     val derefCount: Int
 ) : ScopeEntry {
     /** Legacy subst. Do not really used */
-    override val subst: Substitution
-        get() = emptySubstitution
+    override val subst: Substitution get() = emptySubstitution
 }
 
-private fun collectMethodResolveVariants(referenceName: String, f: (RsMethodResolveProcessor) -> Unit): List<MethodCallee> {
-    val result = mutableListOf<MethodCallee>()
+private fun <T: ScopeEntry> collectResolveVariants(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
+    val result = mutableListOf<T>()
     f { e ->
         if (e.name == referenceName) {
             result += e
@@ -121,7 +129,7 @@ private fun filterMethodCompletionVariants(
     val cache = mutableMapOf<RsImplItem, Boolean>()
     return fun(it: ScopeEntry): Boolean {
         // 1. If not a method (actually a field) or a trait method - just process it
-        if (it !is MethodCallee || it.impl == null) return processor(it)
+        if (it !is MethodResolveVariant || it.impl == null) return processor(it)
         // 2. Filter methods by trait bounds (try to select all obligations for each impl)
         // We're caching evaluation results here because we can often complete to a methods
         // in the same impl and always have the same receiver type

@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.isTest
-import org.rust.lang.core.resolve.ref.MethodCallee
+import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.emptySubstitution
@@ -48,7 +48,7 @@ enum class ScopeEvent : ScopeEntry {
  * return `false` to continue search
  */
 typealias RsResolveProcessor = (ScopeEntry) -> Boolean
-typealias RsMethodResolveProcessor = (MethodCallee) -> Boolean
+typealias RsMethodResolveProcessor = (MethodResolveVariant) -> Boolean
 
 fun collectPathResolveVariants(
     referenceName: String,

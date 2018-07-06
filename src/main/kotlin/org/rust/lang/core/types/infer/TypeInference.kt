@@ -512,7 +512,7 @@ class RsInferenceContext(
         return TyWithObligations(ty.value, obligations)
     }
 
-    private fun  <T : TypeFoldable<T>> hasUnresolvedTypeVars(_ty: T): Boolean = _ty.visitWith(object : TypeVisitor {
+    private fun <T : TypeFoldable<T>> hasUnresolvedTypeVars(_ty: T): Boolean = _ty.visitWith(object : TypeVisitor {
         override fun invoke(_ty: Ty): Boolean {
             val ty = shallowResolve(_ty)
             return when {
@@ -1037,7 +1037,7 @@ private class RsFnInferenceContext(
         return methodType.retType
     }
 
-    private fun pickSingleMethod(receiver: Ty, variants: List<MethodCallee>, methodCall: RsMethodCall): MethodCallee? {
+    private fun pickSingleMethod(receiver: Ty, variants: List<MethodResolveVariant>, methodCall: RsMethodCall): MethodResolveVariant? {
         val filtered = variants.singleOrFilter {
             // 1. filter traits that are not imported
             TypeInferenceMarks.methodPickTraitScope.hit()
@@ -1052,7 +1052,7 @@ private class RsFnInferenceContext(
             // 3. Pick results matching receiver type
             TypeInferenceMarks.methodPickDerefOrder.hit()
 
-            fun pick(ty: Ty): List<MethodCallee> =
+            fun pick(ty: Ty): List<MethodResolveVariant> =
                 list.filter { it.element.selfParameter?.typeOfValue(it.selfTy) == ty }
 
             // https://github.com/rust-lang/rust/blob/a646c912/src/librustc_typeck/check/method/probe.rs#L885
@@ -1080,7 +1080,7 @@ private class RsFnInferenceContext(
                 val first = filtered.first()
                 collapseToTrait(filtered.map { it.element })?.let {
                     TypeInferenceMarks.methodPickCollapseTraits.hit()
-                    MethodCallee(first.name, it, null, first.selfTy, first.derefCount)
+                    MethodResolveVariant(first.name, it, null, first.selfTy, first.derefCount)
                 }
             }
         }
@@ -1117,7 +1117,7 @@ private class RsFnInferenceContext(
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
         val variants = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup)
-        ctx.writeResolvedField(fieldLookup, variants)
+        ctx.writeResolvedField(fieldLookup, variants.map { it.element })
         val field = variants.firstOrNull()
         if (field == null) {
             for (type in lookup.coercionSequence(receiver)) {
@@ -1128,9 +1128,11 @@ private class RsFnInferenceContext(
             }
             return TyUnknown
         }
-        val raw = when (field) {
-            is RsFieldDecl -> field.typeReference?.type
-            is RsTupleFieldDecl -> field.typeReference.type
+        val fieldElement = field.element
+        
+        val raw = when (fieldElement) {
+            is RsFieldDecl -> fieldElement.typeReference?.type
+            is RsTupleFieldDecl -> fieldElement.typeReference.type
             else -> null
         } ?: TyUnknown
         return raw.substitute(receiver.typeParameterValues)
