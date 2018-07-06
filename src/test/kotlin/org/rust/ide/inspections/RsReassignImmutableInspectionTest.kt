@@ -113,13 +113,12 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
         }
     """)
 
-    fun `test E0384 no error in for loop over mutable`() = checkByText("""
-        struct Foo { a: u32 }
+    fun `test E0384 mut struct field`() = checkByText("""
+        struct Foo { a: i32 }
         fn main() {
-            let mut vec: Vec<Foo> = Vec::new();
-            for v in &mut vec {
-                v.a = 15;           // Must not be annotated
-            }
+            let mut foo = Foo { a: 1 };
+            let x = &mut foo;
+            x.a = 2;
         }
     """)
 

@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.infer.Adjust
 import org.rust.lang.core.types.infer.RsInferenceResult
 import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.infer.inferTypesIn
@@ -119,13 +120,19 @@ val RsExpr.mutabilityCategory: MutabilityCategory? get() {
                 }
 
                 MutabilityCategory.valueOf(pointer.mutability)
-                // expr.mutabilityCategory
             }
             else null
         }
 
         is RsDotExpr -> {
-            expr.mutabilityCategory?.inherit()
+            val type = expr.type
+            // val isDeref: Boolean = rsInferenceResult.adjustments.getOrNull(expr)?.any { it -> it.kind == Adjust.DEREF }
+            val isDeref = expr.inference?.adjustments?.get(this)?.any { it.kind == Adjust.DEREF } ?: false
+
+            if (isDeref && type is TyReference)
+                MutabilityCategory.valueOf(type.mutability)
+            else
+                expr.mutabilityCategory?.inherit()
         }
 
         // is RsIndexExpr -> {}
@@ -170,34 +177,3 @@ val RsExpr.isMutable: Boolean get() {
         null -> DEFAULT_MUTABILITY
     }
 }
-
-/*
-val RsExpr.isMutable: Boolean get() {
-    return when (this) {
-        is RsPathExpr -> {
-            val declaration = path.reference.resolve() ?: return DEFAULT_MUTABILITY
-
-            val letExpr = declaration.ancestorStrict<RsLetDecl>()
-            if (letExpr != null && letExpr.eq == null) return true
-
-            if (declaration is RsSelfParameter) return declaration.mutability.isMut
-            if (declaration is RsPatBinding) return declaration.mutability.isMut
-            if (declaration is RsConstant) return declaration.mutability.isMut
-
-
-            val type = this.type
-            if (type is TyReference) return type.mutability.isMut
-            if (type is TyUnknown) return DEFAULT_MUTABILITY
-
-            if (declaration is RsEnumVariant) return true
-            if (declaration is RsStructItem) return true
-            if (declaration is RsFunction) return true
-
-            false
-        }
-    // is RsFieldExpr -> (expr.type as? TyReference)?.mutable ?: DEFAULT_MUTABILITY // <- this one brings false positives without additional analysis
-        is RsUnaryExpr -> mul != null || (expr != null && expr?.isMutable ?: DEFAULT_MUTABILITY)
-        else -> DEFAULT_MUTABILITY
-    }
-}
-*/
