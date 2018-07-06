@@ -130,7 +130,8 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 
     val explicitPath = modDecl.pathAttribute
     if (explicitPath != null) {
-        val vFile = dir.virtualFile.findFileByRelativePath(FileUtil.toSystemIndependentName(explicitPath)) ?: return false
+        val vFile = dir.virtualFile.findFileByRelativePath(FileUtil.toSystemIndependentName(explicitPath))
+            ?: return false
         val mod = vFile.toPsiFile(modDecl.project)?.rustFile ?: return false
 
         val name = modDecl.name ?: return false
@@ -193,14 +194,15 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
     return false
 }
 
-private val RsPath.qualifier: RsPath? get() {
-    path?.let { return it }
-    var ctx = context
-    while (ctx is RsPath) {
-        ctx = ctx.context
+private val RsPath.qualifier: RsPath?
+    get() {
+        path?.let { return it }
+        var ctx = context
+        while (ctx is RsPath) {
+            ctx = ctx.context
+        }
+        return (ctx as? RsUseSpeck)?.qualifier
     }
-    return (ctx as? RsUseSpeck)?.qualifier
-}
 
 fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
 
@@ -559,7 +561,7 @@ private fun reexportedMacros(item: RsExternCrateItem): List<RsMacro>? {
 private fun collectExportedMacros(
     useItem: RsUseItem,
     exportingMacrosCrates: Map<String, RsMod>
-) : List<RsMacro> {
+): List<RsMacro> {
     return buildList {
         val root = useItem.useSpeck ?: return@buildList
 
