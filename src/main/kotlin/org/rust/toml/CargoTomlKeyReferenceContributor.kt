@@ -6,50 +6,20 @@
 package org.rust.toml
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.patterns.PsiElementPattern
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.core.or
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psiElement
-import org.rust.lang.core.with
+import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
+import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
 import org.toml.lang.psi.TomlKey
-import org.toml.lang.psi.TomlTable
-import org.toml.lang.psi.TomlTableHeader
 
 class CargoTomlKeyReferenceContributor : PsiReferenceContributor() {
 
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
-        registrar.registerReferenceProvider(dependencyKeyPattern or specificDependencyKeyPattern,
+        registrar.registerReferenceProvider(onDependencyKey or onSpecificDependencyHeaderKey,
             CargoDependencyReferenceProvider())
-    }
-
-    companion object {
-
-        private const val TOML_KEY_CONTEXT_NAME = "key"
-
-        // [dependencies]
-        // regex = "1"
-        //   ^
-        private val dependencyKeyPattern: PsiElementPattern.Capture<TomlKey> = psiElement<TomlKey>()
-            .withSuperParent(2, psiElement<TomlTable>()
-                .withChild(psiElement<TomlTableHeader>()
-                    .with("dependenciesCondition") { header ->
-                        header.names.lastOrNull()?.isDependencyKey == true
-                    }
-                )
-            )
-        // [dependencies.regex]
-        //                 ^
-        private val specificDependencyKeyPattern: PsiElementPattern.Capture<TomlKey> = psiElement<TomlKey>(TOML_KEY_CONTEXT_NAME)
-            .withParent(psiElement<TomlTableHeader>()
-                .with("specificDependencyCondition") { header, context ->
-                    val key = context?.get(TOML_KEY_CONTEXT_NAME) ?: return@with false
-                    val names = header.names
-                    names.getOrNull(names.size - 2)?.isDependencyKey == true && names.lastOrNull() == key
-                }
-            )
     }
 }
 

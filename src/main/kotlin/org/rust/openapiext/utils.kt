@@ -6,10 +6,12 @@
 package org.rust.openapiext
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.JDOMUtil
@@ -115,3 +117,6 @@ inline fun testAssert(action: () -> Boolean, lazyMessage: () -> Any) {
         throw AssertionError(message)
     }
 }
+
+fun <T> runWithCheckCanceled(callable: () -> T): T =
+    ApplicationUtil.runWithCheckCanceled(callable, ProgressManager.getInstance().progressIndicator)
