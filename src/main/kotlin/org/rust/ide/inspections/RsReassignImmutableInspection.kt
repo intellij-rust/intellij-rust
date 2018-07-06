@@ -9,9 +9,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.AssignmentOp
 import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.types.isDereference
 import org.rust.lang.core.types.isMutable
 
 class RsReassignImmutableInspection : RsLocalInspectionTool() {
@@ -19,7 +21,7 @@ class RsReassignImmutableInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
-                if (expr.isAssignBinaryExpr() && !expr.left.isMutable) {
+                if (expr.isAssignBinaryExpr() && !expr.left.isDereference && !expr.left.isMutable) {
                     registerProblem(holder, expr, expr.left)
                 }
             }
