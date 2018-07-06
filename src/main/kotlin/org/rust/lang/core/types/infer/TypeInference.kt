@@ -1137,8 +1137,11 @@ private class RsFnInferenceContext(
             }
             return TyUnknown
         }
-        val fieldElement = field.element
+        repeat(field.derefCount) {
+            ctx.addAdjustment(fieldLookup.parentDotExpr, Adjustment(Adjust.DEREF, receiver))
+        }
 
+        val fieldElement = field.element
         val raw = when (fieldElement) {
             is RsFieldDecl -> fieldElement.typeReference?.type
             is RsTupleFieldDecl -> fieldElement.typeReference.type
