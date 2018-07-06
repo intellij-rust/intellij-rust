@@ -16,6 +16,12 @@ import org.rust.lang.core.resolve.ref.RsPatBindingReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.ty.Mutability
 
+abstract class RsBindingModeKind(val mutability: Mutability)
+
+class BindByReference(mutability: Mutability) : RsBindingModeKind(mutability)
+class BindByValue(mutability: Mutability) : RsBindingModeKind(mutability)
+
+
 val RsPatBinding.isRef: Boolean get() = kind is BindByReference
 val RsPatBinding.mutability: Mutability get() = kind.mutability
 val RsPatBinding.isArg: Boolean get() = parent?.parent is RsValueParameter
@@ -32,11 +38,6 @@ val RsPatBinding.kind: RsBindingModeKind
             else -> BindByValue(Mutability.IMMUTABLE)
         }
     }
-
-abstract class RsBindingModeKind(val mutability: Mutability)
-
-class BindByReference(mutability: Mutability) : RsBindingModeKind(mutability)
-class BindByValue(mutability: Mutability) : RsBindingModeKind(mutability)
 
 
 val RsPatBinding.topLevelPattern: RsPat

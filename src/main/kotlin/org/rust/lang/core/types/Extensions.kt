@@ -73,10 +73,12 @@ val RsTraitOrImpl.selfType: Ty get() {
 enum class MutabilityCategory {
     Immutable, Declared, Inherited;
 
-    fun fromMutability(mutability: Mutability): MutabilityCategory {
-        return when (mutability) {
-            Mutability.IMMUTABLE -> MutabilityCategory.Immutable
-            Mutability.MUTABLE -> MutabilityCategory.Declared
+    companion object {
+        fun valueOf(mutability: Mutability): MutabilityCategory {
+            return when (mutability) {
+                Mutability.IMMUTABLE -> MutabilityCategory.Immutable
+                Mutability.MUTABLE -> MutabilityCategory.Declared
+            }
         }
     }
 
@@ -97,13 +99,29 @@ enum class MutabilityCategory {
     val isImmutable: Boolean get() = !isMutable
 }
 
-val RsExpr.mutabilityCategory: MutabilityCategory? get() {
-    val type = this.type
+abstract class PointerKind(val mutability: Mutability)
+class BorrowedPointer(mutability: Mutability) : PointerKind(mutability)
+class UnsafePointer(mutability: Mutability) : PointerKind(mutability)
 
-    when (this) {
+val RsExpr.isDereference: Boolean get() = this is RsUnaryExpr && this.mul != null
+
+val RsExpr.mutabilityCategory: MutabilityCategory? get() {
+    return when (this) {
         is RsUnaryExpr -> {
-            if (mul != null)
-                return this.expr?.mutabilityCategory
+            val expr = expr ?: return null
+
+            if (mul != null) {
+                val type = expr.type
+                val pointer = when (type) {
+                    is TyPointer -> UnsafePointer(type.mutability)
+                    is TyReference -> BorrowedPointer(type.mutability)
+                    else -> return null
+                }
+
+                MutabilityCategory.valueOf(pointer.mutability)
+                // expr.mutabilityCategory
+            }
+            else null
         }
 
         is RsDotExpr -> {
@@ -113,21 +131,47 @@ val RsExpr.mutabilityCategory: MutabilityCategory? get() {
         // is RsIndexExpr -> {}
 
         is RsPathExpr -> {
-            // see cat_def
             val declaration = path.reference.resolve() ?: return null
+
+            // this brings false-negative, because such variable should has Immutable category:
+            // let x; x = 1;
+            // x = 2; <-- `x` is immutable, but it determined as mutable
+            //
+            // so it would be replaced with some kind of data-flow analysis
+            val letExpr = declaration.ancestorStrict<RsLetDecl>()
+            if (letExpr != null && letExpr.eq == null) return MutabilityCategory.Declared
 
             when (declaration) {
                 is RsConstant, is RsEnumVariant, is RsStructItem, is RsFunction -> return MutabilityCategory.Declared
-                // is RsPatBinding ->
+
+                is RsPatBinding -> {
+                    return if (declaration.kind is BindByValue && declaration.mutability.isMut)
+                        MutabilityCategory.Declared
+                    else MutabilityCategory.Immutable
+                }
+
+                is RsSelfParameter -> return MutabilityCategory.valueOf(declaration.mutability)
+
+                else -> null
             }
         }
-    }
 
-    return null
+        else -> null
+    }
 }
 
 private val DEFAULT_MUTABILITY = true
 
+val RsExpr.isMutable: Boolean get() {
+    return when (mutabilityCategory) {
+        MutabilityCategory.Immutable -> false
+        MutabilityCategory.Declared -> true
+        MutabilityCategory.Inherited -> true
+        null -> DEFAULT_MUTABILITY
+    }
+}
+
+/*
 val RsExpr.isMutable: Boolean get() {
     return when (this) {
         is RsPathExpr -> {
@@ -156,3 +200,4 @@ val RsExpr.isMutable: Boolean get() {
         else -> DEFAULT_MUTABILITY
     }
 }
+*/
