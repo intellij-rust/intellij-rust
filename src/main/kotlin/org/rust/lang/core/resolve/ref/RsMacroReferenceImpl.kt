@@ -21,5 +21,5 @@ class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceCached<RsMacr
         collectCompletionVariants { processMacroReferenceVariants(element, it) }
 
     override fun resolveInner(): List<RsElement>
-        =  collectResolveVariants(element.referenceName) { processMacroReferenceVariants(element, it) }
+        = collectResolveVariants(element.referenceName) { processMacroReferenceVariants(element, it) }
 }
