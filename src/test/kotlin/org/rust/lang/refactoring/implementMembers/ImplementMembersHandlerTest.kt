@@ -481,6 +481,43 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test with members defined by a macro`() = doTest("""
+        macro_rules! foo {
+            ($ i:ident, $ j:tt) => { fn $ i() $ j }
+        }
+        trait T {
+            foo!(foo, ;);
+            foo!(bar, ;);
+            foo!(baz, ;);
+        }
+        struct S;
+        impl T for S {
+            foo!(foo, {});
+            fn baz() {}/*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("bar()", true, isSelected = true)
+    ), """
+        macro_rules! foo {
+            ($ i:ident, $ j:tt) => { fn $ i() $ j }
+        }
+        trait T {
+            foo!(foo, ;);
+            foo!(bar, ;);
+            foo!(baz, ;);
+        }
+        struct S;
+        impl T for S {
+            foo!(foo, {});
+
+            fn bar() {
+                unimplemented!()
+            }
+
+            fn baz() {}
+        }
+    """)
+
     private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 
     private fun doTest(@Language("Rust") code: String,

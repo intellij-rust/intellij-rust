@@ -8,8 +8,8 @@ package org.rust.lang.core.macros
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.PsiModificationTracker
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.macroName
 
@@ -21,7 +21,10 @@ fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<ExpansionRes
     return when {
         call.macroName == "lazy_static" -> {
             val result = expandLazyStatic(call)?.let { listOf(it) }
-            result?.forEach { it.setContext(context) }
+            result?.forEach {
+                it.setContext(context)
+                it.setExpandedFrom(call)
+            }
             CachedValueProvider.Result.create(result, call.containingFile)
         }
         else -> {
@@ -30,7 +33,10 @@ fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<ExpansionRes
             val project = context.project
             val expander = MacroExpander(project)
             val result = expander.expandMacro(def, call)
-            result?.forEach { it.setContext(context) }
+            result?.forEach {
+                it.setContext(context)
+                it.setExpandedFrom(call)
+            }
             // We can use a files instead of `MODIFICATION_COUNT`, so cached value will be depends
             // on modification count of these files. See [PsiCachedValue.getTimeStamp]
             CachedValueProvider.Result.create(result, def.containingFile, call.containingFile)

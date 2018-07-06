@@ -11,9 +11,8 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.tree.IElementType
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.leftSiblings
+import org.rust.lang.core.macros.expandedFromRecursively
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.rightSiblings
@@ -53,12 +52,12 @@ private fun insertNewTraitMembers(selected: Collection<RsAbstractable>, existing
 
     val templateImpl = RsPsiFactory(existingMembers.project).createMembers(selected, trait.subst)
 
-    val traitMembers = trait.element.members!!.childrenOfType<RsAbstractable>()
+    val traitMembers = trait.element.expandedMembers
     val newMembers = templateImpl.childrenOfType<RsAbstractable>()
 
     // [1] First, check if the order of the existingMembers already implemented
     // matches the order of existingMembers in the trait declaration.
-    val existingMembersWithPosInTrait = existingMembers.childrenOfType<RsAbstractable>().map {
+    val existingMembersWithPosInTrait = existingMembers.expandedMembers.map {
         existingMember -> Pair(existingMember, traitMembers.indexOfFirst {
             it.elementType == existingMember.elementType && it.name == existingMember.name
         })
@@ -80,28 +79,27 @@ private fun insertNewTraitMembers(selected: Collection<RsAbstractable>, existing
         }
 
         val anchor = indexedExistingMembers
-            .map { IndexedValue(it.index, it.value.first) }
             .lastOrNull()
-            ?: IndexedValue(-1, existingMembers.lbrace) ?: return
+            ?.let {
+                val member = it.value.first
+                IndexedValue(it.index, member.expandedFromRecursively ?: member)
+            }
+            ?: IndexedValue(-1, existingMembers.lbrace)
 
         val addedMember = existingMembers.addAfter(newMember, anchor.value) as RsAbstractable
         existingMembersWithPosInTrait.add(anchor.index + 1, Pair(addedMember, posInTrait))
 
         // If the newly added item is a function, we add an extra line between it and each of its siblings.
-        val previousAbstractable = addedMember.leftSiblings.find { it is RsAbstractable }
-        if (previousAbstractable != null) {
-            if (previousAbstractable is RsFunction || addedMember is RsFunction) {
-                val whitespaces = createExtraWhitespacesAroundFunction(previousAbstractable, addedMember)
-                existingMembers.addBefore(whitespaces, addedMember)
-            }
+        val prev = addedMember.leftSiblings.find { it is RsAbstractable || it is RsMacroCall }
+        if (prev != null && (prev is RsFunction || addedMember is RsFunction)) {
+            val whitespaces = createExtraWhitespacesAroundFunction(prev, addedMember)
+            existingMembers.addBefore(whitespaces, addedMember)
         }
 
-        val nextAbstractable = addedMember.rightSiblings.find { it is RsAbstractable }
-        if (nextAbstractable != null) {
-            if (nextAbstractable is RsFunction || addedMember is RsFunction) {
-                val whitespaces = createExtraWhitespacesAroundFunction(addedMember, nextAbstractable)
-                existingMembers.addAfter(whitespaces, addedMember)
-            }
+        val next = addedMember.rightSiblings.find { it is RsAbstractable || it is RsMacroCall }
+        if (next != null && (next is RsFunction || addedMember is RsFunction)) {
+            val whitespaces = createExtraWhitespacesAroundFunction(addedMember, next)
+            existingMembers.addAfter(whitespaces, addedMember)
         }
     }
 }

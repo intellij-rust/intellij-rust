@@ -6,9 +6,10 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.PsiNameIdentifierOwner
+import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.psi.*
 
-interface RsAbstractable : RsNamedElement, PsiNameIdentifierOwner {
+interface RsAbstractable : RsNamedElement, PsiNameIdentifierOwner, ExpansionResult {
     val isAbstract: Boolean
 }
 

@@ -13,6 +13,7 @@ import org.rust.lang.core.macros.ExpansionResult
 import org.rust.lang.core.macros.expandMacro
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsMacroCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsMacroCallStub
@@ -52,6 +53,21 @@ val RsMacroCall.expansion: List<ExpansionResult>?
     get() = CachedValuesManager.getCachedValue(this) {
         expandMacro(this)
     }
+
+fun RsMacroCall.processExpansionRecursively(processor: (ExpansionResult) -> Boolean): Boolean =
+    processExpansionRecursively(processor, 0)
+
+private fun RsMacroCall.processExpansionRecursively(processor: (ExpansionResult) -> Boolean, depth: Int): Boolean {
+    if (depth > DEFAULT_RECURSION_LIMIT) return true
+    return expansion.orEmpty().any { it.processRecursively(processor, depth) }
+}
+
+private fun ExpansionResult.processRecursively(processor: (ExpansionResult) -> Boolean, depth: Int): Boolean {
+    return when (this) {
+        is RsMacroCall -> processExpansionRecursively(processor, depth + 1)
+        else -> processor(this)
+    }
+}
 
 private fun PsiElement.braceListBodyText(): CharSequence? =
     textBetweenParens(firstChild, lastChild)
