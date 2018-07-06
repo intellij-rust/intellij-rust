@@ -85,16 +85,16 @@ fun resolveFieldLookupReferenceWithReceiverType(
 }
 
 interface DotExprResolveVariant : ScopeEntry {
-    val selfTy: Ty;
+    /** The receiver type after possible derefs performed */
+    val selfTy: Ty
+    /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
     val derefCount: Int
 }
 
 data class FieldResolveVariant(
     override val name: String,
     override val element: RsElement,
-    /** The receiver type after possible derefs performed */
     override val selfTy: Ty,
-    /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
     override val derefCount: Int
 ) : DotExprResolveVariant
 
@@ -106,9 +106,7 @@ data class MethodResolveVariant(
      * trait definition, this is the impl of the actual trait for the receiver type
      */
     val impl: RsImplItem?,
-    /** The receiver type after possible derefs performed */
     override val selfTy: Ty,
-    /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
     override val derefCount: Int
 ) : DotExprResolveVariant {
     /** Legacy subst. Do not really used */
