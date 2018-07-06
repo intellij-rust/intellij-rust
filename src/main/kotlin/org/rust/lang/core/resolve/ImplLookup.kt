@@ -402,7 +402,7 @@ class ImplLookup(
             }
             ref.selfTy is TyAnon -> {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
-                    ?.let { setOf(SelectionCandidate.TypeParameter(it)) } ?: emptySet()
+                    ?.let { setOf(SelectionCandidate.TraitObject) } ?: emptySet()
             }
             else -> buildSet {
                 addAll(assembleImplCandidates(ref))
@@ -410,7 +410,7 @@ class ImplLookup(
                 if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
                 if (ref.selfTy is TyTraitObject) {
                     ref.selfTy.trait.flattenHierarchy.find { it.element == ref.trait.element }
-                        ?.let { add(SelectionCandidate.TypeParameter(it)) }
+                        ?.let { add(SelectionCandidate.TraitObject) }
                 }
                 getHardcodedImpls(ref.selfTy).filter { be ->
                     be.element == element && ctx.probe { ctx.combinePairs(zipValues(be.subst, ref.trait.subst)) }
@@ -478,19 +478,33 @@ class ImplLookup(
             }
             is SelectionCandidate.TypeParameter -> {
                 testAssert { !candidate.bound.containsTyOfClass(TyInfer::class.java) }
-                ctx.combinePairs(zipValues(candidate.bound.subst, ref.trait.subst))
-                ctx.combinePairs(zipValues(candidate.bound.assoc, ref.trait.assoc))
+                combineBoundElements(candidate.bound, ref.trait)
                 Selection(candidate.bound.element, emptyList())
+            }
+            SelectionCandidate.TraitObject -> {
+                val traits = when (ref.selfTy) {
+                    is TyTraitObject -> ref.selfTy.trait.flattenHierarchy
+                    is TyAnon -> ref.selfTy.getTraitBoundsTransitively()
+                    else -> error("unreachable")
+                }
+                // should be nonnull because already checked in `assembleCandidates`
+                val be = traits.find { it.element == ref.trait.element } ?: error("Corrupted trait selection")
+                combineBoundElements(be, ref.trait)
+                Selection(be.element, emptyList())
             }
             is SelectionCandidate.HardcodedImpl -> {
                 val impl = getHardcodedImpls(ref.selfTy).first { be ->
                     be.element == ref.trait.element && ctx.probe { ctx.combinePairs(zipValues(be.subst, ref.trait.subst)) }
                 }
-                ctx.combinePairs(zipValues(impl.subst, ref.trait.subst))
-                ctx.combinePairs(zipValues(impl.assoc, ref.trait.assoc))
+                combineBoundElements(impl, ref.trait)
                 Selection(impl.element, emptyList())
             }
         }
+    }
+
+    private fun <T: RsElement> combineBoundElements(be1: BoundElement<T>, be2: BoundElement<T>) {
+        ctx.combinePairs(zipValues(be1.subst, be2.subst))
+        ctx.combinePairs(zipValues(be1.assoc, be2.assoc))
     }
 
     fun coercionSequence(baseTy: Ty): Sequence<Ty> {
@@ -721,6 +735,7 @@ private sealed class SelectionCandidate {
 
     data class DerivedTrait(val item: RsTraitItem) : SelectionCandidate()
     data class TypeParameter(val bound: BoundElement<RsTraitItem>) : SelectionCandidate()
+    object TraitObject : SelectionCandidate()
     /** @see ImplLookup.getHardcodedImpls */
     object HardcodedImpl : SelectionCandidate()
     object Closure : SelectionCandidate()
