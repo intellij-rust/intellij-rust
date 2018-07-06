@@ -42,7 +42,11 @@ private val computeOnce: Boolean by lazy {
 private inline fun <reified T : Any> load(): String = T::class.java.name
 private fun load(p: KProperty<*>): String = p.name
 
-val TomlKey.isDependencyKey: Boolean get() {
-    val text = text
-    return text == "dependencies" || text == "dev-dependencies" || text == "build-dependencies"
-}
+val TomlKey.isDependencyKey: Boolean
+    get() {
+        val text = text
+        return text == "dependencies" || text == "dev-dependencies" || text == "build-dependencies"
+    }
+
+val TomlTableHeader.isDependencyListHeader: Boolean
+    get() = names.lastOrNull()?.isDependencyKey == true
