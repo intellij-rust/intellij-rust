@@ -1147,7 +1147,7 @@ private class RsFnInferenceContext(
             is RsTupleFieldDecl -> fieldElement.typeReference.type
             else -> null
         } ?: TyUnknown
-        return raw.substitute(receiver.typeParameterValues)
+        return raw.substitute(field.selfTy.typeParameterValues)
     }
 
     private fun inferDotExprType(expr: RsDotExpr, expected: Ty?): Ty {
@@ -1503,8 +1503,7 @@ private class RsFnInferenceContext(
 
     private fun RsPat.extractBindings(type: Ty) {
         when (this) {
-            is RsPatWild -> {
-            }
+            is RsPatWild -> {}
             is RsPatConst -> expr.inferTypeCoercableTo(type)
             is RsPatRef -> pat.extractBindings((type as? TyReference)?.referenced ?: TyUnknown)
             is RsPatRange -> patConstList.forEach { it.expr.inferTypeCoercableTo(type) }

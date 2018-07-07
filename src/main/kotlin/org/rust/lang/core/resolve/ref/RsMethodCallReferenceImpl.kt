@@ -50,7 +50,7 @@ class RsFieldLookupReferenceImpl(
         val lookup = ImplLookup.relativeTo(element)
         val receiver = element.receiver.type
         return collectCompletionVariants {
-            processFieldExprResolveVariants(lookup, receiver, true, filterMethodCompletionVariants(it, lookup, receiver))
+            processDotExprResolveVariants(lookup, receiver, filterMethodCompletionVariants(it, lookup, receiver))
         }
     }
 
@@ -80,18 +80,23 @@ fun resolveFieldLookupReferenceWithReceiverType(
     expr: RsFieldLookup
 ): List<FieldResolveVariant> {
     return collectResolveVariants(expr.referenceName) {
-        processFieldExprResolveVariants(lookup, receiverType, false, it)
+        processFieldExprResolveVariants(lookup, receiverType, it)
     }
+}
+
+interface DotExprResolveVariant : ScopeEntry {
+    /** The receiver type after possible derefs performed */
+    val selfTy: Ty
+    /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
+    val derefCount: Int
 }
 
 data class FieldResolveVariant(
     override val name: String,
     override val element: RsElement,
-    /** The receiver type after possible derefs performed */
-    val selfTy: Ty,
-    /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
-    val derefCount: Int
-) : ScopeEntry
+    override val selfTy: Ty,
+    override val derefCount: Int
+) : DotExprResolveVariant
 
 data class MethodResolveVariant(
     override val name: String,
@@ -101,11 +106,9 @@ data class MethodResolveVariant(
      * trait definition, this is the impl of the actual trait for the receiver type
      */
     val impl: RsImplItem?,
-    /** The receiver type after possible derefs performed */
-    val selfTy: Ty,
-    /** The number of `*` dereferences should be performed on receiver to match `selfTy` */
-    val derefCount: Int
-) : ScopeEntry {
+    override val selfTy: Ty,
+    override val derefCount: Int
+) : DotExprResolveVariant {
     /** Legacy subst. Do not really used */
     override val subst: Substitution get() = emptySubstitution
 }
