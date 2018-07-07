@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.infer
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
@@ -616,6 +617,7 @@ class RsFnInferenceContext(
     }
 
     private fun RsExpr.inferType(expected: Ty? = null): Ty {
+        ProgressManager.checkCanceled()
         if (ctx.isTypeInferred(this)) error("Trying to infer expression type twice")
 
         val ty = when (this) {
