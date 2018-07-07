@@ -1405,13 +1405,7 @@ private class RsFnInferenceContext(
                     .find { it.trait.selfTy == expected }
                     ?.let { lookup.asTyFunction(it.trait.trait) }
             }
-            is TyReference -> {
-                if (expected.referenced is TyTraitObject) {
-                    null // TODO
-                } else {
-                    null
-                }
-            }
+            is TyTraitObject -> lookup.asTyFunction(expected.trait)
             is TyFunction -> expected
             else -> null
         }
