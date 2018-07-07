@@ -28,6 +28,7 @@ class RustProjectSettingsServiceImpl(
         var explicitPathToStdlib: String? = null,
         var useCargoCheckForBuild: Boolean = true,
         var useCargoCheckAnnotator: Boolean = false,
+        var compileAllTargets: Boolean = true,
         var useOfflineForCargoCheck: Boolean = false,
         var expandMacros: Boolean = true
     )
@@ -51,6 +52,7 @@ class RustProjectSettingsServiceImpl(
                 explicitPathToStdlib = state.explicitPathToStdlib,
                 useCargoCheckForBuild = state.useCargoCheckForBuild,
                 useCargoCheckAnnotator = state.useCargoCheckAnnotator,
+                compileAllTargets = state.compileAllTargets,
                 useOfflineForCargoCheck = state.useOfflineForCargoCheck,
                 expandMacros = state.expandMacros
             )
@@ -62,6 +64,7 @@ class RustProjectSettingsServiceImpl(
                 explicitPathToStdlib = value.explicitPathToStdlib,
                 useCargoCheckForBuild = value.useCargoCheckForBuild,
                 useCargoCheckAnnotator = value.useCargoCheckAnnotator,
+                compileAllTargets = value.compileAllTargets,
                 useOfflineForCargoCheck = value.useOfflineForCargoCheck,
                 expandMacros = value.expandMacros
             )
