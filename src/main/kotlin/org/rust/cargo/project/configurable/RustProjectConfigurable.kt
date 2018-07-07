@@ -32,26 +32,29 @@ class RustProjectConfigurable(
         project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
     )
 
-    private val autoUpdateEnabledCheckbox = JBCheckBox()
+    private val autoUpdateEnabledCheckbox: JBCheckBox = JBCheckBox()
     private var autoUpdateEnabled: Boolean by CheckboxDelegate(autoUpdateEnabledCheckbox)
 
-    private val useCargoCheckForBuildCheckbox = JBCheckBox()
+    private val useCargoCheckForBuildCheckbox: JBCheckBox = JBCheckBox()
     private var useCargoCheckForBuild: Boolean by CheckboxDelegate(useCargoCheckForBuildCheckbox)
 
-    private val useCargoCheckAnnotatorCheckbox = JBCheckBox()
+    private val useCargoCheckAnnotatorCheckbox: JBCheckBox = JBCheckBox()
     private var useCargoCheckAnnotator: Boolean by CheckboxDelegate(useCargoCheckAnnotatorCheckbox)
 
-    private val useOfflineForCargoCheckCheckbox = JBCheckBox()
+    private val useOfflineForCargoCheckCheckbox: JBCheckBox = JBCheckBox()
     private var useOfflineForCargoCheck: Boolean by CheckboxDelegate(useOfflineForCargoCheckCheckbox)
 
-    private val expandMacrosCheckbox = JBCheckBox()
+    private val compileAllTargetsCheckBox = JBCheckBox()
+    private var compileAllTargets: Boolean by CheckboxDelegate(compileAllTargetsCheckBox)
+
+    private val expandMacrosCheckbox: JBCheckBox = JBCheckBox()
     private var expandMacros: Boolean by CheckboxDelegate(expandMacrosCheckbox)
 
     private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
     private val hintCheckboxes: Map<String, JBCheckBox> =
         hintProvider.supportedOptions.associate { it.id to JBCheckBox() }
 
-    private fun checkboxForOption(opt: Option) = hintCheckboxes[opt.id]!!
+    private fun checkboxForOption(opt: Option): JBCheckBox = hintCheckboxes[opt.id]!!
 
     override fun createComponent(): JComponent = layout {
         rustProjectSettings.attachTo(this)
@@ -60,6 +63,7 @@ class RustProjectConfigurable(
             row("Watch Cargo.toml:", autoUpdateEnabledCheckbox)
             row("Use cargo check to analyze code:", useCargoCheckAnnotatorCheckbox)
             row("Use cargo check when build project:", useCargoCheckForBuildCheckbox)
+            row("Compile all project targets if possible:", compileAllTargetsCheckBox)
             row("Use '-Zoffline' for cargo check (nightly only):", useOfflineForCargoCheckCheckbox)
         }
         val supportedHintOptions = hintProvider.supportedOptions
@@ -85,6 +89,7 @@ class RustProjectConfigurable(
         autoUpdateEnabled = settings.autoUpdateEnabled
         useCargoCheckForBuild = settings.useCargoCheckForBuild
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
+        compileAllTargets = settings.compileAllTargets
         useOfflineForCargoCheck = settings.useOfflineForCargoCheck
         expandMacros = settings.expandMacros
 
@@ -108,6 +113,7 @@ class RustProjectConfigurable(
             autoUpdateEnabled = autoUpdateEnabled,
             useCargoCheckForBuild = useCargoCheckForBuild,
             useCargoCheckAnnotator = useCargoCheckAnnotator,
+            compileAllTargets = compileAllTargets,
             useOfflineForCargoCheck = useOfflineForCargoCheck,
             expandMacros = expandMacros
         )
@@ -122,6 +128,7 @@ class RustProjectConfigurable(
             || autoUpdateEnabled != settings.autoUpdateEnabled
             || useCargoCheckForBuild != settings.useCargoCheckForBuild
             || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
+            || compileAllTargets != settings.compileAllTargets
             || useOfflineForCargoCheck != settings.useOfflineForCargoCheck
             || expandMacros != settings.expandMacros
     }
