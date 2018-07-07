@@ -14,28 +14,32 @@ import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
 
 class Timings(
-    private val values: LinkedHashMap<String, Long> = LinkedHashMap()
+    private val valuesTotal: LinkedHashMap<String, Long> = LinkedHashMap(),
+    private val invokes: MutableMap<String, Long> = mutableMapOf()
 ) {
     fun <T> measure(name: String, f: () -> T): T {
-        check(name !in values)
-        var result: T? = null
-        values[name] = measureTimeMillis { result = f() }
-        @Suppress("UNCHECKED_CAST")
-        return result as T
+        check(name !in valuesTotal)
+        return measureInternal(name, f)
     }
 
+    fun <T> measureAverage(name: String, f: () -> T): T = measureInternal(name, f)
+
     fun merge(other: Timings): Timings {
-        check(values.isEmpty() || other.values.isEmpty() || values.size == other.values.size)
+        val values = values()
+        val otherValues = other.values()
+        check(values.isEmpty() || otherValues.isEmpty() || values.size == otherValues.size)
         val result = Timings()
-        for (k in values.keys.union(other.values.keys)) {
-            result.values[k] =
+        for (k in values.keys.union(otherValues.keys)) {
+            result.valuesTotal[k] =
                 // https://www.youtube.com/watch?v=vrfYLlR8X8k&feature=youtu.be&t=25m17s
-                minOf(values.getOrDefault(k, Long.MAX_VALUE), other.values.getOrDefault(k, Long.MAX_VALUE))
+                minOf(values.getOrDefault(k, Long.MAX_VALUE), otherValues.getOrDefault(k, Long.MAX_VALUE))
+            result.invokes[k] = 1
         }
         return result
     }
 
     fun report() {
+        val values = values()
         if (values.isEmpty()) {
             println("No metrics recorder")
             return
@@ -48,6 +52,23 @@ class Timings(
         val total = values.values.sum()
         println("$total ms total.")
         println()
+    }
+
+    private fun <T> measureInternal(name: String, f: () -> T): T {
+        var result: T? = null
+        val time = measureTimeMillis { result = f() }
+        valuesTotal.merge(name, time, Long::plus)
+        invokes.merge(name, 1, Long::plus)
+        @Suppress("UNCHECKED_CAST")
+        return result as T
+    }
+
+    private fun values(): Map<String, Long> {
+        val result = LinkedHashMap<String, Long>()
+        for ((k, sum) in valuesTotal) {
+            result[k] = (sum.toDouble() / invokes[k]!!).toLong()
+        }
+        return result
     }
 }
 
