@@ -495,7 +495,7 @@ private fun exportedMacros(scope: RsFile): List<RsMacro> {
     check(scope.isCrateRoot)
     return CachedValuesManager.getCachedValue(scope) {
         val macros = exportedMacrosInternal(scope)
-        CachedValueProvider.Result.create(macros, PsiModificationTracker.MODIFICATION_COUNT)
+        CachedValueProvider.Result.create(macros, scope.project.rustStructureModificationTracker)
     }
 }
 
