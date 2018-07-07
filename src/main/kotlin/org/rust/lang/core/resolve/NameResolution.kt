@@ -7,6 +7,7 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
@@ -838,6 +839,7 @@ private fun walkUp(
     var cameFrom = start
     var scope = start.context as RsElement?
     while (scope != null) {
+        ProgressManager.checkCanceled()
         if (processor(cameFrom, scope)) return true
         if (stopAfter(scope)) break
         cameFrom = scope
