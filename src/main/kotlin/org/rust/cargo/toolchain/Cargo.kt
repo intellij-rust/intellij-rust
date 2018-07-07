@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.runExecutable
 import org.rust.cargo.toolchain.impl.CargoMetadata
@@ -132,10 +134,10 @@ class Cargo(
     }
 
     @Throws(ExecutionException::class)
-    fun checkProject(owner: Disposable, projectDirectory: Path): ProcessOutput {
+    fun checkProject(project: Project, owner: Disposable, projectDirectory: Path): ProcessOutput {
         val arguments = mutableListOf("--message-format=json", "--all")
 
-        if (checkSupportForBuildCheckAllTargets()) {
+        if (project.rustSettings.compileAllTargets && checkSupportForBuildCheckAllTargets()) {
             arguments += "--all-targets"
         }
 
