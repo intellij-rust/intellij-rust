@@ -10,6 +10,7 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderFactory
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.parser.GeneratedParserUtilBase
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -208,6 +209,7 @@ private class MacroPattern private constructor(
     private fun isEmpty() = pattern.firstOrNull() == null
 
     private fun matchPartial(macroCallBody: PsiBuilder): MacroSubstitution? {
+        ProgressManager.checkCanceled()
         val map = HashMap<String, String>()
         val groups = mutableListOf<List<MacroSubstitution>>()
 
