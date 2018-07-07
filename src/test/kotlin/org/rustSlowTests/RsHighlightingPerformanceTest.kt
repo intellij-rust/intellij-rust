@@ -73,15 +73,18 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
             refs.forEach { it.reference.resolve() }
         }
 
-        val stmt = myFixture.file.descendantsOfType<RsFunction>().asSequence()
-            .mapNotNull { it.block?.stmtList?.lastOrNull() }.first()
-        myFixture.editor.caretModel.moveToOffset(stmt.textOffset)
-        myFixture.type("2+2;")
-        PsiDocumentManager.getInstance(project).commitAllDocuments() // process PSI modification events
+        myFixture.file.descendantsOfType<RsFunction>()
+            .asSequence()
+            .mapNotNull { it.block?.stmtList?.lastOrNull() }
+            .forEach { stmt ->
+                myFixture.editor.caretModel.moveToOffset(stmt.textOffset)
+                myFixture.type("2+2;")
+                PsiDocumentManager.getInstance(project).commitAllDocuments() // process PSI modification events
 
-        timings.measure("resolve_after_typing") {
-            refs.forEach { it.reference.resolve() }
-        }
+                timings.measureAverage("resolve_after_typing") {
+                    refs.forEach { it.reference.resolve() }
+                }
+            }
 
         return timings
     }
