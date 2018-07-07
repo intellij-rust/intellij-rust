@@ -126,7 +126,6 @@ val RsExpr.mutabilityCategory: MutabilityCategory? get() {
 
         is RsDotExpr -> {
             val type = expr.type
-            // val isDeref: Boolean = rsInferenceResult.adjustments.getOrNull(expr)?.any { it -> it.kind == Adjust.DEREF }
             val isDeref = expr.inference?.adjustments?.get(this)?.any { it.kind == Adjust.DEREF } ?: false
 
             if (isDeref && type is TyReference)
@@ -135,7 +134,9 @@ val RsExpr.mutabilityCategory: MutabilityCategory? get() {
                 expr.mutabilityCategory?.inherit()
         }
 
-        // is RsIndexExpr -> {}
+        is RsIndexExpr -> {
+            this.containerExpr?.mutabilityCategory?.inherit()
+        }
 
         is RsPathExpr -> {
             val declaration = path.reference.resolve() ?: return null
@@ -169,11 +170,4 @@ val RsExpr.mutabilityCategory: MutabilityCategory? get() {
 
 private val DEFAULT_MUTABILITY = true
 
-val RsExpr.isMutable: Boolean get() {
-    return when (mutabilityCategory) {
-        MutabilityCategory.Immutable -> false
-        MutabilityCategory.Declared -> true
-        MutabilityCategory.Inherited -> true
-        null -> DEFAULT_MUTABILITY
-    }
-}
+val RsExpr.isMutable: Boolean get() = mutabilityCategory?.isMutable ?: DEFAULT_MUTABILITY
