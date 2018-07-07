@@ -1431,4 +1431,21 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ X
     """)
+
+    fun `test field type substitution after deref`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct S1<A> { field1: A }
+        struct S2<B> { parent: S1<B> }
+        impl<T> Deref for S2<T> { type Target = S1<T>; }
+
+        fn main() {
+            let s1 = S1 { field1: 1u8 };
+            let s2 = S2 { parent: s1 };
+
+            let a = s2.field1;
+            a;
+        } //^ u8
+    """)
 }

@@ -21,7 +21,9 @@ import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
 import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
-import org.rust.lang.core.resolve.ref.MethodCallee
+import org.rust.lang.core.resolve.ref.DotExprResolveVariant
+import org.rust.lang.core.resolve.ref.FieldResolveVariant
+import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
@@ -70,19 +72,27 @@ import org.rust.stdext.buildList
 //     a code fragment in a temporary file and attaching it to some existing file. See the usages of
 //     [RsCodeFragmentFactory]
 
+fun processDotExprResolveVariants(
+    lookup: ImplLookup,
+    receiverType: Ty,
+    processor: (DotExprResolveVariant) -> Boolean
+): Boolean {
+    if (processFieldExprResolveVariants(lookup, receiverType, processor)) return true
+    if (processMethodDeclarationsWithDeref(lookup, receiverType) { processor(it) }) return true
+
+    return false
+}
+
 fun processFieldExprResolveVariants(
     lookup: ImplLookup,
     receiverType: Ty,
-    isCompletion: Boolean,
-    processor: RsResolveProcessor
+    processor: (FieldResolveVariant) -> Boolean
 ): Boolean {
-    for (ty in lookup.coercionSequence(receiverType)) {
+    for ((i, ty) in lookup.coercionSequence(receiverType).withIndex()) {
         if (ty !is TyAdt || ty.item !is RsStructItem) continue
-        if (processFieldDeclarations(ty.item, processor)) return true
+        if (processFieldDeclarations(ty.item) { processor(FieldResolveVariant(it.name, it.element!!, ty, i)) }) return true
     }
-    if (isCompletion && processMethodDeclarationsWithDeref(lookup, receiverType, processor)) {
-        return true
-    }
+
     return false
 }
 
@@ -120,7 +130,8 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 
     val explicitPath = modDecl.pathAttribute
     if (explicitPath != null) {
-        val vFile = dir.virtualFile.findFileByRelativePath(FileUtil.toSystemIndependentName(explicitPath)) ?: return false
+        val vFile = dir.virtualFile.findFileByRelativePath(FileUtil.toSystemIndependentName(explicitPath))
+            ?: return false
         val mod = vFile.toPsiFile(modDecl.project)?.rustFile ?: return false
 
         val name = modDecl.name ?: return false
@@ -183,14 +194,15 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
     return false
 }
 
-private val RsPath.qualifier: RsPath? get() {
-    path?.let { return it }
-    var ctx = context
-    while (ctx is RsPath) {
-        ctx = ctx.context
+private val RsPath.qualifier: RsPath?
+    get() {
+        path?.let { return it }
+        var ctx = context
+        while (ctx is RsPath) {
+            ctx = ctx.context
+        }
+        return (ctx as? RsUseSpeck)?.qualifier
     }
-    return (ctx as? RsUseSpeck)?.qualifier
-}
 
 fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
 
@@ -549,7 +561,7 @@ private fun reexportedMacros(item: RsExternCrateItem): List<RsMacro>? {
 private fun collectExportedMacros(
     useItem: RsUseItem,
     exportingMacrosCrates: Map<String, RsMod>
-) : List<RsMacro> {
+): List<RsMacro> {
     return buildList {
         val root = useItem.useSpeck ?: return@buildList
 
@@ -606,7 +618,7 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsMethodResolveProcessor): Boolean {
     return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
         val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, _, impl) ->
-            element is RsFunction && !element.isAssocFn && processor(MethodCallee(name, element, impl, ty, i))
+            element is RsFunction && !element.isAssocFn && processor(MethodResolveVariant(name, element, impl, ty, i))
         }
         processAssociatedItems(lookup, ty, VALUES, methodProcessor)
     }
