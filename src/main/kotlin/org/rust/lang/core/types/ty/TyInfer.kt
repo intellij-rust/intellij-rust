@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
+import org.rust.lang.core.types.HAS_TY_INFER_MASK
 import org.rust.lang.core.types.infer.Node
 import org.rust.lang.core.types.infer.NodeOrValue
 import org.rust.lang.core.types.infer.VarValue

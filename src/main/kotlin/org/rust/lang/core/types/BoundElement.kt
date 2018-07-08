@@ -12,10 +12,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.emptySubstitution
-import org.rust.lang.core.types.ty.foldValues
 
 /**
  * Represents a potentially generic Psi Element, like `fn make_t<T>() { }`,
@@ -45,9 +42,13 @@ data class BoundElement<out E : RsElement>(
         if (element is T) BoundElement(element, subst, assoc) else null
 
     override fun superFoldWith(folder: TypeFolder): BoundElement<E> =
-        BoundElement(element, this.subst.foldValues(folder), assoc.foldValues(folder))
+        BoundElement(
+            element,
+            this.subst.foldValues(folder),
+            assoc.mapValues { (_, value) -> value.foldWith(folder) }
+        )
 
-    override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        subst.values.any(visitor) || assoc.values.any(visitor)
+    override fun superVisitWith(visitor: TypeVisitor): Boolean = assoc.values.any { visitor.visitTy(it) } ||
+        subst.types.any { visitor.visitTy(it) } && subst.lifetimes.any { visitor.visitRe(it) }
+
 }
-

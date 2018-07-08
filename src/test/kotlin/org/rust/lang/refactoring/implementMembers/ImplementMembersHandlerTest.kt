@@ -197,7 +197,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    // TODO it should not erase lifetimes
     fun `test implement constants`() = doTest("""
         trait T {
             const C1: i32;
@@ -222,7 +221,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             const C1: i32 = unimplemented!();
-            const C4: &str = unimplemented!();
+            const C4: &'static str = unimplemented!();
         }
     """)
 
@@ -299,6 +298,99 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
             const C2: u16 = unimplemented!();
         }
+    """)
+
+    fun `test implement generic trait with lifetimes`() = doTest("""
+        struct S<'a> { x: &'a str }
+        struct D<'a, T> { x: &'a T }
+        type A<'a> = S<'a>;
+        type B = S<'static>;
+        type C = S<'unknown>;
+        trait T<'a> {
+            fn f1(&'a self) -> &'a str;
+            const C1: &'a str;
+            fn f2(_: &'a S<'a>) -> &'a S<'a>;
+            const C2: &'a S<'a>;
+            fn f3(_: &'a A<'a>) -> &'a A<'a>;
+            const C3: &'a A<'a>;
+            fn f4(_: &'a B) -> &'a B;
+            const C4: &'a B;
+            fn f5(_: &'a C) -> &'a C;
+            const C5: &'a C;
+            fn f6(_: &'a D<'a, D<'a, D<'a, S<'a>>>>) -> &'a D<'a, D<'a, D<'a, S<'a>>>>;
+            const C6: &'a D<'a, D<'a, D<'a, S<'a>>>>;
+        }
+        impl<'b> T<'b> for S<'b> {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f1(&'a self) -> &'a str", true),
+        ImplementMemberSelection("C1: &'a str", true),
+        ImplementMemberSelection("f2(_: &'a S<'a>) -> &'a S<'a>", true),
+        ImplementMemberSelection("C2: &'a S<'a>", true),
+        ImplementMemberSelection("f3(_: &'a A<'a>) -> &'a A<'a>", true),
+        ImplementMemberSelection("C3: &'a A<'a>", true),
+        ImplementMemberSelection("f4(_: &'a B) -> &'a B", true),
+        ImplementMemberSelection("C4: &'a B", true),
+        ImplementMemberSelection("f5(_: &'a C) -> &'a C", true),
+        ImplementMemberSelection("C5: &'a C", true),
+        ImplementMemberSelection("f6(_: &'a D<'a, D<'a, D<'a, S<'a>>>>) -> &'a D<'a, D<'a, D<'a, S<'a>>>>", true),
+        ImplementMemberSelection("C6: &'a D<'a, D<'a, D<'a, S<'a>>>>", true)
+    ), """
+    struct S<'a> { x: &'a str }
+    struct D<'a, T> { x: &'a T }
+    type A<'a> = S<'a>;
+    type B = S<'static>;
+    type C = S<'unknown>;
+    trait T<'a> {
+        fn f1(&'a self) -> &'a str;
+        const C1: &'a str;
+        fn f2(_: &'a S<'a>) -> &'a S<'a>;
+        const C2: &'a S<'a>;
+        fn f3(_: &'a A<'a>) -> &'a A<'a>;
+        const C3: &'a A<'a>;
+        fn f4(_: &'a B) -> &'a B;
+        const C4: &'a B;
+        fn f5(_: &'a C) -> &'a C;
+        const C5: &'a C;
+        fn f6(_: &'a D<'a, D<'a, D<'a, S<'a>>>>) -> &'a D<'a, D<'a, D<'a, S<'a>>>>;
+        const C6: &'a D<'a, D<'a, D<'a, S<'a>>>>;
+    }
+    impl<'b> T<'b> for S<'b> {
+        fn f1(&'b self) -> &'b str {
+            unimplemented!()
+        }
+
+        const C1: &'b str = unimplemented!();
+
+        fn f2(_: &'b S<'b>) -> &'b S<'b> {
+            unimplemented!()
+        }
+
+        const C2: &'b S<'b> = unimplemented!();
+
+        fn f3(_: &'b S<'b>) -> &'b S<'b> {
+            unimplemented!()
+        }
+
+        const C3: &'b S<'b> = unimplemented!();
+
+        fn f4(_: &'b S<'static>) -> &'b S<'static> {
+            unimplemented!()
+        }
+
+        const C4: &'b S<'static> = unimplemented!();
+
+        fn f5(_: &'b S<'_>) -> &'b S<'_> {
+            unimplemented!()
+        }
+
+        const C5: &'b S<'_> = unimplemented!();
+
+        fn f6(_: &'b D<'b, D<'b, D<'b, S<'b>>>>) -> &'b D<'b, D<'b, D<'b, S<'b>>>> {
+            unimplemented!()
+        }
+
+        const C6: &'b D<'b, D<'b, D<'b, S<'b>>>> = unimplemented!();
+    }
     """)
 
     fun `test do not implement methods already present`() = doTest("""

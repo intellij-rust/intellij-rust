@@ -5,10 +5,20 @@
 
 package org.rust.lang.core.types.infer
 
+import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.regions.ReEarlyBound
+import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 
-typealias TypeFolder = (Ty) -> Ty
-typealias TypeVisitor = (Ty) -> Boolean
+interface TypeFolder {
+    fun foldTy(ty: Ty): Ty = ty
+    fun foldRe(region: Region): Region = region
+}
+
+interface TypeVisitor {
+    fun visitTy(ty: Ty): Boolean = false
+    fun visitRe(region: Region): Boolean = false
+}
 
 /**
  * Despite a scary name, [TypeFoldable] is a rather simple thing.
@@ -58,7 +68,7 @@ interface TypeFoldable<out Self> {
 /** Deeply replace any [TyInfer] with the function [folder] */
 fun <T> TypeFoldable<T>.foldTyInferWith(folder: (TyInfer) -> Ty): T =
     foldWith(object : TypeFolder {
-        override fun invoke(ty: Ty): Ty {
+        override fun foldTy(ty: Ty): Ty {
             val foldedTy = if (ty is TyInfer) folder(ty) else ty
             return if (foldedTy.hasTyInfer) foldedTy.superFoldWith(this) else foldedTy
         }
@@ -67,7 +77,7 @@ fun <T> TypeFoldable<T>.foldTyInferWith(folder: (TyInfer) -> Ty): T =
 /** Deeply replace any [TyTypeParameter] with the function [folder] */
 fun <T> TypeFoldable<T>.foldTyTypeParameterWith(folder: (TyTypeParameter) -> Ty): T =
     foldWith(object : TypeFolder {
-        override fun invoke(ty: Ty): Ty = when {
+        override fun foldTy(ty: Ty): Ty = when {
             ty is TyTypeParameter -> folder(ty)
             ty.hasTyTypeParameters -> ty.superFoldWith(this)
             else -> ty
@@ -77,7 +87,7 @@ fun <T> TypeFoldable<T>.foldTyTypeParameterWith(folder: (TyTypeParameter) -> Ty)
 /** Deeply replace any [TyProjection] with the function [folder] */
 fun <T> TypeFoldable<T>.foldTyProjectionWith(folder: (TyProjection) -> Ty): T =
     foldWith(object : TypeFolder {
-        override fun invoke(ty: Ty): Ty = when {
+        override fun foldTy(ty: Ty): Ty = when {
             ty is TyProjection -> folder(ty)
             ty.hasTyProjection -> ty.superFoldWith(this)
             else -> ty
@@ -89,13 +99,19 @@ fun <T> TypeFoldable<T>.foldTyProjectionWith(folder: (TyProjection) -> Ty): T =
  */
 fun <T> TypeFoldable<T>.substitute(subst: Substitution): T =
     foldWith(object : TypeFolder {
-        override fun invoke(ty: Ty): Ty =
-            subst[ty] ?: if (ty.hasTyTypeParameters) ty.superFoldWith(this) else ty
+        override fun foldTy(ty: Ty): Ty = when {
+            ty is TyTypeParameter -> subst[ty] ?: ty
+            ty.needToSubstitute -> ty.superFoldWith(this)
+            else -> ty
+        }
+
+        override fun foldRe(region: Region): Region =
+            (region as? ReEarlyBound)?.let { subst[it] } ?: region
     })
 
 fun <T> TypeFoldable<T>.containsTyOfClass(classes: List<Class<*>>): Boolean =
     visitWith(object : TypeVisitor {
-        override fun invoke(ty: Ty): Boolean =
+        override fun visitTy(ty: Ty): Boolean =
             if (classes.any { it.isInstance(ty) }) true else ty.superVisitWith(this)
     })
 
@@ -105,7 +121,7 @@ fun <T> TypeFoldable<T>.containsTyOfClass(vararg classes: Class<*>): Boolean =
 fun <T> TypeFoldable<T>.collectInferTys(): List<TyInfer> {
     val list = mutableListOf<TyInfer>()
     visitWith(object : TypeVisitor {
-        override fun invoke(ty: Ty): Boolean = when {
+        override fun visitTy(ty: Ty): Boolean = when {
             ty is TyInfer -> {
                 list.add(ty)
                 false

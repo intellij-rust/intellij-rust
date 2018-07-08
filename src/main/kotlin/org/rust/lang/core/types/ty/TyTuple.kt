@@ -7,6 +7,7 @@ package org.rust.lang.core.types.ty
 
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
+import org.rust.lang.core.types.mergeFlags
 
 data class TyTuple(val types: List<Ty>) : Ty(mergeFlags(types)) {
 
@@ -14,6 +15,5 @@ data class TyTuple(val types: List<Ty>) : Ty(mergeFlags(types)) {
         TyTuple(types.map { it.foldWith(folder) })
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        types.any(visitor)
+        types.any { it.visitWith(visitor) }
 }
-

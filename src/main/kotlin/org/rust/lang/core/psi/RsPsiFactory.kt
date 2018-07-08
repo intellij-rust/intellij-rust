@@ -9,15 +9,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
-import org.rust.ide.presentation.insertionSafeText
+import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
-import org.rust.lang.core.types.ty.Substitution
-import org.rust.lang.core.types.ty.emptySubstitution
 import org.rust.lang.core.types.type
 import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
 
@@ -318,10 +320,12 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
     val name = name ?: return null
     val generics = typeParameterList?.text ?: ""
 
-    val allArguments = listOfNotNull(selfParameter?.text) + valueParameters.map {
+    val selfArgument = listOfNotNull(selfParameter?.substAndGetText(subst))
+    val valueArguments = valueParameters.map {
         // fix possible anon parameter
         "${it.pat?.text ?: "_"}: ${it.typeReference?.substAndGetText(subst) ?: "()"}"
     }
+    val allArguments = selfArgument + valueArguments
 
     val ret = retType?.typeReference?.substAndGetText(subst)?.let { "-> $it " } ?: ""
     val where = whereClause?.text ?: ""
@@ -331,7 +335,16 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
 
 private fun RsTypeReference.substAndGetText(subst: Substitution): String =
-    type.substitute(subst).insertionSafeText
+    type.substitute(subst).insertionSafeTextWithLifetimes
+
+private fun RsSelfParameter.substAndGetText(subst: Substitution): String =
+    buildString {
+        append(and?.text ?: "")
+        val lifetime = lifetime.resolve().substitute(subst)
+        if (lifetime != ReUnknown) append("$lifetime ")
+        if (mutability == MUTABLE) append("mut ")
+        append(self.text)
+    }
 
 private fun mutsToRefs(mutability: List<Mutability>): String =
     mutability.joinToString("", "", "") {
