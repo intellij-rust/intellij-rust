@@ -11,18 +11,21 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.infer.foldTyInferWith
+import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.regions.ReEarlyBound
+import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.stdext.buildMap
 
-
 class RsPathReferenceImpl(
     element: RsPath
 ) : RsReferenceBase<RsPath>(element),
-    RsPathReference{
+    RsPathReference {
 
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
@@ -81,6 +84,8 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         }
     }
 
+    val lifetimeArguments: List<Region>? = path.typeArgumentList?.lifetimeList?.map { it.resolve() }
+
     val outputArg = path.retType?.typeReference?.type
 
     return result.map { boundElement ->
@@ -111,12 +116,12 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
             }
         }
 
-        val parameters = element.typeParameters.map { TyTypeParameter.named(it) }
-
-        BoundElement(element,
-            subst + parameters.zip(typeArguments ?: parameters).toMap(),
-            assocTypes
-        )
+        val typeParameters = element.typeParameters.map { TyTypeParameter.named(it) }
+        val lifetimeParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
+        val typeSubst = typeParameters.zip(typeArguments ?: typeParameters).toMap()
+        val lifetimeSubst = lifetimeParameters.zip(lifetimeArguments ?: lifetimeParameters).toMap()
+        val newSubst = Substitution(typeSubst, lifetimeSubst)
+        BoundElement(element, subst + newSubst, assocTypes)
     }
 }
 

@@ -13,10 +13,10 @@ import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.inference
-import org.rust.lang.core.types.ty.Substitution
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.emptySubstitution
 import org.rust.lang.core.types.type
 
 

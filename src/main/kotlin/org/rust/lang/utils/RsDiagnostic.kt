@@ -17,7 +17,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
-import org.rust.ide.annotator.isMut
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.lang.core.psi.*

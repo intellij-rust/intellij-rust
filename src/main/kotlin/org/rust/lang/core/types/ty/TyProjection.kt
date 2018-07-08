@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.HAS_TY_PROJECTION_MASK
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
