@@ -57,13 +57,16 @@ val Project.hasCargoProject: Boolean get() = cargoProjects.allProjects.isNotEmpt
 
 fun Project.buildProject() {
     val command = if (rustSettings.useCargoCheckForBuild) "check" else "build"
-    val allTargets = rustSettings.toolchain
-        ?.rawCargo()
-        ?.checkSupportForBuildCheckAllTargets() ?: false
+
     val arguments = mutableListOf("--all")
 
-    if (allTargets) {
-        arguments += "--all-targets"
+    if (rustSettings.compileAllTargets) {
+        val allTargets = rustSettings.toolchain
+            ?.rawCargo()
+            ?.checkSupportForBuildCheckAllTargets() ?: false
+        if (allTargets) {
+            arguments += "--all-targets"
+        }
     }
     if (rustSettings.useOfflineForCargoCheck) {
         arguments += "-Zoffline"
