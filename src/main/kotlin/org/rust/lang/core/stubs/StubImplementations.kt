@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 134
+        override fun getStubVersion(): Int = 135
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -118,6 +118,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "SELF_PARAMETER" -> RsSelfParameterStub.Type
     "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
     "TYPE_PARAMETER" -> RsTypeParameterStub.Type
+    "LIFETIME" -> RsLifetimeStub.Type
     "LIFETIME_PARAMETER" -> RsLifetimeParameterStub.Type
     "TYPE_ARGUMENT_LIST" -> RsPlaceholderStub.Type("TYPE_ARGUMENT_LIST", ::RsTypeArgumentListImpl)
     "ASSOC_TYPE_BINDING" -> RsAssocTypeBindingStub.Type
@@ -941,6 +942,31 @@ class RsArrayTypeStub(
 
         override fun createStub(psi: RsArrayType, parentStub: StubElement<*>?) =
             RsArrayTypeStub(parentStub, this, psi.isSlice)
+    }
+}
+
+class RsLifetimeStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RsLifetime>(parent, elementType),
+    RsNamedStub {
+
+    object Type : RsStubElementType<RsLifetimeStub, RsLifetime>("LIFETIME") {
+        override fun createPsi(stub: RsLifetimeStub) =
+            RsLifetimeImpl(stub, this)
+
+        override fun createStub(psi: RsLifetime, parentStub: StubElement<*>?) =
+            RsLifetimeStub(parentStub, this, psi.referenceName)
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsLifetimeStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RsLifetimeStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
     }
 }
 
