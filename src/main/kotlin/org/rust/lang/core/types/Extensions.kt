@@ -13,9 +13,7 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.infer.RsInferenceResult
-import org.rust.lang.core.types.infer.inferTypeReferenceType
-import org.rust.lang.core.types.infer.inferTypesIn
+import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyTypeParameter

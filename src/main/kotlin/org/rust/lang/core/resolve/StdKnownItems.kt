@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.ext.RsTypeDeclarationElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.toTypeSubst
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.getTypeParameter
@@ -46,7 +47,7 @@ class StdKnownItems private constructor(
         val ty = findStdTy("alloc", "vec::Vec")
 
         val typeParameter = ty.getTypeParameter("T") ?: return ty
-        return ty.substitute(mapOf(typeParameter to elementTy))
+        return ty.substitute(mapOf(typeParameter to elementTy).toTypeSubst())
     }
 
     fun findRangeTy(rangeName: String, indexType: Ty?): Ty {
@@ -55,7 +56,7 @@ class StdKnownItems private constructor(
         if (indexType == null) return ty
 
         val typeParameter = ty.getTypeParameter("Idx") ?: return ty
-        return ty.substitute(mapOf(typeParameter to indexType))
+        return ty.substitute(mapOf(typeParameter to indexType).toTypeSubst())
     }
 
     fun findStringTy(): Ty =

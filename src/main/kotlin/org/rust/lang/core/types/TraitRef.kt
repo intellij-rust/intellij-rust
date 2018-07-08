@@ -12,14 +12,13 @@ import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.ty.get
 
 /**
  * A complete reference to a trait. These take numerous guises in syntax,
  * but perhaps the most recognizable form is in a where clause:
  *     `T : Foo<U>`
  */
-data class TraitRef(val selfTy: Ty, val trait: BoundElement<RsTraitItem>): TypeFoldable<TraitRef> {
+data class TraitRef(val selfTy: Ty, val trait: BoundElement<RsTraitItem>) : TypeFoldable<TraitRef> {
     override fun superFoldWith(folder: TypeFolder): TraitRef =
         TraitRef(selfTy.foldWith(folder), trait.foldWith(folder))
 

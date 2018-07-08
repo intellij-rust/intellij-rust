@@ -14,8 +14,8 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.isTest
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.ty.Substitution
-import org.rust.lang.core.types.ty.emptySubstitution
+import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.emptySubstitution
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.

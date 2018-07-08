@@ -7,11 +7,14 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-
+import org.rust.lang.core.types.mergeFlags
+import org.rust.lang.core.types.regions.ReEarlyBound
 
 /**
  * A "trait object" type should not be confused with a trait.
@@ -21,7 +24,7 @@ import org.rust.lang.core.types.infer.TypeVisitor
 data class TyTraitObject(val trait: BoundElement<RsTraitItem>) : Ty(mergeFlags(trait)) {
 
     val typeArguments: List<Ty>
-        get() = trait.element.typeParameters.map { typeParameterValues.get(it) ?: TyUnknown }
+        get() = trait.element.typeParameters.map { typeParameterValues[it] ?: TyUnknown }
 
     override val typeParameterValues: Substitution
         get() = trait.subst
@@ -43,8 +46,14 @@ data class TyTraitObject(val trait: BoundElement<RsTraitItem>) : Ty(mergeFlags(t
 fun RsTraitItem.withDefaultSubst(): BoundElement<RsTraitItem> =
     BoundElement(this, defaultSubstitution(this))
 
-private fun defaultSubstitution(item: RsTraitItem): Substitution =
-    item.typeParameters.associate { rsTypeParameter ->
-        val tyTypeParameter = TyTypeParameter.named(rsTypeParameter)
-        tyTypeParameter to tyTypeParameter
+private fun defaultSubstitution(item: RsTraitItem): Substitution {
+    val typeSubst = item.typeParameters.associate {
+        val parameter = TyTypeParameter.named(it)
+        parameter to parameter
     }
+    val lifetimeSubst = item.lifetimeParameters.associate {
+        val parameter = ReEarlyBound(it)
+        parameter to parameter
+    }
+    return Substitution(typeSubst, lifetimeSubst)
+}

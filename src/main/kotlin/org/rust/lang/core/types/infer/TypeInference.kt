@@ -21,13 +21,10 @@ import org.rust.lang.core.resolve.SelectionResult
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralType
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.selfType
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
@@ -35,7 +32,6 @@ import org.rust.openapiext.recursionGuard
 import org.rust.stdext.notEmptyOrLet
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
-import org.rust.stdext.zipValues
 
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
     val items = StdKnownItems.relativeTo(element)
@@ -274,7 +270,7 @@ class RsInferenceContext(
             else -> {
                 val ty1r = varUnificationTable.findRoot(ty1)
                 val isTy2ContainsTy1 = ty2.visitWith(object : TypeVisitor {
-                    override fun invoke(ty: Ty): Boolean = when {
+                    override fun visitTy(ty: Ty): Boolean = when {
                         ty is TyInfer.TyVar && varUnificationTable.findRoot(ty) == ty1r -> true
                         ty.hasTyInfer -> ty.superVisitWith(this)
                         else -> false
@@ -347,7 +343,7 @@ class RsInferenceContext(
     fun combineTraitRefs(ref1: TraitRef, ref2: TraitRef): Boolean =
         ref1.trait.element == ref2.trait.element &&
             combineTypes(ref1.selfTy, ref2.selfTy) &&
-            zipValues(ref1.trait.subst, ref2.trait.subst).all { (a, b) ->
+            ref1.trait.subst.zipTypeValues(ref2.trait.subst).all { (a, b) ->
                 combineTypes(a, b)
             }
 
@@ -514,12 +510,12 @@ class RsInferenceContext(
     }
 
     private fun <T : TypeFoldable<T>> hasUnresolvedTypeVars(_ty: T): Boolean = _ty.visitWith(object : TypeVisitor {
-        override fun invoke(_ty: Ty): Boolean {
-            val ty = shallowResolve(_ty)
+        override fun visitTy(ty: Ty): Boolean {
+            val resolvedTy = shallowResolve(ty)
             return when {
-                ty is TyInfer -> true
-                !ty.hasTyInfer -> false
-                else -> ty.superVisitWith(this)
+                resolvedTy is TyInfer -> true
+                !resolvedTy.hasTyInfer -> false
+                else -> resolvedTy.superVisitWith(this)
             }
         }
     })
@@ -530,7 +526,7 @@ class RsInferenceContext(
 
     fun instantiateBounds(
         bounds: List<TraitRef>,
-        subst: Map<TyTypeParameter, Ty> = emptySubstitution,
+        subst: Substitution = emptySubstitution,
         recursionDepth: Int = 0
     ): Sequence<Obligation> {
         return bounds.asSequence()
@@ -542,7 +538,7 @@ class RsInferenceContext(
     /** Checks that [selfTy] satisfies all trait bounds of the [impl] */
     fun canEvaluateBounds(impl: RsImplItem, selfTy: Ty): Boolean {
         val ff = FulfillmentContext(this, lookup)
-        val subst = impl.generics.associate { it to typeVarForParam(it) }
+        val subst = impl.generics.associate { it to typeVarForParam(it) }.toTypeSubst()
         return probe {
             instantiateBounds(impl.bounds, subst).forEach(ff::registerPredicateObligation)
             impl.typeReference?.type?.substitute(subst)?.let { combineTypes(selfTy, it) }
@@ -728,7 +724,8 @@ class RsFnInferenceContext(
      */
     private fun coerceReference(inferred: TyReference, expected: TyReference): Boolean {
         for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
-            val derefTyRef = TyReference(derefTy, expected.mutability)
+            // TODO proper handling of lifetimes
+            val derefTyRef = TyReference(derefTy, expected.mutability, expected.region)
             if (ctx.combineTypesIfOk(derefTyRef, expected)) return true
         }
 
@@ -741,6 +738,7 @@ class RsFnInferenceContext(
             is RsStubLiteralType.Boolean -> TyBool
             is RsStubLiteralType.Char -> if (stubType.isByte) TyInteger.U8 else TyChar
             is RsStubLiteralType.String -> {
+                // TODO infer the actual lifetime
                 if (stubType.isByte) {
                     TyReference(TyArray(TyInteger.U8, stubType.length), IMMUTABLE)
                 } else {
@@ -831,7 +829,8 @@ class RsFnInferenceContext(
                         val typeParameters = instantiateBounds(owner.trait)
                         // UFCS - add predicate `Self : Trait<Args>`
                         val selfTy = subst[TyTypeParameter.self()] ?: ctx.typeVarForParam(TyTypeParameter.self())
-                        val boundTrait = BoundElement(owner.trait, owner.trait.generics.associateBy { it })
+                        val newSubst = owner.trait.generics.associateBy { it }.toTypeSubst()
+                        val boundTrait = BoundElement(owner.trait, newSubst)
                             .substitute(typeParameters)
                         val traitRef = TraitRef(selfTy, boundTrait)
                         fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
@@ -857,7 +856,7 @@ class RsFnInferenceContext(
             TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, type)
         } else {
             type
-        }.substitute(typeParameters).foldWith(this::normalizeAssociatedTypesIn)
+        }.substitute(typeParameters).foldWith(associatedTypeNormalizer)
     }
 
     private fun instantiateBounds(
@@ -866,12 +865,11 @@ class RsFnInferenceContext(
         typeParameters: Substitution = emptySubstitution
     ): Substitution {
         val map = run {
-            val map = typeParameters + element.generics.associate { it to ctx.typeVarForParam(it) }
-            if (selfTy != null) {
-                map + (TyTypeParameter.self() to selfTy)
-            } else {
-                map
-            }
+            val map = element
+                .generics
+                .associate { it to ctx.typeVarForParam(it) }
+                .let { if (selfTy != null) it + (TyTypeParameter.self() to selfTy) else it }
+            typeParameters + map.toTypeSubst()
         }
         ctx.instantiateBounds(element.bounds, map).forEach(fulfill::registerPredicateObligation)
         return map
@@ -883,14 +881,21 @@ class RsFnInferenceContext(
         return normTy
     }
 
+    private inner class AssociatedTypeNormalizer: TypeFolder {
+        override fun foldTy(ty: Ty): Ty = normalizeAssociatedTypesIn(ty)
+    }
+
+    private val associatedTypeNormalizer = AssociatedTypeNormalizer()
+
     private fun unifySubst(subst1: Substitution, subst2: Substitution) {
-        subst1.forEach { (k, v1) ->
+        subst1.typeSubst.forEach { (k, v1) ->
             subst2[k]?.let { v2 ->
                 if (k != v1 && k != TyTypeParameter.self() && v1 !is TyTypeParameter && v1 !is TyUnknown) {
                     ctx.combineTypes(v2, v1)
                 }
             }
         }
+        // TODO take into account the lifetimes
     }
 
     private fun inferStructLiteralType(expr: RsStructLiteral, expected: Ty?): Ty {
@@ -1007,8 +1012,8 @@ class RsFnInferenceContext(
                     .find { it.element == trait }?.subst ?: emptySubstitution
                 else -> {
                     val typeParameters = instantiateBounds(trait)
-                    val boundTrait = BoundElement(trait, trait.generics.associateBy { it })
-                        .substitute(typeParameters)
+                    val subst = trait.generics.associateBy { it }.toTypeSubst()
+                    val boundTrait = BoundElement(trait, subst).substitute(typeParameters)
                     val traitRef = TraitRef(callee.selfTy, boundTrait)
                     fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
                     ctx.registerMethodRefinement(methodCall, traitRef)
@@ -1026,7 +1031,7 @@ class RsFnInferenceContext(
             } else {
                 val parameters = callee.element.typeParameterList?.typeParameterList.orEmpty()
                     .map { TyTypeParameter.named(it) }
-                parameters.zip(typeArguments).toMap()
+                parameters.zip(typeArguments).toMap().toTypeSubst()
             }
         }
 
@@ -1034,7 +1039,7 @@ class RsFnInferenceContext(
 
         val methodType = (callee.element.typeOfValue)
             .substitute(typeParameters)
-            .foldWith(this::normalizeAssociatedTypesIn) as TyFunction
+            .foldWith(associatedTypeNormalizer) as TyFunction
         if (expected != null) ctx.combineTypes(expected, methodType.retType)
         // drop first element of paramTypes because it's `self` param
         // and it doesn't have value in `methodCall.valueArgumentList.exprList`
@@ -1064,6 +1069,7 @@ class RsFnInferenceContext(
             // https://github.com/rust-lang/rust/blob/a646c912/src/librustc_typeck/check/method/probe.rs#L885
             lookup.coercionSequence(receiver).mapNotNull { ty ->
                 pick(ty)
+                    // TODO do something with lifetimes
                     .notEmptyOrLet { pick(TyReference(ty, IMMUTABLE)) }
                     .notEmptyOrLet { pick(TyReference(ty, MUTABLE)) }
                     .takeIf { it.isNotEmpty() }
@@ -1234,7 +1240,7 @@ class RsFnInferenceContext(
     }
 
     private fun inferRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty =
-        TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable)
+        TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable) // TODO infer the actual lifetime
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {
         expr.condition?.let { it.pat?.extractBindings(it.expr.inferType()) ?: it.expr.inferType(TyBool) }
@@ -1513,11 +1519,11 @@ private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
     if (isExplicitType) {
         // self: Self, self: &Self, self: &mut Self, self: Box<Self>
         val ty = this.typeReference?.type ?: TyUnknown
-        return ty.substitute(mapOf(TyTypeParameter.self() to selfType))
+        return ty.substitute(mapOf(TyTypeParameter.self() to selfType).toTypeSubst())
     }
 
     // self, &self, &mut self
-    return if (isRef) TyReference(selfType, mutability) else selfType
+    return if (isRef) TyReference(selfType, mutability, lifetime.resolve()) else selfType
 
 }
 
