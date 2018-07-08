@@ -7,7 +7,6 @@ package org.rust.debugger.runconfig
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
-import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.execution.Installer
 import com.jetbrains.cidr.execution.RunParameters
@@ -20,9 +19,9 @@ class RsDebugRunParameters(
     val cmd: GeneralCommandLine
 ) : RunParameters() {
     override fun getDebuggerDriverConfiguration(): DebuggerDriverConfiguration {
-        val toolchain = CPPToolchains.getInstance().defaultToolchain
-        if (toolchain == null || toolchain.isUseLLDB) return LLDBDriverConfiguration()
-        return GDBDriverConfiguration(project, toolchain)
+        return CPPToolchains.getInstance().defaultToolchain
+            ?.createDriverConfiguration(project)
+            ?: return LLDBDriverConfiguration()
     }
     override fun getInstaller(): Installer = TrivialInstaller(cmd)
 
