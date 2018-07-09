@@ -3,6 +3,7 @@ branches:
     - staging
     - master
     - trying
+    - 182
 
 language: java
 
