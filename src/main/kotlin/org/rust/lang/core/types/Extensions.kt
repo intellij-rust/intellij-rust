@@ -16,8 +16,8 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.RsInferenceResult
 import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.infer.inferTypesIn
+import org.rust.lang.core.types.infer.mutabilityCategory
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.openapiext.recursionGuard
@@ -73,31 +73,8 @@ val RsTraitOrImpl.selfType: Ty get() {
     }
 }
 
+val RsExpr.isDereference: Boolean get() = this is RsUnaryExpr && this.mul != null
+
 private val DEFAULT_MUTABILITY = true
 
-val RsExpr.isMutable: Boolean get() {
-    return when (this) {
-        is RsPathExpr -> {
-            val declaration = path.reference.resolve() ?: return DEFAULT_MUTABILITY
-            if (declaration is RsSelfParameter) return declaration.mutability.isMut
-            if (declaration is RsPatBinding && declaration.mutability.isMut) return true
-            if (declaration is RsConstant) return declaration.mutability.isMut
-
-            val letExpr = declaration.ancestorStrict<RsLetDecl>()
-            if (letExpr != null && letExpr.eq == null) return true
-
-            val type = this.type
-            if (type is TyReference) return type.mutability.isMut
-            if (type is TyUnknown) return DEFAULT_MUTABILITY
-
-            if (declaration is RsEnumVariant) return true
-            if (declaration is RsStructItem) return true
-            if (declaration is RsFunction) return true
-
-            false
-        }
-    // is RsFieldExpr -> (expr.type as? TyReference)?.mutable ?: DEFAULT_MUTABILITY // <- this one brings false positives without additional analysis
-        is RsUnaryExpr -> mul != null || (expr != null && expr?.isMutable ?: DEFAULT_MUTABILITY)
-        else -> DEFAULT_MUTABILITY
-    }
-}
+val RsExpr.isMutable: Boolean get() = mutabilityCategory?.isMutable ?: DEFAULT_MUTABILITY

@@ -30,7 +30,7 @@ class AddMutableFix(binding: RsNamedElement) : LocalQuickFixAndIntentionActionOn
     companion object {
         fun createIfCompatible(expr: RsExpr): AddMutableFix? {
             val declaration = expr.declaration
-            return if (declaration is RsSelfParameter || declaration is RsPatBinding) {
+            return if (declaration is RsSelfParameter || (declaration is RsPatBinding && !declaration.isRef)) {
                 AddMutableFix(declaration as RsNamedElement)
             } else {
                 null

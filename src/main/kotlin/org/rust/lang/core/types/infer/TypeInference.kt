@@ -43,6 +43,9 @@ fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
         ?: error("Can not run nested type inference")
 }
 
+class Adjustment(val kind: Adjust, val target: Ty)
+enum class Adjust { DEREF }
+
 /**
  * [RsInferenceResult] is an immutable per-function map
  * from expressions to their types.
@@ -53,7 +56,8 @@ class RsInferenceResult(
     private val resolvedPaths: Map<RsPathExpr, List<RsElement>>,
     private val resolvedMethods: Map<RsMethodCall, List<RsFunction>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
-    val diagnostics: List<RsDiagnostic>
+    val diagnostics: List<RsDiagnostic>,
+    val adjustments: Map<RsExpr, List<Adjustment>>
 ) {
     private val timestamp: Long = System.nanoTime()
 
@@ -99,6 +103,7 @@ class RsInferenceContext(
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
+    val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = HashMap()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> = UnificationTable()
     private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> = UnificationTable()
@@ -148,7 +153,7 @@ class RsInferenceContext(
                     reprType to element.expr
                 }
                 else -> error("Type inference is not implemented for PSI element of type " +
-                        "`${element.javaClass}` that implement `RsInferenceContextOwner`")
+                    "`${element.javaClass}` that implement `RsInferenceContextOwner`")
             }
             if (expr != null) {
                 RsFnInferenceContext(this, retTy ?: TyUnknown).inferLambdaBody(expr)
@@ -162,7 +167,7 @@ class RsInferenceContext(
 
         performPathsRefinement(lookup)
 
-        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics)
+        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics, adjustments)
     }
 
     private fun performPathsRefinement(lookup: ImplLookup) {
@@ -226,6 +231,10 @@ class RsInferenceContext(
 
     fun addDiagnostic(diagnostic: RsDiagnostic) {
         diagnostics.add(diagnostic)
+    }
+
+    fun addAdjustment(expression: RsExpr, adjustment: Adjustment) {
+        adjustments.getOrPut(expression) { mutableListOf() }.add(adjustment)
     }
 
     fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
@@ -1128,8 +1137,11 @@ private class RsFnInferenceContext(
             }
             return TyUnknown
         }
-        val fieldElement = field.element
+        repeat(field.derefCount) {
+            ctx.addAdjustment(fieldLookup.parentDotExpr, Adjustment(Adjust.DEREF, receiver))
+        }
 
+        val fieldElement = field.element
         val raw = when (fieldElement) {
             is RsFieldDecl -> fieldElement.typeReference?.type
             is RsTupleFieldDecl -> fieldElement.typeReference.type
@@ -1491,7 +1503,8 @@ private class RsFnInferenceContext(
             is RsPatRange -> patConstList.forEach { it.expr.inferTypeCoercableTo(type) }
             is RsPatIdent -> {
                 val patBinding = patBinding
-                val bindingType = if (patBinding.isRef) TyReference(type, patBinding.mutability) else type
+                val kind = patBinding.kind
+                val bindingType = if (kind is BindByReference) TyReference(type, kind.mutability) else type
                 ctx.writeBindingTy(patBinding, bindingType)
                 pat?.extractBindings(type)
             }
