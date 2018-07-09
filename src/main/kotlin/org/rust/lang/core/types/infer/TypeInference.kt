@@ -1612,14 +1612,6 @@ private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orE
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =
     this + generateSequence { TyUnknown }
 
-private fun unwrapParenExprs(expr: RsExpr): RsExpr {
-    var child = expr
-    while (child is RsParenExpr) {
-        child = child.expr
-    }
-    return child
-}
-
 data class TyWithObligations<out T>(
     val value: T,
     val obligations: List<Obligation> = emptyList()

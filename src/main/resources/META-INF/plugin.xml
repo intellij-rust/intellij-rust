@@ -438,6 +438,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsNeedlessLifetimesInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Assign to immutable"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsAssignToImmutableInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"

@@ -8,9 +8,8 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.AssignmentOp
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.isAssignBinaryExpr
 import org.rust.lang.core.types.isMutable
 
 class RsReassignImmutableInspection : RsLocalInspectionTool() {
@@ -19,8 +18,8 @@ class RsReassignImmutableInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 val left = expr.left
-                if (expr.isAssignBinaryExpr() && left is RsPathExpr && !left.isMutable) {
-                    // todo: perform some kind of data-flow analysis
+                if (expr.isAssignBinaryExpr && left is RsPathExpr && !left.isMutable) {
+                    // TODO: perform some kind of data-flow analysis
                     val declaration = left.path.reference.resolve()
                     val letExpr = declaration?.ancestorStrict<RsLetDecl>()
                     if (letExpr == null) registerProblem(holder, expr, left)
@@ -38,9 +37,4 @@ class RsReassignImmutableInspection : RsLocalInspectionTool() {
         holder.registerProblem(expr, "Re-assignment of immutable variable [E0384]", *fix)
     }
 
-}
-
-private fun RsExpr?.isAssignBinaryExpr(): Boolean {
-    val op = this as? RsBinaryExpr ?: return false
-    return op.operatorType is AssignmentOp
 }
