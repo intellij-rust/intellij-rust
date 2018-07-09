@@ -17,7 +17,6 @@ import org.rust.lang.core.types.infer.RsInferenceResult
 import org.rust.lang.core.types.infer.inferTypeReferenceType
 import org.rust.lang.core.types.infer.inferTypesIn
 import org.rust.lang.core.types.infer.mutabilityCategory
-import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
@@ -73,10 +72,6 @@ val RsTraitOrImpl.selfType: Ty get() {
         else -> error("Unreachable")
     }
 }
-
-abstract class PointerKind(val mutability: Mutability)
-class BorrowedPointer(mutability: Mutability) : PointerKind(mutability)
-class UnsafePointer(mutability: Mutability) : PointerKind(mutability)
 
 val RsExpr.isDereference: Boolean get() = this is RsUnaryExpr && this.mul != null
 

@@ -7,13 +7,16 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.BorrowedPointer
-import org.rust.lang.core.types.UnsafePointer
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
+
+
+abstract class PointerKind(val mutability: Mutability)
+class BorrowedPointer(mutability: Mutability) : PointerKind(mutability)
+class UnsafePointer(mutability: Mutability) : PointerKind(mutability)
 
 
 enum class MutabilityCategory {
@@ -102,6 +105,8 @@ val RsExpr.mutabilityCategory: MutabilityCategory? get() {
                 else -> null
             }
         }
+
+        is RsParenExpr -> expr.mutabilityCategory
 
         else -> null
     }
