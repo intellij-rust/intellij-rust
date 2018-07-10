@@ -566,7 +566,7 @@ class RsFnInferenceContext(
         return ctx.resolveTypeVarsIfPossible(tyRes)
     }
 
-    fun selectObligationsWherePossible() {
+    private fun selectObligationsWherePossible() {
         fulfill.selectWherePossible()
     }
 
@@ -728,7 +728,7 @@ class RsFnInferenceContext(
         return false
     }
 
-    fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
+    private fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
         val stubType = expr.stubType
         return when (stubType) {
             is RsStubLiteralType.Boolean -> TyBool
@@ -1466,7 +1466,7 @@ class RsFnInferenceContext(
     }
 
     // TODO should be replaced with coerceMany
-    fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty = when (ty1) {
+    private fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty = when (ty1) {
         is TyNever -> ty2
         is TyUnknown -> if (ty2 !is TyNever) ty2 else TyUnknown
         else -> {
@@ -1475,7 +1475,7 @@ class RsFnInferenceContext(
         }
     }
 
-    fun <T> TyWithObligations<T>.register(): T {
+    private fun <T> TyWithObligations<T>.register(): T {
         obligations.forEach(fulfill::registerPredicateObligation)
         return value
     }
@@ -1536,12 +1536,12 @@ val RsGenericDeclaration.generics: List<TyTypeParameter>
     get() = typeParameters.map { TyTypeParameter.named(it) }
 
 val RsGenericDeclaration.bounds: List<TraitRef>
-    get() = CachedValuesManager.getCachedValue(this, {
+    get() = CachedValuesManager.getCachedValue(this) {
         CachedValueProvider.Result.create(
             doGetBounds(),
             PsiModificationTracker.MODIFICATION_COUNT
         )
-    })
+    }
 
 private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
     val whereBounds = this.whereClause?.wherePredList.orEmpty().asSequence()
