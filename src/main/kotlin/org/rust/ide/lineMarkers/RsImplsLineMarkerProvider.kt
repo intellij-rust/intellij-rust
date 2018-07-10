@@ -17,7 +17,6 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.searchForImplementations
-import org.rust.lang.core.psi.ext.union
 
 /**
  * Annotates trait declaration with an icon on the gutter that allows to jump to
