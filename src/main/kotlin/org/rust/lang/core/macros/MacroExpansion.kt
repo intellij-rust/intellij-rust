@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.rustStructureModificationTracker
 
 private val NULL_RESULT: CachedValueProvider.Result<List<ExpansionResult>?> =
     CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT)
@@ -28,18 +29,16 @@ fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<ExpansionRes
             CachedValueProvider.Result.create(result, call.containingFile)
         }
         else -> {
-            if (!context.project.rustSettings.expandMacros) return NULL_RESULT
-            val def = call.reference.resolve() as? RsMacro ?: return NULL_RESULT
             val project = context.project
+            if (!project.rustSettings.expandMacros) return NULL_RESULT
+            val def = call.reference.resolve() as? RsMacro ?: return NULL_RESULT
             val expander = MacroExpander(project)
             val result = expander.expandMacro(def, call)
             result?.forEach {
                 it.setContext(context)
                 it.setExpandedFrom(call)
             }
-            // We can use a files instead of `MODIFICATION_COUNT`, so cached value will be depends
-            // on modification count of these files. See [PsiCachedValue.getTimeStamp]
-            CachedValueProvider.Result.create(result, def.containingFile, call.containingFile)
+            CachedValueProvider.Result.create(result, project.rustStructureModificationTracker)
         }
     }
 }
