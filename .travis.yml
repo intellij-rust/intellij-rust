@@ -11,9 +11,9 @@ jdk: oraclejdk8
 
 env:
   matrix:
-    - RUST_VERSION=nightly-2018-06-28 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=182.3569.1 # modified by script
+    - RUST_VERSION=nightly-2018-06-28 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=182.3684.2 # modified by script
     - RUST_VERSION=1.27.0
-    - RUST_VERSION=1.25.0 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=182.3569.1
+    - RUST_VERSION=1.25.0 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=182.3684.2
 
 install: true
 
