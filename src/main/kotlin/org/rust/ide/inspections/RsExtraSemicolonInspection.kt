@@ -10,7 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.rust.lang.core.ExitPoint
+import org.rust.lang.core.cfg.ExitPoint
 import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor

@@ -19,6 +19,8 @@ val RsBinaryOp.operator: PsiElement
 
 val RsBinaryOp.op: String get() = stub?.op ?: operator.text
 
+val RsBinaryOp.isLazy: Boolean get() = andand != null || this.oror != null
+
 abstract class RsBinaryOpImplMixin : RsStubbedElementImpl<RsBinaryOpStub>, RsBinaryOp {
 
     constructor(node: ASTNode) : super(node)
