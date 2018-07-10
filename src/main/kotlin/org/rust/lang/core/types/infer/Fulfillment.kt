@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.infer
 
+import com.intellij.openapi.progress.ProgressManager
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.SelectionResult
 import org.rust.lang.core.types.TraitRef
@@ -111,6 +112,7 @@ class ObligationForest {
         var hasErrors = false
         var stalled = true
         for (index in 0 until nodes.size) {
+            ProgressManager.checkCanceled()
             val node = nodes[index]
             if (node.state != NodeState.Pending) continue
 
