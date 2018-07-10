@@ -45,7 +45,6 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test big signature`() = doTest("""
         /// Docs
-        #[cfg(test)]
         /// More Docs
         pub const unsafe extern "C" fn foo<T>(x: T) -> u32 where T: Clone { 92 }
 
@@ -137,7 +136,6 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         use std::fmt::{Debug, Display};
 
         /// Docs
-        #[cfg(test)]
         /// More Docs
         pub const unsafe extern "C" fn foo<T, U, V>(x: T) -> u32 where T: Clone,
                                                                        U: Debug,
@@ -158,7 +156,6 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         use std::fmt::{Debug, Display};
 
         /// Docs
-        #[cfg(test)]
         /// More Docs
         pub const unsafe extern "C" fn foo<T, U, V>(
          x: T,
