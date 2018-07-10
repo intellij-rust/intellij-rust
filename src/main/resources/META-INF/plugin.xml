@@ -772,6 +772,10 @@
                 icon="AllIcons.ToolbarDecorator.Remove"
                 use-shortcut-of="$Delete"/>
 
+        <action id="Rust.ShowControlFlowGraph"
+                class="org.rust.ide.actions.RsShowControlFlowGraphAction"
+                text="Show control-flow graph"/>
+
         <action id="Rust.ShowSingleStepMacroExpansionAction"
                 class="org.rust.ide.actions.macroExpansion.RsShowSingleStepMacroExpansionAction"
                 text="Show expanded macro">
