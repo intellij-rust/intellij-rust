@@ -59,6 +59,32 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test nested struct ref pattern 1`() = testExpr("""
+        struct S;
+        struct T {
+            s: S
+        }
+
+        fn main() {
+            let T { s: ref x } = T { s: S };
+            x;
+          //^ &S
+        }
+    """)
+
+    fun `test nested struct ref pattern 2`() = testExpr("""
+        struct S;
+        struct T {
+            s: S
+        }
+
+        fn main() {
+            let T { ref s } = T { s: S };
+            s;
+          //^ &S
+        }
+    """)
+
     fun `test braced enum variant`() = testExpr("""
         enum E { S { foo: i32 }}
 
@@ -104,6 +130,16 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             let ref v = vr;
             v;
           //^ &Vec
+        }
+    """)
+
+    fun `test ref pattern 3`() = testExpr("""
+        struct Vec;
+
+        fn bar(vr: Vec) {
+            let ref v = &vr;
+            v;
+          //^ &&Vec
         }
     """)
 
@@ -180,5 +216,115 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
                                //^ bool
             };
         }
+    """)
+
+    fun `test match ergonomics tuple 1`() = testExpr("""
+        fn main() {
+            let (a, b) = &(1, 2);
+            (a, b);
+        } //^ (&i32, &i32)
+    """)
+
+    fun `test match ergonomics tuple 2`() = testExpr("""
+        fn main() {
+            let (a, b) = &mut (1, 2);
+            (a, b);
+        } //^ (&mut i32, &mut i32)
+    """)
+
+    fun `test match ergonomics tuple 3`() = testExpr("""
+        fn main() {
+            let (a,) = &&(1,);
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics tuple 4`() = testExpr("""
+        fn main() {
+            let (a,) = &mut&(1,);
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics tuple 5`() = testExpr("""
+        fn main() {
+            let (a,) = &&mut(1,);
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics tuple 6`() = testExpr("""
+        fn main() {
+            let (a,) = &mut&mut(1,);
+            a;
+        } //^ &mut i32
+    """)
+
+    fun `test match ergonomics tuple ref`() = testExpr("""
+        fn main() {
+            let (ref a,) = &(1,);
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics enum 1`() = testExpr("""
+        enum E { A(i32) }
+        fn main() {
+            let E::A(a) = &E::A(1);
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics enum 2`() = testExpr("""
+        enum E { A(i32) }
+        fn main() {
+            let E::A(ref a) = &E::A(1);
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics struct 1`() = testExpr("""
+        struct S { a: i32 }
+        fn main() {
+            let S { a } = &S{ a: 1 };
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics struct 2`() = testExpr("""
+        struct S { a: i32 }
+        fn main() {
+            let S { ref a } = &S{ a: 1 };
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics struct 3`() = testExpr("""
+        struct S { a: i32 }
+        fn main() {
+            let S { a: ref a } = &S{ a: 1 };
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics slice 1`() = testExpr("""
+        fn main() {
+            let [a, b] = &[1, 2];
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics slice 2`() = testExpr("""
+        fn main() {
+            let [ref a, b] = &[1, 2];
+            a;
+        } //^ &i32
+    """)
+
+    fun `test double ref`() = testExpr("""
+        fn main() {
+            let ref a = &0;
+            a;
+        } //^ &&i32
     """)
 }
