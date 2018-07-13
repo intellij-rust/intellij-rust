@@ -6,6 +6,7 @@
 package org.rust.lang.core.type
 
 import org.intellij.lang.annotations.Language
+import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.types.type
 
@@ -282,15 +283,70 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                   //^ impl Trait1+Trait2
     """)
 
+    fun `test primitive str ref with lifetime`() = testType("""
+        type T = &'static str;
+                //^ &'static str
+    """, renderLifetimes = true)
+
+    fun `test str ref with lifetime`() = testType("""
+        type T<'a> = &'a str;
+                    //^ &'a str
+    """, renderLifetimes = true)
+
+    fun `test str mut ref with lifetime`() = testType("""
+        type T<'a> = &'a mut str;
+                    //^ &'a mut str
+    """, renderLifetimes = true)
+
+    fun `test struct with lifetime`() = testType("""
+        struct Struct<'a> {
+            field: &'a i32,
+        }         //^ &'a i32
+    """, renderLifetimes = true)
+
+    fun `test function with lifetime`() = testType("""
+        fn id<'a>(x: &'a str) -> &'a str { x }
+                    //^ &'a str
+    """, renderLifetimes = true)
+
+    fun `test impl trait with lifetime`() = testType("""
+        trait Trait<'a> {
+            fn foo(x: &'a str);
+        }
+        struct Struct {}
+        impl<'b> Trait<'b> for Struct {
+            fn foo(a: &'b str) {
+                     //^ &'b str
+            }
+        }
+    """, renderLifetimes = true)
+
+    fun `test deep generic struct with lifetime`() = testType("""
+        struct Struct<'a, T>(&'a Struct<'a, Struct<'a, &'a str>>);
+                            //^ &'a Struct<'a, Struct<'a, &'a str>>
+    """, renderLifetimes = true)
+
+    fun `test deep generic struct with static lifetime`() = testType("""
+        struct Struct<'a, T>(&'static Struct<'static, Struct<'static, &'a str>>);
+                            //^ &'static Struct<'static, Struct<'static, &'a str>>
+    """, renderLifetimes = true)
+
+    fun `test deep generic struct with undeclared lifetime`() = testType("""
+        struct Struct<'a, T>(&'b Struct<'b, Struct<'b, &'a str>>);
+                            //^ &'_ Struct<'_, Struct<'_, &'a str>>
+    """, renderLifetimes = true)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
-    private fun testType(@Language("Rust") code: String) {
+    private fun testType(@Language("Rust") code: String, renderLifetimes: Boolean = false) {
         InlineFile(code)
         val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsTypeReference>()
 
-        check(typeAtCaret.type.toString() == expectedType) {
-            "${typeAtCaret.type} != $expectedType"
+        val ty = typeAtCaret.type
+        val renderedTy = if (renderLifetimes) ty.insertionSafeTextWithLifetimes else ty.toString()
+        check(renderedTy == expectedType) {
+            "$renderedTy != $expectedType"
         }
     }
 }

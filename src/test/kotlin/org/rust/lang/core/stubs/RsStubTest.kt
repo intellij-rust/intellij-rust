@@ -57,6 +57,28 @@ class RsStubTest : RsTestBase() {
             BLOCK:RsPlaceholderStub
     """)
 
+    fun `test lifetime is stubbed inside function signature`() = doTest("""
+        fn foo<'a>(x: &'a str) -> i32 { 32 }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            TYPE_PARAMETER_LIST:RsPlaceholderStub
+              LIFETIME_PARAMETER:RsLifetimeParameterStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+              VALUE_PARAMETER:RsValueParameterStub
+                TYPE_REFERENCE:RsPlaceholderStub
+                  REF_LIKE_TYPE:RsRefLikeTypeStub
+                    LIFETIME:RsLifetimeStub
+                    TYPE_REFERENCE:RsPlaceholderStub
+                      BASE_TYPE:RsBaseTypeStub
+                        PATH:RsPathStub
+            RET_TYPE:RsPlaceholderStub
+              TYPE_REFERENCE:RsPlaceholderStub
+                BASE_TYPE:RsBaseTypeStub
+                  PATH:RsPathStub
+            BLOCK:RsPlaceholderStub
+    """)
+
     fun `test literal is not stubbed inside closure tail expr`() = doTest("""
         fn foo() {
             || -> i32 { 0 };

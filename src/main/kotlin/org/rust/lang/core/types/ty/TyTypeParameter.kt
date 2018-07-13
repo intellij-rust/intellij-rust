@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.HAS_TY_TYPE_PARAMETER_MASK
 import org.rust.lang.core.types.type
 
 class TyTypeParameter private constructor(

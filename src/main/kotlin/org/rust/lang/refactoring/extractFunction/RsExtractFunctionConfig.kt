@@ -14,7 +14,9 @@ import org.rust.ide.utils.findStatementsInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
 
 class ReturnValue(val expression: String?, val type: Ty) {
@@ -217,7 +219,7 @@ private fun Ty.types(): Set<Ty> {
 
     fun collect(type: Ty) {
         types.add(type)
-        type.typeParameterValues.values.forEach { collect(it) }
+        type.typeParameterValues.types.forEach { collect(it) }
     }
 
     collect(this)

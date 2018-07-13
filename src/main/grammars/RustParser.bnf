@@ -279,6 +279,8 @@ private Items ::= Item_with_recover*
 Lifetime ::= QUOTE_IDENTIFIER {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsLifetimeImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsLifetimeStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

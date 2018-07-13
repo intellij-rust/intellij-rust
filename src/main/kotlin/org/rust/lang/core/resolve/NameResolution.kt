@@ -27,8 +27,11 @@ import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
+import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.toTypeSubst
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
@@ -220,7 +223,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     if (qualifier != null) {
         val primitiveType = TyPrimitive.fromPath(qualifier)
         if (primitiveType != null) {
-            val selfSubst = mapOf(TyTypeParameter.self() to primitiveType)
+            val selfSubst = mapOf(TyTypeParameter.self() to primitiveType).toTypeSubst()
             if (processAssociatedItemsWithSelfSubst(lookup, primitiveType, ns, selfSubst, processor)) return true
         }
 
@@ -252,13 +255,13 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
                     // it means that all possible `TyInfer` has already substituted (with `_`)
                     subst
                 } else {
-                    subst.mapValues { (_, v) -> v.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+                    subst.mapTypeValues { (_, v) -> v.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
                 }
                 base.declaredType.substitute(realSubst)
             }
             val isSelf = qualifier.hasColonColon || !qualifier.hasCself
             val selfSubst = if (isSelf && base !is RsTraitItem) {
-                mapOf(TyTypeParameter.self() to selfTy)
+                mapOf(TyTypeParameter.self() to selfTy).toTypeSubst()
             } else {
                 emptySubstitution
             }
@@ -270,7 +273,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     if (typeQual != null) {
         // <T as Trait>::Item
         val trait = typeQual.traitRef?.resolveToBoundTrait ?: return false
-        val selfSubst = mapOf(TyTypeParameter.self() to typeQual.typeReference.type)
+        val selfSubst = mapOf(TyTypeParameter.self() to typeQual.typeReference.type).toTypeSubst()
         val subst = trait.subst.substituteInValues(selfSubst) + selfSubst
         if (processAllWithSubst(trait.element.members?.typeAliasList.orEmpty(), subst, processor)) return true
     }
