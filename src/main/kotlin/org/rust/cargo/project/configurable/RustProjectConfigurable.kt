@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.util.PlatformUtils
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
@@ -135,5 +136,6 @@ class RustProjectConfigurable(
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
 
-    override fun getHelpTopic(): String? = null
+    // Currently, we have help page only for CLion
+    override fun getHelpTopic(): String? = if (PlatformUtils.isCLion()) "rustsupport" else null
 }
