@@ -431,6 +431,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsSortImplTraitMembersInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Needless lifetimes"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsNeedlessLifetimesInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
