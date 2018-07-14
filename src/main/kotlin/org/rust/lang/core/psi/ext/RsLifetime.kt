@@ -29,3 +29,40 @@ abstract class RsLifetimeImplMixin : RsStubbedNamedElementImpl<RsLifetimeStub>, 
 
     override val referenceName: String get() = stub?.name ?: referenceNameElement.text
 }
+
+sealed class LifetimeName {
+    /** User-given names or fresh (synthetic) names. */
+    data class Parameter(val name: String) : LifetimeName()
+
+    /** User typed nothing. e.g. the lifetime in `&u32`. */
+    object Implicit : LifetimeName()
+
+    /** User typed `'_`. */
+    object Underscore : LifetimeName()
+
+    /** User wrote `'static` */
+    object Static : LifetimeName()
+}
+
+val LifetimeName.isElided: Boolean
+    get() = when (this) {
+        LifetimeName.Implicit, LifetimeName.Underscore -> true
+        is LifetimeName.Parameter, LifetimeName.Static -> false
+    }
+
+val LifetimeName.isStatic: Boolean get() = this == LifetimeName.Static
+
+val RsLifetime?.name: LifetimeName
+    get() {
+        val text = this?.referenceName
+        return when (text) {
+            null -> LifetimeName.Implicit
+            "'_" -> LifetimeName.Underscore
+            "'static" -> LifetimeName.Static
+            else -> LifetimeName.Parameter(text)
+        }
+    }
+
+val RsLifetime?.isElided: Boolean get() = name.isElided
+
+val RsLifetime?.isStatic: Boolean get() = name.isStatic
