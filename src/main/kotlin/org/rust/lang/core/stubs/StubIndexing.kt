@@ -11,10 +11,7 @@ import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
-import org.rust.lang.core.stubs.index.RsGotoClassIndex
-import org.rust.lang.core.stubs.index.RsModulesIndex
-import org.rust.lang.core.stubs.index.RsNamedElementIndex
-import org.rust.lang.core.stubs.index.RsReexportIndex
+import org.rust.lang.core.stubs.index.*
 
 fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
     indexNamedStub(stub)
@@ -79,6 +76,10 @@ fun IndexSink.indexMacro(stub: RsMacroStub) {
 
 fun IndexSink.indexUseSpeck(stub: RsUseSpeckStub) {
     RsReexportIndex.index(stub, this)
+}
+
+fun IndexSink.indexInnerAttr(stub: RsInnerAttrStub) {
+    RsFeatureIndex.index(stub, this)
 }
 
 private fun IndexSink.indexNamedStub(stub: RsNamedStub) {

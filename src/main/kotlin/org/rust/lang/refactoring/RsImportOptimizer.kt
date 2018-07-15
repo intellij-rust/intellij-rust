@@ -9,6 +9,7 @@ import com.intellij.lang.ImportOptimizer
 import com.intellij.psi.PsiFile
 import org.rust.ide.formatter.processors.asTrivial
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsAttr
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.childrenOfType

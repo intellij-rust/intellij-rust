@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 135
+        override fun getStubVersion(): Int = 136
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -134,7 +134,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "MACRO" -> RsMacroStub.Type
     "MACRO_CALL" -> RsMacroCallStub.Type
 
-    "INNER_ATTR" -> RsPlaceholderStub.Type("INNER_ATTR", ::RsInnerAttrImpl)
+    "INNER_ATTR" -> RsInnerAttrStub.Type
     "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
 
     "META_ITEM" -> RsMetaItemStub.Type
@@ -1058,6 +1058,27 @@ class RsMacroCallStub(
             RsMacroCallStub(parentStub, this, psi.macroName, psi.macroBody)
 
         override fun indexStub(stub: RsMacroCallStub, sink: IndexSink) = Unit
+    }
+}
+
+class RsInnerAttrStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+) : StubBase<RsInnerAttr>(parent, elementType) {
+
+    object Type : RsStubElementType<RsInnerAttrStub, RsInnerAttr>("INNER_ATTR") {
+        override fun createPsi(stub: RsInnerAttrStub): RsInnerAttr = RsInnerAttrImpl(stub, this)
+
+        override fun serialize(stub: RsInnerAttrStub, dataStream: StubOutputStream) {}
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsInnerAttrStub =
+            RsInnerAttrStub(parentStub, this)
+
+        override fun createStub(psi: RsInnerAttr, parentStub: StubElement<*>?): RsInnerAttrStub =
+            RsInnerAttrStub(parentStub, this)
+
+        override fun indexStub(stub: RsInnerAttrStub, sink: IndexSink) {
+            sink.indexInnerAttr(stub)
+        }
     }
 }
 
