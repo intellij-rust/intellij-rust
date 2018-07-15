@@ -96,7 +96,7 @@ class RustProjectSettingsPanel(
         versionUpdateDebouncer.run(
             onPooledThread = {
                 val toolchain = RustToolchain(Paths.get(pathToToolchain))
-                val rustcVersion = toolchain.queryVersions().rustc.semver
+                val rustcVersion = toolchain.queryVersions().rustc?.semver
                 val rustup = toolchain.rustup
                 val stdlibLocation = rustup?.getStdlibFromSysroot()?.presentableUrl
                 Triple(rustcVersion, stdlibLocation, rustup != null)

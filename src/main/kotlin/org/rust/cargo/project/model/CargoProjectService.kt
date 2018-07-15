@@ -92,7 +92,7 @@ interface CargoProject {
     }
 }
 
-data class RustcInfo(val sysroot: String, val version: RustcVersion)
+data class RustcInfo(val sysroot: String, val version: RustcVersion?)
 
 fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false): Boolean {
     if (!explicitRequest) {
