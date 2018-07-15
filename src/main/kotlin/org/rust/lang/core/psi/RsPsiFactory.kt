@@ -221,6 +221,10 @@ class RsPsiFactory(private val project: Project) {
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
 
+    fun createInnerAttr(text: String): RsInnerAttr =
+        createFromText("#![$text]")
+            ?: error("Failed to create an inner attribute from text: `$text`")
+
     fun createMatchBody(enumName: String?, variants: List<RsEnumVariant>): RsMatchBody {
         val matchBodyText = variants.joinToString(",\n", postfix = ",") { variant ->
             val tupleFields = variant.tupleFields?.tupleFieldDeclList

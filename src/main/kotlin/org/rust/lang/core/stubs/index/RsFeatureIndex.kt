@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.stubs.index
 
+import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
@@ -12,6 +14,7 @@ import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsInnerAttrStub
+import org.rust.openapiext.getElements
 
 class RsFeatureIndex : StringStubIndexExtension<RsInnerAttr>() {
 
@@ -28,6 +31,10 @@ class RsFeatureIndex : StringStubIndexExtension<RsInnerAttr>() {
                 val featureName = metaItem.metaItemArgs?.metaItemList?.singleOrNull()?.name ?: return
                 sink.occurrence(KEY, featureName)
             }
+        }
+
+        fun getFeatureAttributes(project: Project, featureName: String): Collection<RsInnerAttr> {
+            return getElements(KEY, featureName, project, GlobalSearchScope.allScope(project))
         }
     }
 }

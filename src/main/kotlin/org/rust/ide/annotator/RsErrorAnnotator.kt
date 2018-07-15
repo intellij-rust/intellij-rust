@@ -13,12 +13,18 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.RustChannel
+import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
+import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
+import org.rust.lang.core.CompilerFeature
+import org.rust.lang.core.FeatureState.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -210,6 +216,46 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis) || isInEnumVariantField(vis)) {
             RsDiagnostic.UnnecessaryVisibilityQualifierError(vis).addToHolder(holder)
         }
+        checkCrateVisibilityModifier(holder, vis)
+    }
+
+    private fun checkCrateVisibilityModifier(holder: AnnotationHolder, vis: RsVis) {
+        val crateModifier = vis.crate ?: return
+        checkFeature(holder, crateModifier, CRATE_VISIBILITY_MODIFIER, "`crate` visibility modifier")
+    }
+
+    private fun checkFeature(
+        holder: AnnotationHolder,
+        element: PsiElement,
+        feature: CompilerFeature,
+        presentableFeatureName: String
+    ) {
+        val rsElement = element.ancestorOrSelf<RsElement>() ?: return
+        val version = rsElement.cargoProject?.rustcInfo?.version ?: return
+
+        val diagnostic = when (feature.state) {
+            ACTIVE -> {
+                if (version.channel != RustChannel.NIGHTLY) {
+                    RsDiagnostic.ExperimentalFeature(element, presentableFeatureName)
+                } else {
+                    val crateRoot = rsElement.crateRoot ?: return
+                    val attrs = RsFeatureIndex.getFeatureAttributes(element.project, feature.name)
+                    if (attrs.none { it.crateRoot == crateRoot }) {
+                        val fix = AddFeatureAttributeFix(feature.name, crateRoot)
+                        RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, fix)
+                    } else {
+                        null
+                    }
+                }
+
+            }
+            ACCEPTED -> if (version.semver < feature.since) {
+                RsDiagnostic.ExperimentalFeature(element, presentableFeatureName)
+            } else {
+                null
+            }
+        }
+        diagnostic?.addToHolder(holder)
     }
 
     private fun checkLabel(holder: AnnotationHolder, label: RsLabel) {
@@ -423,7 +469,6 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierO
     }
     message.addToHolder(holder)
 }
-
 
 private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursively: Boolean): Map<Namespace, Set<PsiElement>> {
     val fileMap = fileDuplicatesMap()
