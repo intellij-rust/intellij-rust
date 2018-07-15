@@ -111,17 +111,16 @@ File ::= [ SHEBANG_LINE ] InnerAttr* Items
 // Attributes
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-fake Attr ::= MetaItem {
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
-}
-
 InnerAttr ::= '#' '!' '[' AttrUpper {
-  extends = Attr
+  implements = [ "org.rust.lang.core.psi.ext.RsAttr" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsInnerAttrStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 OuterAttr ::= '#'     '[' AttrUpper {
-  extends = Attr
+  implements = [ "org.rust.lang.core.psi.ext.RsAttr" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 private AttrUpper ::= MetaItemWithoutTT ']' |  MetaItemWithTT ']'

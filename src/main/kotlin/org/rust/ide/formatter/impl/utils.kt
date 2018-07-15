@@ -12,10 +12,10 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
 import org.rust.lang.core.psi.RS_OPERATORS
-import org.rust.lang.core.psi.RsAttr
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsStmt
+import org.rust.lang.core.psi.ext.RsAttr
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.elementType
