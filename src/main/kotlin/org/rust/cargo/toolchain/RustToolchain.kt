@@ -67,7 +67,7 @@ data class RustToolchain(val location: Path) {
         Files.isExecutable(pathToExecutable(exec))
 
     data class VersionInfo(
-        val rustc: RustcVersion
+        val rustc: RustcVersion?
     )
 
     companion object {
@@ -89,20 +89,16 @@ data class RustToolchain(val location: Path) {
 }
 
 data class RustcVersion(
-    val semver: SemVer?,
-    val host: String?,
-    val nightlyCommitHash: String?
-) {
-    companion object {
-        val UNKNOWN = RustcVersion(null, null, null)
-    }
-}
+    val semver: SemVer,
+    val host: String,
+    val channel: RustChannel
+)
 
-private fun scrapeRustcVersion(rustc: Path): RustcVersion {
+private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
     val lines = GeneralCommandLine(rustc)
         .withParameters("--version", "--verbose")
         .runExecutable()
-        ?: return RustcVersion.UNKNOWN
+        ?: return null
 
     // We want to parse following
     //
@@ -114,19 +110,24 @@ private fun scrapeRustcVersion(rustc: Path): RustcVersion {
     //  host: x86_64-unknown-linux-gnu
     //  release: 1.8.0-beta.1
     //  ```
-    val commitHashRe = "commit-hash: (.*)".toRegex()
     val releaseRe = """release: (\d+\.\d+\.\d+)(.*)""".toRegex()
     val hostRe = "host: (.*)".toRegex()
     val find = { re: Regex -> lines.mapNotNull { re.matchEntire(it) }.firstOrNull() }
 
-    val commitHash = find(commitHashRe)?.let { it.groups[1]!!.value }
-    val releaseMatch = find(releaseRe) ?: return RustcVersion.UNKNOWN
-    val hostText = find(hostRe)?.groups?.get(1)?.value ?: return RustcVersion.UNKNOWN
-    val versionText = releaseMatch.groups[1]?.value ?: return RustcVersion.UNKNOWN
+    val releaseMatch = find(releaseRe) ?: return null
+    val hostText = find(hostRe)?.groups?.get(1)?.value ?: return null
+    val versionText = releaseMatch.groups[1]?.value ?: return null
 
-    val semVer = SemVer.parseFromText(versionText) ?: return RustcVersion.UNKNOWN
-    val isStable = releaseMatch.groups[2]?.value.isNullOrEmpty()
-    return RustcVersion(semVer, hostText, if (isStable) null else commitHash)
+    val semVer = SemVer.parseFromText(versionText) ?: return null
+
+    val releaseSuffix = releaseMatch.groups[2]?.value.orEmpty()
+    val channel = when {
+        releaseSuffix.isEmpty() -> RustChannel.STABLE
+        releaseSuffix.startsWith("-beta") -> RustChannel.BETA
+        releaseSuffix.startsWith("-nightly") -> RustChannel.NIGHTLY
+        else -> RustChannel.DEFAULT
+    }
+    return RustcVersion(semVer, hostText, channel)
 }
 
 private object Suggestions {
