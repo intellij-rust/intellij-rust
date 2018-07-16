@@ -14,11 +14,9 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
-import com.intellij.psi.util.PsiTreeUtil.getContextOfType
 import com.intellij.util.messages.Topic
 import org.rust.lang.RsFileType
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.RsModificationTrackerOwner
+import org.rust.lang.core.psi.ext.findModificationTrackerOwner
 
 val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> = Topic.create(
     "RUST_STRUCTURE_CHANGE_TOPIC",
@@ -89,10 +87,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         // about it because it is a rare case and implementing it differently
         // is much more difficult.
 
-        val owner = getContextOfType(psi, true,
-            RsItemElement::class.java, RsMacroCall::class.java, RsMacro::class.java)
-            as? RsModificationTrackerOwner
-
+        val owner = psi.findModificationTrackerOwner()
         if (owner == null || !owner.incModificationCount(psi)) {
             incRustStructureModificationCount()
         }

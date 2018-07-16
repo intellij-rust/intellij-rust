@@ -7,6 +7,9 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiManager
 
 /**
@@ -27,4 +30,14 @@ interface RsModificationTrackerOwner : RsItemElement {
      * @see org.rust.lang.core.psi.RsPsiManagerImpl.updateModificationCount
      */
     fun incModificationCount(element: PsiElement): Boolean
+}
+
+fun PsiElement.findModificationTrackerOwner(): RsModificationTrackerOwner? {
+    return PsiTreeUtil.getContextOfType(
+        this,
+        true,
+        RsItemElement::class.java,
+        RsMacroCall::class.java,
+        RsMacro::class.java
+    ) as? RsModificationTrackerOwner
 }
