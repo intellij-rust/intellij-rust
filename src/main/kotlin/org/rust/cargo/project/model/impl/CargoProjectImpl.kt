@@ -197,6 +197,14 @@ class CargoProjectsServiceImpl(
         }.get(1, TimeUnit.MINUTES)
     }
 
+    @TestOnly
+    override fun setRustcInfo(rustcInfo: RustcInfo) {
+        modifyProjects { projects ->
+            val updatedProjects = projects.map { it.copy(rustcInfo = rustcInfo, rustcInfoStatus = UpdateStatus.UpToDate) }
+            CompletableFuture.completedFuture(updatedProjects)
+        }.get(1, TimeUnit.MINUTES)
+    }
+
     override fun getState(): Element {
         val state = Element("state")
         for (cargoProject in allProjects) {
