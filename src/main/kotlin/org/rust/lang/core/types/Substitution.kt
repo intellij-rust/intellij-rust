@@ -54,6 +54,16 @@ open class Substitution(
 
     fun mapTypeValues(transform: (Map.Entry<TyTypeParameter, Ty>) -> Ty): Substitution =
         Substitution(typeSubst.mapValues(transform), lifetimeSubst)
+
+    override fun equals(other: Any?): Boolean = when {
+        this === other -> true
+        javaClass != other?.javaClass -> false
+        other !is Substitution -> false
+        typeSubst != other.typeSubst -> false
+        else -> true
+    }
+
+    override fun hashCode(): Int = typeSubst.hashCode()
 }
 
 private object EmptySubstitution : Substitution()
