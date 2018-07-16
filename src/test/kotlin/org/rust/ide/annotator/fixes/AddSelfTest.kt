@@ -5,42 +5,42 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.annotator.RsAnnotatorTestBase
+import org.rust.ide.annotator.RsAnnotationTestBase
 
-class AddSelfTest : RsAnnotatorTestBase() {
-    fun `test has no parameters`() = checkQuickFix("Add self to function", """
-struct S;
+class AddSelfTest : RsAnnotationTestBase() {
+    fun `test has no parameters`() = checkFixByText("Add self to function", """
+        struct S;
 
-impl S {
-    fn foo() {
-        self/*caret*/;
-    }
-}
-""", """
-struct S;
+        impl S {
+            fn foo() {
+                <error>self/*caret*/</error>;
+            }
+        }
+    """, """
+        struct S;
 
-impl S {
-    fn foo(&self) {
-        self/*caret*/;
-    }
-}
-""")
+        impl S {
+            fn foo(&self) {
+                self/*caret*/;
+            }
+        }
+    """)
 
-    fun `test has parameters`() = checkQuickFix("Add self to function", """
-struct S;
+    fun `test has parameters`() = checkFixByText("Add self to function", """
+        struct S;
 
-impl S {
-    fn foo(a: i32) {
-        self/*caret*/;
-    }
-}
-""", """
-struct S;
+        impl S {
+            fn foo(a: i32) {
+                <error>self/*caret*/</error>;
+            }
+        }
+    """, """
+        struct S;
 
-impl S {
-    fn foo(&self, a: i32) {
-        self/*caret*/;
-    }
-}
-""")
+        impl S {
+            fn foo(&self, a: i32) {
+                self/*caret*/;
+            }
+        }
+    """)
 }

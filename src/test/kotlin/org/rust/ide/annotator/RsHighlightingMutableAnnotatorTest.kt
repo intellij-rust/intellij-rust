@@ -7,7 +7,7 @@ package org.rust.ide.annotator
 
 import com.intellij.testFramework.LightProjectDescriptor
 
-class RsHighlightingMutableAnnotatorTest : RsAnnotatorTestBase() {
+class RsHighlightingMutableAnnotatorTest : RsAnnotationTestBase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 

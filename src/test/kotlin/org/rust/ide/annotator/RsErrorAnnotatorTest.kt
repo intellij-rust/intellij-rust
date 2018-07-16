@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-class RsErrorAnnotatorTest : RsAnnotatorTestBase() {
+class RsErrorAnnotatorTest : RsAnnotationTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
     fun `test invalid module declarations`() = doTest("helper.rs")

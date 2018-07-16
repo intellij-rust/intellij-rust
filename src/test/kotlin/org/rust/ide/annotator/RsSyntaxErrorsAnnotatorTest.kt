@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
+class RsSyntaxErrorsAnnotatorTest : RsAnnotationTestBase() {
     fun `test E0379 const trait function`() = checkErrors("""
         trait Foo {
             fn foo();
@@ -213,9 +213,9 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase() {
         }
     """)
 
-    fun `test add parameter_name fix`() = checkQuickFix("Add dummy parameter name", """
+    fun `test add parameter_name fix`() = checkFixByText("Add dummy parameter name", """
         trait Display {
-            fn fmt(&self, F/*caret*/);
+            fn fmt(&self, <warning>F/*caret*/</warning>);
         }
     """, """
         trait Display {
