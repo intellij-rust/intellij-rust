@@ -172,9 +172,9 @@ class CargoProjectsServiceImpl(
     ): CompletableFuture<List<CargoProjectImpl>> =
         projects.updateAsync(f)
             .thenApply { projects ->
-                directoryIndex.resetIndex()
                 ApplicationManager.getApplication().invokeAndWait {
                     runWriteAction {
+                        directoryIndex.resetIndex()
                         ProjectRootManagerEx.getInstanceEx(project)
                             .makeRootsChange(EmptyRunnable.getInstance(), false, true)
                     }
