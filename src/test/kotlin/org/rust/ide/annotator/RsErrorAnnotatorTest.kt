@@ -5,6 +5,8 @@
 
 package org.rust.ide.annotator
 
+import org.rust.lang.MockRustcVersion
+
 class RsErrorAnnotatorTest : RsAnnotationTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
@@ -1142,6 +1144,32 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
     fun `test trait method can return Self type E0277`() = checkErrors("""
         trait Foo {
             fn foo() -> Self;
+        }
+    """)
+
+    @MockRustcVersion("1.27.1")
+    fun `test crate visibility feature E0658`() = checkErrors("""
+        <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
+    """)
+
+    @MockRustcVersion("1.29.0-nightly")
+    fun `test crate visibility feature E0658 2`() = checkErrors("""
+        <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
+    """)
+
+    @MockRustcVersion("1.29.0-nightly")
+    fun `test crate visibility feature E0658 3`() = checkErrors("""
+        #![feature(crate_visibility_modifier)]
+
+        crate struct Foo;
+    """)
+
+    @MockRustcVersion("1.29.0-nightly")
+    fun `test crate visibility feature E0658 4`() = checkErrors("""
+        crate struct Foo;
+
+        mod foo {
+            #![feature(crate_visibility_modifier)]
         }
     """)
 }
