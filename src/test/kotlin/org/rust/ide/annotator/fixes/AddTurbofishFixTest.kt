@@ -6,9 +6,9 @@
 package org.rust.ide.annotator.fixes
 
 import org.intellij.lang.annotations.Language
-import org.rust.ide.annotator.RsAnnotatorTestBase
+import org.rust.ide.annotator.RsAnnotationTestBase
 
-class AddTurbofishFixTest : RsAnnotatorTestBase() {
+class AddTurbofishFixTest : RsAnnotationTestBase() {
     private val intention = "Add turbofish operator"
 
     fun `test trivial happy path`() = checkStatement(
@@ -97,6 +97,6 @@ class AddTurbofishFixTest : RsAnnotatorTestBase() {
         """
 
     private fun checkQuickFix(@Language("Rust") before: String, @Language("Rust") after: String) =
-        checkQuickFix(intention, before, after)
+        checkFixByTextWithoutHighlighting(intention, before, after)
 
 }
