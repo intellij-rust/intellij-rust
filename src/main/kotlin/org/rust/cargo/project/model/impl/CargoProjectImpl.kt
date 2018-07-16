@@ -22,8 +22,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.Consumer
-import com.intellij.util.indexing.LightDirectoryIndex
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
@@ -92,12 +91,12 @@ class CargoProjectsServiceImpl(
      * a containing [CargoProject].
      */
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
-        LightDirectoryIndex(project, noProjectMarker, Consumer { index ->
+        LightDirectoryIndex(project, noProjectMarker) { rootInfos ->
             val visited = mutableSetOf<VirtualFile>()
             fun VirtualFile.put(cargoProject: CargoProjectImpl) {
                 if (this in visited) return
                 visited += this
-                index.putInfo(this, cargoProject)
+                rootInfos[this] = cargoProject
             }
 
             val lowPriority = mutableListOf<Pair<VirtualFile?, CargoProjectImpl>>()
@@ -116,7 +115,7 @@ class CargoProjectsServiceImpl(
             for ((contentRoot, cargoProject) in lowPriority) {
                 contentRoot?.put(cargoProject)
             }
-        })
+        }
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
         directoryIndex.getInfoForFile(file).takeIf { it !== noProjectMarker }
