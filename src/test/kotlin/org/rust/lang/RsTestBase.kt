@@ -301,11 +301,11 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileFilter, testRootDisposable)
     }
 
-    protected fun configureByText(text: String) {
+    protected open fun configureByText(text: String) {
         InlineFile(text.trimIndent())
     }
 
-    protected fun configureByFileTree(text: String) {
+    protected open fun configureByFileTree(text: String) {
         fileTreeFromText(text).createAndOpenFileWithCaretMarker()
     }
 
