@@ -41,7 +41,7 @@ class RsResolveCacheTest : RsTestBase() {
         doTest(code, textToType)
     }
 
-    fun `test`() = doTest("""
+    fun `test cache invalidated on rust structure change`() = doTest("""
         mod a { struct S; }
                      //X
         mod b { struct S; }
@@ -50,4 +50,14 @@ class RsResolveCacheTest : RsTestBase() {
         type T = S;
                //^
     """, "\bb", RsResolveCache.Testmarks.cacheCleared)
+
+    fun `test resolve correctly without global cache invalidation`() = doTest("""
+        struct S1;
+             //X
+        struct S2;
+             //Y
+        fn main() {
+            let a: S1/*caret*/;
+        }        //^
+    """, "\b2")
 }

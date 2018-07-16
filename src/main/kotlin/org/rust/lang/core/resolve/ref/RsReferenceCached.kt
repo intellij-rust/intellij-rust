@@ -26,12 +26,12 @@ abstract class RsReferenceCached<T : RsWeakReferenceElement>(
 
     private fun cachedMultiResolve(): List<PsiElementResolveResult> {
         return RsResolveCache.getInstance(element.project)
-            .resolveWithCaching(this, Resolver).orEmpty()
+            .resolveWithCaching(element, Resolver).orEmpty()
     }
 
-    private object Resolver : (RsReferenceCached<*>) -> List<PsiElementResolveResult> {
-        override fun invoke(ref: RsReferenceCached<*>): List<PsiElementResolveResult> {
-            return ref.resolveInner().map { PsiElementResolveResult(it) }
+    private object Resolver : (RsWeakReferenceElement) -> List<PsiElementResolveResult> {
+        override fun invoke(ref: RsWeakReferenceElement): List<PsiElementResolveResult> {
+            return (ref.reference as RsReferenceCached<*>).resolveInner().map { PsiElementResolveResult(it) }
         }
     }
 }
