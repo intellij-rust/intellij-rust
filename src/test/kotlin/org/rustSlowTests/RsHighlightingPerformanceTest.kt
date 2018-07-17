@@ -31,6 +31,9 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
     fun `test highlighting mysql_async`() =
         repeatTest { highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/conn/mod.rs") }
 
+    fun `test highlighting mysql_async 2`() =
+        repeatTest { highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/connection_like/mod.rs") }
+
     private fun repeatTest(f: () -> Timings) {
         var result = Timings()
         println("${name.substring("test ".length)}:")
