@@ -496,7 +496,7 @@ class ImplLookup(
                     be.element == ref.trait.element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)) }
                 }
                 combineBoundElements(impl, ref.trait)
-                Selection(impl.element, emptyList())
+                Selection(impl.element, emptyList(), mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())
             }
         }
     }
@@ -602,9 +602,8 @@ class ImplLookup(
             is TyTraitObject -> selfTy.trait.assoc[assocType]
             is TyAnon -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
             else -> {
-                val ty = lookupAssocTypeInSelection(res, assocType)
+                lookupAssocTypeInSelection(res, assocType)
                     ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy), res.impl, assocType)
-                ty?.substitute(mapOf(TyTypeParameter.self() to selfTy).toTypeSubst())
             }
         }
     }
