@@ -1448,4 +1448,18 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ u8
     """)
+
+    fun `test Self substitution inside traits`() = testExpr("""
+        struct S<T>(T);
+        impl<T> Tr for S<T> { type Item = T; }
+        trait Tr: Sized {
+            type Item;
+            fn wrap<T>(mut self) -> S<Self> { unimplemented!() }
+            fn unwrap(self) -> Self::Item { unimplemented!() }
+
+            fn bar(&self) {
+                self.wrap().unwrap()
+            }               //^ Self
+        }
+    """)
 }
