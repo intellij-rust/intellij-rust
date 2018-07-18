@@ -5,7 +5,11 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.testFramework.LightProjectDescriptor
+
 class RsHighlightingMutableAnnotatorTest : RsAnnotatorTestBase() {
+
+    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
     fun `test mut self highlight`() = checkInfo("""
         struct <info>Foo</info> {}
@@ -17,11 +21,11 @@ class RsHighlightingMutableAnnotatorTest : RsAnnotatorTestBase() {
     """)
 
     fun `test mut binding`() = checkInfo("""
-        fn <info>main</info>() {
+        fn <info descr="null">main</info>() {
             let mut <info descr="Mutable binding">a</info> = 1;
             let b = <info descr="Mutable binding">a</info>;
-            let Some(ref mut <info descr="Mutable binding">c</info>) = Some(10);
-            let d = <info descr="Mutable binding">c</info>;
+            let <info descr="null">Some</info>(ref mut <info descr="Mutable binding">c</info>) = <info descr="null">Some</info>(10);
+            let <info descr="Mutable binding">d</info> = <info descr="Mutable binding">c</info>;
         }
     """)
 
