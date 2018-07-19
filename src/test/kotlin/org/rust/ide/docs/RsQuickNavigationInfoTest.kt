@@ -688,6 +688,16 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         <b>crate</b> [lib.rs]
     """)
 
+    fun `test item defined with a macro`() = doTest("""
+        macro_rules! foo { ($ i:item) => { $ i } }
+        foo! { struct S; }
+        type T = S;
+               //^
+    """, """
+        test_package
+        struct <b>S</b>
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
         = doTest(code, expected, RsDocumentationProvider::getQuickNavigateInfo)
 }

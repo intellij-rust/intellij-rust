@@ -13,7 +13,7 @@ import org.rust.openapiext.Testmark
 
 abstract class RsDocumentationProviderTest : RsTestBase() {
 
-    protected inline fun doTest(
+    protected fun doTest(
         @Language("Rust") code: String,
         @Language("Html") expected: String,
         block: RsDocumentationProvider.(PsiElement, PsiElement?) -> String?
@@ -34,7 +34,7 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
     protected fun doUrlTestByFileTree(@Language("Rust") text: String, expectedUrl: String?, testmark: Testmark? = null) =
         doUrlTest(text, expectedUrl, testmark, this::configureByFileTree)
 
-    private inline fun doUrlTest(
+    private fun doUrlTest(
         @Language("Rust") text: String,
         expectedUrl: String?,
         testmark: Testmark?,
