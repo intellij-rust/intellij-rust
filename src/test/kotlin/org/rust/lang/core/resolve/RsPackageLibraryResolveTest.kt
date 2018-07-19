@@ -213,4 +213,19 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
             () => {};
         }
     """, NameResolutionTestmarks.missingMacroUse)
+
+    fun `test import from crate root without 'pub' vis`() = stubOnlyResolve("""
+    //- lib.rs
+        mod foo {
+            pub mod bar {
+                pub struct S;
+            }
+        }
+        use foo::bar;
+
+        mod baz;
+    //- baz.rs
+        use bar::S;
+               //^ lib.rs
+    """)
 }
