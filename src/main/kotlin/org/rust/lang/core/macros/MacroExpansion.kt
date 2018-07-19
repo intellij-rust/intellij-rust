@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.macroName
-import org.rust.lang.core.psi.rustStructureModificationTracker
+import org.rust.lang.utils.ReferenceTargetModificationTracker
 
 private val NULL_RESULT: CachedValueProvider.Result<List<RsExpandedElement>?> =
     CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT)
@@ -38,7 +38,30 @@ fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<RsExpandedEl
                 it.setContext(context)
                 it.setExpandedFrom(call)
             }
-            CachedValueProvider.Result.create(result, project.rustStructureModificationTracker)
+
+            // The cached value will be invalidated in these cases:
+            // 1. Some descendant of RsMacroCall PSI is changed
+            // 2. Some descendant of RsMacro PSI is changed
+            // 3. RsMacroCall starts to refer to another RsMacro definition
+            //
+            // The interesting case is when macro call or definition is stubbed.
+            // In this case PSI modification tracking is not provided. But stubbed
+            // PSI is not updated incrementally. I.e. if something is changed in a
+            // stubbed file, all its PSI will be completely invalidated and new one built.
+            // So there are two possible scenarios:
+            // 1. Changed file is a file with a macro call. In this case, the cache
+            //    attached to the call will be invalidate because new PSI will be built
+            // 2. Changed file is a stubbed file containing a macro definition referred
+            //    by some macro call. In this case, the cached expansion of the call will
+            //    be invalidated by ReferenceTargetModificationTracker because new PSI
+            //    will be built for the macro definition, and the tracker will treat it
+            //    as a modification (another resolve result)
+            CachedValueProvider.Result.create(
+                result,
+                call.modificationTracker,
+                def.modificationTracker,
+                ReferenceTargetModificationTracker.forRustStructureDependentReference(call.reference)
+            )
         }
     }
 }
