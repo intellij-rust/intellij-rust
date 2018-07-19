@@ -120,6 +120,9 @@
         // `ctrl+shift+b`
         <typeDeclarationProvider implementation="org.rust.ide.navigation.goto.RsTypeDeclarationProvider"/>
 
+        <targetElementEvaluator language="Rust"
+                                implementationClass="org.rust.ide.navigation.goto.RsTargetElementEvaluator"/>
+
         <!-- Hints -->
 
         <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.RsExpressionTypeProvider"/>
