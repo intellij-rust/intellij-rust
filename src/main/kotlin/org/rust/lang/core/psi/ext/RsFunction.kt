@@ -106,7 +106,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         SimpleModificationTracker()
 
     override fun incModificationCount(element: PsiElement): Boolean {
-        val shouldInc = element !is RsItemElement && block?.isParentOf(element) == true
+        val shouldInc = element !is RsItemElement && block?.isAncestorOf(element) == true
         if (shouldInc) modificationTracker.incModificationCount()
         return shouldInc
     }

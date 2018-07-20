@@ -14,7 +14,7 @@ import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.rightSiblings
+import org.rust.lang.core.psi.ext.rightSiblings
 
 /**
  * Checks for potentially missing `else`s.
