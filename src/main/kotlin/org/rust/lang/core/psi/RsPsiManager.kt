@@ -66,7 +66,10 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
             // We handle more concrete events and so should ignore generic event
             if (event is PsiTreeChangeEventImpl && event.isGenericChange) return
 
-            if (event.file?.fileType != RsFileType) return
+            // There are some cases when PsiFile stored in the event as a child
+            // e.g. file removal by external VFS change
+            val file = event.file ?: event.child as? PsiFile
+            if (file?.fileType != RsFileType) return
 
             val child = event.child
             if (child is PsiComment || child is PsiWhiteSpace) return
