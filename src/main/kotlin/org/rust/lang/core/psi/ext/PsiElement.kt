@@ -29,6 +29,15 @@ val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>> get() {
     }
 }
 
+val PsiElement.leftLeaves: Sequence<PsiElement>
+    get() = generateSequence(this, PsiTreeUtil::prevLeaf).drop(1)
+
+val PsiElement.rightSiblings: Sequence<PsiElement>
+    get() = generateSequence(this.nextSibling) { it.nextSibling }
+
+val PsiElement.leftSiblings: Sequence<PsiElement>
+    get() = generateSequence(this.prevSibling) { it.prevSibling }
+
 /**
  * Extracts node's element type
  */
@@ -97,5 +106,5 @@ fun PsiElement?.getPrevNonCommentSibling(): PsiElement? =
 fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
     PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
 
-fun RsElement.isParentOf(child: PsiElement): Boolean =
+fun RsElement.isAncestorOf(child: PsiElement): Boolean =
     child.ancestors.contains(this)
