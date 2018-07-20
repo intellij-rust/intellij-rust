@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.rust.ide.inspections.ReferenceLifetime.*
+import org.rust.ide.inspections.fixes.ElideLifetimesFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.forEachChild
@@ -209,7 +210,8 @@ private fun registerProblem(holder: ProblemsHolder, fn: RsFunction) {
         TextRange(
             fn.fn.startOffsetInParent,
             fn.block?.getPrevNonCommentSibling()?.endOffsetInParent ?: fn.identifier.endOffsetInParent
-        )
+        ),
+        ElideLifetimesFix()
     )
 }
 
