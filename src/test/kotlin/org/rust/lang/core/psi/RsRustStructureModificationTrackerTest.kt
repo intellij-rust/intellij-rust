@@ -5,8 +5,11 @@
 
 package org.rust.lang.core.psi
 
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
+import org.rust.fileTreeFromText
 import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.INC
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.NOT_INC
@@ -17,14 +20,18 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         NOT_INC({ a, b -> a == b }, "Modification counter expected to remain the same, but it was incremented")
     }
 
-    private fun checkModCount(op: TestAction, @Language("Rust") code: String, text: String) {
-        InlineFile(code).withCaret()
+    private fun checkModCount(op: TestAction, action: () -> Unit) {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         val modTracker = project.rustStructureModificationTracker
         val oldCount = modTracker.modificationCount
-        myFixture.type(text)
+        action()
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         check(op.function(modTracker.modificationCount, oldCount)) { op.comment }
+    }
+
+    private fun checkModCount(op: TestAction, @Language("Rust") code: String, text: String) {
+        InlineFile(code).withCaret()
+        checkModCount(op) { myFixture.type(text) }
     }
 
     private fun doTest(op: TestAction, @Language("Rust") code: String, text: String = "a") {
@@ -133,4 +140,38 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
     fun `test macro call`() = doTest(INC, """
         foo! { /*caret*/ }
     """)
+
+    //
+
+    fun `test external file change`() {
+        val p = fileTreeFromText("""
+        //- main.rs
+            mod foo;
+              //^
+        //- foo.rs
+            // fn bar() {}
+        """).createAndOpenFileWithCaretMarker()
+        val file = p.psiFile("foo.rs").virtualFile!!
+        checkModCount(INC) {
+            runWriteAction {
+                VfsUtil.saveText(file, VfsUtil.loadText(file).replace("//", ""))
+            }
+        }
+    }
+
+    fun `test external file removal`() {
+        val p = fileTreeFromText("""
+        //- main.rs
+            mod foo;
+              //^
+        //- foo.rs
+            fn bar() {}
+        """).createAndOpenFileWithCaretMarker()
+        val file = p.psiFile("foo.rs").virtualFile!!
+        checkModCount(INC) {
+            runWriteAction {
+                file.delete(null)
+            }
+        }
+    }
 }
