@@ -10,14 +10,12 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.completion.or
 import org.rust.lang.core.completion.psiElement
 import org.rust.lang.core.completion.withSuperParent
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.*
 
 /**
@@ -79,17 +77,25 @@ object RsPsiPattern {
         .withChild(psiElement<RsOuterAttr>().withText("#[test]")))
 
     val inAnyLoop: PsiElementPattern.Capture<PsiElement> =
-        psiElement().inside(true,
-            psiElement<RsBlock>().withParent(or(
-                psiElement<RsForExpr>(),
-                psiElement<RsLoopExpr>(),
-                psiElement<RsWhileExpr>())),
-            psiElement<RsLambdaExpr>())
+        psiElement().inside(
+            true,
+            psiElement<RsBlock>().withParent(
+                or(
+                    psiElement<RsForExpr>(),
+                    psiElement<RsLoopExpr>(),
+                    psiElement<RsWhileExpr>()
+                )
+            ),
+            psiElement<RsLambdaExpr>()
+        )
 
     val derivedTraitMetaItem: PsiElementPattern.Capture<RsMetaItem> =
-        psiElement<RsMetaItem>().withSuperParent(2, psiElement()
-            .withSuperParent<RsStructOrEnumItemElement>(2)
-            .with("deriveCondition") { it is RsMetaItem && it.name == "derive" })
+        psiElement<RsMetaItem>().withSuperParent(
+            2,
+            psiElement()
+                .withSuperParent<RsStructOrEnumItemElement>(2)
+                .with("deriveCondition") { it is RsMetaItem && it.name == "derive" }
+        )
 
     val whitespace: PsiElementPattern.Capture<PsiElement> = psiElement().whitespace()
 
@@ -120,12 +126,6 @@ private val PsiElement.prevVisibleOrNewLine: PsiElement?
         .filterNot { it is PsiComment || it is PsiErrorElement }
         .filter { it !is PsiWhiteSpace || it.textContains('\n') }
         .firstOrNull()
-
-val PsiElement.leftLeaves: Sequence<PsiElement> get() = generateSequence(this, PsiTreeUtil::prevLeaf).drop(1)
-
-val PsiElement.rightSiblings: Sequence<PsiElement> get() = generateSequence(this.nextSibling) { it.nextSibling }
-
-val PsiElement.leftSiblings: Sequence<PsiElement> get() = generateSequence(this.prevSibling) { it.prevSibling }
 
 /**
  * Similar with [TreeElementPattern.afterSiblingSkipping]

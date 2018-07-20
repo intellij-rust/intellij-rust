@@ -690,8 +690,7 @@ class RsFnInferenceContext(
             if (!expected.containsTyOfClass(ignoredTys) && !inferred.containsTyOfClass(ignoredTys)) {
                 // another awful hack: check that inner expressions did not annotated as an error
                 // to disallow annotation intersections. This should be done in a different way
-                fun PsiElement.isChildOf(psi: PsiElement) = this.ancestors.contains(psi)
-                if (ctx.diagnostics.all { !it.element.isChildOf(expr) }) {
+                if (ctx.diagnostics.all { !expr.isAncestorOf(it.element) }) {
                     ctx.reportTypeMismatch(expr, expected, inferred)
                 }
             }
