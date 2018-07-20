@@ -217,6 +217,13 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create type from text: `$text`")
     }
 
+    fun createTypeArgumentList(
+        params: Iterable<String>
+    ): RsTypeArgumentList {
+        val text = params.joinToString(prefix = "<", separator = ", ", postfix = ">")
+        return createFromText("type T = a$text") ?: error("Failed to create type argument from text: `$text`")
+    }
+
     fun createOuterAttr(text: String): RsOuterAttr =
         createFromText("#[$text] struct Dummy;")
             ?: error("Failed to create an outer attribute from text: `$text`")
