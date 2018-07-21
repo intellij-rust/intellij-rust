@@ -7,6 +7,7 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -75,6 +76,8 @@ import org.rust.stdext.buildList
 //   * Instead of `getParent` we use `getContext` here. This trick allows for funny things like creating
 //     a code fragment in a temporary file and attaching it to some existing file. See the usages of
 //     [RsCodeFragmentFactory]
+
+private val LOG = Logger.getInstance("org.rust.lang.core.resolve.NameResolution")
 
 fun processDotExprResolveVariants(
     lookup: ImplLookup,
@@ -496,7 +499,10 @@ private fun visibleMacrosInternal(scope: RsItemsOwner): List<RsMacro> {
 }
 
 private fun exportedMacros(scope: RsFile): List<RsMacro> {
-    check(scope.isCrateRoot)
+    if (!scope.isCrateRoot) {
+        LOG.warn("`${scope.virtualFile}` should be crate root")
+        return emptyList()
+    }
     return CachedValuesManager.getCachedValue(scope) {
         val macros = exportedMacrosInternal(scope)
         CachedValueProvider.Result.create(macros, scope.project.rustStructureModificationTracker)
@@ -504,8 +510,6 @@ private fun exportedMacros(scope: RsFile): List<RsMacro> {
 }
 
 private fun exportedMacrosInternal(scope: RsFile): List<RsMacro> {
-    check(scope.isCrateRoot)
-
     val allExportedMacros = RsMacroIndex.allExportedMacros(scope.project)
     return buildList {
         addAll(allExportedMacros[scope].orEmpty())
