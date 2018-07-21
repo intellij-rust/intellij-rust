@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-class RsExpressionAnnotatorTest : RsAnnotatorTestBase() {
+class RsExpressionAnnotatorTest : RsAnnotationTestBase() {
 
     fun `test unnecessary parens`() = checkWarnings("""
 

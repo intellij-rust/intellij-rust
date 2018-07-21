@@ -44,6 +44,9 @@ interface CargoProjectsService {
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace, rustcInfo: RustcInfo? = null)
 
     @TestOnly
+    fun setRustcInfo(rustcInfo: RustcInfo)
+
+    @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {
         val projects = discoverAndRefresh().get(1, TimeUnit.MINUTES)
             ?: error("Timeout when refreshing a test Cargo project")
@@ -92,7 +95,7 @@ interface CargoProject {
     }
 }
 
-data class RustcInfo(val sysroot: String, val version: RustcVersion)
+data class RustcInfo(val sysroot: String, val version: RustcVersion?)
 
 fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false): Boolean {
     if (!explicitRequest) {

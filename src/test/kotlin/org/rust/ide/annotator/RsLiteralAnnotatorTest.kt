@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-class RsLiteralAnnotatorTest : RsAnnotatorTestBase() {
+class RsLiteralAnnotatorTest : RsAnnotationTestBase() {
     fun `test char literal length`() = checkErrors("""
         fn main() {
             let ch1 = <error descr="empty char literal">''</error>;

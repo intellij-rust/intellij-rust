@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-class RsHighlightingAnnotatorTest : RsAnnotatorTestBase() {
+class RsHighlightingAnnotatorTest : RsAnnotationTestBase() {
 
     fun `test attributes`() = checkInfo("""
         <info>#[cfg_attr(foo)]</info>

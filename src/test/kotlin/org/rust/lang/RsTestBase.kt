@@ -22,6 +22,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
@@ -34,7 +35,9 @@ import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RustcVersion
 import org.rust.cargo.toolchain.Rustup
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -51,6 +54,32 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     override fun getTestDataPath(): String = "${RsTestCase.testResourcesPath}/$dataPath"
 
+    override fun setUp() {
+        super.setUp()
+        val testMethod = javaClass.getMethod(name)
+        val version = testMethod.getAnnotation(MockRustcVersion::class.java)?.rustcVersion ?: return
+        val (semVer, channel) = parse(version)
+        val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel))
+        project.cargoProjects.setRustcInfo(rustcInfo)
+    }
+
+    private fun parse(version: String): Pair<SemVer, RustChannel> {
+        val versionRe = """(\d+\.\d+\.\d+)(.*)""".toRegex()
+        val result = versionRe.matchEntire(version) ?: error("$version should match `${versionRe.pattern}` pattern")
+
+        val versionText = result.groups[1]?.value ?: error("")
+        val semVer = SemVer.parseFromText(versionText) ?: error("")
+
+        val releaseSuffix = result.groups[2]?.value.orEmpty()
+        val channel = when {
+            releaseSuffix.isEmpty() -> RustChannel.STABLE
+            releaseSuffix.startsWith("-beta") -> RustChannel.BETA
+            releaseSuffix.startsWith("-nightly") -> RustChannel.NIGHTLY
+            else -> RustChannel.DEFAULT
+        }
+        return semVer to channel
+    }
+
     override fun runTest() {
         val projectDescriptor = projectDescriptor
         val reason = (projectDescriptor as? RustProjectDescriptorBase)?.skipTestReason
@@ -58,7 +87,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             System.err.println("SKIP $name: $reason")
             return
         }
-
         super.runTest()
     }
 
@@ -301,11 +329,11 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileFilter, testRootDisposable)
     }
 
-    protected fun configureByText(text: String) {
+    protected open fun configureByText(text: String) {
         InlineFile(text.trimIndent())
     }
 
-    protected fun configureByFileTree(text: String) {
+    protected open fun configureByFileTree(text: String) {
         fileTreeFromText(text).createAndOpenFileWithCaretMarker()
     }
 

@@ -156,7 +156,7 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
 
                     override fun run(indicator: ProgressIndicator) {
                         indicator.isIndeterminate = true
-                        if (toolchains.osType == OSType.WIN && "msvc" in state.rustVersion().rustc.host.orEmpty()) {
+                        if (toolchains.osType == OSType.WIN && "msvc" in state.rustVersion().rustc?.host.orEmpty()) {
                             result = DebugBuildResult.MSVCToolchain
                             return
                         }
