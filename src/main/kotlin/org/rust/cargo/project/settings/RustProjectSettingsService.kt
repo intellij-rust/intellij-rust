@@ -28,6 +28,8 @@ interface RustProjectSettingsService {
         var runExternalLinterOnTheFly: Boolean = false,
         var externalLinterArguments: String = "",
         var compileAllTargets: Boolean = true,
+        var cargoFeatures: FeaturesSetting = FeaturesSetting.Default,
+        var cargoFeaturesAdditional: List<String> = mutableListOf(),//TODO: Mutable?
         var useOffline: Boolean = false,
         var macroExpansionEngine: MacroExpansionEngine = MacroExpansionEngine.OLD,
         var showTestToolWindow: Boolean = true,
@@ -48,6 +50,13 @@ interface RustProjectSettingsService {
         DISABLED, OLD, NEW
     }
 
+    // We cannot add a toString() method, as the enum serialization/deserialization in XmlSerializerImpl uses toString()
+    enum class FeaturesSetting {
+        All,
+        Default,
+        NoDefault,
+    }
+
     /**
      * Allows to modify settings.
      * After setting change,
@@ -62,6 +71,8 @@ interface RustProjectSettingsService {
     val runExternalLinterOnTheFly: Boolean
     val externalLinterArguments: String
     val compileAllTargets: Boolean
+    val cargoFeatures: FeaturesSetting
+    val cargoFeaturesAdditional: List<String>
     val useOffline: Boolean
     val macroExpansionEngine: MacroExpansionEngine
     val showTestToolWindow: Boolean

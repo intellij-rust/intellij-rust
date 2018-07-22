@@ -25,6 +25,13 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         val text = """
             <RustProjectSettings>
               <option name="autoUpdateEnabled" value="false" />
+              <option name="cargoFeatures" value="NoDefault" />
+              <option name="cargoFeaturesAdditional">
+                <list>
+                  <option value="foo" />
+                  <option value="bar" />
+                </list>
+              </option>
               <option name="compileAllTargets" value="false" />
               <option name="doctestInjectionEnabled" value="false" />
               <option name="explicitPathToStdlib" value="/stdlib" />
@@ -59,6 +66,8 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(false, service.doctestInjectionEnabled)
         assertEquals(true, service.runRustfmtOnSave)
         assertEquals(true, service.useSkipChildren)
+        assertEquals(RustProjectSettingsService.FeaturesSetting.NoDefault, service.cargoFeatures)
+        assertEquals(listOf("foo", "bar"), service.cargoFeaturesAdditional)
     }
 
     fun `test update from version 1`() {

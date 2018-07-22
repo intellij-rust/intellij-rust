@@ -9,12 +9,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.Label
+import org.rust.cargo.project.settings.RustProjectSettingsService.FeaturesSetting
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.util.CargoCommandLineEditor
 import org.rust.ide.ui.layout
 import org.rust.openapiext.CheckboxDelegate
 import org.rust.openapiext.ComboBoxDelegate
-import javax.swing.JComponent
+import java.awt.Component
+import javax.swing.*
+import kotlin.reflect.KProperty
 
 class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
 
@@ -34,6 +39,24 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
     private var compileAllTargets: Boolean by CheckboxDelegate(compileAllTargetsCheckBox)
 
     private lateinit var externalLinterArguments: CargoCommandLineEditor
+
+    private val cargoFeaturesComboBox = ComboBox<FeaturesSetting>().apply {
+        FeaturesSetting.values().forEach { addItem(it) }
+        setRenderer(object : DefaultListCellRenderer() {
+            override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
+                val value2 = when (value as FeaturesSetting) {
+                    FeaturesSetting.All -> "All"
+                    FeaturesSetting.Default -> "Default"
+                    FeaturesSetting.NoDefault -> "No default"
+                }
+                return super.getListCellRendererComponent(list, value2, index, isSelected, cellHasFocus)
+            }
+        })
+    }
+    private var cargoFeatures: FeaturesSetting by FeaturesComboDelegate()
+
+    private val cargoFeaturesAdditionalField = JBTextField()
+    private var cargoFeaturesAdditional: List<String> by FeaturesTextFieldDelegate()
 
     override fun getDisplayName(): String = "Cargo"
 
@@ -62,6 +85,20 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
                 Can be CPU-consuming.
             """)
         }
+        cargoFeaturesAdditionalField.toolTipText = "Additional features to activate. Space-separated."
+        cargoFeaturesAdditionalField.emptyText.text = "Additional features to activate. Space-separated."
+
+        val p = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.X_AXIS)
+            add(cargoFeaturesComboBox)
+            add(Label("+"))
+            add(cargoFeaturesAdditionalField)
+        }
+
+        row("Cargo metadata features:", p, """
+            Cargo features to enable.
+            Pass --all-features, --no-default-features and --features to `cargo metadata`.
+        """)
     }
 
     override fun isModified(): Boolean =
@@ -69,6 +106,8 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
             || externalLinter != settings.externalLinter
             || runExternalLinterOnTheFly != settings.runExternalLinterOnTheFly
             || compileAllTargets != settings.compileAllTargets
+            || cargoFeatures != settings.cargoFeatures
+            || cargoFeaturesAdditional != settings.cargoFeaturesAdditional
             || useOffline != settings.useOffline
             || externalLinterArguments.text != settings.externalLinterArguments
 
@@ -79,6 +118,8 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
             it.runExternalLinterOnTheFly = runExternalLinterOnTheFly
             it.externalLinterArguments = externalLinterArguments.text
             it.compileAllTargets = compileAllTargets
+            it.cargoFeatures = cargoFeatures
+            it.cargoFeaturesAdditional = cargoFeaturesAdditional
             it.useOffline = useOffline
         }
     }
@@ -89,6 +130,28 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
         runExternalLinterOnTheFly = settings.runExternalLinterOnTheFly
         externalLinterArguments.text = settings.externalLinterArguments
         compileAllTargets = settings.compileAllTargets
+        cargoFeatures = settings.cargoFeatures
+        cargoFeaturesAdditional = settings.cargoFeaturesAdditional
         useOffline = settings.useOffline
+    }
+
+    private inner class FeaturesComboDelegate {
+        operator fun getValue(thisRef: Any?, property: KProperty<*>): FeaturesSetting {
+            return cargoFeaturesComboBox.model.selectedItem as FeaturesSetting
+        }
+
+        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: FeaturesSetting) {
+            cargoFeaturesComboBox.selectedItem = value
+        }
+    }
+
+    private inner class FeaturesTextFieldDelegate {
+        operator fun getValue(thisRef: Any?, property: KProperty<*>): List<String> {
+            return cargoFeaturesAdditionalField.text.split(' ').filterNot { it.isEmpty() }
+        }
+
+        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: List<String>) {
+            cargoFeaturesAdditionalField.text = value.joinToString(separator = " ")
+        }
     }
 }

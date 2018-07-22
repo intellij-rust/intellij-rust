@@ -18,6 +18,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.RustProjectSettingsService.State
 import org.rust.cargo.toolchain.ExternalLinter
+import org.rust.cargo.project.settings.RustProjectSettingsService.FeaturesSetting
 import org.rust.cargo.toolchain.RustToolchain
 
 private const val serviceName: String = "RustProjectSettings"
@@ -40,6 +41,8 @@ class RustProjectSettingsServiceImpl(
     override val runExternalLinterOnTheFly: Boolean get() = state.runExternalLinterOnTheFly
     override val externalLinterArguments: String get() = state.externalLinterArguments
     override val compileAllTargets: Boolean get() = state.compileAllTargets
+    override val cargoFeatures: FeaturesSetting get() = state.cargoFeatures
+    override val cargoFeaturesAdditional: List<String> get() = state.cargoFeaturesAdditional
     override val useOffline: Boolean get() = state.useOffline
     override val macroExpansionEngine: MacroExpansionEngine get() = state.macroExpansionEngine
     override val showTestToolWindow: Boolean get() = state.showTestToolWindow
