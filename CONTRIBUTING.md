@@ -43,6 +43,31 @@ plugins for Rust and TOML, which are organized as gradle subprojects. Running
 `./gradlew :task` executes the task only for Rust plugin, `:intellij-toml:task` will run
 the task for TOML and `./gradlew task` will do for both.
 
+### Platform versions
+
+We usually support the latest release platform version and EAPs of next version.
+But sometimes there are not compatible changes in new platform version.
+To avoid creating several parallel vcs branches for each version, we have separate
+folders for each version to keep platform dependent code.
+
+For example, current platform version is 181, next version is 182 
+and `org.rust.ide.navigation.goto.RsImplsSearch` should have separate implementations
+for each version. Then project source code structure will be
+
+     +-- src
+     |   +-- 181/kotlin
+     |       +-- org/rust/ide/navigation/goto
+     |           +-- RsImplsSearch.kt
+     |   +-- 182/kotlin
+     |       +-- org/rust/ide/navigation/goto
+     |           +-- RsImplsSearch.kt
+     |   +-- main/kotlin
+     |       +-- other platfrom independent code
+     
+Of course, only one batch of platform dependent code will be used in compilation.
+To change platform version which you use for compilation, 
+i.e. change IDEA and CLion dependencies and platform dependent code,
+you need to modify `platformVersion` property in `gradle.properties` file.       
 
 ## Development in Intellij IDEA
 
