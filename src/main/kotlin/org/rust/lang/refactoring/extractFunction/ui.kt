@@ -93,7 +93,7 @@ private class DialogExtractFunctionUi(
         ) {
             updateConfig(config, functionNameField, visibilityBox)
             callback()
-            true
+            extractDialogOkValue
         }.show()
     }
 
