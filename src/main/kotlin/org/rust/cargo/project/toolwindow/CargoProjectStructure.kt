@@ -56,42 +56,49 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
         object Root : Node() {
             override fun toString(): String = "Root"
         }
+
         data class Project(val cargoProject: CargoProject) : Node() {
             override fun toString(): String = "Project"
         }
+
         data class WorkspaceMember(val pkg: CargoWorkspace.Package) : Node() {
             override fun toString(): String = "WorkspaceMember($name)"
         }
+
         data class Targets(val targets: Collection<CargoWorkspace.Target>) : Node() {
             override fun toString(): String = "Targets"
         }
+
         data class Target(val target: CargoWorkspace.Target) : Node() {
             override fun toString(): String = "Target($name[${target.kind.name.toLowerCase()}])"
         }
 
-        val name: String get() = when (this) {
-            Root -> ""
-            is Project -> cargoProject.presentableName
-            is WorkspaceMember -> pkg.name
-            is Targets -> "targets"
-            is Target -> target.name
-        }
+        val name: String
+            get() = when (this) {
+                Root -> ""
+                is Project -> cargoProject.presentableName
+                is WorkspaceMember -> pkg.name
+                is Targets -> "targets"
+                is Target -> target.name
+            }
 
-        val icon: Icon? get() = when (this) {
-            is Project -> CargoIcons.ICON
-            is WorkspaceMember -> CargoIcons.ICON
-            is Targets -> CargoIcons.TARGETS
-            is Target -> target.icon
-            else -> null
-        }
+        val icon: Icon?
+            get() = when (this) {
+                is Project -> CargoIcons.ICON
+                is WorkspaceMember -> CargoIcons.ICON
+                is Targets -> CargoIcons.TARGETS
+                is Target -> target.icon
+                else -> null
+            }
 
-        private val CargoWorkspace.Target.icon: Icon? get() = when (kind) {
-            is Lib -> CargoIcons.LIB_TARGET
-            Bin -> CargoIcons.BIN_TARGET
-            Test -> CargoIcons.TEST_TARGET
-            Bench -> CargoIcons.BENCH_TARGET
-            ExampleBin, is ExampleLib -> CargoIcons.EXAMPLE_TARGET
-            Unknown -> null
-        }
+        private val CargoWorkspace.Target.icon: Icon?
+            get() = when (kind) {
+                is Lib -> CargoIcons.LIB_TARGET
+                Bin -> CargoIcons.BIN_TARGET
+                Test -> CargoIcons.TEST_TARGET
+                Bench -> CargoIcons.BENCH_TARGET
+                ExampleBin, is ExampleLib -> CargoIcons.EXAMPLE_TARGET
+                Unknown -> null
+            }
     }
 }

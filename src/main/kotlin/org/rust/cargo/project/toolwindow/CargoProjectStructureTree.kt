@@ -18,12 +18,13 @@ import javax.swing.tree.TreeSelectionModel
 
 class CargoProjectStructureTree(model: CargoProjectStructure) : SimpleTree(model) {
 
-    val selectedProject: CargoProject? get() {
-        val path = selectionPath ?: return null
-        if (path.pathCount < 2) return null
-        val treeNode = path.getPathComponent(1) as? DefaultMutableTreeNode ?: return null
-        return (treeNode.userObject as? CargoProjectStructure.Node.Project)?.cargoProject
-    }
+    val selectedProject: CargoProject?
+        get() {
+            val path = selectionPath ?: return null
+            if (path.pathCount < 2) return null
+            val treeNode = path.getPathComponent(1) as? DefaultMutableTreeNode ?: return null
+            return (treeNode.userObject as? CargoProjectStructure.Node.Project)?.cargoProject
+        }
 
     init {
         isRootVisible = false
