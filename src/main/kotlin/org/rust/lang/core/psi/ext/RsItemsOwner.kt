@@ -69,8 +69,10 @@ private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsItemElement)
     return itemsAndMacros.any { it.processItem(processor) }
 }
 
-private fun RsElement.processItem(processor: (RsItemElement) -> Boolean) = when (this) {
-    is RsMacroCall -> processExpansionRecursively { it is RsItemElement && processor(it) }
-    is RsItemElement -> processor(this)
-    else -> false
+private fun RsElement.processItem(processor: (RsItemElement) -> Boolean): Boolean {
+    return when (this) {
+        is RsMacroCall -> processExpansionRecursively { it is RsItemElement && processor(it) }
+        is RsItemElement -> processor(this)
+        else -> false
+    }
 }
