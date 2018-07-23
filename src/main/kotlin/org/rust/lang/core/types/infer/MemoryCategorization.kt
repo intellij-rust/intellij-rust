@@ -61,6 +61,9 @@ private fun processUnaryExpr(unaryExpr: RsUnaryExpr): Cmt {
 }
 
 private fun processDotExpr(dotExpr: RsDotExpr): Cmt {
+    if (dotExpr.methodCall != null) {
+        return processRvalue(dotExpr)
+    }
     val type = dotExpr.type
     val base = dotExpr.expr
     val baseCmt = processExpr(base)
@@ -123,6 +126,9 @@ private fun processDeref(baseCmt: Cmt): Cmt {
     }
 }
 
+private fun processRvalue(expr: RsExpr): Cmt =
+    Cmt(expr.type, MutabilityCategory.Declared)
+
 private fun processExprUnadjusted(expr: RsExpr): Cmt =
     when (expr) {
         is RsUnaryExpr -> processUnaryExpr(expr)
@@ -130,7 +136,7 @@ private fun processExprUnadjusted(expr: RsExpr): Cmt =
         is RsIndexExpr -> processIndexExpr(expr)
         is RsPathExpr -> processPathExpr(expr)
         is RsParenExpr -> processParenExpr(expr)
-        else -> Cmt(expr.type)
+        else -> processRvalue(expr)
     }
 
 
