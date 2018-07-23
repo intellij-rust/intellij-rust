@@ -181,4 +181,20 @@ class RsMemoryCategorizationTest : RsTestBase() {
             }
         }
     """)
+
+    fun `test rvalue method call`() = testExpr("""
+        fn main() {
+          let v = vec![1];
+          v.iter();
+               //^ Declared
+        }
+    """)
+
+    fun `test rvalue if expr`() = testExpr("""
+        struct S {}
+        fn main() {
+          (if true { S } else { S });
+                                 //^ Declared
+        }
+    """)
 }
