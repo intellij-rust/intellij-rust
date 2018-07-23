@@ -15,8 +15,12 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
     when (this) {
         is RsPatWild -> {}
         is RsPatConst -> {
-            val (derefTy, _) = type.stripReferences()
-            fcx.inferTypeCoercableTo(expr, derefTy)
+            val expr = expr
+            val expectedTy = when {
+                expr is RsLitExpr && expr.kind is RsLiteralKind.String -> type
+                else -> type.stripReferences().first
+            }
+            fcx.inferTypeCoercableTo(expr, expectedTy)
         }
         is RsPatRef -> {
             pat.extractBindings(fcx, (type as? TyReference)?.referenced ?: TyUnknown)

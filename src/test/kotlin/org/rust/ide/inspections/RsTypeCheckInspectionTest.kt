@@ -140,4 +140,14 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
             let _: RefWrapper<u32> = RefWrapper(w);
         }
     """)
+
+    // issue 2670
+    fun `test no type mismatch E0308 when matching with string literal`() = checkByText("""
+        fn main() {
+            match "" {
+                "" => {}
+                _ => {}
+            }
+        }
+    """)
 }
