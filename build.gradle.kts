@@ -29,6 +29,7 @@ buildscript {
 val CI = System.getenv("CI") != null
 
 val channel = prop("publishChannel")
+val platformVersion = prop("platformVersion")
 
 plugins {
     idea
@@ -63,15 +64,15 @@ allprojects {
     }
 
     intellij {
-        version = prop("ideaVersion")
+        version = prop("ideaVersion_$platformVersion")
         downloadSources = !CI
         updateSinceUntilBuild = true
         instrumentCode = false
         ideaDependencyCachePath = file("deps").absolutePath
 
         tasks.withType<PatchPluginXmlTask> {
-            sinceBuild(prop("sinceBuild"))
-            untilBuild(prop("untilBuild"))
+            sinceBuild(prop("sinceBuild_$platformVersion"))
+            untilBuild(prop("untilBuild_$platformVersion"))
         }
     }
 
@@ -117,8 +118,8 @@ allprojects {
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
 
 project(":") {
-    val clionVersion = prop("clionVersion")
-    val versionSuffix = "-${prop("compatibilitySuffix")}$channelSuffix"
+    val clionVersion = prop("clionVersion_$platformVersion")
+    val versionSuffix = "-$platformVersion$channelSuffix"
     version = "0.2.0.${prop("buildNumber")}$versionSuffix"
     intellij {
         pluginName = "intellij-rust"
@@ -139,8 +140,9 @@ project(":") {
     }
 
     java.sourceSets {
+        getByName("main").kotlin.srcDirs("src/$platformVersion/kotlin")
         create("debugger") {
-            kotlin.srcDirs("debugger/src/main/kotlin")
+            kotlin.srcDirs("debugger/src/main/kotlin", "debugger/src/$platformVersion/kotlin")
             compileClasspath += getByName("main").compileClasspath +
                 getByName("main").output +
                 files("deps/clion-$clionVersion/lib/clion.jar")
@@ -273,7 +275,9 @@ fun commitChangelog(): String {
 }
 
 fun commitNightly() {
-    val ideaArtifactName = prop("ideaArtifactName")
+    // TODO: extract the latest versions of all supported platforms
+    val ideaArtifactName = "$platformVersion-EAP-SNAPSHOT"
+
     val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/$ideaArtifactName/BUILD-$ideaArtifactName.txt")
     val ideaVersion = versionUrl.openStream().bufferedReader().readLine().trim()
     println("\n    NEW IDEA: $ideaVersion\n")

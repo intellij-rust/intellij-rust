@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentMap
  * I.e. you can't use this cache for local variable references
  */
 class RsResolveCache(messageBus: MessageBus) {
-    private val cache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
+    private val cache: ConcurrentMap<PsiElement, Any?> = ResolveCacheMap()
     private val guard = RecursionManager.createGuard("RsResolveCache")
 
     init {
@@ -86,7 +86,7 @@ class RsResolveCache(messageBus: MessageBus) {
         return if (owner != null) {
             CachedValuesManager.getCachedValue(owner, LOCAL_CACHE_KEY) {
                 Result.create(
-                    createWeakMap(),
+                    ResolveCacheMap(),
                     owner.project.rustStructureModificationTracker,
                     owner.modificationTracker
                 )
@@ -119,32 +119,31 @@ class RsResolveCache(messageBus: MessageBus) {
     }
 }
 
-private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {
-    return object : ConcurrentWeakKeySoftValueHashMap<K, V>(
-        100,
-        0.75f,
-        Runtime.getRuntime().availableProcessors(),
-        ContainerUtil.canonicalStrategy()
-    ) {
-        override fun createValueReference(
-            value: V,
-            queue: ReferenceQueue<V>
-        ): ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
-            val isTrivialValue = value === NULL_RESULT ||
-                value is Array<*> && value.size == 0 ||
-                value is List<*> && value.size == 0
-            return if (isTrivialValue) {
-                createStrongReference(value)
-            } else {
-                super.createValueReference(value, queue)
-            }
-        }
+abstract class ResolveCacheMapBase<K, V> : ConcurrentWeakKeySoftValueHashMap<K, V>(
+    100,
+    0.75f,
+    Runtime.getRuntime().availableProcessors(),
+    ContainerUtil.canonicalStrategy()
+) {
 
-        @Suppress("UNCHECKED_CAST")
-        override fun get(key: K): V? {
-            val v = super.get(key)
-            return if (v === NULL_RESULT) null else v
+    protected fun createValueReferenceInner(
+        value: V,
+        queue: ReferenceQueue<V>
+    ): ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
+        val isTrivialValue = value === org.rust.lang.core.resolve.ref.NULL_RESULT ||
+            value is Array<*> && value.size == 0 ||
+            value is List<*> && value.size == 0
+        return if (isTrivialValue) {
+            createStrongReference(value)
+        } else {
+            super.createValueReference(value, queue)
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun get(key: K): V? {
+        val v = super.get(key)
+        return if (v === NULL_RESULT) null else v
     }
 }
 

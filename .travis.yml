@@ -3,17 +3,25 @@ branches:
     - staging
     - master
     - trying
-    - 182
 
 language: java
 
 jdk: oraclejdk8
 
 env:
+  global:
+    - OLD_RUST_VERSION=1.25.0
+    - CURRENT_RUST_VERSION=1.27.1
+    - NIGHLY_RUST_VERSION=nightly-2018-06-28
   matrix:
-    - RUST_VERSION=nightly-2018-06-28 ORG_GRADLE_PROJECT_sinceBuild=181 ORG_GRADLE_PROJECT_ideaVersion=181.5540.1 # modified by script
-    - RUST_VERSION=1.27.0
-    - RUST_VERSION=1.25.0 ORG_GRADLE_PROJECT_sinceBuild=181 ORG_GRADLE_PROJECT_ideaVersion=2018.1
+    # 181 branch
+    - RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=181 ORG_GRADLE_PROJECT_sinceBuild_181=181 ORG_GRADLE_PROJECT_ideaVersion_181=181.5540.1 # modified by script
+    - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=181
+    - RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=181 ORG_GRADLE_PROJECT_sinceBuild_181=181 ORG_GRADLE_PROJECT_ideaVersion_181=2018.1
+    # 182 branch
+    - RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182 ORG_GRADLE_PROJECT_sinceBuild_182=182 ORG_GRADLE_PROJECT_ideaVersion_182=182.3684.2 # modified by script
+    - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182
+    - RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182 ORG_GRADLE_PROJECT_sinceBuild_182=182 ORG_GRADLE_PROJECT_ideaVersion_182=182.3684.2
 
 install: true
 
