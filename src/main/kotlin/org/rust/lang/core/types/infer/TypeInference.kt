@@ -228,7 +228,9 @@ class RsInferenceContext(
     }
 
     fun addDiagnostic(diagnostic: RsDiagnostic) {
-        diagnostics.add(diagnostic)
+        if (diagnostic.element.containingFile.isPhysical) {
+            diagnostics.add(diagnostic)
+        }
     }
 
     fun addAdjustment(expression: RsExpr, adjustment: Adjustment) {
