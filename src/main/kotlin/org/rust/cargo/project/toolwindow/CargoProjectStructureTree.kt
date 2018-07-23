@@ -68,7 +68,29 @@ class CargoProjectTreeRenderer : ColoredTreeCellRenderer() {
                     toolTipText = "${StringUtil.capitalize(targetKind.name)} target `${node.name}`"
                 }
             }
-            else -> append(node.name)
+            is CargoProjectStructure.Node.Feature -> {
+                val enabledDisabled = when (node.feature.state) {
+                    CargoWorkspace.FeatureState.Enabled -> {
+                        append(node.name)
+                        "enabled"
+                    }
+                    CargoWorkspace.FeatureState.Disabled -> {
+                        append(node.name, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+                        "disabled"
+                    }
+                    else -> {
+                        append(node.name, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+                        "unknown"
+                    }
+                }
+                toolTipText = "The feature `${node.name}` is $enabledDisabled"
+
+            }
+            else -> {
+                append(node.name)
+                // Clear out tool tip on all other nodes
+                toolTipText = null
+            }
         }
     }
 }

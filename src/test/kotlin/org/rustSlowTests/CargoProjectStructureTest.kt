@@ -11,8 +11,11 @@ import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.tree.TreeUtil
 import org.rust.FileTreeBuilder
+import org.rust.MinRustcVersion
+import org.rust.cargo.CargoFeatures
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.toolwindow.CargoProjectStructure
 import org.rust.fileTree
 import javax.swing.tree.TreeModel
@@ -28,6 +31,8 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
            Target(example[example])
            Target(test[test])
            Target(bench[bench])
+          Features
+           Package(foo-0.1.0)
     """) {
         toml("Cargo.toml", """
             [package]
@@ -56,6 +61,9 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
          Project
           Targets
            Target(foo[bin])
+          Features
+           Package(bar-0.1.0)
+           Package(foo-0.1.0)
           WorkspaceMember(bar)
            Targets
             Target(bar[bin])
@@ -84,6 +92,200 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
             """)
             dir("src") {
                 rust("main.rs", "fn main() {}")
+            }
+        }
+    }
+
+    @MinRustcVersion("1.26.0")
+    @CargoFeatures(RustProjectSettingsService.FeaturesSetting.Default, "")
+    fun `test features default`() = doTest("""
+        Root
+         Project
+          Targets
+           Target(foo[bin])
+          Features
+           Package(foo-0.1.0)
+            Feature(conditional1,enabled)
+            Feature(default,enabled)
+            Feature(conditional2,disabled)
+    """) {
+        toml("Cargo.toml", """
+            [package]
+            name = "foo"
+            version = "0.1.0"
+            authors = []
+            [features]
+            default = ["conditional1"]
+            conditional1 = []
+            conditional2 = []
+        """)
+
+        dir("src") {
+            rust("main.rs", "")
+        }
+    }
+
+    @MinRustcVersion("1.26.0")
+    @CargoFeatures(RustProjectSettingsService.FeaturesSetting.NoDefault, "conditional2")
+    fun `test features no default`() = doTest("""
+        Root
+         Project
+          Targets
+           Target(foo[bin])
+          Features
+           Package(foo-0.1.0)
+            Feature(conditional2,enabled)
+            Feature(conditional1,disabled)
+            Feature(default,disabled)
+    """) {
+        toml("Cargo.toml", """
+            [package]
+            name = "foo"
+            version = "0.1.0"
+            authors = []
+            [features]
+            default = ["conditional1"]
+            conditional1 = []
+            conditional2 = []
+        """)
+
+        dir("src") {
+            rust("main.rs", "")
+        }
+    }
+
+    @MinRustcVersion("1.26.0")
+    @CargoFeatures(RustProjectSettingsService.FeaturesSetting.All, "")
+    fun `test features all`() = doTest("""
+        Root
+         Project
+          Targets
+           Target(foo[bin])
+          Features
+           Package(foo-0.1.0)
+            Feature(conditional1,enabled)
+            Feature(conditional2,enabled)
+            Feature(default,enabled)
+    """) {
+        toml("Cargo.toml", """
+            [package]
+            name = "foo"
+            version = "0.1.0"
+            authors = []
+            [features]
+            default = ["conditional1"]
+            conditional1 = []
+            conditional2 = []
+        """)
+
+        dir("src") {
+            rust("main.rs", "")
+        }
+    }
+
+    @MinRustcVersion("1.26.0")
+    @CargoFeatures(RustProjectSettingsService.FeaturesSetting.Default, "conditional2 conditional3")
+    fun `test features custom`() = doTest("""
+        Root
+         Project
+          Targets
+           Target(foo[bin])
+          Features
+           Package(foo-0.1.0)
+            Feature(conditional2,enabled)
+            Feature(conditional3,enabled)
+            Feature(conditional1,disabled)
+            Feature(conditional4,disabled)
+    """) {
+        toml("Cargo.toml", """
+            [package]
+            name = "foo"
+            version = "0.1.0"
+            authors = []
+            [features]
+            conditional1 = []
+            conditional2 = []
+            conditional3 = []
+            conditional4 = []
+        """)
+
+        dir("src") {
+            rust("main.rs", "")
+        }
+    }
+
+    @MinRustcVersion("1.26.0")
+    fun `test features dependencies`() = doTest("""
+        Root
+         Project
+          Targets
+           Target(foo[bin])
+          Features
+           Package(dep1-0.1.0)
+            Feature(default,enabled)
+            Feature(dep1conditional1,enabled)
+            Feature(dep1conditional2,disabled)
+            Feature(dep1conditional3,disabled)
+           Package(dep2-0.1.0)
+            Feature(dep2conditional2,enabled)
+            Feature(dep2conditional3,enabled)
+            Feature(default,disabled)
+            Feature(dep2conditional1,disabled)
+           Package(foo-0.1.0)
+            Feature(conditional1,enabled)
+            Feature(default,enabled)
+            Feature(conditional2,disabled)
+    """) {
+        toml("Cargo.toml", """
+            [package]
+            name = "foo"
+            version = "0.1.0"
+            authors = []
+            [features]
+            default = ["conditional1"]
+            conditional1 = []
+            conditional2 = []
+            [dependencies]
+            dep1 = { path = "./dep1" }
+            dep2 = { path = "./dep2", default-features = false, features = ["dep2conditional2", "dep2conditional3"] }
+        """)
+
+        dir("src") {
+            rust("main.rs", "")
+        }
+
+        dir("dep1") {
+            toml("Cargo.toml", """
+                [package]
+                name = "dep1"
+                version = "0.1.0"
+                authors = []
+                [features]
+                default = ["dep1conditional1"]
+                dep1conditional1 = []
+                dep1conditional2 = []
+                dep1conditional3 = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", "")
+            }
+        }
+        dir("dep2") {
+            toml("Cargo.toml", """
+                [package]
+                name = "dep2"
+                version = "0.1.0"
+                authors = []
+                [features]
+                default = ["dep2conditional1"]
+                dep2conditional1 = []
+                dep2conditional2 = []
+                dep2conditional3 = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", "")
             }
         }
     }

@@ -37,12 +37,21 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
                     .partition { it.rootDirectory == cargoProject.workingDirectory }
                 val childrenNodes = mutableListOf<Node>()
                 ourPackage.mapTo(childrenNodes) { Targets(it.targets) }
+                childrenNodes.add(Features(cargoProject.workspace
+                    ?.packages
+                    ?.filter { it.origin != PackageOrigin.STDLIB }
+                    ?.sortedBy { it.name } ?: emptyList()))
                 workspaceMembers.mapTo(childrenNodes, ::WorkspaceMember)
                 childrenNodes
             }
             is WorkspaceMember -> listOf(Targets(userObject.pkg.targets))
             is Targets -> userObject.targets.map { Node.Target(it) }
             is Node.Target -> emptyList()
+            is Features -> userObject.packages.map { Node.Package(it) }
+            is Package -> userObject.pkg.features
+                .sortedWith(compareBy({ it.state }, { it.name }))
+                .map { Node.Feature(it) }
+            is Feature -> emptyList()
             else -> null
         }
         return childrenObjects?.map(::DefaultMutableTreeNode)
@@ -73,6 +82,25 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
             override fun toString(): String = "Target($name[${target.kind.name.toLowerCase()}])"
         }
 
+        data class Features(val packages: Collection<CargoWorkspace.Package>) : Node() {
+            override fun toString(): String = "Features"
+        }
+
+        data class Package(val pkg: CargoWorkspace.Package) : Node() {
+            override fun toString(): String = "Package($name)"
+        }
+
+        data class Feature(val feature: CargoWorkspace.Feature) : Node() {
+            override fun toString(): String {
+                val enabledDisabled = when (feature.state) {
+                    CargoWorkspace.FeatureState.Enabled -> "enabled"
+                    CargoWorkspace.FeatureState.Disabled -> "disabled"
+                    else -> "unknown"
+                }
+                return "Feature($name,$enabledDisabled)"
+            }
+        }
+
         val name: String
             get() = when (this) {
                 Root -> ""
@@ -80,6 +108,14 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
                 is WorkspaceMember -> pkg.name
                 is Targets -> "targets"
                 is Target -> target.name
+                is Features -> "features"
+                is Package -> {
+                    if (!pkg.version.isEmpty())
+                        pkg.name + "-" + pkg.version
+                    else
+                        pkg.name
+                }
+                is Feature -> feature.name
             }
 
         val icon: Icon?
@@ -88,6 +124,12 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
                 is WorkspaceMember -> CargoIcons.ICON
                 is Targets -> CargoIcons.TARGETS
                 is Target -> target.icon
+                is Features -> null
+                is Feature -> when (feature.state) {
+                    CargoWorkspace.FeatureState.Enabled -> CargoIcons.FEATURE_ENABLED
+                    CargoWorkspace.FeatureState.Disabled -> CargoIcons.FEATURE_DISABLED
+                    else -> CargoIcons.FEATURE_UNKNOWN
+                }
                 else -> null
             }
 

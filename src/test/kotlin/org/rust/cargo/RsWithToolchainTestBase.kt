@@ -64,6 +64,14 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         if (toolchain != null) {
             project.rustSettings.modify { it.toolchain = toolchain }
         }
+
+        val cargoFeatures = findAnnotationInstance<CargoFeatures>()
+        if (cargoFeatures != null) {
+            project.rustSettings.modify {
+                it.cargoFeatures = cargoFeatures.cargoFeatures
+                it.cargoFeaturesAdditional = cargoFeatures.cargoFeaturesAdditional.split(' ').filterNot { it.isEmpty() }
+            }
+        }
     }
 
     override fun tearDown() {

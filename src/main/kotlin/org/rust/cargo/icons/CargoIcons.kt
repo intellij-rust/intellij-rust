@@ -24,4 +24,8 @@ object CargoIcons {
     val TEST_TARGET = IconLoader.getIcon("/icons/target-test.svg")
     val BENCH_TARGET = IconLoader.getIcon("/icons/target-bench.svg")
     val EXAMPLE_TARGET = IconLoader.getIcon("/icons/target-example.svg")
+
+    val FEATURE_DISABLED = AllIcons.General.Remove
+    val FEATURE_ENABLED = AllIcons.General.Add
+    val FEATURE_UNKNOWN = null
 }
