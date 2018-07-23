@@ -13,10 +13,9 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.infer.RsInferenceResult
-import org.rust.lang.core.types.infer.inferTypeReferenceType
-import org.rust.lang.core.types.infer.inferTypesIn
-import org.rust.lang.core.types.infer.mutabilityCategory
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.recursionGuard
 
@@ -80,4 +79,13 @@ fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
 
 val RsUnaryExpr.isDereference: Boolean get() = this.mul != null
 
-val RsExpr.isMutable: Boolean get() = mutabilityCategory?.isMutable ?: Mutability.DEFAULT_MUTABILITY.isMut
+val RsExpr.cmt: Cmt?
+    get() {
+        val items = StdKnownItems.relativeTo(this)
+        val lookup = ImplLookup(this.project, items)
+        val inference = this.inference ?: return null
+        return MemoryCategorizationContext(lookup, inference).processExpr(this)
+    }
+
+val RsExpr.isMutable: Boolean
+    get() = cmt?.isMutable ?: Mutability.DEFAULT_MUTABILITY.isMut

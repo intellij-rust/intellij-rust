@@ -44,6 +44,13 @@ sealed class Adjustment(val target: Ty) {
     class Deref(target: Ty) : Adjustment(target)
 }
 
+interface RsInferenceData {
+    fun getExprAdjustments(expr: RsExpr): List<Adjustment>
+    fun getExprType(expr: RsExpr): Ty
+    fun getBindingType(binding: RsPatBinding): Ty
+    fun getResolvedPaths(expr: RsPathExpr): List<RsElement>
+}
+
 /**
  * [RsInferenceResult] is an immutable per-function map
  * from expressions to their types.
@@ -56,16 +63,19 @@ class RsInferenceResult(
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
     val diagnostics: List<RsDiagnostic>,
     val adjustments: Map<RsExpr, List<Adjustment>>
-) {
+) : RsInferenceData {
     private val timestamp: Long = System.nanoTime()
 
-    fun getExprType(expr: RsExpr): Ty =
+    override fun getExprAdjustments(expr: RsExpr): List<Adjustment> =
+        adjustments[expr] ?: emptyList()
+
+    override fun getExprType(expr: RsExpr): Ty =
         exprTypes[expr] ?: TyUnknown
 
-    fun getBindingType(binding: RsPatBinding): Ty =
+    override fun getBindingType(binding: RsPatBinding): Ty =
         bindings[binding] ?: TyUnknown
 
-    fun getResolvedPath(expr: RsPathExpr): List<RsElement> =
+    override fun getResolvedPaths(expr: RsPathExpr): List<RsElement> =
         resolvedPaths[expr] ?: emptyList()
 
     fun getResolvedMethod(call: RsMethodCall): List<RsFunction> =
@@ -91,7 +101,7 @@ class RsInferenceResult(
 class RsInferenceContext(
     val lookup: ImplLookup,
     val items: StdKnownItems
-) {
+) : RsInferenceData {
     val fulfill: FulfillmentContext = FulfillmentContext(this, lookup)
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
@@ -183,20 +193,24 @@ class RsInferenceContext(
         }
     }
 
-    fun getExprType(expr: RsExpr): Ty {
+    override fun getExprAdjustments(expr: RsExpr): List<Adjustment> {
+        return adjustments[expr] ?: emptyList()
+    }
+
+    override fun getExprType(expr: RsExpr): Ty {
         return exprTypes[expr] ?: TyUnknown
+    }
+
+    override fun getBindingType(binding: RsPatBinding): Ty {
+        return bindings[binding] ?: TyUnknown
+    }
+
+    override fun getResolvedPaths(expr: RsPathExpr): List<RsElement> {
+        return resolvedPaths[expr] ?: emptyList()
     }
 
     fun isTypeInferred(expr: RsExpr): Boolean {
         return exprTypes.containsKey(expr)
-    }
-
-    fun getBindingType(binding: RsPatBinding): Ty {
-        return bindings[binding] ?: TyUnknown
-    }
-
-    fun getResolvedPaths(expr: RsPathExpr): List<RsElement> {
-        return resolvedPaths[expr] ?: emptyList()
     }
 
     fun writeExprTy(psi: RsExpr, ty: Ty) {
