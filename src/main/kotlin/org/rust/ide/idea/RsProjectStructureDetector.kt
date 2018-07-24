@@ -17,7 +17,12 @@ import java.io.File
 import javax.swing.Icon
 
 class RsProjectStructureDetector : ProjectStructureDetector() {
-    override fun detectRoots(dir: File, children: Array<out File>, base: File, result: MutableList<DetectedProjectRoot>): DirectoryProcessingResult {
+    override fun detectRoots(
+        dir: File,
+        children: Array<out File>,
+        base: File,
+        result: MutableList<DetectedProjectRoot>
+    ): DirectoryProcessingResult {
         if (children.any { it.name == RustToolchain.CARGO_TOML }) {
             result.add(object : DetectedProjectRoot(dir) {
                 override fun getRootTypeName(): String = "Rust"
@@ -27,7 +32,11 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
         return DirectoryProcessingResult.SKIP_CHILDREN
     }
 
-    override fun setupProjectStructure(roots: MutableCollection<DetectedProjectRoot>, projectDescriptor: ProjectDescriptor, builder: ProjectFromSourcesBuilder) {
+    override fun setupProjectStructure(
+        roots: MutableCollection<DetectedProjectRoot>,
+        projectDescriptor: ProjectDescriptor,
+        builder: ProjectFromSourcesBuilder
+    ) {
         val root = roots.singleOrNull()
         if (root == null || builder.hasRootsFromOtherDetectors(this) || projectDescriptor.modules.isNotEmpty()) {
             return
