@@ -971,11 +971,17 @@ class RsFnInferenceContext(
     }
 
     private fun inferCallExprType(expr: RsCallExpr, expected: Ty?): Ty {
-        val ty = resolveTypeVarsWithObligations(expr.expr.inferType()) // or error
-        val argExprs = expr.valueArgumentList.exprList
+        val callee = expr.expr
+        val ty = resolveTypeVarsWithObligations(callee.inferType()) // or error
         // `struct S; S();`
-        if (ty is TyAdt && argExprs.isEmpty()) return ty
-
+        if (callee is RsPathExpr) {
+            ctx.getResolvedPaths(callee).singleOrNull()?.let {
+                if (it is RsFieldsOwner && it.namedFields.isEmpty() && it.positionalFields.isEmpty()) {
+                    return ty
+                }
+            }
+        }
+        val argExprs = expr.valueArgumentList.exprList
         val calleeType = lookup.asTyFunction(ty)?.register() ?: unknownTyFunction(argExprs.size)
         if (expected != null) ctx.combineTypes(expected, calleeType.retType)
         inferArgumentTypes(calleeType.paramTypes, argExprs)
