@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.macros.ExpansionResult
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
@@ -189,5 +189,5 @@ abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsExpr {
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

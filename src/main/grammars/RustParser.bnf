@@ -167,7 +167,7 @@ private PathIdentInner ::= !("union" identifier) identifier | self | super | 'Se
 
 fake Path ::= (Path '::' | '::' | TypeQual)? PathIdentInner PathTypeArguments? {
   implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
-                 "org.rust.lang.core.macros.ExpansionResult" ]
+                 "org.rust.lang.core.macros.RsExpandedElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -479,7 +479,7 @@ Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscr
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsAbstractable"
                  "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
-                 "org.rust.lang.core.macros.ExpansionResult" ]
+                 "org.rust.lang.core.macros.RsExpandedElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsConstantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsConstantStub"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
@@ -881,7 +881,7 @@ Expr ::= RetExpr
        | UnaryExpr
        | TryExpr
        | AtomExpr {
-  implements = "org.rust.lang.core.macros.ExpansionResult"
+  implements = "org.rust.lang.core.macros.RsExpandedElement"
   mixin = "org.rust.lang.core.psi.ext.RsExprMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
 }
@@ -1178,7 +1178,7 @@ MacroExpansionGroupSeparator ::= <<macroBindingGroupSeparatorToken>>
 MacroCall ::= MacroHead <<macroSemicolon>> {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
-                 "org.rust.lang.core.macros.ExpansionResult" ]
+                 "org.rust.lang.core.macros.RsExpandedElement" ]
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"

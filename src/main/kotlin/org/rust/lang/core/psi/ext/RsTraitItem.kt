@@ -14,7 +14,7 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.util.Query
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.macros.ExpansionResult
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
 import org.rust.lang.core.stubs.RsTraitItemStub
@@ -112,7 +112,7 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
-    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
 
 

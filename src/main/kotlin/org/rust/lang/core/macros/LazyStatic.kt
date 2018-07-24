@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 import org.rust.lang.core.psi.ext.elementType
 
-fun expandLazyStatic(call: RsMacroCall): ExpansionResult? {
+fun expandLazyStatic(call: RsMacroCall): RsExpandedElement? {
     val arg = call.macroArgument?.compactTT ?: return null
     val lazyStaticCall = parseLazyStaticCall(arg) ?: return null
     val text = "${if (lazyStaticCall.pub) "pub " else ""}static ${lazyStaticCall.identifier}: ${lazyStaticCall.type} = &${lazyStaticCall.expr};"

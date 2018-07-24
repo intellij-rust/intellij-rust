@@ -9,7 +9,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.CachedValuesManager
-import org.rust.lang.core.macros.ExpansionResult
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.expandMacro
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacroCall
@@ -32,7 +32,7 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>, RsM
     override val referenceNameElement: PsiElement
         get() = findChildByType(IDENTIFIER)!!
 
-    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
 
 val RsMacroCall.macroName: String
@@ -49,20 +49,20 @@ val RsMacroCall.macroBody: String?
         return macroArgument?.compactTT?.text ?: formatMacroArgument?.braceListBodyText()?.toString()
     }
 
-val RsMacroCall.expansion: List<ExpansionResult>?
+val RsMacroCall.expansion: List<RsExpandedElement>?
     get() = CachedValuesManager.getCachedValue(this) {
         expandMacro(this)
     }
 
-fun RsMacroCall.processExpansionRecursively(processor: (ExpansionResult) -> Boolean): Boolean =
+fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElement) -> Boolean): Boolean =
     processExpansionRecursively(processor, 0)
 
-private fun RsMacroCall.processExpansionRecursively(processor: (ExpansionResult) -> Boolean, depth: Int): Boolean {
+private fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElement) -> Boolean, depth: Int): Boolean {
     if (depth > DEFAULT_RECURSION_LIMIT) return true
     return expansion.orEmpty().any { it.processRecursively(processor, depth) }
 }
 
-private fun ExpansionResult.processRecursively(processor: (ExpansionResult) -> Boolean, depth: Int): Boolean {
+private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) -> Boolean, depth: Int): Boolean {
     return when (this) {
         is RsMacroCall -> processExpansionRecursively(processor, depth + 1)
         else -> processor(this)
