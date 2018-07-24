@@ -27,9 +27,9 @@ sealed class RsAbstractableOwner {
 val RsAbstractable.owner: RsAbstractableOwner
     get() {
         val stubOnlyParent = when (this) {
-            is RsConstant -> if (stub != null) stub.parentStub.psi else parent
-            is RsFunction -> if (stub != null) stub.parentStub.psi else parent
-            is RsTypeAlias -> if (stub != null) stub.parentStub.psi else parent
+            is RsConstant -> stub?.parentStub?.psi ?: parent
+            is RsFunction -> stub?.parentStub?.psi ?: parent
+            is RsTypeAlias -> stub?.parentStub?.psi ?: parent
             else -> error("unreachable")
         }
         return when (stubOnlyParent) {
