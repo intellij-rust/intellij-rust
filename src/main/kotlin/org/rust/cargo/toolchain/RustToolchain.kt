@@ -71,15 +71,15 @@ data class RustToolchain(val location: Path) {
     )
 
     companion object {
-        private val RUSTC = "rustc"
-        private val RUSTFMT = "rustfmt"
-        private val CARGO = "cargo"
-        private val RUSTUP = "rustup"
-        private val XARGO = "xargo"
+        private const val RUSTC = "rustc"
+        private const val RUSTFMT = "rustfmt"
+        private const val CARGO = "cargo"
+        private const val RUSTUP = "rustup"
+        private const val XARGO = "xargo"
 
-        val CARGO_TOML = "Cargo.toml"
-        val CARGO_LOCK = "Cargo.lock"
-        val XARGO_TOML = "Xargo.toml"
+        const val CARGO_TOML = "Cargo.toml"
+        const val CARGO_LOCK = "Cargo.lock"
+        const val XARGO_TOML = "Xargo.toml"
 
         fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
             val candidate = RustToolchain(it.toPath().toAbsolutePath())

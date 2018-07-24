@@ -21,7 +21,7 @@ private val HttpConfigurable.proxyUri: URI
         if (PROXY_AUTHENTICATION && !proxyLogin.isNullOrEmpty() && plainProxyPassword != null) {
             val login = proxyLogin
             val password = plainProxyPassword!!
-            userInfo = if (password.isNotEmpty()) login + ":" + password else login
+            userInfo = if (password.isNotEmpty()) "$login:$password" else login
         }
         return URI("http", userInfo, PROXY_HOST, PROXY_PORT, "/", null, null)
     }
