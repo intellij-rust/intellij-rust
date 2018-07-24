@@ -340,4 +340,13 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
           (if true { S } else { S }).f_mut();
         }
     """)
+
+    /** [See github issue 2711](https://github.com/intellij-rust/intellij-rust/issues/2711) */
+    fun `test vector index`() = checkByText("""
+        fn f() {
+            let mut a = vec![1];
+            let b = &mut a;
+            let c = &mut b[0];
+        }
+    """)
 }
