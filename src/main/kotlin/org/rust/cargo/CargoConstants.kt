@@ -17,6 +17,6 @@ object CargoConstants {
     object ProjectLayout {
         val sources = listOf("src", "examples")
         val tests = listOf("tests", "benches")
-        val target = "target"
+        const val target = "target"
     }
 }

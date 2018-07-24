@@ -12,7 +12,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.project.Project
-import org.rust.cargo.CargoConstants.ProjectLayout.target
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -104,7 +103,8 @@ fun CargoWorkspace.Target.launchCommand(): String? {
         CargoWorkspace.TargetKind.LIB -> "build"
         CargoWorkspace.TargetKind.TEST -> "test"
         CargoWorkspace.TargetKind.BENCH -> "bench"
-        CargoWorkspace.TargetKind.EXAMPLE -> if (crateTypes.singleOrNull() == CargoWorkspace.CrateType.BIN) "run" else "build"
+        CargoWorkspace.TargetKind.EXAMPLE ->
+            if (crateTypes.singleOrNull() == CargoWorkspace.CrateType.BIN) "run" else "build"
         else -> null
     }
 }
@@ -119,7 +119,11 @@ fun CargoCommandLine.run(project: Project, cargoProject: CargoProject) {
     ProgramRunnerUtil.executeConfiguration(runConfiguration, executor)
 }
 
-private fun createRunConfiguration(project: Project, cargoCommandLine: CargoCommandLine, name: String? = null): RunnerAndConfigurationSettings {
+private fun createRunConfiguration(
+    project: Project,
+    cargoCommandLine: CargoCommandLine,
+    name: String? = null
+): RunnerAndConfigurationSettings {
     val runManager = RunManagerEx.getInstanceEx(project)
 
     return runManager.createCargoCommandRunConfiguration(cargoCommandLine, name).apply {
