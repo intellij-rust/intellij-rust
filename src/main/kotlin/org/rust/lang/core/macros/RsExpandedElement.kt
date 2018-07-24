@@ -13,16 +13,16 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestors
 
 /**
- *  [ExpansionResult]s are those elements which exist in temporary,
+ *  [RsExpandedElement]s are those elements which exist in temporary,
  *  in-memory PSI-files and are injected into real PSI. Their real
  *  parent is this temp PSI-file, but they are seen by the rest of
  *  the plugin as the children of [getContext] element.
  */
-interface ExpansionResult : RsElement {
+interface RsExpandedElement : RsElement {
     override fun getContext(): PsiElement?
 
     companion object {
-        fun getContextImpl(psi: ExpansionResult): PsiElement? {
+        fun getContextImpl(psi: RsExpandedElement): PsiElement? {
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
             if (psi is StubBasedPsiElement<*>) {
                 val stub = psi.stub
@@ -33,11 +33,11 @@ interface ExpansionResult : RsElement {
     }
 }
 
-fun ExpansionResult.setContext(context: RsElement) {
+fun RsExpandedElement.setContext(context: RsElement) {
     putUserData(RS_EXPANSION_CONTEXT, context)
 }
 
-fun ExpansionResult.setExpandedFrom(call: RsMacroCall) {
+fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
     putUserData(RS_EXPANSION_MACRO_CALL, call)
 }
 
@@ -45,10 +45,10 @@ fun ExpansionResult.setExpandedFrom(call: RsMacroCall) {
  * The [RsMacroCall] that directly expanded to this element or
  * null if this element is not directly produced by a macro
  */
-val ExpansionResult.expandedFrom: RsMacroCall?
+val RsExpandedElement.expandedFrom: RsMacroCall?
     get() = getUserData(RS_EXPANSION_MACRO_CALL) as RsMacroCall?
 
-val ExpansionResult.expandedFromRecursively: RsMacroCall?
+val RsExpandedElement.expandedFromRecursively: RsMacroCall?
     get() {
         var call: RsMacroCall = expandedFrom ?: return null
         while (true) {
@@ -60,7 +60,7 @@ val ExpansionResult.expandedFromRecursively: RsMacroCall?
 
 fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
     val found = ancestors
-        .filterIsInstance<ExpansionResult>()
+        .filterIsInstance<RsExpandedElement>()
         .mapNotNull { it.expandedFromRecursively }
         .firstOrNull()
     return found?.findMacroCallExpandedFrom() ?: found

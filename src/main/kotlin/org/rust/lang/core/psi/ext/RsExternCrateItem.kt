@@ -9,7 +9,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.macros.ExpansionResult
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.resolve.ref.RsExternCrateReferenceImpl
@@ -38,5 +38,5 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
 
     override fun getIcon(flags: Int) = RsIcons.CRATE
 
-    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

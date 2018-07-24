@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.macros.ExpansionResult
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
@@ -38,5 +38,5 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
 
     override val referenceName: String get() = stub?.referenceName ?: referenceNameElement.text
 
-    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
