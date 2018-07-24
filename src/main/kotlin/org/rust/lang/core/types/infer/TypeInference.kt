@@ -380,7 +380,7 @@ class RsInferenceContext(
             return when (ty) {
                 is TyInfer.IntVar -> intUnificationTable.findValue(ty) ?: TyInteger.DEFAULT
                 is TyInfer.FloatVar -> floatUnificationTable.findValue(ty) ?: TyFloat.DEFAULT
-                is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(::go) ?: ty.origin ?: TyUnknown
+                is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(::go) ?: TyUnknown
             }
         }
 

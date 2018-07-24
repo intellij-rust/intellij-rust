@@ -863,7 +863,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
         fn main() {
             let a = UnknownStruct { f1: 1, ..Default::default() };
-        }                                                  //^ Self
+        }                                                  //^ <unknown>
     """)
 
     fun `test index expr of unresolved path`() = testExpr("""
