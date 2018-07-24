@@ -19,10 +19,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
-class RsMethodLineSeparatorProvider : LineMarkerProvider {
+class RsMethodLineSeparatorProvider(
+    private val daemonSettings: DaemonCodeAnalyzerSettings,
+    private val colorsManager: EditorColorsManager
+) : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<PsiElement>? {
-        if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS) {
+        if (daemonSettings.SHOW_METHOD_SEPARATORS) {
             if (element.canHaveSeparator()) {
                 val prevSibling = element.getPrevNonCommentSibling()
                 if (prevSibling.canHaveSeparator() && (element.wantsSeparator() || prevSibling.wantsSeparator())) {
@@ -40,12 +43,15 @@ class RsMethodLineSeparatorProvider : LineMarkerProvider {
     private fun createLineSeparatorByElement(element: PsiElement): LineMarkerInfo<PsiElement> {
         val anchor = PsiTreeUtil.getDeepestFirst(element)
         return LineMarkerInfo(anchor, anchor.textRange, null, Pass.LINE_MARKERS, null, null, GutterIconRenderer.Alignment.RIGHT).apply {
-            separatorColor = EditorColorsManager.getInstance().globalScheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
+            separatorColor = colorsManager.globalScheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
             separatorPlacement = SeparatorPlacement.TOP
         }
     }
 
-    override fun collectSlowLineMarkers(p0: MutableList<PsiElement>, p1: MutableCollection<LineMarkerInfo<PsiElement>>) {
+    override fun collectSlowLineMarkers(
+        elements: List<PsiElement>,
+        result: MutableCollection<LineMarkerInfo<PsiElement>>
+    ) {
     }
 
 }
