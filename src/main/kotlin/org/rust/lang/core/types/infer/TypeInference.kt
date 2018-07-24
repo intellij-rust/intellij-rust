@@ -233,8 +233,10 @@ class RsInferenceContext(
         }
     }
 
-    fun addAdjustment(expression: RsExpr, adjustment: Adjustment) {
-        adjustments.getOrPut(expression) { mutableListOf() }.add(adjustment)
+    fun addAdjustment(expression: RsExpr, adjustment: Adjustment, count: Int = 1) {
+        repeat(count) {
+            adjustments.getOrPut(expression) { mutableListOf() }.add(adjustment)
+        }
     }
 
     fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
@@ -892,7 +894,7 @@ class RsFnInferenceContext(
         return normTy
     }
 
-    private inner class AssociatedTypeNormalizer: TypeFolder {
+    private inner class AssociatedTypeNormalizer : TypeFolder {
         override fun foldTy(ty: Ty): Ty = normalizeAssociatedTypesIn(ty)
     }
 
@@ -1157,9 +1159,7 @@ class RsFnInferenceContext(
             }
             return TyUnknown
         }
-        repeat(field.derefCount) {
-            ctx.addAdjustment(fieldLookup.parentDotExpr.expr, Adjustment.Deref(receiver))
-        }
+        ctx.addAdjustment(fieldLookup.parentDotExpr.expr, Adjustment.Deref(receiver), field.derefCount)
 
         val fieldElement = field.element
 
@@ -1363,13 +1363,27 @@ class RsFnInferenceContext(
     }
 
     private fun inferIndexExprType(expr: RsIndexExpr): Ty {
+        fun isArrayToSlice(prevType: Ty?, type: Ty?): Boolean =
+            prevType is TyArray && type is TySlice
+
         val containerType = expr.containerExpr?.inferType() ?: return TyUnknown
         val indexType = expr.indexExpr?.inferType() ?: return TyUnknown
-        return lookup.coercionSequence(containerType)
-            .mapNotNull { type -> lookup.findIndexOutputType(type, indexType) }
-            .firstOrNull()
-            ?.register()
-            ?: TyUnknown
+
+        var derefCount = -1 // starts with -1 because the fist element of the coercion sequence is the type itself
+        var prevType: Ty? = null
+        for (type in lookup.coercionSequence(containerType)) {
+            if (!isArrayToSlice(prevType, type)) derefCount++
+
+            val outputType = lookup.findIndexOutputType(type, indexType)
+            if (outputType != null) {
+                expr.containerExpr?.let { ctx.addAdjustment(it, Adjustment.Deref(containerType), derefCount) }
+                return outputType.register()
+            }
+
+            prevType = type
+        }
+
+        return TyUnknown
     }
 
     private fun inferMacroExprType(expr: RsMacroExpr): Ty {
