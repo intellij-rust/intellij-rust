@@ -14,10 +14,10 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.psi.rustStructureModificationTracker
 
-private val NULL_RESULT: CachedValueProvider.Result<List<ExpansionResult>?> =
+private val NULL_RESULT: CachedValueProvider.Result<List<RsExpandedElement>?> =
     CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT)
 
-fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<ExpansionResult>?> {
+fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<RsExpandedElement>?> {
     val context = call.context as? RsElement ?: return NULL_RESULT
     return when {
         call.macroName == "lazy_static" -> {

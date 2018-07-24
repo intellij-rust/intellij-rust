@@ -9,7 +9,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.macros.ExpansionResult
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsElementTypes.UNION
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsStructItem
@@ -47,5 +47,5 @@ abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStu
 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
-    override fun getContext(): PsiElement? = ExpansionResult.getContextImpl(this)
+    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
