@@ -46,4 +46,13 @@ class RsMacroExpansionCachingTest : RsResolveTestBase() {
 
         check(ref.resolve() != null)
     }
+
+    fun test() = checkByCode("""
+        macro_rules! foo {
+            () => { fn foo() {} }
+        }
+
+        struct S/*caret*/ {}
+        foo!();
+    """)
 }
