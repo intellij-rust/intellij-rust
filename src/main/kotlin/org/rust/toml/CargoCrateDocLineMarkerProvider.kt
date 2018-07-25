@@ -11,7 +11,6 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil;
 import org.rust.ide.icons.RsIcons
 import org.toml.lang.psi.*
 
@@ -29,15 +28,15 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
     }
 
     private fun annotateTable(el: TomlTable): Collection<LineMarkerInfo<PsiElement>> {
-        val names = el.header.names.map { it.text }
+        val names = el.header.names
         val test = names.getOrNull(names.size - 2)
         val lastName = names.lastOrNull() ?: return emptyList()
-        if (test != null && (test == "dependencies" || test == "dev-dependencies" || test == "build-dependencies")) {
+        if (test?.isDependencyKey == true) {
             val version = el.entries.find { it.name == "version" }?.value?.text?.trimVersion
-            val lineMarkerInfo = genLineMarkerInfo(el.header.names.first(), lastName, version) ?: return emptyList()
+            val lineMarkerInfo = genLineMarkerInfo(el.header.names.first(), lastName.text, version) ?: return emptyList()
             return listOf(lineMarkerInfo)
         }
-        if (lastName != "dependencies" && lastName != "dev-dependencies" && lastName != "build-dependencies") return emptyList()
+        if (!lastName.isDependencyKey) return emptyList()
         return el.entries.mapNotNull {
             val pkgName = it.name
             val pkgVersion = it.version

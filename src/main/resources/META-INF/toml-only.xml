@@ -1,5 +1,7 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
+        <psi.referenceContributor language="TOML"
+                                  implementation="org.rust.toml.CargoTomlKeyReferenceContributor"/>
         <completion.contributor language="TOML"
                                 implementationClass="org.rust.toml.CargoTomlCompletionContributor"/>
         <codeInsight.lineMarkerProvider language="TOML"
