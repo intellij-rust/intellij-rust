@@ -15,8 +15,10 @@ import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 
@@ -129,6 +131,9 @@ private fun filterMethodCompletionVariants(
     lookup: ImplLookup,
     receiver: Ty
 ): RsResolveProcessor {
+    // Don't filter partially unknown types
+    if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor
+
     val cache = mutableMapOf<RsImplItem, Boolean>()
     return fun(it: ScopeEntry): Boolean {
         // 1. If not a method (actually a field) or a trait method - just process it

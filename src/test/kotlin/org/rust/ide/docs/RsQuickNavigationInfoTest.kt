@@ -665,13 +665,13 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
 
     fun `test match if let`() = doTest("""
         fn foo() {
-            if let Some(ref foo) = None {
-                *foo
+            if let Some(ref foo) = Some(0) {
+                *foo;
                  //^
             }
         }
     """, """
-        condition binding <b>foo</b>: &amp;T
+        condition binding <b>foo</b>: &amp;i32
     """)
 
     fun `test file 1`() = doTest("""
