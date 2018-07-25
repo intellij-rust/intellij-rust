@@ -157,7 +157,7 @@ fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Sel
     pattern.accepts(sibling)
 }
 
-private fun <T, Self : ObjectPattern<T, Self>> ObjectPattern<T, Self>.with(name: String, cond: (T) -> Boolean): Self =
+fun <T, Self : ObjectPattern<T, Self>> ObjectPattern<T, Self>.with(name: String, cond: (T) -> Boolean): Self =
     with(object : PatternCondition<T>(name) {
         override fun accepts(t: T, context: ProcessingContext?): Boolean = cond(t)
     })
