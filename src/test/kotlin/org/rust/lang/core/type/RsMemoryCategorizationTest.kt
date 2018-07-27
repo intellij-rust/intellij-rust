@@ -14,7 +14,7 @@ import org.rust.lang.core.types.infer.mutabilityCategory
 class RsMemoryCategorizationTest : RsTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
 
-    private fun testExpr(@Language("Rust") code: String, description: String = "", allowErrors: Boolean = false) {
+    private fun testExpr(@Language("Rust") code: String, description: String = "") {
         InlineFile(code)
         check(description)
     }
