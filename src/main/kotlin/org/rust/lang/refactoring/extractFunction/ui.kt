@@ -8,7 +8,6 @@ package org.rust.lang.refactoring.extractFunction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.psi.PsiFile
 import com.intellij.refactoring.ui.MethodSignatureComponent
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.components.dialog
@@ -22,17 +21,16 @@ private var MOCK: ExtractFunctionUi? = null
 
 fun extractFunctionDialog(
     project: Project,
-    file: PsiFile,
-    config: RsExtractFunctionConfig
+    config: RsExtractFunctionConfig,
+    callback: () -> Unit
+
 ) {
     val extractFunctionUi = if (isUnitTestMode) {
         MOCK ?: error("You should set mock ui via `withMockExtractFunctionUi`")
     } else {
         DialogExtractFunctionUi(project)
     }
-    extractFunctionUi.extract(config) {
-        RsExtractFunctionHandlerAction(project, file, config).execute()
-    }
+    extractFunctionUi.extract(config, callback)
 }
 
 @TestOnly
