@@ -7,7 +7,6 @@ package org.rust.ide.typing.assist
 
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors
 import com.intellij.lang.Language
-import com.intellij.openapi.application.Result
 import com.intellij.openapi.command.WriteCommandAction
 import org.rust.lang.RsLanguage
 import org.rust.lang.RsTestBase
@@ -22,20 +21,17 @@ class RsSmartEnterProcessorTest : RsTestBase() {
     fun getSmartProcessors(language: Language) = SmartEnterProcessors.INSTANCE.forKey(language)
 
     private fun doTest() {
-        myFixture.configureByFile("$fileName")
+        myFixture.configureByFile(fileName)
         val processors = getSmartProcessors(RsLanguage)
 
-        val writeCommand = object : WriteCommandAction<RsSmartEnterProcessor>(project) {
-            override fun run(result: Result<RsSmartEnterProcessor>) {
-                val editor = myFixture.editor
-                for (processor in processors) {
-                    processor.process(project, editor, myFixture.file)
-                }
+        WriteCommandAction.writeCommandAction(project).run<Throwable> {
+            val editor = myFixture.editor
+            for (processor in processors) {
+                processor.process(project, editor, myFixture.file)
             }
         }
-        writeCommand.execute()
 
-        myFixture.checkResultByFile("$fileName".replace(".rs", "_after.rs"), true)
+        myFixture.checkResultByFile(fileName.replace(".rs", "_after.rs"), true)
     }
 
     fun `test fix simple method call`() = doTest()

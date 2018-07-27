@@ -11,7 +11,7 @@ import org.rust.fileTree
 
 class RsRustStructureModificationTrackerToolchainTest : RustWithToolchainTestBase() {
     fun `test mod count incremented on project refresh`() {
-        val p = fileTree {
+        fileTree {
             toml("Cargo.toml", """
                 [package]
                 name = "hello"

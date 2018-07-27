@@ -46,6 +46,8 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             importItem(project, candidates.first(), path)
         } else {
             val consumer = Consumer<DataContext> { chooseItemAndImport(project, it, candidates, path) }
+            // BACKCOMPAT: 2018.1
+            @Suppress("DEPRECATION")
             DataManager.getInstance().dataContextFromFocus.doWhenDone(consumer)
         }
         isConsumed = true
