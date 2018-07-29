@@ -37,3 +37,5 @@ struct S<F>
     where F: FnMut(&mut Self, &T) -> Result<(), <Self as Encoder>::Error>;
 
 struct EmptyWhere where {}
+
+fn bar() -> foo!() { let a: foo!() = 0 as foo!(); a }
