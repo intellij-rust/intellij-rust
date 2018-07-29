@@ -5,6 +5,7 @@
 
 package org.rust.lang
 
+import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -176,7 +177,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     }
 
     protected inline fun <reified T : PsiElement> findElementWithDataAndOffsetInEditor(marker: String = "^"): Triple<T, String, Int> {
-        val caretMarker = "//$marker"
+        val commentPrefix = LanguageCommenters.INSTANCE.forLanguage(myFixture.file.language).lineCommentPrefix ?: "//"
+        val caretMarker = "$commentPrefix$marker"
         val (elementAtMarker, data, offset) = run {
             val text = myFixture.file.text
             val markerOffset = text.indexOf(caretMarker)
