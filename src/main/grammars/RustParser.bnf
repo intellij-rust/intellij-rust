@@ -725,6 +725,7 @@ private TypeAscription ::= ':' TypeReference
 private TypeReferenceInner ::= ArrayType
                                | RefLikeType
                                | FnPointerType
+                               | MacroType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
                                | ExplicitTraitType
@@ -736,6 +737,7 @@ private TypeReferenceInner ::= ArrayType
 private TypeReferenceNoImplicitTraitTypeInner ::= ArrayType
                                | RefLikeType
                                | FnPointerType
+                               | MacroType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
                                | ExplicitTraitType
@@ -745,6 +747,7 @@ private TypeReferenceNoImplicitTraitTypeInner ::= ArrayType
 private ScalarTypeReferenceInner ::= ArrayType
                                    | RefLikeType
                                    | FnPointerType
+                                   | MacroType
                                    | BaseType
                                    | <<tupleOrParenType ScalarTypeReferenceInner TupleType_upper>>
                                    | ForInType
@@ -773,6 +776,13 @@ RefLikeType ::= ( '&' Lifetime? mut? | '*' [ const | mut ] ) TypeReference {
 }
 
 FnPointerType ::= [ unsafe? ExternAbi? ] fn FnTypeParameters RetType? {
+  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+MacroType ::= MacroCallNoSemicolons {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
