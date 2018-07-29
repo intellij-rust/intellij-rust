@@ -19,7 +19,9 @@ import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psiElement
 import org.rust.lang.core.withPrevSiblingSkipping
+import org.rust.lang.core.withSuperParent
 
 /**
  * Completes Rust keywords
