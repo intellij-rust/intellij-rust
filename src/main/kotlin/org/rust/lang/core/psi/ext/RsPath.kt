@@ -32,7 +32,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
     override fun getReference(): RsPathReference = RsPathReferenceImpl(this)
 
     override val referenceNameElement: PsiElement
-        get() = checkNotNull(identifier ?: self ?: `super` ?: cself) {
+        get() = checkNotNull(identifier ?: self ?: `super` ?: cself ?: crate) {
             "Path must contain identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
         }
 
