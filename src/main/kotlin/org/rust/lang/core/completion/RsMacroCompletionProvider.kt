@@ -16,14 +16,15 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.queryAttributes
+import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.processMacroCallVariants
 import org.rust.lang.core.withPrevSiblingSkipping
