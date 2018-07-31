@@ -105,13 +105,19 @@ class StdKnownItems private constructor(
     fun findCopyTrait(): RsTraitItem? = findLangItem("copy", "marker")
 
     fun findPartialEqTrait(): RsTraitItem? = findLangItem("eq", "cmp")
+
     // `Eq` trait doesn't have own lang attribute, so use `findCoreItem` to find it
     fun findEqTrait(): RsTraitItem? = findCoreItem("cmp::Eq") as? RsTraitItem
 
-    fun findPartialOrdTrait(): RsTraitItem? = findCoreItem("cmp::PartialOrd") as? RsTraitItem
-    // Current implementation of `Ord` trait set its lang item under `cfg` attribute (`#[cfg_attr(not(stage0), lang = "ord")]`)
-    // and we can't find it, so use `findCoreItem`
-    fun findOrdTrait(): RsTraitItem? = findCoreItem("cmp::Ord") as? RsTraitItem
+    // In some old versions of stdlib `PartialOrd` trait has lang attribute with value "ord",
+    // but in the new stdlib it is "partial_ord" ("ord" used for "Ord" trait). So we try
+    // "partial_ord", and on failure we resolve it by path
+    fun findPartialOrdTrait(): RsTraitItem? =
+        findLangItem("partial_ord", "cmp") ?: findCoreItem("cmp::PartialOrd") as? RsTraitItem
+
+    // Some old versions of stdlib contain `Ord` trait without lang attribute
+    fun findOrdTrait(): RsTraitItem? =
+        findCoreItem("cmp::Ord") as? RsTraitItem
 
     fun findHashTrait(): RsTraitItem? = findCoreItem("hash::Hash") as? RsTraitItem
 
