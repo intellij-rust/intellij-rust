@@ -44,6 +44,9 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     private fun currentWorkspace(): CargoWorkspace? =
         CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace
 
+    private val allCargoProjects: List<CargoProject> =
+        project.cargoProjects.allProjects.sortedBy { it.presentableName }
+
     private val command = CargoCommandLineEditor(project, { this.currentWorkspace() })
 
     private val backtraceMode = ComboBox<BacktraceMode>().apply {
@@ -74,9 +77,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
                 setText(value?.presentableName)
             }
         }
-        project.cargoProjects.allProjects
-            .sortedBy { it.presentableName }
-            .forEach { addItem(it) }
+        allCargoProjects.forEach { addItem(it) }
 
         addItemListener {
             setWorkingDirectoryFromSelectedProject()
@@ -108,7 +109,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
             cargoProject.selectedIndex = -1
         } else {
             val projectForWd = project.cargoProjects.findProjectForFile(vFile)
-            cargoProject.selectedIndex = project.cargoProjects.allProjects.indexOf(projectForWd)
+            cargoProject.selectedIndex = allCargoProjects.indexOf(projectForWd)
         }
     }
 
