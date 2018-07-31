@@ -534,6 +534,18 @@ class RsInferenceContext(
         }
     })
 
+    fun <T : TypeFoldable<T>> hasResolvableTypeVars(_ty: T): Boolean {
+        return _ty.visitWith(object : TypeVisitor {
+            override fun visitTy(ty: Ty): Boolean {
+                return when {
+                    ty is TyInfer -> ty != shallowResolve(ty)
+                    !ty.hasTyInfer -> false
+                    else -> ty.superVisitWith(this)
+                }
+            }
+        })
+    }
+
     /** Return true if [ty] was instantiated or unified with another type variable */
     fun isTypeVarAffected(ty: TyInfer.TyVar): Boolean =
         varUnificationTable.findRoot(ty) != ty || varUnificationTable.findValue(ty) != null
@@ -1211,7 +1223,7 @@ class RsFnInferenceContext(
     }
 
     private fun inferForExprType(expr: RsForExpr): Ty {
-        val exprTy = expr.expr?.inferType() ?: TyUnknown
+        val exprTy = resolveTypeVarsWithObligations(expr.expr?.inferType() ?: TyUnknown)
         expr.pat?.extractBindings(lookup.findIteratorItemType(exprTy)?.register() ?: TyUnknown)
         expr.block?.inferType()
         return TyUnit
@@ -1244,7 +1256,7 @@ class RsFnInferenceContext(
             UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, MUTABLE)
             UnaryOperator.DEREF -> {
                 // expectation must NOT be used for deref
-                val base = innerExpr.inferType()
+                val base = resolveTypeVarsWithObligations(innerExpr.inferType())
                 val deref = lookup.deref(base)
                 if (deref == null) {
                     ctx.addDiagnostic(RsDiagnostic.DerefError(expr, base))
@@ -1276,18 +1288,19 @@ class RsFnInferenceContext(
     }
 
     private fun inferBinaryExprType(expr: RsBinaryExpr): Ty {
+        val lhsType = resolveTypeVarsWithObligations(expr.left.inferType())
         val op = expr.operatorType
         return when (op) {
             is BoolOp -> {
-                val lhsType = expr.left.inferType()
                 if (op is OverloadableBinaryOperator) {
-                    val rhsType = expr.right?.inferType() ?: TyUnknown
+                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
                     run {
                         // TODO replace it via `selectOverloadedOp` and share the code with `AssignmentOp`
                         // branch when cmp ops will become a real lang items in std
                         val trait = items.findCoreItem("cmp::${op.traitName}") as? RsTraitItem
                             ?: return@run SelectionResult.Err<Selection>()
-                        return@run lookup.select(TraitRef(lhsType, trait.withSubst(rhsType)))
+
+                        lookup.select(TraitRef(lhsType, trait.withSubst(rhsType)))
                     }.ok()?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
                 } else {
                     expr.right?.inferTypeCoercableTo(lhsType)
@@ -1295,16 +1308,14 @@ class RsFnInferenceContext(
                 TyBool
             }
             is ArithmeticOp -> {
-                val lhsType = expr.left.inferType()
-                val rhsType = expr.right?.inferType() ?: TyUnknown
+                val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
                 lookup.findArithmeticBinaryExprOutputType(lhsType, rhsType, op)?.register() ?: TyUnknown
             }
             is AssignmentOp -> {
-                val lhsType = expr.left.inferType()
                 if (op is OverloadableBinaryOperator) {
-                    val rhsType = expr.right?.inferType() ?: TyUnknown
-                    lookup.selectOverloadedOp(lhsType, rhsType, op).ok()?.nestedObligations
-                        ?.forEach(fulfill::registerPredicateObligation)
+                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
+                    lookup.selectOverloadedOp(lhsType, rhsType, op).ok()
+                        ?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
                 } else {
                     expr.right?.inferTypeCoercableTo(lhsType)
                 }
@@ -1367,7 +1378,7 @@ class RsFnInferenceContext(
             prevType is TyArray && type is TySlice
 
         val containerType = expr.containerExpr?.inferType() ?: return TyUnknown
-        val indexType = expr.indexExpr?.inferType() ?: return TyUnknown
+        val indexType = ctx.resolveTypeVarsIfPossible(expr.indexExpr?.inferType() ?: return TyUnknown)
 
         var derefCount = -1 // starts with -1 because the fist element of the coercion sequence is the type itself
         var prevType: Ty? = null
