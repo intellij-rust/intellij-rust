@@ -151,6 +151,8 @@
                                         implementationClass="org.rust.ide.lineMarkers.RsTraitItemImplLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="Rust"
                                         implementationClass="org.rust.ide.lineMarkers.RsCrateDocLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="Rust"
+                                        implementationClass="org.rust.ide.lineMarkers.RsMethodLineSeparatorProvider"/>
 
         <runLineMarkerContributor language="Rust"
                                   implementationClass="org.rust.ide.lineMarkers.CargoExecutableRunLineMarkerContributor"/>
