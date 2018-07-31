@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types.ty
 
-import com.intellij.util.BitUtil
 import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.namedFields
@@ -23,7 +22,7 @@ import org.rust.lang.core.types.infer.substitute
  * The name `Ty` is short for `Type`, inspired by the Rust
  * compiler.
  */
-abstract class Ty(flags: TypeFlags = 0) : Kind(flags), TypeFoldable<Ty> {
+abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
 
     override fun foldWith(folder: TypeFolder): Ty = folder.foldTy(this)
 
@@ -61,21 +60,6 @@ enum class Mutability {
 fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.typeParameterByName(name)
 }
-
-val Ty.hasTyInfer
-    get(): Boolean = BitUtil.isSet(flags, HAS_TY_INFER_MASK)
-
-val Ty.hasTyTypeParameters
-    get(): Boolean = BitUtil.isSet(flags, HAS_TY_TYPE_PARAMETER_MASK)
-
-val Ty.hasTyProjection
-    get(): Boolean = BitUtil.isSet(flags, HAS_TY_PROJECTION_MASK)
-
-val Ty.hasReEarlyBounds
-    get(): Boolean = BitUtil.isSet(flags, HAS_RE_EARLY_BOUND_MASK)
-
-val Ty.needToSubstitute
-    get(): Boolean = hasTyTypeParameters || hasReEarlyBounds
 
 tailrec fun Ty.isSized(): Boolean {
     return when (this) {
