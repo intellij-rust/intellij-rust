@@ -5,19 +5,27 @@
 
 package org.rust.lang.core.types.infer
 
-import org.rust.lang.core.types.Substitution
+import com.intellij.util.BitUtil
+import org.rust.lang.core.types.*
+import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_RE_EARLY_BOUND_VISITOR
+import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_INFER_VISITOR
+import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_PROJECTION_VISITOR
+import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_TYPE_PARAMETER_VISITOR
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.Region
-import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyInfer
+import org.rust.lang.core.types.ty.TyProjection
+import org.rust.lang.core.types.ty.TyTypeParameter
 
 interface TypeFolder {
     fun foldTy(ty: Ty): Ty = ty
-    fun foldRe(region: Region): Region = region
+    fun foldRegion(region: Region): Region = region
 }
 
 interface TypeVisitor {
     fun visitTy(ty: Ty): Boolean = false
-    fun visitRe(region: Region): Boolean = false
+    fun visitRegion(region: Region): Boolean = false
 }
 
 /**
@@ -105,7 +113,7 @@ fun <T> TypeFoldable<T>.substitute(subst: Substitution): T =
             else -> ty
         }
 
-        override fun foldRe(region: Region): Region =
+        override fun foldRegion(region: Region): Region =
             (region as? ReEarlyBound)?.let { subst[it] } ?: region
     })
 
@@ -132,3 +140,30 @@ fun <T> TypeFoldable<T>.collectInferTys(): List<TyInfer> {
     })
     return list
 }
+
+private data class HasTypeFlagVisitor(val flag: TypeFlags) : TypeVisitor {
+    override fun visitTy(ty: Ty): Boolean = BitUtil.isSet(ty.flags, flag)
+    override fun visitRegion(region: Region): Boolean = BitUtil.isSet(region.flags, flag)
+
+    companion object {
+        val HAS_TY_INFER_VISITOR = HasTypeFlagVisitor(HAS_TY_INFER_MASK)
+        val HAS_TY_TYPE_PARAMETER_VISITOR = HasTypeFlagVisitor(HAS_TY_TYPE_PARAMETER_MASK)
+        val HAS_TY_PROJECTION_VISITOR = HasTypeFlagVisitor(HAS_TY_PROJECTION_MASK)
+        val HAS_RE_EARLY_BOUND_VISITOR = HasTypeFlagVisitor(HAS_RE_EARLY_BOUND_MASK)
+    }
+}
+
+val TypeFoldable<*>.hasTyInfer
+    get(): Boolean = visitWith(HAS_TY_INFER_VISITOR)
+
+val TypeFoldable<*>.hasTyTypeParameters
+    get(): Boolean = visitWith(HAS_TY_TYPE_PARAMETER_VISITOR)
+
+val TypeFoldable<*>.hasTyProjection
+    get(): Boolean = visitWith(HAS_TY_PROJECTION_VISITOR)
+
+val TypeFoldable<*>.hasReEarlyBounds
+    get(): Boolean = visitWith(HAS_RE_EARLY_BOUND_VISITOR)
+
+val TypeFoldable<*>.needToSubstitute
+    get(): Boolean = hasTyTypeParameters || hasReEarlyBounds
