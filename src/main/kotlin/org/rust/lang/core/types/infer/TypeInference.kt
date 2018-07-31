@@ -534,6 +534,18 @@ class RsInferenceContext(
         }
     })
 
+    fun <T : TypeFoldable<T>> hasResolvableTypeVars(_ty: T): Boolean {
+        return _ty.visitWith(object : TypeVisitor {
+            override fun visitTy(ty: Ty): Boolean {
+                return when {
+                    ty is TyInfer -> ty != shallowResolve(ty)
+                    !ty.hasTyInfer -> false
+                    else -> ty.superVisitWith(this)
+                }
+            }
+        })
+    }
+
     /** Return true if [ty] was instantiated or unified with another type variable */
     fun isTypeVarAffected(ty: TyInfer.TyVar): Boolean =
         varUnificationTable.findRoot(ty) != ty || varUnificationTable.findValue(ty) != null

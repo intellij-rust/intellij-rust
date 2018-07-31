@@ -331,6 +331,7 @@ class ImplLookup(
 
     private fun selectWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
         if (recursionDepth > DEFAULT_RECURSION_LIMIT) return SelectionResult.Err()
+        testAssert { !ctx.hasResolvableTypeVars(ref) }
         return traitSelectionCache.getOrPut(project, freshen(ref)) { selectCandidate(ref, recursionDepth) }
     }
 
