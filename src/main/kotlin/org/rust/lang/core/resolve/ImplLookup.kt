@@ -508,13 +508,13 @@ class ImplLookup(
 
     fun coercionSequence(baseTy: Ty): Sequence<Ty> {
         val result = mutableSetOf<Ty>()
-        return generateSequence(baseTy) {
+        return generateSequence(ctx.resolveTypeVarsIfPossible(baseTy)) {
             if (result.add(it)) {
-                deref(it) ?: (it as? TyArray)?.let { TySlice(it.base) }
+                deref(it)?.let(ctx::resolveTypeVarsIfPossible) ?: (it as? TyArray)?.let { TySlice(it.base) }
             } else {
                 null
             }
-        }.map(ctx::shallowResolve).constrainOnce().take(DEFAULT_RECURSION_LIMIT)
+        }.constrainOnce().take(DEFAULT_RECURSION_LIMIT)
     }
 
     fun deref(ty: Ty): Ty? = when (ty) {
