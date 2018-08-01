@@ -6,8 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.LiteralTextEscaper
-import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.stubs.IStubElementType
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider
@@ -16,6 +15,7 @@ import org.intellij.lang.regexp.psi.RegExpChar
 import org.intellij.lang.regexp.psi.RegExpGroup
 import org.intellij.lang.regexp.psi.RegExpNamedGroupRef
 import org.rust.ide.injected.escaperForLiteral
+import org.rust.lang.core.psi.RS_ALL_STRING_LITERALS
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsLiteralKind
 import org.rust.lang.core.psi.impl.RsExprImpl
@@ -43,14 +43,13 @@ val RsLitExpr.stubType: RsStubLiteralType? get() {
 val RsLitExpr.integerLiteralValue: String? get() =
     (stub as? RsLitExprStub)?.integerLiteralValue ?: integerLiteral?.text
 
-abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, RegExpLanguageHost {
+abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, ContributedReferenceHost, RegExpLanguageHost {
 
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun isValidHost(): Boolean {
-        return true
-    }
+    override fun isValidHost(): Boolean =
+        node.findChildByType(RS_ALL_STRING_LITERALS) != null
 
     override fun updateText(text: String): PsiLanguageInjectionHost {
         val valueNode = node.firstChildNode
@@ -61,6 +60,9 @@ abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, RegExpLanguageHost {
 
     override fun createLiteralTextEscaper(): LiteralTextEscaper<RsLitExpr> =
         escaperForLiteral(this)
+
+    override fun getReferences(): Array<PsiReference> =
+        PsiReferenceService.getService().getContributedReferences(this)
 
     override fun characterNeedsEscaping(c: Char): Boolean = false
     override fun supportsPerl5EmbeddedComments(): Boolean = false
