@@ -7,9 +7,9 @@ package org.rust.ide.injected
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.LiteralTextEscaper
+import org.rust.lang.core.psi.RS_ALL_STRING_LITERALS
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.utils.parseRustStringCharacters
 import java.lang.StringBuilder
 
@@ -52,7 +52,7 @@ private class RsRawStringLiteralEscaper(host: RsLitExpr) : LiteralTextEscaper<Rs
 }
 
 fun escaperForLiteral(lit: RsLitExpr): LiteralTextEscaper<RsLitExpr> {
-    val elementType = lit.firstChild?.elementType
+    val elementType = lit.node.findChildByType(RS_ALL_STRING_LITERALS)?.elementType
     val isRaw = elementType == RAW_STRING_LITERAL || elementType == RAW_BYTE_STRING_LITERAL
     assert(isRaw || elementType == STRING_LITERAL || elementType == BYTE_STRING_LITERAL) {
         "`${lit.text}` is not a string literal"
