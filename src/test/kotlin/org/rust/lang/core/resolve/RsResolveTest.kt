@@ -1064,4 +1064,26 @@ class RsResolveTest : RsResolveTestBase() {
           //^
         }
     """)
+
+    fun `test resolve path with crate keyword`() = checkByCode("""
+        mod foo {
+            pub struct Foo;
+                      //X
+        }
+
+        use crate::foo::Foo;
+                       //^
+    """)
+
+    fun `test resolve path with crate keyword 2`() = checkByCode("""
+        mod foo {
+            pub struct Foo;
+                      //X
+        }
+
+        fn main() {
+            let foo = crate::foo::Foo;
+                                 //^
+        }
+    """)
 }
