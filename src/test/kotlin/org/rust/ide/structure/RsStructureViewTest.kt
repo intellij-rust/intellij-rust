@@ -16,7 +16,11 @@ import org.rust.lang.core.psi.ext.RsElement
 
 class RsStructureViewTest : RsTestBase() {
     fun `test functions`() = doTest("""
-        fn fn_foo () {}
+        fn fn_foo () {
+            fn fn_bar () {
+                fn fn_baz () {}
+            }
+        }
 
         #[test]
         fn test_something() { assert!(true); }
@@ -24,7 +28,9 @@ class RsStructureViewTest : RsTestBase() {
         fn double(x: i32) -> i32 { x * 2 }
     """, """
         -main.rs
-         fn_foo()
+         -fn_foo()
+          -fn_bar()
+           fn_baz()
          test_something()
          double(i32) -> i32
     """)
