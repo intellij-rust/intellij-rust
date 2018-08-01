@@ -119,7 +119,7 @@ project(":") {
     intellij {
         pluginName = "intellij-rust"
 //        alternativeIdePath = "deps/clion-$clionVersion"
-        setPlugins(project(":intellij-toml"))
+        setPlugins(project(":intellij-toml"), "IntelliLang")
     }
 
     repositories {
