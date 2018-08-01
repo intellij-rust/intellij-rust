@@ -39,10 +39,16 @@ class RsRegExpInjector : MultiHostInjector {
 
     /** Regex::new("...") */
     private fun isRegexNew(context: RsLitExpr): Boolean {
-        val fn = ((context.parent?.parent as? RsCallExpr)?.expr as? RsPathExpr)
-            ?.path?.reference?.resolve() as? RsFunction
-            ?: return false
-        return fn.name == "new" && fn.implTypeName == "Regex"
+//        val fn = ((context.parent?.parent as? RsCallExpr)?.expr as? RsPathExpr)
+//            ?.path?.reference?.resolve() as? RsFunction
+//            ?: return false
+//        return fn.name == "new" && fn.implTypeName == "Regex"
+
+        // We switched to this dumb implementation because this code is sometimes
+        // called from EDT, and invoking `reference.resolve()` can freeze the UI.
+        // See https://github.com/intellij-rust/intellij-rust/issues/2733
+        val call = ((context.parent?.parent as? RsCallExpr)?.expr as? RsPathExpr) ?: return false
+        return call.path.text == "Regex::new"
     }
 
     /** RegexSet::new(&["...", "...", "..."]) */
