@@ -414,4 +414,16 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         //^ b.rs
         fn main() {}
     """)
+
+    fun `test resolve crate keyword in path to crate root mod`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+
+        mod bar {
+            pub struct Foo;
+        }
+    //- foo.rs
+        use crate::bar::Foo;
+            //^ main.rs
+    """)
 }

@@ -297,6 +297,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             if (processor("self", containingMod)) return true
             val superMod = containingMod.`super`
             if (superMod != null && processor("super", superMod)) return true
+            if (crateRoot != null && processor("crate", crateRoot)) return true
         }
     }
 
