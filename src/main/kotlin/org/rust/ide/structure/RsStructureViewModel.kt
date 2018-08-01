@@ -18,8 +18,10 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.buildList
 
-class RsStructureViewModel(editor: Editor?, file: RsFile) : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
-                                                            StructureViewModel.ElementInfoProvider {
+class RsStructureViewModel(editor: Editor?, file: RsFile)
+    : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
+      StructureViewModel.ElementInfoProvider {
+
     init {
         withSuitableClasses(
             RsNamedElement::class.java,
@@ -27,12 +29,11 @@ class RsStructureViewModel(editor: Editor?, file: RsFile) : StructureViewModelBa
         )
     }
 
-    override fun isAlwaysShowsPlus(element: StructureViewTreeElement) = element.value is RsFile
+    override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = element.value is RsFile
 
-    override fun isAlwaysLeaf(element: StructureViewTreeElement) =
+    override fun isAlwaysLeaf(element: StructureViewTreeElement): Boolean =
         when (element.value) {
             is RsFieldDecl,
-            is RsFunction,
             is RsModDeclItem,
             is RsConstant,
             is RsTypeAlias -> true
@@ -44,20 +45,20 @@ private class RsStructureViewElement(
     val psi: RsElement
 ) : StructureViewTreeElement, Navigatable by (psi as NavigatablePsiElement) {
 
-    override fun getValue() = psi
+    override fun getValue(): RsElement = psi
 
     override fun getPresentation(): ItemPresentation = getPresentationForStructure(psi)
 
     override fun getChildren(): Array<TreeElement> =
-        childElements.sortedBy { it.textOffset }
-            .map(::RsStructureViewElement).toTypedArray()
+        childElements.sortedBy { it.textOffset }.map(::RsStructureViewElement).toTypedArray()
 
     private val childElements: List<RsElement>
         get() {
             return when (psi) {
                 is RsEnumItem -> psi.enumBody?.enumVariantList.orEmpty()
                 is RsImplItem, is RsTraitItem -> {
-                    val members = (if (psi is RsImplItem) psi.members else (psi as RsTraitItem).members)
+                    val members = (psi as? RsImplItem)?.members
+                        ?: (psi as? RsTraitItem)?.members
                         ?: return emptyList()
                     buildList {
                         addAll(members.functionList)
@@ -65,23 +66,32 @@ private class RsStructureViewElement(
                         addAll(members.typeAliasList)
                     }
                 }
-                is RsMod -> buildList {
-                    for (item in psi.itemsAndMacros) {
-                        when (item) {
-                            is RsMacro, is RsFunction, is RsModDeclItem, is RsModItem,
-                            is RsStructOrEnumItemElement, is RsTraitOrImpl, is RsTypeAlias, is RsConstant ->
-                                add(item)
-
-                            is RsForeignModItem -> {
-                                addAll(item.functionList)
-                                addAll(item.constantList)
-                            }
-                        }
-                    }
-                }
+                is RsMod -> extractItems(psi)
                 is RsStructItem -> psi.blockFields?.fieldDeclList.orEmpty()
                 is RsEnumVariant -> psi.blockFields?.fieldDeclList.orEmpty()
+                is RsFunction -> psi.block?.let { extractItems(it) }.orEmpty()
                 else -> emptyList()
+            }
+        }
+
+    private fun extractItems(psi: RsItemsOwner): List<RsElement> =
+        buildList {
+            for (item in psi.itemsAndMacros) {
+                when (item) {
+                    is RsMacro,
+                    is RsFunction,
+                    is RsModDeclItem,
+                    is RsModItem,
+                    is RsStructOrEnumItemElement,
+                    is RsTraitOrImpl,
+                    is RsTypeAlias,
+                    is RsConstant -> add(item)
+
+                    is RsForeignModItem -> {
+                        addAll(item.functionList)
+                        addAll(item.constantList)
+                    }
+                }
             }
         }
 }
