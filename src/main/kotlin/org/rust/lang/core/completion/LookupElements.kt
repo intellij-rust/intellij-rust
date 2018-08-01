@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
@@ -39,7 +40,7 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
         .withIcon(if (this is RsFile) RsIcons.MODULE else this.getIcon(0))
 
     return when (this) {
-        is RsMod -> if (scopeName == "self" || scopeName == "super") {
+        is RsMod -> if (scopeName == "self" || scopeName == "super" || scopeName == "crate") {
             base.withTailText("::")
         } else {
             base
@@ -88,14 +89,19 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
 }
 
 private fun getInsertHandler(element: RsElement, scopeName: String, context: InsertionContext) {
-    val curUseItem = context.getItemOfType<RsUseItem>()
+    val curUseItem = context.getElementOfType<RsUseItem>()
     when (element) {
 
-        is RsMod -> if (scopeName == "self" || scopeName == "super") {
-            val offset = context.tailOffset - 1
-            val inSelfParam = PsiTreeUtil.findElementOfClassAtOffset(context.file, offset, RsSelfParameter::class.java, false) != null
-            if (!(context.isInUseGroup || inSelfParam)) {
-                context.addSuffix("::")
+        is RsMod -> {
+            when (scopeName) {
+                "self",
+                "super" -> {
+                    val inSelfParam = context.getElementOfType<RsSelfParameter>() != null
+                    if (!(context.isInUseGroup || inSelfParam)) {
+                        context.addSuffix("::")
+                    }
+                }
+                "crate" -> context.addSuffix("::")
             }
         }
 
@@ -157,11 +163,11 @@ private fun appendSemicolon(context: InsertionContext, curUseItem: RsUseItem?) {
     }
 }
 
-private inline fun <reified T : RsItemElement> InsertionContext.getItemOfType(strict: Boolean = false): T? =
-    PsiTreeUtil.findElementOfClassAtOffset(this.file, this.tailOffset - 1, T::class.java, strict)
+private inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Boolean = false): T? =
+    PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, T::class.java, strict)
 
 private val InsertionContext.isInUseGroup: Boolean
-    get() = PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, RsUseGroup::class.java, false) != null
+    get() = getElementOfType<RsUseGroup>() != null
 
 private val InsertionContext.alreadyHasCallParens: Boolean
     get() = nextCharIs('(')
