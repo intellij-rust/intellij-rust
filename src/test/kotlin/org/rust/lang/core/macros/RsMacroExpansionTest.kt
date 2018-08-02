@@ -148,6 +148,18 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo! {}
     """, "")
 
+    fun `test group after empty group`() = doTest("""
+        macro_rules! foo {
+            ($($ i:meta)* ; $($ j:item)*) => {
+                $($ j)*
+            }
+        }
+
+        foo!{ ; fn foo() {} }
+    """, """
+        fn foo() {}
+    """)
+
     fun `test all items`() = doTest("""
         macro_rules! foo {
             ($ ($ i:item)*) => ($ (

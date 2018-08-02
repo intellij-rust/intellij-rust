@@ -28,6 +28,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.forEachChild
+import org.rust.stdext.joinToWithBuffer
+import org.rust.stdext.mapNotNullToSet
 import java.util.*
 import java.util.Collections.singletonMap
 
@@ -45,8 +48,7 @@ private data class MacroSubstitution(
     val variables: Map<String, String>,
 
     /**
-     * Contains macro groups values. This is a list of lists because macros
-     * can have multiple groups. E.g. for this macro
+     * Contains macro groups values. E.g. for this macro
      * ```rust
      * macro_rules! foo {
      *     ($($ i:item),*; $($ e:expr),*) => {
@@ -59,26 +61,34 @@ private data class MacroSubstitution(
      * It will contains
      * ```
      * [
-     *     [
-     *         {"i" => "mod a {}"},
-     *         {"i" => "mod b {}"}
-     *     ],
-     *     [
-     *         {"e" => "1"},
-     *         {"e" => "2"}
-     *     ]
+     *     MacroGroup {
+     *         substs: [
+     *             {"i" => "mod a {}"},
+     *             {"i" => "mod b {}"}
+     *         ]
+     *     },
+     *     MacroGroup {
+     *         substs: [
+     *             {"e" => "1"},
+     *             {"e" => "2"}
+     *         ]
+     *     }
      * ]
      * ```
-     * Groups can be nested, so we use [MacroSubstitution] as a list element type
      */
-    val groups: List<List<MacroSubstitution>>
+    val groups: List<MacroGroup>
+)
+
+private data class MacroGroup(
+    val definition: RsMacroBindingGroup,
+    val substs: List<MacroSubstitution>
 )
 
 private data class WithParent(
     private val subst: MacroSubstitution,
     private val parent: WithParent?
 ) {
-    val groups: List<List<MacroSubstitution>>
+    val groups: List<MacroGroup>
         get() = subst.groups
 
     fun getVar(name: String): String? =
@@ -150,33 +160,38 @@ class MacroExpander(val project: Project) {
         return PsiBuilderFactory.getInstance().createBuilder(project, holder, lexer, RsLanguage, text)
     }
 
-    private fun substituteMacro(root: PsiElement, subst: WithParent): CharSequence? {
-        val sb = StringBuilder()
-        val children = root.childrenOfType<PsiElement>().asSequence()
-            .filter { it !is PsiComment }
+    private fun substituteMacro(root: PsiElement, subst: WithParent): CharSequence? =
+        buildString { if (!substituteMacro(this, root, subst)) return null }
+
+    private fun substituteMacro(sb: StringBuilder, root: PsiElement, subst: WithParent): Boolean {
+        val children = generateSequence(root.firstChild) { it.nextSibling }.filter { it !is PsiComment }
         for (child in children) {
             when (child) {
                 is RsMacroExpansion, is RsMacroExpansionContents ->
-                    sb.append(substituteMacro(child, subst) ?: return null)
+                    if (!substituteMacro(sb, child, subst)) return false
                 is RsMacroReference ->
-                    sb.append(subst.getVar(child.referenceName) ?: return null)
+                    sb.append(subst.getVar(child.referenceName) ?: return false)
                 is RsMacroExpansionReferenceGroup -> {
                     child.macroExpansionContents?.let { contents ->
                         val separator = child.macroExpansionGroupSeparator?.text ?: ""
-                        val matched = subst.groups.any { group ->
-                            group.map { variant ->
-                                substituteMacro(contents, WithParent(variant, subst)) ?: return@any false
-                            }.joinTo(sb, separator)
-                            true
+
+                        val matchedGroup = subst.groups.singleOrNull()
+                            ?: subst.groups.firstOrNull { it.definition.matches(contents) }
+                            ?: return false
+
+                        matchedGroup.substs.joinToWithBuffer(sb, separator) { sb ->
+                            if (!substituteMacro(sb, contents, WithParent(this, subst))) return false
                         }
-                        if (!matched) return null
                     }
                 }
-                else -> sb.append(child.text)
+                else -> {
+                    sb.append(" ")
+                    sb.append(child.text)
+                    sb.append(" ")
+                }
             }
         }
-
-        return sb
+        return true
     }
 
     private val RsMacro.macroBodyStubbed: RsMacroBody?
@@ -211,7 +226,7 @@ private class MacroPattern private constructor(
     private fun matchPartial(macroCallBody: PsiBuilder): MacroSubstitution? {
         ProgressManager.checkCanceled()
         val map = HashMap<String, String>()
-        val groups = mutableListOf<List<MacroSubstitution>>()
+        val groups = mutableListOf<MacroGroup>()
 
         for (psi in pattern) {
             when (psi) {
@@ -234,7 +249,7 @@ private class MacroPattern private constructor(
                         map[name] = text
                 }
                 is RsMacroBindingGroup -> {
-                    groups += matchGroup(psi, macroCallBody) ?: return null
+                    groups += MacroGroup(psi, matchGroup(psi, macroCallBody) ?: return null)
                 }
                 else -> {
                     if (!macroCallBody.isSameToken(psi)) {
@@ -378,6 +393,46 @@ private fun PsiBuilder.isSameToken(psi: PsiElement): Boolean {
         PsiBuilderUtil.advance(this, size)
     }
     return result
+}
+
+private fun RsMacroBindingGroup.matches(contents: RsMacroExpansionContents): Boolean {
+    val available = availableVars
+    val used = contents.descendantsOfType<RsMacroReference>()
+    return used.all { it.referenceName in available }
+}
+
+/**
+ * Metavars available inside this group. Includes vars from this group, from all descendant groups
+ * and from all ancestor groups. Sibling groups are excluded. E.g these vars available for these groups
+ * ```
+ * ($a [$b $($c)* ]    $($d)*      $($e           $($f)*)*)
+ *         ^ a, b, c   ^ a, b, d   ^ a, b, e, f   ^ a, b, e, f
+ * ```
+ */
+private val RsMacroBindingGroup.availableVars: Set<String>
+    get() = CachedValuesManager.getCachedValue(this) {
+        CachedValueProvider.Result.create(
+            collectAvailableVars(this),
+            PsiModificationTracker.MODIFICATION_COUNT // TODO use modtracker attached to the macro
+        )
+    }
+
+private fun collectAvailableVars(groupDefinition: RsMacroBindingGroup): Set<String> {
+    val vars = groupDefinition.descendantsOfType<RsMacroBinding>().toMutableList()
+
+    fun go(psi: PsiElement) {
+        when (psi) {
+            is RsMacroBinding -> vars += psi
+            !is RsMacroBindingGroup -> psi.forEachChild(::go)
+        }
+    }
+
+    groupDefinition.ancestors
+        .drop(1)
+        .takeWhile { it !is RsMacroCase}
+        .forEach(::go)
+
+    return vars.mapNotNullToSet { it.name }
 }
 
 object MacroExpansionMarks {
