@@ -65,6 +65,23 @@ fun <K, V> replaceTrivialMap(map: Map<K, V>): Map<K, V> = when (map.size) {
     else -> map
 }
 
+private const val INT_MAX_POWER_OF_TWO: Int = Int.MAX_VALUE / 2 + 1
+
+/* Copied from Kotlin's internal Maps.kt */
+fun mapCapacity(expectedSize: Int): Int {
+    if (expectedSize < 3) {
+        return expectedSize + 1
+    }
+    if (expectedSize < INT_MAX_POWER_OF_TWO) {
+        return expectedSize + expectedSize / 3
+    }
+    return Int.MAX_VALUE // any large value
+}
+
+/* Copied from Kotlin's internal Iterables.kt */
+fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int =
+    if (this is Collection<*>) size else default
+
 fun makeBitMask(bitToSet: Int): Int = 1 shl bitToSet
 
 fun <K, V1, V2> zipValues(map1: Map<K, V1>, map2: Map<K, V2>): List<Pair<V1, V2>> =
@@ -91,6 +108,31 @@ fun <T> List<T>.chain(other: List<T>): Sequence<T> =
         this.isEmpty() -> other.asSequence()
         else -> this.asSequence() + other.asSequence()
     }
+
+inline fun <T, R> Iterable<T>.mapToSet(transform: (T) -> R): Set<R> =
+    mapTo(HashSet(mapCapacity(collectionSizeOrDefault(10))), transform)
+
+inline fun <T, R: Any> Iterable<T>.mapNotNullToSet(transform: (T) -> R?): Set<R> =
+    mapNotNullTo(HashSet(mapCapacity(collectionSizeOrDefault(10))), transform)
+
+inline fun <T> Iterable<T>.joinToWithBuffer(
+    buffer: StringBuilder,
+    separator: CharSequence = ", ",
+    prefix: CharSequence = "",
+    postfix: CharSequence = "",
+    action: T.(StringBuilder) -> Unit
+) {
+    buffer.append(prefix)
+    var needInsertSeparator = false
+    for (element in this) {
+        if (needInsertSeparator) {
+            buffer.append(separator)
+        }
+        element.action(buffer)
+        needInsertSeparator = true
+    }
+    buffer.append(postfix)
+}
 
 fun <T : Any> Iterator<T>.nextOrNull(): T? =
     if (hasNext()) next() else null

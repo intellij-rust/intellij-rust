@@ -588,7 +588,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             fn baz() {}/*caret*/
         }
     """, listOf(
-        ImplementMemberSelection("bar()", true, isSelected = true)
+        ImplementMemberSelection("bar ()", true, isSelected = true)
     ), """
         macro_rules! foo {
             ($ i:ident, $ j:tt) => { fn $ i() $ j }
