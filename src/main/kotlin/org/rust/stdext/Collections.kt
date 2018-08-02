@@ -92,5 +92,24 @@ fun <T> List<T>.chain(other: List<T>): Sequence<T> =
         else -> this.asSequence() + other.asSequence()
     }
 
+inline fun <T> Iterable<T>.joinToWithBuffer(
+    buffer: StringBuilder,
+    separator: CharSequence = ", ",
+    prefix: CharSequence = "",
+    postfix: CharSequence = "",
+    action: T.(StringBuilder) -> Unit
+) {
+    buffer.append(prefix)
+    var needInsertSeparator = false
+    for (element in this) {
+        if (needInsertSeparator) {
+            buffer.append(separator)
+        }
+        element.action(buffer)
+        needInsertSeparator = true
+    }
+    buffer.append(postfix)
+}
+
 fun <T : Any> Iterator<T>.nextOrNull(): T? =
     if (hasNext()) next() else null
