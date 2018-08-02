@@ -13,7 +13,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.PackageOrigin.*
+import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
 import org.rust.ide.presentation.escaped
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
@@ -24,6 +24,7 @@ import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.isUnitTestMode
+import org.rust.stdext.joinToWithBuffer
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
 
@@ -81,7 +82,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         buffer.b { it += name }
         val typeBounds = element.bounds
         if (typeBounds.isNotEmpty()) {
-            typeBounds.joinTo(buffer, " + ", ": ") { generateDocumentation(it) }
+            typeBounds.joinToWithBuffer(buffer, " + ", ": ") { generateDocumentation(it) }
         }
         element.typeReference?.generateDocumentation(buffer, " = ")
     }
@@ -353,10 +354,10 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
             typeReference?.generateDocumentation(buffer, " = ")
         }
         is RsTraitRef -> path.generateDocumentation(buffer)
-        is RsLifetimeParamBounds -> lifetimeList.joinTo(buffer, " + ", ": ") { generateDocumentation(it) }
+        is RsLifetimeParamBounds -> lifetimeList.joinToWithBuffer(buffer, " + ", ": ") { generateDocumentation(it) }
         is RsTypeParamBounds -> {
             if (polyboundList.isNotEmpty()) {
-                polyboundList.joinTo(buffer, " + ", ": ") { generateDocumentation(it) }
+                polyboundList.joinToWithBuffer(buffer, " + ", ": ") { generateDocumentation(it) }
             }
         }
         // TODO: support 'for lifetimes'
@@ -367,11 +368,11 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
             (bound.lifetime ?: bound.traitRef)?.generateDocumentation(buffer)
         }
         is RsTypeArgumentList -> (lifetimeList + typeReferenceList + assocTypeBindingList)
-            .joinTo(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
+            .joinToWithBuffer(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
         is RsTypeParameterList -> (lifetimeParameterList + typeParameterList)
-            .joinTo(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
+            .joinToWithBuffer(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
         is RsValueParameterList -> (listOfNotNull(selfParameter) + valueParameterList + listOfNotNull(dotdotdot))
-            .joinTo(buffer, ", ", "(", ")") { generateDocumentation(it) }
+            .joinToWithBuffer(buffer, ", ", "(", ")") { generateDocumentation(it) }
         is RsLifetimeParameter -> {
             buffer += quoteIdentifier.text.escaped
             lifetimeParamBounds?.generateDocumentation(buffer)
@@ -434,7 +435,7 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
                 else -> typeElement.path?.generateDocumentation(buffer)
             }
         }
-        is RsTupleType -> typeElement.typeReferenceList.joinTo(buffer, ", ", "(", ")") { generateDocumentation(it) }
+        is RsTupleType -> typeElement.typeReferenceList.joinToWithBuffer(buffer, ", ", "(", ")") { generateDocumentation(it) }
         is RsArrayType -> {
             buffer += "["
             typeElement.typeReference.generateDocumentation(buffer)
@@ -501,23 +502,4 @@ private inline fun StringBuilder.b(action: (StringBuilder) -> Unit) {
     append("<b>")
     action(this)
     append("</b>")
-}
-
-private inline fun <T> Iterable<T>.joinTo(
-    buffer: StringBuilder,
-    separator: CharSequence = ", ",
-    prefix: CharSequence = "",
-    postfix: CharSequence = "",
-    action: T.(StringBuilder) -> Unit
-) {
-    buffer.append(prefix)
-    var needInsertSeparator = false
-    for (element in this) {
-        if (needInsertSeparator) {
-            buffer.append(separator)
-        }
-        element.action(buffer)
-        needInsertSeparator = true
-    }
-    buffer.append(postfix)
 }
