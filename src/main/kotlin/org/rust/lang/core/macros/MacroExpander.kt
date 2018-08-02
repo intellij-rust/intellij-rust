@@ -138,18 +138,19 @@ class MacroExpander(val project: Project) {
     ): Pair<RsMacroCase, MacroSubstitution>? {
         val macroCallBody = createPsiBuilder(call, call.macroBody ?: return null)
         var start = macroCallBody.mark()
-        return def.macroBodyStubbed?.macroCaseList?.asSequence()
-            ?.mapNotNull { case ->
-                val subst = case.pattern.match(macroCallBody)
-                if (subst != null) {
-                    case to subst
-                } else {
-                    start.rollbackTo()
-                    start = macroCallBody.mark()
-                    null
-                }
+        val macroCaseList = def.macroBodyStubbed?.macroCaseList ?: return null
+
+        for (case in macroCaseList) {
+            val subst = case.pattern.match(macroCallBody)
+            if (subst != null) {
+                return case to subst
+            } else {
+                start.rollbackTo()
+                start = macroCallBody.mark()
             }
-            ?.firstOrNull()
+        }
+
+        return null
     }
 
     private fun createPsiBuilder(context: PsiElement, text: String): PsiBuilder {
