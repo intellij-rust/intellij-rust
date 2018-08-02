@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import de.undercouch.gradle.tasks.download.Download
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.SourceSet
-import org.jetbrains.grammarkit.GrammarKitPluginExtension
 import org.jetbrains.grammarkit.tasks.GenerateLexer
 import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -22,7 +21,7 @@ buildscript {
         maven { setUrl("https://jitpack.io") }
     }
     dependencies {
-        classpath("com.github.hurricup:gradle-grammar-kit-plugin:2018.1.2")
+        classpath("com.github.hurricup:gradle-grammar-kit-plugin:2018.1.7")
     }
 }
 
@@ -33,8 +32,8 @@ val platformVersion = prop("platformVersion")
 
 plugins {
     idea
-    kotlin("jvm") version "1.2.41"
-    id("org.jetbrains.intellij") version "0.3.4"
+    kotlin("jvm") version "1.2.61"
+    id("org.jetbrains.intellij") version "0.3.7"
     id("de.undercouch.download") version "3.4.3"
 }
 
@@ -74,10 +73,6 @@ allprojects {
             sinceBuild(prop("sinceBuild_$platformVersion"))
             untilBuild(prop("untilBuild_$platformVersion"))
         }
-    }
-
-    configure<GrammarKitPluginExtension> {
-        grammarKitRelease = "2017.1.4"
     }
 
     tasks.withType<PublishTask> {
@@ -132,7 +127,6 @@ project(":") {
     }
 
     dependencies {
-        compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
         compile("org.jetbrains:markdown:0.1.28") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
