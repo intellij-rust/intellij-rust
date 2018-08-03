@@ -643,6 +643,14 @@
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsMatchArmUpDownMover"/>
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsItemUpDownMover"/>
 
+        <!-- Macro Expansion -->
+
+        <applicationService serviceImplementation="org.rust.lang.core.macros.MacroExpansionPsiManager"/>
+
+        <applicationService serviceInterface="org.rust.openapiext.ObjectGcTracker"
+                            serviceImplementation="org.rust.openapiext.ObjectGcTrackerImpl"/>
+
+        <!-- Language Injections -->
 
         <lang.elementManipulator forClass="org.rust.lang.core.psi.RsLitExpr"
                                  implementationClass="org.rust.ide.injected.RsStringLiteralManipulator"/>

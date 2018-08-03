@@ -109,7 +109,11 @@ class MacroExpander(val project: Project) {
         val expandedText = expandMacroAsText(def, call) ?: return null
         return when (call.context) {
             is RsMacroExpr -> listOfNotNull(psiFactory.tryCreateExpression(expandedText))
-            else -> psiFactory.createFile(expandedText).childrenOfType()
+            else -> {
+                val psi = MacroExpansionPsiManager.instance.createPsiFromText(project, expandedText.toString())
+                check(psi.stub != null)
+                psi.stubChildrenOfType()
+            }
         }
     }
 
