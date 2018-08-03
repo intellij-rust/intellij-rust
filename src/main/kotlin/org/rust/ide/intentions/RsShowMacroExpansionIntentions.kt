@@ -29,6 +29,9 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
         showExpansion(project, editor, expansionDetails)
     }
 
+    /** Progress window cannot be shown in the write action, so it have to be disabled. **/
+    override fun startInWriteAction(): Boolean = false
+
     /**
      * This method is required for testing to avoid actually creating popup and editor.
      * Inspired by [com.intellij.codeInsight.hint.actions.ShowImplementationsAction].
