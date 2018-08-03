@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.newProject.ConfigurationData
+import org.rust.ide.newProject.RsPackageNameValidator
 
 /**
  * Builder which is used when a new project or module is created and not imported from source.
@@ -49,6 +50,13 @@ class RsModuleBuilder : ModuleBuilder() {
                 throw ConfigurationException(e.message)
             }
         }
+    }
+
+    @Throws(ConfigurationException::class)
+    override fun validateModuleName(moduleName: String): Boolean {
+        val isBinary = configurationData?.createBinary == true
+        val errorMessage = RsPackageNameValidator.validate(moduleName, isBinary) ?: return true
+        throw ConfigurationException(errorMessage)
     }
 
     var configurationData: ConfigurationData? = null
