@@ -41,7 +41,11 @@ abstract class RsElementBaseIntentionAction<Ctx> : BaseElementAtCaretIntentionAc
 
     final override fun invoke(project: Project, editor: Editor, element: PsiElement) {
         val ctx = findApplicableContext(project, editor, element) ?: return
-        checkWriteAccessAllowed()
+
+        if (startInWriteAction()) {
+            checkWriteAccessAllowed()
+        }
+
         invoke(project, editor, ctx)
     }
 
