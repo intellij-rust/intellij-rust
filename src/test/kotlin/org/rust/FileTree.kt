@@ -69,7 +69,7 @@ class FileTree(private val rootDirectory: Entry.Directory) {
                     is Entry.File -> {
                         val vFile = root.findChild(name) ?: root.createChildData(root, name)
                         VfsUtil.saveText(vFile, replaceCaretMarker(entry.text))
-                        if (hasCaretMarker(entry.text) || "//^" in entry.text) {
+                        if (hasCaretMarker(entry.text) || "//^" in entry.text || "#^" in entry.text) {
                             filesWithCaret += components.joinToString(separator = "/")
                         }
                     }
