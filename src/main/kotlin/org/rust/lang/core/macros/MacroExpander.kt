@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.DummyHolderFactory
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -336,7 +337,7 @@ private class MacroPattern private constructor(
     }
 
     private fun parseIdentifier(b: PsiBuilder): Boolean {
-        return if (b.tokenType == RsElementTypes.IDENTIFIER) {
+        return if (b.tokenType in IDENTIFIER_TOKENS) {
             b.advanceLexer()
             true
         } else {
@@ -380,6 +381,16 @@ private class MacroPattern private constructor(
             RustParser::UseItem,
             RustParser::ExternCrateItem,
             RustParser::MacroCall
+        )
+
+        /**
+         * Some tokens that treated as keywords by our lexer,
+         * but rustc's macro parser treats them as identifiers
+         */
+        private val IDENTIFIER_TOKENS = TokenSet.create(
+            RsElementTypes.IDENTIFIER,
+            RsElementTypes.SELF,
+            RsElementTypes.CSELF
         )
     }
 }
