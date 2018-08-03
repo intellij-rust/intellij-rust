@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBCheckBox
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.ui.RsLayoutBuilder
+import java.awt.event.ItemListener
 
 class RsNewProjectPanel(
     private val showProjectTypeCheckbox: Boolean,
@@ -19,6 +20,11 @@ class RsNewProjectPanel(
 
     private val rustProjectSettings = RustProjectSettingsPanel(updateListener = updateListener)
     private val createBinaryCheckbox = JBCheckBox(null, true)
+    private val checkboxListener = ItemListener { updateListener?.invoke() }
+
+    init {
+        createBinaryCheckbox.addItemListener(checkboxListener)
+    }
 
     val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.data, createBinaryCheckbox.isSelected)
 
@@ -35,6 +41,7 @@ class RsNewProjectPanel(
     }
 
     override fun dispose() {
+        createBinaryCheckbox.removeItemListener(checkboxListener)
         rustProjectSettings.dispose()
     }
 }
