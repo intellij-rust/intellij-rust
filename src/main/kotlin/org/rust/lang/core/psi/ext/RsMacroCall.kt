@@ -54,6 +54,22 @@ val RsMacroCall.expansion: List<RsExpandedElement>?
         expandMacro(this)
     }
 
+fun RsMacroCall.expandAllMacrosRecursively(): String =
+    expandAllMacrosRecursively(0)
+
+private fun RsMacroCall.expandAllMacrosRecursively(depth: Int): String {
+    if (depth > DEFAULT_RECURSION_LIMIT) return text
+
+    fun toExpandedText(element: PsiElement): String =
+        when (element) {
+            is RsMacroCall -> element.expandAllMacrosRecursively(depth + 1)
+            is RsElement -> element.directChildren.joinToString(" ") { toExpandedText(it) }
+            else -> element.text
+        }
+
+    return expansion?.joinToString(" ") { toExpandedText(it) } ?: text
+}
+
 fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElement) -> Boolean): Boolean =
     processExpansionRecursively(processor, 0)
 
@@ -79,3 +95,6 @@ private fun PsiElement.textBetweenParens(bra: PsiElement?, ket: PsiElement?): Ch
         ket.textRange.startOffset
     )
 }
+
+private val PsiElement.directChildren: Sequence<PsiElement>
+    get() = generateSequence(firstChild) { it.nextSibling }
