@@ -428,7 +428,9 @@ Pat ::= PatWild
       | PatIdent
       | (PatConst !('..' | '...' | '..='))
       | PatRange
-      | PatUniq
+      | PatUniq {
+  implements = "org.rust.lang.core.macros.RsExpandedElement"
+      }
 
 private Pat_first ::= '_' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
 
@@ -753,6 +755,7 @@ private ScalarTypeReferenceInner ::= ArrayType
                                    | ForInType
 
 TypeReference ::= TypeReferenceInner {
+  implements = "org.rust.lang.core.macros.RsExpandedElement"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

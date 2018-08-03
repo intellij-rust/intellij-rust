@@ -439,6 +439,8 @@ private fun collectAvailableVars(groupDefinition: RsMacroBindingGroup): Set<Stri
 fun RsPsiFactory.parseExpandedTextWithContext(call: RsMacroCall, expandedText: CharSequence): List<RsExpandedElement> =
     when (call.context) {
         is RsMacroExpr -> listOfNotNull(tryCreateExpression(expandedText))
+        is RsPatMacro -> listOfNotNull(tryCreatePat(expandedText))
+        is RsMacroType -> listOfNotNull(tryCreateType(expandedText))
         else -> createFile(expandedText).childrenOfType<RsExpandedElement>()
     }
 

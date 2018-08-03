@@ -474,7 +474,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
          fn foo() {}
     """)
 
-    fun `test impl members`() = checkSingleMacro("""
+    fun `test impl members context`() = checkSingleMacro("""
         macro_rules! foo {
             () => {
                 fn foo() {}
@@ -491,5 +491,32 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() {}
         type Bar = u8;
         const BAZ: u8 = 0;
+    """)
+
+    fun `test pattern context`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ i:ident, $ j:ident) => {
+                ($ i, $ j)
+            }
+        }
+
+        fn main() {
+            let (foo!(a, b), c) = ((1, 2), 3);
+        }      //^
+    """, """
+        (a, b)
+    """)
+
+    fun `test type context`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ i:ident, $ j:ident) => {
+                $ i<$ j>
+            }
+        }
+
+        fn bar() -> foo!(Option, i32) { unimplemented!() }
+                  //^
+    """, """
+        Option<i32>
     """)
 }
