@@ -107,10 +107,8 @@ class MacroExpander(val project: Project) {
         }
 
         val expandedText = expandMacroAsText(def, call) ?: return null
-        return when (call.context) {
-            is RsMacroExpr -> listOfNotNull(psiFactory.tryCreateExpression(expandedText))
-            else -> psiFactory.createFile(expandedText).childrenOfType()
-        }
+
+        return psiFactory.parseExpandedTextWithContext(call, expandedText)
     }
 
     private fun expandMacroAsText(def: RsMacro, call: RsMacroCall): CharSequence? {
@@ -275,7 +273,9 @@ private class MacroPattern private constructor(
                 RustParser(),
                 RustParser.EXTENDS_SETS_
             )
-            val marker = GeneratedParserUtilBase.enter_section_(adaptBuilder, 0, GeneratedParserUtilBase._COLLAPSE_, null)
+            val marker = GeneratedParserUtilBase
+                .enter_section_(adaptBuilder, 0, GeneratedParserUtilBase._COLLAPSE_, null)
+
             val parsed = when (type) {
                 "path" -> RustParser.PathGenericArgsWithColons(adaptBuilder, 0)
                 "expr" -> RustParser.Expr(adaptBuilder, 0, -1)
@@ -435,6 +435,12 @@ private fun collectAvailableVars(groupDefinition: RsMacroBindingGroup): Set<Stri
 
     return vars.mapNotNullToSet { it.name }
 }
+
+fun RsPsiFactory.parseExpandedTextWithContext(call: RsMacroCall, expandedText: CharSequence): List<RsExpandedElement> =
+    when (call.context) {
+        is RsMacroExpr -> listOfNotNull(tryCreateExpression(expandedText))
+        else -> createFile(expandedText).childrenOfType<RsExpandedElement>()
+    }
 
 object MacroExpansionMarks {
     val failMatchPatternByToken = Testmark("failMatchPatternByToken")
