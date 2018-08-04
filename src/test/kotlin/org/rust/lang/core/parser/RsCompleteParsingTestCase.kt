@@ -43,6 +43,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test block bin expr`() = doTest(true)
     fun `test match call ambiguity`() = doTest(true)
     fun `test visibility`() = doTest(true)
+    fun `test polybounds`() = doTest(true)
 
     fun `test issue320`() = doTest(true)
     fun `test diesel macros`() = doTest(true)
