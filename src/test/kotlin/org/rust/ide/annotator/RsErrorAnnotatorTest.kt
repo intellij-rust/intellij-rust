@@ -1172,4 +1172,10 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
             #![feature(crate_visibility_modifier)]
         }
     """)
+
+    fun `test parenthesized lifetime bounds`() = checkErrors("""
+        fn foo<'a, T: <error descr="Parenthesized lifetime bounds are not supported">('a)</error>>(t: T) {
+            unimplemented!();
+        }
+    """)
 }
