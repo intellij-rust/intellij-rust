@@ -363,11 +363,13 @@ TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ] {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-Polybound ::= [ ForLifetimes | '?' ] Bound {
+Polybound ::= '(' PolyboundInner ')' | PolyboundInner {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+private PolyboundInner ::= [ ForLifetimes | '?' ] Bound
 
 WhereClause ::= where <<comma_separated_list WherePred>>? {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
