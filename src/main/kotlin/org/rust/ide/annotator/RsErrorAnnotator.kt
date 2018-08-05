@@ -198,6 +198,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 RsDiagnostic.SelfInStaticMethodError(path, function).addToHolder(holder)
             }
         }
+
+        val crate = path.crate
+        if (crate != null && child != null) {
+            holder.createErrorAnnotation(crate, "`crate` is allowed only at the beginning")
+        }
+
         checkReferenceIsPublic(path, path, holder)
     }
 

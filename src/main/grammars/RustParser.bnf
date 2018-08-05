@@ -163,22 +163,20 @@ MetaItemArgs ::= '(' ( [ <<comma_separated_list (LitExpr | MetaItemWithoutTT )>>
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private PathIdentInner ::= !("union" identifier) identifier | self | super | 'Self'
+private PathIdent ::= !("union" identifier) identifier | self | super | 'Self' | crate
 
-fake Path ::= (Path '::' | '::' | TypeQual)? PathIdentInner PathTypeArguments? {
+fake Path ::= (Path '::' | '::' | TypeQual)? PathIdent PathTypeArguments? {
   implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
                  "org.rust.lang.core.macros.RsExpandedElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-private Path_first ::= identifier | self | 'Self' | super | '::' | '<'
+private Path_first ::= identifier | self | 'Self' | super | '::' | '<' | crate
 
 private PathImpl ::= PathStart PathSegment*
 
-PathIdent ::= PathIdentInner { elementType = Path }
-
-PathStart ::= ('::' | <<checkTypeQualAllowed>> TypeQual)? PathIdentInner PathTypeArguments? { elementType = Path }
+PathStart ::= ('::' | <<checkTypeQualAllowed>> TypeQual)? PathIdent PathTypeArguments? { elementType = Path }
 //    <T as Foo>::bar::baz::<i32>
 //    ^~~~~~~~~~~^ TypeQual
 TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
@@ -187,7 +185,7 @@ TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-left PathSegment ::= '::' PathIdentInner PathTypeArguments? { elementType = Path }
+left PathSegment ::= '::' PathIdent PathTypeArguments? { elementType = Path }
 
 private PathTypeArguments ::= <<isPathMode 'COLONS'>> ColonTypeArgumentList
                             | <<isPathMode 'NO_COLONS '>> ( TypeArgumentList | PathParameters RetType? ) // Fn(i32) -> i32 sugar

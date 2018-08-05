@@ -573,4 +573,20 @@ class RsCompletionTest : RsCompletionTestBase() {
         trait Tr { type Item; }
         type T = Tr<Item/*caret*/>;
     """)
+
+    fun `test complete crate with double colon in use path`() = doSingleCompletion("""
+        use cra/*caret*/
+    """, """
+        use crate::/*caret*/
+    """)
+
+    fun `test complete crate with double colon in general path`() = doSingleCompletion("""
+       fn main() {
+            let x = cra/*caret*/
+       }
+    """, """
+       fn main() {
+            let x = crate::/*caret*/
+       }
+    """)
 }

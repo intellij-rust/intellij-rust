@@ -1178,4 +1178,8 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
             unimplemented!();
         }
     """)
+
+    fun `test crate keyword not at the beginning`() = checkErrors("""
+       use crate::foo::<error descr="`crate` is allowed only at the beginning">crate</error>::Foo;
+    """)
 }
