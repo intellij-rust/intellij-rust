@@ -9,9 +9,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 
 class FlipBinaryExpressionIntentionTest : RsIntentionTestBase(FlipBinaryExpressionIntention()) {
 
-    private val targetIntention = intention as FlipBinaryExpressionIntention
-
-    fun `test all avaiable operators`() {
+    fun `test all available operators`() {
         val operators = FlipBinaryExpressionIntention.COMMUNICATIVE_OPERATORS +
             FlipBinaryExpressionIntention.CHANGE_SEMANTICS_OPERATORS +
             FlipBinaryExpressionIntention.COMPARISON_OPERATORS
@@ -30,7 +28,7 @@ class FlipBinaryExpressionIntentionTest : RsIntentionTestBase(FlipBinaryExpressi
     }
 
     fun doTest(op: String) {
-        val flippedOp = (intention as FlipBinaryExpressionIntention).flippedOp(op)
+        val flippedOp = FlipBinaryExpressionIntention.flippedOp(op)
         doAvailableTest("""
             fn test(x: i32, y: i32) {
                 x /*caret*/$op y;
