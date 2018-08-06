@@ -1,0 +1,268 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.ide.hints
+
+import com.google.common.annotations.VisibleForTesting
+import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext
+import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
+import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext
+import com.intellij.ui.Hint
+import junit.framework.AssertionFailedError
+import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
+import org.junit.Test
+import org.rust.RsTestBase
+
+
+/**
+ * Tests for RsGenericParameterInfoHandler
+ */
+class RsGenericParameterInfoHandlerTest : RsTestBase() {
+    fun `test fn no params`() = checkByText("""
+        fn foo(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "", "", -1)
+
+    fun `test fn one param`() = checkByText("""
+        fn foo<T>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T", "", 0)
+
+    fun `test fn before lbrace`() = checkByText("""
+        fn foo<T>(x: T) {}
+        fn main() { foo::/*caret*/<>(); }
+    """, "T", "", 0)
+
+    fun `test fn after rbrace`() = checkByText("""
+        fn foo<T>(x: T) {}
+        fn main() { foo::<>/*caret*/(); }
+    """, "", "", -1)
+
+    fun `test fn between colons`() = checkByText("""
+        fn foo<T>(x: T) {}
+        fn main() { foo:/*caret*/:<>(); }
+    """, "", "", -1)
+
+    fun `test fn second param`() = checkByText("""
+        fn foo<T, P>(x: T) {}
+        fn main() { foo::<i32,/*caret*/>(); }
+    """, "T, P", "", 1)
+
+    fun `test fn param out of bounds`() = checkByText("""
+        fn foo<T>(x: T) {}
+        fn main() { foo::<i32, /*caret*/>(); }
+    """, "T", "", 1)
+
+    fun `test fn bounded`() = checkByText("""
+        trait Trait {}
+        fn foo<T: Trait>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: Trait", "", 0)
+
+    fun `test fn multiple bounds`() = checkByText("""
+        trait Trait {}
+        trait OtherTrait {}
+        fn foo<T: Trait + OtherTrait>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: Trait + OtherTrait", "", 0)
+
+    fun `test fn bounds with supertraits`() = checkByText("""
+        trait Trait {}
+        trait OtherTrait : Trait{}
+        fn foo<T: OtherTrait>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: OtherTrait", "", 0)
+
+    fun `test fn bounds with ?Sized`() = checkByText("""
+        pub trait Trait {}
+        fn foo<T: Trait + ?Sized>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: ?Sized + Trait", "", 0)
+
+    fun `test fn bounds with Sized`() = checkByText("""
+        pub trait Trait {}
+        fn foo<T: Trait + Sized>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: Trait", "", 0)
+
+    // TODO: hint = "T", after intellij-rust#2783 fix
+    fun `test fn bounds with ?Sized and Sized`() = checkByText("""
+        #[lang = "sized"]
+        pub trait Sized {}
+        fn foo<T: Sized + ?Sized>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: ?Sized", "", 0)
+
+    // TODO: hint = "T: Trait", after intellij-rust#2783 fix
+    fun `test fn bounds with ?Sized and derived Sized`() = checkByText("""
+        #[lang = "sized"]
+        pub trait Sized {}
+        pub trait Trait : Sized {}
+        fn foo<T: Trait + ?Sized>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: ?Sized + Trait", "", 0)
+
+    fun `test fn with simple where`() = checkByText("""
+        pub trait Trait {}
+        fn foo<T>(x: T) where T: Trait {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: Trait", "", 0)
+
+    fun `test fn with complicated where`() = checkByText("""
+        pub trait ConvertTo<T> {}
+        fn foo<T>(x: T) where i32: ConvertTo<T> {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T", "where i32: ConvertTo<T>", 0)
+
+    fun `test fn with complicated where 2`() = checkByText("""
+        enum E<T> { Foo(T), }
+        pub trait SuperTrait {}
+        fn foo<T>(x: T) where E<T>: SuperTrait {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T", "where E<T>: SuperTrait", 0)
+
+    fun `test fn with bounds and simple where`() = checkByText("""
+        pub trait Trait {}
+        pub trait OtherTrait {}
+        fn foo<T: OtherTrait>(x: T) where T: Trait {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: OtherTrait + Trait", "", 0)
+
+    fun `test enum`() = checkByText("""
+        enum E<T> { Foo(T) }
+        fn main() { E::</*caret*/>::Foo(); }
+    """, "T", "", 0)
+
+    fun `test struct`() = checkByText("""
+        struct S<T> { field: T, }
+        fn main() { S::</*caret*/> { field: }; }
+    """, "T", "", 0)
+
+    fun `test nested generics`() = checkByText("""
+        struct S<T> { field: T, }
+        fn foo<P>(x: T) {}
+        fn main() { foo::<S</*caret*/>>(); }
+    """, "T", "", 0)
+
+    fun `test nested generics 2`() = checkByText("""
+        struct S<T> { field: T, }
+        fn foo<P, K>(x: T) {}
+        fn main() { foo::<S<i32>, /*caret*/>(); }
+    """, "P, K", "", 1)
+
+    fun `test parametrized bounds`() = checkByText("""
+        pub trait Trait<T> {}
+        struct S<T> { x: T, }
+        fn foo<T: Trait<S<i32>>>(x: T) {}
+        fn main() { foo::</*caret*/>(); }
+    """, "T: Trait<S<i32>>", "", 0)
+
+    fun `test dotted method call`() = checkByText("""
+        struct S;
+        impl<T> S { fn foo<T>(&self, x: T) {} }
+        fn main() {
+        let s = S{};
+        s.foo::</*caret*/>(5); }
+    """, "T", "", 0)
+
+    fun `test explicit self method call`() = checkByText("""
+        struct S;
+        impl<T> S { fn foo<T>(&self, x: T) {} }
+        fn main() {
+        let s = S{};
+        S::foo::</*caret*/>(&s, 5); }
+    """, "T", "", 0)
+
+    fun `test trait method`() = checkByText("""
+        trait Trait {
+            fn in_trait<T>(&self, x: T) {}
+            fn another<T>(y: T) {}
+        }
+        struct S;
+        impl Trait for S {}
+        fn main() {
+            let s = S {};
+            s.in_trait::</*caret*/>();
+        }
+    """, "T", "", 0)
+
+    fun `test trait method 2`() = checkByText("""
+        trait Trait {
+            fn in_trait<T>(&self, x: T) {}
+            fn another<T>(y: T) {}
+        }
+        struct S;
+        impl Trait for S {}
+        fn main() {
+            let s = S {};
+            S::another::</*caret*/>();
+        }
+    """, "T", "", 0)
+
+    fun `test in fn declaration`() = checkByText("""
+        fn foo</*caret*/>(x: T) {}
+    """, "", "", -1)
+
+    fun `test in struct declaration`() = checkByText("""
+        struct S</*caret*/> { field: T, }
+    """, "", "", -1)
+
+    fun `test in enum declaration`() = checkByText("""
+        enum E</*caret*/> { Foo(T), }
+    """, "", "", -1)
+
+    fun `test in trait declaration`() = checkByText("""
+        pub trait Trait</*caret*/> {
+            fn foo(x: T);
+        }
+    """, "", "", -1)
+
+    fun `test after impl`() = checkByText("""
+        pub trait Trait<T> {}
+        struct S;
+        impl</*caret*/> Trait<T> for S { }
+    """, "", "", -1)
+
+    fun `test in impl block`() = checkByText("""
+        pub trait Trait<T> {}
+        struct S<K> {x: K}
+        impl<P> Trait</*caret*/> for S<P> { }
+    """, "T", "", 0)
+
+    private fun checkByText(@Language("Rust") code: String, hint: String, where: String, index: Int) {
+        myFixture.configureByText("main.rs", replaceCaretMarker(code))
+        val handler = RsGenericParameterInfoHandler()
+        val createContext = MockCreateParameterInfoContext(myFixture.editor, myFixture.file)
+
+        // Check hint
+        val elt = handler.findElementForParameterInfo(createContext)
+        if (hint.isNotEmpty()) {
+            elt ?: throw AssertionFailedError("Hint not found")
+            handler.showParameterInfo(elt, createContext)
+            val items = createContext.itemsToShow ?: throw AssertionFailedError("Parameters are not shown")
+            if (items.isEmpty()) throw AssertionFailedError("Parameters are empty")
+            val context = MockParameterInfoUIContext(elt)
+            handler.updateUI(items[0] as HintLine, context)
+            TestCase.assertEquals(hint, handler.hintText)
+
+            if (items.size > 1) {
+                handler.updateUI(items[1] as HintLine, context)
+                TestCase.assertEquals("Second line mismatched: ", where, handler.hintText)
+            } else {
+                TestCase.assertEquals("Expected second line: ", where, "")
+            }
+
+            // Check parameter index
+            val updateContext = MockUpdateParameterInfoContext(myFixture.editor, myFixture.file)
+            val element = handler.findElementForUpdatingParameterInfo(updateContext)
+                ?: throw AssertionFailedError("Parameter not found")
+            handler.updateParameterInfo(element, updateContext)
+            TestCase.assertEquals("Index mismatched: ", index, handler.curParam)
+        } else if (elt != null) {
+            throw AssertionFailedError("Unexpected hint found")
+        }
+    }
+}
