@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsElement
@@ -23,7 +24,7 @@ import java.util.*
 
 class StdKnownItems private constructor(
     private val absolutePathResolver: (String, String) -> RsNamedElement?,
-    private val langItemsResolver: (String, String?) -> RsTraitItem?
+    private val langItemsResolver: (String, String) -> RsTraitItem?
 ) {
 
     fun findStdItem(prefixNoStd: String, name: String): RsNamedElement? =
@@ -98,13 +99,13 @@ class StdKnownItems private constructor(
     fun findToStringTrait(): RsTraitItem? =
         findCoreItem("string::ToString") as? RsTraitItem
 
-    fun findLangItem(langAttribute: String, modName: String? = null): RsTraitItem? =
-        langItemsResolver(langAttribute, modName)
+    private fun findLangItem(langAttribute: String, crateName: String = AutoInjectedCrates.CORE): RsTraitItem? =
+        langItemsResolver(langAttribute, crateName)
 
-    fun findCloneTrait(): RsTraitItem? = findLangItem("clone", "clone")
-    fun findCopyTrait(): RsTraitItem? = findLangItem("copy", "marker")
+    fun findCloneTrait(): RsTraitItem? = findLangItem("clone")
+    fun findCopyTrait(): RsTraitItem? = findLangItem("copy")
 
-    fun findPartialEqTrait(): RsTraitItem? = findLangItem("eq", "cmp")
+    fun findPartialEqTrait(): RsTraitItem? = findLangItem("eq")
 
     // `Eq` trait doesn't have own lang attribute, so use `findCoreItem` to find it
     fun findEqTrait(): RsTraitItem? = findCoreItem("cmp::Eq") as? RsTraitItem
@@ -113,7 +114,7 @@ class StdKnownItems private constructor(
     // but in the new stdlib it is "partial_ord" ("ord" used for "Ord" trait). So we try
     // "partial_ord", and on failure we resolve it by path
     fun findPartialOrdTrait(): RsTraitItem? =
-        findLangItem("partial_ord", "cmp") ?: findCoreItem("cmp::PartialOrd") as? RsTraitItem
+        findLangItem("partial_ord") ?: findCoreItem("cmp::PartialOrd") as? RsTraitItem
 
     // Some old versions of stdlib contain `Ord` trait without lang attribute
     fun findOrdTrait(): RsTraitItem? =
@@ -121,13 +122,13 @@ class StdKnownItems private constructor(
 
     fun findHashTrait(): RsTraitItem? = findCoreItem("hash::Hash") as? RsTraitItem
 
-    fun findDebugTrait(): RsTraitItem? = findLangItem("debug_trait", "fmt")
+    fun findDebugTrait(): RsTraitItem? = findLangItem("debug_trait")
 
     fun findDefaultTrait(): RsTraitItem? = findCoreItem("default::Default") as? RsTraitItem
 
-    fun findSizedTrait(): RsTraitItem? = findLangItem("sized", "marker")
-    fun findSyncTrait(): RsTraitItem? = findLangItem("sync", "marker")
-    fun findSendTrait(): RsTraitItem? = findLangItem("send", "marker")
+    fun findSizedTrait(): RsTraitItem? = findLangItem("sized")
+    fun findSyncTrait(): RsTraitItem? = findLangItem("sync")
+    fun findSendTrait(): RsTraitItem? = findLangItem("send")
 
     companion object {
         private val stdKnownItemsCache =
@@ -153,9 +154,9 @@ class StdKnownItems private constructor(
                 }.orElse(null)
             }
 
-            val langItemsResolver: (String, String?) -> RsTraitItem? = { langAttribute, modName ->
+            val langItemsResolver: (String, String) -> RsTraitItem? = { langAttribute, crateName ->
                 langItemsCache.getOrPut(project, langAttribute) {
-                    Optional.ofNullable(RsLangItemIndex.findLangItem(project, langAttribute, modName))
+                    Optional.ofNullable(RsLangItemIndex.findLangItem(project, langAttribute, crateName))
                 }.orElse(null)
             }
 
