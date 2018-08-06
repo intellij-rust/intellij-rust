@@ -1,0 +1,24 @@
+macro_rules! wrapper {
+    ($name:ident, $t:ty) => {
+        #[derive(Debug)]
+        struct $name {
+            inner: $t
+        }
+
+        new_impl!($name, $t);
+    };
+}
+
+macro_rules! new_impl {
+    ($name:ident, $t:ty) => {
+        impl $name {
+            fn new(x: $t) -> $name {
+                $name {
+                    inner: x
+                }
+            }
+        }
+    };
+}
+
+<spot>wrapper!(Bar, i32);</spot>
