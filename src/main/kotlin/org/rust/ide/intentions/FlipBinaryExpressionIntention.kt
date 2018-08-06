@@ -17,12 +17,7 @@ import org.rust.lang.core.psi.ext.operator
 
 class FlipBinaryExpressionIntention : RsElementBaseIntentionAction<RsBinaryExpr>() {
 
-    companion object {
-        val COMMUNICATIVE_OPERATORS = listOf(PLUS, MUL, AND, OR, XOR, EQEQ, EXCLEQ)
-        val CHANGE_SEMANTICS_OPERATORS = listOf(MINUS, DIV, REM, ANDAND, OROR, GTGT, LTLT)
-        val COMPARISON_OPERATORS = listOf(GT, GTEQ, LT, LTEQ)
-    }
-
+    override fun getText(): String = "Flip binary expression"
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsBinaryExpr? {
@@ -50,12 +45,17 @@ class FlipBinaryExpressionIntention : RsElementBaseIntentionAction<RsBinaryExpr>
         ctx.replace(RsPsiFactory(project).createExpression("$right $op $left"))
     }
 
-    fun flippedOp(op: String): String = when (op) {
-        ">" -> "<"
-        ">=" -> "<="
-        "<" -> ">"
-        "<=" -> ">="
-        else -> op
-    }
+    companion object {
+        val COMMUNICATIVE_OPERATORS = listOf(PLUS, MUL, AND, OR, XOR, EQEQ, EXCLEQ)
+        val CHANGE_SEMANTICS_OPERATORS = listOf(MINUS, DIV, REM, ANDAND, OROR, GTGT, LTLT)
+        val COMPARISON_OPERATORS = listOf(GT, GTEQ, LT, LTEQ)
 
+        fun flippedOp(op: String): String = when (op) {
+            ">" -> "<"
+            ">=" -> "<="
+            "<" -> ">"
+            "<=" -> ">="
+            else -> op
+        }
+    }
 }
