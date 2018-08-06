@@ -129,10 +129,10 @@ class ImplLookup(
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
     private val binOpsTraitAndOutputCache = mutableMapOf<ArithmeticOp, Pair<RsTraitItem, RsTypeAlias>?>()
     private val arithOps by lazy(NONE) {
-        ArithmeticOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName, it.modName) }
+        ArithmeticOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName) }
     }
     private val assignArithOps by lazy(NONE) {
-        ArithmeticAssignmentOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName, it.modName) }
+        ArithmeticAssignmentOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName) }
     }
     private val comparisionOps by lazy(NONE) {
         listOfNotNull(
@@ -539,7 +539,7 @@ class ImplLookup(
 
     fun findArithmeticBinaryExprOutputType(lhsType: Ty, rhsType: Ty, op: ArithmeticOp): TyWithObligations<Ty>? {
         val traitAndOutput = binOpsTraitAndOutputCache.getOrPut(op) {
-            val trait = RsLangItemIndex.findLangItem(project, op.itemName, op.modName) ?: return@getOrPut null
+            val trait = RsLangItemIndex.findLangItem(project, op.itemName) ?: return@getOrPut null
             trait.findAssociatedType("Output")?.let { trait to it }
         } ?: return null
         return selectProjection(traitAndOutput, lhsType, rhsType).ok()
@@ -624,7 +624,7 @@ class ImplLookup(
     }
 
     fun selectOverloadedOp(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): SelectionResult<Selection> {
-        val trait = RsLangItemIndex.findLangItem(project, op.itemName, op.modName) ?: return SelectionResult.Err()
+        val trait = RsLangItemIndex.findLangItem(project, op.itemName) ?: return SelectionResult.Err()
         return select(TraitRef(lhsType, trait.withSubst(rhsType)))
     }
 
