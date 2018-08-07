@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boolean) : AnAction() {
 
@@ -59,7 +59,7 @@ class RsShowSingleStepMacroExpansionAction : RsShowMacroExpansionActionBase(expa
 fun getMacroUnderCaret(event: DataContext): RsMacroCall? {
     val elementUnderCaret = event.elementUnderCaretInEditor ?: return null
 
-    return elementUnderCaret.parentOfType<RsMacroCall>()
+    return elementUnderCaret.ancestorOrSelf()
 }
 
 private val DataContext.psiFile: PsiFile?
