@@ -34,7 +34,8 @@ object CargoMetadata {
         val packages: List<Package>,
 
         /**
-         * Ids of packages that are members of the cargo workspace
+         * Ids of packages that are members of the cargo workspace.
+         * Since: Rust 1.13.0
          */
         val workspace_members: List<String>?,
 
@@ -49,9 +50,9 @@ object CargoMetadata {
         val version: Int,
 
         /**
-         * Path to workspace root folder. Can be null for old cargo version
+         * Path to workspace root folder.
+         * Since: Rust 1.24.0
          */
-        // BACKCOMPAT: Rust 1.23: use not nullable type here
         val workspace_root: String?
     )
 
@@ -94,6 +95,7 @@ object CargoMetadata {
          *
          * Can be "2015", "2018" or null. Null value can be got from old version of cargo
          * so it is the same as "2015"
+         * Since: Rust 1.29.0
          */
         val edition: String?
     )
@@ -112,6 +114,7 @@ object CargoMetadata {
          * List of crate types
          *
          * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
+         * Since: Rust 1.17.0
          */
         val crate_types: List<String>,
 
@@ -130,6 +133,7 @@ object CargoMetadata {
          *
          * Can be "2015", "2018" or null. Null value can be got from old version of cargo
          * so it is the same as "2015"
+         * Since: Rust 1.29.0
          */
         val edition: String?,
 
@@ -198,11 +202,14 @@ object CargoMetadata {
          * List of dependency info
          *
          * Contains additional info compared with [dependencies] like custom package name.
-         * Can be null for old cargo version
+         * Since: Rust 1.30.0
          */
         val deps: List<Dep>?
     )
 
+    /**
+     *  Since: Rust 1.30.0
+     */
     data class Dep(
         /**
          * Id of dependent package
