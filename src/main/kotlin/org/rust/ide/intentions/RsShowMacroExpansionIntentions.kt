@@ -9,11 +9,11 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.parentOfType
 import org.rust.ide.actions.macroExpansion.MacroExpansionViewDetails
 import org.rust.ide.actions.macroExpansion.expandMacroForViewWithProgress
 import org.rust.ide.actions.macroExpansion.showMacroExpansionPopup
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: Boolean) :
     RsElementBaseIntentionAction<RsMacroCall>() {
@@ -21,7 +21,7 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
     override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroCall? =
-        element.parentOfType<RsMacroCall>()
+        element.ancestorOrSelf()
 
     override fun invoke(project: Project, editor: Editor, ctx: RsMacroCall) {
         val expansionDetails = expandMacroForViewWithProgress(project, ctx, expandRecursively)
