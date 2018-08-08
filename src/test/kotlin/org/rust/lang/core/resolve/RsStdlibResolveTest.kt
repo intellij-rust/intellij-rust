@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.util.text.SemVer
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsStdlibResolveTest : RsResolveTestBase() {
@@ -537,7 +536,23 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }                    //^ ...convert.rs
     """)
 
-    companion object {
-        private val RUST_1_25 = SemVer.parseFromText("1.25.0")!!
-    }
+    fun `test resolve with no_std attribute`() = stubOnlyResolve("""
+    //- main.rs
+        #![no_std]
+
+        fn foo(v: Vec) {}
+                 //^ unresolved
+    """)
+
+    fun `test resolve with no_std attribute 2`() = stubOnlyResolve("""
+    //- main.rs
+        #![no_std]
+
+        extern crate alloc;
+
+        use alloc::Vec;
+
+        fn foo(v: Vec) {}
+                 //^ .../liballoc/vec.rs
+    """)
 }

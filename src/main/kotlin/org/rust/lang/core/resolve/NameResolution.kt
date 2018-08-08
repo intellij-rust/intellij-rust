@@ -15,6 +15,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
@@ -527,14 +529,9 @@ private fun exportedMacrosInternal(scope: RsFile): List<RsMacro> {
             }
         }
 
-        // Implicit extern crate from stdlib
-        val (name, prelude) = when (scope.attributes) {
-            NO_CORE -> null to null
-            NO_STD -> "core" to scope.findDependencyCrateRoot("core")
-            NONE -> "std" to scope.findDependencyCrateRoot("std")
-        }
-        if (name != null && prelude != null) {
-            exportingMacrosCrates[name] = prelude
+        val implicitStdlibCrate = implicitStdlibCrate(scope)
+        if (implicitStdlibCrate != null) {
+            exportingMacrosCrates[implicitStdlibCrate.name] = implicitStdlibCrate.crateRoot
         }
 
         if (exportingMacrosCrates.isNotEmpty()) {
@@ -839,13 +836,40 @@ private fun processNestedScopesUpwards(scopeStart: RsElement, processor: RsResol
         false
     }
 
-    val prelude = scopeStart.containingCargoPackage?.findDependency("std")?.crateRoot
-        ?.findFileByRelativePath("../prelude/v1.rs")
-        ?.toPsiFile(scopeStart.project)
-        ?.rustFile
+    val prelude = findPrelude(scopeStart)
     if (prelude != null && processItemDeclarations(prelude, ns, { v -> v.name !in prevScope && processor(v) }, false)) return true
 
     return false
+}
+
+private fun findPrelude(element: RsElement): RsFile? {
+    val crateRoot = element.crateRoot as? RsFile ?: return null
+    val cargoPackage = crateRoot.containingCargoPackage
+    val isStdlib = cargoPackage?.origin == PackageOrigin.STDLIB
+    val packageName = cargoPackage?.normName
+
+    // `std` and `core` crates explicitly add their prelude
+    val stdlibCrateRoot = if (isStdlib && (packageName == STD || packageName == CORE)) {
+        crateRoot
+    } else {
+        implicitStdlibCrate(crateRoot)?.crateRoot
+    }
+
+    return stdlibCrateRoot
+        ?.virtualFile
+        ?.findFileByRelativePath("../prelude/v1.rs")
+        ?.toPsiFile(element.project)
+        ?.rustFile
+}
+
+// Implicit extern crate from stdlib
+private fun implicitStdlibCrate(scope: RsFile): ImplicitStdlibCrate? {
+    val (name, crateRoot) = when (scope.attributes) {
+        NO_CORE -> return null
+        NO_STD -> CORE to scope.findDependencyCrateRoot(CORE)
+        NONE -> STD to scope.findDependencyCrateRoot(STD)
+    }
+    return if (crateRoot == null) null else ImplicitStdlibCrate(name, crateRoot)
 }
 
 // There's already similar functions in TreeUtils, should use it
@@ -884,3 +908,5 @@ object NameResolutionTestmarks {
     val missingMacroUse = Testmark("missingMacroUse")
     val selfInGroup = Testmark("selfInGroup")
 }
+
+private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)

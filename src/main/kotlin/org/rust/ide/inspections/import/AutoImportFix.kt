@@ -310,8 +310,8 @@ class AutoImportFix(path: RsPath) : LocalQuickFixOnPsiElement(path), HighPriorit
             val candidateToAttributes = stdlibCandidates.map { candidate ->
                 val pkg = candidate.second
                 val attributes = when (pkg.normName) {
-                    AutoInjectedCrates.std -> RsFile.Attributes.NONE
-                    AutoInjectedCrates.core -> RsFile.Attributes.NO_STD
+                    AutoInjectedCrates.STD -> RsFile.Attributes.NONE
+                    AutoInjectedCrates.CORE -> RsFile.Attributes.NO_STD
                     else -> RsFile.Attributes.NO_CORE
                 }
                 hasImportWithSameAttributes = hasImportWithSameAttributes || attributes == fileAttributes
@@ -508,7 +508,7 @@ private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it 
 private val <T: RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
 
 private val CargoWorkspace.Target.isStd: Boolean
-    get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.std
+    get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.STD
 
 private val CargoWorkspace.Target.isCore: Boolean
-    get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.core
+    get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.CORE
