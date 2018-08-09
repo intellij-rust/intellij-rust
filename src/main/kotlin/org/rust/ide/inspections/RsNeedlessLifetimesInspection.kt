@@ -39,7 +39,7 @@ private fun couldUseElision(fn: RsFunction): Boolean {
     val typeParametersBounds = fn.typeParameters.flatMap { it.bounds }.map { it.bound }
     if (typeParametersBounds.any { hasNamedReferenceLifetime(it) }) return false
 
-    val (inputLifetimes, outputLifetimes) = collectLifetimesFromFnSignature(fn)
+    val (inputLifetimes, outputLifetimes) = collectLifetimesFromFnSignature(fn) ?: return false
 
     // no input lifetimes? easy case!
     if (inputLifetimes.isEmpty()) return false
@@ -77,6 +77,7 @@ private fun couldUseElision(fn: RsFunction): Boolean {
 }
 
 private class LifetimesCollector : RsVisitor() {
+    var abort: Boolean = false
     val lifetimes = mutableListOf<ReferenceLifetime>()
 
     override fun visitSelfParameter(selfParameter: RsSelfParameter) {
@@ -90,6 +91,12 @@ private class LifetimesCollector : RsVisitor() {
         super.visitRefLikeType(refLike)
     }
 
+    override fun visitTraitType(trait: RsTraitType) {
+        val lifetimeBounds = trait.polyboundList.mapNotNull { it.bound.lifetime }
+        if (lifetimeBounds.isNotEmpty()) abort = true
+        super.visitTraitType(trait)
+    }
+
     override fun visitPath(path: RsPath) {
         collectAnonymousLifetimes(path)
         super.visitPath(path)
@@ -98,7 +105,7 @@ private class LifetimesCollector : RsVisitor() {
     override fun visitLifetime(lifetime: RsLifetime) = record(lifetime)
 
     override fun visitElement(element: RsElement) {
-        if (element is RsItemElement /* ignore nested items */) return
+        if (abort || element is RsItemElement /* ignore nested items */) return
         element.forEachChild { it.accept(this) }
     }
 
@@ -135,7 +142,7 @@ private class BodyLifetimeChecker : RsVisitor() {
     }
 }
 
-private fun collectLifetimesFromFnSignature(fn: RsFunction): Pair<List<ReferenceLifetime>, List<ReferenceLifetime>> {
+private fun collectLifetimesFromFnSignature(fn: RsFunction): Pair<List<ReferenceLifetime>, List<ReferenceLifetime>>? {
     // these will collect all the lifetimes for references in arg/return types
     val inputCollector = LifetimesCollector()
     val outputCollector = LifetimesCollector()
@@ -145,9 +152,11 @@ private fun collectLifetimesFromFnSignature(fn: RsFunction): Pair<List<Reference
         it.selfParameter?.accept(inputCollector)
         it.valueParameterList.forEach { it.typeReference?.accept(inputCollector) }
     }
+    if (inputCollector.abort) return null
 
     // extract lifetimes in output type
     fn.retType?.typeReference?.accept(outputCollector)
+    if (outputCollector.abort) return null
 
     return Pair(inputCollector.lifetimes, outputCollector.lifetimes)
 }
