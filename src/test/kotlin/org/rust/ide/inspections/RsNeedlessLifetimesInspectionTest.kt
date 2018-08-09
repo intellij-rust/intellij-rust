@@ -261,6 +261,10 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn foo<'a, 'b: 'a>(a: &'a str, b: &'b str) { unimplemented!() }
     """)
 
+    fun `test no elision if there are lifetime bounds in trait type`() = doTest("""
+        fn foo<'a>(a: &'a [i32]) -> Box<Iterator<Item=i32> + 'a> { unimplemented!() }
+    """)
+
     fun `test ignore 'static in body`() = doTest("""
         <weak_warning>fn <caret>foo<'a>(s: &'a str)</weak_warning> { let x: &'static str = unimplemented!(); }
     """, """
