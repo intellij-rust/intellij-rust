@@ -550,7 +550,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
         extern crate alloc;
 
-        use alloc::Vec;
+        use alloc::vec::Vec;
 
         fn foo(v: Vec) {}
                  //^ .../liballoc/vec.rs
