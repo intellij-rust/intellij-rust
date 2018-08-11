@@ -31,6 +31,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="useCargoCheckAnnotator" value="true" />
               <option name="useCargoCheckForBuild" value="false" />
               <option name="useOfflineForCargoCheck" value="true" />
+              <option name="useSkipChildren" value="true" />
             </State>
         """.trimIndent()
         service.loadState(elementFromXmlString(text).deserialize())
@@ -47,7 +48,8 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
             useCargoCheckAnnotator = true,
             compileAllTargets = false,
             useOfflineForCargoCheck = true,
-            expandMacros = false
+            expandMacros = false,
+            useSkipChildren = true
         ))
     }
 }

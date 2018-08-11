@@ -64,7 +64,7 @@ class CargoFmtTest : RustWithToolchainTestBase() {
 
     private fun reformat(file: VirtualFile) {
         val cargo = project.toolchain!!.rawCargo()
-        val result = cargo.reformatFile(testRootDisposable, file)
+        val result = cargo.reformatFile(project, file, testRootDisposable)
         check(result.exitCode == 0)
     }
 }
