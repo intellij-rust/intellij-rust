@@ -254,7 +254,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
 
         private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
-        val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.library }
+        val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.value }
 
         override val skipTestReason: String?
             get() {
