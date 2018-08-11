@@ -591,9 +591,16 @@
 
         <!-- Cargo -->
 
-        <projectConfigurable instance="org.rust.cargo.project.configurable.RustProjectConfigurable"
+        <projectConfigurable instance="org.rust.cargo.project.configurable.RsProjectConfigurable"
                              displayName="Rust"
-                             groupId="language"/>
+                             groupId="language"
+                             id="language.rust"/>
+
+        <projectConfigurable instance="org.rust.cargo.project.configurable.CargoConfigurable"
+                             displayName="Cargo"
+                             parentId="language.rust"
+                             id="language.rust.cargo"/>
+
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
         <projectService serviceInterface="org.rust.cargo.project.model.CargoProjectsService"
