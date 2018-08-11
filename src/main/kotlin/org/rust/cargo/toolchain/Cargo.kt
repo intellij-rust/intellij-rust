@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.runExecutable
@@ -108,25 +110,30 @@ class Cargo(
     }
 
     @Throws(ExecutionException::class)
-    fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
+    fun reformatFile(
+        project: Project,
+        file: VirtualFile,
+        owner: Disposable = project,
+        listener: ProcessListener? = null
+    ): ProcessOutput {
+        FileDocumentManager.getInstance().saveAllDocuments()
 
-        val arguments = mutableListOf("--all", "--")
+        val channel = project.cargoProjects.findProjectForFile(file)
+            ?.rustcInfo?.version?.channel
 
-        val (emit, skipChildren) = checkSupportForRustfmtFlags(file.parent.pathAsPath)
-        arguments += if (emit) "--emit=files" else "--write-mode=overwrite"
-        if (skipChildren) {
-            arguments += "--skip-children"
-        }
-        arguments += file.path
+        val result = ProgressManager.getInstance().runProcessWithProgressSynchronously<ProcessOutput, ExecutionException>({
+            val arguments = mutableListOf("--all", "--")
+            val (emit, skipChildren) = checkSupportForRustfmtFlags(file.parent.pathAsPath)
+            arguments += if (emit) "--emit=files" else "--write-mode=overwrite"
+            if (project.rustSettings.useSkipChildren && channel == RustChannel.NIGHTLY && skipChildren) {
+                arguments += "--unstable-features"
+                arguments += "--skip-children"
+            }
+            arguments += file.path
+            CargoCommandLine("fmt", file.parent.pathAsPath, arguments)
+                .execute(owner, listener)
+        }, "Reformat File with Rustfmt", true, project)
 
-        val documentManager = FileDocumentManager.getInstance()
-        val document = documentManager.getDocument(file)
-        if (document != null && documentManager.isDocumentUnsaved(document)) {
-            documentManager.saveDocument(document)
-        }
-
-        val result = CargoCommandLine("fmt", file.parent.pathAsPath, arguments)
-            .execute(owner, listener)
         // We want to refresh file synchronously only in unit test
         // to get new text right after `reformatFile` call
         VfsUtil.markDirtyAndRefresh(!isUnitTestMode, true, true, file)

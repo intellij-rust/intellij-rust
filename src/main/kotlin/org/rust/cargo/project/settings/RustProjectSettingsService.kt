@@ -22,7 +22,8 @@ interface RustProjectSettingsService {
         val useCargoCheckAnnotator: Boolean,
         val compileAllTargets: Boolean,
         val useOfflineForCargoCheck: Boolean,
-        val expandMacros: Boolean
+        val expandMacros: Boolean,
+        val useSkipChildren: Boolean
     )
 
     var data: Data
@@ -39,6 +40,7 @@ interface RustProjectSettingsService {
     val compileAllTargets: Boolean get() = data.compileAllTargets
     val useOfflineForCargoCheck: Boolean get() = data.useOfflineForCargoCheck
     val expandMacros: Boolean get() = data.expandMacros
+    val useSkipChildren: Boolean get() = data.useSkipChildren
 
     /*
      * Show a dialog for toolchain configuration

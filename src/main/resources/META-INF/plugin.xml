@@ -601,6 +601,11 @@
                              parentId="language.rust"
                              id="language.rust.cargo"/>
 
+        <projectConfigurable instance="org.rust.cargo.project.configurable.RustfmtConfigurable"
+                             displayName="Rustfmt"
+                             parentId="language.rust"
+                             id="language.rust.rustfmt"/>
+
         <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
                         serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
         <projectService serviceInterface="org.rust.cargo.project.model.CargoProjectsService"
@@ -722,7 +727,7 @@
 
         <action id="Rust.CargoFmtFile"
                 class="org.rust.ide.actions.RustfmtFileAction"
-                text="Reformat file with rustfmt"
+                text="Reformat File with Rustfmt"
                 description="Reformat current file with rustfmt">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
