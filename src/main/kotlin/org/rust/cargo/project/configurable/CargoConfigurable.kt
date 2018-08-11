@@ -28,10 +28,21 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
     override fun getDisplayName(): String = "Cargo"
 
     override fun createComponent(): JComponent = layout {
-        row("Use cargo check to analyze code:", useCargoCheckAnnotatorCheckbox)
-        row("Use cargo check when build project:", useCargoCheckForBuildCheckbox)
-        row("Compile all project targets if possible:", compileAllTargetsCheckBox)
-        row("Use '-Zoffline' for cargo check (nightly only):", useOfflineForCargoCheckCheckbox)
+        row("Use cargo check to analyze code:", useCargoCheckAnnotatorCheckbox, """
+            Enable external annotator to add code highlighting based on `cargo check` result.
+            Can be CPU-consuming.
+        """)
+        row("Use cargo check when build project:", useCargoCheckForBuildCheckbox, """
+            Use `cargo check` instead of `cargo build`.
+            It should decrease action time because it doesn't generate binaries.
+        """)
+        row("Compile all project targets if possible:", compileAllTargetsCheckBox, """
+            Pass `--target-all` option to cargo build/check command.
+        """)
+        row("Offline mode (nightly only):", useOfflineForCargoCheckCheckbox, """
+            Pass `-Z offline` option to cargo not to perform network requests.
+            Used only for nightly toolchain.
+        """)
     }
 
     override fun isModified(): Boolean {
