@@ -44,8 +44,13 @@ class RsProjectConfigurable(
 
     override fun createComponent(): JComponent = layout {
         rustProjectSettings.attachTo(this)
-        row("Watch Cargo.toml:", autoUpdateEnabledCheckbox)
-        row("Expand macros (may be slow):", expandMacrosCheckbox)
+        row("Watch Cargo.toml:", autoUpdateEnabledCheckbox, """
+            Update project automatically if `Cargo.toml` changes.
+        """)
+        row("Expand declarative macros (may be slow):", expandMacrosCheckbox, """
+            Allow plugin to process declarative macro invocations
+            to extract information for name resolution and type inference.
+        """)
         val supportedHintOptions = hintProvider.supportedOptions
         if (supportedHintOptions.isNotEmpty()) {
             block("Hints") {

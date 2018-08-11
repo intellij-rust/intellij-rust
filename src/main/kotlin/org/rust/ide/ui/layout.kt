@@ -30,7 +30,7 @@ fun layout(block: RsLayoutBuilder.() -> Unit): JPanel {
 }
 
 interface RsLayoutBuilder {
-    fun row(text: String = "", component: JComponent)
+    fun row(text: String = "", component: JComponent, toolTip: String = "")
     fun block(text: String, block: RsLayoutBuilder.() -> Unit)
 }
 
@@ -47,11 +47,12 @@ private class RsLayoutBuilderImpl(
         panel.add(blockPanel)
     }
 
-    override fun row(text: String, component: JComponent) {
+    override fun row(text: String, component: JComponent, toolTip: String) {
         val labeledComponent = LabeledComponent.create(component, text, BorderLayout.WEST).apply {
             (layout as? BorderLayout)?.hgap = HGAP
             border = JBUI.Borders.empty(VERTICAL_OFFSET, HORIZONTAL_OFFSET)
         }
+        labeledComponent.toolTipText = toolTip.trimIndent()
         labeledComponents += labeledComponent
         panel.add(labeledComponent)
     }
