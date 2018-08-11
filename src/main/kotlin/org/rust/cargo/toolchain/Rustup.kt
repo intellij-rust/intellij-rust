@@ -30,16 +30,16 @@ class Rustup(
         val downloadProcessOutput = GeneralCommandLine(rustup)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "add", "rust-src")
-            .exec()
+            .execute(null)
 
-        return if (downloadProcessOutput.exitCode != 0) {
-            val message = "rustup failed: `${downloadProcessOutput.stderr}`"
-            LOG.warn(message)
-            DownloadResult.Err(message)
-        } else {
+        return if (downloadProcessOutput?.isSuccess == true) {
             val sources = getStdlibFromSysroot() ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
             fullyRefreshDirectory(sources)
             DownloadResult.Ok(sources)
+        } else {
+            val message = "rustup failed: `${downloadProcessOutput?.stderr ?: ""}`"
+            LOG.warn(message)
+            DownloadResult.Err(message)
         }
     }
 
