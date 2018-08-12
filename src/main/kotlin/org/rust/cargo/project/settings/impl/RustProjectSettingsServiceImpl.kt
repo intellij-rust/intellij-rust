@@ -10,7 +10,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.systemIndependentPath
-import org.rust.cargo.project.configurable.RustProjectConfigurable
+import org.rust.cargo.project.configurable.RsProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.toolchain.RustToolchain
 import java.nio.file.Paths
@@ -40,7 +40,7 @@ class RustProjectSettingsServiceImpl(
     }
 
     override fun configureToolchain() {
-        ShowSettingsUtil.getInstance().editConfigurable(project, RustProjectConfigurable(project))
+        ShowSettingsUtil.getInstance().editConfigurable(project, RsProjectConfigurable(project))
     }
 
     override var data: RustProjectSettingsService.Data
