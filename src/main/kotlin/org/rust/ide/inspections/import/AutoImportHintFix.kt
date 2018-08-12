@@ -14,15 +14,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.ext.RsElement
 
 class AutoImportHintFix(
-    path: RsPath,
+    element: RsElement,
     private val hint: String,
     private val multiple: Boolean
-) : LocalQuickFixOnPsiElement(path), HintAction, HighPriorityAction {
+) : LocalQuickFixOnPsiElement(element), HintAction, HighPriorityAction {
 
-    private val delegate: AutoImportFix = AutoImportFix(path)
+    private val delegate: AutoImportFix = AutoImportFix(element)
 
     override fun getFamilyName(): String = delegate.familyName
     override fun getText(): String = delegate.name
