@@ -30,7 +30,8 @@ class RustProjectSettingsServiceImpl(
         var useCargoCheckAnnotator: Boolean = false,
         var compileAllTargets: Boolean = true,
         var useOfflineForCargoCheck: Boolean = false,
-        var expandMacros: Boolean = true
+        var expandMacros: Boolean = true,
+        var useSkipChildren: Boolean = false
     )
 
     override fun getState(): State = state
@@ -54,7 +55,8 @@ class RustProjectSettingsServiceImpl(
                 useCargoCheckAnnotator = state.useCargoCheckAnnotator,
                 compileAllTargets = state.compileAllTargets,
                 useOfflineForCargoCheck = state.useOfflineForCargoCheck,
-                expandMacros = state.expandMacros
+                expandMacros = state.expandMacros,
+                useSkipChildren = state.useSkipChildren
             )
         }
         set(value) {
@@ -66,7 +68,8 @@ class RustProjectSettingsServiceImpl(
                 useCargoCheckAnnotator = value.useCargoCheckAnnotator,
                 compileAllTargets = value.compileAllTargets,
                 useOfflineForCargoCheck = value.useOfflineForCargoCheck,
-                expandMacros = value.expandMacros
+                expandMacros = value.expandMacros,
+                useSkipChildren = value.useSkipChildren
             )
             if (state != newState) {
                 state = newState
@@ -78,4 +81,3 @@ class RustProjectSettingsServiceImpl(
         project.messageBus.syncPublisher(RustProjectSettingsService.TOOLCHAIN_TOPIC).toolchainChanged()
     }
 }
-

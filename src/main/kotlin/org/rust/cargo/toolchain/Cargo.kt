@@ -9,25 +9,22 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.runconfig.runExecutable
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.openapiext.*
+import org.rust.openapiext.GeneralCommandLine
+import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.openapiext.pathAsPath
+import org.rust.openapiext.withWorkDirectory
 import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Path
@@ -41,31 +38,15 @@ import java.nio.file.Path
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(
-    private val cargoExecutable: Path,
-    private val rustExecutable: Path,
-    private val rustfmtExecutable: Path
-) {
+class Cargo(private val cargoExecutable: Path) {
     fun checkSupportForBuildCheckAllTargets(): Boolean {
         val lines = GeneralCommandLine(cargoExecutable)
             .withParameters("help", "check")
-            .runExecutable()
+            .execute()
+            ?.stdoutLines
             ?: return false
 
         return lines.any { it.contains(" --all-targets ") }
-    }
-
-    data class RustfmtFlags(val emit: Boolean, val skipChildren: Boolean)
-
-    private fun checkSupportForRustfmtFlags(workingDirectory: Path): RustfmtFlags {
-        val lines = GeneralCommandLine(rustfmtExecutable)
-            .withParameters("-h")
-            .withWorkDirectory(workingDirectory)
-            .runExecutable()
-            ?: return RustfmtFlags(false, false)
-
-        return RustfmtFlags(lines.any { it.contains(" --emit ") },
-            lines.any { it.contains(" --skip-children ") })
     }
 
     /**
@@ -105,32 +86,6 @@ class Cargo(
         ).execute(owner)
         check(File(directory.path, RustToolchain.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)
-    }
-
-    @Throws(ExecutionException::class)
-    fun reformatFile(owner: Disposable, file: VirtualFile, listener: ProcessListener? = null): ProcessOutput {
-
-        val arguments = mutableListOf("--all", "--")
-
-        val (emit, skipChildren) = checkSupportForRustfmtFlags(file.parent.pathAsPath)
-        arguments += if (emit) "--emit=files" else "--write-mode=overwrite"
-        if (skipChildren) {
-            arguments += "--skip-children"
-        }
-        arguments += file.path
-
-        val documentManager = FileDocumentManager.getInstance()
-        val document = documentManager.getDocument(file)
-        if (document != null && documentManager.isDocumentUnsaved(document)) {
-            documentManager.saveDocument(document)
-        }
-
-        val result = CargoCommandLine("fmt", file.parent.pathAsPath, arguments)
-            .execute(owner, listener)
-        // We want to refresh file synchronously only in unit test
-        // to get new text right after `reformatFile` call
-        VfsUtil.markDirtyAndRefresh(!isUnitTestMode, true, true, file)
-        return result
     }
 
     @Throws(ExecutionException::class)
@@ -194,51 +149,10 @@ class Cargo(
         return cmdLine.withParameters(parameters)
     }
 
-
+    @Throws(ExecutionException::class)
     private fun CargoCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
                                          ignoreExitCode: Boolean = false): ProcessOutput {
-        val command = toGeneralCommandLine(this)
-        val handler = CapturingProcessHandler(command)
-        val cargoKiller = Disposable {
-            // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
-            // https://github.com/rust-lang/cargo/issues/3566
-            handler.destroyProcess()
-        }
-
-        val alreadyDisposed = runReadAction {
-            if (Disposer.isDisposed(owner)) {
-                true
-            } else {
-                Disposer.register(owner, cargoKiller)
-                false
-            }
-        }
-
-        if (alreadyDisposed) {
-            // On the one hand, this seems fishy,
-            // on the other hand, this is isomorphic
-            // to the scenario where cargoKiller triggers.
-            if (ignoreExitCode) {
-                return ProcessOutput().apply { setCancelled() }
-            } else {
-                throw ExecutionException("Cargo command failed to start")
-            }
-        }
-
-        listener?.let { handler.addProcessListener(it) }
-        val output = try {
-            handler.runProcess()
-        } finally {
-            Disposer.dispose(cargoKiller)
-        }
-        if (!ignoreExitCode && output.exitCode != 0) {
-            throw ExecutionException("""
-            Cargo execution failed (exit code ${output.exitCode}).
-            ${command.commandLineString}
-            stdout : ${output.stdout}
-            stderr : ${output.stderr}""".trimIndent())
-        }
-        return output
+        return toGeneralCommandLine(this).execute(owner, ignoreExitCode, listener)
     }
 
     private var _http: HttpConfigurable? = null

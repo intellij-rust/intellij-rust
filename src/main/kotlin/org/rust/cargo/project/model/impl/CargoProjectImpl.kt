@@ -382,10 +382,10 @@ private fun fetchStdlib(
         val download = rustup.downloadStdlib()
         when (download) {
             is Rustup.DownloadResult.Ok -> {
-                val lib = StandardLibrary.fromFile(download.library)
+                val lib = StandardLibrary.fromFile(download.value)
                 if (lib == null) {
                     err("" +
-                        "corrupted standard library: ${download.library.presentableUrl}"
+                        "corrupted standard library: ${download.value.presentableUrl}"
                     )
                 } else {
                     ok(lib)

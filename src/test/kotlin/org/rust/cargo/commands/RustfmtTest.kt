@@ -5,15 +5,18 @@
 
 package org.rust.cargo.commands
 
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.MapDataContext
+import com.intellij.testFramework.TestActionEvent
 import org.rust.cargo.RustWithToolchainTestBase
-import org.rust.cargo.project.settings.toolchain
 import org.rust.fileTree
+import org.rust.ide.actions.RustfmtFileAction
 
-class CargoFmtTest : RustWithToolchainTestBase() {
+class RustfmtTest : RustWithToolchainTestBase() {
 
-    fun `test cargo fmt`() {
+    fun `test rustfmt action`() {
         fileTree {
             toml("Cargo.toml", """
                 [package]
@@ -63,8 +66,17 @@ class CargoFmtTest : RustWithToolchainTestBase() {
     }
 
     private fun reformat(file: VirtualFile) {
-        val cargo = project.toolchain!!.rawCargo()
-        val result = cargo.reformatFile(testRootDisposable, file)
-        check(result.exitCode == 0)
+        val dataContext = MapDataContext(mapOf(
+            CommonDataKeys.PROJECT to project,
+            CommonDataKeys.VIRTUAL_FILE to file
+        ))
+        val action = RustfmtFileAction()
+        val e = TestActionEvent(dataContext, action)
+        action.beforeActionPerformedUpdate(e)
+        check(e.presentation.isEnabledAndVisible) {
+            "Failed to run `${RustfmtFileAction::class.java.simpleName}` action"
+        }
+
+        action.actionPerformed(e)
     }
 }

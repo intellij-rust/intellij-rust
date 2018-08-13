@@ -8,7 +8,6 @@ package org.rust.cargo.toolchain
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.text.SemVer
-import org.rust.cargo.runconfig.runExecutable
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.checkIsBackgroundThread
 import org.rust.openapiext.isUnitTestMode
@@ -35,17 +34,16 @@ data class RustToolchain(val location: Path) {
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "sysroot")
-            .exec(timeoutMs)
-        return if (output.isSuccess) output.stdout.trim() else null
+            .execute(timeoutMs)
+        return if (output?.isSuccess == true) output.stdout.trim() else null
     }
 
-    fun rawCargo(): Cargo =
-        Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC), pathToExecutable(RUSTFMT))
+    fun rawCargo(): Cargo = Cargo(pathToExecutable(CARGO))
 
     fun cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
         val hasXargoToml = cargoProjectDirectory?.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
         val cargoWrapper = if (hasXargoToml && hasExecutable(XARGO)) XARGO else CARGO
-        return Cargo(pathToExecutable(cargoWrapper), pathToExecutable(RUSTC), pathToExecutable(RUSTFMT))
+        return Cargo(pathToExecutable(cargoWrapper))
     }
 
     fun rustup(cargoProjectDirectory: Path): Rustup? =
@@ -53,6 +51,8 @@ data class RustToolchain(val location: Path) {
             Rustup(this, pathToExecutable(RUSTUP), cargoProjectDirectory)
         else
             null
+
+    fun rustfmt(): Rustfmt = Rustfmt(pathToExecutable(RUSTFMT))
 
     val isRustupAvailable: Boolean get() = hasExecutable(RUSTUP)
 
@@ -97,7 +97,8 @@ data class RustcVersion(
 private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
     val lines = GeneralCommandLine(rustc)
         .withParameters("--version", "--verbose")
-        .runExecutable()
+        .execute()
+        ?.stdoutLines
         ?: return null
 
     // We want to parse following
