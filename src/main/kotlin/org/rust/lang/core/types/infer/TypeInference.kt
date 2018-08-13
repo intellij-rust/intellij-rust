@@ -635,11 +635,21 @@ class RsFnInferenceContext(
         is RsLetDecl -> {
             val explicitTy = psi.typeReference?.type
                 ?.let { normalizeAssociatedTypesIn(it) }
-            val inferredTy = explicitTy
-                ?.let { psi.expr?.inferTypeCoercableTo(it) }
-                ?: psi.expr?.inferType()
-                ?: TyInfer.TyVar()
-            psi.pat?.extractBindings(explicitTy ?: resolveTypeVarsWithObligations(inferredTy))
+            val expr = psi.expr
+            // We need to know type before coercion to correctly identify if expr is always diverging
+            // so we can't call `inferTypeCoercableTo` directly here
+            val (inferredTy, coercedInferredTy) = if (expr != null) {
+                val inferredTy = expr.inferType(explicitTy)
+                val coercedTy = if (explicitTy != null && coerce(expr, inferredTy, explicitTy)) {
+                    explicitTy
+                } else {
+                    inferredTy
+                }
+                inferredTy to coercedTy
+            } else {
+                TyUnknown to TyInfer.TyVar()
+            }
+            psi.pat?.extractBindings(explicitTy ?: resolveTypeVarsWithObligations(coercedInferredTy))
             inferredTy == TyNever
         }
         is RsExprStmt -> psi.expr.inferType() == TyNever
@@ -686,19 +696,18 @@ class RsFnInferenceContext(
 
     private fun RsExpr.inferTypeCoercableTo(expected: Ty): Ty {
         val inferred = inferType(expected)
-        coerce(this, inferred, expected)
-        return inferred
+        return if (coerce(this, inferred, expected)) expected else inferred
     }
 
     @JvmName("inferTypeCoercableTo_")
     fun inferTypeCoercableTo(expr: RsExpr, expected: Ty): Ty =
         expr.inferTypeCoercableTo(expected)
 
-    private fun coerce(expr: RsExpr, inferred: Ty, expected: Ty) {
-        coerceResolved(expr, resolveTypeVarsWithObligations(inferred), resolveTypeVarsWithObligations(expected))
+    private fun coerce(expr: RsExpr, inferred: Ty, expected: Ty): Boolean {
+        return coerceResolved(expr, resolveTypeVarsWithObligations(inferred), resolveTypeVarsWithObligations(expected))
     }
 
-    private fun coerceResolved(expr: RsExpr, inferred: Ty, expected: Ty) {
+    private fun coerceResolved(expr: RsExpr, inferred: Ty, expected: Ty): Boolean {
         val ok = tryCoerce(inferred, expected)
         if (!ok) {
             // ignoring possible false-positives (it's only basic experimental type checking)
@@ -719,6 +728,7 @@ class RsFnInferenceContext(
                 }
             }
         }
+        return ok
     }
 
     private fun tryCoerce(inferred: Ty, expected: Ty): Boolean {
@@ -1539,8 +1549,12 @@ class RsFnInferenceContext(
 
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)
-            if (expectedElemTy != null) tryCoerce(elementType, expectedElemTy)
-            elementType to elementTypes.size.toLong()
+            val inferredTy = if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy)) {
+                expectedElemTy
+            } else {
+                elementType
+            }
+            inferredTy to elementTypes.size.toLong()
         }
 
         return TyArray(elementType, size)
