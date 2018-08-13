@@ -5,8 +5,6 @@
 
 package org.rust.cargo.toolchain
 
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -27,9 +25,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.FeaturesSetting
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
-import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
@@ -97,7 +93,7 @@ class Cargo(private val cargoExecutable: Path) {
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener? = null
-    ): CargoWorkspace {
+    ): String {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1")
         if (owner.rustSettings.useOffline) {
             additionalArgs += "-Zoffline"
@@ -125,18 +121,10 @@ class Cargo(private val cargoExecutable: Path) {
             }
         }
 
-        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
+        return CargoCommandLine("metadata", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)
             .stdout
             .dropWhile { it != '{' }
-        val rawData = try {
-            Gson().fromJson(json, CargoMetadata.Project::class.java)
-        } catch (e: JsonSyntaxException) {
-            throw ExecutionException(e)
-        }
-        val projectDescriptionData = CargoMetadata.clean(rawData)
-        val manifestPath = projectDirectory.resolve("Cargo.toml")
-        return CargoWorkspace.deserialize(manifestPath, projectDescriptionData)
     }
 
     @Throws(ExecutionException::class)
