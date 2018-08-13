@@ -30,9 +30,6 @@ class RsProjectConfigurable(
         project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
     )
 
-    private val autoUpdateEnabledCheckbox: JBCheckBox = JBCheckBox()
-    private var autoUpdateEnabled: Boolean by CheckboxDelegate(autoUpdateEnabledCheckbox)
-
     private val expandMacrosCheckbox: JBCheckBox = JBCheckBox()
     private var expandMacros: Boolean by CheckboxDelegate(expandMacrosCheckbox)
 
@@ -44,9 +41,6 @@ class RsProjectConfigurable(
 
     override fun createComponent(): JComponent = layout {
         rustProjectSettings.attachTo(this)
-        row("Watch Cargo.toml:", autoUpdateEnabledCheckbox, """
-            Update project automatically if `Cargo.toml` changes.
-        """)
         row("Expand declarative macros (may be slow):", expandMacrosCheckbox, """
             Allow plugin to process declarative macro invocations
             to extract information for name resolution and type inference.
@@ -70,7 +64,6 @@ class RsProjectConfigurable(
             toolchain = toolchain,
             explicitPathToStdlib = settings.explicitPathToStdlib
         )
-        autoUpdateEnabled = settings.autoUpdateEnabled
         expandMacros = settings.expandMacros
 
         for (option in hintProvider.supportedOptions) {
@@ -90,7 +83,6 @@ class RsProjectConfigurable(
         settings.data = currentData.copy(
             toolchain = rustProjectSettings.data.toolchain,
             explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib,
-            autoUpdateEnabled = autoUpdateEnabled,
             expandMacros = expandMacros
         )
     }
@@ -100,7 +92,6 @@ class RsProjectConfigurable(
         if (hintProvider.supportedOptions.any { checkboxForOption(it).isSelected != it.get() }) return true
         return data.toolchain?.location != settings.toolchain?.location
             || data.explicitPathToStdlib != settings.explicitPathToStdlib
-            || autoUpdateEnabled != settings.autoUpdateEnabled
             || expandMacros != settings.expandMacros
     }
 
