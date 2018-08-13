@@ -12,7 +12,9 @@ import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
+import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.langAttribute
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsTraitItemStub
@@ -24,12 +26,12 @@ class RsLangItemIndex : AbstractStubIndex<String, RsTraitItem>() {
     override fun getKeyDescriptor(): KeyDescriptor<String> = EnumeratorStringDescriptor.INSTANCE
 
     companion object {
-        fun findLangItem(project: Project, langAttribute: String, modName: String? = null): RsTraitItem? {
+        fun findLangItem(project: Project, langAttribute: String, crateName: String = AutoInjectedCrates.CORE): RsTraitItem? {
             val elements = getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project))
-            return if (modName == null || elements.size < 2) {
+            return if (elements.size < 2) {
                 elements.firstOrNull()
             } else {
-                elements.find { it.containingMod.modName == modName }
+                elements.find { it.containingCargoPackage?.normName == crateName }
             }
         }
 

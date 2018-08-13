@@ -156,17 +156,17 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         #![no_std]
 
         fn main() {
-            let x = <error descr="Unresolved reference: `Arc`">Arc::new/*caret*/</error>(123);
+            let x = <error descr="Unresolved reference: `Rc`">Rc::new/*caret*/</error>(123);
         }
     """, """
         #![no_std]
 
         extern crate alloc;
 
-        use alloc::arc::Arc;
+        use alloc::rc::Rc;
 
         fn main() {
-            let x = Arc::new/*caret*/(123);
+            let x = Rc::new/*caret*/(123);
         }
     """)
 

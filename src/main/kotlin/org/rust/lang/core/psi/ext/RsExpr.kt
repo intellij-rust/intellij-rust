@@ -37,7 +37,6 @@ val RsUnaryExpr.operatorType: UnaryOperator get() = when {
 }
 
 interface OverloadableBinaryOperator {
-    val modName: String
     val traitName: String
     val itemName: String
     val fnName: String
@@ -52,21 +51,20 @@ interface OverloadableBinaryOperator {
 sealed class BinaryOperator
 
 sealed class ArithmeticOp(
-    override val modName: String,
     override val traitName: String,
     override val itemName: String,
     override val sign: String
 ) : BinaryOperator(), OverloadableBinaryOperator {
-    object ADD : ArithmeticOp("arith", "Add", "add", "+") // `a + b`
-    object SUB : ArithmeticOp("arith", "Sub", "sub", "-") // `a - b`
-    object MUL : ArithmeticOp("arith", "Mul", "mul", "*") // `a * b`
-    object DIV : ArithmeticOp("arith", "Div", "div", "/") // `a / b`
-    object REM : ArithmeticOp("arith", "Rem", "rem", "%") // `a % b`
-    object BIT_AND : ArithmeticOp("bit", "BitAnd", "bitand", "&") // `a & b`
-    object BIT_OR : ArithmeticOp("bit", "BitOr", "bitor", "|") // `a | b`
-    object BIT_XOR : ArithmeticOp("bit", "BitXor", "bitxor", "^") // `a ^ b`
-    object SHL : ArithmeticOp("bit", "Shl", "shl", "<<") // `a << b`
-    object SHR : ArithmeticOp("bit", "Shr", "shr", ">>") // `a >> b
+    object ADD : ArithmeticOp("Add", "add", "+") // `a + b`
+    object SUB : ArithmeticOp("Sub", "sub", "-") // `a - b`
+    object MUL : ArithmeticOp("Mul", "mul", "*") // `a * b`
+    object DIV : ArithmeticOp("Div", "div", "/") // `a / b`
+    object REM : ArithmeticOp("Rem", "rem", "%") // `a % b`
+    object BIT_AND : ArithmeticOp("BitAnd", "bitand", "&") // `a & b`
+    object BIT_OR : ArithmeticOp("BitOr", "bitor", "|") // `a | b`
+    object BIT_XOR : ArithmeticOp("BitXor", "bitxor", "^") // `a ^ b`
+    object SHL : ArithmeticOp("Shl", "shl", "<<") // `a << b`
+    object SHR : ArithmeticOp("Shr", "shr", ">>") // `a >> b
 
     override val fnName: String get() = itemName
 
@@ -88,7 +86,6 @@ sealed class EqualityOp(
     object EQ : EqualityOp("==") // `a == b`
     object EXCLEQ : EqualityOp("!=") // `a != b`
 
-    override val modName: String = "cmp"
     override val traitName: String = "PartialEq"
     override val itemName: String = "eq"
     override val fnName: String = "eq"
@@ -106,7 +103,6 @@ sealed class ComparisonOp(
     object GT : ComparisonOp(">") // `a > b`
     object GTEQ : ComparisonOp(">=") // `a >= b`
 
-    override val modName: String = "cmp"
     override val traitName: String = "PartialOrd"
     override val itemName: String = "ord"
     override val fnName: String = "partial_cmp"
@@ -121,21 +117,20 @@ sealed class AssignmentOp : BinaryOperator() {
 }
 
 sealed class ArithmeticAssignmentOp(
-    override val modName: String,
     override val traitName: String,
     override val itemName: String,
     override val sign: String
 ) : AssignmentOp(), OverloadableBinaryOperator {
-    object ANDEQ : ArithmeticAssignmentOp("arith", "BitAndAssign", "bitand_assign", "&=") // `a &= b`
-    object OREQ : ArithmeticAssignmentOp("arith", "BitOrAssign", "bitor_assign", "|=") // `a |= b`
-    object PLUSEQ : ArithmeticAssignmentOp("arith", "AddAssign", "add_assign", "+=") // `a += b`
-    object MINUSEQ : ArithmeticAssignmentOp("arith", "SubAssign", "sub_assign", "-=") // `a -= b`
-    object MULEQ : ArithmeticAssignmentOp("arith", "MulAssign", "mul_assign", "*=") // `a *= b`
-    object DIVEQ : ArithmeticAssignmentOp("arith", "DivAssign", "div_assign", "/=") // `a /= b`
-    object REMEQ : ArithmeticAssignmentOp("arith", "RemAssign", "rem_assign", "%=") // `a %= b`
-    object XOREQ : ArithmeticAssignmentOp("bit", "BitXorAssign", "bitxor_assign", "^=") // `a ^= b`
-    object GTGTEQ : ArithmeticAssignmentOp("bit", "ShrAssign", "shr_assign", ">>=") // `a >>= b`
-    object LTLTEQ : ArithmeticAssignmentOp("bit", "ShlAssign", "shl_assign", "<<=") // `a <<= b`
+    object ANDEQ : ArithmeticAssignmentOp("BitAndAssign", "bitand_assign", "&=") // `a &= b`
+    object OREQ : ArithmeticAssignmentOp("BitOrAssign", "bitor_assign", "|=") // `a |= b`
+    object PLUSEQ : ArithmeticAssignmentOp("AddAssign", "add_assign", "+=") // `a += b`
+    object MINUSEQ : ArithmeticAssignmentOp("SubAssign", "sub_assign", "-=") // `a -= b`
+    object MULEQ : ArithmeticAssignmentOp("MulAssign", "mul_assign", "*=") // `a *= b`
+    object DIVEQ : ArithmeticAssignmentOp("DivAssign", "div_assign", "/=") // `a /= b`
+    object REMEQ : ArithmeticAssignmentOp("RemAssign", "rem_assign", "%=") // `a %= b`
+    object XOREQ : ArithmeticAssignmentOp("BitXorAssign", "bitxor_assign", "^=") // `a ^= b`
+    object GTGTEQ : ArithmeticAssignmentOp("ShrAssign", "shr_assign", ">>=") // `a >>= b`
+    object LTLTEQ : ArithmeticAssignmentOp("ShlAssign", "shl_assign", "<<=") // `a <<= b`
 
     override val fnName: String get() = itemName
 
