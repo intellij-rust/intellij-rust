@@ -85,7 +85,7 @@
     elementType(".+BinExpr") = BinaryExpr
     elementType(".+BinOp") = BinaryOp
 
-    extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Uniq|QualPath|Const)") = Pat
+    extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Uniq|Const)") = Pat
 
     generateTokenAccessors=true
 
