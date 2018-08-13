@@ -109,6 +109,9 @@ fun <T> List<T>.chain(other: List<T>): Sequence<T> =
         else -> this.asSequence() + other.asSequence()
     }
 
+inline fun <T, R> Iterable<T>.mapToMutableList(transform: (T) -> R): MutableList<R> =
+    mapTo(ArrayList(collectionSizeOrDefault(10)), transform)
+
 inline fun <T, R> Iterable<T>.mapToSet(transform: (T) -> R): Set<R> =
     mapTo(HashSet(mapCapacity(collectionSizeOrDefault(10))), transform)
 
@@ -136,3 +139,5 @@ inline fun <T> Iterable<T>.joinToWithBuffer(
 
 fun <T : Any> Iterator<T>.nextOrNull(): T? =
     if (hasNext()) next() else null
+
+fun <T> MutableList<T>.removeLast(): T = removeAt(size - 1)
