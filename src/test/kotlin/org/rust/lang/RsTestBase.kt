@@ -176,26 +176,36 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         return element to data
     }
 
-    protected inline fun <reified T : PsiElement> findElementWithDataAndOffsetInEditor(marker: String = "^"): Triple<T, String, Int> {
+    protected inline fun <reified T : PsiElement> findElementWithDataAndOffsetInEditor(
+        marker: String = "^"
+    ): Triple<T, String, Int> {
+        val elementsWithDataAndOffset = findElementsWithDataAndOffsetInEditor<T>(marker)
+        check(elementsWithDataAndOffset.isNotEmpty()) { "No `$marker` marker:\n${myFixture.file.text}" }
+        check(elementsWithDataAndOffset.size <= 1) { "More than one `$marker` marker:\n${myFixture.file.text}" }
+        return elementsWithDataAndOffset.first()
+    }
+
+    protected inline fun <reified T : PsiElement> findElementsWithDataAndOffsetInEditor(
+        marker: String = "^"
+    ): List<Triple<T, String, Int>> {
         val commentPrefix = LanguageCommenters.INSTANCE.forLanguage(myFixture.file.language).lineCommentPrefix ?: "//"
         val caretMarker = "$commentPrefix$marker"
-        val (elementAtMarker, data, offset) = run {
-            val text = myFixture.file.text
-            val markerOffset = text.indexOf(caretMarker)
-            check(markerOffset != -1) { "No `$marker` marker:\n$text" }
-            check(text.indexOf(caretMarker, startIndex = markerOffset + 1) == -1) {
-                "More than one `$marker` marker:\n$text"
-            }
-
+        val text = myFixture.file.text
+        val result = mutableListOf<Triple<T, String, Int>>()
+        var markerOffset = -caretMarker.length
+        while (true) {
+            markerOffset = text.indexOf(caretMarker, markerOffset + caretMarker.length)
+            if (markerOffset == -1) break
             val data = text.drop(markerOffset).removePrefix(caretMarker).takeWhile { it != '\n' }.trim()
             val markerPosition = myFixture.editor.offsetToLogicalPosition(markerOffset + caretMarker.length - 1)
             val previousLine = LogicalPosition(markerPosition.line - 1, markerPosition.column)
             val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
-            Triple(myFixture.file.findElementAt(elementOffset)!!, data, elementOffset)
+            val elementAtMarker = myFixture.file.findElementAt(elementOffset)!!
+            val element = elementAtMarker.ancestorOrSelf<T>()
+                ?: error("No ${T::class.java.simpleName} at ${elementAtMarker.text}")
+            result.add(Triple(element, data, elementOffset))
         }
-        val element = elementAtMarker.ancestorOrSelf<T>()
-            ?: error("No ${T::class.java.simpleName} at ${elementAtMarker.text}")
-        return Triple(element, data, offset)
+        return result
     }
 
     protected fun replaceCaretMarker(text: String) = text.replace("/*caret*/", "<caret>")
@@ -293,7 +303,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
                 targets = listOf(
                     // don't use `FileUtil.join` here because it uses `File.separator`
                     // which is system dependent although all other code uses `/` as separator
-                    CargoWorkspaceData.Target(source?.let { "$contentRoot/$it" } ?: "", targetName, TargetKind.LIB, listOf(CrateType.BIN))
+                    CargoWorkspaceData.Target(source?.let { "$contentRoot/$it" }
+                        ?: "", targetName, TargetKind.LIB, listOf(CrateType.BIN))
                 ),
                 source = source,
                 origin = PackageOrigin.DEPENDENCY
