@@ -53,6 +53,55 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """)
 
+    fun `test unresolved method reference`() = checkByText("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {
+                    unimplemented!();
+                }
+            }
+        }
+
+        fn main() {
+            let x = 123.<error descr="Unresolved reference: `foo`">foo</error>();
+        }
+    """)
+
+    fun `test unresolved method references without quick fix 1`() = checkByText("""
+        fn main() {
+            let x = 123.foo();
+        }
+    """, true)
+
+    fun `test unresolved method references without quick fix 2`() = checkByText("""
+        fn main() {
+            let x = 123.<error descr="Unresolved reference: `foo`">foo</error>();
+        }
+    """, false)
+
+    fun `test do not highlight method reference with local import`() = checkByText("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {
+                    unimplemented!();
+                }
+            }
+        }
+
+        fn main() {
+            use foo::Foo;
+            123.foo();
+        }
+    """)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val defaultValue = (inspection as RsUnresolvedReferenceInspection).ignoreWithoutQuickFix
         try {
