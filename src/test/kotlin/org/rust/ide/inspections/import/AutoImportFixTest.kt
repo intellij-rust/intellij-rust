@@ -1076,4 +1076,178 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = Foo/*caret*/ { };
         }
     """)
+
+    fun `test import trait method`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        fn main() {
+            let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        fn main() {
+            let x = 123.foo/*caret*/();
+        }
+    """)
+
+    fun `test import default trait method`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self) {}
+            }
+
+            impl<T> Foo for T {}
+        }
+
+        fn main() {
+            let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo {
+                fn foo(&self) {}
+            }
+
+            impl<T> Foo for T {}
+        }
+
+        fn main() {
+            let x = 123.foo/*caret*/();
+        }
+    """)
+
+    fun `test import reexported trait method`() = checkAutoImportFixByText("""
+        mod foo {
+            mod bar {
+                pub mod baz {
+                    pub trait FooBar {
+                        fn foo_bar(&self);
+                    }
+
+                    impl<T> FooBar for T {
+                        fn foo_bar(&self) {}
+                    }
+                }
+            }
+
+            pub use self::bar::baz;
+        }
+
+        fn main() {
+            let x = 123.<error descr="Unresolved reference: `foo_bar`">foo_bar/*caret*/</error>();
+        }
+    """, """
+        use foo::baz::FooBar;
+
+        mod foo {
+            mod bar {
+                pub mod baz {
+                    pub trait FooBar {
+                        fn foo_bar(&self);
+                    }
+
+                    impl<T> FooBar for T {
+                        fn foo_bar(&self) {}
+                    }
+                }
+            }
+
+            pub use self::bar::baz;
+        }
+
+        fn main() {
+            let x = 123.foo_bar/*caret*/();
+        }
+    """)
+
+    fun `test do not try to import non trait method`() = checkAutoImportFixIsUnavailable("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        struct Bar;
+
+        impl Bar {
+            fn foo(&self) {}
+        }
+
+        fn main() {
+            let x = Bar.foo/*caret*/();
+        }
+    """)
+
+    fun `test multiple trait method import`() = checkAutoImportFixByTextWithMultipleChoice("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            pub trait Bar {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+
+            impl<T> Bar for T {
+                fn foo(&self) {}
+            }
+        }
+
+        fn main() {
+            let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+        }
+    """, setOf("foo::Foo", "foo::Bar"), "foo::Bar", """
+        use foo::Bar;
+
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            pub trait Bar {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+
+            impl<T> Bar for T {
+                fn foo(&self) {}
+            }
+        }
+
+        fn main() {
+            let x = 123.foo/*caret*/();
+        }
+    """)
 }

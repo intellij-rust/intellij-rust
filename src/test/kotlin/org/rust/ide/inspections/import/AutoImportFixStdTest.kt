@@ -331,4 +331,61 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             let foo = Foo/*caret*/;
         }
     """)
+
+    fun `test extern crate trait method reference`() = checkAutoImportFixByFileTree("""
+        //- dep-lib/lib.rs
+        pub trait Foo {
+            fn foo(&self);
+        }
+
+        impl<T> Foo for T {
+            fn foo(&self) {
+                unimplemented!()
+            }
+        }
+
+        //- main.rs
+        fn main() {
+            let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+        }
+    """, """
+        //- dep-lib/lib.rs
+        pub trait Foo {
+            fn foo(&self);
+        }
+
+        impl<T> Foo for T {
+            fn foo(&self) {
+                unimplemented!()
+            }
+        }
+
+        //- main.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::Foo;
+
+        fn main() {
+            let x = 123.foo/*caret*/();
+        }
+    """)
+
+    fun `test std trait method reference`() = checkAutoImportFixByText("""
+        use std::fs::File;
+
+        fn main() {
+            let mut s = String::new();
+            let mut f = File::open("somefile").unwrap();
+            f.<error descr="Unresolved reference: `read_to_string`">read_to_string/*caret*/</error>(&mut s);
+        }
+    """, """
+        use std::fs::File;
+        use std::io::Read;
+
+        fn main() {
+            let mut s = String::new();
+            let mut f = File::open("somefile").unwrap();
+            f.read_to_string/*caret*/(&mut s);
+        }
+    """)
 }
