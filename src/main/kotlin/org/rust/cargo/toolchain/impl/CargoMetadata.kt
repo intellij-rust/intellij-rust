@@ -239,7 +239,7 @@ object CargoMetadata {
     fun clean(project: Project): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
-            ?: error("No `members` key in the `cargo metadata` output.\n" +
+            ?: error("No `workspace_members` key in the `cargo metadata` output.\n" +
                 "Your version of Cargo is no longer supported, please upgrade Cargo.")
         return CargoWorkspaceData(
             project.packages.mapNotNull { it.clean(fs, it.id in members) },
