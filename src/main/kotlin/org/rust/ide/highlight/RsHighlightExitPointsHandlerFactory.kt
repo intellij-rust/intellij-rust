@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.Consumer
-import org.rust.lang.core.ExitPoint
+import org.rust.lang.core.cfg.ExitPoint
 import org.rust.lang.core.psi.RsElementTypes.Q
 import org.rust.lang.core.psi.RsElementTypes.RETURN
 import org.rust.lang.core.psi.RsFile
