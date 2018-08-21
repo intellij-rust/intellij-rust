@@ -11,9 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.openapiext.GeneralCommandLine
-import org.rust.openapiext.fullyRefreshDirectory
-import org.rust.openapiext.withWorkDirectory
+import org.rust.openapiext.*
 import java.nio.file.Path
 
 private val LOG = Logger.getInstance(Rustup::class.java)
