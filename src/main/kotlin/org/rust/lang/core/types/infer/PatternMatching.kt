@@ -55,7 +55,7 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                     .getOrNull(idx)
                     ?.typeReference
                     ?.type
-                    ?.substitute(derefTy.typeParameterValues)
+                    ?.substituteOrUnknown(derefTy.typeParameterValues)
                     ?: TyUnknown
                 p.extractBindings(fcx, fieldType.toRefIfNeeded(mut), mut != null)
             }
@@ -72,7 +72,7 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                 val fieldType = structFields[kind.fieldName]
                     ?.typeReference
                     ?.type
-                    ?.substitute(derefTy.typeParameterValues)
+                    ?.substituteOrUnknown(derefTy.typeParameterValues)
                     ?: TyUnknown
 
                 when (kind) {

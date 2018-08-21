@@ -13,10 +13,7 @@ import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_PROJEC
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_TYPE_PARAMETER_VISITOR
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.Region
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyInfer
-import org.rust.lang.core.types.ty.TyProjection
-import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.ty.*
 
 interface TypeFolder {
     fun foldTy(ty: Ty): Ty = ty
@@ -109,6 +106,18 @@ fun <T> TypeFoldable<T>.substitute(subst: Substitution): T =
     foldWith(object : TypeFolder {
         override fun foldTy(ty: Ty): Ty = when {
             ty is TyTypeParameter -> subst[ty] ?: ty
+            ty.needToSubstitute -> ty.superFoldWith(this)
+            else -> ty
+        }
+
+        override fun foldRegion(region: Region): Region =
+            (region as? ReEarlyBound)?.let { subst[it] } ?: region
+    })
+
+fun <T> TypeFoldable<T>.substituteOrUnknown(subst: Substitution): T =
+    foldWith(object : TypeFolder {
+        override fun foldTy(ty: Ty): Ty = when {
+            ty is TyTypeParameter -> subst[ty] ?: TyUnknown
             ty.needToSubstitute -> ty.superFoldWith(this)
             else -> ty
         }
