@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain
+package org.rust.openapiext
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -14,8 +14,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.io.systemIndependentPath
+import java.nio.file.Path
 
-private val LOG = Logger.getInstance("org.rust.cargo.toolchain.CommandLineExt")
+private val LOG = Logger.getInstance("org.rust.openapiext.CommandLineExt")
+
+@Suppress("FunctionName")
+fun GeneralCommandLine(path: Path, vararg args: String) = GeneralCommandLine(path.systemIndependentPath, *args)
+
+fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.systemIndependentPath)
 
 fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutput? {
     val output = try {
