@@ -327,4 +327,17 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             a;
         } //^ &&i32
     """)
+
+    fun `test unknown`() = testExpr("""
+        fn main() {
+            let x = unknown;
+            match x {
+                Some(n) => {
+                    n;
+                  //^ <unknown>
+                },
+                _ => {}
+            };
+        }
+    """)
 }
