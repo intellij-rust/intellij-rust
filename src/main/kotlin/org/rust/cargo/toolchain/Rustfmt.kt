@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.openapiext.GeneralCommandLine
+import org.rust.openapiext.execute
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
