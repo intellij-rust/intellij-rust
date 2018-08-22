@@ -52,6 +52,8 @@ interface CargoWorkspace {
 
         val workspace: CargoWorkspace
 
+        val edition: Edition
+
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.normName == normName }?.libTarget
     }
@@ -72,6 +74,8 @@ interface CargoWorkspace {
         val crateRoot: VirtualFile?
 
         val pkg: Package
+
+        val edition: Edition
     }
 
     enum class TargetKind {
@@ -88,9 +92,12 @@ interface CargoWorkspace {
         BIN, LIB, DYLIB, STATICLIB, CDYLIB, RLIB, PROC_MACRO, UNKNOWN
     }
 
+    enum class Edition {
+        EDITION_2015, EDITION_2018
+    }
+
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace
-            = WorkspaceImpl.deserialize(manifestPath, data)
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace = WorkspaceImpl.deserialize(manifestPath, data)
     }
 }
 
@@ -109,7 +116,8 @@ private class WorkspaceImpl(
             pkg.version,
             pkg.targets,
             pkg.source,
-            pkg.origin
+            pkg.origin,
+            pkg.edition
         )
     }
 
@@ -203,9 +211,19 @@ private class PackageImpl(
     override val version: String,
     targetsData: Collection<CargoWorkspaceData.Target>,
     override val source: String?,
-    override var origin: PackageOrigin
+    override var origin: PackageOrigin,
+    override val edition: CargoWorkspace.Edition
 ) : CargoWorkspace.Package {
-    override val targets = targetsData.map { TargetImpl(this, crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind, crateTypes = it.crateTypes) }
+    override val targets = targetsData.map {
+        TargetImpl(
+            this,
+            crateRootUrl = it.crateRootUrl,
+            name = it.name,
+            kind = it.kind,
+            crateTypes = it.crateTypes,
+            edition = it.edition
+        )
+    }
 
     override val contentRoot: VirtualFile? by CachedVirtualFile(contentRootUrl)
 
@@ -224,7 +242,8 @@ private class TargetImpl(
     val crateRootUrl: String,
     override val name: String,
     override val kind: CargoWorkspace.TargetKind,
-    override val crateTypes: List<CargoWorkspace.CrateType>
+    override val crateTypes: List<CargoWorkspace.CrateType>,
+    override val edition: CargoWorkspace.Edition
 ) : CargoWorkspace.Target {
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
@@ -241,14 +260,18 @@ private val PackageImpl.asPackageData: CargoWorkspaceData.Package
             contentRootUrl = contentRootUrl,
             name = name,
             version = version,
-            targets = targets.map { CargoWorkspaceData.Target(
-                crateRootUrl = it.crateRootUrl,
-                name = it.name,
-                kind = it.kind,
-                crateTypes = it.crateTypes
-            ) },
+            targets = targets.map {
+                CargoWorkspaceData.Target(
+                    crateRootUrl = it.crateRootUrl,
+                    name = it.name,
+                    kind = it.kind,
+                    crateTypes = it.crateTypes,
+                    edition = it.edition
+                )
+            },
             source = source,
-            origin = origin
+            origin = origin,
+            edition = edition
         )
 
 private val StandardLibrary.StdCrate.asPackageData
@@ -262,8 +285,10 @@ private val StandardLibrary.StdCrate.asPackageData
                 crateRootUrl = crateRootUrl,
                 name = name,
                 kind = CargoWorkspace.TargetKind.LIB,
-                crateTypes = listOf(CargoWorkspace.CrateType.LIB)
+                crateTypes = listOf(CargoWorkspace.CrateType.LIB),
+                edition = CargoWorkspace.Edition.EDITION_2015
             )),
             source = null,
-            origin = PackageOrigin.STDLIB
+            origin = PackageOrigin.STDLIB,
+            edition = CargoWorkspace.Edition.EDITION_2015
         )

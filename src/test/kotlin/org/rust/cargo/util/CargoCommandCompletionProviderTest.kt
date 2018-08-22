@@ -9,8 +9,7 @@ import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import org.rust.RsTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
-import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
+import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
 import java.nio.file.Paths
@@ -98,17 +97,24 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
     }
 
     private val TEST_WORKSPACE = run {
-        fun target(name: String, kind: TargetKind, crateType: CrateType): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
+        fun target(
+            name: String,
+            kind: TargetKind,
+            crateType: CrateType,
+            edition: Edition = Edition.EDITION_2015
+        ): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
             crateRootUrl = "/tmp/lib/rs",
             name = name,
             kind = kind,
-            crateTypes = listOf(crateType)
+            crateTypes = listOf(crateType),
+            edition = edition
         )
 
         fun pkg(
             name: String,
             isWorkspaceMember: Boolean,
-            targets: List<CargoWorkspaceData.Target>
+            targets: List<CargoWorkspaceData.Target>,
+            edition: Edition = Edition.EDITION_2015
         ): CargoWorkspaceData.Package = CargoWorkspaceData.Package(
             name = name,
             id = "$name 1.0.0",
@@ -116,7 +122,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             version = "1.0.0",
             targets = targets,
             source = null,
-            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY
+            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
+            edition = edition
         )
 
         val pkgs = listOf(
