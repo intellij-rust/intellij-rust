@@ -32,7 +32,7 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
 
     override fun addCompletions(
         parameters: CompletionParameters,
-        context: ProcessingContext?,
+        context: ProcessingContext,
         result: CompletionResultSet
     ) {
         val schema = cachedSchema
