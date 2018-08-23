@@ -184,7 +184,7 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "_"                             { return UNDERSCORE; }
   "$"                             { return DOLLAR; }
 
-  "abstract"|"alignof"|"become"|"do"|"final"|"offsetof"|"override"|"priv"|"proc"|"pure"|"sizeof"|"typeof"|"unsized"|"virtual"|"yield"
+  "abstract"|"become"|"do"|"final"|"override"|"priv"|"typeof"|"unsized"|"virtual"|"yield"
                                   { return RESERVED_KEYWORD; }
 
   "true"|"false"                  { return BOOL_LITERAL; }
