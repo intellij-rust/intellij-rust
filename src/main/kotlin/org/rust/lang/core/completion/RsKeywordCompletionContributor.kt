@@ -49,7 +49,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("where"))
 
         extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
-            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                 val elseBuilder = LookupElementBuilder
                     .create("else")
                     .bold()
@@ -69,7 +69,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         })
 
         extend(CompletionType.BASIC, pathExpressionPattern(), object : CompletionProvider<CompletionParameters>() {
-            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                 for (keyword in CONDITION_KEYWORDS) {
                     result.addElement(conditionLookupElement(keyword).withPriority(KEYWORD_PRIORITY))
                 }

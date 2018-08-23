@@ -30,7 +30,7 @@ import org.rust.lang.core.resolve.processMacroCallVariants
 import org.rust.lang.core.withPrevSiblingSkipping
 
 object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val mod = parameters.position.ancestorStrict<RsMod>()
         result.addAllElements(collectCompletionVariants { variantsCollector ->
             processMacroCallVariants(parameters.position) { entry ->
