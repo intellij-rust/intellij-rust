@@ -31,7 +31,7 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
     private const val GROUP_PRIORITY = DEFAULT_PRIORITY + 0.1
 
     override fun addCompletions(parameters: CompletionParameters,
-                                context: ProcessingContext?,
+                                context: ProcessingContext,
                                 result: CompletionResultSet) {
 
         val owner = parameters.position.ancestorStrict<RsStructOrEnumItemElement>()

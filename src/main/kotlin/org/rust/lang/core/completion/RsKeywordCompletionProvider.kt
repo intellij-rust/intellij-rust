@@ -17,7 +17,7 @@ import org.rust.lang.core.types.ty.TyUnit
 class RsKeywordCompletionProvider(
     private vararg val keywords: String
 ) : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext?, result: CompletionResultSet) {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         for (keyword in keywords) {
             var builder = LookupElementBuilder.create(keyword)
             builder = addInsertionHandler(keyword, builder, parameters)

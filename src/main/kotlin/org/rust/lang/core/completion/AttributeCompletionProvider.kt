@@ -66,7 +66,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
     ).flatMap { entry -> entry.value.split(' ').map { attrName -> RustAttribute(attrName, entry.key) } }
 
     override fun addCompletions(parameters: CompletionParameters,
-                                context: ProcessingContext?,
+                                context: ProcessingContext,
                                 result: CompletionResultSet) {
 
         val elem = parameters.position.parent?.parent?.parent
