@@ -12,9 +12,9 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.annotations.NonNls
-import org.rust.lang.RsTestCase
-import org.rust.lang.pathToGoldTestFile
-import org.rust.lang.pathToSourceTestFile
+import org.rust.RsTestCase
+import org.rust.pathToGoldTestFile
+import org.rust.pathToSourceTestFile
 import java.io.IOException
 
 abstract class RsLexingTestCaseBase : LexerTestCase(), RsTestCase {

@@ -5,9 +5,9 @@
 
 package org.rust.lang.core.type
 
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.RsTestBase
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParamBounds
 import org.rust.lang.core.psi.ext.withSubst

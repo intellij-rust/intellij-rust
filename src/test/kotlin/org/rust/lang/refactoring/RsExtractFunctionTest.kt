@@ -6,9 +6,9 @@
 package org.rust.lang.refactoring
 
 import org.intellij.lang.annotations.Language
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.RsTestBase
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.lang.refactoring.extractFunction.withMockExtractFunctionUi

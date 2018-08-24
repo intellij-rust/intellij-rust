@@ -7,7 +7,7 @@ package org.rust.lang.core.cfg
 
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.ext.descendantsOfType
 

@@ -6,11 +6,8 @@
 package org.rust.lang.core.psi
 
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.AttributeType.Inner
-import org.rust.lang.core.psi.AttributeType.Outer
-import org.rust.lang.core.psi.AttributeType.Both
-import org.rust.lang.core.psi.AttributeType.None
+import org.rust.RsTestBase
+import org.rust.lang.core.psi.AttributeType.*
 import org.rust.lang.core.psi.ext.*
 
 enum class AttributeType { Outer, Inner, Both, None }

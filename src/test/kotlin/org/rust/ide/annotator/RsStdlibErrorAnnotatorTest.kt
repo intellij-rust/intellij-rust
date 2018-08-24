@@ -5,8 +5,8 @@
 
 package org.rust.ide.annotator
 
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsStdlibErrorAnnotatorTest : RsAnnotationTestBase() {

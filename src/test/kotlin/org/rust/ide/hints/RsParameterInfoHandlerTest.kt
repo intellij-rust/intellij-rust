@@ -10,7 +10,7 @@ import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 
 /**

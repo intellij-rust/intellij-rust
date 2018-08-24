@@ -6,9 +6,9 @@
 package org.rust.toml
 
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.fileTree
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithDependencyRustProjectDescriptor
 import org.rust.lang.core.resolve.RsResolveTestBase
 import org.toml.lang.psi.TomlKey
 

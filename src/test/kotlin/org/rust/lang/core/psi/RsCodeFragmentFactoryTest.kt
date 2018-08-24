@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.psi
 
+import org.rust.RsTestBase
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.lang.RsTestBase
 
 class RsCodeFragmentFactoryTest : RsTestBase() {
     fun `test resolve string path`() {

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang
+package org.rust
 
 import com.intellij.testFramework.LightProjectDescriptor
 import java.lang.annotation.Inherited

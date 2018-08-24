@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class CargoTomlWatcherTest : RsTestBase() {
     private var counter = 0

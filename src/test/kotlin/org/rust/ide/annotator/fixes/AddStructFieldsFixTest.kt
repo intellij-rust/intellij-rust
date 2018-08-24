@@ -6,9 +6,9 @@
 package org.rust.ide.annotator.fixes
 
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.annotator.RsAnnotationTestBase
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
 
 class AddStructFieldsFixTest : RsAnnotationTestBase() {
     fun `test no fields`() = checkBothQuickFix("""

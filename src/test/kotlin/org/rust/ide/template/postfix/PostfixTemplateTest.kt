@@ -9,8 +9,8 @@ import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTempla
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
-import org.rust.lang.RsTestBase
 
 abstract class PostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTestBase() {
     protected fun doTest(

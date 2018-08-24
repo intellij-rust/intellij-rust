@@ -10,7 +10,7 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import java.util.*
 
 /**

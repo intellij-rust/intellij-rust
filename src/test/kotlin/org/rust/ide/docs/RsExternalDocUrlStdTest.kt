@@ -6,8 +6,8 @@
 package org.rust.ide.docs
 
 import junit.framework.AssertionFailedError
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {

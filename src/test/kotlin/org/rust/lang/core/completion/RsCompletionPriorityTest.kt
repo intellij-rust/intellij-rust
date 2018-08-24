@@ -6,7 +6,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.psi.PsiElement
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.RsNamedElement

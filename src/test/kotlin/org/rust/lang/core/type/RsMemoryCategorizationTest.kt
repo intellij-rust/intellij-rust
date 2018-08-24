@@ -6,9 +6,9 @@
 package org.rust.lang.core.type
 
 import org.intellij.lang.annotations.Language
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.RsTestBase
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.infer.mutabilityCategory
 

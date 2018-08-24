@@ -7,10 +7,10 @@ package org.rust.lang.core.ext
 
 import com.intellij.psi.PsiFileFactory
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.ide.presentation.presentationInfo
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.lang.RsFileType
-import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type

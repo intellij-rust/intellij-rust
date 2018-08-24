@@ -7,7 +7,7 @@ package org.rust.ide.actions
 
 import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 abstract class RsJoinLinesHandlerTestBase : RsTestBase() {
     protected fun doTestRaw(before: String, after: String) {

@@ -7,7 +7,7 @@ package org.rust.ide.navigation.goto
 
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_TYPE_DECLARATION
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class RsGotoTypeDeclarationTest : RsTestBase() {
 

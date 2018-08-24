@@ -7,7 +7,7 @@ package org.rust.ide.spellchecker
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class RsSpellCheckerTest : RsTestBase() {
     fun testComments() = doTest("""// Hello, <TYPO descr="Typo: In word 'Wodrl'">Wodrl</TYPO>!""")

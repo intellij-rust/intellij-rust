@@ -8,8 +8,8 @@ package org.rust.ide.typing
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil.getMatchedBraceOffset
 import com.intellij.openapi.editor.ex.EditorEx
+import org.rust.RsTestBase
 import org.rust.lang.RsFileType
-import org.rust.lang.RsTestBase
 
 class RsBraceMatcherTest : RsTestBase() {
     fun `test don't pair parenthesis before identifier`() = doTest(

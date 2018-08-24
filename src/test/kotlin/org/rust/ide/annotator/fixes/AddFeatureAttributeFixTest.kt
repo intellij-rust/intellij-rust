@@ -5,8 +5,8 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.MockRustcVersion
 import org.rust.ide.annotator.RsAnnotationTestBase
-import org.rust.lang.MockRustcVersion
 
 class AddFeatureAttributeFixTest : RsAnnotationTestBase() {
 
