@@ -8,8 +8,8 @@ package org.rust.ide.typing.assist
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors
 import com.intellij.lang.Language
 import com.intellij.openapi.command.WriteCommandAction
+import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
-import org.rust.lang.RsTestBase
 
 /**
  * Unit tests for [RsSmartEnterProcessor]

@@ -8,7 +8,7 @@ package org.rust.lang.core.type
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentOfType
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.types.regions.Scope

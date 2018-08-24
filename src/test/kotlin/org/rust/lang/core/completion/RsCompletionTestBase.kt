@@ -9,9 +9,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.hasCaretMarker
-import org.rust.lang.RsTestBase
 
 abstract class RsCompletionTestBase : RsTestBase() {
     // Prefer using `doSingleCompletion` instead

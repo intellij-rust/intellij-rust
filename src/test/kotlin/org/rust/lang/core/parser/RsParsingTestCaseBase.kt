@@ -14,10 +14,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ParsingTestCase
 import com.intellij.testFramework.PlatformTestCase
 import org.jetbrains.annotations.NonNls
+import org.rust.RsTestBase
+import org.rust.RsTestCase
 import org.rust.ide.typing.RsBraceMatcher
 import org.rust.lang.RsLanguage
-import org.rust.lang.RsTestCase
-import org.rust.lang.RsTestBase
 import java.io.File
 
 abstract class RsParsingTestCaseBase(@NonNls dataPath: String) : ParsingTestCase(

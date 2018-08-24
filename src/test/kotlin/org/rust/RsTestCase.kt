@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang
+package org.rust
 
+import org.rust.lang.RsFileType
 import java.nio.file.Path
 import java.nio.file.Paths
 

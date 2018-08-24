@@ -9,8 +9,8 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.INC
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.NOT_INC
 

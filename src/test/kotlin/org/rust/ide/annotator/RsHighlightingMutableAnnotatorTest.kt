@@ -5,8 +5,8 @@
 
 package org.rust.ide.annotator
 
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 class RsHighlightingMutableAnnotatorTest : RsAnnotationTestBase() {
     fun `test mut self highlight`() = checkInfo("""

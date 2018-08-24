@@ -7,8 +7,8 @@ package org.rust.lang.core.type
 
 import com.intellij.openapi.vfs.VirtualFileFilter
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.descendantsOfType

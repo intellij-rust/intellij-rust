@@ -12,8 +12,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
+import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 import org.rust.lang.core.resolve.ref.RsReference

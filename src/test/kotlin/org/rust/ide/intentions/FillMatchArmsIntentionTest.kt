@@ -5,8 +5,8 @@
 
 package org.rust.ide.intentions
 
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention()) {
 

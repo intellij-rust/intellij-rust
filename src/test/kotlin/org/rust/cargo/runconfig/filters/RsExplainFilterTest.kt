@@ -6,7 +6,7 @@
 package org.rust.cargo.runconfig.filters
 
 import com.intellij.execution.filters.Filter
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class RsExplainFilterTest : RsTestBase() {
     private val filter: Filter get() = RsExplainFilter()

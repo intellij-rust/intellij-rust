@@ -9,7 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import junit.framework.ComparisonFailure
 import org.apache.commons.lang3.StringUtils.deleteWhitespace
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.descendantsOfType

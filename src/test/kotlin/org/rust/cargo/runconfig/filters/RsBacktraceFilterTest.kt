@@ -6,9 +6,9 @@
 package org.rust.cargo.runconfig.filters
 
 import com.intellij.openapi.util.SystemInfo
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
 
 /**
  * Tests for RustBacktraceFilter

@@ -5,7 +5,7 @@
 
 package org.rust.ide.highlight
 
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class RsRainbowVisitorTest : RsTestBase() {
 

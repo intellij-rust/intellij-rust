@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang
+package org.rust
 
 import org.rust.cargo.project.model.CargoProject
 

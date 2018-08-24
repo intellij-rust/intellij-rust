@@ -9,9 +9,9 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.RsTestBase
-import org.rust.lang.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.RsTestBase
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class CargoCrateDocLineMarkerProviderTest : RsTestBase() {

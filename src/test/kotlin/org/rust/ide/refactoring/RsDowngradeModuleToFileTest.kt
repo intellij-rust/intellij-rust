@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.TestDataProvider
 import org.rust.FileTree
+import org.rust.RsTestBase
 import org.rust.fileTree
-import org.rust.lang.RsTestBase
 import org.rust.lang.refactoring.RsDowngradeModuleToFile
 
 class RsDowngradeModuleToFileTest : RsTestBase() {

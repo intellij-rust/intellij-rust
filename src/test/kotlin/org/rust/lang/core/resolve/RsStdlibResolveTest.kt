@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
