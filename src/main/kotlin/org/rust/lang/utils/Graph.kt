@@ -20,9 +20,6 @@ class Graph<N, E>(
     fun getNode(index: Int): Node<N, E> =
         nodes[index]
 
-    fun getEdge(index: Int): Edge<N, E> =
-        edges[index]
-
     fun addNode(data: N): Node<N, E> {
         val newNode = Node<N, E>(data, nextNodeIndex)
         nodes.add(newNode)
