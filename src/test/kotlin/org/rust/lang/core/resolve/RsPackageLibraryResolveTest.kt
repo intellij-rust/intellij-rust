@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithDependencyRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsPackageLibraryResolveTest : RsResolveTestBase() {

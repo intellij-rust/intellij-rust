@@ -5,10 +5,10 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {

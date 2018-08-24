@@ -10,9 +10,9 @@ import com.intellij.lang.LanguageSurrounders
 import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.openapi.command.WriteCommandAction
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
-import org.rust.lang.RsTestBase
 
 abstract class RsSurrounderTestBase(private val surrounder: Surrounder) : RsTestBase() {
     protected fun doTest(@Language("Rust") before: String,

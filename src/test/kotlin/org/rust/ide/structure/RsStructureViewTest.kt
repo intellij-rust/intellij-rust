@@ -10,8 +10,8 @@ import com.intellij.testFramework.PlatformTestUtil.expandAll
 import com.intellij.ui.RowIcon
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.ide.presentation.getPresentationForStructure
-import org.rust.lang.RsTestBase
 import org.rust.lang.core.psi.ext.RsElement
 
 class RsStructureViewTest : RsTestBase() {

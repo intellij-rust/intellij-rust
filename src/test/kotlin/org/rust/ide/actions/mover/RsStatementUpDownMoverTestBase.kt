@@ -7,7 +7,7 @@ package org.rust.ide.actions.mover
 
 import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 abstract class RsStatementUpDownMoverTestBase : RsTestBase() {
     fun moveDown(@Language("Rust") before: String, @Language("Rust") after: String) {

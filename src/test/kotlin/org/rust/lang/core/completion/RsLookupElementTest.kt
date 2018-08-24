@@ -7,9 +7,9 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
-import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsLookupElementTest : RsTestBase() {
     private val `$` = '$'

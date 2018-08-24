@@ -5,9 +5,9 @@
 
 package org.rust.ide.annotator
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibAndDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsCrateDocLineMarkerProviderTest : RsLineMarkerProviderTestBase() {

@@ -15,7 +15,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LoggedErrorProcessor
 import org.apache.log4j.Logger
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsInnerAttributeOwner

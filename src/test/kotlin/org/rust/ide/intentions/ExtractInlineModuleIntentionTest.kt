@@ -6,8 +6,8 @@
 package org.rust.ide.intentions
 
 import org.rust.FileTree
+import org.rust.RsTestBase
 import org.rust.fileTree
-import org.rust.lang.RsTestBase
 
 class ExtractInlineModuleIntentionTest : RsTestBase() {
     override val dataPath = "org/rust/ide/intentions/fixtures/"

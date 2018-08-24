@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-import org.rust.lang.MockRustcVersion
+import org.rust.MockRustcVersion
 
 class RsErrorAnnotatorTest : RsAnnotationTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"

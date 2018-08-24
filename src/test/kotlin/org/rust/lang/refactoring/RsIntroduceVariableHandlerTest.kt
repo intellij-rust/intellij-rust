@@ -7,7 +7,7 @@ package org.rust.lang.refactoring
 
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.refactoring.introduceVariable.IntroduceVariableTestmarks
 import org.rust.lang.refactoring.introduceVariable.IntroduceVariableUi

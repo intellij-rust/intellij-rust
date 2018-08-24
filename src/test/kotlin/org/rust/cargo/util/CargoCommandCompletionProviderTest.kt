@@ -6,13 +6,13 @@
 package org.rust.cargo.util
 
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
+import org.rust.RsTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.lang.RsTestBase
 import java.nio.file.Paths
 
 class CargoCommandCompletionProviderTest : RsTestBase() {

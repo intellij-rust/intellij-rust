@@ -7,7 +7,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 import org.rust.lang.core.resolve.ref.RsResolveCache

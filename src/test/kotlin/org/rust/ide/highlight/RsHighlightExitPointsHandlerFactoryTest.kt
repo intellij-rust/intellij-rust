@@ -7,7 +7,7 @@ package org.rust.ide.highlight
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
 

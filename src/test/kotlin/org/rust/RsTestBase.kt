@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang
+package org.rust
 
 import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.editor.LogicalPosition
@@ -21,13 +21,10 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
-import org.rust.FileTree
-import org.rust.TestProject
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustcVersion
-import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCase {

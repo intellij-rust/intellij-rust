@@ -7,7 +7,7 @@ package org.rust.lang.refactoring.implementMembers
 
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.refactoring.introduceVariable.findCandidateExpressionsToExtract
 import org.rust.lang.refactoring.introduceVariable.suggestedNames

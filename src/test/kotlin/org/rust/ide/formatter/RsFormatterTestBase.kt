@@ -7,7 +7,7 @@ package org.rust.ide.formatter
 
 import com.intellij.psi.formatter.FormatterTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 abstract class RsFormatterTestBase : FormatterTestCase() {
     override fun getTestDataPath() = "src/test/resources"

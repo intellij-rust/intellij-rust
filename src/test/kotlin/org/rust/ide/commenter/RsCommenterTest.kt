@@ -6,7 +6,7 @@
 package org.rust.ide.commenter
 
 import com.intellij.openapi.actionSystem.IdeActions
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class RsCommenterTest : RsTestBase() {
 

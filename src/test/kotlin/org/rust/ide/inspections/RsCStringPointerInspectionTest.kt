@@ -5,8 +5,8 @@
 
 package org.rust.ide.inspections
 
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 /**
  * Tests for the CString Pointer inspection

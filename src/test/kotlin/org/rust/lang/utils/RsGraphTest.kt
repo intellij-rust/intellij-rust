@@ -5,7 +5,7 @@
 
 package org.rust.lang.utils
 
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class RsGraphTest : RsTestBase() {
     fun `test graph depth traversal 1`() {

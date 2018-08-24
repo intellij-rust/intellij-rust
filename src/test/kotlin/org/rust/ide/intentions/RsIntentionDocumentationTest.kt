@@ -6,7 +6,7 @@
 package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.IntentionManager
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 
 class RsIntentionDocumentationTest : RsTestBase() {
 

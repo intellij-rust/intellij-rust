@@ -8,7 +8,7 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.lang.RsTestBase
+import org.rust.RsTestBase
 import org.rust.openapiext.Testmark
 
 abstract class RsDocumentationProviderTest : RsTestBase() {

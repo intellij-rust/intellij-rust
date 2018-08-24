@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.completion
 
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.resolve.StdDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
 

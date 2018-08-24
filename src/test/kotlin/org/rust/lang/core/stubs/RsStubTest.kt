@@ -8,8 +8,8 @@ package org.rust.lang.core.stubs
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.StubTreeLoader
 import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import org.rust.lang.RsTestBase
 
 class RsStubTest : RsTestBase() {
 

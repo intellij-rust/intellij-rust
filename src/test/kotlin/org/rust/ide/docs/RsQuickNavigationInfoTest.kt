@@ -6,8 +6,8 @@
 package org.rust.ide.docs
 
 import org.intellij.lang.annotations.Language
-import org.rust.lang.ProjectDescriptor
-import org.rust.lang.WithStdlibRustProjectDescriptor
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     fun `test nested function`() = doTest("""
