@@ -7,11 +7,10 @@ package org.rust.ide.annotator.fixes
 
 import org.intellij.lang.annotations.Language
 import org.rust.ide.annotator.RsAnnotationTestBase
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
 
 class AddStructFieldsFixTest : RsAnnotationTestBase() {
-
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun `test no fields`() = checkBothQuickFix("""
         struct S { foo: i32, bar: f64 }
 
@@ -26,6 +25,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no comma`() = checkBothQuickFix("""
         struct S { a: i32, b: String }
 
@@ -40,6 +40,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         }
         """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test with comma`() = checkBothQuickFix("""
         struct S { a: i32, b: String }
 
@@ -118,6 +119,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test issue 980`() = checkBothQuickFix("""
         struct Mesh {
             pub name: String,
@@ -147,6 +149,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test many type fields`() = checkBothQuickFix("""
         type AliasedString = String;
 
@@ -237,6 +240,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test 1-level recursively fill struct`() = checkRecursiveQuickFix("""
         struct MetaData {
             author: String,
@@ -285,6 +289,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test 2-level recursively fill struct`() = checkRecursiveQuickFix("""
         struct ToolInfo {
             name: String,

@@ -15,6 +15,7 @@ import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.RsFileType
 import org.rust.lang.RsTestBase
+import org.rust.lang.WithStdlibRustProjectDescriptor
 import java.util.*
 import kotlin.system.measureTimeMillis
 

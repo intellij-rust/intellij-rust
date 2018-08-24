@@ -7,11 +7,12 @@ package org.rust.ide.annotator.fixes
 
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
 
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class ConvertToTyUsingFromStrFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun `test A from &str when impl FromStr for A is available`() = simpleTestWithStr("\"HelloWorld!\"")
     fun `test A from &String when impl FromStr for A is available`() = simpleTestWithStr("&String::from(\"HelloWorld!\")", "(&String::from(\"HelloWorld!\"))")
     fun `test A from &mut Str when impl FromStr for A is available`() = simpleTestWithStr("String::from(\"HelloWorld!\").as_mut_str()")

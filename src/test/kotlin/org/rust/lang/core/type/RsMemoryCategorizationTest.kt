@@ -5,15 +5,14 @@
 
 package org.rust.lang.core.type
 
-import com.intellij.testFramework.LightProjectDescriptor
 import org.intellij.lang.annotations.Language
+import org.rust.lang.ProjectDescriptor
 import org.rust.lang.RsTestBase
+import org.rust.lang.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.infer.mutabilityCategory
 
 class RsMemoryCategorizationTest : RsTestBase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
-
     private fun testExpr(@Language("Rust") code: String, description: String = "") {
         InlineFile(code)
         check(description)
@@ -185,6 +184,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test rvalue method call`() = testExpr("""
         fn main() {
           let v = vec![1];
@@ -201,6 +201,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test array`() = testExpr("""
         fn f(buf: &mut [u8]) {
             (buf[0]);

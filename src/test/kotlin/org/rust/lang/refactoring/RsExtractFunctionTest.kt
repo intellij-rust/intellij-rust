@@ -6,7 +6,9 @@
 package org.rust.lang.refactoring
 
 import org.intellij.lang.annotations.Language
+import org.rust.lang.ProjectDescriptor
 import org.rust.lang.RsTestBase
+import org.rust.lang.WithStdlibRustProjectDescriptor
 import org.rust.lang.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.lang.refactoring.extractFunction.withMockExtractFunctionUi
@@ -14,8 +16,6 @@ import org.rust.lang.refactoring.extractFunction.withMockExtractFunctionUi
 
 class RsExtractFunctionTest : RsTestBase() {
     override val dataPath = "org/rust/lang/refactoring/fixtures/extract_function/"
-
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test extract a function without parameters and a return value`() = doTest("""
             fn main() {
@@ -134,6 +134,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract input parameter with mutability`() = doTest("""
             fn main() {
                 let mut vec = vec![1, 2, 3];
@@ -594,6 +595,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with generic parameters`() = doTest("""
             fn foo<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) {
                 <selection>a;
@@ -618,6 +620,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with generic parameters and a return generic value`() = doTest("""
             fn foo<T: Default>() -> T {
                 <selection>T::default()</selection>
@@ -634,6 +637,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with generic parameters and a return generic option value`() = doTest("""
             fn foo<T: Default>() -> Option<T> {
                 <selection>Some(T::default())</selection>
@@ -726,6 +730,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing primitive`() = doTest("""
             fn foo() {
                 let i = 1;
@@ -788,6 +793,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing copy trait`() = doTest("""
             #[derive(Copy, Clone, Debug)]
             struct Copyable;
@@ -814,6 +820,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing by &`() = doTest("""
             fn f(a: &Vec<i32>) {}
 
@@ -850,6 +857,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing by &mut`() = doTest("""
             fn foo() {
                 let mut vec = vec![1, 2, 3];
@@ -878,6 +886,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing by mut`() = doTest("""
             fn test(mut v: Vec<i32>) {}
             fn test2(v: &mut Vec<i32>) {}

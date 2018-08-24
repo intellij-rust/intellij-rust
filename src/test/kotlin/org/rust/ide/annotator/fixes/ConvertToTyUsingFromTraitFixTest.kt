@@ -7,10 +7,11 @@ package org.rust.ide.annotator.fixes
 
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun `test B from A when impl From A for B is available`() = checkFixByText("Convert to B using `From` trait", """
         struct A{}
         struct B{}

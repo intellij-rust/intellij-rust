@@ -6,11 +6,11 @@
 package org.rust.ide.docs
 
 import junit.framework.AssertionFailedError
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
-
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun `test mod`() = doUrlTestByText("""
         fn foo<T: std::fmt::Debug>(x: T) {}
                      //^

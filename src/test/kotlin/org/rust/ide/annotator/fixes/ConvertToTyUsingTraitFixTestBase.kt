@@ -7,14 +7,15 @@ package org.rust.ide.annotator.fixes
 
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 abstract class ConvertToTyUsingTraitFixTestBase(
     isExpectedMut: Boolean, private val trait: String, private val method: String, protected val imports: String = ""
 ) : RsInspectionsTestBase(RsTypeCheckInspection()) {
     private val ref = if (isExpectedMut) "&mut " else "&"
     private val fixName = "Convert to ${ref}A using `$trait` trait"
-
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test Trait with A subs is impl for B`() = checkFixByText(fixName, """
         $imports

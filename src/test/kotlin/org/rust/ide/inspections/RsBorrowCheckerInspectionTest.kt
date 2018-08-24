@@ -5,7 +5,10 @@
 
 package org.rust.ide.inspections
 
-class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection(), useStdLib = true) {
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
+
+class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
 
     fun `test mutable used at ref mutable method call (self)`() = checkByText("""
         struct S;
@@ -324,6 +327,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test rvalue method call`() = checkByText("""
         fn main() {
             let v = vec![1];
@@ -342,6 +346,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
     """)
 
     /** [See github issue 2711](https://github.com/intellij-rust/intellij-rust/issues/2711) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test vector index`() = checkByText("""
         fn f() {
             let mut a = vec![1];

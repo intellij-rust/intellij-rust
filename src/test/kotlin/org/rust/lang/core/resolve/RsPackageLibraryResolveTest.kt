@@ -5,10 +5,11 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithDependencyRustProjectDescriptor
+
+@ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
-
-    override fun getProjectDescriptor() = WithDependencyRustProjectDescriptor
-
     fun `test library as crate`() = stubOnlyResolve("""
     //- main.rs
         extern crate test_package;
