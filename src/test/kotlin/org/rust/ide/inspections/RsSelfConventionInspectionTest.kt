@@ -5,10 +5,13 @@
 
 package org.rust.ide.inspections
 
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
+
 /**
  * Tests for Self Convention inspection
  */
-class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection(), useStdLib = true) {
+class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection()) {
 
     fun testFrom() = checkByText("""
         struct Foo;
@@ -44,6 +47,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test is suppressed for copyable`() = checkByText("""
         #[derive(Copy)]
         struct Copyable;
@@ -52,6 +56,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test is suppressed for copyable on trait`() = checkByText("""
         use std::marker::Copy;
         trait Copyable: Copy {

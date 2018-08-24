@@ -6,16 +6,11 @@
 package org.rust.ide.annotator
 
 import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibAndDependencyRustProjectDescriptor
 
+@ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsCrateDocLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
-
-    override fun getProjectDescriptor() = WithStdlibAndDependencyRustProjectDescriptor
-
-    override fun setUp() {
-        super.setUp()
-        projectDescriptor.setUp(myFixture)
-    }
-
     fun `test documentation link`() = doTestByText("""
         #[cfg(not(windows))]
         extern crate dep_lib;             // - Open documentation for `dep_lib`

@@ -5,8 +5,9 @@
 
 package org.rust.lang.core.type
 
-import com.intellij.testFramework.LightProjectDescriptor
+import org.rust.lang.ProjectDescriptor
 import org.rust.lang.RsTestBase
+import org.rust.lang.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParamBounds
 import org.rust.lang.core.psi.ext.withSubst
@@ -14,10 +15,8 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.*
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsPrimitiveTypeImplsTest : RsTestBase() {
-
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
-
     fun `test Sized types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit, "Sized")
     fun `test Clone types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit, "Clone")
     fun `test Copy types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool + TyChar + TyUnit, "Copy")

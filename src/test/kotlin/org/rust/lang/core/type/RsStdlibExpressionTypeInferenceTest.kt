@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.type
 
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.ext.ArithmeticAssignmentOp
 import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.psi.ext.ComparisonOp
@@ -12,9 +14,8 @@ import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun `test RangeFull`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {

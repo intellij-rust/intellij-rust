@@ -5,10 +5,14 @@
 
 package org.rust.ide.inspections
 
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
+
 /**
  * Tests for Drop Reference inspection.
  */
-class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection(), true) {
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
 
     fun testDropRefSimple() = checkByText("""
         fn main() {

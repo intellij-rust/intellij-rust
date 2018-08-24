@@ -7,18 +7,13 @@ package org.rust.toml
 
 import org.intellij.lang.annotations.Language
 import org.rust.fileTree
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithDependencyRustProjectDescriptor
 import org.rust.lang.core.resolve.RsResolveTestBase
 import org.toml.lang.psi.TomlKey
 
+@ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class CargoTomlKeyResolveTest : RsResolveTestBase() {
-
-    override fun getProjectDescriptor() = WithDependencyRustProjectDescriptor
-
-    override fun setUp() {
-        super.setUp()
-        projectDescriptor.setUp(myFixture)
-    }
-
     fun `test in dependencies block`() = checkResolve("""
         [package]
         name = "intellij-rust-test"

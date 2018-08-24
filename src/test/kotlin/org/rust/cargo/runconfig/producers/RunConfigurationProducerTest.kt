@@ -18,8 +18,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
-import org.intellij.lang.annotations.Language
 import com.intellij.testFramework.TestDataProvider
+import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace

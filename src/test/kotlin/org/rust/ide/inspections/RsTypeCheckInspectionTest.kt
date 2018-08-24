@@ -5,6 +5,9 @@
 
 package org.rust.ide.inspections
 
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
+
 class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
     fun `test type mismatch E0308 primitive`() = checkByText("""
         fn main () {
@@ -148,6 +151,22 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
                 "" => {}
                 _ => {}
             }
+        }
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/2482
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test issue 2482`() = checkByText("""
+        fn main() {
+            let string: String = "string".to_owned();
+        }
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/2460
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test issue 2460`() = checkByText("""
+        fn f64compare(x: &f64, y: &f64) -> ::std::cmp::Ordering {
+            x.partial_cmp(y).unwrap()
         }
     """)
 }
