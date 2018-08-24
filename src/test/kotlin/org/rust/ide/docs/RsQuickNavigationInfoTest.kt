@@ -6,10 +6,10 @@
 package org.rust.ide.docs
 
 import org.intellij.lang.annotations.Language
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
 
 class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun `test nested function`() = doTest("""
         mod a {
             mod b {
@@ -42,6 +42,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         fn <b>foo</b>()
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test big signature`() = doTest("""
         /// Docs
         #[cfg(test)]
@@ -84,6 +85,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         pub fn <b>foo</b>(&amp;self)
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic struct method with where clause`() = doTest("""
         struct Foo<T, F>(T, F);
 
@@ -118,6 +120,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         fn <b>my_func</b>()
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic trait method with where clause`() = doTest("""
         trait MyTrait<T> where T: Into<String> {
             /// Documented
@@ -129,6 +132,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         fn <b>my_func</b>()
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test multiple where`() = doTest("""
         use std::fmt::{Debug, Display};
 
@@ -149,6 +153,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         pub const unsafe extern "C" fn <b>foo</b>&lt;T, U, V&gt;(x: T) -&gt; u32<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Clone">Clone</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;U: <a href="psi_element://Debug">Debug</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;V: <a href="psi_element://Display">Display</a>,
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test expanded signature`() = doTest("""
         use std::fmt::{Debug, Display};
 
@@ -207,6 +212,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         fn <b>foo</b>()
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic trait method impl with where clause`() = doTest("""
         trait Trait<T> {
             fn foo();
@@ -282,6 +288,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         struct <b>Foo</b>&lt;T&gt;
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic struct with where clause`() = doTest("""
         struct Foo<T>(T) where T: Into<String>;
               //^
@@ -329,6 +336,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         enum <b>Foo</b>&lt;T&gt;
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic enum with where clause`() = doTest("""
         enum Foo<T> where T: Into<String> {
              //^
@@ -383,6 +391,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         trait <b>Foo</b>&lt;T&gt;
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic trait with where clause`() = doTest("""
         trait Foo<T> where T: Into<String> {
              //^
@@ -401,6 +410,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         type <b>Str</b> = &amp;&#39;static str
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test pub type alias`() = doTest("""
         pub type Foo = Result<(), i32>;
                 //^
@@ -409,6 +419,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         pub type <b>Foo</b> = <a href="psi_element://Result">Result</a>&lt;(), i32&gt;
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic type alias`() = doTest("""
         type Foo<T> = Result<T, i32>;
             //^
@@ -417,6 +428,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         type <b>Foo</b>&lt;T&gt; = <a href="psi_element://Result">Result</a>&lt;T, i32&gt;
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic type alias with where clause`() = doTest("""
         type Foo<T> where T: Into<String> = Result<T, i32>;
              //^
@@ -425,6 +437,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         type <b>Foo</b>&lt;T&gt; = <a href="psi_element://Result">Result</a>&lt;T, i32&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test impl assoc type`() = doTest("""
         trait Trait {
             type AssocType;
@@ -439,6 +452,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;i32&gt;
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic impl assoc type`() = doTest("""
         trait Trait {
             type AssocType;
@@ -453,6 +467,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic impl assoc type with where clause`() = doTest("""
         trait Trait {
             type AssocType;
@@ -489,6 +504,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         type <b>Awesome</b>
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic trait assoc type with where clause`() = doTest("""
         trait MyTrait<T> where T: Into<String> {
             /// Documented
@@ -542,6 +558,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         type parameter <b>T</b>
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test complex type parameter`() = doTest("""
         use std::borrow::Borrow;
         use std::hash::Hash;
@@ -613,6 +630,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         value parameter <b>val</b>: &amp;mut u32
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test match arm 1`() = doTest("""
         fn foo() {
             match Some(12) {
@@ -624,6 +642,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         match arm binding <b>foo</b>: Option&lt;i32&gt;
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test match arm 2`() = doTest("""
         fn foo() {
             match Some(12) {
@@ -663,6 +682,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         match arm binding <b>Basdfwe</b>: Foo
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test match if let`() = doTest("""
         fn foo() {
             if let Some(ref foo) = Some(0) {
@@ -674,6 +694,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         condition binding <b>foo</b>: &amp;i32
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test file 1`() = doTest("""
         const PI: f64 = std::f64::consts::PI;
                             //^
@@ -681,6 +702,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         mod <b>f64</b> [f64.rs]
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test file 2`() = doTest("""
         const PI: f64 = std::f64::consts::PI;
                         //^

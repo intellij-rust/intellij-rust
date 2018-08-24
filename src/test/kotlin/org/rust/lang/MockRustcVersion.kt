@@ -20,6 +20,6 @@ import org.rust.cargo.project.model.CargoProject
  *
  * @see CargoProject.rustcInfo
  */
-@Target(AnnotationTarget.FUNCTION)
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class MockRustcVersion(val rustcVersion: String)

@@ -5,7 +5,11 @@
 
 package org.rust.ide.inspections
 
-class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspection(), true) {
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
+
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspection()) {
     fun `test simple assert_eq fix`() = checkFixByText("Convert to assert_eq!", """
         fn main() {
             let x = 10;

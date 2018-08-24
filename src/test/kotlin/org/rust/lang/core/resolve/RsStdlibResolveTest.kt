@@ -5,12 +5,12 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveTest : RsResolveTestBase() {
-
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun `test resolve fs`() = stubOnlyResolve("""
     //- main.rs
         use std::fs::File;

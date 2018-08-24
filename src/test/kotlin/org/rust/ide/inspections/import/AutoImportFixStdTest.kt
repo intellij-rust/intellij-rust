@@ -5,12 +5,11 @@
 
 package org.rust.ide.inspections.import
 
-import com.intellij.testFramework.LightProjectDescriptor
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibAndDependencyRustProjectDescriptor
 
+@ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
-
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibAndDependencyRustProjectDescriptor
-
     fun `test import item from std crate`() = checkAutoImportFixByText("""
         fn foo<T: <error descr="Unresolved reference: `io`">io::Read/*caret*/</error>>(t: T) {}
     """, """

@@ -5,6 +5,9 @@
 
 package org.rust.ide.intentions
 
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
+
 class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention()) {
 
     fun `test simple enum variants`() = doAvailableTest("""
@@ -167,6 +170,34 @@ class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention())
     fun `test not enum in match expr`() = doUnavailableTest("""
         fn foo(x: i32) {
             match x/*caret*/ {}
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test Option enum`() = doAvailableTest("""
+        fn foo(x: Option<i32>) {
+            match x/*caret*/ {}
+        }
+    """, """
+        fn foo(x: Option<i32>) {
+            match x {
+                None => {/*caret*/},
+                Some(_) => {},
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test Result enum`() = doAvailableTest("""
+        fn foo(x: Result<i32, bool>) {
+            match x/*caret*/ {}
+        }
+    """, """
+        fn foo(x: Result<i32, bool>) {
+            match x {
+                Ok(_) => {/*caret*/},
+                Err(_) => {},
+            }
         }
     """)
 }

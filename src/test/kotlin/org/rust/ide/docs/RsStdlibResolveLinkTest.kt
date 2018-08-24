@@ -7,13 +7,13 @@ package org.rust.ide.docs
 
 import com.intellij.psi.PsiManager
 import org.intellij.lang.annotations.Language
+import org.rust.lang.ProjectDescriptor
 import org.rust.lang.RsTestBase
+import org.rust.lang.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.ext.RsNamedElement
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveLinkTest : RsTestBase() {
-
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
-
     fun `test with import`() = doTest("""
         use std::hash::Hash;
 

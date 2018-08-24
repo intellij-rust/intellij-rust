@@ -5,10 +5,13 @@
 
 package org.rust.ide.inspections
 
+import org.rust.lang.ProjectDescriptor
+import org.rust.lang.WithStdlibRustProjectDescriptor
+
 /**
  * Tests for the set of Naming Convention inspections.
  */
-abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspectionsTestBase(inspection, true) {
+abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspectionsTestBase(inspection) {
     class RsAssocTypeNamingInspectionTest : RsNamingInspectionTest(RsAssocTypeNamingInspection()) {
         fun testAssociatedTypes() = checkByText("""
             trait Foo {
@@ -604,6 +607,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
          """)
 
         // Issue #730. The inspection must not be applied in the following cases
+        @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
         fun testVariablesNotApplied() = checkByText("""
             fn test_not_applied() {
                 match Some(()) {

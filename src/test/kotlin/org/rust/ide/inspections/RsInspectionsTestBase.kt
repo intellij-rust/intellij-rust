@@ -8,8 +8,7 @@ package org.rust.ide.inspections
 import org.rust.ide.annotator.RsAnnotationTestBase
 
 abstract class RsInspectionsTestBase(
-    val inspection: RsLocalInspectionTool,
-    val useStdLib: Boolean = false
+    val inspection: RsLocalInspectionTool
 ) : RsAnnotationTestBase() {
 
     fun testInspectionHasDocumentation() {
@@ -18,8 +17,6 @@ abstract class RsInspectionsTestBase(
             ?: error("No inspection description for ${inspection.javaClass} ($description)")
         checkHtmlStyle(text)
     }
-
-    override fun getProjectDescriptor() = if (useStdLib) WithStdlibRustProjectDescriptor else super.getProjectDescriptor()
 
     private fun enableInspection() = myFixture.enableInspections(inspection)
 
