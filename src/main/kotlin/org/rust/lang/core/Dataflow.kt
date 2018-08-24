@@ -17,8 +17,8 @@ class DataFlowContext<O : DataFlowOperator>(
     val body: RsBlock,
     val cfg: ControlFlowGraph,
     val oper: O,
-    val bitsPerElement: Int) {
-
+    val bitsPerElement: Int
+) {
     private val wordsPerElement: Int = (bitsPerElement + BITS_PER_INT - 1) / BITS_PER_INT
     private val gens: MutableList<Int>          // TODO: use BitSet
     private val scopeKills: MutableList<Int>    // TODO: use BitSet
@@ -177,7 +177,7 @@ interface DataFlowOperator : BitwiseOperator {
     val neutralElement: Int get() = if (initialValue) Int.MAX_VALUE else 0
 }
 
-class PropagationContext<O : DataFlowOperator>(val dataFlowContext: DataFlowContext<O>, var changed: Boolean) {
+private class PropagationContext<O : DataFlowOperator>(val dataFlowContext: DataFlowContext<O>, var changed: Boolean) {
     val graph = dataFlowContext.cfg.graph
 
     fun walkCfg(nodesInPostOrder: List<CFGNode>) {
@@ -192,7 +192,7 @@ class PropagationContext<O : DataFlowOperator>(val dataFlowContext: DataFlowCont
 
     private fun propagateBitsIntoGraphSuccessorsOf(predBits: List<Int>, node: CFGNode) =
         graph.outgoingEdges(node).forEach {
-            propagateBitsIntoEntrySetFor(predBits, graph.getEdge(it.index))
+            propagateBitsIntoEntrySetFor(predBits, it)
         }
 
     private fun propagateBitsIntoEntrySetFor(predBits: List<Int>, edge: CFGEdge) {
