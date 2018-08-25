@@ -6,9 +6,8 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.macros.setContext
+import org.rust.lang.core.psi.RsCodeFragmentFactory
 import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.*
@@ -164,6 +163,8 @@ class ImplLookup(
         val trait = items.findCoreItem("iter::IntoIterator") as? RsTraitItem ?: return@lazy null
         trait.findAssociatedType("Item")?.let { trait to it }
     }
+
+    private val codeFragmentFactory: RsCodeFragmentFactory by lazy(NONE) { RsCodeFragmentFactory(project) }
 
     val ctx: RsInferenceContext by lazy(NONE) {
         RsInferenceContext(this, items)
@@ -671,7 +672,7 @@ class ImplLookup(
 
     fun isTraitVisibleFrom(trait: RsTraitItem, scope: RsElement): Boolean {
         val name = trait.name ?: return true
-        val path = RsPsiFactory(project).tryCreatePath(name)?.apply { setContext(scope) } ?: return true
+        val path = codeFragmentFactory.createPath(name, scope) ?: return true
         return resolvePath(path, this).any { it.element == trait }
     }
 
