@@ -14,6 +14,7 @@ import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.deepResolve
 import java.util.*
 
 
@@ -21,7 +22,7 @@ class RsExpressionAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         element.accept(RedundantParenthesisVisitor(holder))
         if (element is RsStructLiteral) {
-            val decl = element.path.reference.resolve() as? RsFieldsOwner
+            val decl = element.path.reference.deepResolve() as? RsFieldsOwner
             if (decl != null) {
                 checkStructLiteral(holder, decl, element)
             }

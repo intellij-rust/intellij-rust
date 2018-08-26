@@ -25,6 +25,22 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    fun `test aliased struct`() = checkBothQuickFix("""
+        struct S { foo: i32, bar: f64 }
+        type T = S;
+
+        fn main() {
+            let _ = <error>T</error> { /*caret*/ };
+        }
+    """, """
+        struct S { foo: i32, bar: f64 }
+        type T = S;
+
+        fn main() {
+            let _ = T { foo: /*caret*/0, bar: 0.0 };
+        }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no comma`() = checkBothQuickFix("""
         struct S { a: i32, b: String }
