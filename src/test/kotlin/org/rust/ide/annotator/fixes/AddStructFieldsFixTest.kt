@@ -32,13 +32,13 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         fn main() {
             <error>S</error> { a: 92/*caret*/};
         }
-        """, """
+    """, """
         struct S { a: i32, b: String }
 
         fn main() {
             S { a: 92, b: /*caret*/String::new() };
         }
-        """)
+    """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test with comma`() = checkBothQuickFix("""
@@ -47,13 +47,13 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         fn main() {
             <error>S</error> { a: 92, /*caret*/};
         }
-        """, """
+    """, """
         struct S { a: i32, b: String }
 
         fn main() {
             S { a: 92, b: /*caret*/String::new() };
         }
-        """)
+    """)
 
     fun `test some existing fields`() = checkBothQuickFix("""
         struct S { a: i32, b: i32, c: i32, d: i32 }
