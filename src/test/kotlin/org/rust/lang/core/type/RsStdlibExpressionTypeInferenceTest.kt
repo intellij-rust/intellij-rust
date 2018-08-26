@@ -494,7 +494,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    // https://github.com/intellij-rust/intellij-rust/issues/2514
+    /** Issue [#2514](https://github.com/intellij-rust/intellij-rust/issues/2514) */
     fun `test issue 2514`() = stubOnlyTypeInfer("""
     //- main.rs
         struct Foo {
@@ -507,5 +507,14 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
                 b;
             } //^ i32
         }
+    """)
+
+    /** Issue [#2791](https://github.com/intellij-rust/intellij-rust/issues/2791)*/
+    fun `test issue 2791`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let mut vec: Vec<i32> = Vec::new();
+            for x in &mut vec { x; }
+        }                     //^ &mut i32
     """)
 }

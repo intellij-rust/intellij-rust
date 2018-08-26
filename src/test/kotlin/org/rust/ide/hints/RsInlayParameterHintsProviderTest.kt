@@ -8,7 +8,9 @@ package org.rust.ide.hints
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -239,9 +241,8 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test inlay hint for loops`() = checkByText<RsForExpr>("""
-        #[lang = "std::iter::Iterator"]
-        trait Iterator { type Item; fn next(&mut self) -> Option<Self::Item>; }
         struct S;
         struct I;
         impl Iterator for I {

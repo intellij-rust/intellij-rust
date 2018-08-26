@@ -155,10 +155,6 @@ class ImplLookup(
         val trait = RsLangItemIndex.findLangItem(project, "index") ?: return@lazy null
         trait.findAssociatedType("Output")?.let { trait to it }
     }
-    private val iteratorTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
-        val trait = items.findIteratorTrait() ?: return@lazy null
-        trait.findAssociatedType("Item")?.let { trait to it }
-    }
     private val intoIteratorTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
         val trait = items.findCoreItem("iter::IntoIterator") as? RsTraitItem ?: return@lazy null
         trait.findAssociatedType("Item")?.let { trait to it }
@@ -530,8 +526,7 @@ class ImplLookup(
     }
 
     fun findIteratorItemType(ty: Ty): TyWithObligations<Ty>? {
-        return selectProjection(iteratorTraitAndOutput ?: return null, ty).ok()
-            ?: selectProjection(intoIteratorTraitAndOutput ?: return null, ty).ok()
+        return selectProjection(intoIteratorTraitAndOutput ?: return null, ty).ok()
     }
 
     fun findIndexOutputType(containerType: Ty, indexType: Ty): TyWithObligations<Ty>? {
