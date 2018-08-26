@@ -7,7 +7,9 @@ package org.rust.ide.navigation.goto
 
 import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 
 class RsGotoDeclarationTest : RsTestBase() {
     fun `test struct declaration`() = doTest("""
@@ -60,6 +62,52 @@ class RsGotoDeclarationTest : RsTestBase() {
         /*caret*/foo! { mod a { struct S; } }
         use a::S;
         type T = S;
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test resolve path to derive meta item`() = doTest("""
+        #[derive(Default)]
+        struct S;
+        fn main() { S::/*caret*/default(); }
+    """, """
+        #[derive(/*caret*/Default)]
+        struct S;
+        fn main() { S::default(); }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test resolve aliased path to derive meta item`() = doTest("""
+        #[derive(Default)]
+        struct S;
+        type T = S;
+        fn main() { T::/*caret*/default(); }
+    """, """
+        #[derive(/*caret*/Default)]
+        struct S;
+        type T = S;
+        fn main() { T::default(); }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test resolve method to derive meta item`() = doTest("""
+        #[derive(Clone)]
+        struct S;
+        fn main() { S./*caret*/clone(); }
+    """, """
+        #[derive(/*caret*/Clone)]
+        struct S;
+        fn main() { S.clone(); }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test resolve operator to derive meta item`() = doTest("""
+        #[derive(PartialEq)]
+        struct S;
+        fn main() { S /*caret*/== S; }
+    """, """
+        #[derive(/*caret*/PartialEq)]
+        struct S;
+        fn main() { S == S; }
     """)
 
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) = checkByText(before, after) {
