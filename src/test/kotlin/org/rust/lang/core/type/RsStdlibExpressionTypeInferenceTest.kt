@@ -135,6 +135,16 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test empty vec!`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let mut x = vec![];
+            x.push(0u16);
+            x;
+          //^ Vec<u16>
+        }
+    """)
+
     fun `test repeat vec!`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {

@@ -1413,7 +1413,7 @@ class RsFnInferenceContext(
             } else {
                 // vec![value1, value2, value3]
                 val elementTypes = vecArg.exprList.map { ctx.getExprType(it) }
-                getMoreCompleteType(elementTypes)
+                if (elementTypes.isNotEmpty()) getMoreCompleteType(elementTypes) else TyInfer.TyVar()
             }
             return items.findVecForElementTy(elementType)
         }
