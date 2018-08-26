@@ -5,7 +5,9 @@
 
 package org.rust.ide.annotator
 
+import org.rust.MockEdition
 import org.rust.MockRustcVersion
+import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsErrorAnnotatorTest : RsAnnotationTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
@@ -1179,7 +1181,40 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
-    fun `test crate keyword not at the beginning`() = checkErrors("""
-       use crate::foo::<error descr="`crate` is allowed only at the beginning">crate</error>::Foo;
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test crate keyword not at the beginning E0433`() = checkErrors("""
+        use crate::foo::<error descr="`crate` in paths can only be used in start position [E0433]">crate</error>::Foo;
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test crate keyword not at the beginning in use group E0433`() = checkErrors("""
+        use crate::foo::{<error descr="`crate` in paths can only be used in start position [E0433]">crate</error>::Foo};
+    """)
+
+    @MockRustcVersion("1.28.0")
+    fun `test crate in path feature E0658`() = checkErrors("""
+        mod foo {
+            pub struct Foo;
+        }
+
+        use <error descr="`crate` in paths is experimental [E0658]">crate</error>::foo::Foo;
+    """)
+
+    @MockRustcVersion("1.29.0-nightly")
+    fun `test crate in path feature E0658 2`() = checkErrors("""
+        mod foo {
+            pub struct Foo;
+        }
+
+        use <error descr="`crate` in paths is experimental [E0658]">crate</error>::foo::Foo;
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test crate in path feature E0658 3`() = checkErrors("""
+        mod foo {
+            pub struct Foo;
+        }
+
+        use crate::foo::Foo;
     """)
 }
