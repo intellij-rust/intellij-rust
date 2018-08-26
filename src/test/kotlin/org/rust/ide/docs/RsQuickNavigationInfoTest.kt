@@ -720,6 +720,17 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         struct <b>S</b>
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test derived method`() = doTest("""
+        #[derive(Clone)]
+        struct S;
+        fn main() { S.clone(); }
+                    //^
+    """, """
+        core::clone::Clone
+        fn <b>clone</b>(&amp;self) -&gt; Self
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
         = doTest(code, expected, RsDocumentationProvider::getQuickNavigateInfo)
 }
