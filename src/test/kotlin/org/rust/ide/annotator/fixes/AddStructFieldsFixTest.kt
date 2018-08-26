@@ -25,6 +25,22 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         }
     """)
 
+    fun `test aliased struct`() = checkBothQuickFix("""
+        struct S { foo: i32, bar: f64 }
+        type T = S;
+
+        fn main() {
+            let _ = <error>T</error> { /*caret*/ };
+        }
+    """, """
+        struct S { foo: i32, bar: f64 }
+        type T = S;
+
+        fn main() {
+            let _ = T { foo: /*caret*/0, bar: 0.0 };
+        }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no comma`() = checkBothQuickFix("""
         struct S { a: i32, b: String }
@@ -32,13 +48,13 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         fn main() {
             <error>S</error> { a: 92/*caret*/};
         }
-        """, """
+    """, """
         struct S { a: i32, b: String }
 
         fn main() {
             S { a: 92, b: /*caret*/String::new() };
         }
-        """)
+    """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test with comma`() = checkBothQuickFix("""
@@ -47,13 +63,13 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         fn main() {
             <error>S</error> { a: 92, /*caret*/};
         }
-        """, """
+    """, """
         struct S { a: i32, b: String }
 
         fn main() {
             S { a: 92, b: /*caret*/String::new() };
         }
-        """)
+    """)
 
     fun `test some existing fields`() = checkBothQuickFix("""
         struct S { a: i32, b: i32, c: i32, d: i32 }
