@@ -19,6 +19,7 @@ import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -48,7 +49,7 @@ class AddStructFieldsFix(
     ) {
         val psiFactory = RsPsiFactory(project)
         val structLiteral = startElement as RsStructLiteral
-        val decl = structLiteral.path.reference.resolve() as? RsFieldsOwner ?: return
+        val decl = structLiteral.path.reference.deepResolve() as? RsFieldsOwner ?: return
         val body = structLiteral.structLiteralBody
         val fieldsToAdd = calculateMissingFields(body, decl)
         val (firstAdded, _) = fillStruct(psiFactory, body, decl.namedFields, fieldsToAdd, postProcess = true)
