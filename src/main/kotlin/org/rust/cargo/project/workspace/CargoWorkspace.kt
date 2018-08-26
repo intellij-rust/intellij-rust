@@ -7,6 +7,7 @@ package org.rust.cargo.project.workspace
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.util.StdLibType
 import org.rust.openapiext.CachedVirtualFile
 import java.nio.file.Path
@@ -32,6 +33,9 @@ interface CargoWorkspace {
 
     fun withStdlib(stdlib: StandardLibrary): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
+
+    @TestOnly
+    fun withEdition(edition: Edition): CargoWorkspace
 
     interface Package {
         val contentRoot: VirtualFile?
@@ -102,7 +106,7 @@ interface CargoWorkspace {
 }
 
 
-private class WorkspaceImpl(
+private class WorkspaceImpl constructor(
     override val manifestPath: Path,
     override val workspaceRootPath: Path?,
     packagesData: Collection<CargoWorkspaceData.Package>
@@ -140,7 +144,7 @@ private class WorkspaceImpl(
         val result = WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
-            packages.map { it.asPackageData } +
+            packages.map { it.asPackageData() } +
                 stdlib.crates.map { it.asPackageData }
         )
 
@@ -158,6 +162,23 @@ private class WorkspaceImpl(
                     pkg.dependencies.addAll(stdlibPackages)
                 }
             }
+        }
+
+        return result
+    }
+
+    @TestOnly
+    override fun withEdition(edition: CargoWorkspace.Edition): CargoWorkspace {
+        val result = WorkspaceImpl(
+            manifestPath,
+            workspaceRootPath,
+            packages.map { it.asPackageData(edition) }
+        )
+
+        val oldIdToPackage = packages.associateBy { it.id }
+        val newIdToPackage = result.packages.associateBy { it.id }
+        newIdToPackage.forEach { (id, pkg) ->
+            pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { newIdToPackage[it.id] })
         }
 
         return result
@@ -253,26 +274,25 @@ private class TargetImpl(
 }
 
 
-private val PackageImpl.asPackageData: CargoWorkspaceData.Package
-    get() =
-        CargoWorkspaceData.Package(
-            id = id,
-            contentRootUrl = contentRootUrl,
-            name = name,
-            version = version,
-            targets = targets.map {
-                CargoWorkspaceData.Target(
-                    crateRootUrl = it.crateRootUrl,
-                    name = it.name,
-                    kind = it.kind,
-                    crateTypes = it.crateTypes,
-                    edition = it.edition
-                )
-            },
-            source = source,
-            origin = origin,
-            edition = edition
-        )
+private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): CargoWorkspaceData.Package =
+    CargoWorkspaceData.Package(
+        id = id,
+        contentRootUrl = contentRootUrl,
+        name = name,
+        version = version,
+        targets = targets.map {
+            CargoWorkspaceData.Target(
+                crateRootUrl = it.crateRootUrl,
+                name = it.name,
+                kind = it.kind,
+                crateTypes = it.crateTypes,
+                edition = edition ?: it.edition
+            )
+        },
+        source = source,
+        origin = origin,
+        edition = edition ?: this.edition
+    )
 
 private val StandardLibrary.StdCrate.asPackageData
     get() =

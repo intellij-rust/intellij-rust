@@ -192,17 +192,31 @@ class CargoProjectsServiceImpl(
             workspaceStatus = UpdateStatus.UpToDate,
             rustcInfoStatus = if (rustcInfo != null) UpdateStatus.UpToDate else UpdateStatus.NeedsUpdate)
         testProject.setRootDir(rootDir)
-        modifyProjects { _ ->
-            CompletableFuture.completedFuture(listOf(testProject))
-        }.get(1, TimeUnit.MINUTES)
+        modifyProjectsSync { CompletableFuture.completedFuture(listOf(testProject)) }
     }
 
     @TestOnly
     override fun setRustcInfo(rustcInfo: RustcInfo) {
-        modifyProjects { projects ->
+        modifyProjectsSync { projects ->
             val updatedProjects = projects.map { it.copy(rustcInfo = rustcInfo, rustcInfoStatus = UpdateStatus.UpToDate) }
             CompletableFuture.completedFuture(updatedProjects)
-        }.get(1, TimeUnit.MINUTES)
+        }
+    }
+
+    @TestOnly
+    override fun setEdition(edition: CargoWorkspace.Edition) {
+        modifyProjectsSync { projects ->
+            val updatedProjects = projects.map { project ->
+                val ws = project.workspace?.withEdition(edition)
+                project.copy(rawWorkspace = ws)
+            }
+            CompletableFuture.completedFuture(updatedProjects)
+        }
+    }
+
+    @TestOnly
+    private fun modifyProjectsSync(f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>) {
+        modifyProjects(f).get(1, TimeUnit.MINUTES)
     }
 
     override fun getState(): Element {
