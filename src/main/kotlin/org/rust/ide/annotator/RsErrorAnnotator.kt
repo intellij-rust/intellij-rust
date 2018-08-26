@@ -12,15 +12,21 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.ide.annotator.fixes.AddCrateKeywordFix
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
+import org.rust.lang.core.CRATE_IN_PATHS
 import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature
-import org.rust.lang.core.FeatureState.*
+import org.rust.lang.core.FeatureState.ACCEPTED
+import org.rust.lang.core.FeatureState.ACTIVE
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.CSELF
+import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
@@ -181,13 +187,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkPath(holder: AnnotationHolder, path: RsPath) {
-        val child = path.path
-        if ((child == null || isValidSelfSuperPrefix(child)) && !isValidSelfSuperPrefix(path)) {
+        val qualifier = path.path
+        if ((qualifier == null || isValidSelfSuperPrefix(qualifier)) && !isValidSelfSuperPrefix(path)) {
             holder.createErrorAnnotation(path, "Invalid path: self and super are allowed only at the beginning")
             return
         }
 
-        if (path.self != null && path.parent !is RsPath && path.parent !is RsUseSpeck) {
+        val parent = path.parent
+        if (path.self != null && parent !is RsPath && parent !is RsUseSpeck) {
             val function = path.ancestorStrict<RsFunction>()
             if (function == null) {
                 holder.createErrorAnnotation(path, "self value is not available in this context")
@@ -200,11 +207,36 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
 
         val crate = path.crate
-        if (crate != null && child != null) {
-            holder.createErrorAnnotation(crate, "`crate` is allowed only at the beginning")
+        val useSpeck = path.ancestorStrict<RsUseSpeck>()
+        val edition = path.containingCargoTarget?.edition
+
+        if (crate != null) {
+            if (qualifier != null || useSpeck != null && useSpeck.qualifier != null) {
+                RsDiagnostic.UndeclaredTypeOrModule(crate).addToHolder(holder)
+            } else if (edition == Edition.EDITION_2015) {
+                checkFeature(holder, crate, CRATE_IN_PATHS, "`crate` in paths")
+            }
+        }
+
+        if (edition == Edition.EDITION_2018 && parent is RsUseSpeck && parent.qualifier == null) {
+            checkPathInUseItem(path, holder)
         }
 
         checkReferenceIsPublic(path, path, holder)
+    }
+
+    private fun checkPathInUseItem(path: RsPath, holder: AnnotationHolder) {
+        val basePath = path.basePath()
+        basePath.node.findChildByType(tokenSetOf(IDENTIFIER, CSELF)) ?: return
+
+        val element = basePath.reference.resolve()
+        if (element is RsMod && element.isCrateRoot) return
+        val annotation = holder.createErrorAnnotation(path,
+            "Paths in `use` declarations should start with a crate name, or with `crate`, `super`, or `self`")
+        // TODO: add fixes for other cases
+        if (element != null && element.crateRoot == path.crateRoot && element.containingMod.isCrateRoot) {
+            annotation.registerFix(AddCrateKeywordFix(path))
+        }
     }
 
     private fun checkLifetimeParameter(holder: AnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
