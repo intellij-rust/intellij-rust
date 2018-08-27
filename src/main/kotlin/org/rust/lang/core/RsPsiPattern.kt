@@ -94,6 +94,9 @@ object RsPsiPattern {
                 .with("deriveCondition") { e -> e is RsMetaItem && e.name == "derive" }
         )
 
+    val includeMacroLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+            .withParent(psiElement<RsIncludeMacroArgument>())
+
     val whitespace: PsiElementPattern.Capture<PsiElement> = psiElement().whitespace()
 
     val error: PsiElementPattern.Capture<PsiErrorElement> = psiElement<PsiErrorElement>()

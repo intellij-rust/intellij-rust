@@ -188,6 +188,8 @@
 
         <psi.referenceContributor language="Rust"
                                   implementation="org.rust.lang.core.resolve.ref.RsMetaItemReferenceContributor"/>
+        <psi.referenceContributor language="Rust"
+                                  implementation="org.rust.lang.core.resolve.ref.RsLitExprReferenceContributor"/>
 
         <!-- Completion -->
 
