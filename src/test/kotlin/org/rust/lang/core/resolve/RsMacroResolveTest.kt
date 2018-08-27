@@ -35,7 +35,7 @@ class RsMacroResolveTest : RsResolveTestBase() {
             ($`$`($`$`test:expr),+, $`$`ty:ty) => (
               //X
                 $`$`($`$`test),+
-                //^
+                  //^
             )
         }
     """)

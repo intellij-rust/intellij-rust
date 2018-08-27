@@ -331,7 +331,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test child file`() = doSingleCompletionMultiflie("""
+    fun `test child file`() = doSingleCompletionMultifile("""
     //- main.rs
         use foo::Spam;
         mod foo;
@@ -345,7 +345,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { let _ = Spam::Quux/*caret*/; }
     """)
 
-    fun `test parent file`() = doSingleCompletionMultiflie("""
+    fun `test parent file`() = doSingleCompletionMultifile("""
     //- main.rs
         mod foo;
         pub enum Spam { Quux, Eggs }
@@ -358,7 +358,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo() { let _ = Spam::Quux/*caret*/; }
     """)
 
-    fun `test parent file 2`() = doSingleCompletionMultiflie("""
+    fun `test parent file 2`() = doSingleCompletionMultifile("""
     //- main.rs
         mod foo;
         pub enum Spam { Quux, Eggs }
@@ -588,5 +588,14 @@ class RsCompletionTest : RsCompletionTestBase() {
        fn main() {
             let x = crate::/*caret*/
        }
+    """)
+
+    fun `test complete paths in include macro`() = doSingleCompletionMultifile("""
+    //- main.rs
+        include!("fo/*caret*/");
+    //- foo.rs
+        pub struct Foo;
+    """, """
+        include!("foo.rs/*caret*/");
     """)
 }

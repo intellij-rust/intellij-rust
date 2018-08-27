@@ -14,8 +14,8 @@ import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.Testmark
 
 class RsResolveCacheTest : RsTestBase() {
-    private fun RsWeakReferenceElement.checkResolvedTo(marker: String) {
-        val resolved = checkedResolve()
+    private fun RsWeakReferenceElement.checkResolvedTo(marker: String, offset: Int) {
+        val resolved = checkedResolve(offset)
         val target = findElementInEditor<RsNamedElement>(marker)
 
         check(resolved == target) {
@@ -26,15 +26,15 @@ class RsResolveCacheTest : RsTestBase() {
     private fun doTest(@Language("Rust") code: String, textToType: String) {
         InlineFile(code).withCaret()
 
-        val refElement = findElementInEditor<RsWeakReferenceElement>("^")
+        val (refElement, _, offset) = findElementWithDataAndOffsetInEditor<RsWeakReferenceElement>("^")
 
-        refElement.checkResolvedTo("X")
+        refElement.checkResolvedTo("X", offset)
 
         myFixture.type(textToType)
         PsiDocumentManager.getInstance(project).commitAllDocuments() // process PSI modification events
         check(refElement.isValid)
 
-        refElement.checkResolvedTo("Y")
+        refElement.checkResolvedTo("Y", offset)
     }
 
     private fun doTest(@Language("Rust") code: String, textToType: String, mark: Testmark) = mark.checkHit {
