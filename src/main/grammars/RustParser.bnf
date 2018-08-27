@@ -1216,7 +1216,7 @@ CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
 TT ::= <<any_braces TT*>> | <<unpairedToken>>
 
 private CommonMacro ::= identifier '!' identifier? MacroArgument { pin = 2 }
-private SpecialMacro ::= TryMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro
+private SpecialMacro ::= TryMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro
 
 private TryMacro ::= "try" '!' TryMacroArgument { pin = 2 }
 TryMacroArgument ::= <<any_braces AnyExpr>>
@@ -1248,6 +1248,9 @@ private LogMacro ::=
 LogMacroArgument ::=
   <<any_braces (('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?)>>
 
+private IncludeMacro ::= ("include" | "include_str" | "include_bytes") '!' IncludeMacroArgument
+
+IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>>
 
 private meta any_braces ::=
   '(' <<param>> ')'
