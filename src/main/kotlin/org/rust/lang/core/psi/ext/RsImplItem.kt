@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.RsTraitItem
@@ -23,6 +24,9 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
+
+val RsImplItem.default: PsiElement?
+    get() = node.findChildByType(DEFAULT)?.psi
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
