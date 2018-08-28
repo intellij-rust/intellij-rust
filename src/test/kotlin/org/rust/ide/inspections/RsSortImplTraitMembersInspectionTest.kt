@@ -179,6 +179,50 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         }
     """, checkWeakWarn = true)
 
+    fun `test highlight unsafe keyword`() = checkByText("""
+        unsafe trait Foo {
+            fn foo();
+            fn bar();
+        }
+
+        <weak_warning descr="Different impl member order from the trait">/*caret*/unsafe impl Foo for ()</weak_warning> {
+            fn bar() {
+            }
+            fn foo() {
+            }
+        }
+    """, checkWeakWarn = true)
+
+    fun `test highlight default keyword`() = checkByText("""
+        unsafe trait Foo {
+            fn foo();
+            fn bar();
+        }
+
+        <weak_warning descr="Different impl member order from the trait">/*caret*/default unsafe impl Foo for ()</weak_warning> {
+            fn bar() {
+            }
+            fn foo() {
+            }
+        }
+    """, checkWeakWarn = true)
+
+    fun `test do not highlight comments and attributes for impl`() = checkByText("""
+        trait Foo {
+            fn foo();
+            fn bar();
+        }
+
+        // Some comment
+        #[cfg(some_attr = "value")]
+        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Foo for ()</weak_warning> {
+            fn bar() {
+            }
+            fn foo() {
+            }
+        }
+    """, checkWeakWarn = true)
+
     fun `test different order with different files`() = checkFixByFileTree("Apply same member order", """
         //- foo.rs
         pub trait Trait {

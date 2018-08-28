@@ -11,10 +11,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.RsTraitOrImpl
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.resolveToTrait
+import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 
 class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
@@ -23,7 +20,10 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
             val trait = impl.traitRef?.resolveToTrait ?: return
             val typeRef = impl.typeReference ?: return
             if (sortedImplItems(impl.items(), trait.items()) == null) return
-            val textRange = TextRange(0, typeRef.startOffsetInParent + typeRef.textLength)
+            val textRange = TextRange(
+                (impl.vis ?: impl.default ?: impl.unsafe ?: impl.impl).startOffsetInParent,
+                typeRef.startOffsetInParent + typeRef.textLength
+            )
             holder.registerProblem(
                 impl, textRange,
                 "Different impl member order from the trait",
