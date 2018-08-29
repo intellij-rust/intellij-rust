@@ -131,6 +131,21 @@
         <codeInsight.parameterNameHints language="Rust"
                                         implementationClass="org.rust.ide.hints.RsInlayParameterHintsProvider"/>
 
+        <declarationRangeHandler key="org.rust.lang.core.psi.RsStructItem"
+                                 implementationClass="org.rust.ide.hints.RsStructItemDeclarationRangeHandler"/>
+        <declarationRangeHandler key="org.rust.lang.core.psi.RsTraitItem"
+                                 implementationClass="org.rust.ide.hints.RsTraitItemDeclarationRangeHandler"/>
+        <declarationRangeHandler key="org.rust.lang.core.psi.RsImplItem"
+                                 implementationClass="org.rust.ide.hints.RsImplItemDeclarationRangeHandler"/>
+        <declarationRangeHandler key="org.rust.lang.core.psi.RsEnumItem"
+                                 implementationClass="org.rust.ide.hints.RsEnumItemDeclarationRangeHandler"/>
+        <declarationRangeHandler key="org.rust.lang.core.psi.RsModItem"
+                                 implementationClass="org.rust.ide.hints.RsModItemDeclarationRangeHandler"/>
+        <declarationRangeHandler key="org.rust.lang.core.psi.RsFunction"
+                                 implementationClass="org.rust.ide.hints.RsFunctionDeclarationRangeHandler"/>
+        <declarationRangeHandler key="org.rust.lang.core.psi.RsMacro"
+                                 implementationClass="org.rust.ide.hints.RsMacroDeclarationRangeHandler"/>
+
         <!-- Annotator -->
 
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingAnnotator"/>
