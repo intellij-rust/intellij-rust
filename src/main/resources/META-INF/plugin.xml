@@ -772,6 +772,11 @@
             <reference id="Rust.ShowSingleStepMacroExpansionAction"/>
         </group>
 
+        <action class="org.rust.lang.refactoring.generateConstructor.GenerateConstructorAction"
+                id="Rust.GenerateConstructor"
+                text="Generate Constructor">
+            <add-to-group group-id="GenerateGroup"/>
+        </action>
         <group id="Rust.Cargo">
             <reference id="Rust.RefreshCargoProject"/>
             <reference id="Rust.CargoCommand"/>
