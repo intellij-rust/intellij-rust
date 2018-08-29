@@ -10,7 +10,7 @@ import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.types.infer.mutabilityCategory
+import org.rust.lang.core.types.cmt
 
 class RsMemoryCategorizationTest : RsTestBase() {
     private fun testExpr(@Language("Rust") code: String, description: String = "") {
@@ -21,9 +21,10 @@ class RsMemoryCategorizationTest : RsTestBase() {
     private fun check(description: String) {
         val (expr, expectedCategory) = findElementAndDataInEditor<RsExpr>()
 
-        val category = expr.mutabilityCategory
-        check(category.toString() == expectedCategory) {
-            "Category mismatch. Expected: $expectedCategory, found: $category. $description"
+        val cmt = expr.cmt
+        val actual = "${cmt?.category?.javaClass?.simpleName}, ${cmt?.mutabilityCategory}"
+        check(actual == expectedCategory) {
+            "Category mismatch. Expected: $expectedCategory, found: $actual. $description"
         }
     }
 
@@ -31,7 +32,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let x = 42;
             x;
-          //^ Immutable
+          //^ Local, Immutable
         }
     """)
 
@@ -39,7 +40,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let mut x = 42;
             x;
-          //^ Declared
+          //^ Local, Declared
         }
     """)
 
@@ -48,7 +49,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let y = 42;
             let x = &y;
             (*x);
-             //^ Immutable
+             //^ Deref, Immutable
         }
     """)
 
@@ -57,7 +58,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut y = 42;
             let x = &y;
             (*x);
-             //^ Immutable
+             //^ Deref, Immutable
         }
     """)
 
@@ -66,7 +67,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut y = 42;
             let x = &mut y;
             (*x);
-             //^ Declared
+             //^ Deref, Declared
         }
     """)
 
@@ -74,7 +75,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let a: [i32; 3] = [0; 3];
             a[1];
-             //^ Immutable
+             //^ Interior, Immutable
         }
     """)
 
@@ -82,7 +83,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let mut a: [i32; 3] = [0; 3];
             a[1];
-             //^ Inherited
+             //^ Interior, Inherited
         }
     """)
 
@@ -91,7 +92,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let x = Foo { a: 1 };
             (x.a);
-              //^ Immutable
+              //^ Interior, Immutable
         }
     """)
 
@@ -100,7 +101,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let mut x = Foo { a: 1 };
             (x.a);
-              //^ Inherited
+              //^ Interior, Inherited
         }
     """)
 
@@ -110,7 +111,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut foo = Foo { a: 1 };
             let x = &foo;
             (x.a);
-              //^ Immutable
+              //^ Interior, Immutable
         }
     """)
 
@@ -120,7 +121,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut foo = Foo { a: 1 };
             let x = &mut foo;
             (x.a);
-              //^ Inherited
+              //^ Interior, Inherited
         }
     """)
 
@@ -130,7 +131,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut foo = Foo { a: 1 };
             let x = &mut &mut &foo;
             (x.a);
-              //^ Immutable
+              //^ Interior, Immutable
         }
     """)
 
@@ -140,7 +141,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut foo = Foo { a: 1 };
             let x = & & &mut foo;
             (x.a);
-              //^ Inherited
+              //^ Interior, Inherited
         }
     """)
 
@@ -150,7 +151,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let x = 5;
             let p = &x as *const i32;
             (*p);
-             //^ Immutable
+             //^ Deref, Immutable
         }
     """)
 
@@ -160,7 +161,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut x = 5;
             let p = &mut x as *mut i32;
             (*p);
-             //^ Declared
+             //^ Deref, Declared
         }
     """)
 
@@ -169,7 +170,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         impl Foo {
             fn f(&self) {
                 self;
-                 //^ Immutable
+                 //^ Local, Immutable
             }
         }
     """)
@@ -179,17 +180,33 @@ class RsMemoryCategorizationTest : RsTestBase() {
         impl Foo {
             fn f(&mut self) {
                 self;
-                 //^ Declared
+                 //^ Local, Declared
             }
         }
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test static`() = testExpr("""
+        static N: i32 = 42;
+        fn main() {
+            N;
+          //^ StaticItem, Immutable
+        }
+    """)
+
+    fun `test const`() = testExpr("""
+        const N: i32 = 42;
+        fn main() {
+            N;
+          //^ Rvalue, Declared
+        }
+    """)
+
     fun `test rvalue method call`() = testExpr("""
         fn main() {
           let v = vec![1];
           v.iter();
-               //^ Declared
+               //^ Rvalue, Declared
         }
     """)
 
@@ -197,7 +214,28 @@ class RsMemoryCategorizationTest : RsTestBase() {
         struct S {}
         fn main() {
           (if true { S } else { S });
-                                 //^ Declared
+                                 //^ Rvalue, Declared
+        }
+    """)
+
+    fun `test rvalue closure`() = testExpr("""
+        fn main() {
+          (|x: i32| x + 1);
+                       //^ Rvalue, Declared
+        }
+    """)
+
+    fun `test immutable closure parameter`() = testExpr("""
+        fn main() {
+          (|x: i32| x + 1);
+                  //^ Local, Immutable
+        }
+    """)
+
+    fun `test mutable closure parameter`() = testExpr("""
+        fn main() {
+          (|mut x: i32| x + 1);
+                      //^ Local, Declared
         }
     """)
 
@@ -205,7 +243,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
     fun `test array`() = testExpr("""
         fn f(buf: &mut [u8]) {
             (buf[0]);
-                 //^ Inherited
+                 //^ Interior, Inherited
         }
     """)
 }
