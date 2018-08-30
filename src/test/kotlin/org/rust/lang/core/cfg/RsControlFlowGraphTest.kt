@@ -156,6 +156,27 @@ class RsControlFlowGraphTest : RsTestBase() {
     """
     )
 
+    fun `test while with assign`() = testCFG("""
+        fn main() {
+            while let x = f() {
+                something;
+            }
+        }
+    """, """
+        Entry
+        Dummy
+        f
+        f()
+        x
+        WHILE
+        BLOCK
+        Exit
+        something
+        something;
+        BLOCK
+    """
+    )
+
     fun `test while with unreachable`() = testCFG("""
         fn main() {
             let mut x = 1;
