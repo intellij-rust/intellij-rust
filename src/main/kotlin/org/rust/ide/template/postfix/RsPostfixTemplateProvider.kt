@@ -26,7 +26,8 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
         ParenPostfixTemplate(),
         LambdaPostfixTemplate(this),
         NotPostfixTemplate(this),
-        LetPostfixTemplate(this)
+        LetPostfixTemplate(this),
+        IterPostfixTemplate(this)
     )
 
     override fun getTemplates(): Set<PostfixTemplate> = templates
