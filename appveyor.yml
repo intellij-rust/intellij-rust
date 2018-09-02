@@ -8,6 +8,7 @@ environment:
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: -t7z -m0=lzma2 -mx=9
   JAVA_HOME: C:\Program Files\Java\jdk1.8.0
   RUST_VERSION: 1.28.0
+  JAVA_OPTS: -Xmx2g
 
 install:
   - appveyor-retry appveyor DownloadFile https://win.rustup.rs -FileName rustup-init.exe
@@ -16,7 +17,7 @@ install:
   - rustup component add rustfmt-preview
 
 build_script:
-  - gradlew.bat assemble testClasses --no-daemon
+  - gradlew.bat -Dkotlin.compiler.execution.strategy="in-process" assemble testClasses --no-daemon
 
 test_script:
   - gradlew.bat check --no-daemon
