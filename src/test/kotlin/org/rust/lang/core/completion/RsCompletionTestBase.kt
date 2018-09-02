@@ -48,7 +48,7 @@ abstract class RsCompletionTestBase : RsTestBase() {
         checkByText(before, after) { executeSoloCompletion() }
     }
 
-    protected fun doSingleCompletionMultiflie(@Language("Rust") before: String, @Language("Rust") after: String) {
+    protected fun doSingleCompletionMultifile(@Language("Rust") before: String, @Language("Rust") after: String) {
         fileTreeFromText(before).createAndOpenFileWithCaretMarker()
         executeSoloCompletion()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))

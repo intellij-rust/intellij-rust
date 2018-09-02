@@ -7,7 +7,6 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.ContributedReferenceHost
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.intellij.lang.annotations.Language
@@ -23,7 +22,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected open fun checkByCode(@Language("Rust") code: String) {
         InlineFile(code)
 
-        val (refElement, data) = findElementAndDataInEditor<RsWeakReferenceElement>("^")
+        val (refElement, data, offset) = findElementWithDataAndOffsetInEditor<RsWeakReferenceElement>("^")
 
         if (data == "unresolved") {
             val resolved = refElement.reference?.resolve()
@@ -33,7 +32,7 @@ abstract class RsResolveTestBase : RsTestBase() {
             return
         }
 
-        val resolved = refElement.checkedResolve()
+        val resolved = refElement.checkedResolve(offset)
         val target = findElementInEditor<RsNamedElement>("X")
 
         check(resolved == target) {
@@ -51,17 +50,17 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected fun stubOnlyResolve(@Language("Rust") code: String, mark: Testmark) =
         mark.checkHit { stubOnlyResolve(code) }
 
-    protected inline fun <reified T: PsiElement> stubOnlyResolve(fileTree: FileTree) {
+    protected inline fun <reified T: PsiElement> stubOnlyResolve(fileTree: FileTree, customCheck: (PsiElement) -> Unit = {}) {
         val testProject = fileTree.createAndOpenFileWithCaretMarker()
 
         checkAstNotLoaded(VirtualFileFilter { file ->
             !file.path.endsWith(testProject.fileWithCaret)
         })
 
-        val (referenceElement, resolveVariants) = findElementAndDataInEditor<T>()
+        val (referenceElement, resolveVariants, offset) = findElementWithDataAndOffsetInEditor<T>()
 
         if (resolveVariants == "unresolved") {
-            val element = referenceElement.findReference()?.resolve()
+            val element = referenceElement.findReference(offset)?.resolve()
             if (element != null) {
                 // Turn off virtual file filter to show element text
                 // because it requires access to virtual file
@@ -71,7 +70,8 @@ abstract class RsResolveTestBase : RsTestBase() {
             return
         }
 
-        val element = referenceElement.checkedResolve()
+        val element = referenceElement.checkedResolve(offset)
+        customCheck(element)
         val actualResolveFile = element.containingFile.virtualFile
 
         val resolveFiles = resolveVariants.split("|")
@@ -110,14 +110,10 @@ abstract class RsResolveTestBase : RsTestBase() {
     }
 }
 
-fun PsiElement.findReference(): PsiReference? = when (this) {
-    is RsWeakReferenceElement -> reference
-    is ContributedReferenceHost -> references.firstOrNull()
-    else -> reference
-}
+fun PsiElement.findReference(offset: Int): PsiReference? = findReferenceAt(offset - textRange.startOffset)
 
-fun PsiElement.checkedResolve(): PsiElement {
-    val reference = findReference() ?: error("element doesn't have reference")
+fun PsiElement.checkedResolve(offset: Int): PsiElement {
+    val reference = findReference(offset) ?: error("element doesn't have reference")
     return reference.resolve() ?: run {
         val multiResolve = (reference as? RsReference)?.multiResolve().orEmpty()
         check(multiResolve.size != 1)
