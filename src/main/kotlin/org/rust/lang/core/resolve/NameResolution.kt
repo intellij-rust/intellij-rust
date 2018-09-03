@@ -22,6 +22,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
+import org.rust.lang.core.resolve.NameResolutionTestmarks.otherVersionOfSameCrate
 import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
@@ -171,12 +172,16 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 }
 
 fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    val pkg = crate.containingCargoPackage ?: return false
+    val target = crate.containingCargoTarget ?: return false
+    val pkg = target.pkg
 
     val visitedDeps = mutableSetOf<String>()
     fun processPackage(pkg: CargoWorkspace.Package): Boolean {
         if (isCompletion && pkg.origin != PackageOrigin.DEPENDENCY) return false
         val libTarget = pkg.libTarget ?: return false
+        // When crate depends on another version of the same crate
+        // we shouldn't add current package into resolve/completion results
+        if (otherVersionOfSameCrate.hitOnFalse(libTarget == target)) return false
 
         if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
         visitedDeps += pkg.name
@@ -907,6 +912,7 @@ object NameResolutionTestmarks {
     val missingMacroExport = Testmark("missingMacroExport")
     val missingMacroUse = Testmark("missingMacroUse")
     val selfInGroup = Testmark("selfInGroup")
+    val otherVersionOfSameCrate = Testmark("otherVersionOfSameCrate")
 }
 
 private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)

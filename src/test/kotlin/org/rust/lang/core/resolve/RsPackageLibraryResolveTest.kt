@@ -229,4 +229,18 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use bar::S;
                //^ lib.rs
     """)
+
+    fun `test transitive dependency on the same crate`() = stubOnlyResolve("""
+    //- dep-lib-new/lib.rs
+        pub struct Foo;
+    //- dep-lib/lib.rs
+        extern crate dep_lib_target;
+
+        pub use dep_lib_target::Foo;
+    //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::Foo;
+                            //^ dep-lib-new/lib.rs
+    """, NameResolutionTestmarks.otherVersionOfSameCrate)
 }
