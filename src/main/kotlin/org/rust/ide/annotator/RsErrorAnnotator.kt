@@ -87,7 +87,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkTryExpr(holder: AnnotationHolder, o: RsTryExpr) {
         if (!checkTryTraitFeature(holder, o)) return
-        val ambientScope = o.parentOfType<RsLambdaExpr>() ?: o.parentOfType<RsFunction>() ?: return
+        val ambientScope = o.parentOfType(RsLambdaExpr::class, RsFunction::class)
         val retType = when (ambientScope) {
             is RsFunction -> ambientScope.retType?.typeReference?.type
             is RsLambdaExpr -> ambientScope.retType?.typeReference?.type
