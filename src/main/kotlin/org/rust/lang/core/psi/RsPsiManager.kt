@@ -44,7 +44,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
     override fun projectOpened() {
         PsiManager.getInstance(project).addPsiTreeChangeListener(CacheInvalidator())
         project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-            override fun rootsChanged(event: ModuleRootEvent?) {
+            override fun rootsChanged(event: ModuleRootEvent) {
                 incRustStructureModificationCount()
             }
         })
