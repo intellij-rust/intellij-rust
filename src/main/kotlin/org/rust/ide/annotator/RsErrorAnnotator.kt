@@ -89,13 +89,12 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkTryExpr(holder: AnnotationHolder, o: RsTryExpr) {
         val items = StdKnownItems.relativeTo(o)
-        val tryTrait = items.findTryTrait() ?: return
         val lookup = ImplLookup.relativeTo(o)
-        val errorTy = findErrorTyUsingTryTrait(o.expr.type, tryTrait, lookup)
-        val retType = findParentFnOrLambdaRetTy(o)
-        val tryExprTy = o.expr.type
-        val fooErrorTy = findErrorTyUsingTryTrait(retType, tryTrait, lookup)
+        val tryTrait = items.findTryTrait() ?: return
         val fromTrait = items.findFromTrait() ?: return
+
+        val tryExprTy = o.expr.type
+        val errorTy = findErrorTyUsingTryTrait(o.expr.type, tryTrait, lookup)
         if (errorTy == null) {
             holder.createErrorAnnotation(
                 o.q,
@@ -103,18 +102,23 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             )
             return
         }
-        if (retType == null || fooErrorTy == null) {
+
+        val returnTy = findParentFnOrLambdaRetTy(o)
+        val fooErrorTy = returnTy?.let { findErrorTyUsingTryTrait(it, tryTrait, lookup) }
+        if (returnTy == null || fooErrorTy == null) {
             holder.createErrorAnnotation(
                 o.q,
-                "the `?` operator can only be used in a function that returns `Result` or `Option`(or another type that implements `std::ops::Try`)"
+                "the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `std::ops::Try`)"
             )
             return
         }
-        if (isFnRetTyResultAndMatchErrTy(o.expr, retType, errorTy) || !checkTryTraitFeature(o)) return
-        if (!lookup.canSelect(TraitRef(retType, fromTrait.withSubst(tryExprTy)))) {
+
+        if (isFnRetTyResultAndMatchErrTy(o.expr, returnTy, errorTy) || !checkTryTraitFeature(o)) return
+
+        if (!lookup.canSelect(TraitRef(returnTy, fromTrait.withSubst(tryExprTy)))) {
             val annotation = holder.createErrorAnnotation(
                 o.q,
-                "the trait `std::convert::From<${errorTy.insertionSafeText}>`is not implemented for `${fooErrorTy.insertionSafeText}`"
+                "the trait `std::convert::From<${errorTy.insertionSafeText}>` is not implemented for `${fooErrorTy.insertionSafeText}`"
             )
             if (fooErrorTy is TyAdt && o.crateRoot == fooErrorTy.item.crateRoot) {
                 annotation.registerFix(ImplementFromTraitFix(o, errorTy, fooErrorTy))
@@ -680,8 +684,7 @@ private fun checkTypesAreSized(holder: AnnotationHolder, fn: RsFunction) {
 }
 
 
-private fun findErrorTyUsingTryTrait(type: Ty?, tryTrait: RsTraitItem, lookup: ImplLookup): Ty? {
-    if (type == null) return null
+private fun findErrorTyUsingTryTrait(type: Ty, tryTrait: RsTraitItem, lookup: ImplLookup): Ty? {
     val assocType = tryTrait.findAssociatedType("Error") ?: return null
     return lookup.selectProjectionStrict(TraitRef(type, tryTrait.withSubst(type)),
         assocType).ok()?.value
