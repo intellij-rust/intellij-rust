@@ -685,6 +685,7 @@
         <!--NB: order is important here-->
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsCommaListElementUpDownMover"/>
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsMatchArmUpDownMover"/>
+        <statementUpDownMover implementation="org.rust.ide.actions.mover.RsStatementUpDownMover"/>
         <statementUpDownMover implementation="org.rust.ide.actions.mover.RsItemUpDownMover"/>
 
 
