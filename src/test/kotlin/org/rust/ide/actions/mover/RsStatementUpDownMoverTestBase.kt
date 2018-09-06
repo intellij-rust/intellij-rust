@@ -16,8 +16,20 @@ abstract class RsStatementUpDownMoverTestBase : RsTestBase() {
         }
     }
 
+    fun moveDownForbidden(@Language("Rust") code: String) {
+        checkByText(code.trimIndent() + "\n", code.trimIndent() + "\n") {
+            myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION)
+        }
+    }
+
     fun moveUp(@Language("Rust") before: String, @Language("Rust") after: String) {
         checkByText(before.trimIndent() + "\n", after.trimIndent() + "\n") {
+            myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
+        }
+    }
+
+    fun moveUpForbidden(@Language("Rust") code: String) {
+        checkByText(code.trimIndent() + "\n", code.trimIndent() + "\n") {
             myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
         }
     }
