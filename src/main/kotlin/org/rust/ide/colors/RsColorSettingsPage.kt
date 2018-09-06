@@ -15,8 +15,6 @@ class RsColorSettingsPage : ColorSettingsPage {
     private val ATTRS = RsColor.values().map { it.attributesDescriptor }.toTypedArray()
 
     // This tags should be kept in sync with RsHighlightingAnnotator highlighting logic
-    // TODO: Figure out how to namespace menu elements a la
-    //       https://github.com/JetBrains/kotlin/blob/8b30e7ef4e48494ba245b441a5b23142f1d6ae33/idea/idea-analysis/src/org/jetbrains/kotlin/idea/KotlinBundle.properties
     private val ANNOTATOR_TAGS = RsColor.values().associateBy({ it.name }, { it.textAttributesKey })
 
     private val DEMO_TEXT by lazy {

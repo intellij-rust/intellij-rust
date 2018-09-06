@@ -12,6 +12,8 @@ pub enum <ENUM>Flag</ENUM> {
     <ENUM_VARIANT>Ugly</ENUM_VARIANT>
 }
 
+const <CONSTANT>QUALITY</CONSTANT>: <ENUM>Flag</ENUM> = <ENUM>Flag</ENUM>::<ENUM_VARIANT>Good</ENUM_VARIANT>;
+
 pub trait <TRAIT>Write</TRAIT> {
     fn <METHOD>write</METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize>;
 }
