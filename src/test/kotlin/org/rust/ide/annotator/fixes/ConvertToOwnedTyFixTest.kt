@@ -12,7 +12,8 @@ import org.rust.ide.inspections.RsTypeCheckInspection
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
-    fun `test B is Owned type of A`() = checkFixByText("Convert to B using `ToOwned` trait","""
+
+    fun `test B is Owned type of A`() = checkFixByText("Convert to B using `ToOwned` trait", """
         use std::borrow::Borrow;
 
         struct A;
@@ -28,7 +29,7 @@ class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
         fn main () {
             let b: B = <error>A<caret></error>;
         }
-    ""","""
+    """, """
         use std::borrow::Borrow;
 
         struct A;

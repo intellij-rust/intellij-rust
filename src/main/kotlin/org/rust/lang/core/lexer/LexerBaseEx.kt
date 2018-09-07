@@ -8,9 +8,7 @@ package org.rust.lang.core.lexer
 import com.intellij.lexer.LexerBase
 import com.intellij.psi.tree.IElementType
 
-/**
- * Small utility class to ease implementing [LexerBase].
- */
+/** Small utility class to ease implementing [LexerBase]. */
 abstract class LexerBaseEx : LexerBase() {
     private var state: Int = 0
     private var tokenStart: Int = 0
@@ -19,9 +17,7 @@ abstract class LexerBaseEx : LexerBase() {
     private var bufferEnd: Int = 0
     private var tokenType: IElementType? = null
 
-    /**
-     * Determine type of the current token (the one delimited by [tokenStart] and [tokenEnd]).
-     */
+    /** Determine type of the current token (the one delimited by [tokenStart] and [tokenEnd]). */
     protected abstract fun determineTokenType(): IElementType?
 
     /**
@@ -34,7 +30,6 @@ abstract class LexerBaseEx : LexerBase() {
         bufferSequence = buffer
         bufferEnd = endOffset
         state = initialState
-
         tokenEnd = startOffset
         advance()
     }

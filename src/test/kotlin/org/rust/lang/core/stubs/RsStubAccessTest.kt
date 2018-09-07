@@ -21,10 +21,10 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsInnerAttributeOwner
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsOuterAttributeOwner
-import java.util.*
+import org.rust.stdext.dequeOf
 
 class RsStubAccessTest : RsTestBase() {
-    override val dataPath = "org/rust/lang/core/stubs/fixtures"
+    override val dataPath: String = "org/rust/lang/core/stubs/fixtures"
 
     override fun setUp() {
         super.setUp()
@@ -60,11 +60,16 @@ class RsStubAccessTest : RsTestBase() {
     }
 
     fun `test parent works correctly for stubbed elements`() {
-        val parentsByStub: MutableMap<PsiElement, PsiElement> = HashMap()
+        val parentsByStub: MutableMap<PsiElement, PsiElement> = hashMapOf()
         try {
             LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-                override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
-                    logger.info(message, t)
+                override fun processError(
+                    message: String?,
+                    throwable: Throwable?,
+                    details: Array<out String>?,
+                    logger: Logger
+                ) {
+                    logger.info(message, throwable)
                     throw AssertionError(message)
                 }
             })
@@ -95,14 +100,13 @@ class RsStubAccessTest : RsTestBase() {
     private inline fun <reified T : PsiElement> processStubsWithoutAstAccess(block: (T) -> Unit) {
         checkAstNotLoaded(VirtualFileFilter.ALL)
 
-        val work = ArrayDeque<StubElement<*>>()
+        val work = dequeOf<StubElement<*>>()
 
         VfsUtilCore.visitChildrenRecursively(myFixture.findFileInTempDir("src"), object : VirtualFileVisitor<Void>() {
             override fun visitFileEx(file: VirtualFile): Result {
                 if (!file.isDirectory) {
                     work.push((psiManager.findFile(file) as PsiFileImpl).stub!!)
                 }
-
                 return CONTINUE
             }
         })

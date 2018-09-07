@@ -9,5 +9,9 @@ import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 import com.intellij.platform.DirectoryProjectGenerator
 
-open class RsProjectSettingsStep(generator: DirectoryProjectGenerator<ConfigurationData>)
-    : ProjectSettingsStepBase<ConfigurationData>(generator, AbstractNewProjectStep.AbstractCallback<ConfigurationData>())
+open class RsProjectSettingsStep(
+    generator: DirectoryProjectGenerator<ConfigurationData>
+) : ProjectSettingsStepBase<ConfigurationData>(
+    generator,
+    AbstractNewProjectStep.AbstractCallback<ConfigurationData>()
+)

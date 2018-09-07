@@ -10,29 +10,27 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import org.rust.ide.intentions.RsElementBaseIntentionAction
-import org.rust.lang.core.psi.*
 import org.rust.lang.RsFileType
+import org.rust.lang.core.psi.RsBinaryExpr
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsParenExpr
 import org.rust.lang.core.psi.ext.*
 
 class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() {
-    private val TURBOFISH = "::"
+
+    override fun getText(): String = "Add turbofish operator"
+
+    override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (matchExpr, insertion) = ctx
         val expression = matchExpr.text
         val left = expression.substring(0, insertion)
         val right = expression.substring(insertion)
-        val fixed = create<RsExpr>(project, """$left$TURBOFISH$right""") ?: return
+        val fixed = create<RsExpr>(project, """$left$TURBO_FISH$right""") ?: return
         matchExpr.replace(fixed)
     }
-
-    data class Context(
-        val matchExpr: RsBinaryExpr,
-        val offset: Int
-    )
-
-    override fun getText() = "Add turbofish operator"
-    override fun getFamilyName() = text
 
     private fun resolveMatchExpression(element: PsiElement): RsBinaryExpr? {
         val base = element.ancestorStrict<RsBinaryExpr>() ?: return null
@@ -47,14 +45,12 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
     }
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val m = resolveMatchExpression(element) ?: return null
-        return guessContext(project, m)
+        val resolved = resolveMatchExpression(element) ?: return null
+        return guessContext(project, resolved)
     }
 
     private fun innerOffset(root: PsiElement, child: PsiElement): Int? {
-        if (child == root) {
-            return 0
-        }
+        if (child == root) return 0
         val parent = child.parent ?: return null
         val upper = innerOffset(root, parent) ?: return null
         return upper + child.startOffsetInParent
@@ -65,7 +61,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
         val called = rightBoundary(nodes) ?: return null
         val typeListEndIndex = binary.textLength - called.textLength
 
-        val turbofish_offset = nodes.takeWhile { it != called }.map {
+        val turbofishOffset = nodes.takeWhile { it != called }.map {
             val offset = innerOffset(binary, it)!! + it.textLength
             val typeListCandidate = binary.text.substring(offset, typeListEndIndex)
             if (isTypeArgumentList(project, typeListCandidate)) {
@@ -74,25 +70,24 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
                 null
             }
         }.filterNotNull().firstOrNull() ?: return null
-        return Context(binary, turbofish_offset)
+        return Context(binary, turbofishOffset)
     }
 
     private fun rightBoundary(nodes: List<RsExpr>) = nodes.asReversed().firstOrNull { isCallExpression(it) }
 
     private fun isTypeArgumentList(project: Project, candidate: String) =
-        create<RsCallExpr>(project, "something$TURBOFISH$candidate()") != null
+        create<RsCallExpr>(project, "something$TURBO_FISH$candidate()") != null
 
     private fun bfsLeafs(expr: RsExpr?): List<RsExpr> {
         return when (expr) {
-            is RsBinaryExpr -> {
-                bfsLeafs(expr.left) + bfsLeafs(expr.right)
-            }
-            null -> listOf<RsExpr>()
+            is RsBinaryExpr -> bfsLeafs(expr.left) + bfsLeafs(expr.right)
+            null -> emptyList()
             else -> listOf(expr)
         }
     }
 
-    private fun isCallExpression(expr: RsExpr) = expr is RsParenExpr || expr.firstChild is RsParenExpr
+    private fun isCallExpression(expr: RsExpr): Boolean =
+        expr is RsParenExpr || expr.firstChild is RsParenExpr
 
     private inline fun <reified T : RsElement> create(project: Project, text: String): T? =
         createFromText(project, "fn main() { $text; }")
@@ -100,5 +95,11 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
     private inline fun <reified T : RsElement> createFromText(project: Project, code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, code)
-            .descendantOfTypeStrict<T>()
+            .descendantOfTypeStrict()
+
+    data class Context(val matchExpr: RsBinaryExpr, val offset: Int)
+
+    companion object {
+        private const val TURBO_FISH: String = "::"
+    }
 }

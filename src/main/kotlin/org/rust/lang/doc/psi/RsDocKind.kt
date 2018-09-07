@@ -71,9 +71,8 @@ enum class RsDocKind {
         val firstLineIndented = lines.first()
         val firstLine = firstLineIndented.trimStart()
         val indent = firstLineIndented.length - firstLine.length
-
-        return sequenceOf(firstLine) + lines.drop(1).map {
-            it.dropWhileAtMost(indent) { it == ' ' }
+        return sequenceOf(firstLine) + lines.drop(1).map { line ->
+            line.dropWhileAtMost(indent) { it == ' ' }
         }
     }
 
@@ -111,9 +110,7 @@ enum class RsDocKind {
             return ""
         }
 
-        /**
-         * Get rid of trailing (pseudo-regexp): [ ]+ [*]* * /
-         */
+        /** Get rid of trailing (pseudo-regexp): [ ]+ [*]* * / */
         private fun String.trimTrailingAsterisks(): String {
             if (length < 2) return this
 

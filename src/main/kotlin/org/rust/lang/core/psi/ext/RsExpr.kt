@@ -12,9 +12,7 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
-/**
- * Extracts [RsLitExpr] raw value
- */
+/** Extracts [RsLitExpr] raw value. */
 val RsLitExpr.stringLiteralValue: String? get() = (kind as? RsTextLiteral)?.value
 
 enum class UnaryOperator {
@@ -26,15 +24,16 @@ enum class UnaryOperator {
     BOX, // `box a`
 }
 
-val RsUnaryExpr.operatorType: UnaryOperator get() = when {
-    mut != null -> UnaryOperator.REF_MUT
-    and != null -> UnaryOperator.REF
-    mul != null -> UnaryOperator.DEREF
-    minus != null -> UnaryOperator.MINUS
-    excl != null -> UnaryOperator.NOT
-    box != null -> UnaryOperator.BOX
-    else -> error("Unknown unary operator type: `$text`")
-}
+val RsUnaryExpr.operatorType: UnaryOperator
+    get() = when {
+        mut != null -> UnaryOperator.REF_MUT
+        and != null -> UnaryOperator.REF
+        mul != null -> UnaryOperator.DEREF
+        minus != null -> UnaryOperator.MINUS
+        excl != null -> UnaryOperator.NOT
+        box != null -> UnaryOperator.BOX
+        else -> error("Unknown unary operator type: `$text`")
+    }
 
 interface OverloadableBinaryOperator {
     val traitName: String
@@ -80,9 +79,7 @@ sealed class LogicOp : BoolOp() {
     object OR : LogicOp() // `a || b`
 }
 
-sealed class EqualityOp(
-    override val sign: String
-) : BoolOp(), OverloadableBinaryOperator {
+sealed class EqualityOp(override val sign: String) : BoolOp(), OverloadableBinaryOperator {
     object EQ : EqualityOp("==") // `a == b`
     object EXCLEQ : EqualityOp("!=") // `a != b`
 
@@ -95,9 +92,7 @@ sealed class EqualityOp(
     }
 }
 
-sealed class ComparisonOp(
-    override val sign: String
-) : BoolOp(), OverloadableBinaryOperator {
+sealed class ComparisonOp(override val sign: String) : BoolOp(), OverloadableBinaryOperator {
     object LT : ComparisonOp("<") // `a < b`
     object LTEQ : ComparisonOp("<=") // `a <= b`
     object GT : ComparisonOp(">") // `a > b`
@@ -135,47 +130,49 @@ sealed class ArithmeticAssignmentOp(
     override val fnName: String get() = itemName
 
     companion object {
-        fun values(): List<ArithmeticAssignmentOp> = listOf(ANDEQ, OREQ, PLUSEQ, MINUSEQ, MULEQ, DIVEQ, REMEQ, XOREQ, GTGTEQ, LTLTEQ)
+        fun values(): List<ArithmeticAssignmentOp> =
+            listOf(ANDEQ, OREQ, PLUSEQ, MINUSEQ, MULEQ, DIVEQ, REMEQ, XOREQ, GTGTEQ, LTLTEQ)
     }
 }
 
-val RsBinaryOp.operatorType: BinaryOperator get() = when (op) {
-    "+" -> ArithmeticOp.ADD
-    "-" -> ArithmeticOp.SUB
-    "*" -> ArithmeticOp.MUL
-    "/" -> ArithmeticOp.DIV
-    "%" -> ArithmeticOp.REM
-    "&" -> ArithmeticOp.BIT_AND
-    "|" -> ArithmeticOp.BIT_OR
-    "^" -> ArithmeticOp.BIT_XOR
-    "<<" -> ArithmeticOp.SHL
-    ">>" -> ArithmeticOp.SHR
+val RsBinaryOp.operatorType: BinaryOperator
+    get() = when (op) {
+        "+" -> ArithmeticOp.ADD
+        "-" -> ArithmeticOp.SUB
+        "*" -> ArithmeticOp.MUL
+        "/" -> ArithmeticOp.DIV
+        "%" -> ArithmeticOp.REM
+        "&" -> ArithmeticOp.BIT_AND
+        "|" -> ArithmeticOp.BIT_OR
+        "^" -> ArithmeticOp.BIT_XOR
+        "<<" -> ArithmeticOp.SHL
+        ">>" -> ArithmeticOp.SHR
 
-    "&&" -> LogicOp.AND
-    "||" -> LogicOp.OR
+        "&&" -> LogicOp.AND
+        "||" -> LogicOp.OR
 
-    "==" -> EqualityOp.EQ
-    "!=" -> EqualityOp.EXCLEQ
+        "==" -> EqualityOp.EQ
+        "!=" -> EqualityOp.EXCLEQ
 
-    ">" -> ComparisonOp.GT
-    "<" -> ComparisonOp.LT
-    "<=" -> ComparisonOp.LTEQ
-    ">=" -> ComparisonOp.GTEQ
+        ">" -> ComparisonOp.GT
+        "<" -> ComparisonOp.LT
+        "<=" -> ComparisonOp.LTEQ
+        ">=" -> ComparisonOp.GTEQ
 
-    "=" -> AssignmentOp.EQ
-    "&=" -> ArithmeticAssignmentOp.ANDEQ
-    "|=" -> ArithmeticAssignmentOp.OREQ
-    "+=" -> ArithmeticAssignmentOp.PLUSEQ
-    "-=" -> ArithmeticAssignmentOp.MINUSEQ
-    "*=" -> ArithmeticAssignmentOp.MULEQ
-    "/=" -> ArithmeticAssignmentOp.DIVEQ
-    "%=" -> ArithmeticAssignmentOp.REMEQ
-    "^=" -> ArithmeticAssignmentOp.XOREQ
-    ">>=" -> ArithmeticAssignmentOp.GTGTEQ
-    "<<=" -> ArithmeticAssignmentOp.LTLTEQ
+        "=" -> AssignmentOp.EQ
+        "&=" -> ArithmeticAssignmentOp.ANDEQ
+        "|=" -> ArithmeticAssignmentOp.OREQ
+        "+=" -> ArithmeticAssignmentOp.PLUSEQ
+        "-=" -> ArithmeticAssignmentOp.MINUSEQ
+        "*=" -> ArithmeticAssignmentOp.MULEQ
+        "/=" -> ArithmeticAssignmentOp.DIVEQ
+        "%=" -> ArithmeticAssignmentOp.REMEQ
+        "^=" -> ArithmeticAssignmentOp.XOREQ
+        ">>=" -> ArithmeticAssignmentOp.GTGTEQ
+        "<<=" -> ArithmeticAssignmentOp.LTLTEQ
 
-    else -> error("Unknown binary operator type: `$text`")
-}
+        else -> error("Unknown binary operator type: `$text`")
+    }
 
 val RsBinaryExpr.operator: PsiElement get() = binaryOp.operator
 val RsBinaryExpr.operatorType: BinaryOperator get() = binaryOp.operatorType

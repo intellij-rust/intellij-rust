@@ -11,7 +11,11 @@ import com.intellij.codeInsight.completion.CompletionType
 class CargoTomlCompletionContributor : CompletionContributor() {
     init {
         if (tomlPluginIsAbiCompatible()) {
-            extend(CompletionType.BASIC, CargoTomlKeysCompletionProvider.elementPattern, CargoTomlKeysCompletionProvider())
+            extend(
+                CompletionType.BASIC,
+                CargoTomlKeysCompletionProvider.elementPattern,
+                CargoTomlKeysCompletionProvider()
+            )
         }
     }
 }

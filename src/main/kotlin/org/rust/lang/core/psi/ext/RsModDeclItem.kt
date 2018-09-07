@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.psi.ext
 
-
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -29,21 +28,28 @@ fun RsModDeclItem.getOrCreateModuleFile(): PsiFile? {
 val RsModDeclItem.isLocal: Boolean
     get() = stub?.isLocal ?: (ancestorStrict<RsBlock>() != null)
 
-
 //TODO: use explicit path if present.
 private val RsModDeclItem.suggestChildFileName: String?
     get() = implicitPaths.firstOrNull()
 
+private val RsModDeclItem.implicitPaths: List<String>
+    get() {
+        val name = name ?: return emptyList()
+        return if (isLocal) emptyList() else listOf("$name.rs", "$name/mod.rs")
+    }
 
-private val RsModDeclItem.implicitPaths: List<String> get() {
-    val name = name ?: return emptyList()
-    return if (isLocal) emptyList() else listOf("$name.rs", "$name/mod.rs")
-}
+val RsModDeclItem.pathAttribute: String?
+    get() = queryAttributes.lookupStringValueForKey("path")
 
-val RsModDeclItem.pathAttribute: String? get() = queryAttributes.lookupStringValueForKey("path")
+abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemStub>, RsModDeclItem {
+    override val referenceNameElement: PsiElement get() = identifier
+    override val referenceName: String get() = name!!
 
-abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemStub>,
-                                        RsModDeclItem {
+    override val isPublic: Boolean
+        get() = RsPsiImplUtil.isPublic(this, stub)
+
+    override val crateRelativePath: String?
+        get() = RsPsiImplUtil.crateRelativePath(this)
 
     constructor(node: ASTNode) : super(node)
 
@@ -51,18 +57,10 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
 
     override fun getReference(): RsReference = RsModReferenceImpl(this)
 
-    override val referenceNameElement: PsiElement get() = identifier
-
-    override val referenceName: String get() = name!!
-
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RsIcons.MODULE)
-
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
 
-val RsModDeclItem.hasMacroUse: Boolean get() =
-    queryAttributes.hasAttribute("macro_use")
+val RsModDeclItem.hasMacroUse: Boolean
+    get() = queryAttributes.hasAttribute("macro_use")

@@ -11,26 +11,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.toolchain.RustToolchain
 
 enum class StdLibType {
-    /**
-     * An indispensable part of the stdlib
-     */
+    /** An indispensable part of the stdlib. */
     ROOT,
 
-    /**
-     * A crate that can be used as a dependency if a corresponding feature is turned on
-     */
+    /** A crate that can be used as a dependency if a corresponding feature is turned on. */
     FEATURE_GATED,
 
-    /**
-     * A dependency that is not visible outside of the stdlib
-     */
+    /** A dependency that is not visible outside of the stdlib. */
     DEPENDENCY
 }
 
-data class StdLibInfo (
+data class StdLibInfo(
     val name: String,
     val type: StdLibType,
-    val srcDir: String = "lib" + name,
+    val srcDir: String = "lib$name",
     val dependencies: List<String> = emptyList()
 )
 
@@ -39,9 +33,23 @@ object AutoInjectedCrates {
     const val CORE: String = "core"
     val stdlibCrates = listOf(
         // Roots
-        StdLibInfo(STD, StdLibType.ROOT, dependencies = listOf("alloc_jemalloc", "alloc_system", "panic_abort", "rand",
-            "compiler_builtins", "unwind", "rustc_asan", "rustc_lsan", "rustc_msan", "rustc_tsan",
-            "build_helper")),
+        StdLibInfo(
+            STD,
+            StdLibType.ROOT,
+            dependencies = listOf(
+                "alloc_jemalloc",
+                "alloc_system",
+                "panic_abort",
+                "rand",
+                "compiler_builtins",
+                "unwind",
+                "rustc_asan",
+                "rustc_lsan",
+                "rustc_msan",
+                "rustc_tsan",
+                "build_helper"
+            )
+        ),
         StdLibInfo(CORE, StdLibType.ROOT),
         StdLibInfo("alloc", StdLibType.ROOT),
         StdLibInfo("collections", StdLibType.ROOT),
@@ -51,6 +59,7 @@ object AutoInjectedCrates {
         StdLibInfo("rustc_unicode", type = StdLibType.ROOT),
         StdLibInfo("std_unicode", type = StdLibType.ROOT),
         StdLibInfo("test", dependencies = listOf("getopts", "term"), type = StdLibType.ROOT),
+
         // Feature gated
         StdLibInfo("alloc_jemalloc", StdLibType.FEATURE_GATED),
         StdLibInfo("alloc_system", StdLibType.FEATURE_GATED),
@@ -61,6 +70,7 @@ object AutoInjectedCrates {
         StdLibInfo("rand", StdLibType.FEATURE_GATED),
         StdLibInfo("term", StdLibType.FEATURE_GATED),
         StdLibInfo("unwind", StdLibType.FEATURE_GATED),
+
         // Dependencies
         StdLibInfo("build_helper", StdLibType.DEPENDENCY, srcDir = "build_helper"),
         StdLibInfo("rustc_asan", StdLibType.DEPENDENCY),
@@ -71,9 +81,7 @@ object AutoInjectedCrates {
     )
 }
 
-/**
- * Extracts Cargo based project's root-path (the one containing `Cargo.toml`)
- */
+/** Extracts Cargo based project's root-path (the one containing `Cargo.toml`). */
 val Module.cargoProjectRoot: VirtualFile?
     get() = ModuleRootManager.getInstance(this).contentRoots.firstOrNull {
         it.findChild(RustToolchain.CARGO_TOML) != null

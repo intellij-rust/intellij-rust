@@ -12,16 +12,14 @@ import org.rust.lang.core.psi.RsForExpr
 import org.rust.lang.core.psi.RsPsiFactory
 
 class RsWithForSurrounder : RsStatementsSurrounderBase.BlockWithCondition<RsForExpr>() {
+
     override fun getTemplateDescription(): String = "for { }"
 
     override fun createTemplate(project: Project): Pair<RsForExpr, RsBlock> {
-        val f = RsPsiFactory(project).createExpression("for a in b {}") as RsForExpr
-        return f to f.block!!
+        val forExpr = RsPsiFactory(project).createExpression("for a in b {}") as RsForExpr
+        return forExpr to forExpr.block!!
     }
 
     override fun conditionRange(expression: RsForExpr): TextRange =
-        TextRange(
-            expression.pat!!.textRange.startOffset,
-            expression.expr!!.textRange.endOffset
-        )
+        TextRange(expression.pat!!.textRange.startOffset, expression.expr!!.textRange.endOffset)
 }

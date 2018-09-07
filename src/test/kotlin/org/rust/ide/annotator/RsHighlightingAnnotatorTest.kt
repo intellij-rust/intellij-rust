@@ -38,8 +38,6 @@ class RsHighlightingAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
-    private val `$` = '$'
-
     fun `test macro`() = checkInfo("""
         fn <info>main</info>() {
             <info>println!</info>["Hello, World!"];
@@ -128,4 +126,8 @@ class RsHighlightingAnnotatorTest : RsAnnotationTestBase() {
         """,
         checkInfo = true
     )
+
+    companion object {
+        private const val `$`: Char = '$'
+    }
 }

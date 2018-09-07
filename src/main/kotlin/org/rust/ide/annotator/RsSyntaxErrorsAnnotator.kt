@@ -67,36 +67,50 @@ private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
     }
 }
 
-private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
-    val title = "Type `${ta.identifier.text}`"
-    val owner = ta.owner
+private fun checkTypeAlias(holder: AnnotationHolder, typeAlias: RsTypeAlias) {
+    val title = "Type `${typeAlias.identifier.text}`"
+    val owner = typeAlias.owner
     when (owner) {
         is RsAbstractableOwner.Free -> {
-            deny(ta.default, holder, "$title cannot have the `default` qualifier")
-            deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
-            require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
+            deny(typeAlias.default, holder, "$title cannot have the `default` qualifier")
+            deny(typeAlias.typeParamBounds, holder, "$title cannot have type parameter bounds")
+            require(
+                typeAlias.typeReference,
+                holder,
+                "Aliased type must be provided for type `${typeAlias.identifier.text}`",
+                typeAlias
+            )
         }
         is RsAbstractableOwner.Trait -> {
-            deny(ta.default, holder, "$title cannot have the `default` qualifier")
-            deny(ta.vis, holder, "$title cannot have the `pub` qualifier")
-            deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
-            deny(ta.whereClause, holder, "$title cannot have `where` clause")
+            deny(typeAlias.default, holder, "$title cannot have the `default` qualifier")
+            deny(typeAlias.vis, holder, "$title cannot have the `pub` qualifier")
+            deny(typeAlias.typeParameterList, holder, "$title cannot have generic parameters")
+            deny(typeAlias.whereClause, holder, "$title cannot have `where` clause")
         }
         is RsAbstractableOwner.Impl -> {
             if (owner.impl.`for` == null) {
-                RsDiagnostic.AssociatedTypeInInherentImplError(ta).addToHolder(holder)
+                RsDiagnostic.AssociatedTypeInInherentImplError(typeAlias).addToHolder(holder)
             } else {
-                deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
-                deny(ta.whereClause, holder, "$title cannot have `where` clause")
-                deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
-                require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
+                deny(typeAlias.typeParameterList, holder, "$title cannot have generic parameters")
+                deny(typeAlias.whereClause, holder, "$title cannot have `where` clause")
+                deny(typeAlias.typeParamBounds, holder, "$title cannot have type parameter bounds")
+                require(
+                    typeAlias.typeReference,
+                    holder,
+                    "Aliased type must be provided for type `${typeAlias.identifier.text}`",
+                    typeAlias
+                )
             }
         }
     }
 }
 
 private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
-    val title = if (const.static != null) "Static constant `${const.identifier.text}`" else "Constant `${const.identifier.text}`"
+    val title = if (const.static != null) {
+        "Static constant `${const.identifier.text}`"
+    } else {
+        "Constant `${const.identifier.text}`"
+    }
     when (const.owner) {
         is RsAbstractableOwner.Free -> {
             deny(const.default, holder, "$title cannot have the `default` qualifier")
@@ -168,7 +182,13 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
                     "_: ${param.text}"
                 )
                 val descriptor = InspectionManager.getInstance(param.project)
-                    .createProblemDescriptor(param, annotation.message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)
+                    .createProblemDescriptor(
+                        param,
+                        annotation.message,
+                        fix,
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                        true
+                    )
 
                 annotation.registerFix(fix, null, null, descriptor)
             }
@@ -187,28 +207,50 @@ private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypePara
     }
 }
 
-private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
-    if (el != null) null
-    else holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
+private fun require(
+    element: PsiElement?,
+    holder: AnnotationHolder,
+    message: String,
+    vararg highlightElements: PsiElement?
+): Annotation? {
+    return if (element != null) {
+        null
+    } else {
+        holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
+    }
+}
 
-private fun deny(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
-    if (el == null) null
-    else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
+private fun deny(
+    element: PsiElement?,
+    holder: AnnotationHolder,
+    message: String,
+    vararg highlightElements: PsiElement?
+): Annotation? {
+    return if (element == null) {
+        null
+    } else {
+        holder.createErrorAnnotation(highlightElements.combinedRange ?: element.textRange, message)
+    }
+}
 
-private inline fun <reified T : RsElement> denyType(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
-    if (el !is T) null
-    else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
+private inline fun <reified T : RsElement> denyType(
+    element: PsiElement?,
+    holder: AnnotationHolder,
+    message: String,
+    vararg highlightElements: PsiElement?
+): Annotation? {
+    return if (element !is T) {
+        null
+    } else {
+        holder.createErrorAnnotation(highlightElements.combinedRange ?: element.textRange, message)
+    }
+}
 
 private val Array<out PsiElement?>.combinedRange: TextRange?
-    get() = if (isEmpty())
-        null
-    else filterNotNull()
-        .map { it.textRange }
-        .reduce(TextRange::union)
+    get() = if (isEmpty()) null else filterNotNull().map { it.textRange }.reduce(TextRange::union)
 
 private val PsiElement.rightVisibleLeaves: Sequence<PsiElement>
-    get() = generateSequence(PsiTreeUtil.nextVisibleLeaf(this), { el -> PsiTreeUtil.nextVisibleLeaf(el) })
+    get() = generateSequence(PsiTreeUtil.nextVisibleLeaf(this)) { PsiTreeUtil.nextVisibleLeaf(it) }
 
 private val String.firstLower: String
     get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)
-

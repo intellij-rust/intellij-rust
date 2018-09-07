@@ -8,11 +8,11 @@ package org.rust.ide.inspections
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-/**
- * Tests for the set of Naming Convention inspections.
- */
+/** Tests for the set of Naming Convention inspections. */
 abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspectionsTestBase(inspection) {
+
     class RsAssocTypeNamingInspectionTest : RsNamingInspectionTest(RsAssocTypeNamingInspection()) {
+
         fun testAssociatedTypes() = checkByText("""
             trait Foo {
                 type AssocTypeOk;
@@ -43,6 +43,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsConstNamingInspectionTest : RsNamingInspectionTest(RsConstNamingInspection()) {
+
         fun testConstants() = checkByText("""
             const CONST_OK: u32 = 12;
             const <warning descr="Constant `const_foo` should have an upper case name such as `CONST_FOO`">const_foo</warning>: u32 = 12;
@@ -66,7 +67,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsEnumNamingInspectionTest: RsNamingInspectionTest(RsEnumNamingInspection()) {
+    class RsEnumNamingInspectionTest : RsNamingInspectionTest(RsEnumNamingInspection()) {
+
         fun testEnums() = checkByText("""
             enum EnumOk {}
             enum <warning descr="Type `enum_foo` should have a camel case name such as `EnumFoo`">enum_foo</warning> {}
@@ -90,7 +92,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsEnumVariantNamingInspectionTest: RsNamingInspectionTest(RsEnumVariantNamingInspection()) {
+    class RsEnumVariantNamingInspectionTest : RsNamingInspectionTest(RsEnumVariantNamingInspection()) {
+
         fun testEnumVariants() = checkByText("""
             enum EnumVars {
                 VariantOk,
@@ -122,7 +125,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsFieldNamingInspectionTest: RsNamingInspectionTest(RsFieldNamingInspection()) {
+    class RsFieldNamingInspectionTest : RsNamingInspectionTest(RsFieldNamingInspection()) {
+
         fun testEnumVariantFields() = checkByText("""
             enum EnumVarFields {
                 Variant {
@@ -194,7 +198,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
     }
 
-    class RsFunctionNamingInspectionTest: RsNamingInspectionTest(RsFunctionNamingInspection()) {
+    class RsFunctionNamingInspectionTest : RsNamingInspectionTest(RsFunctionNamingInspection()) {
+
         fun testFunctions() = checkByText("""
             fn fn_ok() {}
             fn <warning descr="Function `FN_BAR` should have a snake case name such as `fn_bar`">FN_BAR</warning>() {}
@@ -222,7 +227,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsArgumentNamingInspectionTest: RsNamingInspectionTest(RsArgumentNamingInspection()) {
+    class RsArgumentNamingInspectionTest : RsNamingInspectionTest(RsArgumentNamingInspection()) {
+
         fun testFunctionArguments() = checkByText("""
             fn fn_par(
                 par_ok: u32,
@@ -280,7 +286,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsLifetimeNamingInspectionTest: RsNamingInspectionTest(RsLifetimeNamingInspection()) {
+    class RsLifetimeNamingInspectionTest : RsNamingInspectionTest(RsLifetimeNamingInspection()) {
+
         fun testLifetimes() = checkByText("""
             fn lifetimes<
                 'lifetime_ok,
@@ -305,7 +312,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsMacroNamingInspectionTest: RsNamingInspectionTest(RsMacroNamingInspection()) {
+    class RsMacroNamingInspectionTest : RsNamingInspectionTest(RsMacroNamingInspection()) {
+
         fun testMacros() = checkByText("""
             macro_rules! macro_ok { () => {}; }
             macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">MacroFoo</warning> { () => {}; }
@@ -325,7 +333,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsMethodNamingInspectionTest: RsNamingInspectionTest(RsMethodNamingInspection()) {
+    class RsMethodNamingInspectionTest : RsNamingInspectionTest(RsMethodNamingInspection()) {
+
         fun testMethods() = checkByText("""
             struct Foo {}
             impl Foo {
@@ -397,7 +406,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         // """)
     }
 
-    class RsModuleNamingInspectionTest: RsNamingInspectionTest(RsModuleNamingInspection()) {
+    class RsModuleNamingInspectionTest : RsNamingInspectionTest(RsModuleNamingInspection()) {
+
         fun testModules() = checkByText("""
             mod module_ok {}
             mod <warning descr="Module `moduleA` should have a snake case name such as `module_a`">moduleA</warning> {}
@@ -430,7 +440,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsStaticConstNamingInspectionTest: RsNamingInspectionTest(RsStaticConstNamingInspection()) {
+    class RsStaticConstNamingInspectionTest : RsNamingInspectionTest(RsStaticConstNamingInspection()) {
+
         fun testStatics() = checkByText("""
             static STATIC_OK: u32 = 12;
             static <warning descr="Static constant `static_foo` should have an upper case name such as `STATIC_FOO`">static_foo</warning>: u32 = 12;
@@ -454,7 +465,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsStructNamingInspectionTest: RsNamingInspectionTest(RsStructNamingInspection()) {
+    class RsStructNamingInspectionTest : RsNamingInspectionTest(RsStructNamingInspection()) {
+
         fun testStructs() = checkByText("""
             struct StructOk {}
             struct <warning descr="Type `struct_foo` should have a camel case name such as `StructFoo`">struct_foo</warning> {}
@@ -478,7 +490,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
         """)
     }
 
-    class RsTraitNamingInspectionTest: RsNamingInspectionTest(RsTraitNamingInspection()) {
+    class RsTraitNamingInspectionTest : RsNamingInspectionTest(RsTraitNamingInspection()) {
         fun testTraits() = checkByText("""
             trait TraitOk {}
             trait <warning descr="Trait `trait_foo` should have a camel case name such as `TraitFoo`">trait_foo</warning> {}
@@ -500,7 +512,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
          """)
     }
 
-    class RsTypeAliasNamingInspectionTest: RsNamingInspectionTest(RsTypeAliasNamingInspection()) {
+    class RsTypeAliasNamingInspectionTest : RsNamingInspectionTest(RsTypeAliasNamingInspection()) {
+
         fun testTypeAliases() = checkByText("""
             type TypeOk = u32;
             type <warning descr="Type `type_foo` should have a camel case name such as `TypeFoo`">type_foo</warning> = u32;
@@ -520,7 +533,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
          """)
     }
 
-    class RsTypeParameterNamingInspectionTest: RsNamingInspectionTest(RsTypeParameterNamingInspection()) {
+    class RsTypeParameterNamingInspectionTest : RsNamingInspectionTest(RsTypeParameterNamingInspection()) {
+
         fun testTypeParameters() = checkByText("""
             fn type_params<
                 SomeType: Clone,
@@ -553,7 +567,8 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
          """)
     }
 
-    class RsVariableNamingInspectionTest: RsNamingInspectionTest(RsVariableNamingInspection()) {
+    class RsVariableNamingInspectionTest : RsNamingInspectionTest(RsVariableNamingInspection()) {
+
         fun testVariables() = checkByText("""
             fn loc_var() {
                 let var_ok = 12;

@@ -11,11 +11,9 @@ import org.rust.cargo.util.StdLibType
 import org.rust.openapiext.CachedVirtualFile
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 /**
  * Rust project model represented roughly in the same way as in Cargo itself.
- *
  * [org.rust.cargo.project.model.CargoProjectsService] manages workspaces.
  */
 interface CargoWorkspace {
@@ -28,17 +26,19 @@ interface CargoWorkspace {
     fun findPackage(name: String): Package? = packages.find { it.name == name }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
-    fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
+    fun isCrateRoot(root: VirtualFile): Boolean = findTargetByCrateRoot(root) != null
 
     fun withStdlib(stdlib: StandardLibrary): CargoWorkspace
-    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
+    val hasStandardLibrary: Boolean
+        get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     interface Package {
         val contentRoot: VirtualFile?
         val rootDirectory: Path
 
         val name: String
-        val normName: String get() = name.replace('-', '_')
+        val normName: String
+            get() = name.replace('-', '_')
 
         val version: String
 
@@ -79,8 +79,7 @@ interface CargoWorkspace {
     }
 
     /**
-     * Represents possible variants of generated artifact binary
-     * corresponded to `--crate-type` compiler attribute
+     * Represents possible variants of generated artifact binary corresponded to `--crate-type` compiler attribute.
      *
      * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
      */
@@ -89,8 +88,8 @@ interface CargoWorkspace {
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace
-            = WorkspaceImpl.deserialize(manifestPath, data)
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace =
+            WorkspaceImpl.deserialize(manifestPath, data)
     }
 }
 
@@ -100,30 +99,21 @@ private class WorkspaceImpl(
     override val workspaceRootPath: Path?,
     packagesData: Collection<CargoWorkspaceData.Package>
 ) : CargoWorkspace {
-    override val packages: List<PackageImpl> = packagesData.map { pkg ->
-        PackageImpl(
-            this,
-            pkg.id,
-            pkg.contentRootUrl,
-            pkg.name,
-            pkg.version,
-            pkg.targets,
-            pkg.source,
-            pkg.origin
-        )
-    }
+    override val packages: List<PackageImpl> =
+        packagesData.map { (id, contentRootUrl, name, version, targets, source, origin) ->
+            PackageImpl(this, id, contentRootUrl, name, version, targets, source, origin)
+        }
 
-    val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
+    val targetByCrateRootUrl: Map<String, TargetImpl> = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
+
     override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? {
         val canonicalFile = root.canonicalFile ?: return null
         return targetByCrateRootUrl[canonicalFile.url]
     }
 
     override fun withStdlib(stdlib: StandardLibrary): CargoWorkspace {
-        // This is a bit trickier than it seems required.
-        // The problem is that workspace packages and targets have backlinks
-        // so we have to rebuild the whole workspace from scratch instead of
-        // *just* adding in the stdlib.
+        // This is a bit trickier than it seems required. The problem is that workspace packages and targets have
+        // backlinks so we have to rebuild the whole workspace from scratch instead of *just* adding in the stdlib.
 
         val stdAll = stdlib.crates.map { it.id }.toSet()
         val stdGated = stdlib.crates.filter { it.type == StdLibType.FEATURE_GATED }.map { it.id }.toSet()
@@ -132,8 +122,7 @@ private class WorkspaceImpl(
         val result = WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
-            packages.map { it.asPackageData } +
-                stdlib.crates.map { it.asPackageData }
+            packages.map { it.asPackageData } + stdlib.crates.map { it.asPackageData }
         )
 
         run {
@@ -162,11 +151,9 @@ private class WorkspaceImpl(
 
     companion object {
         fun deserialize(manifestPath: Path, data: CargoWorkspaceData): WorkspaceImpl {
-            // Packages form mostly a DAG. "Why mostly?", you say.
-            // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
-            // This is ok, because cargo can compile `P` (without `X`, because dev-deps
-            // are used only for tests), then `X`, and then `P`s tests. So we need to
-            // handle cycles here.
+            // Packages form mostly a DAG. "Why mostly?", you say. Well, a dev-dependency `X` of package `P` can depend
+            // on the `P` itself. This is ok, because cargo can compile `P` (without `X`, because dev-deps are used
+            // only for tests), then `X`, and then `P`s tests. So we need to handle cycles here.
 
             val workspaceRootPath = data.workspaceRoot?.let { Paths.get(it) }
             val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages)
@@ -183,7 +170,8 @@ private class WorkspaceImpl(
             // - if a package is a workspace member it's WORKSPACE (handled in constructor)
             // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
             // - otherwise, it's TRANSITIVE_DEPENDENCY (handled in constructor as well)
-            result.packages.filter { it.origin == PackageOrigin.WORKSPACE }
+            result.packages
+                .filter { it.origin == PackageOrigin.WORKSPACE }
                 .flatMap { it.dependencies }
                 .forEach { it.origin = PackageOrigin.min(it.origin, PackageOrigin.DEPENDENCY) }
 
@@ -192,12 +180,10 @@ private class WorkspaceImpl(
     }
 }
 
-
 private class PackageImpl(
     override val workspace: WorkspaceImpl,
     val id: PackageId,
-    // Note: In tests, we use in-memory file system,
-    // so we can't use `Path` here.
+    // Note: In tests, we use in-memory file system, so we can't use `Path` here.
     val contentRootUrl: String,
     override val name: String,
     override val version: String,
@@ -205,17 +191,19 @@ private class PackageImpl(
     override val source: String?,
     override var origin: PackageOrigin
 ) : CargoWorkspace.Package {
-    override val targets = targetsData.map { TargetImpl(this, crateRootUrl = it.crateRootUrl, name = it.name, kind = it.kind, crateTypes = it.crateTypes) }
+    override val targets: List<TargetImpl> =
+        targetsData.map { (crateRootUrl, name, kind, crateTypes) ->
+            TargetImpl(this, crateRootUrl, name, kind, crateTypes)
+        }
 
     override val contentRoot: VirtualFile? by CachedVirtualFile(contentRootUrl)
 
     override val rootDirectory: Path
         get() = Paths.get(VirtualFileManager.extractPath(contentRootUrl))
 
-    override val dependencies: MutableList<PackageImpl> = ArrayList()
+    override val dependencies: MutableList<PackageImpl> = mutableListOf()
 
-    override fun toString()
-        = "Package(name='$name', contentRootUrl='$contentRootUrl')"
+    override fun toString() = "Package(name='$name', contentRootUrl='$contentRootUrl')"
 }
 
 
@@ -226,44 +214,43 @@ private class TargetImpl(
     override val kind: CargoWorkspace.TargetKind,
     override val crateTypes: List<CargoWorkspace.CrateType>
 ) : CargoWorkspace.Target {
-
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
 
-    override fun toString(): String
-        = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
+    override fun toString(): String =
+        "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }
 
 
 private val PackageImpl.asPackageData: CargoWorkspaceData.Package
-    get() =
-        CargoWorkspaceData.Package(
-            id = id,
-            contentRootUrl = contentRootUrl,
-            name = name,
-            version = version,
-            targets = targets.map { CargoWorkspaceData.Target(
+    get() = CargoWorkspaceData.Package(
+        id,
+        contentRootUrl,
+        name,
+        version,
+        targets.map {
+            CargoWorkspaceData.Target(
                 crateRootUrl = it.crateRootUrl,
                 name = it.name,
                 kind = it.kind,
                 crateTypes = it.crateTypes
-            ) },
-            source = source,
-            origin = origin
-        )
+            )
+        },
+        source,
+        origin
+    )
 
 private val StandardLibrary.StdCrate.asPackageData
-    get() =
-        CargoWorkspaceData.Package(
-            id = id,
-            contentRootUrl = packageRootUrl,
-            name = name,
-            version = "",
-            targets = listOf(CargoWorkspaceData.Target(
-                crateRootUrl = crateRootUrl,
-                name = name,
-                kind = CargoWorkspace.TargetKind.LIB,
-                crateTypes = listOf(CargoWorkspace.CrateType.LIB)
-            )),
-            source = null,
-            origin = PackageOrigin.STDLIB
-        )
+    get() = CargoWorkspaceData.Package(
+        id,
+        packageRootUrl,
+        name,
+        "",
+        listOf(CargoWorkspaceData.Target(
+            crateRootUrl,
+            name,
+            CargoWorkspace.TargetKind.LIB,
+            listOf(CargoWorkspace.CrateType.LIB)
+        )),
+        null,
+        PackageOrigin.STDLIB
+    )

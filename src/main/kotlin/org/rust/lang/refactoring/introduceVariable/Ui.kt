@@ -13,7 +13,6 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.RsExpr
 import org.rust.openapiext.isUnitTestMode
 
-
 fun showIntroduceVariableTargetExpressionChooser(
     editor: Editor,
     exprs: List<RsExpr>,
@@ -22,7 +21,7 @@ fun showIntroduceVariableTargetExpressionChooser(
     if (isUnitTestMode) {
         callback(MOCK!!.chooseTarget(exprs))
     } else {
-        IntroduceTargetChooser.showChooser(editor, exprs, callback.asPass, { it.text })
+        IntroduceTargetChooser.showChooser(editor, exprs, callback.asPass) { it.text }
     }
 }
 
@@ -58,13 +57,13 @@ interface IntroduceVariableUi {
 }
 
 private var MOCK: IntroduceVariableUi? = null
+
 @TestOnly
-fun withMockIntroduceVariableTargetExpressionChooser(mock: IntroduceVariableUi, f: () -> Unit) {
+fun withMockIntroduceVariableTargetExpressionChooser(mock: IntroduceVariableUi, action: () -> Unit) {
     MOCK = mock
     try {
-        f()
+        action()
     } finally {
         MOCK = null
     }
 }
-

@@ -25,11 +25,12 @@ import org.rust.lang.core.types.type
  * ```
  */
 class RsExtraSemicolonInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Extra semicolon"
+
+    override fun getDisplayName(): String = "Extra semicolon"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitFunction(o: RsFunction) = inspect(holder, o)
+            override fun visitFunction(fn: RsFunction) = inspect(holder, fn)
         }
 }
 
@@ -44,9 +45,10 @@ private fun inspect(holder: ProblemsHolder, fn: RsFunction) {
                     exitPoint.stmt,
                     "Function returns () instead of ${retType.text}",
                     object : LocalQuickFix {
-                        override fun getName() = "Remove semicolon"
 
-                        override fun getFamilyName() = name
+                        override fun getName(): String = "Remove semicolon"
+
+                        override fun getFamilyName(): String = name
 
                         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                             val statement = (descriptor.psiElement as RsExprStmt)

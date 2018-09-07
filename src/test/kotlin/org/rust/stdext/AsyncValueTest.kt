@@ -11,7 +11,6 @@ import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.RecursiveTask
 import java.util.concurrent.TimeUnit
 
-
 class AsyncValueTest : TestCase() {
     fun `test async value is thread-safe`() = repeat(32) {
         val value = AsyncValue(0)

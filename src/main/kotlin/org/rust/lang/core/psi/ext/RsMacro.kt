@@ -14,8 +14,8 @@ import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.stubs.RsMacroStub
 import javax.swing.Icon
 
-abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
-                                  RsMacro {
+abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>, RsMacro {
+    override val crateRelativePath: String? get() = name?.let { "::$it" }
 
     constructor(node: ASTNode) : super(node)
 
@@ -26,8 +26,6 @@ abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
             .getOrNull(1) // Zeroth is `macro_rules` itself
 
     override fun getIcon(flags: Int): Icon? = RsIcons.MACRO
-
-    override val crateRelativePath: String? get() = name?.let { "::$it" }
 }
 
 val RsMacro.hasMacroExport: Boolean

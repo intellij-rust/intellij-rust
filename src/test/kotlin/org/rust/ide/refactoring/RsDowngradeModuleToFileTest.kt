@@ -5,6 +5,8 @@
 
 package org.rust.ide.refactoring
 
+import com.intellij.idea.IdeaTestApplication
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.TestDataProvider
@@ -14,6 +16,7 @@ import org.rust.fileTree
 import org.rust.lang.refactoring.RsDowngradeModuleToFile
 
 class RsDowngradeModuleToFileTest : RsTestBase() {
+
     fun `test works on file`() = checkAvailable(
         "foo/mod.rs",
         fileTree {
@@ -60,22 +63,22 @@ class RsDowngradeModuleToFileTest : RsTestBase() {
         }
     )
 
-    fun checkAvailable(target: String, before: FileTree, after: FileTree) {
+    private fun checkAvailable(target: String, before: FileTree, after: FileTree) {
         val file = before.create().psiFile(target)
         testActionOnElement(file)
         after.assertEquals(myFixture.findFileInTempDir("."))
     }
 
-    fun checkNotAvailable(target: String, before: FileTree) {
+    private fun checkNotAvailable(target: String, before: FileTree) {
         val file = before.create().psiFile(target)
         val presentation = testActionOnElement(file)
         check(!presentation.isEnabled)
     }
 
     private fun testActionOnElement(element: PsiElement): Presentation {
-        com.intellij.idea.IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
+        IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
             override fun getData(dataId: String?): Any? =
-                if (com.intellij.openapi.actionSystem.CommonDataKeys.PSI_ELEMENT.`is`(dataId)) element else super.getData(dataId)
+                if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) element else super.getData(dataId)
         })
 
         return myFixture.testAction(RsDowngradeModuleToFile())

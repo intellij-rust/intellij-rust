@@ -15,9 +15,12 @@ import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 
 abstract class RsSurrounderTestBase(private val surrounder: Surrounder) : RsTestBase() {
-    protected fun doTest(@Language("Rust") before: String,
-                         @Language("Rust") after: String,
-                         checkSyntaxErrors: Boolean = true) {
+
+    protected fun doTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        checkSyntaxErrors: Boolean = true
+    ) {
         myFixture.configureByText(RsFileType, before)
 
         checkApplicability(fileName, true)

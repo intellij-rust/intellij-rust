@@ -7,13 +7,14 @@ package org.rust.ide.utils
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.ext.LogicOp.*
+import org.rust.lang.core.psi.ext.ArithmeticOp
+import org.rust.lang.core.psi.ext.LogicOp
+import org.rust.lang.core.psi.ext.LogicOp.AND
+import org.rust.lang.core.psi.ext.LogicOp.OR
+import org.rust.lang.core.psi.ext.UnaryOperator
+import org.rust.lang.core.psi.ext.operatorType
 
-/**
- * Returns `true` if all elements are `true`, `false` if there exists
- * `false` element and `null` otherwise.
- */
+/** Returns `true` if all elements are `true`, `false` if there exists `false` element and `null` otherwise. */
 private fun <T> List<T>.allMaybe(predicate: (T) -> Boolean?): Boolean? {
     val values = map(predicate)
     val nullsTrue = values.all {
@@ -26,8 +27,7 @@ private fun <T> List<T>.allMaybe(predicate: (T) -> Boolean?): Boolean? {
 }
 
 /**
- * Check if an expression is functionally pure
- * (has no side-effects and throws no errors).
+ * Check if an expression is functionally pure (has no side-effects and throws no errors).
  *
  * @return `true` if the expression is pure, `false` if
  *        > it is not pure (has side-effects / throws errors)
@@ -38,12 +38,12 @@ fun RsExpr.isPure(): Boolean? {
         is RsArrayExpr -> when (semicolon) {
             null -> exprList.allMaybe(RsExpr::isPure)
             else -> exprList[0].isPure() // Array literal of form [expr; size],
-        // size is a compile-time constant, so it is always pure
+            // size is a compile-time constant, so it is always pure
         }
         is RsStructLiteral -> when (structLiteralBody.dotdot) {
             null -> structLiteralBody.structLiteralFieldList
-                    .map { it.expr }
-                    .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
+                .map { it.expr }
+                .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
             else -> null // TODO: handle update case (`Point{ y: 0, z: 10, .. base}`)
         }
         is RsBinaryExpr -> when (operatorType) {
@@ -56,11 +56,11 @@ fun RsExpr.isPure(): Boolean? {
         is RsBreakExpr, is RsContExpr, is RsRetExpr, is RsTryExpr -> false   // Changes execution flow
         is RsPathExpr, is RsLitExpr, is RsUnitExpr -> true
 
-    // TODO: more complex analysis of blocks of code and search of implemented traits
+        // TODO: more complex analysis of blocks of code and search of implemented traits
         is RsBlockExpr, // Have to analyze lines, very hard case
-        is RsCastExpr, // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
-        is RsCallExpr, // All arguments and function itself must be pure, very hard case
-        is RsForExpr, // Always return (), if pure then can be replaced with it
+        is RsCastExpr,  // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
+        is RsCallExpr,  // All arguments and function itself must be pure, very hard case
+        is RsForExpr,   // Always return (), if pure then can be replaced with it
         is RsIfExpr,
         is RsIndexExpr, // Index trait can be overloaded, can panic if out of bounds
         is RsLambdaExpr,
@@ -84,9 +84,9 @@ fun RsExpr.simplifyBooleanExpression() =
 /**
  * Simplifies a boolean expression if can.
  *
- * @param peek if true then does not perform any changes on PSI,
- *             `expr` is not defined and `result` indicates if this expression
- *             can be simplified
+ * @param peek if true then does not perform any changes on PSI, `expr` is not defined and `result` indicates if this
+ *             expression can be simplified
+ *
  * @return `(expr, result)` where `expr` is a resulting expression,
  *         `result` is true if an expression was actually simplified.
  */
@@ -130,8 +130,8 @@ private fun RsExpr.simplifyBooleanExpression(peek: Boolean): Pair<RsExpr, Boolea
     }
 }
 
-private fun simplifyBinaryOperation(op: RsBinaryExpr, const: RsLitExpr, expr: RsExpr, project: Project): RsExpr? {
-    return const.boolLiteral?.let {
+private fun simplifyBinaryOperation(op: RsBinaryExpr, const: RsLitExpr, expr: RsExpr, project: Project): RsExpr? =
+    const.boolLiteral?.let {
         when (op.operatorType) {
             AND ->
                 when (it.text) {
@@ -145,17 +145,14 @@ private fun simplifyBinaryOperation(op: RsBinaryExpr, const: RsLitExpr, expr: Rs
                     "false" -> expr
                     else -> null
                 }
-            else ->
-                null
+            else -> null
         }
     }
-}
 
 /**
  * Evaluates a boolean expression if can.
  *
- * @return result of evaluation or `null` if can't simplify or
- *         if it is not a boolean expression.
+ * @return result of evaluation or `null` if can't simplify or if it is not a boolean expression.
  */
 fun RsExpr.evalBooleanExpression(): Boolean? {
     return when (this) {
@@ -194,4 +191,5 @@ fun RsExpr.evalBooleanExpression(): Boolean? {
     }
 }
 
-private fun createPsiElement(project: Project, value: Any) = RsPsiFactory(project).createExpression(value.toString())
+private fun createPsiElement(project: Project, value: Any): RsExpr =
+    RsPsiFactory(project).createExpression(value.toString())

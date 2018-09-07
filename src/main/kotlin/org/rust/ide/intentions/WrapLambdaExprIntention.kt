@@ -15,8 +15,10 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
 
 class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
-    override fun getText() = "Add braces to lambda expression"
-    override fun getFamilyName() = text
+
+    override fun getText(): String = "Add braces to lambda expression"
+
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? {
         val lambdaExpr = element.ancestorStrict<RsLambdaExpr>() ?: return null

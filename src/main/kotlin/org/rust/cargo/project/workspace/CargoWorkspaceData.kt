@@ -8,17 +8,18 @@ package org.rust.cargo.project.workspace
 typealias PackageId = String
 
 /**
- * A POD-style representation of [CargoWorkspace] used as an intermediate representation
- * between `cargo metadata` JSON and [CargoWorkspace] object graph.
+ * A POD-style representation of [CargoWorkspace] used as an intermediate representation between `cargo metadata` JSON
+ * and [CargoWorkspace] object graph.
  *
- * Dependency graph is represented via adjacency list, where `Index` is the order of a particular
- * package in `packages` list.
+ * Dependency graph is represented via adjacency list, where `Index` is the order of a particular package in [packages]
+ * list.
  */
 data class CargoWorkspaceData(
     val packages: List<Package>,
     val dependencies: Map<PackageId, Set<PackageId>>,
     val workspaceRoot: String? = null
 ) {
+
     data class DependencyNode(
         val packageIndex: Int,
         val dependenciesIndexes: Collection<Int>

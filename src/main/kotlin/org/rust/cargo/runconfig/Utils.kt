@@ -18,31 +18,30 @@ import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.toolchain.CargoCommandLine
 
 fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): CargoCommandLine =
-    if (environmentVariables.envs.isEmpty())
-        copy(environmentVariables = default.env)
-    else
-        this
+    if (environmentVariables.envs.isEmpty()) copy(environmentVariables = default.env) else this
 
 fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommandLine, name: String? = null): RunnerAndConfigurationSettings {
-    val runnerAndConfigurationSettings =
-        createRunConfiguration(name
-            ?: cargoCommandLine.command, CargoCommandConfigurationType().factory)
+    val runnerAndConfigurationSettings = createRunConfiguration(
+        name ?: cargoCommandLine.command,
+        CargoCommandConfigurationType().factory
+    )
     val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
     configuration.setFromCmd(cargoCommandLine)
     return runnerAndConfigurationSettings
 }
 
-val Project.hasCargoProject: Boolean get() = cargoProjects.allProjects.isNotEmpty()
+val Project.hasCargoProject: Boolean
+    get() = cargoProjects.allProjects.isNotEmpty()
 
 fun Project.buildProject() {
     val command = if (rustSettings.useCargoCheckForBuild) "check" else "build"
-
     val arguments = mutableListOf("--all")
 
     if (rustSettings.compileAllTargets) {
         val allTargets = rustSettings.toolchain
             ?.rawCargo()
-            ?.checkSupportForBuildCheckAllTargets() ?: false
+            ?.checkSupportForBuildCheckAllTargets()
+            ?: false
         if (allTargets) {
             arguments += "--all-targets"
         }

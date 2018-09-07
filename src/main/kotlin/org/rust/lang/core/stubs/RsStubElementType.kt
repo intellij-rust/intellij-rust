@@ -24,7 +24,7 @@ abstract class RsStubElementType<StubT : StubElement<*>, PsiT : RsElement>(
     protected fun createStubIfParentIsStub(node: ASTNode): Boolean {
         val parent = node.treeParent
         val parentType = parent.elementType
-        return (parentType is IStubElementType<*, *> && parentType.shouldCreateStub(parent)) ||
-            parentType is IStubFileElementType<*>
+        return parentType is IStubElementType<*, *> && parentType.shouldCreateStub(parent)
+            || parentType is IStubFileElementType<*>
     }
 }

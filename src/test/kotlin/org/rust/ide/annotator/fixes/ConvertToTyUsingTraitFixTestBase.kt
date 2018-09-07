@@ -12,10 +12,13 @@ import org.rust.ide.inspections.RsTypeCheckInspection
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 abstract class ConvertToTyUsingTraitFixTestBase(
-    isExpectedMut: Boolean, private val trait: String, private val method: String, protected val imports: String = ""
+    isExpectedMut: Boolean,
+    private val trait: String,
+    private val method: String,
+    protected val imports: String = ""
 ) : RsInspectionsTestBase(RsTypeCheckInspection()) {
-    private val ref = if (isExpectedMut) "&mut " else "&"
-    private val fixName = "Convert to ${ref}A using `$trait` trait"
+    private val ref: String = if (isExpectedMut) "&mut " else "&"
+    private val fixName: String = "Convert to ${ref}A using `$trait` trait"
 
     fun `test Trait with A subs is impl for B`() = checkFixByText(fixName, """
         $imports

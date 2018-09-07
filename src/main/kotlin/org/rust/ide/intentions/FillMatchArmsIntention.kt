@@ -18,6 +18,7 @@ import org.rust.lang.core.types.type
 class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntention.Context>() {
 
     override fun getText(): String = familyName
+
     override fun getFamilyName(): String = "Fill match arms"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
@@ -36,14 +37,14 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
         val (expr, name, variants) = ctx
         var body = RsPsiFactory(project).createMatchBody(name, variants)
         val matchBody = expr.matchBody
-        if (matchBody != null) {
+        body = if (matchBody != null) {
             val rbrace = matchBody.rbrace
-            for (arm in body.matchArmList){
+            for (arm in body.matchArmList) {
                 matchBody.addBefore(arm, rbrace)
             }
-            body = matchBody
+            matchBody
         } else {
-            body = expr.addAfter(body, expr.expr) as RsMatchBody
+            expr.addAfter(body, expr.expr) as RsMatchBody
         }
 
         val lbraceOffset = (body.matchArmList.firstOrNull()?.expr as? RsBlockExpr)
@@ -58,9 +59,5 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
         return element == option || element == result
     }
 
-    data class Context(
-        val matchExpr: RsMatchExpr,
-        val enumName: String?,
-        val variants: List<RsEnumVariant>
-    )
+    data class Context(val matchExpr: RsMatchExpr, val enumName: String?, val variants: List<RsEnumVariant>)
 }

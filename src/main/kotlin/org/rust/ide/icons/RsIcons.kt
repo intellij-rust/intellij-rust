@@ -15,65 +15,65 @@ import javax.swing.Icon
 /**
  * Icons that are used by various plugin components.
  *
- * The order of properties matters in this class. When conflating an icon from simple elements,
- * make sure that all those elements are declared above to the icon.
+ * The order of properties matters in this class. When conflating an icon from simple elements, make sure that all
+ * those elements are declared above to the icon.
  */
 object RsIcons {
     // Logos
 
-    val RUST = IconLoader.getIcon("/icons/rust.svg")
+    val RUST: Icon = IconLoader.getIcon("/icons/rust.svg")
 
     // File types
 
-    val RUST_FILE = IconLoader.getIcon("/icons/rust-file.svg")
-    val MAIN_RS = IconLoader.getIcon("/icons/main-rs.svg")
-    val MOD_RS = IconLoader.getIcon("/icons/mod-rs.svg")
+    val RUST_FILE: Icon = IconLoader.getIcon("/icons/rust-file.svg")
+    val MAIN_RS: Icon = IconLoader.getIcon("/icons/main-rs.svg")
+    val MOD_RS: Icon = IconLoader.getIcon("/icons/mod-rs.svg")
 
     // Marks
 
-    val FINAL_MARK = AllIcons.Nodes.FinalMark!!
-    val STATIC_MARK = AllIcons.Nodes.StaticMark!!
-    val TEST_MARK = AllIcons.Nodes.JunitTestMark!!
-    val DOCS_MARK = IconLoader.getIcon("/icons/docsrs.svg")
+    val FINAL_MARK: Icon = AllIcons.Nodes.FinalMark!!
+    val STATIC_MARK: Icon = AllIcons.Nodes.StaticMark!!
+    val TEST_MARK: Icon = AllIcons.Nodes.JunitTestMark!!
+    val DOCS_MARK: Icon = IconLoader.getIcon("/icons/docsrs.svg")
 
     // Source code elements
 
-    val CRATE = AllIcons.Nodes.PpLib!!
-    val MODULE = AllIcons.Nodes.Package!!
+    val CRATE: Icon = AllIcons.Nodes.PpLib!!
+    val MODULE: Icon = AllIcons.Nodes.Package!!
 
-    val TRAIT = AllIcons.Nodes.Interface!!
-    val STRUCT = AllIcons.Nodes.Class!!
-    val TYPE = IconLoader.getIcon("/icons/nodes/typeAlias.svg")
-    val IMPL = AllIcons.Nodes.AbstractClass!!
-    val ENUM = AllIcons.Nodes.Enum!!
+    val TRAIT: Icon = AllIcons.Nodes.Interface!!
+    val STRUCT: Icon = AllIcons.Nodes.Class!!
+    val TYPE: Icon = IconLoader.getIcon("/icons/nodes/typeAlias.svg")
+    val IMPL: Icon = AllIcons.Nodes.AbstractClass!!
+    val ENUM: Icon = AllIcons.Nodes.Enum!!
 
-    val METHOD = AllIcons.Nodes.Method!!
-    val FUNCTION = IconLoader.getIcon("/icons/nodes/function.svg")
-    val ASSOC_FUNCTION = FUNCTION.addStaticMark()
-    val MACRO = AllIcons.General.ExclMark!!
+    val METHOD: Icon = AllIcons.Nodes.Method!!
+    val FUNCTION: Icon = IconLoader.getIcon("/icons/nodes/function.svg")
+    val ASSOC_FUNCTION: Icon = FUNCTION.addStaticMark()
+    val MACRO: Icon = AllIcons.General.ExclMark!!
 
-    val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod!!
-    val ABSTRACT_FUNCTION = IconLoader.getIcon("/icons/nodes/abstractFunction.svg")
-    val ABSTRACT_ASSOC_FUNCTION = ABSTRACT_FUNCTION.addStaticMark()
+    val ABSTRACT_METHOD: Icon = AllIcons.Nodes.AbstractMethod!!
+    val ABSTRACT_FUNCTION: Icon = IconLoader.getIcon("/icons/nodes/abstractFunction.svg")
+    val ABSTRACT_ASSOC_FUNCTION: Icon = ABSTRACT_FUNCTION.addStaticMark()
 
-    val ATTRIBUTE = AllIcons.Nodes.Annotationtype!!
-    val MUT_ARGUMENT = AllIcons.Nodes.Parameter!!
-    val ARGUMENT = MUT_ARGUMENT.addFinalMark()
-    val FIELD = AllIcons.Nodes.Field!!
-    val MUT_BINDING = AllIcons.Nodes.Variable!!
-    val BINDING = MUT_BINDING.addFinalMark()
-    val GLOBAL_BINDING = IconLoader.getIcon("/icons/nodes/globalBinding.svg")
-    val CONSTANT = GLOBAL_BINDING.addFinalMark()
-    val MUT_STATIC = GLOBAL_BINDING.addStaticMark()
-    val STATIC = MUT_STATIC.addFinalMark()
-    val ENUM_VARIANT = FIELD.addFinalMark().addStaticMark()
+    val ATTRIBUTE: Icon = AllIcons.Nodes.Annotationtype!!
+    val MUT_ARGUMENT: Icon = AllIcons.Nodes.Parameter!!
+    val ARGUMENT: Icon = MUT_ARGUMENT.addFinalMark()
+    val FIELD: Icon = AllIcons.Nodes.Field!!
+    val MUT_BINDING: Icon = AllIcons.Nodes.Variable!!
+    val BINDING: Icon = MUT_BINDING.addFinalMark()
+    val GLOBAL_BINDING: Icon = IconLoader.getIcon("/icons/nodes/globalBinding.svg")
+    val CONSTANT: Icon = GLOBAL_BINDING.addFinalMark()
+    val MUT_STATIC: Icon = GLOBAL_BINDING.addStaticMark()
+    val STATIC: Icon = MUT_STATIC.addFinalMark()
+    val ENUM_VARIANT: Icon = FIELD.addFinalMark().addStaticMark()
 
     // Gutter
 
-    val IMPLEMENTED = AllIcons.Gutter.ImplementedMethod!!
-    val IMPLEMENTING_METHOD = AllIcons.Gutter.ImplementingMethod!!
-    val OVERRIDING_METHOD = AllIcons.Gutter.OverridingMethod!!
-    val RECURSIVE_CALL = AllIcons.Gutter.RecursiveMethod!!
+    val IMPLEMENTED: Icon = AllIcons.Gutter.ImplementedMethod!!
+    val IMPLEMENTING_METHOD: Icon = AllIcons.Gutter.ImplementingMethod!!
+    val OVERRIDING_METHOD: Icon = AllIcons.Gutter.OverridingMethod!!
+    val RECURSIVE_CALL: Icon = AllIcons.Gutter.RecursiveMethod!!
 }
 
 fun Icon.addFinalMark(): Icon = LayeredIcon(this, RsIcons.FINAL_MARK)

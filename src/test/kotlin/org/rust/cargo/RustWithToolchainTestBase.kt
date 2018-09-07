@@ -20,14 +20,13 @@ import org.rust.cargo.toolchain.RustToolchain
 abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtureBuilder<*>>() {
     open val dataPath: String = ""
 
-    private val toolchain = RustToolchain.suggest()
+    private val toolchain: RustToolchain? = RustToolchain.suggest()
 
-    protected val cargoProjectDirectory: VirtualFile get() = myFixture.findFileInTempDir(".")
+    protected val cargoProjectDirectory: VirtualFile
+        get() = myFixture.findFileInTempDir(".")
 
     protected fun FileTree.create(): TestProject =
-        create(project, cargoProjectDirectory).apply {
-            refreshWorkspace()
-        }
+        create(project, cargoProjectDirectory).apply { refreshWorkspace() }
 
     protected fun refreshWorkspace() {
         project.cargoProjects.discoverAndRefreshSync()

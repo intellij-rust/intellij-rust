@@ -28,11 +28,12 @@ class CargoRunState(
 ) : CommandLineState(environment) {
     private val toolchain: RustToolchain = config.toolchain
     val commandLine: CargoCommandLine = config.cmd
-    private val cargoProject: CargoProject? = CargoCommandConfiguration.findCargoProject(
-        environment.project,
-        commandLine.additionalArguments,
-        commandLine.workingDirectory
-    )
+    private val cargoProject: CargoProject? =
+        CargoCommandConfiguration.findCargoProject(
+            environment.project,
+            commandLine.additionalArguments,
+            commandLine.workingDirectory
+        )
 
     init {
         val scope = SearchScopeProvider.createSearchScope(environment.project, environment.runProfile)

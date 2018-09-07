@@ -9,6 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
+
     fun `test break in for loop`() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
         fn foo() {
             for _ in 0..4 {

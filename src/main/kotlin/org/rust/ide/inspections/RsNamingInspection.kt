@@ -7,24 +7,26 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsAbstractableOwner
+import org.rust.lang.core.psi.ext.RsConstantKind
+import org.rust.lang.core.psi.ext.kind
+import org.rust.lang.core.psi.ext.owner
 
-/**
- * Base class for naming inspections. Implements the core logic of checking names
- * and registering problems.
- */
+/** Base class for naming inspections. Implements the core logic of checking names and registering problems. */
 abstract class RsNamingInspection(
     val elementType: String,
     val styleName: String,
     val lint: RsLint,
     elementTitle: String = elementType
 ) : RsLocalInspectionTool() {
-    val dispName = elementTitle + " naming convention"
-    override fun getDisplayName() = dispName
+    private val dispName: String = "$elementTitle naming convention"
+
+    override fun getDisplayName(): String = dispName
 
     fun inspect(id: PsiElement?, holder: ProblemsHolder, fix: Boolean = true) {
         if (id == null) return
@@ -32,19 +34,22 @@ abstract class RsNamingInspection(
         if (isOk || suggestedName == null || lint.levelFor(id) == RsLintLevel.ALLOW) return
 
         val fixEl = id.parent
-        val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
+        val fixes = if (fix && fixEl is PsiNamedElement) {
+            arrayOf(RenameFix(fixEl, suggestedName))
+        } else {
+            emptyArray()
+        }
         holder.registerProblem(
             id,
             "$elementType `${id.text}` should have $styleName case name such as `$suggestedName`",
-            *fixes)
+            *fixes
+        )
     }
 
     abstract fun checkName(name: String): Pair<Boolean, String?>
 }
 
-/**
- * Checks if the name is CamelCase.
- */
+/** Checks if the name is CamelCase. */
 open class RsCamelCaseNamingInspection(
     elementType: String,
     elementTitle: String = elementType
@@ -82,9 +87,7 @@ open class RsCamelCaseNamingInspection(
     private val Char.canStartWord: Boolean get() = isUpperCase() || isDigit()
 }
 
-/**
- * Checks if the name is snake_case.
- */
+/** Checks if the name is snake_case. */
 open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection(elementType, "a snake", RsLint.NonSnakeCase) {
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
@@ -95,9 +98,7 @@ open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection
     }
 }
 
-/**
- * Checks if the name is UPPER_CASE.
- */
+/** Checks if the name is UPPER_CASE. */
 open class RsUpperCaseNamingInspection(elementType: String) : RsNamingInspection(elementType, "an upper", RsLint.NonUpperCaseGlobals) {
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
@@ -121,13 +122,13 @@ fun String.toSnakeCase(upper: Boolean): String {
         var newWord = false
         var firstWord = true
         part.forEach { char ->
-            if (newWord && char.isUpperCase()) {
+            newWord = if (newWord && char.isUpperCase()) {
                 if (!firstWord) {
                     result.append('_')
                 }
-                newWord = false
+                false
             } else {
-                newWord = char.isLowerCase()
+                char.isLowerCase()
             }
             result.append(if (upper) char.toUpperCase() else char.toLowerCase())
             firstWord = false
@@ -141,133 +142,134 @@ fun String.toSnakeCase(upper: Boolean): String {
 //
 
 class RsArgumentNamingInspection : RsSnakeCaseNamingInspection("Argument") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitPatBinding(el: RsPatBinding) {
-                if (el.parent?.parent is RsValueParameter) {
-                    inspect(el.identifier, holder)
+            override fun visitPatBinding(binding: RsPatBinding) {
+                if (binding.parent?.parent is RsValueParameter) {
+                    inspect(binding.identifier, holder)
                 }
             }
         }
 }
 
 class RsConstNamingInspection : RsUpperCaseNamingInspection("Constant") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitConstant(el: RsConstant) {
-                if (el.kind == RsConstantKind.CONST) {
-                    inspect(el.identifier, holder)
+            override fun visitConstant(constant: RsConstant) {
+                if (constant.kind == RsConstantKind.CONST) {
+                    inspect(constant.identifier, holder)
                 }
             }
         }
 }
 
 class RsStaticConstNamingInspection : RsUpperCaseNamingInspection("Static constant") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitConstant(el: RsConstant) {
-                if (el.kind != RsConstantKind.CONST) {
-                    inspect(el.identifier, holder)
+            override fun visitConstant(constant: RsConstant) {
+                if (constant.kind != RsConstantKind.CONST) {
+                    inspect(constant.identifier, holder)
                 }
             }
         }
 }
 
 class RsEnumNamingInspection : RsCamelCaseNamingInspection("Type", "Enum") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitEnumItem(el: RsEnumItem) = inspect(el.identifier, holder)
+            override fun visitEnumItem(enumItem: RsEnumItem) = inspect(enumItem.identifier, holder)
         }
 }
 
 class RsEnumVariantNamingInspection : RsCamelCaseNamingInspection("Enum variant") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitEnumVariant(el: RsEnumVariant) = inspect(el.identifier, holder)
+            override fun visitEnumVariant(enumVariant: RsEnumVariant) = inspect(enumVariant.identifier, holder)
         }
 }
 
 class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitFunction(el: RsFunction) {
-                if (el.owner is RsAbstractableOwner.Free) {
-                    inspect(el.identifier, holder)
+            override fun visitFunction(fn: RsFunction) {
+                if (fn.owner is RsAbstractableOwner.Free) {
+                    inspect(fn.identifier, holder)
                 }
             }
         }
 }
 
 class RsMethodNamingInspection : RsSnakeCaseNamingInspection("Method") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitFunction(el: RsFunction) = when (el.owner) {
-                is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> inspect(el.identifier, holder)
+            override fun visitFunction(fn: RsFunction) = when (fn.owner) {
+                is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> inspect(fn.identifier, holder)
                 else -> Unit
             }
         }
 }
 
 class RsLifetimeNamingInspection : RsSnakeCaseNamingInspection("Lifetime") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitLifetimeParameter(el: RsLifetimeParameter) = inspect(el.quoteIdentifier, holder)
+            override fun visitLifetimeParameter(lifetimeParameter: RsLifetimeParameter) =
+                inspect(lifetimeParameter.quoteIdentifier, holder)
         }
 }
 
 class RsMacroNamingInspection : RsSnakeCaseNamingInspection("Macro") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitMacro(el: RsMacro) = inspect(el.nameIdentifier, holder)
+            override fun visitMacro(macro: RsMacro) = inspect(macro.nameIdentifier, holder)
         }
 }
 
 class RsModuleNamingInspection : RsSnakeCaseNamingInspection("Module") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitModDeclItem(el: RsModDeclItem) = inspect(el.identifier, holder)
-            override fun visitModItem(el: RsModItem) = inspect(el.identifier, holder)
+            override fun visitModDeclItem(modDeclItem: RsModDeclItem) = inspect(modDeclItem.identifier, holder)
+            override fun visitModItem(modItem: RsModItem) = inspect(modItem.identifier, holder)
         }
 }
 
 class RsStructNamingInspection : RsCamelCaseNamingInspection("Type", "Struct") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitStructItem(el: RsStructItem) = inspect(el.identifier, holder)
+            override fun visitStructItem(structItem: RsStructItem) = inspect(structItem.identifier, holder)
         }
 }
 
 class RsFieldNamingInspection : RsSnakeCaseNamingInspection("Field") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitFieldDecl(el: RsFieldDecl) = inspect(el.identifier, holder)
+            override fun visitFieldDecl(fieldDecl: RsFieldDecl) = inspect(fieldDecl.identifier, holder)
         }
 }
 
 class RsTraitNamingInspection : RsCamelCaseNamingInspection("Trait") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitTraitItem(el: RsTraitItem) = inspect(el.identifier, holder)
+            override fun visitTraitItem(traitItem: RsTraitItem) = inspect(traitItem.identifier, holder)
         }
 }
 
 class RsTypeAliasNamingInspection : RsCamelCaseNamingInspection("Type", "Type alias") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.owner is RsAbstractableOwner.Free) {
-                    inspect(el.identifier, holder)
+            override fun visitTypeAlias(typeAlias: RsTypeAlias) {
+                if (typeAlias.owner is RsAbstractableOwner.Free) {
+                    inspect(typeAlias.identifier, holder)
                 }
             }
         }
 }
 
 class RsAssocTypeNamingInspection : RsCamelCaseNamingInspection("Type", "Associated type") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitTypeAlias(el: RsTypeAlias) {
-                if (el.owner is RsAbstractableOwner.Trait) {
-                    inspect(el.identifier, holder, false)
+            override fun visitTypeAlias(typeAlias: RsTypeAlias) {
+                if (typeAlias.owner is RsAbstractableOwner.Trait) {
+                    inspect(typeAlias.identifier, holder, false)
                 }
             }
         }
@@ -275,19 +277,20 @@ class RsAssocTypeNamingInspection : RsCamelCaseNamingInspection("Type", "Associa
 
 
 class RsTypeParameterNamingInspection : RsCamelCaseNamingInspection("Type parameter") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitTypeParameter(el: RsTypeParameter) = inspect(el.identifier, holder)
+            override fun visitTypeParameter(typeParameter: RsTypeParameter) =
+                inspect(typeParameter.identifier, holder)
         }
 }
 
 class RsVariableNamingInspection : RsSnakeCaseNamingInspection("Variable") {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
-            override fun visitPatBinding(el: RsPatBinding) {
-                val pattern = PsiTreeUtil.getTopmostParentOfType(el, RsPat::class.java) ?: return
+            override fun visitPatBinding(binding: RsPatBinding) {
+                val pattern = PsiTreeUtil.getTopmostParentOfType(binding, RsPat::class.java) ?: return
                 when (pattern.parent) {
-                    is RsLetDecl -> inspect(el.identifier, holder)
+                    is RsLetDecl -> inspect(binding.identifier, holder)
                 }
             }
         }

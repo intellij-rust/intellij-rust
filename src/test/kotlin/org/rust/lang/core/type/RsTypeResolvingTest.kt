@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.types.type
 
 class RsTypeResolvingTest : RsTypificationTestBase() {
+
     fun `test path`() = testType("""
         struct Spam;
 
@@ -336,9 +337,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                             //^ &'_ Struct<'_, Struct<'_, &'a str>>
     """, renderLifetimes = true)
 
-    /**
-     * Checks the type of the element in [code] pointed to by `//^` marker.
-     */
+    /** Checks the type of the element in [code] pointed to by `//^` marker. */
     private fun testType(@Language("Rust") code: String, renderLifetimes: Boolean = false) {
         InlineFile(code)
         val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsTypeReference>()

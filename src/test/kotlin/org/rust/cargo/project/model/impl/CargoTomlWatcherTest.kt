@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import org.rust.RsTestBase
 
 class CargoTomlWatcherTest : RsTestBase() {
-    private var counter = 0
+    private var counter: Int = 0
 
     fun `test toml modifications`() {
         val watcher = CargoTomlWatcher { counter += 1 }
@@ -104,7 +104,8 @@ class CargoTomlWatcherTest : RsTestBase() {
         return vFile to VFileCreateEvent(null, vFile.parent, vFile.name, false, true)
     }
 
-    private fun newChangeEvent(vFile: VirtualFile) = VFileContentChangeEvent(null, vFile, vFile.modificationStamp - 1, vFile.modificationStamp, true)
+    private fun newChangeEvent(vFile: VirtualFile): VFileContentChangeEvent =
+        VFileContentChangeEvent(null, vFile, vFile.modificationStamp - 1, vFile.modificationStamp, true)
 
     private fun newRenameEvent(vFile: VirtualFile, newName: String): VFilePropertyChangeEvent {
         val oldName = vFile.name

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit
 
 
 class CargoProjectServiceTest : RustWithToolchainTestBase() {
+
     fun `test finds project for file`() {
         val testProject = fileTree {
             dir("a") {
@@ -94,5 +95,4 @@ class CargoProjectServiceTest : RustWithToolchainTestBase() {
         checkFile("c/src/lib.rs", "b")
         checkFile("d/src/lib.rs", "d")
     }
-
 }

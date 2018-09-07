@@ -8,9 +8,7 @@ package org.rust.ide.inspections
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-/**
- * Tests for Self Convention inspection
- */
+/** Tests for Self Convention inspection. */
 class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection()) {
 
     fun testFrom() = checkByText("""

@@ -37,10 +37,11 @@ class RsFmtBlock(
             in FN_DECLS -> Alignment.createAlignment()
             VALUE_PARAMETER_LIST -> ctx.sharedAlignment
             DOT_EXPR ->
-                if (node.treeParent.elementType == DOT_EXPR)
+                if (node.treeParent.elementType == DOT_EXPR) {
                     ctx.sharedAlignment
-                else
+                } else {
                     Alignment.createAlignment()
+                }
             else -> null
         }
         var metLBrace = false
@@ -53,20 +54,18 @@ class RsFmtBlock(
                     metLBrace = true
                 }
 
-                val childCtx = ctx.copy(
-                    metLBrace = metLBrace,
-                    sharedAlignment = sharedAlignment)
+                val childCtx = ctx.copy(metLBrace = metLBrace, sharedAlignment = sharedAlignment)
 
                 RsFormattingModelBuilder.createBlock(
-                    node = childNode,
-                    alignment = alignment.getAlignment(childNode, node, childCtx),
-                    indent = computeIndent(childNode, childCtx),
-                    wrap = null,
-                    ctx = childCtx)
+                    childNode,
+                    alignment.getAlignment(childNode, node, childCtx),
+                    computeIndent(childNode, childCtx),
+                    null,
+                    childCtx
+                )
             }
 
-        // Create fake `.sth` block here, so child indentation will
-        // be relative to it when it starts from new line.
+        // Create fake `.sth` block here, so child indentation will be relative to it when it starts from new line.
         // In other words: foo().bar().baz() => foo().baz()[.baz()]
         // We are using dot as our representative.
         // The idea is nearly copy-pasted from Kotlin's formatter.
@@ -77,7 +76,8 @@ class RsFmtBlock(
                 val syntheticBlock = SyntheticRsFmtBlock(
                     representative = dotBlock,
                     subBlocks = children.subList(dotIndex, children.size),
-                    ctx = ctx)
+                    ctx = ctx
+                )
                 return children.subList(0, dotIndex).plusElement(syntheticBlock)
             }
         }
@@ -85,21 +85,22 @@ class RsFmtBlock(
         return children
     }
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? =
+        computeSpacing(child1, child2, ctx)
 
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
         if (CommaList.forElement(node.elementType) != null && newChildIndex > 1) {
             val isBeforeClosingBrace = newChildIndex + 1 == subBlocks.size
-            return if (isBeforeClosingBrace)
+            return if (isBeforeClosingBrace) {
                 ChildAttributes.DELEGATE_TO_PREV_CHILD
-            else
+            } else {
                 ChildAttributes.DELEGATE_TO_NEXT_CHILD
+            }
         }
 
         val indent = when {
-        // Flat brace blocks do not have separate PSI node for content blocks
-        // so we have to manually decide whether new child is before (no indent)
-        // or after (normal indent) left brace node.
+            // Flat brace blocks do not have separate PSI node for content blocks so we have to manually decide whether
+            // new child is before (no indent) or after (normal indent) left brace node.
             node.isFlatBraceBlock -> {
                 val lbraceIndex = subBlocks.indexOfFirst { it is ASTBlock && it.node?.elementType == LBRACE }
                 if (lbraceIndex != -1 && lbraceIndex < newChildIndex) {
@@ -109,13 +110,13 @@ class RsFmtBlock(
                 }
             }
 
-        // We are inside some kind of {...}, [...], (...) or <...> block
+            // We are inside some kind of {...}, [...], (...) or <...> block
             node.isDelimitedBlock -> Indent.getNormalIndent()
 
-        // Indent expressions (chain calls, binary expressions, ...)
+            // Indent expressions (chain calls, binary expressions, ...)
             node.psi is RsExpr -> Indent.getContinuationWithoutFirstIndent()
 
-        // Otherwise we don't want any indentation (null means continuation indent)
+            // Otherwise we don't want any indentation (null means continuation indent)
             else -> Indent.getNoneIndent()
         }
         return ChildAttributes(indent, null)
@@ -126,5 +127,5 @@ class RsFmtBlock(
     override fun isIncomplete(): Boolean = myIsIncomplete
     private val myIsIncomplete: Boolean by lazy { FormatterUtil.isIncomplete(node) }
 
-    override fun toString() = "${node.text} $textRange"
+    override fun toString(): String = "${node.text} $textRange"
 }

@@ -22,21 +22,24 @@ import org.rust.lang.core.psi.RsTupleFields
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
+
     override fun isAvailableInEditorOnly(): Boolean = true
 
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = false
 
-    override fun isAvailableOnElementInEditorAndFile(element: PsiElement, editor: Editor, file: PsiFile, context: DataContext): Boolean {
-        return findTupleStructBody(element) != null
-    }
+    override fun isAvailableOnElementInEditorAndFile(
+        element: PsiElement,
+        editor: Editor,
+        file: PsiFile,
+        context: DataContext
+    ): Boolean = findTupleStructBody(element) != null
 
     override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
 
-
     override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
 
-
     private object Handler : RefactoringActionHandler {
+
         override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
             val offset = editor.caretModel.offset
             val element = file.findElementAt(offset) ?: return

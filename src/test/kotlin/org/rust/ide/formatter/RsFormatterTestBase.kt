@@ -1,4 +1,4 @@
-    /*
+/*
  * Use of this source code is governed by the MIT license that can be
  * found in the LICENSE file.
  */
@@ -10,11 +10,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
 abstract class RsFormatterTestBase : FormatterTestCase() {
-    override fun getTestDataPath() = "src/test/resources"
-
-    override fun getBasePath() = "org/rust/ide/formatter/fixtures"
-
-    override fun getFileExtension() = "rs"
 
     override fun getTestName(lowercaseFirstLetter: Boolean): String {
         val camelCase = super.getTestName(lowercaseFirstLetter)
@@ -30,4 +25,7 @@ abstract class RsFormatterTestBase : FormatterTestCase() {
         super.doTextTest(text.trimIndent(), text.trimIndent())
     }
 
+    override fun getTestDataPath(): String = "src/test/resources"
+    override fun getBasePath(): String = "org/rust/ide/formatter/fixtures"
+    override fun getFileExtension(): String = "rs"
 }

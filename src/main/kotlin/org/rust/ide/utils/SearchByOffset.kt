@@ -13,8 +13,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsStmt
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsStmt
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 fun findExpressionAtCaret(file: RsFile, offset: Int): RsExpr? {
@@ -44,8 +44,8 @@ fun findExpressionInRange(file: PsiFile, startOffset: Int, endOffset: Int): RsEx
     var parent = PsiTreeUtil.findCommonParent(element1, element2) ?: return null
     parent = parent.ancestorOrSelf<RsExpr>() ?: return null
 
-    // If our parent's deepest first child is element1 and deepest last - element 2,
-    // then is is completely within selection, so this is our sought expression.
+    // If our parent's deepest first child is element1 and deepest last - element 2, then is is completely within
+    // selection, so this is our sought expression.
     if (element1 == PsiTreeUtil.getDeepestFirst(parent) && element2 == PsiTreeUtil.getDeepestLast(element2)) {
         return parent
     }
@@ -56,8 +56,8 @@ fun findExpressionInRange(file: PsiFile, startOffset: Int, endOffset: Int): RsEx
 // FIXME: Maybe items are ok?
 // FIXME: What about macros?
 /**
- * Finds statements (mostly [RsStmt]s, [PsiComment]s and [RsExpr]
- * as return expression, doesn't allow attrs and items) within selected range.
+ * Finds statements (mostly [RsStmt]s, [PsiComment]s and [RsExpr] as return expression, doesn't allow attrs and items)
+ * within selected range.
  */
 fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Array<out PsiElement> {
     var (element1, element2) = file.getElementRange(startOffset, endOffset) ?: return emptyArray()
@@ -83,19 +83,16 @@ fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Arra
 
     // Finally check if found elements meet requirements, and return result
     elements.forEachIndexed { idx, element ->
-        if (!(element is RsStmt
-            || (idx == elements.size - 1 && element is RsExpr)
-            || element is PsiComment
-            )) return emptyArray()
+        if (!(element is RsStmt || (idx == elements.size - 1 && element is RsExpr) || element is PsiComment)) {
+            return emptyArray()
+        }
     }
 
     return elements
 }
 
 
-/**
- * Finds two edge leaf PSI elements within given range.
- */
+/** Finds two edge leaf PSI elements within given range. */
 fun PsiFile.getElementRange(startOffset: Int, endOffset: Int): Pair<PsiElement, PsiElement>? {
     val element1 = findElementAtIgnoreWhitespaceBefore(startOffset) ?: return null
     val element2 = findElementAtIgnoreWhitespaceAfter(endOffset - 1) ?: return null
@@ -130,9 +127,7 @@ fun PsiFile.findElementAtIgnoreWhitespaceAfter(offset: Int): PsiElement? {
     return element
 }
 
-/**
- * Finds child of [parent] of which given element is descendant.
- */
+/** Finds child of [parent] of which given element is descendant. */
 private fun PsiElement.getTopmostParentInside(parent: PsiElement): PsiElement {
     if (parent == this) return this
 
@@ -147,10 +142,7 @@ private fun collectElements(start: PsiElement, stop: PsiElement?, pred: (PsiElem
     check(stop == null || start.parent == stop.parent)
 
     val psiSeq = generateSequence(start) {
-        if (it.nextSibling == stop)
-            null
-        else
-            it.nextSibling
+        if (it.nextSibling == stop) null else it.nextSibling
     }
 
     return PsiUtilCore.toPsiElementArray(psiSeq.filter(pred).toList())

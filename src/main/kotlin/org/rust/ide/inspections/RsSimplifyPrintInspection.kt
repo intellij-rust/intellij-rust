@@ -10,42 +10,44 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsFormatMacroArgument
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.macroName
 
-/**
- * Replace `println!("")` with `println!()` available since Rust 1.14.0
- */
+/** Replace `println!("")` with `println!()` available since Rust 1.14.0 */
 class RsSimplifyPrintInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "println!(\"\") usage"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun getDisplayName(): String = "println!(\"\") usage"
 
-        override fun visitMacroCall(o: RsMacroCall) {
-            val macroName = o.macroName
-            val formatMacroArg = o.formatMacroArgument ?: return
-            if (!(macroName.endsWith("println"))) return
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+        object : RsVisitor() {
 
-            if (emptyStringArg(formatMacroArg) == null) return
-            holder.registerProblem(
-                o,
-                "println! macro invocation can be simplified",
-                object : LocalQuickFix {
-                    override fun getName() = "Remove unnecessary argument"
+            override fun visitMacroCall(macroCall: RsMacroCall) {
+                val macroName = macroCall.macroName
+                val formatMacroArg = macroCall.formatMacroArgument ?: return
+                if (!(macroName.endsWith("println"))) return
 
-                    override fun getFamilyName() = name
+                if (emptyStringArg(formatMacroArg) == null) return
+                holder.registerProblem(
+                    macroCall,
+                    "println! macro invocation can be simplified",
+                    object : LocalQuickFix {
 
-                    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                        val macro = descriptor.psiElement as RsMacroCall
-                        val arg = emptyStringArg(macro.formatMacroArgument!!) ?: return
-                        arg.delete()
+                        override fun getName(): String = "Remove unnecessary argument"
+
+                        override fun getFamilyName(): String = name
+
+                        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+                            val macro = descriptor.psiElement as RsMacroCall
+                            val arg = emptyStringArg(macro.formatMacroArgument!!) ?: return
+                            arg.delete()
+                        }
                     }
-                }
-            )
+                )
+            }
         }
-    }
 
     private fun emptyStringArg(arg: RsFormatMacroArgument): PsiElement? {
         val singeArg = arg.formatMacroArgList.singleOrNull() ?: return null

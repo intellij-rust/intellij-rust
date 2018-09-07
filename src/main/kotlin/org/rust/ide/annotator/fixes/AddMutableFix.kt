@@ -20,10 +20,12 @@ import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.declaration
 
 class AddMutableFix(binding: RsNamedElement) : LocalQuickFixAndIntentionActionOnPsiElement(binding) {
-    private val _text = "Make `${binding.name}` mutable"
+    val mutable: Boolean = true
+    private val _text: String = "Make `${binding.name}` mutable"
+
     override fun getFamilyName(): String = "Make mutable"
+
     override fun getText(): String = _text
-    val mutable = true
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         updateMutable(project, startElement as RsNamedElement, mutable)
@@ -32,7 +34,8 @@ class AddMutableFix(binding: RsNamedElement) : LocalQuickFixAndIntentionActionOn
     companion object {
         fun createIfCompatible(expr: RsExpr): AddMutableFix? {
             val declaration = expr.declaration
-            return if (declaration is RsSelfParameter || (declaration is RsPatBinding && declaration.kind is BindByValue)) {
+            return if (declaration is RsSelfParameter
+                || declaration is RsPatBinding && declaration.kind is BindByValue) {
                 AddMutableFix(declaration as RsNamedElement)
             } else {
                 null
@@ -58,7 +61,8 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
                 parameter.replace(newParameterExpr)
                 return
             }
-            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable = mutable, ref = binding.kind is BindByReference)
+            val newPatBinding = RsPsiFactory(project)
+                .createPatBinding(binding.identifier.text, mutable, binding.kind is BindByReference)
             binding.replace(newPatBinding)
         }
         is RsSelfParameter -> {

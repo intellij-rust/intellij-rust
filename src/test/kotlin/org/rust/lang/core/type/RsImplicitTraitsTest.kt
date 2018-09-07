@@ -167,7 +167,7 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         val hasImpl = lookup.isSized(typeRef.type)
 
         check(mustHaveImpl == hasImpl) {
-            "Expected: `${typeRef.type}` ${if (mustHaveImpl) "has" else "doesn't have" } impl of `$traitName` trait"
+            "Expected: `${typeRef.type}` ${if (mustHaveImpl) "has" else "doesn't have"} impl of `$traitName` trait"
         }
     }
 }

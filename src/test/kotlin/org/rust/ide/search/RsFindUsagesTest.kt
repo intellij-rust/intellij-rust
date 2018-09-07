@@ -11,6 +11,7 @@ import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsFindUsagesTest : RsTestBase() {
+
     fun `test variable usages`() = doTestByText("""
         fn foo(x: i32) -> i32 {
              //^
@@ -171,9 +172,10 @@ class RsFindUsagesTest : RsTestBase() {
             .map { Pair(it.index, it.value.substring(it.value.indexOf(MARKER) + MARKER.length).trim()) }
 
     private companion object {
-        val MARKER = "// - "
-        val COMPARE_SEPARATOR = " | "
+        const val MARKER: String = "// - "
+        const val COMPARE_SEPARATOR: String = " | "
     }
 
-    val PsiElement.line: Int? get() = containingFile.viewProvider.document?.getLineNumber(textRange.startOffset)
+    val PsiElement.line: Int?
+        get() = containingFile.viewProvider.document?.getLineNumber(textRange.startOffset)
 }

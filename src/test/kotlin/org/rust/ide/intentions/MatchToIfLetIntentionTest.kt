@@ -6,6 +6,7 @@
 package org.rust.ide.intentions
 
 class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
+
     fun `test unavailable all void arms`() = doUnavailableTest("""
         enum MyOption {
             Nothing,
@@ -16,7 +17,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
             let a = MyOption::Some(52);
 
             match a {
-                MyOption::Some(x) => {},/*caret*/
+                MyOption::Some(x) => {}/*caret*/
                 Nothing => {}
             }
         }
@@ -32,7 +33,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
             let a = MyOption::Some(52);
 
             match a {
-                MyOption::Some(x) => {42},
+                MyOption::Some(x) => {42}
                 Nothing => {43}/*caret*/
             }
         }
@@ -48,8 +49,8 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
             let color = OptionColor::Color(255, 255, 255);
 
             match color {/*caret*/
-                OptionColor::Color(_, _, _) => {},
-                _ => {print!("No color")},
+                OptionColor::Color(_, _, _) => {}
+                _ => {print!("No color")}
             };
         }
     """)
@@ -68,7 +69,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
                     let a = x + 1;
                     let b = x + 2;
                     let c = a + b;
-                },/*caret*/
+                }/*caret*/
                 Nothing => {}
             }
         }
@@ -100,8 +101,8 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
 
             match color {/*caret*/
                 OptionColor::Color(255, 255, 255) => print!("White"),
-                OptionColor::Color(_,   _,   _  ) => {},
-                OptionColor::NoColor => {},
+                OptionColor::Color(_,   _,   _  ) => {}
+                OptionColor::NoColor => {}
             };
         }
     """, """

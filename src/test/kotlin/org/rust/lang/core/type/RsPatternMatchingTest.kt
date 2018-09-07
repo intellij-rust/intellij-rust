@@ -6,6 +6,7 @@
 package org.rust.lang.core.type
 
 class RsPatternMatchingTest : RsTypificationTestBase() {
+
     fun `test if let pattern`() = testExpr("""
         enum E { L(i32), R(bool) }
         fn main() {
@@ -335,7 +336,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
                 Some(n) => {
                     n;
                   //^ <unknown>
-                },
+                }
                 _ => {}
             };
         }

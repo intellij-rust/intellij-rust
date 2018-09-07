@@ -16,7 +16,6 @@ import org.rust.openapiext.elementFromXmlString
 import org.rust.openapiext.toXmlString
 import java.nio.file.Paths
 
-
 class RustProjectSettingsServiceTest : LightPlatformTestCase() {
     fun `test serialization`() {
         val service = RustProjectSettingsServiceImpl(LightPlatformTestCase.getProject())
@@ -41,15 +40,15 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         }
 
         check(service.data == RustProjectSettingsService.Data(
-            toolchain = RustToolchain(Paths.get("/")),
-            autoUpdateEnabled = false,
-            explicitPathToStdlib = "/stdlib",
-            useCargoCheckForBuild = false,
-            useCargoCheckAnnotator = true,
-            compileAllTargets = false,
-            useOfflineForCargoCheck = true,
-            expandMacros = false,
-            useSkipChildren = true
+            RustToolchain(Paths.get("/")),
+            false,
+            "/stdlib",
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
         ))
     }
 }

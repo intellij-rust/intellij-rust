@@ -14,12 +14,13 @@ import org.rust.lang.core.resolve.processMacroReferenceVariants
 
 
 class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceCached<RsMacroReference>(pattern) {
+
     override val RsMacroReference.referenceAnchor: PsiElement
         get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processMacroReferenceVariants(element, it) }
 
-    override fun resolveInner(): List<RsElement>
-        = collectResolveVariants(element.referenceName) { processMacroReferenceVariants(element, it) }
+    override fun resolveInner(): List<RsElement> =
+        collectResolveVariants(element.referenceName) { processMacroReferenceVariants(element, it) }
 }

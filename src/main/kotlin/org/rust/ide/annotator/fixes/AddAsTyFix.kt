@@ -14,16 +14,20 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.ty.Ty
 
-/**
- * For the given `expr` adds cast to the given type `ty`
- */
+/** For the given `expr` adds cast to the given type `ty`. */
 class AddAsTyFix(expr: PsiElement, val ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
 
     override fun getFamilyName(): String = "Add safe cast"
 
     override fun getText(): String = "Add safe cast to $ty"
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        startElement: PsiElement,
+        endElement: PsiElement
+    ) {
         if (startElement !is RsExpr) return
         startElement.replace(RsPsiFactory(project).createCastExpr(startElement, ty.toString()))
     }

@@ -14,12 +14,11 @@ import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.mergeFlags
-import org.rust.lang.core.types.regions.ReEarlyBound
+import org.rust.lang.core.types.region.ReEarlyBound
 
 /**
  * A "trait object" type should not be confused with a trait.
- * Though you use the same path to denote both traits and trait objects,
- * only the latter are ty.
+ * Though you use the same path to denote both traits and trait objects, only the latter are ty.
  */
 data class TyTraitObject(val trait: BoundElement<RsTraitItem>) : Ty(mergeFlags(trait)) {
 
@@ -51,9 +50,9 @@ private fun defaultSubstitution(item: RsTraitItem): Substitution {
         val parameter = TyTypeParameter.named(it)
         parameter to parameter
     }
-    val lifetimeSubst = item.lifetimeParameters.associate {
+    val regionSubst = item.lifetimeParameters.associate {
         val parameter = ReEarlyBound(it)
         parameter to parameter
     }
-    return Substitution(typeSubst, lifetimeSubst)
+    return Substitution(typeSubst, regionSubst)
 }

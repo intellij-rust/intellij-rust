@@ -5,11 +5,13 @@
 
 package org.rust.ide.formatter
 
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.intellij.lang.annotations.Language
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.RsLanguage
 
 class RsFormatterTest : RsFormatterTestBase() {
+
     fun `test blocks`() = doTest()
     fun `test items`() = doTest()
     fun `test expressions`() = doTest()
@@ -436,7 +438,6 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    private fun common() = getSettings(RsLanguage)
-    private fun custom() = settings.rust
-
+    private fun common(): CommonCodeStyleSettings = getSettings(RsLanguage)
+    private fun custom(): RsCodeStyleSettings = settings.rust
 }

@@ -14,18 +14,14 @@ import org.rust.lang.core.psi.ext.elementType
 fun expandLazyStatic(call: RsMacroCall): RsExpandedElement? {
     val arg = call.macroArgument?.compactTT ?: return null
     val lazyStaticCall = parseLazyStaticCall(arg) ?: return null
-    val text = "${if (lazyStaticCall.pub) "pub " else ""}static ${lazyStaticCall.identifier}: ${lazyStaticCall.type} = &${lazyStaticCall.expr};"
+    val text = "${if (lazyStaticCall.pub) "pub " else ""}static" +
+        " ${lazyStaticCall.identifier}: ${lazyStaticCall.type} = &${lazyStaticCall.expr};"
     return RsPsiFactory(call.project)
         .createFile(text)
         .descendantOfTypeStrict<RsConstant>()
 }
 
-private data class LazyStaticCall(
-    val pub: Boolean,
-    val identifier: String,
-    val type: String,
-    val expr: String
-)
+private data class LazyStaticCall(val pub: Boolean, val identifier: String, val type: String, val expr: String)
 
 private fun parseLazyStaticCall(tt: RsCompactTT): LazyStaticCall? {
     // static ref FOO: Foo = Foo::new();

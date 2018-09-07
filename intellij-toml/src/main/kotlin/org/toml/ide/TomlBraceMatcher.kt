@@ -12,18 +12,16 @@ import com.intellij.psi.tree.IElementType
 import org.toml.lang.psi.TomlElementTypes.*
 
 class TomlBraceMatcher : PairedBraceMatcher {
-    override fun getPairs() = PAIRS
 
+    override fun getPairs(): Array<BracePair> = PAIRS
     override fun isPairedBracesAllowedBeforeType(lbraceType: IElementType, contextType: IElementType?): Boolean = true
-
-    override fun getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int
-        = openingBraceOffset
+    override fun getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int = openingBraceOffset
 
     companion object {
-        private val PAIRS: Array<BracePair> = arrayOf(
-            BracePair(L_CURLY, R_CURLY, false),
-            BracePair(L_BRACKET, R_BRACKET, false)
-        )
+        private val PAIRS: Array<BracePair> =
+            arrayOf(
+                BracePair(L_CURLY, R_CURLY, false),
+                BracePair(L_BRACKET, R_BRACKET, false)
+            )
     }
 }
-

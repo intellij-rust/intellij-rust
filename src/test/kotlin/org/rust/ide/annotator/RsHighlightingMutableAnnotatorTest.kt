@@ -9,6 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 class RsHighlightingMutableAnnotatorTest : RsAnnotationTestBase() {
+
     fun `test mut self highlight`() = checkInfo("""
         struct <info>Foo</info> {}
         impl <info>Foo</info> {

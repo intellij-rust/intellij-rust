@@ -17,8 +17,10 @@ import org.rust.openapiext.Testmark
 
 //TODO: make context more precise here
 class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
-    override fun getFamilyName() = "Extract inline module structure"
-    override fun getText() = "Extract inline module"
+
+    override fun getFamilyName(): String = "Extract inline module structure"
+
+    override fun getText(): String = "Extract inline module"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? {
         val mod = element.ancestorOrSelf<RsModItem>() ?: return null
@@ -47,6 +49,6 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     }
 
     object Testmarks {
-        val copyAttrs = Testmark("copyAttrs")
+        val copyAttrs: Testmark = Testmark("copyAttrs")
     }
 }

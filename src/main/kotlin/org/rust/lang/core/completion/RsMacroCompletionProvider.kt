@@ -30,7 +30,25 @@ import org.rust.lang.core.resolve.processMacroCallVariants
 import org.rust.lang.core.withPrevSiblingSkipping
 
 object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+    val elementPattern: ElementPattern<PsiElement>
+        get() {
+            val incompleteItem = psiElement<RsItemElement>().withLastChild(RsPsiPattern.error)
+            return psiElement(IDENTIFIER)
+                .andNot(psiElement().withPrevSiblingSkipping(RsPsiPattern.whitespace, incompleteItem))
+                .withParent(psiElement().with(object : PatternCondition<PsiElement?>("MacroParent") {
+                    override fun accepts(element: PsiElement, context: ProcessingContext?): Boolean =
+                        element is RsMod
+                            || (element is RsPath && element.path == null && element.parent is RsPathExpr)
+                            || element is RsMacroCall
+                }))
+                .withLanguage(RsLanguage)
+        }
+
+    override fun addCompletions(
+        parameters: CompletionParameters,
+        context: ProcessingContext,
+        result: CompletionResultSet
+    ) {
         val mod = parameters.position.ancestorStrict<RsMod>()
         result.addAllElements(collectCompletionVariants { variantsCollector ->
             processMacroCallVariants(parameters.position) { entry ->
@@ -40,19 +58,6 @@ object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
             }
         }.asList())
     }
-
-    val elementPattern: ElementPattern<PsiElement>
-        get() {
-            val incompleteItem = psiElement<RsItemElement>().withLastChild(RsPsiPattern.error)
-            return psiElement(IDENTIFIER)
-                .andNot(psiElement().withPrevSiblingSkipping(RsPsiPattern.whitespace, incompleteItem))
-                .withParent(psiElement().with(object : PatternCondition<PsiElement?>("MacroParent") {
-                    override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
-                        return t is RsMod || (t is RsPath && t.path == null && t.parent is RsPathExpr) || t is RsMacroCall
-                    }
-                }))
-                .withLanguage(RsLanguage)
-        }
 
     private fun isHidden(macro: RsMacro, mod: RsMod): Boolean =
         macro.queryAttributes.isDocHidden && macro.containingMod != mod

@@ -23,7 +23,7 @@ import org.rust.lang.core.psi.ext.elementType
 class RsJoinLinesHandler : JoinLinesHandlerDelegate {
     /**
      * Fixup lines **after** they have been joined.
-     * See [RsJoinRawLinesHandler]
+     * @see [RsJoinRawLinesHandler]
      */
     override fun tryJoinLines(document: Document, file: PsiFile, offsetNear: Int, end: Int): Int {
         if (file !is RsFile) return CANNOT_JOIN
@@ -62,8 +62,8 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
         return CANNOT_JOIN
     }
 
-    // Normally this is handled by `CodeDocumentationAwareCommenter`, but Rust have different styles
-    // of documentation comments, so we handle this manually.
+    // Normally this is handled by `CodeDocumentationAwareCommenter`, but Rust have different styles of documentation
+    // comments, so we handle this manually.
     private fun joinLineDocComment(document: Document, offsetNear: Int, end: Int): Int {
         val prefix = document.charsSequence.subSequence(end, end + 3).toString()
         if (prefix != "///" && prefix != "//!") return CANNOT_JOIN

@@ -5,9 +5,7 @@
 
 package org.rust.ide.inspections
 
-/**
- * Tests for lint level detection.
- */
+/** Tests for lint level detection. */
 class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection()) {
 
     fun testDirrectAllow() = checkByText("""
@@ -123,5 +121,4 @@ class RsLintLevelFieldTest : RsInspectionsTestBase(RsFieldNamingInspection()) {
             <warning>Bar</warning>: u32
         }
     """)
-
 }

@@ -12,6 +12,7 @@ import org.rust.fileTreeFromText
 import org.rust.lang.RsLanguage
 
 class RsGotoSuperHandlerTest : RsTestBase() {
+
     fun `test module from function`() = checkNavigation("""
         mod foo {
             mod bar {
@@ -110,7 +111,7 @@ class RsGotoSuperHandlerTest : RsTestBase() {
 
         //- main.rs
             mod foo;
-        """, expected = "mod foo;")
+    """, expected = "mod foo;")
 
     fun `test with path attribute`() = checkNavigationInFiles("""
         //- foo.rs

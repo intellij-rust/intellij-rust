@@ -31,17 +31,14 @@ import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
 
-fun <T> Project.runWriteCommandAction(command: () -> T): T {
-    return WriteCommandAction.runWriteCommandAction(this, Computable<T> { command() })
-}
+fun <T> Project.runWriteCommandAction(command: () -> T): T =
+    WriteCommandAction.runWriteCommandAction(this, Computable<T> { command() })
 
 val Project.modules: Collection<Module>
     get() = ModuleManager.getInstance(this).modules.toList()
 
-
 fun <T> recursionGuard(key: Any, block: Computable<T>, memoize: Boolean = true): T? =
     RecursionManager.doPreventingRecursion(key, memoize, block)
-
 
 fun checkWriteAccessAllowed() {
     check(ApplicationManager.getApplication().isWriteAccessAllowed) {
@@ -62,14 +59,11 @@ fun checkIsBackgroundThread() {
 }
 
 fun fullyRefreshDirectory(directory: VirtualFile) {
-    VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, directory)
+    VfsUtil.markDirtyAndRefresh(false, true, true, directory)
 }
 
 fun VirtualFile.findFileByMaybeRelativePath(path: String): VirtualFile? =
-    if (FileUtil.isAbsolute(path))
-        fileSystem.findFileByPath(path)
-    else
-        findFileByRelativePath(path)
+    if (FileUtil.isAbsolute(path)) fileSystem.findFileByPath(path) else findFileByRelativePath(path)
 
 val VirtualFile.pathAsPath: Path get() = Paths.get(path)
 
@@ -80,11 +74,10 @@ inline fun <Key, reified Psi : PsiElement> getElements(
     indexKey: StubIndexKey<Key, Psi>,
     key: Key, project: Project,
     scope: GlobalSearchScope?
-): Collection<Psi> =
-    StubIndex.getElements(indexKey, key, project, scope, Psi::class.java)
+): Collection<Psi> = StubIndex.getElements(indexKey, key, project, scope, Psi::class.java)
 
+fun Element.toXmlString(): String = JDOMUtil.writeElement(this)
 
-fun Element.toXmlString() = JDOMUtil.writeElement(this)
 fun elementFromXmlString(xml: String): org.jdom.Element =
     SAXBuilder().build(xml.byteInputStream()).rootElement
 

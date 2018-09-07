@@ -19,7 +19,13 @@ abstract class ConvertToSizedTypeFix(element: PsiElement) : LocalQuickFixAndInte
 
     override fun getFamilyName(): String = FAMILY_NAME
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, typeReference: PsiElement, endElement: PsiElement) {
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        typeReference: PsiElement,
+        endElement: PsiElement
+    ) {
         if (typeReference !is RsTypeReference) return
         val factory = RsPsiFactory(project)
         val newTypeReference = newTypeReference(factory, typeReference)

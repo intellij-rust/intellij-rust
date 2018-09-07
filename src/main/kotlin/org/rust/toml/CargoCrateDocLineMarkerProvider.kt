@@ -15,29 +15,34 @@ import org.rust.ide.icons.RsIcons
 import org.toml.lang.psi.*
 
 class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
-    override fun getLineMarkerInfo(element: PsiElement) = null
 
-    override fun collectSlowLineMarkers(elements: MutableList<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
+    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
+
+    override fun collectSlowLineMarkers(
+        elements: MutableList<PsiElement>,
+        result: MutableCollection<LineMarkerInfo<PsiElement>>
+    ) {
         if (!tomlPluginIsAbiCompatible()) return
-        for (el in elements) {
-            val file = el.containingFile
+        for (element in elements) {
+            val file = element.containingFile
             if (file.name.toLowerCase() != "cargo.toml") continue
-            if (el !is TomlTable) continue
-            result += annotateTable(el)
+            if (element !is TomlTable) continue
+            result += annotateTable(element)
         }
     }
 
-    private fun annotateTable(el: TomlTable): Collection<LineMarkerInfo<PsiElement>> {
-        val names = el.header.names
+    private fun annotateTable(table: TomlTable): Collection<LineMarkerInfo<PsiElement>> {
+        val names = table.header.names
         val test = names.getOrNull(names.size - 2)
         val lastName = names.lastOrNull() ?: return emptyList()
         if (test?.isDependencyKey == true) {
-            val version = el.entries.find { it.name == "version" }?.value?.text?.trimVersion
-            val lineMarkerInfo = genLineMarkerInfo(el.header.names.first(), lastName.text, version) ?: return emptyList()
+            val version = table.entries.find { it.name == "version" }?.value?.text?.trimVersion
+            val lineMarkerInfo = genLineMarkerInfo(table.header.names.first(), lastName.text, version)
+                ?: return emptyList()
             return listOf(lineMarkerInfo)
         }
         if (!lastName.isDependencyKey) return emptyList()
-        return el.entries.mapNotNull {
+        return table.entries.mapNotNull {
             val pkgName = it.name
             val pkgVersion = it.version
             genLineMarkerInfo(it.key, pkgName, pkgVersion)
@@ -59,6 +64,7 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
 
     }
 }
+
 private val TomlKey.bareKey get() = firstChild
 private val TomlKeyValue.name get() = key.text
 private val TomlKeyValue.version: String?

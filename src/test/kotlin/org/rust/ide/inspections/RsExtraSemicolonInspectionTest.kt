@@ -72,4 +72,3 @@ class RsExtraSemicolonInspectionTest : RsInspectionsTestBase(RsExtraSemicolonIns
         }
     """)
 }
-

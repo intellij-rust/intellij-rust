@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import org.rust.cargo.toolchain.RustToolchain
@@ -18,43 +19,43 @@ import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 class RustProjectSettingsPanel(
     private val cargoProjectDir: Path = Paths.get("."),
     private val updateListener: (() -> Unit)? = null
 ) : Disposable {
-    data class Data(
-        val toolchain: RustToolchain?,
-        val explicitPathToStdlib: String?
-    )
 
-    override fun dispose() {}
+    data class Data(val toolchain: RustToolchain?, val explicitPathToStdlib: String?)
 
-    private val versionUpdateDebouncer = UiDebouncer(this)
+    private val versionUpdateDebouncer: UiDebouncer = UiDebouncer(this)
 
-    private val pathToToolchainField = pathToDirectoryTextField(this,
-        "Select directory with cargo binary") { update() }
+    private val pathToToolchainField: TextFieldWithBrowseButton =
+        pathToDirectoryTextField(this, "Select directory with cargo binary") { update() }
 
-    private val pathToStdlibField = pathToDirectoryTextField(this,
-        "Select directory with standard library source code")
+    private val pathToStdlibField: TextFieldWithBrowseButton =
+        pathToDirectoryTextField(this, "Select directory with standard library source code")
 
-    private val downloadStdlibLink = Link("Download via rustup", action = {
-        val rustup = RustToolchain(Paths.get(pathToToolchainField.text)).rustup
-        if (rustup != null) {
-            object : Task.Backgroundable(null, "Downloading Rust standard library") {
-                override fun shouldStartInBackground(): Boolean = false
-                override fun onSuccess() = update()
-
-                override fun run(indicator: ProgressIndicator) {
-                    indicator.isIndeterminate = true
-                    rustup.downloadStdlib()
+    private val downloadStdlibLink: JComponent =
+        Link(
+            "Download via rustup",
+            action = {
+                val rustup = RustToolchain(Paths.get(pathToToolchainField.text)).rustup
+                if (rustup != null) {
+                    object : Task.Backgroundable(null, "Downloading Rust standard library") {
+                        override fun shouldStartInBackground(): Boolean = false
+                        override fun onSuccess() = update()
+                        override fun run(indicator: ProgressIndicator) {
+                            indicator.isIndeterminate = true
+                            rustup.downloadStdlib()
+                        }
+                    }.queue()
                 }
-            }.queue()
-        }
-    }).apply { isVisible = false }
+            }
+        ).apply { isVisible = false }
 
-    private val toolchainVersion = JLabel()
+    private val toolchainVersion: JLabel = JLabel()
 
     var data: Data
         get() {
@@ -71,17 +72,22 @@ class RustProjectSettingsPanel(
             update()
         }
 
-    fun attachTo(layout: RsLayoutBuilder) = with(layout) {
-        data = Data(
-            toolchain = RustToolchain.suggest(),
-            explicitPathToStdlib = null
-        )
+    private val RustToolchain.rustup: Rustup? get() = rustup(cargoProjectDir)
 
-        row("Toolchain location:", pathToToolchainField)
-        row("Toolchain version:", toolchainVersion)
-        row("Standard library:", pathToStdlibField)
-        row(component = downloadStdlibLink)
-    }
+    override fun dispose() {}
+
+    fun attachTo(layout: RsLayoutBuilder) =
+        with(layout) {
+            data = Data(
+                toolchain = RustToolchain.suggest(),
+                explicitPathToStdlib = null
+            )
+
+            row("Toolchain location:", pathToToolchainField)
+            row("Toolchain version:", toolchainVersion)
+            row("Standard library:", pathToStdlibField)
+            row(component = downloadStdlibLink)
+        }
 
     @Throws(ConfigurationException::class)
     fun validateSettings() {
@@ -117,12 +123,11 @@ class RustProjectSettingsPanel(
                     toolchainVersion.text = rustcVersion.parsedVersion
                     toolchainVersion.foreground = JBColor.foreground()
                 }
+
                 updateListener?.invoke()
             }
         )
     }
-
-    private val RustToolchain.rustup: Rustup? get() = rustup(cargoProjectDir)
 }
 
 private fun String.blankToNull(): String? = if (isBlank()) null else this

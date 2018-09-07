@@ -16,8 +16,8 @@ import com.intellij.usageView.UsageViewTypeLocation
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsDescriptionProvider : ElementDescriptionProvider {
-    override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
-        return when (location) {
+    override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? =
+        when (location) {
             is UsageViewNodeTextLocation -> (element as? RsNamedElement)?.name
             is UsageViewShortNameLocation -> (element as? RsNamedElement)?.name
             is UsageViewLongNameLocation -> (element as? RsNamedElement)?.name
@@ -25,5 +25,4 @@ class RsDescriptionProvider : ElementDescriptionProvider {
             is HighlightUsagesDescriptionLocation -> (element as? RsNamedElement)?.name
             else -> null
         }
-    }
 }

@@ -18,9 +18,11 @@ class CallInfo private constructor(
     val selfParameter: String?,
     val parameters: List<Parameter>
 ) {
+
     class Parameter(val pattern: String, val type: String)
 
     companion object {
+
         fun resolve(call: RsCallExpr): CallInfo? {
             val fn = (call.expr as? RsPathExpr)?.path?.reference?.resolve() ?: return null
             if (fn is RsFunction) return CallInfo(fn)
@@ -30,9 +32,8 @@ class CallInfo private constructor(
             return null
         }
 
-        fun resolve(methodCall: RsMethodCall): CallInfo? {
-            return (methodCall.reference.resolve() as? RsFunction)?.let { CallInfo(it) }
-        }
+        fun resolve(methodCall: RsMethodCall): CallInfo? =
+            (methodCall.reference.resolve() as? RsFunction)?.let { CallInfo(it) }
     }
 
     private constructor(fn: RsFunction) : this(

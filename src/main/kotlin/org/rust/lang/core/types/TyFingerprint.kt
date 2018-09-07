@@ -17,14 +17,12 @@ import java.io.DataOutput
  *  * `ty1 == ty2 => fingerprint(ty1) == fingerprint(ty2)`.
  *  * fingerprint can be computed without name resolution.
  */
-data class TyFingerprint constructor(
-    private val name: String
-) {
-    companion object {
+data class TyFingerprint constructor(private val name: String) {
 
-        val TYPE_PARAMETER_FINGERPRINT = TyFingerprint("#T")
-        private val ANY_INTEGER_FINGERPRINT = TyFingerprint("{integer}")
-        private val ANY_FLOAT_FINGERPRINT = TyFingerprint("{float}")
+    companion object {
+        val TYPE_PARAMETER_FINGERPRINT: TyFingerprint = TyFingerprint("#T")
+        private val ANY_INTEGER_FINGERPRINT: TyFingerprint = TyFingerprint("{integer}")
+        private val ANY_FLOAT_FINGERPRINT: TyFingerprint = TyFingerprint("{float}")
 
         // Keep in sync with Declarations-inferTypeReferenceType
         fun create(ref: RsTypeReference, typeParameters: List<String>): List<TyFingerprint> {
@@ -58,21 +56,23 @@ data class TyFingerprint constructor(
             return listOf(fingerprint)
         }
 
-        fun create(type: Ty): TyFingerprint? = when (type) {
-            is TyAdt -> type.item.name?.let(::TyFingerprint)
-            is TySlice, is TyArray -> TyFingerprint("[T]")
-            is TyPointer -> TyFingerprint("*T")
-            is TyReference -> create(type.referenced)
-            is TyTuple -> TyFingerprint("(tuple)")
-            is TyPrimitive -> TyFingerprint(type.toString())
-            is TyFunction -> TyFingerprint("fn()")
-            is TyInfer.IntVar -> ANY_INTEGER_FINGERPRINT
-            is TyInfer.FloatVar -> ANY_FLOAT_FINGERPRINT
-            else -> null
-        }
+        fun create(type: Ty): TyFingerprint? =
+            when (type) {
+                is TyAdt -> type.item.name?.let(::TyFingerprint)
+                is TySlice, is TyArray -> TyFingerprint("[T]")
+                is TyPointer -> TyFingerprint("*T")
+                is TyReference -> create(type.referenced)
+                is TyTuple -> TyFingerprint("(tuple)")
+                is TyPrimitive -> TyFingerprint(type.toString())
+                is TyFunction -> TyFingerprint("fn()")
+                is TyInfer.IntVar -> ANY_INTEGER_FINGERPRINT
+                is TyInfer.FloatVar -> ANY_FLOAT_FINGERPRINT
+                else -> null
+            }
     }
 
     object KeyDescriptor : com.intellij.util.io.KeyDescriptor<TyFingerprint> {
+
         override fun save(out: DataOutput, value: TyFingerprint) =
             out.writeUTF(value.name)
 

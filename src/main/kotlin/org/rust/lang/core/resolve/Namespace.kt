@@ -25,26 +25,25 @@ val TYPES_N_VALUES: Set<Namespace> = EnumSet.of(Namespace.Types, Namespace.Value
 val TYPES_N_MACROS: Set<Namespace> = EnumSet.of(Namespace.Types, Namespace.Macros)
 val TYPES_N_VALUES_N_MACROS: Set<Namespace> = EnumSet.of(Namespace.Types, Namespace.Values, Namespace.Macros)
 
-val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
-    is RsMod,
-    is RsModDeclItem,
-    is RsEnumItem,
-    is RsTraitItem,
-    is RsTypeParameter,
-    is RsTypeAlias -> TYPES
+val RsNamedElement.namespaces: Set<Namespace>
+    get() = when (this) {
+        is RsMod,
+        is RsModDeclItem,
+        is RsEnumItem,
+        is RsTraitItem,
+        is RsTypeParameter,
+        is RsTypeAlias -> TYPES
 
-    is RsPatBinding,
-    is RsConstant,
-    is RsFunction,
-    is RsEnumVariant -> VALUES
+        is RsPatBinding,
+        is RsConstant,
+        is RsFunction,
+        is RsEnumVariant -> VALUES
 
-    is RsStructItem -> if (blockFields == null) TYPES_N_VALUES else TYPES
+        is RsStructItem -> if (blockFields == null) TYPES_N_VALUES else TYPES
 
-    is RsLifetimeParameter -> LIFETIMES
+        is RsLifetimeParameter -> LIFETIMES
 
-    is RsMacro -> MACROS
+        is RsMacro -> MACROS
 
-    else -> TYPES_N_VALUES
-}
-
-
+        else -> TYPES_N_VALUES
+    }

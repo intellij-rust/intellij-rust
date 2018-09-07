@@ -7,9 +7,7 @@ package org.rust.ide.inspections
 
 import org.rust.ide.annotator.RsAnnotationTestBase
 
-abstract class RsInspectionsTestBase(
-    val inspection: RsLocalInspectionTool
-) : RsAnnotationTestBase() {
+abstract class RsInspectionsTestBase(val inspection: RsLocalInspectionTool) : RsAnnotationTestBase() {
 
     fun testInspectionHasDocumentation() {
         val description = "inspectionDescriptions/${inspection.javaClass.simpleName?.dropLast("Inspection".length)}.html"

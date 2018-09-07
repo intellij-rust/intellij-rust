@@ -11,5 +11,6 @@ import com.intellij.psi.stubs.StubElement
 import org.rust.lang.core.psi.ext.RsElement
 
 abstract class RsElementStub<PsiT : RsElement>(
-    parent: StubElement<*>?, elementType: IStubElementType<out StubElement<*>, *>?
+    parent: StubElement<*>?,
+    elementType: IStubElementType<out StubElement<*>, *>?
 ) : StubBase<PsiT>(parent, elementType)

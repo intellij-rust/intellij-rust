@@ -19,12 +19,14 @@ import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
 
 class RsExtractFunctionHandler : RefactoringActionHandler {
+
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
         //this doesn't get called form the editor.
     }
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext?) {
         if (file !is RsFile) return
+
         val start = editor?.selectionModel?.selectionStart
         val end = editor?.selectionModel?.selectionEnd
         if (start === null || end === null) return
@@ -44,7 +46,11 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         }
     }
 
-    private fun addExtractedFunction(project: Project, config: RsExtractFunctionConfig, psiFactory: RsPsiFactory): Boolean {
+    private fun addExtractedFunction(
+        project: Project,
+        config: RsExtractFunctionConfig,
+        psiFactory: RsPsiFactory
+    ): Boolean {
         val owner = config.containingFunction.owner
 
         val function = psiFactory.createFunction(config)
@@ -55,11 +61,9 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
                 val afterNewline = psiParserFacade.createWhiteSpaceFromText("\n")
                 val type = owner.impl.typeReference!!
                 val parent = owner.impl.parent
-                //FIXME: Don't create new impl if a other impl exists
+                // FIXME: Don't create new impl if a other impl exists
                 val impl = psiFactory.createImpl(type.text, listOf(function))
-                parent.addAfter(afterNewline,
-                    parent.addAfter(impl,
-                        parent.addAfter(beforeNewline, owner.impl)))
+                parent.addAfter(afterNewline, parent.addAfter(impl, parent.addAfter(beforeNewline, owner.impl)))
             }
             else -> {
                 val newline = psiParserFacade.createWhiteSpaceFromText("\n\n")
@@ -71,31 +75,33 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
     }
 
     private fun replaceOldStatementsWithCallExpr(config: RsExtractFunctionConfig, psiFactory: RsPsiFactory) {
-        var stmt = ""
+        var stmtBuilder = StringBuilder()
         if (config.returnValue?.expression != null) {
-            stmt += "let ${config.returnValue.expression} = "
+            stmtBuilder.append("let ${config.returnValue.expression} = ")
         }
         val firstParameter = config.parameters.firstOrNull()
-        stmt += if (firstParameter != null && firstParameter.name.endsWith("self") && firstParameter.type == null) {
-            "self.${config.name}(${config.argumentsText})"
-        } else {
-            val owner = config.containingFunction.owner
-            val type = when (owner) {
-                is RsAbstractableOwner.Impl -> {
-                    owner.impl.typeReference?.text?.let {
-                        if (owner.impl.typeParameterList == null) it else "<$it>"
+        stmtBuilder.append(
+            if (firstParameter != null && firstParameter.name.endsWith("self") && firstParameter.type == null) {
+                "self.${config.name}(${config.argumentsText})"
+            } else {
+                val owner = config.containingFunction.owner
+                val type = when (owner) {
+                    is RsAbstractableOwner.Impl -> {
+                        owner.impl.typeReference?.text?.let {
+                            if (owner.impl.typeParameterList == null) it else "<$it>"
+                        }
                     }
+                    is RsAbstractableOwner.Trait -> "Self"
+                    else -> null
                 }
-                is RsAbstractableOwner.Trait -> "Self"
-                else -> null
+                "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
             }
-            "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
-        }
-        val element = if (config.returnValue == null || config.returnValue.expression != null ) {
-            stmt += ";"
-            psiFactory.createStatement(stmt)
+        )
+        val element = if (config.returnValue == null || config.returnValue.expression != null) {
+            stmtBuilder.append(";")
+            psiFactory.createStatement(stmtBuilder.toString())
         } else {
-            psiFactory.createExpression(stmt)
+            psiFactory.createExpression(stmtBuilder.toString())
         }
         config.elements.forEachIndexed { index, psiElement ->
             if (index == 0) {

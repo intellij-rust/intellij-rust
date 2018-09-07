@@ -18,9 +18,11 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.buildList
 
-class RsStructureViewModel(editor: Editor?, file: RsFile)
-    : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
-      StructureViewModel.ElementInfoProvider {
+class RsStructureViewModel(
+    editor: Editor?,
+    file: RsFile
+) : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
+    StructureViewModel.ElementInfoProvider {
 
     init {
         withSuitableClasses(
@@ -29,7 +31,8 @@ class RsStructureViewModel(editor: Editor?, file: RsFile)
         )
     }
 
-    override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = element.value is RsFile
+    override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean =
+        element.value is RsFile
 
     override fun isAlwaysLeaf(element: StructureViewTreeElement): Boolean =
         when (element.value) {

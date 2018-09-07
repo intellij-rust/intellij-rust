@@ -12,7 +12,6 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 
 abstract class RsConfigurableBase(protected val project: Project) : Configurable {
-
     protected val settings: RustProjectSettingsService = project.rustSettings
 
     // Currently, we have help page only for CLion

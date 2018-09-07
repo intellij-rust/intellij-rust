@@ -11,11 +11,11 @@ import com.intellij.util.messages.Topic
 import org.rust.cargo.toolchain.RustToolchain
 
 interface RustProjectSettingsService {
+
     data class Data(
         val toolchain: RustToolchain?,
         val autoUpdateEnabled: Boolean,
-        // Usually, we use `rustup` to find stdlib automatically,
-        // but if one does not use rustup, it's possible to
+        // Usually, we use `rustup` to find stdlib automatically, but if one does not use rustup, it's possible to
         // provide path to stdlib explicitly.
         val explicitPathToStdlib: String?,
         val useCargoCheckForBuild: Boolean,
@@ -27,7 +27,6 @@ interface RustProjectSettingsService {
     )
 
     var data: Data
-
     val toolchain: RustToolchain? get() = data.toolchain
     var explicitPathToStdlib: String?
         get() = data.explicitPathToStdlib
@@ -42,16 +41,12 @@ interface RustProjectSettingsService {
     val expandMacros: Boolean get() = data.expandMacros
     val useSkipChildren: Boolean get() = data.useSkipChildren
 
-    /*
-     * Show a dialog for toolchain configuration
-     */
+    /* Show a dialog for toolchain configuration. */
     fun configureToolchain()
 
     companion object {
-        val TOOLCHAIN_TOPIC: Topic<ToolchainListener> = Topic(
-            "toolchain changes",
-            ToolchainListener::class.java
-        )
+        val TOOLCHAIN_TOPIC: Topic<ToolchainListener> =
+            Topic("toolchain changes", ToolchainListener::class.java)
     }
 
     interface ToolchainListener {

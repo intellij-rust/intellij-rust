@@ -5,9 +5,7 @@
 
 package org.rust.ide.inspections
 
-/**
- * Tests for Double Negation inspection.
- */
+/** Tests for Double Negation inspection. */
 class RsDoubleNegInspectionTest : RsInspectionsTestBase(RsDoubleNegInspection()) {
 
     fun testSimple() = checkByText("""

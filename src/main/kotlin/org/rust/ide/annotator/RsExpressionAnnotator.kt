@@ -19,6 +19,7 @@ import java.util.*
 
 
 class RsExpressionAnnotator : Annotator {
+
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         element.accept(RedundantParenthesisVisitor(holder))
         if (element is RsStructLiteral) {
@@ -29,11 +30,7 @@ class RsExpressionAnnotator : Annotator {
         }
     }
 
-    private fun checkStructLiteral(
-        holder: AnnotationHolder,
-        decl: RsFieldsOwner,
-        literal: RsStructLiteral
-    ) {
+    private fun checkStructLiteral(holder: AnnotationHolder, decl: RsFieldsOwner, literal: RsStructLiteral) {
         val body = literal.structLiteralBody
         body.structLiteralFieldList
             .filter { it.reference.resolve() == null }
@@ -62,33 +59,33 @@ class RsExpressionAnnotator : Annotator {
                 }
             }
         }
-
     }
 }
 
-
 private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) : RsVisitor() {
-    override fun visitCondition(o: RsCondition) =
-        o.expr.warnIfParens("Predicate expression has unnecessary parentheses")
 
-    override fun visitRetExpr(o: RsRetExpr) =
-        o.expr.warnIfParens("Return expression has unnecessary parentheses")
+    override fun visitCondition(condition: RsCondition) =
+        condition.expr.warnIfParens("Predicate expression has unnecessary parentheses")
 
-    override fun visitMatchExpr(o: RsMatchExpr) =
-        o.expr.warnIfParens("Match expression has unnecessary parentheses")
+    override fun visitRetExpr(retExpr: RsRetExpr) =
+        retExpr.expr.warnIfParens("Return expression has unnecessary parentheses")
 
-    override fun visitForExpr(o: RsForExpr) =
-        o.expr.warnIfParens("For loop expression has unnecessary parentheses")
+    override fun visitMatchExpr(matchExpr: RsMatchExpr) =
+        matchExpr.expr.warnIfParens("Match expression has unnecessary parentheses")
 
-    override fun visitParenExpr(o: RsParenExpr) =
-        o.expr.warnIfParens("Redundant parentheses in expression")
+    override fun visitForExpr(forExpr: RsForExpr) =
+        forExpr.expr.warnIfParens("For loop expression has unnecessary parentheses")
+
+    override fun visitParenExpr(parenExpr: RsParenExpr) =
+        parenExpr.expr.warnIfParens("Redundant parentheses in expression")
 
     private fun RsExpr?.warnIfParens(message: String) {
         if (this !is RsParenExpr) return
         val fix = RemoveParenthesesFromExprIntention()
-        if (fix.isAvailable(this))
+        if (fix.isAvailable(this)) {
             holder.createWeakWarningAnnotation(this, message)
                 .registerFix(RemoveParenthesesFromExprIntention())
+        }
     }
 }
 

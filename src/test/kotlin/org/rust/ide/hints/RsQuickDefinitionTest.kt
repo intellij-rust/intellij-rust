@@ -171,7 +171,16 @@ class RsQuickDefinitionTest : RsTestBase() {
         var actualText: String? = null
 
         val action = object : ShowImplementationsAction() {
-            override fun showImplementations(impls: Array<out PsiElement>, project: Project, text: String?, editor: Editor?, file: PsiFile?, element: PsiElement?, invokedFromEditor: Boolean, invokedByShortcut: Boolean) {
+            override fun showImplementations(
+                impls: Array<out PsiElement>,
+                project: Project,
+                text: String?,
+                editor: Editor?,
+                file: PsiFile?,
+                element: PsiElement?,
+                invokedFromEditor: Boolean,
+                invokedByShortcut: Boolean
+            ) {
                 if (impls.isEmpty()) return
                 actualText = ImplementationViewComponent.getNewText(impls[0].navigationElement)
             }

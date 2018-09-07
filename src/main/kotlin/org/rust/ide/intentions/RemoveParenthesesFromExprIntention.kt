@@ -12,11 +12,14 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 
 class RemoveParenthesesFromExprIntention : RsElementBaseIntentionAction<RsParenExpr>() {
+
     override fun getText(): String = "Remove parentheses from expression"
+
     override fun getFamilyName(): String = text
 
     fun isAvailable(expr: RsParenExpr?): Boolean {
-        if (expr?.ancestorStrict<RsCondition>() == null && expr?.ancestorStrict<RsMatchExpr>() == null) return true
+        if (expr?.ancestorStrict<RsCondition>() == null
+            && expr?.ancestorStrict<RsMatchExpr>() == null) return true
         val child = expr.children.singleOrNull()
         return when (child) {
             is RsStructLiteral -> false

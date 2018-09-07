@@ -7,10 +7,9 @@ package org.rust.cargo.runconfig.test
 
 import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
 
-/**
- * Tests for Test Function Line Marker
- */
+/** Tests for Test Function Line Marker. */
 class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
+
     fun `test simple function`() = doTestByText("""
         #[test]
         fn has_icon() {assert(true)} // - Test has_icon

@@ -8,6 +8,7 @@ package org.toml.ide
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class TomlAnnotatorTest : LightCodeInsightFixtureTestCase() {
+
     fun `test inline tables`() = doTest("""
         a = {something = "", another = ""}
         a = <error>{something = "",

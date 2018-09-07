@@ -23,6 +23,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.checkWriteAccessAllowed
 
 class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
+
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =
         elements.all { it is RsFile && it.name != RsConstants.MOD_RS_FILE }
 
@@ -32,8 +33,8 @@ class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
 
     override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
 
-
     private object Handler : RefactoringActionHandler {
+
         override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
             invoke(project, arrayOf(file), dataContext)
         }

@@ -12,12 +12,10 @@ import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processExternCrateResolveVariants
 
-class RsExternCrateReferenceImpl(
-    externCrate: RsExternCrateItem
-) : RsReferenceCached<RsExternCrateItem>(externCrate),
-    RsReference {
-
-    override val RsExternCrateItem.referenceAnchor: PsiElement get() = referenceNameElement
+class RsExternCrateReferenceImpl(externCrate: RsExternCrateItem) : RsReferenceCached<RsExternCrateItem>(externCrate),
+                                                                   RsReference {
+    override val RsExternCrateItem.referenceAnchor: PsiElement
+        get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processExternCrateResolveVariants(element, true, it) }

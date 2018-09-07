@@ -8,7 +8,8 @@ package org.rust.lang.utils
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ComparisonOp.*
-import org.rust.lang.core.psi.ext.EqualityOp.*
+import org.rust.lang.core.psi.ext.EqualityOp.EQ
+import org.rust.lang.core.psi.ext.EqualityOp.EXCLEQ
 import org.rust.lang.core.psi.ext.operatorType
 
 fun RsBinaryExpr.negateToString(): String {

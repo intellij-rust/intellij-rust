@@ -8,7 +8,8 @@
 package org.rust.lang.core
 
 import com.intellij.util.text.SemVer
-import org.rust.lang.core.FeatureState.*
+import org.rust.lang.core.FeatureState.ACCEPTED
+import org.rust.lang.core.FeatureState.ACTIVE
 
 val ASM = CompilerFeature("asm", ACTIVE, "1.0.0")
 val CONCAT_IDENTS = CompilerFeature("concat_idents", ACTIVE, "1.0.0")
@@ -62,17 +63,13 @@ val CUSTOM_DERIVE = CompilerFeature("custom_derive", ACTIVE, "1.0.0")
 val RUSTC_ATTRS = CompilerFeature("rustc_attrs", ACTIVE, "1.0.0")
 // Allows the use of non lexical lifetimes; RFC 2094
 val NLL = CompilerFeature("nll", ACTIVE, "1.0.0")
-// Allows the use of #[allow_internal_unstable]. This is an
-// attribute on macro_rules! and can't use the attribute handling
-// below (it has to be checked before expansion possibly makes
-// macros disappear).
+// Allows the use of #[allow_internal_unstable]. This is an attribute on macro_rules! and can't use the attribute
+// handling below (it has to be checked before expansion possibly makes macros disappear).
 //
 // rustc internal
 val ALLOW_INTERNAL_UNSTABLE = CompilerFeature("allow_internal_unstable", ACTIVE, "1.0.0")
-// Allows the use of #[allow_internal_unsafe]. This is an
-// attribute on macro_rules! and can't use the attribute handling
-// below (it has to be checked before expansion possibly makes
-// macros disappear).
+// Allows the use of #[allow_internal_unsafe]. This is an attribute on macro_rules! and can't use the attribute
+// handling below (it has to be checked before expansion possibly makes macros disappear).
 //
 // rustc internal
 val ALLOW_INTERNAL_UNSAFE = CompilerFeature("allow_internal_unsafe", ACTIVE, "1.0.0")
@@ -239,8 +236,7 @@ val SSE4A_TARGET_FEATURE = CompilerFeature("sse4a_target_feature", ACTIVE, "1.27
 val TBM_TARGET_FEATURE = CompilerFeature("tbm_target_feature", ACTIVE, "1.27.0")
 // Allows macro invocations of the form `#[foo::bar]`
 val PROC_MACRO_PATH_INVOC = CompilerFeature("proc_macro_path_invoc", ACTIVE, "1.27.0")
-// Allows macro invocations on modules expressions and statements and
-// procedural macros to expand to non-items.
+// Allows macro invocations on modules expressions and statements and procedural macros to expand to non-items.
 val PROC_MACRO_MOD = CompilerFeature("proc_macro_mod", ACTIVE, "1.27.0")
 val PROC_MACRO_EXPR = CompilerFeature("proc_macro_expr", ACTIVE, "1.27.0")
 val PROC_MACRO_NON_ITEMS = CompilerFeature("proc_macro_non_items", ACTIVE, "1.27.0")
@@ -282,16 +278,14 @@ val CONST_INDEXING = CompilerFeature("const_indexing", ACCEPTED, "1.26.0")
 val DEFAULT_TYPE_PARAMS = CompilerFeature("default_type_params", ACCEPTED, "1.0.0")
 val GLOBS = CompilerFeature("globs", ACCEPTED, "1.0.0")
 val IF_LET = CompilerFeature("if_let", ACCEPTED, "1.0.0")
-// A temporary feature gate used to enable parser extensions needed
-// to bootstrap fix for #5723.
+// A temporary feature gate used to enable parser extensions needed to bootstrap fix for #5723.
 val ISSUE_5723_BOOTSTRAP = CompilerFeature("issue_5723_bootstrap", ACCEPTED, "1.0.0")
 val MACRO_RULES = CompilerFeature("macro_rules", ACCEPTED, "1.0.0")
 // Allows using #![no_std]
 val NO_STD = CompilerFeature("no_std", ACCEPTED, "1.6.0")
 val SLICING_SYNTAX = CompilerFeature("slicing_syntax", ACCEPTED, "1.0.0")
 val STRUCT_VARIANT = CompilerFeature("struct_variant", ACCEPTED, "1.0.0")
-// These are used to test this portion of the compiler, they don't actually
-// mean anything
+// These are used to test this portion of the compiler, they don't actually mean anything.
 val TEST_ACCEPTED_FEATURE = CompilerFeature("test_accepted_feature", ACCEPTED, "1.0.0")
 val TUPLE_INDEXING = CompilerFeature("tuple_indexing", ACCEPTED, "1.0.0")
 // Allows macros to appear in the type position.
@@ -324,8 +318,7 @@ val RELAXED_ADTS = CompilerFeature("relaxed_adts", ACCEPTED, "1.19.0")
 val CLOSURE_TO_FN_COERCION = CompilerFeature("closure_to_fn_coercion", ACCEPTED, "1.19.0")
 // Allows attributes on struct literal fields.
 val STRUCT_FIELD_ATTRIBUTES = CompilerFeature("struct_field_attributes", ACCEPTED, "1.20.0")
-// Allows the definition of associated constants in `trait` or `impl`
-// blocks.
+// Allows the definition of associated constants in `trait` or `impl` blocks.
 val ASSOCIATED_CONSTS = CompilerFeature("associated_consts", ACCEPTED, "1.20.0")
 // Usage of the `compile_error!` macro
 val COMPILE_ERROR = CompilerFeature("compile_error", ACCEPTED, "1.20.0")
@@ -333,8 +326,7 @@ val COMPILE_ERROR = CompilerFeature("compile_error", ACCEPTED, "1.20.0")
 val RVALUE_STATIC_PROMOTION = CompilerFeature("rvalue_static_promotion", ACCEPTED, "1.21.0")
 // Allow Drop types in constants (RFC 1440)
 val DROP_TYPES_IN_CONST = CompilerFeature("drop_types_in_const", ACCEPTED, "1.22.0")
-// Allows the sysV64 ABI to be specified on all platforms
-// instead of just the platforms on which it is the C ABI
+// Allows the sysV64 ABI to be specified on all platforms instead of just the platforms on which it is the C ABI.
 val ABI_SYSV64 = CompilerFeature("abi_sysv64", ACCEPTED, "1.24.0")
 // Allows `repr(align(16))` struct attribute (RFC 1358)
 val REPR_ALIGN = CompilerFeature("repr_align", ACCEPTED, "1.25.0")
@@ -386,15 +378,14 @@ data class CompilerFeature(val name: String, val state: FeatureState, val since:
 
 enum class FeatureState {
     /**
-     * Represents active features that are currently being implemented or
-     * currently being considered for addition/removal.
-     * Such features can be used only with nightly compiler with the corresponding feature attribute
+     * Represents active features that are currently being implemented or currently being considered for
+     * addition/removal. Such features can be used only with nightly compiler with the corresponding feature attribute.
      */
     ACTIVE,
+
     /**
-     * Those language feature has since been Accepted (it was once Active)
-     * so such language features can be used with stable/beta compiler since some version
-     * without any additional attributes
+     * Those language feature has since been Accepted (it was once Active) so such language features can be used with
+     * stable/beta compiler since some version without any additional attributes
      */
     ACCEPTED
 }

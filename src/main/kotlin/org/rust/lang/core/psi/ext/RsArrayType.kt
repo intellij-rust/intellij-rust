@@ -9,13 +9,16 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyPrimitive
 
-val RsArrayType.isSlice: Boolean get() = stub?.isSlice ?: (expr == null)
+val RsArrayType.isSlice: Boolean
+    get() = stub?.isSlice ?: (expr == null)
 
-val RsArrayType.arraySize: Long? get() = calculateArraySize(expr)
+val RsArrayType.arraySize: Long?
+    get() = calculateArraySize(expr)
 
 private const val MAX_EXPR_DEPTH: Int = 64
 
-private val defaultExprPathResolver: (RsPathExpr) -> RsElement? = { it.path.reference.resolve() }
+private val defaultExprPathResolver: (RsPathExpr) -> RsElement? =
+    { it.path.reference.resolve() }
 
 fun calculateArraySize(expr: RsExpr?, pathExprResolver: ((RsPathExpr) -> RsElement?) = defaultExprPathResolver): Long? {
 
@@ -49,13 +52,10 @@ fun calculateArraySize(expr: RsExpr?, pathExprResolver: ((RsPathExpr) -> RsEleme
                     ArithmeticOp.BIT_AND -> leftValue and rightValue
                     ArithmeticOp.BIT_OR -> leftValue or rightValue
                     ArithmeticOp.BIT_XOR -> leftValue xor rightValue
-                    // We can't simply convert `rightValue` to Int
-                    // because after conversion of quite large Long values (> 2^31 - 1)
-                    // we can get any Int value including negative one
-                    // so it can lead to incorrect result.
-                    // But if `rightValue` >= `java.lang.Long.BYTES`
-                    // we know result without computation:
-                    // overflow in 'shl' case and 0 in 'shr' case.
+                    // We can't simply convert `rightValue` to Int because after conversion of quite large Long values
+                    // (> 2^31 - 1) we can get any Int value including negative one so it can lead to incorrect result.
+                    // But if `rightValue` >= `java.lang.Long.BYTES` we know result without computation: overflow in
+                    // 'shl' case and 0 in 'shr' case.
                     ArithmeticOp.SHL -> if (rightValue >= java.lang.Long.BYTES) null else leftValue shl rightValue.toInt()
                     ArithmeticOp.SHR -> if (rightValue >= java.lang.Long.BYTES) 0 else leftValue shr rightValue.toInt()
                 }

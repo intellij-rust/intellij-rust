@@ -13,5 +13,4 @@ val RsTraitRef.resolveToTrait: RsTraitItem?
     get() = path.reference.resolve() as? RsTraitItem
 
 val RsTraitRef.resolveToBoundTrait: BoundElement<RsTraitItem>?
-    get() = path.reference.advancedResolve()?.downcast<RsTraitItem>()
-
+    get() = path.reference.advancedResolve()?.downcast()

@@ -9,8 +9,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import org.rust.RsTestBase
 
 class RsCommenterTest : RsTestBase() {
-
-    override val dataPath = "org/rust/ide/commenter/fixtures"
+    override val dataPath: String = "org/rust/ide/commenter/fixtures"
 
     private fun doTest(actionId: String) {
         myFixture.configureByFile(fileName)

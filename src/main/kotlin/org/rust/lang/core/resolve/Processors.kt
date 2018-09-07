@@ -30,62 +30,56 @@ interface ScopeEntry {
     val subst: Substitution get() = emptySubstitution
 }
 
-/**
- * This special event allows to transmit "out of band" information
- * to the resolve processor
- */
+/** This special event allows to transmit "out of band" information to the resolve processor. */
 enum class ScopeEvent : ScopeEntry {
-    // Communicate to the resolve processor that we are about
-    // to process wildecard imports. This is basically a hack
+    // Communicate to the resolve processor that we are about to process wildecard imports. This is basically a hack
     // to make winapi 0.2 work in a reasonable amount of time.
     STAR_IMPORTS;
 
     override val element: RsElement? get() = null
 }
 
-/**
- * Return `true` to stop further processing,
- * return `false` to continue search
- */
+/** Return `true` to stop further processing, return `false` to continue search. */
 typealias RsResolveProcessor = (ScopeEntry) -> Boolean
+
 typealias RsMethodResolveProcessor = (MethodResolveVariant) -> Boolean
 
 fun collectPathResolveVariants(
     referenceName: String,
-    f: (RsResolveProcessor) -> Unit
+    function: (RsResolveProcessor) -> Unit
 ): List<BoundElement<RsElement>> {
     val result = mutableListOf<BoundElement<RsElement>>()
-    f { e ->
-        if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
+    function { entry ->
+        if (entry == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@function true
 
-        if (e.name == referenceName) {
-            val element = e.element ?: return@f false
-            result += BoundElement(element, e.subst)
+        if (entry.name == referenceName) {
+            val element = entry.element ?: return@function false
+            result += BoundElement(element, entry.subst)
         }
         false
     }
     return result
 }
 
-fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsElement> {
+fun collectResolveVariants(referenceName: String, function: (RsResolveProcessor) -> Unit): List<RsElement> {
     val result = mutableListOf<RsElement>()
-    f { e ->
-        if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
+    function { entry ->
+        if (entry == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@function true
 
-        if (e.name == referenceName) {
-            result += e.element ?: return@f false
+        if (entry.name == referenceName) {
+            result += entry.element ?: return@function false
         }
         false
     }
     return result
 }
 
-fun collectCompletionVariants(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {
+fun collectCompletionVariants(function: (RsResolveProcessor) -> Unit): Array<LookupElement> {
     val result = mutableListOf<LookupElement>()
-    f { e ->
-        val element = e.element ?: return@f false
-        if (element is RsFunction && element.isTest) return@f false
-        result += createLookupElement(element, e.name)
+    function { entry ->
+        val element = entry.element ?: return@function false
+        if (element is RsFunction && element.isTest) return@function false
+        result += createLookupElement(element, entry.name)
         false
     }
     return result.toTypedArray()
@@ -109,10 +103,8 @@ private class LazyScopeEntry(
     thunk: Lazy<RsElement?>
 ) : ScopeEntry {
     override val element: RsElement? by thunk
-
     override fun toString(): String = "LazyScopeEntry($name, $element)"
 }
-
 
 operator fun RsResolveProcessor.invoke(name: String, e: RsElement, subst: Substitution = emptySubstitution): Boolean =
     this(SimpleScopeEntry(name, e, subst))

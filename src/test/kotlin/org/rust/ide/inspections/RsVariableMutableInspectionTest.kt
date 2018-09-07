@@ -88,7 +88,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
 
             match a {
                 Some(ref mut b) => *b = 10,
-                None => {},
+                None => {}
             }
         }
     """)

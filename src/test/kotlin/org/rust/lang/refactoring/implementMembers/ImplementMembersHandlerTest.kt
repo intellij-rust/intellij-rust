@@ -12,6 +12,7 @@ import org.rust.RsTestBase
 
 
 class ImplementMembersHandlerTest : RsTestBase() {
+
     fun `test available via override shortcut`() = invokeVia {
         myFixture.performEditorAction("ImplementMethods")
     }
@@ -48,7 +49,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             struct /*caret*/S;
             impl T for S {}
         """)
-        ImplementMembersMarks.noImplInHandler.checkHit {
+        ImplementMembersMarks.NoImplInHandler.checkHit {
             val presentation = myFixture.testAction(ActionManagerEx.getInstanceEx().getAction("ImplementMethods"))
             check(!presentation.isEnabled)
         }
@@ -610,12 +611,17 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
+    private data class ImplementMemberSelection(
+        val member: String,
+        val byDefault: Boolean,
+        val isSelected: Boolean = byDefault
+    )
 
-    private fun doTest(@Language("Rust") code: String,
-                       chooser: List<ImplementMemberSelection>,
-                       @Language("Rust") expected: String) {
-
+    private fun doTest(
+        @Language("Rust") code: String,
+        chooser: List<ImplementMemberSelection>,
+        @Language("Rust") expected: String
+    ) {
         checkByText(code.trimIndent(), expected.trimIndent()) {
             withMockTraitMemberChooser({ _, all, selectedByDefault ->
                 TestCase.assertEquals(all.map { it.formattedText() }, chooser.map { it.member })
@@ -627,9 +633,11 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     }
 
-    private fun extractSelected(all: List<RsTraitMemberChooserMember>, chooser: List<ImplementMemberSelection>): List<RsTraitMemberChooserMember> {
+    private fun extractSelected(
+        all: List<RsTraitMemberChooserMember>,
+        chooser: List<ImplementMemberSelection>
+    ): List<RsTraitMemberChooserMember> {
         val selected = chooser.filter { it.isSelected }.map { it.member }
         return all.filter { selected.contains(it.formattedText()) }
     }
-
 }

@@ -10,7 +10,6 @@ import org.rust.ide.notifications.showBalloonWithoutProject
 import org.toml.lang.psi.*
 import kotlin.reflect.KProperty
 
-
 fun tomlPluginIsAbiCompatible(): Boolean = computeOnce
 
 private val computeOnce: Boolean by lazy {
@@ -40,9 +39,11 @@ private val computeOnce: Boolean by lazy {
 }
 
 private inline fun <reified T : Any> load(): String = T::class.java.name
-private fun load(p: KProperty<*>): String = p.name
 
-val TomlKey.isDependencyKey: Boolean get() {
-    val text = text
-    return text == "dependencies" || text == "dev-dependencies" || text == "build-dependencies"
-}
+private fun load(property: KProperty<*>): String = property.name
+
+val TomlKey.isDependencyKey: Boolean
+    get() {
+        val text = text
+        return text == "dependencies" || text == "dev-dependencies" || text == "build-dependencies"
+    }

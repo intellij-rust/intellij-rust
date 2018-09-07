@@ -6,7 +6,10 @@
 package org.rust.lang.utils
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
@@ -54,7 +57,7 @@ sealed class RsDiagnostic(
                 fixes = buildList {
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
-                    } else  if (element is RsElement) {
+                    } else if (element is RsElement) {
                         val items = StdKnownItems.relativeTo(element)
                         val lookup = ImplLookup(element.project, items)
                         if (isFromActualImplForExpected(items, lookup)) {
@@ -120,7 +123,8 @@ sealed class RsDiagnostic(
             )
         }
 
-        private fun isActualTyNumeric() = actualTy is TyNumeric || actualTy is TyInfer.IntVar || actualTy is TyInfer.FloatVar
+        private fun isActualTyNumeric(): Boolean =
+            actualTy is TyNumeric || actualTy is TyInfer.IntVar || actualTy is TyInfer.FloatVar
 
         private fun isFromActualImplForExpected(items: StdKnownItems, lookup: ImplLookup): Boolean {
             val fromTrait = items.findFromTrait() ?: return false
@@ -129,23 +133,29 @@ sealed class RsDiagnostic(
 
         private fun errTyOfTryFromActualImplForTy(ty: Ty, items: StdKnownItems, lookup: ImplLookup): Ty? {
             val fromTrait = items.findTryFromTrait() ?: return null
-            val result = lookup.selectProjectionStrict(TraitRef(ty, fromTrait.withSubst(actualTy)),
-                fromTrait.associatedTypesTransitively.find { it.name == "Error"} ?: return null)
+            val result = lookup.selectProjectionStrict(
+                TraitRef(ty, fromTrait.withSubst(actualTy)),
+                fromTrait.associatedTypesTransitively.find { it.name == "Error" } ?: return null
+            )
             return result.ok()?.value
         }
 
         private fun ifActualIsStrGetErrTyOfFromStrImplForTy(ty: Ty, items: StdKnownItems, lookup: ImplLookup): Ty? {
             if (lookup.coercionSequence(actualTy).lastOrNull() != TyStr) return null
             val fromStr = items.findFromStrTrait() ?: return null
-            val result = lookup.selectProjectionStrict(TraitRef(ty, BoundElement(fromStr)),
-                fromStr.findAssociatedType("Err") ?: return null)
+            val result = lookup.selectProjectionStrict(
+                TraitRef(ty, BoundElement(fromStr)),
+                fromStr.findAssociatedType("Err") ?: return null
+            )
             return result.ok()?.value
         }
 
         private fun isToOwnedImplWithExpectedForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
             val toOwnedTrait = items.findToOwnedTrait() ?: return false
-            val result = lookup.selectProjectionStrictWithDeref(TraitRef(actualTy, BoundElement(toOwnedTrait)),
-                toOwnedTrait.findAssociatedType("Owned") ?: return false)
+            val result = lookup.selectProjectionStrictWithDeref(
+                TraitRef(actualTy, BoundElement(toOwnedTrait)),
+                toOwnedTrait.findAssociatedType("Owned") ?: return false
+            )
             return expectedTy == result.ok()?.value
         }
 
@@ -154,12 +164,14 @@ sealed class RsDiagnostic(
             return lookup.canSelectWithDeref(TraitRef(actualTy, BoundElement(toStringTrait)))
         }
 
-        private fun isTraitWithTySubstImplForActual(lookup: ImplLookup, trait: RsTraitItem?, ty: TyReference): Boolean =
-            trait != null && lookup.canSelectWithDeref(TraitRef(actualTy, trait.withSubst(ty.referenced)))
+        private fun isTraitWithTySubstImplForActual(
+            lookup: ImplLookup,
+            trait: RsTraitItem?,
+            ty: TyReference
+        ): Boolean = trait != null && lookup.canSelectWithDeref(TraitRef(actualTy, trait.withSubst(ty.referenced)))
 
-        private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
-            return "expected `${expectedTy.escaped}`, found `${actualTy.escaped}`"
-        }
+        private fun expectedFound(expectedTy: Ty, actualTy: Ty): String =
+            "expected `${expectedTy.escaped}`, found `${actualTy.escaped}`"
 
         /**
          * Try to find a "path" from [actualTy] to [expectedTy] through dereferences and references.
@@ -192,7 +204,7 @@ sealed class RsDiagnostic(
             // for the first type X in the "actual sequence" that is also in the "expected sequence"; get the number of
             // dereferences we need to apply to get to X from `actualTy` and number of references to get to `expectedTy`
             val derefs = actualCoercionSeq.indexOfFirst { refSeqEnd = tyToExpectedRefSeq[it]; refSeqEnd != null }
-            val refs = expectedRefSeq.subList(0, refSeqEnd?: return null)
+            val refs = expectedRefSeq.subList(0, refSeqEnd ?: return null)
             // check that mutability of references would not contradict the `element`
             val isSuitableMutability = refs.isEmpty() || !refs.last().isMut || (element as RsExpr).isMutable &&
                 // covers cases like `let mut x: &T = ...`
@@ -208,11 +220,12 @@ sealed class RsDiagnostic(
         element: PsiElement,
         val ty: Ty
     ) : RsDiagnostic(element, inspectionClass = RsExperimentalChecksInspection::class.java) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0614,
-            "type ${ty.escaped} cannot be dereferenced"
-        )
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0614,
+                "type ${ty.escaped} cannot be dereferenced"
+            )
     }
 
     class AccessError(
@@ -220,11 +233,12 @@ sealed class RsDiagnostic(
         private val errorCode: RsErrorCode,
         private val itemType: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            errorCode,
-            "$itemType `${escapeString(element.text)}` is private"
-        )
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                errorCode,
+                "$itemType `${escapeString(element.text)}` is private"
+            )
     }
 
     class StructFieldAccessError(
@@ -232,11 +246,12 @@ sealed class RsDiagnostic(
         private val fieldName: String,
         private val structName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0616,
-            "Field `${escapeString(fieldName)}` of struct `${escapeString(structName)}` is private"
-        )
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0616,
+                "Field `${escapeString(fieldName)}` of struct `${escapeString(structName)}` is private"
+            )
     }
 
     class UnsafeError(
@@ -285,32 +300,36 @@ sealed class RsDiagnostic(
     class UnnecessaryVisibilityQualifierError(
         element: PsiElement
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0449,
-            "Unnecessary visibility qualifier"
-        )
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0449,
+                "Unnecessary visibility qualifier"
+            )
     }
 
     class UnsafeNegativeImplementationError(
         element: PsiElement
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0198,
-            "Negative implementations are not unsafe"
-        )
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0198,
+                "Negative implementations are not unsafe"
+            )
     }
 
     class UnsafeTraitImplError(
         element: PsiElement,
         private val traitName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0199,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0199,
+                errorText()
+            )
 
         private fun errorText(): String {
             val traitNameS = escapeString(traitName)
@@ -322,11 +341,13 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val traitName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0200,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0200,
+                errorText()
+            )
 
         private fun errorText(): String {
             val traitNameS = escapeString(traitName)
@@ -338,15 +359,16 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val attrRequiringUnsafeImpl: String
     ) : RsDiagnostic(element) {
-        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
-            ERROR,
-            E0569,
-            errorText()
-        )
 
-        private fun errorText(): String {
-            return "Requires an `unsafe impl` declaration due to `#[$attrRequiringUnsafeImpl]` attribute"
-        }
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0569,
+                errorText()
+            )
+
+        private fun errorText(): String =
+            "Requires an `unsafe impl` declaration due to `#[$attrRequiringUnsafeImpl]` attribute"
     }
 
     class UnknownMethodInTraitError(
@@ -354,11 +376,13 @@ sealed class RsDiagnostic(
         private val member: RsAbstractable,
         private val traitName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0407,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0407,
+                errorText()
+            )
 
         private fun errorText(): String {
             val memberNameS = escapeString(member.name)
@@ -372,15 +396,16 @@ sealed class RsDiagnostic(
         private val fn: RsFunction,
         private val selfParameter: RsSelfParameter
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0185,
-            errorText()
-        )
 
-        private fun errorText(): String {
-            return "Method `${fn.name}` has a `${selfParameter.canonicalDecl}` declaration in the impl, but not in the trait"
-        }
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0185,
+                errorText()
+            )
+
+        private fun errorText(): String =
+            "Method `${fn.name}` has a `${selfParameter.canonicalDecl}` declaration in the impl, but not in the trait"
     }
 
     class DeclMissingFromImplError(
@@ -388,15 +413,16 @@ sealed class RsDiagnostic(
         private val fn: RsFunction,
         private val selfParameter: RsSelfParameter?
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0186,
-            errorText()
-        )
 
-        private fun errorText(): String {
-            return "Method `${fn.name}` has a `${selfParameter?.canonicalDecl}` declaration in the trait, but not in the impl"
-        }
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0186,
+                errorText()
+            )
+
+        private fun errorText(): String =
+            "Method `${fn.name}` has a `${selfParameter?.canonicalDecl}` declaration in the trait, but not in the impl"
     }
 
     class TraitParamCountMismatchError(
@@ -406,16 +432,19 @@ sealed class RsDiagnostic(
         private val paramsCount: Int,
         private val superParamsCount: Int
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0050,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0050,
+                errorText()
+            )
 
         private fun errorText(): String {
             val fnName = escapeString(fn.name)
             val traitNameS = escapeString(traitName)
-            return "Method `$fnName` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitNameS` has $superParamsCount"
+            return "Method `$fnName` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")}" +
+                " but the declaration in trait `$traitNameS` has $superParamsCount"
         }
     }
 
@@ -424,17 +453,18 @@ sealed class RsDiagnostic(
         private val expectedCount: Int,
         private val realCount: Int
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0060,
-            errorText()
-        )
 
-        private fun errorText(): String {
-            return "This function takes at least $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0060,
+                errorText()
+            )
+
+        private fun errorText(): String =
+            "This function takes at least $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
                 " but $realCount ${pluralise(realCount, "parameter", "parameters")}" +
                 " ${pluralise(realCount, "was", "were")} supplied"
-        }
     }
 
     class TooManyParamsError(
@@ -442,53 +472,58 @@ sealed class RsDiagnostic(
         private val expectedCount: Int,
         private val realCount: Int
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0061,
-            errorText()
-        )
 
-        private fun errorText(): String {
-            return "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0061,
+                errorText()
+            )
+
+        private fun errorText(): String =
+            "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
                 " but $realCount ${pluralise(realCount, "parameter", "parameters")}" +
                 " ${pluralise(realCount, "was", "were")} supplied"
-        }
     }
 
     class ReturnMustHaveValueError(
         element: PsiElement
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0069,
-            "`return;` in a function whose return type is not `()`"
-        )
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0069,
+                "`return;` in a function whose return type is not `()`"
+            )
     }
 
     class DuplicateFieldError(
         element: PsiElement,
         private val fieldName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0124,
-            errorText()
-        )
 
-        private fun errorText(): String {
-            return "Field `$fieldName` is already declared"
-        }
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0124,
+                errorText()
+            )
+
+        private fun errorText(): String =
+            "Field `$fieldName` is already declared"
     }
 
     class DuplicateEnumVariantError(
         element: PsiElement,
         private val fieldName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0428,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0428,
+                errorText()
+            )
 
         private fun errorText(): String {
             val name = escapeString(fieldName)
@@ -500,11 +535,13 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val lifetimeName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0262,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0262,
+                errorText()
+            )
 
         private fun errorText(): String {
             val name = escapeString(lifetimeName)
@@ -516,11 +553,13 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val fieldName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0263,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0263,
+                errorText()
+            )
 
         private fun errorText(): String {
             val name = escapeString(fieldName)
@@ -532,11 +571,13 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val fieldName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0415,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0415,
+                errorText()
+            )
 
         private fun errorText(): String {
             val name = escapeString(fieldName)
@@ -548,11 +589,13 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val fieldName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0403,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0403,
+                errorText()
+            )
 
         private fun errorText(): String {
             val name = escapeString(fieldName)
@@ -564,11 +607,13 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val fieldName: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0201,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0201,
+                errorText()
+            )
 
         private fun errorText(): String {
             val name = escapeString(fieldName)
@@ -582,11 +627,13 @@ sealed class RsDiagnostic(
         private val fieldName: String,
         private val scopeType: String
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0428,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0428,
+                errorText()
+            )
 
         private fun errorText(): String {
             val itemTypeS = escapeString(itemType)
@@ -599,31 +646,37 @@ sealed class RsDiagnostic(
     class AssociatedTypeInInherentImplError(
         element: PsiElement
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0202,
-            "Associated types are not allowed in inherent impls"
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0202,
+                "Associated types are not allowed in inherent impls"
+            )
     }
 
     class ConstTraitFnError(
         element: PsiElement
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0379,
-            "Trait functions cannot be declared const"
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0379,
+                "Trait functions cannot be declared const"
+            )
     }
 
     class UndeclaredLabelError(
         element: RsReferenceElement
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0426,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0426,
+                errorText()
+            )
 
         private fun errorText(): String {
             val labelText = escapeString(element.text)
@@ -634,11 +687,13 @@ sealed class RsDiagnostic(
     class UndeclaredLifetimeError(
         element: RsReferenceElement
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0261,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0261,
+                errorText()
+            )
 
         private fun errorText(): String {
             val lifetimeText = escapeString(element.text)
@@ -652,12 +707,14 @@ sealed class RsDiagnostic(
         private val missing: String,
         private val impl: RsImplItem
     ) : RsDiagnostic(startElement, endElement) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0046,
-            errorText(),
-            fixes = listOf(ImplementMembersFix(impl))
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0046,
+                errorText(),
+                fixes = listOf(ImplementMembersFix(impl))
+            )
 
         private fun errorText(): String {
             val missingS = escapeString(missing)
@@ -669,11 +726,13 @@ sealed class RsDiagnostic(
         startElement: PsiElement,
         private val crateName: String
     ) : RsDiagnostic(startElement) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0463,
-            errorText()
-        )
+
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0463,
+                errorText()
+            )
 
         private fun errorText(): String {
             val elTextS = escapeString(crateName)
@@ -685,13 +744,14 @@ sealed class RsDiagnostic(
         element: RsTypeReference,
         private val ty: Ty
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0277,
-            header = escapeString("the trait bound `$ty: std::marker::Sized` is not satisfied"),
-            description = escapeString("`$ty` does not have a constant size known at compile-time"),
-            fixes = listOf(ConvertToReferenceFix(element), ConvertToBoxFix(element))
-        )
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0277,
+                header = escapeString("the trait bound `$ty: std::marker::Sized` is not satisfied"),
+                description = escapeString("`$ty` does not have a constant size known at compile-time"),
+                fixes = listOf(ConvertToReferenceFix(element), ConvertToBoxFix(element))
+            )
     }
 
     class ExperimentalFeature(
@@ -699,12 +759,13 @@ sealed class RsDiagnostic(
         private val presentableFeatureName: String,
         private val fix: AddFeatureAttributeFix? = null
     ) : RsDiagnostic(element) {
-        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
-            ERROR,
-            E0658,
-            header = escapeString("$presentableFeatureName is experimental"),
-            fixes = listOfNotNull(fix)
-        )
+        override fun prepare(): PreparedAnnotation =
+            PreparedAnnotation(
+                ERROR,
+                E0658,
+                header = escapeString("$presentableFeatureName is experimental"),
+                fixes = listOfNotNull(fix)
+            )
     }
 }
 
@@ -717,10 +778,8 @@ enum class RsErrorCode {
     E0569,
     E0603, E0614, E0616, E0624, E0658;
 
-    val code: String
-        get() = toString()
-    val infoUrl: String
-        get() = "https://doc.rust-lang.org/error-index.html#$code"
+    val code: String get() = toString()
+    val infoUrl: String get() = "https://doc.rust-lang.org/error-index.html#$code"
 }
 
 enum class Severity {
@@ -739,15 +798,12 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
     val prepared = prepare()
 
     val textRange = if (endElement != null) {
-        TextRange.create(
-            element.textRange.startOffset,
-            endElement.textRange.endOffset
-        )
+        TextRange.create(element.textRange.startOffset, endElement.textRange.endOffset)
     } else {
         element.textRange
     }
 
-    val ann = holder.createAnnotation(
+    val annotation = holder.createAnnotation(
         prepared.severity.toHighlightSeverity(),
         textRange,
         simpleHeader(prepared.errorCode, prepared.header),
@@ -756,19 +812,18 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
 
     for (fix in prepared.fixes) {
         if (fix is IntentionAction) {
-            ann.registerFix(fix)
+            annotation.registerFix(fix)
         } else {
             val descriptor = InspectionManager.getInstance(element.project)
                 .createProblemDescriptor(
                     element,
                     endElement ?: element,
-                    ann.message,
+                    annotation.message,
                     prepared.severity.toProblemHighlightType(),
                     true,
                     fix
                 )
-
-            ann.registerFix(fix, null, null, descriptor)
+            annotation.registerFix(fix, null, null, descriptor)
         }
     }
 }
@@ -786,17 +841,19 @@ fun RsDiagnostic.addToHolder(holder: ProblemsHolder) {
     holder.registerProblem(descriptor)
 }
 
-private fun Severity.toProblemHighlightType(): ProblemHighlightType = when (this) {
-    INFO -> ProblemHighlightType.INFORMATION
-    WARN -> ProblemHighlightType.WEAK_WARNING
-    ERROR -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-}
+private fun Severity.toProblemHighlightType(): ProblemHighlightType =
+    when (this) {
+        INFO -> ProblemHighlightType.INFORMATION
+        WARN -> ProblemHighlightType.WEAK_WARNING
+        ERROR -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    }
 
-private fun Severity.toHighlightSeverity(): HighlightSeverity = when (this) {
-    INFO -> HighlightSeverity.INFORMATION
-    WARN -> HighlightSeverity.WARNING
-    ERROR -> HighlightSeverity.ERROR
-}
+private fun Severity.toHighlightSeverity(): HighlightSeverity =
+    when (this) {
+        INFO -> HighlightSeverity.INFORMATION
+        WARN -> HighlightSeverity.WARNING
+        ERROR -> HighlightSeverity.ERROR
+    }
 
 private fun simpleHeader(error: RsErrorCode, description: String): String =
     "$description [${error.code}]"

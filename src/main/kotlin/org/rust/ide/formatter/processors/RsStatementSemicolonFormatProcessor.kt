@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class RsStatementSemicolonFormatProcessor : PreFormatProcessor {
+
     override fun process(node: ASTNode, range: TextRange): TextRange {
         if (!shouldRunPunctuationProcessor(node)) return range
 
@@ -48,5 +49,4 @@ class RsStatementSemicolonFormatProcessor : PreFormatProcessor {
         }
         return false
     }
-
 }

@@ -11,6 +11,7 @@ import org.rust.ide.icons.RsIcons
 import javax.swing.Icon
 
 class RsModuleType : ModuleType<RsModuleBuilder>(ID) {
+
     override fun getNodeIcon(isOpened: Boolean): Icon = RsIcons.RUST
 
     override fun createModuleBuilder(): RsModuleBuilder = RsModuleBuilder()
@@ -20,7 +21,7 @@ class RsModuleType : ModuleType<RsModuleBuilder>(ID) {
     override fun getName(): String = "Rust"
 
     companion object {
-        private const val ID = "RUST_MODULE"
+        private const val ID: String = "RUST_MODULE"
         val INSTANCE: RsModuleType by lazy { ModuleTypeManager.getInstance().findByID(ID) as RsModuleType }
     }
 }

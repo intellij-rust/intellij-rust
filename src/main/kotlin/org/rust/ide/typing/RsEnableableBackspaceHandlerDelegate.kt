@@ -12,25 +12,23 @@ import com.intellij.psi.PsiFile
 abstract class RsEnableableBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
     private var enabled: Boolean = false
 
-    override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {
-        enabled = deleting(c, file, editor)
+    override fun beforeCharDeleted(char: Char, file: PsiFile, editor: Editor) {
+        enabled = deleting(char, file, editor)
     }
 
-    override fun charDeleted(c: Char, file: PsiFile, editor: Editor): Boolean {
+    override fun charDeleted(char: Char, file: PsiFile, editor: Editor): Boolean {
         if (!enabled) return false
-        return deleted(c, file, editor)
+        return deleted(char, file, editor)
     }
 
-    /**
-     * Determine whether this handler applies to given context and perform necessary actions before deleting [c].
-     */
-    open fun deleting(c: Char, file: PsiFile, editor: Editor): Boolean = true
+    /** Determine whether this handler applies to given context and perform necessary actions before deleting [char]. */
+    open fun deleting(char: Char, file: PsiFile, editor: Editor): Boolean = true
 
     /**
-     * Perform action after char [c] was deleted.
+     * Perform action after [char] was deleted.
      *
-     * @return true whether this handler succeeded and the IDE should stop evaluating
-     *         remaining handlers; otherwise, false
+     * @return true whether this handler succeeded and the IDE should stop evaluating remaining handlers;
+     *         otherwise, false
      */
-    open fun deleted(c: Char, file: PsiFile, editor: Editor): Boolean = false
+    open fun deleted(char: Char, file: PsiFile, editor: Editor): Boolean = false
 }

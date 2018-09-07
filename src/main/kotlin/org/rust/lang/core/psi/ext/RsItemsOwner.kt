@@ -27,7 +27,7 @@ val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
                 }
                 is RsBlock -> {
                     val stub = stub
-                    if(stub != null) return@run stub.childrenStubs
+                    if (stub != null) return@run stub.childrenStubs
                 }
             }
             null
@@ -40,12 +40,12 @@ val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
         }.filterIsInstance<RsElement>()
     }
 
-fun RsItemsOwner.processExpandedItems(processor: (RsItemElement) -> Boolean): Boolean {
-    return itemsAndMacros.any { it.processItem(processor) }
-}
+fun RsItemsOwner.processExpandedItems(processor: (RsItemElement) -> Boolean): Boolean =
+    itemsAndMacros.any { it.processItem(processor) }
 
-private fun RsElement.processItem(processor: (RsItemElement) -> Boolean) = when (this) {
-    is RsMacroCall -> processExpansionRecursively { it is RsItemElement && processor(it) }
-    is RsItemElement -> processor(this)
-    else -> false
-}
+private fun RsElement.processItem(processor: (RsItemElement) -> Boolean): Boolean =
+    when (this) {
+        is RsMacroCall -> processExpansionRecursively { it is RsItemElement && processor(it) }
+        is RsItemElement -> processor(this)
+        else -> false
+    }

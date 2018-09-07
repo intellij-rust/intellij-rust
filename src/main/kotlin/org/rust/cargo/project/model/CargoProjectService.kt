@@ -31,17 +31,17 @@ import java.util.concurrent.TimeUnit
  * Cargo itself via `cargo metadata` command.
  */
 interface CargoProjectsService {
-    fun findProjectForFile(file: VirtualFile): CargoProject?
     val allProjects: Collection<CargoProject>
     val hasAtLeastOneValidProject: Boolean
 
+    fun findProjectForFile(file: VirtualFile): CargoProject?
     fun attachCargoProject(manifest: Path): Boolean
     fun detachCargoProject(cargoProject: CargoProject)
     fun refreshAllProjects(): CompletableFuture<List<CargoProject>>
     fun discoverAndRefresh(): CompletableFuture<List<CargoProject>>
 
     @TestOnly
-    fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace, rustcInfo: RustcInfo? = null)
+    fun createTestProject(rootDir: VirtualFile, workspace: CargoWorkspace, rustcInfo: RustcInfo? = null)
 
     @TestOnly
     fun setRustcInfo(rustcInfo: RustcInfo)
@@ -55,10 +55,8 @@ interface CargoProjectsService {
     }
 
     companion object {
-        val CARGO_PROJECTS_TOPIC: Topic<CargoProjectsListener> = Topic(
-            "cargo projects changes",
-            CargoProjectsListener::class.java
-        )
+        val CARGO_PROJECTS_TOPIC: Topic<CargoProjectsListener> =
+            Topic("cargo projects changes", CargoProjectsListener::class.java)
     }
 
     interface CargoProjectsListener {
@@ -66,7 +64,7 @@ interface CargoProjectsService {
     }
 }
 
-val Project.cargoProjects get() = service<CargoProjectsService>()
+val Project.cargoProjects: CargoProjectsService get() = service()
 
 interface CargoProject {
     val manifest: Path
@@ -82,9 +80,8 @@ interface CargoProject {
     val stdlibStatus: UpdateStatus
     val rustcInfoStatus: UpdateStatus
 
-    val mergedStatus: UpdateStatus get() = workspaceStatus
-        .merge(stdlibStatus)
-        .merge(rustcInfoStatus)
+    val mergedStatus: UpdateStatus
+        get() = workspaceStatus.merge(stdlibStatus).merge(rustcInfoStatus)
 
     sealed class UpdateStatus(private val priority: Int) {
         object UpToDate : UpdateStatus(0)

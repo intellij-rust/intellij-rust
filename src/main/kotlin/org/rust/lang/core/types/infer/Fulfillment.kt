@@ -13,9 +13,10 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyProjection
 
-sealed class Predicate: TypeFoldable<Predicate> {
+sealed class Predicate : TypeFoldable<Predicate> {
     /** where T : Bar<A,B,C> */
     data class Trait(val trait: TraitRef) : Predicate() {
+
         override fun superFoldWith(folder: TypeFolder): Trait =
             Trait(trait.foldWith(folder))
 
@@ -24,10 +25,8 @@ sealed class Predicate: TypeFoldable<Predicate> {
     }
 
     /** where <T as TraitRef>::Name == X */
-    data class Projection(
-        val projectionTy: TyProjection,
-        val ty: Ty
-    ): Predicate() {
+    data class Projection(val projectionTy: TyProjection, val ty: Ty) : Predicate() {
+
         override fun superFoldWith(folder: TypeFolder): Projection =
             Projection(projectionTy.foldWith(folder) as TyProjection, ty.foldWith(folder))
 
@@ -40,6 +39,7 @@ sealed class Predicate: TypeFoldable<Predicate> {
 
     /** where `T1 == T2` */
     data class Equate(val ty1: Ty, val ty2: Ty) : Predicate() {
+
         override fun superFoldWith(folder: TypeFolder): Predicate =
             Equate(ty1.foldWith(folder), ty2.foldWith(folder))
 
@@ -51,7 +51,8 @@ sealed class Predicate: TypeFoldable<Predicate> {
     }
 }
 
-data class Obligation(val recursionDepth: Int, var predicate: Predicate): TypeFoldable<Obligation> {
+data class Obligation(val recursionDepth: Int, var predicate: Predicate) : TypeFoldable<Obligation> {
+
     constructor(predicate: Predicate) : this(0, predicate)
 
     override fun superFoldWith(folder: TypeFolder): Obligation =
@@ -61,48 +62,43 @@ data class Obligation(val recursionDepth: Int, var predicate: Predicate): TypeFo
         predicate.visitWith(visitor)
 }
 
-data class PendingPredicateObligation(
-    val obligation: Obligation,
-    var stalledOn: List<Ty> = emptyList()
-)
+data class PendingPredicateObligation(val obligation: Obligation, var stalledOn: List<Ty> = emptyList())
 
 /**
  * [ObligationForest] is a mutable collection of obligations.
- * It's caller's responsibility to add new obligations via
- * [registerObligationAt] and to remove satisfied obligations
+ * It's caller's responsibility to add new obligations via [registerObligationAt] and to remove satisfied obligations
  * as a side effect of [processObligations].
  */
 class ObligationForest {
+
     enum class NodeState {
-        /** Obligations for which selection had not yet returned a non-ambiguous result */
+        /** Obligations for which selection had not yet returned a non-ambiguous result. */
         Pending,
 
-        /** This obligation was selected successfully, but may or may not have subobligations */
+        /** This obligation was selected successfully, but may or may not have subobligations. */
         Success,
 
-        /** This obligation was resolved to an error. Error nodes are removed from the vector by the compression step */
-        Error,
+        /** This obligation was resolved to an error. Error nodes are removed from the vector by compression step. */
+        Error
     }
 
-    data class ProcessObligationsResult(
-        val hasErrors: Boolean,
-        val stalled: Boolean
-    )
+    data class ProcessObligationsResult(val hasErrors: Boolean, val stalled: Boolean)
 
     class Node(val obligation: PendingPredicateObligation) {
         var state: NodeState = NodeState.Pending
     }
 
     private val nodes: MutableList<Node> = mutableListOf()
-    private val doneCache: MutableSet<Predicate> = HashSet()
+    private val doneCache: MutableSet<Predicate> = hashSetOf()
 
     val pendingObligations: Sequence<PendingPredicateObligation> =
         nodes.asSequence().filter { it.state == NodeState.Pending }.map { it.obligation }
 
-    @Suppress("UNUSED_PARAMETER") // TODO use `parent`
+    @Suppress("UNUSED_PARAMETER") // TODO: use `parent`
     fun registerObligationAt(obligation: PendingPredicateObligation, parent: Node?) {
-        if (doneCache.add(obligation.obligation.predicate))
+        if (doneCache.add(obligation.obligation.predicate)) {
             nodes.add(Node(obligation))
+        }
     }
 
     fun processObligations(
@@ -118,7 +114,8 @@ class ObligationForest {
 
             val result = processor(node.obligation)
             when (result) {
-                is ProcessPredicateResult.NoChanges -> {}
+                is ProcessPredicateResult.NoChanges -> {
+                }
                 is ProcessPredicateResult.Ok -> {
                     stalled = false
                     node.state = NodeState.Success
@@ -144,7 +141,6 @@ class ObligationForest {
 }
 
 class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
-
     private val obligations: ObligationForest = ObligationForest()
 
     val pendingObligations: Sequence<PendingPredicateObligation> =
@@ -158,12 +154,13 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
     }
 
     fun selectWherePossible() {
-        while (!obligations.processObligations(this::processPredicate).stalled) {}
+        while (!obligations.processObligations(this::processPredicate).stalled) {
+        }
     }
 
     fun selectUntilError(): Boolean {
         do {
-            val res = obligations.processObligations(this::processPredicate, breakOnFirstError = true)
+            val res = obligations.processObligations(this::processPredicate, true)
             if (res.hasErrors) return false
         } while (!res.stalled)
 
@@ -232,9 +229,9 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
 }
 
 sealed class ProcessPredicateResult {
-    object Err: ProcessPredicateResult()
-    object NoChanges: ProcessPredicateResult()
-    data class Ok(val children: List<PendingPredicateObligation>): ProcessPredicateResult() {
-        constructor(vararg children: PendingPredicateObligation): this(listOf(*children))
+    object Err : ProcessPredicateResult()
+    object NoChanges : ProcessPredicateResult()
+    data class Ok(val children: List<PendingPredicateObligation>) : ProcessPredicateResult() {
+        constructor(vararg children: PendingPredicateObligation) : this(listOf(*children))
     }
 }

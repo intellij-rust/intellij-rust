@@ -20,16 +20,20 @@ class CargoCommandConfigurationType : ConfigurationTypeBase(
     "Cargo command run configuration",
     RsIcons.RUST
 ) {
+    val factory: ConfigurationFactory get() = configurationFactories.single()
+
     init {
         addFactory(object : ConfigurationFactory(this) {
+
             override fun createTemplateConfiguration(project: Project): RunConfiguration =
                 CargoCommandConfiguration(project, "Cargo", this)
 
-            override fun configureBeforeRunTaskDefaults(providerID: Key<out BeforeRunTask<BeforeRunTask<*>>>,
-                                                        task: BeforeRunTask<out BeforeRunTask<*>>) {
+            override fun configureBeforeRunTaskDefaults(
+                providerID: Key<out BeforeRunTask<BeforeRunTask<*>>>,
+                task: BeforeRunTask<out BeforeRunTask<*>>
+            ) {
                 if (providerID == CompileStepBeforeRun.ID) {
-                    // We don't use jps, so we don't need to execute `Make` task
-                    // before run configuration is executed
+                    // We don't use jps, so we don't need to execute `Make` task before run configuration is executed
                     task.isEnabled = false
                 }
             }
@@ -37,6 +41,4 @@ class CargoCommandConfigurationType : ConfigurationTypeBase(
             override fun isConfigurationSingletonByDefault(): Boolean = true
         })
     }
-
-    val factory: ConfigurationFactory get() = configurationFactories.single()
 }

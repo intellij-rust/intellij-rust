@@ -18,8 +18,8 @@ import org.toml.lang.psi.TomlElementTypes.*
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 
 class TomlHighlighter : SyntaxHighlighterBase() {
-    override fun getHighlightingLexer(): Lexer =
-        TomlLexer()
+
+    override fun getHighlightingLexer(): Lexer = TomlLexer()
 
     override fun getTokenHighlights(tokenType: IElementType): Array<out TextAttributesKey> =
         pack(tokenMap[tokenType])
@@ -41,5 +41,3 @@ class TomlHighlighter : SyntaxHighlighterBase() {
 class TomlHighlighterFactory : SingleLazyInstanceSyntaxHighlighterFactory() {
     override fun createHighlighter(): SyntaxHighlighter = TomlHighlighter()
 }
-
-

@@ -16,11 +16,8 @@ import java.nio.file.Path
 
 private val LOG = Logger.getInstance(Rustup::class.java)
 
-class Rustup(
-    private val toolchain: RustToolchain,
-    private val rustup: Path,
-    private val projectDirectory: Path
-) {
+class Rustup(private val toolchain: RustToolchain, private val rustup: Path, private val projectDirectory: Path) {
+
     @Suppress("unused")
     sealed class DownloadResult<out T> {
         class Ok<T>(val value: T) : DownloadResult<T>()
@@ -44,8 +41,8 @@ class Rustup(
         }
     }
 
-    fun downloadRustfmt(owner: Disposable): DownloadResult<Unit> {
-        return try {
+    fun downloadRustfmt(owner: Disposable): DownloadResult<Unit> =
+        try {
             GeneralCommandLine(rustup)
                 .withWorkDirectory(projectDirectory)
                 .withParameters("component", "add", "rustfmt-preview")
@@ -56,7 +53,6 @@ class Rustup(
             LOG.warn(message)
             DownloadResult.Err(message)
         }
-    }
 
     fun getStdlibFromSysroot(): VirtualFile? {
         val sysroot = toolchain.getSysroot(projectDirectory) ?: return null

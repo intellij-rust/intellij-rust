@@ -30,7 +30,8 @@ val RsPatBinding.mutability: Mutability
         }
     }
 
-val RsPatBinding.isArg: Boolean get() = parent?.parent is RsValueParameter
+val RsPatBinding.isArg: Boolean
+    get() = parent?.parent is RsValueParameter
 
 val RsPatBinding.kind: RsBindingModeKind
     get() {
@@ -48,10 +49,12 @@ val RsPatBinding.topLevelPattern: RsPat
         .lastOrNull()
         ?: error("Binding outside the pattern: `${this.text}`")
 
-val RsPatBinding.isReferenceToConstant: Boolean get() = reference.resolve() != null
+val RsPatBinding.isReferenceToConstant: Boolean
+    get() = reference.resolve() != null
 
-abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
-                                                      RsPatBinding {
+abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node), RsPatBinding {
+    override val referenceNameElement: PsiElement get() = nameIdentifier!!
+    override val referenceName: String get() = name!!
 
     // XXX: RsPatBinding is both a name element and a reference element:
     //
@@ -61,10 +64,8 @@ abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
     //     Nope => { /* Nope is a named element*/ }
     // }
     // ```
-    override fun getReference(): RsReference = RsPatBindingReferenceImpl(this)
-
-    override val referenceNameElement: PsiElement get() = nameIdentifier!!
-    override val referenceName: String get() = name!!
+    override fun getReference(): RsReference =
+        RsPatBindingReferenceImpl(this)
 
     override fun getIcon(flags: Int) = when {
         isArg && mutability.isMut -> RsIcons.MUT_ARGUMENT

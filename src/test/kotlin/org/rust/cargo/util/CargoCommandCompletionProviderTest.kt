@@ -16,8 +16,10 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import java.nio.file.Paths
 
 class CargoCommandCompletionProviderTest : RsTestBase() {
+
     fun `test split context prefix`() {
         val provider = CargoCommandCompletionProvider(project.cargoProjects, null)
+
         fun doCheck(text: String, ctx: String, prefix: String) {
             val (actualCtx, actualPrefix) = provider.splitContextPrefix(text)
             check(actualCtx == ctx && actualPrefix == prefix) {
@@ -82,12 +84,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         listOf(project.cargoProjects.allProjects.singleOrNull()?.manifest.toString())
     )
 
-    private fun checkCompletion(
-        text: String,
-        expectedCompletions: List<String>
-    ) {
-
-        val provider = CargoCommandCompletionProvider(project.cargoProjects, TEST_WORKSPACE)
+    private fun checkCompletion(text: String, expectedCompletions: List<String>) {
+        val provider = CargoCommandCompletionProvider(project.cargoProjects, testWorkspace)
         val (ctx, prefix) = provider.splitContextPrefix(text)
         val matcher = PlainPrefixMatcher(prefix)
 
@@ -97,26 +95,23 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         }
     }
 
-    private val TEST_WORKSPACE = run {
-        fun target(name: String, kind: TargetKind, crateType: CrateType): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
-            crateRootUrl = "/tmp/lib/rs",
-            name = name,
-            kind = kind,
-            crateTypes = listOf(crateType)
-        )
+    private val testWorkspace: CargoWorkspace = run {
+
+        fun target(name: String, kind: TargetKind, crateType: CrateType): CargoWorkspaceData.Target =
+            CargoWorkspaceData.Target("/tmp/lib/rs", name, kind, listOf(crateType))
 
         fun pkg(
             name: String,
             isWorkspaceMember: Boolean,
             targets: List<CargoWorkspaceData.Target>
         ): CargoWorkspaceData.Package = CargoWorkspaceData.Package(
-            name = name,
-            id = "$name 1.0.0",
-            contentRootUrl = "/tmp",
-            version = "1.0.0",
-            targets = targets,
-            source = null,
-            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY
+            "$name 1.0.0",
+            "/tmp",
+            name,
+            "1.0.0",
+            targets,
+            null,
+            if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY
         )
 
         val pkgs = listOf(
@@ -127,6 +122,6 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             )),
             pkg("quux", false, listOf(target("quux", TargetKind.LIB, CrateType.LIB)))
         )
-        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyMap()))
+        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, emptyMap()))
     }
 }

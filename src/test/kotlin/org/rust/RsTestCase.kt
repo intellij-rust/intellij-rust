@@ -14,14 +14,14 @@ interface RsTestCase {
     fun getTestDataPath(): String
 
     companion object {
-        val testResourcesPath = "src/test/resources"
+        const val TEST_RESOURCES_PATH: String = "src/test/resources"
     }
 }
 
 
 fun RsTestCase.pathToSourceTestFile(name: String): Path =
-    Paths.get("${RsTestCase.testResourcesPath}/${getTestDataPath()}/$name.${RsFileType.DEFAULTS.EXTENSION}")
+    Paths.get("${RsTestCase.TEST_RESOURCES_PATH}/${getTestDataPath()}/$name.${RsFileType.DEFAULTS.EXTENSION}")
 
 fun RsTestCase.pathToGoldTestFile(name: String): Path =
-    Paths.get("${RsTestCase.testResourcesPath}/${getTestDataPath()}/$name.txt")
+    Paths.get("${RsTestCase.TEST_RESOURCES_PATH}/${getTestDataPath()}/$name.txt")
 

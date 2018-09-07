@@ -11,23 +11,23 @@ import org.rust.lang.core.psi.ext.isLazy
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Graph
+import org.rust.stdext.dequeOf
 import java.util.*
 
 class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode, val exit: CFGNode) : RsVisitor() {
-    class BlockScope(val block: RsBlock, val breakNode: CFGNode)
 
+    class BlockScope(val block: RsBlock, val breakNode: CFGNode)
     class LoopScope(val loop: RsExpr, val continueNode: CFGNode, val breakNode: CFGNode)
 
     enum class ScopeControlFlowKind { BREAK, CONTINUE }
 
     data class Destination(val label: RsLabel?, val target: RsElement)
 
-
     private var result: CFGNode? = null
-    private val preds: Deque<CFGNode> = ArrayDeque<CFGNode>()
+    private val preds: Deque<CFGNode> = dequeOf()
     private val pred: CFGNode get() = preds.peek()
-    private val loopScopes: Deque<LoopScope> = ArrayDeque<LoopScope>()
-    private val breakableBlockScopes: Deque<BlockScope> = ArrayDeque<BlockScope>()
+    private val loopScopes: Deque<LoopScope> = dequeOf()
+    private val breakableBlockScopes: Deque<BlockScope> = dequeOf()
 
     private inline fun finishWith(callable: () -> CFGNode) {
         result = callable()
@@ -284,6 +284,7 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
 
     // TODO: this cases require regions which are not implemented yet
     override fun visitBreakExpr(breakExpr: RsBreakExpr) = finishWith(pred)
+
     override fun visitContExpr(contExpr: RsContExpr) = finishWith(pred)
 
     override fun visitArrayExpr(arrayExpr: RsArrayExpr) =
@@ -357,7 +358,8 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         finishWithAstNode(guard, conditionExit)
     }
 
-    override fun visitParenExpr(parenExpr: RsParenExpr) = parenExpr.expr.accept(this)
+    override fun visitParenExpr(parenExpr: RsParenExpr) =
+        parenExpr.expr.accept(this)
 
     override fun visitTryExpr(tryExpr: RsTryExpr) {
         val exprExit = addAstNode(tryExpr)

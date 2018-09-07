@@ -21,11 +21,13 @@ import com.intellij.refactoring.RefactoringFactory
  */
 class RenameFix(
     element: PsiNamedElement,
-    val newName: String,
-    val fixName: String = "Rename to `$newName`"
+    private val newName: String,
+    private val fixName: String = "Rename to `$newName`"
 ) : LocalQuickFixOnPsiElement(element) {
-    override fun getText() = fixName
-    override fun getFamilyName() = "Rename element"
+
+    override fun getText(): String = fixName
+
+    override fun getFamilyName(): String = "Rename element"
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
         ApplicationManager.getApplication().invokeLater {

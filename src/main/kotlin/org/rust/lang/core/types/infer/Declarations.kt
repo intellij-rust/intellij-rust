@@ -8,13 +8,12 @@ package org.rust.lang.core.types.infer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.advancedDeepResolve
-import org.rust.lang.core.types.regions.ReEarlyBound
-import org.rust.lang.core.types.regions.ReStatic
-import org.rust.lang.core.types.regions.ReUnknown
-import org.rust.lang.core.types.regions.Region
+import org.rust.lang.core.types.region.ReEarlyBound
+import org.rust.lang.core.types.region.ReStatic
+import org.rust.lang.core.types.region.ReUnknown
+import org.rust.lang.core.types.region.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
-
 
 // Keep in sync with TyFingerprint-create
 fun inferTypeReferenceType(ref: RsTypeReference): Ty {
@@ -76,7 +75,7 @@ fun inferTypeReferenceType(ref: RsTypeReference): Ty {
             if (type.isImpl) {
                 TyAnon(type, bounds)
             } else {
-                // TODO use all bounds
+                // TODO: use all bounds
                 bounds.firstOrNull()?.let(::TyTraitObject) ?: TyUnknown
             }
         }

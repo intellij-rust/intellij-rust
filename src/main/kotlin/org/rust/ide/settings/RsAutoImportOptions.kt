@@ -13,13 +13,13 @@ import org.rust.openapiext.CheckboxDelegate
 import javax.swing.JComponent
 
 class RsAutoImportOptions : AutoImportOptionsProvider {
-
     private val showImportPopupCheckbox: JBCheckBox = JBCheckBox("Show import popup")
     private var showImportPopup: Boolean by CheckboxDelegate(showImportPopupCheckbox)
 
-    override fun createComponent(): JComponent = panel {
-        row { showImportPopupCheckbox() }
-    }.apply { border = IdeBorderFactory.createTitledBorder("Rust") }
+    override fun createComponent(): JComponent =
+        panel {
+            row { showImportPopupCheckbox() }
+        }.apply { border = IdeBorderFactory.createTitledBorder("Rust") }
 
     override fun isModified(): Boolean {
         return showImportPopup != RsCodeInsightSettings.getInstance().showImportPopup

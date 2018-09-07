@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
+
     fun `test child mod`() = stubOnlyResolve("""
     //- main.rs
         mod child;
@@ -245,7 +246,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
 
     fun `test use from child`() = stubOnlyResolve("""
     //- main.rs
-        use child::{foo};
+        use child::foo;
         mod child;
 
         fn main() {

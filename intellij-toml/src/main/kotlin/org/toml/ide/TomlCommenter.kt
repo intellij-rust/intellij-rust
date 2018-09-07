@@ -8,6 +8,7 @@ package org.toml.ide
 import com.intellij.lang.Commenter
 
 class TomlCommenter : Commenter {
+
     override fun getLineCommentPrefix(): String = "#"
 
     override fun getBlockCommentPrefix(): String? = null

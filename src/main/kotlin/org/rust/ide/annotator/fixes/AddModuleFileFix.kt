@@ -10,18 +10,17 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.refactoring.RsPromoteModuleToDirectoryAction
-import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.getOrCreateModuleFile
+import org.rust.lang.refactoring.RsPromoteModuleToDirectoryAction
 
-/**
- * Creates module file by the given module declaration.
- */
+/** Creates module file by the given module declaration. */
 class AddModuleFileFix(
     modDecl: RsModDeclItem,
     private val expandModuleFirst: Boolean
 ) : LocalQuickFixAndIntentionActionOnPsiElement(modDecl) {
+
     override fun getText(): String = "Create module file"
 
     override fun getFamilyName(): String = text
@@ -40,5 +39,4 @@ class AddModuleFileFix(
         }
         modDecl.getOrCreateModuleFile()?.navigate(true)
     }
-
 }

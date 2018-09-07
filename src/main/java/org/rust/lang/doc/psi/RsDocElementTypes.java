@@ -2,7 +2,6 @@ package org.rust.lang.doc.psi;
 
 public interface RsDocElementTypes {
     RsDocTokenType DOC_TEXT = new RsDocTokenType("<DOC_TEXT>");
-
     RsDocTokenType DOC_HEADING = new RsDocTokenType("<DOC_HEADING>");
     RsDocTokenType DOC_INLINE_LINK = new RsDocTokenType("<DOC_INLINE_LINK>");
     RsDocTokenType DOC_REF_LINK = new RsDocTokenType("<DOC_REF_LINK>");

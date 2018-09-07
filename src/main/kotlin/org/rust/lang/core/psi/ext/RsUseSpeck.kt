@@ -12,19 +12,20 @@ import org.rust.lang.core.psi.RsUseGroup
 import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.stubs.RsUseSpeckStub
 
-val RsUseSpeck.isStarImport: Boolean get() = stub?.isStarImport ?: (mul != null) // I hate operator precedence
-val RsUseSpeck.qualifier: RsPath? get() =
-    (context as? RsUseGroup)?.parentUseSpeck?.path
+val RsUseSpeck.isStarImport: Boolean
+    get() = stub?.isStarImport ?: (mul != null) // I hate operator precedence
 
-val RsUseSpeck.nameInScope: String? get() {
-    if (useGroup != null) return null
-    alias?.name?.let { return it }
-    val baseName = path?.referenceName ?: return null
-    if (baseName == "self") {
-        return qualifier?.referenceName
+val RsUseSpeck.qualifier: RsPath?
+    get() = (context as? RsUseGroup)?.parentUseSpeck?.path
+
+val RsUseSpeck.nameInScope: String?
+    get() {
+        if (useGroup != null) return null
+        alias?.name?.let { return it }
+        val baseName = path?.referenceName ?: return null
+        if (baseName == "self") return qualifier?.referenceName
+        return baseName
     }
-    return baseName
-}
 
 fun RsUseSpeck.forEachLeafSpeck(consumer: (RsUseSpeck) -> Unit) {
     val group = useGroup

@@ -15,6 +15,7 @@ import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.ext.RsElement
 
 class RsStructureViewTest : RsTestBase() {
+
     fun `test functions`() = doTest("""
         fn fn_foo () {
             fn fn_bar () {
@@ -358,7 +359,11 @@ class RsStructureViewTest : RsTestBase() {
          Foo<T> for Bar<F> where T: Clone, F: Ord
     """)
 
-    private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
+    private fun doPresentationDataTest(
+        @Language("Rust") code: String,
+        expectedPresentableText: String,
+        isPublic: Boolean
+    ) {
         myFixture.configureByText("main.rs", code)
         val psi = myFixture.file.children.mapNotNull { it as? RsElement }.first()
         val data = getPresentationForStructure(psi)

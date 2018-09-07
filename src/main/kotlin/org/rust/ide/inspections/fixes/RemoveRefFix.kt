@@ -15,16 +15,17 @@ import org.rust.lang.core.psi.RsExpr
 
 /**
  * Fix that converts the given reference to owned value.
- * @param argEl An element, that represents a reference from which the first
- * symbol '&' must be removed.
+ * @param argEl An element, that represents a reference from which the first symbol '&' must be removed.
  * @param fixName A name to use for the fix instead of the default one to better fit the inspection.
  */
 class RemoveRefFix(
     argEl: RsExpr,
     val fixName: String = "Change reference to owned value"
 ) : LocalQuickFixOnPsiElement(argEl) {
-    override fun getText() = fixName
-    override fun getFamilyName() = "Change reference to owned value"
+
+    override fun getText(): String = fixName
+
+    override fun getFamilyName(): String = "Change reference to owned value"
 
     override fun invoke(project: Project, file: PsiFile, argEl: PsiElement, endElement: PsiElement) {
         if (argEl.text != null && argEl.text[0] == '&') {

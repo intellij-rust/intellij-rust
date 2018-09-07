@@ -10,19 +10,17 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.model.cargoProjects
 
-/**
- * Tests for RustBacktraceFilter
- */
+/** Tests for RustBacktraceFilter. */
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBacktraceFilterTest : HighlightFilterTestBase() {
     private val filter: RsBacktraceFilter
-        get() =
-            RsBacktraceFilter(project, projectDir, project.cargoProjects.allProjects.single().workspace)
+        get() = RsBacktraceFilter(project, projectDir, project.cargoProjects.allProjects.single().workspace)
 
     fun `test rustc source code link`() =
         checkHighlights(filter,
             "          at src/main.rs:24",
-            "          at [src/main.rs -> main.rs]:24")
+            "          at [src/main.rs -> main.rs]:24"
+        )
 
     fun `test rustc source code link wIth absolute path`() {
         // Windows does not handle abs paths on the tmpfs
@@ -30,33 +28,39 @@ class RsBacktraceFilterTest : HighlightFilterTestBase() {
         val absPath = "${projectDir.canonicalPath}/src/main.rs"
         checkHighlights(filter,
             "          at $absPath:24",
-            "          at [$absPath -> main.rs]:24")
+            "          at [$absPath -> main.rs]:24"
+        )
     }
 
     fun `test full backtrace line`() =
         checkHighlights(filter,
             "   7:     0x7feeefb7d11f - std::io::Stdin::read_line::h93df64e7370b5253",
-            "   7:     0x7feeefb7d11f - [std::io::Stdin::read_line -> stdio.rs][::h93df64e7370b5253]")
+            "   7:     0x7feeefb7d11f - [std::io::Stdin::read_line -> stdio.rs][::h93df64e7370b5253]"
+        )
 
     fun `test short backtrace line`() =
         checkHighlights(filter,
             "   7: std::io::Stdin::read_line",
-            "   7: [std::io::Stdin::read_line -> stdio.rs]")
+            "   7: [std::io::Stdin::read_line -> stdio.rs]"
+        )
 
     fun `test backtrace no links to internal calls`() =
         checkHighlights(filter,
             "  16:        0x106bfe616 - std::rt::lang_start::h538f8960e7644c80",
-            "  16:        0x106bfe616 - std::rt::lang_start[::h538f8960e7644c80]")
+            "  16:        0x106bfe616 - std::rt::lang_start[::h538f8960e7644c80]"
+        )
 
     fun `test backtrace line with closure`() =
         checkHighlights(filter,
             " 103:     0x7feeefb480ee - std::io::Stdin::lock::{{closure}}::hbe9ea065746f6376",
-            " 103:     0x7feeefb480ee - [std::io::Stdin::lock::{{closure}} -> stdio.rs][::hbe9ea065746f6376]")
+            " 103:     0x7feeefb480ee - [std::io::Stdin::lock::{{closure}} -> stdio.rs][::hbe9ea065746f6376]"
+        )
 
     fun `test backtrace line with generics`() =
         checkHighlights(filter,
             "  10:     0x70ae3fe9d6a3 - <core::option::Option<T>>::unwrap::h5dd7da6bb3d06020",
-            "  10:     0x70ae3fe9d6a3 - [<core::option::Option<T>>::unwrap -> option.rs][::h5dd7da6bb3d06020]")
+            "  10:     0x70ae3fe9d6a3 - [<core::option::Option<T>>::unwrap -> option.rs][::h5dd7da6bb3d06020]"
+        )
 
     fun `test backtrace no links to unknown functions`() =
         checkNoHighlights(filter, "  17:        0x106c24240 - foo::bar::unknown[::h5dd7da6bb3d06020]")
@@ -81,7 +85,6 @@ stack backtrace:
                         at ../src/libcore/macros.rs:21
   10:     0x7feeefb3f538 - btest::main::h888e623968051ab6
                         at src/main.rs:22""",
-            "                        at [src/main.rs -> main.rs]:22", 14)
-
-
+            "                        at [src/main.rs -> main.rs]:22", 14
+        )
 }

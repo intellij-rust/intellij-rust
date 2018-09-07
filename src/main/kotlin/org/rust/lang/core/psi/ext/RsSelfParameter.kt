@@ -14,20 +14,30 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsSelfParameter
 import org.rust.lang.core.stubs.RsSelfParameterStub
 import org.rust.lang.core.types.ty.Mutability
+import javax.swing.Icon
 
+val RsSelfParameter.mutability: Mutability
+    get() = Mutability.valueOf(stub?.isMut ?: (mut != null))
 
-val RsSelfParameter.mutability: Mutability get() = Mutability.valueOf(stub?.isMut ?: (mut != null))
-val RsSelfParameter.isRef: Boolean get() = stub?.isRef ?: (and != null)
-val RsSelfParameter.isExplicitType get() = stub?.isExplicitType ?: (colon != null)
-val RsSelfParameter.parentFunction: RsFunction get() = ancestorStrict()!!
+val RsSelfParameter.isRef: Boolean
+    get() = stub?.isRef ?: (and != null)
+
+val RsSelfParameter.isExplicitType
+    get() = stub?.isExplicitType ?: (colon != null)
+
+val RsSelfParameter.parentFunction: RsFunction
+    get() = ancestorStrict()!!
 
 abstract class RsSelfParameterImplMixin : RsStubbedElementImpl<RsSelfParameterStub>,
                                           PsiNameIdentifierOwner,
                                           RsSelfParameter {
+
     constructor(node: ASTNode) : super(node)
+
     constructor(stub: RsSelfParameterStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getNameIdentifier(): PsiElement = self
+
     override fun getName(): String = "self"
 
     override fun setName(name: String): PsiElement? {
@@ -35,5 +45,5 @@ abstract class RsSelfParameterImplMixin : RsStubbedElementImpl<RsSelfParameterSt
         throw UnsupportedOperationException()
     }
 
-    override fun getIcon(flags: Int) = RsIcons.ARGUMENT
+    override fun getIcon(flags: Int): Icon = RsIcons.ARGUMENT
 }

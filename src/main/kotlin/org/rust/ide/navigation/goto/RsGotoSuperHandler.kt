@@ -19,13 +19,13 @@ import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.ext.superItem
 
 class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
-    override fun startInWriteAction() = false
 
-    override fun isValidFor(editor: Editor?, file: PsiFile?) = file is RsFile
+    override fun startInWriteAction(): Boolean = false
+
+    override fun isValidFor(editor: Editor?, file: PsiFile?): Boolean = file is RsFile
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-        val focusedElement = file.findElementAt(editor.caretModel.offset) ?: file
-            ?: return
+        val focusedElement = file.findElementAt(editor.caretModel.offset) ?: file ?: return
         gotoSuperTarget(focusedElement)?.navigate(true)
     }
 }
@@ -47,8 +47,5 @@ fun gotoSuperTarget(source: PsiElement): NavigatablePsiElement? {
     }
 
     val mod = modOrAbstractable as RsMod
-    return when (mod) {
-        is RsFile -> mod.declaration
-        else -> mod.`super`
-    }
+    return if (mod is RsFile) mod.declaration else mod.`super`
 }

@@ -15,20 +15,20 @@ import org.rust.cargo.runconfig.hasCargoProject
 import javax.swing.Icon
 
 abstract class RunCargoCommandActionBase(icon: Icon) : AnAction(icon) {
-    override fun update(e: AnActionEvent) {
-        val hasCargoProject = e.project?.hasCargoProject == true
-        e.presentation.isEnabledAndVisible = hasCargoProject
+
+    override fun update(event: AnActionEvent) {
+        val hasCargoProject = event.project?.hasCargoProject == true
+        event.presentation.isEnabledAndVisible = hasCargoProject
     }
 
-    protected fun getAppropriateCargoProject(e: AnActionEvent): CargoProject? {
-        val cargoProjects = e.project?.cargoProjects ?: return null
+    protected fun getAppropriateCargoProject(event: AnActionEvent): CargoProject? {
+        val cargoProjects = event.project?.cargoProjects ?: return null
         cargoProjects.allProjects.singleOrNull()?.let { return it }
 
-        e.getData(CommonDataKeys.VIRTUAL_FILE)
+        event.getData(CommonDataKeys.VIRTUAL_FILE)
             ?.let { cargoProjects.findProjectForFile(it) }
             ?.let { return it }
 
-        return e.getData(CargoToolWindow.SELECTED_CARGO_PROJECT)
-            ?: cargoProjects.allProjects.firstOrNull()
+        return event.getData(CargoToolWindow.SELECTED_CARGO_PROJECT) ?: cargoProjects.allProjects.firstOrNull()
     }
 }

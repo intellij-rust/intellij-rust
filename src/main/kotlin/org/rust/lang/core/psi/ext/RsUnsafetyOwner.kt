@@ -7,10 +7,7 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.PsiElement
 
-
 interface RsUnsafetyOwner {
     val unsafe: PsiElement?
-
     val isUnsafe: Boolean
 }
-

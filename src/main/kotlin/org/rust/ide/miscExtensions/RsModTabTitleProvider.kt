@@ -12,14 +12,16 @@ import org.rust.lang.core.psi.isRustFile
 import java.io.File
 
 class RsModTabTitleProvider : UniqueNameEditorTabTitleProvider() {
-    val MOD_FILE_NAME = "mod.rs"
 
     override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
         if (file.isRustFile && MOD_FILE_NAME == file.name) {
-            return super.getEditorTabTitle(project, file) ?:
-                "${file.parent.name}${File.separator}${file.name}"
+            return super.getEditorTabTitle(project, file) ?: "${file.parent.name}${File.separator}${file.name}"
         }
 
         return null
+    }
+
+    companion object {
+        const val MOD_FILE_NAME: String = "mod.rs"
     }
 }

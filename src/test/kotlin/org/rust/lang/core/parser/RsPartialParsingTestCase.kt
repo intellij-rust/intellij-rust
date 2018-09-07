@@ -8,8 +8,8 @@ package org.rust.lang.core.parser
 import com.intellij.psi.PsiFile
 
 /**
- * Tests parser recovery (`pin` and `recoverWhile` attributes from `rust.bnf`)
- * by constructing PSI trees from syntactically invalid files.
+ * Tests parser recovery (`pin` and `recoverWhile` attributes from `rust.bnf`) by constructing PSI trees from
+ * syntactically invalid files.
  */
 class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
 
@@ -33,5 +33,4 @@ class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
         }
         super.checkResult(targetDataName, file)
     }
-
 }

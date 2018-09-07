@@ -8,7 +8,7 @@ package org.rust.ide.folding
 import org.rust.RsTestBase
 
 class RsFoldingBuilderTest : RsTestBase() {
-    override val dataPath = "org/rust/ide/folding/fixtures"
+    override val dataPath: String = "org/rust/ide/folding/fixtures"
 
     fun `test fn`() = doTest()
     fun `test loops`() = doTest()

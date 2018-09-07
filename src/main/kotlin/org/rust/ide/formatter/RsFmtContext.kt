@@ -19,18 +19,14 @@ data class RsFmtContext private constructor(
     val rustSettings: RsCodeStyleSettings,
     val spacingBuilder: SpacingBuilder,
 
-    /**
-     * Stores shared alignment object, e.g. for function declarations's parameters, return type & where clause.
-     */
+    /** Stores shared alignment object, e.g. for function declarations's parameters, return type & where clause. */
     val sharedAlignment: Alignment? = null,
 
     /**
-     * Determine whether we have spotted opening delimiter during
-     * construction of a _flat block_'s sub blocks list.
+     * Determine whether we have spotted opening delimiter during construction of a _flat block_'s sub blocks list.
      *
-     * We only care about opening delimiters (`(`, `[`, `{`, `<`, `|`) here,
-     * because none of flat blocks has any children after block part (apart
-     * from closing delimiter, which we have to handle separately anyways).
+     * We only care about opening delimiters (`(`, `[`, `{`, `<`, `|`) here, because none of flat blocks has any
+     * children after block part (apart from closing delimiter, which we have to handle separately anyways).
      *
      * @see isFlatBlock
      */

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFileFactory
 import org.rust.lang.RsLanguage
 
 class RsNonPhysicalFileResolveTest : RsResolveTestBase() {
+
     fun test() {
         val code = """
             extern crate foo;

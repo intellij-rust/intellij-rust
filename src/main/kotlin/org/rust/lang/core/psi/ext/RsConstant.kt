@@ -22,15 +22,18 @@ enum class RsConstantKind {
     CONST
 }
 
-val RsConstant.isMut: Boolean get() = stub?.isMut ?: (mut != null)
+val RsConstant.isMut: Boolean
+    get() = stub?.isMut ?: (mut != null)
 
-val RsConstant.isConst: Boolean get() = stub?.isConst ?: (const != null)
+val RsConstant.isConst: Boolean
+    get() = stub?.isConst ?: (const != null)
 
-val RsConstant.kind: RsConstantKind get() = when {
-    isMut -> RsConstantKind.MUT_STATIC
-    isConst -> RsConstantKind.CONST
-    else -> RsConstantKind.STATIC
-}
+val RsConstant.kind: RsConstantKind
+    get() = when {
+        isMut -> RsConstantKind.MUT_STATIC
+        isConst -> RsConstantKind.CONST
+        else -> RsConstantKind.STATIC
+    }
 
 val RsConstant.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
@@ -38,6 +41,16 @@ val RsConstant.default: PsiElement?
 val RsConstant.mutability: Mutability get() = Mutability.valueOf(isMut)
 
 abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, RsConstant {
+
+    override val isPublic: Boolean
+        get() = RsPsiImplUtil.isPublic(this, stub)
+
+    override val isAbstract: Boolean
+        get() = expr == null
+
+    override val crateRelativePath: String?
+        get() = RsPsiImplUtil.crateRelativePath(this)
+
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsConstantStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
@@ -48,11 +61,6 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
         RsConstantKind.STATIC -> RsIcons.STATIC
     })
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    override val isAbstract: Boolean get() = expr == null
-
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
-
-    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+    override fun getContext(): PsiElement? =
+        RsExpandedElement.getContextImpl(this)
 }

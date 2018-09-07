@@ -12,12 +12,9 @@ import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processModDeclResolveVariants
 
-class RsModReferenceImpl(
-    modDecl: RsModDeclItem
-) : RsReferenceCached<RsModDeclItem>(modDecl),
-    RsReference {
-
-    override val RsModDeclItem.referenceAnchor: PsiElement get() = identifier
+class RsModReferenceImpl(modDecl: RsModDeclItem) : RsReferenceCached<RsModDeclItem>(modDecl), RsReference {
+    override val RsModDeclItem.referenceAnchor: PsiElement
+        get() = identifier
 
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processModDeclResolveVariants(element, it) }

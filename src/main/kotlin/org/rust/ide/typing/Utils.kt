@@ -16,15 +16,11 @@ import org.rust.lang.core.psi.RsLiteralKind
 fun isValidOffset(offset: Int, text: CharSequence): Boolean =
     0 <= offset && offset <= text.length
 
-/**
- * Beware that this returns `false` for EOF!
- */
+/** Beware that this returns `false` for EOF! */
 fun isValidInnerOffset(offset: Int, text: CharSequence): Boolean =
     0 <= offset && offset < text.length
 
-/**
- * Get previous and next token types relative to [iterator] position.
- */
+/** Get previous and next token types relative to [iterator] position. */
 fun getSiblingTokens(iterator: HighlighterIterator): Pair<IElementType?, IElementType?> {
     iterator.retreat()
     val prev = if (iterator.atEnd()) null else iterator.tokenType
@@ -38,9 +34,8 @@ fun getSiblingTokens(iterator: HighlighterIterator): Pair<IElementType?, IElemen
 }
 
 /**
- * Creates virtual [RsLiteralKind] PSI element assuming that it is represented as
- * single, contiguous token in highlighter, in other words - it doesn't contain
- * any escape sequences etc. (hence 'dumb').
+ * Creates virtual [RsLiteralKind] PSI element assuming that it is represented as single, contiguous token in
+ * highlighter, in other words - it doesn't contain any escape sequences etc. (hence 'dumb').
  */
 fun getLiteralDumb(iterator: HighlighterIterator): RsComplexLiteral? {
     val start = iterator.start

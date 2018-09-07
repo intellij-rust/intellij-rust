@@ -10,7 +10,10 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.util.Processor
 
 class RsImplsSearch : RsImplsSearchBase() {
-    override fun processQuery(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in PsiElement>) {
+    override fun processQuery(
+        queryParameters: DefinitionsScopedSearch.SearchParameters,
+        consumer: Processor<in PsiElement>
+    ) {
         @Suppress("UNCHECKED_CAST")
         processQueryInner(queryParameters, consumer as Processor<PsiElement>)
     }

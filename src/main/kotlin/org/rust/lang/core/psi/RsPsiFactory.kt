@@ -16,7 +16,7 @@ import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.regions.ReUnknown
+import org.rust.lang.core.types.region.ReUnknown
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
@@ -28,14 +28,12 @@ class RsPsiFactory(private val project: Project) {
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, text) as RsFile
 
-    fun createMacroBody(text: String): RsMacroBody? = createFromText(
-        "macro_rules! m $text"
-    )
+    fun createMacroBody(text: String): RsMacroBody? =
+        createFromText("macro_rules! m $text")
 
-    fun createSelf(mutable: Boolean = false): RsSelfParameter {
-        return createFromText<RsFunction>("fn main(&${if (mutable) "mut " else ""}self){}")?.selfParameter
+    fun createSelf(mutable: Boolean = false): RsSelfParameter =
+        createFromText<RsFunction>("fn main(&${if (mutable) "mut " else ""}self){}")?.selfParameter
             ?: error("Failed to create self element")
-    }
 
     fun createIdentifier(text: String): PsiElement =
         createFromText<RsModDeclItem>("mod $text;")?.identifier
@@ -82,7 +80,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createStructLiteral(name: String): RsStructLiteral =
-        createExpressionOfType<RsStructLiteral>("$name { }")
+        createExpressionOfType("$name { }")
 
     fun createStructLiteralField(name: String, value: RsExpr? = null): RsStructLiteralField {
         val structLiteralField = createExpressionOfType<RsStructLiteral>("S { $name: () }")
@@ -98,8 +96,7 @@ class RsPsiFactory(private val project: Project) {
         val fieldsText = fields.joinToString(separator = ",\n") {
             "${"pub".iff(it.pub)}${it.name}: ${it.type.text}"
         }
-        return createStruct("struct S { $fieldsText }")
-            .blockFields!!
+        return createStruct("struct S { $fieldsText }").blockFields!!
     }
 
     fun createStruct(text: String): RsStructItem =
@@ -110,8 +107,15 @@ class RsPsiFactory(private val project: Project) {
         createFromText("fn main() { $text 92; }")
             ?: error("Failed to create statement from text: `$text`")
 
-    fun createLetDeclaration(name: String, expr: RsExpr, mutable: Boolean = false, type: RsTypeReference? = null): RsLetDecl =
-        createStatement("let ${"mut".iff(mutable)}$name${if (type != null) ": ${type.text}" else ""} = ${expr.text};") as RsLetDecl
+    fun createLetDeclaration(
+        name: String,
+        expr: RsExpr,
+        mutable: Boolean = false,
+        type: RsTypeReference? = null
+    ): RsLetDecl {
+        val text = "let ${"mut".iff(mutable)}$name${if (type != null) ": ${type.text}" else ""} = ${expr.text};"
+        return createStatement(text) as RsLetDecl
+    }
 
 
     fun createType(text: CharSequence): RsTypeReference =
@@ -123,7 +127,8 @@ class RsPsiFactory(private val project: Project) {
 
     fun createMethodParam(text: String): PsiElement {
         val fnItem: RsFunction = createTraitMethodMember("fn foo($text);")
-        return fnItem.selfParameter ?: fnItem.valueParameters.firstOrNull()
+        return fnItem.selfParameter
+            ?: fnItem.valueParameters.firstOrNull()
             ?: error("Failed to create method param from text: `$text`")
     }
 
@@ -155,24 +160,26 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createMembers(members: Collection<RsAbstractable>, subst: Substitution = emptySubstitution): RsMembers {
-        val body = members.joinToString(separator = "\n", transform = { when (it) {
-            is RsConstant ->
-                "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
-            is RsTypeAlias ->
-                "    type ${it.name} = ();"
-            is RsFunction ->
-                "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
-            else ->
-                error("Unknown trait member")
-        } })
+        val body = members.joinToString(separator = "\n", transform = {
+            when (it) {
+                is RsConstant ->
+                    "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
+                is RsTypeAlias ->
+                    "    type ${it.name} = ();"
+                is RsFunction ->
+                    "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
+                else ->
+                    error("Unknown trait member")
+            }
+        })
 
         val text = "impl T for S {$body}"
         return createFromText(text) ?: error("Failed to create an impl from text: `$text`")
     }
 
     fun createTraitMethodMember(text: String): RsFunction {
-        val members: RsMembers = createFromText("trait Foo { $text }") ?:
-            error("Failed to create an method member from text: `$text`")
+        val members: RsMembers = createFromText("trait Foo { $text }")
+            ?: error("Failed to create an method member from text: `$text`")
         return members.functionList.first()
     }
 
@@ -265,8 +272,8 @@ class RsPsiFactory(private val project: Project) {
 
     fun createNewline(): PsiElement = createWhitespace("\n")
 
-    fun createWhitespace(ws: String): PsiElement =
-        PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(ws)
+    fun createWhitespace(whitespace: String): PsiElement =
+        PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(whitespace)
 
     fun createUnsafeKeyword(): PsiElement =
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
@@ -275,11 +282,11 @@ class RsPsiFactory(private val project: Project) {
     fun createFunction(
         config: RsExtractFunctionConfig
     ): RsFunction =
-        createFromText<RsFunction>(config.signature)
+        createFromText(config.signature)
             ?: error("Failed to create function element: ${config.name}")
 
     fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
-        createFromText<RsImplItem>("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
+        createFromText("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
             ?: error("Failed to create RsImplItem element")
 
     fun createValueParameter(name: String, type: RsTypeReference, mutable: Boolean = false): RsValueParameter {
@@ -296,10 +303,11 @@ class RsPsiFactory(private val project: Project) {
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
 
-    fun createCastExpr(expr: RsExpr, typeText: String): RsCastExpr = when (expr) {
-        is RsBinaryExpr -> createExpressionOfType("(${expr.text}) as $typeText")
-        else -> createExpressionOfType("${expr.text} as $typeText")
-    }
+    fun createCastExpr(expr: RsExpr, typeText: String): RsCastExpr =
+        when (expr) {
+            is RsBinaryExpr -> createExpressionOfType("(${expr.text}) as $typeText")
+            else -> createExpressionOfType("${expr.text} as $typeText")
+        }
 
     fun createAssocFunctionCall(typeText: String, methodNameText: String, arguments: Iterable<RsExpr>): RsCallExpr =
         createExpressionOfType("$typeText::$methodNameText(${arguments.joinToString { it.text }})")
@@ -310,20 +318,24 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createDerefExpr(expr: RsExpr, nOfDerefs: Int = 1): RsExpr =
-        if (nOfDerefs > 0)
+        if (nOfDerefs > 0) {
             when (expr) {
                 is RsBinaryExpr, is RsCastExpr -> createExpressionOfType("${"*".repeat(nOfDerefs)}(${expr.text})")
                 else -> createExpressionOfType("${"*".repeat(nOfDerefs)}${expr.text}")
             }
-        else expr
+        } else {
+            expr
+        }
 
     fun createRefExpr(expr: RsExpr, muts: List<Mutability> = listOf(IMMUTABLE)): RsExpr =
-        if (!muts.none())
+        if (!muts.none()) {
             when (expr) {
                 is RsBinaryExpr, is RsCastExpr -> createExpressionOfType("${mutsToRefs(muts)}(${expr.text})")
                 else -> createExpressionOfType("${mutsToRefs(muts)}${expr.text}")
             }
-        else expr
+        } else {
+            expr
+        }
 
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E
@@ -349,7 +361,8 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
     return "${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
 }
 
-private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
+private fun String.iff(cond: Boolean): String =
+    if (cond) this + " " else " "
 
 private fun RsTypeReference.substAndGetText(subst: Substitution): String =
     type.substitute(subst).insertionSafeTextWithLifetimes

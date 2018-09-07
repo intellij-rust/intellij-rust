@@ -17,13 +17,13 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
 class CargoProjectStructureTree(model: CargoProjectStructure) : SimpleTree(model) {
-
-    val selectedProject: CargoProject? get() {
-        val path = selectionPath ?: return null
-        if (path.pathCount < 2) return null
-        val treeNode = path.getPathComponent(1) as? DefaultMutableTreeNode ?: return null
-        return (treeNode.userObject as? CargoProjectStructure.Node.Project)?.cargoProject
-    }
+    val selectedProject: CargoProject?
+        get() {
+            val path = selectionPath ?: return null
+            if (path.pathCount < 2) return null
+            val treeNode = path.getPathComponent(1) as? DefaultMutableTreeNode ?: return null
+            return (treeNode.userObject as? CargoProjectStructure.Node.Project)?.cargoProject
+        }
 
     init {
         isRootVisible = false
@@ -34,7 +34,15 @@ class CargoProjectStructureTree(model: CargoProjectStructure) : SimpleTree(model
 
 class CargoProjectTreeRenderer : ColoredTreeCellRenderer() {
 
-    override fun customizeCellRenderer(tree: JTree, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean) {
+    override fun customizeCellRenderer(
+        tree: JTree,
+        value: Any?,
+        selected: Boolean,
+        expanded: Boolean,
+        leaf: Boolean,
+        row: Int,
+        hasFocus: Boolean
+    ) {
         val node = (value as? DefaultMutableTreeNode)?.userObject as? CargoProjectStructure.Node ?: return
         icon = node.icon
         appendName(node)

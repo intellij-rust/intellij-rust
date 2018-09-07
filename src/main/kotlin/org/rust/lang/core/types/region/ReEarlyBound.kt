@@ -3,15 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.regions
+package org.rust.lang.core.types.region
 
 import org.rust.lang.core.psi.RsLifetimeParameter
 import org.rust.lang.core.types.HAS_RE_EARLY_BOUND_MASK
 import org.rust.lang.core.types.TypeFlags
 
 /**
- * Region bound in a type or fn declaration which will be
- * substituted 'early' -- that is, at the same time when type
+ * Region bound in a type or fn declaration which will be substituted 'early' -- that is, at the same time when type
  * parameters are substituted.
  */
 data class ReEarlyBound(val parameter: RsLifetimeParameter) : Region() {

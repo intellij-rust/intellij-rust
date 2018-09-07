@@ -37,15 +37,14 @@ data class TyProjection private constructor(
     val type: Ty,
     val trait: BoundElement<RsTraitItem>,
     val target: RsTypeAlias
-): Ty(type.flags or HAS_TY_PROJECTION_MASK) {
+) : Ty(type.flags or HAS_TY_PROJECTION_MASK) {
 
     /**
      * Extracts the underlying trait reference from this projection.
-     * For example, if this is a projection of `<T as Iterator>::Item`,
-     * then this property would return a `T: Iterator` trait reference.
+     * For example, if this is a projection of `<T as Iterator>::Item`, then this property would return a `T: Iterator`
+     * trait reference.
      */
-    val traitRef: TraitRef
-        get() = TraitRef(type, trait)
+    val traitRef: TraitRef get() = TraitRef(type, trait)
 
     override fun superFoldWith(folder: TypeFolder): Ty =
         TyProjection(type.foldWith(folder), trait.foldWith(folder), target)
@@ -54,12 +53,14 @@ data class TyProjection private constructor(
         type.visitWith(visitor)
 
     companion object {
-        private fun valueOf(type: Ty, target: RsTypeAlias): TyProjection = TyProjection(
-            type,
-            (target.owner as? RsAbstractableOwner.Trait)?.trait?.withDefaultSubst()
-                ?: error("Tried to construct an associated type from RsTypeAlias declared out of a trait"),
-            target
-        )
+
+        private fun valueOf(type: Ty, target: RsTypeAlias): TyProjection =
+            TyProjection(
+                type,
+                (target.owner as? RsAbstractableOwner.Trait)?.trait?.withDefaultSubst()
+                    ?: error("Tried to construct an associated type from RsTypeAlias declared out of a trait"),
+                target
+            )
 
         fun valueOf(target: RsTypeAlias): TyProjection =
             valueOf(TyTypeParameter.self(), target)

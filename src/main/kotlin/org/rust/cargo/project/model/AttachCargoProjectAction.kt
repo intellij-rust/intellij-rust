@@ -16,7 +16,6 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.saveAllDocuments
 
-
 class AttachCargoProjectAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
@@ -46,7 +45,6 @@ object CargoProjectChooserDescriptor : FileChooserDescriptor(true, true, false, 
         withTitle("Select Cargo.toml")
     }
 
-    override fun isFileSelectable(file: VirtualFile): Boolean {
-        return super.isFileSelectable(file) && (!file.isDirectory || file.findChild(RustToolchain.CARGO_TOML) != null)
-    }
+    override fun isFileSelectable(file: VirtualFile) =
+        super.isFileSelectable(file) && (!file.isDirectory || file.findChild(RustToolchain.CARGO_TOML) != null)
 }

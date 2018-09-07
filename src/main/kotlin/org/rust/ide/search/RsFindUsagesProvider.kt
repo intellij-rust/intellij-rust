@@ -12,14 +12,14 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsFindUsagesProvider : FindUsagesProvider {
     // XXX: must return new instance of WordScanner here, because it is not thread safe
-    override fun getWordsScanner() = RsWordScanner()
+    override fun getWordsScanner(): RsWordScanner = RsWordScanner()
 
-    override fun canFindUsagesFor(element: PsiElement) =
+    override fun canFindUsagesFor(element: PsiElement): Boolean =
         element is RsNamedElement
 
-    override fun getHelpId(element: PsiElement) = HelpID.FIND_OTHER_USAGES
+    override fun getHelpId(element: PsiElement): String = HelpID.FIND_OTHER_USAGES
 
-    override fun getType(element: PsiElement) = ""
-    override fun getDescriptiveName(element: PsiElement) = ""
-    override fun getNodeText(element: PsiElement, useFullName: Boolean) = ""
+    override fun getType(element: PsiElement): String = ""
+    override fun getDescriptiveName(element: PsiElement): String = ""
+    override fun getNodeText(element: PsiElement, useFullName: Boolean): String = ""
 }

@@ -10,68 +10,9 @@ import org.rust.lang.core.types.infer.UnificationTable
 import org.rust.lang.core.types.ty.TyInfer
 
 class RsUnificationTableTest : TestCase() {
-
-    private object Value
-
     private val table: UnificationTable<TyInfer.IntVar, Value> = UnificationTable()
 
-    private fun checkDifferentSnapshotStates(action: (TyInfer.IntVar) -> Unit) {
-        fun checkWithoutSnapshot(action: (TyInfer.IntVar) -> Unit): TyInfer.IntVar {
-            val ty = TyInfer.IntVar()
-            action(ty)
-            check(table.findValue(ty) == Value)
-            return ty
-        }
-
-        fun checkSnapshotCommit(action: () -> TyInfer.IntVar) {
-            val snapshot = table.startSnapshot()
-            val ty = action()
-            snapshot.commit()
-            check(table.findValue(ty) == Value)
-        }
-
-        fun checkSnapshotRollback(action: () -> TyInfer.IntVar) {
-            val snapshot = table.startSnapshot()
-            val ty = action()
-            snapshot.rollback()
-            check(table.findValue(ty) == null)
-        }
-
-        checkWithoutSnapshot(action)
-        checkSnapshotCommit { checkWithoutSnapshot(action) }
-        checkSnapshotRollback { checkWithoutSnapshot(action) }
-
-        checkSnapshotCommit { // snapshot-snapshot-commit-commit
-            checkWithoutSnapshot { ty ->
-                table.unifyVarValue(ty, Value)
-                checkSnapshotCommit { checkWithoutSnapshot(action) }
-            }
-        }
-
-        checkSnapshotCommit { // snapshot-snapshot-rollback-commit
-            checkWithoutSnapshot { ty ->
-                table.unifyVarValue(ty, Value)
-                checkSnapshotRollback { checkWithoutSnapshot(action) }
-            }
-        }
-
-        checkSnapshotRollback { // snapshot-snapshot-commit-rollback
-            checkWithoutSnapshot { ty ->
-                table.unifyVarValue(ty, Value)
-                checkSnapshotCommit { checkWithoutSnapshot(action) }
-            }
-        }
-
-        checkSnapshotRollback { // snapshot-snapshot-rollback-rollback
-            checkWithoutSnapshot { ty ->
-                table.unifyVarValue(ty, Value)
-                checkSnapshotRollback { checkWithoutSnapshot(action) }
-            }
-        }
-    }
-
-    private fun vars(num: Int): List<TyInfer.IntVar> =
-        generateSequence { TyInfer.IntVar() }.take(num).toList()
+    private object Value
 
     fun `test unifyVarValue`() = checkDifferentSnapshotStates { a ->
         table.unifyVarValue(a, Value)
@@ -105,4 +46,66 @@ class RsUnificationTableTest : TestCase() {
 
         table.unifyVarVar(b, c)
     }
+
+    private fun checkDifferentSnapshotStates(action: (TyInfer.IntVar) -> Unit) {
+        fun checkWithoutSnapshot(action: (TyInfer.IntVar) -> Unit): TyInfer.IntVar {
+            val ty = TyInfer.IntVar()
+            action(ty)
+            check(table.findValue(ty) == Value)
+            return ty
+        }
+
+        fun checkSnapshotCommit(action: () -> TyInfer.IntVar) {
+            val snapshot = table.startSnapshot()
+            val ty = action()
+            snapshot.commit()
+            check(table.findValue(ty) == Value)
+        }
+
+        fun checkSnapshotRollback(action: () -> TyInfer.IntVar) {
+            val snapshot = table.startSnapshot()
+            val ty = action()
+            snapshot.rollback()
+            check(table.findValue(ty) == null)
+        }
+
+        checkWithoutSnapshot(action)
+        checkSnapshotCommit { checkWithoutSnapshot(action) }
+        checkSnapshotRollback { checkWithoutSnapshot(action) }
+
+        checkSnapshotCommit {
+            // snapshot-snapshot-commit-commit
+            checkWithoutSnapshot { ty ->
+                table.unifyVarValue(ty, Value)
+                checkSnapshotCommit { checkWithoutSnapshot(action) }
+            }
+        }
+
+        checkSnapshotCommit {
+            // snapshot-snapshot-rollback-commit
+            checkWithoutSnapshot { ty ->
+                table.unifyVarValue(ty, Value)
+                checkSnapshotRollback { checkWithoutSnapshot(action) }
+            }
+        }
+
+        checkSnapshotRollback {
+            // snapshot-snapshot-commit-rollback
+            checkWithoutSnapshot { ty ->
+                table.unifyVarValue(ty, Value)
+                checkSnapshotCommit { checkWithoutSnapshot(action) }
+            }
+        }
+
+        checkSnapshotRollback {
+            // snapshot-snapshot-rollback-rollback
+            checkWithoutSnapshot { ty ->
+                table.unifyVarValue(ty, Value)
+                checkSnapshotRollback { checkWithoutSnapshot(action) }
+            }
+        }
+    }
+
+    private fun vars(num: Int): List<TyInfer.IntVar> =
+        generateSequence { TyInfer.IntVar() }.take(num).toList()
 }

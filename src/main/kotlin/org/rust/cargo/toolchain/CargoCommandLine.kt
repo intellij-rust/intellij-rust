@@ -29,7 +29,6 @@ data class CargoCommandLine(
     val nocapture: Boolean = true
 ) {
 
-
     fun withDoubleDashFlag(arg: String): CargoCommandLine {
         val (pre, post) = splitOnDoubleDash()
         if (arg in post) return this
@@ -47,6 +46,7 @@ data class CargoCommandLine(
     }
 
     companion object {
+
         fun forTargets(
             targets: List<CargoWorkspace.Target>,
             command: String,
@@ -86,19 +86,17 @@ data class CargoCommandLine(
             command: String,
             additionalArguments: List<String> = emptyList(),
             channel: RustChannel = RustChannel.DEFAULT
-        ): CargoCommandLine {
-            return CargoCommandLine(
-                command,
-                cargoProject.workingDirectory,
-                additionalArguments,
-                channel = channel
-            )
-        }
+        ): CargoCommandLine = CargoCommandLine(
+            command,
+            cargoProject.workingDirectory,
+            additionalArguments,
+            channel = channel
+        )
     }
 }
 
-fun CargoWorkspace.Target.launchCommand(): String? {
-    return when (kind) {
+fun CargoWorkspace.Target.launchCommand(): String? =
+    when (kind) {
         CargoWorkspace.TargetKind.BIN -> "run"
         CargoWorkspace.TargetKind.LIB -> "build"
         CargoWorkspace.TargetKind.TEST -> "test"
@@ -107,14 +105,13 @@ fun CargoWorkspace.Target.launchCommand(): String? {
             if (crateTypes.singleOrNull() == CargoWorkspace.CrateType.BIN) "run" else "build"
         else -> null
     }
-}
 
 fun CargoCommandLine.run(project: Project, cargoProject: CargoProject) {
-    val runConfiguration =
-        if (project.cargoProjects.allProjects.size > 1)
-            createRunConfiguration(project, this, name = command + " [" + cargoProject.presentableName + "]")
-        else
-            createRunConfiguration(project, this)
+    val runConfiguration = if (project.cargoProjects.allProjects.size > 1) {
+        createRunConfiguration(project, this, "$command [${cargoProject.presentableName}]")
+    } else {
+        createRunConfiguration(project, this)
+    }
     val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
     ProgramRunnerUtil.executeConfiguration(runConfiguration, executor)
 }
@@ -125,7 +122,6 @@ private fun createRunConfiguration(
     name: String? = null
 ): RunnerAndConfigurationSettings {
     val runManager = RunManagerEx.getInstanceEx(project)
-
     return runManager.createCargoCommandRunConfiguration(cargoCommandLine, name).apply {
         runManager.setTemporaryConfiguration(this)
     }

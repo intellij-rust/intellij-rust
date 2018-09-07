@@ -7,7 +7,8 @@ package org.rust.ide.formatter
 
 class RsSingleImportRemoveBracesFormatProcessorTest : RsFormatterTestBase() {
 
-    fun `test remove braces if single import`() = doTextTest("use getopts::{optopt};", "use getopts::optopt;")
+    fun `test remove braces if single import`() =
+        doTextTest("use getopts::{optopt};", "use getopts::optopt;")
 
     fun `test remove braces if single import with alias`() =
         doTextTest("use getopts::{A as B};", "use getopts::A as B;")
@@ -30,20 +31,19 @@ class RsSingleImportRemoveBracesFormatProcessorTest : RsFormatterTestBase() {
     fun `test remove braces if single import with extra comma`() =
         doTextTest("use getopts::{optopt,};", "use getopts::optopt;")
 
-    fun `test won't remove braces if import with left comment`() = checkNotChanged("use getopts::{/*comment*/optopt};")
+    fun `test won't remove braces if import with left comment`() =
+        checkNotChanged("use getopts::{/*comment*/optopt};")
 
-    fun `test won't remove braces if import with right comment`() = checkNotChanged("use getopts::{optopt/*comment*/};")
+    fun `test won't remove braces if import with right comment`() =
+        checkNotChanged("use getopts::{optopt/*comment*/};")
 
-    fun `test wont remove braces if multi import`() = checkNotChanged(
-        "use getopts::{optopt, optarg};"
-    )
+    fun `test wont remove braces if multi import`() =
+        checkNotChanged("use getopts::{optopt, optarg};")
 
-    fun `test won't remove braces for single self`() = checkNotChanged(
-        "use getopts::{self};"
-    )
+    fun `test won't remove braces for single self`() =
+        checkNotChanged("use getopts::{self};")
 
-    fun `test remove braces with multiple imports`() = doTextTest(
-        """
+    fun `test remove braces with multiple imports`() = doTextTest("""
         use getopts::{optopt};
         use std::io::{self, Read, Write};
         use std::Vec::{Vec};

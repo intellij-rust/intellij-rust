@@ -9,6 +9,7 @@ import org.rust.RsTestBase
 import org.rust.cargo.project.model.cargoProjects
 
 class RsCodeFragmentFactoryTest : RsTestBase() {
+
     fun `test resolve string path`() {
         InlineFile("mod foo { struct S; }")
         val target = project.cargoProjects.allProjects.single().workspace!!.packages.single().targets.first()

@@ -47,11 +47,6 @@ data class CargoCheckAnnotationInfo(
 )
 
 class CargoCheckAnnotationResult(commandOutput: List<String>) {
-    companion object {
-        private val parser = JsonParser()
-        private val messageRegex = """\s*\{\s*"message".*""".toRegex()
-    }
-
     val messages: List<CargoTopMessage> =
         commandOutput
             .filter { messageRegex.matches(it) }
@@ -60,6 +55,11 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
             .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
             // Cargo can duplicate some error messages when `--all-targets` attribute is used
             .distinct()
+
+    companion object {
+        private val parser: JsonParser = JsonParser()
+        private val messageRegex: Regex = """\s*\{\s*"message".*""".toRegex()
+    }
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
@@ -67,10 +67,10 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): CargoCheckAnnotationInfo? {
         if (file !is RsFile) return null
         if (!file.project.rustSettings.useCargoCheckAnnotator) return null
-        val ws = file.cargoWorkspace ?: return null
+        val workspace = file.cargoWorkspace ?: return null
         val module = ModuleUtil.findModuleForFile(file.virtualFile, file.project) ?: return null
         val toolchain = module.project.toolchain ?: return null
-        return CargoCheckAnnotationInfo(file.virtualFile, toolchain, ws.contentRoot, module)
+        return CargoCheckAnnotationInfo(file.virtualFile, toolchain, workspace.contentRoot, module)
     }
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =
@@ -105,12 +105,11 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     }
 
     companion object {
-        const val TEST_MESSAGE = "CargoAnnotation"
+        const val TEST_MESSAGE: String = "CargoAnnotation"
     }
 }
 
-// NB: executed asynchronously off EDT, so care must be taken not to access
-// disposed objects
+// NB: executed asynchronously off EDT, so care must be taken not to access disposed objects
 // BACKCOMPAT: 2018.1
 @Suppress("DEPRECATION", "OverridingDeprecatedMember")
 private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? {
@@ -154,10 +153,10 @@ private fun filterMessage(file: PsiFile, document: Document, message: RustcMessa
         else -> HighlightSeverity.INFORMATION
     }
 
+    // Some error messages are global, and we *could* show then atop of the editor, but they look rather ugly, so just
+    // skip them.
     val span = message.spans
         .firstOrNull { it.is_primary && it.isValid() }
-        // Some error messages are global, and we *could* show then atop of the editor,
-        // but they look rather ugly, so just skip them.
         ?: return null
 
     val syntaxErrors = listOf("expected pattern", "unexpected token")
@@ -186,7 +185,7 @@ private fun filterMessage(file: PsiFile, document: Document, message: RustcMessa
         return null
     }
 
-    val tooltip = with(ArrayList<String>()) {
+    val tooltip = with(arrayListOf<String>()) {
         val code = message.code.formatAsLink()
         add(escapeHtml(message.message) + if (code == null) "" else " $code")
 
@@ -206,20 +205,22 @@ private fun filterMessage(file: PsiFile, document: Document, message: RustcMessa
     return FilteredMessage(severity, textRange, message.message, tooltip)
 }
 
-private fun RustcSpan.isValid() =
+private fun RustcSpan.isValid(): Boolean =
     line_end > line_start || (line_end == line_start && column_end >= column_start)
 
-private fun ErrorCode?.formatAsLink() =
-    if (this?.code.isNullOrBlank()) null
-    else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
-
+private fun ErrorCode?.formatAsLink(): String? =
+    if (this?.code.isNullOrBlank()) {
+        null
+    } else {
+        "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
+    }
 
 private fun formatMessage(message: String): String {
     data class Group(val isList: Boolean, val lines: ArrayList<String>)
 
     val (lastGroup, groups) =
         message.split("\n").fold(
-            Pair(null as Group?, ArrayList<Group>())
+            Pair(null as Group?, arrayListOf<Group>())
         ) { (group: Group?, acc: ArrayList<Group>), lineWithPrefix ->
             val (isListItem, line) = if (lineWithPrefix.startsWith("-")) {
                 true to lineWithPrefix.substring(2)

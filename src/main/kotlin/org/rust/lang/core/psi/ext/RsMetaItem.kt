@@ -14,27 +14,28 @@ import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsMetaItemStub
 
-val RsMetaItem.name: String? get() {
-    val stub = stub
-    return if (stub != null) stub.name else identifier?.text
-}
+val RsMetaItem.name: String?
+    get() {
+        val stub = stub
+        return if (stub != null) stub.name else identifier?.text
+    }
 
-val RsMetaItem.value: String? get() {
-    val stub = stub
-    return if (stub != null) stub.value else litExpr?.stringLiteralValue
-}
+val RsMetaItem.value: String?
+    get() {
+        val stub = stub
+        return if (stub != null) stub.value else litExpr?.stringLiteralValue
+    }
 
 val RsMetaItem.hasEq: Boolean get() = stub?.hasEq ?: (eq != null)
 
 abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>, RsMetaItem {
+    override val referenceNameElement: PsiElement? get() = identifier
+
+    override val referenceName: String? get() = name
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsMetaItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override val referenceNameElement: PsiElement? get() = identifier
-
-    override val referenceName: String? get() = name
 
     override fun getReference(): RsReference? = references.firstOrNull { it is RsReference } as? RsReference
 

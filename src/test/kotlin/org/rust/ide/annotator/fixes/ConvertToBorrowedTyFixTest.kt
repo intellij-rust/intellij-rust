@@ -6,5 +6,8 @@
 package org.rust.ide.annotator.fixes
 
 class ConvertToBorrowedTyFixTest : ConvertToTyUsingTraitFixTestBase(
-    false, "Borrow", "borrow", "use std::borrow::Borrow;")
-
+    false,
+    "Borrow",
+    "borrow",
+    "use std::borrow::Borrow;"
+)

@@ -85,5 +85,4 @@ class RsWrongLifetimeParametersNumberInspectionTest : RsInspectionsTestBase(RsWr
         type TErr<'a> = <error>Foo2<'a></error>;
         enum EErr<'a> { E(Box<<error>Foo1<'a, 'a></error>>) }
     """)
-
 }

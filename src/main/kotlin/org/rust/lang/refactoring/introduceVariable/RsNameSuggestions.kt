@@ -13,14 +13,13 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyTraitObject
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
 import org.rust.lang.refactoring.isValidRustVariableIdentifier
 import org.rust.openapiext.hitOnFalse
-
 
 class SuggestedNames(
     val default: String,
@@ -28,7 +27,7 @@ class SuggestedNames(
 )
 
 /**
- * This suggests names for an expression about to be bound to a local variable
+ * This suggests names for an expression about to be bound to a local variable.
  *
  * If the type is resolved and nominal, suggest it.
  * If its an argument to a function call, suggest the name of the argument in the function definition.
@@ -75,7 +74,10 @@ private val uselessNames = listOf("new", "default")
 private fun LinkedHashSet<String>.addName(name: String?) {
     if (name == null || name in uselessNames || !isValidRustVariableIdentifier(name)) return
     NameUtil.getSuggestionsByName(name, "", "", false, false, false)
-        .filter { it !in uselessNames && IntroduceVariableTestmarks.invalidNamePart.hitOnFalse(isValidRustVariableIdentifier(it)) }
+        .filter {
+            it !in uselessNames &&
+                IntroduceVariableTestmarks.INVALID_NAME_PART.hitOnFalse(isValidRustVariableIdentifier(it))
+        }
         .mapTo(this) { it.toSnakeCase(false) }
 }
 
@@ -85,8 +87,7 @@ private fun nameForCall(expr: RsCallExpr): List<String> {
         val path = pathElement.path
 
         //path.path.identifier gives us the x's out of: Xxx::<T>::yyy
-        return listOf(path.identifier, path.path?.identifier)
-            .filterNotNull().map(PsiElement::getText)
+        return listOfNotNull(path.identifier, path.path?.identifier).map(PsiElement::getText)
     }
     return listOf(pathElement.text)
 }
@@ -94,6 +95,5 @@ private fun nameForCall(expr: RsCallExpr): List<String> {
 private fun findNamesInLocalScope(expr: PsiElement): List<String> {
     val blockScope = expr.ancestorOrSelf<RsBlock>()
     val letDecls = blockScope?.descendantsOfType<RsLetDecl>().orEmpty()
-
     return letDecls.mapNotNull { it.pat?.text }
 }

@@ -41,7 +41,7 @@ sealed class RsContextType(
         return isInContext(element)
     }
 
-    abstract protected fun isInContext(element: PsiElement): Boolean
+    protected abstract fun isInContext(element: PsiElement): Boolean
 
     override fun createHighlighter(): SyntaxHighlighter = RsHighlighter()
 
@@ -69,22 +69,19 @@ sealed class RsContextType(
     }
 
     class Item : RsContextType("RUST_ITEM", "Item", Generic::class) {
-        override fun isInContext(element: PsiElement): Boolean =
-            // We are inside item but there is no block between
-            owner(element) is RsItemElement
+        // We are inside item but there is no block between
+        override fun isInContext(element: PsiElement): Boolean = owner(element) is RsItemElement
     }
 
     class Struct : RsContextType("RUST_STRUCT", "Structure", Item::class) {
+        // Structs can't be nested or contain other expressions, so it is ok to look for any Struct ancestor.
         override fun isInContext(element: PsiElement): Boolean =
-            // Structs can't be nested or contain other expressions,
-            // so it is ok to look for any Struct ancestor.
             element.ancestorStrict<RsStructItem>() != null
     }
 
     class Mod : RsContextType("RUST_MOD", "Module", Item::class) {
-        override fun isInContext(element: PsiElement): Boolean
-            // We are inside RsMod
-            = owner(element) is RsMod
+        // We are inside RsMod
+        override fun isInContext(element: PsiElement): Boolean = owner(element) is RsMod
     }
 
     class Attribute : RsContextType("RUST_ATTRIBUTE", "Attribute", Item::class) {

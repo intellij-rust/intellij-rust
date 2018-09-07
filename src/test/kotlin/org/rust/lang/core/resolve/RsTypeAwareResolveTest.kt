@@ -5,9 +5,8 @@
 
 package org.rust.lang.core.resolve
 
-import junit.framework.AssertionFailedError
-
 class RsTypeAwareResolveTest : RsResolveTestBase() {
+
     fun `test self method call expr`() = checkByCode("""
         struct S;
 

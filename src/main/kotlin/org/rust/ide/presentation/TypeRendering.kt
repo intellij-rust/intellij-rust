@@ -9,8 +9,8 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.regions.ReUnknown
-import org.rust.lang.core.types.regions.Region
+import org.rust.lang.core.types.region.ReUnknown
+import org.rust.lang.core.types.region.Region
 import org.rust.lang.core.types.ty.*
 
 val Ty.shortPresentableText: String
@@ -35,6 +35,7 @@ private data class TypeRenderer(
     val includeTypeArguments: Boolean = true,
     val includeLifetimeArguments: Boolean = false
 ) {
+
     fun render(ty: Ty): String = render(ty, Int.MAX_VALUE)
 
     fun render(ty: Ty, level: Int): String {
@@ -123,13 +124,13 @@ private data class TypeRenderer(
     }
 
     private fun formatGenerics(adt: TyAdt, render: (Ty) -> String): String {
-        val typeArguments = adt.typeArguments.map(render)
-        val lifetimeArguments = if (includeLifetimeArguments) {
-            adt.lifetimeArguments.map { render(it) }
+        val typeNames = adt.typeArguments.map(render)
+        val lifetimeNames = if (includeLifetimeArguments) {
+            adt.regionArguments.map { render(it) }
         } else {
             emptyList()
         }
-        val generics = lifetimeArguments + typeArguments
+        val generics = lifetimeNames + typeNames
         return if (generics.isEmpty()) "" else generics.joinToString(", ", "<", ">")
     }
 

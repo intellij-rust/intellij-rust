@@ -14,6 +14,27 @@ import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.Testmark
 
 class RsResolveCacheTest : RsTestBase() {
+
+    fun `test cache invalidated on rust structure change`() = doTest("""
+        mod a { struct S; }
+                     //X
+        mod b { struct S; }
+                     //Y
+        use a/*caret*/::S;
+        type T = S;
+               //^
+    """, "\bb", RsResolveCache.Testmarks.cacheCleared)
+
+    fun `test resolve correctly without global cache invalidation`() = doTest("""
+        struct S1;
+             //X
+        struct S2;
+             //Y
+        fn main() {
+            let a: S1/*caret*/;
+        }        //^
+    """, "\b2")
+
     private fun RsWeakReferenceElement.checkResolvedTo(marker: String, offset: Int) {
         val resolved = checkedResolve(offset)
         val target = findElementInEditor<RsNamedElement>(marker)
@@ -37,27 +58,6 @@ class RsResolveCacheTest : RsTestBase() {
         refElement.checkResolvedTo("Y", offset)
     }
 
-    private fun doTest(@Language("Rust") code: String, textToType: String, mark: Testmark) = mark.checkHit {
-        doTest(code, textToType)
-    }
-
-    fun `test cache invalidated on rust structure change`() = doTest("""
-        mod a { struct S; }
-                     //X
-        mod b { struct S; }
-                     //Y
-        use a/*caret*/::S;
-        type T = S;
-               //^
-    """, "\bb", RsResolveCache.Testmarks.cacheCleared)
-
-    fun `test resolve correctly without global cache invalidation`() = doTest("""
-        struct S1;
-             //X
-        struct S2;
-             //Y
-        fn main() {
-            let a: S1/*caret*/;
-        }        //^
-    """, "\b2")
+    private fun doTest(@Language("Rust") code: String, textToType: String, mark: Testmark) =
+        mark.checkHit { doTest(code, textToType) }
 }

@@ -11,10 +11,8 @@ import org.rust.lang.core.psi.RsLabel
 import org.rust.lang.core.resolve.ref.RsLabelReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
-abstract class RsLabelImplMixin (node: ASTNode) : RsElementImpl(node), RsLabel {
-
+abstract class RsLabelImplMixin(node: ASTNode) : RsElementImpl(node), RsLabel {
     override val referenceNameElement: PsiElement get() = quoteIdentifier
-
     override val referenceName: String get() = referenceNameElement.text
 
     override fun getReference(): RsReference = RsLabelReferenceImpl(this)

@@ -19,6 +19,7 @@ class RsDocRemoveDecorationTest(
     private val comment: String,
     private val content: String
 ) {
+
     @Test
     fun test() {
         val commentNorm = StringUtil.convertLineSeparators(comment).trim()
@@ -30,7 +31,8 @@ class RsDocRemoveDecorationTest(
 
     companion object {
         @Parameterized.Parameters(name = "{index}: \"{0}\" → \"{1}\"")
-        @JvmStatic fun data(): Collection<Array<Any>> = listOf(
+        @JvmStatic
+        fun data(): Collection<Array<Any>> = listOf(
             arrayOf(InnerEol, "//! foo", "foo"),
             arrayOf(OuterEol, "/// foo", "foo"),
 

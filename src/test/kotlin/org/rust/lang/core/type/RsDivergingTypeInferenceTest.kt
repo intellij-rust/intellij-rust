@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.type
 
-
 class RsDivergingTypeInferenceTest : RsTypificationTestBase() {
+
     fun `test if with all branches diverging`() = testExpr("""
         fn main() {
             let x = if true { return; } else { return; };

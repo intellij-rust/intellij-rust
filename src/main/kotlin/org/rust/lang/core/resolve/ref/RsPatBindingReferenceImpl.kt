@@ -13,12 +13,9 @@ import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processPatBindingResolveVariants
 
 
-class RsPatBindingReferenceImpl(
-    element: RsPatBinding
-) : RsReferenceCached<RsPatBinding>(element),
-    RsReference {
-
-    override val RsPatBinding.referenceAnchor: PsiElement get() = referenceNameElement
+class RsPatBindingReferenceImpl(element: RsPatBinding) : RsReferenceCached<RsPatBinding>(element), RsReference {
+    override val RsPatBinding.referenceAnchor: PsiElement
+        get() = referenceNameElement
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processPatBindingResolveVariants(element, false, it) }

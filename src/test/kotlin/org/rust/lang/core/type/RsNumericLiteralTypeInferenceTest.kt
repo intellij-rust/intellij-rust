@@ -6,6 +6,7 @@
 package org.rust.lang.core.type
 
 class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
+
     fun `test default float`() = testExpr("""
         fn main() {
             let a = 1.0;
@@ -397,9 +398,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern const`() = testExpr("""
         fn main() {
             match 0u8 {
-                0 => {},
+                0 => {}
               //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -407,9 +408,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern const with match ergonomics`() = testExpr("""
         fn main() {
             match &0u8 {
-                0 => {},
+                0 => {}
               //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -417,9 +418,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern ref`() = testExpr("""
         fn main() {
             match &0u8 {
-                &0 => {},
+                &0 => {}
                //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -427,9 +428,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern inclusive range`() = testExpr("""
         fn main() {
             match 0u8 {
-                0...1 => {},
+                0...1 => {}
               //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -437,9 +438,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern inclusive range new syntax`() = testExpr("""
         fn main() {
             match 0u8 {
-                0..=1 => {},
+                0..=1 => {}
               //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -447,9 +448,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern inclusive range with match ergonomics`() = testExpr("""
         fn main() {
             match &0u8 {
-                0..=1 => {},
+                0..=1 => {}
               //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -457,9 +458,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern exclusive range`() = testExpr("""
         fn main() {
             match 0u8 {
-                0..1 => {},
+                0..1 => {}
               //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -467,9 +468,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
     fun `test unify match pattern tuple`() = testExpr("""
         fn main() {
             match (0u8,) {
-                (0,) => {},
+                (0,) => {}
                //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -479,9 +480,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let a = S { f: 0u8 };
             match a {
-                S { f: 0 } => {},
+                S { f: 0 } => {}
                      //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -490,9 +491,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         struct S<T>(T);
         fn main() {
             match S(0u8) {
-                S(0) => {},
+                S(0) => {}
                 //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -501,9 +502,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         #![feature(slice_patterns)]
         fn main() {
             match [1u8, 2] {
-                [1, _] => {},
+                [1, _] => {}
                //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)
@@ -513,9 +514,9 @@ class RsNumericLiteralTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let a: &[u8] = &[1, 2];
             match a {
-                &[1, _] => {},
+                &[1, _] => {}
                 //^ u8
-                _ => {},
+                _ => {}
             };
         }
     """)

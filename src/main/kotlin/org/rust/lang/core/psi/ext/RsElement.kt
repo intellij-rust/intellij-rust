@@ -21,15 +21,13 @@ import org.rust.lang.core.psi.rustFile
 import org.rust.openapiext.toPsiFile
 
 interface RsElement : PsiElement {
-    /**
-     * Find parent module *in this file*. See [RsMod.super]
-     */
+    /** Find parent module *in this file*. See [RsMod.super]. */
     val containingMod: RsMod
-
     val crateRoot: RsMod?
 }
 
-val CARGO_WORKSPACE = Key.create<CargoWorkspace>("CARGO_WORKSPACE")
+val CARGO_WORKSPACE: Key<CargoWorkspace> =
+    Key.create<CargoWorkspace>("CARGO_WORKSPACE")
 
 val RsElement.cargoProject: CargoProject?
     get() = contextualFile.originalFile.cargoProject
@@ -47,29 +45,27 @@ private val PsiFile.cargoProject: CargoProject?
         return project.cargoProjects.findProjectForFile(vFile)
     }
 
-
 val RsElement.containingCargoTarget: CargoWorkspace.Target?
     get() {
-        val ws = cargoWorkspace ?: return null
+        val workspace = cargoWorkspace ?: return null
         val root = crateRoot ?: return null
         val file = root.contextualFile.originalFile.virtualFile ?: return null
-        return ws.findTargetByCrateRoot(file)
+        return workspace.findTargetByCrateRoot(file)
     }
 
-val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
+val RsElement.containingCargoPackage: CargoWorkspace.Package?
+    get() = containingCargoTarget?.pkg
 
-fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
-    return containingCargoPackage
+fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? =
+    containingCargoPackage
         ?.findDependency(dependencyName)
         ?.crateRoot
         ?.toPsiFile(project)
         ?.rustFile
-}
 
 abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
     override val containingMod: RsMod
-        get() = contextStrict()
-            ?: error("Element outside of module: $text")
+        get() = contextStrict() ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
         get() = (context as? RsElement)?.crateRoot
@@ -82,11 +78,11 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val containingMod: RsMod
-        get() = contextStrict()
-            ?: error("Element outside of module: $text")
+        get() = contextStrict() ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
         get() = (context as? RsElement)?.crateRoot
 
-    override fun toString(): String = "${javaClass.simpleName}($elementType)"
+    override fun toString(): String =
+        "${javaClass.simpleName}($elementType)"
 }

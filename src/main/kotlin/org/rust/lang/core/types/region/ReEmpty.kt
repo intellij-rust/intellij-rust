@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.regions
+package org.rust.lang.core.types.region
 
 /**
- * Empty lifetime is for data that is never accessed. Bottom in the region lattice.
+ * Empty region is for data that is never accessed. Bottom in the region lattice.
  * The only way to get an instance of [ReEmpty] is to have a region variable with no constraints.
  */
 object ReEmpty : Region()

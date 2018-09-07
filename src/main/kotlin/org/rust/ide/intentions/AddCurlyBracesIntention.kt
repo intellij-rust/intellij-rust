@@ -9,11 +9,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsUseSpeck
-import org.rust.lang.core.psi.ext.isStarImport
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isStarImport
 
 /**
  * Adds curly braces to singleton imports, changing from this
@@ -29,14 +29,10 @@ import org.rust.lang.core.psi.ext.ancestorStrict
  * ```
  */
 class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesIntention.Context>() {
-    override fun getText() = "Add curly braces"
-    override fun getFamilyName() = text
 
-    class Context(
-        val useSpeck: RsUseSpeck,
-        val path: RsPath,
-        val semicolon: PsiElement
-    )
+    override fun getText(): String = "Add curly braces"
+
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val useItem = element.ancestorStrict<RsUseItem>() ?: return null
@@ -81,4 +77,6 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
 
         editor.caretModel.moveToOffset(ctx.semicolon.textRange.startOffset - 1)
     }
+
+    class Context(val useSpeck: RsUseSpeck, val path: RsPath, val semicolon: PsiElement)
 }

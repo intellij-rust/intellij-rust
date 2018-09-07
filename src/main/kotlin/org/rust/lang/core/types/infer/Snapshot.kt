@@ -7,7 +7,6 @@ package org.rust.lang.core.types.infer
 
 interface Snapshot {
     fun commit()
-
     fun rollback()
 }
 
@@ -30,7 +29,8 @@ class UndoLog {
 private class LogBasedSnapshot private constructor(
     private val undoLog: MutableList<Undoable>,
     val position: Int
-): Snapshot {
+) : Snapshot {
+
     override fun commit() {
         assertOpenSnapshot()
         if (position == 0) {
@@ -40,7 +40,7 @@ private class LogBasedSnapshot private constructor(
         }
     }
 
-    override fun rollback(){
+    override fun rollback() {
         assertOpenSnapshot()
         val toRollback = undoLog.subList(position + 1, undoLog.size)
         toRollback.asReversed().forEach(Undoable::undo)
@@ -70,8 +70,7 @@ private class LogBasedSnapshot private constructor(
 
     private object CommittedSnapshot : Undoable {
         override fun undo() {
-            // This occurs when there are nested snapshots and
-            // the inner is committed but outer is rolled back.
+            // This occurs when there are nested snapshots and the inner is committed but outer is rolled back.
         }
     }
 }

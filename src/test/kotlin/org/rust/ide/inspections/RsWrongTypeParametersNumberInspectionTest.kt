@@ -170,6 +170,4 @@ class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongT
             (foo)();
         }
     """)
-
-
 }

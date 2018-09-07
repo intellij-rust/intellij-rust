@@ -5,7 +5,8 @@
 
 package org.rust.lang.core.completion
 
-class RsCompletionFilteringTest: RsCompletionTestBase() {
+class RsCompletionFilteringTest : RsCompletionTestBase() {
+
     fun `test unsatisfied bound filtered 1`() = doSingleCompletion("""
         trait Bound {}
         trait Trait1 { fn foo(&self) {} }

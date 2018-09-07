@@ -80,7 +80,13 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
                     baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
                     panel.add(baseRenderer.nextStepLabel, BorderLayout.EAST)
                     val importCandidate = value as? ImportCandidate
-                    panel.add(psiRenderer.getListCellRendererComponent(list, importCandidate, index, isSelected, cellHasFocus))
+                    panel.add(psiRenderer.getListCellRendererComponent(
+                        list,
+                        importCandidate,
+                        index,
+                        isSelected,
+                        cellHasFocus
+                    ))
                     panel
                 }
             }
@@ -98,11 +104,16 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
 
     override fun getRightCellRenderer(value: Any?): DefaultListCellRenderer? = rightRender
 
-    override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
+    override fun getListCellRendererComponent(
+        list: JList<*>?,
+        value: Any?,
+        index: Int,
+        isSelected: Boolean,
+        cellHasFocus: Boolean
+    ): Component {
         val realValue = if (value is ImportCandidate) {
-            // Generally, it's rather hacky but I don't know another way
-            // how to use functionality of `PsiElementListCellRenderer`
-            // and pass additional info with psi element at same time
+            // Generally, it's rather hacky but I don't know another way how to use functionality of
+            // `PsiElementListCellRenderer` and pass additional info with psi element at same time
             importCandidate = value
             value.importItem.item
         } else {
@@ -111,7 +122,8 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
         return super.getListCellRendererComponent(list, realValue, index, isSelected, cellHasFocus)
     }
 
-    override fun getElementText(element: PsiElement): String = importCandidate?.importItem?.itemName ?: super.getElementText(element)
+    override fun getElementText(element: PsiElement): String =
+        importCandidate?.importItem?.itemName ?: super.getElementText(element)
 
     override fun getContainerText(element: PsiElement, name: String): String? {
         val importCandidate = importCandidate
@@ -130,8 +142,13 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
     }
 
     private inner class LibraryCellRender : DefaultListCellRenderer() {
-        override fun getListCellRendererComponent(list: JList<*>, value: Any?, index: Int,
-                                                  isSelected: Boolean, cellHasFocus: Boolean): Component {
+        override fun getListCellRendererComponent(
+            list: JList<*>,
+            value: Any?,
+            index: Int,
+            isSelected: Boolean,
+            cellHasFocus: Boolean
+        ): Component {
             val component = super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus)
             val textWithIcon = textWithIcon()
             if (textWithIcon != null) {

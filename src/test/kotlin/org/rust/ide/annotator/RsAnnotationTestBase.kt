@@ -12,11 +12,12 @@ import org.rust.fileTreeFromText
 import org.rust.openapiext.Testmark
 
 abstract class RsAnnotationTestBase : RsTestBase() {
+
     protected fun doTest(vararg additionalFilenames: String) {
         myFixture.testHighlighting(fileName, *additionalFilenames)
     }
 
-    protected fun checkInfo(@Language("Rust") text: String)  =
+    protected fun checkInfo(@Language("Rust") text: String) =
         checkByText(text, checkWarn = false, checkWeakWarn = false, checkInfo = true)
 
     protected fun checkWarnings(@Language("Rust") text: String) =
@@ -31,12 +32,14 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         testmark: Testmark? = null
-    ) = check(text,
-        checkWarn = checkWarn,
-        checkInfo = checkInfo,
-        checkWeakWarn = checkWeakWarn,
-        configure = this::configureByText,
-        testmark = testmark)
+    ) = check(
+        text,
+        checkWarn,
+        checkInfo,
+        checkWeakWarn,
+        this::configureByText,
+        testmark
+    )
 
     protected fun checkFixByText(
         fixName: String,
@@ -46,22 +49,30 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         testmark: Testmark? = null
-    ) = checkFix(fixName, before, after,
-        configure = this::configureByText,
-        checkBefore = { myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
-        checkAfter = this::checkByText,
-        testmark = testmark)
+    ) = checkFix(
+        fixName,
+        before,
+        after,
+        this::configureByText,
+        { myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
+        this::checkByText,
+        testmark
+    )
 
     protected fun checkFixByTextWithoutHighlighting(
         fixName: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         testmark: Testmark? = null
-    ) = checkFix(fixName, before, after,
-        configure = this::configureByText,
-        checkBefore = {},
-        checkAfter = this::checkByText,
-        testmark = testmark)
+    ) = checkFix(
+        fixName,
+        before,
+        after,
+        this::configureByText,
+        {},
+        this::checkByText,
+        testmark
+    )
 
     protected fun checkByFileTree(
         @Language("Rust") text: String,
@@ -69,12 +80,14 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         testmark: Testmark? = null
-    ) = check(text,
-        checkWarn = checkWarn,
-        checkInfo = checkInfo,
-        checkWeakWarn = checkWeakWarn,
-        configure = this::configureByFileTree,
-        testmark = testmark)
+    ) = check(
+        text,
+        checkWarn,
+        checkInfo,
+        checkWeakWarn,
+        this::configureByFileTree,
+        testmark
+    )
 
     protected fun checkFixByFileTree(
         fixName: String,
@@ -84,11 +97,15 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         testmark: Testmark? = null
-    ) = checkFix(fixName, before, after,
-        configure = this::configureByFileTree,
-        checkBefore = { myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
-        checkAfter = this::checkByFileTree,
-        testmark = testmark)
+    ) = checkFix(
+        fixName,
+        before,
+        after,
+        this::configureByFileTree,
+        { myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
+        this::checkByFileTree,
+        testmark
+    )
 
     protected fun checkFixIsUnavailable(
         fixName: String,
@@ -97,12 +114,15 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         testmark: Testmark? = null
-    ) = checkFixIsUnavailable(fixName, text,
-        checkWarn = checkWarn,
-        checkInfo = checkInfo,
-        checkWeakWarn = checkWeakWarn,
-        configure = this::configureByText,
-        testmark = testmark)
+    ) = checkFixIsUnavailable(
+        fixName,
+        text,
+        checkWarn,
+        checkInfo,
+        checkWeakWarn,
+        this::configureByText,
+        testmark
+    )
 
     protected fun checkFixIsUnavailableByFileTree(
         fixName: String,
@@ -111,12 +131,15 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         testmark: Testmark? = null
-    ) = checkFixIsUnavailable(fixName, text,
-        checkWarn = checkWarn,
-        checkInfo = checkInfo,
-        checkWeakWarn = checkWeakWarn,
-        configure = this::configureByFileTree,
-        testmark = testmark)
+    ) = checkFixIsUnavailable(
+        fixName,
+        text,
+        checkWarn,
+        checkInfo,
+        checkWeakWarn,
+        this::configureByFileTree,
+        testmark
+    )
 
     private fun check(
         @Language("Rust") text: String,
@@ -166,19 +189,21 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         }
     }
 
-    private fun checkByText(text: String) {
+    private fun checkByText(text: String) =
         myFixture.checkResult(replaceCaretMarker(text.trimIndent()))
-    }
 
-    private fun checkByFileTree(text: String) {
+    private fun checkByFileTree(text: String) =
         fileTreeFromText(replaceCaretMarker(text)).check(myFixture)
-    }
 
-    protected fun checkDontTouchAstInOtherFiles(@Language("Rust") text: String, checkInfo: Boolean = false, filePath: String? = null) {
+    protected fun checkDontTouchAstInOtherFiles(
+        @Language("Rust") text: String,
+        checkInfo: Boolean = false,
+        filePath: String? = null
+    ) {
         fileTreeFromText(text).create()
         val testFilePath = filePath ?: "main.rs"
         (myFixture as CodeInsightTestFixtureImpl) // meh
-                    .setVirtualFileFilter { !it.path.endsWith(testFilePath) }
+            .setVirtualFileFilter { !it.path.endsWith(testFilePath) }
 
         myFixture.configureFromTempProjectFile(testFilePath)
         myFixture.testHighlighting(false, checkInfo, false)

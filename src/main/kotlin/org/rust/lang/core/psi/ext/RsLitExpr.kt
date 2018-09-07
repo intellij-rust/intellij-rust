@@ -26,26 +26,28 @@ import org.rust.lang.core.stubs.RsStubLiteralType
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 
-val RsLitExpr.stubType: RsStubLiteralType? get() {
-    val stub = (stub as? RsLitExprStub)
-    if (stub != null) return stub.type
-    val kind = kind
-    return when (kind) {
-        is RsLiteralKind.Boolean ->  RsStubLiteralType.Boolean
-        is RsLiteralKind.Char -> RsStubLiteralType.Char(kind.isByte)
-        is RsLiteralKind.String -> RsStubLiteralType.String(kind.value?.length?.toLong(), kind.isByte)
-        is RsLiteralKind.Integer -> RsStubLiteralType.Integer(TyInteger.fromSuffixedLiteral(integerLiteral!!))
-        is RsLiteralKind.Float -> RsStubLiteralType.Float(TyFloat.fromSuffixedLiteral(floatLiteral!!))
-        else -> null
+val RsLitExpr.stubType: RsStubLiteralType?
+    get() {
+        val stub = stub as? RsLitExprStub
+        if (stub != null) return stub.type
+        val kind = kind
+        return when (kind) {
+            is RsLiteralKind.Boolean -> RsStubLiteralType.Boolean
+            is RsLiteralKind.Char -> RsStubLiteralType.Char(kind.isByte)
+            is RsLiteralKind.String -> RsStubLiteralType.String(kind.value?.length?.toLong(), kind.isByte)
+            is RsLiteralKind.Integer -> RsStubLiteralType.Integer(TyInteger.fromSuffixedLiteral(integerLiteral!!))
+            is RsLiteralKind.Float -> RsStubLiteralType.Float(TyFloat.fromSuffixedLiteral(floatLiteral!!))
+            else -> null
+        }
     }
-}
 
-val RsLitExpr.integerLiteralValue: String? get() =
-    (stub as? RsLitExprStub)?.integerLiteralValue ?: integerLiteral?.text
+val RsLitExpr.integerLiteralValue: String?
+    get() = (stub as? RsLitExprStub)?.integerLiteralValue ?: integerLiteral?.text
 
 abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, ContributedReferenceHost, RegExpLanguageHost {
 
     constructor(node: ASTNode) : super(node)
+
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun isValidHost(): Boolean =
@@ -64,7 +66,7 @@ abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, ContributedReferenceHost,
     override fun getReferences(): Array<PsiReference> =
         PsiReferenceService.getService().getContributedReferences(this)
 
-    override fun characterNeedsEscaping(c: Char): Boolean = false
+    override fun characterNeedsEscaping(char: Char): Boolean = false
     override fun supportsPerl5EmbeddedComments(): Boolean = false
     override fun supportsPossessiveQuantifiers(): Boolean = true
     override fun supportsPythonConditionalRefs(): Boolean = false

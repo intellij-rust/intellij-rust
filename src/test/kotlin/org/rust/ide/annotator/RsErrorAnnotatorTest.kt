@@ -8,7 +8,7 @@ package org.rust.ide.annotator
 import org.rust.MockRustcVersion
 
 class RsErrorAnnotatorTest : RsAnnotationTestBase() {
-    override val dataPath = "org/rust/ide/annotator/fixtures/errors"
+    override val dataPath: String = "org/rust/ide/annotator/fixtures/errors"
 
     fun `test invalid module declarations`() = doTest("helper.rs")
 
@@ -770,7 +770,7 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         fn foo() {}
         fn bat() {}
         fn bar() {
-            use self::{foo};
+            use self::foo;
             use self::{foo,bat};
         }
     """)

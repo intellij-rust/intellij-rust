@@ -12,9 +12,7 @@ import org.rust.lang.core.types.BoundElement
 
 interface RsTraitOrImpl : RsItemElement, RsGenericDeclaration {
     val members: RsMembers?
-
     val implementedTrait: BoundElement<RsTraitItem>?
-
     val associatedTypesTransitively: Collection<RsTypeAlias>
 }
 

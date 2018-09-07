@@ -10,16 +10,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 
 class DetachCargoProjectAction : AnAction() {
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = e.project != null && e.cargoProject != null
+    private val AnActionEvent.cargoProject: CargoProject?
+        get() = getData(CargoToolWindow.SELECTED_CARGO_PROJECT)
+
+    override fun update(event: AnActionEvent) {
+        event.presentation.isEnabled = event.project != null && event.cargoProject != null
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
-        val cargoProject = e.cargoProject ?: return
+    override fun actionPerformed(event: AnActionEvent) {
+        val project = event.project ?: return
+        val cargoProject = event.cargoProject ?: return
         project.cargoProjects.detachCargoProject(cargoProject)
     }
-
-    private val AnActionEvent.cargoProject get() = getData(CargoToolWindow.SELECTED_CARGO_PROJECT)
-
 }

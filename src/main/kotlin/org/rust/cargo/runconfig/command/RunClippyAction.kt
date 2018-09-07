@@ -13,11 +13,10 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.run
 
 class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
+    override fun actionPerformed(event: AnActionEvent) {
+        val project = event.project ?: return
         val toolchain = project.toolchain ?: return
-        val cargoProject = getAppropriateCargoProject(e) ?: return
+        val cargoProject = getAppropriateCargoProject(event) ?: return
         val channel = if (toolchain.isRustupAvailable) RustChannel.NIGHTLY else RustChannel.DEFAULT
         CargoCommandLine.forProject(cargoProject, "clippy", channel = channel).run(project, cargoProject)
     }

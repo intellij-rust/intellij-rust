@@ -59,7 +59,8 @@ fun RsDocAndAttributeOwner.documentationAsHtml(): String? {
     val text = documentation() ?: return null
     val flavour = RustDocMarkdownFlavourDescriptor(baseURI)
     val root = MarkdownParser(flavour).buildMarkdownTreeFromString(text)
-    return HtmlGenerator(text, root, flavour).generateHtml()
+    return HtmlGenerator(text, root, flavour)
+        .generateHtml()
         .replace(tmpUriPrefix, DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)
 }
 
@@ -74,7 +75,7 @@ private fun RsDocAndAttributeOwner.outerDocs(): Sequence<Pair<RsDocKind, String>
         .takeWhile { it is RsOuterAttr || it is PsiComment || it is PsiWhiteSpace }
         .mapNotNull {
             when {
-                it is RsOuterAttr -> it.metaItem.docAttr?.let { RsDocKind.Attr to it }
+                it is RsOuterAttr -> it.metaItem.docAttr?.let { attr -> RsDocKind.Attr to attr }
                 it is PsiComment && (it.tokenType == OUTER_EOL_DOC_COMMENT
                     || it.tokenType == OUTER_BLOCK_DOC_COMMENT) -> RsDocKind.of(it.tokenType) to it.text
                 else -> null
@@ -107,7 +108,6 @@ private class RustDocMarkdownFlavourDescriptor(
     private val uri: URI? = null,
     private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor()
 ) : MarkdownFlavourDescriptor by gfm {
-
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
         val generatingProviders = HashMap(gfm.createHtmlGeneratingProviders(linkMap, uri ?: baseURI))
         // Filter out MARKDOWN_FILE to avoid producing unnecessary <body> tags

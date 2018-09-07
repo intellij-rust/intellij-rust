@@ -22,9 +22,7 @@ interface RsModificationTrackerOwner : RsItemElement {
     /**
      * Increments local modification counter if needed.
      *
-     * If and only if false returned,
-     * [RsPsiManager.rustStructureModificationTracker]
-     * will be incremented.
+     * If and only if false returned, [RsPsiManager.rustStructureModificationTracker] will be incremented.
      *
      * @param element the changed psi element
      * @see org.rust.lang.core.psi.RsPsiManagerImpl.updateModificationCount
@@ -32,12 +30,11 @@ interface RsModificationTrackerOwner : RsItemElement {
     fun incModificationCount(element: PsiElement): Boolean
 }
 
-fun PsiElement.findModificationTrackerOwner(): RsModificationTrackerOwner? {
-    return PsiTreeUtil.getContextOfType(
+fun PsiElement.findModificationTrackerOwner(): RsModificationTrackerOwner? =
+    PsiTreeUtil.getContextOfType(
         this,
         true,
         RsItemElement::class.java,
         RsMacroCall::class.java,
         RsMacro::class.java
     ) as? RsModificationTrackerOwner
-}

@@ -8,13 +8,17 @@ package org.rust.ide.inspections.fixes
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.RsElement
 
 class RemoveTypeParameter : LocalQuickFix {
 
-    override fun getName() = "Remove all type parameters"
-    override fun getFamilyName() = name
+    override fun getName(): String = "Remove all type parameters"
+
+    override fun getFamilyName(): String = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? RsElement ?: return
@@ -25,8 +29,8 @@ class RemoveTypeParameter : LocalQuickFix {
             else -> null
         } ?: return
 
-        val lifetime = typeArgumentList.lifetimeList.size
-        if (lifetime == 0) {
+        val lifetimeCount = typeArgumentList.lifetimeList.size
+        if (lifetimeCount == 0) {
             typeArgumentList.delete()
         }
     }

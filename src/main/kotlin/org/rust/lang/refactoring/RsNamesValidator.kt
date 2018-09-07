@@ -15,24 +15,22 @@ import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 
 class RsNamesValidator : NamesValidator {
 
-    override fun isKeyword(name: String, project: Project?): Boolean {
-        return getLexerType(name) in RS_KEYWORDS
-    }
+    override fun isKeyword(name: String, project: Project?): Boolean =
+        getLexerType(name) in RS_KEYWORDS
 
-    override fun isIdentifier(name: String, project: Project?): Boolean {
-        return when (getLexerType(name)) {
+    override fun isIdentifier(name: String, project: Project?): Boolean =
+        when (getLexerType(name)) {
             IDENTIFIER, QUOTE_IDENTIFIER -> true
             else -> false
         }
-    }
-
 
     companion object {
-        val PredefinedLifetimes = arrayOf("'static")
+        val PREDEFINED_LIFETIMES: Array<String> = arrayOf("'static")
     }
 }
 
-fun isValidRustVariableIdentifier(name: String): Boolean = getLexerType(name) == IDENTIFIER
+fun isValidRustVariableIdentifier(name: String): Boolean =
+    getLexerType(name) == IDENTIFIER
 
 private fun getLexerType(text: String): IElementType? {
     val lexer = RsLexer()

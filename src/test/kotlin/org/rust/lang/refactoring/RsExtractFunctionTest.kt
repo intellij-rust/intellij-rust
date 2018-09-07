@@ -15,7 +15,7 @@ import org.rust.lang.refactoring.extractFunction.withMockExtractFunctionUi
 
 
 class RsExtractFunctionTest : RsTestBase() {
-    override val dataPath = "org/rust/lang/refactoring/fixtures/extract_function/"
+    override val dataPath: String = "org/rust/lang/refactoring/fixtures/extract_function/"
 
     fun `test extract a function without parameters and a return value`() = doTest("""
             fn main() {
@@ -31,74 +31,70 @@ class RsExtractFunctionTest : RsTestBase() {
                 println!("test");
                 println!("test2");
             }
-        """,
-        false,
-        "test")
+        """, false, "test")
 
     fun `test extract a complex function as example`() = doTest("""
-        fn parse_test(call: Call) -> JsResult<JsValue> {
-            <selection>let scope = call.scope;
-            let test = call.arguments.require(scope, 0)?.check::<JsInteger>()?.value() as usize;
-            let callback = call.arguments.require(scope, 1)?.check::<JsFunction>()?;
-            let file = FILE.lock().unwrap();
-            let file = get_file_or_return_null!(file).clone();</selection>
+            fn parse_test(call: Call) -> JsResult<JsValue> {
+                <selection>let scope = call.scope;
+                let test = call.arguments.require(scope, 0)?.check::<JsInteger>()?.value() as usize;
+                let callback = call.arguments.require(scope, 1)?.check::<JsFunction>()?;
+                let file = FILE.lock().unwrap();
+                let file = get_file_or_return_null!(file).clone();</selection>
 
-            struct RenderTask(Arc<File>, usize);
-            impl Task for RenderTask {
-                type Output = String;
-                type Error = ();
-                type JsEvent = JsString;
+                struct RenderTask(Arc<File>, usize);
+                impl Task for RenderTask {
+                    type Output = String;
+                    type Error = ();
+                    type JsEvent = JsString;
 
-                fn perform(&self) -> Result<String, ()> {
-                    let mut renderer = renderer();
-                    let tree = renderer.render_one(&self.0, self.1);
-                    Ok(tree)
+                    fn perform(&self) -> Result<String, ()> {
+                        let mut renderer = renderer();
+                        let tree = renderer.render_one(&self.0, self.1);
+                        Ok(tree)
+                    }
+
+                    fn complete<'a, T: Scope<'a>>(self, scope: &'a mut T, result: Result<String, ()>) -> JsResult<JsString> {
+                        Ok(JsString::new(scope, &result.unwrap()).unwrap())
+                    }
                 }
 
-                fn complete<'a, T: Scope<'a>>(self, scope: &'a mut T, result: Result<String, ()>) -> JsResult<JsString> {
-                    Ok(JsString::new(scope, &result.unwrap()).unwrap())
-                }
+                RenderTask(file, test).schedule(callback);
+                Ok(JsNull::new().upcast())
             }
-
-            RenderTask(file, test).schedule(callback);
-            Ok(JsNull::new().upcast())
-        }
         """, """
-        fn parse_test(call: Call) -> JsResult<JsValue> {
-            let (test, callback, file) = foo(call);
+            fn parse_test(call: Call) -> JsResult<JsValue> {
+                let (test, callback, file) = foo(call);
 
-            struct RenderTask(Arc<File>, usize);
-            impl Task for RenderTask {
-                type Output = String;
-                type Error = ();
-                type JsEvent = JsString;
+                struct RenderTask(Arc<File>, usize);
+                impl Task for RenderTask {
+                    type Output = String;
+                    type Error = ();
+                    type JsEvent = JsString;
 
-                fn perform(&self) -> Result<String, ()> {
-                    let mut renderer = renderer();
-                    let tree = renderer.render_one(&self.0, self.1);
-                    Ok(tree)
+                    fn perform(&self) -> Result<String, ()> {
+                        let mut renderer = renderer();
+                        let tree = renderer.render_one(&self.0, self.1);
+                        Ok(tree)
+                    }
+
+                    fn complete<'a, T: Scope<'a>>(self, scope: &'a mut T, result: Result<String, ()>) -> JsResult<JsString> {
+                        Ok(JsString::new(scope, &result.unwrap()).unwrap())
+                    }
                 }
 
-                fn complete<'a, T: Scope<'a>>(self, scope: &'a mut T, result: Result<String, ()>) -> JsResult<JsString> {
-                    Ok(JsString::new(scope, &result.unwrap()).unwrap())
-                }
+                RenderTask(file, test).schedule(callback);
+                Ok(JsNull::new().upcast())
             }
 
-            RenderTask(file, test).schedule(callback);
-            Ok(JsNull::new().upcast())
-        }
-
-        fn foo(call: _) -> (usize, _, _) {
-            let scope = call.scope;
-            let test = call.arguments.require(scope, 0)?.check::<JsInteger>()?.value() as usize;
-            let callback = call.arguments.require(scope, 1)?.check::<JsFunction>()?;
-            let file = FILE.lock().unwrap();
-            let file = get_file_or_return_null!(file).clone();
-            (test, callback, file)
-        }
-        """,
-        false,
-        "foo")
+            fn foo(call: _) -> (usize, _, _) {
+                let scope = call.scope;
+                let test = call.arguments.require(scope, 0)?.check::<JsInteger>()?.value() as usize;
+                let callback = call.arguments.require(scope, 1)?.check::<JsFunction>()?;
+                let file = FILE.lock().unwrap();
+                let file = get_file_or_return_null!(file).clone();
+                (test, callback, file)
+            }
+        """, false, "foo")
 
     fun `test extract basic input parameter`() = doTest("""
             fn main() {
@@ -114,9 +110,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn foo(bar: i32) {
                 println!("{}", bar);
             }
-        """,
-        false,
-        "foo")
+        """, false, "foo")
 
     fun `test extract input parameter from method`() = doTest("""
             fn foo(a: i32) {
@@ -130,9 +124,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn bar(a: i32) {
                 println!("{}", a);
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract input parameter with mutability`() = doTest("""
@@ -149,9 +141,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn foo(vec: &mut Vec<i32>) {
                 vec.push(1);
             }
-        """,
-        false,
-        "foo")
+        """, false, "foo")
 
     fun `test extract two input parameter`() = doTest("""
             fn main() {
@@ -169,9 +159,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn foo(bar: i32, test: i32) {
                 println!("{} {}", bar, test);
             }
-        """,
-        false,
-        "foo")
+        """, false, "foo")
 
     fun `test extract ignore unused bindings`() = doTest("""
             fn main() {
@@ -191,9 +179,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn foo(test: i32) {
                 println!("{}", test);
             }
-        """,
-        false,
-        "foo")
+        """, false, "foo")
 
     fun `test extract ignore unused bindings only before`() = doTest("""
             fn main() {
@@ -221,9 +207,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn foo(a: i32) {
                 println!("{}", a);
             }
-        """,
-        false,
-        "test")
+        """, false, "test")
 
     fun `test extract a function with a return value`() = doTest("""
             fn main() {
@@ -240,9 +224,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 let test = 10i32;
                 test
             }
-        """,
-        false,
-        "test")
+        """, false, "test")
 
     fun `test extract return tuple`() = doTest("""
             fn main() {
@@ -263,9 +245,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 let test = 10i32;
                 (test2, test)
             }
-        """,
-        false,
-        "test")
+        """, false, "test")
 
     fun `test extract return parameter expr`() = doTest("""
             fn test() -> (i32, i32) {
@@ -283,9 +263,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 let test = 10i32;
                 (test2, test)
             }
-        """,
-        false,
-        "test2")
+        """, false, "test2")
 
     fun `test extract a function with public visibility`() = doTest("""
             fn main() {
@@ -301,9 +279,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 println!("test");
                 println!("test2");
             }
-        """,
-        true,
-        "test")
+        """, true, "test")
 
     fun `test extract a function in impl`() = doTest("""
             struct S;
@@ -325,9 +301,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("test2");
                 }
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function in impl for generic types`() = doTest("""
             struct S<T>(T);
@@ -347,9 +321,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("Hello!");
                 }
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function with the parameter self`() = doTest("""
             struct S;
@@ -381,9 +353,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("bla");
                 }
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function with the parameter ref self`() = doTest("""
             struct S;
@@ -415,9 +385,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("bla");
                 }
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function with the parameter ref mut self`() = doTest("""
             struct S;
@@ -449,9 +417,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("bla");
                 }
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function with the parameter self and other parameter`() = doTest("""
             struct S;
@@ -483,9 +449,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("bla");
                 }
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function without self because it is not used`() = doTest("""
             struct S;
@@ -509,9 +473,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("test2");
                 }
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function in an impl with public visibility`() = doTest("""
             struct S;
@@ -533,9 +495,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("test2");
                 }
             }
-        """,
-        true,
-        "bar")
+        """, true, "bar")
 
     fun `test extract a function in a impl trait`() = doTest("""
             struct S;
@@ -569,9 +529,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("test2");
                 }
             }
-""",
-        false,
-        "bar")
+""", false, "bar")
 
     fun `test extract a function in a trait`() = doTest("""
             trait Foo {
@@ -591,9 +549,7 @@ class RsExtractFunctionTest : RsTestBase() {
                     println!("{}", b);
                 }
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with generic parameters`() = doTest("""
@@ -616,9 +572,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 d;
                 println!("test")
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with generic parameters and a return generic value`() = doTest("""
@@ -633,9 +587,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn bar<T: Default>() -> T {
                 T::default()
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with generic parameters and a return generic option value`() = doTest("""
@@ -650,9 +602,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn bar<T: Default>() -> Option<T> {
                 Some(T::default())
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function with generic parameters and where clauses`() = doTest("""
             trait Trait1 {}
@@ -676,9 +626,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 u;
                 println!("test")
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function with bounded generic parameters`() = doTest("""
             trait Foo<T> {}
@@ -698,9 +646,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn bar<T, F: Foo<T>, B: Bar<Baz<F>>>(b: B) {
                 b;
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function with bounded generic parameters and where clauses`() = doTest("""
             trait T1 {}
@@ -726,9 +672,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn bar<T: T1, F: Foo<T>, B>(b: B) where T: T2, B: Bar<F> + Baz<F> {
                 b;
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing primitive`() = doTest("""
@@ -769,9 +713,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 println!("{}", b);
                 println!("{}", c);
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     fun `test extract a function with passing reference`() = doTest("""
             fn foo() {
@@ -789,9 +731,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn bar(s: &str) {
                 println!("{}", s);
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing copy trait`() = doTest("""
@@ -816,9 +756,7 @@ class RsExtractFunctionTest : RsTestBase() {
             fn bar(copy: Copyable) {
                 println!("{:?}", copy);
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing by &`() = doTest("""
@@ -853,9 +791,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 println!("{}", vec2.len());
                 f(&vec3);
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing by &mut`() = doTest("""
@@ -882,9 +818,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 vec.push(123);
                 vec2.push(123);
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test extract a function with passing by mut`() = doTest("""
@@ -913,14 +847,14 @@ class RsExtractFunctionTest : RsTestBase() {
                 test(vec);
                 test2(&mut vec2);
             }
-        """,
-        false,
-        "bar")
+        """, false, "bar")
 
-    private fun doTest(@Language("Rust") code: String,
-                       @Language("Rust") excepted: String,
-                       pub: Boolean,
-                       name: String) {
+    private fun doTest(
+        @Language("Rust") code: String,
+        @Language("Rust") excepted: String,
+        pub: Boolean,
+        name: String
+    ) {
         withMockExtractFunctionUi(object : ExtractFunctionUi {
             override fun extract(config: RsExtractFunctionConfig, callback: () -> Unit) {
                 config.name = name

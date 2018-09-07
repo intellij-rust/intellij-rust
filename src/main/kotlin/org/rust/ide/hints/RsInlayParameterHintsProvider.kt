@@ -34,7 +34,9 @@ private val RsPat.inlayInfo: List<InlayInfo>
     }
 
 enum class HintType(desc: String, enabled: Boolean) {
+
     LET_BINDING_HINT("Show local variable type hints", true) {
+
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val element = elem as? RsLetDecl ?: return emptyList()
             if (element.typeReference != null) return emptyList()
@@ -43,12 +45,14 @@ enum class HintType(desc: String, enabled: Boolean) {
                 val declaration = expr?.declaration
                 if (declaration is RsStructItem || declaration is RsEnumVariant) return emptyList()
             }
-            return element.pat?.inlayInfo ?: emptyList()
+            return element.pat?.inlayInfo.orEmpty()
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl
     },
+
     PARAMETER_HINT("Show argument name hints", true) {
+
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val (callInfo, valueArgumentList) = when (elem) {
                 is RsCallExpr -> (CallInfo.resolve(elem) to elem.valueArgumentList)
@@ -93,7 +97,9 @@ enum class HintType(desc: String, enabled: Boolean) {
         override fun isApplicable(elem: PsiElement): Boolean =
             elem is RsCallExpr || elem is RsMethodCall
     },
+
     LAMBDA_PARAMETER_HINT("Show lambda parameter type hints", true) {
+
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val element = elem as? RsLambdaExpr ?: return emptyList()
             val type = element.type as? TyFunction ?: return emptyList()
@@ -105,30 +111,33 @@ enum class HintType(desc: String, enabled: Boolean) {
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsLambdaExpr
     },
+
     FOR_PARAMETER_HINT("Show type hints for for loops parameter", true) {
+
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val element = elem as? RsForExpr ?: return emptyList()
-            return element.pat?.inlayInfo ?: emptyList()
+            return element.pat?.inlayInfo.orEmpty()
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsForExpr
     };
 
-    companion object {
-        val SMART_HINTING = Option("SMART_HINTING", "Show only smart hints", true)
-        fun resolve(elem: PsiElement): HintType? =
-            HintType.values().find { it.isApplicable(elem) }
-    }
+    val option: Option = Option("SHOW_${this.name}", desc, enabled)
+    val enabled: Boolean get() = option.get()
+    val smart: Boolean get() = SMART_HINTING.get()
 
     abstract fun isApplicable(elem: PsiElement): Boolean
     abstract fun provideHints(elem: PsiElement): List<InlayInfo>
 
-    val option = Option("SHOW_${this.name}", desc, enabled)
-    val enabled get() = option.get()
-    val smart get() = SMART_HINTING.get()
+    companion object {
+        val SMART_HINTING: Option = Option("SMART_HINTING", "Show only smart hints", true)
+        fun resolve(elem: PsiElement): HintType? =
+            HintType.values().find { it.isApplicable(elem) }
+    }
 }
 
 class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
+
     override fun getSupportedOptions(): List<Option> =
         HintType.values().map { it.option } + HintType.SMART_HINTING
 

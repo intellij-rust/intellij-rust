@@ -15,27 +15,27 @@ import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Ty
 
 /**
- * Represents a potentially generic Psi Element, like `fn make_t<T>() { }`,
- * together with actual type arguments, like `T := i32` ([subst]) and
- * associated type values ([assoc]).
+ * Represents a potentially generic Psi Element, like `fn make_t<T>() { }`, together with actual type arguments,
+ * like `T := i32` ([subst]) and associated type values ([assoc]).
  */
 data class BoundElement<out E : RsElement>(
     val element: E,
+
     /**
-     * Generic type bindings, e.g. if we have some generic declaration
-     * `struct S<T>(T)` and its usage with concrete type parameter value
-     * `let _: S<u8>;`, [subst] maps `T` to `u8`
+     * Generic type bindings, e.g. if we have some generic declaration `struct S<T>(T)` and its usage with concrete type
+     * parameter value `let _: S<u8>;`, [subst] maps `T` to `u8`
      */
     val subst: Substitution = emptySubstitution,
+
     /**
-     * Associated type bindings, e.g. if we have some trait with
-     * associated type `trait Trait { type Item; }` and its usage
-     * with concrete associated type value `type T = Trait<Item=u8>`,
-     * [assoc] maps `Item` to `u8`
+     * Associated type bindings, e.g. if we have some trait with associated type `trait Trait { type Item; }` and its
+     * usage with concrete associated type value `type T = Trait<Item=u8>`, [assoc] maps `Item` to `u8`.
      */
     val assoc: Map<RsTypeAlias, Ty> = emptyMap()
 ) : ResolveResult, TypeFoldable<BoundElement<E>> {
+
     override fun getElement(): PsiElement = element
+
     override fun isValidResult(): Boolean = true
 
     inline fun <reified T : RsElement> downcast(): BoundElement<T>? =
@@ -49,6 +49,5 @@ data class BoundElement<out E : RsElement>(
         )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean = assoc.values.any { visitor.visitTy(it) } ||
-        subst.types.any { visitor.visitTy(it) } && subst.lifetimes.any { visitor.visitRegion(it) }
-
+        subst.types.any { visitor.visitTy(it) } && subst.regions.any { visitor.visitRegion(it) }
 }

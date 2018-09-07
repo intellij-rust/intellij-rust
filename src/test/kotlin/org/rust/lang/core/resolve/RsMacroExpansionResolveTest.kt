@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 class RsMacroExpansionResolveTest : RsResolveTestBase() {
+
     fun `test lazy static`() = checkByCode("""
         #[macro_use]
         extern crate lazy_static;

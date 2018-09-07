@@ -28,9 +28,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import java.lang.Integer.max
-import java.util.*
 
 class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
+
     override fun getPlaceholderText(node: ASTNode): String =
         when {
             node.elementType == LBRACE -> " { "
@@ -46,10 +46,10 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<out FoldingDescriptor> {
         if (root !is RsFile) return emptyArray()
 
-        val descriptors: MutableList<FoldingDescriptor> = ArrayList()
-        val usingRanges: MutableList<TextRange> = ArrayList()
-        val modsRanges: MutableList<TextRange> = ArrayList()
-        val cratesRanges: MutableList<TextRange> = ArrayList()
+        val descriptors = arrayListOf<FoldingDescriptor>()
+        val usingRanges = arrayListOf<TextRange>()
+        val modsRanges = arrayListOf<TextRange>()
+        val cratesRanges = arrayListOf<TextRange>()
 
         val rightMargin = CodeStyle.getSettings(root).getRightMargin(RsLanguage)
         val visitor = FoldingVisitor(descriptors, usingRanges, modsRanges, cratesRanges, rightMargin)
@@ -66,30 +66,33 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         val rightMargin: Int
     ) : RsVisitor() {
 
-        override fun visitStructLiteralBody(o: RsStructLiteralBody) = fold(o)
+        override fun visitStructLiteralBody(structLiteralBody: RsStructLiteralBody) = fold(structLiteralBody)
 
-        override fun visitEnumBody(o: RsEnumBody) = fold(o)
+        override fun visitEnumBody(enumBody: RsEnumBody) = fold(enumBody)
 
-        override fun visitBlockFields(o: RsBlockFields) = fold(o)
+        override fun visitBlockFields(blockFields: RsBlockFields) = fold(blockFields)
 
-        override fun visitBlock(o: RsBlock) {
-            if (tryFoldBlockWhitespaces(o)) return
-            fold(o)
+        override fun visitBlock(block: RsBlock) {
+            if (tryFoldBlockWhitespaces(block)) return
+            fold(block)
         }
 
-        override fun visitMatchBody(o: RsMatchBody) = fold(o)
+        override fun visitMatchBody(matchBody: RsMatchBody) = fold(matchBody)
 
-        override fun visitUseGroup(o: RsUseGroup) = fold(o)
+        override fun visitUseGroup(useGroup: RsUseGroup) = fold(useGroup)
 
-        override fun visitMembers(o: RsMembers) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitMembers(members: RsMembers) =
+            foldBetween(members, members.lbrace, members.rbrace)
 
-        override fun visitModItem(o: RsModItem) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitModItem(modItem: RsModItem) =
+            foldBetween(modItem, modItem.lbrace, modItem.rbrace)
 
-        override fun visitMacroArgument(o: RsMacroArgument) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitMacroArgument(macroArgument: RsMacroArgument) =
+            foldBetween(macroArgument, macroArgument.lbrace, macroArgument.rbrace)
 
-        override fun visitValueParameterList(o: RsValueParameterList) {
-            if (o.valueParameterList.isEmpty()) return
-            foldBetween(o, o.firstChild, o.lastChild)
+        override fun visitValueParameterList(valueParameterList: RsValueParameterList) {
+            if (valueParameterList.valueParameterList.isEmpty()) return
+            foldBetween(valueParameterList, valueParameterList.firstChild, valueParameterList.lastChild)
         }
 
         override fun visitComment(comment: PsiComment) {
@@ -100,8 +103,8 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
             }
         }
 
-        override fun visitStructItem(o: RsStructItem) {
-            val blockFields = o.blockFields
+        override fun visitStructItem(structItem: RsStructItem) {
+            val blockFields = structItem.blockFields
             if (blockFields != null) {
                 fold(blockFields)
             }
@@ -122,8 +125,8 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
             if (block.parent !is RsFunction) return false
 
             val doc = PsiDocumentManager.getInstance(block.project).getDocument(block.containingFile) ?: return false
-            val maxLenght = rightMargin - block.getOffsetInLine(doc) - ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH
-            if (!block.isSingleLine(doc, maxLenght)) return false
+            val maxLength = rightMargin - block.getOffsetInLine(doc) - ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH
+            if (!block.isSingleLine(doc, maxLength)) return false
 
             val lbrace = block.lbrace
             val rbrace = block.rbrace ?: return false
@@ -131,7 +134,8 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
             val blockElement = lbrace.getNextNonCommentSibling()
             if (blockElement == null || blockElement != rbrace.getPrevNonCommentSibling()) return false
             if (blockElement.textContains('\n')) return false
-            if (!(doc.areOnAdjacentLines(lbrace, blockElement) && doc.areOnAdjacentLines(blockElement, rbrace))) return false
+            if (!(doc.areOnAdjacentLines(lbrace, blockElement)
+                    && doc.areOnAdjacentLines(blockElement, rbrace))) return false
 
             val leadingSpace = lbrace.nextSibling as? PsiWhiteSpace ?: return false
             val trailingSpace = rbrace.prevSibling as? PsiWhiteSpace ?: return false
@@ -146,16 +150,16 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
             return true
         }
 
-        override fun visitUseItem(o: RsUseItem) {
-            foldRepeatingItems(o, usesRanges)
+        override fun visitUseItem(useItem: RsUseItem) {
+            foldRepeatingItems(useItem, usesRanges)
         }
 
-        override fun visitModDeclItem(o: RsModDeclItem) {
-            foldRepeatingItems(o, modsRanges)
+        override fun visitModDeclItem(modDeclItem: RsModDeclItem) {
+            foldRepeatingItems(modDeclItem, modsRanges)
         }
 
-        override fun visitExternCrateItem(o: RsExternCrateItem) {
-            foldRepeatingItems(o, cratesRanges)
+        override fun visitExternCrateItem(externCrateItem: RsExternCrateItem) {
+            foldRepeatingItems(externCrateItem, cratesRanges)
         }
 
         private inline fun <reified T> foldRepeatingItems(startNode: T, ranges: MutableList<TextRange>) {
@@ -181,7 +185,7 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
 
         private fun isInRangesAlready(ranges: MutableList<TextRange>, element: PsiElement?): Boolean {
             if (element == null) return false
-            return !ranges.filter { x -> x.contains(element.textOffset) }.isEmpty()
+            return !ranges.none { x -> x.contains(element.textOffset) }
         }
     }
 
@@ -190,9 +194,9 @@ class RsFoldingBuilder : FoldingBuilderEx(), DumbAware {
             || (CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS && node.elementType in DOC_COMMENTS)
 
     private companion object {
-        val COLLAPSED_BY_DEFAULT = TokenSet.create(LBRACE, RBRACE)
-        val DOC_COMMENTS = TokenSet.create(INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT)
-        val ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH = 4
+        val COLLAPSED_BY_DEFAULT: TokenSet = TokenSet.create(LBRACE, RBRACE)
+        val DOC_COMMENTS: TokenSet = TokenSet.create(INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT)
+        const val ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH: Int = 4
     }
 }
 
@@ -213,5 +217,5 @@ private fun PsiElement.getOffsetInLine(doc: Document): Int {
     val blockLine = doc.getLineNumber(textRange.startOffset)
     return leftLeaves
         .takeWhile { doc.getLineNumber(it.textRange.endOffset) == blockLine }
-        .sumBy { el -> el.text.lastIndexOf('\n').let { el.text.length - max(it + 1, 0) } }
+        .sumBy { element -> element.text.lastIndexOf('\n').let { element.text.length - max(it + 1, 0) } }
 }

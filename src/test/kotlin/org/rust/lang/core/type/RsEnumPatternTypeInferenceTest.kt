@@ -6,6 +6,7 @@
 package org.rust.lang.core.type
 
 class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
+
     fun `test enum pattern`() = testExpr("""
         enum E {
             X
@@ -114,4 +115,3 @@ class RsEnumPatternTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 }
-

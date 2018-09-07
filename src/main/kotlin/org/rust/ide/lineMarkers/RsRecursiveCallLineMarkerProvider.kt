@@ -16,7 +16,6 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.resolve.ref.RsReference
-import java.util.*
 
 /**
  * Line marker provider that annotates recursive function and method calls with
@@ -24,17 +23,19 @@ import java.util.*
  */
 class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
 
-    override fun getLineMarkerInfo(element: PsiElement) = null
+    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
-    override fun collectSlowLineMarkers(elements: List<PsiElement>,
-                                        result: MutableCollection<LineMarkerInfo<PsiElement>>) {
-        val lines = HashSet<Int>()  // To prevent several markers on one line
+    override fun collectSlowLineMarkers(
+        elements: List<PsiElement>,
+        result: MutableCollection<LineMarkerInfo<PsiElement>>
+    ) {
+        val lines = hashSetOf<Int>()  // To prevent several markers on one line
 
-        for (el in elements) {
-            val parent = el.parent
+        for (element in elements) {
+            val parent = element.parent
             val isRecursive = when {
-                parent is RsMethodCall && el == parent.identifier && parent.reference.isRecursive -> true
-                parent is RsPath && el == parent.identifier -> {
+                parent is RsMethodCall && element == parent.identifier && parent.reference.isRecursive -> true
+                parent is RsPath && element == parent.identifier -> {
                     val expr = parent.parent as? RsPathExpr
                     val call = expr?.parent as? RsCallExpr
                     expr != null && call != null && call.expr == expr && parent.reference.isRecursive
@@ -42,13 +43,13 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
                 else -> false
             }
             if (!isRecursive) continue
-            val doc = PsiDocumentManager.getInstance(el.project).getDocument(el.containingFile) ?: continue
-            val lineNumber = doc.getLineNumber(el.textOffset)
+            val doc = PsiDocumentManager.getInstance(element.project).getDocument(element.containingFile) ?: continue
+            val lineNumber = doc.getLineNumber(element.textOffset)
             if (lineNumber !in lines) {
                 lines.add(lineNumber)
                 result.add(LineMarkerInfo(
-                    el,
-                    el.textRange,
+                    element,
+                    element.textRange,
                     RsIcons.RECURSIVE_CALL,
                     Pass.LINE_MARKERS,
                     FunctionUtil.constant("Recursive call"),

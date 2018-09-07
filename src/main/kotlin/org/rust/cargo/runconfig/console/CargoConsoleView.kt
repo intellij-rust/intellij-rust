@@ -14,13 +14,18 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 
-class CargoConsoleView(project: Project, searchScope: GlobalSearchScope, viewer: Boolean, usePredefinedMessageFilter: Boolean)
-    : ConsoleViewImpl(project, searchScope, viewer, usePredefinedMessageFilter) {
-    private var hasErrors = false
+class CargoConsoleView(
+    project: Project,
+    searchScope: GlobalSearchScope,
+    viewer: Boolean,
+    usePredefinedMessageFilter: Boolean
+) : ConsoleViewImpl(project, searchScope, viewer, usePredefinedMessageFilter) {
+    private var hasErrors: Boolean = false
 
     override fun doCreateConsoleEditor(): EditorEx {
         val editor = super.doCreateConsoleEditor()
         editor.document.addDocumentListener(object : DocumentListener {
+
             override fun documentChanged(e: DocumentEvent) {
                 if ("error" !in e.newFragment) return
 
@@ -53,4 +58,4 @@ class CargoConsoleView(project: Project, searchScope: GlobalSearchScope, viewer:
     }
 }
 
-private val ERROR_RE = """^\s*error\S*:.*""".toRegex()
+private val ERROR_RE: Regex = """^\s*error\S*:.*""".toRegex()

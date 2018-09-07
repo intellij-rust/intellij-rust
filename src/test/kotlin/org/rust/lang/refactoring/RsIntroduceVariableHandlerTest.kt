@@ -16,6 +16,7 @@ import org.rust.openapiext.Testmark
 
 
 class RsIntroduceVariableHandlerTest : RsTestBase() {
+
     fun `test expression`() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
@@ -181,7 +182,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
             let node_type = t.ty;
             foo(node_type)
         }
-    """, mark = IntroduceVariableTestmarks.invalidNamePart)
+    """, mark = IntroduceVariableTestmarks.INVALID_NAME_PART)
 
     private fun doTest(
         @Language("Rust") before: String,

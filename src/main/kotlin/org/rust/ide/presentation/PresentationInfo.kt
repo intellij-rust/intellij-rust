@@ -21,7 +21,8 @@ class PresentationInfo(
 
     val projectStructureItemText: String get() = "$name${declaration.suffix}"
 
-    val shortSignatureText = "<b>$name</b>${declaration.suffix.escaped}"
+    val shortSignatureText: String = "<b>$name</b>${declaration.suffix.escaped}"
+
     val signatureText: String = "${declaration.prefix}$shortSignatureText"
 
     val quickDocumentationText: String
@@ -31,59 +32,149 @@ class PresentationInfo(
             ""
         } + "$signatureText${valueText.escaped}$location"
 
-    private val valueText: String get() = if (declaration.value.isEmpty()) {
-        ""
-    } else {
-        " ${declaration.value}"
-    }
+    private val valueText: String
+        get() = if (declaration.value.isEmpty()) "" else " ${declaration.value}"
 }
 
-val RsNamedElement.presentationInfo: PresentationInfo? get() {
-    val elementName = name ?: return null
+val RsNamedElement.presentationInfo: PresentationInfo?
+    get() {
+        val elementName = name ?: return null
 
-    val declInfo = when (this) {
-        is RsFunction -> Pair("function", createDeclarationInfo(this, identifier, false, listOf(whereClause, retType, valueParameterList)))
-        is RsStructItem -> Pair("struct", createDeclarationInfo(this, identifier, false, if (blockFields != null) listOf(whereClause) else listOf(whereClause, tupleFields)))
-        is RsFieldDecl -> Pair("field", createDeclarationInfo(this, identifier, false, listOf(typeReference)))
-        is RsEnumItem -> Pair("enum", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
-        is RsEnumVariant -> Pair("enum variant", createDeclarationInfo(this, identifier, false, listOf(tupleFields)))
-        is RsTraitItem -> Pair("trait", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
-        is RsTypeAlias -> Pair("type alias", createDeclarationInfo(this, identifier, false, listOf(typeReference, typeParamBounds, whereClause), eq))
-        is RsConstant -> Pair("constant", createDeclarationInfo(this, identifier, false, listOf(expr, typeReference), eq))
-        is RsSelfParameter -> Pair("parameter", createDeclarationInfo(this, self, false, listOf(typeReference)))
-        is RsTypeParameter -> Pair("type parameter", createDeclarationInfo(this, identifier, true))
-        is RsLifetimeParameter -> Pair("lifetime", createDeclarationInfo(this, quoteIdentifier, true))
-        is RsModItem -> Pair("module", createDeclarationInfo(this, identifier, false))
-        is RsMacro -> Pair("macro", createDeclarationInfo(this, nameIdentifier, false))
-        is RsLabelDecl -> {
-            val p = parent
-            when (p) {
-                is RsLoopExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl?.quoteIdentifier, false, listOf(p.loop)))
-                is RsForExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl?.quoteIdentifier, false, listOf(p.expr, p.`in`, p.`for`)))
-                is RsWhileExpr -> Pair("label", createDeclarationInfo(p, p.labelDecl?.quoteIdentifier, false, listOf(p.condition, p.`while`)))
-                else -> Pair("label", createDeclarationInfo(this, quoteIdentifier, true))
+        val declInfo = when (this) {
+            is RsFunction ->
+                Pair(
+                    "function",
+                    createDeclarationInfo(
+                        this,
+                        identifier,
+                        false,
+                        listOf(whereClause, retType, valueParameterList)
+                    )
+                )
+            is RsStructItem ->
+                Pair(
+                    "struct",
+                    createDeclarationInfo(
+                        this,
+                        identifier,
+                        false,
+                        if (blockFields != null) listOf(whereClause) else listOf(whereClause, tupleFields)
+                    )
+                )
+            is RsFieldDecl ->
+                Pair("field", createDeclarationInfo(this, identifier, false, listOf(typeReference)))
+            is RsEnumItem ->
+                Pair("enum", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
+            is RsEnumVariant ->
+                Pair("enum variant", createDeclarationInfo(this, identifier, false, listOf(tupleFields)))
+            is RsTraitItem ->
+                Pair("trait", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
+            is RsTypeAlias ->
+                Pair(
+                    "type alias",
+                    createDeclarationInfo(
+                        this,
+                        identifier,
+                        false,
+                        listOf(typeReference, typeParamBounds, whereClause),
+                        eq
+                    )
+                )
+            is RsConstant ->
+                Pair("constant", createDeclarationInfo(this, identifier, false, listOf(expr, typeReference), eq))
+            is RsSelfParameter ->
+                Pair("parameter", createDeclarationInfo(this, self, false, listOf(typeReference)))
+            is RsTypeParameter ->
+                Pair("type parameter", createDeclarationInfo(this, identifier, true))
+            is RsLifetimeParameter ->
+                Pair("lifetime", createDeclarationInfo(this, quoteIdentifier, true))
+            is RsModItem ->
+                Pair("module", createDeclarationInfo(this, identifier, false))
+            is RsMacro ->
+                Pair("macro", createDeclarationInfo(this, nameIdentifier, false))
+            is RsLabelDecl -> {
+                val parent = parent
+                when (parent) {
+                    is RsLoopExpr ->
+                        Pair(
+                            "label",
+                            createDeclarationInfo(
+                                parent,
+                                parent.labelDecl?.quoteIdentifier,
+                                false,
+                                listOf(parent.loop)
+                            )
+                        )
+                    is RsForExpr ->
+                        Pair(
+                            "label",
+                            createDeclarationInfo(
+                                parent,
+                                parent.labelDecl?.quoteIdentifier,
+                                false,
+                                listOf(parent.expr, parent.`in`, parent.`for`)
+                            )
+                        )
+                    is RsWhileExpr ->
+                        Pair(
+                            "label",
+                            createDeclarationInfo(
+                                parent,
+                                parent.labelDecl?.quoteIdentifier,
+                                false,
+                                listOf(parent.condition, parent.`while`)
+                            )
+                        )
+                    else ->
+                        Pair("label", createDeclarationInfo(this, quoteIdentifier, true))
+                }
             }
-        }
-        is RsPatBinding -> {
-            val patOwner = topLevelPattern.parent
-            when (patOwner) {
-                is RsLetDecl -> Pair("variable", createDeclarationInfo(patOwner, identifier, false, listOf(patOwner.typeReference)))
-                is RsValueParameter -> Pair("value parameter", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.typeReference)))
-                is RsMatchArm -> Pair("match arm binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.patList.lastOrNull())))
-                is RsCondition -> Pair("condition binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.lastChild)))
-                else -> Pair("binding", createDeclarationInfo(this, identifier, true))
+            is RsPatBinding -> {
+                val patOwner = topLevelPattern.parent
+                when (patOwner) {
+                    is RsLetDecl ->
+                        Pair(
+                            "variable",
+                            createDeclarationInfo(patOwner, identifier, false, listOf(patOwner.typeReference))
+                        )
+                    is RsValueParameter ->
+                        Pair(
+                            "value parameter",
+                            createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.typeReference))
+                        )
+                    is RsMatchArm ->
+                        Pair(
+                            "match arm binding",
+                            createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.patList.lastOrNull()))
+                        )
+                    is RsCondition ->
+                        Pair(
+                            "condition binding",
+                            createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.lastChild))
+                        )
+                    else ->
+                        Pair("binding", createDeclarationInfo(this, identifier, true))
+                }
             }
+            is RsFile -> {
+                val mName = modName
+                when {
+                    isCrateRoot ->
+                        return PresentationInfo(this, "crate", "crate", DeclarationInfo())
+                    mName != null ->
+                        return PresentationInfo(this, "mod", name.substringBeforeLast(".rs"), DeclarationInfo("mod "))
+                    else ->
+                        Pair("file", DeclarationInfo())
+                }
+            }
+            else ->
+                Pair(
+                    javaClass.simpleName,
+                    createDeclarationInfo(this, (this as? RsNameIdentifierOwner)?.nameIdentifier, true)
+                )
         }
-        is RsFile -> {
-            val mName = modName
-            if (isCrateRoot) return PresentationInfo(this, "crate", "crate", DeclarationInfo())
-            else if (mName != null) return PresentationInfo(this, "mod", name.substringBeforeLast(".rs"), DeclarationInfo("mod "))
-            else Pair("file", DeclarationInfo())
-        }
-        else -> Pair(javaClass.simpleName, createDeclarationInfo(this, (this as? RsNameIdentifierOwner)?.nameIdentifier, true))
+        return declInfo.second?.let { PresentationInfo(this, declInfo.first, elementName, it) }
     }
-    return declInfo.second?.let { PresentationInfo(this, declInfo.first, elementName, it) }
-}
 
 data class DeclarationInfo(
     val prefix: String = "",
@@ -122,7 +213,7 @@ private fun createDeclarationInfo(
     val end = stopAt
         .filterNotNull().firstOrNull()
         ?.let { it.startOffsetInParent + it.textLength }
-        ?: nameStart + name.textLength
+        ?: nameStart+name.textLength
 
     val valueStart = valueSeparator?.offsetIn(decl) ?: end
 

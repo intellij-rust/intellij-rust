@@ -6,11 +6,15 @@
 package org.rust.openapiext
 
 import com.intellij.openapi.util.Condition
-import com.intellij.util.*
+import com.intellij.util.FilteredQuery
+import com.intellij.util.InstanceofQuery
+import com.intellij.util.Query
 
 // Be careful with queries: they are `Iterable`s, so they have Kotlin's
 // `map`, `filter` and friends, which convert then to List.
 
-fun <U> Query<U>.filterQuery(condition: Condition<U>): Query<U> = FilteredQuery(this, condition)
+fun <U> Query<U>.filterQuery(condition: Condition<U>): Query<U> =
+    FilteredQuery(this, condition)
 
-inline fun <reified V: Any> Query<*>.filterIsInstanceQuery(): Query<V> = InstanceofQuery(this, V::class.java)
+inline fun <reified V : Any> Query<*>.filterIsInstanceQuery(): Query<V> =
+    InstanceofQuery(this, V::class.java)

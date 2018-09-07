@@ -14,16 +14,16 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.tokenSetOf
 
-private val GENERIC_NAMED_ENTITY_KEYWORDS = tokenSetOf(FN, STRUCT, ENUM, TRAIT, TYPE_KW)
+private val GENERIC_NAMED_ENTITY_KEYWORDS: TokenSet = tokenSetOf(FN, STRUCT, ENUM, TRAIT, TYPE_KW)
 
-private val INVALID_INSIDE_TOKENS = tokenSetOf(LBRACE, RBRACE, SEMICOLON)
+private val INVALID_INSIDE_TOKENS: TokenSet = tokenSetOf(LBRACE, RBRACE, SEMICOLON)
 
 class RsAngleBraceTypedHandler : TypedHandlerDelegate() {
-
     private var rsLTTyped = false
 
     override fun beforeCharTyped(c: Char, project: Project, editor: Editor, file: PsiFile, fileType: FileType): Result {
@@ -66,8 +66,8 @@ class RsAngleBraceTypedHandler : TypedHandlerDelegate() {
 
 class RsAngleBraceBackspaceHandler : RsEnableableBackspaceHandlerDelegate() {
 
-    override fun deleting(c: Char, file: PsiFile, editor: Editor): Boolean {
-        if (c == '<' && file is RsFile) {
+    override fun deleting(char: Char, file: PsiFile, editor: Editor): Boolean {
+        if (char == '<' && file is RsFile) {
             val offset = editor.caretModel.offset
             val iterator = (editor as EditorEx).highlighter.createIterator(offset)
             return iterator.tokenType == GT
@@ -75,7 +75,7 @@ class RsAngleBraceBackspaceHandler : RsEnableableBackspaceHandlerDelegate() {
         return false
     }
 
-    override fun deleted(c: Char, file: PsiFile, editor: Editor): Boolean {
+    override fun deleted(char: Char, file: PsiFile, editor: Editor): Boolean {
         val balance = calculateBalance(editor)
         if (balance < 0) {
             val offset = editor.caretModel.offset
@@ -88,8 +88,7 @@ class RsAngleBraceBackspaceHandler : RsEnableableBackspaceHandlerDelegate() {
 
 private fun isStartOfGenericBraces(editor: Editor): Boolean {
     val offset = editor.caretModel.offset
-    val lexer = editor.createLexer(offset - 1)
-        ?: return false
+    val lexer = editor.createLexer(offset - 1) ?: return false
 
     return when (lexer.tokenType) {
         // manual function type specification
@@ -99,8 +98,8 @@ private fun isStartOfGenericBraces(editor: Editor): Boolean {
         IDENTIFIER -> {
             // don't complete angle braces inside identifier
             if (lexer.end != offset) return false
-            // it considers that typical case is only one whitespace character
-            // between keyword (fn, enum, etc.) and identifier
+            // it considers that typical case is only one whitespace character between keyword (fn, enum, etc.) and
+            // identifier
             if (lexer.start > 1) {
                 lexer.retreat()
                 lexer.retreat()

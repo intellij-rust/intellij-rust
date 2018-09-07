@@ -162,7 +162,7 @@ class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention())
 
         fn foo(x: FooBar) {
             match x/*caret*/ {
-                FooBar::Foo => {},
+                FooBar::Foo => {}
             }
         }
     """)

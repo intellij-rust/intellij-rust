@@ -12,7 +12,6 @@ import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processMacroCallVariants
 
 class RsMacroCallReferenceImpl(macroInvocation: RsMacroCall) : RsReferenceCached<RsMacroCall>(macroInvocation) {
-
     override val RsMacroCall.referenceAnchor: PsiElement
         get() = referenceNameElement
 

@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.intellij.lang.annotations.Language
 
 class RsClosuresResolveTest : RsResolveTestBase() {
+
     override fun checkByCode(@Language("Rust") code: String) {
         val FN_LANG_ITEMS = """
             #[lang = "fn_once"]

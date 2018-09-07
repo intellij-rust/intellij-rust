@@ -17,15 +17,16 @@ import javax.swing.Icon
 val RsFieldDecl.parentStruct: RsStructItem? get() = stubAncestorStrict()
 
 abstract class RsFieldDeclImplMixin : RsStubbedNamedElementImpl<RsFieldDeclStub>, RsFieldDecl {
+    override val isPublic: Boolean
+        get() = RsPsiImplUtil.isPublic(this, stub)
+
+    // Temporary solution.
+    override val crateRelativePath: String?
+        get() = RsPsiImplUtil.crateRelativePath(this)
+
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsFieldDeclStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int): Icon =
-        iconWithVisibility(flags, RsIcons.FIELD)
-
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    // temporary solution.
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+    override fun getIcon(flags: Int): Icon = iconWithVisibility(flags, RsIcons.FIELD)
 }

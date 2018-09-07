@@ -32,8 +32,8 @@ import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.joinToWithBuffer
 import org.rust.stdext.mapNotNullToSet
-import java.util.*
 import java.util.Collections.singletonMap
+import kotlin.reflect.KFunction2
 
 private data class MacroSubstitution(
     /**
@@ -89,14 +89,13 @@ private data class WithParent(
     private val subst: MacroSubstitution,
     private val parent: WithParent?
 ) {
-    val groups: List<MacroGroup>
-        get() = subst.groups
+    val groups: List<MacroGroup> get() = subst.groups
 
     fun getVar(name: String): String? =
         subst.variables[name] ?: parent?.getVar(name)
 }
 
-private val STD_MACRO_WHITELIST = setOf("write", "writeln")
+private val STD_MACRO_WHITELIST: Set<String> = setOf("write", "writeln")
 
 class MacroExpander(val project: Project) {
     private val psiFactory = RsPsiFactory(project)
@@ -131,10 +130,7 @@ class MacroExpander(val project: Project) {
         return substituteMacro(macroExpansion.macroExpansionContents, substWithGlobalVars)
     }
 
-    private fun findMatchingPattern(
-        def: RsMacro,
-        call: RsMacroCall
-    ): Pair<RsMacroCase, MacroSubstitution>? {
+    private fun findMatchingPattern(def: RsMacro, call: RsMacroCall): Pair<RsMacroCase, MacroSubstitution>? {
         val macroCallBody = createPsiBuilder(call, call.macroBody ?: return null)
         var start = macroCallBody.mark()
         val macroCaseList = def.macroBodyStubbed?.macroCaseList ?: return null
@@ -163,14 +159,14 @@ class MacroExpander(val project: Project) {
     private fun substituteMacro(root: PsiElement, subst: WithParent): CharSequence? =
         buildString { if (!substituteMacro(this, root, subst)) return null }
 
-    private fun substituteMacro(sb: StringBuilder, root: PsiElement, subst: WithParent): Boolean {
+    private fun substituteMacro(builder: StringBuilder, root: PsiElement, subst: WithParent): Boolean {
         val children = generateSequence(root.firstChild) { it.nextSibling }.filter { it !is PsiComment }
         for (child in children) {
             when (child) {
                 is RsMacroExpansion, is RsMacroExpansionContents ->
-                    if (!substituteMacro(sb, child, subst)) return false
+                    if (!substituteMacro(builder, child, subst)) return false
                 is RsMacroReference ->
-                    sb.append(subst.getVar(child.referenceName) ?: return false)
+                    builder.append(subst.getVar(child.referenceName) ?: return false)
                 is RsMacroExpansionReferenceGroup -> {
                     child.macroExpansionContents?.let { contents ->
                         val separator = child.macroExpansionGroupSeparator?.text ?: ""
@@ -179,15 +175,15 @@ class MacroExpander(val project: Project) {
                             ?: subst.groups.firstOrNull { it.definition.matches(contents) }
                             ?: return false
 
-                        matchedGroup.substs.joinToWithBuffer(sb, separator) { sb ->
+                        matchedGroup.substs.joinToWithBuffer(builder, separator) { sb ->
                             if (!substituteMacro(sb, contents, WithParent(this, subst))) return false
                         }
                     }
                 }
                 else -> {
-                    sb.append(" ")
-                    sb.append(child.text)
-                    sb.append(" ")
+                    builder.append(" ")
+                    builder.append(child.text)
+                    builder.append(" ")
                 }
             }
         }
@@ -207,11 +203,10 @@ class MacroExpander(val project: Project) {
         }
 }
 
-private class MacroPattern private constructor(
-    val pattern: Sequence<PsiElement>
-) {
-    fun match(macroCallBody: PsiBuilder): MacroSubstitution? {
-        return matchPartial(macroCallBody)?.let { result ->
+private class MacroPattern private constructor(val pattern: Sequence<PsiElement>) {
+
+    fun match(macroCallBody: PsiBuilder): MacroSubstitution? =
+        matchPartial(macroCallBody)?.let { result ->
             if (!macroCallBody.eof()) {
                 MacroExpansionMarks.failMatchPatternByExtraInput.hit()
                 null
@@ -219,13 +214,13 @@ private class MacroPattern private constructor(
                 result
             }
         }
-    }
 
-    private fun isEmpty() = pattern.firstOrNull() == null
+    private fun isEmpty(): Boolean = pattern.firstOrNull() == null
 
     private fun matchPartial(macroCallBody: PsiBuilder): MacroSubstitution? {
         ProgressManager.checkCanceled()
-        val map = HashMap<String, String>()
+
+        val map = hashMapOf<String, String>()
         val groups = mutableListOf<MacroGroup>()
 
         for (psi in pattern) {
@@ -243,10 +238,7 @@ private class MacroPattern private constructor(
                     val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
 
                     // Wrap expressions in () to avoid problems related to operator precedence during expansion
-                    if (type == "expr")
-                        map[name] = "($text)"
-                    else
-                        map[name] = text
+                    if (type == "expr") map[name] = "($text)" else map[name] = text
                 }
                 is RsMacroBindingGroup -> {
                     groups += MacroGroup(psi, matchGroup(psi, macroCallBody) ?: return null)
@@ -262,8 +254,8 @@ private class MacroPattern private constructor(
         return MacroSubstitution(map, groups)
     }
 
-    private fun parse(builder: PsiBuilder, type: String): Boolean {
-        return if (type == "ident") {
+    private fun parse(builder: PsiBuilder, type: String): Boolean =
+        if (type == "ident") {
             parseIdentifier(builder)
         } else {
             // we use similar logic as in org.rust.lang.core.parser.RustParser#parseLight
@@ -292,7 +284,6 @@ private class MacroPattern private constructor(
             GeneratedParserUtilBase.exit_section_(adaptBuilder, 0, marker, root, parsed, true) { _, _ -> false }
             parsed
         }
-    }
 
     private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder): List<MacroSubstitution>? {
         val groups = mutableListOf<MacroSubstitution>()
@@ -336,9 +327,9 @@ private class MacroPattern private constructor(
         return groups
     }
 
-    private fun parseIdentifier(b: PsiBuilder): Boolean {
-        return if (b.tokenType in IDENTIFIER_TOKENS) {
-            b.advanceLexer()
+    private fun parseIdentifier(builder: PsiBuilder): Boolean {
+        return if (builder.tokenType in IDENTIFIER_TOKENS) {
+            builder.advanceLexer()
             true
         } else {
             false
@@ -352,6 +343,7 @@ private class MacroPattern private constructor(
         parseItemFns.any { it(b, 0) }
 
     companion object {
+
         fun valueOf(psi: RsMacroPatternContents): MacroPattern =
             MacroPattern(psi.childrenSkipWhitespaceAndComments().flatten())
 
@@ -367,31 +359,30 @@ private class MacroPattern private constructor(
             generateSequence(firstChild) { it.nextSibling }
                 .filter { it !is PsiWhiteSpace && it !is PsiComment }
 
-        private val parseItemFns = listOf(
-            RustParser::Constant,
-            RustParser::TypeAlias,
-            RustParser::Function,
-            RustParser::TraitItem,
-            RustParser::ImplItem,
-            RustParser::ModItem,
-            RustParser::ModDeclItem,
-            RustParser::ForeignModItem,
-            RustParser::StructItem,
-            RustParser::EnumItem,
-            RustParser::UseItem,
-            RustParser::ExternCrateItem,
-            RustParser::MacroCall
-        )
+        private val parseItemFns: List<KFunction2<PsiBuilder, Int, Boolean>> =
+            listOf(
+                RustParser::Constant,
+                RustParser::TypeAlias,
+                RustParser::Function,
+                RustParser::TraitItem,
+                RustParser::ImplItem,
+                RustParser::ModItem,
+                RustParser::ModDeclItem,
+                RustParser::ForeignModItem,
+                RustParser::StructItem,
+                RustParser::EnumItem,
+                RustParser::UseItem,
+                RustParser::ExternCrateItem,
+                RustParser::MacroCall
+            )
 
-        /**
-         * Some tokens that treated as keywords by our lexer,
-         * but rustc's macro parser treats them as identifiers
-         */
-        private val IDENTIFIER_TOKENS = TokenSet.create(
-            RsElementTypes.IDENTIFIER,
-            RsElementTypes.SELF,
-            RsElementTypes.CSELF
-        )
+        /** Some tokens that treated as keywords by our lexer, but rustc's macro parser treats them as identifiers. */
+        private val IDENTIFIER_TOKENS: TokenSet =
+            TokenSet.create(
+                RsElementTypes.IDENTIFIER,
+                RsElementTypes.SELF,
+                RsElementTypes.CSELF
+            )
     }
 }
 
@@ -414,8 +405,8 @@ private fun RsMacroBindingGroup.matches(contents: RsMacroExpansionContents): Boo
 }
 
 /**
- * Metavars available inside this group. Includes vars from this group, from all descendant groups
- * and from all ancestor groups. Sibling groups are excluded. E.g these vars available for these groups
+ * Metavars available inside this group. Includes vars from this group, from all descendant groups and from all
+ * ancestor groups. Sibling groups are excluded. E.g these vars available for these groups
  * ```
  * ($a [$b $($c)* ]    $($d)*      $($e           $($f)*)*)
  *         ^ a, b, c   ^ a, b, d   ^ a, b, e, f   ^ a, b, e, f
@@ -425,7 +416,7 @@ private val RsMacroBindingGroup.availableVars: Set<String>
     get() = CachedValuesManager.getCachedValue(this) {
         CachedValueProvider.Result.create(
             collectAvailableVars(this),
-            PsiModificationTracker.MODIFICATION_COUNT // TODO use modtracker attached to the macro
+            PsiModificationTracker.MODIFICATION_COUNT // TODO: use modtracker attached to the macro
         )
     }
 
@@ -441,7 +432,7 @@ private fun collectAvailableVars(groupDefinition: RsMacroBindingGroup): Set<Stri
 
     groupDefinition.ancestors
         .drop(1)
-        .takeWhile { it !is RsMacroCase}
+        .takeWhile { it !is RsMacroCase }
         .forEach(::go)
 
     return vars.mapNotNullToSet { it.name }
@@ -452,15 +443,15 @@ fun RsPsiFactory.parseExpandedTextWithContext(call: RsMacroCall, expandedText: C
         is RsMacroExpr -> listOfNotNull(tryCreateExpression(expandedText))
         is RsPatMacro -> listOfNotNull(tryCreatePat(expandedText))
         is RsMacroType -> listOfNotNull(tryCreateType(expandedText))
-        else -> createFile(expandedText).childrenOfType<RsExpandedElement>()
+        else -> createFile(expandedText).childrenOfType()
     }
 
 object MacroExpansionMarks {
-    val failMatchPatternByToken = Testmark("failMatchPatternByToken")
-    val failMatchPatternByExtraInput = Testmark("failMatchPatternByExtraInput")
-    val failMatchPatternByBindingType = Testmark("failMatchPatternByBindingType")
-    val failMatchGroupBySeparator = Testmark("failMatchGroupBySeparator")
-    val groupInputEnd1 = Testmark("groupInputEnd1")
-    val groupInputEnd2 = Testmark("groupInputEnd2")
-    val groupInputEnd3 = Testmark("groupInputEnd3")
+    val failMatchPatternByToken: Testmark = Testmark("failMatchPatternByToken")
+    val failMatchPatternByExtraInput: Testmark = Testmark("failMatchPatternByExtraInput")
+    val failMatchPatternByBindingType: Testmark = Testmark("failMatchPatternByBindingType")
+    val failMatchGroupBySeparator: Testmark = Testmark("failMatchGroupBySeparator")
+    val groupInputEnd1: Testmark = Testmark("groupInputEnd1")
+    val groupInputEnd2: Testmark = Testmark("groupInputEnd2")
+    val groupInputEnd3: Testmark = Testmark("groupInputEnd3")
 }

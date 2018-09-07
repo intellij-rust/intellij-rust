@@ -13,20 +13,6 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.cmt
 
 class RsMemoryCategorizationTest : RsTestBase() {
-    private fun testExpr(@Language("Rust") code: String, description: String = "") {
-        InlineFile(code)
-        check(description)
-    }
-
-    private fun check(description: String) {
-        val (expr, expectedCategory) = findElementAndDataInEditor<RsExpr>()
-
-        val cmt = expr.cmt
-        val actual = "${cmt?.category?.javaClass?.simpleName}, ${cmt?.mutabilityCategory}"
-        check(actual == expectedCategory) {
-            "Category mismatch. Expected: $expectedCategory, found: $actual. $description"
-        }
-    }
 
     fun `test declared immutable`() = testExpr("""
         fn main() {
@@ -246,4 +232,19 @@ class RsMemoryCategorizationTest : RsTestBase() {
                  //^ Interior, Inherited
         }
     """)
+
+    private fun testExpr(@Language("Rust") code: String, description: String = "") {
+        InlineFile(code)
+        check(description)
+    }
+
+    private fun check(description: String) {
+        val (expr, expectedCategory) = findElementAndDataInEditor<RsExpr>()
+
+        val cmt = expr.cmt
+        val actual = "${cmt?.category?.javaClass?.simpleName}, ${cmt?.mutabilityCategory}"
+        check(actual == expectedCategory) {
+            "Category mismatch. Expected: $expectedCategory, found: $actual. $description"
+        }
+    }
 }

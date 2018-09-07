@@ -8,6 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotationTestBase
 
 class AddUnsafeTest : RsAnnotationTestBase() {
+
     fun `test add unsafe to function`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 

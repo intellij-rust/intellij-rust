@@ -5,9 +5,7 @@
 
 package org.rust.ide.inspections
 
-/**
- * Tests for Suspicious Assignment inspection.
- */
+/** Tests for Suspicious Assignment inspection. */
 class RsSuspiciousAssignmentInspectionTest : RsInspectionsTestBase(RsSuspiciousAssignmentInspection()) {
 
     fun testMinus() = checkByText("""

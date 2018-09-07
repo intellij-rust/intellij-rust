@@ -20,21 +20,25 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.openapiext.getElements
 
 class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
+
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<TyFingerprint, RsImplItem> = KEY
     override fun getKeyDescriptor(): KeyDescriptor<TyFingerprint> = TyFingerprint.KeyDescriptor
 
     companion object {
         /**
-         * Note this method may return false positives
+         * Note this method may return false positives.
          * @see TyFingerprint
          */
         fun findPotentialImpls(project: Project, target: Ty): Collection<RsImplItem> {
-            val fingerprint = TyFingerprint.create(target)
-                ?: return emptyList()
-
+            val fingerprint = TyFingerprint.create(target) ?: return emptyList()
             val impls = getElements(KEY, fingerprint, project, GlobalSearchScope.allScope(project))
-            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, GlobalSearchScope.allScope(project))
+            val freeImpls = getElements(
+                KEY,
+                TyFingerprint.TYPE_PARAMETER_FINGERPRINT,
+                project,
+                GlobalSearchScope.allScope(project)
+            )
             return impls + freeImpls
         }
 

@@ -21,18 +21,21 @@ import javax.swing.Icon
 val RsStructItem.union: PsiElement?
     get() = node.findChildByType(UNION)?.psi
 
-
 enum class RsStructKind {
     STRUCT,
     UNION
 }
 
-val RsStructItem.kind: RsStructKind get() {
-    val hasUnion = stub?.isUnion ?: (union != null)
-    return if (hasUnion) RsStructKind.UNION else RsStructKind.STRUCT
-}
+val RsStructItem.kind: RsStructKind
+    get() {
+        val hasUnion = stub?.isUnion ?: (union != null)
+        return if (hasUnion) RsStructKind.UNION else RsStructKind.STRUCT
+    }
 
 abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStub>, RsStructItem {
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
+    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
     constructor(node: ASTNode) : super(node)
 
@@ -41,11 +44,6 @@ abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStu
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.STRUCT)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
-
-    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
-
-    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+    override fun getContext(): PsiElement? =
+        RsExpandedElement.getContextImpl(this)
 }

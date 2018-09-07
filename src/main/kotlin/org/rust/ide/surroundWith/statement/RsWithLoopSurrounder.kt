@@ -11,11 +11,11 @@ import org.rust.lang.core.psi.RsLoopExpr
 import org.rust.lang.core.psi.RsPsiFactory
 
 class RsWithLoopSurrounder : RsStatementsSurrounderBase.SimpleBlock<RsLoopExpr>() {
+
     override fun getTemplateDescription(): String = "loop { }"
 
     override fun createTemplate(project: Project): Pair<RsLoopExpr, RsBlock> {
-        val l = RsPsiFactory(project).createExpression("loop {}") as RsLoopExpr
-        return l to l.block!!
+        val loopExpr = RsPsiFactory(project).createExpression("loop {}") as RsLoopExpr
+        return loopExpr to loopExpr.block!!
     }
-
 }

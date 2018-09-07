@@ -14,17 +14,20 @@ import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsAbstractable
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.superItem
 import javax.swing.Icon
 
-/**
- * Annotates the implementation of a trait members (const, fn, type) with an icon on the gutter.
- */
+/** Annotates the implementation of a trait members (const, fn, type) with an icon on the gutter. */
 class RsTraitItemImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
-    override fun collectNavigationMarkers(el: PsiElement, result: MutableCollection<in RelatedItemLineMarkerInfo<PsiElement>>) {
-        if (el !is RsAbstractable) return
+    override fun collectNavigationMarkers(
+        elementl: PsiElement,
+        result: MutableCollection<in RelatedItemLineMarkerInfo<PsiElement>>
+    ) {
+        if (elementl !is RsAbstractable) return
 
-        val superItem = el.superItem ?: return
+        val superItem = elementl.superItem ?: return
         val trait = superItem.ancestorStrict<RsTraitItem>() ?: return
 
         val action: String
@@ -37,10 +40,10 @@ class RsTraitItemImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
             icon = RsIcons.OVERRIDING_METHOD
         }
 
-        val (type, element) = when (el) {
-            is RsConstant -> "constant" to el.identifier
-            is RsFunction -> "method" to el.identifier
-            is RsTypeAlias -> "type" to el.identifier
+        val (type, element) = when (elementl) {
+            is RsConstant -> "constant" to elementl.identifier
+            is RsFunction -> "method" to elementl.identifier
+            is RsTypeAlias -> "type" to elementl.identifier
             else -> error("unreachable")
         }
 

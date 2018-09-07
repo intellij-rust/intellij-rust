@@ -15,19 +15,19 @@ import org.rust.lang.core.psi.ext.containingCargoPackage
 import javax.swing.Icon
 
 class RsIconProvider : IconProvider() {
-    override fun getIcon(element: PsiElement, flags: Int): Icon? = when (element) {
-        is RsFile -> getFileIcon(element)
-        else -> null
-    }
 
-    private fun getFileIcon(file: RsFile): Icon? = when {
-        file.name == RsConstants.MOD_RS_FILE -> RsIcons.MOD_RS
-        isMainFile(file) -> RsIcons.MAIN_RS
-        isBuildRs(file) -> CargoIcons.BUILD_RS_ICON
-        else -> null
-    }
+    override fun getIcon(element: PsiElement, flags: Int): Icon? =
+        if (element is RsFile) getFileIcon(element) else null
 
-    private fun isMainFile(element: RsFile) =
+    private fun getFileIcon(file: RsFile): Icon? =
+        when {
+            file.name == RsConstants.MOD_RS_FILE -> RsIcons.MOD_RS
+            isMainFile(file) -> RsIcons.MAIN_RS
+            isBuildRs(file) -> CargoIcons.BUILD_RS_ICON
+            else -> null
+        }
+
+    private fun isMainFile(element: RsFile): Boolean =
         (element.name == RsConstants.MAIN_RS_FILE || element.name == RsConstants.LIB_RS_FILE)
             && element.isCrateRoot
 

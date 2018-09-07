@@ -33,5 +33,4 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
         }
         return StringUtil.escapeXml(type.toString())
     }
-
 }

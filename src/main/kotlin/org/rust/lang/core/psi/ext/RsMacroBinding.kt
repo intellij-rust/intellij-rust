@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsMacroBinding
 
 abstract class RsMacroBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node), RsMacroBinding {
-
     override fun getNameIdentifier(): PsiElement? = metaVarIdentifier
 }
 

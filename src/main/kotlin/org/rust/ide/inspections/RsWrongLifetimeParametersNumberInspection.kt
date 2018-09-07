@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsVisitor
@@ -13,9 +14,9 @@ import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.types.lifetimeElidable
 
 class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
-
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
+
             override fun visitBaseType(type: RsBaseType) {
                 // Don't apply generic declaration checks to Fn-traits and `Self`
                 if (type.path?.valueParameterList != null) return
@@ -28,7 +29,11 @@ class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
                 if (actualLifetimes == 0 && !type.lifetimeElidable) {
                     holder.registerProblem(type, "Missing lifetime specifier [E0106]")
                 } else if (actualLifetimes > 0) {
-                    holder.registerProblem(type, "Wrong number of lifetime parameters: expected $expectedLifetimes, found $actualLifetimes [E0107]")
+                    holder.registerProblem(
+                        type,
+                        "Wrong number of lifetime parameters: expected $expectedLifetimes," +
+                            " found $actualLifetimes [E0107]"
+                    )
                 }
             }
 
@@ -38,5 +43,4 @@ class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
                 }
             }
         }
-
 }

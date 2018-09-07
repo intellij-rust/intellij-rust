@@ -35,33 +35,34 @@ import org.rust.cargo.util.CargoCommandLineEditor
 import java.awt.Dimension
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.swing.JComponent
-import javax.swing.JList
-import javax.swing.JPanel
-
+import javax.swing.*
 
 class CargoCommandConfigurationEditor(private val project: Project) : SettingsEditor<CargoCommandConfiguration>() {
-    private fun currentWorkspace(): CargoWorkspace? =
-        CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace
 
     private val allCargoProjects: List<CargoProject> =
         project.cargoProjects.allProjects.sortedBy { it.presentableName }
 
-    private val command = CargoCommandLineEditor(project, { this.currentWorkspace() })
+    private val command: CargoCommandLineEditor =
+        CargoCommandLineEditor(project) { this.currentWorkspace() }
 
-    private val backtraceMode = ComboBox<BacktraceMode>().apply {
-        BacktraceMode.values()
-            .sortedBy { it.index }
-            .forEach { addItem(it) }
-    }
-    private val channelLabel = Label("C&hannel:")
+    private val backtraceMode: ComboBox<BacktraceMode> =
+        ComboBox<BacktraceMode>().apply {
+            BacktraceMode.values()
+                .sortedBy { it.index }
+                .forEach { addItem(it) }
+        }
+
+    private val channelLabel: JLabel = Label("C&hannel:")
+
     private val channel = ComboBox<RustChannel>().apply {
         RustChannel.values()
             .sortedBy { it.index }
             .forEach { addItem(it) }
     }
 
-    private val currentWorkingDirectory: Path? get() = workingDirectory.component.text.nullize()?.let { Paths.get(it) }
+    private val currentWorkingDirectory: Path?
+        get() = workingDirectory.component.text.nullize()?.let { Paths.get(it) }
+
     private val workingDirectory = run {
         val textField = TextFieldWithBrowseButton().apply {
             val fileChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor().apply {
@@ -71,6 +72,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         }
         LabeledComponent.create(textField, ExecutionBundle.message("run.configuration.working.directory.label"))
     }
+
     private val cargoProject = ComboBox<CargoProject>().apply {
         renderer = object : ListCellRendererWrapper<CargoProject>() {
             override fun customize(list: JList<*>?, value: CargoProject?, index: Int, selected: Boolean, hasFocus: Boolean) {
@@ -84,6 +86,15 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         }
     }
 
+    private val environmentVariables: EnvironmentVariablesComponent =
+        EnvironmentVariablesComponent()
+
+    private val nocapture: JCheckBox =
+        CheckBox("Show stdout/stderr in tests", true)
+
+    private fun currentWorkspace(): CargoWorkspace? =
+        CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace
+
     private fun setWorkingDirectoryFromSelectedProject() {
         val selectedProject = run {
             val idx = cargoProject.selectedIndex
@@ -92,10 +103,6 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         }
         workingDirectory.component.text = selectedProject.workingDirectory.toString()
     }
-
-    private val environmentVariables = EnvironmentVariablesComponent()
-    private val nocapture = CheckBox("Show stdout/stderr in tests", true)
-
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         channel.selectedIndex = configuration.channel.index
@@ -131,25 +138,26 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         }
     }
 
-    override fun createEditor(): JComponent = panel {
-        labeledRow("&Command:", command) {
-            command(CCFlags.pushX, CCFlags.growX)
-            channelLabel.labelFor = channel
-            channelLabel()
-            channel()
-        }
-
-        row { nocapture() }
-
-        row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
-        row(workingDirectory.label) {
-            workingDirectory.apply { makeWide() }()
-            if (project.cargoProjects.allProjects.size > 1) {
-                cargoProject()
+    override fun createEditor(): JComponent =
+        panel {
+            labeledRow("&Command:", command) {
+                command(CCFlags.pushX, CCFlags.growX)
+                channelLabel.labelFor = channel
+                channelLabel()
+                channel()
             }
+
+            row { nocapture() }
+
+            row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
+            row(workingDirectory.label) {
+                workingDirectory.apply { makeWide() }()
+                if (project.cargoProjects.allProjects.size > 1) {
+                    cargoProject()
+                }
+            }
+            labeledRow("Back&trace:", backtraceMode) { backtraceMode() }
         }
-        labeledRow("Back&trace:", backtraceMode) { backtraceMode() }
-    }
 
     private fun LayoutBuilder.labeledRow(labelText: String, component: JComponent, init: Row.() -> Unit) {
         val label = Label(labelText)

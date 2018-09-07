@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.ext.RsReferenceElement
 
 
 class RsMultiResolveTest : RsResolveTestBase() {
+
     fun `test struct expr`() = doTest("""
         struct S { foo: i32, foo: () }
         fn main() {

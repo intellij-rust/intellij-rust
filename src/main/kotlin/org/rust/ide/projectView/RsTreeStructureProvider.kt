@@ -13,11 +13,13 @@ import com.intellij.openapi.project.DumbAware
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 
-/**
- * Moves `mod.rs` files on top
- */
+/** Moves `mod.rs` files on top. */
 class RsTreeStructureProvider : TreeStructureProvider, DumbAware {
-    override fun modify(parent: AbstractTreeNode<*>, children: Collection<AbstractTreeNode<*>>, settings: ViewSettings?): Collection<AbstractTreeNode<*>> {
+    override fun modify(
+        parent: AbstractTreeNode<*>,
+        children: Collection<AbstractTreeNode<*>>,
+        settings: ViewSettings?
+    ): Collection<AbstractTreeNode<*>> {
         if (children.none { it is PsiFileNode && it.value?.name == RsConstants.MOD_RS_FILE }) {
             return children
         }
@@ -34,7 +36,9 @@ class RsTreeStructureProvider : TreeStructureProvider, DumbAware {
     override fun getData(selected: Collection<AbstractTreeNode<Any>>, dataName: String?): Any? = null
 }
 
-private class RsPsiFileNode(original: PsiFileNode, viewSettings: ViewSettings?)
-    : PsiFileNode(original.project, original.value, viewSettings) {
+private class RsPsiFileNode(
+    original: PsiFileNode,
+    viewSettings: ViewSettings?
+) : PsiFileNode(original.project, original.value, viewSettings) {
     override fun getSortKey(): Int = if (value.name == RsConstants.MOD_RS_FILE) -1 else 0
 }

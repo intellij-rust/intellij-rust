@@ -15,19 +15,20 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.refactoring.introduceVariable.extractExpression
 
 class RsPostfixTemplateProvider : PostfixTemplateProvider {
-    private val templates: Set<PostfixTemplate> = setOf(
-        AssertPostfixTemplate(this),
-        DebugAssertPostfixTemplate(this),
-        IfExpressionPostfixTemplate(),
-        ElseExpressionPostfixTemplate(),
-        WhileExpressionPostfixTemplate(),
-        WhileNotExpressionPostfixTemplate(),
-        MatchPostfixTemplate(this),
-        ParenPostfixTemplate(),
-        LambdaPostfixTemplate(this),
-        NotPostfixTemplate(this),
-        LetPostfixTemplate(this)
-    )
+    private val templates: Set<PostfixTemplate> =
+        setOf(
+            AssertPostfixTemplate(this),
+            DebugAssertPostfixTemplate(this),
+            IfExpressionPostfixTemplate(),
+            ElseExpressionPostfixTemplate(),
+            WhileExpressionPostfixTemplate(),
+            WhileNotExpressionPostfixTemplate(),
+            MatchPostfixTemplate(this),
+            ParenPostfixTemplate(),
+            LambdaPostfixTemplate(this),
+            NotPostfixTemplate(this),
+            LetPostfixTemplate(this)
+        )
 
     override fun getTemplates(): Set<PostfixTemplate> = templates
 
@@ -37,14 +38,21 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
     override fun afterExpand(file: PsiFile, editor: Editor) {
     }
 
-    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int) = copyFile
+    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int): PsiFile = copyFile
 
     override fun preExpand(file: PsiFile, editor: Editor) {
     }
 }
 
-class LetPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    PostfixTemplateWithExpressionSelector(null, "let", "let name = expr;", RsAllParentsSelector(), provider) {
+class LetPostfixTemplate(
+    provider: RsPostfixTemplateProvider
+) : PostfixTemplateWithExpressionSelector(
+    null,
+    "let",
+    "let name = expr;",
+    RsAllParentsSelector(),
+    provider
+) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         if (expression !is RsExpr) return
         extractExpression(editor, expression)

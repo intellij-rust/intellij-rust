@@ -12,14 +12,14 @@ import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsPsiFactory
 
 class RsWithIfSurrounder : RsStatementsSurrounderBase.BlockWithCondition<RsIfExpr>() {
+
     override fun getTemplateDescription(): String = "if { }"
 
     override fun createTemplate(project: Project): Pair<RsIfExpr, RsBlock> {
-        val i = RsPsiFactory(project).createExpression("if a {}") as RsIfExpr
-        return i to i.block!!
+        val ifExpr = RsPsiFactory(project).createExpression("if a {}") as RsIfExpr
+        return ifExpr to ifExpr.block!!
     }
 
     override fun conditionRange(expression: RsIfExpr): TextRange =
         expression.condition!!.textRange
-
 }

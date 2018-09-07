@@ -12,12 +12,8 @@ import org.rust.lang.core.resolve.ref.RsMacroReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
 abstract class RsMacroReferenceImplMixin(node: ASTNode) : RsElementImpl(node), RsMacroReference {
+    override val referenceName: String get() = referenceNameElement.text
+    override val referenceNameElement: PsiElement get() = metaVarIdentifier
 
     override fun getReference(): RsReference = RsMacroReferenceImpl(this)
-
-    override val referenceName: String
-        get() = referenceNameElement.text
-
-    override val referenceNameElement: PsiElement
-        get() = metaVarIdentifier
 }

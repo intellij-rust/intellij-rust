@@ -8,7 +8,7 @@ package org.rust.lang.refactoring
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
-class RsImportOptimizerTest: RsTestBase() {
+class RsImportOptimizerTest : RsTestBase() {
 
     fun `test should do nothing`() = doTest("""
         use foo;
@@ -170,23 +170,23 @@ class RsImportOptimizerTest: RsTestBase() {
     """)
 
     fun `test remove curly braces simple`() = doTest(
-        "use std::{mem};",
+        "use std::mem;",
         "use std::mem;"
     )
 
     fun `test remove curly braces with no path`() = doTest(
-        "use {std};",
+        "use std;",
         "use std;"
     )
 
     fun `test remove curly braces longer`() = doTest(
-        "use foo::bar::baz::{qux};",
+        "use foo::bar::baz::qux;",
         "use foo::bar::baz::qux;"
     )
 
     fun `test remove curly braces extra`() = doTest("""
         #[macro_use]
-        pub use /*comment*/ std::{mem};
+        pub use /*comment*/ std::mem;
     """, """
         #[macro_use]
         pub use /*comment*/ std::mem;
@@ -220,7 +220,7 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
-    private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String){
+    private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) {
         checkByText(code.trimIndent(), excepted.trimIndent()) {
             myFixture.performEditorAction("OptimizeImports")
         }

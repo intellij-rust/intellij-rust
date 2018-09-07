@@ -12,6 +12,7 @@ import org.rust.RsTestBase
 import org.rust.lang.core.RsPsiPattern
 
 class RsPsiPatternTest : RsTestBase() {
+
     fun `test on struct attr`() = testPattern("""
         #[foo]
         //^

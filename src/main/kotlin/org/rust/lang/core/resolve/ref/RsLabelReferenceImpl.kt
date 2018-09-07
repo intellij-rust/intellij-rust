@@ -12,12 +12,9 @@ import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processLabelResolveVariants
 
-class RsLabelReferenceImpl(
-    element: RsLabel
-) : RsReferenceCached<RsLabel>(element),
-    RsReference {
-
-    override val RsLabel.referenceAnchor: PsiElement get() = quoteIdentifier
+class RsLabelReferenceImpl(element: RsLabel) : RsReferenceCached<RsLabel>(element), RsReference {
+    override val RsLabel.referenceAnchor: PsiElement
+        get() = quoteIdentifier
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processLabelResolveVariants(element, it) }

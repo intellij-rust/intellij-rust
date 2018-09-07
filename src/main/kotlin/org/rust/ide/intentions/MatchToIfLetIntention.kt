@@ -9,19 +9,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
-    override fun getText() = "Convert match statement to if let"
-    override fun getFamilyName(): String = text
 
-    data class Context(
-        val match: RsMatchExpr,
-        val matchTarget: RsExpr,
-        val nonVoidArm: RsMatchArm,
-        val pattern: RsPat
-    )
+    override fun getText(): String = "Convert match statement to if let"
+
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val matchExpr = element.ancestorStrict<RsMatchExpr>() ?: return null
@@ -29,9 +24,7 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
         val matchBody = matchExpr.matchBody ?: return null
         val matchArmList = matchBody.matchArmList
 
-        val nonVoidArm = matchArmList
-            .filter { it.expr?.isVoid == false }
-            .singleOrNull() ?: return null
+        val nonVoidArm = matchArmList.singleOrNull { it.expr?.isVoid == false } ?: return null
 
         val pattern = nonVoidArm.patList.singleOrNull() ?: return null
         if (pattern.text == "_") return null
@@ -56,4 +49,6 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
     private val RsExpr.isVoid: Boolean
         get() = (this is RsBlockExpr && block.lbrace.getNextNonCommentSibling() == block.rbrace)
             || this is RsUnitExpr
+
+    data class Context(val match: RsMatchExpr, val matchTarget: RsExpr, val nonVoidArm: RsMatchArm, val pattern: RsPat)
 }

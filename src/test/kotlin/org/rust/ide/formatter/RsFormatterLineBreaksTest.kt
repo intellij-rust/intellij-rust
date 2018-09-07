@@ -6,11 +6,6 @@
 package org.rust.ide.formatter
 
 class RsFormatterLineBreaksTest : RsFormatterTestBase() {
-    override fun getTestDataPath() = "src/test/resources"
-
-    override fun getBasePath() = "org/rust/ide/formatter/fixtures/line_breaks"
-
-    override fun getFileExtension() = "rs"
 
     fun `test all`() = doTest()
     fun `test traits`() = doTest()
@@ -245,5 +240,9 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
                 92
             };
         }
-""")
+    """)
+
+    override fun getTestDataPath(): String = "src/test/resources"
+    override fun getBasePath(): String = "org/rust/ide/formatter/fixtures/line_breaks"
+    override fun getFileExtension(): String = "rs"
 }

@@ -17,8 +17,15 @@ import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
 import javax.swing.Icon
 
-
 abstract class RsEnumItemImplMixin : RsStubbedNamedElementImpl<RsEnumItemStub>, RsEnumItem {
+    override val isPublic: Boolean
+        get() = RsPsiImplUtil.isPublic(this, stub)
+
+    override val crateRelativePath: String?
+        get() = RsPsiImplUtil.crateRelativePath(this)
+
+    override val declaredType: Ty
+        get() = RsPsiTypeImplUtil.declaredType(this)
 
     constructor(node: ASTNode) : super(node)
 
@@ -27,11 +34,6 @@ abstract class RsEnumItemImplMixin : RsStubbedNamedElementImpl<RsEnumItemStub>, 
     override fun getIcon(flags: Int): Icon? =
         iconWithVisibility(flags, RsIcons.ENUM)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
-
-    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
-
-    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+    override fun getContext(): PsiElement? =
+        RsExpandedElement.getContextImpl(this)
 }

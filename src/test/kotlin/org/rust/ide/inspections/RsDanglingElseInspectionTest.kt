@@ -5,9 +5,7 @@
 
 package org.rust.ide.inspections
 
-/**
- * Tests for Dangling Else inspection.
- */
+/** Tests for Dangling Else inspection. */
 class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspection()) {
 
     fun testSimple() = checkByText("""
@@ -100,5 +98,4 @@ class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspect
             }
         }
     """)
-
 }

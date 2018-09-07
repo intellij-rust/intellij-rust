@@ -15,31 +15,29 @@ import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.openapiext.Testmark
 
 class ImplementMembersHandler : LanguageCodeInsightActionHandler {
+
     override fun isValidFor(editor: Editor, file: PsiFile): Boolean {
         if (file !is RsFile) return false
 
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
         val classOrObject = elementAtCaret?.ancestorOrSelf<RsImplItem>()
         return if (classOrObject == null) {
-            ImplementMembersMarks.noImplInHandler.hit()
+            ImplementMembersMarks.NoImplInHandler.hit()
             false
         } else {
             true
         }
     }
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
-        val implItem = elementAtCaret?.ancestorOrSelf<RsImplItem>()
-            ?: error("No impl trait item")
+        val implItem = elementAtCaret?.ancestorOrSelf<RsImplItem>() ?: error("No impl trait item")
         generateTraitMembers(implItem, editor)
     }
-
 }
 
 object ImplementMembersMarks {
-    val noImplInHandler = Testmark("noImplInHandler")
+    val NoImplInHandler: Testmark = Testmark("noImplInHandler")
 }
-

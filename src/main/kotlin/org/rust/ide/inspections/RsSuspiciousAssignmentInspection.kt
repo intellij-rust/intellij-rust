@@ -23,7 +23,8 @@ import org.rust.lang.core.psi.ext.operator
  * QuickFix 2: Change `a =? b` to `a = ?b`
  */
 class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Suspicious assignment"
+
+    override fun getDisplayName(): String = "Suspicious assignment"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
@@ -58,29 +59,29 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
                         TextRange(expr.left.text.length, uExprOffset),
                         "Suspicious assignment. Did you mean `$subst1` or `$subst2`?",
                         SubstituteTextFix.replace("Change to `$subst1`", file, substRange, " $op= "),
-                        SubstituteTextFix.replace("Change to `$subst2`", file, substRange, " = $op"))
+                        SubstituteTextFix.replace("Change to `$subst2`", file, substRange, " = $op")
+                    )
                 }
             }
         }
 
-    /**
-     * Computes the distance between the start points of this PSI element and another one.
-     */
-    private fun PsiElement.distanceTo(other: PsiElement) = other.textRange.startOffset - textRange.startOffset
+    /** Computes the distance between the start points of this PSI element and another one. */
+    private fun PsiElement.distanceTo(other: PsiElement): Int =
+        other.textRange.startOffset - textRange.startOffset
 
-    private fun String.compact() = if (length <= LONG_TEXT_THRESHOLD) this else LONG_TEXT_SUBST
+    private fun String.compact(): String =
+        if (length <= LONG_TEXT_THRESHOLD) this else LONG_TEXT_SUBST
 
-    /**
-     * Finds the first unary expression on the left side of the given expression.
-     */
-    private fun findUnaryExpr(el: RsExpr?): RsUnaryExpr? = when (el) {
-        is RsUnaryExpr -> el
-        is RsBinaryExpr -> findUnaryExpr(el.left)
-        else -> null
-    }
+    /** Finds the first unary expression on the left side of the given expression. */
+    private fun findUnaryExpr(expr: RsExpr?): RsUnaryExpr? =
+        when (expr) {
+            is RsUnaryExpr -> expr
+            is RsBinaryExpr -> findUnaryExpr(expr.left)
+            else -> null
+        }
 
     private companion object {
-        val LONG_TEXT_THRESHOLD = 10
-        val LONG_TEXT_SUBST = ".."
+        const val LONG_TEXT_THRESHOLD: Int = 10
+        const val LONG_TEXT_SUBST: String = ".."
     }
 }

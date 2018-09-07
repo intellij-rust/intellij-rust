@@ -19,23 +19,22 @@ import org.rust.ide.icons.multiple
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.isStdDerivable
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isStdDerivable
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
 
 object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
+    private const val DEFAULT_PRIORITY: Double = 5.0
+    private const val GROUP_PRIORITY: Double = DEFAULT_PRIORITY + 0.1
 
-    private const val DEFAULT_PRIORITY = 5.0
-    private const val GROUP_PRIORITY = DEFAULT_PRIORITY + 0.1
-
-    override fun addCompletions(parameters: CompletionParameters,
-                                context: ProcessingContext,
-                                result: CompletionResultSet) {
-
-        val owner = parameters.position.ancestorStrict<RsStructOrEnumItemElement>()
-            ?: return
+    override fun addCompletions(
+        parameters: CompletionParameters,
+        context: ProcessingContext,
+        result: CompletionResultSet
+    ) {
+        val owner = parameters.position.ancestorStrict<RsStructOrEnumItemElement>() ?: return
         val alreadyDerived = ImplLookup.relativeTo(owner)
             .findImplsAndTraits(owner.declaredType)
             .mapNotNull {
@@ -46,11 +45,9 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
         StdDerivableTrait.values()
             .filter { it.name !in alreadyDerived }
             .forEach { trait ->
-                val traitWithDependencies = trait.withDependencies
-                    .filter { it.name !in alreadyDerived }
-                // if 'traitWithDependencies' contains only one element
-                // then all trait dependencies are already satisfied
-                // and 'traitWithDependencies' contains only 'trait' element
+                val traitWithDependencies = trait.withDependencies.filter { it.name !in alreadyDerived }
+                // if 'traitWithDependencies' contains only one element then all trait dependencies are already
+                // satisfied and 'traitWithDependencies' contains only 'trait' element
                 if (traitWithDependencies.size > 1) {
                     val element = LookupElementBuilder.create(traitWithDependencies.joinToString(", "))
                         .withIcon(RsIcons.TRAIT.multiple())
@@ -64,7 +61,6 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     val elementPattern: ElementPattern<PsiElement>
         get() {
-
             val deriveAttr = psiElement(META_ITEM)
                 .withParent(psiElement(OUTER_ATTR))
                 .with(object : PatternCondition<PsiElement>("derive") {
@@ -75,13 +71,8 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                 })
 
             val traitMetaItem = psiElement(META_ITEM)
-                .withParent(
-                    psiElement(META_ITEM_ARGS)
-                        .withParent(deriveAttr)
-                )
+                .withParent(psiElement(META_ITEM_ARGS).withParent(deriveAttr))
 
-            return psiElement()
-                .inside(traitMetaItem)
-                .withLanguage(RsLanguage)
+            return psiElement().inside(traitMetaItem).withLanguage(RsLanguage)
         }
 }

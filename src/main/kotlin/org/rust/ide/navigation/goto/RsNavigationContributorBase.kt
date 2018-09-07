@@ -19,31 +19,32 @@ import org.rust.lang.core.psi.ext.qualifiedName
 abstract class RsNavigationContributorBase<T> protected constructor(
     private val indexKey: StubIndexKey<String, T>,
     private val clazz: Class<T>
-) : ChooseByNameContributor,
-    GotoClassContributor where T : NavigationItem, T : RsNamedElement {
+) : ChooseByNameContributor, GotoClassContributor where T : NavigationItem, T : RsNamedElement {
 
     override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<out String> {
         project ?: return emptyArray()
         return StubIndex.getInstance().getAllKeys(indexKey, project).toTypedArray()
     }
 
-    override fun getItemsByName(name: String?,
-                                pattern: String?,
-                                project: Project?,
-                                includeNonProjectItems: Boolean): Array<out NavigationItem> {
+    override fun getItemsByName(
+        name: String?,
+        pattern: String?,
+        project: Project?,
+        includeNonProjectItems: Boolean
+    ): Array<out NavigationItem> {
+        if (project == null || name == null) return emptyArray()
 
-        if (project == null || name == null) {
-            return emptyArray()
-        }
-        val scope = if (includeNonProjectItems)
+        val scope = if (includeNonProjectItems) {
             GlobalSearchScope.allScope(project)
-        else
+        } else {
             GlobalSearchScope.projectScope(project)
+        }
 
         return StubIndex.getElements(indexKey, name, project, scope, clazz).toTypedArray<NavigationItem>()
     }
 
-    override fun getQualifiedName(item: NavigationItem?): String? = (item as? RsQualifiedNamedElement)?.qualifiedName
+    override fun getQualifiedName(item: NavigationItem?): String? =
+        (item as? RsQualifiedNamedElement)?.qualifiedName
 
     override fun getQualifiedNameSeparator(): String = "::"
 }

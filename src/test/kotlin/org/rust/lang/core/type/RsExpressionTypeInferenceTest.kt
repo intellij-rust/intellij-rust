@@ -6,6 +6,7 @@
 package org.rust.lang.core.type
 
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
+
     fun `test function call`() = testExpr("""
         struct S;
 
@@ -101,14 +102,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test if else with return 1`() = testExpr("""
         fn main() {
-            let a = if true { return } else { 1 };
+            let a = if true { return; } else { 1 };
             a;
         } //^ i32
     """)
 
     fun `test if else with return 2`() = testExpr("""
         fn main() {
-            let a = if true { return } else if true { return } else { 1 };
+            let a = if true { return; } else if true { return; } else { 1 };
             a;
         } //^ i32
     """)
@@ -216,7 +217,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                 break loop {
                     if v { break 'outer 0u32; }
                     break 7;
-                }
+                };
             };
             x;
           //^ u32

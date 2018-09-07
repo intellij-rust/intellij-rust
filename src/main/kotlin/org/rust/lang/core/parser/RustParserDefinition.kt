@@ -18,12 +18,8 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.RsLexer
-import org.rust.lang.core.psi.RS_COMMENTS
-import org.rust.lang.core.psi.RS_EOL_COMMENTS
-import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
-import org.rust.lang.core.psi.RsTokenType
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
 class RustParserDefinition : ParserDefinition {
@@ -36,7 +32,8 @@ class RustParserDefinition : ParserDefinition {
         return LanguageUtil.canStickTokensTogetherByLexer(left, right, RsLexer())
     }
 
-    override fun getFileNodeType(): IFileElementType = RsFileStub.Type
+    override fun getFileNodeType(): IFileElementType =
+        RsFileStub.Type
 
     override fun getStringLiteralElements(): TokenSet =
         TokenSet.create(STRING_LITERAL)
@@ -44,7 +41,7 @@ class RustParserDefinition : ParserDefinition {
     override fun getWhitespaceTokens(): TokenSet =
         TokenSet.create(TokenType.WHITE_SPACE)
 
-    override fun getCommentTokens() = RS_COMMENTS
+    override fun getCommentTokens(): TokenSet = RS_COMMENTS
 
     override fun createElement(node: ASTNode?): PsiElement =
         RsElementTypes.Factory.createElement(node)
@@ -54,11 +51,17 @@ class RustParserDefinition : ParserDefinition {
     override fun createParser(project: Project?): PsiParser = RustParser()
 
     companion object {
-        @JvmField val BLOCK_COMMENT = RsTokenType("<BLOCK_COMMENT>")
-        @JvmField val EOL_COMMENT = RsTokenType("<EOL_COMMENT>")
-        @JvmField val INNER_BLOCK_DOC_COMMENT = RsTokenType("<INNER_BLOCK_DOC_COMMENT>")
-        @JvmField val OUTER_BLOCK_DOC_COMMENT = RsTokenType("<OUTER_BLOCK_DOC_COMMENT>")
-        @JvmField val INNER_EOL_DOC_COMMENT = RsTokenType("<INNER_EOL_DOC_COMMENT>")
-        @JvmField val OUTER_EOL_DOC_COMMENT = RsTokenType("<OUTER_EOL_DOC_COMMENT>")
+        @JvmField
+        val BLOCK_COMMENT: RsTokenType = RsTokenType("<BLOCK_COMMENT>")
+        @JvmField
+        val EOL_COMMENT: RsTokenType = RsTokenType("<EOL_COMMENT>")
+        @JvmField
+        val INNER_BLOCK_DOC_COMMENT: RsTokenType = RsTokenType("<INNER_BLOCK_DOC_COMMENT>")
+        @JvmField
+        val OUTER_BLOCK_DOC_COMMENT: RsTokenType = RsTokenType("<OUTER_BLOCK_DOC_COMMENT>")
+        @JvmField
+        val INNER_EOL_DOC_COMMENT: RsTokenType = RsTokenType("<INNER_EOL_DOC_COMMENT>")
+        @JvmField
+        val OUTER_EOL_DOC_COMMENT: RsTokenType = RsTokenType("<OUTER_EOL_DOC_COMMENT>")
     }
 }

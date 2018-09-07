@@ -18,17 +18,14 @@ import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.refactoring.RsNamesValidator
 
-abstract class RsReferenceBase<T : RsWeakReferenceElement>(
-    element: T
-) : PsiPolyVariantReferenceBase<T>(element),
-    RsReference {
+abstract class RsReferenceBase<T : RsWeakReferenceElement>(element: T) : PsiPolyVariantReferenceBase<T>(element),
+                                                                         RsReference {
+    abstract val T.referenceAnchor: PsiElement?
 
     override fun resolve(): RsElement? = super.resolve() as? RsElement
 
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         multiResolve().map { PsiElementResolveResult(it) }.toTypedArray()
-
-    abstract val T.referenceAnchor: PsiElement?
 
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()
 
@@ -46,12 +43,14 @@ abstract class RsReferenceBase<T : RsWeakReferenceElement>(
         return element
     }
 
-    override fun equals(other: Any?): Boolean = other is RsReferenceBase<*> && element === other.element
+    override fun equals(other: Any?): Boolean =
+        other is RsReferenceBase<*> && element === other.element
 
     override fun hashCode(): Int = element.hashCode()
 
     companion object {
-        @JvmStatic protected fun doRename(identifier: PsiElement, newName: String) {
+        @JvmStatic
+        protected fun doRename(identifier: PsiElement, newName: String) {
             val factory = RsPsiFactory(identifier.project)
             val newId = when (identifier.elementType) {
                 IDENTIFIER -> {

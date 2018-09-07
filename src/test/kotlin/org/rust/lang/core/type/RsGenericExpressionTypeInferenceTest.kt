@@ -8,6 +8,7 @@ package org.rust.lang.core.type
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
+
     fun `test generic field`() = testExpr("""
         struct S<T> { field: T }
 

@@ -106,7 +106,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         if (item.type == RsQualifiedName.ParentItemType.CRATE) {
             var target: CargoWorkspace.Target? = null
 
-            loop@for (pkg in context.cargoWorkspace?.packages.orEmpty()) {
+            loop@ for (pkg in context.cargoWorkspace?.packages.orEmpty()) {
                 val libTarget = pkg.libTarget
                 if (libTarget?.normName == item.name) {
                     target = libTarget
@@ -164,42 +164,43 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         return listOf("$pagePrefix/$pagePath")
     }
 
-    private val RsDocAndAttributeOwner.hasExternalDocumentation: Boolean get() {
-        // items with #[doc(hidden)] attribute don't have external documentation
-        if (queryAttributes.isDocHidden) {
-            Testmarks.docHidden.hit()
-            return false
-        }
-
-        // private items don't have external documentation
-        if (this is RsVisible) {
-            if (this is RsAbstractable) {
-                val owner = owner
-                // items in
-                if ((!owner.isImplOrTrait || owner.isInherentImpl) && !isPublic) return false
-            } else {
-                if (!isPublic) return false
+    private val RsDocAndAttributeOwner.hasExternalDocumentation: Boolean
+        get() {
+            // items with #[doc(hidden)] attribute don't have external documentation
+            if (queryAttributes.isDocHidden) {
+                Testmarks.docHidden.hit()
+                return false
             }
-        }
 
-        // macros without #[macro_export] are not public and don't have external documentation
-        if (this is RsMacro && !hasMacroExport) {
-            Testmarks.notExportedMacro.hit()
-            return false
+            // private items don't have external documentation
+            if (this is RsVisible) {
+                if (this is RsAbstractable) {
+                    val owner = owner
+                    // items in
+                    if ((!owner.isImplOrTrait || owner.isInherentImpl) && !isPublic) return false
+                } else {
+                    if (!isPublic) return false
+                }
+            }
+
+            // macros without #[macro_export] are not public and don't have external documentation
+            if (this is RsMacro && !hasMacroExport) {
+                Testmarks.notExportedMacro.hit()
+                return false
+            }
+            // TODO: we should take into account real path of item for user, i.e. take into account reexports
+            // instead of already resolved item path
+            return containingMod.superMods.all { it.isPublic }
         }
-        // TODO: we should take into account real path of item for user, i.e. take into account reexports
-        // instead of already resolved item path
-        return containingMod.superMods.all { it.isPublic }
-    }
 
     companion object {
-        const val STD_DOC_HOST = "https://doc.rust-lang.org"
-        const val TEST_HOST = "test://doc-host.org"
+        const val STD_DOC_HOST: String = "https://doc.rust-lang.org"
+        const val TEST_HOST: String = "test://doc-host.org"
     }
 
     object Testmarks {
-        val docHidden = Testmark("docHidden")
-        val notExportedMacro = Testmark("notExportedMacro")
+        val docHidden: Testmark = Testmark("docHidden")
+        val notExportedMacro: Testmark = Testmark("notExportedMacro")
     }
 }
 
@@ -265,85 +266,89 @@ private fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
     rawLines.joinTo(builder, "<br>")
 }
 
-private val RsImplItem.declarationText: List<String> get() {
-    val typeRef = typeReference ?: return emptyList()
+private val RsImplItem.declarationText: List<String>
+    get() {
+        val typeRef = typeReference ?: return emptyList()
 
-    val buffer = StringBuilder("impl")
-    typeParameterList?.generateDocumentation(buffer)
-    buffer += " "
-    val traitRef = traitRef
-    if (traitRef != null) {
-        traitRef.generateDocumentation(buffer)
-        buffer += " for "
-    }
-    typeRef.generateDocumentation(buffer)
-    return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
-}
-
-private val RsTraitItem.declarationText: List<String> get() {
-    val name = presentableQualifiedName ?: return emptyList()
-    val buffer = StringBuilder(name)
-    typeParameterList?.generateDocumentation(buffer)
-    return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
-}
-
-private val RsItemElement.declarationModifiers: List<String> get() {
-    val modifiers = mutableListOf<String>()
-    if (isPublic) {
-        modifiers += "pub"
-    }
-    when (this) {
-        is RsFunction -> {
-            if (isConst) {
-                modifiers += "const"
-            }
-            if (isUnsafe) {
-                modifiers += "unsafe"
-            }
-            if (isExtern) {
-                modifiers += "extern"
-                abiName?.let { modifiers += it }
-            }
-            modifiers += "fn"
+        val buffer = StringBuilder("impl")
+        typeParameterList?.generateDocumentation(buffer)
+        buffer += " "
+        val traitRef = traitRef
+        if (traitRef != null) {
+            traitRef.generateDocumentation(buffer)
+            buffer += " for "
         }
-        is RsStructItem -> modifiers += "struct"
-        is RsEnumItem -> modifiers += "enum"
-        is RsConstant -> modifiers += if (isConst) "const" else "static"
-        is RsTypeAlias -> modifiers += "type"
-        is RsTraitItem -> {
-            if (isUnsafe) {
-                modifiers += "unsafe"
-            }
-            modifiers += "trait"
-        }
-        else -> error("unexpected type $javaClass")
+        typeRef.generateDocumentation(buffer)
+        return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
     }
-    return modifiers
-}
 
-private val RsWhereClause.documentationText: List<String> get() {
-    return listOf("where") + wherePredList.mapNotNull {
-        val buffer = StringBuilder()
-        val lifetime = it.lifetime
-        val typeReference = it.typeReference
-
-        when {
-            lifetime != null -> {
-                lifetime.generateDocumentation(buffer)
-                it.lifetimeParamBounds?.generateDocumentation(buffer)
-            }
-            typeReference != null -> {
-                typeReference.generateDocumentation(buffer)
-                it.typeParamBounds?.generateDocumentation(buffer)
-            }
-            else -> return@mapNotNull null
-        }
-        "&nbsp;&nbsp;&nbsp;&nbsp;$buffer,"
+private val RsTraitItem.declarationText: List<String>
+    get() {
+        val name = presentableQualifiedName ?: return emptyList()
+        val buffer = StringBuilder(name)
+        typeParameterList?.generateDocumentation(buffer)
+        return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
     }
-}
 
-private val RsDocAndAttributeOwner.presentableQualifiedModName: String? get() =
-    presentableQualifiedName?.removeSuffix("::$name")
+private val RsItemElement.declarationModifiers: List<String>
+    get() {
+        val modifiers = mutableListOf<String>()
+        if (isPublic) {
+            modifiers += "pub"
+        }
+        when (this) {
+            is RsFunction -> {
+                if (isConst) {
+                    modifiers += "const"
+                }
+                if (isUnsafe) {
+                    modifiers += "unsafe"
+                }
+                if (isExtern) {
+                    modifiers += "extern"
+                    abiName?.let { modifiers += it }
+                }
+                modifiers += "fn"
+            }
+            is RsStructItem -> modifiers += "struct"
+            is RsEnumItem -> modifiers += "enum"
+            is RsConstant -> modifiers += if (isConst) "const" else "static"
+            is RsTypeAlias -> modifiers += "type"
+            is RsTraitItem -> {
+                if (isUnsafe) {
+                    modifiers += "unsafe"
+                }
+                modifiers += "trait"
+            }
+            else -> error("unexpected type $javaClass")
+        }
+        return modifiers
+    }
+
+private val RsWhereClause.documentationText: List<String>
+    get() {
+        return listOf("where") + wherePredList.mapNotNull {
+            val buffer = StringBuilder()
+            val lifetime = it.lifetime
+            val typeReference = it.typeReference
+
+            when {
+                lifetime != null -> {
+                    lifetime.generateDocumentation(buffer)
+                    it.lifetimeParamBounds?.generateDocumentation(buffer)
+                }
+                typeReference != null -> {
+                    typeReference.generateDocumentation(buffer)
+                    it.typeParamBounds?.generateDocumentation(buffer)
+                }
+                else -> return@mapNotNull null
+            }
+            "&nbsp;&nbsp;&nbsp;&nbsp;$buffer,"
+        }
+    }
+
+private val RsDocAndAttributeOwner.presentableQualifiedModName: String?
+    get() = presentableQualifiedName?.removeSuffix("::$name")
 
 private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: String = "", suffix: String = "") {
     buffer += prefix
@@ -470,8 +475,7 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
 
 private fun RsPath.isLinkNeeded(): Boolean {
     val element = reference.resolve()
-    // If it'll find out that links for type parameters are useful
-    // just check element for null
+    // If it'll find out that links for type parameters are useful just check element for null
     return !(element == null || element is RsTypeParameter)
 }
 

@@ -14,21 +14,17 @@ import org.rust.lang.core.resolve.ref.RsAssocTypeBindingReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsAssocTypeBindingStub
 
-// Current grammar allows to write assoc type bindings in method calls, e.g.
-// `a.foo::<Item = i32>()`, so it's nullable
+// Current grammar allows to write assoc type bindings in method calls, e.g. `a.foo::<Item = i32>()`, so it's nullable.
 val RsAssocTypeBinding.parentPath: RsPath?
     get() = ancestorStrict()
 
-abstract class RsAssocTypeBindingMixin : RsStubbedNamedElementImpl<RsAssocTypeBindingStub>,
-                                         RsAssocTypeBinding {
+abstract class RsAssocTypeBindingMixin : RsStubbedNamedElementImpl<RsAssocTypeBindingStub>, RsAssocTypeBinding {
+    override val referenceNameElement: PsiElement get() = identifier
+    override val referenceName: String get() = stub?.name ?: referenceNameElement.text
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsAssocTypeBindingStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getReference(): RsReference = RsAssocTypeBindingReferenceImpl(this)
-
-    override val referenceNameElement: PsiElement get() = identifier
-
-    override val referenceName: String get() = stub?.name ?: referenceNameElement.text
 }

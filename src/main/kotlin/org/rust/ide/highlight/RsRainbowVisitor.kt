@@ -9,10 +9,14 @@ import com.intellij.codeInsight.daemon.RainbowVisitor
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.descendantsOfType
 
 class RsRainbowVisitor : RainbowVisitor() {
+
     override fun suitableForFile(file: PsiFile): Boolean = file is RsFile
 
     override fun clone(): HighlightVisitor = RsRainbowVisitor()

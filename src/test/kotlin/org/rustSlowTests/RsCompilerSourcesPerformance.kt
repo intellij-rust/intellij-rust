@@ -16,20 +16,20 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.RsFileType
-import java.util.*
 import kotlin.system.measureTimeMillis
 
 class RsCompilerSourcesPerformance : RsTestBase() {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
+    override fun getProjectDescriptor(): WithStdlibRustProjectDescriptor =
+        WithStdlibRustProjectDescriptor
 
     // Use this function to check that some code does not blow up
     // on some strange real-world PSI.
-//    fun `test anything`() = forAllPsiElements { element ->
-//        if (element is RsNamedElement) {
-//            check(element.name != null)
-//        }
-//    }
+    // fun `test anything`() = forAllPsiElements { element ->
+    //     if (element is RsNamedElement) {
+    //         check(element.name != null)
+    //     }
+    // }
 
     fun `test parsing standard library sources`() {
         val sources = rustSrcDir()
@@ -47,11 +47,13 @@ class RsCompilerSourcesPerformance : RsTestBase() {
         val fileLength: Int
     )
 
-    private fun parseRustFiles(directory: VirtualFile,
-                               ignored: Collection<String>,
-                               expectedNumberOfFiles: Int,
-                               checkForErrors: Boolean) {
-        val processed = ArrayList<FileStats>()
+    private fun parseRustFiles(
+        directory: VirtualFile,
+        ignored: Collection<String>,
+        expectedNumberOfFiles: Int,
+        checkForErrors: Boolean
+    ) {
+        val processed = arrayListOf<FileStats>()
         val totalTime = measureTimeMillis {
             VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Void>() {
                 override fun visitFileEx(file: VirtualFile): Result {
@@ -92,7 +94,7 @@ class RsCompilerSourcesPerformance : RsTestBase() {
     }
 
     @Suppress("unused")
-    private fun forAllPsiElements(f: (PsiElement) -> Unit) {
+    private fun forAllPsiElements(function: (PsiElement) -> Unit) {
         VfsUtilCore.visitChildrenRecursively(rustSrcDir(), object : VirtualFileVisitor<Void>() {
             override fun visitFileEx(file: VirtualFile): Result {
                 if (file.fileType != RsFileType) return CONTINUE
@@ -101,7 +103,7 @@ class RsCompilerSourcesPerformance : RsTestBase() {
                 val psi = PsiFileFactory.getInstance(project).createFileFromText(file.name, file.fileType, fileContent)
 
                 PsiTreeUtil.processElements(psi) {
-                    f(it)
+                    function(it)
                     true
                 }
                 return CONTINUE

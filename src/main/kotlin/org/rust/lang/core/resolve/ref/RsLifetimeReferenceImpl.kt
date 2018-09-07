@@ -12,12 +12,9 @@ import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processLifetimeResolveVariants
 
-class RsLifetimeReferenceImpl(
-    element: RsLifetime
-) : RsReferenceCached<RsLifetime>(element),
-    RsReference {
-
-    override val RsLifetime.referenceAnchor: PsiElement get() = quoteIdentifier
+class RsLifetimeReferenceImpl(element: RsLifetime) : RsReferenceCached<RsLifetime>(element), RsReference {
+    override val RsLifetime.referenceAnchor: PsiElement
+        get() = quoteIdentifier
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processLifetimeResolveVariants(element, it) }

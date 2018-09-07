@@ -21,20 +21,18 @@ import org.rust.lang.core.types.type
 
 class ReturnValue(val expression: String?, val type: Ty) {
     companion object {
-        fun direct(expr: RsExpr): ReturnValue {
-            return ReturnValue(null, expr.type)
-        }
 
-        fun namedValue(value: RsPatBinding): ReturnValue {
-            return ReturnValue(value.referenceName, value.type)
-        }
+        fun direct(expr: RsExpr): ReturnValue =
+            ReturnValue(null, expr.type)
 
-        fun tupleNamedValue(value: List<RsPatBinding>): ReturnValue {
-            return ReturnValue(
+        fun namedValue(value: RsPatBinding): ReturnValue =
+            ReturnValue(value.referenceName, value.type)
+
+        fun tupleNamedValue(value: List<RsPatBinding>): ReturnValue =
+            ReturnValue(
                 value.joinToString(", ", postfix = ")", prefix = "(") { it.referenceName },
                 TyTuple(value.map { it.type })
             )
-        }
     }
 }
 
@@ -44,12 +42,22 @@ class Parameter(
     val reference: Reference = Reference.NONE,
     isMutableValue: Boolean = false
 ) {
+    private val mut: String = if (isMutableValue) "mut " else ""
+
+    val parameterText: String
+        get() = if (type != null) "$mut$name: ${reference.text}${type.insertionSafeText}" else name
+
+    val argumentText: String
+        get() = "${reference.text}$name"
 
     enum class Reference(val text: String) {
-        MUTABLE("&mut "), IMMUTABLE("& "), NONE("")
+        MUTABLE("&mut "),
+        IMMUTABLE("& "),
+        NONE("")
     }
 
     companion object {
+
         fun direct(value: RsPatBinding, requiredBorrowing: Boolean, requiredMutableValue: Boolean): Parameter {
             val reference = when {
                 requiredMutableValue -> if (requiredBorrowing) Reference.MUTABLE else Reference.NONE
@@ -60,18 +68,8 @@ class Parameter(
             return Parameter(value.referenceName, value.type, reference, requiredMutableValue)
         }
 
-        fun self(value: String): Parameter {
-            return Parameter(value)
-        }
+        fun self(value: String): Parameter = Parameter(value)
     }
-
-    private val mut = if (isMutableValue) "mut " else ""
-
-    val parameterText: String
-        get() = if (type != null) "$mut$name: ${reference.text}${type.insertionSafeText}" else name
-
-    val argumentText: String
-        get() = "${reference.text}$name"
 }
 
 class RsExtractFunctionConfig private constructor(
@@ -82,7 +80,6 @@ class RsExtractFunctionConfig private constructor(
     var visibilityLevelPublic: Boolean = false,
     val parameters: List<Parameter>
 ) {
-
     private val parametersText: String
         get() = parameters.joinToString(",") { it.parameterText }
 
@@ -91,13 +88,9 @@ class RsExtractFunctionConfig private constructor(
 
     val signature: String
         get() = buildString {
-            if (visibilityLevelPublic) {
-                append("pub ")
-            }
+            if (visibilityLevelPublic) append("pub ")
             append("fn $name$typeParametersText($parametersText)")
-            if (returnValue != null) {
-                append(" -> ${returnValue.type.insertionSafeText}")
-            }
+            if (returnValue != null) append(" -> ${returnValue.type.insertionSafeText}")
             append(whereClausesText)
             val stmts = elements.map { it.text }.toMutableList()
             if (returnValue?.expression != null) {
@@ -134,16 +127,22 @@ class RsExtractFunctionConfig private constructor(
         return containingFunction.typeParameters.filter { it.declaredType in paramAndReturnTypes }
     }
 
-    private fun typeParameterBounds(): Map<Ty, Set<Ty>> {
-        return containingFunction.typeParameters.associate {
+    private fun typeParameterBounds(): Map<Ty, Set<Ty>> =
+        containingFunction.typeParameters.associate {
             val type = it.declaredType
             val bounds = mutableSetOf<Ty>()
-            it.bounds.flatMapTo(bounds) {
-                it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList?.flatMap { it.type.types() } ?: emptyList()
+            it.bounds.flatMapTo(bounds) { polybound ->
+                polybound
+                    .bound
+                    .traitRef
+                    ?.path
+                    ?.typeArgumentList
+                    ?.typeReferenceList
+                    ?.flatMap { reference -> reference.type.types() }
+                    .orEmpty()
             }
             type to bounds
         }
-    }
 
     companion object {
         fun create(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
@@ -161,9 +160,9 @@ class RsExtractFunctionConfig private constructor(
 
             val implLookup = ImplLookup.relativeTo(fn)
             val parameters = letBindings
-                .mapNotNull {
-                    if (it.textOffset > start) return@mapNotNull null
-                    val result = ReferencesSearch.search(it, LocalSearchScope(fn))
+                .mapNotNull { binding ->
+                    if (binding.textOffset > start) return@mapNotNull null
+                    val result = ReferencesSearch.search(binding, LocalSearchScope(fn))
 
                     val targets = result.filter { it.element.textOffset in start..end }
                     if (targets.isEmpty()) return@mapNotNull null
@@ -173,15 +172,15 @@ class RsExtractFunctionConfig private constructor(
                         operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT
                     }
                     val requiredBorrowing = hasRefOperator || result.any { it.element.textOffset > end }
-                        && it.type !is TyReference && !implLookup.isCopy(it.type)
+                        && binding.type !is TyReference && !implLookup.isCopy(binding.type)
 
-                    val requiredMutableValue = it.mutability.isMut && targets.any {
+                    val requiredMutableValue = binding.mutability.isMut && targets.any {
                         if (it.element.ancestorStrict<RsValueArgumentList>() == null) return@any false
                         val operatorType = it.element.ancestorStrict<RsUnaryExpr>()?.operatorType
                         operatorType == null || operatorType == UnaryOperator.REF_MUT
                     }
 
-                    Parameter.direct(it, requiredBorrowing, requiredMutableValue)
+                    Parameter.direct(binding, requiredBorrowing, requiredMutableValue)
                 }
                 .toMutableList()
 

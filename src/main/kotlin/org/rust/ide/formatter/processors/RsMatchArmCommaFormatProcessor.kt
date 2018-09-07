@@ -17,10 +17,11 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class RsMatchArmCommaFormatProcessor : PreFormatProcessor {
+
     override fun process(element: ASTNode, range: TextRange): TextRange {
         if (!shouldRunPunctuationProcessor(element)) return range
 
-        var nRemovedCommas = 0
+        var removedCommasCount = 0
         element.psi.accept(object : PsiRecursiveElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 if (range.contains(element.textRange)) {
@@ -28,11 +29,11 @@ class RsMatchArmCommaFormatProcessor : PreFormatProcessor {
                 }
 
                 if (element is RsMatchArm && removeCommaAfterBlock(element)) {
-                    nRemovedCommas += 1
+                    removedCommasCount += 1
                 }
             }
         })
-        return range.grown(-nRemovedCommas)
+        return range.grown(-removedCommasCount)
     }
 
     private fun removeCommaAfterBlock(element: RsMatchArm): Boolean {

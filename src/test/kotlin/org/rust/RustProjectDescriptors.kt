@@ -42,8 +42,8 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         if (skipTestReason != null) return
 
         val projectDir = contentEntry.file!!
-        val ws = testCargoProject(module, projectDir.url)
-        module.project.cargoProjects.createTestProject(projectDir, ws, rustcInfo)
+        val workspace = testCargoProject(module, projectDir.url)
+        module.project.cargoProjects.createTestProject(projectDir, workspace, rustcInfo)
     }
 
     open fun setUp(fixture: CodeInsightTestFixture) {}

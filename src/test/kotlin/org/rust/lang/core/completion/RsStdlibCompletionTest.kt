@@ -10,6 +10,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibCompletionTest : RsCompletionTestBase() {
+
     fun `test prelude`() = @Suppress("DEPRECATION") checkSingleCompletion("drop()", """
         fn main() {
             dr/*caret*/
@@ -60,4 +61,3 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
        pub use std::unimplemented;/*caret*/
     """)
 }
-

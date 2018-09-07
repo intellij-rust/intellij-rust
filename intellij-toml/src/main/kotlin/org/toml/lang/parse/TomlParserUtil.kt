@@ -10,14 +10,13 @@ import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 
-
 object TomlParserUtil : GeneratedParserUtilBase() {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
-    fun remap(b: PsiBuilder, level: Int, from: IElementType, to: IElementType): Boolean {
-        if (b.tokenType == from) {
-            b.remapCurrentToken(to)
-            b.advanceLexer()
+    fun remap(builder: PsiBuilder, level: Int, from: IElementType, to: IElementType): Boolean {
+        if (builder.tokenType == from) {
+            builder.remapCurrentToken(to)
+            builder.advanceLexer()
             return true
         }
         return false
@@ -25,25 +24,25 @@ object TomlParserUtil : GeneratedParserUtilBase() {
 
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
-    fun any(b: PsiBuilder, level: Int): Boolean = true
+    fun any(builder: PsiBuilder, level: Int): Boolean = true
 
     @JvmStatic
-    fun atSameLine(b: PsiBuilder, level: Int, parser: Parser): Boolean {
-        val marker = enter_section_(b)
-        b.eof() // skip whitespace
-        val isSameLine = !isNextAfterNewLine(b)
-        if (!isSameLine) addVariant(b, "VALUE")
-        val result = isSameLine && parser.parse(b, level)
-        exit_section_(b, marker, null, result)
+    fun atSameLine(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+        val marker = enter_section_(builder)
+        builder.eof() // skip whitespace
+        val isSameLine = !isNextAfterNewLine(builder)
+        if (!isSameLine) addVariant(builder, "VALUE")
+        val result = isSameLine && parser.parse(builder, level)
+        exit_section_(builder, marker, null, result)
         return result
     }
 
     @JvmStatic
-    fun atNewLine(b: PsiBuilder, level: Int, parser: Parser): Boolean {
-        val marker = enter_section_(b)
-        b.eof() // skip whitespace
-        val result = isNextAfterNewLine(b) && parser.parse(b, level)
-        exit_section_(b, marker, null, result)
+    fun atNewLine(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+        val marker = enter_section_(builder)
+        builder.eof() // skip whitespace
+        val result = isNextAfterNewLine(builder) && parser.parse(builder, level)
+        exit_section_(builder, marker, null, result)
         return result
     }
 }

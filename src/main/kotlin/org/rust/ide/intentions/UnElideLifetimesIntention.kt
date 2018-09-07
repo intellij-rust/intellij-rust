@@ -12,7 +12,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
-    override fun getText() = "Un-elide lifetimes"
+
+    override fun getText(): String = "Un-elide lifetimes"
+
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsFunction? {
@@ -62,20 +64,21 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
         RsPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
 
-    private val RsFunction.allRefArgs: List<PsiElement> get() {
-        val selfAfg: List<PsiElement> = listOfNotNull(selfParameter)
-        val params: List<PsiElement> = valueParameters
-            .filter { param ->
-                val type = param.typeReference?.typeElement
-                type is RsRefLikeType && type.isRef
-            }
-        return selfAfg + params
-    }
+    private val RsFunction.allRefArgs: List<PsiElement>
+        get() {
+            val selfAfg: List<PsiElement> = listOfNotNull(selfParameter)
+            val params: List<PsiElement> = valueParameters
+                .filter { param ->
+                    val type = param.typeReference?.typeElement
+                    type is RsRefLikeType && type.isRef
+                }
+            return selfAfg + params
+        }
 
-    private val PsiElement.lifetime: RsLifetime? get() =
-    when (this) {
-        is RsSelfParameter -> lifetime
-        is RsValueParameter -> (typeReference?.typeElement as? RsRefLikeType)?.lifetime
-        else -> null
-    }
+    private val PsiElement.lifetime: RsLifetime?
+        get() = when (this) {
+            is RsSelfParameter -> lifetime
+            is RsValueParameter -> (typeReference?.typeElement as? RsRefLikeType)?.lifetime
+            else -> null
+        }
 }

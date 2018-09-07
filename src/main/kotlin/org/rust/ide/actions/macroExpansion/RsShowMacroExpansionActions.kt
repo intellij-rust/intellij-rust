@@ -19,19 +19,19 @@ import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boolean) : AnAction() {
 
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = getMacroUnderCaret(e.dataContext) != null
+    override fun update(event: AnActionEvent) {
+        event.presentation.isEnabledAndVisible = getMacroUnderCaret(event.dataContext) != null
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-        performForContext(e.dataContext)
+    override fun actionPerformed(event: AnActionEvent) {
+        performForContext(event.dataContext)
     }
 
     @VisibleForTesting
-    fun performForContext(e: DataContext) {
-        val project = e.project ?: return
-        val editor = e.editor ?: return
-        val macroToExpand = getMacroUnderCaret(e) ?: return
+    fun performForContext(context: DataContext) {
+        val project = context.project ?: return
+        val editor = context.editor ?: return
+        val macroToExpand = getMacroUnderCaret(context) ?: return
 
         val expansionDetails = expandMacroForViewWithProgress(project, macroToExpand, expandRecursively)
 

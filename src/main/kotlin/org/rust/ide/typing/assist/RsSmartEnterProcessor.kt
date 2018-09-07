@@ -14,18 +14,12 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsStmt
 
-/**
- * Smart enter implementation for the Rust language.
- */
+/** Smart enter implementation for the Rust language. */
 class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
 
     init {
-        addFixers(
-            MethodCallFixer(),
-            SemicolonFixer())
-
-        addEnterProcessors(
-            PlainEnterProcessor())
+        addFixers(MethodCallFixer(), SemicolonFixer())
+        addEnterProcessors(PlainEnterProcessor())
     }
 
     override fun getStatementAtCaret(editor: Editor?, psiFile: PsiFile?): PsiElement? {

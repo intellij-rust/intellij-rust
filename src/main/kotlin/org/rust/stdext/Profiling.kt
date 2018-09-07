@@ -29,11 +29,11 @@ class Timings(
         val otherValues = other.values()
         check(values.isEmpty() || otherValues.isEmpty() || values.size == otherValues.size)
         val result = Timings()
-        for (k in values.keys.union(otherValues.keys)) {
-            result.valuesTotal[k] =
+        for (key in values.keys.union(otherValues.keys)) {
+            result.valuesTotal[key] =
                 // https://www.youtube.com/watch?v=vrfYLlR8X8k&feature=youtu.be&t=25m17s
-                minOf(values.getOrDefault(k, Long.MAX_VALUE), otherValues.getOrDefault(k, Long.MAX_VALUE))
-            result.invokes[k] = 1
+                minOf(values.getOrDefault(key, Long.MAX_VALUE), otherValues.getOrDefault(key, Long.MAX_VALUE))
+            result.invokes[key] = 1
         }
         return result
     }
@@ -46,17 +46,17 @@ class Timings(
         }
 
         val width = values.keys.map { it.length }.max()!!
-        for ((k, v) in values) {
-            println("${k.padEnd(width)}: $v ms")
+        for ((key, value) in values) {
+            println("${key.padEnd(width)}: $value ms")
         }
         val total = values.values.sum()
         println("$total ms total.")
         println()
     }
 
-    private fun <T> measureInternal(name: String, f: () -> T): T {
+    private fun <T> measureInternal(name: String, block: () -> T): T {
         var result: T? = null
-        val time = measureTimeMillis { result = f() }
+        val time = measureTimeMillis { result = block() }
         valuesTotal.merge(name, time, Long::plus)
         invokes.merge(name, 1, Long::plus)
         @Suppress("UNCHECKED_CAST")
@@ -65,13 +65,12 @@ class Timings(
 
     private fun values(): Map<String, Long> {
         val result = LinkedHashMap<String, Long>()
-        for ((k, sum) in valuesTotal) {
-            result[k] = (sum.toDouble() / invokes[k]!!).toLong()
+        for ((key, sum) in valuesTotal) {
+            result[key] = (sum.toDouble() / invokes[key]!!).toLong()
         }
         return result
     }
 }
-
 
 interface RsWatch {
     val name: String
@@ -79,20 +78,15 @@ interface RsWatch {
 }
 
 /**
- * Useful to quickly measure total times of a certain repeated
- * operation during profiling.
+ * Useful to quickly measure total times of a certain repeated operation during profiling.
  *
- * Create a global StopWatch instance, use [messages] function
- * around interesting block, see the results at the end. Note
- * that [measure] is not reentrant, and will double count
- * recursive activities like resolve. If you want reentrancy,
- * use [RsReentrantStopWatch]
+ * Create a global StopWatch instance, use [messages] function around interesting block, see the results at the end.
+ * Note that [measure] is not reentrant, and will double count recursive activities like resolve.
+ * If you want reentrancy, use [RsReentrantStopWatch].
  *
  * **FOR DEVELOPMENT ONLY**
  */
-class RsStopWatch(
-    override val name: String
-) : RsWatch {
+class RsStopWatch(override val name: String) : RsWatch {
     override var totalNs: AtomicLong = AtomicLong(0)
 
     init {
@@ -107,9 +101,7 @@ class RsStopWatch(
     }
 }
 
-/**
- * Like [RsStopWatch], but requires an explicit start and is reentrant
- */
+/** Like [RsStopWatch], but requires an explicit start and is reentrant. */
 class RsReentrantStopWatch(override val name: String) : RsWatch {
     override val totalNs: AtomicLong = AtomicLong(0)
     private val started: AtomicBoolean = AtomicBoolean(false)
@@ -138,12 +130,13 @@ class RsReentrantStopWatch(override val name: String) : RsWatch {
 }
 
 private class NestingCounter : ThreadLocal<Int>() {
+
     override fun initialValue(): Int = 0
 
     fun enter(): Boolean {
-        val v = get()
-        set(v + 1)
-        return v == 0
+        val value = get()
+        set(value + 1)
+        return value == 0
     }
 
     fun exit() {
@@ -152,7 +145,8 @@ private class NestingCounter : ThreadLocal<Int>() {
 }
 
 private object WATCHES {
-    private val registered = ConcurrentHashMap.newKeySet<RsWatch>()
+    private val registered: ConcurrentHashMap.KeySetView<RsWatch, Boolean> =
+        ConcurrentHashMap.newKeySet<RsWatch>()
 
     init {
         Runtime.getRuntime().addShutdownHook(object : Thread() {

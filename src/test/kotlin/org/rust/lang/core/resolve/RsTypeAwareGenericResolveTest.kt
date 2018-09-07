@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
+
     fun `test fn`() = checkByCode("""
         fn foo<T>() -> T {
              //X

@@ -12,7 +12,6 @@ import org.rust.openapiext.CheckboxDelegate
 import javax.swing.JComponent
 
 class RustfmtConfigurable(project: Project) : RsConfigurableBase(project) {
-
     private val useSkipChildrenCheckbox: JBCheckBox = JBCheckBox()
     private var useSkipChildren: Boolean by CheckboxDelegate(useSkipChildrenCheckbox)
 

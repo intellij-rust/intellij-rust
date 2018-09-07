@@ -14,6 +14,7 @@ import org.toml.lang.psi.TomlKey
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class CargoTomlKeyResolveTest : RsResolveTestBase() {
+
     fun `test in dependencies block`() = checkResolve("""
         [package]
         name = "intellij-rust-test"

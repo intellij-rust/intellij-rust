@@ -12,12 +12,13 @@ import org.rust.ide.annotator.fixes.updateMutable
 import org.rust.lang.core.psi.RsPatBinding
 
 class RemoveMutableFix : LocalQuickFix {
+
+    override fun getName(): String = "Remove mutable"
+
+    override fun getFamilyName(): String = name
+
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val patBinding = descriptor.psiElement as? RsPatBinding ?: return
         updateMutable(project, patBinding, false)
     }
-
-    override fun getName(): String  = "Remove mutable"
-    override fun getFamilyName(): String  = name
-
 }

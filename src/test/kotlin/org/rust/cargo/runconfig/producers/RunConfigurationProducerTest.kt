@@ -307,13 +307,15 @@ class RunConfigurationProducerTest : RsTestBase() {
     private fun modifyTemplateConfiguration(f: CargoCommandConfiguration.() -> Unit) {
         val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
         val factory = configurationType.factory
-        val template = RunManager.getInstance(project).getConfigurationTemplate(factory).configuration as CargoCommandConfiguration
+        val template = RunManager.getInstance(project)
+            .getConfigurationTemplate(factory)
+            .configuration as CargoCommandConfiguration
         template.f()
     }
 
     private fun checkOnLeaf() = checkOnElement<PsiElement>()
 
-    inline private fun <reified T : PsiElement> checkOnTopLevel() {
+    private inline fun <reified T : PsiElement> checkOnTopLevel() {
         checkOnElement<T>()
         checkOnElement<PsiElement>()
     }
@@ -384,11 +386,8 @@ class RunConfigurationProducerTest : RsTestBase() {
     }
 
     private inner class TestProjectBuilder {
-        private inner class File(
-            val path: String,
-            val code: String,
-            val caretOffset: Int?
-        )
+
+        private inner class File(val path: String, val code: String, val caretOffset: Int?)
 
         private inner class Target(
             val name: String,
@@ -397,12 +396,12 @@ class RunConfigurationProducerTest : RsTestBase() {
             val crateTypes: List<CargoWorkspace.CrateType>
         )
 
-        private var targets = arrayListOf<Target>()
-        private var files = arrayListOf<File>()
+        private var targets: ArrayList<Target> = arrayListOf()
+        private var files: ArrayList<File> = arrayListOf()
         private var toOpen: File? = null
-        private val helloWorld = """fn main() { println!("Hello, World!") }"""
-        private val simpleTest = """#[test] fn test_simple() { assert_eq!(2 + 2, 5) }"""
-        private val hello = """pub fn hello() -> String { return "Hello, World!".to_string() }"""
+        private val helloWorld: String = """fn main() { println!("Hello, World!") }"""
+        private val simpleTest: String = """#[test] fn test_simple() { assert_eq!(2 + 2, 5) }"""
+        private val hello: String = """pub fn hello() -> String { return "Hello, World!".to_string(); }"""
 
         fun bin(name: String, path: String, @Language("Rust") code: String = helloWorld): TestProjectBuilder {
             addTarget(name, TargetKind.BIN, CrateType.BIN, path, code)
@@ -436,11 +435,14 @@ class RunConfigurationProducerTest : RsTestBase() {
         }
 
         fun build() {
-            myFixture.addFileToProject("Cargo.toml", """
+            myFixture.addFileToProject(
+                "Cargo.toml",
+                """
                 [project]
                 name = "test"
                 version = 0.0.1
-            """)
+                """
+            )
             files.forEach { myFixture.addFileToProject(it.path, it.code) }
             toOpen?.let { toOpen ->
                 openFileInEditor(toOpen.path)
@@ -477,7 +479,13 @@ class RunConfigurationProducerTest : RsTestBase() {
             project.cargoProjects.createTestProject(myFixture.findFileInTempDir("."), projectDescription)
         }
 
-        private fun addTarget(name: String, kind: CargoWorkspace.TargetKind, crateType: CargoWorkspace.CrateType, path: String, code: String) {
+        private fun addTarget(
+            name: String,
+            kind: CargoWorkspace.TargetKind,
+            crateType: CargoWorkspace.CrateType,
+            path: String,
+            code: String
+        ) {
             val file = addFile(path, code)
             targets.add(Target(name, file, kind, listOf(crateType)))
         }

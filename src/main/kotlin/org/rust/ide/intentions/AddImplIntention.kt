@@ -14,10 +14,10 @@ import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 
 class AddImplIntention : RsElementBaseIntentionAction<AddImplIntention.Context>() {
-    override fun getText() = "Add impl block"
-    override fun getFamilyName() = text
 
-    class Context(val type: RsStructOrEnumItemElement, val name: String)
+    override fun getText(): String = "Add impl block"
+
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val struct = element.ancestorStrict<RsStructOrEnumItemElement>() ?: return null
@@ -26,10 +26,13 @@ class AddImplIntention : RsElementBaseIntentionAction<AddImplIntention.Context>(
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        var impl = RsPsiFactory(project).createInherentImplItem(ctx.name, ctx.type.typeParameterList, ctx.type.whereClause)
+        var impl = RsPsiFactory(project)
+            .createInherentImplItem(ctx.name, ctx.type.typeParameterList, ctx.type.whereClause)
 
         impl = ctx.type.parent.addAfter(impl, ctx.type) as RsImplItem
 
         editor.caretModel.moveToOffset(impl.textOffset + impl.textLength - 1)
     }
+
+    class Context(val type: RsStructOrEnumItemElement, val name: String)
 }

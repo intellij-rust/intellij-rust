@@ -8,9 +8,7 @@ package org.rust.ide.inspections
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-/**
- * Tests for Drop Reference inspection.
- */
+/** Tests for Drop Reference inspection. */
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
 

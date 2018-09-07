@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.openapiext.Testmark
 
 abstract class RsLineMover : LineMover() {
+
     override fun checkAvailable(editor: Editor, file: PsiFile, info: MoveInfo, down: Boolean): Boolean {
         if (file !is RsFile && super.checkAvailable(editor, file, info, down)) return false
         @Suppress("USELESS_ELVIS") // NotNull annotation is wrong :(
@@ -63,6 +64,7 @@ abstract class RsLineMover : LineMover() {
     protected open fun canApply(firstMovableElement: PsiElement, secondMovableElement: PsiElement): Boolean = true
 
     companion object {
+
         enum class RangeEndpoint {
             START, END
         }
@@ -76,6 +78,6 @@ abstract class RsLineMover : LineMover() {
 }
 
 object UpDownMoverTestMarks {
-    val moveOutOfImpl = Testmark("moveOutOfImpl")
-    val moveOutOfMatch = Testmark("moveOutOfMatch")
+    val moveOutOfImpl: Testmark = Testmark("moveOutOfImpl")
+    val moveOutOfMatch: Testmark = Testmark("moveOutOfMatch")
 }

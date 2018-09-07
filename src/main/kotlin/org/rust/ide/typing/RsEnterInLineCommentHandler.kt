@@ -24,6 +24,7 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.doc.psi.RsDocKind
 
 class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
+
     override fun preprocessEnter(
         file: PsiFile,
         editor: Editor,
@@ -57,8 +58,8 @@ class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
             elementAtCaret = elementAtCaret.prevSibling ?: return Result.Continue
         }
 
-        // check if the element at the caret is a line comment
-        // and extract the comment token (//, /// or //!) from the comment text
+        // check if the element at the caret is a line comment and extract the comment token (//, /// or //!) from the
+        // comment text
         val prefix = when (elementAtCaret.elementType) {
             OUTER_EOL_DOC_COMMENT -> RsDocKind.OuterEol.prefix
             INNER_EOL_DOC_COMMENT -> RsDocKind.InnerEol.prefix
@@ -79,23 +80,21 @@ class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         }
 
         if (text.startsWith(prefix, offset)) {
-            // If caret is currently at the beginning of some sequence which
-            // starts the same as our prefix, we are at one of these situations:
+            // If caret is currently at the beginning of some sequence which starts the same as our prefix, we are at
+            // one of these situations:
             // a)  // comment
             //     <caret>// comment
             // b) // comment <caret>//comment
-            // Here, we don't want to insert any prefixes, as there is already one
-            // in code. We only have to insert space after prefix if it's missing
-            // and update caret position.
+            // Here, we don't want to insert any prefixes, as there is already one in code. We only have to insert
+            // space after prefix if it's missing and update caret position.
             val afterPrefix = offset + prefix.length
             if (afterPrefix < document.textLength && text[afterPrefix] != ' ') {
                 document.insertString(afterPrefix, " ")
             }
             caretOffsetRef.set(offset)
         } else {
-            // Otherwise; add one space, if caret isn't at one
-            // currently, and insert prefix just before it.
-            val prefixToAdd = if (text[caretOffset] != ' ') prefix + ' ' else prefix
+            // Otherwise; add one space, if caret isn't at one currently, and insert prefix just before it.
+            val prefixToAdd = if (text[caretOffset] != ' ') "$prefix " else prefix
             document.insertString(caretOffset, prefixToAdd)
             caretAdvanceRef.set(prefixToAdd.length)
         }

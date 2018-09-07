@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.psi.StubBasedPsiElement
 import org.rust.lang.core.psi.*
 
-/** Returns all members including those produced by macros */
+/** Returns all members including those produced by macros. */
 val RsMembers.expandedMembers: List<RsAbstractable>
     get() {
         val members = mutableListOf<RsAbstractable>()
@@ -39,8 +39,10 @@ private fun RsMacroCall.collectAbstractableMembersRecursively(members: MutableLi
 
 val List<RsAbstractable>.functions: List<RsFunction>
     get() = filterIsInstance<RsFunction>()
+
 val List<RsAbstractable>.constants: List<RsConstant>
     get() = filterIsInstance<RsConstant>()
+
 val List<RsAbstractable>.types: List<RsTypeAlias>
     get() = filterIsInstance<RsTypeAlias>()
 

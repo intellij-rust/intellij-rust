@@ -9,18 +9,10 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 
-data class CargoTopMessage(
-    val message: RustcMessage,
-    val package_id: String,
-    val reason: String,
-    val target: Target
-) {
+data class CargoTopMessage(val message: RustcMessage, val package_id: String, val reason: String, val target: Target) {
     companion object {
         fun fromJson(json: JsonObject): CargoTopMessage? {
-            if (json.getAsJsonPrimitive("reason")?.asString != "compiler-message") {
-                return null
-            }
-
+            if (json.getAsJsonPrimitive("reason")?.asString != "compiler-message") return null
             return Gson().fromJson(json, CargoTopMessage::class.java)
                 ?: error("Failed to parse CargoTopMessage from $json")
         }
@@ -36,10 +28,7 @@ data class RustcMessage(
     val spans: List<RustcSpan>
 )
 
-data class ErrorCode(
-    val code: String,
-    val explanation: String?
-)
+data class ErrorCode(val code: String, val explanation: String?)
 
 data class RustcSpan(
     val byte_end: Int,
@@ -56,21 +45,8 @@ data class RustcSpan(
     val text: List<RustcText>
 )
 
-data class Expansion(
-    val def_site_span: RustcSpan?,
-    val macro_decl_name: String,
-    val span: RustcSpan
-)
+data class Expansion(val def_site_span: RustcSpan?, val macro_decl_name: String, val span: RustcSpan)
 
-data class RustcText(
-    val highlight_end: Int,
-    val highlight_start: Int,
-    val text: String?
-)
+data class RustcText(val highlight_end: Int, val highlight_start: Int, val text: String?)
 
-data class Target(
-    val crate_types: List<String>,
-    val kind: List<String>,
-    val name: String,
-    val src_path: String
-)
+data class Target(val crate_types: List<String>, val kind: List<String>, val name: String, val src_path: String)

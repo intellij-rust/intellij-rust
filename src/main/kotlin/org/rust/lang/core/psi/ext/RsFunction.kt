@@ -22,30 +22,35 @@ import javax.swing.Icon
 
 val RsFunction.isAssocFn: Boolean get() = selfParameter == null && owner.isImplOrTrait
 
-val RsFunction.isTest: Boolean get() {
-    val stub = stub
-    return stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
-}
+val RsFunction.isTest: Boolean
+    get() {
+        val stub = stub
+        return stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
+    }
 
-val RsFunction.isConst: Boolean get() {
-    val stub = stub
-    return stub?.isConst ?: (const != null)
-}
+val RsFunction.isConst: Boolean
+    get() {
+        val stub = stub
+        return stub?.isConst ?: (const != null)
+    }
 
-val RsFunction.isExtern: Boolean get() {
-    val stub = stub
-    return stub?.isExtern ?: (abi != null)
-}
+val RsFunction.isExtern: Boolean
+    get() {
+        val stub = stub
+        return stub?.isExtern ?: (abi != null)
+    }
 
-val RsFunction.isVariadic: Boolean get() {
-    val stub = stub
-    return stub?.isVariadic ?: (valueParameterList?.dotdotdot != null)
-}
+val RsFunction.isVariadic: Boolean
+    get() {
+        val stub = stub
+        return stub?.isVariadic ?: (valueParameterList?.dotdotdot != null)
+    }
 
-val RsFunction.abiName: String? get() {
-    val stub = stub
-    return stub?.abiName ?: abi?.stringLiteral?.text
-}
+val RsFunction.abiName: String?
+    get() {
+        val stub = stub
+        return stub?.abiName ?: abi?.stringLiteral?.text
+    }
 
 val RsFunction.valueParameters: List<RsValueParameter>
     get() = valueParameterList?.valueParameterList.orEmpty()
@@ -64,29 +69,36 @@ val RsFunction.title: String
             if (isAssocFn) "Associated function `$name`" else "Method `$name`"
     }
 
-val RsFunction.returnType: Ty get() {
-    val retType = retType ?: return TyUnit
-    return retType.typeReference?.type ?: TyUnknown
-}
+val RsFunction.returnType: Ty
+    get() {
+        val retType = retType ?: return TyUnit
+        return retType.typeReference?.type ?: TyUnknown
+    }
 
 val RsFunction.abi: RsExternAbi? get() = externAbi ?: (parent as? RsForeignModItem)?.externAbi
 
 abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction, RsModificationTrackerOwner {
+    override val isPublic: Boolean
+        get() = RsPsiImplUtil.isPublic(this, stub)
+
+    override val isAbstract: Boolean
+        get() = stub?.isAbstract ?: (block == null)
+
+    override val isUnsafe: Boolean
+        get() = this.stub?.isUnsafe ?: (unsafe != null)
+
+    override val crateRelativePath: String?
+        get() = RsPsiImplUtil.crateRelativePath(this)
+
+    final override val innerAttrList: List<RsInnerAttr>
+        get() = block?.innerAttrList.orEmpty()
+
+    override val modificationTracker: SimpleModificationTracker =
+        SimpleModificationTracker()
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsFunctionStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    override val isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
-
-    override val isUnsafe: Boolean get() = this.stub?.isUnsafe ?: (unsafe != null)
-
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
-
-    final override val innerAttrList: List<RsInnerAttr>
-        get() = block?.innerAttrList.orEmpty()
 
     override fun getIcon(flags: Int): Icon = when (owner) {
         is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
@@ -101,9 +113,6 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     }
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
-
-    override val modificationTracker: SimpleModificationTracker =
-        SimpleModificationTracker()
 
     override fun incModificationCount(element: PsiElement): Boolean {
         val shouldInc = element !is RsItemElement && block?.isAncestorOf(element) == true

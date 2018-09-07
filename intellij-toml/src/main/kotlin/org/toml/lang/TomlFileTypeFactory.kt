@@ -13,10 +13,12 @@ import org.toml.lang.psi.TomlFileType
 
 class TomlFileTypeFactory : FileTypeFactory() {
     override fun createFileTypes(consumer: FileTypeConsumer) {
-        consumer.consume(TomlFileType,
+        consumer.consume(
+            TomlFileType,
             ExactFileNameMatcher("Cargo.lock"),
             ExactFileNameMatcher("Gopkg.lock"),
             ExactFileNameMatcher("Pipfile"),
-            ExtensionFileNameMatcher(TomlFileType.defaultExtension))
+            ExtensionFileNameMatcher(TomlFileType.defaultExtension)
+        )
     }
 }

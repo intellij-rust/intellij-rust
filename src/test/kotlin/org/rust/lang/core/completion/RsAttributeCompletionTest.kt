@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 class RsAttributeCompletionTest : RsCompletionTestBase() {
+
     fun `test derive on struct`() = @Suppress("DEPRECATION") checkSingleCompletion("derive", """
         #[der/*caret*/]
         struct Bar;

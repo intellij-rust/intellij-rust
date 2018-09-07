@@ -43,7 +43,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     open val dataPath: String = ""
 
-    override fun getTestDataPath(): String = "${RsTestCase.testResourcesPath}/$dataPath"
+    override fun getTestDataPath(): String = "${RsTestCase.TEST_RESOURCES_PATH}/$dataPath"
 
     override fun setUp() {
         super.setUp()
@@ -87,8 +87,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         super.runTest()
     }
 
-    protected val fileName: String
-        get() = "$testName.rs"
+    protected val fileName: String get() = "$testName.rs"
 
     private val testName: String
         get() = camelOrWordsToSnake(getTestName(true))
@@ -112,7 +111,11 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 
-    protected fun checkByDirectory(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {
+    protected fun checkByDirectory(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        action: () -> Unit
+    ) {
         fileTreeFromText(before).create()
         action()
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -136,18 +139,17 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     private fun getVirtualFileByName(path: String): VirtualFile? =
         LocalFileSystem.getInstance().findFileByPath(path)
 
-    protected inline fun <reified X : Throwable> expect(f: () -> Unit) {
+    protected inline fun <reified X : Throwable> expect(function: () -> Unit) {
         try {
-            f()
-        } catch (e: Throwable) {
-            if (e is X)
-                return
-            throw e
+            function()
+        } catch (error: Throwable) {
+            if (error is X) return
+            throw error
         }
         fail("No ${X::class.java} was thrown during the test")
     }
 
-    inner class InlineFile(private @Language("Rust") val code: String, val name: String = "main.rs") {
+    inner class InlineFile(@Language("Rust") private val code: String, val name: String = "main.rs") {
         private val hasCaretMarker = "/*caret*/" in code
 
         init {
@@ -241,7 +243,6 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         @JvmStatic
         fun camelOrWordsToSnake(name: String): String {
             if (' ' in name) return name.trim().replace(" ", "_")
-
             return name.split("(?=[A-Z])".toRegex()).joinToString("_", transform = String::toLowerCase)
         }
 
@@ -261,9 +262,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         @JvmStatic
         fun getResourceAsString(path: String): String? {
-            val stream = RsTestBase::class.java.classLoader.getResourceAsStream(path)
-                ?: return null
-
+            val stream = RsTestBase::class.java.classLoader.getResourceAsStream(path) ?: return null
             return StreamUtil.readText(stream, Charsets.UTF_8)
         }
     }
@@ -280,4 +279,3 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     protected val PsiElement.lineNumber: Int
         get() = myFixture.getDocument(myFixture.file).getLineNumber(textOffset)
 }
-

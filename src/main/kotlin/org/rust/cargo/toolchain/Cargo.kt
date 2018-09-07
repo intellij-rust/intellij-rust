@@ -29,39 +29,40 @@ import java.nio.file.Path
 /**
  * A main gateway for executing cargo commands.
  *
- * This class is not aware of SDKs or projects, so you'll need to provide
- * paths yourself.
+ * This class is not aware of SDKs or projects, so you'll need to provide paths yourself.
  *
- * It is impossible to guarantee that paths to the project or executables are valid,
- * because the user can always just `rm ~/.cargo/bin -rf`.
+ * It is impossible to guarantee that paths to the project or executables are valid, because the user can always just
+ * `rm ~/.cargo/bin -rf`.
  */
 class Cargo(private val cargoExecutable: Path) {
+
     fun checkSupportForBuildCheckAllTargets(): Boolean {
         val lines = GeneralCommandLine(cargoExecutable)
             .withParameters("help", "check")
             .execute()
             ?.stdoutLines
             ?: return false
-
         return lines.any { it.contains(" --all-targets ") }
     }
 
     /**
      * Fetch all dependencies and calculate project information.
      *
-     * This is a potentially long running operation which can
-     * legitimately fail due to network errors or inability
-     * to resolve dependencies. Hence it is mandatory to
-     * pass an [owner] to correctly kill the process if it
-     * runs for too long.
+     * This is a potentially long running operation which can legitimately fail due to network errors or inability to
+     * resolve dependencies. Hence it is mandatory to pass an [owner] to correctly kill the process if it runs for too
+     * long.
      */
     @Throws(ExecutionException::class)
-    fun fullProjectDescription(owner: Disposable, projectDirectory: Path, listener: ProcessListener? = null): CargoWorkspace {
-        val json = CargoCommandLine("metadata", projectDirectory,
+    fun fullProjectDescription(
+        owner: Disposable,
+        projectDirectory: Path,
+        listener: ProcessListener? = null
+    ): CargoWorkspace {
+        val json = CargoCommandLine(
+            "metadata",
+            projectDirectory,
             listOf("--verbose", "--format-version", "1", "--all-features")
-        ).execute(owner, listener)
-            .stdout
-            .dropWhile { it != '{' }
+        ).execute(owner, listener).stdout.dropWhile { it != '{' }
         val rawData = try {
             Gson().fromJson(json, CargoMetadata.Project::class.java)
         } catch (e: JsonSyntaxException) {
@@ -147,10 +148,11 @@ class Cargo(private val cargoExecutable: Path) {
     }
 
     @Throws(ExecutionException::class)
-    private fun CargoCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
-                                         ignoreExitCode: Boolean = false): ProcessOutput {
-        return toGeneralCommandLine(this).execute(owner, ignoreExitCode, listener)
-    }
+    private fun CargoCommandLine.execute(
+        owner: Disposable,
+        listener: ProcessListener? = null,
+        ignoreExitCode: Boolean = false
+    ): ProcessOutput = toGeneralCommandLine(this).execute(owner, ignoreExitCode, listener)
 
     private var _http: HttpConfigurable? = null
     private val http: HttpConfigurable
@@ -162,7 +164,7 @@ class Cargo(private val cargoExecutable: Path) {
     }
 
     private companion object {
-        val COLOR_ACCEPTING_COMMANDS = listOf(
+        val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
             "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"
         )
     }

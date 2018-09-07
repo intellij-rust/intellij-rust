@@ -55,7 +55,7 @@ class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
 
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 
-    override fun setVariables(template: Template, element: PsiElement): Unit {
+    override fun setVariables(template: Template, element: PsiElement) {
         with(template) {
             addVariable("PAT", TextExpression("_"), true)
         }

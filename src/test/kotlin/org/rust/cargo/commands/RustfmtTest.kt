@@ -71,12 +71,12 @@ class RustfmtTest : RustWithToolchainTestBase() {
             CommonDataKeys.VIRTUAL_FILE to file
         ))
         val action = RustfmtFileAction()
-        val e = TestActionEvent(dataContext, action)
-        action.beforeActionPerformedUpdate(e)
-        check(e.presentation.isEnabledAndVisible) {
+        val event = TestActionEvent(dataContext, action)
+        action.beforeActionPerformedUpdate(event)
+        check(event.presentation.isEnabledAndVisible) {
             "Failed to run `${RustfmtFileAction::class.java.simpleName}` action"
         }
 
-        action.actionPerformed(e)
+        action.actionPerformed(event)
     }
 }

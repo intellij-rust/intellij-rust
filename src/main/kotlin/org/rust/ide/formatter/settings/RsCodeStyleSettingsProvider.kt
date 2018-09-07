@@ -12,19 +12,26 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 import org.rust.lang.RsLanguage
 
 class RsCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
-    override fun createCustomSettings(settings: CodeStyleSettings) = RsCodeStyleSettings(settings)
 
-    override fun getConfigurableDisplayName() = RsLanguage.displayName
+    override fun createCustomSettings(settings: CodeStyleSettings): RsCodeStyleSettings =
+        RsCodeStyleSettings(settings)
 
-    override fun createSettingsPage(settings: CodeStyleSettings, originalSettings: CodeStyleSettings) =
+    override fun getConfigurableDisplayName(): String =
+        RsLanguage.displayName
+
+    override fun createSettingsPage(
+        settings: CodeStyleSettings,
+        originalSettings: CodeStyleSettings
+    ): CodeStyleAbstractConfigurable =
         object : CodeStyleAbstractConfigurable(settings, originalSettings, configurableDisplayName) {
             override fun createPanel(settings: CodeStyleSettings) = RsCodeStyleMainPanel(currentSettings, settings)
-            override fun getHelpTopic() = null
+            override fun getHelpTopic(): String? = null
         }
 
-    private class RsCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
-        TabbedLanguageCodeStylePanel(RsLanguage, currentSettings, settings) {
-
+    private class RsCodeStyleMainPanel(
+        currentSettings: CodeStyleSettings,
+        settings: CodeStyleSettings
+    ) : TabbedLanguageCodeStylePanel(RsLanguage, currentSettings, settings) {
         override fun initTabs(settings: CodeStyleSettings?) {
             addIndentOptionsTab(settings)
             addWrappingAndBracesTab(settings)

@@ -91,7 +91,8 @@ fun GeneralCommandLine.execute(
     return output
 }
 
-private fun errorMessage(commandLine: GeneralCommandLine, output: ProcessOutput): String = """
+private fun errorMessage(commandLine: GeneralCommandLine, output: ProcessOutput): String =
+    """
         Execution failed (exit code ${output.exitCode}).
         ${commandLine.commandLineString}
         stdout : ${output.stdout}

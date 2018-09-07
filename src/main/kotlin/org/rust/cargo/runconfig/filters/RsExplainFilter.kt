@@ -11,15 +11,13 @@ import com.intellij.openapi.project.DumbAware
 import org.rust.lang.RsConstants
 import java.util.regex.Pattern
 
-
-/**
- * Filters output for “[--explain Exxxx]” (or other similar patterns) and links
- * to the relevant documentation.
- */
+/** Filters output for “[--explain Exxxx]” (or other similar patterns) and links to the relevant documentation. */
 class RsExplainFilter : Filter, DumbAware {
-    private val patterns = listOf(
-        Pattern.compile("--explain E(\\d{4})"),
-        Pattern.compile("(error|warning)\\[E(\\d{4})\\]"))
+    private val patterns: List<Pattern> =
+        listOf(
+            Pattern.compile("--explain E(\\d{4})"),
+            Pattern.compile("(error|warning)\\[E(\\d{4})\\]")
+        )
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         val matcher = patterns

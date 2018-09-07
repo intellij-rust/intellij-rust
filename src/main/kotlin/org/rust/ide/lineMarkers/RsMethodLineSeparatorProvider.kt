@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsMethodLineSeparatorProvider(
@@ -36,13 +36,22 @@ class RsMethodLineSeparatorProvider(
         return null
     }
 
-    private fun PsiElement?.canHaveSeparator() = this is RsFunction
+    private fun PsiElement?.canHaveSeparator(): Boolean = this is RsFunction
 
-    private fun PsiElement?.wantsSeparator() = if (this == null) false else StringUtil.getLineBreakCount(text) > 0
+    private fun PsiElement?.wantsSeparator(): Boolean =
+        if (this == null) false else StringUtil.getLineBreakCount(text) > 0
 
     private fun createLineSeparatorByElement(element: PsiElement): LineMarkerInfo<PsiElement> {
         val anchor = PsiTreeUtil.getDeepestFirst(element)
-        return LineMarkerInfo(anchor, anchor.textRange, null, Pass.LINE_MARKERS, null, null, GutterIconRenderer.Alignment.RIGHT).apply {
+        return LineMarkerInfo(
+            anchor,
+            anchor.textRange,
+            null,
+            Pass.LINE_MARKERS,
+            null,
+            null,
+            GutterIconRenderer.Alignment.RIGHT
+        ).apply {
             separatorColor = colorsManager.globalScheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
             separatorPlacement = SeparatorPlacement.TOP
         }
@@ -53,5 +62,4 @@ class RsMethodLineSeparatorProvider(
         result: MutableCollection<LineMarkerInfo<PsiElement>>
     ) {
     }
-
 }

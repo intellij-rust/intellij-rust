@@ -10,15 +10,12 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 
-
 /**
- * A container for an immutable value, which allows
- * reading and updating value safely concurrently.
+ * A container for an immutable value, which allows reading and updating value safely concurrently.
  * [AsyncValue] is similar to Clojure's atom.
  *
- * [updateAsync] method is used to schedule a modification
- * of the form `(T) -> Promise<T>`. It is guaranteed that
- * all updates are serialized.
+ * [updateAsync] method is used to schedule a modification of the form `(T) -> Promise<T>`.
+ * It is guaranteed that all updates are serialized.
  */
 class AsyncValue<T>(initial: T) {
     @Volatile

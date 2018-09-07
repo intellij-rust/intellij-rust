@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsElseBranch
@@ -16,15 +17,16 @@ import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsVisitor
 
 /**
- * Detects `else if` statements broken by new lines. A partial analogue
- * of the Clippy's suspicious_else_formatting lint.
+ * Detects `else if` statements broken by new lines.
+ * A partial analogue of the Clippy's suspicious_else_formatting lint.
  * Quick fix 1: Remove `else`
  * Quick fix 2: Join `else if`
  */
 class RsDanglingElseInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Dangling else"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun getDisplayName(): String = "Dangling else"
+
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitElseBranch(expr: RsElseBranch) {
                 val elseEl = expr.`else`

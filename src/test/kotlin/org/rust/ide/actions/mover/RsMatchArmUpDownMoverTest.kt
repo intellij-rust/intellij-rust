@@ -6,6 +6,7 @@
 package org.rust.ide.actions.mover
 
 class RsMatchArmUpDownMoverTest : RsStatementUpDownMoverTestBase() {
+
     fun `test step over match arm single line expr`() = moveDownAndBackUp("""
         fn main() {
             match test {
@@ -84,7 +85,7 @@ class RsMatchArmUpDownMoverTest : RsStatementUpDownMoverTestBase() {
     fun `test can not move across different match expressions`() = moveDownAndBackUp("""
         fn main() {
             match x {
-                1 => {},
+                1 => {}
                 <selection>2 => {},
             };
             match x {
@@ -95,7 +96,7 @@ class RsMatchArmUpDownMoverTest : RsStatementUpDownMoverTestBase() {
     """, """
         fn main() {
             match x {
-                1 => {},
+                1 => {}
                 <selection>2 => {},
             };
             match x {

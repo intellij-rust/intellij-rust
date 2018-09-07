@@ -11,10 +11,11 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 
-private val pluginNotifications = NotificationGroup.balloonGroup("Rust Plugin")
+private val PLUGIN_NOTIFICATIONS: NotificationGroup =
+    NotificationGroup.balloonGroup("Rust Plugin")
 
 fun Project.showBalloon(content: String, type: NotificationType, action: AnAction? = null) {
-    val notification = pluginNotifications.createNotification(content, type)
+    val notification = PLUGIN_NOTIFICATIONS.createNotification(content, type)
     if (action != null) {
         notification.addAction(action)
     }
@@ -22,6 +23,6 @@ fun Project.showBalloon(content: String, type: NotificationType, action: AnActio
 }
 
 fun showBalloonWithoutProject(content: String, type: NotificationType) {
-    val notification = pluginNotifications.createNotification(content, type)
+    val notification = PLUGIN_NOTIFICATIONS.createNotification(content, type)
     Notifications.Bus.notify(notification)
 }

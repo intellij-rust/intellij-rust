@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.RsLiteralKind
 import org.rust.lang.core.psi.kind
 
 class RsStringLiteralManipulator : AbstractElementManipulator<RsLitExpr>() {
+
     override fun handleContentChange(element: RsLitExpr, range: TextRange, newContent: String): RsLitExpr {
         if (range != getRangeInElement(element)) {
             // FIXME not supported for now
@@ -21,7 +22,6 @@ class RsStringLiteralManipulator : AbstractElementManipulator<RsLitExpr>() {
         return element
     }
 
-    override fun getRangeInElement(element: RsLitExpr): TextRange {
-        return (element.kind as? RsLiteralKind.String)?.offsets?.value ?: super.getRangeInElement(element)
-    }
+    override fun getRangeInElement(element: RsLitExpr): TextRange =
+        (element.kind as? RsLiteralKind.String)?.offsets?.value ?: super.getRangeInElement(element)
 }

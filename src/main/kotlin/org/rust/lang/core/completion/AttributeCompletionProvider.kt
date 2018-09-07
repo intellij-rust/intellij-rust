@@ -46,43 +46,52 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
 
     private data class RustAttribute(val name: String, val appliesTo: ElementPattern<PsiElement>)
 
-    private val attributes = mapOf(
-        onCrate to "crate_name crate_type feature() no_builtins no_main no_start no_std plugin recursion_limit",
-        onExternCrate to "macro_use macro_reexport no_link",
-        onMod to "no_implicit_prelude path macro_use",
-        onFn to "main plugin_registrar start test cold naked export_name link_section lang inline",
-        onTestFn to "should_panic",
-        onStaticMut to "thread_local",
-        onExternBlock to "link_args link() linked_from",
-        onExternBlockDecl to "link_name linkage",
-        onStruct to "repr unsafe_no_drop_flags derive()",
-        onEnum to "repr derive()",
-        onTrait to "rustc_on_unimplemented",
-        onMacro to "macro_export",
-        onStatic to "export_name link_section",
-        onAnyItem to "no_mangle doc cfg() cfg_attr() allow() warn() forbid() deny()",
-        onTupleStruct to "simd",
-        onDropFn to "unsafe_destructor_blind_to_params"
-    ).flatMap { entry -> entry.value.split(' ').map { attrName -> RustAttribute(attrName, entry.key) } }
+    private val attributes: List<RustAttribute> =
+        mapOf(
+            onCrate to "crate_name crate_type feature() no_builtins no_main no_start no_std plugin recursion_limit",
+            onExternCrate to "macro_use macro_reexport no_link",
+            onMod to "no_implicit_prelude path macro_use",
+            onFn to "main plugin_registrar start test cold naked export_name link_section lang inline",
+            onTestFn to "should_panic",
+            onStaticMut to "thread_local",
+            onExternBlock to "link_args link() linked_from",
+            onExternBlockDecl to "link_name linkage",
+            onStruct to "repr unsafe_no_drop_flags derive()",
+            onEnum to "repr derive()",
+            onTrait to "rustc_on_unimplemented",
+            onMacro to "macro_export",
+            onStatic to "export_name link_section",
+            onAnyItem to "no_mangle doc cfg() cfg_attr() allow() warn() forbid() deny()",
+            onTupleStruct to "simd",
+            onDropFn to "unsafe_destructor_blind_to_params"
+        ).flatMap { (key, value) ->
+            value.split(' ').map { attrName -> RustAttribute(attrName, key) }
+        }
 
-    override fun addCompletions(parameters: CompletionParameters,
-                                context: ProcessingContext,
-                                result: CompletionResultSet) {
+    val elementPattern: ElementPattern<PsiElement>
+        get() {
+            val outerAttrElem = psiElement<RsOuterAttr>()
+            val innerAttrElem = psiElement<RsInnerAttr>()
+            val metaItemElem = psiElement<RsMetaItem>()
+                .and(
+                    PlatformPatterns.psiElement().withParent(outerAttrElem) or
+                        PlatformPatterns.psiElement().withParent(innerAttrElem)
+                )
+            return PlatformPatterns.psiElement().withParent(metaItemElem).withLanguage(RsLanguage)
+        }
 
-        val elem = parameters.position.parent?.parent?.parent
-
+    override fun addCompletions(
+        parameters: CompletionParameters,
+        context: ProcessingContext,
+        result: CompletionResultSet
+    ) {
+        val element = parameters.position.parent?.parent?.parent
         val suggestions = attributes
-            .filter { it.appliesTo.accepts(parameters.position) && elem.attrMetaItems.none { item -> item == it.name } }
+            .filter {
+                it.appliesTo.accepts(parameters.position) && element.attrMetaItems.none { item -> item == it.name }
+            }
             .map { createLookupElement(it.name) }
         result.addAllElements(suggestions)
-    }
-
-    val elementPattern: ElementPattern<PsiElement> get() {
-        val outerAttrElem = psiElement<RsOuterAttr>()
-        val innerAttrElem = psiElement<RsInnerAttr>()
-        val metaItemElem = psiElement<RsMetaItem>()
-            .and(PlatformPatterns.psiElement().withParent(outerAttrElem) or PlatformPatterns.psiElement().withParent(innerAttrElem))
-        return PlatformPatterns.psiElement().withParent(metaItemElem).withLanguage(RsLanguage)
     }
 
     private fun createLookupElement(name: String): LookupElement =
@@ -94,12 +103,12 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
                 }
         } else {
             LookupElementBuilder.create(name)
-        }
-            .withIcon(RsIcons.ATTRIBUTE)
+        }.withIcon(RsIcons.ATTRIBUTE)
 
     private val PsiElement?.attrMetaItems: Sequence<String>
-        get() = if (this is RsDocAndAttributeOwner)
+        get() = if (this is RsDocAndAttributeOwner) {
             queryAttributes.metaItems.mapNotNull { it.name }
-        else
+        } else {
             emptySequence()
+        }
 }
