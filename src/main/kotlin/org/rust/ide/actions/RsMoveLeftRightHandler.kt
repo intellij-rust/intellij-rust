@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.arrayElements
 
 class RsMoveLeftRightHandler : MoveElementLeftRightHandler() {
-
     override fun getMovableSubElements(element: PsiElement): Array<PsiElement> {
         val subElements = when (element) {
             is RsArrayExpr -> element.arrayElements.orEmpty()

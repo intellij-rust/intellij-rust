@@ -19,6 +19,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.Testmark
 
 abstract class RsResolveTestBase : RsTestBase() {
+
     protected open fun checkByCode(@Language("Rust") code: String) {
         InlineFile(code)
 
@@ -50,7 +51,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected fun stubOnlyResolve(@Language("Rust") code: String, mark: Testmark) =
         mark.checkHit { stubOnlyResolve(code) }
 
-    protected inline fun <reified T: PsiElement> stubOnlyResolve(fileTree: FileTree, customCheck: (PsiElement) -> Unit = {}) {
+    protected inline fun <reified T : PsiElement> stubOnlyResolve(fileTree: FileTree, customCheck: (PsiElement) -> Unit = {}) {
         val testProject = fileTree.createAndOpenFileWithCaretMarker()
 
         checkAstNotLoaded(VirtualFileFilter { file ->
@@ -91,7 +92,6 @@ abstract class RsResolveTestBase : RsTestBase() {
         if (expectedFilePath.startsWith("...")) {
             if (!actualResolveFile.path.endsWith(expectedFilePath.drop(3))) {
                 return ResolveResult.Err("Should resolve to $expectedFilePath, was ${actualResolveFile.path} instead")
-
             }
         } else {
             val expectedResolveFile = myFixture.findFileInTempDir(expectedFilePath)
@@ -110,7 +110,8 @@ abstract class RsResolveTestBase : RsTestBase() {
     }
 }
 
-fun PsiElement.findReference(offset: Int): PsiReference? = findReferenceAt(offset - textRange.startOffset)
+fun PsiElement.findReference(offset: Int): PsiReference? =
+    findReferenceAt(offset - textRange.startOffset)
 
 fun PsiElement.checkedResolve(offset: Int): PsiElement {
     val reference = findReference(offset) ?: error("element doesn't have reference")

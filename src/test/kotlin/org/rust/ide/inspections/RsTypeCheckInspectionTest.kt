@@ -9,6 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+
     fun `test type mismatch E0308 primitive`() = checkByText("""
         fn main () {
             let _: u8 = <error>1u16</error>;

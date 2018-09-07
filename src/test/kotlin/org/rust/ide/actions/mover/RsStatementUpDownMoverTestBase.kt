@@ -10,6 +10,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
 abstract class RsStatementUpDownMoverTestBase : RsTestBase() {
+
     fun moveDown(@Language("Rust") before: String, @Language("Rust") after: String) {
         checkByText(before.trimIndent() + "\n", after.trimIndent() + "\n") {
             myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION)

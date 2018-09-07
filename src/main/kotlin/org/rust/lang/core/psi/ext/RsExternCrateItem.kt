@@ -15,14 +15,18 @@ import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.resolve.ref.RsExternCrateReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsExternCrateItemStub
+import javax.swing.Icon
 
-val RsExternCrateItem.nameWithAlias: String get() = alias?.name ?: referenceName
+val RsExternCrateItem.nameWithAlias: String
+    get() = alias?.name ?: referenceName
 
-val RsExternCrateItem.hasMacroUse: Boolean get() =
-    queryAttributes.hasAttribute("macro_use")
+val RsExternCrateItem.hasMacroUse: Boolean
+    get() = queryAttributes.hasAttribute("macro_use")
 
-abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCrateItemStub>,
-                                            RsExternCrateItem {
+abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCrateItemStub>, RsExternCrateItem {
+    override val referenceNameElement: PsiElement get() = identifier
+    override val referenceName: String get() = name!!
+    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
 
     constructor(node: ASTNode) : super(node)
 
@@ -30,13 +34,7 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
 
     override fun getReference(): RsReference = RsExternCrateReferenceImpl(this)
 
-    override val referenceNameElement: PsiElement get() = identifier
-
-    override val referenceName: String get() = name!!
-
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    override fun getIcon(flags: Int) = RsIcons.CRATE
+    override fun getIcon(flags: Int): Icon = RsIcons.CRATE
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

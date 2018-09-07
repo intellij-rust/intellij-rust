@@ -8,6 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotationTestBase
 
 class AddSelfTest : RsAnnotationTestBase() {
+
     fun `test has no parameters`() = checkFixByText("Add self to function", """
         struct S;
 

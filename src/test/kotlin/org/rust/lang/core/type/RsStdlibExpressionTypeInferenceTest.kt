@@ -16,6 +16,7 @@ import org.rust.lang.core.types.ty.TyInteger
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
+
     fun `test RangeFull`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -458,7 +459,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     }
 
     private fun <A, B> Collection<A>.permutations(other: Collection<B>): List<Pair<A, B>> {
-        val result = ArrayList<Pair<A, B>>(size*other.size)
+        val result = ArrayList<Pair<A, B>>(size * other.size)
         for (a in this) {
             for (b in other) {
                 result += Pair(a, b)

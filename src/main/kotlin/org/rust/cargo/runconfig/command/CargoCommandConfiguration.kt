@@ -29,15 +29,12 @@ import java.nio.file.Paths
 
 /**
  * This class describes a Run Configuration.
- * It is basically a bunch of values which are persisted to .xml files inside .idea,
- * or displayed in the GUI form. It has to be mutable to satisfy various IDE's APIs.
+ * It is basically a bunch of values which are persisted to .xml files inside .idea, or displayed in the GUI form.
+ * It has to be mutable to satisfy various IDE's APIs.
  */
-class CargoCommandConfiguration(
-    project: Project,
-    name: String,
-    factory: ConfigurationFactory
-) : LocatableConfigurationBase(project, factory, name),
-    RunConfigurationWithSuppressedDefaultDebugAction {
+class CargoCommandConfiguration(project: Project, name: String, factory: ConfigurationFactory)
+    : LocatableConfigurationBase(project, factory, name),
+      RunConfigurationWithSuppressedDefaultDebugAction {
 
     var channel: RustChannel = RustChannel.DEFAULT
     var command: String = "run"
@@ -56,10 +53,7 @@ class CargoCommandConfiguration(
         env.writeExternal(element)
     }
 
-    /**
-     * If you change serialization, make sure that the old variant is still
-     * readable for several releases.
-     */
+    /** If you change serialization, make sure that the old variant is still readable for several releases. */
     override fun readExternal(element: Element) {
         super.readExternal(element)
         element.readEnum<RustChannel>("channel")?.let { channel = it }
@@ -95,33 +89,27 @@ class CargoCommandConfiguration(
         clean().ok?.let { CargoRunState(environment, it) }
 
     sealed class CleanConfiguration {
-        class Ok(
-            val cmd: CargoCommandLine,
-            val toolchain: RustToolchain
-        ) : CleanConfiguration()
+
+        class Ok(val cmd: CargoCommandLine, val toolchain: RustToolchain) : CleanConfiguration()
 
         class Err(val error: RuntimeConfigurationError) : CleanConfiguration()
 
         val ok: CleanConfiguration.Ok? get() = this as? Ok
 
         companion object {
-            fun error(message: String) = Err(RuntimeConfigurationError(message))
+            fun error(message: String): Err = Err(RuntimeConfigurationError(message))
         }
     }
 
     fun clean(): CleanConfiguration {
-        val workingDirectory = workingDirectory
-            ?: return CleanConfiguration.error("No working directory specified")
+        val workingDirectory = workingDirectory ?: return CleanConfiguration.error("No working directory specified")
         val cmd = run {
             val args = ParametersListUtil.parse(command)
-            if (args.isEmpty()) {
-                return CleanConfiguration.error("No command specified")
-            }
+            if (args.isEmpty()) return CleanConfiguration.error("No command specified")
             CargoCommandLine(args.first(), workingDirectory, args.drop(1), backtrace, channel, env, nocapture)
         }
 
-        val toolchain = project.toolchain
-            ?: return CleanConfiguration.error("No Rust toolchain specified")
+        val toolchain = project.toolchain ?: return CleanConfiguration.error("No Rust toolchain specified")
 
         if (!toolchain.looksLikeValidToolchain()) {
             return CleanConfiguration.error("Invalid toolchain: ${toolchain.presentableLocation}")
@@ -135,6 +123,7 @@ class CargoCommandConfiguration(
     }
 
     companion object {
+
         fun findCargoProject(project: Project, additionalArgs: List<String>, workingDirectory: Path?): CargoProject? {
             val cargoProjects = project.cargoProjects
             cargoProjects.allProjects.singleOrNull()?.let { return it }
@@ -146,21 +135,20 @@ class CargoCommandConfiguration(
             }
 
             for (dir in listOfNotNull(manifestPath?.parent, workingDirectory)) {
-                LocalFileSystem.getInstance().findFileByIoFile(dir.toFile())
+                LocalFileSystem.getInstance()
+                    .findFileByIoFile(dir.toFile())
                     ?.let { cargoProjects.findProjectForFile(it) }
                     ?.let { return it }
             }
             return null
         }
 
-        fun findCargoProject(project: Project, cmd: String, workingDirectory: Path?): CargoProject? = findCargoProject(
-            project, ParametersListUtil.parse(cmd), workingDirectory
-        )
+        fun findCargoProject(project: Project, cmd: String, workingDirectory: Path?): CargoProject? =
+            findCargoProject(project, ParametersListUtil.parse(cmd), workingDirectory)
     }
 }
 
 val CargoProject.workingDirectory: Path get() = manifest.parent
-
 
 private fun Element.writeString(name: String, value: String) {
     val opt = org.jdom.Element("option")
@@ -179,7 +167,8 @@ private fun Element.writeBool(name: String, value: Boolean) {
     writeString(name, value.toString())
 }
 
-private fun Element.readBool(name: String) = readString(name)?.toBoolean()
+private fun Element.readBool(name: String): Boolean? =
+    readString(name)?.toBoolean()
 
 private fun <E : Enum<*>> Element.writeEnum(name: String, value: E) {
     writeString(name, value.name)
@@ -195,12 +184,10 @@ private inline fun <reified E : Enum<E>> Element.readEnum(name: String): E? {
 }
 
 private fun Element.writePath(name: String, value: Path?) {
-    if (value != null) {
-        val s = ExternalizablePath.urlValue(value.toString())
-        writeString(name, s)
-    }
+    if (value == null) return
+    val s = ExternalizablePath.urlValue(value.toString())
+    writeString(name, s)
 }
 
-private fun Element.readPath(name: String): Path? {
-    return readString(name)?.let { Paths.get(ExternalizablePath.localPathValue(it)) }
-}
+private fun Element.readPath(name: String): Path? =
+    readString(name)?.let { Paths.get(ExternalizablePath.localPathValue(it)) }

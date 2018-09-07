@@ -6,6 +6,7 @@
 package org.rust.ide.typing
 
 class RsDotTypedHandlerTest : RsTypingTestBase() {
+
     fun `test autoindent dot in chained call`() = doTestByText("""
         fn main() {
             frobnicate()

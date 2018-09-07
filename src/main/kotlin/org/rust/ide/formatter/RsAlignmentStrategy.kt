@@ -11,26 +11,19 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 
 interface RsAlignmentStrategy {
-    /**
-     * Requests current strategy for alignment to use for given child.
-     */
+
+    /** Requests current strategy for alignment to use for given child. */
     fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RsFmtContext): Alignment?
 
-    /**
-     * Always returns `null`.
-     */
+    /** Always returns `null`. */
     object NullStrategy : RsAlignmentStrategy {
         override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RsFmtContext): Alignment? = null
     }
 
-    /**
-     * Apply this strategy only when child element is in [tt].
-     */
+    /** Apply this strategy only when child element is in [tt]. */
     fun alignIf(vararg tt: IElementType): RsAlignmentStrategy = alignIf(TokenSet.create(*tt))
 
-    /**
-     * Apply this strategy only when child element type matches [filterSet].
-     */
+    /** Apply this strategy only when child element type matches [filterSet]. */
     fun alignIf(filterSet: TokenSet): RsAlignmentStrategy =
         object : RsAlignmentStrategy {
             override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RsFmtContext): Alignment? =
@@ -41,9 +34,7 @@ interface RsAlignmentStrategy {
                 }
         }
 
-    /**
-     * Apply this strategy only when [predicate] passes.
-     */
+    /** Apply this strategy only when [predicate] passes. */
     fun alignIf(predicate: (child: ASTNode, parent: ASTNode?, ctx: RsFmtContext) -> Boolean): RsAlignmentStrategy =
         object : RsAlignmentStrategy {
             override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RsFmtContext): Alignment? =
@@ -54,29 +45,20 @@ interface RsAlignmentStrategy {
                 }
         }
 
-    /**
-     * Returns [NullStrategy] if [condition] is `false`. Useful for making strategies configurable.
-     */
+    /** Returns [NullStrategy] if [condition] is `false`. Useful for making strategies configurable. */
     fun alignIf(condition: Boolean): RsAlignmentStrategy =
-        if (condition) {
-            this
-        } else {
-            NullStrategy
-        }
+        if (condition) this else NullStrategy
 
     companion object {
-        /**
-         * Always returns [alignment].
-         */
+
+        /** Always returns [alignment]. */
         fun wrap(alignment: Alignment = Alignment.createAlignment()): RsAlignmentStrategy =
             object : RsAlignmentStrategy {
                 override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RsFmtContext): Alignment? =
                     alignment
             }
 
-        /**
-         * Always returns [RsFmtContext.sharedAlignment]
-         */
+        /** Always returns [RsFmtContext.sharedAlignment]. */
         fun shared(): RsAlignmentStrategy =
             object : RsAlignmentStrategy {
                 override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RsFmtContext): Alignment? =

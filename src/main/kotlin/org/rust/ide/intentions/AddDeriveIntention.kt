@@ -10,19 +10,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsEnumItem
+import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.findOuterAttr
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.findOuterAttr
 
 class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Context>() {
-    override fun getFamilyName() = "Add derive clause"
-    override fun getText() = "Add derive clause"
 
-    class Context(
-        val item: RsStructOrEnumItemElement,
-        val itemStart: PsiElement
-    )
+    override fun getFamilyName(): String = "Add derive clause"
+
+    override fun getText(): String = "Add derive clause"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val item = element.ancestorStrict<RsStructOrEnumItemElement>() ?: return null
@@ -42,7 +42,11 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
 
     }
 
-    private fun findOrCreateDeriveAttr(project: Project, item: RsStructOrEnumItemElement, keyword: PsiElement): RsOuterAttr {
+    private fun findOrCreateDeriveAttr(
+        project: Project,
+        item: RsStructOrEnumItemElement,
+        keyword: PsiElement
+    ): RsOuterAttr {
         val existingDeriveAttr = item.findOuterAttr("derive")
         if (existingDeriveAttr != null) {
             return existingDeriveAttr
@@ -60,10 +64,10 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
     }
 
     private fun moveCaret(editor: Editor, deriveAttr: RsOuterAttr) {
-        val offset = deriveAttr.metaItem.metaItemArgs?.rparen?.textOffset ?:
-            deriveAttr.rbrack.textOffset ?:
-            deriveAttr.textOffset
+        val offset = deriveAttr.metaItem.metaItemArgs?.rparen?.textOffset ?: deriveAttr.rbrack.textOffset
+        ?: deriveAttr.textOffset
         editor.caretModel.moveToOffset(offset)
     }
-}
 
+    class Context(val item: RsStructOrEnumItemElement, val itemStart: PsiElement)
+}

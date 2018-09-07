@@ -8,6 +8,7 @@ package org.rust.ide.typing
 import org.intellij.lang.annotations.Language
 
 class RsAngleBraceTypedHandlerTest : RsTypingTestBase() {
+
     fun `test pair angle brace after colon colon token`() = doComplexTest("fn foo() { let _ = foo::<caret>")
     fun `test pair angle brace in implementation block`() = doComplexTest("impl<caret>")
     fun `test pair angle brace in generic function declaration`() = doComplexTest("fn foo<caret>")
@@ -61,7 +62,11 @@ class RsAngleBraceTypedHandlerTest : RsTypingTestBase() {
         doTypeDeleteTest(before, afterWithoutGT, """fn main() { /* <code> */ }""")
     }
 
-    private fun doTypeDeleteTest(@Language("Rust") before: String, @Language("Rust") after: String, @Language("Rust") surroundings: String) = doTypeDeleteTest(
+    private fun doTypeDeleteTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        @Language("Rust") surroundings: String
+    ) = doTypeDeleteTest(
         surroundings.replace("<code>", before),
         surroundings.replace("<code>", after)
     )

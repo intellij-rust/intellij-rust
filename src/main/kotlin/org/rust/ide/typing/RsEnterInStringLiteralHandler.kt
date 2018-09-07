@@ -40,8 +40,8 @@ class RsEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
 
         // Return if we are inside escape sequence
         if (iterator.tokenType in STRING_LITERAL_ESCAPES) {
-            // If we are just at the beginning, we don't want to return, but
-            // we have to determine literal type. Retreating iterator will do.
+            // If we are just at the beginning, we don't want to return, but we have to determine literal type.
+            // Retreating iterator will do.
             if (caretOffset == iterator.start) {
                 iterator.retreat()
             } else {
@@ -51,9 +51,8 @@ class RsEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
 
         return when (iterator.tokenType) {
             in RS_STRING_LITERALS -> {
-                // In Rust, an unescaped newline inside a string literal is perfectly valid,
-                // and can be used to format multiline text. So if there is at least one such
-                // newline, don't try to be smart.
+                // In Rust, an unescaped newline inside a string literal is perfectly valid, and can be used to format
+                // multiline text. So if there is at least one such newline, don't try to be smart.
                 val tokenText = editor.document.immutableCharSequence.subSequence(iterator.start, iterator.end)
                 if (tokenText.contains(UNESCAPED_NEWLINE)) return Result.Continue
 
@@ -70,4 +69,4 @@ class RsEnterInStringLiteralHandler : EnterHandlerDelegateAdapter() {
     }
 }
 
-private val UNESCAPED_NEWLINE = """[^\\]\n""".toRegex()
+private val UNESCAPED_NEWLINE: Regex = """[^\\]\n""".toRegex()

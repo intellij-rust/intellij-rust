@@ -9,19 +9,14 @@ import com.intellij.psi.StringEscapesTokenTypes.*
 import org.rust.lang.core.lexer.RustEscapesLexer
 import org.rust.lang.core.lexer.tokenize
 
-/**
- * Unescape string escaped using Rust escaping rules.
- */
+/** Unescape string escaped using Rust escaping rules. */
 fun String.unescapeRust(unicode: Boolean = true, eol: Boolean = true, extendedByte: Boolean = true): String =
     this.unescapeRust(RustEscapesLexer.dummy(unicode, eol, extendedByte))
 
-/**
- * Unescape string escaped using Rust escaping rules.
- */
+/** Unescape string escaped using Rust escaping rules. */
 fun String.unescapeRust(escapesLexer: RustEscapesLexer): String =
     this.tokenize(escapesLexer)
-        .joinToString(separator = "") {
-            val (type, text) = it
+        .joinToString(separator = "") { (type, text) ->
             when (type) {
                 VALID_STRING_ESCAPE_TOKEN -> decodeEscape(text)
                 else -> text
@@ -40,9 +35,7 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder): Pair<IntA
     return sourceOffsets to result
 }
 
-/**
- * Mimics [com.intellij.codeInsight.CodeInsightUtilCore.parseStringCharacters], but obeys Rust escaping rules.
- */
+/** Mimics [com.intellij.codeInsight.CodeInsightUtilCore.parseStringCharacters], but obeys Rust escaping rules. */
 private fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffsets: IntArray): Boolean {
     val outOffset = outChars.length
     var index = 0
@@ -79,23 +72,24 @@ private fun parseRustStringCharacters(chars: String, outChars: StringBuilder, so
     return true
 }
 
-private fun decodeEscape(esc: String): String = when (esc) {
-    "\\n" -> "\n"
-    "\\r" -> "\r"
-    "\\t" -> "\t"
-    "\\0" -> "\u0000"
-    "\\\\" -> "\\"
-    "\\'" -> "\'"
-    "\\\"" -> "\""
+private fun decodeEscape(esc: String): String =
+    when (esc) {
+        "\\n" -> "\n"
+        "\\r" -> "\r"
+        "\\t" -> "\t"
+        "\\0" -> "\u0000"
+        "\\\\" -> "\\"
+        "\\'" -> "\'"
+        "\\\"" -> "\""
 
-    else -> {
-        assert(esc.length >= 2)
-        assert(esc[0] == '\\')
-        when (esc[1]) {
-            'x' -> Integer.parseInt(esc.substring(2), 16).toChar().toString()
-            'u' -> Integer.parseInt(esc.substring(3, esc.length - 1).filter { it != '_' }, 16).toChar().toString()
-            '\r', '\n' -> ""
-            else -> error("unreachable")
+        else -> {
+            assert(esc.length >= 2)
+            assert(esc[0] == '\\')
+            when (esc[1]) {
+                'x' -> Integer.parseInt(esc.substring(2), 16).toChar().toString()
+                'u' -> Integer.parseInt(esc.substring(3, esc.length - 1).filter { it != '_' }, 16).toChar().toString()
+                '\r', '\n' -> ""
+                else -> error("unreachable")
+            }
         }
     }
-}

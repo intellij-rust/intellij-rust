@@ -16,11 +16,9 @@ import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
 
 /**
- * Represents both a type, like `i32` or `S<Foo, Bar>`, as well
- * as an unbound constructor `S`.
+ * Represents both a type, like `i32` or `S<Foo, Bar>`, as well as an unbound constructor `S`.
  *
- * The name `Ty` is short for `Type`, inspired by the Rust
- * compiler.
+ * The name `Ty` is short for `Type`, inspired by the Rust compiler.
  */
 abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
 
@@ -32,14 +30,10 @@ abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean = false
 
-    /**
-     * Bindings between formal type parameters and actual type arguments.
-     */
+    /** Bindings between formal type parameters and actual type arguments. */
     open val typeParameterValues: Substitution get() = emptySubstitution
 
-    /**
-     * User visible string representation of a type
-     */
+    /** User visible string representation of a type. */
     final override fun toString(): String = tyToString(this)
 }
 
@@ -50,16 +44,15 @@ enum class Mutability {
     val isMut: Boolean get() = this == MUTABLE
 
     companion object {
+        val DEFAULT_MUTABILITY: Mutability = MUTABLE
+
         fun valueOf(mutable: Boolean): Mutability =
             if (mutable) MUTABLE else IMMUTABLE
-
-        val DEFAULT_MUTABILITY = MUTABLE
     }
 }
 
-fun Ty.getTypeParameter(name: String): TyTypeParameter? {
-    return typeParameterValues.typeParameterByName(name)
-}
+fun Ty.getTypeParameter(name: String): TyTypeParameter? =
+    typeParameterValues.typeParameterByName(name)
 
 tailrec fun Ty.isSized(): Boolean {
     return when (this) {

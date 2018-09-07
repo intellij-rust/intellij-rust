@@ -14,9 +14,9 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-const val HGAP = 30
-const val VERTICAL_OFFSET = 2
-const val HORIZONTAL_OFFSET = 5
+const val HGAP: Int = 30
+const val VERTICAL_OFFSET: Int = 2
+const val HORIZONTAL_OFFSET: Int = 5
 
 fun layout(block: RsLayoutBuilder.() -> Unit): JPanel {
     val panel = JPanel(BorderLayout())
@@ -38,6 +38,7 @@ private class RsLayoutBuilderImpl(
     val panel: JPanel,
     val labeledComponents: MutableList<LabeledComponent<*>> = mutableListOf()
 ) : RsLayoutBuilder {
+
     override fun block(text: String, block: RsLayoutBuilder.() -> Unit) {
         val blockPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)

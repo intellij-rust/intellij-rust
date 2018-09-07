@@ -19,10 +19,8 @@ import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.recursionGuard
 
-
 val RsTypeReference.type: Ty
-    get() = recursionGuard(this, Computable { inferTypeReferenceType(this) })
-        ?: TyUnknown
+    get() = recursionGuard(this, Computable { inferTypeReferenceType(this) }) ?: TyUnknown
 
 val RsTypeElement.lifetimeElidable: Boolean
     get() {
@@ -30,15 +28,16 @@ val RsTypeElement.lifetimeElidable: Boolean
         return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
     }
 
-private val TYPE_INFERENCE_KEY: Key<CachedValue<RsInferenceResult>> = Key.create("TYPE_INFERENCE_KEY")
+private val TYPE_INFERENCE_KEY: Key<CachedValue<RsInferenceResult>> =
+    Key.create("TYPE_INFERENCE_KEY")
 
 val RsInferenceContextOwner.inference: RsInferenceResult
     get() = CachedValuesManager.getCachedValue(this, TYPE_INFERENCE_KEY) {
         val inferred = inferTypesIn(this)
         val project = project
 
-        // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
-        // cached value will be invalidated if the modification counter is incremented.
+        // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the cached value will be
+        // invalidated if the modification counter is incremented.
         if (this is RsModificationTrackerOwner) {
             Result.create(inferred, project.rustStructureModificationTracker, modificationTracker)
         } else {

@@ -131,12 +131,7 @@ class FileTree(private val rootDirectory: Entry.Directory) {
     }
 }
 
-class TestProject(
-    private val project: Project,
-    val root: VirtualFile,
-    private val filesWithCaret: List<String>
-) {
-
+class TestProject(private val project: Project, val root: VirtualFile, private val filesWithCaret: List<String>) {
     val fileWithCaret: String get() = filesWithCaret.singleOrNull()!!
 
     inline fun <reified T : PsiElement> findElementInFile(path: String): T {
@@ -213,9 +208,11 @@ private fun findElementInFile(file: PsiFile, marker: String): PsiElement {
     val makerColumn = markerOffset - doc.getLineStartOffset(markerLine)
     val elementOffset = doc.getLineStartOffset(markerLine - 1) + makerColumn
 
-    return file.findElementAt(elementOffset) ?:
-        error { "No element found, offset = $elementOffset" }
+    return file.findElementAt(elementOffset) ?: error { "No element found, offset = $elementOffset" }
 }
 
-fun replaceCaretMarker(text: String): String = text.replace("/*caret*/", "<caret>")
-fun hasCaretMarker(text: String): Boolean = text.contains("/*caret*/")
+fun replaceCaretMarker(text: String): String =
+    text.replace("/*caret*/", "<caret>")
+
+fun hasCaretMarker(text: String): Boolean =
+    text.contains("/*caret*/")

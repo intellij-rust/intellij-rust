@@ -6,6 +6,7 @@
 package org.rust.ide.formatter
 
 class RsStatementSemicolonFormatProcessorTest : RsFormatterTestBase() {
+
     // https://internals.rust-lang.org/t/syntax-of-block-like-expressions-in-match-arms/5025
     fun `test adds semicolon after return statement`() {
         doTextTest("""

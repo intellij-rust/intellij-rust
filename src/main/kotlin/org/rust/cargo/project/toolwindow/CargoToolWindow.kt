@@ -35,15 +35,15 @@ import javax.swing.tree.DefaultMutableTreeNode
 class CargoToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         guessAndSetupRustProject(project)
-        val toolwindowPanel = CargoToolWindowPanel(project)
+        val toolWindowPanel = CargoToolWindowPanel(project)
         val tab = ContentFactory.SERVICE.getInstance()
-            .createContent(toolwindowPanel, "", false)
+            .createContent(toolWindowPanel, "", false)
         toolWindow.contentManager.addContent(tab)
     }
 }
 
 private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
-    private val cargoTab = CargoToolWindow(project)
+    private val cargoTab: CargoToolWindow = CargoToolWindow(project)
 
     init {
         setToolbar(cargoTab.toolbar.component)
@@ -52,35 +52,35 @@ private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(tru
     }
 
     override fun getData(dataId: String): Any? {
-        if (CargoToolWindow.SELECTED_CARGO_PROJECT.`is`(dataId)) {
-            return cargoTab.selectedProject
-        }
+        if (CargoToolWindow.SELECTED_CARGO_PROJECT.`is`(dataId)) return cargoTab.selectedProject
         return super.getData(dataId)
     }
 }
 
-class CargoToolWindow(
-    private val project: Project
-) {
+class CargoToolWindow(private val project: Project) {
     val toolbar: ActionToolbar = run {
         val actionManager = ActionManager.getInstance()
-        actionManager.createActionToolbar("Cargo Toolbar", actionManager.getAction("Rust.Cargo") as DefaultActionGroup, true)
+        actionManager.createActionToolbar(
+            "Cargo Toolbar",
+            actionManager.getAction("Rust.Cargo") as DefaultActionGroup,
+            true
+        )
     }
 
-    val note = JEditorPane("text/html", html("")).apply {
+    val note: JEditorPane = JEditorPane("text/html", html("")).apply {
         background = UIUtil.getTreeBackground()
         isEditable = false
     }
 
-    private val projectStructure = CargoProjectStructure()
+    private val projectStructure: CargoProjectStructure = CargoProjectStructure()
+
     private val projectTree = CargoProjectStructureTree(projectStructure).apply {
         cellRenderer = CargoProjectTreeRenderer()
         addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (e.clickCount < 2) return
                 val tree = e.source as? CargoProjectStructureTree ?: return
-                val node = tree.selectionModel.selectionPath
-                    ?.lastPathComponent as? DefaultMutableTreeNode ?: return
+                val node = tree.selectionModel.selectionPath?.lastPathComponent as? DefaultMutableTreeNode ?: return
                 val target = (node.userObject as? CargoProjectStructure.Node.Target)?.target ?: return
                 val command = target.launchCommand()
                 if (command == null) {
@@ -99,13 +99,15 @@ class CargoToolWindow(
 
     init {
         with(project.messageBus.connect()) {
-            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
-                    ApplicationManager.getApplication().invokeLater {
-                        projectStructure.updateCargoProjects(projects.sortedBy { it.manifest })
+            subscribe(
+                CargoProjectsService.CARGO_PROJECTS_TOPIC,
+                object : CargoProjectsService.CargoProjectsListener {
+                    override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+                        ApplicationManager.getApplication().invokeLater {
+                            projectStructure.updateCargoProjects(projects.sortedBy { it.manifest })
+                        }
                     }
-                }
-            })
+                })
         }
 
         ApplicationManager.getApplication().invokeLater {

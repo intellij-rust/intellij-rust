@@ -8,7 +8,6 @@ package org.rust.openapiext
 import junit.framework.TestCase.fail
 import org.jetbrains.annotations.TestOnly
 
-
 /**
  * Testmarks allow easy navigation between code and tests.
  * That is, to find a relevant test for some piece of logic,
@@ -74,7 +73,7 @@ class Testmark(val name: String) {
     }
 }
 
-fun Testmark.hitOnFalse(b: Boolean): Boolean {
-    if (!b) hit()
-    return b
+fun Testmark.hitOnFalse(bool: Boolean): Boolean {
+    if (!bool) hit()
+    return bool
 }

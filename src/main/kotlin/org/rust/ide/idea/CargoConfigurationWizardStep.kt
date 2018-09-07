@@ -28,12 +28,13 @@ class CargoConfigurationWizardStep private constructor(
     private val context: WizardContext,
     private val projectDescriptor: ProjectDescriptor? = null
 ) : ModuleWizardStep() {
+    private val newProjectPanel: RsNewProjectPanel =
+        RsNewProjectPanel(showProjectTypeCheckbox = projectDescriptor == null)
 
-    private val newProjectPanel = RsNewProjectPanel(showProjectTypeCheckbox = projectDescriptor == null)
-
-    override fun getComponent(): JComponent = layout {
-        newProjectPanel.attachTo(this)
-    }
+    override fun getComponent(): JComponent =
+        layout {
+            newProjectPanel.attachTo(this)
+        }
 
     override fun disposeUIResources() = Disposer.dispose(newProjectPanel)
 
@@ -93,10 +94,13 @@ class CargoConfigurationWizardStep private constructor(
     }
 
     companion object {
-        fun newProject(context: WizardContext) =
+
+        fun newProject(context: WizardContext): CargoConfigurationWizardStep =
             CargoConfigurationWizardStep(context, null)
 
-        fun importExistingProject(context: WizardContext, projectDescriptor: ProjectDescriptor) =
-            CargoConfigurationWizardStep(context, projectDescriptor)
+        fun importExistingProject(
+            context: WizardContext,
+            projectDescriptor: ProjectDescriptor
+        ): CargoConfigurationWizardStep = CargoConfigurationWizardStep(context, projectDescriptor)
     }
 }

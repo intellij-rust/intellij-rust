@@ -16,41 +16,42 @@ import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.stdext.buildList
 
-/**
- * Provides functions/methods arguments hint.
- */
+/** Provides functions/methods arguments hint. */
 class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescription> {
-
     var hintText: String = ""
 
-    override fun couldShowInLookup() = true
+    override fun couldShowInLookup(): Boolean = true
 
-    override fun tracksParameterIndex() = true
+    override fun tracksParameterIndex(): Boolean = true
 
-    override fun getParameterCloseChars() = ",)"
+    override fun getParameterCloseChars(): String = ",)"
 
     override fun getParametersForLookup(item: LookupElement, context: ParameterInfoContext?): Array<out Any>? {
-        val el = item.`object` as? PsiElement ?: return null
-        val p = el.parent?.parent ?: return null
-        val isCall = p is RsCallExpr && CallInfo.resolve(p) != null || p is RsMethodCall && CallInfo.resolve(p) != null
-        return if (isCall) arrayOf(p) else emptyArray()
+        val element = item.`object` as? PsiElement ?: return null
+        val parent = element.parent?.parent ?: return null
+        val isCall = parent is RsCallExpr && CallInfo.resolve(parent) != null
+            || parent is RsMethodCall
+            && CallInfo.resolve(parent) != null
+        return if (isCall) arrayOf(parent) else emptyArray()
     }
 
-    override fun getParametersForDocumentation(p: RsArgumentsDescription, context: ParameterInfoContext?) =
-        p.arguments
+    override fun getParametersForDocumentation(
+        argumentsDescription: RsArgumentsDescription,
+        context: ParameterInfoContext?
+    ): Array<String> = argumentsDescription.arguments
 
     override fun findElementForParameterInfo(context: CreateParameterInfoContext): PsiElement? {
         val contextElement = context.file.findElementAt(context.editor.caretModel.offset) ?: return null
         return findElementForParameterInfo(contextElement)
     }
 
-    override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext) =
+    override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext): PsiElement? =
         context.file.findElementAt(context.editor.caretModel.offset)
 
     override fun showParameterInfo(element: PsiElement, context: CreateParameterInfoContext) {
         if (element !is RsValueArgumentList) return
-        val argsDescr = RsArgumentsDescription.findDescription(element) ?: return
-        context.itemsToShow = arrayOf(argsDescr)
+        val argumentsDescription = RsArgumentsDescription.findDescription(element) ?: return
+        context.itemsToShow = arrayOf(argumentsDescription)
         context.showHint(element, element.textRange.startOffset, this)
     }
 
@@ -71,13 +72,13 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
         context.objectsToView.indices.map { context.setUIComponentEnabled(it, true) }
     }
 
-    override fun updateUI(p: RsArgumentsDescription?, context: ParameterInfoUIContext) {
-        if (p == null) {
+    override fun updateUI(argumentsDescription: RsArgumentsDescription?, context: ParameterInfoUIContext) {
+        if (argumentsDescription == null) {
             context.isUIComponentEnabled = false
             return
         }
-        val range = p.getArgumentRange(context.currentParameterIndex)
-        hintText = p.presentText
+        val range = argumentsDescription.getArgumentRange(context.currentParameterIndex)
+        hintText = argumentsDescription.presentText
         context.setupUIComponentPresentation(
             hintText,
             range.startOffset,
@@ -91,9 +92,7 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
     private fun findElementForParameterInfo(contextElement: PsiElement) =
         contextElement.ancestorStrict<RsValueArgumentList>()
 
-    /**
-     * Finds index of the argument in the given place
-     */
+    /** Finds index of the argument in the given place. */
     private fun findArgumentIndex(place: PsiElement): Int {
         val callArgs = place.ancestorStrict<RsValueArgumentList>() ?: return INVALID_INDEX
         val descr = RsArgumentsDescription.findDescription(callArgs) ?: return INVALID_INDEX
@@ -101,7 +100,7 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
         if (descr.arguments.isNotEmpty()) {
             index += generateSequence(callArgs.firstChild, { c -> c.nextSibling })
                 .filter { it.text == "," }
-                .count({ it.textRange.startOffset < place.textRange.startOffset }) + 1
+                .count { it.textRange.startOffset < place.textRange.startOffset } + 1
             if (index >= descr.arguments.size) {
                 index = -1
             }
@@ -110,28 +109,23 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
     }
 
     private companion object {
-        val INVALID_INDEX: Int = -2
+        const val INVALID_INDEX: Int = -2
     }
 }
 
-/**
- * Holds information about arguments from func/method declaration
- */
-class RsArgumentsDescription(
-    val arguments: Array<String>
-) {
+/** Holds information about arguments from func/method declaration. */
+class RsArgumentsDescription(val arguments: Array<String>) {
+    val presentText: String =
+        if (arguments.isEmpty()) "<no arguments>" else arguments.joinToString(", ")
+
     fun getArgumentRange(index: Int): TextRange {
         if (index < 0 || index >= arguments.size) return TextRange.EMPTY_RANGE
         val start = arguments.take(index).sumBy { it.length + 2 }
         return TextRange(start, start + arguments[index].length)
     }
 
-    val presentText = if (arguments.isEmpty()) "<no arguments>" else arguments.joinToString(", ")
-
     companion object {
-        /**
-         * Finds declaration of the func/method and creates description of its arguments
-         */
+        /** Finds declaration of the func/method and creates description of its arguments. */
         fun findDescription(args: RsValueArgumentList): RsArgumentsDescription? {
             val call = args.parent
             val callInfo = when (call) {

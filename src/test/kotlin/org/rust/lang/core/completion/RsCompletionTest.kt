@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 class RsCompletionTest : RsCompletionTestBase() {
+
     fun `test local variable`() = doSingleCompletion("""
         fn foo(quux: i32) { qu/*caret*/ }
     """, """

@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 class RsNamespaceResolveTest : RsResolveTestBase() {
+
     fun `test mod and fn`() = checkByCode("""
         mod test {
            //X
@@ -116,7 +117,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
     """)
 
     fun `test use mod glob`() = checkByCode("""
-        use m::{foo};
+        use m::foo;
         mod m {
             fn foo() {}
 
@@ -133,7 +134,7 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
     """)
 
     fun `test use fn glob`() = checkByCode("""
-        use m::{foo};
+        use m::foo;
         mod m {
             fn foo() {}
               //X
@@ -190,5 +191,4 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
             let _: T::X = T::X;
         }                  //^
     """)
-
 }

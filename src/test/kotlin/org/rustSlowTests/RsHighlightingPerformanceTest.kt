@@ -21,24 +21,41 @@ import org.rust.stdext.Timings
 
 
 class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
-    // It is a performance test, but we don't want to waste time
-    // measuring CPU performance
+    // It is a performance test, but we don't want to waste time measuring CPU performance.
     override fun isPerformanceTest(): Boolean = false
 
     fun `test highlighting Cargo`() =
-        repeatTest { highlightProjectFile("cargo", "https://github.com/rust-lang/cargo", "src/cargo/core/resolver/mod.rs") }
+        repeatTest {
+            highlightProjectFile(
+                "cargo",
+                "https://github.com/rust-lang/cargo",
+                "src/cargo/core/resolver/mod.rs"
+            )
+        }
 
     fun `test highlighting mysql_async`() =
-        repeatTest { highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/conn/mod.rs") }
+        repeatTest {
+            highlightProjectFile(
+                "mysql_async",
+                "https://github.com/blackbeam/mysql_async",
+                "src/conn/mod.rs"
+            )
+        }
 
     fun `test highlighting mysql_async 2`() =
-        repeatTest { highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/connection_like/mod.rs") }
+        repeatTest {
+            highlightProjectFile(
+                "mysql_async",
+                "https://github.com/blackbeam/mysql_async",
+                "src/connection_like/mod.rs"
+            )
+        }
 
-    private fun repeatTest(f: () -> Timings) {
+    private fun repeatTest(function: () -> Timings) {
         var result = Timings()
         println("${name.substring("test ".length)}:")
         repeat(10) {
-            result = result.merge(f())
+            result = result.merge(function())
             tearDown()
             setUp()
         }
@@ -92,19 +109,13 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
         return timings
     }
 
-    private fun currentPsiModificationCount() =
+    private fun currentPsiModificationCount(): Long =
         PsiModificationTracker.SERVICE.getInstance(project).modificationCount
 
     private fun openRealProject(path: String): VirtualFile? {
-        val projectDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
-            ?: return null
+        val projectDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path) ?: return null
         runWriteAction {
-            VfsUtil.copyDirectory(
-                this,
-                projectDir,
-                cargoProjectDirectory,
-                { true }
-            )
+            VfsUtil.copyDirectory(this, projectDir, cargoProjectDirectory) { true }
             fullyRefreshDirectory(cargoProjectDirectory)
         }
 
@@ -113,4 +124,3 @@ class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
         return cargoProjectDirectory
     }
 }
-

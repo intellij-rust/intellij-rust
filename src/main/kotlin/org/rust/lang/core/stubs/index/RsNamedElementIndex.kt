@@ -19,6 +19,7 @@ import org.rust.openapiext.ProjectCache
 import org.rust.openapiext.getElements
 
 class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
+
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<String, RsNamedElement> = KEY
 
@@ -26,15 +27,18 @@ class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
         val KEY: StubIndexKey<String, RsNamedElement> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustNamedElementIndex")
 
-        private val derivableTraitsCache = ProjectCache<String, Collection<RsTraitItem>>("derivableTraitsCache")
+        private val derivableTraitsCache: ProjectCache<String, Collection<RsTraitItem>> =
+            ProjectCache("derivableTraitsCache")
+
         fun findDerivableTraits(project: Project, target: String): Collection<RsTraitItem> =
             derivableTraitsCache.getOrPut(project, target) {
                 val stdTrait = STD_DERIVABLE_TRAITS[target]
                 getElements(KEY, target, project, GlobalSearchScope.allScope(project))
                     .mapNotNull { it as? RsTraitItem }
-                    .filter { e ->
+                    .filter { trait ->
                         if (stdTrait == null) return@filter true
-                        e.containingCargoPackage?.origin == PackageOrigin.STDLIB && e.containingMod.modName == stdTrait.modName
+                        trait.containingCargoPackage?.origin == PackageOrigin.STDLIB
+                            && trait.containingMod.modName == stdTrait.modName
                     }
             }
 

@@ -20,10 +20,9 @@ import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.newProject.RsPackageNameValidator
 
-/**
- * Builder which is used when a new project or module is created and not imported from source.
- */
+/** Builder which is used when a new project or module is created and not imported from source. */
 class RsModuleBuilder : ModuleBuilder() {
+    var configurationData: ConfigurationData? = null
 
     override fun getModuleType(): ModuleType<*>? = RsModuleType.INSTANCE
 
@@ -59,9 +58,7 @@ class RsModuleBuilder : ModuleBuilder() {
         throw ConfigurationException(errorMessage)
     }
 
-    var configurationData: ConfigurationData? = null
-
     companion object {
-        private val LOG = Logger.getInstance(RsModuleBuilder::class.java)
+        private val LOG: Logger = Logger.getInstance(RsModuleBuilder::class.java)
     }
 }

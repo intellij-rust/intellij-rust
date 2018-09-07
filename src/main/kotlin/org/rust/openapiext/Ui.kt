@@ -18,11 +18,8 @@ import com.intellij.util.Alarm
 import javax.swing.event.DocumentEvent
 import kotlin.reflect.KProperty
 
-class UiDebouncer(
-    private val parentDisposable: Disposable,
-    private val delayMillis: Int = 200
-) {
-    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
+class UiDebouncer(private val parentDisposable: Disposable, private val delayMillis: Int = 200) {
+    private val alarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
 
     /**
      * @param onUiThread: callback to be executed in EDT with **any** modality state.
@@ -32,10 +29,10 @@ class UiDebouncer(
         if (Disposer.isDisposed(parentDisposable)) return
         alarm.cancelAllRequests()
         alarm.addRequest({
-            val r = onPooledThread()
+            val request = onPooledThread()
             ApplicationManager.getApplication().invokeLater({
                 if (!Disposer.isDisposed(parentDisposable)) {
-                    onUiThread(r)
+                    onUiThread(request)
                 }
             }, ModalityState.any())
         }, delayMillis)
@@ -47,8 +44,8 @@ fun pathToDirectoryTextField(
     title: String,
     onTextChanged: () -> Unit = {}
 ): TextFieldWithBrowseButton {
-
     val component = TextFieldWithBrowseButton(null, disposable)
+
     component.addBrowseFolderListener(title, null, null,
         FileChooserDescriptorFactory.createSingleFolderDescriptor(),
         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
@@ -63,9 +60,9 @@ fun pathToDirectoryTextField(
 }
 
 class CheckboxDelegate(private val checkbox: JBCheckBox) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean {
-        return checkbox.isSelected
-    }
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean =
+        checkbox.isSelected
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
         checkbox.isSelected = value

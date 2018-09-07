@@ -13,12 +13,9 @@ import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processBinaryOpVariants
 
-class RsBinaryOpReferenceImpl(
-    element: RsBinaryOp
-) : RsReferenceCached<RsBinaryOp>(element),
-    RsReference {
-
-    override val RsBinaryOp.referenceAnchor: PsiElement get() = referenceNameElement
+class RsBinaryOpReferenceImpl(element: RsBinaryOp) : RsReferenceCached<RsBinaryOp>(element), RsReference {
+    override val RsBinaryOp.referenceAnchor: PsiElement
+        get() = referenceNameElement
 
     override fun resolveInner(): List<RsElement> {
         val operator = element.operatorType as? OverloadableBinaryOperator ?: return emptyList()

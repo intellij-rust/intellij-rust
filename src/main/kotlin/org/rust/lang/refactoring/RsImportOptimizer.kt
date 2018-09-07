@@ -15,16 +15,17 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.childrenOfType
 
 class RsImportOptimizer : ImportOptimizer {
+
     override fun supports(file: PsiFile?): Boolean = file is RsFile
 
-    override fun processFile(file: PsiFile?) = Runnable {
-        executeForUseItem(file as RsFile)
-        executeForExternCrate(file)
-    }
+    override fun processFile(file: PsiFile?): Runnable =
+        Runnable {
+            executeForUseItem(file as RsFile)
+            executeForExternCrate(file)
+        }
 
     private fun executeForExternCrate(file: RsFile) {
-        val first = file.childrenOfType<RsElement>()
-            .firstOrNull { it !is RsInnerAttr } ?: return
+        val first = file.childrenOfType<RsElement>().firstOrNull { it !is RsInnerAttr } ?: return
         val externCrateItems = file.childrenOfType<RsExternCrateItem>()
         externCrateItems
             .sortedBy { it.referenceName }
@@ -67,7 +68,8 @@ class RsImportOptimizer : ImportOptimizer {
         }
 
         private fun replaceOrderOfUseItems(file: RsMod, uses: Collection<RsUseItem>) {
-            val first = file.childrenOfType<RsElement>()
+            val first = file
+                .childrenOfType<RsElement>()
                 .firstOrNull { it !is RsExternCrateItem && it !is RsAttr } ?: return
             val psiFactory = RsPsiFactory(file.project)
             val sortedUses = uses

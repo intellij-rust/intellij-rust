@@ -6,6 +6,7 @@
 package org.rust.ide.intentions
 
 class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplicitlyIntention()) {
+
     fun `test inferred type`() = doAvailableTest(
         """ fn main() { let var/*caret*/ = 42; } """,
         """ fn main() { let var: i32 = 42; } """

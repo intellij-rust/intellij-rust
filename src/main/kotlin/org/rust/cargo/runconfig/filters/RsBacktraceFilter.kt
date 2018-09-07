@@ -9,6 +9,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -25,30 +26,22 @@ import java.util.regex.Pattern
  * - Turn source code links into hyperlinks.
  * - Dims function hash codes to reduce noise.
  */
-class RsBacktraceFilter(
-    project: Project,
-    cargoProjectDir: VirtualFile,
-    workspace: CargoWorkspace?
-) : Filter {
+class RsBacktraceFilter(project: Project, cargoProjectDir: VirtualFile, workspace: CargoWorkspace?) : Filter {
+    private val sourceLinkFilter: RegexpFileLinkFilter =
+        RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
+    private val backtraceItemFilter: RsBacktraceItemFilter =
+        RsBacktraceItemFilter(project, workspace)
 
-    private val sourceLinkFilter = RegexpFileLinkFilter(project, cargoProjectDir, "\\s+at $FILE_POSITION_RE")
-    private val backtraceItemFilter = RsBacktraceItemFilter(project, workspace)
-
-    override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-        return backtraceItemFilter.applyFilter(line, entireLength)
-            ?: sourceLinkFilter.applyFilter(line, entireLength)
-    }
+    override fun applyFilter(line: String, entireLength: Int): Filter.Result? =
+        backtraceItemFilter.applyFilter(line, entireLength) ?: sourceLinkFilter.applyFilter(line, entireLength)
 }
 
-/**
- * Adds hyperlinks to function names in backtraces
- */
-private class RsBacktraceItemFilter(
-    val project: Project,
-    val workspace: CargoWorkspace?
-) : Filter {
-    private val pattern = Pattern.compile("^(\\s*\\d+:\\s+(?:0x[a-f0-9]+ - )?)(.+?)(::h[0-9a-f]+)?$")!!
-    private val docManager = PsiDocumentManager.getInstance(project)
+/** Adds hyperlinks to function names in backtraces. */
+private class RsBacktraceItemFilter(val project: Project, val workspace: CargoWorkspace?) : Filter {
+    private val pattern: Pattern =
+        Pattern.compile("^(\\s*\\d+:\\s+(?:0x[a-f0-9]+ - )?)(.+?)(::h[0-9a-f]+)?$")!!
+    private val docManager: PsiDocumentManager =
+        PsiDocumentManager.getInstance(project)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         val matcher = pattern.matcher(line)
@@ -102,16 +95,15 @@ private class RsBacktraceItemFilter(
             str = if (idx < 0 || idx > range.endInclusive) {
                 str.removeRange(range)
             } else {
-                str.removeRange(IntRange(range.endInclusive, range.endInclusive))
-                        .removeRange(IntRange(range.start, range.start))
+                str
+                    .removeRange(IntRange(range.endInclusive, range.endInclusive))
+                    .removeRange(IntRange(range.start, range.start))
             }
         }
         return str
     }
 
-    /**
-     * Finds the range of the first matching angle brackets within the string.
-     */
+    /** Finds the range of the first matching angle brackets within the string. */
     private fun String.findAngleBrackets(): IntRange? {
         var start = -1
         var counter = 0
@@ -126,21 +118,22 @@ private class RsBacktraceItemFilter(
                 '>' -> counter -= 1
                 else -> continue@loop
             }
-            if (counter == 0) {
-                return IntRange(start, index)
-            }
+            if (counter == 0) return IntRange(start, index)
         }
         return null
     }
 
     private companion object {
-        val DIMMED_TEXT = EditorColorsManager.getInstance().globalScheme
-            .getAttributes(TextAttributesKey.createTextAttributesKey("org.rust.DIMMED_TEXT"))!!
-        val SKIP_PREFIXES = arrayOf(
-            "std::rt::lang_start",
-            "std::panicking",
-            "std::sys::backtrace",
-            "std::sys::imp::backtrace",
-            "core::panicking")
+        val DIMMED_TEXT: TextAttributes =
+            EditorColorsManager.getInstance().globalScheme
+                .getAttributes(TextAttributesKey.createTextAttributesKey("org.rust.DIMMED_TEXT"))!!
+        val SKIP_PREFIXES: Array<String> =
+            arrayOf(
+                "std::rt::lang_start",
+                "std::panicking",
+                "std::sys::backtrace",
+                "std::sys::imp::backtrace",
+                "core::panicking"
+            )
     }
 }

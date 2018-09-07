@@ -10,6 +10,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspection()) {
+
     fun `test simple assert_eq fix`() = checkFixByText("Convert to assert_eq!", """
         fn main() {
             let x = 10;
@@ -26,7 +27,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
 
     fun `test expr assert_eq fix`() = checkFixByText("Convert to assert_eq!", """
         fn answer() -> i32 {
-            return 42
+            return 42;
         }
 
         fn main() {
@@ -34,7 +35,7 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, """
         fn answer() -> i32 {
-            return 42
+            return 42;
         }
 
         fn main() {
@@ -102,7 +103,8 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true)
 
-    fun `test fix unavailable when arguments do not implement Debug`() = checkFixIsUnavailable("Convert to assert_eq!", """
+    fun `test fix unavailable when arguments do not implement Debug`() =
+        checkFixIsUnavailable("Convert to assert_eq!", """
         #[derive(PartialEq)]
         struct Number(u32);
 
@@ -113,7 +115,8 @@ class RsAssertEqualInspectionTest : RsInspectionsTestBase(RsAssertEqualInspectio
         }
     """, checkWeakWarn = true, testmark = RsAssertEqualInspection.Testmarks.debugTraitIsNotImplemented)
 
-    fun `test fix unavailable when arguments do not implement PartialEq`() = checkFixIsUnavailable("Convert to assert_eq!", """
+    fun `test fix unavailable when arguments do not implement PartialEq`() =
+        checkFixIsUnavailable("Convert to assert_eq!", """
         #[derive(Debug)]
         struct Number(u32);
 

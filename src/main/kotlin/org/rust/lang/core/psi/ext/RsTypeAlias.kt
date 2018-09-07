@@ -22,20 +22,25 @@ val RsTypeAlias.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 
 abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>, RsTypeAlias {
+    override val isPublic: Boolean
+        get() = RsPsiImplUtil.isPublic(this, stub)
+
+    override val isAbstract: Boolean
+        get() = typeReference == null
+
+    override val crateRelativePath: String?
+        get() = RsPsiImplUtil.crateRelativePath(this)
+
+    override val declaredType: Ty
+        get() = RsPsiTypeImplUtil.declaredType(this)
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsTypeAliasStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RsIcons.TYPE)
+    override fun getIcon(flags: Int): Icon? =
+        iconWithVisibility(flags, RsIcons.TYPE)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    override val isAbstract: Boolean get() = typeReference == null
-
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
-
-    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
-
-    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+    override fun getContext(): PsiElement? =
+        RsExpandedElement.getContextImpl(this)
 }

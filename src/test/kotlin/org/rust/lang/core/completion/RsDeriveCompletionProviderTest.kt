@@ -12,6 +12,7 @@ import org.rust.lang.core.resolve.withDependencies
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
+
     fun `test complete on struct`() = doSingleCompletion("""
         #[derive(Debu/*caret*/)]
         struct Test {

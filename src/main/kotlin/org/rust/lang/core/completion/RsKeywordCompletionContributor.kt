@@ -24,61 +24,133 @@ import org.rust.lang.core.withPrevSiblingSkipping
 import org.rust.lang.core.withSuperParent
 
 /**
- * Completes Rust keywords
+ * Completes Rust keywords.
  *
- * TODO: checkout  org.jetbrains.kotlin.idea.completion.KeywordCompletion, it has some super cool ideas
+ * TODO: checkout org.jetbrains.kotlin.idea.completion.KeywordCompletion, it has some super cool ideas
  */
 class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     init {
-        extend(CompletionType.BASIC, declarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "pub", "static", "struct", "trait", "type", "unsafe", "use"))
-        extend(CompletionType.BASIC, pubDeclarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "unsafe", "use"))
-        extend(CompletionType.BASIC, externDeclarationPattern(),
-            RsKeywordCompletionProvider("crate", "fn"))
-        extend(CompletionType.BASIC, unsafeDeclarationPattern(),
-            RsKeywordCompletionProvider("fn", "impl", "trait", "extern"))
-        extend(CompletionType.BASIC, newCodeStatementPattern(),
-            RsKeywordCompletionProvider("return", "let"))
-        extend(CompletionType.BASIC, letPattern(),
-            RsKeywordCompletionProvider("mut"))
-        extend(CompletionType.BASIC, loopFlowCommandPatern(),
-            RsKeywordCompletionProvider("break", "continue"))
-        extend(CompletionType.BASIC, wherePattern(),
-            RsKeywordCompletionProvider("where"))
+        extend(
+            CompletionType.BASIC,
+            declarationPattern(),
+            RsKeywordCompletionProvider(
+                "const",
+                "enum",
+                "extern",
+                "fn",
+                "impl",
+                "mod",
+                "pub",
+                "static",
+                "struct",
+                "trait",
+                "type",
+                "unsafe",
+                "use"
+            )
+        )
 
-        extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
-            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-                val elseBuilder = LookupElementBuilder
-                    .create("else")
-                    .bold()
-                    .withTailText(" {...}")
-                    .withInsertHandler { ctx, _ ->
-                        ctx.document.insertString(ctx.selectionEndOffset, " {  }")
-                        EditorModificationUtil.moveCaretRelatively(ctx.editor, 3)
+        extend(
+            CompletionType.BASIC,
+            pubDeclarationPattern(),
+            RsKeywordCompletionProvider(
+                "const",
+                "enum",
+                "extern",
+                "fn",
+                "mod",
+                "static",
+                "struct",
+                "trait",
+                "type",
+                "unsafe",
+                "use"
+            )
+        )
 
-                    }
+        extend(
+            CompletionType.BASIC,
+            externDeclarationPattern(),
+            RsKeywordCompletionProvider("crate", "fn")
+        )
 
-                val elseIfBuilder = conditionLookupElement("else if")
+        extend(
+            CompletionType.BASIC,
+            unsafeDeclarationPattern(),
+            RsKeywordCompletionProvider("fn", "impl", "trait", "extern")
+        )
 
-                // `else` is more common than `else if`
-                result.addElement(elseBuilder.withPriority(KEYWORD_PRIORITY * 1.0001))
-                result.addElement(elseIfBuilder.withPriority(KEYWORD_PRIORITY))
-            }
-        })
+        extend(
+            CompletionType.BASIC,
+            newCodeStatementPattern(),
+            RsKeywordCompletionProvider("return", "let")
+        )
 
-        extend(CompletionType.BASIC, pathExpressionPattern(), object : CompletionProvider<CompletionParameters>() {
-            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-                for (keyword in CONDITION_KEYWORDS) {
-                    result.addElement(conditionLookupElement(keyword).withPriority(KEYWORD_PRIORITY))
+        extend(
+            CompletionType.BASIC,
+            letPattern(),
+            RsKeywordCompletionProvider("mut")
+        )
+
+        extend(
+            CompletionType.BASIC,
+            loopFlowCommandPattern(),
+            RsKeywordCompletionProvider("break", "continue")
+        )
+
+        extend(
+            CompletionType.BASIC,
+            wherePattern(),
+            RsKeywordCompletionProvider("where")
+        )
+
+        extend(
+            CompletionType.BASIC,
+            elsePattern(),
+            object : CompletionProvider<CompletionParameters>() {
+                override fun addCompletions(
+                    parameters: CompletionParameters,
+                    context: ProcessingContext,
+                    result: CompletionResultSet
+                ) {
+                    val elseBuilder = LookupElementBuilder
+                        .create("else")
+                        .bold()
+                        .withTailText(" {...}")
+                        .withInsertHandler { ctx, _ ->
+                            ctx.document.insertString(ctx.selectionEndOffset, " {  }")
+                            EditorModificationUtil.moveCaretRelatively(ctx.editor, 3)
+                        }
+
+                    val elseIfBuilder = conditionLookupElement("else if")
+
+                    // `else` is more common than `else if`
+                    result.addElement(elseBuilder.withPriority(KEYWORD_PRIORITY * 1.0001))
+                    result.addElement(elseIfBuilder.withPriority(KEYWORD_PRIORITY))
                 }
             }
-        })
+        )
+
+        extend(
+            CompletionType.BASIC,
+            pathExpressionPattern(),
+            object : CompletionProvider<CompletionParameters>() {
+                override fun addCompletions(
+                    parameters: CompletionParameters,
+                    context: ProcessingContext,
+                    result: CompletionResultSet
+                ) {
+                    for (keyword in CONDITION_KEYWORDS) {
+                        result.addElement(conditionLookupElement(keyword).withPriority(KEYWORD_PRIORITY))
+                    }
+                }
+            }
+        )
     }
 
-    private fun conditionLookupElement(lookupString: String): LookupElementBuilder {
-        return LookupElementBuilder
+    private fun conditionLookupElement(lookupString: String): LookupElementBuilder =
+        LookupElementBuilder
             .create(lookupString)
             .bold()
             .withTailText(" {...}")
@@ -93,7 +165,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                 context.document.insertString(context.selectionEndOffset, tail)
                 EditorModificationUtil.moveCaretRelatively(context.editor, 1)
             }
-    }
 
     private fun declarationPattern(): PsiElementPattern.Capture<PsiElement> =
         baseDeclarationPattern().and(statementBeginningPattern())
@@ -113,17 +184,14 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     private fun letPattern(): PsiElementPattern.Capture<PsiElement> =
         baseCodeStatementPattern().and(statementBeginningPattern("let"))
 
-    private fun loopFlowCommandPatern(): PsiElementPattern.Capture<PsiElement> =
+    private fun loopFlowCommandPattern(): PsiElementPattern.Capture<PsiElement> =
         RsPsiPattern.inAnyLoop.and(newCodeStatementPattern())
 
     private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
-        psiElement()
-            .withParent(or(psiElement<RsPath>(), psiElement<RsModItem>(), psiElement<RsFile>()))
+        psiElement().withParent(or(psiElement<RsPath>(), psiElement<RsModItem>(), psiElement<RsFile>()))
 
     private fun baseCodeStatementPattern(): PsiElementPattern.Capture<PsiElement> =
-        psiElement()
-            .inside(psiElement<RsFunction>())
-            .andNot(psiElement().withParent(RsModItem::class.java))
+        psiElement().inside(psiElement<RsFunction>()).andNot(psiElement().withParent(RsModItem::class.java))
 
     private fun statementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement(IDENTIFIER).and(RsPsiPattern.onStatementBeginning(*startWords))
@@ -138,8 +206,10 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
         val function = psiElement<RsFunction>()
             .withLastChildSkipping(RsPsiPattern.error, or(psiElement<RsValueParameterList>(), psiElement<RsRetType>()))
-            .andOr(psiElement().withChild(psiElement<RsTypeParameterList>()),
-                psiElement().withParent(RsMembers::class.java))
+            .andOr(
+                psiElement().withChild(psiElement<RsTypeParameterList>()),
+                psiElement().withParent(RsMembers::class.java)
+            )
 
         val struct = psiElement<RsStructItem>()
             .withChild(typeParameters)
@@ -165,9 +235,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     private fun pathExpressionPattern(): PsiElementPattern.Capture<PsiElement> {
         val parent = psiElement<RsPath>()
             .with(object : PatternCondition<RsPath>("RsPath") {
-                override fun accepts(t: RsPath, context: ProcessingContext?): Boolean {
-                    return t.path == null && t.typeQual == null
-                }
+                override fun accepts(path: RsPath, context: ProcessingContext?): Boolean =
+                    path.path == null && path.typeQual == null
             })
 
         return psiElement(IDENTIFIER)
@@ -177,6 +246,6 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     }
 
     companion object {
-        val CONDITION_KEYWORDS = listOf("if", "match")
+        val CONDITION_KEYWORDS: List<String> = listOf("if", "match")
     }
 }

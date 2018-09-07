@@ -22,9 +22,16 @@ class AddFeatureAttributeFix(
 ) : LocalQuickFixAndIntentionActionOnPsiElement(crateRoot) {
 
     override fun getFamilyName(): String = "Add feature attribute"
+
     override fun getText(): String = "Add `$featureName` feature"
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        startElement: PsiElement,
+        endElement: PsiElement
+    ) {
         val mod = startElement as RsMod
         val lastFeatureAttribute = mod.childrenOfType<RsInnerAttr>()
             .lastOrNull { it.metaItem.name == "feature" }

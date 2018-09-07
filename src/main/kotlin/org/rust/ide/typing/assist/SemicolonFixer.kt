@@ -11,10 +11,9 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsStmt
 
-/**
- * Fixer that adds missing semicolons at the end of statements.
- */
+/** Fixer that adds missing semicolons at the end of statements. */
 class SemicolonFixer : SmartEnterProcessorWithFixers.Fixer<RsSmartEnterProcessor>() {
+
     override fun apply(editor: Editor, processor: RsSmartEnterProcessor, element: PsiElement) {
         fixStatement(editor, element)
         fixLastExprInBlock(editor, element)

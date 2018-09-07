@@ -6,17 +6,16 @@
 package org.rust.cargo
 
 object CargoConstants {
+    const val MANIFEST_FILE: String = "Cargo.toml"
+    const val XARGO_MANIFEST_FILE: String = "Xargo.toml"
+    const val LOCK_FILE: String = "Cargo.lock"
+    const val BUILD_RS_FILE: String = "build.rs"
 
-    const val MANIFEST_FILE = "Cargo.toml"
-    const val XARGO_MANIFEST_FILE = "Xargo.toml"
-    const val LOCK_FILE = "Cargo.lock"
-    const val BUILD_RS_FILE = "build.rs"
-
-    const val RUST_BACTRACE_ENV_VAR = "RUST_BACKTRACE"
+    const val RUST_BACTRACE_ENV_VAR: String = "RUST_BACKTRACE"
 
     object ProjectLayout {
-        val sources = listOf("src", "examples")
-        val tests = listOf("tests", "benches")
-        const val target = "target"
+        val sources: List<String> = listOf("src", "examples")
+        val tests: List<String> = listOf("tests", "benches")
+        const val target: String = "target"
     }
 }

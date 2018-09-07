@@ -42,16 +42,16 @@ sealed class RsLiteralKind(val node: ASTNode) {
         override val validSuffixes: List<kotlin.String>
             get() = listOf("f32", "f64")
 
-        val value: Double? get() = offsets.value?.substring(node.text)
-            ?.filter { it != '_' }
-            ?.let {
-                try {
-                    it.toDouble()
-                } catch(e: NumberFormatException) {
-                    null
+        val value: Double?
+            get() = offsets.value?.substring(node.text)
+                ?.filter { it != '_' }
+                ?.let {
+                    try {
+                        it.toDouble()
+                    } catch (e: NumberFormatException) {
+                        null
+                    }
                 }
-            }
-
 
         override val offsets: LiteralOffsets by lazy { offsetsForNumber(node) }
     }
@@ -64,14 +64,15 @@ sealed class RsLiteralKind(val node: ASTNode) {
         override val hasUnpairedQuotes: kotlin.Boolean
             get() = offsets.openDelim == null || offsets.closeDelim == null
 
-        override val value: kotlin.String? get() {
-            val rawValue = offsets.value?.substring(node.text)
-
-            return if (node.elementType in RS_RAW_LITERALS)
-                rawValue
-            else
-                rawValue?.unescapeRust(RustEscapesLexer.of(node.elementType))
-        }
+        override val value: kotlin.String?
+            get() {
+                val rawValue = offsets.value?.substring(node.text)
+                return if (node.elementType in RS_RAW_LITERALS) {
+                    rawValue
+                } else {
+                    rawValue?.unescapeRust(RustEscapesLexer.of(node.elementType))
+                }
+            }
     }
 
     class Char(node: ASTNode, val isByte: kotlin.Boolean) : RsLiteralKind(node), RsLiteralWithSuffix, RsTextLiteral {
@@ -101,14 +102,13 @@ sealed class RsLiteralKind(val node: ASTNode) {
             else -> null
         }
     }
-
 }
 
-val RsLitExpr.kind: RsLiteralKind? get() {
-    val literalAstNode = this.node.findChildByType(RS_LITERALS) ?: return null
-    return RsLiteralKind.fromAstNode(literalAstNode)
-        ?: error("Unknown literal: $literalAstNode (`$text`)")
-}
+val RsLitExpr.kind: RsLiteralKind?
+    get() {
+        val literalAstNode = this.node.findChildByType(RS_LITERALS) ?: return null
+        return RsLiteralKind.fromAstNode(literalAstNode) ?: error("Unknown literal: $literalAstNode (`$text`)")
+    }
 
 fun offsetsForNumber(node: ASTNode): LiteralOffsets {
     val (start, digits) = when (node.text.take(2)) {
@@ -135,8 +135,7 @@ fun offsetsForNumber(node: ASTNode): LiteralOffsets {
 
 fun offsetsForText(node: ASTNode): LiteralOffsets {
     when (node.elementType) {
-        RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL ->
-            return offsetsForRawText(node)
+        RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL -> return offsetsForRawText(node)
     }
 
     val text = node.text
@@ -213,9 +212,7 @@ private fun offsetsForRawText(node: ASTNode): LiteralOffsets {
 
 private fun locatePrefix(node: ASTNode): Int {
     node.text.forEachIndexed { i, ch ->
-        if (!ch.isLetter()) {
-            return i
-        }
+        if (!ch.isLetter()) return i
     }
     return node.textLength
 }

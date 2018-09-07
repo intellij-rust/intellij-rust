@@ -15,11 +15,12 @@ interface RsQualifiedNamedElement : RsNamedElement {
     val crateRelativePath: String?
 }
 
-val RsQualifiedNamedElement.qualifiedName: String? get() {
-    val inCratePath = crateRelativePath ?: return null
-    val cargoTarget = containingCargoTarget?.normName ?: return null
-    return "$cargoTarget$inCratePath"
-}
+val RsQualifiedNamedElement.qualifiedName: String?
+    get() {
+        val inCratePath = crateRelativePath ?: return null
+        val cargoTarget = containingCargoTarget?.normName ?: return null
+        return "$cargoTarget$inCratePath"
+    }
 
 @Suppress("DataClassPrivateConstructor")
 data class RsQualifiedName private constructor(
@@ -42,7 +43,6 @@ data class RsQualifiedName private constructor(
     }
 
     companion object {
-        
         private val LOG: Logger = Logger.getInstance(RsQualifiedName::class.java)
 
         @JvmStatic
@@ -53,8 +53,7 @@ data class RsQualifiedName private constructor(
             val (parentItem, childItem) = if (segments.size == 2 && segments[1] == "index.html") {
                 Item(segments[0], ParentItemType.CRATE) to null
             } else {
-                // Last segment contains info about item type and name
-                // and it should have the following structure:
+                // Last segment contains info about item type and name and it should have the following structure:
                 // parentItem ( '#' childItem )?
                 val itemParts = segments.last().split("#")
                 val parentRaw = itemParts[0]
@@ -83,13 +82,13 @@ data class RsQualifiedName private constructor(
             val type = ParentItemType.fromString(parts[0]) ?: return null
             return Item(parts[1], type)
         }
-        
+
         private fun childItem(raw: String): Item? {
             val parts = raw.split(".")
             if (parts.size != 2) return null
             val type = ChildItemType.fromString(parts[0]) ?: return null
             return Item(parts[1], type)
-        } 
+        }
 
         @JvmStatic
         fun from(element: RsQualifiedNamedElement): RsQualifiedName? {
@@ -224,9 +223,8 @@ data class RsQualifiedName private constructor(
         CRATE;
 
         override fun toString(): String = name.toLowerCase()
-        
-        companion object {
 
+        companion object {
             fun fromString(name: String): ParentItemType? {
                 return when (name) {
                     "struct" -> STRUCT
@@ -255,10 +253,10 @@ data class RsQualifiedName private constructor(
         METHOD;
 
         override fun toString(): String = name.toLowerCase()
-        
+
         companion object {
-            fun fromString(name: String): ChildItemType? {
-                return when (name) {
+            fun fromString(name: String): ChildItemType? =
+                when (name) {
                     "variant" -> VARIANT
                     "structfield" -> STRUCTFIELD
                     "associatedtype" -> ASSOCIATEDTYPE
@@ -270,7 +268,6 @@ data class RsQualifiedName private constructor(
                         null
                     }
                 }
-            }
         }
     }
 }

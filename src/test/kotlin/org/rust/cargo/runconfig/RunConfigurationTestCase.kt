@@ -68,11 +68,9 @@ class RunConfigurationTestCase : RustWithToolchainTestBase() {
     }
 }
 
-/**
- * Capturing adapter that removes ANSI escape codes from the output
- */
+/** Capturing adapter that removes ANSI escape codes from the output. */
 class AnsiAwareCapturingProcessAdapter : ProcessAdapter(), AnsiEscapeDecoder.ColoredTextAcceptor {
-    val output = ProcessOutput()
+    val output: ProcessOutput = ProcessOutput()
 
     private val decoder = object : AnsiEscapeDecoder() {
         override fun getCurrentOutputAttributes(outputType: Key<*>) = outputType

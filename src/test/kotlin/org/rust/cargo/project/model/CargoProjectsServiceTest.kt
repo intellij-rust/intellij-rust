@@ -11,7 +11,6 @@ import org.rust.openapiext.elementFromXmlString
 import org.rust.openapiext.toXmlString
 import java.nio.file.Paths
 
-
 class CargoProjectsServiceTest : LightPlatformTestCase() {
     fun `test serialization`() {
         val service = CargoProjectsServiceImpl(LightPlatformTestCase.getProject())

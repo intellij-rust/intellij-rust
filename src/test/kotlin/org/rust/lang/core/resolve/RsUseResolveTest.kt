@@ -97,7 +97,7 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test view path glob ident`() = checkByCode("""
         mod foo {
-            use bar::{hello as h};
+            use bar::hello as h;
                       //^
         }
 
@@ -135,7 +135,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
 
         mod bar {
-            use foo::{hello};
+            use foo::hello;
 
             fn main() {
                 hello();
@@ -167,7 +167,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
 
         mod bar {
-            use foo::{hello as spam};
+            use foo::hello as spam;
 
             fn main() {
                 spam();
@@ -326,7 +326,7 @@ class RsUseResolveTest : RsResolveTestBase() {
               //X
 
         mod foo {
-            use {Spam};
+            use Spam;
 
             fn main() {
                 let _: Spam = unimplemented!();
@@ -340,7 +340,7 @@ class RsUseResolveTest : RsResolveTestBase() {
               //X
 
         mod foo {
-            use ::{Spam};
+            use ::Spam;
 
             fn main() {
                 let _: Spam = unimplemented!();
@@ -395,7 +395,7 @@ class RsUseResolveTest : RsResolveTestBase() {
     """)
 
     fun `test import from self`() = checkByCode("""
-         use self::{foo as bar};
+         use self::foo as bar;
          fn foo() {}
            //X
          fn main() { bar() }
@@ -434,11 +434,11 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test use glob cycle`() = checkByCode("""
         mod foo {
-            pub use bar::{b as a};
+            pub use bar::b as a;
         }
 
         mod bar {
-            pub use foo::{a as b};
+            pub use foo::a as b;
 
             fn main() {
                 b();

@@ -14,13 +14,7 @@ import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
-abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStub>,
-                                           RsForeignModItem {
-
-    constructor(node: ASTNode) : super(node)
-
-    constructor(stub: RsPlaceholderStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
-
+abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsForeignModItem {
     override val innerAttrList: List<RsInnerAttr>
         get() = stubChildrenOfType()
 
@@ -28,6 +22,10 @@ abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStu
         get() = stubChildrenOfType()
 
     override val isPublic: Boolean get() = false // visibility does not affect foreign mods
+
+    constructor(node: ASTNode) : super(node)
+
+    constructor(stub: RsPlaceholderStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

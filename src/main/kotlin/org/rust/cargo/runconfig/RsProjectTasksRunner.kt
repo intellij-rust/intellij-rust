@@ -12,13 +12,22 @@ import com.intellij.task.*
 import org.rust.cargo.util.cargoProjectRoot
 
 class RsProjectTasksRunner : ProjectTaskRunner() {
-    override fun run(project: Project, context: ProjectTaskContext, callback: ProjectTaskNotification?, tasks: MutableCollection<out ProjectTask>) {
+
+    override fun run(
+        project: Project,
+        context: ProjectTaskContext,
+        callback: ProjectTaskNotification?,
+        tasks: MutableCollection<out ProjectTask>
+    ) {
         project.buildProject()
     }
 
     override fun canRun(projectTask: ProjectTask): Boolean =
         projectTask is ModuleBuildTask && projectTask.module.cargoProjectRoot != null
 
-    override fun createExecutionEnvironment(project: Project, task: ExecuteRunConfigurationTask, executor: Executor?): ExecutionEnvironment? =
-        null
+    override fun createExecutionEnvironment(
+        project: Project,
+        task: ExecuteRunConfigurationTask,
+        executor: Executor?
+    ): ExecutionEnvironment? = null
 }

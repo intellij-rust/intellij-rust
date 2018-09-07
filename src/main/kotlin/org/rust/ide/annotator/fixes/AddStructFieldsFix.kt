@@ -23,20 +23,14 @@ import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
-/**
- * Adds the given fields to the stricture defined by `expr`
- */
+/** Adds the given fields to the stricture defined by `expr`. */
 class AddStructFieldsFix(
     structBody: RsStructLiteral,
     private val recursive: Boolean = false
 ) : LocalQuickFixAndIntentionActionOnPsiElement(structBody) {
-    override fun getText(): String {
-        return if (recursive) {
-            "Recursively add missing fields"
-        } else {
-            "Add missing fields"
-        }
-    }
+
+    override fun getText(): String =
+        if (recursive) "Recursively add missing fields" else "Add missing fields"
 
     override fun getFamilyName(): String = text
 
@@ -52,7 +46,7 @@ class AddStructFieldsFix(
         val decl = structLiteral.path.reference.deepResolve() as? RsFieldsOwner ?: return
         val body = structLiteral.structLiteralBody
         val fieldsToAdd = calculateMissingFields(body, decl)
-        val (firstAdded, _) = fillStruct(psiFactory, body, decl.namedFields, fieldsToAdd, postProcess = true)
+        val (firstAdded, _) = fillStruct(psiFactory, body, decl.namedFields, fieldsToAdd, true)
 
         if (editor != null && firstAdded != null) {
             editor.caretModel.moveToOffset(firstAdded.expr!!.textOffset)
@@ -121,9 +115,9 @@ class AddStructFieldsFix(
         if (prevIdx != -1 && prevIdx + 1 == nextIdx) {
             return existingFields[nextIdx]
         }
+
         // We have next field, but the order is different.
-        // It's impossible to guess the best position, so
-        // let's add to the end
+        // It's impossible to guess the best position, so let's add to the end.
         if (nextIdx != -1) {
             return null
         }
@@ -159,7 +153,7 @@ class AddStructFieldsFix(
                                 structLiteral.structLiteralBody,
                                 item.namedFields,
                                 item.namedFields,
-                                postProcess = false
+                                false
                             )
                             structLiteral
                         } else {
@@ -179,7 +173,10 @@ class AddStructFieldsFix(
         }
     }
 
-    private fun specializedCreateStructLiteralField(factory: RsPsiFactory, fieldDecl: RsFieldDecl): RsStructLiteralField? {
+    private fun specializedCreateStructLiteralField(
+        factory: RsPsiFactory,
+        fieldDecl: RsFieldDecl
+    ): RsStructLiteralField? {
         val fieldType = fieldDecl.typeReference?.type ?: return null
         val fieldLiteral = defaultValueExprFor(factory, fieldDecl, fieldType)
         return factory.createStructLiteralField(fieldDecl.name!!, fieldLiteral)

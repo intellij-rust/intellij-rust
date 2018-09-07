@@ -22,16 +22,20 @@ import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsTrailingCommaFormatProcessor : PostFormatProcessor {
+
     override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
         doProcess(source, settings, null)
         return source
     }
 
-    override fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange {
-        return doProcess(source, settings, rangeToReformat).resultTextRange
-    }
+    override fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange =
+        doProcess(source, settings, rangeToReformat).resultTextRange
 
-    private fun doProcess(source: PsiElement, settings: CodeStyleSettings, range: TextRange? = null): PostFormatProcessorHelper {
+    private fun doProcess(
+        source: PsiElement,
+        settings: CodeStyleSettings,
+        range: TextRange? = null
+    ): PostFormatProcessorHelper {
         val helper = PostFormatProcessorHelper(settings.getCommonSettings(RsLanguage))
         helper.resultTextRange = range
         if (settings.rust.PRESERVE_PUNCTUATION) return helper
@@ -52,9 +56,7 @@ class RsTrailingCommaFormatProcessor : PostFormatProcessor {
     }
 }
 
-/**
- * Delete trailing comma in one-line blocks
- */
+/** Delete trailing comma in one-line blocks. */
 fun CommaList.removeTrailingComma(list: PsiElement): Boolean {
     check(list.elementType == this.list)
     if (PostFormatProcessorHelper.isMultiline(list)) return false

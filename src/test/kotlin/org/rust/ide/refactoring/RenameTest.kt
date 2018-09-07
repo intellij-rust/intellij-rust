@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.descendantsOfType
 
 class RenameTest : RsTestBase() {
+
     fun `test function`() = doTest("spam", """
         mod a {
             mod b {
@@ -97,11 +98,11 @@ class RenameTest : RsTestBase() {
 
     fun `test rename loop label`() = doTest("'bar", """
         fn foo() {
-            /*caret*/'foo: loop { break 'foo }
+            /*caret*/'foo: loop { break 'foo; }
         }
     """, """
         fn foo() {
-            'bar: loop { break 'bar }
+            'bar: loop { break 'bar; }
         }
     """)
 
@@ -201,4 +202,3 @@ class RenameTest : RsTestBase() {
         myFixture.checkResult(after)
     }
 }
-

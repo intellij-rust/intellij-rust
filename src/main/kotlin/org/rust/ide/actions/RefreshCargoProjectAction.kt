@@ -14,6 +14,7 @@ import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.openapiext.saveAllDocuments
 
 class RefreshCargoProjectAction : AnAction() {
+
     init {
         templatePresentation.text = "Refresh Cargo project"
         templatePresentation.description = "Update Cargo project information and download new dependencies"

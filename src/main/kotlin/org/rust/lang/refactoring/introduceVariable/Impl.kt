@@ -17,8 +17,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.openapiext.runWriteCommandAction
-import java.util.*
-
 
 fun findCandidateExpressionsToExtract(editor: Editor, file: RsFile): List<RsExpr> {
     val selection = editor.selectionModel
@@ -26,8 +24,7 @@ fun findCandidateExpressionsToExtract(editor: Editor, file: RsFile): List<RsExpr
         // If there's an explicit selection, suggest only one expression
         listOfNotNull(findExpressionInRange(file, selection.selectionStart, selection.selectionEnd))
     } else {
-        val expr = findExpressionAtCaret(file, editor.caretModel.offset)
-            ?: return emptyList()
+        val expr = findExpressionAtCaret(file, editor.caretModel.offset) ?: return emptyList()
         // Finds possible expressions that might want to be bound to a local variable.
         // We don't go further than the current block scope,
         // further more path expressions don't make sense to bind to a local variable so we exclude them.
@@ -98,8 +95,7 @@ private class ExpressionReplacer(
 
 
     fun replaceElementForAllExpr(exprs: List<PsiElement>) {
-        val anchor = findAnchor(exprs.minBy { it.textRange.startOffset } ?: chosenExpr)
-            ?: return
+        val anchor = findAnchor(exprs.minBy { it.textRange.startOffset } ?: chosenExpr) ?: return
 
         val suggestedNames = chosenExpr.suggestedNames()
         val (let, name) = createLet(suggestedNames.default) ?: return
@@ -127,8 +123,7 @@ private class ExpressionReplacer(
         val mutable = parent is RsUnaryExpr && parent.mut != null
         val let = psiFactory.createLetDeclaration(name, chosenExpr, mutable = mutable)
 
-        val binding = let.findBinding()
-            ?: error("Failed to create a proper let expression: `${let.text}`")
+        val binding = let.findBinding() ?: error("Failed to create a proper let expression: `${let.text}`")
 
         return let to binding.identifier
     }
@@ -153,8 +148,7 @@ private class ExpressionReplacer(
  * An anchor point is surrounding element before the block scope, which is used to scope the insertion of the new let binding.
  */
 private fun findAnchor(expr: PsiElement): PsiElement? {
-    val block = expr.ancestorOrSelf<RsBlock>()
-        ?: return null
+    val block = expr.ancestorOrSelf<RsBlock>() ?: return null
 
     var anchor = expr
     while (anchor.parent != block) {
@@ -169,7 +163,7 @@ private fun findAnchor(expr: PsiElement): PsiElement? {
  */
 private fun findOccurrences(expr: RsExpr): List<RsExpr> {
     val visitor = object : PsiRecursiveElementVisitor() {
-        val foundOccurrences = ArrayList<RsExpr>()
+        val foundOccurrences = arrayListOf<RsExpr>()
 
         override fun visitElement(element: PsiElement) {
             if (element is RsExpr && PsiEquivalenceUtil.areElementsEquivalent(expr, element)) {
@@ -185,7 +179,8 @@ private fun findOccurrences(expr: RsExpr): List<RsExpr> {
     return visitor.foundOccurrences
 }
 
-private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RsPatBinding::class.java)
+private fun PsiElement.findBinding(): RsPatBinding? =
+    PsiTreeUtil.findChildOfType(this, RsPatBinding::class.java)
 
 private class RustInPlaceVariableIntroducer(
     elementToRename: PsiNamedElement,

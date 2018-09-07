@@ -15,6 +15,7 @@ import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class CargoCrateDocLineMarkerProviderTest : RsTestBase() {
+
     protected fun doTestByText(@Language("toml") source: String) {
         myFixture.configureByText("cargo.toml", source)
         myFixture.doHighlighting()
@@ -23,13 +24,13 @@ class CargoCrateDocLineMarkerProviderTest : RsTestBase() {
         assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
     }
 
-    private fun markersFrom(text: String) =
+    private fun markersFrom(text: String): List<Pair<Int, String>> =
         text.split('\n')
             .withIndex()
             .filter { it.value.contains(MARKER) }
             .map { Pair(it.index, it.value.substring(it.value.indexOf(MARKER) + MARKER.length).trim()) }
 
-    private fun markersFrom(editor: Editor, project: Project) =
+    private fun markersFrom(editor: Editor, project: Project): List<Pair<Int, String?>> =
         DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project)
             .map {
                 Pair(editor.document.getLineNumber(it.element?.textRange?.startOffset as Int), it.lineMarkerTooltip)
@@ -37,8 +38,8 @@ class CargoCrateDocLineMarkerProviderTest : RsTestBase() {
             .sortedBy { it.first }
 
     private companion object {
-        val MARKER = "# - "
-        val COMPARE_SEPARATOR = " | "
+        const val MARKER: String = "# - "
+        const val COMPARE_SEPARATOR: String = " | "
     }
 
     fun `test standard version`() = doTestByText("""

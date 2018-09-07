@@ -23,16 +23,12 @@ class TomlKeyValueImpl(type: IElementType) : CompositePsiElement(type), TomlKeyV
 }
 
 class TomlKeyImpl(type: IElementType) : CompositePsiElement(type), TomlKey {
-    override fun getReferences(): Array<PsiReference>
-        = ReferenceProvidersRegistry.getReferencesFromProviders(this)
-
+    override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
     override fun toString(): String = "TomlKey"
 }
 
 class TomlLiteralImpl(type: IElementType) : CompositePsiElement(type), TomlLiteral {
-    override fun getReferences(): Array<PsiReference>
-        = ReferenceProvidersRegistry.getReferencesFromProviders(this)
-
+    override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
     override fun toString(): String = "TomlLiteral"
 }
 
@@ -54,7 +50,6 @@ class TomlTableHeaderImpl(type: IElementType) : CompositePsiElement(type), TomlT
 
 class TomlInlineTableImpl(type: IElementType) : CompositePsiElement(type), TomlInlineTable {
     override val entries: List<TomlKeyValue> get() = childrenOfType()
-
     override fun toString(): String = "TomlInlineTable"
 }
 
@@ -65,17 +60,18 @@ class TomlArrayTableImpl(type: IElementType) : CompositePsiElement(type), TomlAr
 }
 
 class TomlASTFactory : ASTFactory() {
-    override fun createComposite(type: IElementType): CompositeElement? = when (type) {
-        KEY_VALUE -> TomlKeyValueImpl(type)
-        KEY -> TomlKeyImpl(type)
-        LITERAL -> TomlLiteralImpl(type)
-        ARRAY -> TomlArrayImpl(type)
-        TABLE -> TomlTableImpl(type)
-        TABLE_HEADER -> TomlTableHeaderImpl(type)
-        INLINE_TABLE -> TomlInlineTableImpl(type)
-        ARRAY_TABLE -> TomlArrayTableImpl(type)
-        else -> error("Unknown TOML element type: `$type`")
-    }
+    override fun createComposite(type: IElementType): CompositeElement? =
+        when (type) {
+            KEY_VALUE -> TomlKeyValueImpl(type)
+            KEY -> TomlKeyImpl(type)
+            LITERAL -> TomlLiteralImpl(type)
+            ARRAY -> TomlArrayImpl(type)
+            TABLE -> TomlTableImpl(type)
+            TABLE_HEADER -> TomlTableHeaderImpl(type)
+            INLINE_TABLE -> TomlInlineTableImpl(type)
+            ARRAY_TABLE -> TomlArrayTableImpl(type)
+            else -> error("Unknown TOML element type: `$type`")
+        }
 }
 
 private inline fun <reified T : TomlElement> CompositePsiElement.childOfTypeNullable(): T? =
@@ -83,12 +79,13 @@ private inline fun <reified T : TomlElement> CompositePsiElement.childOfTypeNull
 
 private inline fun <reified T : TomlElement> CompositePsiElement.childOfTypeNotNull(): T =
     PsiTreeUtil.getChildOfType(this, T::class.java)
-        ?: error("""
-            Invalid TOML PSI
-            Expected to find `${T::class.simpleName}` child of ${this::class.simpleName}
-            Element text:
-        """.trimIndent() + "\n$text"
-    )
+        ?: error(
+            """
+                Invalid TOML PSI
+                Expected to find `${T::class.simpleName}` child of ${this::class.simpleName}
+                Element text:
+            """.trimIndent() + "\n$text"
+        )
 
 private inline fun <reified T : TomlElement> CompositePsiElement.childrenOfType(): List<T> =
     PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)

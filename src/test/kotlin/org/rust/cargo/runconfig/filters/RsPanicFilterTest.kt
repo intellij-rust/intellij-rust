@@ -5,9 +5,7 @@
 
 package org.rust.cargo.runconfig.filters
 
-/**
- * Tests for RustPanicFilter
- */
+/** Tests for RustPanicFilter. */
 class RsPanicFilterTest : HighlightFilterTestBase() {
 
     private val filter: RsPanicFilter get() = RsPanicFilter(project, projectDir)
@@ -15,12 +13,14 @@ class RsPanicFilterTest : HighlightFilterTestBase() {
     fun `test one line`() =
         checkHighlights(filter,
             "thread 'main' panicked at 'something went wrong', src/main.rs:24",
-            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24")
+            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24"
+        )
 
     fun `test one line with line separator`() =
         checkHighlights(filter,
             "thread 'main' panicked at 'something went wrong', src/main.rs:24\n",
-            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24\n")
+            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24\n"
+        )
 
     fun `test full output`() =
         checkHighlights(filter,
@@ -29,6 +29,8 @@ class RsPanicFilterTest : HighlightFilterTestBase() {
     Finished debug [unoptimized + debuginfo] target(s) in 1.20 secs
      Running `target/debug/panics`
 thread 'main' panicked at 'something went wrong', src/main.rs:24""",
-            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24", 4)
+            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24",
+            4
+        )
 
 }

@@ -11,6 +11,7 @@ import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveTest : RsResolveTestBase() {
+
     fun `test resolve fs`() = stubOnlyResolve("""
     //- main.rs
         use std::fs::File;

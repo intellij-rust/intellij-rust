@@ -16,18 +16,14 @@ import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.inference
-import org.rust.lang.core.types.regions.ReEarlyBound
-import org.rust.lang.core.types.regions.Region
+import org.rust.lang.core.types.region.ReEarlyBound
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.stdext.buildMap
 
-class RsPathReferenceImpl(
-    element: RsPath
-) : RsReferenceBase<RsPath>(element),
-    RsPathReference {
-
-    override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
+class RsPathReferenceImpl(element: RsPath) : RsReferenceBase<RsPath>(element), RsPathReference {
+    override val RsPath.referenceAnchor: PsiElement
+        get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processPathResolveVariants(ImplLookup.relativeTo(element), element, true, it) }
@@ -44,9 +40,8 @@ class RsPathReferenceImpl(
         (element.parent as? RsPathExpr)?.let { it.inference?.getResolvedPaths(it)?.map { BoundElement(it) } }
             ?: advancedCachedMultiResolve()
 
-    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
-        return advancedMultiResolve().toTypedArray()
-    }
+    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
+        advancedMultiResolve().toTypedArray()
 
     override fun multiResolve(): List<RsNamedElement> =
         advancedMultiResolve().mapNotNull { it.element as? RsNamedElement }
@@ -61,9 +56,7 @@ class RsPathReferenceImpl(
     }
 
     private object Resolver : (RsPath) -> List<BoundElement<RsElement>> {
-        override fun invoke(element: RsPath): List<BoundElement<RsElement>> {
-            return resolvePath(element)
-        }
+        override fun invoke(element: RsPath): List<BoundElement<RsElement>> = resolvePath(element)
     }
 }
 
@@ -72,7 +65,7 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         processPathResolveVariants(lookup, path, false, it)
     }
 
-    val typeArguments: List<Ty>? = run {
+    val typeArguments = run {
         val inAngles = path.typeArgumentList
         val fnSugar = path.valueParameterList
         when {
@@ -84,9 +77,9 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         }
     }
 
-    val lifetimeArguments: List<Region>? = path.typeArgumentList?.lifetimeList?.map { it.resolve() }
+    val regionArguments = path.typeArgumentList?.lifetimeList?.map { it.resolve() }
 
-    val outputArg = path.retType?.typeReference?.type
+    val outputArgument = path.retType?.typeReference?.type
 
     return result.map { boundElement ->
         val (element, subst) = boundElement.downcast<RsGenericDeclaration>() ?: return@map boundElement
@@ -96,9 +89,8 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
                 buildMap {
                     // Iterator<Item=T>
                     path.typeArgumentList?.assocTypeBindingList?.forEach { binding ->
-                        // We can't just use `binding.reference.resolve()` here because
-                        // resolving of an assoc type depends on a parent path resolve,
-                        // so we coming back here and entering the infinite recursion
+                        // We can't just use `binding.reference.resolve()` here because resolving of an assoc type
+                        // depends on a parent path resolve, so we coming back here and entering the infinite recursion
                         resolveAssocTypeBinding(element, binding)?.let { assoc ->
                             binding.typeReference?.type?.let { put(assoc, it) }
                         }
@@ -107,8 +99,8 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
 
                     // Fn() -> T
                     val outputParam = lookup.fnOnceOutput
-                    if (outputArg != null && outputParam != null) {
-                        put(outputParam, outputArg)
+                    if (outputArgument != null && outputParam != null) {
+                        put(outputParam, outputArgument)
                     }
                 }
             } else {
@@ -117,10 +109,10 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         }
 
         val typeParameters = element.typeParameters.map { TyTypeParameter.named(it) }
-        val lifetimeParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
+        val regionParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
         val typeSubst = typeParameters.zip(typeArguments ?: typeParameters).toMap()
-        val lifetimeSubst = lifetimeParameters.zip(lifetimeArguments ?: lifetimeParameters).toMap()
-        val newSubst = Substitution(typeSubst, lifetimeSubst)
+        val regionSubst = regionParameters.zip(regionArguments ?: regionParameters).toMap()
+        val newSubst = Substitution(typeSubst, regionSubst)
         BoundElement(element, subst + newSubst, assocTypes)
     }
 }
@@ -129,11 +121,11 @@ private fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBind
     collectResolveVariants(binding.referenceName) { processAssocTypeVariants(trait, it) }
         .singleOrNull() as? RsTypeAlias?
 
-/** Resolves a reference through type aliases */
+/** Resolves a reference through type aliases. */
 fun RsPathReference.deepResolve(): RsElement? =
     advancedDeepResolve()?.element
 
-/** Resolves a reference through type aliases */
+/** Resolves a reference through type aliases. */
 fun RsPathReference.advancedDeepResolve(): BoundElement<RsElement>? {
     val boundElement = advancedResolve()?.let { resolved ->
         // Resolve potential `Self` inside `impl`

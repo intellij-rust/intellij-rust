@@ -16,10 +16,10 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type
 
 
-// Unit tests for various `ancestorStrict` like utilities,
-// which use `instanceof` under the hood and thus sensitive
-// to PSI structure
+// Unit tests for various `ancestorStrict` like utilities, which use `instanceof` under the hood and thus sensitive to
+// PSI structure
 class RsPsiStructureTest : RsTestBase() {
+
     private fun checkFunctionOwner(cond: (RsAbstractableOwner) -> Boolean, @Language("Rust") code: String) =
         checkElement<RsFunction>(code) { check(cond(it.owner)) }
 
@@ -139,5 +139,4 @@ class RsPsiStructureTest : RsTestBase() {
 
         callback(element)
     }
-
 }

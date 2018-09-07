@@ -17,6 +17,7 @@ class RsMacroArgFmtBlock(
     private val wrap: Wrap?,
     val ctx: RsFmtContext
 ) : ASTBlock {
+
     override fun getNode(): ASTNode = node
     override fun getTextRange(): TextRange = node.textRange
     override fun getAlignment(): Alignment? = alignment
@@ -25,8 +26,11 @@ class RsMacroArgFmtBlock(
 
     override fun getSubBlocks(): List<Block> = emptyList()
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing? = Spacing.getReadOnlySpacing()
-    override fun getChildAttributes(newChildIndex: Int): ChildAttributes = ChildAttributes(null, null)
+    override fun getSpacing(child1: Block?, child2: Block): Spacing? =
+        Spacing.getReadOnlySpacing()
+
+    override fun getChildAttributes(newChildIndex: Int): ChildAttributes =
+        ChildAttributes(null, null)
 
     override fun isLeaf(): Boolean = node.firstChildNode == null
     override fun isIncomplete(): Boolean = false

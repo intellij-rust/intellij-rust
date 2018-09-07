@@ -15,19 +15,18 @@ import org.rust.lang.core.stubs.RsLifetimeStub
 import org.rust.lang.refactoring.RsNamesValidator
 
 
-val RsLifetime.isPredefined: Boolean get() = referenceName in RsNamesValidator.PredefinedLifetimes
+val RsLifetime.isPredefined: Boolean
+    get() = referenceName in RsNamesValidator.PREDEFINED_LIFETIMES
 
 abstract class RsLifetimeImplMixin : RsStubbedNamedElementImpl<RsLifetimeStub>, RsLifetime {
+    override val referenceNameElement: PsiElement get() = quoteIdentifier
+    override val referenceName: String get() = stub?.name ?: referenceNameElement.text
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsLifetimeStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getReference(): RsReference = RsLifetimeReferenceImpl(this)
-
-    override val referenceNameElement: PsiElement get() = quoteIdentifier
-
-    override val referenceName: String get() = stub?.name ?: referenceNameElement.text
 }
 
 sealed class LifetimeName {
@@ -40,7 +39,7 @@ sealed class LifetimeName {
     /** User typed `'_`. */
     object Underscore : LifetimeName()
 
-    /** User wrote `'static` */
+    /** User wrote `'static`. */
     object Static : LifetimeName()
 }
 

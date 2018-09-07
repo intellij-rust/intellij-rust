@@ -8,6 +8,7 @@ package org.rust.ide.formatter
 import org.rust.ide.typing.RsTypingTestBase
 
 class RsAutoIndentTest : RsTypingTestBase() {
+
     fun `test fn`() = doTestByText("""
         fn main() {/*caret*/
     """, """

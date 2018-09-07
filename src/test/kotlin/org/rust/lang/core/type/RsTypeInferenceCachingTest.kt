@@ -16,24 +16,6 @@ class RsTypeInferenceCachingTest : RsTestBase() {
     private val TYPE: () -> Unit = { myFixture.type("a") }
     private val COMPLETE: () -> Unit = { myFixture.completeBasic() }
 
-    private fun List<RsFunction>.collectStamps(): Map<String, Long> =
-        associate { it.name!! to it.inference.getTimestamp() }
-
-
-    private fun checkReinferred(action: () -> Unit, @Language("Rust") code: String, vararg names: String) {
-        InlineFile(code).withCaret()
-        val fns = myFixture.file.childrenOfType<RsFunction>()
-        val oldStamps = fns.collectStamps()
-        action()
-        PsiDocumentManager.getInstance(project).commitAllDocuments() // process PSI modification events
-        val changed = fns.collectStamps().entries
-            .filter { oldStamps[it.key] != it.value }
-            .map { it.key }
-        check(changed == names.toList()) {
-            "Expected to reinfer types in ${names.asList()}, reinferred in $changed instead"
-        }
-    }
-
     fun `test reinferred only current function`() = checkReinferred(TYPE, """
         fn foo() { /*caret*/ }
         fn bar() {  }
@@ -54,4 +36,21 @@ class RsTypeInferenceCachingTest : RsTestBase() {
         fn foo() { struct S { /*caret*/ } }
         fn bar() {  }
     """, "foo", "bar")
+
+    private fun List<RsFunction>.collectStamps(): Map<String, Long> =
+        associate { it.name!! to it.inference.getTimestamp() }
+
+    private fun checkReinferred(action: () -> Unit, @Language("Rust") code: String, vararg names: String) {
+        InlineFile(code).withCaret()
+        val fns = myFixture.file.childrenOfType<RsFunction>()
+        val oldStamps = fns.collectStamps()
+        action()
+        PsiDocumentManager.getInstance(project).commitAllDocuments() // process PSI modification events
+        val changed = fns.collectStamps().entries
+            .filter { oldStamps[it.key] != it.value }
+            .map { it.key }
+        check(changed == names.toList()) {
+            "Expected to reinfer types in ${names.asList()}, reinferred in $changed instead"
+        }
+    }
 }

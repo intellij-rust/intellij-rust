@@ -8,13 +8,9 @@ package org.rust.openapiext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.CompositeElement
 
-
-/**
- * Iterates all children of the `PsiElement` and invokes `action` for each one.
- */
+/** Iterates all children of the `PsiElement` and invokes `action` for each one. */
 inline fun PsiElement.forEachChild(action: (PsiElement) -> Unit) {
     var psiChild: PsiElement? = firstChild
-
     while (psiChild != null) {
         if (psiChild.node is CompositeElement) {
             action(psiChild)

@@ -7,22 +7,18 @@ package org.rust.ide.inspections
 
 import junit.framework.TestCase
 
-/**
- * Base class for naming notations tests.
- */
+/** Base class for naming notations tests. */
 abstract class NamingNotationTest : TestCase() {
     protected abstract val inspection: RsNamingInspection
 
-    /**
-     * Checks that the given name is acceptable in the notation.
-     */
+    /** Checks that the given name is acceptable in the notation. */
     protected fun testOk(name: String) {
         testResult(name, true, null)
     }
 
     /**
-     * Checks that the given name is not acceptable in the notation and must be suggested
-     * to be changed to `expSuggestion`.
+     * Checks that the given name is not acceptable in the notation and must be suggested to be changed to
+     * [expSuggestion].
      */
     protected fun testSuggestion(name: String, expSuggestion: String) {
         testResult(name, false, expSuggestion)
@@ -31,13 +27,15 @@ abstract class NamingNotationTest : TestCase() {
     private fun testResult(name: String, expOk: Boolean, expSuggestion: String?) {
         val (isOk, suggestion) = inspection.checkName(name)
         assertEquals("Name $name acceptance: expected $expOk, but was $isOk", expOk, isOk)
-        assertEquals("Suggestion for name $name: expected $expSuggestion, but was $suggestion", expSuggestion, suggestion)
+        assertEquals(
+            "Suggestion for name $name: expected $expSuggestion, but was $suggestion",
+            expSuggestion,
+            suggestion
+        )
     }
 }
 
-/**
- * CamelCase notation tests.
- */
+/** CamelCase notation tests. */
 class CamelCaseNotationTest : NamingNotationTest() {
     override val inspection = RsCamelCaseNamingInspection("Camel")
 
@@ -73,9 +71,7 @@ class CamelCaseNotationTest : NamingNotationTest() {
     }
 }
 
-/**
- * snake_case notation tests.
- */
+/** snake_case notation tests. */
 class SnakeCaseNotationTest : NamingNotationTest() {
     override val inspection = RsSnakeCaseNamingInspection("Snake")
 
@@ -117,9 +113,7 @@ class SnakeCaseNotationTest : NamingNotationTest() {
     }
 }
 
-/**
- * UPPER_CASE notation tests.
- */
+/** UPPER_CASE notation tests. */
 class UpperCaseNotationTest : NamingNotationTest() {
     override val inspection = RsUpperCaseNamingInspection("Upper")
 

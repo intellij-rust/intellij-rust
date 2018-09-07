@@ -27,11 +27,9 @@ private class RsDeriveTraitReferenceProvider : PsiReferenceProvider() {
     }
 }
 
-private class RsDeriveTraitReferenceImpl(
-    element: RsMetaItem
-) : RsReferenceCached<RsMetaItem>(element) {
-
-    override val RsMetaItem.referenceAnchor: PsiElement? get() = element.identifier
+private class RsDeriveTraitReferenceImpl(element: RsMetaItem) : RsReferenceCached<RsMetaItem>(element) {
+    override val RsMetaItem.referenceAnchor: PsiElement?
+        get() = element.identifier
 
     // Completion in `#[derive]` attribute is provided by `RsDeriveCompletionProvider`
     override fun getVariants(): Array<Any> = emptyArray()

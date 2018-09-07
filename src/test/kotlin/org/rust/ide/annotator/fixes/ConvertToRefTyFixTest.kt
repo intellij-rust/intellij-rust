@@ -5,5 +5,4 @@
 
 package org.rust.ide.annotator.fixes
 
-
 class ConvertToRefTyFixTest : ConvertToTyUsingTraitFixTestBase(false, "AsRef", "as_ref")

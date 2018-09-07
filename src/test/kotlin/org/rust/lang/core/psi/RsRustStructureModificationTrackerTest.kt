@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.NOT_INC
 
 class RsRustStructureModificationTrackerTest : RsTestBase() {
+
     private enum class TestAction(val function: (Long, Long) -> Boolean, val comment: String) {
         INC({ a, b -> a > b }, "Modification counter expected to be incremented, but it remained the same"),
         NOT_INC({ a, b -> a == b }, "Modification counter expected to remain the same, but it was incremented")

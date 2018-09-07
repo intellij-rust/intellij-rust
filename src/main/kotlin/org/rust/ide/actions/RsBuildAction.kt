@@ -23,6 +23,7 @@ class RsBuildAction : AnAction() {
     }
 
     companion object {
-        private fun isSuitablePlatform(): Boolean = !(PlatformUtils.isIntelliJ() || PlatformUtils.isAppCode())
+        private fun isSuitablePlatform(): Boolean =
+            !(PlatformUtils.isIntelliJ() || PlatformUtils.isAppCode())
     }
 }

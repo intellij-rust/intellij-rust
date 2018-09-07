@@ -19,6 +19,7 @@ package org.rust.ide.intentions
  * ```
  */
 class SetImmutableIntention : SetMutableIntention() {
-    override fun getText() = "Set reference immutable"
-    override val mutable = false
+    override val mutable: Boolean = false
+
+    override fun getText(): String = "Set reference immutable"
 }

@@ -5,8 +5,8 @@
 
 package org.rust.lang.utils
 
+import org.rust.stdext.dequeOf
 import org.rust.stdext.nextOrNull
-import java.util.*
 
 class Graph<N, E>(
     private val nodes: MutableList<Node<N, E>> = mutableListOf(),
@@ -68,8 +68,7 @@ class Graph<N, E>(
 
     fun depthFirstTraversal(startNode: Node<N, E>, direction: Direction = Direction.OUTGOING): Sequence<Node<N, E>> {
         val visited = mutableSetOf(startNode)
-        val stack = ArrayDeque<Node<N, E>>()
-        stack.push(startNode)
+        val stack = dequeOf(startNode)
 
         val visit = { node: Node<N, E> -> if (visited.add(node)) stack.push(node) }
 
@@ -87,7 +86,7 @@ class Graph<N, E>(
 
     fun nodesInPostOrder(entryNode: Node<N, E>, direction: Direction = Direction.OUTGOING): List<Node<N, E>> {
         val visited = mutableSetOf<Node<N, E>>()
-        val stack = ArrayDeque<Pair<Node<N, E>, Iterator<Edge<N, E>>>>()
+        val stack = dequeOf<Pair<Node<N, E>, Iterator<Edge<N, E>>>>()
         val result = mutableListOf<Node<N, E>>()
         val pushNode = { node: Node<N, E> ->
             if (visited.add(node)) stack.push(Pair(node, incidentEdges(node, direction).iterator()))

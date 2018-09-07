@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.tree.IElementType
 import com.intellij.util.Query
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
@@ -36,24 +37,27 @@ val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 
 val RsTraitItem.isSizedTrait: Boolean get() = langAttribute == "sized"
 
-val RsTraitItem.isStdDerivable: Boolean get() {
-    val derivableTrait = STD_DERIVABLE_TRAITS[name] ?: return false
-    return containingCargoPackage?.origin == PackageOrigin.STDLIB &&
-        containingMod.modName == derivableTrait.modName
-}
-
-val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {
-    val result = mutableListOf<BoundElement<RsTraitItem>>()
-    val visited = mutableSetOf<RsTraitItem>()
-    fun dfs(boundTrait: BoundElement<RsTraitItem>) {
-        if (!visited.add(boundTrait.element)) return
-        result += boundTrait
-        boundTrait.element.superTraits.forEach { dfs(it.substitute(boundTrait.subst)) }
+val RsTraitItem.isStdDerivable: Boolean
+    get() {
+        val derivableTrait = STD_DERIVABLE_TRAITS[name] ?: return false
+        return containingCargoPackage?.origin == PackageOrigin.STDLIB
+            && containingMod.modName == derivableTrait.modName
     }
-    dfs(this)
 
-    return result
-}
+val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>>
+    get() {
+        val result = mutableListOf<BoundElement<RsTraitItem>>()
+        val visited = mutableSetOf<RsTraitItem>()
+
+        fun dfs(boundTrait: BoundElement<RsTraitItem>) {
+            if (!visited.add(boundTrait.element)) return
+            result += boundTrait
+            boundTrait.element.superTraits.forEach { dfs(it.substitute(boundTrait.subst)) }
+        }
+        dfs(this)
+
+        return result
+    }
 
 val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias>
     get() = flattenHierarchy.flatMap { it.element.members?.typeAliasList.orEmpty() }
@@ -61,17 +65,17 @@ val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlia
 fun RsTraitItem.findAssociatedType(name: String): RsTypeAlias? =
     associatedTypesTransitively.find { it.name == name }
 
-fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
-    return ReferencesSearch.search(this, this.useScope)
+fun RsTraitItem.searchForImplementations(): Query<RsImplItem> =
+    ReferencesSearch.search(this, this.useScope)
         .mapQuery { it.element.parent?.parent }
         .filterIsInstanceQuery<RsImplItem>()
         .filterQuery(Condition { it.typeReference != null })
-}
 
-private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
-    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
-    return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-}
+private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>>
+    get() {
+        val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
+        return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+    }
 
 fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
     val typeParameterList = typeParameterList?.typeParameterList.orEmpty()
@@ -88,6 +92,22 @@ fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
 }
 
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {
+    override val isPublic: Boolean
+        get() = RsPsiImplUtil.isPublic(this, stub)
+
+    override val crateRelativePath: String?
+        get() = RsPsiImplUtil.crateRelativePath(this)
+
+    override val implementedTrait: BoundElement<RsTraitItem>?
+        get() = BoundElement(this)
+
+    override val associatedTypesTransitively: Collection<RsTypeAlias>
+        get() = BoundElement(this).associatedTypesTransitively
+
+    override val isUnsafe: Boolean
+        get() = stub?.isUnsafe ?: (unsafe != null)
+
+    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
     constructor(node: ASTNode) : super(node)
 
@@ -96,23 +116,8 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.TRAIT)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
-
-    override val implementedTrait: BoundElement<RsTraitItem>? get() = BoundElement(this)
-
-    override val associatedTypesTransitively: Collection<RsTypeAlias>
-        get() = BoundElement(this).associatedTypesTransitively
-
-    override val isUnsafe: Boolean get() {
-        val stub = stub
-        return stub?.isUnsafe ?: (unsafe != null)
-    }
-
-    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
-
-    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+    override fun getContext(): PsiElement? =
+        RsExpandedElement.getContextImpl(this)
 }
 
 
@@ -122,11 +127,14 @@ class TraitImplementationInfo private constructor(
     traitMembers: RsMembers,
     implMembers: RsMembers
 ) {
-    val declared = traitMembers.abstractable()
-    private val implemented = implMembers.abstractable()
-    private val declaredByName = declared.associateBy { it.name!! }
-    private val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }
+    val declared: List<RsAbstractable> = traitMembers.abstractable()
 
+    private val implemented: List<RsAbstractable> = implMembers.abstractable()
+
+    private val declaredByName: Map<String, RsAbstractable> = declared.associateBy { it.name!! }
+
+    private val implementedByNameAndType: Map<Pair<String, IElementType>, RsAbstractable> =
+        implemented.associateBy { it.name!! to it.elementType }
 
     val missingImplementations: List<RsAbstractable> =
         declared.filter { it.isAbstract }.filter { it.name to it.elementType !in implementedByNameAndType }
@@ -141,7 +149,6 @@ class TraitImplementationInfo private constructor(
             val dec = declaredByName[imp.name]
             if (dec != null) imp to dec else null
         }
-
 
     private fun RsMembers.abstractable(): List<RsAbstractable> =
         expandedMembers.filter { it.name != null }

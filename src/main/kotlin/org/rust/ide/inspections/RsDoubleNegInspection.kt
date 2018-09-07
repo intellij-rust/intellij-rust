@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RsVisitor
@@ -17,13 +18,17 @@ import org.rust.lang.core.psi.RsVisitor
  * Analogue of Clippy's double_neg.
  */
 class RsDoubleNegInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Double negation"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun getDisplayName(): String = "Double negation"
+
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitUnaryExpr(expr: RsUnaryExpr) {
                 if (expr.isNegation && expr.expr.isNegation) {
-                    holder.registerProblem(expr, "--x could be misinterpreted as a pre-decrement, but effectively is a no-op")
+                    holder.registerProblem(
+                        expr,
+                        "--x could be misinterpreted as a pre-decrement, but effectively is a no-op"
+                    )
                 }
             }
         }

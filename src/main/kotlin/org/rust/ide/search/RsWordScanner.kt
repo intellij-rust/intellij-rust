@@ -9,7 +9,8 @@ import com.intellij.lang.cacheBuilder.DefaultWordsScanner
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.RS_COMMENTS
-import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
 
 class RsWordScanner : DefaultWordsScanner(
     RsLexer(),

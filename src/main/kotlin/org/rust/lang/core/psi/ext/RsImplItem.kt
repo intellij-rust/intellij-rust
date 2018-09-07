@@ -24,51 +24,54 @@ import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
+import javax.swing.Icon
 
 val RsImplItem.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
-
-    constructor(node: ASTNode) : super(node)
-    constructor(stub: RsImplItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override fun getIcon(flags: Int) = RsIcons.IMPL
-
     override val isPublic: Boolean get() = false // pub does not affect impls at all
 
-    override fun getPresentation(): ItemPresentation = getPresentation(this)
-
-    override val implementedTrait: BoundElement<RsTraitItem>? get() {
-        val (trait, subst) = traitRef?.resolveToBoundTrait ?: return null
-        val aliases = members?.typeAliasList.orEmpty().mapNotNull { typeAlias ->
-            trait.members?.typeAliasList.orEmpty()
-                .find { it.name == typeAlias.name }
-                ?.let { it to typeAlias.declaredType }
-        }.toMap()
-        return BoundElement(trait, subst, aliases)
-    }
-
     override val innerAttrList: List<RsInnerAttr>
-        get() = members?.innerAttrList ?: emptyList()
+        get() = members?.innerAttrList.orEmpty()
 
     override val associatedTypesTransitively: Collection<RsTypeAlias>
-        get() = CachedValuesManager.getCachedValue(this, {
+        get() = CachedValuesManager.getCachedValue(this) {
             CachedValueProvider.Result.create(
                 doGetAssociatedTypesTransitively(),
                 PsiModificationTracker.MODIFICATION_COUNT
             )
-        })
+        }
 
-    private fun doGetAssociatedTypesTransitively(): List<RsTypeAlias> {
-        val implAliases = members?.typeAliasList.orEmpty()
-        val traitAliases = implementedTrait?.associatedTypesTransitively ?: emptyList()
-        return implAliases + traitAliases.filter { trAl -> implAliases.find { it.name == trAl.name } == null }
-    }
-
-    override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
+    override val declaredType: Ty
+        get() = RsPsiTypeImplUtil.declaredType(this)
 
     override val isUnsafe: Boolean get() = unsafe != null
 
+    override val implementedTrait: BoundElement<RsTraitItem>?
+        get() {
+            val (trait, subst) = traitRef?.resolveToBoundTrait ?: return null
+            val aliases = members?.typeAliasList.orEmpty().mapNotNull { typeAlias ->
+                trait.members?.typeAliasList.orEmpty()
+                    .find { it.name == typeAlias.name }
+                    ?.let { it to typeAlias.declaredType }
+            }.toMap()
+            return BoundElement(trait, subst, aliases)
+        }
+
+    constructor(node: ASTNode) : super(node)
+
+    constructor(stub: RsImplItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+
+    override fun getIcon(flags: Int): Icon = RsIcons.IMPL
+
+    override fun getPresentation(): ItemPresentation = getPresentation(this)
+
+    private fun doGetAssociatedTypesTransitively(): List<RsTypeAlias> {
+        val implAliases = members?.typeAliasList.orEmpty()
+        val traitAliases = implementedTrait?.associatedTypesTransitively.orEmpty()
+        return implAliases + traitAliases.filter { alias -> implAliases.find { it.name == alias.name } == null }
+    }
 }

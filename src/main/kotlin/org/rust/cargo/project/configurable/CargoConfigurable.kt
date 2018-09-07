@@ -51,13 +51,12 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
         """)
     }
 
-    override fun isModified(): Boolean {
-        return autoUpdateEnabled != settings.autoUpdateEnabled
+    override fun isModified(): Boolean =
+        autoUpdateEnabled != settings.autoUpdateEnabled
             || useCargoCheckForBuild != settings.useCargoCheckForBuild
             || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
             || compileAllTargets != settings.compileAllTargets
             || useOfflineForCargoCheck != settings.useOfflineForCargoCheck
-    }
 
     override fun apply() {
         val currentData = settings.data

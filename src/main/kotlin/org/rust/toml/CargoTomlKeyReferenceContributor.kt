@@ -21,25 +21,29 @@ import org.toml.lang.psi.TomlTableHeader
 class CargoTomlKeyReferenceContributor : PsiReferenceContributor() {
 
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
-        registrar.registerReferenceProvider(dependencyKeyPattern or specificDependencyKeyPattern,
-            CargoDependencyReferenceProvider())
+        registrar.registerReferenceProvider(
+            dependencyKeyPattern or specificDependencyKeyPattern,
+            CargoDependencyReferenceProvider()
+        )
     }
 
     companion object {
 
-        private const val TOML_KEY_CONTEXT_NAME = "key"
+        private const val TOML_KEY_CONTEXT_NAME: String = "key"
 
         // [dependencies]
         // regex = "1"
         //   ^
-        private val dependencyKeyPattern: PsiElementPattern.Capture<TomlKey> = psiElement<TomlKey>()
-            .withSuperParent(2, psiElement<TomlTable>()
-                .withChild(psiElement<TomlTableHeader>()
-                    .with("dependenciesCondition") { header ->
-                        header.names.lastOrNull()?.isDependencyKey == true
-                    }
+        private val dependencyKeyPattern: PsiElementPattern.Capture<TomlKey> =
+            psiElement<TomlKey>()
+                .withSuperParent(2, psiElement<TomlTable>()
+                    .withChild(psiElement<TomlTableHeader>()
+                        .with("dependenciesCondition") { header ->
+                            header.names.lastOrNull()?.isDependencyKey == true
+                        }
+                    )
                 )
-            )
+
         // [dependencies.regex]
         //                 ^
         private val specificDependencyKeyPattern: PsiElementPattern.Capture<TomlKey> = psiElement<TomlKey>(TOML_KEY_CONTEXT_NAME)
@@ -54,7 +58,6 @@ class CargoTomlKeyReferenceContributor : PsiReferenceContributor() {
 }
 
 private class CargoDependencyReferenceProvider : PsiReferenceProvider() {
-
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
         if (element !is TomlKey) return emptyArray()
         return arrayOf(CargoDependencyReferenceImpl(element))
@@ -73,5 +76,6 @@ private class CargoDependencyReferenceImpl(key: TomlKey) : PsiReferenceBase<Toml
 
     override fun getVariants(): Array<Any> = emptyArray()
 
-    override fun calculateDefaultRangeInElement(): TextRange = TextRange.from(0, element.textLength)
+    override fun calculateDefaultRangeInElement(): TextRange =
+        TextRange.from(0, element.textLength)
 }

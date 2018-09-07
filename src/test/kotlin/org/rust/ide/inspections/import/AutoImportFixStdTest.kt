@@ -10,6 +10,7 @@ import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
+
     fun `test import item from std crate`() = checkAutoImportFixByText("""
         fn foo<T: <error descr="Unresolved reference: `io`">io::Read/*caret*/</error>>(t: T) {}
     """, """

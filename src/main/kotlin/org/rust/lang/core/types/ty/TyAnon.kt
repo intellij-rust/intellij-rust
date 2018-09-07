@@ -11,9 +11,7 @@ import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.isImpl
 import org.rust.lang.core.types.BoundElement
 
-/**
- * Represents "impl Trait".
- */
+/** Represents "impl Trait". */
 data class TyAnon(val definition: RsTraitType, val traits: List<BoundElement<RsTraitItem>>) : Ty() {
 
     init {

@@ -12,8 +12,8 @@ import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.impl.computeSpacing
 
 /**
- * Synthetic formatting block wraps a subsequence of sub blocks
- * and presents itself as one of the members of this subsequence.
+ * Synthetic formatting block wraps a subsequence of sub blocks and presents itself as one of the members of this
+ * subsequence.
  */
 class SyntheticRsFmtBlock(
     val representative: ASTBlock? = null,
@@ -30,7 +30,8 @@ class SyntheticRsFmtBlock(
 
     private val textRange = TextRange(
         subBlocks.first().textRange.startOffset,
-        subBlocks.last().textRange.endOffset)
+        subBlocks.last().textRange.endOffset
+    )
 
     override fun getTextRange(): TextRange = textRange
 
@@ -49,7 +50,8 @@ class SyntheticRsFmtBlock(
     override fun isIncomplete(): Boolean = subBlocks.last().isIncomplete
 
     override fun toString(): String {
-        val text = findFirstNonSyntheticChild()?.psi?.containingFile?.text?.let { textRange.subSequence(it) }
+        val text = findFirstNonSyntheticChild()?.psi?.containingFile?.text
+            ?.let { textRange.subSequence(it) }
             ?: "<rust synthetic>"
         return "$text $textRange"
     }

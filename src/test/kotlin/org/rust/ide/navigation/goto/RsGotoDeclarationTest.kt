@@ -12,6 +12,7 @@ import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 
 class RsGotoDeclarationTest : RsTestBase() {
+
     fun `test struct declaration`() = doTest("""
         struct S;
         type T = /*caret*/S;

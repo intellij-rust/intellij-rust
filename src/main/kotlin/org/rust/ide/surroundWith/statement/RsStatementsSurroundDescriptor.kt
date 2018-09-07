@@ -11,8 +11,10 @@ import com.intellij.lang.surroundWith.Surrounder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.findStatementsInRange
+import org.rust.lang.core.psi.RsExpr
 
 class RsStatementsSurroundDescriptor : SurroundDescriptor {
+
     override fun getElementsToSurround(file: PsiFile, startOffset: Int, endOffset: Int): Array<out PsiElement> {
         val stmts = findStatementsInRange(file, startOffset, endOffset)
         FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.surroundwith.expression")
@@ -21,15 +23,16 @@ class RsStatementsSurroundDescriptor : SurroundDescriptor {
 
     override fun getSurrounders(): Array<out Surrounder> = SURROUNDERS
 
-    override fun isExclusive() = false
+    override fun isExclusive(): Boolean = false
 
     companion object {
-        private val SURROUNDERS = arrayOf(
-            RsWithBlockSurrounder(),
-            RsWithLoopSurrounder(),
-            RsWithWhileSurrounder(),
-            RsWithIfSurrounder(),
-            RsWithForSurrounder()
-        )
+        private val SURROUNDERS: Array<RsStatementsSurrounderBase<RsExpr>> =
+            arrayOf(
+                RsWithBlockSurrounder(),
+                RsWithLoopSurrounder(),
+                RsWithWhileSurrounder(),
+                RsWithIfSurrounder(),
+                RsWithForSurrounder()
+            )
     }
 }

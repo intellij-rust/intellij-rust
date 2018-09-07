@@ -12,15 +12,17 @@ package org.rust.ide.newProject
  */
 object RsPackageNameValidator {
 
-    private val BLACKLIST = setOf(
-        "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate", "do",
-        "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop",
-        "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv", "proc", "pub",
-        "pure", "ref", "return", "self", "sizeof", "static", "struct", "super", "test", "trait",
-        "true", "type", "typeof", "unsafe", "unsized", "use", "virtual", "where", "while", "yield"
-    )
+    private val BLACKLIST: Set<String> =
+        setOf(
+            "abstract", "alignof", "as", "become", "box", "break", "const", "continue", "crate", "do",
+            "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop",
+            "macro", "match", "mod", "move", "mut", "offsetof", "override", "priv", "proc", "pub",
+            "pure", "ref", "return", "self", "sizeof", "static", "struct", "super", "test", "trait",
+            "true", "type", "typeof", "unsafe", "unsized", "use", "virtual", "where", "while", "yield"
+        )
 
-    private val BINARY_BLACKLIST = setOf("deps", "examples", "build", "native", "incremental")
+    private val BINARY_BLACKLIST: Set<String> =
+        setOf("deps", "examples", "build", "native", "incremental")
 
     fun validate(name: String, isBinary: Boolean): String? = when {
         name.isEmpty() -> "Package name can't be empty"

@@ -103,6 +103,7 @@ class StdKnownItems private constructor(
         langItemsResolver(langAttribute, crateName)
 
     fun findCloneTrait(): RsTraitItem? = findLangItem("clone")
+
     fun findCopyTrait(): RsTraitItem? = findLangItem("copy")
 
     fun findPartialEqTrait(): RsTraitItem? = findLangItem("eq")
@@ -127,17 +128,19 @@ class StdKnownItems private constructor(
     fun findDefaultTrait(): RsTraitItem? = findCoreItem("default::Default") as? RsTraitItem
 
     fun findSizedTrait(): RsTraitItem? = findLangItem("sized")
+
     fun findSyncTrait(): RsTraitItem? = findLangItem("sync")
+
     fun findSendTrait(): RsTraitItem? = findLangItem("send")
 
     companion object {
-        private val stdKnownItemsCache =
-            ProjectCache<Pair<CargoWorkspace, String>, Optional<RsNamedElement>>("stdKnownItemsCache")
+        private val stdKnownItemsCache: ProjectCache<Pair<CargoWorkspace, String>, Optional<RsNamedElement>> =
+            ProjectCache("stdKnownItemsCache")
 
-        private val langItemsCache =
-            ProjectCache<String, Optional<RsTraitItem>>("langItemsCache")
+        private val langItemsCache: ProjectCache<String, Optional<RsTraitItem>> =
+            ProjectCache("langItemsCache")
 
-        private val defaultStdKnownItems = StdKnownItems({ _, _ -> null }, { _, _ -> null })
+        private val defaultStdKnownItems: StdKnownItems = StdKnownItems({ _, _ -> null }, { _, _ -> null })
 
         fun relativeTo(psi: RsElement): StdKnownItems {
             val project = psi.project

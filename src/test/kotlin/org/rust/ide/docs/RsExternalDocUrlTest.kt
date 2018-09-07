@@ -10,6 +10,7 @@ import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsExternalDocUrlTest : RsDocumentationProviderTest() {
+
     fun `test not stdlib item`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
         pub struct Foo;

@@ -13,7 +13,7 @@ class RemoveCurlyBracesIntentionTest : RsIntentionTestBase(RemoveCurlyBracesInte
     )
 
     fun `test remove curly braces longer`() = doAvailableTest(
-        "use foo::bar::/*caret*/baz::{qux};",
+        "use foo::bar::/*caret*/baz::qux;",
         "use foo::bar::/*caret*/baz::qux;"
     )
 

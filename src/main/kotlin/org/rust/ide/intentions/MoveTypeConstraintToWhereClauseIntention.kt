@@ -9,11 +9,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.RsTraitOrImpl
+import org.rust.lang.core.psi.ext.ancestorStrict
 
 class MoveTypeConstraintToWhereClauseIntention : RsElementBaseIntentionAction<RsTypeParameterList>() {
-    override fun getText() = "Move type constraint to where clause"
-    override fun getFamilyName() = text
+
+    override fun getText(): String = "Move type constraint to where clause"
+
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsTypeParameterList? {
         val genericParams = element.ancestorStrict<RsTypeParameterList>() ?: return null

@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.toml.lang.psi.TomlFileType
 
 class TomlFileTypeDetector : FileTypeRegistry.FileTypeDetector {
+
     override fun getVersion(): Int = 1
 
     override fun detect(file: VirtualFile, firstBytes: ByteSequence, firstCharsIfText: CharSequence?): FileType? =

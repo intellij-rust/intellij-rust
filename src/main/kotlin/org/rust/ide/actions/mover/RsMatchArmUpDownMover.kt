@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
 
 class RsMatchArmUpDownMover : RsLineMover() {
+
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
         psi.ancestorOrSelf<RsMatchArm>()
 

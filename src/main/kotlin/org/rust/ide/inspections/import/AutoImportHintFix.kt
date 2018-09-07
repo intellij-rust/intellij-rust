@@ -21,7 +21,6 @@ class AutoImportHintFix(
     private val hint: String,
     private val multiple: Boolean
 ) : LocalQuickFixOnPsiElement(element), HintAction, HighPriorityAction {
-
     private val delegate: AutoImportFix = AutoImportFix(element)
 
     override fun getFamilyName(): String = delegate.familyName

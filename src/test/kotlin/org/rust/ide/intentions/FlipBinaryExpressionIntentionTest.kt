@@ -39,5 +39,4 @@ class FlipBinaryExpressionIntentionTest : RsIntentionTestBase(FlipBinaryExpressi
             }
         """)
     }
-
 }

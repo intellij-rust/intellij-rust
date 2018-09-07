@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveLinkTest : RsTestBase() {
+
     fun `test with import`() = doTest("""
         use std::hash::Hash;
 

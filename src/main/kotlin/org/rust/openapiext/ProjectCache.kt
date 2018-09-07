@@ -15,8 +15,9 @@ import org.rust.lang.core.psi.rustStructureModificationTracker
 import java.util.concurrent.ConcurrentMap
 
 class ProjectCache<in T, R>(cacheName: String) {
+
     init {
-        if (!registered.add(cacheName)) {
+        if (!REGISTERED.add(cacheName)) {
             error("""
                 ProjectCache `$cacheName` is already registered.
                 Make sure ProjectCache is static, that is, put it inside companion object.
@@ -28,16 +29,21 @@ class ProjectCache<in T, R>(cacheName: String) {
 
     fun getOrPut(project: Project, key: T, defaultValue: () -> R): R {
         val cache = CachedValuesManager.getManager(project)
-            .getCachedValue(project, cacheKey, {
-                CachedValueProvider.Result.create(
-                    ContainerUtil.newConcurrentMap<T, R>(),
-                    project.rustStructureModificationTracker
-                )
-            }, false)
+            .getCachedValue(
+                project,
+                cacheKey,
+                {
+                    CachedValueProvider.Result.create(
+                        ContainerUtil.newConcurrentMap<T, R>(),
+                        project.rustStructureModificationTracker
+                    )
+                },
+                false
+            )
         return cache.getOrPut(key) { defaultValue() }
     }
 
     companion object {
-        private val registered = ContainerUtil.newConcurrentSet<String>()
+        private val REGISTERED = ContainerUtil.newConcurrentSet<String>()
     }
 }

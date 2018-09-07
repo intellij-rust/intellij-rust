@@ -9,18 +9,14 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.resolve.ref.RsReference
 
 interface RsWeakReferenceElement : RsElement {
-
     val referenceNameElement: PsiElement?
-
     val referenceName: String?
 
     override fun getReference(): RsReference?
 }
 
 interface RsReferenceElement : RsWeakReferenceElement {
-
     override val referenceNameElement: PsiElement
-
     override val referenceName: String
 
     override fun getReference(): RsReference

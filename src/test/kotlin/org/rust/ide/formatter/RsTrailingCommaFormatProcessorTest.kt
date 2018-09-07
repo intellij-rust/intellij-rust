@@ -6,6 +6,7 @@
 package org.rust.ide.formatter
 
 class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
+
     fun `test removes trailing comma if single line in brace blocks`() = doTextTest("""
         use foo::{bar, baz,};
 

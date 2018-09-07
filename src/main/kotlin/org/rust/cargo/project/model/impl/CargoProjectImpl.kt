@@ -50,11 +50,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-
 @State(name = "CargoProjects")
-class CargoProjectsServiceImpl(
-    val project: Project
-) : CargoProjectsService, PersistentStateComponent<Element> {
+class CargoProjectsServiceImpl(val project: Project) : CargoProjectsService, PersistentStateComponent<Element> {
     init {
         with(project.messageBus.connect()) {
             subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(fun() {
@@ -71,26 +68,21 @@ class CargoProjectsServiceImpl(
     }
 
     /**
-     * While in theory Cargo and rustup are concurrency-safe, in practice
-     * it's better to serialize their execution, and this queue does
-     * exactly that. Not that [AsyncValue] [projects] also provides
-     * serialization grantees, so this queue is no strictly necessary.
+     * While in theory Cargo and rustup are concurrency-safe, in practice it's better to serialize their execution, and
+     * this queue does exactly that.
+     * Not that [AsyncValue] [projects] also provides serialization grantees, so this queue is no strictly necessary.
      */
-    val taskQueue = BackgroundTaskQueue(project, "Cargo update")
+    val taskQueue: BackgroundTaskQueue = BackgroundTaskQueue(project, "Cargo update")
 
     /**
-     * The heart of the plugin Project model. Care must be taken to ensure
-     * this is thread-safe, and that refreshes are scheduled after
-     * set of projects changes.
+     * The heart of the plugin Project model. Care must be taken to ensure this is thread-safe, and that refreshes are
+     * scheduled after set of projects changes.
      */
-    private val projects = AsyncValue<List<CargoProjectImpl>>(emptyList())
+    private val projects: AsyncValue<List<CargoProjectImpl>> = AsyncValue(emptyList())
 
+    private val noProjectMarker: CargoProjectImpl = CargoProjectImpl(Paths.get(""), this)
 
-    private val noProjectMarker = CargoProjectImpl(Paths.get(""), this)
-    /**
-     * [directoryIndex] allows to quickly map from a [VirtualFile] to
-     * a containing [CargoProject].
-     */
+    /** [directoryIndex] allows to quickly map from a [VirtualFile] to a containing [CargoProject]. */
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
         LightDirectoryIndex(project, noProjectMarker, Consumer { index ->
             val visited = mutableSetOf<VirtualFile>()
@@ -121,19 +113,18 @@ class CargoProjectsServiceImpl(
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
         directoryIndex.getInfoForFile(file).takeIf { it !== noProjectMarker }
 
-    override val allProjects: Collection<CargoProject>
-        get() = projects.currentState
+    override val allProjects: Collection<CargoProject> get() = projects.currentState
 
-    override val hasAtLeastOneValidProject: Boolean
-        get() = hasAtLeastOneValidProject(allProjects)
+    override val hasAtLeastOneValidProject: Boolean get() = hasAtLeastOneValidProject(allProjects)
 
     override fun attachCargoProject(manifest: Path): Boolean {
         if (isExistingProject(allProjects, manifest)) return false
         modifyProjects { projects ->
-            if (isExistingProject(projects, manifest))
+            if (isExistingProject(projects, manifest)) {
                 CompletableFuture.completedFuture(projects)
-            else
+            } else {
                 doRefresh(project, projects + CargoProjectImpl(manifest, this))
+            }
         }
         return true
     }
@@ -145,8 +136,7 @@ class CargoProjectsServiceImpl(
     }
 
     override fun refreshAllProjects(): CompletableFuture<List<CargoProject>> =
-        modifyProjects { doRefresh(project, it) }
-            .thenApply { projects -> projects.map { it as CargoProject } }
+        modifyProjects { doRefresh(project, it) }.thenApply { projects -> projects.map { it as CargoProject } }
 
     override fun discoverAndRefresh(): CompletableFuture<List<CargoProject>> {
         val guessManifest = project.modules
@@ -163,14 +153,13 @@ class CargoProjectsServiceImpl(
     }
 
     /**
-     * All modifications to project model except for low-level `loadState` should
-     * go through this method: it makes sure that when we update various IDEA listeners,
-     * [allProjects] contains fresh projects.
+     * All modifications to project model except for low-level `loadState` should go through this method: it makes sure
+     * that when we update various IDEA listeners, [allProjects] contains fresh projects.
      */
     private fun modifyProjects(
-        f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>
+        function: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>
     ): CompletableFuture<List<CargoProjectImpl>> =
-        projects.updateAsync(f)
+        projects.updateAsync(function)
             .thenApply { projects ->
                 ApplicationManager.getApplication().invokeAndWait {
                     runWriteAction {
@@ -186,11 +175,17 @@ class CargoProjectsServiceImpl(
             }
 
     @TestOnly
-    override fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace, rustcInfo: RustcInfo?) {
+    override fun createTestProject(rootDir: VirtualFile, workspace: CargoWorkspace, rustcInfo: RustcInfo?) {
         val manifest = rootDir.pathAsPath.resolve("Cargo.toml")
-        val testProject = CargoProjectImpl(manifest, this, ws, null, rustcInfo,
+        val testProject = CargoProjectImpl(
+            manifest,
+            this,
+            workspace,
+            null,
+            rustcInfo,
             workspaceStatus = UpdateStatus.UpToDate,
-            rustcInfoStatus = if (rustcInfo != null) UpdateStatus.UpToDate else UpdateStatus.NeedsUpdate)
+            rustcInfoStatus = if (rustcInfo != null) UpdateStatus.UpToDate else UpdateStatus.NeedsUpdate
+        )
         testProject.setRootDir(rootDir)
         modifyProjects { _ ->
             CompletableFuture.completedFuture(listOf(testProject))
@@ -200,7 +195,9 @@ class CargoProjectsServiceImpl(
     @TestOnly
     override fun setRustcInfo(rustcInfo: RustcInfo) {
         modifyProjects { projects ->
-            val updatedProjects = projects.map { it.copy(rustcInfo = rustcInfo, rustcInfoStatus = UpdateStatus.UpToDate) }
+            val updatedProjects = projects.map {
+                it.copy(rustcInfo = rustcInfo, rustcInfoStatus = UpdateStatus.UpToDate)
+            }
             CompletableFuture.completedFuture(updatedProjects)
         }.get(1, TimeUnit.MINUTES)
     }
@@ -216,24 +213,25 @@ class CargoProjectsServiceImpl(
     }
 
     override fun loadState(state: Element) {
-        val loaded = state.getChildren("cargoProject")
+        val loaded = state
+            .getChildren("cargoProject")
             .mapNotNull { it.getAttributeValue("FILE") }
             .map { CargoProjectImpl(Paths.get(it), this) }
-        // Refresh projects via `invokeLater` to avoid model modifications
-        // while the project is being opened. Use `updateSync` directly
-        // instead of `modifyProjects` for this reason
-        projects.updateSync { _ -> loaded }
+        // Refresh projects via `invokeLater` to avoid model modifications while the project is being opened.
+        // Use `updateSync` directly instead of `modifyProjects` for this reason
+        projects
+            .updateSync { _ -> loaded }
             .whenComplete { _, _ ->
                 ApplicationManager.getApplication().invokeLater { refreshAllProjects() }
             }
     }
 
     override fun noStateLoaded() {
-        // Do nothing: in theory, we might try to do [discoverAndRefresh]
-        // here, but the `RustToolchain` is most likely not ready.
+        // Do nothing: in theory, we might try to do [discoverAndRefresh] here, but the `RustToolchain` is most likely
+        // not ready.
         //
-        // So the actual "Let's guess a project model if it is not imported
-        // explicitly" happens in [org.rust.ide.notifications.MissingToolchainNotificationProvider]
+        // So the actual "Let's guess a project model if it is not imported explicitly" happens in
+        // [org.rust.ide.notifications.MissingToolchainNotificationProvider]
     }
 
     override fun toString(): String =
@@ -250,7 +248,6 @@ data class CargoProjectImpl(
     override val stdlibStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : CargoProject {
-
     private val projectDirectory get() = manifest.parent
     private val project get() = projectService.project
     private val toolchain get() = project.toolchain
@@ -310,8 +307,8 @@ data class CargoProjectImpl(
     }
 
     private fun refreshWorkspace(): CompletableFuture<CargoProjectImpl> {
-        val toolchain = toolchain ?:
-            return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
+        val toolchain = toolchain
+            ?: return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
                 "Can't update Cargo project, no Rust toolchain"
             )))
 
@@ -343,7 +340,7 @@ data class CargoProjectImpl(
         "CargoProject(manifest = $manifest)"
 }
 
-private fun hasAtLeastOneValidProject(projects: Collection<CargoProject>) =
+private fun hasAtLeastOneValidProject(projects: Collection<CargoProject>): Boolean =
     projects.any { it.manifest.exists() }
 
 private fun isExistingProject(projects: Collection<CargoProject>, manifest: Path): Boolean {
@@ -413,15 +410,19 @@ private fun fetchCargoWorkspace(
         }
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
         try {
-            val ws = cargo.fullProjectDescription(project, projectDirectory, object : ProcessAdapter() {
-                override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
-                    val text = event.text.trim { it <= ' ' }
-                    if (text.startsWith("Updating") || text.startsWith("Downloading")) {
-                        progress.text = text
+            val workspace = cargo.fullProjectDescription(
+                project,
+                projectDirectory,
+                object : ProcessAdapter() {
+                    override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
+                        val text = event.text.trim { it <= ' ' }
+                        if (text.startsWith("Updating") || text.startsWith("Downloading")) {
+                            progress.text = text
+                        }
                     }
                 }
-            })
-            ok(ws)
+            )
+            ok(workspace)
         } catch (e: ExecutionException) {
             err(e.message ?: "failed to run Cargo")
         }
@@ -433,8 +434,8 @@ private fun fetchRustcInfo(
     queue: BackgroundTaskQueue,
     toolchain: RustToolchain,
     projectDirectory: Path
-): CompletableFuture<TaskResult<RustcInfo>> {
-    return runAsyncTask(project, queue, "Getting toolchain version") {
+): CompletableFuture<TaskResult<RustcInfo>> =
+    runAsyncTask(project, queue, "Getting toolchain version") {
         progress.isIndeterminate = true
         if (!toolchain.looksLikeValidToolchain()) {
             return@runAsyncTask err(
@@ -448,4 +449,3 @@ private fun fetchRustcInfo(
 
         ok(RustcInfo(sysroot, versions.rustc))
     }
-}

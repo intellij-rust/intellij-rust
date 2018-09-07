@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.stubs.RsFileStub
 
 class RsGotoClassIndex : StringStubIndexExtension<RsNamedElement>() {
+
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<String, RsNamedElement> = KEY
 

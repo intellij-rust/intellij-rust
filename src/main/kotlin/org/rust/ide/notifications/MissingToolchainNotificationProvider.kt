@@ -28,8 +28,8 @@ import org.rust.lang.core.psi.isNotRustFile
 /**
  * Warn user if rust toolchain or standard library is not properly configured.
  *
- * Try to fix this automatically (toolchain from PATH, standard library from the last project)
- * and if not successful show the actual notification to the user.
+ * Try to fix this automatically (toolchain from PATH, standard library from the last project) and if not successful
+ * how the actual notification to the user.
  */
 class MissingToolchainNotificationProvider(
     private val project: Project,
@@ -70,14 +70,13 @@ class MissingToolchainNotificationProvider(
         }
 
         val cargoProject = cargoProjects.findProjectForFile(file) ?:
-            //TODO: more precise check here
-            return createNoCargoProjectForFilePanel()
+        //TODO: more precise check here
+        return createNoCargoProjectForFilePanel()
 
         val workspace = cargoProject.workspace ?: return null
         if (!workspace.hasStandardLibrary) {
-            // If rustup is not null, the WorkspaceService will use it
-            // to add stdlib automatically. This happens asynchronously,
-            // so we can't reliably say here if that succeeded or not.
+            // If rustup is not null, the WorkspaceService will use it to add stdlib automatically.
+            // This happens asynchronously, so we can't reliably say here if that succeeded or not.
             if (!toolchain.isRustupAvailable) return createLibraryAttachingPanel()
         }
 
@@ -143,8 +142,7 @@ class MissingToolchainNotificationProvider(
         PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_STATUS_KEY)
 
     companion object {
-        private val NOTIFICATION_STATUS_KEY = "org.rust.hideToolchainNotifications"
-
+        private const val NOTIFICATION_STATUS_KEY: String = "org.rust.hideToolchainNotifications"
         private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
     }
 }

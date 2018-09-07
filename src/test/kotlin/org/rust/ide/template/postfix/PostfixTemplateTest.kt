@@ -13,6 +13,7 @@ import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
 
 abstract class PostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTestBase() {
+
     protected fun doTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,

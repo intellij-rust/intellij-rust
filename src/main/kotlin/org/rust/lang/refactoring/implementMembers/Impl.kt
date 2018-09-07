@@ -20,6 +20,7 @@ import org.rust.openapiext.checkWriteAccessAllowed
 
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     check(!ApplicationManager.getApplication().isWriteAccessAllowed)
+
     val (implInfo, trait) = findMembersToImplement(impl) ?: run {
         if (editor != null) {
             HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
@@ -44,7 +45,11 @@ private fun findMembersToImplement(impl: RsImplItem): Pair<TraitImplementationIn
     return implInfo to trait
 }
 
-private fun insertNewTraitMembers(selected: Collection<RsAbstractable>, existingMembers: RsMembers, trait: BoundElement<RsTraitItem>) {
+private fun insertNewTraitMembers(
+    selected: Collection<RsAbstractable>,
+    existingMembers: RsMembers,
+    trait: BoundElement<RsTraitItem>
+) {
     checkWriteAccessAllowed()
     if (selected.isEmpty()) return
 
@@ -55,8 +60,8 @@ private fun insertNewTraitMembers(selected: Collection<RsAbstractable>, existing
 
     // [1] First, check if the order of the existingMembers already implemented
     // matches the order of existingMembers in the trait declaration.
-    val existingMembersWithPosInTrait = existingMembers.expandedMembers.map {
-        existingMember -> Pair(existingMember, traitMembers.indexOfFirst {
+    val existingMembersWithPosInTrait = existingMembers.expandedMembers.map { existingMember ->
+        Pair(existingMember, traitMembers.indexOfFirst {
             it.elementType == existingMember.elementType && it.name == existingMember.name
         })
     }.toMutableList()

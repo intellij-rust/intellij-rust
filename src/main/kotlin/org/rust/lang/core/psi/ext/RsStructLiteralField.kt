@@ -13,16 +13,15 @@ import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve.ref.RsStructLiteralFieldReferenceImpl
 
+val RsStructLiteralField.parentStructLiteral: RsStructLiteral
+    get() = ancestorStrict()!!
 
-val RsStructLiteralField.parentStructLiteral: RsStructLiteral get() = ancestorStrict<RsStructLiteral>()!!
-val RsStructLiteralField.resolveToDeclaration: RsFieldDecl? get() = reference.resolve() as? RsFieldDecl
+val RsStructLiteralField.resolveToDeclaration: RsFieldDecl?
+    get() = reference.resolve() as? RsFieldDecl
 
 abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsElementImpl(node), RsStructLiteralField {
+    override val referenceNameElement: PsiElement get() = identifier
+    override val referenceName: String get() = referenceNameElement.text
 
     override fun getReference(): RsReference = RsStructLiteralFieldReferenceImpl(this)
-
-    override val referenceNameElement: PsiElement get() = identifier
-
-    override val referenceName: String get() = referenceNameElement.text
 }
-

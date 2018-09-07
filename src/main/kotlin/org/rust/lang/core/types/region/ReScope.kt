@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.regions
+package org.rust.lang.core.types.region
 
 /**
  * A concrete region naming some statically determined scope (e.g. an expression or sequence of statements) within the

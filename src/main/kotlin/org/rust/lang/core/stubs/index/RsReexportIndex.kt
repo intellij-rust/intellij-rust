@@ -19,6 +19,7 @@ import org.rust.lang.core.stubs.RsUseSpeckStub
 import org.rust.openapiext.getElements
 
 class RsReexportIndex : StringStubIndexExtension<RsUseSpeck>() {
+
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<String, RsUseSpeck> = KEY
 

@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.ext.ancestorOrSelf
 abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: Boolean) :
     RsElementBaseIntentionAction<RsMacroCall>() {
 
-    override fun getFamilyName() = text
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroCall? =
         element.ancestorOrSelf()
@@ -40,13 +40,12 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
     protected open fun showExpansion(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
         showMacroExpansionPopup(project, editor, expansionDetails)
     }
-
 }
 
 class RsShowRecursiveMacroExpansionIntention : RsShowMacroExpansionIntentionBase(expandRecursively = true) {
-    override fun getText() = "Show recursive macro expansion"
+    override fun getText(): String = "Show recursive macro expansion"
 }
 
 class RsShowSingleStepMacroExpansionIntention : RsShowMacroExpansionIntentionBase(expandRecursively = false) {
-    override fun getText() = "Show single step macro expansion"
+    override fun getText(): String = "Show single step macro expansion"
 }

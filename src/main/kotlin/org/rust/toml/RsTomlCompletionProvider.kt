@@ -20,12 +20,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.intellij.lang.annotations.Language
 import org.rust.ide.notifications.showBalloon
-import org.rust.ide.notifications.showBalloonWithoutProject
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.toml.lang.psi.*
 import java.io.IOException
 import java.net.URL
-
 
 class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>() {
     private var cachedSchema: TomlSchema? = null
@@ -53,8 +51,7 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
             }
 
             is TomlKeyValue -> {
-                val tableName = (table as? TomlHeaderOwner)?.header?.names?.firstOrNull()?.text
-                    ?: return
+                val tableName = (table as? TomlHeaderOwner)?.header?.names?.firstOrNull()?.text ?: return
                 if (isDependenciesTable(tableName)) {
                     dependencies(parent)
                 } else {
@@ -118,7 +115,7 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
 // Example from http://doc.crates.io/manifest.html,
 // basic completion is automatically generated from it.
 @Language("TOML")
-private val EXAMPLE_CARGO_TOML = """
+private const val EXAMPLE_CARGO_TOML: String = """
 
 [package]
 name = "hello_world" # the name of the package

@@ -10,7 +10,7 @@ import org.rust.RsTestBase
 import org.rust.fileTree
 
 class ExtractInlineModuleIntentionTest : RsTestBase() {
-    override val dataPath = "org/rust/ide/intentions/fixtures/"
+    override val dataPath: String = "org/rust/ide/intentions/fixtures/"
 
     fun `test valid extract inline module`() = doTest(
         fileTree {
@@ -36,29 +36,30 @@ class ExtractInlineModuleIntentionTest : RsTestBase() {
         }
     )
 
-    fun `test extracting module preserves attributes and visibility`() = ExtractInlineModuleIntention.Testmarks.copyAttrs.checkHit {
-        doTest(
-            fileTree {
-                rust("main.rs", """
+    fun `test extracting module preserves attributes and visibility`() =
+        ExtractInlineModuleIntention.Testmarks.copyAttrs.checkHit {
+            doTest(
+                fileTree {
+                    rust("main.rs", """
                 #[cfg(test)]
                 pub(in super) mod /*caret*/tests {
                     #[test]
                     fn foo() {}
                 }
             """)
-            },
-            fileTree {
-                rust("main.rs", """
+                },
+                fileTree {
+                    rust("main.rs", """
                 #[cfg(test)]
                 pub(in super) mod tests;
             """)
-                rust("tests.rs", """
+                    rust("tests.rs", """
                 #[test]
                 fn foo() {}
             """)
-            }
-        )
-    }
+                }
+            )
+        }
 
     fun `test invalid extract inline module`() {
         doTest(fileTree {

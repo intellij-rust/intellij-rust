@@ -9,48 +9,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 
 class RsMethodLineSeparatorProviderTest : RsLineMarkerProviderTestBase() {
 
-    fun `test impl`() {
-        doTest("""
-            struct Foo {} // - Has implementations
-            impl Foo {
-                const C1: i32 = 1;
-                fn f1() {}
-                fn f2() {}
-                fn f3() { // - null
-                }
-                fn f4() { // - null
-                }
-                fn f5() {} // - null
-        """)
-    }
-
-    fun `test trait`() {
-        doTest("""
-            trait Foo { // - Has implementations
-                const C1: i32 = 1;
-                fn f1();
-                fn f2();
-                fn f3() { // - null
-                }
-                fn f4() { // - null
-                }
-                fn f5(); // - null
-            }
-        """)
-    }
-
-    fun `test extern`() {
-        doTest("""
-            extern {
-                fn f1();
-                fn f2();
-                fn f3();
-            }
-        """)
-    }
-
-    fun `test top level`() {
-        doTest("""
+    fun `test impl`() = doTest("""
+        struct Foo {} // - Has implementations
+        impl Foo {
             const C1: i32 = 1;
             fn f1() {}
             fn f2() {}
@@ -59,21 +20,50 @@ class RsMethodLineSeparatorProviderTest : RsLineMarkerProviderTestBase() {
             fn f4() { // - null
             }
             fn f5() {} // - null
-        """)
-    }
+    """)
 
-    fun `test not show`() {
-        doTest("""
+    fun `test trait`() = doTest("""
+        trait Foo { // - Has implementations
             const C1: i32 = 1;
-            fn f1() {}
-            fn f2() {}
-            fn f3() {
+            fn f1();
+            fn f2();
+            fn f3() { // - null
             }
-            fn f4() {
+            fn f4() { // - null
             }
-            fn f5() {}
-        """, false)
-    }
+            fn f5(); // - null
+        }
+    """)
+
+    fun `test extern`() = doTest("""
+        extern {
+            fn f1();
+            fn f2();
+            fn f3();
+        }
+    """)
+
+    fun `test top level`() = doTest("""
+        const C1: i32 = 1;
+        fn f1() {}
+        fn f2() {}
+        fn f3() { // - null
+        }
+        fn f4() { // - null
+        }
+        fn f5() {} // - null
+    """)
+
+    fun `test not show`() = doTest("""
+        const C1: i32 = 1;
+        fn f1() {}
+        fn f2() {}
+        fn f3() {
+        }
+        fn f4() {
+        }
+        fn f5() {}
+    """, false)
 
     private fun doTest(source: String, showMethodSeparator: Boolean = true) {
         try {

@@ -18,9 +18,10 @@ import org.rust.lang.core.psi.RsFile
 
 
 class RsDotTypedHandler : TypedHandlerDelegate() {
-    override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
+
+    override fun charTyped(char: Char, project: Project, editor: Editor, file: PsiFile): Result {
         if (file !is RsFile) return Result.CONTINUE
-        if (c != '.') return Result.CONTINUE
+        if (char != '.') return Result.CONTINUE
 
         val offset = editor.caretModel.offset
         PsiDocumentManager.getInstance(project).commitDocument(editor.document)

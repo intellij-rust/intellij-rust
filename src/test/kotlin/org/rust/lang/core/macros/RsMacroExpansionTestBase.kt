@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.ext.expandAllMacrosRecursively
 import org.rust.openapiext.Testmark
 
 abstract class RsMacroExpansionTestBase : RsTestBase() {
+
     fun doTest(@Language("Rust") code: String, @Language("Rust") vararg expectedExpansions: Pair<String, Testmark?>) {
         InlineFile(code)
         val calls = myFixture.file.descendantsOfType<RsMacroCall>()

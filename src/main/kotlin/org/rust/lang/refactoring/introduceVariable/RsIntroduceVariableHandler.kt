@@ -17,10 +17,11 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.Testmark
 
 class RsIntroduceVariableHandler : RefactoringActionHandler {
+
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
         if (file !is RsFile) return
-        val exprs = findCandidateExpressionsToExtract(editor, file)
 
+        val exprs = findCandidateExpressionsToExtract(editor, file)
         when (exprs.size) {
             0 -> {
                 val message = RefactoringBundle.message(if (editor.selectionModel.hasSelection())
@@ -45,5 +46,5 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
 }
 
 object IntroduceVariableTestmarks {
-    val invalidNamePart = Testmark("invalidNamePart")
+    val INVALID_NAME_PART = Testmark("invalidNamePart")
 }

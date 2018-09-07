@@ -12,6 +12,7 @@ import org.rust.RsTestBase
 import org.rust.lang.RsFileType
 
 class RsBraceMatcherTest : RsTestBase() {
+
     fun `test don't pair parenthesis before identifier`() = doTest(
         "fn main() { let _ = <caret>typing }",
         '(',
@@ -78,7 +79,12 @@ class RsBraceMatcherTest : RsTestBase() {
         myFixture.configureByText(RsFileType, source)
         val editorHighlighter = (myFixture.editor as EditorEx).highlighter
         val iterator = editorHighlighter.createIterator(myFixture.editor.caretModel.offset)
-        val matched = BraceMatchingUtil.matchBrace(myFixture.editor.document.charsSequence, myFixture.file.fileType, iterator, true)
+        val matched = BraceMatchingUtil.matchBrace(
+            myFixture.editor.document.charsSequence,
+            myFixture.file.fileType,
+            iterator,
+            true
+        )
         check(!matched)
     }
 

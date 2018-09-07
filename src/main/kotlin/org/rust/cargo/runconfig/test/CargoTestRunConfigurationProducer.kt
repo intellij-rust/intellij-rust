@@ -18,7 +18,8 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
 
-class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
+class CargoTestRunConfigurationProducer
+    : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
 
     override fun isConfigurationFromContext(
         configuration: CargoCommandConfiguration,
@@ -42,27 +43,24 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
     }
 
     companion object {
+
         fun findTest(context: ConfigurationContext): TestConfig? {
-            val elements: Array<PsiElement>? = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.dataContext)
+            val elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.dataContext)
                 ?: context.location?.psiElement?.let { arrayOf(it) }
             return elements?.let { findTest(it) }
         }
 
         fun findTest(psi: Array<PsiElement>, climbUp: Boolean = true): TestConfig? {
             return if (psi.isNotEmpty()) {
-                var config: TestConfig? = TestConfig.MultipleFileTestConfig.create(psi.mapNotNull {
-                    findElement<RsMod>(it, climbUp)
-                }.toTypedArray())
-                if (config != null) {
-                    return config
-                }
+                var config: TestConfig? = TestConfig.MultipleFileTestConfig.create(
+                    psi.mapNotNull { findElement<RsMod>(it, climbUp) }.toTypedArray()
+                )
+                if (config != null) return config
 
                 config = findElement<RsFunction>(psi[0], climbUp)?.let {
                     TestConfig.SingleTestConfig.create(it)
                 }
-                if (config != null) {
-                    return config
-                }
+                if (config != null) return config
 
                 findElement<RsMod>(psi[0], climbUp)?.let {
                     TestConfig.SingleTestConfig.create(it)
@@ -81,21 +79,24 @@ class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandC
 }
 
 sealed class TestConfig {
+
     class SingleTestConfig(
         override val path: String,
         val target: CargoWorkspace.Target,
         override val sourceElement: RsElement
     ) : TestConfig() {
-        override val exact = sourceElement is RsFunction
+        override val exact: Boolean = sourceElement is RsFunction
 
-        override val configurationName: String = if (sourceElement is RsMod) {
-            if (sourceElement.modName == "test" || sourceElement.modName == "tests")
-                "Test ${sourceElement.`super`?.modName}::${sourceElement.modName}"
-            else
-                "Test ${sourceElement.modName}"
-        } else {
-            "Test $path"
-        }
+        override val configurationName: String =
+            if (sourceElement is RsMod) {
+                if (sourceElement.modName == "test" || sourceElement.modName == "tests") {
+                    "Test ${sourceElement.`super`?.modName}::${sourceElement.modName}"
+                } else {
+                    "Test ${sourceElement.modName}"
+                }
+            } else {
+                "Test $path"
+            }
 
         override val targets: List<CargoWorkspace.Target>
             get() = listOf(target)
@@ -126,20 +127,14 @@ sealed class TestConfig {
 
         companion object {
             fun create(modules: Array<RsMod>): MultipleFileTestConfig? {
-                val modulesWithTests = modules
-                    .filter { hasTestFunction(it) && it.containingCargoTarget != null }
+                val modulesWithTests = modules.filter { hasTestFunction(it) && it.containingCargoTarget != null }
 
-                val targets = modulesWithTests
-                    .mapNotNull { it.containingCargoTarget }
-                if (targets.size <= 1) {
-                    return null
-                }
+                val targets = modulesWithTests.mapNotNull { it.containingCargoTarget }
+                if (targets.size <= 1) return null
 
                 // If the selection spans more than one package, bail out.
                 val pkgs = targets.map { it.pkg }.distinct()
-                if (pkgs.size > 1) {
-                    return null
-                }
+                if (pkgs.size > 1) return null
 
                 return MultipleFileTestConfig(targets, modulesWithTests[0])
             }
@@ -166,6 +161,5 @@ sealed class TestConfig {
     }
 }
 
-// We need to chop off heading colon `::`, since `crateRelativePath`
-// always returns fully-qualified path
+// We need to chop off heading colon `::`, since `crateRelativePath` always returns fully-qualified path
 private fun String?.configPath(): String? = this?.removePrefix("::")

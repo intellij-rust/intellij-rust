@@ -18,6 +18,7 @@ import org.rust.pathToSourceTestFile
 import java.io.IOException
 
 abstract class RsLexingTestCaseBase : LexerTestCase(), RsTestCase {
+
     override fun getDirPath(): String = throw UnsupportedOperationException()
 
     // NOTE(matkad): this is basically a copy-paste of doFileTest.

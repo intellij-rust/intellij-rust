@@ -13,10 +13,10 @@ import org.rust.lang.refactoring.introduceVariable.findCandidateExpressionsToExt
 import org.rust.lang.refactoring.introduceVariable.suggestedNames
 
 class RsNameSuggestionsKtTest : RsTestBase() {
-    override val dataPath = "org/rust/lang/refactoring/fixtures/introduce_variable/"
+    override val dataPath: String = "org/rust/lang/refactoring/fixtures/introduce_variable/"
 
     fun `test argument names`() = doTest("""
-        fn foo(a: i32, veryCoolVariableName: i32) {
+        fn foo(a: i32, very_cool_variable_name: i32) {
             a + b
         }
 
@@ -28,7 +28,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
     )
 
     fun `test non direct argument names`() = doTest("""
-        fn foo(a: i32, veryCoolVariableName: i32) {
+        fn foo(a: i32, very_cool_variable_name: i32) {
             a + b
         }
 
@@ -41,7 +41,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
 
 
     fun `test function names`() = doTest("""
-        fn foo(a: i32, veryCoolVariableName: i32) -> i32 {
+        fn foo(a: i32, very_cool_variable_name: i32) -> i32 {
             a + b
         }
 

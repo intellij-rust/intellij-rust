@@ -13,17 +13,19 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.PathUtil
 import org.rust.lang.RsConstants
-import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.pathAttribute
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsModDeclItemStub
 
 class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
+
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<String, RsModDeclItem> = KEY
 
     companion object {
+
         fun getDeclarationFor(mod: RsFile): RsModDeclItem? {
             val key = key(mod) ?: return null
             val project = mod.project
@@ -55,9 +57,8 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
         private val KEY: StubIndexKey<String, RsModDeclItem> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RustModulesIndex")
 
-        // We use case-insensitive name as a key, because certain file systems
-        // are case-insensitive. It will work correctly with case-sensitive fs
-        // because we of the resolve check we do in [getDeclarationFor]
+        // We use case-insensitive name as a key, because certain file systems are case-insensitive.
+        // It will work correctly with case-sensitive fs because we of the resolve check we do in [getDeclarationFor],
         private fun key(mod: RsFile): String? {
             val name = if (mod.name != RsConstants.MOD_RS_FILE) FileUtil.getNameWithoutExtension(mod.name) else mod.parent?.name
             return name?.toLowerCase()
@@ -68,7 +69,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
             return if (pathAttribute != null) {
                 val fileName = PathUtil.getFileName(pathAttribute)
                 if (fileName == RsConstants.MOD_RS_FILE)
-                    // Use the name of the parent directory for files named mod.rs
+                // Use the name of the parent directory for files named mod.rs
                     PathUtil.getFileName(PathUtil.getParentPath(pathAttribute))
                 else
                     FileUtil.getNameWithoutExtension(fileName)

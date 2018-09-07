@@ -20,24 +20,27 @@ class RunCargoCommandDialog(
     project: Project,
     private val cargoProject: CargoProject
 ) : DialogWrapper(project, false) {
-    private val commandField = CargoCommandLineEditor(project, cargoProject.workspace)
+    private val commandField: CargoCommandLineEditor =
+        CargoCommandLineEditor(project, cargoProject.workspace)
 
     init {
         init()
         title = "Run Cargo Command"
     }
 
-    override fun createCenterPanel(): JComponent = panel {
-        val label = Label("&Command line")
-        row(label) {
-            commandField.apply {
-                setPreferredWidth(400)
-                attachLabel(label)
-            }()
+    override fun createCenterPanel(): JComponent =
+        panel {
+            val label = Label("&Command line")
+            row(label) {
+                commandField.apply {
+                    setPreferredWidth(400)
+                    attachLabel(label)
+                }()
+            }
         }
-    }
 
-    override fun getPreferredFocusedComponent(): JComponent = commandField.preferredFocusedComponent
+    override fun getPreferredFocusedComponent(): JComponent =
+        commandField.preferredFocusedComponent
 
     fun getCargoCommandLine(): CargoCommandLine {
         val params = ParametersListUtil.parse(commandField.text)

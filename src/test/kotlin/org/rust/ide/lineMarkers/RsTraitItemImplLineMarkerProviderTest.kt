@@ -5,11 +5,7 @@
 
 package org.rust.ide.lineMarkers
 
-import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
-
-/**
- * Tests for Trait member (const, fn, type) Implementation Line Marker
- */
+/** Tests for Trait member (const, fn, type) Implementation Line Marker. */
 class RsTraitItemImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
     fun `test impl`() = doTestByText("""

@@ -17,6 +17,7 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
+
             override fun visitMethodCall(o: RsMethodCall) {
                 val fn = o.reference.resolve() as? RsFunction ?: return
                 val receiver = o.receiver
@@ -48,5 +49,4 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         }
         return false
     }
-
 }

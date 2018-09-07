@@ -21,14 +21,8 @@ import java.nio.file.Path
 class Rustfmt(private val rustfmtExecutable: Path) {
 
     @Throws(ExecutionException::class)
-    fun reformatFile(
-        project: Project,
-        file: VirtualFile,
-        owner: Disposable = project
-    ): ProcessOutput {
-        val channel = project.cargoProjects.findProjectForFile(file)
-            ?.rustcInfo?.version?.channel
-
+    fun reformatFile(project: Project, file: VirtualFile, owner: Disposable = project): ProcessOutput {
+        val channel = project.cargoProjects.findProjectForFile(file)?.rustcInfo?.version?.channel
         val arguments = mutableListOf<String>()
         val (emit, skipChildren) = checkSupportForRustfmtFlags(file.parent.pathAsPath)
         arguments += if (emit) "--emit=files" else "--write-mode=overwrite"
@@ -50,9 +44,10 @@ class Rustfmt(private val rustfmtExecutable: Path) {
             .execute()
             ?.stdoutLines
             ?: return RustfmtFlags(false, false)
-
-        return RustfmtFlags(lines.any { it.contains(" --emit ") },
-            lines.any { it.contains(" --skip-children ") })
+        return RustfmtFlags(
+            lines.any { it.contains(" --emit ") },
+            lines.any { it.contains(" --skip-children ") }
+        )
     }
 
     private data class RustfmtFlags(val emit: Boolean, val skipChildren: Boolean)

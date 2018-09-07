@@ -16,6 +16,7 @@ object RsPsiTypeImplUtil {
     fun declaredType(psi: RsEnumItem): Ty = TyAdt.valueOf(psi)
     fun declaredType(psi: RsTraitItem): Ty = TyTraitObject.valueOf(psi)
     fun declaredType(psi: RsTypeParameter): Ty = TyTypeParameter.named(psi)
+    fun declaredType(psi: RsImplItem): Ty = TyTypeParameter.self(psi)
     fun declaredType(psi: RsTypeAlias): Ty {
         val typeReference = psi.typeReference
         if (typeReference != null) return typeReference.type
@@ -26,5 +27,4 @@ object RsPsiTypeImplUtil {
             is RsAbstractableOwner.Foreign -> TyUnknown
         }
     }
-    fun declaredType(psi: RsImplItem): Ty = TyTypeParameter.self(psi)
 }

@@ -6,15 +6,17 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.NavigatablePsiElement
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsInnerAttr
+import org.rust.lang.core.psi.RsMetaItem
+import org.rust.lang.core.psi.RsOuterAttr
 
 interface RsDocAndAttributeOwner : RsElement, NavigatablePsiElement
 
 interface RsInnerAttributeOwner : RsDocAndAttributeOwner {
     /**
      * Outer attributes are always children of the owning node.
-     * In contrast, inner attributes can be either direct
-     * children or grandchildren.
+     * In contrast, inner attributes can be either direct children or grandchildren.
      */
     val innerAttrList: List<RsInnerAttr>
 }
@@ -41,15 +43,11 @@ interface RsOuterAttributeOwner : RsDocAndAttributeOwner {
     val outerAttrList: List<RsOuterAttr>
 }
 
-/**
- * Find the first outer attribute with the given identifier.
- */
+/** Find the first outer attribute with the given identifier. */
 fun RsOuterAttributeOwner.findOuterAttr(name: String): RsOuterAttr? =
     outerAttrList.find { it.metaItem.name == name }
 
-/**
- * Returns [QueryAttributes] for given PSI element.
- */
+/** Returns [QueryAttributes] for given PSI element. */
 val RsDocAndAttributeOwner.queryAttributes: QueryAttributes
     get() = QueryAttributes(this)
 
@@ -58,14 +56,29 @@ val RsDocAndAttributeOwner.queryAttributes: QueryAttributes
  *
  * **Do not instantiate directly**, use [RsDocAndAttributeOwner.queryAttributes] instead.
  */
-class QueryAttributes(
-    private val psi: RsDocAndAttributeOwner
-) {
-    private val attributes: Sequence<RsAttr> = Sequence { (psi as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
-        Sequence { (psi as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
+class QueryAttributes(private val psi: RsDocAndAttributeOwner) {
+    private val attributes: Sequence<RsAttr> =
+        Sequence { (psi as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
+            Sequence { (psi as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
 
     // #[doc(hidden)]
-    val isDocHidden: Boolean get() = hasAttributeWithArg("doc", "hidden")
+    val isDocHidden: Boolean
+        get() = hasAttributeWithArg("doc", "hidden")
+
+    // #[lang = "copy"]
+    val langAttribute: String?
+        get() = getStringAttributes("lang").firstOrNull()
+
+    // #[derive(Clone)], #[derive(Copy, Clone, Debug)]
+    val deriveAttributes: Sequence<RsMetaItem>
+        get() = attrsByName("derive")
+
+    // #[repr(u16)], #[repr(C, packed)], #[repr(simd)], #[repr(align(8))]
+    val reprAttributes: Sequence<RsMetaItem>
+        get() = attrsByName("repr")
+
+    val metaItems: Sequence<RsMetaItem>
+        get() = attributes.mapNotNull { it.metaItem }
 
     // #[cfg(test)], #[cfg(target_has_atomic = "ptr")], #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
     fun hasCfgAttr(): Boolean {
@@ -100,28 +113,13 @@ class QueryAttributes(
             .mapNotNull { it.value }
             .singleOrNull()
 
-    // #[lang = "copy"]
-    val langAttribute: String?
-        get() = getStringAttributes("lang").firstOrNull()
-
-    // #[derive(Clone)], #[derive(Copy, Clone, Debug)]
-    val deriveAttributes: Sequence<RsMetaItem>
-        get() = attrsByName("derive")
-
-    // #[repr(u16)], #[repr(C, packed)], #[repr(simd)], #[repr(align(8))]
-    val reprAttributes: Sequence<RsMetaItem>
-        get() = attrsByName("repr")
-
     // `#[attributeName = "Xxx"]`
-    private fun getStringAttributes(attributeName: String): Sequence<String?> = attrsByName(attributeName).map { it.value }
+    private fun getStringAttributes(attributeName: String): Sequence<String?> =
+        attrsByName(attributeName).map { it.value }
 
-    val metaItems: Sequence<RsMetaItem>
-        get() = attributes.mapNotNull { it.metaItem }
-
-    /**
-     * Get a sequence of all attributes named [name]
-     */
-    private fun attrsByName(name: String): Sequence<RsMetaItem> = metaItems.filter { it.name == name }
+    /** Get a sequence of all attributes named [name]. */
+    private fun attrsByName(name: String): Sequence<RsMetaItem> =
+        metaItems.filter { it.name == name }
 
     override fun toString(): String =
         "QueryAttributes(${attributes.joinToString { it.text }})"

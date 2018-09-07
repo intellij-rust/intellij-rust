@@ -10,8 +10,8 @@ import org.rust.lang.core.types.infer.SnapshotMap
 import org.rust.lang.core.types.infer.UnificationTable
 
 /**
- * [SnapshotMap] shares snapshot logic with [UnificationTable], so snapshot/rollback mechanics
- * mostly tested in [RsUnificationTableTest]
+ * [SnapshotMap] shares snapshot logic with [UnificationTable], so snapshot/rollback mechanics mostly tested in
+ * [RsUnificationTableTest].
  */
 class RsSnapshotMapTest : TestCase() {
 

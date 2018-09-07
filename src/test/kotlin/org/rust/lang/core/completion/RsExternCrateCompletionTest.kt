@@ -10,6 +10,7 @@ import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsExternCrateCompletionTest : RsCompletionTestBase() {
+
     fun `test extern crate`() = doSingleCompletion(
         "extern crate dep_l/*caret*/",
         "extern crate dep_lib_target/*caret*/"

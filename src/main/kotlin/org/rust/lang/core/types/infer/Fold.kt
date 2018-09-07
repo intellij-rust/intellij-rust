@@ -11,8 +11,8 @@ import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_RE_EARLY_
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_INFER_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_PROJECTION_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_TYPE_PARAMETER_VISITOR
-import org.rust.lang.core.types.regions.ReEarlyBound
-import org.rust.lang.core.types.regions.Region
+import org.rust.lang.core.types.region.ReEarlyBound
+import org.rust.lang.core.types.region.Region
 import org.rust.lang.core.types.ty.*
 
 interface TypeFolder {
@@ -28,8 +28,8 @@ interface TypeVisitor {
 /**
  * Despite a scary name, [TypeFoldable] is a rather simple thing.
  *
- * It allows to map type variables within a type (or another object,
- * containing a type, like a [Predicate]) to other types.
+ * It allows to map type variables within a type (or another object, containing a type, like a [Predicate]) to other
+ * types.
  */
 interface TypeFoldable<out Self> {
     /**
@@ -44,8 +44,7 @@ interface TypeFoldable<out Self> {
      * `a.foldWith(folder)` is equivalent to `folder(a)` in cases where `a` is `Ty`.
      * In other cases the call delegates to [superFoldWith]
      *
-     * The folding basically is not deep. If you want to fold type deeply, you should write a folder
-     * somehow like this:
+     * The folding basically is not deep. If you want to fold type deeply, you should write a folder somehow like this:
      * ```kotlin
      * // We initially have `ty = A<B<C>, B<C>>` and want replace C to D to get `A<B<D>, B<D>>`
      * ty.foldWith(object : TypeFolder {
@@ -63,14 +62,14 @@ interface TypeFoldable<out Self> {
      */
     fun superFoldWith(folder: TypeFolder): Self
 
-    /** Similar to [superVisitWith], but just visit types without folding */
+    /** Similar to [superVisitWith], but just visit types without folding. */
     fun visitWith(visitor: TypeVisitor): Boolean = superVisitWith(visitor)
 
-    /** Similar to [foldWith], but just visit types without folding */
+    /** Similar to [foldWith], but just visit types without folding. */
     fun superVisitWith(visitor: TypeVisitor): Boolean
 }
 
-/** Deeply replace any [TyInfer] with the function [folder] */
+/** Deeply replace any [TyInfer] with the function [folder]. */
 fun <T> TypeFoldable<T>.foldTyInferWith(folder: (TyInfer) -> Ty): T =
     foldWith(object : TypeFolder {
         override fun foldTy(ty: Ty): Ty {
@@ -99,11 +98,10 @@ fun <T> TypeFoldable<T>.foldTyProjectionWith(folder: (TyProjection) -> Ty): T =
         }
     })
 
-/**
- * Deeply replace any [TyTypeParameter] by [subst] mapping.
- */
+/** Deeply replace any [TyTypeParameter] by [subst] mapping. */
 fun <T> TypeFoldable<T>.substitute(subst: Substitution): T =
     foldWith(object : TypeFolder {
+
         override fun foldTy(ty: Ty): Ty = when {
             ty is TyTypeParameter -> subst[ty] ?: ty
             ty.needToSubstitute -> ty.superFoldWith(this)
@@ -116,6 +114,7 @@ fun <T> TypeFoldable<T>.substitute(subst: Substitution): T =
 
 fun <T> TypeFoldable<T>.substituteOrUnknown(subst: Substitution): T =
     foldWith(object : TypeFolder {
+
         override fun foldTy(ty: Ty): Ty = when {
             ty is TyTypeParameter -> subst[ty] ?: TyUnknown
             ty.needToSubstitute -> ty.superFoldWith(this)
@@ -151,14 +150,15 @@ fun <T> TypeFoldable<T>.collectInferTys(): List<TyInfer> {
 }
 
 private data class HasTypeFlagVisitor(val flag: TypeFlags) : TypeVisitor {
+
     override fun visitTy(ty: Ty): Boolean = BitUtil.isSet(ty.flags, flag)
     override fun visitRegion(region: Region): Boolean = BitUtil.isSet(region.flags, flag)
 
     companion object {
-        val HAS_TY_INFER_VISITOR = HasTypeFlagVisitor(HAS_TY_INFER_MASK)
-        val HAS_TY_TYPE_PARAMETER_VISITOR = HasTypeFlagVisitor(HAS_TY_TYPE_PARAMETER_MASK)
-        val HAS_TY_PROJECTION_VISITOR = HasTypeFlagVisitor(HAS_TY_PROJECTION_MASK)
-        val HAS_RE_EARLY_BOUND_VISITOR = HasTypeFlagVisitor(HAS_RE_EARLY_BOUND_MASK)
+        val HAS_TY_INFER_VISITOR: TypeVisitor = HasTypeFlagVisitor(HAS_TY_INFER_MASK)
+        val HAS_TY_TYPE_PARAMETER_VISITOR: TypeVisitor = HasTypeFlagVisitor(HAS_TY_TYPE_PARAMETER_MASK)
+        val HAS_TY_PROJECTION_VISITOR: TypeVisitor = HasTypeFlagVisitor(HAS_TY_PROJECTION_MASK)
+        val HAS_RE_EARLY_BOUND_VISITOR: TypeVisitor = HasTypeFlagVisitor(HAS_RE_EARLY_BOUND_MASK)
     }
 }
 

@@ -6,15 +6,15 @@
 package org.rust.lang.core.type
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.util.parentOfType
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
-import org.rust.lang.core.types.regions.Scope
-import org.rust.lang.core.types.regions.ScopeTree
-import org.rust.lang.core.types.regions.getRegionScopeTree
-import org.rust.lang.core.types.regions.span
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.types.region.Scope
+import org.rust.lang.core.types.region.ScopeTree
+import org.rust.lang.core.types.region.getRegionScopeTree
+import org.rust.lang.core.types.region.span
 
 /**
  * `//^`       - mark for pat bindings. Used to calculate LCA of all scopes of marked bindings.
@@ -164,7 +164,7 @@ class RsScopeTest : RsTestBase() {
         val scopeWithScopeTrees = mutableListOf<Pair<Scope, ScopeTree>>()
         for ((pat, data, _) in patAndDataAndOffsets) {
             check(data.isEmpty()) { "Did not expect marker data" }
-            val contextOwner = checkNotNull(pat.parentOfType<RsInferenceContextOwner>()) { "Cannot find pat owner" }
+            val contextOwner = checkNotNull(pat.ancestorStrict<RsInferenceContextOwner>()) { "Cannot find pat owner" }
             val scopeTree = getRegionScopeTree(contextOwner)
             val scope = checkNotNull(scopeTree.getVariableScope(pat)) { "Cannot infer scope of pat: `${pat.text}`" }
             scopeWithScopeTrees.add(Pair(scope, scopeTree))
@@ -189,7 +189,7 @@ class RsScopeTest : RsTestBase() {
     }
 
     companion object {
-        private const val START_MARKER = "/*start*/"
-        private const val END_MARKER = "/*end*/"
+        private const val START_MARKER: String = "/*start*/"
+        private const val END_MARKER: String = "/*end*/"
     }
 }

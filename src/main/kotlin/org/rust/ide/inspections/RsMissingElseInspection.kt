@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsExprStmt
@@ -22,9 +23,10 @@ import org.rust.lang.core.psi.ext.rightSiblings
  * QuickFix: Change to `else if`
  */
 class RsMissingElseInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Missing else"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun getDisplayName(): String = "Missing else"
+
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitExprStmt(expr: RsExprStmt) {
                 val firstIf = expr.extractIf() ?: return
@@ -39,13 +41,19 @@ class RsMissingElseInspection : RsLocalInspectionTool() {
                     expr.parent,
                     TextRange(rangeStart, rangeStart + rangeLen),
                     "Suspicious if. Did you mean `else if`?",
-                    SubstituteTextFix.insert("Change to `else if`", nextIf.containingFile, nextIf.textRange.startOffset, "else "))
+                    SubstituteTextFix.insert(
+                        "Change to `else if`",
+                        nextIf.containingFile,
+                        nextIf.textRange.startOffset,
+                        "else "
+                    ))
             }
         }
 
-    private fun PsiElement?.extractIf(): RsIfExpr? = when (this) {
-        is RsIfExpr -> this
-        is RsExprStmt -> firstChild.extractIf()
-        else -> null
-    }
+    private fun PsiElement?.extractIf(): RsIfExpr? =
+        when (this) {
+            is RsIfExpr -> this
+            is RsExprStmt -> firstChild.extractIf()
+            else -> null
+        }
 }

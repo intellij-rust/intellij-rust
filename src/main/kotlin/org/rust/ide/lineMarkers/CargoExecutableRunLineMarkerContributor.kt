@@ -27,6 +27,7 @@ class CargoExecutableRunLineMarkerContributor : RunLineMarkerContributor() {
             Function<PsiElement, String> { psiElement ->
                 actions.mapNotNull { getText(it, psiElement) }.joinToString("\n")
             },
-            *actions)
+            *actions
+        )
     }
 }

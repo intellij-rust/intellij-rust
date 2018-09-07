@@ -27,17 +27,16 @@ import org.rust.lang.core.psi.ext.ancestorStrict
  */
 // TODO: this really should reuse code from RsSingleImportRemoveBracesFormatProcessor.
 class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBracesIntention.Context>() {
-    override fun getText() = "Remove curly braces"
-    override fun getFamilyName() = text
 
-    data class Context(
-        val useSpeck: RsUseSpeck,
-        val path: RsPath,
-        val useGroup: RsUseGroup,
-        val name: String
-    )
+    override fun getText(): String = "Remove curly braces"
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RemoveCurlyBracesIntention.Context? {
+    override fun getFamilyName(): String = text
+
+    override fun findApplicableContext(
+        project: Project,
+        editor: Editor,
+        element: PsiElement
+    ): RemoveCurlyBracesIntention.Context? {
         val useItem = element.ancestorStrict<RsUseItem>() ?: return null
         val useSpeck = useItem.useSpeck ?: return null
         val path = useSpeck.path ?: return null
@@ -63,14 +62,13 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
             else -> caret - 2
         }
 
-        // Conjure up a new use item to make a new path containing the
-        // identifier we want; then grab the relevant parts
+        // Conjure up a new use item to make a new path containing the identifier we want; then grab the relevant parts
         val newUseSpeck = RsPsiFactory(project).createUseSpeck("dummy::$name")
         val newPath = newUseSpeck.path ?: return
         val newSubPath = newPath.path ?: return
 
-        // Attach the identifier to the old path, then splice that path into
-        // the use item. Delete the old glob list and attach the alias, if any.
+        // Attach the identifier to the old path, then splice that path into the use item. Delete the old glob list and
+        // attach the alias, if any.
         newSubPath.replace(path.copy())
         path.replace(newPath)
         useSpeck.coloncolon?.delete()
@@ -78,4 +76,6 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
 
         editor.caretModel.moveToOffset(newOffset)
     }
+
+    data class Context(val useSpeck: RsUseSpeck, val path: RsPath, val useGroup: RsUseGroup, val name: String)
 }

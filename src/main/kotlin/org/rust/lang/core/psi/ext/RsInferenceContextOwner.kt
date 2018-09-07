@@ -5,11 +5,14 @@
 
 package org.rust.lang.core.psi.ext
 
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsArrayType
+import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsVariantDiscriminant
 
 /**
- * PSI element that implements this interface holds type inference context that
- * can be retrieved for each child element by [org.rust.lang.core.types.inference]
+ * PSI element that implements this interface holds type inference context that can be retrieved for each child element
+ * by [org.rust.lang.core.types.inference]
  *
  * @see org.rust.lang.core.types.infer.RsInferenceContext.infer
  */

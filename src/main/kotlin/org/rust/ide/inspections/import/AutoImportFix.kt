@@ -27,13 +27,14 @@ import org.rust.openapiext.Testmark
 import org.rust.openapiext.runWriteCommandAction
 
 class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), HighPriorityAction {
-
     private var isConsumed: Boolean = false
 
     override fun getFamilyName(): String = NAME
+
     override fun getText(): String = familyName
 
-    public override fun isAvailable(): Boolean = super.isAvailable() && !isConsumed
+    public override fun isAvailable(): Boolean =
+        super.isAvailable() && !isConsumed
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         invoke(project)
@@ -43,7 +44,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         val element = startElement as? RsElement ?: return
         val (_, candidates) = when (element) {
             is RsPath -> findApplicableContext(project, element) ?: return
-            is RsMethodCall -> findApplicableContext(project, element)  ?: return
+            is RsMethodCall -> findApplicableContext(project, element) ?: return
             else -> return
         }
 
@@ -76,24 +77,22 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
     ): Unit = project.runWriteCommandAction {
         val mod = originalElement.containingMod
         val psiFactory = RsPsiFactory(project)
-        // depth of `mod` relative to module with `extern crate` item
-        // we uses this info to create correct relative use item path if needed
+        // depth of `mod` relative to module with `extern crate` item we uses this info to create correct relative use
+        // item path if needed
         var relativeDepth: Int? = null
 
         val info = candidate.info
-        // if crate of importing element differs from current crate
-        // we need to add new extern crate item
+        // if crate of importing element differs from current crate we need to add new extern crate item
         if (info is ImportInfo.ExternCrateImportInfo) {
             val target = info.target
             val crateRoot = originalElement.crateRoot
             val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
             when {
-                // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
-                // we don't add corresponding extern crate item manually
-                // because it will be done by compiler implicitly
+                // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]` we don't
+                // add corresponding extern crate item manually because it will be done by compiler implicitly
                 attributes == RsFile.Attributes.NONE && target.isStd -> Testmarks.autoInjectedStdCrate.hit()
-                // if crate of imported element is `core` and there is `#![no_std]`
-                // we don't add corresponding extern crate item manually for the same reason
+                // if crate of imported element is `core` and there is `#![no_std]` we don't add corresponding extern
+                // crate item manually for the same reason
                 attributes == RsFile.Attributes.NO_STD && target.isCore -> Testmarks.autoInjectedCoreCrate.hit()
                 else -> {
                     if (info.needInsertExternCrateItem) {
@@ -142,8 +141,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
     }
 
     companion object {
-
-        const val NAME = "Import"
+        const val NAME: String = "Import"
 
         fun findApplicableContext(project: Project, path: RsPath): Context<RsPath>? {
             val basePath = path.basePath()
@@ -178,8 +176,8 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 .filter { basePath != path || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers) }
                 .flatMap { it.withModuleReexports(project).asSequence() }
                 .mapNotNull { importItem -> importItem.toImportCandidate(pathSuperMods) }
-                // check that result after import can be resolved and resolved element is suitable
-                // if no, don't add it in candidate list
+                // check that result after import can be resolved and resolved element is suitable if no, don't add it
+                // in candidate list
                 .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info, attributes, namespaceFilter) }
                 .filterImportCandidates(attributes)
 
@@ -210,7 +208,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             val lookup = ImplLookup.relativeTo(methodCall)
 
             val traitsToImport = mutableListOf<RsTraitItem>()
-            loop@for (fn in resolveResults) {
+            loop@ for (fn in resolveResults) {
                 if (fn !is RsFunction) continue
                 val owner = fn.owner
                 val trait = when (owner) {
@@ -228,19 +226,16 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             return traitsToImport
         }
 
-        /**
-         * Collect all possible imports using reexports of modules from original import item path
-         */
+        /** Collect all possible imports using reexports of modules from original import item path. */
         private fun ImportItem.withModuleReexports(project: Project): List<ImportItem> {
             check(this is ImportItem.ExplicitItem || this is ImportItem.ReexportedItem) {
-                "`ImportItem.withModuleReexports` should be called only for `ImportItem.ExplicitItem` and `ImportItem.ReexportedItem`"
+                "`ImportItem.withModuleReexports` should be called only for `ImportItem.ExplicitItem`" +
+                    " and `ImportItem.ReexportedItem`"
             }
 
-            // Contains already visited edges of module graph
-            // (useSpeck element <-> reexport edge of module graph).
-            // Only reexports can create cycles in module graph
-            // so it's enough to collect only such edges
-            val visited: MutableSet<RsUseSpeck> = HashSet()
+            // Contains already visited edges of module graph (useSpeck element <-> reexport edge of module graph).
+            // Only reexports can create cycles in module graph so it's enough to collect only such edges
+            val visited: MutableSet<RsUseSpeck> = hashSetOf()
 
             fun ImportItem.collectImportItems(): List<ImportItem> {
                 val importItems = mutableListOf(this)
@@ -272,17 +267,16 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             return collectImportItems()
         }
 
-        // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)`
-        // but in our case `mod` is always same and `mod` needs only to get set of its super mods
-        // so we pass `superMods` instead of `mod` for optimization
+        // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)` but in our case `mod` is always same
+        // and `mod` needs only to get set of its super mods so we pass `superMods` instead of `mod` for optimization
         private fun ImportItem.canBeImported(superMods: LinkedHashSet<RsMod>): ImportInfo? {
             if (item !is RsVisible) return null
 
             val ourSuperMods = this.superMods ?: return null
             val parentMod = ourSuperMods.getOrNull(0) ?: return null
 
-            // try to find latest common ancestor module of `parentMod` and `mod` in module tree
-            // we need to do it because we can use direct child items of any super mod with any visibility
+            // try to find latest common ancestor module of `parentMod` and `mod` in module tree we need to do it
+            // because we can use direct child items of any super mod with any visibility
             val lca = ourSuperMods.find { it in superMods }
             val crateRelativePath = crateRelativePath ?: return null
 
@@ -378,10 +372,10 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 candidate to attributes
             }
 
-            val condition: (RsFile.Attributes) -> Boolean = if (hasImportWithSameAttributes) {
-                attributes -> attributes == fileAttributes
-            } else {
-                attributes -> attributes < fileAttributes
+            val condition: (RsFile.Attributes) -> Boolean = if (hasImportWithSameAttributes) { attributes ->
+                attributes == fileAttributes
+            } else { attributes ->
+                attributes < fileAttributes
             }
             return candidateToAttributes.mapNotNull { (candidate, attributes) ->
                 if (condition(attributes)) candidate else null
@@ -391,8 +385,8 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         private fun filterInPackage(candidates: List<ImportCandidate>): List<ImportCandidate> {
             val (simpleImports, compositeImports) = candidates.partition { it.importItem !is ImportItem.CompositeImportItem }
 
-            // If there is item reexport from some parent module of current import path
-            // we want to drop this import candidate
+            // If there is item reexport from some parent module of current import path we want to drop this import
+            // candidate.
             //
             // For example, in the following case
             //
@@ -406,7 +400,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 val superMods = it.importItem.superMods ?: return@mapNotNull null
                 it to superMods
             }
-            val parents = candidatesWithSuperMods.mapTo(HashSet()) { (_, superMods) -> superMods[0] }
+            val parents = candidatesWithSuperMods.mapTo(hashSetOf()) { (_, superMods) -> superMods[0] }
             val filteredSimpleImports = candidatesWithSuperMods.mapNotNull { (candidate, superMods) ->
                 if (superMods.asSequence().drop(1).none { it in parents }) candidate else null
             }
@@ -414,58 +408,63 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         }
     }
 
-    data class Context<T>(
-        val data: T,
-        val candidates: List<ImportCandidate>
-    )
+    data class Context<T>(val data: T, val candidates: List<ImportCandidate>)
 
     object Testmarks {
-        val autoInjectedStdCrate = Testmark("autoInjectedStdCrate")
-        val autoInjectedCoreCrate = Testmark("autoInjectedCoreCrate")
-        val pathInUseItem = Testmark("pathInUseItem")
-        val externCrateItemInNotCrateRoot = Testmark("externCrateItemInNotCrateRoot")
+        val autoInjectedStdCrate: Testmark = Testmark("autoInjectedStdCrate")
+        val autoInjectedCoreCrate: Testmark = Testmark("autoInjectedCoreCrate")
+        val pathInUseItem: Testmark = Testmark("pathInUseItem")
+        val externCrateItemInNotCrateRoot: Testmark = Testmark("externCrateItemInNotCrateRoot")
     }
 }
 
 sealed class ImportItem(val item: RsQualifiedNamedElement) {
-
     abstract val itemName: String?
     abstract val isPublic: Boolean
     abstract val superMods: List<RsMod>?
     abstract val containingCargoTarget: CargoWorkspace.Target?
 
-    val parentCrateRelativePath: String? get() {
-        val path = superMods
-            ?.map { it.modName ?: return null }
-            ?.asReversed()
-            ?.drop(1)
-            ?.joinToString("::") ?: return null
-        return if (item is RsEnumVariant) item.parentEnum.name?.let { "$path::$it" } else path
-    }
+    val parentCrateRelativePath: String?
+        get() {
+            val path = superMods
+                ?.map { it.modName ?: return null }
+                ?.asReversed()
+                ?.drop(1)
+                ?.joinToString("::") ?: return null
+            return if (item is RsEnumVariant) item.parentEnum.name?.let { "$path::$it" } else path
+        }
 
-    val crateRelativePath: String? get() {
-        val name = itemName ?: return null
-        val parentPath = parentCrateRelativePath ?: return null
-        if (parentPath.isEmpty()) return name
-        return "$parentPath::$name"
-    }
+    val crateRelativePath: String?
+        get() {
+            val name = itemName ?: return null
+            val parentPath = parentCrateRelativePath ?: return null
+            if (parentPath.isEmpty()) return name
+            return "$parentPath::$name"
+        }
 
     class ExplicitItem(item: RsQualifiedNamedElement) : ImportItem(item) {
         override val itemName: String? get() = item.name
-        override val isPublic: Boolean get() = (item as? RsVisible)?.isPublic == true
-        override val superMods: List<RsMod>? get() = (if (item is RsMod) item.`super` else item.containingMod)?.superMods
-        override val containingCargoTarget: CargoWorkspace.Target? get() = item.containingCargoTarget
+
+        override val isPublic: Boolean
+            get() = (item as? RsVisible)?.isPublic == true
+
+        override val superMods: List<RsMod>?
+            get() = (if (item is RsMod) item.`super` else item.containingMod)?.superMods
+
+        override val containingCargoTarget: CargoWorkspace.Target?
+            get() = item.containingCargoTarget
     }
 
-    class ReexportedItem(
-        private val useSpeck: RsUseSpeck,
-        item: RsQualifiedNamedElement
-    ) : ImportItem(item) {
-
+    class ReexportedItem(private val useSpeck: RsUseSpeck, item: RsQualifiedNamedElement) : ImportItem(item) {
         override val itemName: String? get() = useSpeck.nameInScope
+
         override val isPublic: Boolean get() = true
-        override val superMods: List<RsMod>? get() = useSpeck.containingMod.superMods
-        override val containingCargoTarget: CargoWorkspace.Target? get() = useSpeck.containingCargoTarget
+
+        override val superMods: List<RsMod>?
+            get() = useSpeck.containingMod.superMods
+
+        override val containingCargoTarget: CargoWorkspace.Target?
+            get() = useSpeck.containingCargoTarget
     }
 
     class CompositeImportItem(
@@ -475,21 +474,22 @@ sealed class ImportItem(val item: RsQualifiedNamedElement) {
         private val explicitSuperMods: List<RsMod>,
         item: RsQualifiedNamedElement
     ) : ImportItem(item) {
+        override val superMods: List<RsMod>?
+            get() {
+                val mods = ArrayList(explicitSuperMods)
+                mods += reexportedModItem.superMods.orEmpty()
+                return mods
+            }
 
-        override val superMods: List<RsMod>? get() {
-            val mods = ArrayList(explicitSuperMods)
-            mods += reexportedModItem.superMods.orEmpty()
-            return mods
-        }
-        override val containingCargoTarget: CargoWorkspace.Target? get() = reexportedModItem.containingCargoTarget
+        override val containingCargoTarget: CargoWorkspace.Target?
+            get() = reexportedModItem.containingCargoTarget
     }
 }
 
 sealed class ImportInfo {
-
     abstract val usePath: String
 
-    class LocalImportInfo(override val usePath: String): ImportInfo()
+    class LocalImportInfo(override val usePath: String) : ImportInfo()
 
     class ExternCrateImportInfo(
         val target: CargoWorkspace.Target,
@@ -528,45 +528,50 @@ sealed class ImportInfo {
 
 data class ImportCandidate(val importItem: ImportItem, val info: ImportInfo)
 
-private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean get() = when (context) {
-    is RsTypeElement -> { e ->
-        when (e) {
-            is RsEnumItem,
-            is RsStructItem,
-            is RsTraitItem,
-            is RsTypeAlias -> true
-            else -> false
+private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean
+    get() = when (context) {
+        is RsTypeElement -> { element ->
+            when (element) {
+                is RsEnumItem,
+                is RsStructItem,
+                is RsTraitItem,
+                is RsTypeAlias -> true
+                else -> false
+            }
         }
-    }
-    is RsPathExpr -> { e ->
-        when (e) {
-            // TODO: take into account fields type
-            is RsFieldsOwner,
-            is RsConstant,
-            is RsFunction -> true
-            else -> false
+        is RsPathExpr -> { element ->
+            when (element) {
+                // TODO: take into account fields type
+                is RsFieldsOwner,
+                is RsConstant,
+                is RsFunction -> true
+                else -> false
+            }
         }
-    }
-    is RsTraitRef -> { e -> e is RsTraitItem }
-    is RsStructLiteral -> { e -> e is RsFieldsOwner && e.blockFields != null }
-    is RsPatBinding -> { e ->
-        when (e) {
-            is RsEnumItem,
-            is RsEnumVariant,
-            is RsStructItem,
-            is RsTypeAlias,
-            is RsConstant,
-            is RsFunction -> true
-            else -> false
+        is RsTraitRef -> { element -> element is RsTraitItem }
+        is RsStructLiteral -> { element -> element is RsFieldsOwner && element.blockFields != null }
+        is RsPatBinding -> { element ->
+            when (element) {
+                is RsEnumItem,
+                is RsEnumVariant,
+                is RsStructItem,
+                is RsTypeAlias,
+                is RsConstant,
+                is RsFunction -> true
+                else -> false
+            }
         }
+        else -> { _ -> true }
     }
-    else -> { _ -> true }
-}
 
 private val RsElement.stdlibAttributes: RsFile.Attributes
     get() = (crateRoot?.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
-private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsInnerAttr }
-private val <T: RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
+
+private val RsItemsOwner.firstItem: RsElement
+    get() = itemsAndMacros.first { it !is RsInnerAttr }
+
+private val <T : RsElement> List<T>.lastElement: T?
+    get() = maxBy { it.textOffset }
 
 private val CargoWorkspace.Target.isStd: Boolean
     get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.STD

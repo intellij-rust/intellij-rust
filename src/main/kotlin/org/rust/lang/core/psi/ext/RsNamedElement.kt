@@ -22,31 +22,31 @@ interface RsNamedElement : RsElement, PsiNamedElement, NavigatablePsiElement
 
 interface RsNameIdentifierOwner : RsNamedElement, PsiNameIdentifierOwner
 
-abstract class RsNamedElementImpl(node: ASTNode) : RsElementImpl(node),
-                                                   RsNameIdentifierOwner {
+abstract class RsNamedElementImpl(node: ASTNode) : RsElementImpl(node), RsNameIdentifierOwner {
 
-    override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)
+    override fun getNameIdentifier(): PsiElement? =
+        findChildByType(IDENTIFIER)
 
-    override fun getName(): String? = nameIdentifier?.text
+    override fun getName(): String? =
+        nameIdentifier?.text
 
     override fun setName(name: String): PsiElement? {
         nameIdentifier?.replace(RsPsiFactory(project).createIdentifier(name))
         return this
     }
 
-    override fun getTextOffset(): Int = nameIdentifier?.textOffset ?: super.getTextOffset()
+    override fun getTextOffset(): Int =
+        nameIdentifier?.textOffset ?: super.getTextOffset()
 }
 
-abstract class RsStubbedNamedElementImpl<StubT> : RsStubbedElementImpl<StubT>,
-                                                  RsNameIdentifierOwner
-where StubT : RsNamedStub, StubT : StubElement<*> {
+abstract class RsStubbedNamedElementImpl<StubT> : RsStubbedElementImpl<StubT>, RsNameIdentifierOwner
+    where StubT : RsNamedStub, StubT : StubElement<*> {
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getNameIdentifier(): PsiElement?
-        = findChildByType(IDENTIFIER)
+    override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)
 
     override fun getName(): String? {
         val stub = stub

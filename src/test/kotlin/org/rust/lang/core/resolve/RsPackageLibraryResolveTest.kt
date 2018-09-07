@@ -10,6 +10,7 @@ import org.rust.WithDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
+
     fun `test library as crate`() = stubOnlyResolve("""
     //- main.rs
         extern crate test_package;

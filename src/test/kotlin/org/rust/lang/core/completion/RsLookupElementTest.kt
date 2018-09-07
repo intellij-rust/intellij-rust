@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsLookupElementTest : RsTestBase() {
-    private val `$` = '$'
+
     fun `test fn`() = check("""
         fn foo(x: i32) -> Option<String> {}
           //^
@@ -110,5 +110,9 @@ class RsLookupElementTest : RsTestBase() {
         check(presentation.icon != null)
         check(presentation.tailText == tailText)
         check(presentation.typeText == typeText)
+    }
+
+    companion object {
+        private const val `$`: Char = '$'
     }
 }

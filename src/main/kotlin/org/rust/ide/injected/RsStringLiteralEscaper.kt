@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.utils.parseRustStringCharacters
 import java.lang.StringBuilder
 
-/** See [com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper] */
+/** See [com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper]. */
 private class RsNormalStringLiteralEscaper(host: RsLitExpr) : LiteralTextEscaper<RsLitExpr>(host) {
     private var outSourceOffsets: IntArray? = null
 
@@ -39,6 +39,7 @@ private class RsNormalStringLiteralEscaper(host: RsLitExpr) : LiteralTextEscaper
 
 /** See [com.intellij.psi.LiteralTextEscaper.createSimple] */
 private class RsRawStringLiteralEscaper(host: RsLitExpr) : LiteralTextEscaper<RsLitExpr>(host) {
+
     override fun decode(rangeInsideHost: TextRange, outChars: StringBuilder): Boolean {
         outChars.append(rangeInsideHost.substring(myHost.text))
         return true

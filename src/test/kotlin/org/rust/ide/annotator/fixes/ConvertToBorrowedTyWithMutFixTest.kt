@@ -7,7 +7,11 @@ package org.rust.ide.annotator.fixes
 
 
 class ConvertToBorrowedTyWithMutFixTest : ConvertToTyUsingTraitFixTestBase(
-    true, "BorrowMut", "borrow_mut", "use std::borrow::BorrowMut;") {
+    true,
+    "BorrowMut",
+    "borrow_mut",
+    "use std::borrow::BorrowMut;"
+) {
 
     fun `test &String to &mut String`() = checkFixIsUnavailable("Convert to &mut String using `BorrowMut` trait", """
         $imports

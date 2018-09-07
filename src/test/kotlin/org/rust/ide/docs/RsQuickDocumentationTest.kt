@@ -10,6 +10,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 class RsQuickDocumentationTest : RsDocumentationProviderTest() {
+
     fun `test fn`() = doTest("""
         /// Adds one to the number given.
         ///
@@ -1043,6 +1044,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p><a href="psi_element://test_package/struct.Foo.html#method.bar"><code>Foo::bar</code></a></p></div>
     """)
 
-    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
-        = doTest(code, expected, RsDocumentationProvider::generateDoc)
+    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String) =
+        doTest(code, expected, RsDocumentationProvider::generateDoc)
 }

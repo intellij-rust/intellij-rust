@@ -12,7 +12,7 @@ import java.util.*
 
 fun processItemOrEnumVariantDeclarations(
     scope: RsElement,
-    ns: Set<Namespace>,
+    namespaces: Set<Namespace>,
     processor: RsResolveProcessor,
     withPrivateImports: Boolean = false
 ): Boolean {
@@ -21,7 +21,7 @@ fun processItemOrEnumVariantDeclarations(
             if (processAll(scope.enumBody?.enumVariantList.orEmpty(), processor)) return true
         }
         is RsMod -> {
-            if (processItemDeclarations(scope, ns, processor, withPrivateImports)) return true
+            if (processItemDeclarations(scope, namespaces, processor, withPrivateImports)) return true
         }
     }
 
@@ -31,14 +31,14 @@ fun processItemOrEnumVariantDeclarations(
 
 fun processItemDeclarations(
     scope: RsItemsOwner,
-    ns: Set<Namespace>,
+    namespaces: Set<Namespace>,
     originalProcessor: RsResolveProcessor,
     withPrivateImports: Boolean
 ): Boolean {
     val starImports = mutableListOf<RsUseSpeck>()
     val itemImports = mutableListOf<RsUseSpeck>()
 
-    val directlyDeclaredNames = HashSet<String>()
+    val directlyDeclaredNames = hashSetOf<String>()
     val processor = { e: ScopeEntry ->
         directlyDeclaredNames += e.name
         originalProcessor(e)
@@ -54,21 +54,21 @@ fun processItemDeclarations(
                     }
                 }
 
-        // Unit like structs are both types and values
+            // Unit like structs are both types and values
             is RsStructItem ->
-                if (item.namespaces.intersect(ns).isNotEmpty() && processor(item)) return true
+                if (item.namespaces.intersect(namespaces).isNotEmpty() && processor(item)) return true
 
-            is RsModDeclItem -> if (Namespace.Types in ns) {
+            is RsModDeclItem -> if (Namespace.Types in namespaces) {
                 val name = item.name ?: return false
                 val mod = item.reference.resolve() ?: return false
                 if (processor(name, mod)) return true
             }
 
             is RsEnumItem, is RsModItem, is RsTraitItem, is RsTypeAlias ->
-                if (Namespace.Types in ns && processor(item as RsNamedElement)) return true
+                if (Namespace.Types in namespaces && processor(item as RsNamedElement)) return true
 
             is RsFunction, is RsConstant ->
-                if (Namespace.Values in ns && processor(item as RsNamedElement)) return true
+                if (Namespace.Values in namespaces && processor(item as RsNamedElement)) return true
 
             is RsForeignModItem ->
                 if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
@@ -84,8 +84,7 @@ fun processItemDeclarations(
 
     if (scope.processExpandedItems(::processItem)) return true
 
-
-    if (Namespace.Types in ns) {
+    if (Namespace.Types in namespaces) {
         if (scope is RsFile && scope.isCrateRoot) {
             // Rust injects implicit `extern crate std` in every crate root module unless it is
             // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
@@ -109,18 +108,16 @@ fun processItemDeclarations(
         check(speck.useGroup == null)
         val path = speck.path ?: continue
         val name = speck.nameInScope ?: continue
-        if (processMultiResolveWithNs(name, ns, path.reference, processor)) return true
+        if (processMultiResolveWithNs(name, namespaces, path.reference, processor)) return true
     }
 
-    if (originalProcessor(ScopeEvent.STAR_IMPORTS)) {
-        return false
-    }
+    if (originalProcessor(ScopeEvent.STAR_IMPORTS)) return false
+
     for (speck in starImports) {
         val basePath = speck.path
-        val mod = (if (basePath != null) basePath.reference.resolve() else speck.crateRoot)
-            ?: continue
+        val mod = (if (basePath != null) basePath.reference.resolve() else speck.crateRoot) ?: continue
 
-        val found = processItemOrEnumVariantDeclarations(mod, ns,
+        val found = processItemOrEnumVariantDeclarations(mod, namespaces,
             { it.name !in directlyDeclaredNames && originalProcessor(it) },
             withPrivateImports = basePath != null && isSuperChain(basePath)
         )
@@ -130,7 +127,12 @@ fun processItemDeclarations(
     return false
 }
 
-private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsReference, processor: RsResolveProcessor): Boolean {
+private fun processMultiResolveWithNs(
+    name: String,
+    namespaces: Set<Namespace>,
+    ref: RsReference,
+    processor: RsResolveProcessor
+): Boolean {
     // XXX: use items can legitimately resolve in both namespaces.
     // Because we must be lazy, we don't know up front how many times we
     // need to call the `processor`, so we need to calculate this lazily
@@ -141,15 +143,15 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
     var variants: List<RsNamedElement> = emptyList()
     val visitedNamespaces = EnumSet.noneOf(Namespace::class.java)
     if (processor.lazy(name) {
-        variants = ref.multiResolve()
-            .filterIsInstance<RsNamedElement>()
-            .filter { ns.intersect(it.namespaces).isNotEmpty() }
-        val first = variants.firstOrNull()
-        if (first != null) {
-            visitedNamespaces.addAll(first.namespaces)
-        }
-        first
-    }) {
+            variants = ref.multiResolve()
+                .filterIsInstance<RsNamedElement>()
+                .filter { namespaces.intersect(it.namespaces).isNotEmpty() }
+            val first = variants.firstOrNull()
+            if (first != null) {
+                visitedNamespaces.addAll(first.namespaces)
+            }
+            first
+        }) {
         return true
     }
     // `variants` will be populated if processor looked at the corresponding element

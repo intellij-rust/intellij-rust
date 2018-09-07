@@ -18,6 +18,7 @@ import org.rust.lang.utils.Severity
 import org.rust.openapiext.Testmark
 
 abstract class RsTypificationTestBase : RsTestBase() {
+
     protected fun testExpr(@Language("Rust") code: String, description: String = "", allowErrors: Boolean = false) {
         InlineFile(code)
         check(description)
@@ -32,7 +33,11 @@ abstract class RsTypificationTestBase : RsTestBase() {
         allowErrors: Boolean = false
     ) = mark.checkHit { testExpr(code, description, allowErrors) }
 
-    protected fun stubOnlyTypeInfer(@Language("Rust") code: String, description: String = "", allowErrors: Boolean = false) {
+    protected fun stubOnlyTypeInfer(
+        @Language("Rust") code: String,
+        description: String = "",
+        allowErrors: Boolean = false
+    ) {
         val testProject = fileTreeFromText(code)
             .createAndOpenFileWithCaretMarker()
 

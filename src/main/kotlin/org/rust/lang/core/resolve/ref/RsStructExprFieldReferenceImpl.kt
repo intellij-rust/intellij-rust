@@ -14,12 +14,10 @@ import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processStructLiteralFieldResolveVariants
 
-class RsStructLiteralFieldReferenceImpl(
-    field: RsStructLiteralField
-) : RsReferenceCached<RsStructLiteralField>(field),
-    RsReference {
-
-    override val RsStructLiteralField.referenceAnchor: PsiElement get() = referenceNameElement
+class RsStructLiteralFieldReferenceImpl(field: RsStructLiteralField) : RsReferenceCached<RsStructLiteralField>(field),
+                                                                       RsReference {
+    override val RsStructLiteralField.referenceAnchor: PsiElement
+        get() = referenceNameElement
 
     override fun getVariants(): Array<out LookupElement> =
         collectCompletionVariants { processStructLiteralFieldResolveVariants(element, it) }
@@ -29,8 +27,8 @@ class RsStructLiteralFieldReferenceImpl(
             processStructLiteralFieldResolveVariants(element, it)
         }
 
-    override fun handleElementRename(newName: String): PsiElement {
-        return if (element.colon != null) {
+    override fun handleElementRename(newName: String): PsiElement =
+        if (element.colon != null) {
             super.handleElementRename(newName)
         } else {
             val psiFactory = RsPsiFactory(element.project)
@@ -41,7 +39,6 @@ class RsStructLiteralFieldReferenceImpl(
             element.identifier.replace(newIdent)
             element.add(colon)
             element.add(initExpression)
-            return element
+            element
         }
-    }
 }

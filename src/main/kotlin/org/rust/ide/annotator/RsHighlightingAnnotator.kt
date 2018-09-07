@@ -56,8 +56,8 @@ class RsHighlightingAnnotator : Annotator {
             return null
         }
 
-        // Although we remap tokens from identifier to keyword, this happens in the
-        // parser's pass, so we can't use HighlightingLexer to color these
+        // Although we remap tokens from identifier to keyword, this happens in the parser's pass, so we can't use
+        // `HighlightingLexer` to color these
         if (element.elementType in RS_CONTEXTUAL_KEYWORDS) {
             return element.textRange to RsColor.KEYWORD
         }
@@ -73,40 +73,41 @@ class RsHighlightingAnnotator : Annotator {
     }
 }
 
-// If possible, this should use only stubs because this will be called
-// on elements in other files when highlighting references.
-private fun colorFor(element: RsElement): RsColor? = when (element) {
-    is RsMacro -> RsColor.MACRO
+// If possible, this should use only stubs because this will be called on elements in other files when highlighting
+// references.
+private fun colorFor(element: RsElement): RsColor? =
+    when (element) {
+        is RsMacro -> RsColor.MACRO
 
-    is RsAttr -> RsColor.ATTRIBUTE
-    is RsMacroCall -> RsColor.MACRO
-    is RsSelfParameter -> RsColor.SELF_PARAMETER
-    is RsTryExpr -> RsColor.Q_OPERATOR
-    is RsTraitRef -> RsColor.TRAIT
+        is RsAttr -> RsColor.ATTRIBUTE
+        is RsMacroCall -> RsColor.MACRO
+        is RsSelfParameter -> RsColor.SELF_PARAMETER
+        is RsTryExpr -> RsColor.Q_OPERATOR
+        is RsTraitRef -> RsColor.TRAIT
 
-    is RsEnumItem -> RsColor.ENUM
-    is RsEnumVariant -> RsColor.ENUM_VARIANT
-    is RsExternCrateItem -> RsColor.CRATE
-    is RsFieldDecl -> RsColor.FIELD
-    is RsFunction -> when (element.owner) {
-        is RsAbstractableOwner.Foreign, is RsAbstractableOwner.Free -> RsColor.FUNCTION
-        is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl ->
-            if (element.isAssocFn) RsColor.ASSOC_FUNCTION else RsColor.METHOD
+        is RsEnumItem -> RsColor.ENUM
+        is RsEnumVariant -> RsColor.ENUM_VARIANT
+        is RsExternCrateItem -> RsColor.CRATE
+        is RsFieldDecl -> RsColor.FIELD
+        is RsFunction -> when (element.owner) {
+            is RsAbstractableOwner.Foreign, is RsAbstractableOwner.Free -> RsColor.FUNCTION
+            is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl ->
+                if (element.isAssocFn) RsColor.ASSOC_FUNCTION else RsColor.METHOD
+        }
+        is RsMethodCall -> RsColor.METHOD
+        is RsModDeclItem -> RsColor.MODULE
+        is RsModItem -> RsColor.MODULE
+        is RsPatBinding -> {
+            if (element.ancestorStrict<RsValueParameter>() != null) RsColor.PARAMETER else null
+        }
+        is RsStructItem -> RsColor.STRUCT
+        is RsTraitItem -> RsColor.TRAIT
+        is RsTypeAlias -> RsColor.TYPE_ALIAS
+        is RsTypeParameter -> RsColor.TYPE_PARAMETER
+        is RsMacroReference -> RsColor.FUNCTION
+        is RsMacroBinding -> RsColor.FUNCTION
+        else -> null
     }
-    is RsMethodCall -> RsColor.METHOD
-    is RsModDeclItem -> RsColor.MODULE
-    is RsModItem -> RsColor.MODULE
-    is RsPatBinding -> {
-        if (element.ancestorStrict<RsValueParameter>() != null) RsColor.PARAMETER else null
-    }
-    is RsStructItem -> RsColor.STRUCT
-    is RsTraitItem -> RsColor.TRAIT
-    is RsTypeAlias -> RsColor.TYPE_ALIAS
-    is RsTypeParameter -> RsColor.TYPE_PARAMETER
-    is RsMacroReference -> RsColor.FUNCTION
-    is RsMacroBinding -> RsColor.FUNCTION
-    else -> null
-}
 
 private fun partToHighlight(element: RsElement): TextRange? {
     if (element is RsMacro) {

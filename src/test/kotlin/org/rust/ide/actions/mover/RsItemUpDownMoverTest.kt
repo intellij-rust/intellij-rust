@@ -8,6 +8,7 @@ package org.rust.ide.actions.mover
 import org.intellij.lang.annotations.Language
 
 class RsItemUpDownMoverTest : RsStatementUpDownMoverTestBase() {
+
     fun `test step nowhere`() = doTest("""
         /*item*/
     """, """
@@ -332,7 +333,10 @@ class RsItemUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         fun replacePlaceholder(_text: String, replacement: String): String {
             val text = _text.trimIndent()
             val indent = text.lines().find { placeholder in it }!!.substringBefore(placeholder)
-            return text.replace("$indent$placeholder", replacement.trimIndent().lines().joinToString("\n") { "$indent$it" })
+            return text.replace(
+                "$indent$placeholder",
+                replacement.trimIndent().lines().joinToString("\n") { "$indent$it" }
+            )
         }
 
         for (item in items) {

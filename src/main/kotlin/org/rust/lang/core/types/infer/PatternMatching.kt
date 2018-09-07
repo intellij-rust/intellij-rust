@@ -13,7 +13,8 @@ import org.rust.lang.core.types.type
 
 fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolean = false) {
     when (this) {
-        is RsPatWild -> {}
+        is RsPatWild -> {
+        }
         is RsPatConst -> {
             val expr = expr
             val expectedTy = when {
@@ -50,14 +51,14 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                 ?: return
 
             val tupleFields = item.positionalFields
-            for ((idx, p) in patList.withIndex()) {
+            for ((idx, pat) in patList.withIndex()) {
                 val fieldType = tupleFields
                     .getOrNull(idx)
                     ?.typeReference
                     ?.type
                     ?.substituteOrUnknown(derefTy.typeParameterValues)
                     ?: TyUnknown
-                p.extractBindings(fcx, fieldType.toRefIfNeeded(mut), mut != null)
+                pat.extractBindings(fcx, fieldType.toRefIfNeeded(mut), mut != null)
             }
         }
         is RsPatStruct -> {
@@ -79,7 +80,8 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                     is RsPatFieldKind.Full -> kind.pat.extractBindings(fcx, fieldType.toRefIfNeeded(mut), mut != null)
                     is RsPatFieldKind.Shorthand -> {
                         val bindingKind = kind.binding.kind
-                        val bindingType = fieldType.toRefIfNeeded(if (bindingKind is BindByReference) bindingKind.mutability else mut)
+                        val mutability = (bindingKind as? BindByReference)?.mutability ?: mut
+                        val bindingType = fieldType.toRefIfNeeded(mutability)
                         fcx.writeBindingTy(kind.binding, bindingType)
                     }
                 }

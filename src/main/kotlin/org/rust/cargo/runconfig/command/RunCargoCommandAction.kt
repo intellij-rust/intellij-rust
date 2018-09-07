@@ -11,14 +11,11 @@ import org.rust.cargo.runconfig.ui.RunCargoCommandDialog
 import org.rust.cargo.toolchain.run
 
 class RunCargoCommandAction : RunCargoCommandActionBase(CargoIcons.ICON) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
-        val cargoProject = getAppropriateCargoProject(e) ?: return
+    override fun actionPerformed(event: AnActionEvent) {
+        val project = event.project ?: return
+        val cargoProject = getAppropriateCargoProject(event) ?: return
         val dialog = RunCargoCommandDialog(project, cargoProject)
         if (!dialog.showAndGet()) return
-
         dialog.getCargoCommandLine().run(project, cargoProject)
     }
-
 }

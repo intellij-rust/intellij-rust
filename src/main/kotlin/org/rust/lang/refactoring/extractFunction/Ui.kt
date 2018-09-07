@@ -19,12 +19,7 @@ import org.rust.openapiext.isUnitTestMode
 
 private var MOCK: ExtractFunctionUi? = null
 
-fun extractFunctionDialog(
-    project: Project,
-    config: RsExtractFunctionConfig,
-    callback: () -> Unit
-
-) {
+fun extractFunctionDialog(project: Project, config: RsExtractFunctionConfig, callback: () -> Unit) {
     val extractFunctionUi = if (isUnitTestMode) {
         MOCK ?: error("You should set mock ui via `withMockExtractFunctionUi`")
     } else {
@@ -47,9 +42,7 @@ interface ExtractFunctionUi {
     fun extract(config: RsExtractFunctionConfig, callback: () -> Unit)
 }
 
-private class DialogExtractFunctionUi(
-    private val project: Project
-) : ExtractFunctionUi {
+private class DialogExtractFunctionUi(private val project: Project) : ExtractFunctionUi {
 
     override fun extract(config: RsExtractFunctionConfig, callback: () -> Unit) {
         val functionNameField = NameSuggestionsField(project)

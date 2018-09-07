@@ -9,7 +9,9 @@ import org.rust.lang.core.psi.ext.*
 
 class RsOperatorsResolve : RsResolveTestBase() {
 
-    fun `test arithmetic binary operators`() = testWithAllOps(ArithmeticOp.values()) { traitName, itemName, fnName, sign ->
+    fun `test arithmetic binary operators`() = testWithAllOps(
+        ArithmeticOp.values()
+    ) { traitName, itemName, fnName, sign ->
         """
         #[lang = "$itemName"]
         pub trait $traitName<RHS=Self> {
@@ -78,7 +80,9 @@ class RsOperatorsResolve : RsResolveTestBase() {
         """
     }
 
-    fun `test assignment binary operators`() = testWithAllOps(ArithmeticAssignmentOp.values()) { traitName, itemName, fnName, sign ->
+    fun `test assignment binary operators`() = testWithAllOps(
+        ArithmeticAssignmentOp.values()
+    ) { traitName, itemName, fnName, sign ->
         """
         #[lang = "$itemName"]
         pub trait $traitName<Rhs=Self> {
@@ -100,8 +104,10 @@ class RsOperatorsResolve : RsResolveTestBase() {
         """
     }
 
-    private inline fun testWithAllOps(operators: List<OverloadableBinaryOperator>,
-                                      codeGenerator: (String, String, String, String) -> String) {
+    private inline fun testWithAllOps(
+        operators: List<OverloadableBinaryOperator>,
+        codeGenerator: (String, String, String, String) -> String
+    ) {
         for ((traitName, itemName, fnName, sign) in operators) {
             checkByCode(codeGenerator(traitName, itemName, fnName, sign))
         }

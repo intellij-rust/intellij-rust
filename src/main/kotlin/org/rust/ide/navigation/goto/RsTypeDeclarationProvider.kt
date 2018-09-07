@@ -30,8 +30,8 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
         return arrayOf(typeDeclaration)
     }
 
-    private tailrec fun Ty.baseTypeDeclaration(): RsElement? {
-        return when (this) {
+    private tailrec fun Ty.baseTypeDeclaration(): RsElement? =
+        when (this) {
             is TyAdt -> item
             is TyTraitObject -> trait.element
             is TyTypeParameter -> {
@@ -49,5 +49,4 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
             is TyAnon -> traits.firstOrNull()?.element
             else -> null
         }
-    }
 }

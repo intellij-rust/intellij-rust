@@ -6,10 +6,11 @@
 package org.rust.lang.core.completion
 
 class RsPartialParseCompletionTest : RsCompletionTestBase() {
+
     fun `test match`() = @Suppress("DEPRECATION") checkSingleCompletion("tokenizer", """
-            pub fn parse(tokenizer: lexer::Tokenizer) -> ast::Expr {
-                match tok/*caret*/
-            }
+        pub fn parse(tokenizer: lexer::Tokenizer) -> ast::Expr {
+            match tok/*caret*/
+        }
     """)
 
     fun `test if let`() = @Suppress("DEPRECATION") checkSingleCompletion("tokenizer", """

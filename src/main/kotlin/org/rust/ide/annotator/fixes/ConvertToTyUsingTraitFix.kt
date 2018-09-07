@@ -23,43 +23,45 @@ abstract class ConvertToTyUsingTraitFix(
     expr: PsiElement,
     private val tyName: String,
     private val traitName: String,
-    private val methodName: String) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+    private val methodName: String
+) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
 
-    constructor(expr: PsiElement, ty: Ty, traitName: String, methodName: String) : this(expr, ty.toString(), traitName, methodName)
+    constructor(
+        expr: PsiElement,
+        ty: Ty,
+        traitName: String,
+        methodName: String
+    ) : this(expr, ty.toString(), traitName, methodName)
 
     override fun getFamilyName(): String = "Convert to type"
 
     override fun getText(): String = "Convert to $tyName using `$traitName` trait"
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        startElement: PsiElement,
+        endElement: PsiElement
+    ) {
         if (startElement !is RsExpr) return
         startElement.replace(RsPsiFactory(project).createNoArgsMethodCall(startElement, methodName))
     }
 }
 
-/**
- * For the given `expr` converts it to the borrowed type with `borrow()` method.
- */
+/** For the given `expr` converts it to the borrowed type with `borrow()` method. */
 class ConvertToBorrowedTyFix(expr: PsiElement, ty: Ty) : ConvertToTyUsingTraitFix(expr, ty, "Borrow", "borrow")
 
-/**
- * For the given `expr` converts it to the borrowed type with `borrow_mut()` method.
- */
+/** For the given `expr` converts it to the borrowed type with `borrow_mut()` method. */
 class ConvertToBorrowedTyWithMutFix(expr: PsiElement, ty: Ty) : ConvertToTyUsingTraitFix(expr, ty, "BorrowMut", "borrow_mut")
 
-/**
- * For the given `expr` converts it to the borrowed type with `as_mut()` method.
- */
+/** For the given `expr` converts it to the borrowed type with `as_mut()` method. */
 class ConvertToMutTyFix(expr: PsiElement, ty: Ty) : ConvertToTyUsingTraitFix(expr, ty, "AsMut", "as_mut")
 
-/**
- * For the given `expr` converts it to the reference type with `as_ref()` method.
- */
+/** For the given `expr` converts it to the reference type with `as_ref()` method. */
 class ConvertToRefTyFix(expr: PsiElement, ty: Ty) : ConvertToTyUsingTraitFix(expr, ty, "AsRef", "as_ref")
 
-/**
- * For the given `expr` converts it to the owned type with `to_owned()` method.
- */
+/** For the given `expr` converts it to the owned type with `to_owned()` method. */
 class ConvertToOwnedTyFix(expr: PsiElement, ty: Ty): ConvertToTyUsingTraitFix(expr, ty, "ToOwned", "to_owned")
 
 /**

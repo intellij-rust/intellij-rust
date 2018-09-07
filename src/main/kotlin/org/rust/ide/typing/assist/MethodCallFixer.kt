@@ -10,9 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsCallExpr
 
-/**
- * Fixer that closes missing function call parenthesis.
- */
+/** Fixer that closes missing function call parenthesis. */
 class MethodCallFixer : SmartEnterProcessorWithFixers.Fixer<RsSmartEnterProcessor>() {
     override fun apply(editor: Editor, processor: RsSmartEnterProcessor, element: PsiElement) {
         if (element is RsCallExpr) {

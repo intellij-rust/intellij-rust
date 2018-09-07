@@ -12,6 +12,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
 abstract class RsLineMarkerProviderTestBase : RsTestBase() {
+
     protected fun doTestByText(@Language("Rust") source: String) {
         myFixture.configureByText("lib.rs", source)
         myFixture.doHighlighting()
@@ -20,22 +21,21 @@ abstract class RsLineMarkerProviderTestBase : RsTestBase() {
         assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
     }
 
-    private fun markersFrom(text: String) =
+    private fun markersFrom(text: String): List<Pair<Int, String>> =
         text.split('\n')
             .withIndex()
             .filter { it.value.contains(MARKER) }
             .map { Pair(it.index, it.value.substring(it.value.indexOf(MARKER) + MARKER.length).trim()) }
 
-    private fun markersFrom(editor: Editor, project: Project) =
+    private fun markersFrom(editor: Editor, project: Project): List<Pair<Int, String?>> =
         DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project)
             .map {
-                Pair(editor.document.getLineNumber(it.element?.textRange?.startOffset as Int),
-                    it.lineMarkerTooltip)
+                Pair(editor.document.getLineNumber(it.element?.textRange?.startOffset as Int), it.lineMarkerTooltip)
             }
             .sortedBy { it.first }
 
     private companion object {
-        val MARKER = "// - "
-        val COMPARE_SEPARATOR = " | "
+        const val MARKER: String = "// - "
+        const val COMPARE_SEPARATOR: String = " | "
     }
 }

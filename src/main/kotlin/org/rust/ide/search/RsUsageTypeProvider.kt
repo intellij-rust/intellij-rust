@@ -12,7 +12,9 @@ import com.intellij.usages.impl.rules.UsageTypeProviderEx
 import org.rust.lang.core.psi.*
 
 object RsUsageTypeProvider : UsageTypeProviderEx {
-    override fun getUsageType(element: PsiElement?): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
+
+    override fun getUsageType(element: PsiElement?): UsageType? =
+        getUsageType(element, UsageTarget.EMPTY_ARRAY)
 
     override fun getUsageType(element: PsiElement?, targets: Array<out UsageTarget>): UsageType? {
         val parent = element?.goUp<RsPath>() ?: return null

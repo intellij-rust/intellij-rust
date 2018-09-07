@@ -9,7 +9,6 @@ import com.intellij.codeInsight.intention.IntentionManager
 import org.rust.RsTestBase
 
 class RsIntentionDocumentationTest : RsTestBase() {
-
     fun `test intentions has documentation`() {
         IntentionManager.EP_INTENTION_ACTIONS
             .extensions

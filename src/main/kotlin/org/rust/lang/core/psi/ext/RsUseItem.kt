@@ -14,11 +14,12 @@ import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.stubs.RsUseItemStub
 
 abstract class RsUseItemImplMixin : RsStubbedElementImpl<RsUseItemStub>, RsUseItem {
+    override val isPublic: Boolean
+        get() = RsPsiImplUtil.isPublic(this, stub)
 
     constructor (node: ASTNode) : super(node)
-    constructor (stub: RsUseItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
+    constructor (stub: RsUseItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

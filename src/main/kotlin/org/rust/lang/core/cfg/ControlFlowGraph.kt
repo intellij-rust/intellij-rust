@@ -17,6 +17,7 @@ import org.rust.lang.utils.Graph
 import org.rust.lang.utils.Node
 
 sealed class CFGNodeData(val element: RsElement? = null) {
+
     class AST(element: RsElement) : CFGNodeData(element)
     object Entry : CFGNodeData()
     object Exit : CFGNodeData()
@@ -72,7 +73,8 @@ class ControlFlowGraph private constructor(
         }
     }
 
-    fun isNodeReachable(item: RsElement) = graph.depthFirstTraversal(entry).any { it.data.element == item }
+    fun isNodeReachable(item: RsElement): Boolean =
+        graph.depthFirstTraversal(entry).any { it.data.element == item }
 
     fun buildLocalIndex(): HashMap<RsElement, MutableList<CFGNode>> {
         val table = hashMapOf<RsElement, MutableList<CFGNode>>()
@@ -124,6 +126,7 @@ class ControlFlowGraph private constructor(
 
 
 sealed class ExitPoint {
+
     class Return(val e: RsRetExpr) : ExitPoint()
     class TryExpr(val e: RsExpr) : ExitPoint() // `?` or `try!`
     class DivergingExpr(val e: RsExpr) : ExitPoint()
@@ -141,12 +144,12 @@ sealed class ExitPoint {
     }
 }
 
-private class ExitPointVisitor(
-    private val sink: (ExitPoint) -> Unit
-) : RsVisitor() {
+private class ExitPointVisitor(private val sink: (ExitPoint) -> Unit) : RsVisitor() {
+
     override fun visitElement(element: RsElement) = element.acceptChildren(this)
 
     override fun visitLambdaExpr(lambdaExpr: RsLambdaExpr) = Unit
+
     override fun visitFunction(function: RsFunction) = Unit
 
     override fun visitRetExpr(retExpr: RsRetExpr) = sink(ExitPoint.Return(retExpr))

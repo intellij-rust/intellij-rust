@@ -8,11 +8,11 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.inspections.ReferenceLifetime.*
 import org.rust.ide.inspections.fixes.ElideLifetimesFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.openapiext.forEachChild
 import org.rust.stdext.chain
 
 /**
@@ -20,11 +20,12 @@ import org.rust.stdext.chain
  * Corresponds to needless_lifetimes lint from Rust Clippy.
  */
 class RsNeedlessLifetimesInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
-        override fun visitFunction(fn: RsFunction) {
-            if (couldUseElision(fn)) registerProblem(holder, fn)
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+        object : RsVisitor() {
+            override fun visitFunction(fn: RsFunction) {
+                if (couldUseElision(fn)) registerProblem(holder, fn)
+            }
         }
-    }
 }
 
 /**
@@ -78,7 +79,7 @@ private fun couldUseElision(fn: RsFunction): Boolean {
 
 private class LifetimesCollector : RsVisitor() {
     var abort: Boolean = false
-    val lifetimes = mutableListOf<ReferenceLifetime>()
+    val lifetimes: MutableList<ReferenceLifetime> = mutableListOf<ReferenceLifetime>()
 
     override fun visitSelfParameter(selfParameter: RsSelfParameter) {
         selfParameter.lifetime?.let { visitLifetime(it) }
@@ -105,8 +106,8 @@ private class LifetimesCollector : RsVisitor() {
     override fun visitLifetime(lifetime: RsLifetime) = record(lifetime)
 
     override fun visitElement(element: RsElement) {
-        if (abort || element is RsItemElement /* ignore nested items */) return
-        element.forEachChild { it.accept(this) }
+        if (abort || element is RsItemElement) return
+        element.acceptChildren(this)
     }
 
     private fun record(lifetime: RsLifetime?) {
@@ -137,8 +138,8 @@ private class BodyLifetimeChecker : RsVisitor() {
     }
 
     override fun visitElement(element: RsElement) {
-        if (lifetimesUsedInBody || element is RsItemElement /* ignore nested items */) return
-        element.forEachChild { it.accept(this) }
+        if (lifetimesUsedInBody || element is RsItemElement) return
+        element.acceptChildren(this)
     }
 }
 
@@ -150,7 +151,7 @@ private fun collectLifetimesFromFnSignature(fn: RsFunction): Pair<List<Reference
     // extract lifetimes in input argument types
     fn.valueParameterList?.let {
         it.selfParameter?.accept(inputCollector)
-        it.valueParameterList.forEach { it.typeReference?.accept(inputCollector) }
+        it.valueParameterList.forEach { param -> param.typeReference?.accept(inputCollector) }
     }
     if (inputCollector.abort) return null
 
@@ -162,7 +163,7 @@ private fun collectLifetimesFromFnSignature(fn: RsFunction): Pair<List<Reference
 }
 
 private fun allowedLifetimesFrom(lifetimeParameters: List<RsLifetimeParameter>): Set<ReferenceLifetime> {
-    val allowedLifetimes = HashSet<ReferenceLifetime>()
+    val allowedLifetimes = hashSetOf<ReferenceLifetime>()
     lifetimeParameters
         .filter { it.bounds.isEmpty() }
         .mapNotNull { it.name }

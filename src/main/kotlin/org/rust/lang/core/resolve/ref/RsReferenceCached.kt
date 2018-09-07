@@ -11,10 +11,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 
-abstract class RsReferenceCached<T : RsWeakReferenceElement>(
-    element: T
-) : RsReferenceBase<T>(element),
-    RsReference {
+abstract class RsReferenceCached<T : RsWeakReferenceElement>(element: T) : RsReferenceBase<T>(element), RsReference {
 
     protected abstract fun resolveInner(): List<RsElement>
 
@@ -24,14 +21,11 @@ abstract class RsReferenceCached<T : RsWeakReferenceElement>(
     final override fun multiResolve(): List<RsNamedElement> =
         cachedMultiResolve().mapNotNull { it.element as? RsNamedElement }
 
-    private fun cachedMultiResolve(): List<PsiElementResolveResult> {
-        return RsResolveCache.getInstance(element.project)
-            .resolveWithCaching(element, Resolver).orEmpty()
-    }
+    private fun cachedMultiResolve(): List<PsiElementResolveResult> =
+        RsResolveCache.getInstance(element.project).resolveWithCaching(element, Resolver).orEmpty()
 
     private object Resolver : (RsWeakReferenceElement) -> List<PsiElementResolveResult> {
-        override fun invoke(ref: RsWeakReferenceElement): List<PsiElementResolveResult> {
-            return (ref.reference as RsReferenceCached<*>).resolveInner().map { PsiElementResolveResult(it) }
-        }
+        override fun invoke(ref: RsWeakReferenceElement): List<PsiElementResolveResult> =
+            (ref.reference as RsReferenceCached<*>).resolveInner().map { PsiElementResolveResult(it) }
     }
 }

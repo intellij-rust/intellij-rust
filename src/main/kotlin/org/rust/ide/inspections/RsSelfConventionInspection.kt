@@ -7,6 +7,7 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
@@ -17,7 +18,7 @@ import org.rust.stdext.typeAscription
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
                 val owner = m.owner
@@ -41,13 +42,14 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
         }
 
     private companion object {
-        val SELF_CONVENTIONS = listOf(
-            SelfConvention("as_", listOf(SelfSignature.BY_REF, SelfSignature.BY_MUT_REF)),
-            SelfConvention("from_", listOf(SelfSignature.NO_SELF)),
-            SelfConvention("into_", listOf(SelfSignature.BY_VAL)),
-            SelfConvention("is_", listOf(SelfSignature.BY_REF, SelfSignature.NO_SELF)),
-            SelfConvention("to_", listOf(SelfSignature.BY_REF))
-        )
+        val SELF_CONVENTIONS: List<SelfConvention> =
+            listOf(
+                SelfConvention("as_", listOf(SelfSignature.BY_REF, SelfSignature.BY_MUT_REF)),
+                SelfConvention("from_", listOf(SelfSignature.NO_SELF)),
+                SelfConvention("into_", listOf(SelfSignature.BY_VAL)),
+                SelfConvention("is_", listOf(SelfSignature.BY_REF, SelfSignature.NO_SELF)),
+                SelfConvention("to_", listOf(SelfSignature.BY_REF))
+            )
     }
 }
 

@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -14,7 +15,7 @@ import org.rust.lang.core.types.isMutable
 
 class RsReassignImmutableInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 val left = expr.left
@@ -36,5 +37,4 @@ class RsReassignImmutableInspection : RsLocalInspectionTool() {
         val fix = AddMutableFix.createIfCompatible(nameExpr).let { if (it == null) emptyArray() else arrayOf(it) }
         holder.registerProblem(expr, "Re-assignment of immutable variable [E0384]", *fix)
     }
-
 }

@@ -9,14 +9,13 @@ import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.formatter.common.AbstractBlock
-import java.util.*
 
 /**
  * Rust has multiline string literals, and whitespace inside them is actually significant.
  *
- * By default, the formatter will add and remove indentation **inside** string literals
- * without a moment of hesitation. To handle this situation, we create a separate FmtBlock
- * for each line of the string literal, and forbid messing with whitespace between them.
+ * By default, the formatter will add and remove indentation **inside** string literals without a moment of hesitation.
+ * To handle this situation, we create a separate FmtBlock for each line of the string literal, and forbid messing with
+ * whitespace between them.
  */
 class RsMultilineStringLiteralBlock(
     private val node: ASTNode,
@@ -36,9 +35,8 @@ class RsMultilineStringLiteralBlock(
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes =
         ChildAttributes(null, null)
 
-
     override fun getSubBlocks(): List<Block> {
-        val result = ArrayList<Block>()
+        val result = arrayListOf<Block>()
         var startOffset = 0
         val chars = node.chars
 
@@ -55,15 +53,15 @@ class RsMultilineStringLiteralBlock(
         return result
     }
 
-    override fun getSpacing(child1: Block?, child2: Block): Spacing = Spacing.getReadOnlySpacing()
+    override fun getSpacing(child1: Block?, child2: Block): Spacing =
+        Spacing.getReadOnlySpacing()
 }
 
 private class RsLineBlock(
     node: ASTNode,
     rangeInParent: TextRange
 ) : AbstractBlock(node, null, null) {
-
-    private val textRange = rangeInParent.shiftRight(node.startOffset)
+    private val textRange: TextRange = rangeInParent.shiftRight(node.startOffset)
 
     override fun getTextRange(): TextRange = textRange
 

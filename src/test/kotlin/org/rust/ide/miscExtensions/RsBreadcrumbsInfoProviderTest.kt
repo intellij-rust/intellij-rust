@@ -11,7 +11,6 @@ import org.rust.ide.presentation.breadcrumbName
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.descendantsOfType
 
-
 class RsBreadcrumbsInfoProviderTest : RsTestBase() {
     fun `test breadcrumbs`() {
         InlineFile("""

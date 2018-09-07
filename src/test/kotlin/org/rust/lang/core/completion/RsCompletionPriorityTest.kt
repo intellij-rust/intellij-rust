@@ -11,8 +11,8 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.RsNamedElement
 
-
 class RsCompletionPriorityTest : RsTestBase() {
+
     fun `test macros_are_low_priority`() {
         InlineFile("""
             fn foo_bar() {}
@@ -45,5 +45,4 @@ class RsCompletionPriorityTest : RsTestBase() {
         val actualName = psi.name
         check(name == actualName) { "Expected $name got $actualName" }
     }
-
 }

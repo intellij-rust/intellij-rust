@@ -28,8 +28,8 @@ class RsRawLiteralHashesInserter : TypedHandlerDelegate() {
         val caretOffset = editor.caretModel.offset
         if (!isValidOffset(caretOffset - 1, editor.document.charsSequence)) return Result.CONTINUE
 
-        // Get token type current cursor is, we are using caretOffset - 1 in order to properly
-        // handle this case: r#""#<caret>, cases r<caret>#""# and <caret>r#""# will still work.
+        // Get token type current cursor is, we are using caretOffset - 1 in order to properly handle this case:
+        // r#""#<caret>, cases r<caret>#""# and <caret>r#""# will still work.
         val highlighter = (editor as EditorEx).highlighter
         val iterator = highlighter.createIterator(caretOffset - 1)
         val (openHashes, closeHashes) = getHashesOffsets(iterator) ?: return Result.CONTINUE
@@ -59,7 +59,7 @@ class RsRawLiteralHashesInserter : TypedHandlerDelegate() {
 class RsRawLiteralHashesDeleter : RsEnableableBackspaceHandlerDelegate() {
     private var offsets: Pair<TextRange, TextRange>? = null
 
-    override fun deleting(c: Char, file: PsiFile, editor: Editor): Boolean {
+    override fun deleting(char: Char, file: PsiFile, editor: Editor): Boolean {
         val caretOffset = editor.caretModel.offset
         if (!isValidOffset(caretOffset, editor.document.charsSequence)) return false
 
@@ -67,22 +67,21 @@ class RsRawLiteralHashesDeleter : RsEnableableBackspaceHandlerDelegate() {
         val iterator = highlighter.createIterator(caretOffset - 1)
 
         // [getHashesOffsets] is O(n) (n is literal length), so do not evaluate it when it's not needed.
-        if (c != '#' || iterator.tokenType !in RS_RAW_LITERALS) return false
+        if (char != '#' || iterator.tokenType !in RS_RAW_LITERALS) return false
 
         // We have to compute offsets here, because we still have our '#' in document.
         offsets = getHashesOffsets(iterator)
         return offsets != null
     }
 
-    override fun deleted(c: Char, file: PsiFile, editor: Editor): Boolean {
+    override fun deleted(char: Char, file: PsiFile, editor: Editor): Boolean {
         // We want caret offset before deletion!
         val caretOffset = editor.caretModel.offset + 1
         val (openHashes, closeHashes) = checkNotNull(offsets)
 
         // Now detect on which side of the literal we are, and remove hash on the other one.
         // Remember that offsets apply to literal before deletion!
-        // We are growing ranges in order to catch situations where caret is places directly
-        // after last hash character.
+        // We are growing ranges in order to catch situations where caret is places directly after last hash character.
         when (caretOffset) {
             in openHashes.grown(1) ->
                 // -1 because left-closed ranges

@@ -12,17 +12,14 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsMatchArmGuard
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.parentMatchArm
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.parentMatchArm
 
 class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMatchArmIntention.Context>() {
-    override fun getText(): String = "Move guard inside the match arm"
-    override fun getFamilyName(): String = text
 
-    data class Context(
-        val guard: RsMatchArmGuard,
-        val armBody: RsExpr
-    )
+    override fun getText(): String = "Move guard inside the match arm"
+
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val guard = element.ancestorStrict<RsMatchArmGuard>() ?: return null
@@ -39,4 +36,6 @@ class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMat
         guard.delete()
         editor.caretModel.moveToOffset(newBody.textOffset + caretOffsetInGuard)
     }
+
+    data class Context(val guard: RsMatchArmGuard, val armBody: RsExpr)
 }

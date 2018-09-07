@@ -19,7 +19,8 @@ import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature
-import org.rust.lang.core.FeatureState.*
+import org.rust.lang.core.FeatureState.ACCEPTED
+import org.rust.lang.core.FeatureState.ACTIVE
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
@@ -33,6 +34,7 @@ import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
 
 class RsErrorAnnotator : Annotator, HighlightRangeExtension {
+
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
@@ -72,21 +74,21 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         element.accept(visitor)
     }
 
-    private fun checkDotExpr(holder: AnnotationHolder, o: RsDotExpr) {
-        val field = o.fieldLookup ?: o.methodCall ?: return
-        checkReferenceIsPublic(field, o, holder)
+    private fun checkDotExpr(holder: AnnotationHolder, dotExpr: RsDotExpr) {
+        val field = dotExpr.fieldLookup ?: dotExpr.methodCall ?: return
+        checkReferenceIsPublic(field, dotExpr, holder)
     }
 
-    private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
-        val element = ref.reference.resolve() as? RsVisible ?: return
-        if (element.isPublic) return
-        val elementMod = (if (element is RsMod) element.`super` else element.contextStrict()) ?: return
-        val oMod = o.contextStrict<RsMod>() ?: return
+    private fun checkReferenceIsPublic(ref: RsReferenceElement, element: PsiElement, holder: AnnotationHolder) {
+        val visible = ref.reference.resolve() as? RsVisible ?: return
+        if (visible.isPublic) return
+        val elementMod = (if (visible is RsMod) visible.`super` else visible.contextStrict()) ?: return
+        val oMod = element.contextStrict<RsMod>() ?: return
         // We have access to any item in any super module of `oMod`
         // Note: `oMod.superMods` contains `oMod`
         if (oMod.superMods.contains(elementMod)) return
 
-        val members = element.parent as? RsMembers
+        val members = visible.parent as? RsMembers
         if (members != null) {
             val parent = members.context ?: return
             when (parent) {
@@ -96,13 +98,13 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
 
         val error = when {
-            element is RsFieldDecl -> {
-                val structName = element.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
+            visible is RsFieldDecl -> {
+                val structName = visible.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
                 RsDiagnostic.StructFieldAccessError(ref, ref.referenceName, structName)
             }
             ref is RsMethodCall -> RsDiagnostic.AccessError(ref.identifier, RsErrorCode.E0624, "Method")
             else -> {
-                val itemType = when (element) {
+                val itemType = when (visible) {
                     is RsMod -> "Module"
                     is RsConstant -> "Constant"
                     is RsFunction -> "Function"
@@ -118,18 +120,18 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         error.addToHolder(holder)
     }
 
-    private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCall) {
-        val fn = o.reference.resolve() as? RsFunction ?: return
+    private fun checkMethodCallExpr(holder: AnnotationHolder, methodCall: RsMethodCall) {
+        val fn = methodCall.reference.resolve() as? RsFunction ?: return
         if (fn.isUnsafe) {
-            checkUnsafeCall(holder, o.parentDotExpr)
+            checkUnsafeCall(holder, methodCall.parentDotExpr)
         }
     }
 
-    private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
-        val path = (o.expr as? RsPathExpr)?.path ?: return
+    private fun checkCallExpr(holder: AnnotationHolder, callExpr: RsCallExpr) {
+        val path = (callExpr.expr as? RsPathExpr)?.path ?: return
         val fn = path.reference.resolve() as? RsFunction ?: return
         if (fn.isUnsafe) {
-            checkUnsafeCall(holder, o)
+            checkUnsafeCall(holder, callExpr)
         }
     }
 
@@ -147,17 +149,23 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         return parent is RsBlockExpr || (parent is RsFunction && parent.isUnsafe)
     }
 
-    private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
-        if (!o.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
-            RsDiagnostic.UnsafeError(o, "Call to unsafe function requires unsafe function or block").addToHolder(holder)
+    private fun checkUnsafeCall(holder: AnnotationHolder, expr: RsExpr) {
+        if (!expr.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
+            RsDiagnostic.UnsafeError(
+                expr,
+                "Call to unsafe function requires unsafe function or block"
+            ).addToHolder(holder)
         }
     }
 
-    private fun checkUnsafePtrDereference(holder: AnnotationHolder, o: RsUnaryExpr) {
-        if (o.expr?.type !is TyPointer) return
+    private fun checkUnsafePtrDereference(holder: AnnotationHolder, unaryExpr: RsUnaryExpr) {
+        if (unaryExpr.expr?.type !is TyPointer) return
 
-        if (!o.isInUnsafeBlockOrFn()) {
-            RsDiagnostic.UnsafeError(o, "Dereference of raw pointer requires unsafe function or block").addToHolder(holder)
+        if (!unaryExpr.isInUnsafeBlockOrFn()) {
+            RsDiagnostic.UnsafeError(
+                unaryExpr,
+                "Dereference of raw pointer requires unsafe function or block"
+            ).addToHolder(holder)
         }
     }
 
@@ -417,25 +425,26 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         RsDiagnostic.ReturnMustHaveValueError(ret).addToHolder(holder)
     }
 
-    private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
-        if (el.reference.multiResolve().isNotEmpty() || el.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
-        RsDiagnostic.CrateNotFoundError(el, el.identifier.text).addToHolder(holder)
+    private fun checkExternCrate(holder: AnnotationHolder, externalCrate: RsExternCrateItem) {
+        if (externalCrate.reference.multiResolve().isNotEmpty()
+            || externalCrate.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
+        RsDiagnostic.CrateNotFoundError(externalCrate, externalCrate.identifier.text).addToHolder(holder)
     }
 
-    private fun checkPolybound(holder: AnnotationHolder, o: RsPolybound) {
-        if (o.lparen != null && o.bound.lifetime != null) {
-            holder.createErrorAnnotation(o, "Parenthesized lifetime bounds are not supported")
+    private fun checkPolybound(holder: AnnotationHolder, polybound: RsPolybound) {
+        if (polybound.lparen != null && polybound.bound.lifetime != null) {
+            holder.createErrorAnnotation(polybound, "Parenthesized lifetime bounds are not supported")
         }
     }
 
-    private fun isInTraitImpl(o: RsVis): Boolean {
-        val impl = o.parent?.parent?.parent
+    private fun isInTraitImpl(vis: RsVis): Boolean {
+        val impl = vis.parent?.parent?.parent
         return impl is RsImplItem && impl.traitRef != null
     }
 
-    private fun isInEnumVariantField(o: RsVis): Boolean {
-        val field = o.parent as? RsFieldDecl
-            ?: o.parent as? RsTupleFieldDecl
+    private fun isInEnumVariantField(vis: RsVis): Boolean {
+        val field = vis.parent as? RsFieldDecl
+            ?: vis.parent as? RsTupleFieldDecl
             ?: return false
         return field.parent.parent is RsEnumVariant
     }
@@ -443,8 +452,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private val Collection<String?>.namesList: String
         get() = mapNotNull { "`$it`" }.joinToString(", ")
 
-    private fun hasResolve(el: RsReferenceElement): Boolean =
-        !(el.reference.resolve() != null || el.reference.multiResolve().size > 1)
+    private fun hasResolve(ref: RsReferenceElement): Boolean =
+        !(ref.reference.resolve() != null || ref.reference.multiResolve().size > 1)
 
     companion object {
         private val RESERVED_LIFETIME_NAMES: Set<String> = setOf("'_", "'static")
@@ -456,11 +465,15 @@ private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     return op is ComparisonOp || op is EqualityOp
 }
 
-private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierOwner, scope: PsiElement = element.parent, recursively: Boolean = false) {
+private fun checkDuplicates(
+    holder: AnnotationHolder,
+    element: RsNameIdentifierOwner,
+    scope: PsiElement = element.parent,
+    recursively: Boolean = false
+) {
     val owner = if (scope is RsMembers) scope.parent else scope
     val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
-    val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
-        ?: return
+    val namespaces = element.namespaces.find { element in duplicates[it].orEmpty() } ?: return
     val name = element.name!!
     val identifier = element.nameIdentifier ?: element
     val message = when {
@@ -477,13 +490,16 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierO
                 is RsTraitItem -> "trait"
                 else -> "scope"
             }
-            RsDiagnostic.DuplicateItemError(identifier, ns.itemName, name, scopeType)
+            RsDiagnostic.DuplicateItemError(identifier, namespaces.itemName, name, scopeType)
         }
     }
     message.addToHolder(holder)
 }
 
-private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursively: Boolean): Map<Namespace, Set<PsiElement>> {
+private fun AnnotationSession.duplicatesByNamespace(
+    owner: PsiElement,
+    recursively: Boolean
+): Map<Namespace, Set<PsiElement>> {
     val fileMap = fileDuplicatesMap()
     fileMap[owner]?.let { return it }
 
@@ -537,17 +553,17 @@ private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
 
 private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
-    val el = path.reference.resolve()
-    if (el is RsDocAndAttributeOwner && el.queryAttributes.hasCfgAttr()) return null
-    return when (el) {
-        is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.size?.let { Pair(it, false) }
+    val element = path.reference.resolve()
+    if (element is RsDocAndAttributeOwner && element.queryAttributes.hasCfgAttr()) return null
+    return when (element) {
+        is RsFieldsOwner -> element.tupleFields?.tupleFieldDeclList?.size?.let { Pair(it, false) }
         is RsFunction -> {
-            val owner = el.owner
+            val owner = element.owner
             if (owner.isTraitImpl) return null
-            val count = el.valueParameterList?.valueParameterList?.size ?: return null
+            val count = element.valueParameterList?.valueParameterList?.size ?: return null
             // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
-            val s = if (path.coloncolon != null && el.selfParameter != null) 1 else 0
-            Pair(count + s, el.isVariadic)
+            val s = if (path.coloncolon != null && element.selfParameter != null) 1 else 0
+            Pair(count + s, element.isVariadic)
         }
         else -> null
     }
@@ -565,8 +581,8 @@ private fun isValidSelfSuperPrefix(path: RsPath): Boolean {
     if (path.path == null && path.coloncolon != null) return false
     if (path.self != null && path.path != null) return false
     if (path.`super` != null) {
-        val q = path.path ?: return true
-        return q.self != null || q.`super` != null
+        val subPath = path.path ?: return true
+        return subPath.self != null || subPath.`super` != null
     }
     return true
 }

@@ -19,21 +19,23 @@ class CargoCommandLineEditor(
     project: Project,
     workspaceGetter: () -> CargoWorkspace?
 ) : JPanel(BorderLayout()), TextAccessor {
+    private val textField: TextFieldWithCompletion =
+        TextFieldWithCompletion(
+            project,
+            CargoCommandCompletionProvider(project.cargoProjects, workspaceGetter),
+            "",
+            true,
+            false,
+            false
+        )
 
-    constructor(project: Project, workspace: CargoWorkspace?)
-        : this(project, { workspace })
-
-    private val textField = TextFieldWithCompletion(
-        project,
-        CargoCommandCompletionProvider(project.cargoProjects, workspaceGetter),
-        "", true, false, false
-    )
     val preferredFocusedComponent: JComponent = textField
-
 
     init {
         add(textField, BorderLayout.CENTER)
     }
+
+    constructor(project: Project, workspace: CargoWorkspace?) : this(project, { workspace })
 
     override fun setText(text: String?) {
         textField.setText(text)

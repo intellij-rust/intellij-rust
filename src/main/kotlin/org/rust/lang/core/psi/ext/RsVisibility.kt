@@ -18,7 +18,8 @@ interface RsVisibilityOwner : RsVisible {
 }
 
 fun RsVisibilityOwner.iconWithVisibility(flags: Int, icon: Icon): Icon =
-    if ((flags and com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY) == 0)
+    if (flags and com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY == 0) {
         icon
-    else
+    } else {
         icon.addVisibilityIcon(isPublic)
+    }

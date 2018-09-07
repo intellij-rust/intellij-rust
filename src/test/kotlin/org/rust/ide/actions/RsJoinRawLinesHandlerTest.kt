@@ -6,6 +6,7 @@
 package org.rust.ide.actions
 
 class RsJoinRawLinesHandlerTest : RsJoinLinesHandlerTestBase() {
+
     fun `test block expression`() = doTest("""
         fn main() {
             let _ = /*caret*/{
@@ -45,7 +46,7 @@ class RsJoinRawLinesHandlerTest : RsJoinLinesHandlerTestBase() {
             match current.parent() {
                 Some(p) => /*caret*/{
                     current = p
-                },
+                }
                 None => break,
             }
         }

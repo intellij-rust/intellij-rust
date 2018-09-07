@@ -9,7 +9,6 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
-
 fun ensureTrailingComma(xs: List<RsElement>) {
     val last = xs.lastOrNull() ?: return
     if (last.getNextNonCommentSibling()?.elementType == RsElementTypes.COMMA) return

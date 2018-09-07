@@ -18,17 +18,18 @@ import com.intellij.util.messages.Topic
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
 
-val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> = Topic.create(
-    "RUST_STRUCTURE_CHANGE_TOPIC",
-    RustStructureChangeListener::class.java,
-    Topic.BroadcastDirection.TO_PARENT
-)
+val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> =
+    Topic.create(
+        "RUST_STRUCTURE_CHANGE_TOPIC",
+        RustStructureChangeListener::class.java,
+        Topic.BroadcastDirection.TO_PARENT
+    )
 
 interface RsPsiManager {
     /**
-     * A project-global modification tracker that increments on each PSI change that can affect
-     * name resolution or type inference. It will be incremented with a change of most types of
-     * PSI element excluding function bodies (expressions and statements)
+     * A project-global modification tracker that increments on each PSI change that can affect name resolution or type
+     * inference. It will be incremented with a change of most types of PSI element excluding function bodies
+     * (expressions and statements)
      */
     val rustStructureModificationTracker: ModificationTracker
 }
@@ -38,19 +39,17 @@ interface RustStructureChangeListener {
 }
 
 class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
-
-    override val rustStructureModificationTracker = SimpleModificationTracker()
+    override val rustStructureModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
 
     override fun projectOpened() {
         PsiManager.getInstance(project).addPsiTreeChangeListener(CacheInvalidator())
         project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
-            override fun rootsChanged(event: ModuleRootEvent) {
-                incRustStructureModificationCount()
-            }
+            override fun rootsChanged(event: ModuleRootEvent) = incRustStructureModificationCount()
         })
     }
 
     inner class CacheInvalidator : PsiTreeChangeAdapter() {
+
         override fun childRemoved(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun childReplaced(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun childAdded(event: PsiTreeChangeEvent) = onPsiChange(event)

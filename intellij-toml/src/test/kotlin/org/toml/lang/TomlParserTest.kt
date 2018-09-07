@@ -10,9 +10,7 @@ import com.intellij.testFramework.ParsingTestCase
 import org.toml.lang.parse.TomlParserDefinition
 import org.toml.lang.psi.impl.TomlASTFactory
 
-
-class TomlParserTest
-    : ParsingTestCase("org/toml/lang/parse/fixtures", "toml", true /*lowerCaseFirstLetter*/, TomlParserDefinition()) {
+class TomlParserTest : ParsingTestCase("org/toml/lang/parse/fixtures", "toml", true, TomlParserDefinition()) {
 
     fun testEmpty() = doTest()
     fun testKeys() = doTest()
@@ -26,7 +24,7 @@ class TomlParserTest
     fun testArrayTables() = doTest()
     fun testInvalid() = doTest()
 
-    override fun getTestDataPath() = "src/test/resources"
+    override fun getTestDataPath(): String = "src/test/resources"
     override fun setUp() {
         super.setUp()
         addExplicitExtension(LanguageASTFactory.INSTANCE, myLanguage, TomlASTFactory())

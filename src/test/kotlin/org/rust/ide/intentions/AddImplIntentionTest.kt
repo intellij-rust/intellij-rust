@@ -6,6 +6,7 @@
 package org.rust.ide.intentions
 
 class AddImplIntentionTest : RsIntentionTestBase(AddImplIntention()) {
+
     fun `test simple struct`() = doAvailableTest("""
         struct Hey/*caret*/ {
             var: i32

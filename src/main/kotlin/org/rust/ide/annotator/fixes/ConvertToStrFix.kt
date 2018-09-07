@@ -34,12 +34,10 @@ abstract class ConvertToStrFix(expr: PsiElement) : LocalQuickFixAndIntentionActi
 
 class ConvertToImmutableStrFix(expr: PsiElement) : ConvertToStrFix(expr) {
     override fun getStrMethodName(): String = "as_str"
-
     override fun getStrTypeName(): String = "&str"
 }
 
 class ConvertToMutStrFix(expr: PsiElement) : ConvertToStrFix(expr) {
     override fun getStrMethodName(): String = "as_mut_str"
-
     override fun getStrTypeName(): String = "&mut str"
 }

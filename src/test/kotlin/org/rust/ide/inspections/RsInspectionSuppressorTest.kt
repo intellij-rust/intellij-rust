@@ -5,9 +5,7 @@
 
 package org.rust.ide.inspections
 
-/**
- * Tests for inspections suppression
- */
+/** Tests for inspections suppression. */
 class RsInspectionSuppressorTest : RsInspectionsTestBase(RsSelfConventionInspection()) {
 
     fun testWithoutSuppression() = checkByText("""

@@ -11,6 +11,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.annotator.RsAnnotationTestBase
 
 class AddStructFieldsFixTest : RsAnnotationTestBase() {
+
     fun `test no fields`() = checkBothQuickFix("""
         struct S { foo: i32, bar: f64 }
 
@@ -374,5 +375,4 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
 
     private fun checkRecursiveQuickFix(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkFixByText("Recursively add missing fields", before, after)
-
 }

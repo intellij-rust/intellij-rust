@@ -9,13 +9,6 @@ import org.rust.RsTestBase
 
 class RsRainbowVisitorTest : RsTestBase() {
 
-    fun checkRainbow(code: String, isRainbowOn: Boolean = true, withColor: Boolean = false) {
-        myFixture.testRainbow(
-            "main.rs",
-            code,
-            isRainbowOn, withColor)
-    }
-
     fun testPathBinding() = checkRainbow("""
         fn main() {
             let mut <rainbow>test</rainbow> = "";
@@ -49,4 +42,7 @@ class RsRainbowVisitorTest : RsTestBase() {
         }
     """, withColor = true)
 
+    private fun checkRainbow(code: String, isRainbowOn: Boolean = true, withColor: Boolean = false) {
+        myFixture.testRainbow("main.rs", code, isRainbowOn, withColor)
+    }
 }

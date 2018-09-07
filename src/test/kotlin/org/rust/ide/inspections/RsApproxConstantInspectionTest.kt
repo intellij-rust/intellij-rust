@@ -5,11 +5,8 @@
 
 package org.rust.ide.inspections;
 
-/**
- * Tests for the Approximate Constant inspection
- */
+/** Tests for the Approximate Constant inspection. */
 class RsApproxConstantInspectionTest : RsInspectionsTestBase(RsApproxConstantInspection()) {
-
     fun testConstants() = checkByText("""
         fn main() {
             let pi = 3.1;
@@ -22,5 +19,4 @@ class RsApproxConstantInspectionTest : RsInspectionsTestBase(RsApproxConstantIns
             let log2_e = <warning descr="Approximate value of `std::f64::consts::LOG2_E` found. Consider using it directly.">1.442695040888963</warning>;
         }
     """)
-
 }

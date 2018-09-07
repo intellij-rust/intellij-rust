@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsLabelDecl
 import org.rust.lang.core.psi.RsPsiFactory
 
 abstract class RsLabelDeclImplMixin(node: ASTNode) : RsNamedElementImpl(node), RsLabelDecl {
+
     override fun getNameIdentifier(): PsiElement? = quoteIdentifier
 
     override fun setName(name: String): PsiElement? {

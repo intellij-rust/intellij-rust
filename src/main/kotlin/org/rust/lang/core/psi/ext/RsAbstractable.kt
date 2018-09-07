@@ -46,7 +46,7 @@ val RsAbstractable.owner: RsAbstractableOwner
         }
     }
 
-// Resolve a const, fn or type in a impl block to the corresponding item in the trait block
+/** Resolve a const, fn or type in a impl block to the corresponding item in the trait block. */
 val RsAbstractable.superItem: RsAbstractable?
     get() {
         val rustImplItem = ancestorStrict<RsImplItem>() ?: return null

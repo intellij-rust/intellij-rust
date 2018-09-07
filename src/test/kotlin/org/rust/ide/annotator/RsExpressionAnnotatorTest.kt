@@ -8,7 +8,6 @@ package org.rust.ide.annotator
 class RsExpressionAnnotatorTest : RsAnnotationTestBase() {
 
     fun `test unnecessary parens`() = checkWarnings("""
-
         struct S { f: i32 }
 
         fn test() {
@@ -200,5 +199,4 @@ class RsExpressionAnnotatorTest : RsAnnotationTestBase() {
             let val = *char_ptr;
         }
     """)
-
 }

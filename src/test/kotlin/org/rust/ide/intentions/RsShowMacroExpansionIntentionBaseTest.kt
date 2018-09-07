@@ -27,7 +27,6 @@ class RsShowMacroExpansionIntentionBaseTest : RsIntentionTestBase(RsShowMacroExp
             foo();
         """)
     }
-
 }
 
 object RsShowMacroExpansionIntention : RsShowMacroExpansionIntentionBase(expandRecursively = true) {

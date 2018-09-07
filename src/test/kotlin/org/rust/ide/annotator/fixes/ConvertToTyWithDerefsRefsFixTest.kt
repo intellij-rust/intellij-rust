@@ -96,33 +96,37 @@ class ConvertToTyWithDerefsRefsFixTest : RsInspectionsTestBase(RsTypeCheckInspec
         }
     """)
 
-    fun `test mut &T to &mut T`() = checkFixIsUnavailable("Convert to &mut i32 using dereferences and/or references", """
+    fun `test mut &T to &mut T`() =
+        checkFixIsUnavailable("Convert to &mut i32 using dereferences and/or references", """
         fn main () {
             let mut a: &i32 = &42;
             let b: &mut i32 = <error>a<caret></error>;
         }
     """)
 
-    fun `test &mut&&mut T to &mut T`() = checkFixIsUnavailable("Convert to &mut i32 using dereferences and/or references", """
+    fun `test &mut&&mut T to &mut T`() =
+        checkFixIsUnavailable("Convert to &mut i32 using dereferences and/or references", """
         fn main () {
             let a: &i32 = &42;
             let b: &mut i32 = <error>a<caret></error>;
         }
     """)
 
-    fun `test &mut&&mut T to &mut& T `() = checkFixByText("Convert to &mut &i32 using dereferences and/or references", """
+    fun `test &mut&&mut T to &mut& T `() =
+        checkFixByText("Convert to &mut &i32 using dereferences and/or references", """
         fn main () {
             let a: &mut &&mut i32 = &mut &&mut 42;
             let b: &mut &i32 = <error>a<caret></error>;
         }
-    ""","""
+    """, """
         fn main () {
             let a: &mut &&mut i32 = &mut &&mut 42;
             let b: &mut &i32 = &mut &***a;
         }
     """)
 
-    fun `test B to &mut A when Deref for A with target B exists`() = checkFixIsUnavailable("Convert to &mut B using dereferences and/or references", """
+    fun `test B to &mut A when Deref for A with target B exists`() =
+        checkFixIsUnavailable("Convert to &mut B using dereferences and/or references", """
         #[lang = "deref"]
         trait Deref { type Target; }
         struct A;
@@ -135,7 +139,8 @@ class ConvertToTyWithDerefsRefsFixTest : RsInspectionsTestBase(RsTypeCheckInspec
         }
     """)
 
-    fun `test mut B to &mut A when Deref for A with target B exists`() = checkFixByText("Convert to &mut B using dereferences and/or references", """
+    fun `test mut B to &mut A when Deref for A with target B exists`() =
+        checkFixByText("Convert to &mut B using dereferences and/or references", """
         #[lang = "deref"]
         trait Deref { type Target; }
         struct A;
@@ -158,6 +163,4 @@ class ConvertToTyWithDerefsRefsFixTest : RsInspectionsTestBase(RsTypeCheckInspec
             let b: &mut B = &mut *a;
         }
     """)
-
 }
-

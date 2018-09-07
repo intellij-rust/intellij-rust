@@ -19,15 +19,15 @@ import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
-
 class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeExplicitlyIntention.Context>() {
-    override fun getFamilyName() = "Specify type explicitly"
 
-    override fun getText() = "Specify type explicitly"
+    override fun getFamilyName(): String = "Specify type explicitly"
+
+    override fun getText(): String = "Specify type explicitly"
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val letDecl = element.ancestorStrict<RsLetDecl>() ?: return null
-        if(letDecl.typeReference != null) {
+        if (letDecl.typeReference != null) {
             return null
         }
         val ident = letDecl.pat as? RsPatIdent ?: return null
@@ -46,9 +46,5 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         letDecl.addAfter(createdType, colon)
     }
 
-
-    data class Context(
-        val type: Ty,
-        val letDecl: RsLetDecl
-    )
+    data class Context(val type: Ty, val letDecl: RsLetDecl)
 }

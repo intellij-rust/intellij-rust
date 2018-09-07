@@ -10,6 +10,7 @@ import org.rust.RsTestBase
 import org.rust.lang.refactoring.RsConvertToNamedFieldsAction
 
 class RsConvertToNamedFieldsActionTest : RsTestBase() {
+
     fun `test works for structs`() = doTest("""
         struct/*caret*/ S(i32, pub String);
     """, """

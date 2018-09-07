@@ -17,23 +17,29 @@ class RsNewProjectPanel(
     private val showProjectTypeCheckbox: Boolean,
     updateListener: (() -> Unit)? = null
 ) : Disposable {
+    private val rustProjectSettings: RustProjectSettingsPanel =
+        RustProjectSettingsPanel(updateListener = updateListener)
 
-    private val rustProjectSettings = RustProjectSettingsPanel(updateListener = updateListener)
-    private val createBinaryCheckbox = JBCheckBox(null, true)
-    private val checkboxListener = ItemListener { updateListener?.invoke() }
+    private val createBinaryCheckbox: JBCheckBox =
+        JBCheckBox(null, true)
+
+    private val checkboxListener: ItemListener =
+        ItemListener { updateListener?.invoke() }
+
+    val data: ConfigurationData
+        get() = ConfigurationData(rustProjectSettings.data, createBinaryCheckbox.isSelected)
 
     init {
         createBinaryCheckbox.addItemListener(checkboxListener)
     }
 
-    val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.data, createBinaryCheckbox.isSelected)
-
-    fun attachTo(layout: RsLayoutBuilder) = with(layout) {
-        rustProjectSettings.attachTo(this)
-        if (showProjectTypeCheckbox) {
-            row("Use a binary (application) template:", createBinaryCheckbox)
+    fun attachTo(layout: RsLayoutBuilder) =
+        with(layout) {
+            rustProjectSettings.attachTo(this)
+            if (showProjectTypeCheckbox) {
+                row("Use a binary (application) template:", createBinaryCheckbox)
+            }
         }
-    }
 
     @Throws(ConfigurationException::class)
     fun validateSettings() {

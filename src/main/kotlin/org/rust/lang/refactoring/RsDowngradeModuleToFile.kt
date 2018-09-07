@@ -24,6 +24,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.checkWriteAccessAllowed
 
 class RsDowngradeModuleToFile : BaseRefactoringAction() {
+
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = elements.all { it.isDirectoryMod }
 
     override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
@@ -33,6 +34,7 @@ class RsDowngradeModuleToFile : BaseRefactoringAction() {
     override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
 
     private object Handler : RefactoringActionHandler {
+
         override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
             invoke(project, arrayOf(file), dataContext)
         }
@@ -50,21 +52,21 @@ class RsDowngradeModuleToFile : BaseRefactoringAction() {
 private fun contractModule(fileOrDirectory: PsiFileSystemItem) {
     checkWriteAccessAllowed()
 
-    val (file, dir) = when (fileOrDirectory) {
+    val (file, directory) = when (fileOrDirectory) {
         is RsFile -> fileOrDirectory to fileOrDirectory.parent!!
         is PsiDirectory -> fileOrDirectory.children.single() as RsFile to fileOrDirectory
         else -> error("Can contract only files and directories")
     }
 
-    val dst = dir.parent!!
-    val fileName = "${dir.name}.rs"
+    val destination = directory.parent!!
+    val fileName = "${directory.name}.rs"
     PsiFileImplUtil.setName(file, fileName)
-    MoveFilesOrDirectoriesUtil.doMoveFile(file, dst)
-    dir.delete()
+    MoveFilesOrDirectoriesUtil.doMoveFile(file, destination)
+    directory.delete()
 }
 
-private val PsiElement.isDirectoryMod: Boolean get() {
-    return when (this) {
+private val PsiElement.isDirectoryMod: Boolean
+    get() = when (this) {
         is RsFile -> name == RsConstants.MOD_RS_FILE && containingDirectory?.children?.size == 1
         is PsiDirectory -> {
             val child = children.singleOrNull()
@@ -72,4 +74,3 @@ private val PsiElement.isDirectoryMod: Boolean get() {
         }
         else -> false
     }
-}

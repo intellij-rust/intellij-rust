@@ -6,6 +6,7 @@
 package org.rust.ide.actions.mover
 
 class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
+
     fun `test function parameter`() = moveDownAndBackUp("""
         fn foo(
             /*caret*/x: i32,
@@ -170,5 +171,4 @@ class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
             foo: u32,
         }
     """)
-
 }

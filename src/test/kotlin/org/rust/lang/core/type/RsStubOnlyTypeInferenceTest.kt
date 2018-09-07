@@ -6,7 +6,6 @@
 package org.rust.lang.core.type
 
 class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
-
     fun `test const expr`() = stubOnlyTypeInfer("""
     //- foo.rs
         const COUNT: usize = 2;

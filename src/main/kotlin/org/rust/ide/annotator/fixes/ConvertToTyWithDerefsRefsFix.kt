@@ -25,12 +25,23 @@ data class DerefRefPath(val derefs: Int, val refs: List<Mutability>)
  * The fix applies `path.derefs` dereferences to the expression and then references of the mutability given by
  * `path.refs`.  Note that correctness of the generated code is not verified.
  */
-class ConvertToTyWithDerefsRefsFix(expr: PsiElement, val ty: Ty, val path: DerefRefPath) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+class ConvertToTyWithDerefsRefsFix(
+    expr: PsiElement,
+    val ty: Ty,
+    val path: DerefRefPath
+) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+
     override fun getFamilyName(): String = "Convert to type"
 
     override fun getText(): String = "Convert to $ty using dereferences and/or references"
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        startElement: PsiElement,
+        endElement: PsiElement
+    ) {
         if (startElement !is RsExpr) return
         val psiFactory = RsPsiFactory(project)
         startElement.replace(psiFactory.createRefExpr(psiFactory.createDerefExpr(startElement, path.derefs), path.refs))

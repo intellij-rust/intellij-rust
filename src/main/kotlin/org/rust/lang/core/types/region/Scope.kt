@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.regions
+package org.rust.lang.core.types.region
 
 import com.intellij.openapi.util.TextRange
 import org.rust.lang.core.psi.*

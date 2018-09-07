@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsPreciseTraitMatchingTest : RsResolveTestBase() {
+
     fun `test method in specialized trait impl for struct`() = checkByCode("""
         trait Tr { fn some_fn(&self); }
         struct S<T> { value: T }

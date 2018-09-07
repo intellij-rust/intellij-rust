@@ -6,8 +6,8 @@
 package org.rust.ide.actions
 
 class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
-    fun `test empty file`() = doTestRaw ("/*caret*/", "/*caret*/")
 
+    fun `test empty file`() = doTestRaw("/*caret*/", "/*caret*/")
     fun `test blank file1`() = doTestRaw("/*caret*/\n\n", "/*caret*/\n")
     fun `test blank file2`() = doTestRaw("\n/*caret*/\n", "\n/*caret*/")
 
@@ -120,7 +120,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
                     bar: 42,
                 };</selection>
             }
-        ""","""
+        """, """
             struct S { foo: i32, bar: i32 }
             fn main() {
                 let _ = S { foo: 42, bar: 42 };
@@ -134,7 +134,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
                 foo: 42,
             };
         }
-    ""","""
+    """, """
         struct S { foo: i32 }
         fn main() {
             let _ = S {/*caret*/ foo: 42,
@@ -148,7 +148,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
             let _ = S { foo: 42,/*caret*/
              };
         }
-    ""","""
+    """, """
         struct S { foo: i32 }
         fn main() {
             let _ = S { foo: 42/*caret*/ };
@@ -163,7 +163,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
                 bar: /*caret*/42,
              };
         }
-    ""","""
+    """, """
         struct S { foo: i32, bar: i32 }
         fn main() {
             let _ = S {
@@ -175,21 +175,21 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
     fun `test remove comma struct definition`() = doTest("""
         /*caret*/struct S { foo: i32,
         }
-    ""","""
+    """, """
         struct S { foo: i32/*caret*/ }
     """)
 
     fun `test remove comma tuple struct definition`() = doTest("""
         /*caret*/struct S(i32,
         );
-    ""","""
+    """, """
         struct S(i32/*caret*/);
     """)
 
     fun `test remove comma function parameter`() = doTest("""
         /*caret*/fn foo (foo: i32,
         ) {}
-    ""","""
+    """, """
         fn foo (foo: i32/*caret*/) {}
     """)
 
@@ -198,7 +198,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
             foo(1,/*caret*/
             )
         }
-    ""","""
+    """, """
         fn main() {
             foo(1/*caret*/)
         }

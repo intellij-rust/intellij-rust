@@ -17,19 +17,19 @@ import org.rust.lang.core.stubs.RsBinaryOpStub
 val RsBinaryOp.operator: PsiElement
     get() = requireNotNull(node.findChildByType(RS_BINARY_OPS)) { "guaranteed to be not-null by parser" }.psi
 
-val RsBinaryOp.op: String get() = stub?.op ?: operator.text
+val RsBinaryOp.op: String
+    get() = stub?.op ?: operator.text
 
-val RsBinaryOp.isLazy: Boolean get() = andand != null || this.oror != null
+val RsBinaryOp.isLazy: Boolean
+    get() = andand != null || this.oror != null
 
 abstract class RsBinaryOpImplMixin : RsStubbedElementImpl<RsBinaryOpStub>, RsBinaryOp {
+    override val referenceNameElement: PsiElement get() = operator
+    override val referenceName: String get() = referenceNameElement.text
 
     constructor(node: ASTNode) : super(node)
 
     constructor(stub: RsBinaryOpStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override val referenceNameElement: PsiElement get() = operator
-
-    override val referenceName: String get() = referenceNameElement.text
 
     override fun getReference(): RsReference = RsBinaryOpReferenceImpl(this)
 }

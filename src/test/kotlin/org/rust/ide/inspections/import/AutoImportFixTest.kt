@@ -1040,7 +1040,10 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error> { };
         }
-    """, setOf("block_struct_mod::Foo", "enum_struct_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_struct_mod::Bar::Foo", """
+    """,
+        setOf("block_struct_mod::Foo", "enum_struct_mod::Bar::Foo", "type_alias_mod::Foo"),
+        "enum_struct_mod::Bar::Foo",
+        """
         use enum_struct_mod::Bar::Foo;
 
         mod struct_mod {

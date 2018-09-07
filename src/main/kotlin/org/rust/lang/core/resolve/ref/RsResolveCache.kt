@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.RecursionGuard
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
@@ -31,8 +32,8 @@ import java.util.concurrent.ConcurrentMap
 
 /**
  * The implementation is inspired by Intellij platform's [com.intellij.psi.impl.source.resolve.ResolveCache].
- * The main difference from the platform one: we invalidate the cache after rust structure change, when
- * platform cache invalidates on any PSI change.
+ * The main difference from the platform one: we invalidate the cache after rust structure change, when platform cache
+ * invalidates on any PSI change.
  * See [org.rust.lang.core.psi.RsPsiManager.rustStructureModificationTracker].
  *
  * Use with caution: You should ensure that your resolve depends on rust structure only.
@@ -40,7 +41,7 @@ import java.util.concurrent.ConcurrentMap
  */
 class RsResolveCache(messageBus: MessageBus) {
     private val cache: ConcurrentMap<PsiElement, Any?> = ResolveCacheMap()
-    private val guard = RecursionManager.createGuard("RsResolveCache")
+    private val guard: RecursionGuard = RecursionManager.createGuard("RsResolveCache")
 
     init {
         messageBus.connect().subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
@@ -52,7 +53,7 @@ class RsResolveCache(messageBus: MessageBus) {
      * Retrieve a cached value by [key] or compute a new value by [resolver].
      * Internally recursion-guarded by [key].
      *
-     * Expected resolve results: [PsiElement], [ResolveResult] or a [List]/[Array] of [ResolveResult]
+     * Expected resolve results: [PsiElement], [ResolveResult] or a [List]/[Array] of [ResolveResult].
      */
     @Suppress("UNCHECKED_CAST")
     fun <K : PsiElement, V> resolveWithCaching(key: K, resolver: (K) -> V): V? {
@@ -72,16 +73,14 @@ class RsResolveCache(messageBus: MessageBus) {
 
     private fun getCacheFor(element: PsiElement): ConcurrentMap<PsiElement, Any?> {
         // 1. The global resolve cache invalidates only on rust structure changes.
-        // 2. If some reference element is located inside RsModificationTrackerOwner,
-        //    the global cache will not be invalidated on its change
+        // 2. If some reference element is located inside RsModificationTrackerOwner, the global cache will not be
+        //    invalidated on its change
         // 3. PSI uses default identity-based equals/hashCode
         // 4. Intellij does incremental updates of a mutable PSI tree.
         //
-        // It means that some reference element may be changed and then should be
-        // re-resolved to another target. But if we use the global cache, we will
-        // retrieve its previous resolve result from the cache. So if the reference
-        // element is located inside RsModificationTrackerOwner, we should use a
-        // separate cache for it.
+        // It means that some reference element may be changed and then should be re-resolved to another target. But if
+        // we use the global cache, we will retrieve its previous resolve result from the cache. So if the reference
+        // element is located inside RsModificationTrackerOwner, we should use a separate cache for it.
         val owner = element.findModificationTrackerOwner()
         return if (owner != null) {
             CachedValuesManager.getCachedValue(owner, LOCAL_CACHE_KEY) {
@@ -115,7 +114,7 @@ class RsResolveCache(messageBus: MessageBus) {
     }
 
     object Testmarks {
-        val cacheCleared = Testmark("cacheCleared")
+        val cacheCleared: Testmark = Testmark("cacheCleared")
     }
 }
 
@@ -142,14 +141,15 @@ abstract class ResolveCacheMapBase<K, V> : ConcurrentWeakKeySoftValueHashMap<K, 
 
     @Suppress("UNCHECKED_CAST")
     override fun get(key: K): V? {
-        val v = super.get(key)
-        return if (v === NULL_RESULT) null else v
+        val value = super.get(key)
+        return if (value === NULL_RESULT) null else value
     }
 }
 
 private class StrongValueReference<K, V>(
     private val value: V
 ) : ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
+
     override fun getKeyReference(): ConcurrentWeakKeySoftValueHashMap.KeyReference<K, V> {
         // will never GC so this method will never be called so no implementation is necessary
         throw UnsupportedOperationException()
@@ -159,19 +159,24 @@ private class StrongValueReference<K, V>(
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun <K, V> createStrongReference(value: V): StrongValueReference<K, V> {
-    return when {
+private fun <K, V> createStrongReference(value: V): StrongValueReference<K, V> =
+    when {
         value === NULL_RESULT -> NULL_VALUE_REFERENCE as StrongValueReference<K, V>
         value === ResolveResult.EMPTY_ARRAY -> EMPTY_RESOLVE_RESULT as StrongValueReference<K, V>
         value is List<*> && value.size == 0 -> EMPTY_LIST as StrongValueReference<K, V>
         else -> StrongValueReference(value)
     }
-}
 
-private val NULL_RESULT = Any()
-private val NULL_VALUE_REFERENCE = StrongValueReference<Any, Any>(NULL_RESULT)
-private val EMPTY_RESOLVE_RESULT = StrongValueReference<Any, Array<ResolveResult>>(ResolveResult.EMPTY_ARRAY)
-private val EMPTY_LIST = StrongValueReference<Any, List<Any>>(emptyList())
+private val NULL_RESULT: Any = Any()
+
+private val NULL_VALUE_REFERENCE: StrongValueReference<Any, Any> =
+    StrongValueReference(NULL_RESULT)
+
+private val EMPTY_RESOLVE_RESULT: StrongValueReference<Any, Array<ResolveResult>> =
+    StrongValueReference(ResolveResult.EMPTY_ARRAY)
+
+private val EMPTY_LIST: StrongValueReference<Any, List<Any>> =
+    StrongValueReference(emptyList())
 
 private val LOCAL_CACHE_KEY: Key<CachedValue<ConcurrentMap<PsiElement, Any?>>> = Key.create("LOCAL_CACHE_KEY")
 

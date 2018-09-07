@@ -14,16 +14,14 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.openapiext.toPsiFile
 
-
 class RsCodeFragmentFactory(val project: Project) {
-    private val psiFactory = RsPsiFactory(project)
+    private val psiFactory: RsPsiFactory = RsPsiFactory(project)
 
     fun createCrateRelativePath(pathText: String, target: CargoWorkspace.Target): RsPath? {
         check(pathText.startsWith("::"))
         val vFile = target.crateRoot ?: return null
         val crateRoot = vFile.toPsiFile(project) as? RsFile ?: return null
-        return psiFactory.tryCreatePath(pathText)
-            ?.apply { setContext(crateRoot) }
+        return psiFactory.tryCreatePath(pathText)?.apply { setContext(crateRoot) }
     }
 
     fun createPath(path: String, context: RsElement): RsPath? =
@@ -38,11 +36,14 @@ class RsCodeFragmentFactory(val project: Project) {
         } else {
             "" to "use $usePath;"
         }
-        val mod = psiFactory.createModItem("__tmp__", """
+        val mod = psiFactory.createModItem(
+            "__tmp__",
+            """
             $externCrateItem
             use super::*;
             $useItem
-            """)
+            """
+        )
         mod.setContext(context)
         return createPath(importingPath.text, mod)
     }

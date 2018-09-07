@@ -21,13 +21,9 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
-
-class RsMethodCallReferenceImpl(
-    element: RsMethodCall
-) : RsReferenceBase<RsMethodCall>(element),
-    RsReference {
-
-    override val RsMethodCall.referenceAnchor: PsiElement get() = referenceNameElement
+class RsMethodCallReferenceImpl(element: RsMethodCall) : RsReferenceBase<RsMethodCall>(element), RsReference {
+    override val RsMethodCall.referenceAnchor: PsiElement
+        get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> {
         val lookup = ImplLookup.relativeTo(element)
@@ -38,15 +34,12 @@ class RsMethodCallReferenceImpl(
     }
 
     override fun multiResolve(): List<RsElement> =
-        element.inference?.getResolvedMethod(element) ?: emptyList()
+        element.inference?.getResolvedMethod(element).orEmpty()
 }
 
-class RsFieldLookupReferenceImpl(
-    element: RsFieldLookup
-) : RsReferenceBase<RsFieldLookup>(element),
-    RsReference {
-
-    override val RsFieldLookup.referenceAnchor: PsiElement get() = referenceNameElement
+class RsFieldLookupReferenceImpl(element: RsFieldLookup) : RsReferenceBase<RsFieldLookup>(element), RsReference {
+    override val RsFieldLookup.referenceAnchor: PsiElement
+        get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> {
         val lookup = ImplLookup.relativeTo(element)
@@ -57,7 +50,7 @@ class RsFieldLookupReferenceImpl(
     }
 
     override fun multiResolve(): List<RsElement> =
-        element.inference?.getResolvedField(element) ?: emptyList()
+        element.inference?.getResolvedField(element).orEmpty()
 
     override fun handleElementRename(newName: String): PsiElement {
         val ident = element.identifier
@@ -70,20 +63,16 @@ fun resolveMethodCallReferenceWithReceiverType(
     lookup: ImplLookup,
     receiverType: Ty,
     methodCall: RsMethodCall
-): List<MethodResolveVariant> {
-    return collectResolveVariants(methodCall.referenceName) {
-        processMethodCallExprResolveVariants(lookup, receiverType, it)
-    }
+): List<MethodResolveVariant> = collectResolveVariants(methodCall.referenceName) {
+    processMethodCallExprResolveVariants(lookup, receiverType, it)
 }
 
 fun resolveFieldLookupReferenceWithReceiverType(
     lookup: ImplLookup,
     receiverType: Ty,
     expr: RsFieldLookup
-): List<FieldResolveVariant> {
-    return collectResolveVariants(expr.referenceName) {
-        processFieldExprResolveVariants(lookup, receiverType, it)
-    }
+): List<FieldResolveVariant> = collectResolveVariants(expr.referenceName) {
+    processFieldExprResolveVariants(lookup, receiverType, it)
 }
 
 interface DotExprResolveVariant : ScopeEntry {
@@ -104,22 +93,25 @@ data class MethodResolveVariant(
     override val name: String,
     override val element: RsFunction,
     /**
-     * If the method defined in impl, this is the impl. If the method inherited from
-     * trait definition, this is the impl of the actual trait for the receiver type
+     * If the method defined in impl, this is the impl. If the method inherited from trait definition, this is the impl
+     * of the actual trait for the receiver type.
      */
     val impl: RsImplItem?,
     override val selfTy: Ty,
     override val derefCount: Int
 ) : DotExprResolveVariant {
-    /** Legacy subst. Do not really used */
+    /** Legacy subst. Do not really used. */
     override val subst: Substitution get() = emptySubstitution
 }
 
-private fun <T: ScopeEntry> collectResolveVariants(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
+private fun <T : ScopeEntry> collectResolveVariants(
+    referenceName: String,
+    function: ((T) -> Boolean) -> Unit
+): List<T> {
     val result = mutableListOf<T>()
-    f { e ->
-        if (e.name == referenceName) {
-            result += e
+    function { entry ->
+        if (entry.name == referenceName) {
+            result += entry
         }
         false
     }
@@ -136,11 +128,11 @@ private fun filterMethodCompletionVariants(
 
     val cache = mutableMapOf<RsImplItem, Boolean>()
     return fun(it: ScopeEntry): Boolean {
-        // 1. If not a method (actually a field) or a trait method - just process it
+        // 1. If not a method (actually a field) or a trait method - just process it.
         if (it !is MethodResolveVariant || it.impl == null) return processor(it)
-        // 2. Filter methods by trait bounds (try to select all obligations for each impl)
-        // We're caching evaluation results here because we can often complete to a methods
-        // in the same impl and always have the same receiver type
+        // 2. Filter methods by trait bounds (try to select all obligations for each impl).
+        // We're caching evaluation results here because we can often complete to a methods in the same impl and always
+        // have the same receiver type.
         if (cache.getOrPut(it.impl) { lookup.ctx.canEvaluateBounds(it.impl, receiver) }) return processor(it)
 
         return false

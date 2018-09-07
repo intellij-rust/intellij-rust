@@ -15,7 +15,11 @@ import org.rust.lang.core.psi.RsTypeReference
 import org.rust.openapiext.filterIsInstanceQuery
 import org.rust.openapiext.mapQuery
 
-interface RsStructOrEnumItemElement : RsQualifiedNamedElement, RsItemElement, RsGenericDeclaration, RsTypeDeclarationElement, RsNameIdentifierOwner
+interface RsStructOrEnumItemElement : RsQualifiedNamedElement,
+                                      RsItemElement,
+                                      RsGenericDeclaration,
+                                      RsTypeDeclarationElement,
+                                      RsNameIdentifierOwner
 
 val RsStructOrEnumItemElement.derivedTraits: Collection<RsTraitItem>
     get() = deriveMetaItems
@@ -33,10 +37,7 @@ private val RsStructOrEnumItemElement.deriveMetaItems: Sequence<RsMetaItem>
         .flatMap { it.metaItemArgs?.metaItemList?.asSequence() ?: emptySequence() }
 
 
-fun RsStructOrEnumItemElement.searchForImplementations(): Query<RsImplItem> {
-    return ReferencesSearch.search(this, this.useScope)
-        .mapQuery { ref ->
-            PsiTreeUtil.getTopmostParentOfType(ref.element, RsTypeReference::class.java)?.parent
-        }
-        .filterIsInstanceQuery<RsImplItem>()
-}
+fun RsStructOrEnumItemElement.searchForImplementations(): Query<RsImplItem> =
+    ReferencesSearch.search(this, this.useScope)
+        .mapQuery { PsiTreeUtil.getTopmostParentOfType(it.element, RsTypeReference::class.java)?.parent }
+        .filterIsInstanceQuery()

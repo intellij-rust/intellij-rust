@@ -6,6 +6,7 @@
 package org.rust.ide.actions.mover
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.TokenSet
 import org.rust.ide.actions.mover.RsLineMover.Companion.RangeEndpoint
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMembers
@@ -14,19 +15,20 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.tokenSetOf
 
 class RsItemUpDownMover : RsLineMover() {
-    private val movableItems = tokenSetOf(
-        RsElementTypes.TRAIT_ITEM,
-        RsElementTypes.IMPL_ITEM,
-        RsElementTypes.MACRO_CALL,
-        RsElementTypes.MACRO,
-        RsElementTypes.STRUCT_ITEM,
-        RsElementTypes.ENUM_ITEM,
-        RsElementTypes.MOD_ITEM,
-        RsElementTypes.USE_ITEM,
-        RsElementTypes.FUNCTION,
-        RsElementTypes.CONSTANT,
-        RsElementTypes.TYPE_ALIAS
-    )
+    private val movableItems: TokenSet =
+        tokenSetOf(
+            RsElementTypes.TRAIT_ITEM,
+            RsElementTypes.IMPL_ITEM,
+            RsElementTypes.MACRO_CALL,
+            RsElementTypes.MACRO,
+            RsElementTypes.STRUCT_ITEM,
+            RsElementTypes.ENUM_ITEM,
+            RsElementTypes.MOD_ITEM,
+            RsElementTypes.USE_ITEM,
+            RsElementTypes.FUNCTION,
+            RsElementTypes.CONSTANT,
+            RsElementTypes.TYPE_ALIAS
+        )
 
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
         psi.ancestors.find { it.elementType in movableItems }

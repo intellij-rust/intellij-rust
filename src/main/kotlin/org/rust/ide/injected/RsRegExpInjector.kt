@@ -16,10 +16,11 @@ import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.types.type
 
 /**
- * Injects RegExpr language to a string literals in context like
- * `Regex::new("...")` and `RegexSet::new(&["...", "...", "..."])`
+ * Injects RegExpr language to a string literals in context like `Regex::new("...")` and
+ * `RegexSet::new(&["...", "...", "..."])`
  */
 class RsRegExpInjector : MultiHostInjector {
+
     override fun elementsToInjectIn(): List<Class<out PsiElement>> =
         listOf(RsLitExpr::class.java)
 
@@ -44,8 +45,8 @@ class RsRegExpInjector : MultiHostInjector {
 //            ?: return false
 //        return fn.name == "new" && fn.implTypeName == "Regex"
 
-        // We switched to this dumb implementation because this code is sometimes
-        // called from EDT, and invoking `reference.resolve()` can freeze the UI.
+        // We switched to this dumb implementation because this code is sometimes called from EDT, and invoking
+        // `reference.resolve()` can freeze the UI.
         // See https://github.com/intellij-rust/intellij-rust/issues/2733
         val call = ((context.parent?.parent as? RsCallExpr)?.expr as? RsPathExpr) ?: return false
         return call.path.text == "Regex::new"

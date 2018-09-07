@@ -12,12 +12,13 @@ import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.parentDotExpr
-import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.receiver
 
 class UnwrapToTryIntention : RsElementBaseIntentionAction<RsMethodCall>() {
-    override fun getText() = "Replace .unwrap() with try"
-    override fun getFamilyName() = text
+
+    override fun getText(): String = "Replace .unwrap() with try"
+
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMethodCall? {
         val methodCall = element.ancestorOrSelf<RsMethodCall>() ?: return null

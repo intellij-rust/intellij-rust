@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.RsPath
 
 class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
     fun `test Cargo toml is refreshed`() {
-        val p = fileTree {
+        val testProject = fileTree {
             toml("Cargo.toml", """
                 [package]
                 name = "hello"
@@ -53,10 +53,10 @@ class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
             }
         }.create()
 
-        p.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+        testProject.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
         project.cargoProjects.discoverAndRefreshSync()
 
-        val toml = p.root.findFileByRelativePath("Cargo.toml")!!
+        val toml = testProject.root.findFileByRelativePath("Cargo.toml")!!
         runWriteAction {
             VfsUtil.saveText(toml, VfsUtil.loadText(toml).replace("#", ""))
         }
@@ -65,7 +65,7 @@ class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
         for (retries in 0..1000) {
             Thread.sleep(10)
             dispatchAllInvocationEvents()
-            if (p.findElementInFile<RsPath>("src/main.rs").reference.resolve() != null) {
+            if (testProject.findElementInFile<RsPath>("src/main.rs").reference.resolve() != null) {
                 return
             }
         }

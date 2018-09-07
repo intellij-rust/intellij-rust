@@ -12,14 +12,18 @@ import org.rust.lang.core.psi.RsPatBinding
 
 class RsImplementationTextSelectioner : ImplementationTextSelectioner {
 
-    override fun getTextEndOffset(element: PsiElement): Int = element.definitionRoot.textRange.endOffset
-    override fun getTextStartOffset(element: PsiElement): Int = element.definitionRoot.textRange.startOffset
+    override fun getTextEndOffset(element: PsiElement): Int =
+        element.definitionRoot.textRange.endOffset
 
-    private val PsiElement.definitionRoot: PsiElement get() {
-        var element = this
-        while (element is RsPatBinding || element is RsPat) {
-            element = element.parent
+    override fun getTextStartOffset(element: PsiElement): Int =
+        element.definitionRoot.textRange.startOffset
+
+    private val PsiElement.definitionRoot: PsiElement
+        get() {
+            var element = this
+            while (element is RsPatBinding || element is RsPat) {
+                element = element.parent
+            }
+            return element
         }
-        return element
-    }
 }

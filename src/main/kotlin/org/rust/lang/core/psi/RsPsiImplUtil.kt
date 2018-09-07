@@ -5,13 +5,15 @@
 
 package org.rust.lang.core.psi
 
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.RsVisibilityOwner
+import org.rust.lang.core.psi.ext.superMods
 import org.rust.lang.core.stubs.RsVisibilityStub
 
 /**
- * Mixin methods to implement PSI interfaces without copy pasting and
- * introducing monster base classes. Can be simplified when Kotlin supports
- * default methods in interfaces with mixed Kotlin-Java hierarchies (KT-9073 ).
+ * Mixin methods to implement PSI interfaces without copy pasting and introducing monster base classes.
+ * Can be simplified when Kotlin supports default methods in interfaces with mixed Kotlin-Java hierarchies (KT-9073).
  */
 object RsPsiImplUtil {
     fun isPublic(psi: RsVisibilityOwner, stub: RsVisibilityStub?): Boolean =
@@ -27,11 +29,11 @@ object RsPsiImplUtil {
     }
 
     fun modCrateRelativePath(mod: RsMod): String? {
-        val segments = mod.superMods.asReversed().drop(1).map {
-            it.modName ?: return null
-        }
+        val segments = mod.superMods
+            .asReversed()
+            .drop(1)
+            .map { it.modName ?: return null }
         if (segments.isEmpty()) return ""
         return "::" + segments.joinToString("::")
     }
 }
-

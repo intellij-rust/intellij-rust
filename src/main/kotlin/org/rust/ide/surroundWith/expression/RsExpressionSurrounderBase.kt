@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 
 abstract class RsExpressionSurrounderBase<E : RsExpr> : Surrounder {
+
     abstract fun createTemplate(project: Project): E
     abstract fun getWrappedExpression(expression: E): RsExpr
     abstract fun isApplicable(expression: RsExpr): Boolean
@@ -33,5 +34,6 @@ abstract class RsExpressionSurrounderBase<E : RsExpr> : Surrounder {
         return doPostprocessAndGetSelectionRange(editor, newExpression)
     }
 
-    private fun targetExpr(elements: Array<out PsiElement>) = elements.singleOrNull() as? RsExpr
+    private fun targetExpr(elements: Array<out PsiElement>): RsExpr? =
+        elements.singleOrNull() as? RsExpr
 }

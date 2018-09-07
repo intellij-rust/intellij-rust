@@ -14,6 +14,7 @@ import org.rust.fileTreeFromText
 import org.rust.hasCaretMarker
 
 abstract class RsCompletionTestBase : RsTestBase() {
+
     // Prefer using `doSingleCompletion` instead
     @Deprecated(
         "Use doSingleCompletion, because it's simpler and checks caret position as well",
@@ -36,7 +37,9 @@ abstract class RsCompletionTestBase : RsTestBase() {
         }
         val element = myFixture.file.findElementAt(myFixture.caretOffset - shift)!!
         val skipTextCheck = normName.isEmpty() || normName.contains(' ')
-        check((skipTextCheck || element.text == normName) && (element.fitsHierarchically(target) || element.fitsLinearly(target))) {
+        check((skipTextCheck || element.text == normName)
+            && (element.fitsHierarchically(target)
+            || element.fitsLinearly(target))) {
             "Wrong completion, expected `$target`, but got\n${myFixture.file.text}"
         }
     }
@@ -90,8 +93,7 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
         if (variants != null) {
             if (variants.size == 1) {
-                // for cases like `frob/*caret*/nicate()`,
-                // completion won't be selected automatically.
+                // for cases like `frob/*caret*/nicate()`, completion won't be selected automatically.
                 myFixture.type('\n')
                 return
             }
@@ -112,12 +114,16 @@ abstract class RsCompletionTestBase : RsTestBase() {
         checkLinearly(target, Direction.LEFT) || checkLinearly(target, Direction.RIGHT)
 
     private fun PsiElement.checkLinearly(target: String, direction: Direction): Boolean {
-        var el = this
+        var element = this
         var text = ""
         while (text.length < target.length) {
-            text = if (direction == Direction.LEFT) el.text + text else text + el.text
+            text = if (direction == Direction.LEFT) element.text + text else text + element.text
             if (text == target) return true
-            el = (if (direction == Direction.LEFT) PsiTreeUtil.prevVisibleLeaf(el) else PsiTreeUtil.nextVisibleLeaf(el)) ?: break
+            element = if (direction == Direction.LEFT) {
+                PsiTreeUtil.prevVisibleLeaf(element)
+            } else {
+                PsiTreeUtil.nextVisibleLeaf(element)
+            } ?: break
         }
         return false
     }

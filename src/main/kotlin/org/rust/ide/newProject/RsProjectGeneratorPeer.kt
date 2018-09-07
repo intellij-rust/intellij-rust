@@ -14,7 +14,6 @@ import org.rust.ide.ui.layout
 import javax.swing.JComponent
 
 class RsProjectGeneratorPeer : GeneratorPeerImpl<ConfigurationData>() {
-
     private val newProjectPanel = RsNewProjectPanel(showProjectTypeCheckbox = true) { checkValid?.run() }
     private var checkValid: Runnable? = null
 
@@ -25,9 +24,10 @@ class RsProjectGeneratorPeer : GeneratorPeerImpl<ConfigurationData>() {
         return super.getComponent(myLocationField, checkValid)
     }
 
-    override fun getComponent(): JComponent = layout {
-        newProjectPanel.attachTo(this)
-    }
+    override fun getComponent(): JComponent =
+        layout {
+            newProjectPanel.attachTo(this)
+        }
 
     override fun validate(): ValidationInfo? = try {
         newProjectPanel.validateSettings()

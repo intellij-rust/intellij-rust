@@ -16,27 +16,23 @@ import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.checkReadAccessAllowed
 import javax.swing.Icon
 
-/**
- * IDEA side of Cargo package from crates.io
- */
+/** IDEA side of Cargo package from crates.io */
 class CargoLibrary(
     val root: VirtualFile,
     private val name: String,
     private val isStd: Boolean
 ) : SyntheticLibrary(), ItemPresentation {
     override fun getSourceRoots(): Collection<VirtualFile> = listOf(root)
+    override fun getPresentableText(): String? = name
+    override fun getLocationString(): String? = null
+    override fun getIcon(unused: Boolean): Icon? = if (isStd) RsIcons.RUST else CargoIcons.ICON
     override fun equals(other: Any?): Boolean = other is CargoLibrary && other.root == root
     override fun hashCode(): Int = root.hashCode()
-
-    override fun getLocationString(): String? = null
-
-    override fun getIcon(unused: Boolean): Icon? = if (isStd) RsIcons.RUST else CargoIcons.ICON
-
-    override fun getPresentableText(): String? = name
 }
 
 
 class RsAdditionalLibraryRootsProvider : AdditionalLibraryRootsProvider() {
+
     override fun getAdditionalProjectLibraries(project: Project): Collection<CargoLibrary> {
         checkReadAccessAllowed()
         return project.cargoProjects.allProjects
@@ -56,9 +52,9 @@ private fun <U, V> Collection<U>.smartFlatMap(transform: (U) -> Collection<V>): 
     }
 
 private val CargoWorkspace.ideaLibraries: Collection<CargoLibrary>
-    get() = packages.filter { it.origin != PackageOrigin.WORKSPACE }
+    get() = packages
+        .filter { it.origin != PackageOrigin.WORKSPACE }
         .mapNotNull { pkg ->
             val root = pkg.contentRoot ?: return@mapNotNull null
             CargoLibrary(root, pkg.name, pkg.origin == PackageOrigin.STDLIB)
         }
-

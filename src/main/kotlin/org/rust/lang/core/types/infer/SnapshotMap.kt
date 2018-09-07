@@ -6,12 +6,12 @@
 package org.rust.lang.core.types.infer
 
 /**
- * Works like a regular [MutableMap], but additionally allows you to take a snapshot
- * ([startSnapshot]) and then roll back the map to the snapshot state.
+ * Works like a regular [MutableMap], but additionally allows you to take a snapshot ([startSnapshot]) and then roll
+ * back the map to the snapshot state.
  * Note: this map currently don't support remove/clear operations
  */
 class SnapshotMap<K, V> {
-    private val inner: MutableMap<K, V> = HashMap()
+    private val inner: MutableMap<K, V> = hashMapOf()
     private val undoLog: UndoLog = UndoLog()
 
     fun put(key: K, value: V): V? {

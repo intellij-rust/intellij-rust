@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.ancestorPairs
 import org.rust.lang.core.psi.ext.elementType
 
 class RsCommaListElementUpDownMover : RsLineMover() {
+
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? {
         @Suppress("NAME_SHADOWING")
         val psi = if (endpoint == RangeEndpoint.END && psi.elementType == COMMA) {
@@ -37,13 +38,12 @@ class RsCommaListElementUpDownMover : RsLineMover() {
         return null
     }
 
-    override fun fixupSibling(sibling: PsiElement, down: Boolean): PsiElement? {
-        return if (sibling.elementType == COMMA) {
+    override fun fixupSibling(sibling: PsiElement, down: Boolean): PsiElement? =
+        if (sibling.elementType == COMMA) {
             StatementUpDownMover.firstNonWhiteElement(if (down) sibling.nextSibling else sibling.prevSibling, down)
         } else {
             sibling
         }
-    }
 
     override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
         if (isMovingOutOfParenBlock(sibling, down) || isMovingOutOfBraceBlock(sibling, down)) return null

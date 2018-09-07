@@ -29,7 +29,6 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
     override fun getKey(): StubIndexKey<String, RsMacro> = KEY
 
     companion object {
-
         private val KEY: StubIndexKey<String, RsMacro> =
             StubIndexKey.createIndexKey("org.rust.lang.core.resolve.indexes.RsMacroIndex")
 
@@ -37,9 +36,9 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
             stub.name?.let { sink.occurrence(KEY, it) }
         }
 
-        fun allExportedMacros(project: Project): Map<RsMod, Set<RsMacro>> {
-            return CachedValuesManager.getManager(project).getCachedValue(project) {
-                val result = HashMap<RsMod, MutableSet<RsMacro>>()
+        fun allExportedMacros(project: Project): Map<RsMod, Set<RsMacro>> =
+            CachedValuesManager.getManager(project).getCachedValue(project) {
+                val result = hashMapOf<RsMod, MutableSet<RsMacro>>()
                 val keys = StubIndex.getInstance().getAllKeys(KEY, project)
                 for (key in keys) {
                     val elements = getElements(KEY, key, project, GlobalSearchScope.allScope(project))
@@ -52,6 +51,5 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
                 }
                 CachedValueProvider.Result.create(result, project.rustStructureModificationTracker)
             }
-        }
     }
 }

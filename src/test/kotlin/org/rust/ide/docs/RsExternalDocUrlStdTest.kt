@@ -11,6 +11,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
+
     fun `test mod`() = doUrlTestByText("""
         fn foo<T: std::fmt::Debug>(x: T) {}
                      //^

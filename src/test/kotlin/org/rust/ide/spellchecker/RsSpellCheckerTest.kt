@@ -10,6 +10,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
 class RsSpellCheckerTest : RsTestBase() {
+
     fun testComments() = doTest("""// Hello, <TYPO descr="Typo: In word 'Wodrl'">Wodrl</TYPO>!""")
 
     fun testStringLiterals() = doTest("""
@@ -34,7 +35,11 @@ class RsSpellCheckerTest : RsTestBase() {
         }
     """)
 
-    private fun doTest(@Language("Rust") text: String, processComments: Boolean = true, processLiterals: Boolean = true) {
+    private fun doTest(
+        @Language("Rust") text: String,
+        processComments: Boolean = true,
+        processLiterals: Boolean = true
+    ) {
         val inspection = SpellCheckingInspection()
         inspection.processLiterals = processLiterals
         inspection.processComments = processComments

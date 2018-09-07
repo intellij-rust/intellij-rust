@@ -8,6 +8,7 @@ package org.rust.lang.utils
 import org.rust.RsTestBase
 
 class RsGraphTest : RsTestBase() {
+
     fun `test graph depth traversal 1`() {
         val graph = simpleGraph1()
         val depthFirst = graph.depthFirstTraversal(graph.getNode(0)).map { it.data }.joinToString(" ")
@@ -36,7 +37,7 @@ class RsGraphTest : RsTestBase() {
         check(actual == expected) { "Expected: $expected, found: $actual" }
     }
 
-    fun simpleGraph1(): Graph<Int, String> {
+    private fun simpleGraph1(): Graph<Int, String> {
         val graph = Graph<Int, String>()
         (1..4).forEach { graph.addNode(it) }
 
@@ -48,7 +49,7 @@ class RsGraphTest : RsTestBase() {
         return graph
     }
 
-    fun simpleGraph2(): Graph<Int, String> {
+    private fun simpleGraph2(): Graph<Int, String> {
         val graph = Graph<Int, String>()
         (1..6).forEach { graph.addNode(it) }
 

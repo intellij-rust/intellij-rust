@@ -16,7 +16,8 @@ import org.rust.ide.formatter.blocks.RsMacroArgFmtBlock
 import org.rust.ide.formatter.blocks.RsMultilineStringLiteralBlock
 import org.rust.lang.core.psi.RS_RAW_LITERALS
 import org.rust.lang.core.psi.RS_STRING_LITERALS
-import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.MACRO_ARGUMENT
+import org.rust.lang.core.psi.RsElementTypes.MACRO_BODY
 
 class RsFormattingModelBuilder : FormattingModelBuilder {
     override fun getRangeAffectingIndent(file: PsiFile?, offset: Int, elementAtOffset: ASTNode?): TextRange? = null

@@ -30,14 +30,20 @@ abstract class ConvertToTyUsingTryTraitFix(
     expr: PsiElement,
     internal val ty: Ty,
     private val traitName: String,
-    private val fromCallMaker: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr) -> RsExpr)
-    : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+    private val fromCallMaker: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr) -> RsExpr
+) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
 
     override fun getFamilyName(): String = "Convert to type"
 
     override fun getText(): String = "Convert to $ty using `$traitName` trait"
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        startElement: PsiElement,
+        endElement: PsiElement
+    ) {
         if (startElement !is RsExpr) return
         val rsPsiFactory = RsPsiFactory(project)
         val fromCall = fromCallMaker(rsPsiFactory, startElement)
@@ -49,16 +55,14 @@ abstract class ConvertToTyUsingTryTraitFix(
     }
 }
 
-/**
- * Similar to [ConvertToTyUsingTryTraitFix], but also "unwraps" the result with `unwrap()` or `?`.
- */
+/** Similar to [ConvertToTyUsingTryTraitFix], but also "unwraps" the result with `unwrap()` or `?`. */
 abstract class ConvertToTyUsingTryTraitAndUnpackFix(
     expr: PsiElement,
     ty: Ty,
     private val errTy: Ty,
     traitName: String,
-    fromCallMaker: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr) -> RsExpr)
-    : ConvertToTyUsingTryTraitFix(expr, ty, traitName, fromCallMaker) {
+    fromCallMaker: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr) -> RsExpr
+) : ConvertToTyUsingTryTraitFix(expr, ty, traitName, fromCallMaker) {
 
     override fun addFromCall(rsPsiFactory: RsPsiFactory, startElement: RsExpr, fromCall: RsExpr) {
         val parentFnRetTy = findParentFnOrLambdaRetTy(startElement)
@@ -88,18 +92,18 @@ abstract class ConvertToTyUsingTryTraitAndUnpackFix(
         val items = StdKnownItems.relativeTo(element)
         val lookup = ImplLookup(element.project, items)
         return fnRetTy is TyAdt && fnRetTy.item == items.findResultItem()
-            && lookup.select(TraitRef(fnRetTy.typeArguments.get(1), (items.findFromTrait()
+            && lookup.select(TraitRef(fnRetTy.typeArguments[1], (items.findFromTrait()
             ?: return false).withSubst(errTy))).ok() != null
     }
 }
 
 private const val TRY_FROM_TRAIT = "TryFrom"
 private val TRY_FROM_CALL_MAKER: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr) -> RsExpr =
-    { rsPsiFactory, startElement -> rsPsiFactory.createAssocFunctionCall(tyToStringWithoutTypeArgs(ty), "try_from", listOf(startElement)) }
+    { rsPsiFactory, startElement ->
+        rsPsiFactory.createAssocFunctionCall(tyToStringWithoutTypeArgs(ty), "try_from", listOf(startElement))
+    }
 
-/**
- * For the given `expr` converts it to the type `Result<ty, _>` with `ty::try_from(expr)`.
- */
+/** For the given `expr` converts it to the type `Result<ty, _>` with `ty::try_from(expr)`. */
 class ConvertToTyUsingTryFromTraitFix(expr: PsiElement, ty: Ty) :
     ConvertToTyUsingTryTraitFix(expr, ty, TRY_FROM_TRAIT, TRY_FROM_CALL_MAKER)
 
@@ -110,19 +114,19 @@ class ConvertToTyUsingTryFromTraitFix(expr: PsiElement, ty: Ty) :
 class ConvertToTyUsingTryFromTraitAndUnpackFix(expr: PsiElement, ty: Ty, errTy: Ty) :
     ConvertToTyUsingTryTraitAndUnpackFix(expr, ty, errTy, TRY_FROM_TRAIT, TRY_FROM_CALL_MAKER)
 
-private const val FROM_STR_TRAIT = "FromStr"
+private const val FROM_STR_TRAIT: String = "FromStr"
 private val PARSE_CALL_MAKER: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr) -> RsExpr =
-    { rsPsiFactory, startElement -> rsPsiFactory.createNoArgsMethodCall(startElement, "parse") }
+    { psiFactory, startElement ->
+        psiFactory.createNoArgsMethodCall(startElement, "parse")
+    }
 
-/**
- * For the given `strExpr` converts it to the type `Result<ty, _>` with `strExpr.parse()`.
- */
-class ConvertToTyUsingFromStrFix(strExpr: PsiElement, ty: Ty):
+/** For the given `strExpr` converts it to the type `Result<ty, _>` with `strExpr.parse()`. */
+class ConvertToTyUsingFromStrFix(strExpr: PsiElement, ty: Ty) :
     ConvertToTyUsingTryTraitFix(strExpr, ty, FROM_STR_TRAIT, PARSE_CALL_MAKER)
 
 /**
- * For the given `strExpr` converts it to the type [ty] with `strExpr.parse().unwrap()` or
- * `strExpr.parse()?` if possible.
+ * For the given `strExpr` converts it to the type [ty] with `strExpr.parse().unwrap()` or `strExpr.parse()?` if
+ * possible.
  */
 class ConvertToTyUsingFromStrAndUnpackFix(strExpr: PsiElement, ty: Ty, errTy: Ty) :
     ConvertToTyUsingTryTraitAndUnpackFix(strExpr, ty, errTy, FROM_STR_TRAIT, PARSE_CALL_MAKER)

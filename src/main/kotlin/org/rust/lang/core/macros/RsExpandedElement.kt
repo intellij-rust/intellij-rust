@@ -13,10 +13,9 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestors
 
 /**
- *  [RsExpandedElement]s are those elements which exist in temporary,
- *  in-memory PSI-files and are injected into real PSI. Their real
- *  parent is this temp PSI-file, but they are seen by the rest of
- *  the plugin as the children of [getContext] element.
+ *  [RsExpandedElement] are those elements which exist in temporary, in-memory PSI-files and are injected into real PSI.
+ *  Their real parent is this temp PSI-file, but they are seen by the rest of the plugin as the children of [getContext]
+ *  element.
  */
 interface RsExpandedElement : RsElement {
     override fun getContext(): PsiElement?
@@ -42,8 +41,7 @@ fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
 }
 
 /**
- * The [RsMacroCall] that directly expanded to this element or
- * null if this element is not directly produced by a macro
+ * The [RsMacroCall] that directly expanded to this element or null if this element is not directly produced by a macro.
  */
 val RsExpandedElement.expandedFrom: RsMacroCall?
     get() = getUserData(RS_EXPANSION_MACRO_CALL) as RsMacroCall?
@@ -66,7 +64,7 @@ fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
     return found?.findMacroCallExpandedFrom() ?: found
 }
 
-
-private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
-private val RS_EXPANSION_MACRO_CALL = Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
-
+private val RS_EXPANSION_CONTEXT: Key<RsElement> =
+    Key.create<RsElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
+private val RS_EXPANSION_MACRO_CALL: Key<RsElement> =
+    Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")

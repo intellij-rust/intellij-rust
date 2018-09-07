@@ -5,10 +5,10 @@
 
 package org.rust.lang.core.types.infer.outlives
 
-import org.rust.lang.core.types.regions.ReEarlyBound
-import org.rust.lang.core.types.regions.ReFree
-import org.rust.lang.core.types.regions.ReStatic
-import org.rust.lang.core.types.regions.Region
+import org.rust.lang.core.types.region.ReEarlyBound
+import org.rust.lang.core.types.region.ReFree
+import org.rust.lang.core.types.region.ReStatic
+import org.rust.lang.core.types.region.Region
 
 class FreeRegionMap {
     /**
@@ -49,6 +49,8 @@ class FreeRegionMap {
     }
 }
 
-private fun isFree(region: Region): Boolean = region is ReEarlyBound || region is ReFree
+private fun isFree(region: Region): Boolean =
+    region is ReEarlyBound || region is ReFree
 
-private fun isFreeOrStatic(region: Region): Boolean = isFree(region) || region === ReStatic
+private fun isFreeOrStatic(region: Region): Boolean =
+    isFree(region) || region === ReStatic

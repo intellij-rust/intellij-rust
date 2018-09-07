@@ -22,13 +22,6 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.isUnitTestMode
 
 class RsHighlightingMutableAnnotator : Annotator {
-    companion object {
-        private val MUTABLE_HIGHTLIGHTING = HighlightSeverity(
-            "MUTABLE_HIGHTLIGHTING",
-            HighlightSeverity.INFORMATION.myVal + 3
-        )
-    }
-
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val ref = when (element) {
@@ -40,15 +33,16 @@ class RsHighlightingMutableAnnotator : Annotator {
         distinctAnnotation(element, ref, holder)
     }
 
-    private fun annotationFor(ref: RsElement): RsColor? = when (ref) {
-        is RsSelfParameter -> RsColor.MUT_PARAMETER
-        is RsPatBinding -> if (ref.ancestorStrict<RsValueParameter>() != null) {
-            RsColor.MUT_PARAMETER
-        } else {
-            RsColor.MUT_BINDING
+    private fun annotationFor(ref: RsElement): RsColor? =
+        when (ref) {
+            is RsSelfParameter -> RsColor.MUT_PARAMETER
+            is RsPatBinding -> if (ref.ancestorStrict<RsValueParameter>() != null) {
+                RsColor.MUT_PARAMETER
+            } else {
+                RsColor.MUT_BINDING
+            }
+            else -> null
         }
-        else -> null
-    }
 
     private fun distinctAnnotation(element: PsiElement, ref: RsElement, holder: AnnotationHolder) {
         val color = annotationFor(ref) ?: return
@@ -59,11 +53,12 @@ class RsHighlightingMutableAnnotator : Annotator {
         }
     }
 
-    private fun partToHighlight(element: PsiElement): PsiElement = when (element) {
-        is RsSelfParameter -> element.self
-        is RsPatBinding -> element.identifier
-        else -> element
-    }
+    private fun partToHighlight(element: PsiElement): PsiElement =
+        when (element) {
+            is RsSelfParameter -> element.self
+            is RsPatBinding -> element.identifier
+            else -> element
+        }
 
     private fun addHighlightingAnnotation(holder: AnnotationHolder, target: PsiElement, key: RsColor) {
         // These following lines allow to test the mutable highlight for it own using INFORMATION and the description.
@@ -76,6 +71,10 @@ class RsHighlightingMutableAnnotator : Annotator {
         ).textAttributes = key.textAttributesKey
     }
 
+    companion object {
+        private val MUTABLE_HIGHTLIGHTING: HighlightSeverity =
+            HighlightSeverity("MUTABLE_HIGHTLIGHTING", HighlightSeverity.INFORMATION.myVal + 3)
+    }
 }
 
 val RsElement.isMut: Boolean

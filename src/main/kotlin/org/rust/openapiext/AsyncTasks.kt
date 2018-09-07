@@ -23,20 +23,24 @@ interface AsyncTaskCtx<T> {
     fun ok(value: T) = TaskResult.Ok(value)
 }
 
-fun <T> runAsyncTask(project: Project, queue: BackgroundTaskQueue, title: String,
-                     task: AsyncTaskCtx<T>.() -> TaskResult<T>): CompletableFuture<TaskResult<T>> {
-    val fut = CompletableFuture<TaskResult<T>>()
+fun <T> runAsyncTask(
+    project: Project,
+    queue: BackgroundTaskQueue,
+    title: String,
+    task: AsyncTaskCtx<T>.() -> TaskResult<T>
+): CompletableFuture<TaskResult<T>> {
+    val future = CompletableFuture<TaskResult<T>>()
     queue.run(object : Task.Backgroundable(project, title) {
         override fun run(indicator: ProgressIndicator) {
             val ctx = object : AsyncTaskCtx<T> {
                 override val progress: ProgressIndicator get() = indicator
             }
-            fut.complete(ctx.task())
+            future.complete(ctx.task())
         }
 
         override fun onThrowable(error: Throwable) {
-            fut.completeExceptionally(error)
+            future.completeExceptionally(error)
         }
     })
-    return fut
+    return future
 }

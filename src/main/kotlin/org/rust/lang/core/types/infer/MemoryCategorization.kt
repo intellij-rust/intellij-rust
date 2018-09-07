@@ -24,37 +24,40 @@ import org.rust.lang.core.types.infer.MutabilityCategory.Declared
 import org.rust.lang.core.types.infer.PointerKind.BorrowedPointer
 import org.rust.lang.core.types.infer.PointerKind.UnsafePointer
 import org.rust.lang.core.types.isDereference
-import org.rust.lang.core.types.regions.ReStatic
-import org.rust.lang.core.types.regions.Region
+import org.rust.lang.core.types.region.ReStatic
+import org.rust.lang.core.types.region.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.stdext.nextOrNull
 
-/** [Categorization] is a subset of the full expression forms */
+/** [Categorization] is a subset of the full expression forms. */
 sealed class Categorization {
-    /** Temporary value */
+
+    /** Temporary value. */
     data class Rvalue(val region: Region) : Categorization()
 
-    /** Static value */
+    /** Static value. */
     object StaticItem : Categorization()
 
-    /** Local variable */
+    /** Local variable. */
     data class Local(val element: RsElement) : Categorization()
 
-    /** Dereference of a pointer */
+    /** Dereference of a pointer. */
     data class Deref(val cmt: Cmt, val pointerKind: PointerKind) : Categorization()
 
-    /** Something reachable from the base without a pointer dereference (e.g. field) */
+    /** Something reachable from the base without a pointer dereference (e.g. field). */
     data class Interior(val cmt: Cmt, val interiorKind: InteriorKind) : Categorization()
 
-    /** Selects a particular enum variant (if enum has more than one variant */
+    /** Selects a particular enum variant (if enum has more than one variant. */
     data class Downcast(val cmt: Cmt, val element: RsElement) : Categorization()
 }
 
 sealed class BorrowKind {
+
     object ImmutableBorrow : BorrowKind()
     object MutableBorrow : BorrowKind()
 
     companion object {
+
         fun from(mutability: Mutability): BorrowKind =
             when (mutability) {
                 Mutability.IMMUTABLE -> ImmutableBorrow
@@ -71,7 +74,7 @@ sealed class PointerKind {
     data class UnsafePointer(val mutability: Mutability) : PointerKind()
 }
 
-/** "interior" means "something reachable from the base without a pointer dereference" */
+/** "interior" means "something reachable from the base without a pointer dereference". */
 sealed class InteriorKind {
     /** e.g. `s.field` */
     class InteriorField(val fieldName: String?) : InteriorKind()
@@ -83,15 +86,15 @@ sealed class InteriorKind {
     object InteriorPattern : InteriorKind()
 }
 
-/** Reason why something is immutable */
+/** Reason why something is immutable. */
 sealed class ImmutabilityBlame {
-    /** Immutable as immutable variable */
+    /** Immutable as immutable variable. */
     class LocalDeref(val element: RsElement) : ImmutabilityBlame()
 
-    /** Immutable as dereference of immutable variable */
+    /** Immutable as dereference of immutable variable. */
     object AdtFieldDeref : ImmutabilityBlame()
 
-    /** Immutable as interior of immutable */
+    /** Immutable as interior of immutable. */
     class ImmutableLocal(val element: RsElement) : ImmutabilityBlame()
 }
 
@@ -114,13 +117,13 @@ enum class AliasableReason {
     StaticMut
 }
 
-/** Mutability of the expression address */
+/** Mutability of the expression address. */
 enum class MutabilityCategory {
-    /** Any immutable */
+    /** Any immutable. */
     Immutable,
-    /** Directly declared as mutable */
+    /** Directly declared as mutable. */
     Declared,
-    /** Inherited from the fact that owner is mutable */
+    /** Inherited from the fact that owner is mutable. */
     Inherited;
 
     companion object {
@@ -155,10 +158,9 @@ enum class MutabilityCategory {
 /**
  * [Cmt]: Category, MutabilityCategory, and Type
  *
- * Imagine a routine Address(Expr) that evaluates an expression and returns an
- * address where the result is to be found.  If Expr is a place, then this
- * is the address of the place.  If Expr is an rvalue, this is the address of
- * some temporary spot in memory where the result is stored.
+ * Imagine a routine Address(Expr) that evaluates an expression and returns an address where the result is to be found.
+ * If Expr is a place, then this is the address of the place.  If Expr is an rvalue, this is the address of some
+ * temporary spot in memory where the result is stored.
  *
  * [element]: Expr
  * [category]: kind of Expr

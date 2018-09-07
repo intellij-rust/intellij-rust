@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsPsiFactory
 
 class RsWithBlockSurrounder : RsStatementsSurrounderBase.SimpleBlock<RsBlockExpr>() {
+
     override fun getTemplateDescription(): String = "{}"
 
     override fun createTemplate(project: Project): Pair<RsBlockExpr, RsBlock> {

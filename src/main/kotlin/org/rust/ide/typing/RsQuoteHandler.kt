@@ -41,10 +41,11 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
     }
 
     override fun isInsideLiteral(iterator: HighlighterIterator): Boolean =
-        if (iterator.tokenType in STRING_LITERAL_ESCAPES)
+        if (iterator.tokenType in STRING_LITERAL_ESCAPES) {
             true
-        else
+        } else {
             super.isInsideLiteral(iterator)
+        }
 
     override fun isNonClosedLiteral(iterator: HighlighterIterator, chars: CharSequence): Boolean {
         if (iterator.tokenType == BYTE_LITERAL) {
@@ -55,11 +56,9 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
             return lastChar != '#' && lastChar != '"'
         }
         if (super.isNonClosedLiteral(iterator, chars)) return true
-        // Rust allows multiline literals, so an unclosed quote will
-        // match with an opening quote of the next literal.
+        // Rust allows multiline literals, so an unclosed quote will match with an opening quote of the next literal.
         // Let's employ heuristics to find out if it is the case!
-        // Specifically, check if the next token can't appear
-        // in valid Rust code.
+        // Specifically, check if the next token can't appear in valid Rust code.
         val nextChar = chars.getOrElse(iterator.end, { '"' })
         if (nextChar == '"') return true
 
@@ -73,29 +72,25 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
         return false
     }
 
-    /**
-     * Check whether caret is deep inside string literal,
-     * i.e. it's inside contents itself, not decoration.
-     */
+    /** Check whether caret is deep inside string literal, i.e. it's inside contents itself, not decoration. */
     fun isDeepInsideLiteral(iterator: HighlighterIterator, offset: Int): Boolean {
         // First, filter out unwanted token types
         if (!isInsideLiteral(iterator)) return false
 
-        val tt = iterator.tokenType
+        val tokenType = iterator.tokenType
         val start = iterator.start
 
         // If we are inside raw literal then we don't have to deal with escapes
-        if (tt == RAW_STRING_LITERAL || tt == RAW_BYTE_STRING_LITERAL) {
+        if (tokenType == RAW_STRING_LITERAL || tokenType == RAW_BYTE_STRING_LITERAL) {
             return getLiteralDumb(iterator)?.offsets?.value?.containsOffset(offset - start) ?: false
         }
 
         // We have to deal with escapes here as we are inside (byte) string literal;
-        // we could build huge virtual literal using something like [getLiteralDumb],
-        // but that is expensive, especially for long strings with numerous escapes
-        // while we wanna be fast & furious when user notices lags.
+        // we could build huge virtual literal using something like [getLiteralDumb], but that is expensive, especially
+        // for long strings with numerous escapes while we wanna be fast & furious when user notices lags.
 
         // If we are inside escape then we must be deep inside literal
-        if (tt in STRING_LITERAL_ESCAPES) return true
+        if (tokenType in STRING_LITERAL_ESCAPES) return true
 
         // We can try to deduce our situation by just looking at neighbourhood...
         val (prev, next) = getSiblingTokens(iterator)

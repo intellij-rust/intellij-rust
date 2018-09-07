@@ -12,11 +12,9 @@ import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.rust.RsTestBase
 
-
-/**
- * Tests for RustParameterInfoHandler
- */
+/** Tests for RustParameterInfoHandler. */
 class RsParameterInfoHandlerTest : RsTestBase() {
+
     fun testFnNoArgs() = checkByText("""
         fn foo() {}
         fn main() { foo(<caret>); }
@@ -187,7 +185,8 @@ class RsParameterInfoHandlerTest : RsTestBase() {
 
             // Check parameter index
             val updateContext = MockUpdateParameterInfoContext(myFixture.editor, myFixture.file)
-            val element = handler.findElementForUpdatingParameterInfo(updateContext) ?: throw AssertionFailedError("Parameter not found")
+            val element = handler.findElementForUpdatingParameterInfo(updateContext)
+                ?: throw AssertionFailedError("Parameter not found")
             handler.updateParameterInfo(element, updateContext)
             TestCase.assertEquals(index, updateContext.currentParameter)
         } else if (elt != null) {

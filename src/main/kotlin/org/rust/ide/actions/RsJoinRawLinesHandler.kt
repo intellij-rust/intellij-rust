@@ -10,14 +10,15 @@ import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsElementTypes.COMMA
+import org.rust.lang.core.psi.RsElementTypes.LBRACE
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
     /**
      *  Executed when user presses `Ctrl+Shift+J`, before lines are joined.
-     *  See [RsJoinLinesHandler]
+     *  @see [RsJoinLinesHandler]
      */
     override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
         if (file !is RsFile) return CANNOT_JOIN
@@ -26,7 +27,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
         return tryJoinSingleExpressionBlock(file, start)
     }
 
-    fun tryJoinSingleExpressionBlock(file: RsFile, start: Int): Int {
+    private fun tryJoinSingleExpressionBlock(file: RsFile, start: Int): Int {
         val lbrace = file.findElementAt(start - 1)!!
         if (lbrace.elementType != LBRACE) return CANNOT_JOIN
 

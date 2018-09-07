@@ -22,17 +22,16 @@ import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
 class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
+
     /**
      * Allows to intercept platform calls to [PsiReference.resolve]
      *
-     * Note that if this method returns null, it means
-     * "use default logic", i.e. call `ref.resolve()`
+     * Note that if this method returns null, it means "use default logic", i.e. call `ref.resolve()`.
      */
     override fun getElementByReference(ref: PsiReference, flags: Int): PsiElement? {
         if (ref !is RsReference) return null
-        // These conditions should filter invocations from CtrlMouseHandler (see RsQuickNavigationInfoTest)
-        // and leave invocations from GotoDeclarationAction only.
-        // Really it is a hack and it may break down in the future.
+        // These conditions should filter invocations from CtrlMouseHandler (see RsQuickNavigationInfoTest) and leave
+        // invocations from GotoDeclarationAction only. Really it is a hack and it may break down in the future.
         if (BitUtil.isSet(flags, TargetElementUtil.ELEMENT_NAME_ACCEPTED)) return null
         if (!BitUtil.isSet(flags, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)) return null
 
@@ -59,10 +58,9 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
     }
 
     /**
-     * Allows to refine GotoDeclaration target
+     * Allows to refine GotoDeclaration target.
      *
-     * Note that if this method returns null, it means
-     * "use default logic", i.e. just use `navElement`
+     * Note that if this method returns null, it means "use default logic", i.e. just use `navElement`.
      *
      * @param element the resolved element (basically via `element.reference.resolve()`)
      * @param navElement the element we going to navigate to ([PsiElement.getNavigationElement])

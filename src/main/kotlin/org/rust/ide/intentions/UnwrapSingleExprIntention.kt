@@ -16,18 +16,21 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
-    override fun getText() = "Remove braces from single expression"
-    override fun getFamilyName() = text
+
+    override fun getText(): String = "Remove braces from single expression"
+
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsBlockExpr? {
         val blockExpr = element.ancestorStrict<RsBlockExpr>() ?: return null
         if (blockExpr.unsafe != null) return null
         val block = blockExpr.block
 
-        return if (block.expr != null && block.lbrace.getNextNonCommentSibling() == block.expr)
+        return if (block.expr != null && block.lbrace.getNextNonCommentSibling() == block.expr) {
             blockExpr
-        else
+        } else {
             null
+        }
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsBlockExpr) {
@@ -36,7 +39,8 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
         if (parent is RsMatchArm && parent.comma == null) {
             parent.add(RsPsiFactory(project).createComma())
         }
-        val relativeCaretPosition = Math.min(Math.max(editor.caretModel.offset - blockBody.textOffset, 0), blockBody.textLength)
+        val relativeCaretPosition =
+            Math.min(Math.max(editor.caretModel.offset - blockBody.textOffset, 0), blockBody.textLength)
 
         val offset = (ctx.replace(blockBody) as RsExpr).textOffset
         editor.caretModel.moveToOffset(offset + relativeCaretPosition)

@@ -10,6 +10,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
+
     fun `test nested function`() = doTest("""
         mod a {
             mod b {
@@ -571,7 +572,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
 
     fun `test loop label`() = doTest("""
         fn foo() {
-            'foo: loop { break 'foo }
+            'foo: loop { break 'foo; }
                                 //^
         }
     """, """
@@ -580,7 +581,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
 
     fun `test for loop label`() = doTest("""
         fn foo() {
-            'foo: for x in 0..4 { continue 'foo }
+            'foo: for x in 0..4 { continue 'foo; }
                                             //^
         }
     """, """
@@ -589,7 +590,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
 
     fun `test while loop label`() = doTest("""
         fn foo() {
-            'foo: while true { continue 'foo }
+            'foo: while true { continue 'foo; }
                                          //^
         }
     """, """
@@ -731,6 +732,6 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         fn <b>clone</b>(&amp;self) -&gt; Self
     """)
 
-    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
-        = doTest(code, expected, RsDocumentationProvider::getQuickNavigateInfo)
+    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String) =
+        doTest(code, expected, RsDocumentationProvider::getQuickNavigateInfo)
 }

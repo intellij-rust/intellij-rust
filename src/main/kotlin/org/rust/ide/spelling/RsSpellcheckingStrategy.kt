@@ -13,12 +13,8 @@ import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
 
 class RsSpellcheckingStrategy : SpellcheckingStrategy() {
 
-    override fun isMyContext(element: PsiElement) = RsLanguage.`is`(element.language)
+    override fun isMyContext(element: PsiElement): Boolean = RsLanguage.`is`(element.language)
 
     override fun getTokenizer(element: PsiElement?): Tokenizer<*> =
-        if (element?.node?.elementType == STRING_LITERAL)
-            StringLiteralTokenizer
-        else
-            super.getTokenizer(element)
+        if (element?.node?.elementType == STRING_LITERAL) StringLiteralTokenizer else super.getTokenizer(element)
 }
-

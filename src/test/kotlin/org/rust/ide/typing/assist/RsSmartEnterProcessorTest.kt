@@ -9,9 +9,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
-/**
- * Unit tests for [RsSmartEnterProcessor]
- */
+/** Unit tests for [RsSmartEnterProcessor]. */
 class RsSmartEnterProcessorTest : RsTestBase() {
 
     fun `test fix simple method call`() = doTest("""
@@ -24,6 +22,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             /*caret*/
         }
     """)
+
     fun `test fix nested method call`() = doTest("""
         fn double(x: i32) -> i32 {
         /*caret*/double(double(x
@@ -36,7 +35,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             double(x)
         }
     """)
-    
+
     fun `test fix method call with string literal`() = doTest("""
         fn f(s: String) -> String {
             f(f(f("((")/*caret*/
@@ -47,7 +46,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             /*caret*/
         }
     """)
-    
+
     fun `test fix method call multiple lines`() = doTest("""
         fn f(s: String) -> String {
             f("");
@@ -62,7 +61,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             /*caret*/
         }
     """)
-    
+
     fun `test fix whitespace and semicolon`() = doTest("""
         fn f(x: i32) -> i32 {
             f(f(x))/*caret*/  ;
@@ -73,7 +72,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             /*caret*/
         }
     """)
-    
+
     fun `test fix semicolon after declaration`() = doTest("""
         struct Point {
             x: i32,
@@ -94,7 +93,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             /*caret*/
         }
     """)
-    
+
     fun `test fix declaration with call`() = doTest("""
         fn f() -> i32 {
             return 42;
@@ -113,7 +112,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             /*caret*/
         }
     """)
-    
+
     fun `test fix match in let`() = doTest("""
         fn main() {
             let version_req = match version {
@@ -130,7 +129,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             /*caret*/
         }
     """)
-    
+
     fun `test fix call in stmt`() = doTest("""
         fn f(s: String) {
             /*caret*/f(

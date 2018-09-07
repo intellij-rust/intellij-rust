@@ -10,10 +10,7 @@ import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 
-
 class CargoConsoleBuilder(project: Project, scope: GlobalSearchScope) : TextConsoleBuilderImpl(project, scope) {
-    override fun createConsole(): ConsoleView {
-        return CargoConsoleView(project, scope, isViewer, true)
-    }
+    override fun createConsole(): ConsoleView =
+        CargoConsoleView(project, scope, isViewer, true)
 }
-

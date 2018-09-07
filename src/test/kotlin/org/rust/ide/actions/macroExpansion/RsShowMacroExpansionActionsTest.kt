@@ -77,10 +77,10 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
     """)
 
     fun `test that recursive expansion of macro without body is just its name`() = testRecursiveExpansion("""
-            /*caret*/foo!();
-        """, """
-            foo!();
-        """)
+        /*caret*/foo!();
+    """, """
+        foo!();
+    """)
 
     fun `test that single step expansion of macro without body is just its name`() = testSingleStepExpansion("""
         /*caret*/foo!();

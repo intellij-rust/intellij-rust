@@ -13,14 +13,11 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.findOuterAttr
 import org.rust.lang.core.psi.ext.isTest
 
-class ToggleIgnoreTestIntention: RsElementBaseIntentionAction<ToggleIgnoreTestIntention.Context>() {
+class ToggleIgnoreTestIntention : RsElementBaseIntentionAction<ToggleIgnoreTestIntention.Context>() {
 
-    data class Context(
-        val element: RsFunction
-    )
+    override fun getText(): String = "Toggle ignore for tests"
 
-    override fun getText() = "Toggle ignore for tests"
-    override fun getFamilyName() = text
+    override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val function = element.parent as? RsFunction ?: return null
@@ -38,4 +35,6 @@ class ToggleIgnoreTestIntention: RsElementBaseIntentionAction<ToggleIgnoreTestIn
             existingIgnore.delete()
         }
     }
+
+    data class Context(val element: RsFunction)
 }

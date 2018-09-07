@@ -16,8 +16,8 @@ import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.descendantsOfType
 
 /**
- * Pre format processor ensuring that if an import statement only contains a single import from a crate that
- * there are no curly braces surrounding it.
+ * Pre format processor ensuring that if an import statement only contains a single import from a crate that there are
+ * no curly braces surrounding it.
  *
  * For example the following would change like so:
  *

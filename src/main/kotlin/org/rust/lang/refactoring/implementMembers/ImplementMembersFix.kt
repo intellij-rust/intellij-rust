@@ -10,21 +10,17 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.refactoring.implementMembers.generateTraitMembers
 import org.rust.lang.core.psi.RsImplItem
 
-/**
- * Adds unimplemented methods and associated types to an impl block
- */
-class ImplementMembersFix(
-    implBody: RsImplItem
-) : LocalQuickFixAndIntentionActionOnPsiElement(implBody) {
+/** Adds unimplemented methods and associated types to an impl block. */
+class ImplementMembersFix(implBody: RsImplItem) : LocalQuickFixAndIntentionActionOnPsiElement(implBody) {
 
     override fun getText(): String = "Implement members"
 
     override fun getFamilyName(): String = text
 
     override fun startInWriteAction(): Boolean = false
+
     override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement = currentFile
 
     override fun invoke(

@@ -12,20 +12,10 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 
 class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention.Context>() {
+
     override fun getText(): String = "Convert if let statement to match"
+
     override fun getFamilyName(): String = text
-
-    data class Context(
-        val ifStmt: RsIfExpr,
-        val target: RsExpr,
-        val matchArms: MutableList<MatchArm>,
-        var elseBody: RsBlock?
-    )
-
-    data class MatchArm(
-        val matchArm: RsPat,
-        val body: RsBlock
-    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         //1) Check that we have an if statement
@@ -49,7 +39,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
         val (ifStmt, target, matchArms, elseBody) = ctx
 
         //var generatedCode = "match ${target.text} {"
-        var generatedCode = buildString {
+        val generatedCode = buildString {
             append("match ")
             append(target.text)
             append(" {")
@@ -100,9 +90,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
 
             newContext
         } else {
-            val newContext = Context(iflet, target, mutableListOf(matchArm), null)
-
-            newContext
+            Context(iflet, target, mutableListOf(matchArm), null)
         }
 
         //6) Extract else body if any
@@ -121,4 +109,13 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
 
         return context
     }
+
+    data class Context(
+        val ifStmt: RsIfExpr,
+        val target: RsExpr,
+        val matchArms: MutableList<MatchArm>,
+        var elseBody: RsBlock?
+    )
+
+    data class MatchArm(val matchArm: RsPat, val body: RsBlock)
 }

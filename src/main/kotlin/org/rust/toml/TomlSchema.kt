@@ -13,9 +13,7 @@ import org.toml.lang.psi.TomlFileType
 import org.toml.lang.psi.TomlKeyValueOwner
 import org.toml.lang.psi.TomlTable
 
-class TomlSchema private constructor(
-    private val tables: List<TomlTableSchema>
-) {
+class TomlSchema private constructor(private val tables: List<TomlTableSchema>) {
 
     fun topLevelKeys(isArray: Boolean): Collection<String> =
         tables.filter { it.isArray == isArray }.map { it.name }

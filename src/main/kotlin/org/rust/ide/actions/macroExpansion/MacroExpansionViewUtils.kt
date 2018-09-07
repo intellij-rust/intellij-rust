@@ -70,7 +70,7 @@ private fun expandMacroForView(macroToExpand: RsMacroCall, expandRecursively: Bo
         getMacroExpansions(macroToExpand, expandRecursively)
     )
 
-private fun<T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T {
+private fun <T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T {
     val manager = ProgressManager.getInstance()
 
     return manager.runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
@@ -95,9 +95,8 @@ private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Bo
     return expansionElements
 }
 
-/** Simple view to show some code. Inspired by [com.intellij.codeInsight.hint.ImplementationViewComponent] */
+/** Simple view to show some code. Inspired by [com.intellij.codeInsight.hint.ImplementationViewComponent]. */
 private class MacroExpansionViewComponent(expansions: List<RsExpandedElement>) : JPanel(BorderLayout()) {
-
     private val editor: EditorEx
 
     init {
@@ -127,8 +126,7 @@ private class MacroExpansionViewComponent(expansions: List<RsExpandedElement>) :
     }
 
     /**
-     * Every editor, created by [EditorFactory], should be released
-     * (see docs for [EditorFactory.createEditor] method).
+     * Every editor, created by [EditorFactory], should be released (see docs for [EditorFactory.createEditor] method).
      */
     override fun removeNotify() {
         super.removeNotify()

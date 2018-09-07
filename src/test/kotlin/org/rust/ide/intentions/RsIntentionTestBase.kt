@@ -20,7 +20,10 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
-    protected fun doAvailableTestWithFileTree(@Language("Rust") fileStructureBefore: String, @Language("Rust") openedFileAfter: String) {
+    protected fun doAvailableTestWithFileTree(
+        @Language("Rust") fileStructureBefore: String,
+        @Language("Rust") openedFileAfter: String
+    ) {
         fileTreeFromText(fileStructureBefore).createAndOpenFileWithCaretMarker()
         launchAction()
         myFixture.checkResult(replaceCaretMarker(openedFileAfter.trimIndent()))
@@ -31,10 +34,11 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
         myFixture.launchAction(intention)
     }
 
-    protected fun doAvailableTest(@Language("Rust") before: String,
-                                  @Language("Rust") after: String,
-                                  testmark: Testmark) =
-        testmark.checkHit { doAvailableTest(before, after) }
+    protected fun doAvailableTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        testmark: Testmark
+    ) = testmark.checkHit { doAvailableTest(before, after) }
 
     protected fun doUnavailableTest(@Language("Rust") before: String) {
         InlineFile(before).withCaret()

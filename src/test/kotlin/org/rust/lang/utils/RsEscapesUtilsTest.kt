@@ -13,17 +13,21 @@ import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
 
 @RunWith(Parameterized::class)
-class UnescapeRsTest(private val input: String,
-                     private val expected: String,
-                     private val unicode: Boolean,
-                     private val eol: Boolean,
-                     private val extendedByte: Boolean) {
+class UnescapeRsTest(
+    private val input: String,
+    private val expected: String,
+    private val unicode: Boolean,
+    private val eol: Boolean,
+    private val extendedByte: Boolean
+) {
+
     @Test
     fun test() = assertEquals(expected, input.unescapeRust(unicode, eol, extendedByte))
 
     companion object {
         @Parameters(name = "{index}: \"{0}\" → \"{1}\" U:{2} E:{3}")
-        @JvmStatic fun data(): Collection<Array<Any>> = listOf(
+        @JvmStatic
+        fun data(): Collection<Array<Any>> = listOf(
             arrayOf("aaa", "aaa", true, true, false),
             arrayOf("aaa", "aaa", false, false, false),
             arrayOf("a\\na", "a\na", true, true, false),
@@ -70,10 +74,10 @@ class UnescapeRsWithOffsetsTest(
     private val offsets: IntArray,
     private val success: Boolean
 ) {
+
     @Test
     fun test() {
         val (decoded, offsets, success) = parseRustStringCharacters(str)
-
         assertEquals(this.decoded, decoded.toString())
         assertArrayEquals(this.offsets.copyOf(offsets.size), offsets)
         assertEquals(this.success, success)
@@ -84,26 +88,26 @@ class UnescapeRsWithOffsetsTest(
         @JvmStatic
         fun data(): Collection<Array<out Any>> = listOf(
             arrayOf("", "", intArrayOf(), true),
-            arrayOf("foo", "foo", intArrayOf(0,1,2,3), true),
-            arrayOf("""a\"b""", "a\"b", intArrayOf(0,1,3,4), true),
-            arrayOf("""a\'b""", "a\'b", intArrayOf(0,1,3,4), true),
-            arrayOf("""a\tb""", "a\tb", intArrayOf(0,1,3,4), true),
-            arrayOf("""a\nb""", "a\nb", intArrayOf(0,1,3,4), true),
-            arrayOf("""a\rb""", "a\rb", intArrayOf(0,1,3,4), true),
-            arrayOf("""a\0b""", "a\u0000b", intArrayOf(0,1,3,4), true),
-            arrayOf("""a\\b""", "a\\b", intArrayOf(0,1,3,4), true),
-            arrayOf("""a\x01b""", "a\u0001b", intArrayOf(0,1,5,6), true),
-            arrayOf("""a\x7Fb""", "a\u007Fb", intArrayOf(0,1,5,6), true),
+            arrayOf("foo", "foo", intArrayOf(0, 1, 2, 3), true),
+            arrayOf("""a\"b""", "a\"b", intArrayOf(0, 1, 3, 4), true),
+            arrayOf("""a\'b""", "a\'b", intArrayOf(0, 1, 3, 4), true),
+            arrayOf("""a\tb""", "a\tb", intArrayOf(0, 1, 3, 4), true),
+            arrayOf("""a\nb""", "a\nb", intArrayOf(0, 1, 3, 4), true),
+            arrayOf("""a\rb""", "a\rb", intArrayOf(0, 1, 3, 4), true),
+            arrayOf("""a\0b""", "a\u0000b", intArrayOf(0, 1, 3, 4), true),
+            arrayOf("""a\\b""", "a\\b", intArrayOf(0, 1, 3, 4), true),
+            arrayOf("""a\x01b""", "a\u0001b", intArrayOf(0, 1, 5, 6), true),
+            arrayOf("""a\x7Fb""", "a\u007Fb", intArrayOf(0, 1, 5, 6), true),
             // We should fail on `\x80` because it's not ASCII char, but currently we successfully parse it.
 //            arrayOf("""a\x80b""", "a", intArrayOf(0,1,2), false),
-            arrayOf("""a\x+1b""", "a", intArrayOf(0,1,2), false),
-            arrayOf("""a\x-1b""", "a", intArrayOf(0,1,2), false),
-            arrayOf("""a\u{0}b""", "a\u0000b", intArrayOf(0,1,6,7), true),
-            arrayOf("""a\u{001234}b""", "a\u1234b", intArrayOf(0,1,11,12), true),
-            arrayOf("""a\u{00_12__34}b""", "a\u1234b", intArrayOf(0,1,14,15), true),
-            arrayOf("""a\u{00_12__34_5}b""", "a", intArrayOf(0,1,2), false),
-            arrayOf("""a\u{_00}b""", "a", intArrayOf(0,1,2), false),
-            arrayOf("""a\ab""", "a", intArrayOf(0,1,2), false)
+            arrayOf("""a\x+1b""", "a", intArrayOf(0, 1, 2), false),
+            arrayOf("""a\x-1b""", "a", intArrayOf(0, 1, 2), false),
+            arrayOf("""a\u{0}b""", "a\u0000b", intArrayOf(0, 1, 6, 7), true),
+            arrayOf("""a\u{001234}b""", "a\u1234b", intArrayOf(0, 1, 11, 12), true),
+            arrayOf("""a\u{00_12__34}b""", "a\u1234b", intArrayOf(0, 1, 14, 15), true),
+            arrayOf("""a\u{00_12__34_5}b""", "a", intArrayOf(0, 1, 2), false),
+            arrayOf("""a\u{_00}b""", "a", intArrayOf(0, 1, 2), false),
+            arrayOf("""a\ab""", "a", intArrayOf(0, 1, 2), false)
         )
     }
 }

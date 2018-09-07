@@ -11,18 +11,19 @@ import org.rust.ide.presentation.breadcrumbName
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.ext.RsElement
 
-
 class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
+
     override fun getLanguages(): Array<RsLanguage> = LANGUAGES
 
-    override fun acceptElement(e: PsiElement): Boolean =
-        e is RsElement && breadcrumbName(e) != null
+    override fun acceptElement(element: PsiElement): Boolean =
+        element is RsElement && breadcrumbName(element) != null
 
-    override fun getElementInfo(e: PsiElement): String = breadcrumbName(e as RsElement)!!
+    override fun getElementInfo(element: PsiElement): String =
+        breadcrumbName(element as RsElement)!!
 
-    override fun getElementTooltip(e: PsiElement): String? = null
+    override fun getElementTooltip(element: PsiElement): String? = null
 
     companion object {
-        private val LANGUAGES = arrayOf(RsLanguage)
+        private val LANGUAGES: Array<RsLanguage> = arrayOf(RsLanguage)
     }
 }

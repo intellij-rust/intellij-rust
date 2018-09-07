@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.regions
+package org.rust.lang.core.types.region
 
 object ReUnknown : Region() {
     override fun toString(): String = "'_"

@@ -20,17 +20,15 @@ import org.rust.lang.core.stubs.RsMacroCallStub
 
 
 abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>, RsMacroCall {
+    override val referenceName: String get() = macroName
+    override val referenceNameElement: PsiElement
+        get() = findChildByType(IDENTIFIER)!!
 
     constructor(node: ASTNode) : super(node)
+
     constructor(stub: RsMacroCallStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getReference(): RsReference = RsMacroCallReferenceImpl(this)
-
-    override val referenceName: String
-        get() = macroName
-
-    override val referenceNameElement: PsiElement
-        get() = findChildByType(IDENTIFIER)!!
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
@@ -78,12 +76,11 @@ private fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElemen
     return expansion.orEmpty().any { it.processRecursively(processor, depth) }
 }
 
-private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) -> Boolean, depth: Int): Boolean {
-    return when (this) {
+private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) -> Boolean, depth: Int): Boolean =
+    when (this) {
         is RsMacroCall -> processExpansionRecursively(processor, depth + 1)
         else -> processor(this)
     }
-}
 
 private fun PsiElement.braceListBodyText(): CharSequence? =
     textBetweenParens(firstChild, lastChild)

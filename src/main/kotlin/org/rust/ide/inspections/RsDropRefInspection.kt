@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.psi.PsiElementVisitor
 import org.rust.ide.inspections.fixes.RemoveRefFix
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsFunction
@@ -19,9 +20,10 @@ import org.rust.lang.core.types.type
  * Quick fix: Use the owned value as the argument.
  */
 class RsDropRefInspection : RsLocalInspectionTool() {
+
     override fun getDisplayName(): String = "Drop reference"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitCallExpr(expr: RsCallExpr) = inspectExpr(expr, holder)
         }
@@ -41,7 +43,8 @@ class RsDropRefInspection : RsLocalInspectionTool() {
             holder.registerProblem(
                 expr,
                 "Call to std::mem::drop with a reference argument. Dropping a reference does nothing",
-                *fixes)
+                *fixes
+            )
         }
     }
 }

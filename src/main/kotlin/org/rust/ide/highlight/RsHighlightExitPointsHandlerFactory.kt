@@ -22,7 +22,11 @@ import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.elementType
 
 class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
-    override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
+    override fun createHighlightUsagesHandler(
+        editor: Editor,
+        file: PsiFile,
+        target: PsiElement
+    ): HighlightUsagesHandlerBase<*>? {
         if (file !is RsFile) return null
 
         val elementType = target.elementType
@@ -33,8 +37,13 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
     }
 }
 
-private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var target: PsiElement) : HighlightUsagesHandlerBase<PsiElement>(editor, file) {
-    override fun getTargets() = listOf(target)
+private class RsHighlightExitPointsHandler(
+    editor: Editor,
+    file: PsiFile,
+    var target: PsiElement
+) : HighlightUsagesHandlerBase<PsiElement>(editor, file) {
+
+    override fun getTargets(): List<PsiElement> = listOf(target)
 
     override fun selectTargets(targets: List<PsiElement>, selectionConsumer: Consumer<List<PsiElement>>) {
         selectionConsumer.consume(targets)
@@ -44,7 +53,8 @@ private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var ta
         val sink: (ExitPoint) -> Unit = { exitPoint ->
             when (exitPoint) {
                 is ExitPoint.Return -> addOccurrence(exitPoint.e)
-                is ExitPoint.TryExpr -> if (exitPoint.e is RsTryExpr) addOccurrence(exitPoint.e.q) else addOccurrence(exitPoint.e)
+                is ExitPoint.TryExpr ->
+                    if (exitPoint.e is RsTryExpr) addOccurrence(exitPoint.e.q) else addOccurrence(exitPoint.e)
                 is ExitPoint.DivergingExpr -> addOccurrence(exitPoint.e)
                 is ExitPoint.TailExpr -> addOccurrence(exitPoint.e)
                 is ExitPoint.TailStatement -> Unit
@@ -58,4 +68,3 @@ private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var ta
         }
     }
 }
-

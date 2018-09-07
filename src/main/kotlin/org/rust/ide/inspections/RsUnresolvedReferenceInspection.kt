@@ -22,10 +22,9 @@ import org.rust.lang.core.psi.ext.RsElement
 import javax.swing.JComponent
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
-
     var ignoreWithoutQuickFix: Boolean = true
 
-    override fun getDisplayName() = "Unresolved reference"
+    override fun getDisplayName(): String = "Unresolved reference"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
@@ -58,7 +57,11 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         referenceName: String?,
         range: TextRange
     ) {
-        val description = if (referenceName == null) "Unresolved reference" else "Unresolved reference: `$referenceName`"
+        val description = if (referenceName == null) {
+            "Unresolved reference"
+        } else {
+            "Unresolved reference: `$referenceName`"
+        }
         var fix: LocalQuickFix? = null
         if (candidates.isNotEmpty()) {
             fix = if (RsCodeInsightSettings.getInstance().showImportPopup) {
@@ -68,11 +71,17 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
             }
         }
 
-        registerProblem(element, description, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-            range, *listOfNotNull(fix).toTypedArray())
+        registerProblem(
+            element,
+            description,
+            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+            range,
+            *listOfNotNull(fix).toTypedArray()
+        )
     }
 
-    override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).apply {
-        addCheckbox("Ignore unresolved references without quick fix", "ignoreWithoutQuickFix")
-    }
+    override fun createOptionsPanel(): JComponent =
+        MultipleCheckboxOptionsPanel(this).apply {
+            addCheckbox("Ignore unresolved references without quick fix", "ignoreWithoutQuickFix")
+        }
 }

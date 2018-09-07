@@ -22,18 +22,18 @@ import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 import javax.swing.JComponent
 
-class RsProjectConfigurable(
-    project: Project
-) : RsConfigurableBase(project), Configurable.NoScroll {
+class RsProjectConfigurable(project: Project) : RsConfigurableBase(project), Configurable.NoScroll {
 
-    private val rustProjectSettings = RustProjectSettingsPanel(
-        project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
-    )
+    private val rustProjectSettings: RustProjectSettingsPanel =
+        RustProjectSettingsPanel(
+            project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
+        )
 
     private val expandMacrosCheckbox: JBCheckBox = JBCheckBox()
     private var expandMacros: Boolean by CheckboxDelegate(expandMacrosCheckbox)
 
-    private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
+    private val hintProvider =
+        InlayParameterHintsExtension.forLanguage(RsLanguage)
     private val hintCheckboxes: Map<String, JBCheckBox> =
         hintProvider.supportedOptions.associate { it.id to JBCheckBox() }
 

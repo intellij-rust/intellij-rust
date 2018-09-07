@@ -16,11 +16,12 @@ sealed class TyInfer : Ty(HAS_TY_INFER_MASK) {
         val origin: Ty? = null,
         override var parent: NodeOrValue = VarValue(null, 0)
     ) : TyInfer(), Node
+
     class IntVar(override var parent: NodeOrValue = VarValue(null, 0)) : TyInfer(), Node
     class FloatVar(override var parent: NodeOrValue = VarValue(null, 0)) : TyInfer(), Node
 }
 
-/** Used for caching only */
+/** Used for caching only. */
 sealed class FreshTyInfer : Ty() {
     data class TyVar(val id: Int) : FreshTyInfer()
     data class IntVar(val id: Int) : FreshTyInfer()

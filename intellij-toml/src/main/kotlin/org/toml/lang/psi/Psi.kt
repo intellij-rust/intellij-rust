@@ -30,16 +30,10 @@ interface TomlKeyValue : TomlElement {
     val value: TomlValue?
 }
 
-/**
- * It's possible to use [PsiReferenceContributor] to inject references
- * into [TomlKey] from third-party plugins.
- */
+/** It's possible to use [PsiReferenceContributor] to inject references into [TomlKey] from third-party plugins. */
 interface TomlKey : TomlElement, ContributedReferenceHost
 
-/**
- * It's possible to use [PsiReferenceContributor] to inject references
- * into [TomlLiteral] from third-party plugins.
- */
+/** It's possible to use [PsiReferenceContributor] to inject references into [TomlLiteral] from third-party plugins. */
 interface TomlLiteral : TomlValue, ContributedReferenceHost
 
 interface TomlArray : TomlValue {
@@ -53,4 +47,3 @@ interface TomlInlineTable : TomlKeyValueOwner, TomlValue
 interface TomlTableHeader : TomlElement {
     val names: List<TomlKey>
 }
-

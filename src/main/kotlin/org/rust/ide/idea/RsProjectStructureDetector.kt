@@ -17,6 +17,7 @@ import java.io.File
 import javax.swing.Icon
 
 class RsProjectStructureDetector : ProjectStructureDetector() {
+
     override fun detectRoots(
         dir: File,
         children: Array<out File>,
@@ -38,7 +39,9 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
         builder: ProjectFromSourcesBuilder
     ) {
         val root = roots.singleOrNull()
-        if (root == null || builder.hasRootsFromOtherDetectors(this) || projectDescriptor.modules.isNotEmpty()) {
+        if (root == null
+            || builder.hasRootsFromOtherDetectors(this)
+            || projectDescriptor.modules.isNotEmpty()) {
             return
         }
 
@@ -46,9 +49,11 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
         projectDescriptor.modules = listOf(moduleDescriptor)
     }
 
-    override fun createWizardSteps(builder: ProjectFromSourcesBuilder,
-                                   projectDescriptor: ProjectDescriptor,
-                                   stepIcon: Icon?): List<ModuleWizardStep> =
+    override fun createWizardSteps(
+        builder: ProjectFromSourcesBuilder,
+        projectDescriptor: ProjectDescriptor,
+        stepIcon: Icon?
+    ): List<ModuleWizardStep> =
         listOf(CargoConfigurationWizardStep.importExistingProject(builder.context, projectDescriptor))
 }
 

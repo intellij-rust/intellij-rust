@@ -21,12 +21,18 @@ import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.openapiext.getElements
 
 class RsLangItemIndex : AbstractStubIndex<String, RsTraitItem>() {
+
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
     override fun getKey(): StubIndexKey<String, RsTraitItem> = KEY
     override fun getKeyDescriptor(): KeyDescriptor<String> = EnumeratorStringDescriptor.INSTANCE
 
     companion object {
-        fun findLangItem(project: Project, langAttribute: String, crateName: String = AutoInjectedCrates.CORE): RsTraitItem? {
+
+        fun findLangItem(
+            project: Project,
+            langAttribute: String,
+            crateName: String = AutoInjectedCrates.CORE
+        ): RsTraitItem? {
             val elements = getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project))
             return if (elements.size < 2) {
                 elements.firstOrNull()

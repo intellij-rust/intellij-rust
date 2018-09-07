@@ -8,5 +8,4 @@ package org.rust.lang.core.psi.ext
 import org.rust.lang.core.psi.RsUseGroup
 import org.rust.lang.core.psi.RsUseSpeck
 
-
 val RsUseGroup.parentUseSpeck: RsUseSpeck get() = parent as RsUseSpeck

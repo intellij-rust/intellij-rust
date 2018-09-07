@@ -11,6 +11,7 @@ import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsCrateDocLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
+
     fun `test documentation link`() = doTestByText("""
         #[cfg(not(windows))]
         extern crate dep_lib;             // - Open documentation for `dep_lib`

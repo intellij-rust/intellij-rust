@@ -95,9 +95,8 @@ private typealias ArgCompleter = (Context) -> List<LookupElement>
 private class Opt(
     val name: String,
     val argCompleter: ArgCompleter? = null
-
 ) {
-    val long get() = "--$name"
+    val long: String get() = "--$name"
 
     val lookupElement: LookupElement =
         LookupElementBuilder.create(long)
@@ -112,21 +111,21 @@ private class Opt(
 }
 
 private val CargoProject.lookupElement: LookupElement
-    get() =
-        LookupElementBuilder
-            .create(manifest.toString())
-            .withIcon(CargoIcons.ICON)
+    get() = LookupElementBuilder
+        .create(manifest.toString())
+        .withIcon(CargoIcons.ICON)
 
-private val CargoWorkspace.Target.lookupElement: LookupElement get() = LookupElementBuilder.create(name)
+private val CargoWorkspace.Target.lookupElement: LookupElement
+    get() = LookupElementBuilder.create(name)
+
 private val CargoWorkspace.Package.lookupElement: LookupElement
     get() {
         val priority = if (origin == PackageOrigin.WORKSPACE) 1.0 else 0.0
         return LookupElementBuilder.create(name).withPriority(priority)
     }
 
-private class OptBuilder(
-    val result: MutableList<Opt> = mutableListOf()
-) {
+private class OptBuilder(val result: MutableList<Opt> = mutableListOf()) {
+
     fun compileOptions() {
         release()
         jobs()
@@ -205,7 +204,8 @@ private class OptBuilder(
     }
 }
 
-private fun options(f: OptBuilder.() -> Unit): List<Opt> = OptBuilder().apply(f).result
+private fun options(f: OptBuilder.() -> Unit): List<Opt> =
+    OptBuilder().apply(f).result
 
 private val COMMON_COMMANDS = listOf(
     Cmd("run") {
@@ -290,8 +290,11 @@ private val COMMON_COMMANDS = listOf(
     }
 )
 
-// Copy of com.intellij.openapi.externalSystem.service.execution.cmd.ParametersListLexer,
-// which is not present in all IDEs.
+/**
+ * Copy of [com.intellij.openapi.externalSystem.service.execution.cmd.ParametersListLexer], which is not present in
+ * all IDEs.
+ * */
+
 class ParametersListLexer(private val myText: String) {
     private var myTokenStart = -1
     private var index = 0

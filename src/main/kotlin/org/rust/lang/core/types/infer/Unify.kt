@@ -6,31 +6,29 @@
 package org.rust.lang.core.types.infer
 
 interface NodeOrValue
-interface Node: NodeOrValue {
+interface Node : NodeOrValue {
     var parent: NodeOrValue
 }
-data class VarValue<out V>(val value: V?, val rank: Int): NodeOrValue
+
+data class VarValue<out V>(val value: V?, val rank: Int) : NodeOrValue
 
 /**
- * [UnificationTable] is map from [K] to [V] with additional ability
- * to redirect certain K's to a single V en-masse with the help of
- * disjoint set union.
+ * [UnificationTable] is map from [K] to [V] with additional ability to redirect certain K's to a single V en-masse
+ * with the help of disjoint set union.
  *
- * We implement Tarjan's union-find
- * algorithm: when two keys are unified, one of them is converted
- * into a "redirect" pointing at the other. These redirects form a
- * DAG: the roots of the DAG (nodes that are not redirected) are each
- * associated with a value of type `V` and a rank. The rank is used
- * to keep the DAG relatively balanced, which helps keep the running
- * time of the algorithm under control. For more information, see
- * <http://en.wikipedia.org/wiki/Disjoint-set_data_structure>.
+ * We implement Tarjan's union-find algorithm: when two keys are unified, one of them is converted into a "redirect"
+ * pointing at the other. These redirects form a DAG: the roots of the DAG (nodes that are not redirected) are each
+ * associated with a value of type `V` and a rank. The rank is used to keep the DAG relatively balanced, which helps
+ * keep the running time of the algorithm under control.
+ *
+ * For more information, see <http://en.wikipedia.org/wiki/Disjoint-set_data_structure>.
  */
 @Suppress("UNCHECKED_CAST")
 class UnificationTable<K : Node, V> {
     private val undoLog: UndoLog = UndoLog()
 
     @Suppress("UNCHECKED_CAST")
-    private data class Root<out K: Node, out V>(val key: K) {
+    private data class Root<out K : Node, out V>(val key: K) {
         private val varValue: VarValue<V> = key.parent as VarValue<V>
         val rank: Int get() = varValue.rank
         val value: V? get() = varValue.value
@@ -57,13 +55,13 @@ class UnificationTable<K : Node, V> {
 
     private fun unify(rootA: Root<K, V>, rootB: Root<K, V>, newValue: V?): K {
         return when {
-        // a has greater rank, so a should become b's parent,
-        // i.e., b should redirect to a.
+            // a has greater rank, so a should become b's parent,
+            // i.e., b should redirect to a.
             rootA.rank > rootB.rank -> redirectRoot(rootA.rank, rootB, rootA, newValue)
-        // b has greater rank, so a should redirect to b.
+            // b has greater rank, so a should redirect to b.
             rootA.rank < rootB.rank -> redirectRoot(rootB.rank, rootA, rootB, newValue)
-        // If equal, redirect one to the other and increment the
-        // other's rank.
+            // If equal, redirect one to the other and increment the
+            // other's rank.
             else -> redirectRoot(rootA.rank + 1, rootA, rootB, newValue)
         }
     }

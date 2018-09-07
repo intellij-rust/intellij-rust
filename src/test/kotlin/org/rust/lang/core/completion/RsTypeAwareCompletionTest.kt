@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 class RsTypeAwareCompletionTest : RsCompletionTestBase() {
+
     fun `test method call only self`() = doSingleCompletion("""
         struct S;
         impl S { fn frobnicate(self) {} }
@@ -44,7 +45,7 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test method call on &self`() = doSingleCompletion( """
+    fun `test method call on &self`() = doSingleCompletion("""
         struct S;
 
         impl S {

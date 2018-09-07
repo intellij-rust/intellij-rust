@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.macroName
@@ -19,51 +20,53 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 
 class RsAssertEqualInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+        object : RsVisitor() {
 
-        override fun visitMacroCall(o: RsMacroCall) {
-            if (o.macroName != "assert") return
-            val assertMacroArg = o.assertMacroArgument ?: return
+            override fun visitMacroCall(macroCall: RsMacroCall) {
+                if (macroCall.macroName != "assert") return
+                val assertMacroArg = macroCall.assertMacroArgument ?: return
 
-            val expr = assertMacroArg.expr as? RsBinaryExpr ?: return
+                val expr = assertMacroArg.expr as? RsBinaryExpr ?: return
 
-            val (macroName, operator) = when (expr.operatorType) {
-                EqualityOp.EQ -> "assert_eq" to "=="
-                EqualityOp.EXCLEQ -> "assert_ne" to "!="
-                else -> return
+                val (macroName, operator) = when (expr.operatorType) {
+                    EqualityOp.EQ -> "assert_eq" to "=="
+                    EqualityOp.EXCLEQ -> "assert_ne" to "!="
+                    else -> return
+                }
+
+                if (!isExprSuitable(expr)) return
+
+                holder.registerProblem(
+                    macroCall,
+                    "assert!(a $operator b) can be $macroName!(a, b)",
+                    SpecializedAssertQuickFix(macroName)
+                )
             }
 
-            if (!isExprSuitable(expr)) return
+            private fun isExprSuitable(expr: RsBinaryExpr): Boolean {
+                val leftType = expr.left.type
+                val rightType = expr.right?.type ?: return false
 
-            holder.registerProblem(
-                o,
-                "assert!(a $operator b) can be $macroName!(a, b)",
-                SpecializedAssertQuickFix(macroName)
-            )
+                val lookup = ImplLookup.relativeTo(expr)
+                // The `assert_eq!` macro, as opposed to `assert!`, requires both arguments to implement `core::fmt::Debug`.
+                if (!lookup.isDebug(leftType) || !lookup.isDebug(rightType)) {
+                    Testmarks.debugTraitIsNotImplemented.hit()
+                    return false
+                }
+                // Don't try to convert `assert!` macro into `assert_eq!/assert_ne!`
+                // if expressions can't be compared at all
+                if (!lookup.isPartialEq(leftType, rightType)) {
+                    Testmarks.partialEqTraitIsNotImplemented.hit()
+                    return false
+                }
+                return true
+            }
         }
-
-        private fun isExprSuitable(expr: RsBinaryExpr): Boolean {
-            val leftType = expr.left.type
-            val rightType = expr.right?.type ?: return false
-
-            val lookup = ImplLookup.relativeTo(expr)
-            // The `assert_eq!` macro, as opposed to `assert!`, requires both arguments to implement `core::fmt::Debug`.
-            if (!lookup.isDebug(leftType) || !lookup.isDebug(rightType)) {
-                Testmarks.debugTraitIsNotImplemented.hit()
-                return false
-            }
-            // Don't try to convert `assert!` macro into `assert_eq!/assert_ne!`
-            // if expressions can't be compared at all
-            if (!lookup.isPartialEq(leftType, rightType)) {
-                Testmarks.partialEqTraitIsNotImplemented.hit()
-                return false
-            }
-            return true
-        }
-    }
 
     private class SpecializedAssertQuickFix(private val assertName: String) : LocalQuickFix {
-        override fun getName() = "Convert to $assertName!"
+
+        override fun getName(): String = "Convert to $assertName!"
 
         override fun getFamilyName(): String = name
 
@@ -112,7 +115,7 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
     }
 
     object Testmarks {
-        val partialEqTraitIsNotImplemented = Testmark("partialEqTraitIsNotImplemented")
-        val debugTraitIsNotImplemented = Testmark("debugTraitIsNotImplemented")
+        val partialEqTraitIsNotImplemented: Testmark = Testmark("partialEqTraitIsNotImplemented")
+        val debugTraitIsNotImplemented: Testmark = Testmark("debugTraitIsNotImplemented")
     }
 }

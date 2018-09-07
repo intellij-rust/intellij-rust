@@ -10,13 +10,14 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.childrenOfType
 import org.rust.lang.core.psi.ext.isRef
 import org.rust.lang.core.psi.ext.mutability
 
 class ElideLifetimesFix : LocalQuickFix {
-    override fun getName() = "Elide lifetimes"
-    override fun getFamilyName() = name
+
+    override fun getName(): String = "Elide lifetimes"
+
+    override fun getFamilyName(): String = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val fn = descriptor.psiElement as? RsFunction ?: return
@@ -25,7 +26,7 @@ class ElideLifetimesFix : LocalQuickFix {
 }
 
 private class LifetimeRemover : RsVisitor() {
-    private val boundsLifetimes = mutableListOf<RsLifetimeParameter>()
+    private val boundsLifetimes: MutableList<RsLifetimeParameter> = mutableListOf()
 
     override fun visitFunction(fn: RsFunction) {
         fn.typeParameterList?.let { visitTypeParameterList(it) }
@@ -79,6 +80,6 @@ private class LifetimeRemover : RsVisitor() {
     }
 
     override fun visitElement(element: RsElement) {
-        element.childrenOfType<RsElement>().forEach { it.accept(this) }
+        element.acceptChildren(this)
     }
 }

@@ -18,16 +18,16 @@ class TyTypeParameter private constructor(
     val isSized: Boolean,
     boundsSupplier: () -> Collection<BoundElement<RsTraitItem>>
 ) : Ty(HAS_TY_TYPE_PARAMETER_MASK) {
-
+    val name: String? get() = parameter.name
     private val bounds: Collection<BoundElement<RsTraitItem>> by lazy(LazyThreadSafetyMode.NONE, boundsSupplier)
 
-    override fun equals(other: Any?): Boolean = other is TyTypeParameter && other.parameter == parameter
+    override fun equals(other: Any?): Boolean =
+        other is TyTypeParameter && other.parameter == parameter
+
     override fun hashCode(): Int = parameter.hashCode()
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         bounds.flatMap { it.flattenHierarchy }
-
-    val name: String? get() = parameter.name
 
     interface TypeParameter {
         val name: String?
@@ -42,13 +42,13 @@ class TyTypeParameter private constructor(
     }
 
     companion object {
-        private val self = TyTypeParameter(Self, isSized = false) { emptyList() }
+        private val self: TyTypeParameter = TyTypeParameter(Self, isSized = false) { emptyList() }
 
         fun self(): TyTypeParameter = self
 
         fun self(item: RsTraitOrImpl): TyTypeParameter {
             val isSized = when (item) {
-                is RsTraitItem -> item.implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait  }
+                is RsTraitItem -> item.implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
                 is RsImplItem -> item.typeReference?.type?.isSized() == true
                 else -> error("item must be instance of `RsTraitItem` or `RsImplItem`")
             }

@@ -19,8 +19,8 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
-const val KEYWORD_PRIORITY = 10.0
-private const val MACRO_PRIORITY = -0.1
+const val KEYWORD_PRIORITY: Double = 10.0
+private const val MACRO_PRIORITY: Double = -0.1
 
 fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
     val base = element.getLookupElementBuilder(scopeName)
@@ -30,7 +30,6 @@ fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
 
     return base
 }
-
 
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     PrioritizedLookupElement.withPriority(this, priority)
@@ -46,8 +45,7 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
             base
         }
 
-        is RsConstant -> base
-            .withTypeText(typeReference?.text)
+        is RsConstant -> base.withTypeText(typeReference?.text)
         is RsFieldDecl -> base.withTypeText(typeReference?.text)
         is RsTraitItem -> base
 
@@ -56,19 +54,19 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
             .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
             .appendTailText(extraTailText, true)
 
-        is RsStructItem -> base
-            .withTailText(when {
-                blockFields != null -> " { ... }"
-                tupleFields != null -> tupleFields!!.text
-                else -> ""
-            })
+        is RsStructItem -> base.withTailText(when {
+            blockFields != null -> " { ... }"
+            tupleFields != null -> tupleFields!!.text
+            else -> ""
+        })
 
         is RsEnumVariant -> base
             .withTypeText(ancestorStrict<RsEnumItem>()?.name ?: "")
             .withTailText(when {
                 blockFields != null -> " { ... }"
-                tupleFields != null ->
-                    tupleFields!!.tupleFieldDeclList.joinToString(prefix = "(", postfix = ")") { it.typeReference.text }
+                tupleFields != null -> tupleFields!!
+                    .tupleFieldDeclList
+                    .joinToString(prefix = "(", postfix = ")") { it.typeReference.text }
                 else -> ""
             })
 
@@ -91,11 +89,9 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
 private fun getInsertHandler(element: RsElement, scopeName: String, context: InsertionContext) {
     val curUseItem = context.getElementOfType<RsUseItem>()
     when (element) {
-
         is RsMod -> {
             when (scopeName) {
-                "self",
-                "super" -> {
+                "self", "super" -> {
                     val inSelfParam = context.getElementOfType<RsSelfParameter>() != null
                     if (!(context.isInUseGroup || inSelfParam)) {
                         context.addSuffix("::")
@@ -116,7 +112,10 @@ private fun getInsertHandler(element: RsElement, scopeName: String, context: Ins
                 if (!context.alreadyHasCallParens) {
                     context.document.insertString(context.selectionEndOffset, "()")
                 }
-                EditorModificationUtil.moveCaretRelatively(context.editor, if (element.valueParameters.isEmpty()) 2 else 1)
+                EditorModificationUtil.moveCaretRelatively(
+                    context.editor,
+                    if (element.valueParameters.isEmpty()) 2 else 1
+                )
                 if (!element.valueParameters.isEmpty()) {
                     AutoPopupController.getInstance(element.project)?.autoPopupParameterInfo(context.editor, element)
                 }
@@ -149,7 +148,6 @@ private fun getInsertHandler(element: RsElement, scopeName: String, context: Ins
                 appendSemicolon(context, curUseItem)
             }
         }
-
     }
 }
 
@@ -174,17 +172,15 @@ private val InsertionContext.alreadyHasCallParens: Boolean
 
 private val InsertionContext.alreadyHasPatternParens: Boolean
     get() {
-        val pat = file.findElementAt(startOffset)!!.ancestorStrict<RsPatTupleStruct>()
-            ?: return false
+        val pat = file.findElementAt(startOffset)!!.ancestorStrict<RsPatTupleStruct>() ?: return false
         return pat.path.textRange.contains(startOffset)
     }
 
 private val RsFunction.extraTailText: String
     get() = ancestorStrict<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
 
-
-fun InsertionContext.nextCharIs(c: Char): Boolean =
-    document.charsSequence.indexOfSkippingSpace(c, tailOffset) != null
+fun InsertionContext.nextCharIs(char: Char): Boolean =
+    document.charsSequence.indexOfSkippingSpace(char, tailOffset) != null
 
 private fun CharSequence.indexOfSkippingSpace(c: Char, startIndex: Int): Int? {
     for (i in startIndex until this.length) {
