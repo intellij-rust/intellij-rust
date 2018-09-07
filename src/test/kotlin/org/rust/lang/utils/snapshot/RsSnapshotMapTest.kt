@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.type
+package org.rust.lang.utils.snapshot
 
 import junit.framework.TestCase
-import org.rust.lang.core.types.infer.SnapshotMap
+import org.rust.lang.core.type.RsUnificationTableTest
 import org.rust.lang.core.types.infer.UnificationTable
 
 /**
- * [SnapshotMap] shares snapshot logic with [UnificationTable], so snapshot/rollback mechanics
- * mostly tested in [RsUnificationTableTest]
+ * [SnapshotMap] shares snapshot logic with [UnificationTable],
+ * so snapshot/rollback mechanics mostly tested in [RsUnificationTableTest]
  */
 class RsSnapshotMapTest : TestCase() {
 

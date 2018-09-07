@@ -5,6 +5,10 @@
 
 package org.rust.lang.core.types.infer
 
+import org.rust.lang.utils.snapshot.Snapshot
+import org.rust.lang.utils.snapshot.UndoLog
+import org.rust.lang.utils.snapshot.Undoable
+
 interface NodeOrValue
 interface Node: NodeOrValue {
     var parent: NodeOrValue

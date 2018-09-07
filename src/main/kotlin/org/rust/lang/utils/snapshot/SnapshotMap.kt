@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.infer
+package org.rust.lang.utils.snapshot
 
 /**
  * Works like a regular [MutableMap], but additionally allows you to take a snapshot
