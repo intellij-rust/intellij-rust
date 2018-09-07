@@ -22,17 +22,16 @@ data class TyReference(
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         referenced.visitWith(visitor) || region.visitWith(visitor)
 
-    /**
-     * We ignore lifetimes when comparing because we don't yet know how to compare them.
-     */
-    override fun equals(other: Any?): Boolean = when {
-        this === other -> true
-        javaClass != other?.javaClass -> false
-        other !is TyReference -> false
-        referenced != other.referenced -> false
-        mutability != other.mutability -> false
-        else -> true
-    }
+    /** We ignore lifetimes when comparing because we don't yet know how to compare them. */
+    override fun equals(other: Any?): Boolean =
+        when {
+            this === other -> true
+            javaClass != other?.javaClass -> false
+            other !is TyReference -> false
+            referenced != other.referenced -> false
+            mutability != other.mutability -> false
+            else -> true
+        }
 
     override fun hashCode(): Int = 31 * referenced.hashCode() + mutability.hashCode()
 }

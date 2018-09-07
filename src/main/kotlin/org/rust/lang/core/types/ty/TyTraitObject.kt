@@ -67,7 +67,7 @@ private fun defaultSubstitution(item: RsTraitItem): Substitution {
         parameter to parameter
     }
     val regionSubst = item.lifetimeParameters.associate {
-        val parameter = ReEarlyBound(it)
+        val parameter = ReEarlyBound.named(it)
         parameter to parameter
     }
     return Substitution(typeSubst, regionSubst)

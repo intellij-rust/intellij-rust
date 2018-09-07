@@ -10,6 +10,11 @@ interface Snapshot {
     fun rollback()
 }
 
+class CombinedSnapshot(private vararg val snapshots: Snapshot?) : Snapshot {
+    override fun commit() = snapshots.forEach { it?.commit() }
+    override fun rollback() = snapshots.forEach { it?.rollback() }
+}
+
 interface Undoable {
     fun undo()
 }

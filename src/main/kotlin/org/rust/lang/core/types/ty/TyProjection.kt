@@ -37,7 +37,7 @@ data class TyProjection private constructor(
     val type: Ty,
     val trait: BoundElement<RsTraitItem>,
     val target: RsTypeAlias
-): Ty(type.flags or HAS_TY_PROJECTION_MASK) {
+) : Ty(type.flags or HAS_TY_PROJECTION_MASK) {
 
     /**
      * Extracts the underlying trait reference from this projection.

@@ -77,6 +77,8 @@ class TyTypeParameter private constructor(
     }
 }
 
+fun TyTypeParameter.toTyVar(): Ty = TyInfer.TyVar(this)
+
 private fun traitBounds(parameter: RsTypeParameter): List<BoundElement<RsTraitItem>> =
     parameter.bounds.mapNotNull {
         val trait = it.bound.traitRef?.resolveToBoundTrait ?: return@mapNotNull null

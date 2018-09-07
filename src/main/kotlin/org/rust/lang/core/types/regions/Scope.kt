@@ -155,7 +155,7 @@ data class ScopeTree(
      * @returns the outermost [Scope] that the region outlives.
      */
     fun getEarlyFreeScope(region: ReEarlyBound): Scope {
-        val parameterOwner = region.parameter.ancestorStrict<RsGenericDeclaration>()
+        val parameterOwner = region.origin.stubAncestorStrict<RsGenericDeclaration>()
         val body = if (parameterOwner is RsFunction) {
             parameterOwner.block
         } else {
@@ -174,14 +174,7 @@ data class ScopeTree(
      * @returns the outermost [Scope] that the region outlives.
      */
     fun getFreeScope(region: ReFree): Scope {
-        val parameterOwner = if (region.bound is BoundRegion.Named) {
-            region.bound.contextOwner.ancestorStrict<RsInferenceContextOwner>()
-        } else {
-            region.contextOwner
-        }
-        check(parameterOwner === region.contextOwner)
-
-        val body = parameterOwner?.body
+        val body = region.contextOwner.body
         return Scope.CallSite(checkNotNull(body))
     }
 }

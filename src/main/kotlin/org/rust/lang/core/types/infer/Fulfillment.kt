@@ -6,14 +6,20 @@
 package org.rust.lang.core.types.infer
 
 import com.intellij.openapi.progress.ProgressManager
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.SelectionResult
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.getObligations
+import org.rust.lang.core.types.infer.outlives.RegionObligation
+import org.rust.lang.core.types.infer.outlives.RegionObligationCause.MiscObligation
+import org.rust.lang.core.types.infer.outlives.registerRegionObligation
+import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyProjection
 
-sealed class Predicate: TypeFoldable<Predicate> {
+sealed class Predicate : TypeFoldable<Predicate> {
     /** where T : Bar<A,B,C> */
     data class Trait(val trait: TraitRef) : Predicate() {
         override fun superFoldWith(folder: TypeFolder): Trait =
@@ -27,7 +33,7 @@ sealed class Predicate: TypeFoldable<Predicate> {
     data class Projection(
         val projectionTy: TyProjection,
         val ty: Ty
-    ): Predicate() {
+    ) : Predicate() {
         override fun superFoldWith(folder: TypeFolder): Projection =
             Projection(projectionTy.foldWith(folder) as TyProjection, ty.foldWith(folder))
 
@@ -49,9 +55,45 @@ sealed class Predicate: TypeFoldable<Predicate> {
         override fun toString(): String =
             "$ty1 == $ty2"
     }
+
+    /** where 'a: 'b */
+    data class RegionOutlives(val sub: Region, val sup: Region, val body: RsElement) : Predicate() {
+        override fun superFoldWith(folder: TypeFolder): Predicate =
+            RegionOutlives(sub.foldWith(folder), sup.foldWith(folder), body)
+
+        override fun superVisitWith(visitor: TypeVisitor): Boolean =
+            sup.visitWith(visitor) || sub.visitWith(visitor)
+
+        override fun toString(): String =
+            "$sup: $sub"
+    }
+
+    /** where T: 'a */
+    data class TypeOutlives(val subRegion: Region, val supTy: Ty, val body: RsElement) : Predicate() {
+        override fun superFoldWith(folder: TypeFolder): Predicate =
+            TypeOutlives(subRegion.foldWith(folder), supTy.foldWith(folder), body)
+
+        override fun superVisitWith(visitor: TypeVisitor): Boolean =
+            supTy.visitWith(visitor) || subRegion.visitWith(visitor)
+
+        override fun toString(): String =
+            "$supTy: $subRegion"
+    }
+
+    /** no syntax: T WF */
+    data class WellFormed(val ty: Ty, val body: RsElement) : Predicate() {
+        override fun superFoldWith(folder: TypeFolder): Predicate =
+            WellFormed(ty.foldWith(folder), body)
+
+        override fun superVisitWith(visitor: TypeVisitor): Boolean =
+            ty.visitWith(visitor)
+
+        override fun toString(): String =
+            "$ty WF"
+    }
 }
 
-data class Obligation(val recursionDepth: Int, var predicate: Predicate): TypeFoldable<Obligation> {
+data class Obligation(val recursionDepth: Int, var predicate: Predicate) : TypeFoldable<Obligation> {
     constructor(predicate: Predicate) : this(0, predicate)
 
     override fun superFoldWith(folder: TypeFolder): Obligation =
@@ -118,7 +160,8 @@ class ObligationForest {
 
             val result = processor(node.obligation)
             when (result) {
-                is ProcessPredicateResult.NoChanges -> {}
+                is ProcessPredicateResult.NoChanges -> {
+                }
                 is ProcessPredicateResult.Ok -> {
                     stalled = false
                     node.state = NodeState.Success
@@ -158,19 +201,20 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
     }
 
     fun selectWherePossible() {
-        while (!obligations.processObligations(this::processPredicate).stalled) {}
+        while (!obligations.processObligations(this::processObligation).stalled) {
+        }
     }
 
     fun selectUntilError(): Boolean {
         do {
-            val res = obligations.processObligations(this::processPredicate, breakOnFirstError = true)
+            val res = obligations.processObligations(this::processObligation, breakOnFirstError = true)
             if (res.hasErrors) return false
         } while (!res.stalled)
 
         return true
     }
 
-    private fun processPredicate(pendingObligation: PendingPredicateObligation): ProcessPredicateResult {
+    private fun processObligation(pendingObligation: PendingPredicateObligation): ProcessPredicateResult {
         val (obligation, stalledOn) = pendingObligation
         if (!stalledOn.isEmpty()) {
             val nothingChanged = stalledOn.all {
@@ -219,6 +263,29 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
                     }
                 }
             }
+            is Predicate.RegionOutlives -> {
+                val cause = MiscObligation(predicate.body)
+                ctx.handleRegionOutlivesPredicate(cause, predicate)
+                return ProcessPredicateResult.Ok()
+            }
+            is Predicate.TypeOutlives -> {
+                val regionObligation = RegionObligation(
+                    predicate.subRegion,
+                    predicate.supTy,
+                    MiscObligation(predicate.body)
+                )
+                ctx.registerRegionObligation(predicate.body, regionObligation)
+                return ProcessPredicateResult.Ok()
+            }
+            is Predicate.WellFormed -> {
+                val obligations = ctx.getObligations(predicate.ty, predicate.body)
+                return if (obligations == null) {
+                    pendingObligation.stalledOn = listOf(predicate.ty)
+                    ProcessPredicateResult.NoChanges
+                } else {
+                    ProcessPredicateResult.Ok((obligations).map { PendingPredicateObligation(it) })
+                }
+            }
         }
     }
 
@@ -232,9 +299,9 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
 }
 
 sealed class ProcessPredicateResult {
-    object Err: ProcessPredicateResult()
-    object NoChanges: ProcessPredicateResult()
-    data class Ok(val children: List<PendingPredicateObligation>): ProcessPredicateResult() {
-        constructor(vararg children: PendingPredicateObligation): this(listOf(*children))
+    object Err : ProcessPredicateResult()
+    object NoChanges : ProcessPredicateResult()
+    data class Ok(val children: List<PendingPredicateObligation>) : ProcessPredicateResult() {
+        constructor(vararg children: PendingPredicateObligation) : this(listOf(*children))
     }
 }

@@ -7,11 +7,14 @@ package org.rust.lang.core.types.infer
 
 import com.intellij.util.BitUtil
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_FREE_REGIONS_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_RE_EARLY_BOUND_VISITOR
+import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_RE_INFER_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_INFER_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_PROJECTION_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_TYPE_PARAMETER_VISITOR
 import org.rust.lang.core.types.regions.ReEarlyBound
+import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 
@@ -99,14 +102,23 @@ fun <T> TypeFoldable<T>.foldTyProjectionWith(folder: (TyProjection) -> Ty): T =
         }
     })
 
-/**
- * Deeply replace any [TyTypeParameter] by [subst] mapping.
- */
+/** Replace any [ReUnknown] with the function [folder] */
+fun <T> TypeFoldable<T>.foldReUnknown(folder: (Region) -> Region): T =
+    foldWith(object : TypeFolder {
+
+        override fun foldTy(ty: Ty): Ty =
+            ty.superFoldWith(this)
+
+        override fun foldRegion(region: Region): Region =
+            if (region is ReUnknown) folder(region) else region
+    })
+
+/** Deeply replace any [TyTypeParameter] by [subst] mapping. */
 fun <T> TypeFoldable<T>.substitute(subst: Substitution): T =
     foldWith(object : TypeFolder {
         override fun foldTy(ty: Ty): Ty = when {
             ty is TyTypeParameter -> subst[ty] ?: ty
-            ty.needToSubstitute -> ty.superFoldWith(this)
+            ty.needsSubst -> ty.superFoldWith(this)
             else -> ty
         }
 
@@ -118,7 +130,7 @@ fun <T> TypeFoldable<T>.substituteOrUnknown(subst: Substitution): T =
     foldWith(object : TypeFolder {
         override fun foldTy(ty: Ty): Ty = when {
             ty is TyTypeParameter -> subst[ty] ?: TyUnknown
-            ty.needToSubstitute -> ty.superFoldWith(this)
+            ty.needsSubst -> ty.superFoldWith(this)
             else -> ty
         }
 
@@ -155,24 +167,35 @@ private data class HasTypeFlagVisitor(val flag: TypeFlags) : TypeVisitor {
     override fun visitRegion(region: Region): Boolean = BitUtil.isSet(region.flags, flag)
 
     companion object {
-        val HAS_TY_INFER_VISITOR = HasTypeFlagVisitor(HAS_TY_INFER_MASK)
         val HAS_TY_TYPE_PARAMETER_VISITOR = HasTypeFlagVisitor(HAS_TY_TYPE_PARAMETER_MASK)
-        val HAS_TY_PROJECTION_VISITOR = HasTypeFlagVisitor(HAS_TY_PROJECTION_MASK)
+        val HAS_TY_INFER_VISITOR = HasTypeFlagVisitor(HAS_TY_INFER_MASK)
+        val HAS_RE_INFER_VISITOR = HasTypeFlagVisitor(HAS_RE_INFER_MASK)
         val HAS_RE_EARLY_BOUND_VISITOR = HasTypeFlagVisitor(HAS_RE_EARLY_BOUND_MASK)
+        val HAS_FREE_REGIONS_VISITOR = HasTypeFlagVisitor(HAS_FREE_REGIONS_MASK)
+        val HAS_TY_PROJECTION_VISITOR = HasTypeFlagVisitor(HAS_TY_PROJECTION_MASK)
     }
 }
 
-val TypeFoldable<*>.hasTyInfer
-    get(): Boolean = visitWith(HAS_TY_INFER_VISITOR)
-
-val TypeFoldable<*>.hasTyTypeParameters
+val TypeFoldable<*>.hasTyTypeParameters: Boolean
     get(): Boolean = visitWith(HAS_TY_TYPE_PARAMETER_VISITOR)
 
-val TypeFoldable<*>.hasTyProjection
-    get(): Boolean = visitWith(HAS_TY_PROJECTION_VISITOR)
+val TypeFoldable<*>.hasTyInfer: Boolean
+    get(): Boolean = visitWith(HAS_TY_INFER_VISITOR)
 
-val TypeFoldable<*>.hasReEarlyBounds
+val TypeFoldable<*>.hasReInfer: Boolean
+    get(): Boolean = visitWith(HAS_RE_INFER_VISITOR)
+
+val TypeFoldable<*>.hasReEarlyBounds: Boolean
     get(): Boolean = visitWith(HAS_RE_EARLY_BOUND_VISITOR)
 
-val TypeFoldable<*>.needToSubstitute
+val TypeFoldable<*>.hasFreeRegions: Boolean
+    get(): Boolean = visitWith(HAS_FREE_REGIONS_VISITOR)
+
+val TypeFoldable<*>.hasTyProjection: Boolean
+    get(): Boolean = visitWith(HAS_TY_PROJECTION_VISITOR)
+
+val TypeFoldable<*>.needsInfer: Boolean
+    get(): Boolean = hasTyInfer || hasReInfer
+
+val TypeFoldable<*>.needsSubst: Boolean
     get(): Boolean = hasTyTypeParameters || hasReEarlyBounds

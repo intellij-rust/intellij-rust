@@ -11,6 +11,7 @@ import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 
 /**
@@ -27,7 +28,7 @@ data class TraitRef(val selfTy: Ty, val trait: BoundElement<RsTraitItem>) : Type
 
     override fun toString(): String {
         val (item, subst) = trait
-        val tyArgs = item.typeParameters.map { subst.get(it) ?: TyUnknown }
+        val tyArgs = item.typeParameters.map { subst[TyTypeParameter.named(it)] ?: TyUnknown }
         return "$selfTy: ${trait.element.name}" + (if (tyArgs.isEmpty()) "" else tyArgs.joinToString(", ", "<", ">"))
     }
 }

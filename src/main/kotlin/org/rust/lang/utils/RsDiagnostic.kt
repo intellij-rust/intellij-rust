@@ -18,6 +18,7 @@ import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
+import org.rust.ide.inspections.RsRegionCheckInspection
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.lang.core.psi.*
@@ -206,6 +207,30 @@ sealed class RsDiagnostic(
                 }
             if (!isSuitableMutability) return null
             return DerefRefPath(derefs, refs)
+        }
+    }
+
+    class RegionError(
+        element: PsiElement
+    ) : RsDiagnostic(element, inspectionClass = RsRegionCheckInspection::class.java) {
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                E0623,
+                "Lifetime mismatch"
+            )
+        }
+    }
+
+    class OutliveError(
+        element: PsiElement
+    ) : RsDiagnostic(element, inspectionClass = RsRegionCheckInspection::class.java) {
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                E0482,
+                "Lifetime of return value does not outlive the function call"
+            )
         }
     }
 
@@ -828,8 +853,8 @@ enum class RsErrorCode {
     E0200, E0201, E0202, E0261, E0262, E0263, E0277,
     E0308, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0463,
-    E0569, E0594,
-    E0603, E0614, E0616, E0624, E0658,
+    E0569, E0594, E0597,
+    E0603, E0614, E0616, E0623, E0624, E0658,
     E0704;
 
     val code: String

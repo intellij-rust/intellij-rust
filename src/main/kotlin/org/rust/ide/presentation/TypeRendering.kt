@@ -134,12 +134,12 @@ private data class TypeRenderer(
 
     private fun formatGenerics(adt: TyAdt, render: (Ty) -> String): String {
         val typeArgumentNames = adt.typeArguments.map(render)
-        val regionArgumentNames = if (includeLifetimeArguments) {
+        val lifetimeArgumentNames = if (includeLifetimeArguments) {
             adt.regionArguments.map { render(it) }
         } else {
             emptyList()
         }
-        val generics = regionArgumentNames + typeArgumentNames
+        val generics = lifetimeArgumentNames + typeArgumentNames
         return if (generics.isEmpty()) "" else generics.joinToString(", ", "<", ">")
     }
 

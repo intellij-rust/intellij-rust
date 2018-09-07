@@ -137,9 +137,7 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
             else -> null
         }
     }
-
     val regionArguments: List<Region>? = path.typeArgumentList?.lifetimeList?.map { it.resolve() }
-
     val outputArg = path.retType?.typeReference?.type
 
     return result.map { boundElement ->
@@ -171,7 +169,7 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         }
 
         val typeParameters = element.typeParameters.map { TyTypeParameter.named(it) }
-        val regionParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
+        val regionParameters = element.lifetimeParameters.map { ReEarlyBound.named(it) }
         val typeSubst = typeParameters.zip(typeArguments ?: typeParameters).toMap()
         val regionSubst = regionParameters.zip(regionArguments ?: regionParameters).toMap()
         val newSubst = Substitution(typeSubst, regionSubst)

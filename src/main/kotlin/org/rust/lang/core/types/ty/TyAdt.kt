@@ -38,7 +38,7 @@ data class TyAdt private constructor(
                 TyTypeParameter.named(param) to typeArguments.getOrElse(i) { TyUnknown }
             }
             val regionSubst = item.lifetimeParameters.withIndex().associate { (i, param) ->
-                ReEarlyBound(param) to regionArguments.getOrElse(i) { ReUnknown }
+                ReEarlyBound.named(param) to regionArguments.getOrElse(i) { ReUnknown }
             }
             return Substitution(typeSubst, regionSubst)
         }
@@ -63,4 +63,4 @@ private fun defaultTypeArguments(item: RsStructOrEnumItemElement): List<Ty> =
     }
 
 private fun defaultRegionArguments(item: RsStructOrEnumItemElement): List<Region> =
-    item.lifetimeParameters.map { param -> ReEarlyBound(param) }
+    item.lifetimeParameters.map { param -> ReEarlyBound.named(param) }

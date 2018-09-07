@@ -29,7 +29,4 @@ sealed class BoundRegion {
 
     /** Named region parameters for functions (a in &'a T). */
     data class Named(val contextOwner: RsInferenceContextOwner, val name: String) : BoundRegion()
-
-    /** Fresh bound identifiers created during GLB computations. */
-    data class Fresh(val index: Int) : BoundRegion()
 }

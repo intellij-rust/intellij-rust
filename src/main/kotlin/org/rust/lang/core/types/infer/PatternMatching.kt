@@ -8,12 +8,21 @@ package org.rust.lang.core.types.infer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
+import org.rust.lang.core.types.infer.ReVarOrigin.AddrOfRegion
+import org.rust.lang.core.types.infer.ReVarOrigin.Coercion
+import org.rust.lang.core.types.regions.ReVar
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolean = false) {
+    fun createReVar(origin: ReVarOrigin): ReVar = fcx.ctx.regionConstraints.createReVar(origin)
+    fun Ty.toRefIfNeeded(mut: Mutability?): Ty =
+        mut?.let { TyReference(this, mut, createReVar(Coercion(this@extractBindings))) } ?: this
+
     when (this) {
-        is RsPatWild -> {}
+        is RsPatWild -> {
+        }
         is RsPatConst -> {
             val expr = expr
             val expectedTy = when {
@@ -32,7 +41,11 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
         is RsPatIdent -> {
             val patBinding = patBinding
             val kind = patBinding.kind
-            val bindingType = if (kind is BindByReference && !ignoreRef) TyReference(type, kind.mutability) else type
+            val bindingType = if (kind is BindByReference && !ignoreRef) {
+                TyReference(type, kind.mutability, createReVar(AddrOfRegion(patBinding)))
+            } else {
+                type
+            }
             fcx.writeBindingTy(patBinding, bindingType)
             pat?.extractBindings(fcx, type)
         }
@@ -79,7 +92,8 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                     is RsPatFieldKind.Full -> kind.pat.extractBindings(fcx, fieldType.toRefIfNeeded(mut), mut != null)
                     is RsPatFieldKind.Shorthand -> {
                         val bindingKind = kind.binding.kind
-                        val bindingType = fieldType.toRefIfNeeded(if (bindingKind is BindByReference) bindingKind.mutability else mut)
+                        val bindingMutability = (bindingKind as? BindByReference)?.mutability ?: mut
+                        val bindingType = fieldType.toRefIfNeeded(bindingMutability)
                         fcx.writeBindingTy(kind.binding, bindingType)
                     }
                 }
@@ -116,6 +130,3 @@ private fun Ty.stripReferences(): Pair<Ty, Mutability?> {
     }
     return ty to (if (this is TyReference) Mutability.valueOf(isMut) else null)
 }
-
-private fun Ty.toRefIfNeeded(mut: Mutability?): Ty =
-    mut?.let { TyReference(this, mut) } ?: this

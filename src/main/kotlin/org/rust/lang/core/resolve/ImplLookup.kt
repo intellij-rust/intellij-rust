@@ -301,7 +301,7 @@ class ImplLookup(
 
     private fun findSimpleImpls(selfTy: Ty): Sequence<RsImplItem> {
         return RsImplIndex.findPotentialImpls(project, selfTy).mapNotNull { impl ->
-            val subst = impl.generics.associate { it to ctx.typeVarForParam(it) }.toTypeSubst()
+            val subst = impl.paramsToVarsSubst
             // TODO: take into account the lifetimes (?)
             val formalSelfTy = impl.typeReference?.type?.substitute(subst) ?: return@mapNotNull null
             impl.takeIf { ctx.canCombineTypes(formalSelfTy, selfTy) }

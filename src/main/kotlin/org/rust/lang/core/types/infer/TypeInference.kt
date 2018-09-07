@@ -16,9 +16,22 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
+import org.rust.lang.core.psi.ext.UnaryOperator.*
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.Selection
+import org.rust.lang.core.resolve.SelectionResult
+import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralType
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.infer.ReVarOrigin.AddrOfRegion
+import org.rust.lang.core.types.infer.SubRegionOrigin.*
+import org.rust.lang.core.types.infer.outlives.FreeRegionMap
+import org.rust.lang.core.types.infer.outlives.OutlivesEnvironment
+import org.rust.lang.core.types.infer.outlives.RegionObligation
+import org.rust.lang.core.types.infer.outlives.RegionObligationCause
+import org.rust.lang.core.types.regions.*
 import org.rust.lang.core.types.infer.Adjustment.BorrowReference
 import org.rust.lang.core.types.infer.Adjustment.Deref
 import org.rust.lang.core.types.regions.Region
@@ -34,6 +47,7 @@ import org.rust.openapiext.recursionGuard
 import org.rust.stdext.notEmptyOrLet
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
+import java.util.*
 
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
     val items = element.knownItems
@@ -127,11 +141,18 @@ class RsInferenceContext(
     private val varUnificationTable: UnificationTable<TyInfer.TyVar, Ty> = UnificationTable()
     private val projectionCache: ProjectionCache = ProjectionCache()
 
+    var freeRegionMap: FreeRegionMap? = null
+    val regionConstraints: RegionConstraintCollector = RegionConstraintCollector()
+    val regionObligations: SnapshotList<Pair<RsElement, RegionObligation>> = SnapshotList()
+    private var lexicalRegionResolutions: LexicalRegionResolutions? = null
+
     fun startSnapshot(): Snapshot = CombinedSnapshot(
         intUnificationTable.startSnapshot(),
         floatUnificationTable.startSnapshot(),
         varUnificationTable.startSnapshot(),
-        projectionCache.startSnapshot()
+        projectionCache.startSnapshot(),
+        regionConstraints.startSnapshot(),
+        regionObligations.startSnapshot()
     )
 
     inline fun <T> probe(action: () -> T): T {
@@ -144,10 +165,12 @@ class RsInferenceContext(
     }
 
     fun infer(element: RsInferenceContextOwner): RsInferenceResult {
-        if (element is RsFunction) {
-            val fctx = RsFnInferenceContext(this, element.returnType)
+        val callerBounds = if (element is RsGenericDeclaration) getOutlivePredicates(element) else emptyList()
+        val fctx = if (element is RsFunction) {
+            val fctx = RsFnInferenceContext(this, element.returnType, callerBounds, element.block)
             fctx.extractParameterBindings(element)
             element.block?.let { fctx.inferFnBody(it) }
+            fctx
         } else {
             val (retTy, expr) = when (element) {
                 is RsConstant -> element.typeReference?.type to element.expr
@@ -167,9 +190,9 @@ class RsInferenceContext(
                 else -> error("Type inference is not implemented for PSI element of type " +
                     "`${element.javaClass}` that implement `RsInferenceContextOwner`")
             }
-            if (expr != null) {
-                RsFnInferenceContext(this, retTy ?: TyUnknown).inferLambdaBody(expr)
-            }
+            val fctx = expr?.let { RsFnInferenceContext(this, retTy ?: TyUnknown, callerBounds, it) }
+            fctx?.inferLambdaBody(expr)
+            fctx
         }
 
         fulfill.selectWherePossible()
@@ -179,7 +202,19 @@ class RsInferenceContext(
 
         performPathsRefinement(lookup)
 
-        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics, adjustments)
+        fctx?.inferRegions(element)
+        exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
+        bindings.replaceAll { _, ty -> fullyResolve(ty) }
+
+        return RsInferenceResult(
+            bindings,
+            exprTypes,
+            resolvedPaths,
+            resolvedMethods,
+            resolvedFields,
+            diagnostics,
+            adjustments
+        )
     }
 
     private fun performPathsRefinement(lookup: ImplLookup) {
@@ -207,6 +242,22 @@ class RsInferenceContext(
 
     override fun getBindingType(binding: RsPatBinding): Ty {
         return bindings[binding] ?: TyUnknown
+    }
+
+    fun getNodeType(node: RsElement): Ty =
+        when (node) {
+            is RsExpr -> getExprType(node)
+            is RsPatBinding -> getBindingType(node)
+            else -> TyUnknown
+        }
+
+    fun getAdjustments(element: RsElement): List<Adjustment> {
+        return (element as? RsExpr)?.let { adjustments[it] } ?: emptyList()
+    }
+
+    /** Returns the type of [expr], considering any [Adjustment] entry recorded for that expression. */
+    fun getExprTypeAdjusted(expr: RsExpr): Ty {
+        return getAdjustments(expr).lastOrNull()?.target ?: getExprType(expr)
     }
 
     override fun getResolvedPaths(expr: RsPathExpr): List<RsElement> {
@@ -257,8 +308,33 @@ class RsInferenceContext(
         }
     }
 
+    fun addGiven(sub: Region, sup: ReVar) {
+        regionConstraints.addGiven(sub, sup)
+    }
+
+    fun makeSubRegion(origin: SubRegionOrigin, sub: Region, sup: Region) {
+        regionConstraints.makeSubRegion(origin, sub, sup)
+    }
+
+    fun handleRegionOutlivesPredicate(cause: RegionObligationCause, predicate: Predicate.RegionOutlives) {
+        val origin = SubRegionOrigin.fromObligationCause(cause) { RelateRegionParamBound(cause.element) }
+        makeSubRegion(origin, predicate.sub, predicate.sup)  // `b: a` ==> `a <= b`
+    }
+
+    fun verifyGenericBound(origin: SubRegionOrigin, kind: GenericKind, region: Region, bound: VerifyBound) {
+        regionConstraints.verifyGenericBound(origin, kind, region, bound)
+    }
+
     fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
         addDiagnostic(RsDiagnostic.TypeError(expr, expected, actual))
+    }
+
+    fun reportRegionMismatch(element: RsElement) {
+        addDiagnostic(RsDiagnostic.RegionError(element))
+    }
+
+    fun reportOutliveError(element: RsElement) {
+        addDiagnostic(RsDiagnostic.OutliveError(element))
     }
 
     fun canCombineTypes(ty1: Ty, ty2: Ty): Boolean {
@@ -584,11 +660,160 @@ class RsInferenceContext(
     /** Checks that [selfTy] satisfies all trait bounds of the [impl] */
     fun canEvaluateBounds(impl: RsImplItem, selfTy: Ty): Boolean {
         val ff = FulfillmentContext(this, lookup)
-        val subst = impl.generics.associate { it to typeVarForParam(it) }.toTypeSubst()
+        val subst = impl.paramsToVarsSubst
         return probe {
             instantiateBounds(impl.bounds, subst).forEach(ff::registerPredicateObligation)
             impl.typeReference?.type?.substitute(subst)?.let { combineTypes(selfTy, it) }
             ff.selectUntilError()
+        }
+    }
+
+    fun getOutlivePredicates(declaration: RsGenericDeclaration): List<Predicate> {
+        val body = (declaration as? RsInferenceContextOwner)?.body ?: return emptyList()
+        val predicates = mutableListOf<Predicate>()
+
+        for (parameter in declaration.typeParameters) {
+            val subTy = TyTypeParameter.named(parameter)
+            for (polybound in parameter.bounds) {
+                val lifetime = polybound.bound.lifetime ?: continue
+                val subRegion = lifetime.resolve()
+                if (subRegion is ReUnknown) continue
+                val predicate = Predicate.TypeOutlives(subRegion, subTy, body)
+                predicates.add(predicate)
+            }
+        }
+
+        for (parameter in declaration.lifetimeParameters) {
+            val supRegion = ReEarlyBound.named(parameter)
+            for (bound in parameter.bounds) {
+                val subRegion = bound.resolve()
+                if (subRegion is ReUnknown) continue
+                val predicate = Predicate.RegionOutlives(subRegion, supRegion, body)
+                predicates.add(predicate)
+            }
+        }
+
+        loop@ for (wherePred in declaration.whereClause?.wherePredList.orEmpty()) {
+            when {
+                wherePred.typeReference != null && wherePred.forLifetimes == null -> {
+                    val typeReference = checkNotNull(wherePred.typeReference)
+                    val supTy = inferTypeReferenceType(typeReference)
+                    val polybounds = checkNotNull(wherePred.typeParamBounds?.polyboundList)
+                    for (polybound in polybounds) {
+                        if (polybound.forLifetimes != null) continue
+                        val lifetime = polybound.bound.lifetime ?: continue
+                        val subRegion = lifetime.resolve()
+                        if (subRegion is ReUnknown) continue
+                        val predicate = Predicate.TypeOutlives(subRegion, supTy, body)
+                        predicates.add(predicate)
+                    }
+                }
+                wherePred.lifetime != null -> {
+                    val lifetime = wherePred.lifetime ?: continue@loop
+                    val supRegion = lifetime.resolve()
+                    if (supRegion is ReUnknown) continue@loop
+                    val lifetimeBounds = checkNotNull(wherePred.lifetimeParamBounds?.lifetimeList)
+                    for (bound in lifetimeBounds) {
+                        val subRegion = bound.resolve()
+                        if (subRegion is ReUnknown) continue
+                        val predicate = Predicate.RegionOutlives(subRegion, supRegion, body)
+                        predicates.add(predicate)
+                    }
+                }
+            }
+        }
+
+        return predicates
+    }
+
+    fun isMethodCall(expr: RsExpr): Boolean {
+        when (expr) {
+            is RsCallExpr -> {
+                val resolved = resolvedPaths[expr.expr]?.firstOrNull()
+                val fn = resolved as? RsFunction ?: return false
+                return fn.ancestorStrict<RsItemElement>() is RsTraitOrImpl
+            }
+            is RsDotExpr -> expr.methodCall != null
+            is RsBinaryExpr -> {
+                val lhsTy = exprTypes[expr.left] ?: return false
+                val rhsTy = exprTypes[expr.right] ?: return false
+                if ((lhsTy is TyNumeric || lhsTy is TyBool) && (rhsTy is TyNumeric || rhsTy is TyBool)) return false
+                val op = (expr.binaryOp as? OverloadableBinaryOperator) ?: return false
+
+                val trait = RsLangItemIndex.findLangItem(expr.project, op.itemName) ?: return false
+                return lookup.canSelect(TraitRef(lhsTy, trait.withSubst(rhsTy)))
+            }
+            is RsUnaryExpr -> {
+                val ty = exprTypes[expr] ?: return false
+                val opType = expr.operatorType
+
+                val isBuiltin = when (opType) {
+                    DEREF -> when (ty) {
+                        is TyReference -> true
+                        is TyPointer -> true
+                        is TyAdt -> {
+                            val boxItem = null // TODO: RsLangItemIndex.findBoxItem(expr.project)
+                            ty.item === boxItem
+                        }
+                        else -> false
+                    }
+                    MINUS -> ty is TyNumeric
+                    NOT -> ty is TyBool
+                    else -> false
+                }
+                if (isBuiltin) return false
+
+                val itemName = when (opType) {
+                    DEREF -> "deref"
+                    MINUS -> "neg"
+                    NOT -> "not"
+                    else -> return false
+                }
+                val trait = RsLangItemIndex.findLangItem(expr.project, itemName) ?: return false
+                return lookup.canSelect(TraitRef(ty, trait.withSubst(ty)))
+            }
+            is RsIndexExpr -> {
+                val ty = exprTypes[expr] ?: return false
+                if (ty is TyArray) return false
+                val trait = RsLangItemIndex.findLangItem(expr.project, "index") ?: return false
+                return lookup.canSelect(TraitRef(ty, trait.withSubst(ty)))
+            }
+        }
+        return false
+    }
+
+    /**
+     * Process the region constraints and report any errors that result.
+     * After this, no more unification operations should be done - or the compiler will panic - but it is legal to use
+     * [resolveTypeVarsIfPossible] as well as [fullyResolve].
+     */
+    fun resolveRegions(
+        context: RsInferenceContextOwner,
+        regionScopeTree: ScopeTree,
+        outlives: OutlivesEnvironment
+    ) {
+        check(regionObligations.isEmpty())
+        val relations = RegionRelations(context, regionScopeTree, outlives.freeRegionMap)
+        val (varInfos, data) = regionConstraints.intoInfosAndData()
+        check(lexicalRegionResolutions == null)
+        lexicalRegionResolutions = resolveLexicalRegions(relations, varInfos, data)
+        val errors = lexicalRegionResolutions?.errors.orEmpty()
+        for (error in errors) {
+            when (error) {
+                is RegionResolutionError.ConcreteFailure -> {
+                    if (error.origin is RelateObjectBound) {
+                        reportRegionMismatch(error.origin.element)
+                    }
+                }
+                is RegionResolutionError.GenericBoundFailure -> {
+
+                }
+                is RegionResolutionError.SubSupConflict -> {
+                    if (error.supOrigin is Reborrow) {
+                        reportOutliveError(error.supOrigin.element)
+                    }
+                }
+            }
         }
     }
 
@@ -598,12 +823,15 @@ class RsInferenceContext(
 }
 
 class RsFnInferenceContext(
-    private val ctx: RsInferenceContext,
-    private val returnTy: Ty
+    val ctx: RsInferenceContext,
+    private val returnTy: Ty,
+    val callerBounds: List<Predicate>,
+    body: RsElement?
 ) {
     private val lookup get() = ctx.lookup
     private val items get() = ctx.items
     private val fulfill get() = ctx.fulfill
+    val implicitRegionBound: Region? = body?.let { ReScope(Scope.CallSite(it)) }
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
 
     private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
@@ -743,7 +971,7 @@ class RsFnInferenceContext(
         return ok
     }
 
-    private fun tryCoerce(inferred: Ty, expected: Ty): Boolean {
+    private fun tryCoerce(inferred: Ty, expected: Ty, element: RsElement): Boolean {
         return when {
             // Coerce array to slice
             inferred is TyReference && inferred.referenced is TyArray &&
@@ -763,7 +991,7 @@ class RsFnInferenceContext(
             // Coerce references
             inferred is TyReference && expected is TyReference &&
                 coerceMutability(inferred.mutability, expected.mutability) -> {
-                coerceReference(inferred, expected)
+                coerceReference(inferred, expected, element)
             }
             // TODO trait object unsizing
             else -> ctx.combineTypes(inferred, expected)
@@ -777,13 +1005,12 @@ class RsFnInferenceContext(
      * Reborrows `&mut A` to `&mut B` and `&(mut) A` to `&B`.
      * To match `A` with `B`, autoderef will be performed
      */
-    private fun coerceReference(inferred: TyReference, expected: TyReference): Boolean {
+    private fun coerceReference(inferred: TyReference, expected: TyReference, element: RsElement): Boolean {
+        ctx.makeSubRegion(RelateObjectBound(element), expected.region, inferred.region)
         for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
-            // TODO proper handling of lifetimes
-            val derefTyRef = TyReference(derefTy, expected.mutability, expected.region)
+            val derefTyRef = TyReference(derefTy, inferred.mutability, inferred.region)
             if (ctx.combineTypesIfOk(derefTyRef, expected)) return true
         }
-
         return false
     }
 
@@ -793,11 +1020,10 @@ class RsFnInferenceContext(
             is RsStubLiteralType.Boolean -> TyBool
             is RsStubLiteralType.Char -> if (stubType.isByte) TyInteger.U8 else TyChar
             is RsStubLiteralType.String -> {
-                // TODO infer the actual lifetime
                 if (stubType.isByte) {
-                    TyReference(TyArray(TyInteger.U8, stubType.length), IMMUTABLE)
+                    TyReference(TyArray(TyInteger.U8, stubType.length), IMMUTABLE, ReStatic)
                 } else {
-                    TyReference(TyStr, IMMUTABLE)
+                    TyReference(TyStr, IMMUTABLE, ReStatic)
                 }
             }
             is RsStubLiteralType.Integer -> {
@@ -901,7 +1127,7 @@ class RsFnInferenceContext(
                         val typeParameters = instantiateBounds(owner.trait)
                         // UFCS - add predicate `Self : Trait<Args>`
                         val selfTy = subst[TyTypeParameter.self()] ?: ctx.typeVarForParam(TyTypeParameter.self())
-                        val newSubst = owner.trait.generics.associateBy { it }.toTypeSubst()
+                        val newSubst = owner.trait.paramsToVarsSubst
                         val boundTrait = BoundElement(owner.trait, newSubst)
                             .substitute(typeParameters)
                         val traitRef = TraitRef(selfTy, boundTrait)
@@ -936,13 +1162,9 @@ class RsFnInferenceContext(
         selfTy: Ty? = null,
         typeParameters: Substitution = emptySubstitution
     ): Substitution {
-        val map = run {
-            val map = element
-                .generics
-                .associate { it to ctx.typeVarForParam(it) }
-                .let { if (selfTy != null) it + (TyTypeParameter.self() to selfTy) else it }
-            typeParameters + map.toTypeSubst()
-        }
+        val map = element.paramsToVarsSubst
+            .let { if (selfTy != null) it + mapOf(TyTypeParameter.self() to selfTy).toTypeSubst() else it }
+            .let { it + typeParameters }
         ctx.instantiateBounds(element.bounds, map).forEach(fulfill::registerPredicateObligation)
         return map
     }
@@ -1334,9 +1556,9 @@ class RsFnInferenceContext(
     private fun inferUnaryExprType(expr: RsUnaryExpr, expected: Ty?): Ty {
         val innerExpr = expr.expr ?: return TyUnknown
         return when (expr.operatorType) {
-            UnaryOperator.REF -> inferRefType(innerExpr, expected, IMMUTABLE)
-            UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, MUTABLE)
-            UnaryOperator.DEREF -> {
+            REF -> inferRefType(innerExpr, expected, IMMUTABLE)
+            REF_MUT -> inferRefType(innerExpr, expected, MUTABLE)
+            DEREF -> {
                 // expectation must NOT be used for deref
                 val base = resolveTypeVarsWithObligations(innerExpr.inferType())
                 val deref = lookup.deref(base)
@@ -1345,17 +1567,19 @@ class RsFnInferenceContext(
                 }
                 deref ?: TyUnknown
             }
-            UnaryOperator.MINUS -> innerExpr.inferType(expected)
-            UnaryOperator.NOT -> innerExpr.inferType(expected)
-            UnaryOperator.BOX -> {
+            MINUS -> innerExpr.inferType(expected)
+            NOT -> innerExpr.inferType(expected)
+            BOX -> {
                 innerExpr.inferType()
                 TyUnknown
             }
         }
     }
 
-    private fun inferRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty =
-        TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable) // TODO infer the actual lifetime
+    private fun inferRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty {
+        val variable = ctx.regionConstraints.createReVar(AddrOfRegion(expr))
+        return TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable, variable)
+    }
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {
         expr.condition?.let { it.pat?.extractBindings(it.expr.inferType()) ?: it.expr.inferType(TyBool) }
@@ -1578,7 +1802,10 @@ class RsFnInferenceContext(
         val isFreshRetTy = expectedRetTy == null
         val retTy = expectedRetTy ?: TyInfer.TyVar()
 
-        expr.expr?.let { RsFnInferenceContext(ctx, retTy).inferLambdaBody(it) }
+        expr.expr?.let {
+            val ctx = RsFnInferenceContext(ctx, retTy, callerBounds, it)
+            ctx.inferLambdaBody(it)
+        }
 
         val isDefaultRetTy = isFreshRetTy && retTy is TyInfer.TyVar && !ctx.isTypeVarAffected(retTy)
         return TyFunction(paramTypes, if (isDefaultRetTy) TyUnit else retTy)
@@ -1675,7 +1902,7 @@ class RsFnInferenceContext(
         ctx.writeBindingTy(psi, ty)
 }
 
-private val RsSelfParameter.typeOfValue: Ty
+val RsSelfParameter.typeOfValue: Ty
     get() {
         val owner = parentFunction.owner
         val selfType = when (owner) {
@@ -1695,11 +1922,16 @@ private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
     }
 
     // self, &self, &mut self
-    return if (isRef) TyReference(selfType, mutability, lifetime.resolve()) else selfType
+    return if (isRef) {
+        val region = lifetime?.resolve() ?: ReEarlyBound.implicit(this)
+        TyReference(selfType, mutability, region)
+    } else {
+        selfType
+    }
 
 }
 
-private val RsFunction.typeOfValue: TyFunction
+val RsFunction.typeOfValue: TyFunction
     get() {
         val paramTypes = mutableListOf<Ty>()
 
@@ -1715,6 +1947,14 @@ private val RsFunction.typeOfValue: TyFunction
 
 val RsGenericDeclaration.generics: List<TyTypeParameter>
     get() = typeParameters.map { TyTypeParameter.named(it) }
+
+val RsGenericDeclaration.paramsToVarsSubst: Substitution
+    get() {
+        val typeSubst = typeParameters
+            .map { TyTypeParameter.named(it) }
+            .associate { it to TyInfer.TyVar(it) }
+        return Substitution(typeSubst)
+    }
 
 val RsGenericDeclaration.bounds: List<TraitRef>
     get() = CachedValuesManager.getCachedValue(this) {

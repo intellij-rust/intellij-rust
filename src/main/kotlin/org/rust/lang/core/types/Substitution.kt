@@ -29,8 +29,8 @@ open class Substitution(
 
     operator fun get(key: TyTypeParameter) = typeSubst[key]
     operator fun get(key: ReEarlyBound) = regionSubst[key]
-    operator fun get(psi: RsTypeParameter) = typeSubst[TyTypeParameter.named((psi))]
-    operator fun get(psi: RsLifetimeParameter) = regionSubst[ReEarlyBound((psi))]
+    operator fun get(psi: RsTypeParameter) = typeSubst[TyTypeParameter.named(psi)]
+    operator fun get(psi: RsLifetimeParameter) = regionSubst[ReEarlyBound.named(psi)]
 
     fun typeByName(name: String): Ty =
         typeSubst.entries.find { it.key.toString() == name }?.value ?: TyUnknown
@@ -55,13 +55,14 @@ open class Substitution(
     fun mapTypeValues(transform: (Map.Entry<TyTypeParameter, Ty>) -> Ty): Substitution =
         Substitution(typeSubst.mapValues(transform), regionSubst)
 
-    override fun equals(other: Any?): Boolean = when {
-        this === other -> true
-        javaClass != other?.javaClass -> false
-        other !is Substitution -> false
-        typeSubst != other.typeSubst -> false
-        else -> true
-    }
+    override fun equals(other: Any?): Boolean =
+        when {
+            this === other -> true
+            javaClass != other?.javaClass -> false
+            other !is Substitution -> false
+            typeSubst != other.typeSubst -> false
+            else -> true
+        }
 
     override fun hashCode(): Int = typeSubst.hashCode()
 }

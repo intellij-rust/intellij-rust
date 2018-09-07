@@ -365,7 +365,7 @@ private fun RsTypeReference.substAndGetText(subst: Substitution): String =
 private fun RsSelfParameter.substAndGetText(subst: Substitution): String =
     buildString {
         append(and?.text ?: "")
-        val region = lifetime.resolve().substitute(subst)
+        val region = lifetime?.resolve()?.substitute(subst) ?: ReUnknown
         if (region != ReUnknown) append("$region ")
         if (mutability == MUTABLE) append("mut ")
         append(self.text)

@@ -16,6 +16,7 @@ import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.regions.Region
 import org.rust.stdext.dequeOf
 import java.util.*
 
