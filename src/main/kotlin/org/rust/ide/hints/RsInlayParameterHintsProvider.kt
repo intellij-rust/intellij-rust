@@ -131,9 +131,9 @@ enum class HintType(desc: String, enabled: Boolean) {
                 val offset =
                     (field.colon ?: if (field.nextSibling.elementType == RsElementTypes.COLON) field.nextSibling
                     else field.identifier).textRange.endOffset
-                text to offset
+                InlayInfo(text, offset)
             }
-            return hints.map { InlayInfo(it.first, it.second) }
+            return hints
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsStructLiteral
