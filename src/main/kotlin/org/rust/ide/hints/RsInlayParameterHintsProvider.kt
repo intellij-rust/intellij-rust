@@ -13,10 +13,8 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.TyFunction
@@ -123,17 +121,17 @@ enum class HintType(desc: String, enabled: Boolean) {
     STRUCT_LITERAL_TYPE_HINT("Show type hints for fields in struct literal", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val element = elem as? RsStructLiteral ?: return emptyList()
-            val declaration = element.path.reference.resolve() as? RsFieldsOwner ?: return emptyList()
             val subst = element.type.typeParameterValues
             val hints = element.structLiteralBody.structLiteralFieldList.mapNotNull { field ->
-                (declaration.namedFields
-                    .find { it.name.equals(field.referenceName) }
+                val text = (field.reference.resolve() as? RsFieldDecl)
                     ?.typeReference?.type?.substitute(subst)
                     ?.shortPresentableText
-                    ?: return@mapNotNull null) to (
-                    // in case of incomplete field, COLON will be the sibling, not the child
-                    field.colon ?: if (field.nextSibling.elementType == RsElementTypes.COLON) field.nextSibling
+                    ?: return@mapNotNull null
+                // in case of incomplete field, COLON will be the sibling, not the child
+                val offset =
+                    (field.colon ?: if (field.nextSibling.elementType == RsElementTypes.COLON) field.nextSibling
                     else field.identifier).textRange.endOffset
+                text to offset
             }
             return hints.map { InlayInfo(it.first, it.second) }
         }
