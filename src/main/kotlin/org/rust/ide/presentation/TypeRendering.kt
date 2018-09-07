@@ -123,13 +123,13 @@ private data class TypeRenderer(
     }
 
     private fun formatGenerics(adt: TyAdt, render: (Ty) -> String): String {
-        val typeArguments = adt.typeArguments.map(render)
-        val lifetimeArguments = if (includeLifetimeArguments) {
-            adt.lifetimeArguments.map { render(it) }
+        val typeArgumentNames = adt.typeArguments.map(render)
+        val regionArgumentNames = if (includeLifetimeArguments) {
+            adt.regionArguments.map { render(it) }
         } else {
             emptyList()
         }
-        val generics = lifetimeArguments + typeArguments
+        val generics = regionArgumentNames + typeArgumentNames
         return if (generics.isEmpty()) "" else generics.joinToString(", ", "<", ">")
     }
 
@@ -139,7 +139,7 @@ private data class TypeRenderer(
         includeAssoc: Boolean = true
     ): String {
         val tySubst = trait.element.typeParameters.map { render(trait.subst[it] ?: TyUnknown) }
-        val reSubst = if (includeLifetimeArguments) {
+        val regionSubst = if (includeLifetimeArguments) {
             trait.element.lifetimeParameters.map { render(trait.subst[it] ?: ReUnknown) }
         } else {
             emptyList()
@@ -152,7 +152,7 @@ private data class TypeRenderer(
         } else {
             emptyList()
         }
-        val visibleTypes = reSubst + tySubst + assoc
+        val visibleTypes = regionSubst + tySubst + assoc
         return if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">")
     }
 
