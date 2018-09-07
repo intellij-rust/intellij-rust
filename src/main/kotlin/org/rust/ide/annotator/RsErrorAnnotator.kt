@@ -73,9 +73,17 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitArrayType(o: RsArrayType) = collectDiagnostics(holder, o)
             override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(holder, o)
             override fun visitPolybound(o: RsPolybound) = checkPolybound(holder, o)
+            override fun visitTraitRef(o: RsTraitRef) = checkTraitRef(holder, o)
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkTraitRef(holder: AnnotationHolder, o: RsTraitRef) {
+        val item = o.path.reference.resolve() as? RsItemElement ?: return
+        if (item !is RsTraitItem) {
+            RsDiagnostic.NotTraitError(o, item).addToHolder(holder)
+        }
     }
 
     private fun checkDotExpr(holder: AnnotationHolder, o: RsDotExpr) {
