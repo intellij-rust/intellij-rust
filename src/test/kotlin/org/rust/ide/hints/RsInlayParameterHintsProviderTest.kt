@@ -276,6 +276,87 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         check(inlays.size == 1)
     }
 
+    fun `test struct literal first`() = checkByText<RsStructLiteral>("""
+        struct S {
+            x: i32,
+            y: f64,
+        }
+        fn main() {
+            fn foo() -> S {
+                S {
+                    x:/*caret*/
+                }
+            }
+        }
+    """, "i32", 0)
+
+    fun `test struct literal second`() = checkByText<RsStructLiteral>("""
+        struct S {
+            x: i32,
+            y: f64,
+        }
+        fn main() {
+            fn foo() -> S {
+                S {
+                    x: 5,
+                    y:/*caret*/
+                }
+            }
+        }
+    """, "f64", 1)
+
+    fun `test generic struct literal`() = checkByText<RsStructLiteral>("""
+        pub trait Trait {}
+        struct S<T>;
+        struct B<T> {
+            x: i32,
+            y: T,
+            z: String,
+        }
+        fn main() {
+            fn foo<T: Trait>() -> B<S<T>> {
+                B {
+                    x: 3,
+                    y:/*caret*/
+                }
+            }
+        }
+    """, "S<T>", 1)
+
+    fun `test generic struct literal 2`() = checkByText<RsStructLiteral>("""
+        struct S<T>;
+        struct B<T> {
+            x: i32,
+            y: T,
+            z: String,
+        }
+        fn main() {
+            fn foo() -> B<S<i64>> {
+                B {
+                    x: 3,
+                    y:/*caret*/
+                }
+            }
+        }
+    """, "S<i64>", 1)
+
+    fun `test struct literal with tuple`() = checkByText<RsStructLiteral>("""
+        struct S<T>;
+        struct B<T> {
+            x: i32,
+            y: (i32, T),
+        }
+        fn main() {
+            fn foo() -> B<S<i64>> {
+                B {
+                    x: 3,
+                    y:/*caret*/
+                }
+            }
+        }
+    """, "(i32, S<i64>)", 1)
+
+
     inline private fun <reified T : PsiElement> checkNoHint(@Language("Rust") code: String, smart: Boolean = true) {
         InlineFile(code)
         HintType.SMART_HINTING.set(smart)
@@ -297,8 +378,9 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             check(pos < inlays.size) {
                 "Expected at least ${pos + 1} hints, got ${inlays.map { it.text }}"
             }
-            check(inlays[pos].text == hint)
+            check(inlays[pos].text == hint) { "Expected: `$hint`, actual: `${inlays[pos].text}`" }
             check(inlays[pos].offset == myFixture.editor.caretModel.offset)
+            { "Expected: `${myFixture.editor.caretModel.offset}`, actual: `${inlays[pos].offset}`" }
         }
     }
 }

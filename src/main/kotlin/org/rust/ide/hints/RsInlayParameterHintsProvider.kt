@@ -14,7 +14,9 @@ import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.types.declaration
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -112,6 +114,29 @@ enum class HintType(desc: String, enabled: Boolean) {
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsForExpr
+    },
+
+    /* In case of fields without any expressions
+       PSI is destructed in this place, so only hints before error element will be shown */
+    STRUCT_LITERAL_TYPE_HINT("Show type hints for fields in struct literal", true) {
+        override fun provideHints(elem: PsiElement): List<InlayInfo> {
+            val element = elem as? RsStructLiteral ?: return emptyList()
+            val subst = element.type.typeParameterValues
+            val hints = element.structLiteralBody.structLiteralFieldList.mapNotNull { field ->
+                val text = (field.reference.resolve() as? RsFieldDecl)
+                    ?.typeReference?.type?.substitute(subst)
+                    ?.shortPresentableText
+                    ?: return@mapNotNull null
+                // in case of incomplete field, COLON will be the sibling, not the child
+                val offset =
+                    (field.colon ?: if (field.nextSibling.elementType == RsElementTypes.COLON) field.nextSibling
+                    else field.identifier).textRange.endOffset
+                InlayInfo(text, offset)
+            }
+            return hints
+        }
+
+        override fun isApplicable(elem: PsiElement): Boolean = elem is RsStructLiteral
     };
 
     companion object {
