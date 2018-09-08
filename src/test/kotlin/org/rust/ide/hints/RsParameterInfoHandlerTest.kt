@@ -12,22 +12,21 @@ import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.rust.RsTestBase
 
-
 /**
  * Tests for RustParameterInfoHandler
  */
 class RsParameterInfoHandlerTest : RsTestBase() {
-    fun testFnNoArgs() = checkByText("""
+    fun `test fn no args`() = checkByText("""
         fn foo() {}
         fn main() { foo(<caret>); }
     """, "<no arguments>", -1)
 
-    fun testFnNoArgsBeforeArgs() = checkByText("""
+    fun `test fn no args before args`() = checkByText("""
         fn foo() {}
         fn main() { foo<caret>(); }
     """, "<no arguments>", -1)
 
-    fun testFnOneArg() = checkByText("""
+    fun `test fn one arg`() = checkByText("""
         fn foo(arg: u32) {}
         fn main() { foo(<caret>); }
     """, "arg: u32", 0)
@@ -42,69 +41,69 @@ class RsParameterInfoHandlerTest : RsTestBase() {
         fn main() { E::Foo(<caret>); }
     """, "_: u32", 0)
 
-    fun testFnOneArgEnd() = checkByText("""
+    fun `test fn one arg end`() = checkByText("""
         fn foo(arg: u32) {}
         fn main() { foo(42<caret>); }
     """, "arg: u32", 0)
 
-    fun testFnManyArgs() = checkByText("""
+    fun `test fn many args`() = checkByText("""
         fn foo(id: u32, name: &'static str, mut year: &u16) {}
         fn main() { foo(<caret>); }
     """, "id: u32, name: &'static str, mut year: &u16", 0)
 
-    fun testFnPoorlyFormattedArgs() = checkByText("""
+    fun `test fn poorly formatted args`() = checkByText("""
         fn foo(  id   :   u32   , name: &'static str   , mut year   : &u16   ) {}
         fn main() { foo(<caret>); }
     """, "id: u32, name: &'static str, mut year: &u16", 0)
 
-    fun testFnArgIndex0() = checkByText("""
+    fun `test fn arg index0`() = checkByText("""
         fn foo(a1: u32, a2: u32) {}
         fn main() { foo(a1<caret>); }
     """, "a1: u32, a2: u32", 0)
 
-    fun testFnArgIndex0WithComma() = checkByText("""
+    fun `test fn arg index0 with comma`() = checkByText("""
         fn foo(a1: u32, a2: u32) {}
         fn main() { foo(a1<caret>,); }
     """, "a1: u32, a2: u32", 0)
 
-    fun testFnArgIndex1() = checkByText("""
+    fun `test fn arg index1`() = checkByText("""
         fn foo(a1: u32, a2: u32) {}
         fn main() { foo(16,<caret>); }
     """, "a1: u32, a2: u32", 1)
 
-    fun testFnArgIndex1ValueStart() = checkByText("""
+    fun `test fn arg index1 value start`() = checkByText("""
         fn foo(a1: u32, a2: u32) {}
         fn main() { foo(12, <caret>32); }
     """, "a1: u32, a2: u32", 1)
 
-    fun testFnArgIndex1ValueEnd() = checkByText("""
+    fun `test fn arg index1 value end`() = checkByText("""
         fn foo(a1: u32, a2: u32) {}
         fn main() { foo(5, 32<caret>); }
     """, "a1: u32, a2: u32", 1)
 
-    fun testFnArgTooManyArgs() = checkByText("""
+    fun `test fn arg too many args`() = checkByText("""
         fn foo(a1: u32, a2: u32) {}
         fn main() { foo(0, 32,<caret>); }
     """, "a1: u32, a2: u32", -1)
 
-    fun testFnClosure() = checkByText("""
+    fun `test fn closure`() = checkByText("""
         fn foo(fun: Fn(u32) -> u32) {}
         fn main() { foo(|x| x + <caret>); }
     """, "fun: Fn(u32) -> u32", 0)
 
-    fun testFnNestedInner() = checkByText("""
+    fun `test fn nested inner`() = checkByText("""
         fn add(v1: u32, v2: u32) -> u32 { v1 + v2 }
         fn display(v: u32, format: &'static str) {}
         fn main() { display(add(4, <caret>), "0.00"); }
     """, "v1: u32, v2: u32", 1)
 
-    fun testFnNestedOuter() = checkByText("""
+    fun `test fn nested outer`() = checkByText("""
         fn add(v1: u32, v2: u32) -> u32 { v1 + v2 }
         fn display(v: u32, indent: bool, format: &'static str) {}
         fn main() { display(add(4, 7), false, <caret>"); }
     """, "v: u32, indent: bool, format: &'static str", 2)
 
-    fun testMultiline() = checkByText("""
+    fun `test multiline`() = checkByText("""
         fn sum(v1: u32, v2: u32, v3: u32) -> u32 { v1 + v2 + v3 }
         fn main() {
             sum(
@@ -114,7 +113,7 @@ class RsParameterInfoHandlerTest : RsTestBase() {
         }
     """, "v1: u32, v2: u32, v3: u32", 1)
 
-    fun testAssocFn() = checkByText("""
+    fun `test assoc fn`() = checkByText("""
         struct Foo;
         impl Foo { fn new(id: u32, val: f64) {} }
         fn main() {
@@ -122,7 +121,7 @@ class RsParameterInfoHandlerTest : RsTestBase() {
         }
     """, "id: u32, val: f64", 1)
 
-    fun testMethod() = checkByText("""
+    fun `test method`() = checkByText("""
         struct Foo;
         impl Foo { fn bar(&self, id: u32, name: &'static name, year: u16) {} }
         fn main() {
@@ -131,7 +130,7 @@ class RsParameterInfoHandlerTest : RsTestBase() {
         }
     """, "id: u32, name: &'static name, year: u16", 1)
 
-    fun testTraitMethod() = checkByText("""
+    fun `test trait method`() = checkByText("""
         trait Named {
             fn greet(&self, text: &'static str, count: u16, l: f64);
         }
@@ -155,17 +154,17 @@ class RsParameterInfoHandlerTest : RsTestBase() {
         }
     """, "self, arg: u32", 1)
 
-    fun testNotArgs1() = checkByText("""
+    fun `test not args 1`() = checkByText("""
         fn foo() {}
         fn main() { fo<caret>o(); }
     """, "", -1)
 
-    fun testNotArgs2() = checkByText("""
+    fun `test not args 2`() = checkByText("""
         fn foo() {}
         fn main() { foo()<caret>; }
     """, "", -1)
 
-    fun testNotAppliedWithinDeclaration() = checkByText("""
+    fun `test not applied within declaration`() = checkByText("""
         fn foo(v<caret>: u32) {}
     """, "", -1)
 

@@ -10,9 +10,8 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
 class RsLiveTemplatesTest : RsTestBase() {
-    override val dataPath = "org/rust/ide/template/fixtures"
 
-    fun testStructField() = expandSnippet("""
+    fun `test struct field`() = expandSnippet("""
         struct S {
             f/*caret*/
         }
@@ -22,7 +21,7 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
-    fun testPrint() = expandSnippet("""
+    fun `test print`() = expandSnippet("""
         fn main() {
             p/*caret*/
         }
@@ -32,55 +31,55 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
-    fun testAttribute() = noSnippet("""
+    fun `test attribute`() = noSnippet("""
         #[macro/*caret*/]
         extern crate std;
 
         fn main() { }
     """)
 
-    fun testComment() = noSnippet("""
+    fun `test comment`() = noSnippet("""
         fn main() {
             // p/*caret*/
         }
     """)
 
-    fun testDocComment() = noSnippet("""
+    fun `test doc comment`() = noSnippet("""
         /// p/*caret*/
         fn f() {}
     """)
 
-    fun testStringLiteral() = noSnippet("""
+    fun `test string literal`() = noSnippet("""
         fn main() {
             let _ = "p/*caret*/";
         }
     """)
 
-    fun testRawStringLiteral() = noSnippet("""
+    fun `test raw string literal`() = noSnippet("""
         fn main() {
             let _ = r##"p/*caret*/"##;
         }
     """)
 
-    fun testByteStringLiteral() = noSnippet("""
+    fun `test byte string literal`() = noSnippet("""
         fn main() {
             let _ = b"p/*caret*/";
         }
     """)
 
-    fun testFieldExpression() = noSnippet("""
+    fun `test field expression`() = noSnippet("""
         fn main() {
             let _ = foo.p/*caret*/
         }
     """)
 
-    fun testMethodExpression() = noSnippet("""
+    fun `test method expression`() = noSnippet("""
         fn main() {
             let _ = foo.p/*caret*/()
         }
     """)
 
-    fun testPath() = noSnippet("""
+    fun `test path`() = noSnippet("""
         fn main() {
             let _ = foo::p/*caret*/
         }

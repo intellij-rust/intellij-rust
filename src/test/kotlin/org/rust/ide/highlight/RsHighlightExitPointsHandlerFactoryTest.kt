@@ -11,14 +11,6 @@ import org.rust.RsTestBase
 
 class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
 
-    fun doTest(@Language("Rust") check: String, vararg usages: String) {
-        InlineFile(check)
-        HighlightUsagesHandler.invoke(myFixture.project, myFixture.editor, myFixture.file)
-        val highlighters = myFixture.editor.markupModel.allHighlighters
-        val actual = highlighters.map { myFixture.file.text.substring(it.startOffset, it.endOffset) }.toList()
-        assertSameElements(actual, usages.toList())
-    }
-
     fun `test highlight all returns`() = doTest("""
         fn main() {
             if true {
@@ -210,4 +202,11 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """)
 
+    private fun doTest(@Language("Rust") check: String, vararg usages: String) {
+        InlineFile(check)
+        HighlightUsagesHandler.invoke(myFixture.project, myFixture.editor, myFixture.file)
+        val highlighters = myFixture.editor.markupModel.allHighlighters
+        val actual = highlighters.map { myFixture.file.text.substring(it.startOffset, it.endOffset) }.toList()
+        assertSameElements(actual, usages.toList())
+    }
 }
