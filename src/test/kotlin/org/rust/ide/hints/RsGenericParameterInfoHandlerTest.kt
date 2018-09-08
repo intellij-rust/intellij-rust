@@ -5,17 +5,13 @@
 
 package org.rust.ide.hints
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext
-import com.intellij.ui.Hint
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.junit.Test
 import org.rust.RsTestBase
-
 
 /**
  * Tests for RsGenericParameterInfoHandler
