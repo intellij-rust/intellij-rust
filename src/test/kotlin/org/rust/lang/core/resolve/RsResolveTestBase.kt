@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.intellij.lang.annotations.Language
@@ -72,7 +73,11 @@ abstract class RsResolveTestBase : RsTestBase() {
 
         val element = referenceElement.checkedResolve(offset)
         customCheck(element)
-        val actualResolveFile = element.containingFile.virtualFile
+        val actualResolveFile = if (element is PsiDirectory) {
+            element.virtualFile
+        } else {
+            element.containingFile.virtualFile
+        }
 
         val resolveFiles = resolveVariants.split("|")
         if (resolveFiles.size == 1) {
