@@ -5,34 +5,38 @@
 
 package org.rust.lang.utils.snapshot
 
-/**
- * Works like a regular [MutableMap], but additionally allows you to take a snapshot
- * ([startSnapshot]) and then roll back the map to the snapshot state.
- * Note: this map currently don't support remove/clear operations
- */
-class SnapshotMap<K, V> {
-    private val inner: MutableMap<K, V> = HashMap()
-    private val undoLog: UndoLog = UndoLog()
+class SnapshotMap<K, V> : Snapshotable() {
+    private val inner: MutableMap<K, V> = hashMapOf()
+
+    val size: Int get() = inner.size
+
+    fun isEmpty(): Boolean = inner.isEmpty()
+
+    fun iterator(): Iterator<Map.Entry<K, V>> = inner.iterator()
+
+    fun contains(key: K): Boolean = inner.contains(key)
+
+    operator fun get(key: K): V? = inner[key]
+
+    operator fun set(key: K, value: V) {
+        put(key, value)
+    }
 
     fun put(key: K, value: V): V? {
         val oldValue = inner.put(key, value)
-        undoLog.logChange(if (oldValue == null) Insert(inner, key) else Overwrite(inner, key, oldValue))
+        undoLog.logChange(if (oldValue == null) Insert(key) else Overwrite(key, oldValue))
         return oldValue
     }
 
-    fun get(key: K): V? = inner[key]
-
-    fun startSnapshot(): Snapshot = undoLog.startSnapshot()
-
-    private data class Insert<K, V>(val map: MutableMap<K, V>, val key: K) : Undoable {
+    private inner class Insert(val key: K) : Undoable {
         override fun undo() {
-            map.remove(key)
+            inner.remove(key)
         }
     }
 
-    private data class Overwrite<K, V>(val map: MutableMap<K, V>, val key: K, val oldValue: V) : Undoable {
+    private inner class Overwrite(val key: K, val oldValue: V) : Undoable {
         override fun undo() {
-            map[key] = oldValue
+            inner[key] = oldValue
         }
     }
 }

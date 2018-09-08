@@ -33,8 +33,8 @@ class ProjectionCache {
      * to the cache and returns `null`
      */
     fun tryStart(key: TyProjection): ProjectionCacheEntry? {
-        return map.get(key) ?: run {
-            map.put(key, ProjectionCacheEntry.InProgress)
+        return map[key] ?: run {
+            map[key] = ProjectionCacheEntry.InProgress
             null
         }
     }

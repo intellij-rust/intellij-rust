@@ -14,13 +14,21 @@ interface Undoable {
     fun undo()
 }
 
+/** An entity that allows you to take a snapshot ([startSnapshot]) and then roll back to snapshot state. */
+abstract class Snapshotable {
+    protected val undoLog: UndoLog = UndoLog()
+
+    fun inSnapshot(): Boolean = undoLog.inSnapshot()
+    fun startSnapshot(): Snapshot = undoLog.startSnapshot()
+}
+
 class UndoLog {
     private val undoLog: MutableList<Undoable> = mutableListOf()
 
-    private fun isSnapshot(): Boolean = !undoLog.isEmpty()
+    fun inSnapshot(): Boolean = undoLog.isNotEmpty()
 
     fun logChange(undoable: Undoable) {
-        if (isSnapshot()) undoLog.add(undoable)
+        if (inSnapshot()) undoLog.add(undoable)
     }
 
     fun startSnapshot(): Snapshot = LogBasedSnapshot.start(undoLog)
