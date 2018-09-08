@@ -277,6 +277,23 @@ class RsPsiPatternTest : RsTestBase() {
         struct Foo(i32);
     """, RsPsiPattern.derivedTraitMetaItem)
 
+    fun `test literal in include macro`() = testPattern("""
+        include!("foo.rs");
+                  //^
+    """, RsPsiPattern.includeMacroLiteral)
+
+    fun `test literal in path attr on mod decl`() = testPattern("""
+        #[path="bar.rs"]
+                //^
+        mod foo;
+    """, RsPsiPattern.pathAttrLiteral)
+
+    fun `test literal in path attr on mod`() = testPattern("""
+        #[path="bar.rs"]
+                //^
+        mod foo {}
+    """, RsPsiPattern.pathAttrLiteral)
+
     private inline fun <reified T : PsiElement> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
         val element = findElementInEditor<T>()
