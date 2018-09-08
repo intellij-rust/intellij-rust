@@ -8,12 +8,13 @@ package org.rust.ide.annotator
 import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.MockEdition
 import org.rust.MockRustcVersion
+import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsErrorAnnotatorTest : RsAnnotationTestBase() {
     override val dataPath = "org/rust/ide/annotator/fixtures/errors"
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
     fun `test invalid module declarations`() = doTest("helper.rs")
 
     fun `test create file quick fix`() = checkByDirectory {
