@@ -9,28 +9,21 @@ import org.rust.RsTestBase
 
 class RsRainbowVisitorTest : RsTestBase() {
 
-    fun checkRainbow(code: String, isRainbowOn: Boolean = true, withColor: Boolean = false) {
-        myFixture.testRainbow(
-            "main.rs",
-            code,
-            isRainbowOn, withColor)
-    }
-
-    fun testPathBinding() = checkRainbow("""
+    fun `test path binding`() = checkRainbow("""
         fn main() {
             let mut <rainbow>test</rainbow> = "";
             <rainbow>test</rainbow> = "";
         }
     """)
 
-    fun testFunctionBinding() = checkRainbow("""
+    fun `test function binding`() = checkRainbow("""
         fn foo() {}
         fn main() {
             foo();
         }
     """, true)
 
-    fun testDifferentColor() = checkRainbow("""
+    fun `test different color`() = checkRainbow("""
         fn main() {
             let mut <rainbow color='ff000002'>test</rainbow> = "";
             <rainbow color='ff000002'>test</rainbow> = "";
@@ -39,7 +32,7 @@ class RsRainbowVisitorTest : RsTestBase() {
         }
     """, withColor = true)
 
-    fun testComplexDifferentColor() = checkRainbow("""
+    fun `test complex different color`() = checkRainbow("""
         fn foo(<rainbow color='ff000002'>test</rainbow>: i32) {
             let <rainbow color='ff000004'>x</rainbow> = <rainbow color='ff000002'>test</rainbow> + <rainbow color='ff000002'>test</rainbow>;
             let <rainbow color='ff000001'>y</rainbow> = {
@@ -49,4 +42,7 @@ class RsRainbowVisitorTest : RsTestBase() {
         }
     """, withColor = true)
 
+    private fun checkRainbow(code: String, isRainbowOn: Boolean = true, withColor: Boolean = false) {
+        myFixture.testRainbow("main.rs", code, isRainbowOn, withColor)
+    }
 }

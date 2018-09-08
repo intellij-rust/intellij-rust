@@ -6,11 +6,11 @@
 package org.rust.ide.template.postfix
 
 class LambdaPostfixTemplateTest : PostfixTemplateTest(LambdaPostfixTemplate(RsPostfixTemplateProvider())) {
-    fun testNotApplicable() = doTestNotApplicable("""
+    fun `test not applicable`() = doTestNotApplicable("""
         struct S { }.lambda/*caret*/
     """)
 
-    fun testSimple() = doTest("""
+    fun `test simple`() = doTest("""
         fn foo() {
             let a = 4 + 4.lambda/*caret*/;
         }
