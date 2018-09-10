@@ -44,6 +44,9 @@ class StdKnownItems private constructor(
     fun findIteratorTrait(): RsTraitItem? =
         findCoreItem("iter::Iterator") as? RsTraitItem
 
+    fun findIntoIteratorTrait(): RsTraitItem? =
+        findCoreItem("iter::IntoIterator") as? RsTraitItem
+
     fun findVecForElementTy(elementTy: Ty): Ty {
         val ty = findStdTy("alloc", "vec::Vec")
 
