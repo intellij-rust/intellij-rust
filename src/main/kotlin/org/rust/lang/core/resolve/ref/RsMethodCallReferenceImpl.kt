@@ -13,8 +13,6 @@ import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
@@ -38,7 +36,7 @@ class RsMethodCallReferenceImpl(
     }
 
     override fun multiResolve(): List<RsElement> =
-        element.inference?.getResolvedMethod(element) ?: emptyList()
+        element.inference?.getResolvedMethod(element)?.map { it.element } ?: emptyList()
 }
 
 class RsFieldLookupReferenceImpl(
@@ -103,17 +101,15 @@ data class FieldResolveVariant(
 data class MethodResolveVariant(
     override val name: String,
     override val element: RsFunction,
-    /**
-     * If the method defined in impl, this is the impl. If the method inherited from
-     * trait definition, this is the impl of the actual trait for the receiver type
-     */
-    val impl: RsImplItem?,
     override val selfTy: Ty,
-    override val derefCount: Int
-) : DotExprResolveVariant {
-    /** Legacy subst. Do not really used */
-    override val subst: Substitution get() = emptySubstitution
-}
+    override val derefCount: Int,
+    /**
+     * If the method defined in impl, this contains the impl. If the method inherited from
+     * trait definition, this contains the impl of the actual trait for the receiver type.
+     * Otherwise it's just a trait the method defined in
+     */
+    val source: TraitImplSource
+) : DotExprResolveVariant
 
 private fun <T: ScopeEntry> collectResolveVariants(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
     val result = mutableListOf<T>()
@@ -137,11 +133,11 @@ private fun filterMethodCompletionVariants(
     val cache = mutableMapOf<RsImplItem, Boolean>()
     return fun(it: ScopeEntry): Boolean {
         // 1. If not a method (actually a field) or a trait method - just process it
-        if (it !is MethodResolveVariant || it.impl == null) return processor(it)
+        if (it !is MethodResolveVariant || it.source !is TraitImplSource.ExplicitImpl) return processor(it)
         // 2. Filter methods by trait bounds (try to select all obligations for each impl)
         // We're caching evaluation results here because we can often complete to a methods
         // in the same impl and always have the same receiver type
-        if (cache.getOrPut(it.impl) { lookup.ctx.canEvaluateBounds(it.impl, receiver) }) return processor(it)
+        if (cache.getOrPut(it.source.value) { lookup.ctx.canEvaluateBounds(it.source.value, receiver) }) return processor(it)
 
         return false
     }

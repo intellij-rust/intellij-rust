@@ -120,6 +120,30 @@ val HARDCODED_FROM_IMPLS_MAP: Map<TyPrimitive, List<TyPrimitive>> = run {
     map
 }
 
+sealed class TraitImplSource {
+    abstract val value: RsTraitOrImpl
+
+    val impl: RsImplItem?
+        get() = (this as? TraitImplSource.ExplicitImpl)?.value
+
+    /** An impl block, directly defined in the code */
+    data class ExplicitImpl(override val value: RsImplItem): TraitImplSource()
+    /** T: Trait */
+    data class TraitBound(override val value: RsTraitItem): TraitImplSource()
+    /** Trait is implemented for item via ```#[derive]``` attribute. */
+    data class Derived(override val value: RsTraitItem): TraitImplSource()
+    /** dyn/impl Trait or a closure */
+    data class Object(override val value: RsTraitItem): TraitImplSource()
+    /**
+     * Used only as a result of method pick. It means that method is resolved to multiple impls of the same trait
+     * (with different type parameter values), so we collapsed all impls to that trait. Specific impl
+     * will be selected during type inference.
+     */
+    data class Collapsed(override val value: RsTraitItem): TraitImplSource()
+    /** A trait impl hardcoded in Intellij-Rust. Mostly it's something defined with a macro in stdlib */
+    data class Hardcoded(override val value: RsTraitItem): TraitImplSource()
+}
+
 class ImplLookup(
     private val project: Project,
     private val items: StdKnownItems
@@ -166,25 +190,27 @@ class ImplLookup(
         RsInferenceContext(this, items)
     }
 
-    fun findImplsAndTraits(ty: Ty): Set<RsTraitOrImpl> {
+    fun findImplsAndTraits(ty: Ty): Set<TraitImplSource> {
         return findImplsAndTraitsCache.getOrPut(project, freshen(ty)) { rawFindImplsAndTraits(ty) }
     }
 
-    private fun rawFindImplsAndTraits(ty: Ty): Set<RsTraitOrImpl> {
-        val implsAndTraits = mutableSetOf<RsTraitOrImpl>()
+    private fun rawFindImplsAndTraits(ty: Ty): Set<TraitImplSource> {
+        val implsAndTraits = mutableSetOf<TraitImplSource>()
         when (ty) {
-            is TyTypeParameter -> ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { it.element }
-            is TyTraitObject -> ty.trait.flattenHierarchy.mapTo(implsAndTraits) { it.element }
+            is TyTypeParameter ->
+                ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.TraitBound(it.element) }
+            is TyTraitObject ->
+                ty.trait.flattenHierarchy.mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
             is TyFunction -> {
-                implsAndTraits += findSimpleImpls(ty)
-                implsAndTraits += fnTraits
+                implsAndTraits += findSimpleImpls(ty).map { TraitImplSource.ExplicitImpl(it) }
+                implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
             }
-            is TyAnon -> ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { it.element }
+            is TyAnon -> ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
             is TyUnknown -> Unit
             else -> {
-                implsAndTraits += findDerivedTraits(ty)
-                implsAndTraits += findSimpleImpls(ty)
-                getHardcodedImpls(ty).mapTo(implsAndTraits) { it.element }
+                implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
+                implsAndTraits += findSimpleImpls(ty).map { TraitImplSource.ExplicitImpl(it) }
+                getHardcodedImpls(ty).mapTo(implsAndTraits) { TraitImplSource.Hardcoded(it.element) }
             }
         }
         return implsAndTraits
@@ -676,7 +702,7 @@ class ImplLookup(
             ImplLookup(psi.project, StdKnownItems.relativeTo(psi))
 
         private val findImplsAndTraitsCache =
-            ProjectCache<Ty, Set<RsTraitOrImpl>>("findImplsAndTraitsCache")
+            ProjectCache<Ty, Set<TraitImplSource>>("findImplsAndTraitsCache")
 
         private val traitSelectionCache =
             ProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("traitSelectionCache")

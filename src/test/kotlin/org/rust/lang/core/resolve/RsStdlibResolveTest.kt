@@ -555,4 +555,15 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn foo(v: Vec) {}
                  //^ .../liballoc/vec.rs
     """)
+
+    fun `test inherent impl have higher priority than derived`() = checkByCode("""
+        #[derive(Clone)]
+        struct S;
+        impl S {
+            fn clone(&self) {}
+        }    //X
+        fn main() {
+            S.clone();
+        }   //^
+    """)
 }

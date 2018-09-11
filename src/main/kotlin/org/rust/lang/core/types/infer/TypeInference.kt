@@ -15,10 +15,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.Selection
-import org.rust.lang.core.resolve.SelectionResult
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralType
 import org.rust.lang.core.types.*
@@ -59,7 +56,7 @@ class RsInferenceResult(
     private val bindings: Map<RsPatBinding, Ty>,
     private val exprTypes: Map<RsExpr, Ty>,
     private val resolvedPaths: Map<RsPathExpr, List<RsElement>>,
-    private val resolvedMethods: Map<RsMethodCall, List<RsFunction>>,
+    private val resolvedMethods: Map<RsMethodCall, List<MethodResolveVariant>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
     val diagnostics: List<RsDiagnostic>,
     val adjustments: Map<RsExpr, List<Adjustment>>
@@ -78,7 +75,7 @@ class RsInferenceResult(
     override fun getResolvedPaths(expr: RsPathExpr): List<RsElement> =
         resolvedPaths[expr] ?: emptyList()
 
-    fun getResolvedMethod(call: RsMethodCall): List<RsFunction> =
+    fun getResolvedMethod(call: RsMethodCall): List<MethodResolveVariant> =
         resolvedMethods[call] ?: emptyList()
 
     fun getResolvedField(call: RsFieldLookup): List<RsElement> =
@@ -106,7 +103,7 @@ class RsInferenceContext(
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
     private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
     private val resolvedPaths: MutableMap<RsPathExpr, List<RsElement>> = HashMap()
-    private val resolvedMethods: MutableMap<RsMethodCall, List<RsFunction>> = HashMap()
+    private val resolvedMethods: MutableMap<RsMethodCall, List<MethodResolveVariant>> = HashMap()
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = HashMap()
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
@@ -186,10 +183,10 @@ class RsInferenceContext(
                 ?.let { resolvedPaths[path] = listOf(it) }
         }
         for ((call, traitRef) in methodRefinements) {
-            val fnName = resolvedMethods[call]?.firstOrNull()?.name
-            lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()
-                ?.impl?.members?.functionList?.find { it.name == fnName }
-                ?.let { resolvedMethods[call] = listOf(it) }
+            val variant = resolvedMethods[call]?.firstOrNull() ?: continue
+            val impl = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()?.impl as? RsImplItem ?: continue
+            val fn = impl.members?.functionList?.find { it.name == variant.name } ?: continue
+            resolvedMethods[call] = listOf(variant.copy(element = fn, source = TraitImplSource.ExplicitImpl(impl)))
         }
     }
 
@@ -225,7 +222,7 @@ class RsInferenceContext(
         resolvedPaths[path] = resolved.map { it.element }
     }
 
-    fun writeResolvedMethod(call: RsMethodCall, resolvedTo: List<RsFunction>) {
+    fun writeResolvedMethod(call: RsMethodCall, resolvedTo: List<MethodResolveVariant>) {
         resolvedMethods[call] = resolvedTo
     }
 
@@ -1022,7 +1019,7 @@ class RsFnInferenceContext(
             val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
             val callee = pickSingleMethod(receiver, variants, methodCall)
             // If we failed to resolve ambiguity just write the all possible methods
-            val variantsForDisplay = (callee?.let(::listOf) ?: variants).map { it.element }
+            val variantsForDisplay = (callee?.let(::listOf) ?: variants)
             ctx.writeResolvedMethod(methodCall, variantsForDisplay)
 
             callee ?: variants.firstOrNull()
@@ -1033,7 +1030,7 @@ class RsFnInferenceContext(
             return methodType.retType
         }
 
-        val impl = callee.impl
+        val impl = callee.source.impl
         var typeParameters = if (impl != null) {
             val typeParameters = instantiateBounds(impl)
             impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
@@ -1097,12 +1094,13 @@ class RsFnInferenceContext(
         val filtered = variants.singleOrFilter {
             // 1. filter traits that are not imported
             TypeInferenceMarks.methodPickTraitScope.hit()
-            val trait = it.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem ?: return@singleOrFilter true
+            val trait = it.source.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem
+                ?: return@singleOrFilter true
             lookup.isTraitVisibleFrom(trait, methodCall)
         }.singleOrFilter { callee ->
             // 2. Filter methods by trait bounds (try to select all obligations for each impl)
             TypeInferenceMarks.methodPickCheckBounds.hit()
-            val impl = callee.impl ?: return@singleOrFilter true
+            val impl = callee.source.impl ?: return@singleOrFilter true
             ctx.canEvaluateBounds(impl, callee.selfTy)
         }.singleOrLet { list ->
             // 3. Pick results matching receiver type
@@ -1135,9 +1133,15 @@ class RsFnInferenceContext(
                 // We want to collapse them to the single function defined in the trait.
                 // Specific impl will be selected later according to the method parameter type.
                 val first = filtered.first()
-                collapseToTrait(filtered.map { it.element })?.let {
+                collapseToTrait(filtered.map { it.element })?.let { fn ->
                     TypeInferenceMarks.methodPickCollapseTraits.hit()
-                    MethodResolveVariant(first.name, it, null, first.selfTy, first.derefCount)
+                    MethodResolveVariant(
+                        first.name,
+                        fn,
+                        first.selfTy,
+                        first.derefCount,
+                        TraitImplSource.Collapsed((fn.owner as RsAbstractableOwner.Trait).trait)
+                    )
                 }
             }
         }
