@@ -19,9 +19,12 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.TraitImplSource
+import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
+import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.runWriteCommandAction
@@ -187,7 +190,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         }
 
         fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context<Unit>? {
-            val results = methodCall.reference.multiResolve()
+            val results = methodCall.inference?.getResolvedMethod(methodCall) ?: emptyList()
             if (results.isEmpty()) return Context(Unit, emptyList())
 
             val traitsToImport = collectTraitsToImport(methodCall, results) ?: return null
@@ -206,20 +209,27 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         private fun ImportItem.toImportCandidate(superMods: LinkedHashSet<RsMod>): ImportCandidate? =
             canBeImported(superMods)?.let { ImportCandidate(this, it) }
 
-        private fun collectTraitsToImport(methodCall: RsMethodCall, resolveResults: List<RsElement>): List<RsTraitItem>? {
+        private fun collectTraitsToImport(
+            methodCall: RsMethodCall,
+            resolveResults: List<MethodResolveVariant>
+        ): List<RsTraitItem>? {
             val lookup = ImplLookup.relativeTo(methodCall)
 
             val traitsToImport = mutableListOf<RsTraitItem>()
-            loop@for (fn in resolveResults) {
-                if (fn !is RsFunction) continue
-                val owner = fn.owner
-                val trait = when (owner) {
-                    is RsAbstractableOwner.Trait -> owner.trait
-                    is RsAbstractableOwner.Impl -> {
-                        if (owner.isInherent) return null
-                        owner.impl.traitRef?.resolveToTrait ?: continue@loop
+            loop@ for (variant in resolveResults) {
+                val source = variant.source
+                val trait = when (source) {
+                    is TraitImplSource.ExplicitImpl -> {
+                        val impl = source.value
+                        if (impl.traitRef == null) return null
+                        impl.traitRef?.resolveToTrait ?: continue@loop
                     }
-                    else -> return null
+                    is TraitImplSource.Derived -> source.value
+                    is TraitImplSource.Collapsed -> source.value
+                    is TraitImplSource.Hardcoded -> source.value
+
+                    is TraitImplSource.TraitBound -> return null
+                    is TraitImplSource.Object -> return null
                 }
 
                 if (lookup.isTraitVisibleFrom(trait, methodCall)) return null

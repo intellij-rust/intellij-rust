@@ -19,8 +19,8 @@ import org.rust.ide.icons.multiple
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.isStdDerivable
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isStdDerivable
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.StdDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
@@ -39,7 +39,7 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
         val alreadyDerived = ImplLookup.relativeTo(owner)
             .findImplsAndTraits(owner.declaredType)
             .mapNotNull {
-                val (trait, _) = it.implementedTrait ?: return@mapNotNull null
+                val (trait, _) = it.value.implementedTrait ?: return@mapNotNull null
                 if (trait.isStdDerivable) trait.name else null
             }
 
