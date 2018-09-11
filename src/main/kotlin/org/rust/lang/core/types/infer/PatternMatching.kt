@@ -8,6 +8,7 @@ package org.rust.lang.core.types.infer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -93,6 +94,13 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                 else -> TyUnknown
             }
             patList.forEach { it.extractBindings(fcx, elementType.toRefIfNeeded(mut), mut != null) }
+        }
+        is RsPatBox -> {
+            val (derefTy, mut) = type.stripReferences()
+            if (derefTy is TyAdt && derefTy.item == RsLangItemIndex.findBoxItem(project)) {
+                val boxed = derefTy.typeArguments.singleOrNull() ?: return
+                pat.extractBindings(fcx, boxed.toRefIfNeeded(mut), mut != null)
+            }
         }
         else -> {
             // not yet handled

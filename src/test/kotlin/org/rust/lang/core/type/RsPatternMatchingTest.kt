@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.type
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class RsPatternMatchingTest : RsTypificationTestBase() {
     fun `test if let pattern`() = testExpr("""
         enum E { L(i32), R(bool) }
@@ -218,6 +221,18 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test box pattern`() = stubOnlyTypeInfer("""
+    //- main.rs
+        #![feature(box_patterns)]
+        fn main() {
+            let a = Box::new(0);
+            match a {
+                box b => { b; }
+            }            //^ i32
+        }
+    """)
+
     fun `test match ergonomics tuple 1`() = testExpr("""
         fn main() {
             let (a, b) = &(1, 2);
@@ -338,6 +353,18 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
                 },
                 _ => {}
             };
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test match ergonomics box`() = stubOnlyTypeInfer("""
+    //- main.rs
+        #![feature(box_patterns)]
+        fn main() {
+            let a = &Box::new(0);
+            match a {
+                box b => { b; }
+            }            //^ &i32
         }
     """)
 }
