@@ -1217,4 +1217,18 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
 
         use crate::foo::Foo;
     """)
+
+    fun `test E0404 expected trait`() = checkErrors("""
+        struct S;
+        enum E {}
+        type T = S;
+        mod a {}
+        trait Trait {}
+        impl <error descr="Expected trait, found struct `S` [E0404]">S</error> for S {}
+        impl <error descr="Expected trait, found enum `E` [E0404]">E</error> for S {}
+        impl <error descr="Expected trait, found type alias `T` [E0404]">T</error> for S {}
+        impl <error descr="Expected trait, found module `a` [E0404]">a</error> for S {}
+        fn foo<A: <error descr="Expected trait, found struct `S` [E0404]">S</error>>() {}
+        impl Trait for S {}
+    """)
 }
