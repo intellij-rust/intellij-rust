@@ -20,6 +20,7 @@ fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
 fun IndexSink.indexStructItem(stub: RsStructItemStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
+    RsLangItemIndex.index(stub.psi, this)
 }
 
 fun IndexSink.indexEnumItem(stub: RsEnumItemStub) {
@@ -43,7 +44,7 @@ fun IndexSink.indexModItem(stub: RsModItemStub) {
 fun IndexSink.indexTraitItem(stub: RsTraitItemStub) {
     indexNamedStub(stub)
     indexGotoClass(stub)
-    RsLangItemIndex.index(stub, this)
+    RsLangItemIndex.index(stub.psi, this)
 }
 
 fun IndexSink.indexImplItem(stub: RsImplItemStub) {
