@@ -8,7 +8,6 @@ package org.rust.lang.core.resolve
 import com.intellij.codeInsight.lookup.LookupElement
 import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.isTest
@@ -101,7 +100,7 @@ data class AssocItemScopeEntry(
     override val name: String,
     override val element: RsElement,
     override val subst: Substitution = emptySubstitution,
-    val impl: RsImplItem?
+    val source: TraitImplSource
 ) : ScopeEntry
 
 private class LazyScopeEntry(

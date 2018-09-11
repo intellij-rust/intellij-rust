@@ -1250,4 +1250,29 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let x = 123.foo/*caret*/();
         }
     """)
+
+    /** Issue [2822](https://github.com/intellij-rust/intellij-rust/issues/2822) */
+    fun `test do not try to import trait object method`() = checkAutoImportFixIsUnavailable("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self) {}
+            }
+        }
+
+        fn bar(t: &dyn foo::Foo) {
+            t.foo/*caret*/();
+        }
+    """)
+
+    fun `test do not try to import trait bound method`() = checkAutoImportFixIsUnavailable("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self) {}
+            }
+        }
+
+        fn bar<T: foo::Foo>(t: T) {
+            t.foo/*caret*/();
+        }
+    """)
 }
