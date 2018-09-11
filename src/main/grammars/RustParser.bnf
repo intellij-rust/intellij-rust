@@ -85,7 +85,7 @@
     elementType(".+BinExpr") = BinaryExpr
     elementType(".+BinOp") = BinaryOp
 
-    extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Uniq|Const)") = Pat
+    extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const)") = Pat
 
     generateTokenAccessors=true
 
@@ -428,14 +428,14 @@ Pat ::= PatWild
       | PatIdent
       | (PatConst !('..' | '...' | '..='))
       | PatRange
-      | PatUniq {
+      | PatBox {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
       }
 
 private Pat_first ::= '_' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
 
 
-PatUniq ::= box Pat
+PatBox ::= box Pat
 
 // XXX(matklad): it is impossible to distinguish between nullary enum variants
 // and identifiers during parsing.
