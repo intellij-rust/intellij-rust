@@ -598,4 +598,58 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         include!("foo.rs/*caret*/");
     """)
+
+    fun `test complete path in path attribute on mod decl`() = doSingleCompletionMultifile("""
+    //- main.rs
+        #[path="b/*caret*/"]
+        mod foo;
+    //- bar.rs
+        fn bar() {}
+    """, """
+        #[path="bar.rs/*caret*/"]
+        mod foo;
+    """)
+
+    fun `test complete rust file path in path attribute`() = doSingleCompletionMultifile("""
+    //- main.rs
+        #[path="b/*caret*/"]
+        mod foo;
+    //- bar.rs
+        fn bar() {}
+    //- baz.txt
+        // some text
+    """, """
+        #[path="bar.rs/*caret*/"]
+        mod foo;
+    """)
+
+    fun `test complete path in path attribute on mod`() = doSingleCompletionMultifile("""
+    //- main.rs
+        #[path="ba/*caret*/"]
+        mod foo {
+        }
+    //- baz/bar.rs
+        fn bar() {}
+    """, """
+        #[path="baz/*caret*/"]
+        mod foo {
+        }
+    """)
+
+    fun `test complete path in path attribute on inner mod decl`() = doSingleCompletionMultifile("""
+    //- main.rs
+        #[path="baz"]
+        mod foo {
+            #[path="ba/*caret*/"]
+            mod qqq;
+        }
+    //- baz/bar.rs
+        fn bar() {}
+    """, """
+        #[path="baz"]
+        mod foo {
+            #[path="bar.rs/*caret*/"]
+            mod qqq;
+        }
+    """)
 }
