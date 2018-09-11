@@ -31,13 +31,15 @@ data class CargoWorkspaceData(
         val version: String,
         val targets: Collection<Target>,
         val source: String?,
-        val origin: PackageOrigin
+        val origin: PackageOrigin,
+        val edition: CargoWorkspace.Edition
     )
 
     data class Target(
         val crateRootUrl: String,
         val name: String,
         val kind: CargoWorkspace.TargetKind,
-        val crateTypes: List<CargoWorkspace.CrateType>
+        val crateTypes: List<CargoWorkspace.CrateType>,
+        val edition: CargoWorkspace.Edition
     )
 }

@@ -14,8 +14,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
-import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
+import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Package
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
@@ -53,17 +52,18 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, emptyMap()))
     }
 
-    protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = Package(
+    protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoWorkspaceData.Package(
         id = "$name 0.0.1",
         contentRootUrl = contentRoot,
         name = name,
         version = "0.0.1",
         targets = listOf(
-            Target("$contentRoot/main.rs", name, TargetKind.BIN, listOf(CrateType.BIN)),
-            Target("$contentRoot/lib.rs", name, TargetKind.LIB, listOf(CrateType.LIB))
+            Target("$contentRoot/main.rs", name, TargetKind.BIN, listOf(CrateType.BIN), edition = Edition.EDITION_2015),
+            Target("$contentRoot/lib.rs", name, TargetKind.LIB, listOf(CrateType.LIB), edition = Edition.EDITION_2015)
         ),
         source = null,
-        origin = PackageOrigin.WORKSPACE
+        origin = PackageOrigin.WORKSPACE,
+        edition = Edition.EDITION_2015
     )
 }
 
@@ -115,10 +115,12 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             targets = listOf(
                 // don't use `FileUtil.join` here because it uses `File.separator`
                 // which is system dependent although all other code uses `/` as separator
-                Target(source?.let { "$contentRoot/$it" } ?: "", targetName, TargetKind.LIB, listOf(CrateType.BIN))
+                Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
+                    TargetKind.LIB, listOf(CrateType.BIN), Edition.EDITION_2015)
             ),
             source = source,
-            origin = origin
+            origin = origin,
+            edition = Edition.EDITION_2015
         )
     }
 

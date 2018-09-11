@@ -10,8 +10,7 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
-import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
+import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -84,7 +83,15 @@ object CargoMetadata {
          * Artifacts that can be build from this package.
          * This is a list of crates that can be build from the package.
          */
-        val targets: List<Target>
+        val targets: List<Target>,
+
+        /**
+         * Code edition of current package.
+         *
+         * Can be "2015", "2018" or null. Null value can be got from old version of cargo
+         * so it is the same as "2015"
+         */
+        val edition: String?
     )
 
 
@@ -112,7 +119,15 @@ object CargoMetadata {
          *
          * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
          */
-        val crate_types: List<String>
+        val crate_types: List<String>,
+
+        /**
+         * Code edition of current target.
+         *
+         * Can be "2015", "2018" or null. Null value can be got from old version of cargo
+         * so it is the same as "2015"
+         */
+        val edition: String?
     ) {
         val cleanKind: TargetKind
             get() = when (kind.singleOrNull()) {
@@ -141,7 +156,7 @@ object CargoMetadata {
                     else -> CrateType.UNKNOWN
                 }
             }
-        }
+    }
 
     /**
      * A rooted graph of dependencies, represented as adjacency list
@@ -206,7 +221,8 @@ object CargoMetadata {
             version,
             targets.mapNotNull { it.clean(root) },
             source,
-            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY
+            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
+            edition = edition.cleanEdition()
         )
     }
 
@@ -214,7 +230,14 @@ object CargoMetadata {
 
         val mainFile = root.findFileByMaybeRelativePath(src_path)
 
-        return mainFile?.let { CargoWorkspaceData.Target(it.url, name, cleanKind, cleanCrateTypes) }
+        return mainFile?.let {
+            CargoWorkspaceData.Target(it.url, name, cleanKind, cleanCrateTypes, edition.cleanEdition())
+        }
+    }
+
+    private fun String?.cleanEdition(): Edition = when (this) {
+        "2015" -> Edition.EDITION_2015
+        "2018" -> Edition.EDITION_2018
+        else -> Edition.EDITION_2015
     }
 }
-

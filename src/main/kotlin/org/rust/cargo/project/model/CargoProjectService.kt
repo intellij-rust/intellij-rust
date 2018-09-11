@@ -47,6 +47,9 @@ interface CargoProjectsService {
     fun setRustcInfo(rustcInfo: RustcInfo)
 
     @TestOnly
+    fun setEdition(edition: CargoWorkspace.Edition)
+
+    @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {
         val projects = discoverAndRefresh().get(1, TimeUnit.MINUTES)
             ?: error("Timeout when refreshing a test Cargo project")

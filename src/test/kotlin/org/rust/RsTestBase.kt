@@ -23,6 +23,7 @@ import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustcVersion
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -51,6 +52,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         (projectDescriptor as? RustProjectDescriptorBase)?.setUp(myFixture)
 
         setupMockRustcVersion()
+        setupMockEdition()
     }
 
     private fun setupMockRustcVersion() {
@@ -58,6 +60,11 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         val (semVer, channel) = parse(annotation.rustcVersion)
         val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel))
         project.cargoProjects.setRustcInfo(rustcInfo)
+    }
+
+    private fun setupMockEdition() {
+        val edition = findAnnotationInstance<MockEdition>()?.edition ?: CargoWorkspace.Edition.EDITION_2015
+        project.cargoProjects.setEdition(edition)
     }
 
     private fun parse(version: String): Pair<SemVer, RustChannel> {
