@@ -12,7 +12,6 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustChannel
@@ -25,6 +24,7 @@ import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAM
 import org.rust.lang.core.CRATE_IN_PATHS
 import org.rust.ide.annotator.fixes.ImplementFromTraitFix
 import org.rust.ide.presentation.insertionSafeText
+import org.rust.lang.core.CRATE_IN_PATHS
 import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.FeatureState.ACCEPTED
@@ -94,7 +94,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val fromTrait = items.findFromTrait() ?: return
 
         val tryExprTy = o.expr.type
-        val errorTy = findErrorTyUsingTryTrait(o.expr.type, tryTrait, lookup)
+        val errorTy = findErrorTyUsingTryTrait(tryExprTy, tryTrait, lookup)
         if (errorTy == null) {
             holder.createErrorAnnotation(
                 o.q,
@@ -115,7 +115,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
         if (isFnRetTyResultAndMatchErrTy(o.expr, returnTy, errorTy) || !checkTryTraitFeature(o)) return
 
-        if (!lookup.canSelect(TraitRef(returnTy, fromTrait.withSubst(tryExprTy)))) {
+        if (!lookup.canSelect(TraitRef(fooErrorTy, fromTrait.withSubst(errorTy)))) {
             val annotation = holder.createErrorAnnotation(
                 o.q,
                 "the trait `std::convert::From<${errorTy.insertionSafeText}>` is not implemented for `${fooErrorTy.insertionSafeText}`"
