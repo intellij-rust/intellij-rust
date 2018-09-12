@@ -3,14 +3,13 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator.fixes
+package org.rust.ide.inspections
 
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.ide.annotator.RsAnnotationTestBase
 import org.rust.MockEdition
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-class FixUsePathsFixTest : RsAnnotationTestBase() {
+class RsAnchoredPathsInspectionTest : RsInspectionsTestBase(RsAnchoredPathsInspection()) {
 
     fun `test add crate keyword 1`() = checkFixByText("Add `crate` at the beginning of path", """
         mod foo {

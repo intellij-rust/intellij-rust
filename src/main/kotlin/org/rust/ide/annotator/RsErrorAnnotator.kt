@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.ide.annotator.fixes.AddCrateKeywordFix
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
@@ -25,8 +24,6 @@ import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.FeatureState.ACCEPTED
 import org.rust.lang.core.FeatureState.ACTIVE
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.CSELF
-import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
@@ -226,25 +223,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             }
         }
 
-        if (edition == Edition.EDITION_2018 && parent is RsUseSpeck && parent.qualifier == null) {
-            checkPathInUseItem(path, holder)
-        }
-
         checkReferenceIsPublic(path, path, holder)
-    }
-
-    private fun checkPathInUseItem(path: RsPath, holder: AnnotationHolder) {
-        val basePath = path.basePath()
-        basePath.node.findChildByType(tokenSetOf(IDENTIFIER, CSELF)) ?: return
-
-        val element = basePath.reference.resolve()
-        if (element is RsMod && element.isCrateRoot) return
-        val annotation = holder.createErrorAnnotation(path,
-            "Paths in `use` declarations should start with a crate name, or with `crate`, `super`, or `self`")
-        // TODO: add fixes for other cases
-        if (element != null && element.crateRoot == path.crateRoot && element.containingMod.isCrateRoot) {
-            annotation.registerFix(AddCrateKeywordFix(path))
-        }
     }
 
     private fun checkLifetimeParameter(holder: AnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
