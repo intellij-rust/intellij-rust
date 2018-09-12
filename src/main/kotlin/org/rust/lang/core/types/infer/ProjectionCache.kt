@@ -7,6 +7,8 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyProjection
+import org.rust.lang.utils.snapshot.Snapshot
+import org.rust.lang.utils.snapshot.SnapshotMap
 
 /**
  * The projection cache. Unlike the standard caches, this can
@@ -31,8 +33,8 @@ class ProjectionCache {
      * to the cache and returns `null`
      */
     fun tryStart(key: TyProjection): ProjectionCacheEntry? {
-        return map.get(key) ?: run {
-            map.put(key, ProjectionCacheEntry.InProgress)
+        return map[key] ?: run {
+            map[key] = ProjectionCacheEntry.InProgress
             null
         }
     }

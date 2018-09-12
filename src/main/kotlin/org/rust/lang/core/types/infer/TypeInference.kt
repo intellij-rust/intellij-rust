@@ -23,6 +23,8 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.snapshot.CombinedSnapshot
+import org.rust.lang.utils.snapshot.Snapshot
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
 import org.rust.openapiext.recursionGuard
@@ -114,11 +116,6 @@ class RsInferenceContext(
     private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> = UnificationTable()
     private val varUnificationTable: UnificationTable<TyInfer.TyVar, Ty> = UnificationTable()
     private val projectionCache: ProjectionCache = ProjectionCache()
-
-    private class CombinedSnapshot(vararg val snapshots: Snapshot) : Snapshot {
-        override fun rollback() = snapshots.forEach { it.rollback() }
-        override fun commit() = snapshots.forEach { it.commit() }
-    }
 
     fun startSnapshot(): Snapshot = CombinedSnapshot(
         intUnificationTable.startSnapshot(),

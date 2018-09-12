@@ -3,11 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.infer
+package org.rust.lang.utils.snapshot
 
 interface Snapshot {
     fun commit()
-
     fun rollback()
 }
 
@@ -15,13 +14,21 @@ interface Undoable {
     fun undo()
 }
 
+/** An entity that allows you to take a snapshot ([startSnapshot]) and then roll back to snapshot state. */
+abstract class Snapshotable {
+    protected val undoLog: UndoLog = UndoLog()
+
+    fun inSnapshot(): Boolean = undoLog.inSnapshot()
+    fun startSnapshot(): Snapshot = undoLog.startSnapshot()
+}
+
 class UndoLog {
     private val undoLog: MutableList<Undoable> = mutableListOf()
 
-    private fun isSnapshot(): Boolean = !undoLog.isEmpty()
+    fun inSnapshot(): Boolean = undoLog.isNotEmpty()
 
     fun logChange(undoable: Undoable) {
-        if (isSnapshot()) undoLog.add(undoable)
+        if (inSnapshot()) undoLog.add(undoable)
     }
 
     fun startSnapshot(): Snapshot = LogBasedSnapshot.start(undoLog)
@@ -30,7 +37,7 @@ class UndoLog {
 private class LogBasedSnapshot private constructor(
     private val undoLog: MutableList<Undoable>,
     val position: Int
-): Snapshot {
+) : Snapshot {
     override fun commit() {
         assertOpenSnapshot()
         if (position == 0) {
@@ -40,7 +47,7 @@ private class LogBasedSnapshot private constructor(
         }
     }
 
-    override fun rollback(){
+    override fun rollback() {
         assertOpenSnapshot()
         val toRollback = undoLog.subList(position + 1, undoLog.size)
         toRollback.asReversed().forEach(Undoable::undo)
@@ -74,4 +81,9 @@ private class LogBasedSnapshot private constructor(
             // the inner is committed but outer is rolled back.
         }
     }
+}
+
+class CombinedSnapshot(vararg val snapshots: Snapshot) : Snapshot {
+    override fun rollback() = snapshots.forEach { it.rollback() }
+    override fun commit() = snapshots.forEach { it.commit() }
 }

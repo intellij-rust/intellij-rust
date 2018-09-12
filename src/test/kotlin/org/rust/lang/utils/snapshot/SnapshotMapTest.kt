@@ -3,17 +3,15 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.type
+package org.rust.lang.utils.snapshot
 
 import junit.framework.TestCase
-import org.rust.lang.core.types.infer.SnapshotMap
-import org.rust.lang.core.types.infer.UnificationTable
 
 /**
- * [SnapshotMap] shares snapshot logic with [UnificationTable], so snapshot/rollback mechanics
- * mostly tested in [RsUnificationTableTest]
+ * [SnapshotMap] shares snapshot logic with [ org.rust.lang.core.type.RsUnificationTableTest],
+ * so snapshot/rollback mechanics mostly tested in [org.rust.lang.core.type.RsUnificationTableTest]
  */
-class RsSnapshotMapTest : TestCase() {
+class SnapshotMapTest : TestCase() {
 
     private object Key
 
@@ -24,26 +22,26 @@ class RsSnapshotMapTest : TestCase() {
 
     fun `test simple insert`() {
         val map = SnapshotMap<Key, Value>()
-        map.put(Key, Value.Value1)
-        check(map.get(Key) == Value.Value1)
+        map[Key] = Value.Value1
+        check(map[Key] == Value.Value1)
     }
 
     fun `test snapshot-rollback insert`() {
         val map = SnapshotMap<Key, Value>()
         val snapshot = map.startSnapshot()
-        map.put(Key, Value.Value1)
-        check(map.get(Key) == Value.Value1)
+        map[Key] = Value.Value1
+        check(map[Key] == Value.Value1)
         snapshot.rollback()
-        check(map.get(Key) == null)
+        check(map[Key] == null)
     }
 
     fun `test snapshot-rollback overwrite`() {
         val map = SnapshotMap<Key, Value>()
-        map.put(Key, Value.Value1)
+        map[Key] = Value.Value1
         val snapshot = map.startSnapshot()
-        map.put(Key, Value.Value2)
-        check(map.get(Key) == Value.Value2)
+        map[Key] = Value.Value2
+        check(map[Key] == Value.Value2)
         snapshot.rollback()
-        check(map.get(Key) == Value.Value1)
+        check(map[Key] == Value.Value1)
     }
 }
