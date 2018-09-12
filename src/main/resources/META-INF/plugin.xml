@@ -462,6 +462,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsAssignToImmutableInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Edition 2018"
+                         displayName="Anchored paths"
+                         enabledByDefault="false" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsAnchoredPathsInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
