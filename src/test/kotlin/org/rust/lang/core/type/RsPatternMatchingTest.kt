@@ -336,6 +336,18 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         } //^ &i32
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test match ergonomics box`() = stubOnlyTypeInfer("""
+    //- main.rs
+        #![feature(box_patterns)]
+        fn main() {
+            let a = &Box::new(0);
+            match a {
+                box b => { b; }
+            }            //^ &i32
+        }
+    """)
+
     fun `test double ref`() = testExpr("""
         fn main() {
             let ref a = &0;
@@ -343,6 +355,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         } //^ &&i32
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test unknown`() = testExpr("""
         fn main() {
             let x = unknown;
@@ -353,18 +366,6 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
                 },
                 _ => {}
             };
-        }
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test match ergonomics box`() = stubOnlyTypeInfer("""
-    //- main.rs
-        #![feature(box_patterns)]
-        fn main() {
-            let a = &Box::new(0);
-            match a {
-                box b => { b; }
-            }            //^ &i32
         }
     """)
 }
