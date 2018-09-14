@@ -1,0 +1,7 @@
+enum Foo {
+    A, B, C
+}
+
+fn foo(x: Foo) {
+    <spot>x</spot>.match
+}

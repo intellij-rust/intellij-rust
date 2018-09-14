@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class MatchPostfixTemplateTest : PostfixTemplateTest(MatchPostfixTemplate(RsPostfixTemplateProvider())) {
+class MatchPostfixTemplateTest : RsPostfixTemplateTest(MatchPostfixTemplate(RsPostfixTemplateProvider())) {
     fun `test simple`() = doTest("""
         enum Message {
             Quit,

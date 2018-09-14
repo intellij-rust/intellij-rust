@@ -1,0 +1,6 @@
+pub fn main() {
+    let v = vec![1, 2, 3];
+    for <spot>x</spot> in v {
+
+    }
+}

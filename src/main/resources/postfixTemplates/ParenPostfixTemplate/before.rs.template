@@ -1,0 +1,3 @@
+pub fn main() {
+    <spot>2 + 4</spot>.par
+}
