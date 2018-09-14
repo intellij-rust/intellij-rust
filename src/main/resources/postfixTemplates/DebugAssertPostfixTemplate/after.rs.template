@@ -1,0 +1,6 @@
+#[test]
+fn foo() {
+    let foo = 2;
+    let bar = 4;
+    debug_assert_eq!(foo, bar);
+}

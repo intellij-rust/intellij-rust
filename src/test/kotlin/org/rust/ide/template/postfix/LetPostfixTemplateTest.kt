@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class LetPostfixTemplateTest : PostfixTemplateTest(LetPostfixTemplate(RsPostfixTemplateProvider())) {
+class LetPostfixTemplateTest : RsPostfixTemplateTest(LetPostfixTemplate(RsPostfixTemplateProvider())) {
     fun `test not expr`() = doTestNotApplicable("""
         fn foo() {
             println!("test");.let/*caret*/

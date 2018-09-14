@@ -12,7 +12,27 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
 
-abstract class PostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTestBase() {
+abstract class RsPostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTestBase() {
+
+    fun `test template has documentation`() {
+        val description = "postfixTemplates/${postfixTemplate.javaClass.simpleName}/description.html"
+        val text = getResourceAsString(description)
+            ?: error("No postfix template description for ${postfixTemplate.javaClass} ($description)")
+        checkHtmlStyle(text)
+
+        checkExampleTemplate("before.rs.template")
+        checkExampleTemplate("after.rs.template")
+    }
+
+    private fun checkExampleTemplate(fileName: String) {
+        val path = "postfixTemplates/${postfixTemplate.javaClass.simpleName}/$fileName"
+        val text = getResourceAsString(path)
+            ?: error("No `$fileName` for ${postfixTemplate.javaClass.simpleName}")
+        if (text.isBlank()) {
+            error("Please add example text into `$path`")
+        }
+    }
+
     protected fun doTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
