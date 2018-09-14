@@ -9,7 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class IterPostFixTemplateTest : PostfixTemplateTest(IterPostfixTemplate(RsPostfixTemplateProvider())) {
+class IterPostFixTemplateTest : RsPostfixTemplateTest(IterPostfixTemplate(RsPostfixTemplateProvider())) {
 
     fun `test non iterable expr`() = doTestNotApplicable("""
             let b = 5;

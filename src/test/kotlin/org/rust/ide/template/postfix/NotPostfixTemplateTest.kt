@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class NotPostfixTemplateTest : PostfixTemplateTest(NotPostfixTemplate(RsPostfixTemplateProvider())) {
+class NotPostfixTemplateTest : RsPostfixTemplateTest(NotPostfixTemplate(RsPostfixTemplateProvider())) {
     fun `test simple`() = doTest("""
         fn foo() {
             assert!(nodes.is_empty().not/*caret*/);

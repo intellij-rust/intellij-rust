@@ -1,0 +1,3 @@
+fn foo(value: bool) {
+    <spot>value</spot>.whilenot
+}

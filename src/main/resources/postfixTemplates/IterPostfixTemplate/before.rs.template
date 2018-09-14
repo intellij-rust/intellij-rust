@@ -1,0 +1,4 @@
+pub fn main() {
+    let v = vec![1, 2, 3];
+    <spot>v</spot>.iter
+}
