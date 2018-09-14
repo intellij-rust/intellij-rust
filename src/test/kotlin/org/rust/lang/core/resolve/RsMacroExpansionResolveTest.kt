@@ -23,6 +23,48 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         }      //^
     """)
 
+    fun `test multiple lazy static 1`() = checkByCode("""
+        #[macro_use]
+        extern crate lazy_static;
+
+        struct Foo {}
+        impl Foo {
+            fn new() -> Foo { Foo {} }
+            fn bar (&self) {}
+        }     //X
+
+        lazy_static! {
+            static ref FOO_1: Foo = Foo::new();
+            static ref FOO_2: Foo = Foo::new();
+        }
+
+        fn main() {
+            FOO_1.bar();
+                 //^
+        }
+    """)
+
+    fun `test multiple lazy static 2`() = checkByCode("""
+        #[macro_use]
+        extern crate lazy_static;
+
+        struct Foo {}
+        impl Foo {
+            fn new() -> Foo { Foo {} }
+            fn bar (&self) {}
+        }     //X
+
+        lazy_static! {
+            static ref FOO_1: Foo = Foo::new();
+            static ref FOO_2: Foo = Foo::new();
+        }
+
+        fn main() {
+            FOO_2.bar();
+                 //^
+        }
+    """)
+
     fun `test expand item`() = checkByCode("""
         macro_rules! if_std {
             ($ i:item) => (
