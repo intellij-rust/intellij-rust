@@ -62,7 +62,7 @@ class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
 
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 
-    override fun setVariables(template: Template, element: PsiElement): Unit {
+    override fun setVariables(template: Template, element: PsiElement) {
         with(template) {
             addVariable("PAT", TextExpression("_"), true)
         }
@@ -73,7 +73,11 @@ class IterPostfixTemplate(provider: RsPostfixTemplateProvider) :
     StringBasedPostfixTemplate("iter", "for x in expr",
         RsTopMostInScopeSelector { it.implementsIntoIter || it.implementsIter }, provider) {
     override fun getTemplateString(element: PsiElement): String =
-        "for x in ${element.text} {\n\$END$\n}"
+        "for \$name$ in ${element.text} {\n     \$END$\n}"
+
+    override fun setVariables(template: Template, element: PsiElement) {
+        template.addVariable("name", TextExpression("x"), true)
+    }
 
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
