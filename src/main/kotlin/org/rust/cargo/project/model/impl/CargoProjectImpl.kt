@@ -122,14 +122,18 @@ class CargoProjectsServiceImpl(
             }
         })
 
-    override fun findProjectForFile(file: VirtualFile): CargoProject? =
-        directoryIndex.getInfoForFile(file).takeIf { it !== noProjectMarker }
+    private val packageIndex: CargoPackageIndex = CargoPackageIndex(project, this)
 
     override val allProjects: Collection<CargoProject>
         get() = projects.currentState
 
     override val hasAtLeastOneValidProject: Boolean
         get() = hasAtLeastOneValidProject(allProjects)
+
+    override fun findProjectForFile(file: VirtualFile): CargoProject? =
+        directoryIndex.getInfoForFile(file).takeIf { it !== noProjectMarker }
+
+    override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? = packageIndex.findPackageForFile(file)
 
     override fun attachCargoProject(manifest: Path): Boolean {
         if (isExistingProject(allProjects, manifest)) return false
@@ -181,10 +185,10 @@ class CargoProjectsServiceImpl(
                         directoryIndex.resetIndex()
                         ProjectRootManagerEx.getInstanceEx(project)
                             .makeRootsChange(EmptyRunnable.getInstance(), false, true)
+                        project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
+                            .cargoProjectsUpdated(projects)
                     }
                 }
-                project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
-                    .cargoProjectsUpdated(projects)
 
                 projects
             }
