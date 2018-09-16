@@ -82,14 +82,19 @@ class CargoToolWindow(
                 val tree = e.source as? CargoProjectStructureTree ?: return
                 val node = tree.selectionModel.selectionPath
                     ?.lastPathComponent as? DefaultMutableTreeNode ?: return
-                val target = (node.userObject as? CargoProjectStructure.Node.Target)?.target ?: return
-                val command = target.launchCommand()
-                if (command == null) {
-                    LOG.warn("Can't create launch command for `${target.name}` target")
-                    return
+                val userObject = node.userObject
+                when (userObject) {
+                    is CargoProjectStructure.Node.Target -> {
+                        val target = userObject.target
+                        val command = target.launchCommand()
+                        if (command == null) {
+                            LOG.warn("Can't create launch command for `${target.name}` target")
+                            return
+                        }
+                        val cargoProject = selectedProject ?: return
+                        CargoCommandLine.forTarget(target, command).run(cargoProject)
+                    }
                 }
-                val cargoProject = selectedProject ?: return
-                CargoCommandLine.forTarget(target, command).run(cargoProject)
             }
         })
     }
