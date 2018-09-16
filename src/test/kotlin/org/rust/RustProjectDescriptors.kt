@@ -109,7 +109,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
     ): Package {
         return Package(
             id = "$name $version",
-            contentRootUrl = "",
+            contentRootUrl = contentRoot,
             name = name,
             version = version,
             targets = listOf(
@@ -134,10 +134,11 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val packages = listOf(
             testCargoPackage(contentRoot),
-            externalPackage(contentRoot, "dep-lib/lib.rs", "dep-lib", "dep-lib-target"),
-            externalPackage(contentRoot, null, "nosrc-lib", "nosrc-lib-target"),
-            externalPackage(contentRoot, "trans-lib/lib.rs", "trans-lib"),
-            externalPackage(contentRoot, "dep-lib-new/lib.rs", "dep-lib", "dep-lib-target",
+            externalPackage("$contentRoot/dep-lib", "lib.rs", "dep-lib", "dep-lib-target"),
+            externalPackage("", null, "nosrc-lib", "nosrc-lib-target"),
+            externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib",
+                origin = PackageOrigin.TRANSITIVE_DEPENDENCY),
+            externalPackage("$contentRoot/dep-lib-new", "lib.rs", "dep-lib", "dep-lib-target",
                 version = "0.0.2", origin = PackageOrigin.TRANSITIVE_DEPENDENCY)
         )
 
