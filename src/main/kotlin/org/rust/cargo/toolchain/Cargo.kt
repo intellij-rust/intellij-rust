@@ -56,10 +56,14 @@ class Cargo(private val cargoExecutable: Path) {
      * runs for too long.
      */
     @Throws(ExecutionException::class)
-    fun fullProjectDescription(owner: Disposable, projectDirectory: Path, listener: ProcessListener? = null): CargoWorkspace {
-        val json = CargoCommandLine("metadata", projectDirectory,
-            listOf("--verbose", "--format-version", "1", "--all-features")
-        ).execute(owner, listener)
+    fun fullProjectDescription(owner: Project, projectDirectory: Path, listener: ProcessListener? = null): CargoWorkspace {
+        val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
+        if (owner.rustSettings.useOfflineForCargoCheck) {
+            additionalArgs += "-Zoffline"
+        }
+
+        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
+            .execute(owner, listener)
             .stdout
             .dropWhile { it != '{' }
         val rawData = try {
