@@ -21,7 +21,7 @@ fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<RsExpandedEl
     val context = call.context as? RsElement ?: return NULL_RESULT
     return when {
         call.macroName == "lazy_static" -> {
-            val result = expandLazyStatic(call)?.let { listOf(it) }
+            val result = expandLazyStatic(call)
             result?.forEach {
                 it.setContext(context)
                 it.setExpandedFrom(call)
