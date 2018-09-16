@@ -38,7 +38,10 @@ class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
                     }
             }
 
-        fun findElementsByName(project: Project, target: String): Collection<RsNamedElement> =
-            getElements(KEY, target, project, GlobalSearchScope.allScope(project))
+        fun findElementsByName(
+            project: Project,
+            target: String,
+            scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
+        ): Collection<RsNamedElement> = getElements(KEY, target, project, scope)
     }
 }

@@ -12,10 +12,13 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Consumer
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.ide.search.RsCargoProjectScope
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -162,12 +165,14 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             val pathMod = path.containingMod
             val pathSuperMods = LinkedHashSet(pathMod.superMods)
 
-            val explicitItems = RsNamedElementIndex.findElementsByName(project, basePath.referenceName)
+            val scope = RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project))
+
+            val explicitItems = RsNamedElementIndex.findElementsByName(project, basePath.referenceName, scope)
                 .asSequence()
                 .filterIsInstance<RsQualifiedNamedElement>()
                 .map { ImportItem.ExplicitItem(it) }
 
-            val reexportedItems = RsReexportIndex.findReexportsByName(project, basePath.referenceName)
+            val reexportedItems = RsReexportIndex.findReexportsByName(project, basePath.referenceName, scope)
                 .asSequence()
                 .mapNotNull {
                     val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null

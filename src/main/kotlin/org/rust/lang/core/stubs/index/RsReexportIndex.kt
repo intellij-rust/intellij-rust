@@ -34,7 +34,10 @@ class RsReexportIndex : StringStubIndexExtension<RsUseSpeck>() {
             sink.occurrence(KEY, name)
         }
 
-        fun findReexportsByName(project: Project, target: String): Collection<RsUseSpeck> =
-            getElements(KEY, target, project, GlobalSearchScope.allScope(project))
+        fun findReexportsByName(
+            project: Project,
+            target: String,
+            scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
+        ): Collection<RsUseSpeck> = getElements(KEY, target, project, scope)
     }
 }

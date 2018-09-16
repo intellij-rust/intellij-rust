@@ -388,4 +388,36 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             f.read_to_string/*caret*/(&mut s);
         }
     """)
+
+    fun `test do not suggest items from transitive dependencies`() = checkAutoImportFixByFileTree("""
+        //- dep-lib-new/lib.rs
+        pub struct Foo;
+
+        //- dep-lib/lib.rs
+        extern crate dep_lib_target;
+
+        pub use dep_lib_target::Foo;
+
+        //- main.rs
+        fn main() {
+            let foo = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        //- dep-lib-new/lib.rs
+        pub struct Foo;
+
+        //- dep-lib/lib.rs
+        extern crate dep_lib_target;
+
+        pub use dep_lib_target::Foo;
+
+        //- main.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::Foo;
+
+        fn main() {
+            let foo = Foo/*caret*/;
+        }
+    """)
 }
