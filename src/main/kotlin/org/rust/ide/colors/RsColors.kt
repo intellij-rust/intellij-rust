@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 /**
  * See [RsColorSettingsPage] and [org.rust.ide.highlight.RsHighlighter]
  */
-enum class RsColor(humanName: String, val default: TextAttributesKey) {
+enum class RsColor(val humanName: String, val default: TextAttributesKey) {
     IDENTIFIER("Variables//Default", Default.IDENTIFIER),
     MUT_BINDING("Variables//Mutable binding", Default.IDENTIFIER),
     FIELD("Variables//Field", Default.INSTANCE_FIELD),
