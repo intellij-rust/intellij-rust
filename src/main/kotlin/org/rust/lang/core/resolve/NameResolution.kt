@@ -171,8 +171,8 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     return false
 }
 
-fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    val target = crate.containingCargoTarget ?: return false
+fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+    val target = element.containingCargoTarget ?: return false
     val pkg = target.pkg
 
     val visitedDeps = mutableSetOf<String>()
@@ -186,7 +186,7 @@ fun processExternCrateResolveVariants(crate: RsExternCrateItem, isCompletion: Bo
         if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
         visitedDeps += pkg.name
         return processor.lazy(libTarget.normName) {
-            libTarget.crateRoot?.toPsiFile(crate.project)?.rustFile
+            libTarget.crateRoot?.toPsiFile(element.project)?.rustFile
         }
     }
 
@@ -305,6 +305,10 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             val superMod = containingMod.`super`
             if (superMod != null && processor("super", superMod)) return true
             if (crateRoot != null && processor("crate", crateRoot)) return true
+            if (path.kind == PathKind.IDENTIFIER &&
+                path.containingCargoTarget?.edition == CargoWorkspace.Edition.EDITION_2018) {
+                if (processExternCrateResolveVariants(path, isCompletion, processor)) return true
+            }
         }
     }
 

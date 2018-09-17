@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 139
+        override fun getStubVersion(): Int = 140
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -693,7 +693,7 @@ class RsPathStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val referenceName: String,
     val hasColonColon: Boolean,
-    val hasCself: Boolean
+    val kind: PathKind
 ) : StubBase<RsPath>(parent, elementType) {
 
     object Type : RsStubElementType<RsPathStub, RsPath>("PATH") {
@@ -703,20 +703,20 @@ class RsPathStub(
             RsPathImpl(stub, this)
 
         override fun createStub(psi: RsPath, parentStub: StubElement<*>?) =
-            RsPathStub(parentStub, this, psi.referenceName, psi.hasColonColon, psi.hasCself)
+            RsPathStub(parentStub, this, psi.referenceName, psi.hasColonColon, psi.kind)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsPathStub(parentStub, this,
                 dataStream.readName()!!.string,
                 dataStream.readBoolean(),
-                dataStream.readBoolean()
+                dataStream.readEnum()
             )
 
         override fun serialize(stub: RsPathStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.referenceName)
                 writeBoolean(stub.hasColonColon)
-                writeBoolean(stub.hasCself)
+                writeEnum(stub.kind)
             }
     }
 }
