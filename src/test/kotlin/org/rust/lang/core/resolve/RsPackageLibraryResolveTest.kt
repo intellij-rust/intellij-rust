@@ -5,8 +5,10 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsPackageLibraryResolveTest : RsResolveTestBase() {
@@ -243,4 +245,22 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use dep_lib_target::Foo;
                             //^ dep-lib-new/lib.rs
     """, NameResolutionTestmarks.otherVersionOfSameCrate)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve reference without extern crate item 1`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        use dep_lib_target::Foo;
+                //^ dep-lib/lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve reference without extern crate item 2`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        fn foo() -> dep_lib_target::Foo { unimplemented!() }
+                                   //^ dep-lib/lib.rs
+    """)
 }
