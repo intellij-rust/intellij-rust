@@ -12,7 +12,7 @@ class SnapshotMap<K, V> : Snapshotable() {
 
     fun isEmpty(): Boolean = inner.isEmpty()
 
-    fun iterator(): Iterator<Map.Entry<K, V>> = inner.iterator()
+    operator fun iterator(): Iterator<Map.Entry<K, V>> = inner.iterator()
 
     fun contains(key: K): Boolean = inner.contains(key)
 

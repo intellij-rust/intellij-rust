@@ -13,6 +13,7 @@ import org.rust.lang.core.types.regions.ReVar
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.TyProjection
 import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.utils.snapshot.*
 
 typealias VarInfos = SnapshotMap<ReVar, ReVarOrigin>
 

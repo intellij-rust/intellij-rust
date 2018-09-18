@@ -15,12 +15,8 @@ import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.*
 import org.rust.lang.core.psi.ext.UnaryOperator.*
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.Selection
-import org.rust.lang.core.resolve.SelectionResult
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralType
@@ -41,6 +37,7 @@ import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.snapshot.CombinedSnapshot
 import org.rust.lang.utils.snapshot.Snapshot
+import org.rust.lang.utils.snapshot.SnapshotList
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
 import org.rust.openapiext.recursionGuard
@@ -752,7 +749,7 @@ class RsInferenceContext(
                         is TyReference -> true
                         is TyPointer -> true
                         is TyAdt -> {
-                            val boxItem = null // TODO: RsLangItemIndex.findBoxItem(expr.project)
+                            val boxItem = RsLangItemIndex.findBoxItem(expr.project)
                             ty.item === boxItem
                         }
                         else -> false

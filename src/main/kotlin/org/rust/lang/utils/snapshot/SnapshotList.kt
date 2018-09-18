@@ -8,7 +8,7 @@ package org.rust.lang.utils.snapshot
 import org.rust.stdext.removeLast
 
 class SnapshotList<E> private constructor(
-    private val inner: MutableList<E>
+    val inner: MutableList<E>
 ) : Snapshotable(), Collection<E> by inner {
 
     constructor() : this(mutableListOf())

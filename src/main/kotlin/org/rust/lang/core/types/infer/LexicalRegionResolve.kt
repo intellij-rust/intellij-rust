@@ -80,7 +80,7 @@ class LexicalResolver(
      *     then  'c <= '1
      */
     private fun expandGivens(graph: RegionGraph) {
-        val seeds = data.givens.copy()
+        val seeds = data.givens.stream().collect(Collectors.toList())
         for ((region, variable) in seeds) {
             val seed = graph.getNode(variable.index)
             check(seed.data === variable)
