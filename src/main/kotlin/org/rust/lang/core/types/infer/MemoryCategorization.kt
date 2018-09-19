@@ -248,7 +248,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
         val type = inference.getExprType(dotExpr)
         val base = dotExpr.expr
         val baseCmt = processExpr(base)
-        val fieldName = dotExpr.fieldLookup?.identifier?.text
+        val fieldName = dotExpr.fieldLookup?.identifier?.text ?: dotExpr.fieldLookup?.integerLiteral?.text
         return cmtOfField(dotExpr, baseCmt, fieldName, type)
     }
 

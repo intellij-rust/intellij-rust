@@ -1178,9 +1178,10 @@ class RsFnInferenceContext(
         ctx.writeResolvedField(fieldLookup, variants.map { it.element })
         val field = variants.firstOrNull()
         if (field == null) {
-            for (type in lookup.coercionSequence(receiver)) {
+            for ((index, type) in lookup.coercionSequence(receiver).withIndex()) {
                 if (type is TyTuple) {
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
+                    ctx.addAdjustment(fieldLookup.parentDotExpr.expr, Adjustment.Deref(receiver), index)
                     return type.types.getOrElse(fieldIndex) { TyUnknown }
                 }
             }
