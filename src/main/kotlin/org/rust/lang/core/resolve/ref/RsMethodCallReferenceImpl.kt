@@ -31,7 +31,12 @@ class RsMethodCallReferenceImpl(
         val lookup = ImplLookup.relativeTo(element)
         val receiver = element.receiver.type
         return collectCompletionVariants {
-            processMethodCallExprResolveVariants(lookup, receiver, filterMethodCompletionVariants(it, lookup, receiver))
+            processMethodCallExprResolveVariants(lookup, receiver,
+                filterCompletionVariantsByVisibility(
+                    filterMethodCompletionVariantsByTraitBounds(it, lookup, receiver),
+                    element.containingMod
+                )
+            )
         }
     }
 
@@ -50,7 +55,7 @@ class RsFieldLookupReferenceImpl(
         val lookup = ImplLookup.relativeTo(element)
         val receiver = element.receiver.type
         return collectCompletionVariants {
-            processDotExprResolveVariants(lookup, receiver, filterMethodCompletionVariants(it, lookup, receiver))
+            processDotExprResolveVariants(lookup, receiver, filterMethodCompletionVariantsByTraitBounds(it, lookup, receiver))
         }
     }
 
@@ -111,7 +116,7 @@ data class MethodResolveVariant(
     val source: TraitImplSource
 ) : DotExprResolveVariant
 
-private fun <T: ScopeEntry> collectResolveVariants(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
+private fun <T : ScopeEntry> collectResolveVariants(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
     val result = mutableListOf<T>()
     f { e ->
         if (e.name == referenceName) {
@@ -122,7 +127,7 @@ private fun <T: ScopeEntry> collectResolveVariants(referenceName: String, f: ((T
     return result
 }
 
-private fun filterMethodCompletionVariants(
+private fun filterMethodCompletionVariantsByTraitBounds(
     processor: RsResolveProcessor,
     lookup: ImplLookup,
     receiver: Ty
