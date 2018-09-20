@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
@@ -28,6 +29,14 @@ abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
     override fun getIcon(flags: Int): Icon? = RsIcons.MACRO
 
     override val crateRelativePath: String? get() = name?.let { "::$it" }
+
+    override val modificationTracker: SimpleModificationTracker =
+        SimpleModificationTracker()
+
+    override fun incModificationCount(element: PsiElement): Boolean {
+        modificationTracker.incModificationCount()
+        return false // force rustStructureModificationTracker to be incremented
+    }
 }
 
 val RsMacro.hasMacroExport: Boolean

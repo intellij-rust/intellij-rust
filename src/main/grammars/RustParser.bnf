@@ -1164,7 +1164,8 @@ Macro ::= AttrsAndVis "macro_rules" '!' identifier MacroBody <<macroSemicolon>>{
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
-                 "org.rust.lang.core.macros.RsExpandedElement" ]
+                 "org.rust.lang.core.macros.RsExpandedElement"
+                 "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsMacroImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1217,7 +1218,8 @@ private Macro2MatchLikeBody ::= '{' MacroCase ';'? '}'
 
 MacroCall ::= MacroHead <<macroSemicolon>> {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
-                 "org.rust.lang.core.macros.RsExpandedElement" ]
+                 "org.rust.lang.core.macros.RsExpandedElement"
+                 "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
