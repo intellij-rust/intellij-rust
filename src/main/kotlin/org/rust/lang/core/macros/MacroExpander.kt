@@ -206,7 +206,7 @@ class MacroExpander(val project: Project) {
             return CachedValuesManager.getCachedValue(this) {
                 CachedValueProvider.Result.create(
                     psiFactory.createMacroBody(text),
-                    PsiModificationTracker.MODIFICATION_COUNT
+                    modificationTracker
                 )
             }
         }
@@ -491,7 +491,7 @@ private val RsMacroBindingGroup.availableVars: Set<String>
     get() = CachedValuesManager.getCachedValue(this) {
         CachedValueProvider.Result.create(
             collectAvailableVars(this),
-            PsiModificationTracker.MODIFICATION_COUNT // TODO use modtracker attached to the macro
+            ancestorStrict<RsMacro>()!!.modificationTracker
         )
     }
 
