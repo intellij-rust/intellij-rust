@@ -82,7 +82,7 @@ class RsCompletionTest : RsCompletionTestBase() {
 
     fun `test path`() = doSingleCompletion("""
         mod foo {
-            mod bar { fn frobnicate() {} }
+            pub mod bar { pub fn frobnicate() {} }
         }
         fn frobfrobfrob() {}
 
@@ -91,7 +91,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """, """
         mod foo {
-            mod bar { fn frobnicate() {} }
+            pub mod bar { pub fn frobnicate() {} }
         }
         fn frobfrobfrob() {}
 
@@ -207,14 +207,14 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     fun `test wildcard imports`() = doSingleCompletion("""
-        mod foo { fn transmogrify() {} }
+        mod foo { pub fn transmogrify() {} }
 
         fn main() {
             use self::foo::*;
             trans/*caret*/
         }
     """, """
-        mod foo { fn transmogrify() {} }
+        mod foo { pub fn transmogrify() {} }
 
         fn main() {
             use self::foo::*;
@@ -650,6 +650,27 @@ class RsCompletionTest : RsCompletionTestBase() {
         mod foo {
             #[path="bar.rs/*caret*/"]
             mod qqq;
+        }
+    """)
+
+    fun `test private function`() = checkNoCompletion("""
+        mod foo { fn bar() {} }
+        fn main() {
+            foo::ba/*caret*/
+        }
+    """)
+
+    fun `test private mod`() = checkNoCompletion("""
+        mod foo { mod bar {} }
+        fn main() {
+            foo::ba/*caret*/
+        }
+    """)
+
+    fun `test private enum`() = checkNoCompletion("""
+        mod foo { enum MyEnum {} }
+        fn main() {
+            foo::MyEn/*caret*/
         }
     """)
 }
