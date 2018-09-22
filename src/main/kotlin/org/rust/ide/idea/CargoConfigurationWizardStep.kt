@@ -13,9 +13,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
-import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
@@ -80,14 +79,7 @@ class CargoConfigurationWizardStep private constructor(
                 }
 
                 val projectRoot = contentEntry.file ?: return
-                val makeVfsUrl = { dirName: String -> FileUtil.join(projectRoot.url, dirName) }
-                CargoConstants.ProjectLayout.sources.map(makeVfsUrl).forEach {
-                    contentEntry.addSourceFolder(it, /* test = */ false)
-                }
-                CargoConstants.ProjectLayout.tests.map(makeVfsUrl).forEach {
-                    contentEntry.addSourceFolder(it, /* test = */ true)
-                }
-                contentEntry.addExcludeFolder(makeVfsUrl(CargoConstants.ProjectLayout.target))
+                contentEntry.setup(projectRoot)
             }
         }
     }

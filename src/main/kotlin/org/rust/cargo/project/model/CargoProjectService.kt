@@ -11,9 +11,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
@@ -142,4 +145,15 @@ private fun discoverToolchain(project: Project) {
         project.showBalloon("Using $tool", NotificationType.INFORMATION)
         project.cargoProjects.discoverAndRefresh()
     }
+}
+
+fun ContentEntry.setup(contentRoot: VirtualFile) {
+    val makeVfsUrl = { dirName: String -> FileUtil.join(contentRoot.url, dirName) }
+    CargoConstants.ProjectLayout.sources.map(makeVfsUrl).forEach {
+        addSourceFolder(it, /* test = */ false)
+    }
+    CargoConstants.ProjectLayout.tests.map(makeVfsUrl).forEach {
+        addSourceFolder(it, /* test = */ true)
+    }
+    addExcludeFolder(makeVfsUrl(CargoConstants.ProjectLayout.target))
 }

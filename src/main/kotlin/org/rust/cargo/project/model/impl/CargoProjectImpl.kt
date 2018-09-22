@@ -10,12 +10,15 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
@@ -32,6 +35,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.RustcInfo
+import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
@@ -381,10 +385,29 @@ private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): Compl
                     break
                 }
             }
+
+            setupProjectRoots(project, updatedProjects)
             updatedProjects
         }
 }
 
+private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject>) {
+    for (cargoProject in cargoProjects) {
+        val workspacePackages = cargoProject.workspace?.packages
+            .orEmpty()
+            .filter { it.origin == PackageOrigin.WORKSPACE }
+
+        for (pkg in workspacePackages) {
+            val packageContentRoot = pkg.contentRoot ?: continue
+            val packageModule = runReadAction { ModuleUtilCore.findModuleForFile(packageContentRoot, project) }
+                ?: continue
+            ModuleRootModificationUtil.updateModel(packageModule) { rootModel ->
+                val contentEntry = rootModel.contentEntries.singleOrNull() ?: return@updateModel
+                contentEntry.setup(packageContentRoot)
+            }
+        }
+    }
+}
 
 private fun fetchStdlib(
     project: Project,

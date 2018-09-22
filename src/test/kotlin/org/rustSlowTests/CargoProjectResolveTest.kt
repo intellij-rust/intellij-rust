@@ -6,10 +6,7 @@
 package org.rustSlowTests
 
 import com.intellij.openapi.util.SystemInfo
-import org.rust.FileTreeBuilder
-import org.rust.TestProject
 import org.rust.cargo.RustWithToolchainTestBase
-import org.rust.fileTree
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
 
@@ -299,7 +296,4 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("hello/src/main.rs", toCrate = "rand 0.3.14")
         checkReferenceIsResolved<RsPath>("bar/src/lib.rs", toCrate = "rand 54.0.0")
     }
-
-    private fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
-        fileTree { builder() }.create()
 }

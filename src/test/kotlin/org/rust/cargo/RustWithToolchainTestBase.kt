@@ -9,10 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import org.rust.FileTree
+import org.rust.FileTreeBuilder
 import org.rust.TestProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.fileTree
 
 // This class allows to execute real Cargo during the tests.
 // Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
@@ -53,4 +55,7 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
         project.rustSettings.data = project.rustSettings.data.copy(toolchain = null)
         super.tearDown()
     }
+
+    protected fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
+        fileTree { builder() }.create()
 }
