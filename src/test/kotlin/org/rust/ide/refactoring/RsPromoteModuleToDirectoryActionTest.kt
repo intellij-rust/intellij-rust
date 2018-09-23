@@ -51,7 +51,7 @@ class RsPromoteModuleToDirectoryActionTest : RsTestBase() {
 
     private fun testActionOnElement(element: PsiElement): Presentation {
         IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
-            override fun getData(dataId: String?): Any? =
+            override fun getData(dataId: String): Any? =
                 if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) element else super.getData(dataId)
         })
 
