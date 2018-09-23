@@ -37,6 +37,7 @@ plugins {
     idea
     id("org.jetbrains.intellij") version "0.3.7"
     id("de.undercouch.download") version "3.4.3"
+    id("net.saliman.properties") version "1.4.6"
 }
 
 idea {
@@ -66,15 +67,15 @@ allprojects {
     }
 
     intellij {
-        version = prop("ideaVersion_$platformVersion")
+        version = prop("ideaVersion")
         downloadSources = !CI
         updateSinceUntilBuild = true
         instrumentCode = false
         ideaDependencyCachePath = file("deps").absolutePath
 
         tasks.withType<PatchPluginXmlTask> {
-            sinceBuild(prop("sinceBuild_$platformVersion"))
-            untilBuild(prop("untilBuild_$platformVersion"))
+            sinceBuild(prop("sinceBuild"))
+            untilBuild(prop("untilBuild"))
         }
     }
 
@@ -116,7 +117,7 @@ allprojects {
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
 
 project(":") {
-    val clionVersion = prop("clionVersion_$platformVersion")
+    val clionVersion = prop("clionVersion")
     val versionSuffix = "-$platformVersion$channelSuffix"
     version = "0.2.0.${prop("buildNumber")}$versionSuffix"
     intellij {
