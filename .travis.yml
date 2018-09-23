@@ -11,8 +11,8 @@ jdk: oraclejdk8
 env:
   global:
     - OLD_RUST_VERSION=1.25.0
-    - CURRENT_RUST_VERSION=1.28.0
-    - NIGHLY_RUST_VERSION=nightly-2018-08-06
+    - CURRENT_RUST_VERSION=1.29.0
+    - NIGHLY_RUST_VERSION=nightly-2018-09-21
   matrix:
     # 181 branch
     - RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=181 ORG_GRADLE_PROJECT_sinceBuild_181=181 ORG_GRADLE_PROJECT_ideaVersion_181=181.5540.7 # modified by script
