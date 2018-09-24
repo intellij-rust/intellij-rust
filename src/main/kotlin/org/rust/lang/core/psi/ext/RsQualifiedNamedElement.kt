@@ -7,10 +7,15 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexKey
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ParentItemType.*
+import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.ty.TyPrimitive
 
@@ -42,6 +47,90 @@ data class RsQualifiedName private constructor(
         }
         segments += pageName
         return segments.joinToString(separator = "/", postfix = anchor)
+    }
+
+    /** Tries to find rust qualified name element related to this qualified name */
+    fun findPsiElement(psiManager: PsiManager, context: RsElement): RsQualifiedNamedElement? {
+        val item = childItem ?: parentItem
+
+        // If it's link to crate, try to find the corresponding `lib.rs` file
+        if (item.type == RsQualifiedName.ParentItemType.CRATE) {
+            return findCrateRoot(item, psiManager, context)
+        }
+
+        // Otherwise, split search into two steps:
+        val project = context.project
+        // First: look for `RsQualifiedNamedElement` with the same name as expected,
+        // generate sequence of all possible reexports of this element and check
+        // if any variant has the same `RsQualifiedName`
+        var result = lookupInIndex(project, RsNamedElementIndex.KEY) { element ->
+            if (element !is RsQualifiedNamedElement) return@lookupInIndex null
+            val candidate = if (element is RsModDeclItem && item.type == RsQualifiedName.ParentItemType.MOD) {
+                element.reference.resolve() as? RsMod ?: return@lookupInIndex null
+            } else {
+                element
+            }
+            QualifiedNamedItem.ExplicitItem(candidate)
+        }
+
+        if (result == null) {
+            // Second: if the first step didn't find any suitable item,
+            // look over all direct item reexports (considering possible new alias),
+            // generate sequence of all possible reexports for each element and check
+            // if any variant has the same `RsQualifiedName`
+            result = lookupInIndex(project, RsReexportIndex.KEY) { useSpeck ->
+                val candidate = useSpeck.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@lookupInIndex null
+                QualifiedNamedItem.ReexportedItem(useSpeck, candidate)
+            }
+        }
+
+        return result
+    }
+
+    private fun findCrateRoot(item: Item, psiManager: PsiManager, context: RsElement): RsFile? {
+        var target: CargoWorkspace.Target? = null
+
+        loop@ for (pkg in context.cargoWorkspace?.packages.orEmpty()) {
+            val libTarget = pkg.libTarget
+            if (libTarget?.normName == item.name) {
+                target = libTarget
+                break
+            } else {
+                for (t in pkg.targets) {
+                    if (t.normName == item.name) {
+                        target = t
+                        break@loop
+                    }
+                }
+            }
+        }
+        val crateRoot = target?.crateRoot ?: return null
+        return psiManager.findFile(crateRoot)?.rustFile
+    }
+
+    private inline fun <reified T : RsElement> lookupInIndex(
+        project: Project,
+        indexKey: StubIndexKey<String, T>,
+        crossinline transform: (T) -> QualifiedNamedItem?
+    ): RsQualifiedNamedElement? {
+        var result: RsQualifiedNamedElement? = null
+        val item = childItem ?: parentItem
+        StubIndex.getInstance().processElements(
+            indexKey,
+            item.name,
+            project,
+            GlobalSearchScope.allScope(project),
+            T::class.java
+        ) { element ->
+            val qualifiedNamedItem = transform(element) ?: return@processElements true
+            val withReexports = qualifiedNamedItem.withModuleReexports(project)
+            if (withReexports.any { RsQualifiedName.from(it) == this }) {
+                result = qualifiedNamedItem.item
+                return@processElements false
+            }
+            true
+        }
+        return result
     }
 
     companion object {
@@ -117,6 +206,35 @@ data class RsQualifiedName private constructor(
             }
 
             return RsQualifiedName(crateName, modSegments, parentItem, childItem)
+        }
+
+        @JvmStatic
+        fun from(qualifiedNamedItem: QualifiedNamedItem): RsQualifiedName? {
+            val crateName = qualifiedNamedItem.containingCargoTarget?.normName ?: return null
+            val modSegments = mutableListOf<String>()
+            qualifiedNamedItem.superMods
+                ?.asReversed()
+                ?.drop(1)
+                ?.mapTo(modSegments) { it.modName ?: return null }
+                ?: return null
+
+            val (parentItem, childItem) = qualifiedNamedItem.item.toItems() ?: return null
+            if (parentItem.type == MOD) {
+                modSegments += parentItem.name
+            }
+
+            return RsQualifiedName(crateName, modSegments, parentItem, childItem)
+        }
+
+        private fun RsQualifiedNamedElement.toItems(): Pair<Item, Item?>? {
+            val parent = parentItem(this)
+
+            return if (parent != null) {
+                parent to (toChildItem() ?: return null)
+            } else {
+                val parentItem = toParentItem() ?: return null
+                parentItem to null
+            }
         }
 
         private fun parentItem(element: RsQualifiedNamedElement): Item? {
