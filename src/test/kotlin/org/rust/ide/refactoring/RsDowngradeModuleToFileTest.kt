@@ -74,7 +74,7 @@ class RsDowngradeModuleToFileTest : RsTestBase() {
 
     private fun testActionOnElement(element: PsiElement): Presentation {
         com.intellij.idea.IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
-            override fun getData(dataId: String?): Any? =
+            override fun getData(dataId: String): Any? =
                 if (com.intellij.openapi.actionSystem.CommonDataKeys.PSI_ELEMENT.`is`(dataId)) element else super.getData(dataId)
         })
 

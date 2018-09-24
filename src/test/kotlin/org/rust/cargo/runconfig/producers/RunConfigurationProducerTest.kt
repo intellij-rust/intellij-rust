@@ -325,7 +325,7 @@ class RunConfigurationProducerTest : RsTestBase() {
         })
 
         IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
-            override fun getData(dataId: String?): Any? =
+            override fun getData(dataId: String): Any? =
                 if (PSI_ELEMENT_ARRAY.`is`(dataId)) files else super.getData(dataId)
         })
 

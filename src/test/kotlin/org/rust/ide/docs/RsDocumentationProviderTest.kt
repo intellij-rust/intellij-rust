@@ -25,6 +25,7 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
             .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
 
         val actual = RsDocumentationProvider().block(element, originalElement)?.trim()
+            ?: error("Expected not null result")
         assertSameLines(expected.trimIndent(), actual)
     }
 

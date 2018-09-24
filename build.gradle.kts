@@ -6,7 +6,8 @@ import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.SourceSet
 import org.jetbrains.grammarkit.tasks.GenerateLexer
 import org.jetbrains.grammarkit.tasks.GenerateParser
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+// since kotlin 1.3-rc `KotlinSourceSet` moved back to `org.jetbrains.kotlin.gradle.plugin` package
+import org.jetbrains.kotlin.gradle.plugin.source.KotlinSourceSet
 import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -19,9 +20,11 @@ import kotlin.concurrent.thread
 buildscript {
     repositories {
         maven { setUrl("https://jitpack.io") }
+        maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
     }
     dependencies {
         classpath("com.github.hurricup:gradle-grammar-kit-plugin:2018.1.7")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3-M2")
     }
 }
 
@@ -32,9 +35,9 @@ val platformVersion = prop("platformVersion")
 
 plugins {
     idea
-    kotlin("jvm") version "1.2.61"
     id("org.jetbrains.intellij") version "0.3.7"
     id("de.undercouch.download") version "3.4.3"
+    id("net.saliman.properties") version "1.4.6"
 }
 
 idea {
@@ -54,6 +57,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
     }
 
     idea {
@@ -63,15 +67,15 @@ allprojects {
     }
 
     intellij {
-        version = prop("ideaVersion_$platformVersion")
+        version = prop("ideaVersion")
         downloadSources = !CI
         updateSinceUntilBuild = true
         instrumentCode = false
         ideaDependencyCachePath = file("deps").absolutePath
 
         tasks.withType<PatchPluginXmlTask> {
-            sinceBuild(prop("sinceBuild_$platformVersion"))
-            untilBuild(prop("untilBuild_$platformVersion"))
+            sinceBuild(prop("sinceBuild"))
+            untilBuild(prop("untilBuild"))
         }
     }
 
@@ -94,7 +98,7 @@ allprojects {
         targetCompatibility = VERSION_1_8
     }
 
-    java.sourceSets {
+    sourceSets {
         getByName("main").java.srcDirs("src/gen")
     }
 
@@ -113,7 +117,7 @@ allprojects {
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
 
 project(":") {
-    val clionVersion = prop("clionVersion_$platformVersion")
+    val clionVersion = prop("clionVersion")
     val versionSuffix = "-$platformVersion$channelSuffix"
     version = "0.2.0.${prop("buildNumber")}$versionSuffix"
     intellij {
@@ -133,7 +137,7 @@ project(":") {
         }
     }
 
-    java.sourceSets {
+    sourceSets {
         getByName("main").kotlin.srcDirs("src/$platformVersion/kotlin")
         create("debugger") {
             kotlin.srcDirs("debugger/src/main/kotlin", "debugger/src/$platformVersion/kotlin")
@@ -144,7 +148,7 @@ project(":") {
     }
 
     tasks.withType<Jar> {
-        from(java.sourceSets.getByName("debugger").output)
+        from(sourceSets.getByName("debugger").output)
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
