@@ -39,7 +39,7 @@ enum class RsColor(val humanName: String, val default: TextAttributesKey) {
     MODULE("Types//Module", Default.IDENTIFIER),
 
     KEYWORD("Keywords//Keyword", Default.KEYWORD),
-    KEYWORD_UNSAFE("Keywords//unsafe", Default.KEYWORD),
+    KEYWORD_UNSAFE("Keywords//Unsafe", Default.KEYWORD),
 
     CHAR("Literals//Char", Default.STRING),
     NUMBER("Literals//Number", Default.NUMBER),
