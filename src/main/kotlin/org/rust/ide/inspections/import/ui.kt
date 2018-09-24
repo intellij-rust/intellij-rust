@@ -69,7 +69,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
             }
 
             override fun getTextFor(value: ImportCandidate): String = value.info.usePath
-            override fun getIconFor(value: ImportCandidate): Icon? = value.importItem.item.getIcon(0)
+            override fun getIconFor(value: ImportCandidate): Icon? = value.qualifiedNamedItem.item.getIcon(0)
         }
         val popup = object : ListPopupImpl(step) {
             override fun getListElementRenderer(): ListCellRenderer<*> {
@@ -104,20 +104,21 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
             // how to use functionality of `PsiElementListCellRenderer`
             // and pass additional info with psi element at same time
             importCandidate = value
-            value.importItem.item
+            value.qualifiedNamedItem.item
         } else {
             value
         }
         return super.getListCellRendererComponent(list, realValue, index, isSelected, cellHasFocus)
     }
 
-    override fun getElementText(element: PsiElement): String = importCandidate?.importItem?.itemName ?: super.getElementText(element)
+    override fun getElementText(element: PsiElement): String = importCandidate?.qualifiedNamedItem?.itemName
+        ?: super.getElementText(element)
 
     override fun getContainerText(element: PsiElement, name: String): String? {
         val importCandidate = importCandidate
         return if (importCandidate != null) {
             val crateName = (importCandidate.info as? ImportInfo.ExternCrateImportInfo)?.externCrateName
-            val parentPath = importCandidate.importItem.parentCrateRelativePath ?: return null
+            val parentPath = importCandidate.qualifiedNamedItem.parentCrateRelativePath ?: return null
             val container = when {
                 crateName == null -> parentPath
                 parentPath.isEmpty() -> crateName
@@ -147,7 +148,7 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
         }
 
         private fun textWithIcon(): Pair<String, Icon>? {
-            val pkg = importCandidate?.importItem?.containingCargoTarget?.pkg ?: return null
+            val pkg = importCandidate?.qualifiedNamedItem?.containingCargoTarget?.pkg ?: return null
             return when (pkg.origin) {
                 PackageOrigin.STDLIB -> pkg.normName to RsIcons.RUST
                 PackageOrigin.DEPENDENCY, PackageOrigin.TRANSITIVE_DEPENDENCY -> pkg.normName to CargoIcons.ICON
