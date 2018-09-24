@@ -232,6 +232,34 @@ class RsResolveLinkTest : RsTestBase() {
               //^
     """, "test_package/foo/bar/struct.foo.html")
 
+    fun `test fqn link with direct reexports`() = doTest("""
+        mod foo {
+            pub mod bar {
+                pub struct Baz;
+                          //X
+            }
+            pub use foo::bar::Baz;
+        }
+
+        struct Foo;
+              //^
+    """, "test_package/foo/struct.Baz.html")
+
+    fun `test fqn link with module reexports`() = doTest("""
+        mod foo {
+            pub mod bar {
+                pub mod baz {
+                    pub struct Baz;
+                              //X
+                }
+            }
+            pub use foo::bar::baz;
+        }
+
+        struct Foo;
+              //^
+    """, "test_package/foo/baz/struct.Baz.html")
+
     private fun doTest(@Language("Rust") code: String, link: String) {
         InlineFile(code)
         val context = findElementInEditor<RsNamedElement>("^")
