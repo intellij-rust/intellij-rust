@@ -34,31 +34,21 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
-    fun `test straightline down out of body`() {
-        val code = """
-            fn main() {
-                1;
-                2;
-                3/*caret*/;
-            }
-        """
-        UpDownMoverTestMarks.moveOutOfBody.checkHit {
-            moveDownForbidden(code)
+    fun `test straightline down out of body`() = moveDown("""
+        fn main() {
+            1;
+            2;
+            3/*caret*/;
         }
-    }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
 
-    fun `test straightline up out of body`() {
-        val code = """
-            fn main() {
-                1/*caret*/;
-                2;
-                3;
-            }
-        """
-        UpDownMoverTestMarks.moveOutOfBody.checkHit {
-            moveUpForbidden(code)
+    fun `test straightline up out of body`() = moveUp("""
+        fn main() {
+            1/*caret*/;
+            2;
+            3;
         }
-    }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
 
     fun `test up into if block`() = moveUp("""
         fn main() {
