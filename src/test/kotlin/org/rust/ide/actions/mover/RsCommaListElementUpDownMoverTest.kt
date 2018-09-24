@@ -58,14 +58,11 @@ class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
-    fun `test prevent step out of parameter list`() {
-        val code = """
-            fn foo(
-                /*caret*/x: i32,
-            ) { }
-        """
-        moveDownAndBackUp(code, code)
-    }
+    fun `test prevent step out of parameter list`() = moveDownAndBackUp("""
+        fn foo(
+            /*caret*/x: i32,
+        ) { }
+    """)
 
     fun `test function argument`() = moveDownAndBackUp("""
         fn main() {
@@ -115,25 +112,19 @@ class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
-    fun `test prevent step out of argument list`() {
-        val code = """
-            fn main() {
-                foo(
-                    /*caret*/x,
-                );
-            }
-        """
-        moveDownAndBackUp(code, code)
-    }
+    fun `test prevent step out of argument list`() = moveDownAndBackUp("""
+        fn main() {
+            foo(
+                /*caret*/x,
+            );
+        }
+    """)
 
-    fun `test prevent step out of use group`() {
-        val code = """
-            use foo::{
-                /*caret*/foo
-            };
-        """
-        moveDownAndBackUp(code, code)
-    }
+    fun `test prevent step out of use group`() = moveDownAndBackUp("""
+        use foo::{
+            /*caret*/foo
+        };
+    """)
 
     fun `test move struct fields`() = moveDownAndBackUp("""
         struct S {

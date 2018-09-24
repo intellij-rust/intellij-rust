@@ -8,34 +8,41 @@ package org.rust.ide.actions.mover
 import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.openapiext.Testmark
 
 abstract class RsStatementUpDownMoverTestBase : RsTestBase() {
-    fun moveDown(@Language("Rust") before: String, @Language("Rust") after: String) {
-        checkByText(before.trimIndent() + "\n", after.trimIndent() + "\n") {
-            myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION)
-        }
+    fun moveDown(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String = before,
+        testmark: Testmark? = null
+    ) = doTest(before, after, IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION, testmark)
+
+    fun moveUp(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String = before,
+        testmark: Testmark? = null
+    ) = doTest(before, after, IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION, testmark)
+
+    fun moveDownAndBackUp(
+        @Language("Rust") down: String,
+        @Language("Rust") up: String = down,
+        testmark: Testmark? = null
+    ) {
+        moveDown(down, up, testmark)
+        moveUp(up, down, testmark)
     }
 
-    fun moveDownForbidden(@Language("Rust") code: String) {
-        checkByText(code.trimIndent() + "\n", code.trimIndent() + "\n") {
-            myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_DOWN_ACTION)
+    private fun doTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String = before,
+        actionId: String,
+        testmark: Testmark? = null
+    ) {
+        val action = {
+            checkByText(before.trimIndent() + "\n", after.trimIndent() + "\n") {
+                myFixture.performEditorAction(actionId)
+            }
         }
-    }
-
-    fun moveUp(@Language("Rust") before: String, @Language("Rust") after: String) {
-        checkByText(before.trimIndent() + "\n", after.trimIndent() + "\n") {
-            myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
-        }
-    }
-
-    fun moveUpForbidden(@Language("Rust") code: String) {
-        checkByText(code.trimIndent() + "\n", code.trimIndent() + "\n") {
-            myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
-        }
-    }
-
-    fun moveDownAndBackUp(@Language("Rust") down: String, @Language("Rust") up: String) {
-        moveDown(down, up)
-        moveUp(up, down)
+        testmark?.checkHit(action) ?: action()
     }
 }
