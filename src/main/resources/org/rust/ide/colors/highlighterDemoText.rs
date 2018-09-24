@@ -62,7 +62,8 @@ fn <FUNCTION>main</FUNCTION>() {
 /// # Heading
 /// [Rust](https://www.rust-lang.org/)
 <ATTRIBUTE>#[cfg(target_os=</ATTRIBUTE>"linux"<ATTRIBUTE>)]</ATTRIBUTE>
-unsafe fn <FUNCTION>a_function</FUNCTION><<TYPE_PARAMETER>T</TYPE_PARAMETER>: <LIFETIME>'lifetime</LIFETIME>>() {
+<KEYWORD_UNSAFE>unsafe</KEYWORD_UNSAFE> fn <FUNCTION>a_function</FUNCTION><<TYPE_PARAMETER>T</TYPE_PARAMETER>: <LIFETIME>'lifetime</LIFETIME>>(<MUT_PARAMETER>count</MUT_PARAMETER>: &mut i64) -> ! {
+    <MUT_PARAMETER>count</MUT_PARAMETER> += 1;
     'label: loop {
         <MACRO>println!</MACRO>("Hello\x20W\u{f3}rld!\u{abcdef}");
     }
