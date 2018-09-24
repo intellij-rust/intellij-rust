@@ -12,6 +12,8 @@ pub enum <ENUM>Flag</ENUM> {
     <ENUM_VARIANT>Ugly</ENUM_VARIANT>
 }
 
+const <CONSTANT>QUALITY</CONSTANT>: <ENUM>Flag</ENUM> = <ENUM>Flag</ENUM>::<ENUM_VARIANT>Good</ENUM_VARIANT>;
+
 pub trait <TRAIT>Write</TRAIT> {
     fn <METHOD>write</METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize>;
 }
@@ -60,7 +62,8 @@ fn <FUNCTION>main</FUNCTION>() {
 /// # Heading
 /// [Rust](https://www.rust-lang.org/)
 <ATTRIBUTE>#[cfg(target_os=</ATTRIBUTE>"linux"<ATTRIBUTE>)]</ATTRIBUTE>
-unsafe fn <FUNCTION>a_function</FUNCTION><<TYPE_PARAMETER>T</TYPE_PARAMETER>: <LIFETIME>'lifetime</LIFETIME>>() {
+<KEYWORD_UNSAFE>unsafe</KEYWORD_UNSAFE> fn <FUNCTION>a_function</FUNCTION><<TYPE_PARAMETER>T</TYPE_PARAMETER>: <LIFETIME>'lifetime</LIFETIME>>(<MUT_PARAMETER>count</MUT_PARAMETER>: &mut i64) -> ! {
+    <MUT_PARAMETER>count</MUT_PARAMETER> += 1;
     'label: loop {
         <MACRO>println!</MACRO>("Hello\x20W\u{f3}rld!\u{abcdef}");
     }

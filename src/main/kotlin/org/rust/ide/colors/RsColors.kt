@@ -12,64 +12,60 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 /**
  * See [RsColorSettingsPage] and [org.rust.ide.highlight.RsHighlighter]
  */
-enum class RsColor(humanName: String, val default: TextAttributesKey) {
-    IDENTIFIER("Identifier", Default.IDENTIFIER),
-    FUNCTION("Function", Default.FUNCTION_DECLARATION),
-    METHOD("Method", Default.INSTANCE_METHOD),
-    ASSOC_FUNCTION("Associated function", Default.STATIC_METHOD),
-    PARAMETER("Parameter", Default.PARAMETER),
-    MUT_PARAMETER("Mutable parameter", Default.PARAMETER),
-    SELF_PARAMETER("Self parameter", Default.KEYWORD),
-    Q_OPERATOR("? operator", Default.KEYWORD),
+enum class RsColor(val humanName: String, val default: TextAttributesKey) {
+    IDENTIFIER("Variables//Default", Default.IDENTIFIER),
+    MUT_BINDING("Variables//Mutable binding", Default.IDENTIFIER),
+    FIELD("Variables//Field", Default.INSTANCE_FIELD),
+    CONSTANT("Variables//Constant", Default.CONSTANT),
 
-    LIFETIME("Lifetime", Default.IDENTIFIER),
+    FUNCTION("Functions//Function", Default.FUNCTION_DECLARATION),
+    METHOD("Functions//Method", Default.INSTANCE_METHOD),
+    ASSOC_FUNCTION("Functions//Associated function", Default.STATIC_METHOD),
+    MACRO("Functions//Macro", Default.IDENTIFIER),
 
-    CHAR("Char", Default.STRING),
-    STRING("String", Default.STRING),
-    NUMBER("Number", Default.NUMBER),
+    PARAMETER("Parameters//Parameter", Default.PARAMETER),
+    MUT_PARAMETER("Parameters//Mutable parameter", Default.PARAMETER),
+    SELF_PARAMETER("Parameters//Self parameter", Default.KEYWORD),
+    LIFETIME("Parameters//Lifetime", Default.IDENTIFIER),
+    TYPE_PARAMETER("Parameters//Type parameter", Default.IDENTIFIER),
 
-    PRIMITIVE_TYPE("Primitive type", Default.KEYWORD),
+    PRIMITIVE_TYPE("Types//Primitive", Default.KEYWORD),
+    STRUCT("Types//Struct", Default.CLASS_NAME),
+    TRAIT("Types//Trait", Default.INTERFACE_NAME),
+    ENUM("Types//Enum", Default.CLASS_NAME),
+    ENUM_VARIANT("Types//Enum variant", Default.STATIC_FIELD),
+    TYPE_ALIAS("Types//Type alias", Default.CLASS_NAME),
+    CRATE("Types//Crate", Default.IDENTIFIER),
+    MODULE("Types//Module", Default.IDENTIFIER),
 
-    CRATE("Crate", Default.IDENTIFIER),
-    STRUCT("Struct", Default.CLASS_NAME),
-    TRAIT("Trait", Default.INTERFACE_NAME),
-    MODULE("Module", Default.IDENTIFIER),
-    ENUM("Enum", Default.CLASS_NAME),
-    ENUM_VARIANT("Enum variant", Default.STATIC_FIELD),
-    TYPE_ALIAS("Type alias", Default.CLASS_NAME),
+    KEYWORD("Keywords//Keyword", Default.KEYWORD),
+    KEYWORD_UNSAFE("Keywords//Unsafe", Default.KEYWORD),
 
-    FIELD("Field", Default.INSTANCE_FIELD),
+    CHAR("Literals//Char", Default.STRING),
+    NUMBER("Literals//Number", Default.NUMBER),
+    STRING("Literals//Strings//String", Default.STRING),
+    VALID_STRING_ESCAPE("Literals//Strings//Escape sequence//Valid", Default.VALID_STRING_ESCAPE),
+    INVALID_STRING_ESCAPE("Literals//Strings//Escape sequence//Invalid", Default.INVALID_STRING_ESCAPE),
 
-    KEYWORD("Keyword", Default.KEYWORD),
+    BLOCK_COMMENT("Comments//Block comment", Default.BLOCK_COMMENT),
+    EOL_COMMENT("Comments//Line comment", Default.LINE_COMMENT),
 
-    BLOCK_COMMENT("Block comment", Default.BLOCK_COMMENT),
-    EOL_COMMENT("Line comment", Default.LINE_COMMENT),
+    DOC_COMMENT("Rustdoc//Comment", Default.DOC_COMMENT),
+    DOC_HEADING("Rustdoc//Heading", Default.DOC_COMMENT_TAG),
+    DOC_LINK("Rustdoc//Link", Default.DOC_COMMENT_TAG_VALUE),
+    DOC_CODE("Rustdoc//Code", Default.DOC_COMMENT_MARKUP),
 
-    DOC_COMMENT("Rustdoc comment", Default.DOC_COMMENT),
-    DOC_HEADING("Rustdoc heading", Default.DOC_COMMENT_TAG),
-    DOC_LINK("Rustdoc link", Default.DOC_COMMENT_TAG_VALUE),
-    DOC_CODE("Rustdoc code", Default.DOC_COMMENT_MARKUP),
-
-    PARENTHESIS("Parenthesis", Default.PARENTHESES),
-    BRACKETS("Brackets", Default.BRACKETS),
-    BRACES("Braces", Default.BRACES),
-
-    OPERATORS("Operator sign", Default.OPERATION_SIGN),
-
-    SEMICOLON("Semicolon", Default.SEMICOLON),
-    DOT("Dot", Default.DOT),
-    COMMA("Comma", Default.COMMA),
+    BRACES("Braces and Operators//Braces", Default.BRACES),
+    BRACKETS("Braces and Operators//Brackets", Default.BRACKETS),
+    OPERATORS("Braces and Operators//Operation sign", Default.OPERATION_SIGN),
+    Q_OPERATOR("Braces and Operators//? operator", Default.KEYWORD),
+    SEMICOLON("Braces and Operators//Semicolon", Default.SEMICOLON),
+    DOT("Braces and Operators//Dot", Default.DOT),
+    COMMA("Braces and Operators//Comma", Default.COMMA),
+    PARENTHESIS("Braces and Operators//Parenthesis", Default.PARENTHESES),
 
     ATTRIBUTE("Attribute", Default.METADATA),
 
-    MACRO("Macro", Default.IDENTIFIER),
-
-    TYPE_PARAMETER("Type parameter", Default.IDENTIFIER),
-
-    MUT_BINDING("Mutable binding", Default.IDENTIFIER),
-
-    VALID_STRING_ESCAPE("Valid escape sequence", Default.VALID_STRING_ESCAPE),
-    INVALID_STRING_ESCAPE("Invalid escape sequence", Default.INVALID_STRING_ESCAPE),
     ;
 
     val textAttributesKey = TextAttributesKey.createTextAttributesKey("org.rust.$name", default)
