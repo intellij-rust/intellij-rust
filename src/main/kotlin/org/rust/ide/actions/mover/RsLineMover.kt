@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.openapiext.Testmark
 
@@ -72,10 +73,14 @@ abstract class RsLineMover : LineMover() {
 
         fun isMovingOutOfParenBlock(sibling: PsiElement, down: Boolean): Boolean =
             sibling.elementType == (if (down) RsElementTypes.RPAREN else RsElementTypes.LPAREN)
+
+        fun isMovingOutOfFunctionBody(sibling: PsiElement, down: Boolean): Boolean =
+            isMovingOutOfBraceBlock(sibling, down) && sibling.parent?.parent is RsFunction
     }
 }
 
 object UpDownMoverTestMarks {
     val moveOutOfImpl = Testmark("moveOutOfImpl")
     val moveOutOfMatch = Testmark("moveOutOfMatch")
+    val moveOutOfBody = Testmark("moveOutOfBody")
 }

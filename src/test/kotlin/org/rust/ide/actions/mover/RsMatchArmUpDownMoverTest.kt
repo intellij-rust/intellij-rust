@@ -46,20 +46,15 @@ class RsMatchArmUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
-    fun `test prevent step out match body`() {
-        val code = """
-            fn main() {
-                match test {
-                    Some(/*caret*/_) => {
+    fun `test prevent step out match body`() = moveDownAndBackUp("""
+        fn main() {
+            match test {
+                Some(/*caret*/_) => {
 
-                    }
                 }
             }
-        """
-        UpDownMoverTestMarks.moveOutOfMatch.checkHit {
-            moveDownAndBackUp(code, code)
         }
-    }
+    """, testmark = UpDownMoverTestMarks.moveOutOfMatch)
 
     fun `test can move several arms`() = moveDownAndBackUp("""
         fn main() {

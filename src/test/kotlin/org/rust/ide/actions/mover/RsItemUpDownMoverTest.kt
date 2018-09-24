@@ -48,30 +48,20 @@ class RsItemUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         fn /*caret*/foo() {}
     """)
 
-    fun `test impl prevent step out`() {
-        val code = """
-            struct S;
-            impl S {
-                fn /*caret*/test() {
-                    test!();
-                }
+    fun `test impl prevent step out`() = moveDownAndBackUp("""
+        struct S;
+        impl S {
+            fn /*caret*/test() {
+                test!();
             }
-        """
-        UpDownMoverTestMarks.moveOutOfImpl.checkHit {
-            moveDownAndBackUp(code, code)
         }
-    }
+    """, testmark = UpDownMoverTestMarks.moveOutOfImpl)
 
-    fun `test trait prevent step out`() {
-        val code = """
-            trait T {
-                type /*caret*/Foo;
-            }
-        """
-        UpDownMoverTestMarks.moveOutOfImpl.checkHit {
-            moveDownAndBackUp(code, code)
+    fun `test trait prevent step out`() = moveDownAndBackUp("""
+        trait T {
+            type /*caret*/Foo;
         }
-    }
+    """, testmark = UpDownMoverTestMarks.moveOutOfImpl)
 
     fun `test can move items inside impl`() {
         moveDownAndBackUp("""
