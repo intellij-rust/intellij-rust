@@ -116,7 +116,16 @@ fun processItemDeclarations(
         return false
     }
     for (speck in starImports) {
-        val basePath = speck.path
+        val path = speck.path
+        val basePath = if (path == null && speck.context is RsUseGroup) {
+            // `use foo::bar::{self, *}`
+            //           ~~~
+            speck.qualifier
+        } else {
+            // `use foo::bar::*` or `use foo::{self, bar::*}`
+            //           ~~~                         ~~~
+            path
+        }
         val mod = (if (basePath != null) basePath.reference.resolve() else speck.crateRoot)
             ?: continue
 
