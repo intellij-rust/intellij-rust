@@ -559,4 +559,16 @@ class RsUseResolveTest : RsResolveTestBase() {
         use self::m::E::foo;
                         //^ unresolved
     """)
+
+    fun `test wildcard in braces`() = checkByCode("""
+        mod m {
+            pub enum A { X }
+        }              //X
+
+        use m::A::{self, *};
+
+        fn main() {
+            let a: A = X;
+        }            //^
+    """)
 }
