@@ -30,7 +30,14 @@ class RsPathReferenceImpl(
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processPathResolveVariants(ImplLookup.relativeTo(element), element, true, it) }
+        collectCompletionVariants {
+            processPathResolveVariants(
+                ImplLookup.relativeTo(element),
+                element,
+                true,
+                filterCompletionVariantsByVisibility(it, element.containingMod)
+            )
+        }
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()

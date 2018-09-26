@@ -90,21 +90,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
         val element = ref.reference.resolve() as? RsVisible ?: return
-        if (element.isPublic) return
-        val elementMod = (if (element is RsMod) element.`super` else element.contextStrict()) ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
-        // We have access to any item in any super module of `oMod`
-        // Note: `oMod.superMods` contains `oMod`
-        if (oMod.superMods.contains(elementMod)) return
-
-        val members = element.parent as? RsMembers
-        if (members != null) {
-            val parent = members.context ?: return
-            when (parent) {
-                is RsImplItem -> if (parent.traitRef != null) return
-                is RsTraitItem -> return
-            }
-        }
+        if (element.isVisibleFrom(oMod)) return
 
         val error = when {
             element is RsFieldDecl -> {
@@ -329,8 +316,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val traitName = trait.name ?: return
 
         fun mayDangleOnTypeOrLifetimeParameters(impl: RsImplItem): Boolean {
-            return impl.typeParameters.any() { it.queryAttributes.hasAtomAttribute("may_dangle") } ||
-                impl.lifetimeParameters.any() { it.queryAttributes.hasAtomAttribute("may_dangle") }
+            return impl.typeParameters.any { it.queryAttributes.hasAtomAttribute("may_dangle") } ||
+                impl.lifetimeParameters.any { it.queryAttributes.hasAtomAttribute("may_dangle") }
         }
 
         val attrRequiringUnsafeImpl = if (mayDangleOnTypeOrLifetimeParameters(impl)) "may_dangle" else null
