@@ -163,7 +163,7 @@ private fun appendSemicolon(context: InsertionContext, curUseItem: RsUseItem?) {
     }
 }
 
-private inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Boolean = false): T? =
+inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Boolean = false): T? =
     PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, T::class.java, strict)
 
 private val InsertionContext.isInUseGroup: Boolean

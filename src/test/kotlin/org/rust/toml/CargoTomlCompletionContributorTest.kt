@@ -5,10 +5,7 @@
 
 package org.rust.toml
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-
-
-class CargoTomlCompletionContributorTest : LightCodeInsightFixtureTestCase() {
+class CargoTomlCompletionContributorTest : CargoTomlCompletionTestBase() {
     fun `test complete top level`() {
         myFixture.configureByText("Cargo.toml", "[dep<caret>]")
         val completions = myFixture.completeBasic().map { it.lookupString }
@@ -18,22 +15,22 @@ class CargoTomlCompletionContributorTest : LightCodeInsightFixtureTestCase() {
         )
     }
 
-    fun `test complete hyphen 1`() = doTest(
+    fun `test complete hyphen 1`() = doSingleCompletion(
         "[dev<caret>]",
         "[dev-dependencies<caret>]"
     )
 
-    fun `test complete hyphen 2`() = doTest(
+    fun `test complete hyphen 2`() = doSingleCompletion(
         "[dev-<caret>]",
         "[dev-dependencies<caret>]"
     )
 
-    fun `test complete hyphen 3`() = doTest(
+    fun `test complete hyphen 3`() = doSingleCompletion(
         "[build-d<caret>]",
         "[build-dependencies<caret>]"
     )
 
-    fun `test complete key in table`() = doTest("""
+    fun `test complete key in table`() = doSingleCompletion("""
         [profile.release]
         opt<caret>
     """, """
@@ -41,10 +38,4 @@ class CargoTomlCompletionContributorTest : LightCodeInsightFixtureTestCase() {
         opt-level<caret>
     """
     )
-
-    private fun doTest(before: String, after: String) {
-        myFixture.configureByText("Cargo.toml", before)
-        myFixture.completeBasic()
-        myFixture.checkResult(after)
-    }
 }
