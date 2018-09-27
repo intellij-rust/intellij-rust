@@ -19,26 +19,32 @@ private val NULL_RESULT: CachedValueProvider.Result<List<RsExpandedElement>?> =
 
 fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<RsExpandedElement>?> {
     val context = call.context as? RsElement ?: return NULL_RESULT
-    return when {
-        call.macroName == "lazy_static" -> {
+    val project = context.project
+    val expander = MacroExpander(project)
+    return when (call.macroName) {
+        "lazy_static" -> {
             val result = expandLazyStatic(call)
-            result?.forEach {
-                it.setContext(context)
-                it.setExpandedFrom(call)
-            }
+            setExpansionContext(result, context, call)
             CachedValueProvider.Result.create(result, call.containingFile)
         }
-        else -> {
-            val project = context.project
-            if (!project.rustSettings.expandMacros) return NULL_RESULT
-            val def = call.reference.resolve() as? RsMacro ?: return NULL_RESULT
-            val expander = MacroExpander(project)
-            val result = expander.expandMacro(def, call)
-            result?.forEach {
-                it.setContext(context)
-                it.setExpandedFrom(call)
-            }
+        "include" -> {
+            val result = expandInclude(call) ?: return NULL_RESULT
+            setExpansionContext(result, context, call)
             CachedValueProvider.Result.create(result, project.rustStructureModificationTracker)
         }
+        else -> {
+            if (!project.rustSettings.expandMacros) return NULL_RESULT
+            val def = call.reference.resolve() as? RsMacro ?: return NULL_RESULT
+            val result = expander.expandMacro(def, call)
+            setExpansionContext(result, context, call)
+            CachedValueProvider.Result.create(result, project.rustStructureModificationTracker)
+        }
+    }
+}
+
+private fun setExpansionContext(result: List<RsExpandedElement>?, context: RsElement, call: RsMacroCall) {
+    result?.forEach {
+        it.setContext(context)
+        it.setExpandedFrom(call)
     }
 }
