@@ -345,6 +345,22 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         }
     """)
 
+    fun `test tuple`() = checkByText("""
+        fn main() {
+            let mut x = (0, 0);
+            let y = &mut x;
+            let _z = &mut y.0;
+        }
+    """)
+
+    fun `test tuple multiple deref`() = checkByText("""
+        fn main() {
+            let mut x = (0, 0);
+            let y = &mut & x;
+            let _z = &mut <error descr="Cannot borrow immutable local variable `y.0` as mutable">y.0</error>;
+        }
+    """)
+
     /** [See github issue 2711](https://github.com/intellij-rust/intellij-rust/issues/2711) */
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test vector index`() = checkByText("""
