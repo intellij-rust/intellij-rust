@@ -20,11 +20,14 @@ import javax.swing.Icon
  * IDEA side of Cargo package from crates.io
  */
 class CargoLibrary(
-    val root: VirtualFile,
     private val name: String,
+    private val root: VirtualFile,
+    private val excluded: Set<VirtualFile>,
     private val isStd: Boolean
 ) : SyntheticLibrary(), ItemPresentation {
     override fun getSourceRoots(): Collection<VirtualFile> = listOf(root)
+    override fun getExcludedRoots(): Set<VirtualFile> = excluded
+
     override fun equals(other: Any?): Boolean = other is CargoLibrary && other.root == root
     override fun hashCode(): Int = root.hashCode()
 
@@ -45,7 +48,7 @@ class RsAdditionalLibraryRootsProvider : AdditionalLibraryRootsProvider() {
     }
 
     override fun getRootsToWatch(project: Project): Collection<VirtualFile> =
-        getAdditionalProjectLibraries(project).map { it.root }
+        getAdditionalProjectLibraries(project).flatMap { it.sourceRoots }
 }
 
 private fun <U, V> Collection<U>.smartFlatMap(transform: (U) -> Collection<V>): Collection<V> =
@@ -59,6 +62,13 @@ private val CargoWorkspace.ideaLibraries: Collection<CargoLibrary>
     get() = packages.filter { it.origin != PackageOrigin.WORKSPACE }
         .mapNotNull { pkg ->
             val root = pkg.contentRoot ?: return@mapNotNull null
-            CargoLibrary(root, pkg.name, pkg.origin == PackageOrigin.STDLIB)
+            val isStd = pkg.origin == PackageOrigin.STDLIB
+            val excluded = if (isStd) {
+                listOfNotNull(root.findChild("tests"), root.findChild("benches")).toSet()
+            } else {
+                // TODO exclude full module hierarchy instead of crate roots only
+                pkg.targets.filter { !it.isLib }.mapNotNull { it.crateRoot }.toSet()
+            }
+            CargoLibrary(pkg.name, root, excluded, isStd)
         }
 
