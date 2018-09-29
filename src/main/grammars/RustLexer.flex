@@ -184,7 +184,7 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "_"                             { return UNDERSCORE; }
   "$"                             { return DOLLAR; }
 
-  "abstract"|"become"|"do"|"final"|"override"|"priv"|"typeof"|"unsized"|"virtual"|"yield"
+  "abstract"|"become"|"do"|"final"|"override"|"priv"|"typeof"|"unsized"|"virtual"
                                   { return RESERVED_KEYWORD; }
 
   "true"|"false"                  { return BOOL_LITERAL; }
@@ -223,6 +223,7 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
   "use"                           { return USE; }
   "where"                         { return WHERE; }
   "while"                         { return WHILE; }
+  "yield"                         { return YIELD; }
 
   "/*"                            { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
 
