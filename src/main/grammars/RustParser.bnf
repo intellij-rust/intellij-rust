@@ -866,6 +866,7 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
 // There are `no_struct_lit_expr` and `any_expr` productions for this two cases.
 // `expr` production is an implementation detail. It passes the context information to the child expressions.
 Expr ::= RetExpr
+       | YieldExpr
        | LambdaExpr
        | AssignBinExpr
 
@@ -900,7 +901,7 @@ Expr ::= RetExpr
 }
 
 private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | '..=' | true | false | box | QUOTE_IDENTIFIER
-  | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe
+  | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe | yield
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 NoStructLitExpr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' Expr>> >> { elementType = Expr }
@@ -1139,6 +1140,10 @@ LitExpr ::= OuterAttr*
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
  implements = "com.intellij.psi.PsiLanguageInjectionHost"
  mixin = "org.rust.lang.core.psi.ext.RsLitExprMixin"
+}
+
+YieldExpr ::= OuterAttr* yield Expr? {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

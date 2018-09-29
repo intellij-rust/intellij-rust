@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 140
+        override fun getStubVersion(): Int = 141
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -166,6 +166,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "PATH_EXPR" -> RsExprStub.Type("PATH_EXPR", ::RsPathExprImpl)
     "RANGE_EXPR" -> RsExprStub.Type("RANGE_EXPR", ::RsRangeExprImpl)
     "RET_EXPR" -> RsExprStub.Type("RET_EXPR", ::RsRetExprImpl)
+    "YIELD_EXPR" -> RsExprStub.Type("YIELD_EXPR", ::RsYieldExprImpl)
     "STRUCT_LITERAL" -> RsExprStub.Type("STRUCT_LITERAL", ::RsStructLiteralImpl)
     "TRY_EXPR" -> RsExprStub.Type("TRY_EXPR", ::RsTryExprImpl)
     "TUPLE_EXPR" -> RsExprStub.Type("TUPLE_EXPR", ::RsTupleExprImpl)
