@@ -706,10 +706,9 @@ private fun processAssociatedItemsWithSelfSubst(
     selfSubst: Substitution,
     processor: RsResolveProcessor
 ): Boolean {
-    val assocItemsProcessor: RsResolveProcessor = {
-        processor(it.name, it.element!!, it.subst + selfSubst)
+    return processAssociatedItems(lookup, type, ns) {
+        processor(it.copy(subst = it.subst + selfSubst))
     }
-    return processAssociatedItems(lookup, type, ns, assocItemsProcessor)
 }
 
 private fun processLexicalDeclarations(scope: RsElement, cameFrom: PsiElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean {

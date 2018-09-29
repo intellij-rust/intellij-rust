@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.*
@@ -12,6 +13,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
@@ -29,15 +31,20 @@ class RsPathReferenceImpl(
 
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun getVariants(): Array<out Any> =
-        collectCompletionVariants {
+    override fun getVariants(): Array<out LookupElement> {
+        val lookup = ImplLookup.relativeTo(element)
+        return collectCompletionVariants {
             processPathResolveVariants(
-                ImplLookup.relativeTo(element),
+                lookup,
                 element,
                 true,
-                filterCompletionVariantsByVisibility(it, element.containingMod)
+                filterCompletionVariantsByVisibility(
+                    filterPathCompletionVariantsByTraitBounds(it, lookup),
+                    element.containingMod
+                )
             )
         }
+    }
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         val target = resolve()
@@ -71,6 +78,30 @@ class RsPathReferenceImpl(
         override fun invoke(element: RsPath): List<BoundElement<RsElement>> {
             return resolvePath(element)
         }
+    }
+}
+
+private fun filterPathCompletionVariantsByTraitBounds(
+    processor: RsResolveProcessor,
+    lookup: ImplLookup
+): RsResolveProcessor {
+    val cache = mutableMapOf<RsImplItem, Boolean>()
+    return fun(it: ScopeEntry): Boolean {
+        if (it !is AssocItemScopeEntry) return processor(it)
+        if (it.source !is TraitImplSource.ExplicitImpl) return processor(it)
+
+        val receiver = it.subst[TyTypeParameter.self()] ?: return processor(it)
+        // Don't filter partially unknown types
+        if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor(it)
+        // Filter members by trait bounds (try to select all obligations for each impl)
+        // We're caching evaluation results here because we can often complete members
+        // in the same impl and always have the same receiver type
+        val canEvaluate = cache.getOrPut(it.source.value) {
+            lookup.ctx.canEvaluateBounds(it.source.value, receiver)
+        }
+        if (canEvaluate) return processor(it)
+
+        return false
     }
 }
 
