@@ -34,9 +34,11 @@ import java.util.concurrent.TimeUnit
  * Cargo itself via `cargo metadata` command.
  */
 interface CargoProjectsService {
-    fun findProjectForFile(file: VirtualFile): CargoProject?
     val allProjects: Collection<CargoProject>
     val hasAtLeastOneValidProject: Boolean
+
+    fun findProjectForFile(file: VirtualFile): CargoProject?
+    fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package?
 
     fun attachCargoProject(manifest: Path): Boolean
     fun detachCargoProject(cargoProject: CargoProject)
