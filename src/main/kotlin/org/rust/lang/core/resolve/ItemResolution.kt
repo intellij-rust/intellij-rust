@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
@@ -74,9 +76,11 @@ fun processItemDeclarations(
                 if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
 
             is RsExternCrateItem -> {
-                val name = item.alias?.name ?: item.name ?: return false
-                val mod = item.reference.resolve() ?: return false
-                if (processor(name, mod)) return true
+                if (item.isPublic || withPrivateImports) {
+                    val name = item.alias?.name ?: item.name ?: return false
+                    val mod = item.reference.resolve() ?: return false
+                    if (processor(name, mod)) return true
+                }
             }
         }
         return false
@@ -86,7 +90,7 @@ fun processItemDeclarations(
 
 
     if (Namespace.Types in ns) {
-        if (scope is RsFile && scope.isCrateRoot) {
+        if (scope is RsFile && scope.isCrateRoot && withPrivateImports) {
             // Rust injects implicit `extern crate std` in every crate root module unless it is
             // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
             // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
@@ -95,10 +99,10 @@ fun processItemDeclarations(
             // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
             when (scope.attributes) {
                 RsFile.Attributes.NONE ->
-                    if (processor.lazy("std") { scope.findDependencyCrateRoot("std") }) return true
+                    if (processor.lazy(STD) { scope.findDependencyCrateRoot(STD) }) return true
 
                 RsFile.Attributes.NO_STD ->
-                    if (processor.lazy("core") { scope.findDependencyCrateRoot("core") }) return true
+                    if (processor.lazy(CORE) { scope.findDependencyCrateRoot(CORE) }) return true
 
                 RsFile.Attributes.NO_CORE -> Unit
             }

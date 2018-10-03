@@ -7,6 +7,8 @@ package org.rust.lang.core.resolve
 
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsElement
@@ -36,10 +38,10 @@ class StdKnownItems private constructor(
     }
 
     fun findCoreItem(name: String): RsNamedElement? =
-        findStdItem("core", name)
+        findStdItem(CORE, name)
 
     fun findCoreTy(name: String): Ty =
-        findStdTy("core", name)
+        findStdTy(CORE, name)
 
     fun findIteratorTrait(): RsTraitItem? =
         findCoreItem("iter::Iterator") as? RsTraitItem
@@ -55,7 +57,7 @@ class StdKnownItems private constructor(
     }
 
     fun findRangeTy(rangeName: String, indexType: Ty?): Ty {
-        val ty = findStdTy("core", "ops::" + rangeName)
+        val ty = findStdTy(CORE, "ops::" + rangeName)
 
         if (indexType == null) return ty
 
@@ -149,7 +151,7 @@ class StdKnownItems private constructor(
             val useStdPrefix = crateRoot.attributes == RsFile.Attributes.NONE
 
             val absolutePathResolver: (String, String) -> RsNamedElement? = { prefixNoStd, name ->
-                val prefix = if (useStdPrefix) "std" else prefixNoStd
+                val prefix = if (useStdPrefix) STD else prefixNoStd
                 val path = "$prefix::$name"
                 val key = workspace to path
                 stdKnownItemsCache.getOrPut(project, key) {
