@@ -418,7 +418,7 @@ fun processMacroCallVariants(element: PsiElement, processor: RsResolveProcessor)
     }
     if (result) return true
 
-    val prelude = (element.contextOrSelf<RsElement>())?.findDependencyCrateRoot("std") ?: return false
+    val prelude = (element.contextOrSelf<RsElement>())?.findDependencyCrateRoot(STD) ?: return false
     return processAll(exportedMacros(prelude), processor)
 }
 
