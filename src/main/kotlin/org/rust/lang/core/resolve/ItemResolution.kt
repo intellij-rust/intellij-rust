@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
@@ -97,10 +99,10 @@ fun processItemDeclarations(
             // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
             when (scope.attributes) {
                 RsFile.Attributes.NONE ->
-                    if (processor.lazy("std") { scope.findDependencyCrateRoot("std") }) return true
+                    if (processor.lazy(STD) { scope.findDependencyCrateRoot(STD) }) return true
 
                 RsFile.Attributes.NO_STD ->
-                    if (processor.lazy("core") { scope.findDependencyCrateRoot("core") }) return true
+                    if (processor.lazy(CORE) { scope.findDependencyCrateRoot(CORE) }) return true
 
                 RsFile.Attributes.NO_CORE -> Unit
             }
