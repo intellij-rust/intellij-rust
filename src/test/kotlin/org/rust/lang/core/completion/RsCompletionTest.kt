@@ -5,6 +5,10 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
         fn foo(quux: i32) { qu/*caret*/ }
@@ -672,5 +676,17 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() {
             foo::MyEn/*caret*/
         }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test private extern crate`() = checkNoCompletion("""
+        mod foo { extern crate std; }
+        pub use foo::st/*caret*/
+    """)
+
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test no std completion`() = checkNoCompletion("""
+        extern crate dep_lib_target;
+        pub use dep_lib_target::st/*caret*/
     """)
 }

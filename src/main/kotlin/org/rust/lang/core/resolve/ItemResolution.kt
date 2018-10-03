@@ -74,9 +74,11 @@ fun processItemDeclarations(
                 if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
 
             is RsExternCrateItem -> {
-                val name = item.alias?.name ?: item.name ?: return false
-                val mod = item.reference.resolve() ?: return false
-                if (processor(name, mod)) return true
+                if (item.isPublic || withPrivateImports) {
+                    val name = item.alias?.name ?: item.name ?: return false
+                    val mod = item.reference.resolve() ?: return false
+                    if (processor(name, mod)) return true
+                }
             }
         }
         return false
@@ -86,7 +88,7 @@ fun processItemDeclarations(
 
 
     if (Namespace.Types in ns) {
-        if (scope is RsFile && scope.isCrateRoot) {
+        if (scope is RsFile && scope.isCrateRoot && withPrivateImports) {
             // Rust injects implicit `extern crate std` in every crate root module unless it is
             // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
             // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
