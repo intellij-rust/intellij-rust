@@ -137,12 +137,15 @@ private fun filterMethodCompletionVariantsByTraitBounds(
 
     val cache = mutableMapOf<RsImplItem, Boolean>()
     return fun(it: ScopeEntry): Boolean {
-        // 1. If not a method (actually a field) or a trait method - just process it
+        // If not a method (actually a field) or a trait method - just process it
         if (it !is MethodResolveVariant || it.source !is TraitImplSource.ExplicitImpl) return processor(it)
-        // 2. Filter methods by trait bounds (try to select all obligations for each impl)
-        // We're caching evaluation results here because we can often complete to a methods
+        // Filter methods by trait bounds (try to select all obligations for each impl)
+        // We're caching evaluation results here because we can often complete methods
         // in the same impl and always have the same receiver type
-        if (cache.getOrPut(it.source.value) { lookup.ctx.canEvaluateBounds(it.source.value, receiver) }) return processor(it)
+        val canEvaluate = cache.getOrPut(it.source.value) {
+            lookup.ctx.canEvaluateBounds(it.source.value, receiver)
+        }
+        if (canEvaluate) return processor(it)
 
         return false
     }
