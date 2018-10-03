@@ -202,6 +202,32 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    fun `test insert use item after outer attributes`() = checkAutoImportFixByText("""
+        mod foo {
+            pub struct Foo;
+        }
+
+        #[cfg(test)]
+        mod tests {
+            fn foo() {
+                let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+            }
+        }
+    """, """
+        mod foo {
+            pub struct Foo;
+        }
+
+        #[cfg(test)]
+        mod tests {
+            use foo::Foo;
+
+            fn foo() {
+                let f = Foo/*caret*/;
+            }
+        }
+    """)
+
     fun `test import item from nested module`() = checkAutoImportFixByText("""
         mod foo {
             pub mod bar {
