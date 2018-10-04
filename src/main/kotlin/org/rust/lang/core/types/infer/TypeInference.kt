@@ -970,10 +970,19 @@ class RsFnInferenceContext(
     }
 
     private fun inferStructTypeArguments(literal: RsStructLiteral, typeParameters: Substitution) {
-        literal.structLiteralBody.structLiteralFieldList.mapNotNull { field ->
-            field.expr?.let { expr ->
-                val fieldType = field.type
-                expr.inferTypeCoercableTo(fieldType.substitute(typeParameters))
+        literal.structLiteralBody.structLiteralFieldList.filterNotNull().forEach { field ->
+            val fieldType = field.type.substitute(typeParameters)
+            val expr = field.expr
+
+            if (expr != null) {
+                expr.inferTypeCoercableTo(fieldType)
+            } else {
+                // Handle struct field shorthand by looking up the matching declaration in scope.
+                RsCodeFragmentFactory(field.project).createPath(field.referenceName, field)?.let { path ->
+                    val local = resolvePath(path, lookup).singleOrNull()?.element
+                    val ty = (local as? RsPatBinding)?.let { ctx.getBindingType(it) } ?: TyUnknown
+                    tryCoerce(ty, fieldType)
+                }
             }
         }
     }
