@@ -12,7 +12,6 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsLookupElementTest : RsTestBase() {
-    private val `$` = '$'
     fun `test fn`() = check("""
         fn foo(x: i32) -> Option<String> {}
           //^
@@ -53,6 +52,14 @@ class RsLookupElementTest : RsTestBase() {
              //^
     """, tailText = "(f32, i64)")
 
+    fun `test multi-line tuple struct`() = check("""
+        struct S(
+             //^
+            f32,
+            i64
+        );
+    """, tailText = "(f32, i64)")
+
     fun `test struct`() = check("""
         struct S { field: String }
              //^
@@ -73,6 +80,16 @@ class RsLookupElementTest : RsTestBase() {
                //^
     """, tailText = "(i32, String)", typeText = "E")
 
+    fun `test multi-line enum tuple variant`() = check("""
+        enum E {
+            X(
+          //^
+                i32,
+                String
+            )
+        }
+    """, tailText = "(i32, String)", typeText = "E")
+
     fun `test field`() = check("""
         struct S { field: String }
                    //^
@@ -80,7 +97,7 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test macro simple`() = check("""
         macro_rules! test {
-            ($`$`test:expr) => ($`$`test)
+            ($ test:expr) => ($ test)
                 //^
         }
     """, tailText = null, typeText = "expr")
