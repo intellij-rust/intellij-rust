@@ -7,8 +7,12 @@ package org.rust.ide.utils
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.ext.LogicOp.*
+import org.rust.lang.core.psi.ext.ArithmeticOp
+import org.rust.lang.core.psi.ext.LogicOp
+import org.rust.lang.core.psi.ext.LogicOp.AND
+import org.rust.lang.core.psi.ext.LogicOp.OR
+import org.rust.lang.core.psi.ext.UnaryOperator
+import org.rust.lang.core.psi.ext.operatorType
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -195,3 +199,32 @@ fun RsExpr.evalBooleanExpression(): Boolean? {
 }
 
 private fun createPsiElement(project: Project, value: Any) = RsPsiFactory(project).createExpression(value.toString())
+
+/***
+ * Go to the RsExpr, which parent is not RsParenExpr.
+ *
+ * @return RsExpr, which parent is not RsParenExpr.
+ */
+fun RsExpr.skipParenExprUp(): RsExpr {
+    var element = this
+    var parent = element.parent
+    while (parent is RsParenExpr) {
+        element = parent
+        parent = parent.parent
+    }
+
+    return element
+}
+
+/***
+ * Go down to the item below RsParenExpr.
+ *
+ * @return a child expression without parentheses.
+ */
+fun RsCondition.skipParenExprDown(): RsExpr {
+    var child = this.expr
+    while (child is RsParenExpr) {
+        child = child.expr
+    }
+    return child
+}

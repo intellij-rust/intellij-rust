@@ -1,0 +1,7 @@
+fn test(x: i32, y: i32) {
+    if x == 3 {
+        if y == 2 {
+            print!("Hello")
+        }
+    }
+}
