@@ -480,7 +480,7 @@ private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean get() =
 
 private val RsElement.stdlibAttributes: RsFile.Attributes
     get() = (crateRoot?.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
-private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsInnerAttr }
+private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsAttr }
 private val <T: RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
 
 private val CargoWorkspace.Target.isStd: Boolean
