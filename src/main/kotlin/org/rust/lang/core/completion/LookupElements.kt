@@ -57,20 +57,11 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
             .appendTailText(extraTailText, true)
 
         is RsStructItem -> base
-            .withTailText(when {
-                blockFields != null -> " { ... }"
-                tupleFields != null -> tupleFields!!.text
-                else -> ""
-            })
+            .withTailText(getFieldsOwnerTailText(this))
 
         is RsEnumVariant -> base
             .withTypeText(ancestorStrict<RsEnumItem>()?.name ?: "")
-            .withTailText(when {
-                blockFields != null -> " { ... }"
-                tupleFields != null ->
-                    tupleFields!!.tupleFieldDeclList.joinToString(prefix = "(", postfix = ")") { it.typeReference.text }
-                else -> ""
-            })
+            .withTailText(getFieldsOwnerTailText(this))
 
         is RsPatBinding -> base
             .withTypeText(type.let {
@@ -86,6 +77,13 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
 
         else -> base
     }
+}
+
+private fun getFieldsOwnerTailText(owner: RsFieldsOwner) = when {
+    owner.blockFields != null -> " { ... }"
+    owner.tupleFields != null ->
+        owner.positionalFields.joinToString(prefix = "(", postfix = ")") { it.typeReference.text }
+    else -> ""
 }
 
 private fun getInsertHandler(element: RsElement, scopeName: String, context: InsertionContext) {
