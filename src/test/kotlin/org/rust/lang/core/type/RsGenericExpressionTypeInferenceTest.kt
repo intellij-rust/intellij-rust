@@ -334,6 +334,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test struct field shorthand`() = testExpr("""
+        enum E<T> { A, B(T) }
+        struct S<T> { item: E<T> }
+        fn foo() -> S<u8> {
+            let item = E::A;
+                     //^ E<u8>
+            S { item }
+        }
+    """)
+
     fun `test struct expr with 2 fields of same type 1`() = testExpr("""
         struct X;
         struct S<T> { a: T, b: T }
