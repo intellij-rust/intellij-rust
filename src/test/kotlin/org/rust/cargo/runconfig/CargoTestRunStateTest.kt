@@ -11,6 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.rust.cargo.toolchain.CargoCommandLine
+import java.nio.file.Path
 import java.nio.file.Paths
 
 @RunWith(Parameterized::class)
@@ -18,8 +19,8 @@ class CargoTestRunStatePatchArgsTest(
     private val input: String,
     private val expected: String
 ) {
+    private val wd: Path = Paths.get("/my-crate")
 
-    private val wd = Paths.get("/my-crate")
     @Test
     fun test() = assertEquals(
         ParametersListUtil.parse(expected),
@@ -28,17 +29,18 @@ class CargoTestRunStatePatchArgsTest(
 
     companion object {
         @Parameterized.Parameters(name = "{index}: {0}")
-        @JvmStatic fun data(): Collection<Array<String>> = listOf(
-            arrayOf("", "-- -Z unstable-options --format=json"),
-            arrayOf("foo", "foo -- -Z unstable-options --format=json"),
-            arrayOf("foo bar", "foo bar -- -Z unstable-options --format=json"),
-            arrayOf("--", "-- -Z unstable-options --format=json"),
+        @JvmStatic
+        fun data(): Collection<Array<String>> = listOf(
+            arrayOf("", "--no-fail-fast -- -Z unstable-options --format=json"),
+            arrayOf("foo", "foo --no-fail-fast -- -Z unstable-options --format=json"),
+            arrayOf("foo bar", "foo bar --no-fail-fast -- -Z unstable-options --format=json"),
+            arrayOf("--", "--no-fail-fast -- -Z unstable-options --format=json"),
 
-            arrayOf("-- -Z unstable-options", "-- -Z unstable-options --format=json"),
-            arrayOf("-- --format=json", "-- --format=json -Z unstable-options"),
-            arrayOf("-- --format json", "-- --format json -Z unstable-options"),
-            arrayOf("-- --format pretty", "-- --format json -Z unstable-options"),
-            arrayOf("-- --format=pretty", "-- --format=json -Z unstable-options")
+            arrayOf("-- -Z unstable-options", "--no-fail-fast -- -Z unstable-options --format=json"),
+            arrayOf("-- --format=json", "--no-fail-fast -- --format=json -Z unstable-options"),
+            arrayOf("-- --format json", "--no-fail-fast -- --format json -Z unstable-options"),
+            arrayOf("-- --format pretty", "--no-fail-fast -- --format json -Z unstable-options"),
+            arrayOf("-- --format=pretty", "--no-fail-fast -- --format=json -Z unstable-options")
         )
     }
 }
