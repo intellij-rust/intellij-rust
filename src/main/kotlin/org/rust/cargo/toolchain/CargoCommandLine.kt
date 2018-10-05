@@ -25,8 +25,7 @@ data class CargoCommandLine(
     val additionalArguments: List<String> = emptyList(),
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
-    val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
-    val nocapture: Boolean = true
+    val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
 ) {
 
 
