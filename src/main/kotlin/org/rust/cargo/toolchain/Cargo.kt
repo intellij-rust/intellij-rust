@@ -108,13 +108,6 @@ class Cargo(private val cargoExecutable: Path) {
         generalCommandLine(commandLine, false)
 
     private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
-        @Suppress("NAME_SHADOWING")
-        val commandLine = if (commandLine.command == "test" && commandLine.nocapture) {
-            commandLine.withDoubleDashFlag("--nocapture")
-        } else {
-            commandLine
-        }
-
         val cmdLine = GeneralCommandLine(cargoExecutable)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(commandLine.workingDirectory)
