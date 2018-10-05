@@ -10,8 +10,6 @@ import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.execution.testframework.TestIconMapper
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.rust.cargo.icons.CargoIcons
@@ -19,6 +17,7 @@ import org.rust.cargo.runconfig.test.CargoTestLocator
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.elementType
 import javax.swing.Icon
 
@@ -39,9 +38,13 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
     companion object {
         fun getTestStateIcon(sourceElement: PsiElement): Icon? {
-            val function = sourceElement as? RsFunction ?: return CargoIcons.TEST
-            val url = CargoTestLocator.getTestFnUrl(function)
-            val project = function.project
+            val url = when (sourceElement) {
+                is RsFunction -> CargoTestLocator.getTestFnUrl(sourceElement)
+                is RsMod -> CargoTestLocator.getTestModUrl(sourceElement)
+                else -> return null
+            }
+
+            val project = sourceElement.project
 
             val magnitude = TestStateStorage.getInstance(project).getState(url)
                 ?.let { TestIconMapper.getMagnitude(it.magnitude) }

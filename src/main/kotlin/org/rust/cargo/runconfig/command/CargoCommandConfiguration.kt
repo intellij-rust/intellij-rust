@@ -92,7 +92,7 @@ class CargoCommandConfiguration(
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
         clean().ok?.let {
-            if (command.startsWith("test") && project.toolchain?.queryVersionsSync()?.rustc?.nightlyCommitHash !=  null) {
+            if (command.startsWith("test")) {
                 CargoTestRunState(environment, it)
             } else {
                 CargoRunState(environment, it)
