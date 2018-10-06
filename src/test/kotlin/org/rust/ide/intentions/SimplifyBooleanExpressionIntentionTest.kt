@@ -49,6 +49,46 @@ class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBoole
         }
     """)
 
+    fun `test equals true`() = doAvailableTest("""
+        fn main() {
+            let a = foo ==/*caret*/ true;
+        }
+    """, """
+        fn main() {
+            let a = foo;
+        }
+    """)
+
+    fun `test equals false`() = doAvailableTest("""
+        fn main() {
+            let a = /*caret*/foo == false;
+        }
+    """, """
+        fn main() {
+            let a = !foo;
+        }
+    """)
+
+    fun `test not equals true`() = doAvailableTest("""
+        fn main() {
+            let a = foo != /*caret*/true;
+        }
+    """, """
+        fn main() {
+            let a = !foo;
+        }
+    """)
+
+    fun `test not equals false`() = doAvailableTest("""
+        fn main() {
+            let a = foo != false/*caret*/;
+        }
+    """, """
+        fn main() {
+            let a = foo;
+        }
+    """)
+
     fun `test parens`() = doAvailableTest("""
         fn main() {
             let a = (/*caret*/true);

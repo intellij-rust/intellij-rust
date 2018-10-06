@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.LogicOp.*
+import org.rust.lang.core.psi.ext.EqualityOp.*
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -142,6 +143,18 @@ private fun simplifyBinaryOperation(op: RsBinaryExpr, const: RsLitExpr, expr: Rs
             OR ->
                 when (it.text) {
                     "true" -> createPsiElement(project, "true")
+                    "false" -> expr
+                    else -> null
+                }
+            EQ ->
+                when (it.text) {
+                    "true" -> expr
+                    "false" -> createPsiElement(project, "!${expr.text}")
+                    else -> null
+                }
+            EXCLEQ ->
+                when (it.text) {
+                    "true" -> createPsiElement(project, "!${expr.text}")
                     "false" -> expr
                     else -> null
                 }
