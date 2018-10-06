@@ -307,7 +307,17 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             if (crateRoot != null && processor("crate", crateRoot)) return true
             if (path.kind == PathKind.IDENTIFIER &&
                 path.containingCargoTarget?.edition == CargoWorkspace.Edition.EDITION_2018) {
-                if (processExternCrateResolveVariants(path, isCompletion, processor)) return true
+                val attributes = (crateRoot as? RsFile)?.attributes
+                val implicitExternCrate = when (attributes) {
+                    NONE -> "std"
+                    NO_STD -> "core"
+                    else -> null
+                }
+                // We shouldn't process implicit extern crate here
+                // because we add it in `ItemResolutionKt.processItemDeclarations`
+                if (path.referenceName != implicitExternCrate) {
+                    if (processExternCrateResolveVariants(path, isCompletion, processor)) return true
+                }
             }
         }
     }

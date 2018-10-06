@@ -174,7 +174,11 @@ private class WorkspaceImpl(
         val result = WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
-            packages.map { it.asPackageData(edition) }
+            packages.map { pkg ->
+                // Currently, stdlib doesn't use 2018 edition
+                val packageEdition = if (pkg.origin == PackageOrigin.STDLIB) pkg.edition else edition
+                pkg.asPackageData(packageEdition)
+            }
         )
 
         val oldIdToPackage = packages.associateBy { it.id }
