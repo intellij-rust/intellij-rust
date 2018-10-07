@@ -1048,11 +1048,20 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ i32
     """)
 
-    fun `test type of ambiguously resolved paths is unknown`() = testExpr("""
+    fun `test type of ambiguously resolved paths is unknown 1`() = testExpr("""
         struct S;
         struct S;
         fn main() {
             let a: S;
+            a;
+        } //^ <unknown>
+    """)
+
+    fun `test type of ambiguously resolved paths is unknown 2`() = testExpr("""
+        struct S;
+        struct S;
+        fn main() {
+            let a = S;
             a;
         } //^ <unknown>
     """)
