@@ -24,7 +24,7 @@ import org.rust.lang.core.types.ty.TyFloat.F64
 import org.rust.lang.core.types.ty.TyInteger.*
 import org.rust.openapiext.ProjectCache
 import org.rust.openapiext.testAssert
-import org.rust.stdext.buildSet
+import org.rust.stdext.buildList
 import org.rust.stdext.zipValues
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -157,12 +157,6 @@ class ImplLookup(
     private val assignArithOps by lazy(NONE) {
         ArithmeticAssignmentOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName) }
     }
-    private val comparisionOps by lazy(NONE) {
-        listOfNotNull(
-            items.findPartialOrdTrait(),
-            items.findPartialEqTrait()
-        )
-    }
     private val fnTraits by lazy(NONE) {
         listOf("fn", "fn_mut", "fn_once").mapNotNull { RsLangItemIndex.findLangItem(project, it) }
     }
@@ -261,7 +255,6 @@ class ImplLookup(
             // libcore/ops/arith.rs libcore/ops/bit.rs
             impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
             impls += assignArithOps.map { it.withSubst(ty) }
-            impls += comparisionOps.map { it.withSubst(ty) }
             // Debug (libcore/fmt/num.rs libcore/fmt/float.rs)
             addImpl(items.findDebugTrait())
         }
@@ -415,19 +408,19 @@ class ImplLookup(
         }
     }
 
-    private fun assembleCandidates(ref: TraitRef): Set<SelectionCandidate> {
+    private fun assembleCandidates(ref: TraitRef): List<SelectionCandidate> {
         val element = ref.trait.element
         return when {
             element == items.findSizedTrait() -> sizedTraitCandidates(ref.selfTy, element)
             ref.selfTy is TyTypeParameter -> {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
-                    ?.let { setOf(SelectionCandidate.TypeParameter(it)) } ?: emptySet()
+                    ?.let { listOf(SelectionCandidate.TypeParameter(it)) } ?: emptyList()
             }
             ref.selfTy is TyAnon -> {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
-                    ?.let { setOf(SelectionCandidate.TraitObject) } ?: emptySet()
+                    ?.let { listOf(SelectionCandidate.TraitObject) } ?: emptyList()
             }
-            else -> buildSet {
+            else -> buildList {
                 addAll(assembleImplCandidates(ref))
                 addAll(assembleDerivedCandidates(ref))
                 if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
@@ -464,14 +457,14 @@ class ImplLookup(
             .map { SelectionCandidate.DerivedTrait(it) }
     }
 
-    private fun sizedTraitCandidates(ty: Ty, sizedTrait: RsTraitItem): Set<SelectionCandidate> {
-        if (!ty.isSized()) return emptySet()
+    private fun sizedTraitCandidates(ty: Ty, sizedTrait: RsTraitItem): List<SelectionCandidate> {
+        if (!ty.isSized()) return emptyList()
         val candidate = if (ty is TyTypeParameter) {
             SelectionCandidate.TypeParameter(sizedTrait.withSubst())
         } else {
             SelectionCandidate.DerivedTrait(sizedTrait)
         }
-        return setOf(candidate)
+        return listOf(candidate)
     }
 
     private fun confirmCandidate(

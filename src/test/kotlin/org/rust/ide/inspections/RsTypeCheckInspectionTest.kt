@@ -169,4 +169,10 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
             x.partial_cmp(y).unwrap()
         }
     """)
+
+    /** Issue [2713](https://github.com/intellij-rust/intellij-rust/issues/2713) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test 321`() = checkByText("""
+        fn main() { u64::from(0u8); }
+    """)
 }
