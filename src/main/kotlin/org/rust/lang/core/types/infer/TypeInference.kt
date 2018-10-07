@@ -803,7 +803,7 @@ class RsFnInferenceContext(
             val resolved = collapseToTrait(variants.map { it.element })
             if (resolved != null) {
                 // TODO remap subst
-                return instantiatePath(BoundElement(resolved, variants.first().subst), expr, tryRefinePath = true)
+                return instantiatePath(BoundElement(resolved, emptySubstitution), expr, tryRefinePath = true)
             }
         }
         val first = variants.singleOrNull() ?: return TyUnknown
