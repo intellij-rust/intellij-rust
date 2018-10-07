@@ -309,7 +309,7 @@ class ImplLookup(
         return impls
     }
 
-    private fun findSimpleImpls(selfTy: Ty): Collection<RsImplItem> {
+    private fun findSimpleImpls(selfTy: Ty): Sequence<RsImplItem> {
         return RsImplIndex.findPotentialImpls(project, selfTy).mapNotNull { impl ->
             val subst = impl.generics.associate { it to ctx.typeVarForParam(it) }.toTypeSubst()
             // TODO: take into account the lifetimes (?)
@@ -452,7 +452,7 @@ class ImplLookup(
                     prepareSubstAndTraitRefRaw(ctx, impl.generics, formalSelfTy, formalTraitRef, ref.selfTy)
                 if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return@mapNotNull null
                 SelectionCandidate.Impl(impl, formalSelfTy, formalTraitRef)
-            }
+            }.toList()
     }
 
     private fun assembleDerivedCandidates(ref: TraitRef): List<SelectionCandidate> {
