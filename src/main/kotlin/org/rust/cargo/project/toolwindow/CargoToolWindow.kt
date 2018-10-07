@@ -5,6 +5,7 @@
 
 package org.rust.cargo.project.toolwindow
 
+import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DataKey
@@ -24,6 +25,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.launchCommand
 import org.rust.cargo.toolchain.run
@@ -94,9 +96,24 @@ class CargoToolWindow(
                         val cargoProject = selectedProject ?: return
                         CargoCommandLine.forTarget(target, command).run(cargoProject)
                     }
+                    is CargoProjectStructure.Node.WorkspaceMember -> {
+                        userObject.pkg.navigateTo()
+                    }
+                    is CargoProjectStructure.Node.Package -> {
+                        userObject.pkg.navigateTo()
+                    }
+                    is CargoProjectStructure.Node.Feature -> {
+                        userObject.pkg.navigateTo()
+                    }
                 }
             }
         })
+    }
+
+    fun CargoWorkspace.Package.navigateTo() {
+        val fileCargoToml = this.contentRoot?.findChild("Cargo.toml") ?: return
+        // Keep current cursor position/selection as we cannot yet navigate to a certain points in Cargo.toml
+        OpenFileHyperlinkInfo(project, fileCargoToml, -1).navigate(project)
     }
 
     val selectedProject: CargoProject? get() = projectTree.selectedProject

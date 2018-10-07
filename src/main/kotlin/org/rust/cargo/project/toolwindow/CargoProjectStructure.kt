@@ -50,7 +50,7 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
             is Features -> userObject.packages.map { Node.Package(it) }
             is Package -> userObject.pkg.features
                 .sortedWith(compareBy({ it.state }, { it.name }))
-                .map { Node.Feature(it) }
+                .map { Node.Feature(it, userObject.pkg) }
             is Feature -> emptyList()
             else -> null
         }
@@ -90,7 +90,7 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
             override fun toString(): String = "Package($name)"
         }
 
-        data class Feature(val feature: CargoWorkspace.Feature) : Node() {
+        data class Feature(val feature: CargoWorkspace.Feature, val pkg: CargoWorkspace.Package) : Node() {
             override fun toString(): String {
                 val enabledDisabled = when (feature.state) {
                     CargoWorkspace.FeatureState.Enabled -> "enabled"
