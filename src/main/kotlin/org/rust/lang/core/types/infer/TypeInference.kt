@@ -806,7 +806,7 @@ class RsFnInferenceContext(
                 return instantiatePath(BoundElement(resolved, variants.first().subst), expr, tryRefinePath = true)
             }
         }
-        val first = variants.firstOrNull() ?: return TyUnknown
+        val first = variants.singleOrNull() ?: return TyUnknown
         return instantiatePath(first, expr, tryRefinePath = variants.size == 1)
     }
 
