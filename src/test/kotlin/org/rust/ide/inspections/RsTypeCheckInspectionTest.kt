@@ -172,7 +172,15 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
 
     /** Issue [2713](https://github.com/intellij-rust/intellij-rust/issues/2713) */
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test 321`() = checkByText("""
+    fun `test issue 2713`() = checkByText("""
         fn main() { u64::from(0u8); }
+    """)
+
+    fun `test assoc fn of type param with multiple bounds of the same trait`() = checkByText("""
+        trait From<T> { fn from(_: T) -> Self; }
+        fn foo<T: From<u8> + From<i8>>(_: T) {
+            T::from(0u8);
+            T::from(0i8);
+        }
     """)
 }
