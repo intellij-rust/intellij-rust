@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
+
 class RsMacroExpansionResolveTest : RsResolveTestBase() {
     fun `test lazy static`() = checkByCode("""
         #[macro_use]
@@ -265,5 +268,89 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             Foo.foo().bar();
         }           //^ unresolved
+    """)
+
+    fun `test 'crate' metavar in same crate`() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            pub fn bar(&self) {}
+        }     //X
+
+        macro_rules! foo {
+            () => { fn foo() -> $ crate::Foo { unimplemented!() } }
+        }
+        foo!();
+
+        fn main() {
+            foo().bar()
+        }       //^ lib.rs
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar`() = stubOnlyResolve("""
+    //- lib.rs
+        pub struct Foo;
+        impl Foo {
+            pub fn bar(&self) {}
+        }     //X
+        #[macro_export]
+        macro_rules! foo {
+            () => { fn foo() -> $ crate::Foo { unimplemented!() } }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+
+        foo!();
+
+        fn main() {
+            foo().bar()
+        }       //^ lib.rs
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar with alias`() = stubOnlyResolve("""
+    //- lib.rs
+        pub struct Foo;
+        impl Foo {
+            pub fn bar(&self) {}
+        }     //X
+        #[macro_export]
+        macro_rules! foo {
+            () => { fn foo() -> $ crate::Foo { unimplemented!() } }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate test_package as package;
+
+        foo!();
+
+        fn main() {
+            foo().bar()
+        }       //^ lib.rs
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar with macro call not in crate root`() = stubOnlyResolve("""
+    //- lib.rs
+        pub struct Foo;
+        impl Foo {
+            pub fn bar(&self) {}
+        }     //X
+        #[macro_export]
+        macro_rules! foo {
+            () => { fn foo() -> $ crate::Foo { unimplemented!() } }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate test_package as package;
+
+        mod a {
+            foo!();
+
+            fn main() {
+                foo().bar()
+            }       //^ lib.rs
+        }
     """)
 }

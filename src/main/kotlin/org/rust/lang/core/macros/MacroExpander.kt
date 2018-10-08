@@ -116,12 +116,11 @@ class MacroExpander(val project: Project) {
         val (case, subst) = findMatchingPattern(def, call) ?: return null
         val macroExpansion = case.macroExpansion ?: return null
 
-        val crate = def.containingMod.crateRelativePath ?: ""
         val substWithGlobalVars = WithParent(
             subst,
             WithParent(
                 MacroSubstitution(
-                    singletonMap("crate", crate),
+                    singletonMap("crate", getPathToCrate(call, def)),
                     emptyList()
                 ),
                 null
@@ -205,6 +204,17 @@ class MacroExpander(val project: Project) {
                 )
             }
         }
+
+    /** Returns path from [context] to [def]'s crate */
+    private fun getPathToCrate(context: RsElement, def: RsMacro): String {
+        val externCrateMod = def.crateRoot ?: return ""
+        val contextCrate = context.crateRoot ?: return ""
+        if (externCrateMod == contextCrate) return ""
+        val externCrateItem = contextCrate.childrenOfType<RsExternCrateItem>()
+            .find { it.reference.resolve() == externCrateMod } ?: return ""
+        val name = externCrateItem.nameWithAlias
+        return "::$name"
+    }
 }
 
 private class MacroPattern private constructor(
