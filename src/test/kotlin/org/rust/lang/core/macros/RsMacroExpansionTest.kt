@@ -160,7 +160,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         foo! { foo }
     """, """
-        fn foo() { let a = ::a::foo; }
+        fn foo() { let a = ::foo; }
     """)
 
     fun `test empty group`() = doTest(MacroExpansionMarks.groupInputEnd1, """
