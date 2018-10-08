@@ -195,4 +195,12 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
         struct S<A>(A);
         impl<B: Tr> S<B> { fn foo(self) -> <B as Tr>::Item/*caret*/ }
     """)
+
+    // https://doc.rust-lang.org/error-index.html#E0223
+    fun `test no completion for associated type of type other then type parameter`() = checkNoCompletion("""
+        trait Tr { type Item; }
+        impl<T> Tr for T { type Item = (); }
+        struct S;
+        fn main() { let a: S::/*caret*/; }
+    """)
 }

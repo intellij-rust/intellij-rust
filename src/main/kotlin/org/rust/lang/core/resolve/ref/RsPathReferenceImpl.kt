@@ -38,9 +38,12 @@ class RsPathReferenceImpl(
                 lookup,
                 element,
                 true,
-                filterCompletionVariantsByVisibility(
-                    filterPathCompletionVariantsByTraitBounds(it, lookup),
-                    element.containingMod
+                filterAssocTypes(
+                    element,
+                    filterCompletionVariantsByVisibility(
+                        filterPathCompletionVariantsByTraitBounds(it, lookup),
+                        element.containingMod
+                    )
                 )
             )
         }
@@ -78,6 +81,19 @@ class RsPathReferenceImpl(
         override fun invoke(element: RsPath): List<BoundElement<RsElement>> {
             return resolvePath(element)
         }
+    }
+}
+
+private fun filterAssocTypes(
+    path: RsPath,
+    processor: RsResolveProcessor
+): RsResolveProcessor {
+    val qualifier = path.path
+    val allAssocItemsAllowed =
+        qualifier == null || qualifier.hasCself || qualifier.reference.resolve() is RsTypeParameter
+    return if (allAssocItemsAllowed) processor else fun(it: ScopeEntry): Boolean {
+        if (it is AssocItemScopeEntry && (it.element is RsTypeAlias)) return false
+        return processor(it)
     }
 }
 

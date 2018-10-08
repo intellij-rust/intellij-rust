@@ -81,20 +81,20 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
 
     fun `test unsatisfied bound path filtering`() = doSingleCompletion("""
         trait Bound {}
-        trait Trait1 { type Foo = (); }
-        trait Trait2 { type Bar = (); }
+        trait Trait1 { fn foo(){} }
+        trait Trait2 { fn bar() {} }
         impl<T: Bound> Trait1 for T {}
         impl<T> Trait2 for T {}
         struct S;
         fn main() { S::/*caret*/ }
     """, """
         trait Bound {}
-        trait Trait1 { type Foo = (); }
-        trait Trait2 { type Bar = (); }
+        trait Trait1 { fn foo(){} }
+        trait Trait2 { fn bar() {} }
         impl<T: Bound> Trait1 for T {}
         impl<T> Trait2 for T {}
         struct S;
-        fn main() { S::Bar/*caret*/ }
+        fn main() { S::bar()/*caret*/ }
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
