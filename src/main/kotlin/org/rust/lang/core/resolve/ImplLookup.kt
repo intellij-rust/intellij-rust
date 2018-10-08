@@ -413,8 +413,10 @@ class ImplLookup(
         return when {
             element == items.findSizedTrait() -> sizedTraitCandidates(ref.selfTy, element)
             ref.selfTy is TyTypeParameter -> {
-                ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
-                    ?.let { listOf(SelectionCandidate.TypeParameter(it)) } ?: emptyList()
+                ref.selfTy.getTraitBoundsTransitively().asSequence()
+                    .filter { ctx.probe { combineBoundElements(it, ref.trait) } }
+                    .map { SelectionCandidate.TypeParameter(it) }
+                    .toList()
             }
             ref.selfTy is TyAnon -> {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
@@ -518,10 +520,10 @@ class ImplLookup(
         }
     }
 
-    private fun <T: RsElement> combineBoundElements(be1: BoundElement<T>, be2: BoundElement<T>) {
-        ctx.combinePairs(be1.subst.zipTypeValues(be2.subst))
-        ctx.combinePairs(zipValues(be1.assoc, be2.assoc))
-    }
+    private fun <T : RsElement> combineBoundElements(be1: BoundElement<T>, be2: BoundElement<T>): Boolean =
+        be1.element == be2.element &&
+            ctx.combinePairs(be1.subst.zipTypeValues(be2.subst)) &&
+            ctx.combinePairs(zipValues(be1.assoc, be2.assoc))
 
     fun coercionSequence(baseTy: Ty): Sequence<Ty> {
         val result = mutableSetOf<Ty>()
