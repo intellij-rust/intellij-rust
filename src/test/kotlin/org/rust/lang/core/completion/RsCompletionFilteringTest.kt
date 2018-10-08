@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class RsCompletionFilteringTest: RsCompletionTestBase() {
     fun `test unsatisfied bound filtered 1`() = doSingleCompletion("""
         trait Bound {}
@@ -92,5 +95,18 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         impl<T> Trait2 for T {}
         struct S;
         fn main() { S::Bar/*caret*/ }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test method is not filtered by Sync+Send bounds`() = doSingleCompletion("""
+        struct S;
+        trait Trait { fn foo(&self) {} }
+        impl<T: Sync + Send> Trait for T {}
+        fn main() { S.fo/*caret*/ }
+    """, """
+        struct S;
+        trait Trait { fn foo(&self) {} }
+        impl<T: Sync + Send> Trait for T {}
+        fn main() { S.foo()/*caret*/ }
     """)
 }
