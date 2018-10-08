@@ -9,10 +9,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyTypeParameter
 
 /**
  * Represents a potentially generic Psi Element, like `fn make_t<T>() { }`,
@@ -52,3 +55,6 @@ data class BoundElement<out E : RsElement>(
         subst.types.any { visitor.visitTy(it) } && subst.lifetimes.any { visitor.visitRegion(it) }
 
 }
+
+val BoundElement<RsGenericDeclaration>.positionalTypeArguments: List<Ty>
+    get() = element.typeParameters.map { subst[it] ?: TyTypeParameter.named(it) }
