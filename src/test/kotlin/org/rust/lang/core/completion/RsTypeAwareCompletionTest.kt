@@ -203,4 +203,16 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
         struct S;
         fn main() { let a: S::/*caret*/; }
     """)
+
+    fun `test associated type in explicit UFCS form`() = doSingleCompletion("""
+        trait Tr { type Item; }
+        impl<T> Tr for T { type Item = (); }
+        struct S;
+        fn main() { let a: <S as Tr>::/*caret*/; }
+    """, """
+        trait Tr { type Item; }
+        impl<T> Tr for T { type Item = (); }
+        struct S;
+        fn main() { let a: <S as Tr>::Item/*caret*/; }
+    """)
 }
