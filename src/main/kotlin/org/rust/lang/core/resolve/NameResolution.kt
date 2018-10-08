@@ -668,11 +668,11 @@ private fun processAssociatedItems(
                 // trait SliceIndex<T> { type Output; }
                 // fn get<I: : SliceIndex<S>>(index: I) -> I::Output
                 // Resulting subst will contains mapping T => S
-                traitBounds.find { it.element == traitOrImpl.value }?.subst ?: emptySubstitution
+                traitBounds.filter { it.element == traitOrImpl.value }.map { it.subst }
             } else {
-                emptySubstitution
+                listOf(emptySubstitution)
             }
-            return processor(AssocItemScopeEntry(name, entry, subst, traitOrImpl))
+            return subst.any { processor(AssocItemScopeEntry(name, entry, it, traitOrImpl)) }
         }
 
         /**

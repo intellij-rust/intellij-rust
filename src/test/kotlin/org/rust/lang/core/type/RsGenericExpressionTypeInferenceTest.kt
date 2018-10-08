@@ -1472,4 +1472,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             }               //^ Self
         }
     """)
+
+    fun `test type arguments remap on collapse to trait`() = testExpr("""
+        struct S;
+        trait Tr<A> { fn foo<B>(a: A, b: B) -> Self; }
+        impl Tr<u8> for S { fn foo<C>(a: u8, b: C) -> Self { unimplemented!() } }
+        impl Tr<u16> for S { fn foo<D>(a: u16, b: D) -> Self { unimplemented!() } }
+
+        fn main() {
+            let a = 0;
+            let s = S::foo::<u64>(0u8, a);
+            (a, s);
+        } //^ (u64, S)
+    """)
 }

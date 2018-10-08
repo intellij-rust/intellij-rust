@@ -798,12 +798,13 @@ class RsFnInferenceContext(
     private fun inferPathExprType(expr: RsPathExpr): Ty {
         val variants = resolvePath(expr.path, lookup).mapNotNull { it.downcast<RsNamedElement>() }
         ctx.writePath(expr, variants)
+        val fnVariants = variants.mapNotNull { it.downcast<RsFunction>() }
         val qualifier = expr.path.path
-        if (variants.size > 1 && qualifier != null) {
-            val resolved = collapseToTrait(variants.map { it.element })
+        if (variants.size > 1 && fnVariants.size == variants.size && qualifier != null) {
+            val resolved = collapseToTrait(fnVariants.map { it.element })
             if (resolved != null) {
-                // TODO remap subst
-                return instantiatePath(BoundElement(resolved, variants.first().subst), expr, tryRefinePath = true)
+                val subst = collapseSubst(resolved, fnVariants)
+                return instantiatePath(BoundElement(resolved, subst), expr, tryRefinePath = true)
             }
         }
         val first = variants.singleOrNull() ?: return TyUnknown
@@ -811,11 +812,11 @@ class RsFnInferenceContext(
     }
 
     /** This works for `String::from` where multiple impls of `From` trait found for `String` */
-    private fun collapseToTrait(elements: List<RsNamedElement>): RsFunction? {
+    private fun collapseToTrait(elements: List<RsFunction>): RsFunction? {
         if (elements.size <= 1) return null
 
         val traits = elements.mapNotNull {
-            val owner = (it as? RsFunction)?.owner
+            val owner = it.owner
             when (owner) {
                 is RsAbstractableOwner.Impl -> owner.impl.traitRef?.resolveToTrait
                 is RsAbstractableOwner.Trait -> owner.trait
@@ -830,6 +831,22 @@ class RsFnInferenceContext(
         }
 
         return null
+    }
+
+    /** See test `test type arguments remap on collapse to trait` */
+    private fun collapseSubst(parentFn: RsFunction, variants: List<BoundElement<RsFunction>>): Substitution {
+        //TODO remap lifetimes
+        val collapsed = mutableMapOf<TyTypeParameter, Ty>()
+        val generics = parentFn.generics
+        for (fn in variants) {
+            for ((key, newValue) in generics.zip(fn.positionalTypeArguments)) {
+                collapsed.compute(key) { key, oldValue ->
+                    if (oldValue == null || oldValue == newValue) newValue else TyInfer.TyVar(key)
+                }
+            }
+        }
+        variants.first().subst[TyTypeParameter.self()]?.let { collapsed[TyTypeParameter.self()] = it }
+        return collapsed.toTypeSubst()
     }
 
     private fun instantiatePath(
