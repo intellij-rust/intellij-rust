@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 141
+        override fun getStubVersion(): Int = 142
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -437,34 +437,51 @@ class RsModItemStub(
 class RsTraitItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    override val isPublic: Boolean,
-    val isUnsafe: Boolean
+    private val flags: Int
 ) : StubBase<RsTraitItem>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
 
+    override val isPublic: Boolean
+        get() = BitUtil.isSet(flags, PUBLIC_MASK)
+    val isUnsafe: Boolean
+        get() = BitUtil.isSet(flags, UNSAFE_MASK)
+    val isAuto: Boolean
+        get() = BitUtil.isSet(flags, AUTO_MASK)
+
     object Type : RsStubElementType<RsTraitItemStub, RsTraitItem>("TRAIT_ITEM") {
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsTraitItemStub(parentStub, this,
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsTraitItemStub {
+            return RsTraitItemStub(parentStub, this,
                 dataStream.readNameAsString(),
-                dataStream.readBoolean(),
-                dataStream.readBoolean()
+                dataStream.readUnsignedByte()
             )
+        }
 
         override fun serialize(stub: RsTraitItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
-                writeBoolean(stub.isPublic)
-                writeBoolean(stub.isUnsafe)
+                writeByte(stub.flags)
             }
 
         override fun createPsi(stub: RsTraitItemStub): RsTraitItem =
             RsTraitItemImpl(stub, this)
 
-        override fun createStub(psi: RsTraitItem, parentStub: StubElement<*>?) =
-            RsTraitItemStub(parentStub, this, psi.name, psi.isPublic, psi.isUnsafe)
+        override fun createStub(psi: RsTraitItem, parentStub: StubElement<*>?): RsTraitItemStub {
+            var flags = 0
+            flags = BitUtil.set(flags, PUBLIC_MASK, psi.isPublic)
+            flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
+            flags = BitUtil.set(flags, AUTO_MASK, psi.isAuto)
+
+            return RsTraitItemStub(parentStub, this, psi.name, flags)
+        }
 
         override fun indexStub(stub: RsTraitItemStub, sink: IndexSink) = sink.indexTraitItem(stub)
+    }
+
+    companion object {
+        private val PUBLIC_MASK: Int = makeBitMask(0)
+        private val UNSAFE_MASK: Int = makeBitMask(1)
+        private val AUTO_MASK: Int = makeBitMask(2)
     }
 }
 

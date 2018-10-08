@@ -420,6 +420,7 @@ class ImplLookup(
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
                     ?.let { listOf(SelectionCandidate.TraitObject) } ?: emptyList()
             }
+            element.isAuto -> autoTraitCandidates(ref.selfTy, element)
             else -> buildList {
                 addAll(assembleImplCandidates(ref))
                 addAll(assembleDerivedCandidates(ref))
@@ -465,6 +466,12 @@ class ImplLookup(
             SelectionCandidate.DerivedTrait(sizedTrait)
         }
         return listOf(candidate)
+    }
+
+    private fun autoTraitCandidates(ty: Ty, trait: RsTraitItem): List<SelectionCandidate> {
+        // FOr now, just think that any type is Sync + Send
+        // TODO implement auto trait logic
+        return listOf(SelectionCandidate.DerivedTrait(trait))
     }
 
     private fun confirmCandidate(
