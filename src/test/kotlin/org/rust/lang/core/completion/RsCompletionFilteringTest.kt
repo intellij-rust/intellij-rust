@@ -140,4 +140,25 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
             foo::S.b/*caret*/()
         }
     """)
+
+    fun `test private method 2`() = checkNoCompletion("""
+        mod foo {
+            pub struct S;
+            impl S { fn bar(&self) {} }
+        }
+        fn main() {
+            foo::S.b/*caret*/
+        }
+    """)
+
+    fun `test private field`() = checkNoCompletion("""
+        mod foo {
+            pub struct S {
+                field: i32
+            }
+        }
+        fn bar(s: S) {
+            s.f/*caret*/
+        }
+    """)
 }

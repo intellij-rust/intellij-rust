@@ -55,7 +55,14 @@ class RsFieldLookupReferenceImpl(
         val lookup = ImplLookup.relativeTo(element)
         val receiver = element.receiver.type
         return collectCompletionVariants {
-            processDotExprResolveVariants(lookup, receiver, filterMethodCompletionVariantsByTraitBounds(it, lookup, receiver))
+            processDotExprResolveVariants(
+                lookup,
+                receiver,
+                filterCompletionVariantsByVisibility(
+                    filterMethodCompletionVariantsByTraitBounds(it, lookup, receiver),
+                    element.containingMod
+                )
+            )
         }
     }
 
