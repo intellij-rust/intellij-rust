@@ -20,22 +20,20 @@ import java.time.Instant
 import java.util.*
 
 /**
- * Tests for Test Function Line Marker
+ * Tests for Test Function Line Marker.
  */
 class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     fun `test simple function`() = doTestByText("""
         #[test]
-        fn has_icon() {assert(true)} // - Test has_icon
-
-        fn no_icon() {assert(true)}
+        fn has_icon() { assert(true) } // - Test has_icon
+        fn no_icon() { assert(true) }
     """)
 
     fun `test function in a module`() = doTestByText("""
-        mod module { // - Test module
+        mod tests { // - Test lib::tests
             #[test]
-            fn has_icon() {assert(true)} // - Test module::has_icon
-
-            fn no_icon() {assert(true)}
+            fn has_icon() { assert(true) } // - Test tests::has_icon
+            fn no_icon() { assert(true) }
         }
     """)
 
@@ -43,9 +41,8 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         #[cfg(test)]
         mod test { // - Test lib::test
             #[test]
-            fn has_icon() {assert(true)} // - Test test::has_icon
-
-            fn no_icon() {assert(true)}
+            fn has_icon() { assert(true) } // - Test test::has_icon
+            fn no_icon() { assert(true) }
         }
     """)
 
@@ -53,19 +50,39 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         #[cfg(test)]
         mod tests { // - Test lib::tests
             #[test]
-            fn has_icon() {assert(true)} // - Test tests::has_icon
-
-            fn no_icon() {assert(true)}
+            fn has_icon() { assert(true) } // - Test tests::has_icon
+            fn no_icon() { assert(true) }
         }
     """)
+
+    fun `test function in a nested tests module`() = doTestByText("""
+        #[cfg(test)]
+        mod tests { // - Test lib::tests
+            #[cfg(test)]
+            mod nested_tests { // - Test nested_tests
+                #[test]
+                fn has_icon() { assert(true) } // - Test tests::nested_tests::has_icon
+                fn no_icon() { assert(true) }
+            }
+        }
+    """)
+
+    fun `test show a test mark as default for test function`() = checkElement<RsFunction>("""
+        #[test]
+        fn test() {}
+    """) {
+        val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
+        assertEquals(CargoIcons.TEST, icon)
+    }
 
     fun `test show a green mark for a passed test`() = checkElement<RsFunction>("""
         #[test]
         fn passing_test() {}
-        """) {
+    """) {
         val instance = TestStateStorage.getInstance(project)
-        instance.writeState(CargoTestLocator.getTestFnUrl(it),
-            TestStateStorage.Record(TestStateInfo.Magnitude.PASSED_INDEX.value, Date.from(Instant.now()), 1))
+        instance.writeState(
+            CargoTestLocator.getTestFnUrl(it),
+            createRecord(TestStateInfo.Magnitude.PASSED_INDEX.value, Date.from(Instant.now()), 1))
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
         assertEquals(CargoIcons.TEST_GREEN, icon)
     }
@@ -73,18 +90,26 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     fun `test show a red mark for a failed test`() = checkElement<RsFunction>("""
         #[test]
         fn failing_test() {}
-        """) {
+    """) {
         val instance = TestStateStorage.getInstance(project)
-        instance.writeState(CargoTestLocator.getTestFnUrl(it),
-            TestStateStorage.Record(TestStateInfo.Magnitude.ERROR_INDEX.value, Date.from(Instant.now()), 1))
+        instance.writeState(
+            CargoTestLocator.getTestFnUrl(it),
+            createRecord(TestStateInfo.Magnitude.ERROR_INDEX.value, Date.from(Instant.now()), 1)
+        )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
         assertEquals(CargoIcons.TEST_RED, icon)
     }
 
-    fun `test show a test mark as default for test function`() = checkElement<RsFunction>("""
+    fun `test show a mark for an ignored test`() = checkElement<RsFunction>("""
         #[test]
-        fn foo_bar() {}
-        """) {
+        #[ignore]
+        fn ignored_test() {}
+    """) {
+        val instance = TestStateStorage.getInstance(project)
+        instance.writeState(
+            CargoTestLocator.getTestFnUrl(it),
+            createRecord(TestStateInfo.Magnitude.IGNORED_INDEX.value, Date.from(Instant.now()), 1)
+        )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
         assertEquals(CargoIcons.TEST, icon)
     }
@@ -92,9 +117,54 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     fun `test show a test mark as default for mod`() = checkElement<RsMod>("""
         mod tests {
             #[test]
+            fn test() {}
+        }
+    """) {
+        val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
+        assertEquals(CargoIcons.TEST, icon)
+    }
+
+    fun `test show a green mark for a passed mod`() = checkElement<RsMod>("""
+        mod tests {
+            #[test]
             fn passing_test() {}
         }
-        """) {
+    """) {
+        val instance = TestStateStorage.getInstance(project)
+        instance.writeState(
+            CargoTestLocator.getTestModUrl(it),
+            createRecord(TestStateInfo.Magnitude.PASSED_INDEX.value, Date.from(Instant.now()), 1))
+        val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
+        assertEquals(CargoIcons.TEST_GREEN, icon)
+    }
+
+    fun `test show a red mark for a failed mod`() = checkElement<RsMod>("""
+        mod tests {
+            #[test]
+            fn failing_test() {}
+        }
+    """) {
+        val instance = TestStateStorage.getInstance(project)
+        instance.writeState(
+            CargoTestLocator.getTestModUrl(it),
+            createRecord(TestStateInfo.Magnitude.ERROR_INDEX.value, Date.from(Instant.now()), 1)
+        )
+        val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
+        assertEquals(CargoIcons.TEST_RED, icon)
+    }
+
+    fun `test show a mark for an ignored mod`() = checkElement<RsMod>("""
+        mod tests {
+            #[test]
+            #[ignore]
+            fn ignored_test() {}
+        }
+    """) {
+        val instance = TestStateStorage.getInstance(project)
+        instance.writeState(
+            CargoTestLocator.getTestModUrl(it),
+            createRecord(TestStateInfo.Magnitude.IGNORED_INDEX.value, Date.from(Instant.now()), 1)
+        )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
         assertEquals(CargoIcons.TEST, icon)
     }
@@ -103,8 +173,11 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         val element = PsiFileFactory.getInstance(project)
             .createFileFromText("main.rs", RsFileType, code)
             .descendantOfTypeStrict<E>() ?: error("No ${E::class.java} in\n$code")
-
         callback(element)
     }
 
+    companion object {
+        private fun createRecord(magnitude: Int, date: Date, configurationHash: Long): TestStateStorage.Record =
+            TestStateStorage.Record(magnitude, date, configurationHash, 0, "", "", "")
+    }
 }
