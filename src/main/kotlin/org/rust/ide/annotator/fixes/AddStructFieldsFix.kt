@@ -5,18 +5,16 @@
 
 package org.rust.ide.annotator.fixes
 
-import com.intellij.codeInsight.CodeInsightUtilBase
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.annotator.calculateMissingFields
-import org.rust.ide.formatter.impl.CommaList
-import org.rust.ide.formatter.processors.removeTrailingComma
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.canBeInstantiatedIn
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.resolve.StdKnownItems
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -47,52 +45,57 @@ class AddStructFieldsFix(
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        val psiFactory = RsPsiFactory(project)
         val structLiteral = startElement as RsStructLiteral
         val decl = structLiteral.path.reference.deepResolve() as? RsFieldsOwner ?: return
         val body = structLiteral.structLiteralBody
         val fieldsToAdd = calculateMissingFields(body, decl)
-        val (firstAdded, _) = fillStruct(psiFactory, body, decl.namedFields, fieldsToAdd, postProcess = true)
+        val firstAdded = fillStruct(
+            RsPsiFactory(project),
+            StdKnownItems.relativeTo(decl),
+            body,
+            decl.namedFields,
+            fieldsToAdd,
+            body.containingMod
+        )
 
         if (editor != null && firstAdded != null) {
-            editor.caretModel.moveToOffset(firstAdded.expr!!.textOffset)
+            val expr = firstAdded.expr
+            if (expr != null) editor.caretModel.moveToOffset(expr.textOffset)
         }
     }
 
     private fun fillStruct(
         psiFactory: RsPsiFactory,
-        structLiteralBody: RsStructLiteralBody,
+        items: StdKnownItems,
+        structLiteral: RsStructLiteralBody,
         declaredFields: List<RsFieldDecl>,
         fieldsToAdd: List<RsFieldDecl>,
-        postProcess: Boolean
-    ): Pair<RsStructLiteralField?, RsStructLiteralBody> {
-        var structLiteral = structLiteralBody
-        val forceMultiline = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
+        mod: RsMod
+    ): RsStructLiteralField? {
+        val forceMultiLine = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
 
         var firstAdded: RsStructLiteralField? = null
         for (fieldDecl in fieldsToAdd) {
-            val field = specializedCreateStructLiteralField(psiFactory, fieldDecl)!!
+            val field = specializedCreateStructLiteralField(psiFactory, items, fieldDecl, mod) ?: continue
             val addBefore = findPlaceToAdd(field, structLiteral.structLiteralFieldList, declaredFields)
-            ensureTrailingComma(structLiteral.structLiteralFieldList)
-
-            val comma = structLiteral.addBefore(psiFactory.createComma(), addBefore ?: structLiteral.rbrace)
-            val added = structLiteral.addBefore(field, comma) as RsStructLiteralField
+            val added = if (addBefore == null) {
+                ensureTrailingComma(structLiteral.structLiteralFieldList)
+                structLiteral.addBefore(field, structLiteral.rbrace) as RsStructLiteralField
+            } else {
+                val comma = structLiteral.addBefore(psiFactory.createComma(), addBefore)
+                structLiteral.addBefore(field, comma) as RsStructLiteralField
+            }
 
             if (firstAdded == null) {
                 firstAdded = added
             }
         }
 
-        if (forceMultiline) {
+        if (forceMultiLine) {
             structLiteral.addAfter(psiFactory.createNewline(), structLiteral.lbrace)
         }
 
-        if (postProcess) structLiteral = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(structLiteral)
-
-        CommaList.forElement(structLiteral.elementType)!!
-            .removeTrailingComma(structLiteral)
-
-        return Pair(firstAdded, structLiteral)
+        return firstAdded
     }
 
     private fun findPlaceToAdd(
@@ -135,31 +138,45 @@ class AddStructFieldsFix(
         return null
     }
 
-    private fun defaultValueExprFor(factory: RsPsiFactory, fieldDecl: RsFieldDecl, ty: Ty): RsExpr {
-        val stdknownItems = StdKnownItems.relativeTo(fieldDecl)
+    private fun specializedCreateStructLiteralField(
+        factory: RsPsiFactory,
+        items: StdKnownItems,
+        fieldDecl: RsFieldDecl,
+        mod: RsMod
+    ): RsStructLiteralField? {
+        val fieldType = fieldDecl.typeReference?.type ?: return null
+        val name = fieldDecl.name ?: return null
+        val fieldLiteral = defaultValueExprFor(factory, items, mod, fieldType)
+        return factory.createStructLiteralField(name, fieldLiteral)
+    }
+
+    private fun defaultValueExprFor(factory: RsPsiFactory, items: StdKnownItems, mod: RsMod, ty: Ty): RsExpr {
         return when (ty) {
             is TyBool -> factory.createExpression("false")
             is TyInteger -> factory.createExpression("0")
             is TyFloat -> factory.createExpression("0.0")
             is TyChar -> factory.createExpression("''")
-            is TyStr -> factory.createExpression("\"\"")
-            is TyReference ->
-                defaultValueExprFor(factory, fieldDecl, ty.referenced)
+            is TyReference -> when (ty.referenced) {
+                is TyStr -> factory.createExpression("\"\"")
+                else -> factory.createRefExpr(defaultValueExprFor(factory, items, mod, ty.referenced), listOf(ty.mutability))
+            }
             is TyAdt -> {
-                when (ty.item) {
-                    stdknownItems.findCoreItem("option::Option") -> factory.createExpression("None")
-                    stdknownItems.findStdItem("collections", "string::String") -> factory.createExpression("String::new()")
-                    stdknownItems.findStdItem("collections", "vec::Vec") -> factory.createExpression("Vec::new()")
+                val item = ty.item
+                when (item) {
+                    items.findOptionItem() -> factory.createExpression("None")
+                    items.findStdItem("collections", "string::String") -> factory.createExpression("String::new()")
+                    items.findStdItem("collections", "vec::Vec") -> factory.createExpression("Vec::new()")
                     else -> {
-                        val item = ty.item
-                        if (item is RsStructItem && recursive) {
+                        if (recursive && item is RsStructItem && item.canBeInstantiatedIn(mod)) {
+                            // `!!` is because it isn't possible to acquire TyAdt with anonymous item
                             val structLiteral = factory.createStructLiteral(ty.item.name!!)
                             fillStruct(
                                 factory,
+                                items,
                                 structLiteral.structLiteralBody,
                                 item.namedFields,
                                 item.namedFields,
-                                postProcess = false
+                                mod
                             )
                             structLiteral
                         } else {
@@ -171,17 +188,11 @@ class AddStructFieldsFix(
             is TySlice, is TyArray -> factory.createExpression("[]")
             is TyTuple -> {
                 val text = ty.types.joinToString(prefix = "(", separator = ", ", postfix = ")") { tupleElement ->
-                    defaultValueExprFor(factory, fieldDecl, tupleElement).text
+                    defaultValueExprFor(factory, items, mod, tupleElement).text
                 }
                 factory.createExpression(text)
             }
             else -> factory.createExpression("()")
         }
-    }
-
-    private fun specializedCreateStructLiteralField(factory: RsPsiFactory, fieldDecl: RsFieldDecl): RsStructLiteralField? {
-        val fieldType = fieldDecl.typeReference?.type ?: return null
-        val fieldLiteral = defaultValueExprFor(factory, fieldDecl, fieldType)
-        return factory.createStructLiteralField(fieldDecl.name!!, fieldLiteral)
     }
 }
