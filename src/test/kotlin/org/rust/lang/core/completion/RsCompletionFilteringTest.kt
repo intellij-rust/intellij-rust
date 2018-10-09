@@ -109,4 +109,80 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         impl<T: Sync + Send> Trait for T {}
         fn main() { S.foo()/*caret*/ }
     """)
+
+    fun `test private function`() = checkNoCompletion("""
+        mod foo { fn bar() {} }
+        fn main() {
+            foo::ba/*caret*/
+        }
+    """)
+
+    fun `test private mod`() = checkNoCompletion("""
+        mod foo { mod bar {} }
+        fn main() {
+            foo::ba/*caret*/
+        }
+    """)
+
+    fun `test private enum`() = checkNoCompletion("""
+        mod foo { enum MyEnum {} }
+        fn main() {
+            foo::MyEn/*caret*/
+        }
+    """)
+
+    fun `test private method 1`() = checkNoCompletion("""
+        mod foo {
+            pub struct S;
+            impl S { fn bar(&self) {} }
+        }
+        fn main() {
+            foo::S.b/*caret*/()
+        }
+    """)
+
+    fun `test private method 2`() = checkNoCompletion("""
+        mod foo {
+            pub struct S;
+            impl S { fn bar(&self) {} }
+        }
+        fn main() {
+            foo::S.b/*caret*/
+        }
+    """)
+
+    fun `test private field`() = checkNoCompletion("""
+        mod foo {
+            pub struct S {
+                field: i32
+            }
+        }
+        fn bar(s: S) {
+            s.f/*caret*/
+        }
+    """)
+
+    fun `test doc(hidden) item`() = checkNoCompletion("""
+        mod foo {
+            #[doc(hidden)]
+            pub struct MyStruct;
+        }
+        fn main() {
+            foo::My/*caret*/
+        }
+    """)
+
+    fun `test doc(hidden) item from the same module isn't filtered`() = doSingleCompletion("""
+        #[doc(hidden)]
+        struct MyStruct;
+        fn main() {
+            My/*caret*/
+        }
+    """, """
+        #[doc(hidden)]
+        struct MyStruct;
+        fn main() {
+            MyStruct/*caret*/
+        }
+    """)
 }
