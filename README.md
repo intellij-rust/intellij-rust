@@ -66,8 +66,8 @@ with [help wanted].
 [travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust?branch=master
 [travis-build-status-svg]: https://travis-ci.org/intellij-rust/intellij-rust.svg?branch=master
 
-[appveyor-build-status]: https://ci.appveyor.com/project/matklad/intellij-rust/branch/master
-[appveyor-build-status-svg]: https://ci.appveyor.com/api/projects/status/mc5rjptfa0t2cer5?svg=true
+[appveyor-build-status]: https://ci.appveyor.com/project/intellij-rust/intellij-rust/branch/master
+[appveyor-build-status-svg]: https://ci.appveyor.com/api/projects/status/xf8792c7p3637060?svg=true
 
 [teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust&guest=1
 [teamcity-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/statusIcon.svg
