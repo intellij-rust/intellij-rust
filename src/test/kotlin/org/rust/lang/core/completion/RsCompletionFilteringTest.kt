@@ -109,4 +109,25 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         impl<T: Sync + Send> Trait for T {}
         fn main() { S.foo()/*caret*/ }
     """)
+
+    fun `test private function`() = checkNoCompletion("""
+        mod foo { fn bar() {} }
+        fn main() {
+            foo::ba/*caret*/
+        }
+    """)
+
+    fun `test private mod`() = checkNoCompletion("""
+        mod foo { mod bar {} }
+        fn main() {
+            foo::ba/*caret*/
+        }
+    """)
+
+    fun `test private enum`() = checkNoCompletion("""
+        mod foo { enum MyEnum {} }
+        fn main() {
+            foo::MyEn/*caret*/
+        }
+    """)
 }
