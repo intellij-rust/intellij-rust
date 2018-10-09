@@ -161,4 +161,28 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
             s.f/*caret*/
         }
     """)
+
+    fun `test doc(hidden) item`() = checkNoCompletion("""
+        mod foo {
+            #[doc(hidden)]
+            pub struct MyStruct;
+        }
+        fn main() {
+            foo::My/*caret*/
+        }
+    """)
+
+    fun `test doc(hidden) item from the same module isn't filtered`() = doSingleCompletion("""
+        #[doc(hidden)]
+        struct MyStruct;
+        fn main() {
+            My/*caret*/
+        }
+    """, """
+        #[doc(hidden)]
+        struct MyStruct;
+        fn main() {
+            MyStruct/*caret*/
+        }
+    """)
 }

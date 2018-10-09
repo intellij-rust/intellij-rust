@@ -150,8 +150,13 @@ fun processAllWithSubst(
 
 fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, mod: RsMod): RsResolveProcessor {
     return fun(it: ScopeEntry): Boolean {
-        val visible = it.element as? RsVisible ?: return processor(it)
-        if (visible.isVisibleFrom(mod)) return processor(it)
-        return false
+        val element = it.element
+        if (element is RsVisible && !element.isVisibleFrom(mod)) return false
+
+        val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
+            element.containingMod != mod
+        if (isHidden) return false
+
+        return processor(it)
     }
 }
