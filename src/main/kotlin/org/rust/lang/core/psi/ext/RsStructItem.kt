@@ -32,6 +32,8 @@ val RsStructItem.kind: RsStructKind get() {
     return if (hasUnion) RsStructKind.UNION else RsStructKind.STRUCT
 }
 
+val RsStructItem.isTupleStruct get() = tupleFields != null
+
 abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStub>, RsStructItem {
 
     constructor(node: ASTNode) : super(node)
