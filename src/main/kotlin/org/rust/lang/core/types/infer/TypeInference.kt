@@ -1429,24 +1429,29 @@ class RsFnInferenceContext(
         fun isArrayToSlice(prevType: Ty?, type: Ty?): Boolean =
             prevType is TyArray && type is TySlice
 
-        val containerType = expr.containerExpr?.inferType() ?: return TyUnknown
-        val indexType = ctx.resolveTypeVarsIfPossible(expr.indexExpr?.inferType() ?: return TyUnknown)
+        val containerExpr = expr.containerExpr ?: return TyUnknown
+        val indexExpr = expr.indexExpr ?: return TyUnknown
+
+        val containerType = containerExpr.inferType()
+        val indexType = ctx.resolveTypeVarsIfPossible(indexExpr.inferType())
 
         var derefCount = -1 // starts with -1 because the fist element of the coercion sequence is the type itself
         var prevType: Ty? = null
+        var result: Ty = TyUnknown
         for (type in lookup.coercionSequence(containerType)) {
             if (!isArrayToSlice(prevType, type)) derefCount++
 
             val outputType = lookup.findIndexOutputType(type, indexType)
             if (outputType != null) {
-                expr.containerExpr?.let { ctx.addAdjustment(it, Adjustment.Deref(containerType), derefCount) }
-                return outputType.register()
+                result = outputType.register()
+                break
             }
 
             prevType = type
         }
 
-        return TyUnknown
+        ctx.addAdjustment(containerExpr, Adjustment.Deref(containerType), derefCount)
+        return result
     }
 
     private fun inferMacroExprType(expr: RsMacroExpr): Ty {

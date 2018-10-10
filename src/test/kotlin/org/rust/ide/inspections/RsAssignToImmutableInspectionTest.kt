@@ -82,4 +82,11 @@ class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmuta
             <error descr="Cannot assign to immutable dereference of raw pointer [E0594]">*p = 1</error>;
         }
     """)
+
+    fun `test assign to index expr of unknown type`() = checkByText("""
+        fn main() {
+            let xs = &mut unknownType;
+            xs[0] = 1;
+        }
+    """)
 }
