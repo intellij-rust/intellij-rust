@@ -14,9 +14,9 @@ import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.searchForImplementations
 
-abstract class RsImplsSearchBase : QueryExecutorBase<PsiElement, DefinitionsScopedSearch.SearchParameters>(/* readAction = */ true) {
+class RsImplsSearch : QueryExecutorBase<PsiElement, DefinitionsScopedSearch.SearchParameters>(/* readAction = */ true) {
 
-    protected fun processQueryInner(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<PsiElement>) {
+    override fun processQuery(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in PsiElement>) {
         val psi = queryParameters.element
         val query = when (psi) {
             is RsTraitItem -> psi.searchForImplementations()
