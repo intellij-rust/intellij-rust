@@ -1075,4 +1075,38 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             b;
         } //^ <unknown>
     """)
+
+    fun `test type coercion in tuple`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Foo;
+        struct Bar;
+
+        impl Deref for Foo {
+            type Target = Bar;
+        }
+
+        fn main() {
+            let a: (&Bar, &Bar) = (&Foo, &Foo);
+                                //^ (&Bar, &Bar)
+        }
+    """)
+
+    fun `test type coercion in array`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Foo;
+        struct Bar;
+
+        impl Deref for Foo {
+            type Target = Bar;
+        }
+
+        fn main() {
+            let a: [&Bar, 2] = [&Foo, &Foo];
+                             //^ [&Bar; 2]
+        }
+    """)
 }
