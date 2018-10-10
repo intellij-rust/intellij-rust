@@ -51,7 +51,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
     }
 
     inner class CacheInvalidator : PsiTreeChangeAdapter() {
-        override fun childRemoved(event: PsiTreeChangeEvent) = onPsiChange(event)
+        override fun beforeChildRemoval(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun childReplaced(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun childAdded(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun childrenChanged(event: PsiTreeChangeEvent) = onPsiChange(event)
