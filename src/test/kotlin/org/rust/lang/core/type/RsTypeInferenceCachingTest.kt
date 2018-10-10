@@ -13,8 +13,8 @@ import org.rust.lang.core.psi.ext.childrenOfType
 import org.rust.lang.core.types.inference
 
 class RsTypeInferenceCachingTest : RsTestBase() {
-    private val TYPE: () -> Unit = { myFixture.type("a") }
     private val COMPLETE: () -> Unit = { myFixture.completeBasic() }
+    private fun type(text: String = "a"): () -> Unit = { myFixture.type(text) }
 
     private fun List<RsFunction>.collectStamps(): Map<String, Long> =
         associate { it.name!! to it.inference.getTimestamp() }
@@ -34,8 +34,18 @@ class RsTypeInferenceCachingTest : RsTestBase() {
         }
     }
 
-    fun `test reinferred only current function`() = checkReinferred(TYPE, """
+    fun `test reinferred only current function after insert`() = checkReinferred(type(), """
         fn foo() { /*caret*/ }
+        fn bar() {  }
+    """, "foo")
+
+    fun `test reinferred only current function after remove`() = checkReinferred(type("\b"), """
+        fn foo() { 2/*caret*/ }
+        fn bar() {  }
+    """, "foo")
+
+    fun `test reinferred only current function after replace`() = checkReinferred(type("\ba"), """
+        fn foo() { 2/*caret*/ }
         fn bar() {  }
     """, "foo")
 
@@ -44,13 +54,13 @@ class RsTypeInferenceCachingTest : RsTestBase() {
         fn bar() {  }
     """)
 
-    fun `test reinferred everything on structure change 1`() = checkReinferred(TYPE, """
+    fun `test reinferred everything on structure change 1`() = checkReinferred(type(), """
         struct S { /*caret*/ }
         fn foo() {  }
         fn bar() {  }
     """, "foo", "bar")
 
-    fun `test reinferred everything on structure change 2`() = checkReinferred(TYPE, """
+    fun `test reinferred everything on structure change 2`() = checkReinferred(type(), """
         fn foo() { struct S { /*caret*/ } }
         fn bar() {  }
     """, "foo", "bar")
