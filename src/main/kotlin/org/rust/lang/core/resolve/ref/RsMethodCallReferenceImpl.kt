@@ -18,6 +18,9 @@ import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import org.rust.stdext.InternalIterator
+import org.rust.stdext.filter
+import org.rust.stdext.toInternalIterator
 
 
 class RsMethodCallReferenceImpl(
@@ -30,14 +33,20 @@ class RsMethodCallReferenceImpl(
     override fun getVariants(): Array<out Any> {
         val lookup = ImplLookup.relativeTo(element)
         val receiver = element.receiver.type
-        return collectCompletionVariants {
-            processMethodCallExprResolveVariants(lookup, receiver,
-                filterCompletionVariantsByVisibility(
-                    filterMethodCompletionVariantsByTraitBounds(it, lookup, receiver),
-                    element.containingMod
-                )
-            )
-        }
+
+        return ::processMethodCallExprResolveVariants.toInternalIterator(lookup, receiver)
+            .filterCompletionVariantsByVisibility(element.containingMod)
+            .filterMethodCompletionVariantsByTraitBounds(lookup, receiver)
+            .collectCompletionVariants()
+
+//        return collectCompletionVariants {
+//            processMethodCallExprResolveVariants(lookup, receiver,
+//                filterCompletionVariantsByVisibility(
+//                    filterMethodCompletionVariantsByTraitBounds(it, lookup, receiver),
+//                    element.containingMod
+//                )
+//            )
+//        }
     }
 
     override fun multiResolve(): List<RsElement> =
@@ -155,5 +164,28 @@ private fun filterMethodCompletionVariantsByTraitBounds(
         if (canEvaluate) return processor(it)
 
         return false
+    }
+}
+
+private fun InternalIterator<ScopeEntry>.filterMethodCompletionVariantsByTraitBounds(
+    lookup: ImplLookup,
+    receiver: Ty
+): InternalIterator<ScopeEntry> {
+    // Don't filter partially unknown types
+    if (receiver.containsTyOfClass(TyUnknown::class.java)) return this
+
+    val cache = mutableMapOf<RsImplItem, Boolean>()
+    return filter {
+        // If not a method (actually a field) or a trait method - just process it
+        if (it !is MethodResolveVariant || it.source !is TraitImplSource.ExplicitImpl) return@filter true
+        // Filter methods by trait bounds (try to select all obligations for each impl)
+        // We're caching evaluation results here because we can often complete methods
+        // in the same impl and always have the same receiver type
+        val canEvaluate = cache.getOrPut(it.source.value) {
+            lookup.ctx.canEvaluateBounds(it.source.value, receiver)
+        }
+        if (canEvaluate) return@filter true
+
+        return@filter false
     }
 }

@@ -13,6 +13,7 @@ import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
+import org.rust.stdext.*
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.
@@ -77,6 +78,15 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
     return result
 }
 
+fun InternalIterator<ScopeEntry>.collectResolveVariants(referenceName: String): List<RsElement> {
+    val result = mutableListOf<RsElement>()
+    this.takeWhile { it != ScopeEvent.STAR_IMPORTS || result.isEmpty() }
+        .filter { it.name == referenceName }
+        .mapNotNull { it.element }
+        .forEachUnstopable(result::add)
+    return result
+}
+
 fun collectCompletionVariants(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {
     val result = mutableListOf<LookupElement>()
     f { e ->
@@ -86,6 +96,14 @@ fun collectCompletionVariants(f: (RsResolveProcessor) -> Unit): Array<LookupElem
         false
     }
     return result.toTypedArray()
+}
+
+fun InternalIterator<ScopeEntry>.collectCompletionVariants(): Array<LookupElement> {
+    return mapNotNull { e ->
+        val element = e.element ?: return@mapNotNull null
+        if (element is RsFunction && element.isTest) return@mapNotNull null
+        createLookupElement(element, e.name)
+    }.toTypedArray()
 }
 
 private data class SimpleScopeEntry(
@@ -159,4 +177,17 @@ fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, mod: RsM
 
         return processor(it)
     }
+}
+
+fun InternalIterator<ScopeEntry>.filterCompletionVariantsByVisibility(
+    mod: RsMod
+): InternalIterator<ScopeEntry> = filter {
+    val element = it.element
+    if (element is RsVisible && !element.isVisibleFrom(mod)) return@filter false
+
+    val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
+        element.containingMod != mod
+    if (isHidden) return@filter false
+
+    return@filter true
 }
