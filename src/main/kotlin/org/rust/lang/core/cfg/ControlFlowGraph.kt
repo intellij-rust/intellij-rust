@@ -114,8 +114,10 @@ class ControlFlowGraph private constructor(
                 val target = edge.target
                 val sourceNode = source.data
                 val targetNode = target.data
+                val escapedSourceText = sourceNode.text.replace("\"", "\\\"")
+                val escapedTargetText = targetNode.text.replace("\"", "\\\"")
 
-                append("    \"${source.index}: ${sourceNode.text}\" -> \"${target.index}: ${targetNode.text}\";\n")
+                append("    \"${source.index}: $escapedSourceText\" -> \"${target.index}: $escapedTargetText\";\n")
             }
 
             append("}\n")
