@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.Consumer
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -56,10 +55,9 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         if (candidates.size == 1) {
             importItem(project, candidates.first(), element)
         } else {
-            val consumer = Consumer<DataContext> { chooseItemAndImport(project, it, candidates, element) }
-            // BACKCOMPAT: 2018.1
-            @Suppress("DEPRECATION")
-            DataManager.getInstance().dataContextFromFocus.doWhenDone(consumer)
+            DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
+                chooseItemAndImport(project, it, candidates, element)
+            }
         }
         isConsumed = true
     }

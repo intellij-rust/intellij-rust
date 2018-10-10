@@ -91,7 +91,7 @@ private class DialogExtractFunctionUi(
         ) {
             updateConfig(config, functionNameField, visibilityBox)
             callback()
-            extractDialogOkValue
+            emptyList()
         }.show()
     }
 
