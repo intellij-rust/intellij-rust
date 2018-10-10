@@ -20,16 +20,17 @@ import org.rust.lang.core.psi.ext.isTupleStruct
 import org.rust.openapiext.checkWriteAccessAllowed
 
 class GenerateConstructorAction : CodeInsightAction() {
-    override fun getHandler(): CodeInsightActionHandler = generateConstructorHandler
-    override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean =
-        GenerateConstructorHandler().isValidFor(editor, file)
 
-    private val generateConstructorHandler = GenerateConstructorHandler()
+    private val generateConstructorHandler: GenerateConstructorHandler = GenerateConstructorHandler()
+
+    override fun getHandler(): CodeInsightActionHandler = generateConstructorHandler
+
+    override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean =
+        generateConstructorHandler.isValidFor(editor, file)
 }
 
 class GenerateConstructorHandler : LanguageCodeInsightActionHandler {
-    override fun isValidFor(editor: Editor, file: PsiFile): Boolean =
-        getStructItem(editor, file) != null
+    override fun isValidFor(editor: Editor, file: PsiFile): Boolean = getStructItem(editor, file) != null
 
     override fun startInWriteAction() = false
     private fun getStructItem(editor: Editor, file: PsiFile): RsStructItem? =
@@ -40,10 +41,9 @@ class GenerateConstructorHandler : LanguageCodeInsightActionHandler {
         generateConstructorBody(structItem, editor)
     }
 
-
     private fun generateConstructorBody(structItem: RsStructItem, editor: Editor) {
         check(!ApplicationManager.getApplication().isWriteAccessAllowed)
-        val chosenFields = showConstructorArgumentsChooser(structItem, structItem.project) ?: return
+        val chosenFields = showConstructorArgumentsChooser(structItem.project, structItem) ?: return
         runWriteAction {
             insertNewConstructor(structItem, chosenFields, editor)
         }
@@ -52,57 +52,57 @@ class GenerateConstructorHandler : LanguageCodeInsightActionHandler {
     private fun insertNewConstructor(structItem: RsStructItem, selectedFields: List<ConstructorArgument>, editor: Editor) {
         checkWriteAccessAllowed()
         val project = editor.project ?: return
-        val psiFactory = RsPsiFactory(project)
         val structName = structItem.name ?: return
-        var expr = psiFactory.createInherentImplItem(structName, structItem.typeParameterList, structItem.whereClause)
-        val anchor = expr.lastChild.lastChild
-        val function = getFunction(structItem, selectedFields, psiFactory)
-        expr.lastChild.addBefore(function, anchor)
-        expr = structItem.parent.addAfter(expr, structItem) as RsImplItem
-        editor.caretModel.moveToOffset(expr.textOffset + expr.textLength - 1)
+        val psiFactory = RsPsiFactory(project)
+        val impl = psiFactory.createInherentImplItem(structName, structItem.typeParameterList, structItem.whereClause)
+        val anchor = impl.lastChild.lastChild
+        val constructor = getFunction(structItem, selectedFields, psiFactory)
+        impl.lastChild.addBefore(constructor, anchor)
+        val insertedImpl = structItem.parent.addAfter(impl, structItem) as RsImplItem
+        editor.caretModel.moveToOffset(insertedImpl.textOffset + insertedImpl.textLength - 1)
     }
 
     private fun getFunction(structItem: RsStructItem, selectedFields: List<ConstructorArgument>, psiFactory: RsPsiFactory): RsFunction {
-        val arguments = buildString {
-            append(selectedFields.joinToString(prefix = "(", postfix = ")", separator = ",")
-            { "${it.argumentIdentifier}:${(it.typeReference)}" })
+        val arguments = selectedFields.joinToString(prefix = "(", postfix = ")", separator = ",") {
+            "${it.argumentIdentifier}: ${it.typeReference}"
         }
 
         val body = generateBody(structItem, selectedFields)
         return psiFactory.createTraitMethodMember("pub fn new$arguments->Self{\n$body}\n")
     }
 
-
     private fun generateBody(structItem: RsStructItem, selectedFields: List<ConstructorArgument>): String {
         val prefix = if (structItem.isTupleStruct) "(" else "{"
         val postfix = if (structItem.isTupleStruct) ")" else "}"
-        return structItem.nameIdentifier?.text + ConstructorArgument.fromStruct(structItem).joinToString(prefix = prefix, postfix = postfix, separator = ",") {
-            if (!selectedFields.contains(it)) {
-                it.fieldIdentifier
-            } else {
-                it.argumentIdentifier
-            }
+        val arguments = ConstructorArgument.fromStruct(structItem).joinToString(prefix = prefix, postfix = postfix, separator = ",") {
+            if (it !in selectedFields) it.fieldIdentifier else it.argumentIdentifier
         }
+        return structItem.nameIdentifier?.text + arguments
     }
 }
 
-data class ConstructorArgument(val argumentIdentifier: String,
-                               val fieldIdentifier: String,
-                               val typeReference: String,
-                               val type: RsTypeReference?) {
-    companion object {
-        private fun fromTupleList(tupleFieldList: List<RsTupleFieldDecl>): List<ConstructorArgument> {
-            return tupleFieldList.mapIndexed { index: Int, tupleField: RsTupleFieldDecl ->
-                val typeName = (tupleField.typeReference.text ?: "()")
-                ConstructorArgument("field$index", "()", typeName, tupleField.typeReference)
-            }
-        }
+data class ConstructorArgument(
+    val argumentIdentifier: String,
+    val fieldIdentifier: String,
+    val typeReference: String,
+    val type: RsTypeReference?
+) {
 
+    val dialogRepresentation: String get() = "$argumentIdentifier: ${type?.text ?: "()"}"
+
+    companion object {
         fun fromStruct(structItem: RsStructItem): List<ConstructorArgument> {
             return if (structItem.isTupleStruct) {
                 fromTupleList(structItem.tupleFields?.tupleFieldDeclList.orEmpty())
             } else {
                 fromFieldList(structItem.blockFields?.fieldDeclList.orEmpty())
+            }
+        }
+
+        private fun fromTupleList(tupleFieldList: List<RsTupleFieldDecl>): List<ConstructorArgument> {
+            return tupleFieldList.mapIndexed { index, tupleField ->
+                val typeName = tupleField.typeReference.text ?: "()"
+                ConstructorArgument("field$index", "()", typeName, tupleField.typeReference)
             }
         }
 
