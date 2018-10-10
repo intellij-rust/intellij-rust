@@ -17,23 +17,16 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsFile
 
-data class TypingPairAtom(val char: Char, val token: IElementType)
+data class BraceKind(val char: Char, val tokenType: IElementType)
 
-interface TypingPairHandler {
-    val opening: TypingPairAtom
-    val closing: TypingPairAtom
+interface BraceHandler {
+    val opening: BraceKind
+    val closing: BraceKind
     fun shouldComplete(editor: Editor): Boolean
     fun calculateBalance(editor: Editor): Int
-
-    fun Editor.createLexer(offset: Int): HighlighterIterator? {
-        if (!isValidOffset(offset, document.charsSequence)) return null
-        val lexer = (this as EditorEx).highlighter.createIterator(offset)
-        if (lexer.atEnd()) return null
-        return lexer
-    }
 }
 
-abstract class RsBraceTypedHandler(private val handler: TypingPairHandler) : TypedHandlerDelegate() {
+abstract class RsBraceTypedHandler(private val handler: BraceHandler) : TypedHandlerDelegate() {
 
     private var openingTyped = false
 
@@ -46,7 +39,7 @@ abstract class RsBraceTypedHandler(private val handler: TypingPairHandler) : Typ
                 handler.closing.char -> {
                     val lexer = editor.createLexer(editor.caretModel.offset) ?: return Result.CONTINUE
                     val tokenType = lexer.tokenType
-                    if (tokenType == handler.closing.token && handler.calculateBalance(editor) == 0) {
+                    if (tokenType == handler.closing.tokenType && handler.calculateBalance(editor) == 0) {
                         EditorModificationUtil.moveCaretRelatively(editor, 1)
                         return Result.STOP
                     }
@@ -73,13 +66,13 @@ abstract class RsBraceTypedHandler(private val handler: TypingPairHandler) : Typ
     }
 }
 
-abstract class RsBraceBackspaceHandler(private val handler: TypingPairHandler) : RsEnableableBackspaceHandlerDelegate() {
+abstract class RsBraceBackspaceHandler(private val handler: BraceHandler) : RsEnableableBackspaceHandlerDelegate() {
 
     override fun deleting(c: Char, file: PsiFile, editor: Editor): Boolean {
         if (c == handler.opening.char && file is RsFile) {
             val offset = editor.caretModel.offset
             val iterator = (editor as EditorEx).highlighter.createIterator(offset)
-            return iterator.tokenType == handler.closing.token
+            return iterator.tokenType == handler.closing.tokenType
         }
         return false
     }
@@ -95,7 +88,7 @@ abstract class RsBraceBackspaceHandler(private val handler: TypingPairHandler) :
     }
 }
 
-private fun Editor.createLexer(offset: Int): HighlighterIterator? {
+fun Editor.createLexer(offset: Int): HighlighterIterator? {
     if (!isValidOffset(offset, document.charsSequence)) return null
     val lexer = (this as EditorEx).highlighter.createIterator(offset)
     if (lexer.atEnd()) return null

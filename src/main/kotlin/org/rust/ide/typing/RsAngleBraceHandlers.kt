@@ -19,17 +19,14 @@ class RsAngleBraceTypedHandler : RsBraceTypedHandler(AngleBraceHandler)
 
 class RsAngleBraceBackspaceHandler : RsBraceBackspaceHandler(AngleBraceHandler)
 
-object AngleBraceHandler : TypingPairHandler {
-    override val opening: TypingPairAtom
-        get() = TypingPairAtom('<', LT)
+object AngleBraceHandler : BraceHandler {
 
-    override val closing: TypingPairAtom
-        get() = TypingPairAtom('>', GT)
+    override val opening: BraceKind = BraceKind('<', LT)
+    override val closing: BraceKind = BraceKind('>', GT)
 
     override fun shouldComplete(editor: Editor): Boolean {
         val offset = editor.caretModel.offset
-        val lexer = editor.createLexer(offset - 1)
-            ?: return false
+        val lexer = editor.createLexer(offset - 1) ?: return false
 
         return when (lexer.tokenType) {
             // manual function type specification

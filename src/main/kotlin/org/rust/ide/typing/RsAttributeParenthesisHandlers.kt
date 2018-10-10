@@ -9,16 +9,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import org.rust.lang.core.psi.RsElementTypes.*
 
-class RsAttributeParenthesisHandler : RsBraceTypedHandler(AttributeHandler)
+class RsAttributeParenthesisTypedHandler : RsBraceTypedHandler(AttributeParenthesisHandler)
 
-class RsAttributeParenthesisBackspaceHandler : RsBraceBackspaceHandler(AttributeHandler)
+class RsAttributeParenthesisBackspaceHandler : RsBraceBackspaceHandler(AttributeParenthesisHandler)
 
-object AttributeHandler : TypingPairHandler {
-    override val opening: TypingPairAtom
-        get() = TypingPairAtom('(', LPAREN)
+object AttributeParenthesisHandler : BraceHandler {
 
-    override val closing: TypingPairAtom
-        get() = TypingPairAtom(')', RPAREN)
+    override val opening: BraceKind = BraceKind('(', LPAREN)
+    override val closing: BraceKind = BraceKind(')', RPAREN)
 
     override fun shouldComplete(editor: Editor): Boolean {
         val offset = editor.caretModel.offset
