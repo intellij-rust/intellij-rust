@@ -945,7 +945,7 @@ class RsFnInferenceContext(
     }
 
     private fun coerceResolved(expr: RsExpr, inferred: Ty, expected: Ty): Boolean {
-        val ok = tryCoerce(inferred, expected)
+        val ok = tryCoerce(inferred, expected, expr)
         if (!ok) {
             // ignoring possible false-positives (it's only basic experimental type checking)
             val ignoredTys = listOf(
@@ -1239,7 +1239,7 @@ class RsFnInferenceContext(
                 RsCodeFragmentFactory(field.project).createPath(field.referenceName, field)?.let { path ->
                     val local = resolvePath(path, lookup).singleOrNull()?.element
                     val ty = (local as? RsPatBinding)?.let { ctx.getBindingType(it) } ?: TyUnknown
-                    tryCoerce(ty, fieldType)
+                    tryCoerce(ty, fieldType, field)
                 }
             }
         }
@@ -1843,7 +1843,7 @@ class RsFnInferenceContext(
 
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)
-            val inferredTy = if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy)) {
+            val inferredTy = if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy, expr)) {
                 expectedElemTy
             } else {
                 elementType

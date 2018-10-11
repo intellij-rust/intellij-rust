@@ -14,8 +14,6 @@ import org.rust.lang.utils.Direction.OUTGOING
 import org.rust.lang.utils.Graph
 import org.rust.stdext.dequeOf
 import java.util.*
-import java.util.stream.Collectors
-import kotlin.streams.asStream
 
 /**
  * This function performs lexical region resolution given a complete set of constraints and var origins.
@@ -69,7 +67,7 @@ class LexicalResolver(
      */
     private fun constructVarData(): LexicalRegionResolutions {
         val map: MutableMap<ReVar, Region?> =
-            varInfos.iterator().asSequence().asStream().collect(Collectors.toMap({ it.key }, { ReEmpty }))
+            varInfos.iterator().asSequence().associateTo(mutableMapOf()) { it.key to ReEmpty }
         return LexicalRegionResolutions(map, ReStatic)
     }
 
@@ -80,7 +78,7 @@ class LexicalResolver(
      *     then  'c <= '1
      */
     private fun expandGivens(graph: RegionGraph) {
-        val seeds = data.givens.stream().collect(Collectors.toList())
+        val seeds = data.givens.toList()
         for ((region, variable) in seeds) {
             val seed = graph.getNode(variable.index)
             check(seed.data === variable)
