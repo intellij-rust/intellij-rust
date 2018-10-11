@@ -18,19 +18,19 @@ import org.rust.stdext.zipValues
 
 open class Substitution(
     val typeSubst: Map<TyTypeParameter, Ty> = emptyMap(),
-    val lifetimeSubst: Map<ReEarlyBound, Region> = emptyMap()
+    val regionSubst: Map<ReEarlyBound, Region> = emptyMap()
 ) {
     val types: Collection<Ty> get() = typeSubst.values
-    val lifetimes: Collection<Region> get() = lifetimeSubst.values
-    val kinds: Collection<Kind> get() = types + lifetimes
+    val regions: Collection<Region> get() = regionSubst.values
+    val kinds: Collection<Kind> get() = types + regions
 
     operator fun plus(other: Substitution): Substitution =
-        Substitution(mergeMaps(typeSubst, other.typeSubst), mergeMaps(lifetimeSubst, other.lifetimeSubst))
+        Substitution(mergeMaps(typeSubst, other.typeSubst), mergeMaps(regionSubst, other.regionSubst))
 
     operator fun get(key: TyTypeParameter) = typeSubst[key]
-    operator fun get(key: ReEarlyBound) = lifetimeSubst[key]
+    operator fun get(key: ReEarlyBound) = regionSubst[key]
     operator fun get(psi: RsTypeParameter) = typeSubst[TyTypeParameter.named((psi))]
-    operator fun get(psi: RsLifetimeParameter) = lifetimeSubst[ReEarlyBound((psi))]
+    operator fun get(psi: RsLifetimeParameter) = regionSubst[ReEarlyBound((psi))]
 
     fun typeByName(name: String): Ty =
         typeSubst.entries.find { it.key.toString() == name }?.value ?: TyUnknown
@@ -41,19 +41,19 @@ open class Substitution(
     fun substituteInValues(map: Substitution): Substitution =
         Substitution(
             typeSubst.mapValues { (_, value) -> value.substitute(map) },
-            lifetimeSubst.mapValues { (_, value) -> value.substitute(map) }
+            regionSubst.mapValues { (_, value) -> value.substitute(map) }
         )
 
     fun foldValues(folder: TypeFolder): Substitution =
         Substitution(
             typeSubst.mapValues { (_, value) -> value.foldWith(folder) },
-            lifetimeSubst.mapValues { (_, value) -> value.foldWith(folder) }
+            regionSubst.mapValues { (_, value) -> value.foldWith(folder) }
         )
 
     fun zipTypeValues(other: Substitution): List<Pair<Ty, Ty>> = zipValues(typeSubst, other.typeSubst)
 
     fun mapTypeValues(transform: (Map.Entry<TyTypeParameter, Ty>) -> Ty): Substitution =
-        Substitution(typeSubst.mapValues(transform), lifetimeSubst)
+        Substitution(typeSubst.mapValues(transform), regionSubst)
 
     override fun equals(other: Any?): Boolean = when {
         this === other -> true
