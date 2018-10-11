@@ -12,7 +12,7 @@ env:
   global:
     - OLD_RUST_VERSION=1.25.0
     - CURRENT_RUST_VERSION=1.29.0
-    - NIGHLY_RUST_VERSION=nightly-2018-09-21
+    - NIGHLY_RUST_VERSION=nightly-2018-10-10
   matrix:
     # 182 platform
     - RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=182.4505.22 # modified by script
