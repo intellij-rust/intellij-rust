@@ -48,7 +48,7 @@ data class CargoCheckAnnotationInfo(
 class CargoCheckAnnotationResult(commandOutput: List<String>) {
     companion object {
         private val parser = JsonParser()
-        private val messageRegex = """\s*\{\s*"message".*""".toRegex()
+        private val messageRegex = """\s*\{.*"message".*""".toRegex()
     }
 
     val messages: List<CargoTopMessage> =
