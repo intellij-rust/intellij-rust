@@ -22,6 +22,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
+import org.rust.cargo.runconfig.CargoTestRunState
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -43,7 +44,6 @@ class CargoCommandConfiguration(
 
     var channel: RustChannel = RustChannel.DEFAULT
     var command: String = "run"
-    var nocapture: Boolean = true
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
@@ -52,7 +52,6 @@ class CargoCommandConfiguration(
         super.writeExternal(element)
         element.writeEnum("channel", channel)
         element.writeString("command", command)
-        element.writeBool("nocapture", nocapture)
         element.writeEnum("backtrace", backtrace)
         element.writePath("workingDirectory", workingDirectory)
         env.writeExternal(element)
@@ -66,7 +65,6 @@ class CargoCommandConfiguration(
         super.readExternal(element)
         element.readEnum<RustChannel>("channel")?.let { channel = it }
         element.readString("command")?.let { command = it }
-        element.readBool("nocapture")?.let { nocapture = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
         element.readPath("workingDirectory")?.let { workingDirectory = it }
         env = EnvironmentVariablesData.readExternal(element)
@@ -75,7 +73,6 @@ class CargoCommandConfiguration(
     fun setFromCmd(cmd: CargoCommandLine) {
         channel = cmd.channel
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
-        nocapture = cmd.nocapture
         backtrace = cmd.backtraceMode
         workingDirectory = cmd.workingDirectory
         env = cmd.environmentVariables
@@ -94,7 +91,13 @@ class CargoCommandConfiguration(
         CargoCommandConfigurationEditor(project)
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
-        clean().ok?.let { CargoRunState(environment, it) }
+        clean().ok?.let {
+            if (command.startsWith("test")) {
+                CargoTestRunState(environment, it)
+            } else {
+                CargoRunState(environment, it)
+            }
+        }
 
     sealed class CleanConfiguration {
         class Ok(
@@ -119,7 +122,7 @@ class CargoCommandConfiguration(
             if (args.isEmpty()) {
                 return CleanConfiguration.error("No command specified")
             }
-            CargoCommandLine(args.first(), workingDirectory, args.drop(1), backtrace, channel, env, nocapture)
+            CargoCommandLine(args.first(), workingDirectory, args.drop(1), backtrace, channel, env)
         }
 
         val toolchain = project.toolchain
@@ -175,13 +178,6 @@ private fun Element.readString(name: String): String? =
     children
         .find { it.name == "option" && it.getAttributeValue("name") == name }
         ?.getAttributeValue("value")
-
-
-private fun Element.writeBool(name: String, value: Boolean) {
-    writeString(name, value.toString())
-}
-
-private fun Element.readBool(name: String) = readString(name)?.toBoolean()
 
 private fun <E : Enum<*>> Element.writeEnum(name: String, value: E) {
     writeString(name, value.name)

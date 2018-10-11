@@ -2,7 +2,6 @@
   <configuration name="Test bar::tests" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
     <option name="command" value="test --package test-package --lib bar::tests" />
-    <option name="nocapture" value="true" />
     <option name="backtrace" value="SHORT" />
     <option name="workingDirectory" value="file:///my-crate" />
     <envs />

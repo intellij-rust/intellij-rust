@@ -162,7 +162,7 @@ sealed class TestConfig {
 
     companion object {
         private fun hasTestFunction(mod: RsMod): Boolean =
-            mod.processExpandedItems { it is RsFunction && it.isTest }
+            mod.processExpandedItems { it is RsFunction && it.isTest || it is RsMod && hasTestFunction(it) }
     }
 }
 

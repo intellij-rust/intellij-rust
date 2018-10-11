@@ -2,7 +2,6 @@
   <configuration name="Test test_foo" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
     <option name="command" value="test --package test-package --bin foo test_foo -- --exact" />
-    <option name="nocapture" value="true" />
     <option name="backtrace" value="SHORT" />
     <option name="workingDirectory" value="file:///my-crate" />
     <envs />
