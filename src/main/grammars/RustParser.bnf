@@ -381,7 +381,11 @@ WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypePar
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ForLifetimes ::= for '<' LifetimesParams '>'
+ForLifetimes ::= for '<' LifetimesParams '>' {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ExternAbi ::= extern STRING_LITERAL?
 
