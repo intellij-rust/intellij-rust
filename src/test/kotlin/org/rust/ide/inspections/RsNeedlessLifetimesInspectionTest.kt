@@ -6,6 +6,8 @@
 package org.rust.ide.inspections
 
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifetimesInspection()) {
 
@@ -279,6 +281,22 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn <caret>foo(s: &str) {
             fn bar<'b>(s: &'b str, t: &str) -> &str { unimplemented!(); }
         }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no elision for impl 1`() = doTest("""
+        fn foo<'a>(_: impl Into<&'a ()>) {}
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no elision for impl 2`() = doTest("""
+        struct S<'a>(&'a str);
+        fn _foo<'a>(_: impl Into<S<'a>>) {}
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no elision for impl 3`() = doTest("""
+        fn foo<'a>(_: impl Iterator<Item = &'a ()>) {}
     """)
 
     private fun doTest(
