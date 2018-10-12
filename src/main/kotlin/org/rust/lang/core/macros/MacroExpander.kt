@@ -412,6 +412,8 @@ private class MacroPattern private constructor(
         private val IDENTIFIER_TOKENS = TokenSet.create(
             RsElementTypes.IDENTIFIER,
             RsElementTypes.SELF,
+            RsElementTypes.SUPER,
+            RsElementTypes.CRATE,
             RsElementTypes.CSELF
         )
     }
