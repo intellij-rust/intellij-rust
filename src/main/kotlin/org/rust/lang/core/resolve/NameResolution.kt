@@ -853,14 +853,14 @@ private fun processLexicalDeclarations(
     return false
 }
 
-private fun processNestedScopesUpwards(
+fun processNestedScopesUpwards(
     scopeStart: RsElement,
     processor: RsResolveProcessor,
     ns: Set<Namespace>,
     withPlainExternCrateItems: Boolean = true
 ): Boolean {
     val prevScope = mutableSetOf<String>()
-    walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
+    if (walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
         val currScope = mutableListOf<String>()
         val shadowingProcessor = { e: ScopeEntry ->
             e.name !in prevScope && run {
@@ -871,6 +871,8 @@ private fun processNestedScopesUpwards(
         if (processLexicalDeclarations(scope, cameFrom, ns, withPlainExternCrateItems, shadowingProcessor)) return@walkUp true
         prevScope.addAll(currScope)
         false
+    }) {
+        return true
     }
 
     val prelude = findPrelude(scopeStart)

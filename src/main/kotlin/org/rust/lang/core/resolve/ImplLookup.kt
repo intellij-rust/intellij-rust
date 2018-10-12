@@ -13,7 +13,6 @@ import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
-import org.rust.lang.core.resolve.ref.resolvePath
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
@@ -692,12 +691,6 @@ class ImplLookup(
             val outputType = (assoc[outputParam] ?: TyUnit)
             return TyFunction(argumentTypes, outputType)
         }
-
-    fun isTraitVisibleFrom(trait: RsTraitItem, scope: RsElement): Boolean {
-        val name = trait.name ?: return true
-        val path = codeFragmentFactory.createPath(name, scope) ?: return true
-        return resolvePath(path, this).any { it.element == trait }
-    }
 
     companion object {
         fun relativeTo(psi: RsElement): ImplLookup =

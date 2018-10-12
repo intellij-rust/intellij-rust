@@ -1124,12 +1124,23 @@ class RsFnInferenceContext(
     }
 
     private fun pickSingleMethod(receiver: Ty, variants: List<MethodResolveVariant>, methodCall: RsMethodCall): MethodResolveVariant? {
-        val filtered = variants.singleOrFilter {
+        val filtered = variants.singleOrLet { list ->
             // 1. filter traits that are not imported
             TypeInferenceMarks.methodPickTraitScope.hit()
-            val trait = it.source.impl?.traitRef?.path?.reference?.resolve() as? RsTraitItem
-                ?: return@singleOrFilter true
-            lookup.isTraitVisibleFrom(trait, methodCall)
+            val traitToCallee = hashMapOf<RsTraitItem, MutableList<MethodResolveVariant>>()
+            val filtered = mutableListOf<MethodResolveVariant>()
+            for (callee in list) {
+                val trait = callee.source.impl?.traitRef?.resolveToTrait
+                if (trait != null) {
+                    traitToCallee.getOrPut(trait) { mutableListOf() }.add(callee)
+                } else {
+                    filtered.add(callee) // inherent impl
+                }
+            }
+            traitToCallee.keys.filterInScope(methodCall).forEach {
+                filtered += traitToCallee.getValue(it)
+            }
+            filtered
         }.singleOrFilter { callee ->
             // 2. Filter methods by trait bounds (try to select all obligations for each impl)
             TypeInferenceMarks.methodPickCheckBounds.hit()
