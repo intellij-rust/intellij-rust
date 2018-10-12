@@ -169,7 +169,7 @@ class MacroExpander(val project: Project) {
                 is RsMacroExpansion, is RsMacroExpansionContents ->
                     if (!substituteMacro(sb, child, subst)) return false
                 is RsMacroReference ->
-                    sb.append(subst.getVar(child.referenceName) ?: return false)
+                    sb.safeAppend(subst.getVar(child.referenceName) ?: return false)
                 is RsMacroExpansionReferenceGroup -> {
                     child.macroExpansionContents?.let { contents ->
                         val separator = child.macroExpansionGroupSeparator?.text ?: ""
@@ -184,13 +184,19 @@ class MacroExpander(val project: Project) {
                     }
                 }
                 else -> {
-                    sb.append(" ")
-                    sb.append(child.text)
-                    sb.append(" ")
+                    sb.safeAppend(child.text)
                 }
             }
         }
         return true
+    }
+
+    /** Ensures that the buffer ends (or [str] starts) with a whitespace and appends [str] to the buffer */
+    private fun StringBuilder.safeAppend(str: String) {
+        if (!isEmpty() && !last().isWhitespace() && !str.isEmpty() && !str.first().isWhitespace()) {
+            append(" ")
+        }
+        append(str)
     }
 
     private val RsMacro.macroBodyStubbed: RsMacroBody?
