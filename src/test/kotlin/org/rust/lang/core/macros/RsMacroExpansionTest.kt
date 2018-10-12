@@ -17,7 +17,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn bar() {}
     """)
 
-    fun `test ident self`() = doTest("""
+    fun `test ident 'self'`() = doTest("""
         macro_rules! foo {
             ($ i:ident) => (
                 use foo::{$ i};
@@ -28,7 +28,21 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         use foo::{self};
     """)
 
-    fun `test ident Self`() = doTest("""
+    fun `test ident 'super', 'crate'`() = doTest("""
+        macro_rules! foo {
+            ($ i:ident) => (
+                use $ i::foo;
+            )
+        }
+        foo! { super }
+        foo! { crate }
+    """, """
+        use super::foo;
+    """, """
+        use crate::foo;
+    """)
+
+    fun `test ident 'Self'`() = doTest("""
         macro_rules! foo {
             ($ i:ident) => (
                 impl S { fn foo() -> $ i { S } }
