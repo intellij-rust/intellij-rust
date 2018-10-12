@@ -1305,6 +1305,23 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    /** Issue [2863](https://github.com/intellij-rust/intellij-rust/issues/2863) */
+    fun `test do not try to import aliased trait`() = checkAutoImportFixIsUnavailable("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self) {}
+            }
+
+            impl<T> Foo for T {}
+        }
+
+        use foo::Foo as _Foo;
+
+        fn main() {
+            123.foo/*caret*/();
+        }
+    """)
+
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import item in root module (edition 2018)`() = checkAutoImportFixByText("""
         mod foo {
