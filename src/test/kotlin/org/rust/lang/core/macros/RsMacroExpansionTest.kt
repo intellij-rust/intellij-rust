@@ -367,6 +367,23 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Bar;
     """ to MacroExpansionMarks.failMatchPatternByExtraInput)
 
+    fun `test match * vs + group pattern`() = doTest("""
+        macro_rules! foo {
+            ($ ($ i:ident)+) => (
+                mod plus_matched {}
+            );
+            ($ ($ i:ident)*) => (
+                mod asterisk_matched {}
+            );
+        }
+        foo! {  }
+        foo! { foo }
+    """, """
+        mod asterisk_matched {}
+    """ to MacroExpansionMarks.failMatchGroupTooFewElements, """
+        mod plus_matched {}
+    """ to null)
+
     fun `test group pattern with collapsed token as a separator`() = doTest("""
         macro_rules! foo {
             ($ ($ i:ident)&&*) => ($ (
