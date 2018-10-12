@@ -349,6 +349,12 @@ private class MacroPattern private constructor(
             }
         }
 
+        val isExpectedAtLeastOne = group.plus != null
+        if (isExpectedAtLeastOne && groups.isEmpty()) {
+            MacroExpansionMarks.failMatchGroupTooFewElements.hit()
+            return null
+        }
+
         return groups
     }
 
@@ -485,6 +491,7 @@ object MacroExpansionMarks {
     val failMatchPatternByExtraInput = Testmark("failMatchPatternByExtraInput")
     val failMatchPatternByBindingType = Testmark("failMatchPatternByBindingType")
     val failMatchGroupBySeparator = Testmark("failMatchGroupBySeparator")
+    val failMatchGroupTooFewElements = Testmark("failMatchGroupTooFewElements")
     val groupInputEnd1 = Testmark("groupInputEnd1")
     val groupInputEnd2 = Testmark("groupInputEnd2")
     val groupInputEnd3 = Testmark("groupInputEnd3")
