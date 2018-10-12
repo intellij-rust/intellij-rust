@@ -120,7 +120,7 @@ class MacroExpander(val project: Project) {
             subst,
             WithParent(
                 MacroSubstitution(
-                    singletonMap("crate", getPathToCrate(call, def)),
+                    singletonMap("crate", expandDollarCrateVar(call, def)),
                     emptyList()
                 ),
                 null
@@ -210,18 +210,58 @@ class MacroExpander(val project: Project) {
                 )
             }
         }
-
-    /** Returns path from [context] to [def]'s crate */
-    private fun getPathToCrate(context: RsElement, def: RsMacro): String {
-        val externCrateMod = def.crateRoot ?: return ""
-        val contextCrate = context.crateRoot ?: return ""
-        if (externCrateMod == contextCrate) return ""
-        val externCrateItem = contextCrate.childrenOfType<RsExternCrateItem>()
-            .find { it.reference.resolve() == externCrateMod } ?: return ""
-        val name = externCrateItem.nameWithAlias
-        return "::$name"
-    }
 }
+
+/**
+ * Returns (synthetic) path from [call] to [def]'s crate
+ * We can't just expand `$crate` to something like `::crate_name` because
+ * we can pass a result of `$crate` expansion to another macro as a single identifier.
+ *
+ * Let's look at the example:
+ * ```
+ * // foo_crate
+ * macro_rules! foo {
+ *     () => { bar!($crate); } // $crate consumed as a single identifier by `bar!`
+ * }
+ * // bar_crate
+ * macro_rules! bar {
+ *     ($i:ident) => { fn f() { $i::some_item(); } }
+ * }
+ * // baz_crate
+ * mod baz {
+ *     foo!();
+ * }
+ * ```
+ * Imagine that macros `foo`, `bar` and the foo's call are located in different
+ * crates. In this case, when expanding `foo!()`, we should expand $crate to
+ * `::foo_crate`. This `::` is needed to make the path to the crate guaranteed
+ * absolutely (and also to make it work on rust 2015 edition).
+ * Ok, let's look at the result of single step of `foo` macro expansion:
+ * `foo!()` => `bar!(::foo_crate)`. Syntactic construction `::foo_crate` consists
+ * of 2 tokens: `::` and `foo_crate` (identifier). BUT `bar` expects a single
+ * identifier as an input! And this is successfully complied by the rust compiler!!
+ *
+ * The secret is that we should not really expand `$crate` to `::foo_crate`.
+ * We should expand it to "something" that can be passed to another macro
+ * as a single identifier.
+ *
+ * Rustc figures it out by synthetic token (without text representation).
+ * Rustc can do it this way because its macro substitution is based on AST.
+ * But our expansion is text-based, so we must provide something textual
+ * that can be parsed as an identifier.
+ *
+ * It's a very awful hack and we know it.
+ * DON'T TRY THIS AT HOME
+ */
+private fun expandDollarCrateVar(call: RsMacroCall, def: RsMacro): String {
+    val defTarget = def.containingCargoTarget
+    val callTarget = call.containingCargoTarget
+    val crateName = if (defTarget == callTarget) "self" else defTarget?.normName ?: ""
+    return MACRO_CRATE_IDENTIFIER_PREFIX + crateName
+}
+
+/** Prefix for synthetic identifier produced from `$crate` metavar. See [expandDollarCrateVar] */
+const val MACRO_CRATE_IDENTIFIER_PREFIX: String = "IntellijRustDollarCrate_"
 
 private class MacroPattern private constructor(
     val pattern: Sequence<PsiElement>

@@ -18,6 +18,8 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.RsConstants
+import org.rust.lang.core.macros.MACRO_CRATE_IDENTIFIER_PREFIX
+import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
 import org.rust.lang.core.psi.ext.*
@@ -305,6 +307,20 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     val containingMod = path.containingMod
     val crateRoot = path.crateRoot
     if (!path.hasColonColon) {
+        run { // hacks around $crate macro metavar. See `expandDollarCrateVar` function docs
+            val referenceName = path.referenceName
+            if (referenceName.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && path.findMacroCallExpandedFrom() != null) {
+                val crate = referenceName.removePrefix(MACRO_CRATE_IDENTIFIER_PREFIX)
+                val result = if (crate == "self") {
+                    processor.lazy(referenceName) { path.crateRoot }
+                } else {
+                    processExternCrateResolveVariants(path, false) {
+                        if (it.name == crate) processor.lazy(referenceName) { it.element } else false
+                    }
+                }
+                if (result) return true
+            }
+        }
         if (Namespace.Types in ns) {
             if (processor("self", containingMod)) return true
             val superMod = containingMod.`super`

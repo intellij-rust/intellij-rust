@@ -53,6 +53,20 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         impl S { fn foo() -> Self { S } }
     """)
 
+    // This test doesn't check result of '$crate' expansion because it's implementation detail.
+    // For example rustc expands '$crate' to synthetic token without text representation
+    fun `test '$crate' metavar is matched as identifier`() = doTest("""
+        macro_rules! foo {
+            () => { bar!($ crate); } // $ crate consumed as a single identifier by `bar`
+        }
+        macro_rules! bar {
+            ($ i:ident) => { mod a {} }
+        }
+        foo! {}
+    """, """
+        mod a {}
+    """)
+
     fun `test path`() = doTest("""
         macro_rules! foo {
             ($ i:path) => {
@@ -163,18 +177,6 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo! { fn foo() {} }
     """, """
         fn foo() {}
-    """)
-
-    fun `test 'crate' metavar`() = doTest("""
-        #[macro_use]
-        mod a {
-            macro_rules! foo {
-                ($ i:ident) => { fn $ i() { let a = $ crate::foo; } }
-            }
-        }
-        foo! { foo }
-    """, """
-        fn foo() { let a = ::foo; }
     """)
 
     fun `test empty group`() = doTest(MacroExpansionMarks.groupInputEnd1, """
