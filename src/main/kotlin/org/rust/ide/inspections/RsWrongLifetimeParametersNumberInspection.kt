@@ -11,6 +11,8 @@ import org.rust.lang.core.psi.RsRefLikeType
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 import org.rust.lang.core.types.lifetimeElidable
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
 
 class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
 
@@ -26,15 +28,16 @@ class RsWrongLifetimeParametersNumberInspection : RsLocalInspectionTool() {
                 val actualLifetimes = type.path?.typeArgumentList?.lifetimeList?.size ?: 0
                 if (expectedLifetimes == actualLifetimes) return
                 if (actualLifetimes == 0 && !type.lifetimeElidable) {
-                    holder.registerProblem(type, "Missing lifetime specifier [E0106]")
+                    RsDiagnostic.MissingLifetimeSpecifier(type).addToHolder(holder)
                 } else if (actualLifetimes > 0) {
-                    holder.registerProblem(type, "Wrong number of lifetime parameters: expected $expectedLifetimes, found $actualLifetimes [E0107]")
+                    RsDiagnostic.WrongNumberOfLifetimeArguments(type, expectedLifetimes, actualLifetimes)
+                        .addToHolder(holder)
                 }
             }
 
             override fun visitRefLikeType(type: RsRefLikeType) {
                 if (type.mul == null && !type.lifetimeElidable && type.lifetime == null) {
-                    holder.registerProblem(type.and ?: type, "Missing lifetime specifier [E0106]")
+                    RsDiagnostic.MissingLifetimeSpecifier(type.and ?: type).addToHolder(holder)
                 }
             }
         }
