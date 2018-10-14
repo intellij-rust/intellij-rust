@@ -65,7 +65,7 @@ private data class TypeRenderer(
                 ty.paramTypes.joinTo(this, ", ", "fn(", ")", transform = render)
                 if (ty.retType != TyUnit) {
                     append(" -> ")
-                    append(ty.retType)
+                    append(render(ty.retType))
                 }
             }
             is TySlice -> "[${render(ty.elementType)}]"
