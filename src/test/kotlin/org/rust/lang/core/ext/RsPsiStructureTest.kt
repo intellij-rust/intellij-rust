@@ -113,7 +113,7 @@ class RsPsiStructureTest : RsTestBase() {
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x);
             foo;
-            //^ S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>
+            //^ S<fn(i32) -> i32, S<fn(i32) -> i32, S<…, …>>>
         }
     """)
 
@@ -124,7 +124,7 @@ class RsPsiStructureTest : RsTestBase() {
         fn main() {
             let s: S<SomeLongNamedType, SomeLongNamedType, SomeLongNamedType, SomeLongNamedType> = unimplemented!();
             s;
-        } //^ S<_, _, _, _>
+        } //^ S<…, …, …, …>
     """)
 
     private fun testShortTypeExpr(@Language("Rust") code: String) {

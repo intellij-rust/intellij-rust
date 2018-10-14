@@ -62,7 +62,7 @@ private data class TypeRenderer(
             }
         }
 
-        if (level == 0) return "_"
+        if (level == 0) return "…"
 
         val render = { subTy: Ty ->
             render(subTy, level - 1)

@@ -237,7 +237,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x);
         }
-    """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
+    """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<…, …>>>", 0)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test inlay hint for loops`() = checkByText<RsForExpr>("""
