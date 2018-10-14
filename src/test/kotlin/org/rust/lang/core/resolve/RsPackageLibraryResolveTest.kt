@@ -307,4 +307,16 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         fn foo() -> dep_lib_target::Foo { unimplemented!() }
                                    //^ dep-lib/lib.rs
     """, ItemResolutionTestmarks.externCrateItemAliasWithSameName)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extern crate in super chain (edition 2018)`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        mod foo {
+            extern crate dep_lib_target;
+            use self::dep_lib_target::Foo;
+                                     //^ dep-lib/lib.rs
+        }
+    """)
 }
