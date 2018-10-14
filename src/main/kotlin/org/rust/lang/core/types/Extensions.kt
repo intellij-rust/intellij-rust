@@ -27,7 +27,11 @@ val RsTypeReference.type: Ty
 val RsTypeElement.lifetimeElidable: Boolean
     get() {
         val typeOwner = owner.parent
-        return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
+
+        val isAssociatedConstant =  typeOwner is RsConstant && typeOwner.owner.isImplOrTrait
+
+        return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl
+            && typeOwner !is RsTypeAlias && !isAssociatedConstant
     }
 
 private val TYPE_INFERENCE_KEY: Key<CachedValue<RsInferenceResult>> = Key.create("TYPE_INFERENCE_KEY")
