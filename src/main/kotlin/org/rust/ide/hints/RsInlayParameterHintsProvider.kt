@@ -15,7 +15,6 @@ import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.types.declaration
-import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.stdext.buildList
@@ -27,10 +26,12 @@ private val RsPat.inlayInfo: List<InlayInfo>
         } else {
             descendantsOfType<RsPatIdent>()
         }
-        return idents
+        return idents.asSequence()
             .map { it.patBinding to it.patBinding.type }
+            .filterNot { it.first.referenceName.startsWith("_") } // "ignored" bindings
             .filterNot { it.second is TyUnknown }
             .map { InlayInfo(": " + it.second.shortPresentableText, it.first.textRange.endOffset) }
+            .toList()
     }
 
 enum class HintType(desc: String, enabled: Boolean) {
@@ -96,11 +97,10 @@ enum class HintType(desc: String, enabled: Boolean) {
     LAMBDA_PARAMETER_HINT("Show lambda parameter type hints", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
             val element = elem as? RsLambdaExpr ?: return emptyList()
-            val type = element.type as? TyFunction ?: return emptyList()
             return element.valueParameterList.valueParameterList
-                .mapIndexed { index, parameter -> type.paramTypes.getOrNull(index) to parameter }
-                .filter { it.first != null && it.second.typeReference == null }
-                .map { InlayInfo(": ${it.first}", it.second.textRange.endOffset) }
+                .filter { it.typeReference == null }
+                .mapNotNull { it.pat }
+                .flatMap { it.inlayInfo }
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsLambdaExpr
