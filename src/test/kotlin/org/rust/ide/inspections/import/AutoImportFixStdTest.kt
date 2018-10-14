@@ -5,8 +5,10 @@
 
 package org.rust.ide.inspections.import
 
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
@@ -419,5 +421,20 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn main() {
             let foo = Foo/*caret*/;
         }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item from not std crate (edition 2018)`() = checkAutoImportFixByFileTree("""
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub struct Bar;
+        }
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>) {}
+    """, """
+        //- main.rs
+        use dep_lib_target::foo::Bar;
+
+        fn foo(t: Bar/*caret*/) {}
     """)
 }
