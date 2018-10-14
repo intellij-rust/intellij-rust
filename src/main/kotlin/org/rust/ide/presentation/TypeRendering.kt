@@ -5,6 +5,7 @@
 
 package org.rust.ide.presentation
 
+import com.intellij.util.withPrevious
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
@@ -13,8 +14,15 @@ import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 
+private const val MAX_SHORT_TYPE_LEN = 50
+
 val Ty.shortPresentableText: String
-    get() = TypeRenderer.DEFAULT.render(this, level = 3)
+    get() = generateSequence(1) { it + 1 }
+        .map { TypeRenderer.DEFAULT.render(this, level = it) }
+        .withPrevious()
+        .takeWhile { (cur, prev) ->
+            cur != prev && (prev == null || cur.length <= MAX_SHORT_TYPE_LEN)
+        }.last().first
 
 val Ty.insertionSafeText: String
     get() = TypeRenderer.INSERTION_SAFE.render(this)
