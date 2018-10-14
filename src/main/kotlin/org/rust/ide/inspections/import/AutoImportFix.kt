@@ -84,6 +84,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         // we uses this info to create correct relative use item path if needed
         var relativeDepth: Int? = null
 
+        val isEdition2018 = originalElement.containingCargoTarget?.edition == CargoWorkspace.Edition.EDITION_2018
         val info = candidate.info
         // if crate of importing element differs from current crate
         // we need to add new extern crate item
@@ -100,7 +101,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 // we don't add corresponding extern crate item manually for the same reason
                 attributes == RsFile.Attributes.NO_STD && target.isCore -> Testmarks.autoInjectedCoreCrate.hit()
                 else -> {
-                    if (info.needInsertExternCrateItem) {
+                    if (info.needInsertExternCrateItem && !isEdition2018) {
                         crateRoot?.insertExternCrateItem(psiFactory, info.externCrateName)
                     } else {
                         if (info.depth != null) {
@@ -113,7 +114,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         }
 
         val prefix = when (relativeDepth) {
-            null -> ""
+            null -> if (info is ImportInfo.LocalImportInfo && isEdition2018) "crate::" else ""
             0 -> "self::"
             else -> "super::".repeat(relativeDepth)
         }
