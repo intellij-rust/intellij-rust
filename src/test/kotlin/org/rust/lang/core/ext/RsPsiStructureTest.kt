@@ -117,6 +117,16 @@ class RsPsiStructureTest : RsTestBase() {
         }
     """)
 
+    fun `test long 2-level type`() = testShortTypeExpr("""
+        struct S<A, B, C, D>;
+        struct SomeLongNamedType;
+
+        fn main() {
+            let s: S<SomeLongNamedType, SomeLongNamedType, SomeLongNamedType, SomeLongNamedType> = unimplemented!();
+            s;
+        } //^ S<_, _, _, _>
+    """)
+
     private fun testShortTypeExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()
