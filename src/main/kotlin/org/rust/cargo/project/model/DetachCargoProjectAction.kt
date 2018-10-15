@@ -5,11 +5,10 @@
 
 package org.rust.cargo.project.model
 
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 
-class DetachCargoProjectAction : AnAction() {
+class DetachCargoProjectAction : CargoProjectActionBase() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = e.project != null && e.cargoProject != null
     }
