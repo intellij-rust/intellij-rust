@@ -10,7 +10,7 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
     fun `test E0384 reassign immutable binding`() = checkByText("""
         fn main() {
             let x = 5;
-            <error descr="Re-assignment of immutable variable [E0384]">x = 3</error>;
+            <error descr="Cannot assign twice to immutable variable [E0384]">x = 3</error>;
         }
     """)
 
@@ -72,7 +72,7 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
     fun `test E0384 in pattern`() = checkByText("""
         fn main() {
             let (x, mut y) = (92, 62);
-            <error descr="Re-assignment of immutable variable [E0384]">x = 42</error>;
+            <error descr="Cannot assign twice to immutable variable [E0384]">x = 42</error>;
             y = 42;
         }
     """)
@@ -85,13 +85,13 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
 
     fun `test E0384 immutable used at mutable function definition`() = checkByText("""
         fn test(test: i32) {
-            <error descr="Re-assignment of immutable variable [E0384]">test = 10</error>;
+            <error descr="Cannot assign twice to immutable variable [E0384]">test = 10</error>;
         }
     """)
 
     fun `test E0384 immutable used at mutable function definition (pattern)`() = checkByText("""
         fn foo((x, y): (i32, i32)) {
-            <error descr="Re-assignment of immutable variable [E0384]">x = 92</error>;
+            <error descr="Cannot assign twice to immutable variable [E0384]">x = 92</error>;
         }
     """)
 
@@ -103,7 +103,7 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
 
     fun `test E0384 immutable used at mutable function definition (pattern) 2`() = checkByText("""
         fn foo((x, y): (i32, i32)) {
-            <error descr="Re-assignment of immutable variable [E0384]">y = 92</error>;
+            <error descr="Cannot assign twice to immutable variable [E0384]">y = 92</error>;
         }
     """)
 
