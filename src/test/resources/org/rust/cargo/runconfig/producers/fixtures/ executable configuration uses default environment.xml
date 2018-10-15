@@ -2,6 +2,7 @@
   <configuration name="Run hello" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
     <option name="command" value="run --package test-package --bin hello" />
+    <option name="allFeatures" value="true" />
     <option name="backtrace" value="SHORT" />
     <option name="workingDirectory" value="file:///my-crate" />
     <envs>
