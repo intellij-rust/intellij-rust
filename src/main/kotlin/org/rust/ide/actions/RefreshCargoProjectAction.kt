@@ -5,15 +5,15 @@
 
 package org.rust.ide.actions
 
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.rust.cargo.project.model.CargoProjectActionBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.openapiext.saveAllDocuments
 
-class RefreshCargoProjectAction : AnAction() {
+class RefreshCargoProjectAction : CargoProjectActionBase() {
     init {
         templatePresentation.text = "Refresh Cargo project"
         templatePresentation.description = "Update Cargo project information and download new dependencies"
