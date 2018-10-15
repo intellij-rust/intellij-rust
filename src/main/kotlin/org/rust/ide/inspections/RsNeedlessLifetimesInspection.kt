@@ -12,6 +12,10 @@ import org.rust.ide.inspections.ReferenceLifetime.*
 import org.rust.ide.inspections.fixes.ElideLifetimesFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.regions.ReEarlyBound
+import org.rust.lang.core.types.regions.ReStatic
+import org.rust.lang.core.types.ty.TyTraitObject
+import org.rust.lang.core.types.type
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.chain
 
@@ -76,24 +80,40 @@ private fun couldUseElision(fn: RsFunction): Boolean {
     }
 }
 
-private class LifetimesCollector : RsVisitor() {
+private class LifetimesCollector(val isForInputParams: Boolean = false) : RsVisitor() {
     var abort: Boolean = false
     val lifetimes = mutableListOf<ReferenceLifetime>()
 
     override fun visitSelfParameter(selfParameter: RsSelfParameter) {
         selfParameter.lifetime?.let { visitLifetime(it) }
-        if (selfParameter.isRef && selfParameter.lifetime.isElided) record(null)
+        if (selfParameter.isRef && selfParameter.lifetime.isElided) {
+            record(null)
+        }
         selfParameter.typeReference?.let { visitTypeReference(it) }
     }
 
     override fun visitRefLikeType(refLike: RsRefLikeType) {
-        if (refLike.isRef && refLike.lifetime.isElided) record(null)
+        if (refLike.isRef && refLike.lifetime.isElided) {
+            record(null)
+        }
         super.visitRefLikeType(refLike)
     }
 
+    override fun visitTypeReference(ref: RsTypeReference) {
+        val type = ref.type
+        if (type is TyTraitObject && (type.region is ReEarlyBound || type.region is ReStatic)) {
+            abort = true
+        }
+        super.visitTypeReference(ref)
+    }
+
     override fun visitTraitType(trait: RsTraitType) {
-        val lifetimeBounds = trait.polyboundList.mapNotNull { it.bound.lifetime }
-        if (lifetimeBounds.isNotEmpty()) abort = true
+        for (polybound in trait.polyboundList) {
+            polybound.bound.lifetime?.let { record(null) }
+            if (isForInputParams) {
+                abort = abort || hasNamedReferenceLifetime(polybound.bound)
+            }
+        }
         super.visitTraitType(trait)
     }
 
@@ -114,13 +134,14 @@ private class LifetimesCollector : RsVisitor() {
     }
 
     private fun collectAnonymousLifetimes(path: RsPath) {
-        if (path.typeArgumentList != null) return
+        if (path.typeArgumentList?.lifetimeList.orEmpty().isNotEmpty()) return
         val resolved = path.reference.resolve()
         when (resolved) {
             is RsStructItem, is RsTraitItem, is RsTypeAlias -> {
                 val declaration = resolved as RsGenericDeclaration
-                val genericsCount = declaration.lifetimeParameters.size + declaration.typeParameters.size
-                repeat(genericsCount) { record(null) }
+                repeat(declaration.lifetimeParameters.size) {
+                    record(null)
+                }
             }
         }
     }
@@ -144,7 +165,7 @@ private class BodyLifetimeChecker : RsVisitor() {
 
 private fun collectLifetimesFromFnSignature(fn: RsFunction): Pair<List<ReferenceLifetime>, List<ReferenceLifetime>>? {
     // these will collect all the lifetimes for references in arg/return types
-    val inputCollector = LifetimesCollector()
+    val inputCollector = LifetimesCollector(true)
     val outputCollector = LifetimesCollector()
 
     // extract lifetimes in input argument types
