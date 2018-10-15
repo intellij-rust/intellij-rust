@@ -29,13 +29,14 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
          * Note this method may return false positives
          * @see TyFingerprint
          */
-        fun findPotentialImpls(project: Project, target: Ty): Collection<RsImplItem> {
+        fun findPotentialImpls(project: Project, target: Ty): Sequence<RsImplItem> {
             val fingerprint = TyFingerprint.create(target)
-                ?: return emptyList()
+                ?: return emptySequence()
 
             val impls = getElements(KEY, fingerprint, project, GlobalSearchScope.allScope(project))
             val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, GlobalSearchScope.allScope(project))
-            return impls + freeImpls
+            // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
+            return (impls.asSequence() + freeImpls.asSequence()).filter { it.crateRoot != null }
         }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {
