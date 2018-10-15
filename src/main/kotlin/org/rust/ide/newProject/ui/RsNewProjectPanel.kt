@@ -7,6 +7,7 @@ package org.rust.ide.newProject.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBCheckBox
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.ide.newProject.ConfigurationData
@@ -42,6 +43,6 @@ class RsNewProjectPanel(
 
     override fun dispose() {
         createBinaryCheckbox.removeItemListener(checkboxListener)
-        rustProjectSettings.dispose()
+        Disposer.dispose(rustProjectSettings)
     }
 }
