@@ -30,7 +30,7 @@
         <!-- Rust -->
 
         <!-- Project Creation -->
-
+        <projectOpenProcessor id="Cargo" implementation="org.rust.cargo.project.CargoProjectOpenProcessor"/>
         <directoryProjectGenerator implementation="org.rust.ide.newProject.RsDirectoryProjectGenerator"/>
 
         <!-- File-type Factory -->
