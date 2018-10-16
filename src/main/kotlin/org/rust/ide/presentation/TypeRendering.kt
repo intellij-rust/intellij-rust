@@ -18,7 +18,7 @@ private const val MAX_SHORT_TYPE_LEN = 50
 
 val Ty.shortPresentableText: String
     get() = generateSequence(1) { it + 1 }
-        .map { TypeRenderer.DEFAULT.render(this, level = it) }
+        .map { TypeRenderer.SHORT.render(this, level = it) }
         .withPrevious()
         .takeWhile { (cur, prev) ->
             cur != prev && (prev == null || cur.length <= MAX_SHORT_TYPE_LEN)
@@ -166,6 +166,7 @@ private data class TypeRenderer(
 
     companion object {
         val DEFAULT: TypeRenderer = TypeRenderer()
+        val SHORT: TypeRenderer = TypeRenderer(unknown = "?")
         val DEFAULT_WITHOUT_TYPE_ARGUMENTS: TypeRenderer = TypeRenderer(includeTypeArguments = false)
         val INSERTION_SAFE: TypeRenderer = TypeRenderer(
             unknown = "_",
