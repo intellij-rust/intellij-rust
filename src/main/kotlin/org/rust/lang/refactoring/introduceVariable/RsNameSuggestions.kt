@@ -7,25 +7,28 @@ package org.rust.lang.refactoring.introduceVariable
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.toSnakeCase
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyTraitObject
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
 import org.rust.lang.refactoring.isValidRustVariableIdentifier
 import org.rust.openapiext.hitOnFalse
+import org.rust.stdext.mapNotNullToSet
 
 
 class SuggestedNames(
     val default: String,
     val all: LinkedHashSet<String>
 )
+
+const val FRESHEN_LIMIT = 1000
 
 /**
  * This suggests names for an expression about to be bound to a local variable
@@ -37,6 +40,16 @@ class SuggestedNames(
  * If a name is already bound in the local scope do not suggest it.
  */
 fun RsExpr.suggestedNames(): SuggestedNames {
+    fun freshenName(name: String, usedNames: Set<String>): String {
+        var newName = name
+        var i = 1
+        while (i < FRESHEN_LIMIT && usedNames.contains(newName)) {
+            newName = "$name$i"
+            ++i
+        }
+        return newName
+    }
+
     val names = LinkedHashSet<String>()
     val type = type
     when (type) {
@@ -65,10 +78,13 @@ fun RsExpr.suggestedNames(): SuggestedNames {
         names.addName(parent.identifier.text)
     }
 
+    val topName = names.firstOrNull() ?: "x"
     val usedNames = findNamesInLocalScope(this)
+
+    val name = freshenName(topName, usedNames)
     names.removeAll(usedNames)
 
-    return SuggestedNames(names.firstOrNull() ?: "x", names)
+    return SuggestedNames(name, names)
 }
 
 private val uselessNames = listOf("new", "default")
@@ -91,9 +107,11 @@ private fun nameForCall(expr: RsCallExpr): List<String> {
     return listOf(pathElement.text)
 }
 
-private fun findNamesInLocalScope(expr: PsiElement): List<String> {
-    val blockScope = expr.ancestorOrSelf<RsBlock>()
-    val letDecls = blockScope?.descendantsOfType<RsLetDecl>().orEmpty()
+private fun findNamesInLocalScope(expr: PsiElement): Set<String> {
+    val functionScope = expr.ancestorOrSelf<RsFunction>()
 
-    return letDecls.mapNotNull { it.pat?.text }
+    // Existing names should not be shadowed.
+    // For example, see https://github.com/intellij-rust/intellij-rust/issues/2919
+    return PsiTreeUtil.findChildrenOfAnyType(functionScope, RsPatBinding::class.java, RsPath::class.java)
+        .mapNotNullToSet { (it as? RsPath)?.referenceName ?: (it as RsPatBinding).name }
 }

@@ -96,7 +96,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """, listOf("10", "5 + 10", "foo(5 + 10)"), 2, """
         fn hello() {
-            let foo = foo(5 + 10);
+            let foo1 = foo(5 + 10);
         }
     """)
 
@@ -155,8 +155,8 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
             (1, 2)
         }
         fn main() {
-            let bar = bar();
-            foo(bar);
+            let bar1 = bar();
+            foo(bar1);
         }
     """)
 
@@ -182,6 +182,97 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
             foo(node_type)
         }
     """, mark = IntroduceVariableTestmarks.invalidNamePart)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/2919
+    fun `test issue2919`() = doTest("""
+        fn main() {
+            let i1 = 1;
+            let i2 = 1;
+            let i3 = 1;
+            let (i, x) = (1, 2);
+
+            let z = /*caret*/3 + 4;
+            let w = x + 5;
+        }
+    """, listOf("3", "3 + 4"), 0, """
+        fn main() {
+            let i1 = 1;
+            let i2 = 1;
+            let i3 = 1;
+            let (i, x) = (1, 2);
+            let i4 = 3;
+
+            let z = i4 + 4;
+            let w = x + 5;
+        }
+    """)
+
+    fun `test patterns 1`() = doTest("""
+        fn main() {
+            let (i, x) = (1, 2);
+            let z = /*caret*/3 + 4;
+        }
+    """, listOf("3", "3 + 4"), 0, """
+        fn main() {
+            let (i, x) = (1, 2);
+            let i1 = 3;
+            let z = i1 + 4;
+        }
+    """)
+
+    fun `test patterns 2`() = doTest("""
+        struct S { a: i32 }
+
+        fn main() {
+            let s = S { a: 0 };
+            match s {
+                S { i } => {
+                    let x = /*caret*/5 + i;
+                }
+            }
+        }
+    """, listOf("5", "5 + i"), 0, """
+        struct S { a: i32 }
+
+        fn main() {
+            let s = S { a: 0 };
+            match s {
+                S { i } => {
+                    let i1 = 5;
+                    let x = i1 + i;
+                }
+            }
+        }
+    """)
+
+    fun `test nested scopes`() = doTest("""
+        fn main() {
+            { { let i = 1; } }
+            let i1 = /*caret*/3 + 5;
+        }
+    """, listOf("3", "3 + 5"), 0, """
+        fn main() {
+            { { let i = 1; } }
+            let i2 = 3;
+            let i1 = i2 + 5;
+        }
+    """)
+
+    fun `test functions and static`() = doTest("""
+        fn i() -> i32 { 42 }
+        static i1: i32 = 1;
+        fn main() {
+            let x = i1 + i() + /*caret*/3 + 5;
+        }
+    """, listOf("3", "i1 + i() + 3", "i1 + i() + 3 + 5"), 0, """
+        fn i() -> i32 { 42 }
+        static i1: i32 = 1;
+        fn main() {
+            let i2 = 3;
+            let x = i1 + i() + i2 + 5;
+        }
+    """)
+
 
     private fun doTest(
         @Language("Rust") before: String,
