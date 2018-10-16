@@ -54,6 +54,14 @@ class RsShortTypeRenderingTest : RsTestBase() {
 
     // TODO write more simple tests
 
+    fun `test unknown type`() = testShortTypeExpr("""
+        struct S<T>(T);
+        fn main() {
+            let s = S(UnknownType);
+            s;
+        } //^ S<?>
+    """)
+
     private fun testShortTypeExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()
