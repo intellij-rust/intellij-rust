@@ -279,9 +279,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         HintType.SMART_HINTING.set(smart)
         val handler = RsInlayParameterHintsProvider()
         val targets = myFixture.file.descendantsOfType<T>()
-        val inlays = targets
-            .map { handler.getParameterHints(it) }
-            .flatten()
+        val inlays = targets.flatMap { handler.getParameterHints(it) }
         check(inlays.isEmpty()) {
             "Expected no hints, but ${inlays.map { it.text }} shown"
         }
@@ -298,8 +296,8 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             check(pos < inlays.size) {
                 "Expected at least ${pos + 1} hints, got ${inlays.map { it.text }}"
             }
-            check(inlays[pos].text == hint)
-            check(inlays[pos].offset == myFixture.editor.caretModel.offset)
+            assertEquals(hint, inlays[pos].text)
+            assertEquals(myFixture.editor.caretModel.offset, inlays[pos].offset)
         }
     }
 }
