@@ -6,33 +6,45 @@
 package org.rust.debugger.settings
 
 import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.layout.panel
-import org.rust.openapiext.CheckboxDelegate
+import com.intellij.util.ui.UIUtil.ComponentStyle.SMALL
+import org.rust.debugger.GDBRenderers
+import org.rust.debugger.LLDBRenderers
 import javax.swing.JComponent
 
 class RsDebuggerSettingsConfigurable(
     private val settings: RsDebuggerSettings
 ) : SearchableConfigurable {
 
-    private val isRendersEnabledCheckbox: JBCheckBox = JBCheckBox("Enable Rust library renders")
-    private var isRendersEnabled: Boolean by CheckboxDelegate(isRendersEnabledCheckbox)
+    private val lldbRenderers = ComboBox<LLDBRenderers>().apply {
+        LLDBRenderers.values().forEach { addItem(it) }
+    }
+
+    private val gdbRenderers = ComboBox<GDBRenderers>().apply {
+        GDBRenderers.values().forEach { addItem(it) }
+    }
 
     override fun getId(): String = "Debugger.Rust"
     override fun getDisplayName(): String = DISPLAY_NAME
 
     override fun createComponent(): JComponent = panel {
-        row { isRendersEnabledCheckbox() }
+        row("LLDB renderers:") { lldbRenderers() }
+        row("GDB renderers:") { gdbRenderers() }
+        row { label("Changing these options will affect next debug session", gapLeft = 4, style = SMALL) }
     }
 
-    override fun isModified(): Boolean = isRendersEnabled != settings.isRendersEnabled
+    override fun isModified(): Boolean =
+        lldbRenderers.selectedIndex != settings.lldbRenderers.ordinal || gdbRenderers.selectedIndex != settings.gdbRenderers.ordinal
 
     override fun apply() {
-        settings.isRendersEnabled = isRendersEnabled
+        settings.lldbRenderers = LLDBRenderers.fromIndex(lldbRenderers.selectedIndex)
+        settings.gdbRenderers = GDBRenderers.fromIndex(gdbRenderers.selectedIndex)
     }
 
     override fun reset() {
-        isRendersEnabled = settings.isRendersEnabled
+        lldbRenderers.selectedIndex = settings.lldbRenderers.ordinal
+        gdbRenderers.selectedIndex = settings.gdbRenderers.ordinal
     }
 
     companion object {
