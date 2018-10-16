@@ -16,7 +16,8 @@ import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.canBeInstantiatedIn
 import org.rust.lang.core.psi.ext.namedFields
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -51,7 +52,7 @@ class AddStructFieldsFix(
         val fieldsToAdd = calculateMissingFields(body, decl)
         val firstAdded = fillStruct(
             RsPsiFactory(project),
-            StdKnownItems.relativeTo(decl),
+            decl.knownItems,
             body,
             decl.namedFields,
             fieldsToAdd,
@@ -66,7 +67,7 @@ class AddStructFieldsFix(
 
     private fun fillStruct(
         psiFactory: RsPsiFactory,
-        items: StdKnownItems,
+        items: KnownItems,
         structLiteral: RsStructLiteralBody,
         declaredFields: List<RsFieldDecl>,
         fieldsToAdd: List<RsFieldDecl>,
@@ -140,7 +141,7 @@ class AddStructFieldsFix(
 
     private fun specializedCreateStructLiteralField(
         factory: RsPsiFactory,
-        items: StdKnownItems,
+        items: KnownItems,
         fieldDecl: RsFieldDecl,
         mod: RsMod
     ): RsStructLiteralField? {
@@ -150,7 +151,7 @@ class AddStructFieldsFix(
         return factory.createStructLiteralField(name, fieldLiteral)
     }
 
-    private fun defaultValueExprFor(factory: RsPsiFactory, items: StdKnownItems, mod: RsMod, ty: Ty): RsExpr {
+    private fun defaultValueExprFor(factory: RsPsiFactory, items: KnownItems, mod: RsMod, ty: Ty): RsExpr {
         return when (ty) {
             is TyBool -> factory.createExpression("false")
             is TyInteger -> factory.createExpression("0")
@@ -163,9 +164,9 @@ class AddStructFieldsFix(
             is TyAdt -> {
                 val item = ty.item
                 when (item) {
-                    items.findOptionItem() -> factory.createExpression("None")
-                    items.findStdItem("collections", "string::String") -> factory.createExpression("String::new()")
-                    items.findStdItem("collections", "vec::Vec") -> factory.createExpression("Vec::new()")
+                    items.Option -> factory.createExpression("None")
+                    items.String -> factory.createExpression("String::new()")
+                    items.Vec -> factory.createExpression("Vec::new()")
                     else -> {
                         if (recursive && item is RsStructItem && item.canBeInstantiatedIn(mod)) {
                             // `!!` is because it isn't possible to acquire TyAdt with anonymous item

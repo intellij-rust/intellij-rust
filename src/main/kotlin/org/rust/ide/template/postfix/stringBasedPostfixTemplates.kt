@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
@@ -84,14 +84,14 @@ class IterPostfixTemplate(provider: RsPostfixTemplateProvider) :
 
 
 private val RsExpr.implementsIntoIter: Boolean
-    get() = isImplementsTrait(this, "iter::IntoIterator")
+    get() = isImplementsTrait(this, "core::iter::IntoIterator")
 
 private val RsExpr.implementsIter: Boolean
-    get() = isImplementsTrait(this, "iter::Iterator")
+    get() = isImplementsTrait(this, "core::iter::Iterator")
 
 private fun isImplementsTrait(expr: RsExpr, traitName: String, vararg subst: Ty): Boolean {
-    val items = StdKnownItems.relativeTo(expr)
+    val items = expr.knownItems
     val implLookup = ImplLookup(expr.project, items)
-    val trait = items.findCoreItem(traitName) as? RsTraitItem ?: return false
+    val trait = items.findItem(traitName) as? RsTraitItem ?: return false
     return implLookup.canSelect(TraitRef(expr.type, trait.withSubst(*subst)))
 }

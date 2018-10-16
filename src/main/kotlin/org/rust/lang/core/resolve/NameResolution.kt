@@ -393,6 +393,7 @@ fun processLocalVariables(place: RsElement, processor: (RsPatBinding) -> Unit) {
  * Resolves an absolute path.
  */
 fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project): Pair<RsNamedElement, CargoWorkspace.Package>? {
+    check(!path.startsWith("::"))
     val parts = path.split("::", limit = 2)
     if (parts.size != 2) return null
     val pkg = workspace.findPackage(parts[0]) ?: run {
