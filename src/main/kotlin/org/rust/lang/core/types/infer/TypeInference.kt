@@ -15,10 +15,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.SelectionResult
-import org.rust.lang.core.resolve.StdKnownItems
-import org.rust.lang.core.resolve.TraitImplSource
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralType
 import org.rust.lang.core.types.*
@@ -39,7 +36,7 @@ import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
 
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
-    val items = StdKnownItems.relativeTo(element)
+    val items = element.knownItems
     val lookup = ImplLookup(element.project, items)
     return recursionGuard(element, Computable { lookup.ctx.infer(element) })
         ?: error("Can not run nested type inference")
@@ -112,7 +109,7 @@ class RsInferenceResult(
  */
 class RsInferenceContext(
     val lookup: ImplLookup,
-    val items: StdKnownItems
+    val items: KnownItems
 ) : RsInferenceData {
     val fulfill: FulfillmentContext = FulfillmentContext(this, lookup)
     private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
@@ -1381,7 +1378,7 @@ class RsFnInferenceContext(
                     run {
                         // TODO replace it via `selectOverloadedOp` and share the code with `AssignmentOp`
                         // branch when cmp ops will become a real lang items in std
-                        val trait = items.findCoreItem("cmp::${op.traitName}") as? RsTraitItem
+                        val trait = items.findItem("core::cmp::${op.traitName}") as? RsTraitItem
                             ?: return@run null
 
                         val boundTrait = trait.withSubst(rhsType)
@@ -1434,7 +1431,7 @@ class RsFnInferenceContext(
     private fun inferTryExprOrMacroType(arg: RsExpr, allowOption: Boolean): Ty {
         val base = arg.inferType() as? TyAdt ?: return TyUnknown
         //TODO: make it work with generic `std::ops::Try` trait
-        if (base.item == items.findResultItem() || (allowOption && base.item == items.findOptionItem())) {
+        if (base.item == items.Result || (allowOption && base.item == items.Option)) {
             TypeInferenceMarks.questionOperator.hit()
             return base.typeArguments.firstOrNull() ?: TyUnknown
         }
@@ -1534,8 +1531,8 @@ class RsFnInferenceContext(
         val name = expr.macroCall.macroName
         return when {
             "print" in name || "assert" in name -> TyUnit
-            name == "format" -> items.findStringTy()
-            name == "format_args" -> items.findArgumentsTy()
+            name == "format" -> items.String.asTy()
+            name == "format_args" -> items.Arguments.asTy()
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
             name == "write" || name == "writeln" -> {
                 (expr.macroCall.expansion?.singleOrNull() as? RsExpr)?.inferType() ?: TyUnknown
@@ -1747,6 +1744,22 @@ data class TyWithObligations<out T>(
 
 fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
     TyWithObligations(value, obligations + addObligations)
+
+private fun KnownItems.findVecForElementTy(elementTy: Ty): Ty {
+    val ty = Vec?.declaredType ?: TyUnknown
+
+    val typeParameter = ty.getTypeParameter("T") ?: return ty
+    return ty.substitute(mapOf(typeParameter to elementTy).toTypeSubst())
+}
+
+private fun KnownItems.findRangeTy(rangeName: String, indexType: Ty?): Ty {
+    val ty = (findItem("core::ops::$rangeName") as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown
+
+    if (indexType == null) return ty
+
+    val typeParameter = ty.getTypeParameter("Idx") ?: return ty
+    return ty.substitute(mapOf(typeParameter to indexType).toTypeSubst())
+}
 
 object TypeInferenceMarks {
     val cyclicType = Testmark("cyclicType")

@@ -145,7 +145,7 @@ sealed class TraitImplSource {
 
 class ImplLookup(
     private val project: Project,
-    private val items: StdKnownItems
+    private val items: KnownItems
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
@@ -156,24 +156,22 @@ class ImplLookup(
     private val assignArithOps by lazy(NONE) {
         ArithmeticAssignmentOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName) }
     }
-    private val fnTraits by lazy(NONE) {
-        listOf("fn", "fn_mut", "fn_once").mapNotNull { RsLangItemIndex.findLangItem(project, it) }
-    }
+    private val fnTraits = listOfNotNull(items.Fn, items.FnMut, items.FnOnce)
     val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
-        val trait = RsLangItemIndex.findLangItem(project, "fn_once") ?: return@lazy null
+        val trait = items.FnOnce ?: return@lazy null
         trait.findAssociatedType("Output")
     }
 
     private val derefTraitAndTarget: Pair<RsTraitItem, RsTypeAlias>? = run {
-        val trait = RsLangItemIndex.findLangItem(project, "deref") ?: return@run null
+        val trait = items.Deref ?: return@run null
         trait.findAssociatedType("Target")?.let { trait to it }
     }
     private val indexTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
-        val trait = RsLangItemIndex.findLangItem(project, "index") ?: return@lazy null
+        val trait = items.Index ?: return@lazy null
         trait.findAssociatedType("Output")?.let { trait to it }
     }
     private val intoIteratorTraitAndOutput: Pair<RsTraitItem, RsTypeAlias>? by lazy(NONE) {
-        val trait = items.findCoreItem("iter::IntoIterator") as? RsTraitItem ?: return@lazy null
+        val trait = items.IntoIterator ?: return@lazy null
         trait.findAssociatedType("Item")?.let { trait to it }
     }
 
@@ -188,7 +186,7 @@ class ImplLookup(
     }
 
     private fun rawFindImplsAndTraits(ty: Ty): Set<TraitImplSource> {
-        val implsAndTraits = mutableSetOf<TraitImplSource>()
+        val implsAndTraits = hashSetOf<TraitImplSource>()
         when (ty) {
             is TyTypeParameter ->
                 ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.TraitBound(it.element) }
@@ -225,13 +223,13 @@ class ImplLookup(
                 }
             }
             is TyAdt -> when {
-                ty.item == items.findCoreItem("slice::Iter") -> {
-                    val trait = items.findIteratorTrait() ?: return emptyList()
+                ty.item == items.findItem("core::slice::Iter") -> {
+                    val trait = items.Iterator ?: return emptyList()
                     listOf(trait.substAssocType("Item",
                         TyReference(ty.typeParameterValues.typeByName("T"), IMMUTABLE)))
                 }
-                ty.item == items.findCoreItem("slice::IterMut") -> {
-                    val trait = items.findIteratorTrait() ?: return emptyList()
+                ty.item == items.findItem("core::slice::IterMut") -> {
+                    val trait = items.Iterator ?: return emptyList()
                     listOf(trait.substAssocType("Item",
                         TyReference(ty.typeParameterValues.typeByName("T"), MUTABLE)))
                 }
@@ -255,47 +253,47 @@ class ImplLookup(
             impls += arithOps.map { it.withSubst(ty).substAssocType("Output", ty) }
             impls += assignArithOps.map { it.withSubst(ty) }
             // Debug (libcore/fmt/num.rs libcore/fmt/float.rs)
-            addImpl(items.findDebugTrait())
+            addImpl(items.Debug)
         }
         if (ty is TyInteger || ty is TyInfer.IntVar) {
             // libcore/num/mod.rs
-            items.findFromStrTrait()?.let {
-                impls += it.substAssocType("Err", items.findCoreTy("num::ParseIntError"))
+            items.FromStr?.let {
+                impls += it.substAssocType("Err", items.findItem("core::num::ParseIntError").asTy())
             }
 
             // libcore/hash/mod.rs
-            addImpl(items.findHashTrait())
+            addImpl(items.Hash)
         }
         HARDCODED_FROM_IMPLS_MAP[ty]?.forEach { from ->
-            addImpl(items.findFromTrait(), from)
+            addImpl(items.From, from)
         }
         if (ty != TyStr) {
             // Default (libcore/default.rs)
-            addImpl(items.findDefaultTrait())
+            addImpl(items.Default)
 
             // PatrialEq (libcore/cmp.rs)
             if (ty != TyNever && ty != TyUnit) {
-                addImpl(items.findPartialEqTrait(), ty)
+                addImpl(items.PartialEq, ty)
             }
 
             // Eq (libcore/cmp.rs)
             if (ty !is TyFloat && ty !is TyInfer.FloatVar && ty != TyNever) {
-                addImpl(items.findEqTrait())
+                addImpl(items.Eq)
             }
 
             // PartialOrd (libcore/cmp.rs)
             if (ty != TyUnit && ty != TyBool && ty != TyNever) {
-                addImpl(items.findPartialOrdTrait(), ty)
+                addImpl(items.PartialOrd, ty)
                 // Ord (libcore/cmp.rs)
                 if (ty !is TyFloat && ty !is TyInfer.FloatVar) {
-                    addImpl(items.findOrdTrait())
+                    addImpl(items.Ord)
                 }
             }
 
             // Clone (libcore/clone.rs)
-            addImpl(items.findCloneTrait())
+            addImpl(items.Clone)
             // Copy (libcore/markers.rs)
-            addImpl(items.findCopyTrait())
+            addImpl(items.Copy)
         }
 
         return impls
@@ -410,7 +408,7 @@ class ImplLookup(
     private fun assembleCandidates(ref: TraitRef): List<SelectionCandidate> {
         val element = ref.trait.element
         return when {
-            element == items.findSizedTrait() -> sizedTraitCandidates(ref.selfTy, element)
+            element == items.Sized -> sizedTraitCandidates(ref.selfTy, element)
             ref.selfTy is TyTypeParameter -> {
                 ref.selfTy.getTraitBoundsTransitively().asSequence()
                     .filter { ctx.probe { combineBoundElements(it, ref.trait) } }
@@ -673,11 +671,11 @@ class ImplLookup(
         return ref.asFunctionType
     }
 
-    fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.findCopyTrait())
-    fun isClone(ty: Ty): Boolean = ty.isTraitImplemented(items.findCloneTrait())
-    fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(items.findSizedTrait())
-    fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.findDebugTrait())
-    fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.findPartialEqTrait(), rhsType)
+    fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.Copy)
+    fun isClone(ty: Ty): Boolean = ty.isTraitImplemented(items.Clone)
+    fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(items.Sized)
+    fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.Debug)
+    fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.PartialEq, rhsType)
 
     private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): Boolean {
         if (trait == null) return false
@@ -695,7 +693,7 @@ class ImplLookup(
 
     companion object {
         fun relativeTo(psi: RsElement): ImplLookup =
-            ImplLookup(psi.project, StdKnownItems.relativeTo(psi))
+            ImplLookup(psi.project, psi.knownItems)
 
         private val findImplsAndTraitsCache =
             ProjectCache<Ty, Set<TraitImplSource>>("findImplsAndTraitsCache")
