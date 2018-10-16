@@ -10,10 +10,14 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory
 import com.intellij.xdebugger.settings.XDebuggerSettings
+import org.rust.debugger.GDBRenderers
+import org.rust.debugger.LLDBRenderers
 
 class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
-    var isRendersEnabled: Boolean = true
+    var lldbRenderers: LLDBRenderers = LLDBRenderers.DEFAULT
+
+    var gdbRenderers: GDBRenderers = GDBRenderers.DEFAULT
 
     override fun getState(): RsDebuggerSettings = this
 

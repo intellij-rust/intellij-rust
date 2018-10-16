@@ -95,9 +95,8 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
                         override fun start(session: XDebugSession): XDebugProcess =
                             RsLocalDebugProcess(runParameters, session, state.consoleBuilder).apply {
                                 ProcessTerminatedListener.attach(processHandler, environment.project)
-                                if (sysroot != null && RsDebuggerSettings.getInstance().isRendersEnabled) {
-                                    loadPrettyPrinters(sysroot)
-                                }
+                                val settings = RsDebuggerSettings.getInstance()
+                                loadPrettyPrinters(sysroot, settings.lldbRenderers, settings.gdbRenderers)
                                 start()
                             }
 
