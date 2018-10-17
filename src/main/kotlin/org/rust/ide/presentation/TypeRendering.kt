@@ -5,6 +5,7 @@
 
 package org.rust.ide.presentation
 
+import com.intellij.util.withPrevious
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
@@ -13,8 +14,15 @@ import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 
+private const val MAX_SHORT_TYPE_LEN = 50
+
 val Ty.shortPresentableText: String
-    get() = TypeRenderer.DEFAULT.render(this, level = 3)
+    get() = generateSequence(1) { it + 1 }
+        .map { TypeRenderer.SHORT.render(this, level = it) }
+        .withPrevious()
+        .takeWhile { (cur, prev) ->
+            cur != prev && (prev == null || cur.length <= MAX_SHORT_TYPE_LEN)
+        }.last().first
 
 val Ty.insertionSafeText: String
     get() = TypeRenderer.INSERTION_SAFE.render(this)
@@ -54,7 +62,7 @@ private data class TypeRenderer(
             }
         }
 
-        if (level == 0) return "_"
+        if (level == 0) return "…"
 
         val render = { subTy: Ty ->
             render(subTy, level - 1)
@@ -65,7 +73,7 @@ private data class TypeRenderer(
                 ty.paramTypes.joinTo(this, ", ", "fn(", ")", transform = render)
                 if (ty.retType != TyUnit) {
                     append(" -> ")
-                    append(ty.retType)
+                    append(render(ty.retType))
                 }
             }
             is TySlice -> "[${render(ty.elementType)}]"
@@ -158,6 +166,7 @@ private data class TypeRenderer(
 
     companion object {
         val DEFAULT: TypeRenderer = TypeRenderer()
+        val SHORT: TypeRenderer = TypeRenderer(unknown = "?")
         val DEFAULT_WITHOUT_TYPE_ARGUMENTS: TypeRenderer = TypeRenderer(includeTypeArguments = false)
         val INSERTION_SAFE: TypeRenderer = TypeRenderer(
             unknown = "_",
