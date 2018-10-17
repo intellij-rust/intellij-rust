@@ -174,4 +174,22 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
             }
         }
     }
+
+    //
+
+    fun `test replace function with comment`() = doTest(INC, """
+        /*caret*/fn foo() {}
+    """, "//")
+
+    fun `test replace expr with block with item`() = doTest(INC, """
+        fn foo() { 2/*caret*/; }
+    """, "\b{ fn bar() {} }")
+
+    fun `test replace expr with block with macro definition`() = doTest(INC, """
+        fn foo() { 2/*caret*/; }
+    """, "\b{ macro_rules! foo { () => {} } }")
+
+    fun `test replace expr with block with call`() = doTest(INC, """
+        fn foo() { 2/*caret*/; }
+    """, "\b{ foo!() }")
 }

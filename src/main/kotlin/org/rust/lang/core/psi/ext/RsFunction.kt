@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.macros.RsExpandedElement
@@ -106,7 +107,13 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         SimpleModificationTracker()
 
     override fun incModificationCount(element: PsiElement): Boolean {
-        val shouldInc = element !is RsItemElement && block?.isAncestorOf(element) == true
+        val shouldInc = block?.isAncestorOf(element) == true && PsiTreeUtil.findChildOfAnyType(
+            element,
+            false,
+            RsItemElement::class.java,
+            RsMacro::class.java,
+            RsMacroCall::class.java
+        ) == null
         if (shouldInc) modificationTracker.incModificationCount()
         return shouldInc
     }
