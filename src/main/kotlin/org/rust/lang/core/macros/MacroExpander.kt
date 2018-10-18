@@ -465,6 +465,15 @@ fun RsPsiFactory.parseExpandedTextWithContext(call: RsMacroCall, expandedText: C
         else -> createFile(expandedText).childrenOfType<RsExpandedElement>()
     }
 
+/** If [call] is previously expanded to [expandedFile], this function extract expanded elements from the file */
+fun getExpandedElementsFromMacroExpansion(call: RsMacroCall, expandedFile: RsFile): List<RsExpandedElement> =
+    when (call.context) {
+        is RsMacroExpr -> listOfNotNull(expandedFile.descendantOfTypeStrict<RsExpr>())
+        is RsPatMacro -> listOfNotNull(expandedFile.descendantOfTypeStrict<RsPat>())
+        is RsMacroType -> listOfNotNull(expandedFile.descendantOfTypeStrict<RsTypeReference>())
+        else -> expandedFile.childrenOfType<RsExpandedElement>()
+    }
+
 object MacroExpansionMarks {
     val failMatchPatternByToken = Testmark("failMatchPatternByToken")
     val failMatchPatternByExtraInput = Testmark("failMatchPatternByExtraInput")

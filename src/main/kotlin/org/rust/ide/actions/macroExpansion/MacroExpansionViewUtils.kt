@@ -7,6 +7,7 @@ package org.rust.ide.actions.macroExpansion
 
 import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
@@ -15,11 +16,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.ui.popup.PopupPositionManager
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.macros.getExpandedElementsFromMacroExpansion
 import org.rust.lang.core.macros.parseExpandedTextWithContext
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.expandAllMacrosRecursively
@@ -28,7 +32,11 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 
 /** Data class to group title and expansions of macro to show them in the view. */
-data class MacroExpansionViewDetails(val title: String, val expansions: List<RsExpandedElement>)
+data class MacroExpansionViewDetails(
+    val macroToExpand: RsMacroCall,
+    val title: String,
+    val expansions: List<RsExpandedElement>
+)
 
 /**
  * This method expands macro in background thread with progress bar showing on, allowing user to close it if expansion
@@ -51,7 +59,9 @@ fun expandMacroForViewWithProgress(
 fun showMacroExpansionPopup(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
     if (expansionDetails.expansions.isEmpty()) return
 
-    val component = MacroExpansionViewComponent(expansionDetails.expansions)
+    val formattedExpansion = reformatMacroExpansion(expansionDetails.macroToExpand, expansionDetails.expansions)
+
+    val component = MacroExpansionViewComponent(formattedExpansion)
 
     val popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
         .setProject(project)
@@ -66,6 +76,7 @@ fun showMacroExpansionPopup(project: Project, editor: Editor, expansionDetails: 
 
 private fun expandMacroForView(macroToExpand: RsMacroCall, expandRecursively: Boolean): MacroExpansionViewDetails =
     MacroExpansionViewDetails(
+        macroToExpand,
         getMacroExpansionViewTitle(macroToExpand, expandRecursively),
         getMacroExpansions(macroToExpand, expandRecursively)
     )
@@ -89,10 +100,19 @@ private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Bo
     }
 
     val expansionText = macroToExpand.expandAllMacrosRecursively()
-    val expansionElements = RsPsiFactory(macroToExpand.project)
-        .parseExpandedTextWithContext(macroToExpand, expansionText)
 
-    return expansionElements
+    return RsPsiFactory(macroToExpand.project)
+        .parseExpandedTextWithContext(macroToExpand, expansionText)
+}
+
+private fun reformatMacroExpansion(
+    macroToExpand: RsMacroCall,
+    expansions: List<RsExpandedElement>
+): List<RsExpandedElement> {
+    val file = expansions.first().containingFile as RsFile
+    runWriteAction { formatPsiFile(file) }
+
+    return getExpandedElementsFromMacroExpansion(macroToExpand, file)
 }
 
 /** Simple view to show some code. Inspired by [com.intellij.codeInsight.hint.ImplementationViewComponent] */
@@ -103,12 +123,9 @@ private class MacroExpansionViewComponent(expansions: List<RsExpandedElement>) :
     init {
         require(expansions.isNotEmpty()) { "Must be at least one expansion!" }
 
-        val firstExpansion = expansions.first()
-        val project = firstExpansion.project
+        val project = expansions.first().project
 
-        val reformatted = expansions.map { project.formatPsiElement(it) }
-        editor = project.createReadOnlyEditorWithElements(reformatted)
-
+        editor = project.createReadOnlyEditorWithElements(expansions)
         setupSimpleEditorLook(editor)
         editor.highlighter = project.createRustHighlighter()
 
@@ -137,14 +154,15 @@ private class MacroExpansionViewComponent(expansions: List<RsExpandedElement>) :
     }
 }
 
-private fun Project.formatPsiElement(element: PsiElement): PsiElement =
-    CodeStyleManager.getInstance(this).reformatRange(
+private fun formatPsiFile(element: PsiFile) {
+    CodeStyleManager.getInstance(element.project).reformatText(
         element,
         element.textRange.startOffset,
         element.textRange.endOffset
     )
+}
 
-private fun Project.createReadOnlyEditorWithElements(expansions: List<PsiElement>): EditorEx {
+private fun Project.createReadOnlyEditorWithElements(expansions: Collection<PsiElement>): EditorEx {
     val factory = EditorFactory.getInstance()
 
     val text = expansions.joinToString("\n") { it.text }
