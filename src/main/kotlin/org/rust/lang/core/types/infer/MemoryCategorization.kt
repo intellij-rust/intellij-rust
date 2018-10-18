@@ -6,12 +6,8 @@
 package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.containerExpr
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.psi.ext.mutability
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.builtinDeref
 import org.rust.lang.core.types.infer.Aliasability.FreelyAliasable
 import org.rust.lang.core.types.infer.Aliasability.NonAliasable
 import org.rust.lang.core.types.infer.AliasableReason.*
@@ -19,11 +15,9 @@ import org.rust.lang.core.types.infer.BorrowKind.ImmutableBorrow
 import org.rust.lang.core.types.infer.BorrowKind.MutableBorrow
 import org.rust.lang.core.types.infer.Categorization.*
 import org.rust.lang.core.types.infer.ImmutabilityBlame.*
-import org.rust.lang.core.types.infer.InteriorKind.*
 import org.rust.lang.core.types.infer.MutabilityCategory.Declared
 import org.rust.lang.core.types.infer.PointerKind.BorrowedPointer
 import org.rust.lang.core.types.infer.PointerKind.UnsafePointer
-import org.rust.lang.core.types.isDereference
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
@@ -38,15 +32,26 @@ sealed class Categorization {
     object StaticItem : Categorization()
 
     /** Local variable */
-    data class Local(val element: RsElement) : Categorization()
+    data class Local(val declaration: RsElement) : Categorization()
 
     /** Dereference of a pointer */
     data class Deref(val cmt: Cmt, val pointerKind: PointerKind) : Categorization()
 
     /** Something reachable from the base without a pointer dereference (e.g. field) */
-    data class Interior(val cmt: Cmt, val interiorKind: InteriorKind) : Categorization()
+    sealed class Interior : Categorization() {
+        abstract val cmt: Cmt
 
-    /** Selects a particular enum variant (if enum has more than one variant */
+        /** e.g. `s.field` */
+        data class Field(override val cmt: Cmt, val name: String?) : Interior()
+
+        /** e.g. `arr[0]` */
+        data class Index(override val cmt: Cmt) : Interior()
+
+        /** e.g. `fn foo([_, a, _, _]: [A; 4]) { ... }` */
+        data class Pattern(override val cmt: Cmt) : Interior()
+    }
+
+    /** Selects a particular enum variant (if enum has more than one variant) */
     data class Downcast(val cmt: Cmt, val element: RsElement) : Categorization()
 }
 
@@ -69,18 +74,6 @@ sealed class BorrowKind {
 sealed class PointerKind {
     data class BorrowedPointer(val borrowKind: BorrowKind, val region: Region) : PointerKind()
     data class UnsafePointer(val mutability: Mutability) : PointerKind()
-}
-
-/** "interior" means "something reachable from the base without a pointer dereference" */
-sealed class InteriorKind {
-    /** e.g. `s.field` */
-    class InteriorField(val fieldName: String?) : InteriorKind()
-
-    /** e.g. `arr[0]` */
-    object InteriorIndex : InteriorKind()
-
-    /** e.g. `fn foo([_, a, _, _]: [A; 4]) { ... }` */
-    object InteriorPattern : InteriorKind()
 }
 
 /** Reason why something is immutable */
@@ -179,7 +172,7 @@ class Cmt(
                 val baseCmt = category.cmt
                 if (pointerKind is BorrowedPointer && pointerKind.borrowKind is ImmutableBorrow) {
                     when (baseCmt.category) {
-                        is Local -> LocalDeref(baseCmt.category.element)
+                        is Local -> LocalDeref(baseCmt.category.declaration)
                         is Interior -> AdtFieldDeref
                         else -> null
                     }
@@ -189,7 +182,7 @@ class Cmt(
                     baseCmt.immutabilityBlame
                 }
             }
-            is Local -> ImmutableLocal(category.element)
+            is Local -> ImmutableLocal(category.declaration)
             is Interior -> category.cmt.immutabilityBlame
             is Downcast -> category.cmt.immutabilityBlame
             else -> null
@@ -217,14 +210,20 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
         return processExprAdjustedWith(expr, adjustments.asReversed().iterator())
     }
 
-    private fun processExprAdjustedWith(expr: RsExpr, adjustments: Iterator<Adjustment>): Cmt =
-        when (adjustments.nextOrNull()) {
+    private fun processExprAdjustedWith(expr: RsExpr, adjustments: Iterator<Adjustment>): Cmt {
+        val adjustment = adjustments.nextOrNull()
+        return when (adjustment) {
             is Adjustment.Deref -> {
                 // TODO: overloaded deref
                 processDeref(expr, processExprAdjustedWith(expr, adjustments))
             }
+            is Adjustment.BorrowReference, is Adjustment.BorrowPointer -> {
+                val target = adjustment.target
+                processRvalue(expr, target)
+            }
             else -> processExprUnadjusted(expr)
         }
+    }
 
     private fun processExprUnadjusted(expr: RsExpr): Cmt =
         when (expr) {
@@ -256,7 +255,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
         val type = inference.getExprType(indexExpr)
         val base = indexExpr.containerExpr ?: return Cmt(indexExpr, ty = type)
         val baseCmt = processExpr(base)
-        return Cmt(indexExpr, Interior(baseCmt, InteriorIndex), baseCmt.mutabilityCategory.inherit(), type)
+        return Cmt(indexExpr, Interior.Index(baseCmt), baseCmt.mutabilityCategory.inherit(), type)
     }
 
     private fun processPathExpr(pathExpr: RsPathExpr): Cmt {
@@ -311,8 +310,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
             for ((index, subPat) in pats.withIndex()) {
                 val subBinding = subPat.descendantsOfType<RsPatBinding>().firstOrNull() ?: continue
                 val subType = inference.getBindingType(subBinding)
-                val interior = InteriorField(index.toString())
-                val subCmt = Cmt(pat, Interior(cmt, interior), cmt.mutabilityCategory.inherit(), subType)
+                val subCmt = Cmt(pat, Interior.Field(cmt, index.toString()), cmt.mutabilityCategory.inherit(), subType)
                 walkPat(subCmt, subPat, callback)
             }
         }
@@ -351,7 +349,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
     private fun cmtOfField(element: RsElement, baseCmt: Cmt, fieldName: String?, fieldType: Ty): Cmt =
         Cmt(
             element,
-            Interior(baseCmt, InteriorField(fieldName)),
+            Interior.Field(baseCmt, fieldName),
             baseCmt.mutabilityCategory.inherit(),
             fieldType
         )
@@ -359,14 +357,8 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
     private fun cmtOfSliceElement(element: RsElement, baseCmt: Cmt): Cmt =
         Cmt(
             element,
-            Interior(baseCmt, InteriorPattern),
+            Interior.Pattern(baseCmt),
             baseCmt.mutabilityCategory.inherit(),
             baseCmt.ty
         )
-
-    fun isTypeMovesByDefault(ty: Ty): Boolean =
-        when (ty) {
-            is TyUnknown, is TyPrimitive, is TyTuple, is TyReference, is TyPointer, is TyFunction -> false
-            else -> lookup.isCopy(ty).not()
-        }
 }
