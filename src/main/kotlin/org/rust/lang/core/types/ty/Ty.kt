@@ -9,6 +9,7 @@ import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
