@@ -10,10 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.findOuterAttr
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.findOuterAttr
+import org.rust.lang.core.psi.ext.firstKeyword
 
 class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Context>() {
     override fun getFamilyName() = "Add derive clause"
@@ -26,11 +28,7 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val item = element.ancestorStrict<RsStructOrEnumItemElement>() ?: return null
-        val keyword = when (item) {
-            is RsStructItem -> item.vis ?: item.struct
-            is RsEnumItem -> item.vis ?: item.enum
-            else -> null
-        } ?: return null
+        val keyword = item.firstKeyword ?: return null
         return Context(item, keyword)
 
     }

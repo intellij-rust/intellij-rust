@@ -342,9 +342,8 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
 fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     return processNestedScopesUpwards(binding, { entry ->
         processor.lazy(entry.name) {
-            val element = entry.element
-            val isConstant = element is RsConstant
-                || (element is RsEnumVariant && element.blockFields == null && element.tupleFields == null)
+            val element = entry.element ?: return@lazy null
+            val isConstant = element.isConstantLike
             val isPathOrDestructable = when (element) {
                 is RsMod, is RsEnumItem, is RsEnumVariant, is RsStructItem -> true
                 else -> false
