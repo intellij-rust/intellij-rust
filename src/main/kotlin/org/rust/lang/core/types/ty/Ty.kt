@@ -141,3 +141,18 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
         }
     }
 }
+
+fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
+    when {
+        this is TyReference -> Pair(referenced, mutability)
+        this is TyPointer && explicit -> Pair(referenced, mutability)
+        else -> null
+    }
+
+// TODO
+fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
+    when (this) {
+        is TyUnknown, is TyReference, is TyPointer, is TyFunction -> false
+        is TyTuple -> types.any { it.isMovesByDefault(lookup) }
+        else -> lookup.isCopy(this).not()
+    }

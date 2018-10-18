@@ -74,15 +74,6 @@ val RsTraitOrImpl.selfType: Ty
         else -> error("Unreachable")
     }
 
-fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
-    when {
-        this is TyReference -> Pair(referenced, mutability)
-        this is TyPointer && explicit -> Pair(referenced, mutability)
-        else -> null
-    }
-
-val RsUnaryExpr.isDereference: Boolean get() = this.mul != null
-
 val RsExpr.cmt: Cmt?
     get() {
         val items = StdKnownItems.relativeTo(this)

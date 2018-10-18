@@ -75,7 +75,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let a: [i32; 3] = [0; 3];
             a[1];
-             //^ Interior, Immutable
+             //^ Index, Immutable
         }
     """)
 
@@ -83,7 +83,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let mut a: [i32; 3] = [0; 3];
             a[1];
-             //^ Interior, Inherited
+             //^ Index, Inherited
         }
     """)
 
@@ -92,7 +92,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let x = Foo { a: 1 };
             (x.a);
-              //^ Interior, Immutable
+              //^ Field, Immutable
         }
     """)
 
@@ -101,7 +101,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
             let mut x = Foo { a: 1 };
             (x.a);
-              //^ Interior, Inherited
+              //^ Field, Inherited
         }
     """)
 
@@ -111,7 +111,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut foo = Foo { a: 1 };
             let x = &foo;
             (x.a);
-              //^ Interior, Immutable
+              //^ Field, Immutable
         }
     """)
 
@@ -121,7 +121,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut foo = Foo { a: 1 };
             let x = &mut foo;
             (x.a);
-              //^ Interior, Inherited
+              //^ Field, Inherited
         }
     """)
 
@@ -131,7 +131,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut foo = Foo { a: 1 };
             let x = &mut &mut &foo;
             (x.a);
-              //^ Interior, Immutable
+              //^ Field, Immutable
         }
     """)
 
@@ -141,7 +141,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
             let mut foo = Foo { a: 1 };
             let x = & & &mut foo;
             (x.a);
-              //^ Interior, Inherited
+              //^ Field, Inherited
         }
     """)
 
@@ -243,7 +243,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
     fun `test array`() = testExpr("""
         fn f(buf: &mut [u8]) {
             (buf[0]);
-                 //^ Interior, Inherited
+                 //^ Index, Inherited
         }
     """)
 }
