@@ -193,7 +193,7 @@ private class OptBuilder(
 
     fun verbose() {
         flag("verbose")
-        flag("quite")
+        flag("quiet")
     }
 
     fun flag(long: String) {
