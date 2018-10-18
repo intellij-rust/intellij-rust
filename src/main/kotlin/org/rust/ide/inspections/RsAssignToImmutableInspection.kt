@@ -8,8 +8,8 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr
+import org.rust.lang.core.psi.ext.isDereference
 import org.rust.lang.core.psi.ext.unwrapParenExprs
-import org.rust.lang.core.types.isDereference
 import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyReference

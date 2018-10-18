@@ -16,6 +16,8 @@ import com.intellij.psi.stubs.StubElement
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.rustFile
 import org.rust.openapiext.toPsiFile
@@ -57,6 +59,22 @@ val RsElement.containingCargoTarget: CargoWorkspace.Target?
     }
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
+
+/**
+ * It is possible to match value with constant-like element, e.g.
+ *      ```
+ *      enum Kind { A }
+ *      use Kind::A;
+ *      match kind { A => ... } // `A` is a constant-like element, not a pat binding
+ *      ```
+ *
+ * But there is no way to distinguish a pat binding from a constant-like element on syntax level,
+ * so we resolve an item `A` first, and then use [isConstantLike] to check whether the element is constant-like or not.
+ *
+ * Constant-like element can be: real constant, static variable, and enum variant without fields.
+ */
+val RsElement.isConstantLike: Boolean
+    get() = this is RsConstant || (this is RsEnumVariant && blockFields == null && tupleFields == null)
 
 fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
     return containingCargoPackage
