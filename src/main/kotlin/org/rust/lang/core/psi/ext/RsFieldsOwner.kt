@@ -9,6 +9,8 @@ import org.rust.lang.core.psi.RsBlockFields
 import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.psi.RsTupleFields
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.type
 
 interface RsFieldsOwner : RsElement{
     val blockFields: RsBlockFields?
@@ -37,3 +39,7 @@ val RsFieldsOwner.positionalFields: List<RsTupleFieldDecl>
  */
 fun RsFieldsOwner.canBeInstantiatedIn(mod: RsMod): Boolean =
     namedFields.all { it.isVisibleFrom(mod) } && positionalFields.all { it.isVisibleFrom(mod) }
+
+val RsFieldsOwner.fieldTypes: List<Ty>
+    get() = blockFields?.fieldDeclList?.mapNotNull { it.typeReference?.type }
+        ?: tupleFields?.tupleFieldDeclList?.mapNotNull { it.typeReference.type }.orEmpty()

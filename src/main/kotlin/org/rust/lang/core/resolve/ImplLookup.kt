@@ -675,6 +675,7 @@ class ImplLookup(
     }
 
     fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.findCopyTrait())
+    fun isClone(ty: Ty): Boolean = ty.isTraitImplemented(items.findCloneTrait())
     fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(items.findSizedTrait())
     fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.findDebugTrait())
     fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.findPartialEqTrait(), rhsType)
