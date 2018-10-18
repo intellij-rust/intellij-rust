@@ -7,6 +7,7 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.annotator.fixes.AddMutableFix
+import org.rust.ide.inspections.fixes.DeriveCopyFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.borrowCheckResult
@@ -52,7 +53,8 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
     }
 
     private fun registerUseOfMovedValueProblem(holder: ProblemsHolder, use: RsElement) {
-        holder.registerProblem(use, "Use of moved value")
+        val fix = DeriveCopyFix.createIfCompatible(use).let { if (it == null) emptyArray() else arrayOf(it) }
+        holder.registerProblem(use, "Use of moved value", *fix)
     }
 
     private fun registerMoveProblem(holder: ProblemsHolder, element: RsElement) {
