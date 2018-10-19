@@ -9,6 +9,7 @@ import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
@@ -141,3 +142,18 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
         }
     }
 }
+
+fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
+    when {
+        this is TyReference -> Pair(referenced, mutability)
+        this is TyPointer && explicit -> Pair(referenced, mutability)
+        else -> null
+    }
+
+// TODO
+fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
+    when (this) {
+        is TyUnknown, is TyReference, is TyPointer, is TyFunction -> false
+        is TyTuple -> types.any { it.isMovesByDefault(lookup) }
+        else -> lookup.isCopy(this).not()
+    }

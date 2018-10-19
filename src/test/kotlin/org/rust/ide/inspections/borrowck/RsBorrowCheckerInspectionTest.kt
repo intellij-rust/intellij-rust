@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.borrowck
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.inspections.RsBorrowCheckerInspection
+import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
 
@@ -19,7 +21,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let mut test = S;
             test.test();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable used at mutable method call (self)`() = checkByText("""
         struct S;
@@ -30,7 +32,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let test = S;
             test.test();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable used at mutable method call (args)`() = checkByText("""
         struct S;
@@ -42,7 +44,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let mut reassign = S;
             test.test(&mut reassign);
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable used at mutable call`() = checkByText("""
         struct S;
@@ -51,7 +53,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let mut s = S;
             test(&mut s);
         }
-    """)
+    """, checkWarn = false)
 
     fun `test immutable used at mutable call (pattern)`() = checkByText("""
         struct S;
@@ -61,7 +63,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         fn test((x,y): (&S, &mut S)) {
             <error>x</error>.foo();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable used at mutable call (pattern)`() = checkByText("""
         struct S;
@@ -71,7 +73,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         fn test((x,y): (&mut S, &mut S)) {
             x.foo();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable used at mutable method definition`() = checkByText("""
         struct S;
@@ -81,7 +83,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             }
             fn foo(&mut self) {}
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable type should not annotate`() = checkByText("""
         struct S;
@@ -96,7 +98,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
                 self.foo();
             }
         }
-    """)
+    """, checkWarn = false)
 
     fun `test immutable used at mutable method definition`() = checkByText("""
         struct S;
@@ -106,7 +108,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             }
             fn foo(&mut self) {}
         }
-    """)
+    """, checkWarn = false)
 
     fun `test immutable used at reference mutable function definition`() = checkByText("""
         struct S;
@@ -116,7 +118,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         fn test(test: &S) {
             <error>test</error>.foo();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable used at reference mutable function definition`() = checkByText("""
         struct S;
@@ -126,7 +128,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         fn test(test: &mut S) {
             test.foo();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test no highlight for mutable for loops`() = checkByText("""
         fn test() {
@@ -135,7 +137,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
                 test.push(0);
             }
         }
-    """)
+    """, checkWarn = false)
 
     fun `test immutable used at reassign`() = checkByText("""
         fn main() {
@@ -147,7 +149,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             }
             a = 5;//FIXME(farodin91): this line should fail
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable used at reassign`() = checkByText("""
         fn main() {
@@ -155,7 +157,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             x = 3;
             x = 5;
         }
-    """)
+    """, checkWarn = false)
 
     fun `test let some from mutable reference`() = checkByText("""
         fn foo(optional: Option<&mut String>) {
@@ -163,7 +165,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
                 *x = "str".to_string();
             }
         }
-    """)
+    """, checkWarn = false)
 
     fun `test simple enum variant is treated as mutable`() = checkByText("""
         enum Foo { FOO }
@@ -171,7 +173,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         fn bar () {
             foo(&mut Foo::FOO);     // Must not be highlighted
         }
-    """)
+    """, checkWarn = false)
 
     fun `test mutable reference to empty struct with and without braces`() = checkByText("""
         struct S;
@@ -180,7 +182,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let test1 = &mut S; // Must not be highlighted
             let test2 = &mut S {}; // Must not be highlighted
         }
-    """)
+    """, checkWarn = false)
 
     fun `test fix method at method call (self)`() = checkFixByText("Make `self` mutable", """
         struct S;
@@ -198,7 +200,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             }
             fn foo(&mut self) {}
         }
-    """)
+    """, checkWarn = false)
 
     fun `test fix method at method call (args)`() = checkFixByText("Make `s` mutable", """
         struct S;
@@ -216,7 +218,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             }
             fn foo(&mut self) {}
         }
-    """)
+    """, checkWarn = false)
 
     fun `test immutable used at ref mutable method call (self)`() = checkByText("""
         struct S;
@@ -227,7 +229,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let test = S;
             <error>test</error>.test();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test immutable used at mutable method call (args)`() = checkByText("""
         struct S;
@@ -239,7 +241,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let reassign = S;
             test.test(&mut <error descr="Cannot borrow immutable local variable `reassign` as mutable">reassign</error>);
         }
-    """)
+    """, checkWarn = false)
 
     fun `test immutable used at mutable call`() = checkByText("""
         struct S;
@@ -248,7 +250,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let s = S;
             test(&mut <error>s</error>);
         }
-    """)
+    """, checkWarn = false)
 
     fun `test fix let at method call (self)`() = checkFixByText("Make `test` mutable", """
         struct S;
@@ -268,7 +270,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let mut test = S;
             test.test();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test fix let at method call (args)`() = checkFixByText("Make `reassign` mutable", """
         struct S;
@@ -290,7 +292,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let mut reassign = S;
             test.test(&mut reassign);
         }
-    """)
+    """, checkWarn = false)
 
     fun `test fix let at call (args)`() = checkFixByText("Make `s` mutable", """
         struct S;
@@ -306,7 +308,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let mut s = S;
             test(&mut s);
         }
-    """)
+    """, checkWarn = false)
 
     fun `test &mut on function`() = checkByText("""
         fn foo() {}
@@ -314,7 +316,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         fn main() {
             let local = &mut foo;
         }
-    """)
+    """, checkWarn = false)
 
     fun `test &mut on method`() = checkByText("""
         struct A {}
@@ -325,7 +327,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         fn main() {
             let local = &mut A::foo;
         }
-    """)
+    """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test rvalue method call`() = checkByText("""
@@ -333,7 +335,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let v = vec![1];
             v.iter().any(|c| *c == 2);
         }
-    """)
+    """, checkWarn = false)
 
     fun `test rvalue if expr`() = checkByText("""
         struct S {}
@@ -343,7 +345,7 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
         fn main() {
           (if true { S } else { S }).f_mut();
         }
-    """)
+    """, checkWarn = false)
 
     fun `test tuple`() = checkByText("""
         fn main() {
@@ -369,5 +371,5 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let b = &mut a;
             let c = &mut b[0];
         }
-    """)
+    """, checkWarn = false)
 }
