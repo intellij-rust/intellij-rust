@@ -1330,7 +1330,7 @@ class RsFnInferenceContext(
                 // expectation must NOT be used for deref
                 val base = resolveTypeVarsWithObligations(innerExpr.inferType())
                 val deref = lookup.deref(base)
-                if (deref == null) {
+                if (deref == null && base != TyUnknown) {
                     ctx.addDiagnostic(RsDiagnostic.DerefError(expr, base))
                 }
                 deref ?: TyUnknown
