@@ -541,4 +541,15 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         Option<i32>
     """)
+
+    fun `test expend macro definition`() = doTest("""
+       macro_rules! foo {
+           () => {
+               macro_rules! bar { () => {} }
+           }
+       }
+       foo!();
+    """, """
+        macro_rules! bar { () => {} }
+    """)
 }
