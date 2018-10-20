@@ -68,6 +68,14 @@ class RsCompletionTest : RsCompletionTestBase() {
         }}
     """)
 
+    fun `test struct-like enum with braces`() = doSingleCompletion("""
+        enum E { Frobnicate { f: i32 } }
+        fn main() { E::Frob/*caret*/ {} }
+    """, """
+        enum E { Frobnicate { f: i32 } }
+        fn main() { E::Frobnicate {/*caret*/} }
+    """)
+
     fun `test function call with parens with arg`() = doSingleCompletion("""
         fn frobnicate(foo: i32) {}
         fn main() { frob/*caret*/() }
