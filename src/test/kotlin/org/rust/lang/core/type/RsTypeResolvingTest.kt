@@ -333,7 +333,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
 
     fun `test deep generic struct with undeclared lifetime`() = testType("""
         struct Struct<'a, T>(&'b Struct<'b, Struct<'b, &'a str>>);
-                            //^ &'_ Struct<'_, Struct<'_, &'a str>>
+                            //^ &Struct<'_, Struct<'_, &'a str>>
     """, renderLifetimes = true)
 
     /**

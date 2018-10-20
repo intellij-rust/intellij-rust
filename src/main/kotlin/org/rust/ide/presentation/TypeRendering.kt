@@ -9,6 +9,8 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.regions.ReEarlyBound
+import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
@@ -82,7 +84,7 @@ private data class TypeRenderer(
             is TyArray -> "[${render(ty.base)}; ${ty.size ?: unknown}]"
             is TyReference -> buildString {
                 append('&')
-                if (includeLifetimeArguments) {
+                if (includeLifetimeArguments && (ty.region is ReEarlyBound || ty.region is ReStatic)) {
                     append(render(ty.region))
                     append(" ")
                 }
