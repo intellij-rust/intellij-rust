@@ -220,6 +220,18 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
+    fun `test do not move use items before mod block`() = doTest("""
+        pub mod foo {
+            use std::time;
+            use std::io;
+        }
+    """, """
+        pub mod foo {
+            use std::io;
+            use std::time;
+        }
+    """)
+
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String){
         checkByText(code.trimIndent(), excepted.trimIndent()) {
             myFixture.performEditorAction("OptimizeImports")
