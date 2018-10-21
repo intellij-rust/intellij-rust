@@ -227,7 +227,16 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     val parent = path.context
     val ns = when (parent) {
         is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
-        is RsUseSpeck -> if (parent.isStarImport) TYPES_N_MACROS else TYPES_N_VALUES_N_MACROS
+        is RsUseSpeck -> when {
+            // use foo::bar::{self, baz};
+            //     ~~~~~~~~
+            // use foo::bar::*;
+            //     ~~~~~~~~
+            parent.useGroup != null || parent.isStarImport -> TYPES
+            // use foo::bar;
+            //     ~~~~~~~~
+            else -> TYPES_N_VALUES_N_MACROS
+        }
         is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
         else -> TYPES_N_VALUES
     }
