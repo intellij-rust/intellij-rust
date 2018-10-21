@@ -35,8 +35,9 @@ val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
 
     is RsPatBinding,
     is RsConstant,
-    is RsFunction,
-    is RsEnumVariant -> VALUES
+    is RsFunction -> VALUES
+
+    is RsEnumVariant -> if (blockFields == null) VALUES else TYPES
 
     is RsStructItem -> if (blockFields == null) TYPES_N_VALUES else TYPES
 
