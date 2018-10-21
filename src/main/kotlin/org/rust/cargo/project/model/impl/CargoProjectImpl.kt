@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -271,14 +272,14 @@ data class CargoProjectImpl(
     override val workspaceStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
     override val stdlibStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
-) : CargoProject {
+) : UserDataHolderBase(), CargoProject {
 
     private val projectDirectory get() = manifest.parent
-    private val project get() = projectService.project
+    override val project get() = projectService.project
     private val toolchain get() = project.toolchain
-    override val workspace: CargoWorkspace? = run {
-        val rawWorkspace = rawWorkspace ?: return@run null
-        val stdlib = stdlib ?: return@run rawWorkspace
+    override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val rawWorkspace = rawWorkspace ?: return@lazy null
+        val stdlib = stdlib ?: return@lazy rawWorkspace
         rawWorkspace.withStdlib(stdlib)
     }
 

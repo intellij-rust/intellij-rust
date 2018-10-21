@@ -14,7 +14,7 @@ import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.borrowck.BorrowCheckContext
 import org.rust.lang.core.types.borrowck.BorrowCheckResult
 import org.rust.lang.core.types.infer.*
@@ -86,7 +86,7 @@ val RsTraitOrImpl.selfType: Ty
 
 val RsExpr.cmt: Cmt?
     get() {
-        val items = StdKnownItems.relativeTo(this)
+        val items = this.knownItems
         val lookup = ImplLookup(this.project, items)
         val inference = this.inference ?: return null
         return MemoryCategorizationContext(lookup, inference).processExpr(this)
@@ -103,3 +103,6 @@ val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
         val borrowCheckResult = bccx?.check()
         createResult(borrowCheckResult)
     }
+
+fun RsNamedElement?.asTy(): Ty =
+    (this as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown

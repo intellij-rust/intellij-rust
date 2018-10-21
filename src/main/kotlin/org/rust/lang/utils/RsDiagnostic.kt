@@ -22,9 +22,11 @@ import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.asTy
 import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
@@ -58,7 +60,7 @@ sealed class RsDiagnostic(
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
                     } else  if (element is RsElement) {
-                        val items = StdKnownItems.relativeTo(element)
+                        val items = element.knownItems
                         val lookup = ImplLookup(element.project, items)
                         if (isFromActualImplForExpected(items, lookup)) {
                             add(ConvertToTyUsingFromTraitFix(element, expectedTy))
@@ -77,28 +79,28 @@ sealed class RsDiagnostic(
                         if (isToOwnedImplWithExpectedForActual(items, lookup)) {
                             add(ConvertToOwnedTyFix(element, expectedTy))
                         }
-                        val stringTy = items.findStringTy()
+                        val stringTy = items.String.asTy()
                         if (expectedTy == stringTy
                             && (isToStringImplForActual(items, lookup) || isActualTyNumeric())) {
                             add(ConvertToStringFix(element))
                         } else if (expectedTy is TyReference) {
                             if (expectedTy.mutability == Mutability.IMMUTABLE) {
-                                if (isTraitWithTySubstImplForActual(lookup, items.findBorrowTrait(), expectedTy)) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.Borrow, expectedTy)) {
                                     add(ConvertToBorrowedTyFix(element, expectedTy))
                                 }
-                                if (isTraitWithTySubstImplForActual(lookup, items.findAsRefTrait(), expectedTy)) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.AsRef, expectedTy)) {
                                     add(ConvertToRefTyFix(element, expectedTy))
                                 }
                             } else if (expectedTy.mutability == Mutability.MUTABLE && element is RsExpr && element.isMutable
                                 && lookup.coercionSequence(actualTy).all { it !is TyReference || it.mutability.isMut }) {
-                                if (isTraitWithTySubstImplForActual(lookup, items.findBorrowMutTrait(), expectedTy)) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.BorrowMut, expectedTy)) {
                                     add(ConvertToBorrowedTyWithMutFix(element, expectedTy))
                                 }
-                                if (isTraitWithTySubstImplForActual(lookup, items.findAsMutTrait(), expectedTy)) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.AsMut, expectedTy)) {
                                     add(ConvertToMutTyFix(element, expectedTy))
                                 }
                             }
-                        } else if (expectedTy is TyAdt && expectedTy.item == items.findResultItem()) {
+                        } else if (expectedTy is TyAdt && expectedTy.item == items.Result) {
                             val (expOkTy, expErrTy) = expectedTy.typeArguments
                             if (expErrTy == errTyOfTryFromActualImplForTy(expOkTy, items, lookup)) {
                                 add(ConvertToTyUsingTryFromTraitFix(element, expOkTy))
@@ -125,35 +127,35 @@ sealed class RsDiagnostic(
 
         private fun isActualTyNumeric() = actualTy is TyNumeric || actualTy is TyInfer.IntVar || actualTy is TyInfer.FloatVar
 
-        private fun isFromActualImplForExpected(items: StdKnownItems, lookup: ImplLookup): Boolean {
-            val fromTrait = items.findFromTrait() ?: return false
+        private fun isFromActualImplForExpected(items: KnownItems, lookup: ImplLookup): Boolean {
+            val fromTrait = items.From ?: return false
             return lookup.canSelect(TraitRef(expectedTy, fromTrait.withSubst(actualTy)))
         }
 
-        private fun errTyOfTryFromActualImplForTy(ty: Ty, items: StdKnownItems, lookup: ImplLookup): Ty? {
-            val fromTrait = items.findTryFromTrait() ?: return null
+        private fun errTyOfTryFromActualImplForTy(ty: Ty, items: KnownItems, lookup: ImplLookup): Ty? {
+            val fromTrait = items.TryFrom ?: return null
             val result = lookup.selectProjectionStrict(TraitRef(ty, fromTrait.withSubst(actualTy)),
                 fromTrait.associatedTypesTransitively.find { it.name == "Error"} ?: return null)
             return result.ok()?.value
         }
 
-        private fun ifActualIsStrGetErrTyOfFromStrImplForTy(ty: Ty, items: StdKnownItems, lookup: ImplLookup): Ty? {
+        private fun ifActualIsStrGetErrTyOfFromStrImplForTy(ty: Ty, items: KnownItems, lookup: ImplLookup): Ty? {
             if (lookup.coercionSequence(actualTy).lastOrNull() != TyStr) return null
-            val fromStr = items.findFromStrTrait() ?: return null
+            val fromStr = items.FromStr ?: return null
             val result = lookup.selectProjectionStrict(TraitRef(ty, BoundElement(fromStr)),
                 fromStr.findAssociatedType("Err") ?: return null)
             return result.ok()?.value
         }
 
-        private fun isToOwnedImplWithExpectedForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
-            val toOwnedTrait = items.findToOwnedTrait() ?: return false
+        private fun isToOwnedImplWithExpectedForActual(items: KnownItems, lookup: ImplLookup): Boolean {
+            val toOwnedTrait = items.ToOwned ?: return false
             val result = lookup.selectProjectionStrictWithDeref(TraitRef(actualTy, BoundElement(toOwnedTrait)),
                 toOwnedTrait.findAssociatedType("Owned") ?: return false)
             return expectedTy == result.ok()?.value
         }
 
-        private fun isToStringImplForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
-            val toStringTrait = items.findToStringTrait() ?: return false
+        private fun isToStringImplForActual(items: KnownItems, lookup: ImplLookup): Boolean {
+            val toStringTrait = items.ToString ?: return false
             return lookup.canSelectWithDeref(TraitRef(actualTy, BoundElement(toStringTrait)))
         }
 
