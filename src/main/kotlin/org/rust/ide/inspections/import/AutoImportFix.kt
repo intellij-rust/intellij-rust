@@ -20,7 +20,6 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.search.RsCargoProjectScope
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.TraitImplSource
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -217,16 +216,13 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             methodCall: RsMethodCall,
             resolveResults: List<MethodResolveVariant>
         ): List<RsTraitItem>? {
-            val lookup = ImplLookup.relativeTo(methodCall)
-
-            val traitsToImport = mutableListOf<RsTraitItem>()
-            loop@ for (variant in resolveResults) {
+            val traits = resolveResults.mapNotNull { variant ->
                 val source = variant.source
                 val trait = when (source) {
                     is TraitImplSource.ExplicitImpl -> {
                         val impl = source.value
                         if (impl.traitRef == null) return null
-                        impl.traitRef?.resolveToTrait ?: continue@loop
+                        impl.traitRef?.resolveToTrait ?: return@mapNotNull null
                     }
                     is TraitImplSource.Derived -> source.value
                     is TraitImplSource.Collapsed -> source.value
@@ -236,10 +232,9 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                     is TraitImplSource.Object -> return null
                 }
 
-                if (lookup.isTraitVisibleFrom(trait, methodCall)) return null
-                traitsToImport += trait
+                trait
             }
-            return traitsToImport
+            return if (traits.filterInScope(methodCall).isNotEmpty()) null else traits
         }
 
         // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)`
