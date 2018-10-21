@@ -119,12 +119,10 @@ class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test view path glob self fn`() = checkByCode("""
         fn f() {}
-         //X
 
         mod foo {
-            // This looks strange, but is allowed by the Rust Language
             use f::{self};
-                   //^
+                   //^ unresolved
         }
     """)
 
@@ -570,5 +568,30 @@ class RsUseResolveTest : RsResolveTestBase() {
         fn main() {
             let a: A = X;
         }            //^
+    """)
+
+    fun `test do not resolve use item inner path to value items 1`() = checkByCode("""
+        pub mod foo {
+            pub fn bar() {}
+                  //X
+        }
+        pub fn foo() {}
+
+        use self::foo::{bar};
+                       //^
+    """)
+
+    fun `test do not resolve use item inner path to value items 2`() = checkByCode("""
+        pub mod foo {
+            pub fn bar() {}
+                  //X
+        }
+        pub const foo: i32 = 123;
+
+        use self::foo::{bar};
+
+        fn main() {
+            bar();
+        }  //^
     """)
 }
