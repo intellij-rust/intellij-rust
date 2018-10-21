@@ -283,7 +283,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
 
         fn main() {
             foo().bar()
-        }       //^ lib.rs
+        }       //^
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -292,7 +292,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         pub struct Foo;
         impl Foo {
             pub fn bar(&self) {}
-        }     //X
+        }
         #[macro_export]
         macro_rules! foo {
             () => { fn foo() -> $ crate::Foo { unimplemented!() } }
@@ -314,7 +314,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         pub struct Foo;
         impl Foo {
             pub fn bar(&self) {}
-        }     //X
+        }
         #[macro_export]
         macro_rules! foo {
             () => { fn foo() -> $ crate::Foo { unimplemented!() } }
@@ -336,7 +336,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         pub struct Foo;
         impl Foo {
             pub fn bar(&self) {}
-        }     //X
+        }
         #[macro_export]
         macro_rules! foo {
             () => { fn foo() -> $ crate::Foo { unimplemented!() } }
