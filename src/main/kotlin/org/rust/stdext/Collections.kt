@@ -146,3 +146,26 @@ fun <T> dequeOf(): Deque<T> = ArrayDeque<T>()
 
 fun <T> dequeOf(vararg elements: T): Deque<T> =
     ArrayDeque<T>().apply { addAll(elements) }
+
+typealias LookbackValue<T> = Pair<T, T?>
+
+fun <T> Sequence<T>.withPrevious(): Sequence<LookbackValue<T>> = LookbackSequence(this)
+
+private class LookbackSequence<T>(private val sequence: Sequence<T>) : Sequence<LookbackValue<T>> {
+
+    override fun iterator(): Iterator<LookbackValue<T>> = LookbackIterator(sequence.iterator())
+}
+
+private class LookbackIterator<T>(private val iterator: Iterator<T>) : Iterator<LookbackValue<T>> {
+
+    private var previous: T? = null
+
+    override fun hasNext() = iterator.hasNext()
+
+    override fun next(): LookbackValue<T> {
+        val next = iterator.next()
+        val result = LookbackValue(next, previous)
+        previous = next
+        return result
+    }
+}
