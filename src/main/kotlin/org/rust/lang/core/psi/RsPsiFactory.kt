@@ -305,6 +305,9 @@ class RsPsiFactory(private val project: Project) {
         else -> createExpressionOfType("${expr.text} as $typeText")
     }
 
+    fun createFunctionCall(functionName: String, arguments: Iterable<RsExpr>): RsCallExpr =
+        createExpressionOfType("$functionName(${arguments.joinToString { it.text }})")
+
     fun createAssocFunctionCall(typeText: String, methodNameText: String, arguments: Iterable<RsExpr>): RsCallExpr =
         createExpressionOfType("$typeText::$methodNameText(${arguments.joinToString { it.text }})")
 

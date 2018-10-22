@@ -77,7 +77,7 @@ val PsiElement.isEdition2018: Boolean get() =
  * Constant-like element can be: real constant, static variable, and enum variant without fields.
  */
 val RsElement.isConstantLike: Boolean
-    get() = this is RsConstant || (this is RsEnumVariant && blockFields == null && tupleFields == null)
+    get() = this is RsConstant || (this is RsEnumVariant && isFieldless)
 
 fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
     return containingCargoPackage

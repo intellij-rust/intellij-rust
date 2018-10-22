@@ -46,3 +46,18 @@ fun RsFieldsOwner.canBeInstantiatedIn(mod: RsMod): Boolean =
 val RsFieldsOwner.fieldTypes: List<Ty>
     get() = blockFields?.namedFieldDeclList?.mapNotNull { it.typeReference?.type }
         ?: tupleFields?.tupleFieldDeclList?.mapNotNull { it.typeReference.type }.orEmpty()
+
+/**
+ * True for:
+ * ```
+ * struct S;
+ * enum E { A }
+ * ```
+ * but false for:
+ * ```
+ * struct S {}
+ * struct S();
+ * ```
+ */
+val RsFieldsOwner.isFieldless: Boolean
+    get() = blockFields == null && tupleFields == null
