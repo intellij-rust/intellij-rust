@@ -28,7 +28,7 @@ class RsNamesValidator : NamesValidator {
 
 
     companion object {
-        val PredefinedLifetimes = arrayOf("'static")
+        val RESERVED_LIFETIME_NAMES: Set<String> = setOf("'static", "'_")
     }
 }
 
