@@ -436,13 +436,25 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         fn foo(a: &'static str) {}
     """)
 
-    fun `test reserved lifetime names E0262`() = checkErrors("""
-        fn foo<<error descr="`'_` is a reserved lifetime name [E0262]">'_</error>>(x: &'_ str) {}
-        fn bar<<error descr="`'static` is a reserved lifetime name [E0262]">'static</error>>(x: &'static str) {}
-        struct Str<<error>'static</error>> { a: &'static u32 }
-        impl<<error>'static</error>> Str<'static> {}
-        enum En<<error>'static</error>> { A(&'static str) }
-        trait Tr<<error>'static</error>> {}
+    fun `test not applied to underscore lifetimes E0261`() = checkErrors("""
+        const ZERO: &'_ u32 = &0;
+        fn foo(a: &'_ str) {}
+    """)
+
+    fun `test reserved lifetime name ('static) E0262`() = checkErrors("""
+        fn foo1<<error descr="`'static` is a reserved lifetime name [E0262]">'static</error>>(x: &'static str) {}
+        struct Str1<<error>'static</error>> { a: &'static u32 }
+        impl<<error>'static</error>> Str1<'static> {}
+        enum En1<<error>'static</error>> { A(&'static str) }
+        trait Tr1<<error>'static</error>> {}
+    """)
+
+    fun `test reserved lifetime name ('_) E0262`() = checkErrors("""
+        fn foo2<<error descr="`'_` is a reserved lifetime name [E0262]">'_</error>>(x: &'_ str) {}
+        struct Str2<<error>'_</error>> { a: &'_ u32 }
+        impl<<error>'_</error>> Str2<'_> {}
+        enum En2<<error>'_</error>> { A(&'_ str) }
+        trait Tr2<<error>'_</error>> {}
     """)
 
     fun `test lifetime name duplication in generic params E0263`() = checkErrors("""

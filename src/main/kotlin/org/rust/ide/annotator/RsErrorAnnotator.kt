@@ -31,6 +31,7 @@ import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.lang.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
@@ -451,10 +452,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun hasResolve(el: RsReferenceElement): Boolean =
         !(el.reference.resolve() != null || el.reference.multiResolve().size > 1)
-
-    companion object {
-        private val RESERVED_LIFETIME_NAMES: Set<String> = setOf("'_", "'static")
-    }
 }
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
