@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.util.StdLibType
 import org.rust.openapiext.CachedVirtualFile
+import org.rust.stdext.applyWithSymlink
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -128,10 +129,8 @@ private class WorkspaceImpl(
 
     val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
 
-    override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? {
-        val canonicalFile = root.canonicalFile ?: return null
-        return targetByCrateRootUrl[canonicalFile.url]
-    }
+    override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? =
+        root.applyWithSymlink { targetByCrateRootUrl[it.url] }
 
     override fun withStdlib(stdlib: StandardLibrary): CargoWorkspace {
         // This is a bit trickier than it seems required.

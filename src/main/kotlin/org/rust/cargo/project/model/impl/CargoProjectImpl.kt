@@ -48,6 +48,7 @@ import org.rust.cargo.toolchain.Rustup
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.AsyncValue
+import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.joinAll
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -132,9 +133,10 @@ class CargoProjectsServiceImpl(
         get() = hasAtLeastOneValidProject(allProjects)
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
-        directoryIndex.getInfoForFile(file).takeIf { it !== noProjectMarker }
+        file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { it !== noProjectMarker } }
 
-    override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? = packageIndex.findPackageForFile(file)
+    override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? =
+        file.applyWithSymlink(packageIndex::findPackageForFile)
 
     override fun attachCargoProject(manifest: Path): Boolean {
         if (isExistingProject(allProjects, manifest)) return false
