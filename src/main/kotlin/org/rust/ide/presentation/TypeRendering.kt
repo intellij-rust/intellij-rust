@@ -5,7 +5,6 @@
 
 package org.rust.ide.presentation
 
-import com.intellij.util.withPrevious
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
@@ -13,6 +12,7 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
+import org.rust.stdext.withPrevious
 
 private const val MAX_SHORT_TYPE_LEN = 50
 
