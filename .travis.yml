@@ -13,6 +13,7 @@ env:
     - OLD_RUST_VERSION=1.25.0
     - CURRENT_RUST_VERSION=1.29.0
     - NIGHLY_RUST_VERSION=nightly-2018-10-21
+    - RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
   matrix:
     # 182 platform
     - RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=182.4892.20 # modified by script
@@ -26,7 +27,9 @@ install: true
 before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
+  - rustup component add rust-src
   - rustup component add rustfmt-preview
+  - ln -s $(rustc --print sysroot)/lib/rustlib/src/rust/src $RUST_SRC_WITH_SYMLINK
   - ./check-license.sh
   - ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon
   - ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
