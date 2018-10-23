@@ -132,12 +132,14 @@ private fun getInsertHandler(element: RsElement, scopeName: String, context: Ins
 
         is RsEnumVariant -> {
             if (curUseItem == null) {
+                // Currently this works only for enum variants (and not for structs). It's because in the case of
+                // struct you may want to append an associated function call after a struct name (e.g. `::new()`)
                 val (text, shift) = when {
                     element.tupleFields != null -> Pair("()", 1)
                     element.blockFields != null -> Pair(" {}", 2)
                     else -> Pair("", 0)
                 }
-                if (!(context.alreadyHasPatternParens || context.alreadyHasCallParens)) {
+                if (!(context.alreadyHasStructBraces || context.alreadyHasCallParens)) {
                     context.document.insertString(context.selectionEndOffset, text)
                 }
                 EditorModificationUtil.moveCaretRelatively(context.editor, shift)
@@ -179,12 +181,8 @@ private val InsertionContext.isInUseGroup: Boolean
 private val InsertionContext.alreadyHasCallParens: Boolean
     get() = nextCharIs('(')
 
-private val InsertionContext.alreadyHasPatternParens: Boolean
-    get() {
-        val pat = file.findElementAt(startOffset)!!.ancestorStrict<RsPatTupleStruct>()
-            ?: return false
-        return pat.path.textRange.contains(startOffset)
-    }
+private val InsertionContext.alreadyHasStructBraces: Boolean
+    get() = nextCharIs('{')
 
 private val RsFunction.extraTailText: String
     get() = ancestorStrict<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
