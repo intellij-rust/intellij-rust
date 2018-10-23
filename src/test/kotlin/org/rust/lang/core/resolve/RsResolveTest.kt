@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.rust.MockRustcVersion
+import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.psi.ext.RsFieldDecl
 
 class RsResolveTest : RsResolveTestBase() {
@@ -1342,6 +1343,52 @@ class RsResolveTest : RsResolveTestBase() {
         fn main() {
             foo();
           //^
+        }
+    """)
+
+    fun `test struct cfg`() = checkByCode("""
+        struct S {
+            #[cfg(not(test))] x: u32,
+            #[cfg(test)]      x: i32,
+                            //X
+        }
+
+        fn t(f: S) {
+            f.x;
+            //^
+        }
+    """)
+
+    fun `test tuple struct cfg1`() = checkByCodeGeneric<RsTupleFieldDecl>("""
+        struct S(#[cfg(not(test))] u32,
+                 #[cfg(test)]      i32);
+                                 //X
+        fn t(f: S) {
+            f.0;
+            //^
+        }
+    """)
+
+    fun `test tuple struct cfg2`() = checkByCodeGeneric<RsTupleFieldDecl>("""
+        struct S(#[cfg(test)]      u32,
+                                 //X
+                 #[cfg(not(test))] i32);
+        fn t(f: S) {
+            f.0;
+            //^
+        }
+    """)
+
+    fun `test tuple enum cfg`() = checkByCode("""
+        enum E {
+            #[cfg(not(test))] Variant(u32),
+            #[cfg(test)]      Variant(u32),
+                            //X
+        }
+
+        fn t() {
+            E::Variant(0);
+             //^
         }
     """)
 }

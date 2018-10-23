@@ -35,6 +35,7 @@ class RsConvertToNamedFieldsProcessor(
 
     private val rsPsiFactory: RsPsiFactory = RsPsiFactory(project)
 
+    //TODO #[cfg()] on tupleFieldDeclList items
     private val types = element.tupleFields!!.tupleFieldDeclList
     private var newNames: List<String> = (0..types.size).map { "_$it" }
 

@@ -21,10 +21,10 @@ val RsFieldsOwner.fields: List<RsFieldDecl>
     get() = namedFields + positionalFields
 
 val RsFieldsOwner.namedFields: List<RsNamedFieldDecl>
-    get() = blockFields?.namedFieldDeclList.orEmpty()
+    get() = blockFields?.namedFieldDeclList?.filter { it.queryAttributes.evaluateCfgAttr() }.orEmpty()
 
 val RsFieldsOwner.positionalFields: List<RsTupleFieldDecl>
-    get() = tupleFields?.tupleFieldDeclList.orEmpty()
+    get() = tupleFields?.tupleFieldDeclList?.filter { it.queryAttributes.evaluateCfgAttr() }.orEmpty()
 
 /**
  * If some field of a struct/enum is private (not visible from [mod]),

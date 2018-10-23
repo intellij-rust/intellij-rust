@@ -422,6 +422,7 @@ class RsTypeInferenceWalker(
         val tupleFields = (element as? RsFieldsOwner)?.tupleFields
         return if (tupleFields != null) {
             // Treat tuple constructor as a function
+            //TODO #[cfg()] on tupleFieldDeclList items
             TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.type }, type)
         } else {
             type

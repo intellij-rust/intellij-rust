@@ -862,7 +862,7 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
     val el = path.reference.resolve()
     return when (el) {
-        is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.size?.let { Pair(it, false) }
+        is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.filter { it.queryAttributes.evaluateCfgAttr() }?.size?.let { Pair(it, false) }
         is RsFunction -> {
             val owner = el.owner
             if (owner.isTraitImpl) return null

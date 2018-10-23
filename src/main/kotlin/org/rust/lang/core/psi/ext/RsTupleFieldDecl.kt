@@ -13,7 +13,10 @@ import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
 val RsTupleFieldDecl.position: Int?
-    get() = parentStruct?.tupleFields?.tupleFieldDeclList?.withIndex()?.firstOrNull { it.value === this }?.index
+    get() = parentStruct?.tupleFields?.tupleFieldDeclList
+        ?.filter { it.queryAttributes.evaluateCfgAttr() }
+        ?.withIndex()
+        ?.firstOrNull { it.value === this }?.index
 
 
 abstract class RsTupleFieldDeclImplMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsTupleFieldDecl {

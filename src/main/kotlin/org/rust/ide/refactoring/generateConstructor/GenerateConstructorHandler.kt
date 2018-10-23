@@ -93,6 +93,7 @@ data class ConstructorArgument(
     companion object {
         fun fromStruct(structItem: RsStructItem): List<ConstructorArgument> {
             return if (structItem.isTupleStruct) {
+                //TODO #[cfg()] on tupleFieldDeclList items
                 fromTupleList(structItem.tupleFields?.tupleFieldDeclList.orEmpty())
             } else {
                 fromFieldList(structItem.blockFields?.namedFieldDeclList.orEmpty())
