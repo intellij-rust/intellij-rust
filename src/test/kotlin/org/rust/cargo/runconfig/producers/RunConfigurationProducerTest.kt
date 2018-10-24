@@ -24,9 +24,7 @@ import org.jdom.Element
 import org.rust.RsTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
-import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
+import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -129,6 +127,28 @@ class RunConfigurationProducerTest : RsTestBase() {
         doTestRemembersContext(CargoTestRunConfigurationProducer(), ctx1, ctx2)
     }
 
+    fun `test test producer remembers context im test mod`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                #[cfg(test)]
+                mod tests {
+                    fn foo() {
+                        let x = 2 + 2;
+                    }
+
+                    #[test]
+                    fn test_bar() {
+                        let x = 2 * 2;
+                    }
+                }
+            """).open()
+        }
+
+        val ctx1 = myFixture.findElementByText("+", PsiElement::class.java)
+        val ctx2 = myFixture.findElementByText("*", PsiElement::class.java)
+        doTestRemembersContext(CargoTestRunConfigurationProducer(), ctx1, ctx2)
+    }
+
     fun `test test producer works for modules`() {
         testProject {
             lib("foo", "src/lib.rs", """
@@ -138,6 +158,39 @@ class RunConfigurationProducerTest : RsTestBase() {
                     #[test] fn baz() {}
 
                     fn quux() {/*caret*/}
+                }
+            """).open()
+        }
+        checkOnTopLevel<RsMod>()
+    }
+
+    fun `test test producer works for nested modules 1`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                mod foo {
+                    mod bar {
+                        #[test] fn bar() {}
+
+                        #[test] fn baz() {}
+
+                        fn quux() { /*caret*/ }
+                    }
+                }
+            """).open()
+        }
+        checkOnTopLevel<RsMod>()
+    }
+
+    fun `test test producer works for nested modules 2`() {
+        testProject {
+            lib("foo", "src/lib.rs", """
+                mod foo {
+                    mod bar {
+                        #[test] fn bar() {}
+
+                        #[test] fn baz() {}
+                    }
+                    fn quux() { /*caret*/ }
                 }
             """).open()
         }
@@ -215,7 +268,19 @@ class RunConfigurationProducerTest : RsTestBase() {
         checkOnLeaf()
     }
 
-    fun `test main mod and test mod have same specificity`() {
+    fun `test test fn is more specific than main mod`() {
+        testProject {
+            bin("foo", "src/main.rs", """
+                fn main() {}
+                fn foo() {}
+                #[test]
+                fn test_foo() { /*caret*/ }
+            """).open()
+        }
+        checkOnLeaf()
+    }
+
+    fun `test main mod is more specific than test mod`() {
         testProject {
             bin("foo", "src/main.rs", """
                 fn main() {}
@@ -314,7 +379,7 @@ class RunConfigurationProducerTest : RsTestBase() {
 
     private fun checkOnLeaf() = checkOnElement<PsiElement>()
 
-    inline private fun <reified T : PsiElement> checkOnTopLevel() {
+    private inline fun <reified T : PsiElement> checkOnTopLevel() {
         checkOnElement<T>()
         checkOnElement<PsiElement>()
     }
