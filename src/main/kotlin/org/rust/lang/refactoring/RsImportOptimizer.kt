@@ -66,10 +66,12 @@ class RsImportOptimizer : ImportOptimizer {
             return true
         }
 
-        private fun replaceOrderOfUseItems(file: RsMod, uses: Collection<RsUseItem>) {
-            val first = file.childrenOfType<RsElement>()
-                .firstOrNull { it !is RsExternCrateItem && it !is RsAttr } ?: return
-            val psiFactory = RsPsiFactory(file.project)
+        private fun replaceOrderOfUseItems(mod: RsMod, uses: Collection<RsUseItem>) {
+            // We should ignore all items before `{` in inline modules
+            val offset = if (mod is RsModItem) mod.lbrace.textOffset + 1 else 0
+            val first = mod.childrenOfType<RsElement>()
+                .firstOrNull { it.textOffset >= offset && it !is RsExternCrateItem && it !is RsAttr } ?: return
+            val psiFactory = RsPsiFactory(mod.project)
             val sortedUses = uses
                 .sortedBy { it.useSpeck?.pathText }
                 .mapNotNull { it.copy() as? RsUseItem }
@@ -77,7 +79,7 @@ class RsImportOptimizer : ImportOptimizer {
                 .mapNotNull { it.useSpeck }
                 .forEach { optimizeUseSpeck(psiFactory, it) }
             for (importPath in sortedUses) {
-                file.addBefore(importPath, first)
+                mod.addBefore(importPath, first)
             }
             uses.forEach { it.delete() }
         }
