@@ -1,0 +1,13 @@
+struct S {
+    b: bool,
+    s: String
+}
+
+impl S {<spot>
+    fn b(&self) -> bool {
+        self.b
+    }
+    fn s(&self) -> &String {
+        self.s
+    }</spot>
+}

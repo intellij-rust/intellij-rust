@@ -613,6 +613,10 @@
             <className>org.rust.ide.intentions.NestUseStatementsIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.GenerateAccessorIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
