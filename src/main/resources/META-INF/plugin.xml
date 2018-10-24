@@ -128,7 +128,8 @@
 
         <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.RsExpressionTypeProvider"/>
         <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.RsParameterInfoHandler"/>
-        <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.RsGenericParameterInfoHandler"/>
+        <codeInsight.parameterInfo language="Rust"
+                                   implementationClass="org.rust.ide.hints.RsGenericParameterInfoHandler"/>
         <codeInsight.parameterNameHints language="Rust"
                                         implementationClass="org.rust.ide.hints.RsInlayParameterHintsProvider"/>
 
@@ -619,8 +620,9 @@
         <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
         <runConfigurationProducer
-            implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
-        <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>
+            implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
+        <!-- To register a new producer, add it to the `producers` list in the `CompositeCargoRunConfigurationProducer`
+             producer instead of registering it here. -->
 
         <projectTaskRunner implementation="org.rust.cargo.runconfig.RsProjectTasksRunner"/>
 
