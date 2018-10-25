@@ -94,13 +94,12 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     }
 
     private val environmentVariables = EnvironmentVariablesComponent()
-    private val nocapture = CheckBox("Show stdout/stderr in tests", true)
-
+    private val allFeatures = CheckBox("Use all features in tests", true)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         channel.selectedIndex = configuration.channel.index
         command.text = configuration.command
-        nocapture.isSelected = configuration.nocapture
+        allFeatures.isSelected = configuration.allFeatures
         backtraceMode.selectedIndex = configuration.backtrace.index
         workingDirectory.component.text = configuration.workingDirectory?.toString() ?: ""
         environmentVariables.envData = configuration.env
@@ -119,7 +118,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
 
         configuration.channel = configChannel
         configuration.command = command.text
-        configuration.nocapture = nocapture.isSelected
+        configuration.allFeatures = allFeatures.isSelected
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
         configuration.workingDirectory = currentWorkingDirectory
         configuration.env = environmentVariables.envData
@@ -139,7 +138,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
             channel()
         }
 
-        row { nocapture() }
+        row { allFeatures() }
 
         row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
         row(workingDirectory.label) {

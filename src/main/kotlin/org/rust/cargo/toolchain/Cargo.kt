@@ -107,12 +107,11 @@ class Cargo(private val cargoExecutable: Path) {
     fun toGeneralCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
         generalCommandLine(commandLine, false)
 
-    private fun generalCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
-        @Suppress("NAME_SHADOWING")
-        val commandLine = if (commandLine.command == "test" && commandLine.nocapture) {
-            commandLine.withDoubleDashFlag("--nocapture")
+    private fun generalCommandLine(rawCommandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
+        val commandLine = if (rawCommandLine.command == "test" && rawCommandLine.allFeatures) {
+            rawCommandLine.addArgToCargo("--all-features")
         } else {
-            commandLine
+            rawCommandLine
         }
 
         val cmdLine = GeneralCommandLine(cargoExecutable)

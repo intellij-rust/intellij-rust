@@ -11,6 +11,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr
 import org.rust.lang.core.types.isMutable
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
 
 class RsReassignImmutableInspection : RsLocalInspectionTool() {
 
@@ -33,8 +35,8 @@ class RsReassignImmutableInspection : RsLocalInspectionTool() {
         }
 
     private fun registerProblem(holder: ProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
-        val fix = AddMutableFix.createIfCompatible(nameExpr).let { if (it == null) emptyArray() else arrayOf(it) }
-        holder.registerProblem(expr, "Re-assignment of immutable variable [E0384]", *fix)
+        val fix = AddMutableFix.createIfCompatible(nameExpr)
+        RsDiagnostic.CannotReassignToImmutable(expr, fix).addToHolder(holder)
     }
 
 }

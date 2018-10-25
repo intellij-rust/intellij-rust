@@ -88,7 +88,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
                 a: 92,
                 b: /*caret*/0,
                 c: 92,
-                d: 0,
+                d: 0
             };
         }
     """)
@@ -103,7 +103,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         struct S { a: i32, b: i32 }
 
         fn main() {
-            let _ = S { a: /*caret*/0, b: 0 };
+            let _ = S { a: /*caret*/0, b: 0, };
         }
     """)
 
@@ -160,7 +160,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
                 name: String::new(),
                 vertices: Vec::new(),
                 faces: Vec::new(),
-                material: None,
+                material: None
             };
         }
     """)
@@ -190,6 +190,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
             vec_field: Vec<i32>,
             opt_field: Option<i32>,
             ref_field: &'a String,
+            ref_mut_field: &'a mut String,
             tuple_field: (bool, char, i8, String),
             aliased_field: AliasedString,
             unsupported_type_field: fn(i32) -> i32
@@ -222,6 +223,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
             vec_field: Vec<i32>,
             opt_field: Option<i32>,
             ref_field: &'a String,
+            ref_mut_field: &'a mut String,
             tuple_field: (bool, char, i8, String),
             aliased_field: AliasedString,
             unsupported_type_field: fn(i32) -> i32
@@ -248,10 +250,11 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
                 str_field: String::new(),
                 vec_field: Vec::new(),
                 opt_field: None,
-                ref_field: String::new(),
+                ref_field: &String::new(),
+                ref_mut_field: &mut String::new(),
                 tuple_field: (false, '', 0, String::new()),
                 aliased_field: String::new(),
-                unsupported_type_field: (),
+                unsupported_type_field: ()
             };
         }
     """)
@@ -299,8 +302,8 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
                 metadata: MetaData {
                     author: String::new(),
                     licence: None,
-                    specVersion: 0,
-                },
+                    specVersion: 0
+                }
             };
         }
     """)
@@ -361,9 +364,43 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
                     author: String::new(),
                     licence: None,
                     specVersion: 0,
-                    tool: ToolInfo { name: String::new(), toolVersion: String::new() },
-                },
+                    tool: ToolInfo { name: String::new(), toolVersion: String::new() }
+                }
             };
+        }
+    """)
+
+    fun `test we don't filling struct that can't be instantiated (has private fields)`() = checkRecursiveQuickFix("""
+        mod foo {
+            pub struct Outer {
+                pub inner: Inner,
+                pub field2: i32
+            }
+
+            pub struct Inner {
+                field1: i32,
+                field2: i32
+            }
+        }
+
+        fn main() {
+            <error>foo::Outer</error> {/*caret*/};
+        }
+    """, """
+        mod foo {
+            pub struct Outer {
+                pub inner: Inner,
+                pub field2: i32
+            }
+
+            pub struct Inner {
+                field1: i32,
+                field2: i32
+            }
+        }
+
+        fn main() {
+            foo::Outer { inner: (), field2: 0 };
         }
     """)
 

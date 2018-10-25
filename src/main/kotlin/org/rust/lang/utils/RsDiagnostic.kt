@@ -22,9 +22,11 @@ import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.asTy
 import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
@@ -58,7 +60,7 @@ sealed class RsDiagnostic(
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
                     } else  if (element is RsElement) {
-                        val items = StdKnownItems.relativeTo(element)
+                        val items = element.knownItems
                         val lookup = ImplLookup(element.project, items)
                         if (isFromActualImplForExpected(items, lookup)) {
                             add(ConvertToTyUsingFromTraitFix(element, expectedTy))
@@ -77,28 +79,28 @@ sealed class RsDiagnostic(
                         if (isToOwnedImplWithExpectedForActual(items, lookup)) {
                             add(ConvertToOwnedTyFix(element, expectedTy))
                         }
-                        val stringTy = items.findStringTy()
+                        val stringTy = items.String.asTy()
                         if (expectedTy == stringTy
                             && (isToStringImplForActual(items, lookup) || isActualTyNumeric())) {
                             add(ConvertToStringFix(element))
                         } else if (expectedTy is TyReference) {
                             if (expectedTy.mutability == Mutability.IMMUTABLE) {
-                                if (isTraitWithTySubstImplForActual(lookup, items.findBorrowTrait(), expectedTy)) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.Borrow, expectedTy)) {
                                     add(ConvertToBorrowedTyFix(element, expectedTy))
                                 }
-                                if (isTraitWithTySubstImplForActual(lookup, items.findAsRefTrait(), expectedTy)) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.AsRef, expectedTy)) {
                                     add(ConvertToRefTyFix(element, expectedTy))
                                 }
                             } else if (expectedTy.mutability == Mutability.MUTABLE && element is RsExpr && element.isMutable
                                 && lookup.coercionSequence(actualTy).all { it !is TyReference || it.mutability.isMut }) {
-                                if (isTraitWithTySubstImplForActual(lookup, items.findBorrowMutTrait(), expectedTy)) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.BorrowMut, expectedTy)) {
                                     add(ConvertToBorrowedTyWithMutFix(element, expectedTy))
                                 }
-                                if (isTraitWithTySubstImplForActual(lookup, items.findAsMutTrait(), expectedTy)) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.AsMut, expectedTy)) {
                                     add(ConvertToMutTyFix(element, expectedTy))
                                 }
                             }
-                        } else if (expectedTy is TyAdt && expectedTy.item == items.findResultItem()) {
+                        } else if (expectedTy is TyAdt && expectedTy.item == items.Result) {
                             val (expOkTy, expErrTy) = expectedTy.typeArguments
                             if (expErrTy == errTyOfTryFromActualImplForTy(expOkTy, items, lookup)) {
                                 add(ConvertToTyUsingTryFromTraitFix(element, expOkTy))
@@ -125,35 +127,35 @@ sealed class RsDiagnostic(
 
         private fun isActualTyNumeric() = actualTy is TyNumeric || actualTy is TyInfer.IntVar || actualTy is TyInfer.FloatVar
 
-        private fun isFromActualImplForExpected(items: StdKnownItems, lookup: ImplLookup): Boolean {
-            val fromTrait = items.findFromTrait() ?: return false
+        private fun isFromActualImplForExpected(items: KnownItems, lookup: ImplLookup): Boolean {
+            val fromTrait = items.From ?: return false
             return lookup.canSelect(TraitRef(expectedTy, fromTrait.withSubst(actualTy)))
         }
 
-        private fun errTyOfTryFromActualImplForTy(ty: Ty, items: StdKnownItems, lookup: ImplLookup): Ty? {
-            val fromTrait = items.findTryFromTrait() ?: return null
+        private fun errTyOfTryFromActualImplForTy(ty: Ty, items: KnownItems, lookup: ImplLookup): Ty? {
+            val fromTrait = items.TryFrom ?: return null
             val result = lookup.selectProjectionStrict(TraitRef(ty, fromTrait.withSubst(actualTy)),
                 fromTrait.associatedTypesTransitively.find { it.name == "Error"} ?: return null)
             return result.ok()?.value
         }
 
-        private fun ifActualIsStrGetErrTyOfFromStrImplForTy(ty: Ty, items: StdKnownItems, lookup: ImplLookup): Ty? {
+        private fun ifActualIsStrGetErrTyOfFromStrImplForTy(ty: Ty, items: KnownItems, lookup: ImplLookup): Ty? {
             if (lookup.coercionSequence(actualTy).lastOrNull() != TyStr) return null
-            val fromStr = items.findFromStrTrait() ?: return null
+            val fromStr = items.FromStr ?: return null
             val result = lookup.selectProjectionStrict(TraitRef(ty, BoundElement(fromStr)),
                 fromStr.findAssociatedType("Err") ?: return null)
             return result.ok()?.value
         }
 
-        private fun isToOwnedImplWithExpectedForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
-            val toOwnedTrait = items.findToOwnedTrait() ?: return false
+        private fun isToOwnedImplWithExpectedForActual(items: KnownItems, lookup: ImplLookup): Boolean {
+            val toOwnedTrait = items.ToOwned ?: return false
             val result = lookup.selectProjectionStrictWithDeref(TraitRef(actualTy, BoundElement(toOwnedTrait)),
                 toOwnedTrait.findAssociatedType("Owned") ?: return false)
             return expectedTy == result.ok()?.value
         }
 
-        private fun isToStringImplForActual(items: StdKnownItems, lookup: ImplLookup): Boolean {
-            val toStringTrait = items.findToStringTrait() ?: return false
+        private fun isToStringImplForActual(items: KnownItems, lookup: ImplLookup): Boolean {
+            val toStringTrait = items.ToString ?: return false
             return lookup.canSelectWithDeref(TraitRef(actualTy, BoundElement(toStringTrait)))
         }
 
@@ -757,15 +759,64 @@ sealed class RsDiagnostic(
             }
         }
     }
+
+    class MissingLifetimeSpecifier(
+        element: PsiElement
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0106,
+            "Missing lifetime specifier"
+        )
+    }
+
+    class WrongNumberOfLifetimeArguments(
+        element: PsiElement,
+        private val expectedLifetimes: Int,
+        private val actualLifetimes: Int
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0107,
+            errorText()
+        )
+
+        private fun errorText(): String {
+            return "Wrong number of lifetime arguments: expected $expectedLifetimes, found $actualLifetimes"
+        }
+    }
+
+    class CannotAssignToImmutable(
+        element: PsiElement,
+        private val message: String
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0594,
+            "Cannot assign to $message"
+        )
+    }
+
+    class CannotReassignToImmutable(
+        element: PsiElement,
+        private val fix: AddMutableFix?
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0384,
+            "Cannot assign twice to immutable variable",
+            fixes = listOfNotNull(fix)
+        )
+    }
 }
 
 enum class RsErrorCode {
     E0046, E0050, E0060, E0061, E0069,
-    E0121, E0124, E0133, E0185, E0186, E0198, E0199,
+    E0106, E0107, E0121, E0124, E0133, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0261, E0262, E0263, E0277,
-    E0308, E0379,
+    E0308, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0463,
-    E0569,
+    E0569, E0594,
     E0603, E0614, E0616, E0624, E0658;
 
     val code: String

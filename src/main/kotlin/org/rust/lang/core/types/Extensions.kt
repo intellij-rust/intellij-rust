@@ -14,11 +14,28 @@ import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.borrowck.BorrowCheckContext
+import org.rust.lang.core.types.borrowck.BorrowCheckResult
 import org.rust.lang.core.types.infer.*
-import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Mutability
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.openapiext.recursionGuard
 
+
+private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
+    val structureModificationTracker = project.rustStructureModificationTracker
+
+    // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
+    // cached value will be invalidated if the modification counter is incremented.
+    return if (this is RsModificationTrackerOwner) {
+        Result.create(value, structureModificationTracker, modificationTracker)
+    } else {
+        Result.create(value, structureModificationTracker)
+    }
+}
 
 val RsTypeReference.type: Ty
     get() = recursionGuard(this, Computable { inferTypeReferenceType(this) })
@@ -27,7 +44,11 @@ val RsTypeReference.type: Ty
 val RsTypeElement.lifetimeElidable: Boolean
     get() {
         val typeOwner = owner.parent
-        return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl && typeOwner !is RsTypeAlias
+
+        val isAssociatedConstant =  typeOwner is RsConstant && typeOwner.owner.isImplOrTrait
+
+        return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl
+            && typeOwner !is RsTypeAlias && !isAssociatedConstant
     }
 
 private val TYPE_INFERENCE_KEY: Key<CachedValue<RsInferenceResult>> = Key.create("TYPE_INFERENCE_KEY")
@@ -35,15 +56,8 @@ private val TYPE_INFERENCE_KEY: Key<CachedValue<RsInferenceResult>> = Key.create
 val RsInferenceContextOwner.inference: RsInferenceResult
     get() = CachedValuesManager.getCachedValue(this, TYPE_INFERENCE_KEY) {
         val inferred = inferTypesIn(this)
-        val project = project
 
-        // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
-        // cached value will be invalidated if the modification counter is incremented.
-        if (this is RsModificationTrackerOwner) {
-            Result.create(inferred, project.rustStructureModificationTracker, modificationTracker)
-        } else {
-            Result.create(inferred, project.rustStructureModificationTracker)
-        }
+        createResult(inferred)
     }
 
 val PsiElement.inference: RsInferenceResult?
@@ -70,18 +84,9 @@ val RsTraitOrImpl.selfType: Ty
         else -> error("Unreachable")
     }
 
-fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
-    when {
-        this is TyReference -> Pair(referenced, mutability)
-        this is TyPointer && explicit -> Pair(referenced, mutability)
-        else -> null
-    }
-
-val RsUnaryExpr.isDereference: Boolean get() = this.mul != null
-
 val RsExpr.cmt: Cmt?
     get() {
-        val items = StdKnownItems.relativeTo(this)
+        val items = this.knownItems
         val lookup = ImplLookup(this.project, items)
         val inference = this.inference ?: return null
         return MemoryCategorizationContext(lookup, inference).processExpr(this)
@@ -89,3 +94,15 @@ val RsExpr.cmt: Cmt?
 
 val RsExpr.isMutable: Boolean
     get() = cmt?.isMutable ?: Mutability.DEFAULT_MUTABILITY.isMut
+
+private val BORROW_CHECKER_KEY: Key<CachedValue<BorrowCheckResult>> = Key.create("BORROW_CHECKER_KEY")
+
+val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
+    get() = CachedValuesManager.getCachedValue(this, BORROW_CHECKER_KEY) {
+        val bccx = BorrowCheckContext.buildFor(this)
+        val borrowCheckResult = bccx?.check()
+        createResult(borrowCheckResult)
+    }
+
+fun RsNamedElement?.asTy(): Ty =
+    (this as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown

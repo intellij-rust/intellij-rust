@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
@@ -32,7 +33,7 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.tree.DefaultMutableTreeNode
 
-class CargoToolWindowFactory : ToolWindowFactory {
+class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         guessAndSetupRustProject(project)
         val toolwindowPanel = CargoToolWindowPanel(project)

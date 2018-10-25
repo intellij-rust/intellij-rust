@@ -7,8 +7,10 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.annotator.fixes.AddMutableFix
+import org.rust.ide.inspections.fixes.DeriveCopyFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.borrowCheckResult
 import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
@@ -31,11 +33,32 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
                     registerProblem(holder, expr, expr)
                 }
             }
+
+            override fun visitFunction(func: RsFunction) {
+                val borrowCheckResult = func.borrowCheckResult ?: return
+
+                borrowCheckResult.usesOfMovedValue.forEach {
+                    registerUseOfMovedValueProblem(holder, it.use)
+                }
+                borrowCheckResult.moveErrors.forEach {
+                    val move = it.from.element.ancestorOrSelf<RsExpr>()
+                    if (move != null) registerMoveProblem(holder, move)
+                }
+            }
         }
 
     private fun registerProblem(holder: ProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
         val fix = AddMutableFix.createIfCompatible(nameExpr).let { if (it == null) emptyArray() else arrayOf(it) }
         holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", *fix)
+    }
+
+    private fun registerUseOfMovedValueProblem(holder: ProblemsHolder, use: RsElement) {
+        val fix = DeriveCopyFix.createIfCompatible(use).let { if (it == null) emptyArray() else arrayOf(it) }
+        holder.registerProblem(use, "Use of moved value", *fix)
+    }
+
+    private fun registerMoveProblem(holder: ProblemsHolder, element: RsElement) {
+        holder.registerProblem(element, "Cannot move")
     }
 
     private fun checkMethodRequiresMutable(receiver: RsExpr, fn: RsFunction): Boolean {
@@ -48,5 +71,4 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         }
         return false
     }
-
 }

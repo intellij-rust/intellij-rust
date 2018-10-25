@@ -5,7 +5,6 @@
 
 package org.rust.cargo.project.model
 
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -17,7 +16,7 @@ import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.saveAllDocuments
 
 
-class AttachCargoProjectAction : AnAction() {
+class AttachCargoProjectAction : CargoProjectActionBase() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         saveAllDocuments()

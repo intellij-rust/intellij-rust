@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
@@ -52,9 +52,9 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
     }
 
     private fun isStdOptionOrResult(element: RsEnumItem): Boolean {
-        val knownItems = StdKnownItems.relativeTo(element)
-        val option = knownItems.findOptionItem()
-        val result = knownItems.findResultItem()
+        val knownItems = element.knownItems
+        val option = knownItems.Option
+        val result = knownItems.Result
         return element == option || element == result
     }
 

@@ -42,7 +42,7 @@ class LetPostfixTemplateTest : RsPostfixTemplateTest(LetPostfixTemplate(RsPostfi
         fn foo() { }
 
         fn main() {
-            let /*caret*/foo = foo();
+            let /*caret*/foo1 = foo();
         }
     """)
 

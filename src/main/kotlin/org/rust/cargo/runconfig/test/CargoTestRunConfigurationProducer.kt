@@ -6,19 +6,18 @@
 package org.rust.cargo.runconfig.test
 
 import com.intellij.execution.actions.ConfigurationContext
-import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.cargo.runconfig.command.CargoRunConfigurationProducer
 import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
 
-class CargoTestRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
+class CargoTestRunConfigurationProducer : CargoRunConfigurationProducer() {
 
     override fun isConfigurationFromContext(
         configuration: CargoCommandConfiguration,
@@ -155,14 +154,14 @@ sealed class TestConfig {
     fun cargoCommandLine(): CargoCommandLine {
         var commandLine = CargoCommandLine.forTargets(targets, "test", listOf(path))
         if (exact) {
-            commandLine = commandLine.withDoubleDashFlag("--exact")
+            commandLine = commandLine.addArgToBinary("--exact")
         }
         return commandLine
     }
 
     companion object {
         private fun hasTestFunction(mod: RsMod): Boolean =
-            mod.processExpandedItems { it is RsFunction && it.isTest }
+            mod.processExpandedItems { it is RsFunction && it.isTest || it is RsMod && hasTestFunction(it) }
     }
 }
 

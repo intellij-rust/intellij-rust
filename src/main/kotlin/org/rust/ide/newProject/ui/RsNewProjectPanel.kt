@@ -7,11 +7,14 @@ package org.rust.ide.newProject.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.components.JBRadioButton
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.ui.RsLayoutBuilder
+import java.awt.event.ItemEvent
 import java.awt.event.ItemListener
+import javax.swing.ButtonGroup
 
 class RsNewProjectPanel(
     private val showProjectTypeCheckbox: Boolean,
@@ -19,19 +22,25 @@ class RsNewProjectPanel(
 ) : Disposable {
 
     private val rustProjectSettings = RustProjectSettingsPanel(updateListener = updateListener)
-    private val createBinaryCheckbox = JBCheckBox(null, true)
-    private val checkboxListener = ItemListener { updateListener?.invoke() }
-
-    init {
-        createBinaryCheckbox.addItemListener(checkboxListener)
+    private val templateButtons = listOf(JBRadioButton("Binary (application)", true), JBRadioButton("Library"))
+    private val checkboxListener = ItemListener {
+        if (it.stateChange == ItemEvent.SELECTED) updateListener?.invoke()
     }
 
-    val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.data, createBinaryCheckbox.isSelected)
+    init {
+        templateButtons.forEach { it.addItemListener(checkboxListener) }
+    }
+
+    val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.data, templateButtons[0].isSelected)
 
     fun attachTo(layout: RsLayoutBuilder) = with(layout) {
         rustProjectSettings.attachTo(this)
         if (showProjectTypeCheckbox) {
-            row("Use a binary (application) template:", createBinaryCheckbox)
+            val buttonGroup = ButtonGroup()
+            templateButtons.forEachIndexed { index, button ->
+                buttonGroup.add(button)
+                row(if (index == 0) "Project template:" else "", button)
+            }
         }
     }
 
@@ -41,7 +50,7 @@ class RsNewProjectPanel(
     }
 
     override fun dispose() {
-        createBinaryCheckbox.removeItemListener(checkboxListener)
-        rustProjectSettings.dispose()
+        templateButtons.forEach { it.removeItemListener(checkboxListener) }
+        Disposer.dispose(rustProjectSettings)
     }
 }

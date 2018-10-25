@@ -41,12 +41,12 @@ class RsNameSuggestionsKtTest : RsTestBase() {
 
 
     fun `test function names`() = doTest("""
-        fn foo(a: i32, veryCoolVariableName: i32) -> i32 {
+        fn get_foo(a: i32, veryCoolVariableName: i32) -> i32 {
             a + b
         }
 
         fn bar() {
-            f/*caret*/oo(4, 10 + 2)
+            get_f/*caret*/oo(4, 10 + 2)
         }
     """,
         listOf("i", "foo")

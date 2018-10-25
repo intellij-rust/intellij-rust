@@ -10,6 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
+          <option value=":generateRustLexer" />
           <option value=":generateRustParser" />
         </list>
       </option>

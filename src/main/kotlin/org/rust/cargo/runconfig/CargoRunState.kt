@@ -7,6 +7,7 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.SearchScopeProvider
+import com.intellij.execution.filters.Filter
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
@@ -22,7 +23,7 @@ import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
 
-class CargoRunState(
+open class CargoRunState(
     environment: ExecutionEnvironment,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CommandLineState(environment) {
@@ -37,14 +38,19 @@ class CargoRunState(
     init {
         val scope = SearchScopeProvider.createSearchScope(environment.project, environment.runProfile)
         consoleBuilder = CargoConsoleBuilder(environment.project, scope)
+        createFilters().forEach { consoleBuilder.addFilter(it) }
+    }
 
-        consoleBuilder.addFilter(RsExplainFilter())
+    protected fun createFilters(): Collection<Filter> {
+        val filters = mutableListOf<Filter>()
+        filters.add(RsExplainFilter())
         val dir = cargoProject?.workspaceRootDir ?: cargoProject?.rootDir
         if (dir != null) {
-            consoleBuilder.addFilter(RsConsoleFilter(environment.project, dir))
-            consoleBuilder.addFilter(RsPanicFilter(environment.project, dir))
-            consoleBuilder.addFilter(RsBacktraceFilter(environment.project, dir, cargoProject?.workspace))
+            filters.add(RsConsoleFilter(environment.project, dir))
+            filters.add(RsPanicFilter(environment.project, dir))
+            filters.add(RsBacktraceFilter(environment.project, dir, cargoProject?.workspace))
         }
+        return filters
     }
 
     fun cargo(): Cargo = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
@@ -56,9 +62,11 @@ class CargoRunState(
 
     fun rustVersion(): RustToolchain.VersionInfo = toolchain.queryVersions()
 
+    protected open fun prepareCommandLine() = commandLine
+
     override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
-            .toColoredCommandLine(commandLine)
+            .toColoredCommandLine(prepareCommandLine())
             // Explicitly use UTF-8.
             // Even though default system encoding is usually not UTF-8 on windows,
             // most Rust programs are UTF-8 only.

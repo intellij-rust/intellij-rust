@@ -5,23 +5,29 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ItemResolutionTestmarks.externCrateItemAliasWithSameName
+import org.rust.lang.core.resolve.ItemResolutionTestmarks.externCrateItemWithoutAlias
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.openapiext.Testmark
 import java.util.*
 
 fun processItemOrEnumVariantDeclarations(
     scope: RsElement,
     ns: Set<Namespace>,
     processor: RsResolveProcessor,
-    withPrivateImports: Boolean = false
+    withPrivateImports: Boolean = false,
+    withPlainExternCrateItems: Boolean = true
 ): Boolean {
     when (scope) {
         is RsEnumItem -> {
             if (processAll(scope.enumBody?.enumVariantList.orEmpty(), processor)) return true
         }
         is RsMod -> {
-            if (processItemDeclarations(scope, ns, processor, withPrivateImports)) return true
+            if (processItemDeclarations(scope, ns, processor, withPrivateImports, withPlainExternCrateItems)) return true
         }
     }
 
@@ -33,7 +39,8 @@ fun processItemDeclarations(
     scope: RsItemsOwner,
     ns: Set<Namespace>,
     originalProcessor: RsResolveProcessor,
-    withPrivateImports: Boolean
+    withPrivateImports: Boolean,
+    withPlainExternCrateItems: Boolean = true
 ): Boolean {
     val starImports = mutableListOf<RsUseSpeck>()
     val itemImports = mutableListOf<RsUseSpeck>()
@@ -54,7 +61,7 @@ fun processItemDeclarations(
                     }
                 }
 
-        // Unit like structs are both types and values
+            // Unit like structs are both types and values
             is RsStructItem ->
                 if (item.namespaces.intersect(ns).isNotEmpty() && processor(item)) return true
 
@@ -74,9 +81,28 @@ fun processItemDeclarations(
                 if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
 
             is RsExternCrateItem -> {
-                val name = item.alias?.name ?: item.name ?: return false
-                val mod = item.reference.resolve() ?: return false
-                if (processor(name, mod)) return true
+                if (item.isPublic || withPrivateImports) {
+                    val itemName = item.name
+                    val aliasName = item.alias?.name
+                    val name = aliasName ?: itemName ?: return false
+
+                    if (!withPlainExternCrateItems) {
+                        // In some situations (for example, absolute paths in edition 2018)
+                        // we should process only extern crate item
+                        // which brings new name into the scope, i.e. with alias,
+                        // because otherwise this item is already processed in other place
+                        if (aliasName == null) {
+                            externCrateItemWithoutAlias.hit()
+                            return false
+                        }
+                        if (aliasName == itemName) {
+                            externCrateItemAliasWithSameName.hit()
+                            return false
+                        }
+                    }
+                    val mod = item.reference.resolve() ?: return false
+                    if (processor(name, mod)) return true
+                }
             }
         }
         return false
@@ -86,7 +112,7 @@ fun processItemDeclarations(
 
 
     if (Namespace.Types in ns) {
-        if (scope is RsFile && scope.isCrateRoot) {
+        if (scope is RsFile && scope.isCrateRoot && withPrivateImports) {
             // Rust injects implicit `extern crate std` in every crate root module unless it is
             // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
             // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
@@ -95,10 +121,10 @@ fun processItemDeclarations(
             // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
             when (scope.attributes) {
                 RsFile.Attributes.NONE ->
-                    if (processor.lazy("std") { scope.findDependencyCrateRoot("std") }) return true
+                    if (processor.lazy(STD) { scope.findDependencyCrateRoot(STD) }) return true
 
                 RsFile.Attributes.NO_STD ->
-                    if (processor.lazy("core") { scope.findDependencyCrateRoot("core") }) return true
+                    if (processor.lazy(CORE) { scope.findDependencyCrateRoot(CORE) }) return true
 
                 RsFile.Attributes.NO_CORE -> Unit
             }
@@ -131,7 +157,8 @@ fun processItemDeclarations(
 
         val found = processItemOrEnumVariantDeclarations(mod, ns,
             { it.name !in directlyDeclaredNames && originalProcessor(it) },
-            withPrivateImports = basePath != null && isSuperChain(basePath)
+            withPrivateImports = basePath != null && isSuperChain(basePath),
+            withPlainExternCrateItems = withPlainExternCrateItems
         )
         if (found) return true
     }
@@ -168,4 +195,9 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
         if (processor(name, element)) return true
     }
     return false
+}
+
+object ItemResolutionTestmarks {
+    val externCrateItemWithoutAlias = Testmark("externCrateItemWithoutAlias")
+    val externCrateItemAliasWithSameName = Testmark("externCrateItemAliasWithSameName")
 }

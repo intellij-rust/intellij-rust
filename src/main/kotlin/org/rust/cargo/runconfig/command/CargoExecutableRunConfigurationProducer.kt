@@ -7,7 +7,6 @@ package org.rust.cargo.runconfig.command
 
 import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
-import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -16,11 +15,11 @@ import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.openapiext.toPsiFile
 
-class CargoExecutableRunConfigurationProducer : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
+class CargoExecutableRunConfigurationProducer : CargoRunConfigurationProducer() {
 
     override fun isConfigurationFromContext(
         configuration: CargoCommandConfiguration,

@@ -8,12 +8,14 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr
+import org.rust.lang.core.psi.ext.isDereference
 import org.rust.lang.core.psi.ext.unwrapParenExprs
-import org.rust.lang.core.types.isDereference
 import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
 
 class RsAssignToImmutableInspection : RsLocalInspectionTool() {
 
@@ -43,6 +45,6 @@ class RsAssignToImmutableInspection : RsLocalInspectionTool() {
     }
 
     private fun registerProblem(holder: ProblemsHolder, expr: RsExpr, message: String) {
-        holder.registerProblem(expr, "Cannot assign to $message [E0594]")
+        RsDiagnostic.CannotAssignToImmutable(expr, message).addToHolder(holder)
     }
 }

@@ -70,6 +70,14 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """, ": S", 0, smart = false)
 
+    fun `test no redundant hints`() = checkNoHint<RsLetDecl>("""
+        fn main() {
+            let _ = 1;
+            let _a = 1;
+            let a = UnknownType;
+        }
+    """, smart = false)
+
     fun `test smart hint don't show redundant hints`() = checkNoHint<RsLetDecl>("""
         struct S;
         struct TupleStruct(f32);
@@ -173,7 +181,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """)
 
-    fun `test lambda type hint`() = checkByText<RsLambdaExpr>("""
+    private val fnTypes = """
         #[lang = "fn_once"]
         trait FnOnce<Args> { type Output; }
 
@@ -182,6 +190,10 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
 
         #[lang = "fn"]
         trait Fn<Args>: FnMut<Args> { }
+    """
+
+    fun `test lambda type hint`() = checkByText<RsLambdaExpr>("""
+        $fnTypes
         struct S;
         fn with_s<F: Fn(S)>(f: F) {}
         fn main() {
@@ -189,31 +201,18 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """, ": S", 0)
 
-    fun `test lambda type should not show if defined`() = checkNoHint<RsLambdaExpr>("""
-        #[lang = "fn_once"]
-        trait FnOnce<Args> { type Output; }
-
-        #[lang = "fn_mut"]
-        trait FnMut<Args>: FnOnce<Args> { }
-
-        #[lang = "fn"]
-        trait Fn<Args>: FnMut<Args> { }
+    fun `test lambda type not shown if redundant`() = checkNoHint<RsLambdaExpr>("""
+        $fnTypes
         struct S;
         fn with_s<F: Fn(S)>(f: F) {}
         fn main() {
             with_s(|s: S| s.bar())
+            with_s(|_| ())
         }
     """)
 
     fun `test lambda type should show after an defined type correct`() = checkByText<RsLambdaExpr>("""
-        #[lang = "fn_once"]
-        trait FnOnce<Args> { type Output; }
-
-        #[lang = "fn_mut"]
-        trait FnMut<Args>: FnOnce<Args> { }
-
-        #[lang = "fn"]
-        trait Fn<Args>: FnMut<Args> { }
+        $fnTypes
         struct S;
         fn foo<T: Fn(S, S, (S, S)) -> ()>(action: T) {}
         fn main() {
@@ -238,7 +237,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x);
         }
-    """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<_, _>>>", 0)
+    """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<…, …>>>", 0)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test inlay hint for loops`() = checkByText<RsForExpr>("""
@@ -280,9 +279,10 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         HintType.SMART_HINTING.set(smart)
         val handler = RsInlayParameterHintsProvider()
         val targets = myFixture.file.descendantsOfType<T>()
-        targets
-            .map { handler.getParameterHints(it) }
-            .forEach { check(it.isEmpty()) }
+        val inlays = targets.flatMap { handler.getParameterHints(it) }
+        check(inlays.isEmpty()) {
+            "Expected no hints, but ${inlays.map { it.text }} shown"
+        }
     }
 
     private inline fun <reified T : PsiElement> checkByText(@Language("Rust") code: String, hint: String, pos: Int, smart: Boolean = true) {
@@ -296,8 +296,8 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             check(pos < inlays.size) {
                 "Expected at least ${pos + 1} hints, got ${inlays.map { it.text }}"
             }
-            check(inlays[pos].text == hint)
-            check(inlays[pos].offset == myFixture.editor.caretModel.offset)
+            assertEquals(hint, inlays[pos].text)
+            assertEquals(myFixture.editor.caretModel.offset, inlays[pos].offset)
         }
     }
 }

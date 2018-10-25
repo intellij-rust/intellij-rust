@@ -9,11 +9,14 @@ import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.substitute
+import org.rust.stdext.dequeOf
+import java.util.*
 
 /**
  * Represents both a type, like `i32` or `S<Foo, Bar>`, as well
@@ -86,3 +89,71 @@ tailrec fun Ty.isSized(): Boolean {
         else -> true
     }
 }
+
+fun Ty.walk(): TypeIterator = TypeIterator(this)
+
+class TypeIterator(root: Ty) : Iterator<Ty> {
+    private val stack: Deque<Ty> = dequeOf(root)
+    private var lastSubtreeSize: Int = 0
+
+    override fun hasNext(): Boolean = stack.isNotEmpty()
+
+    override fun next(): Ty {
+        val ty = stack.removeFirst()
+        lastSubtreeSize = stack.size
+        pushSubTypes(stack, ty)
+        return ty
+    }
+
+    fun skipCurrentSubtree() {
+        while (stack.size > lastSubtreeSize) {
+            stack.removeLast()
+        }
+    }
+}
+
+fun Ty.walkShallow(): Iterator<Ty> {
+    val stack = dequeOf<Ty>()
+    pushSubTypes(stack, this)
+    return stack.iterator()
+}
+
+private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
+    when (parentTy) {
+        is TyAdt ->
+            stack.addAll(parentTy.typeArguments)
+        is TyAnon, is TyProjection ->
+            stack.addAll(parentTy.typeParameterValues.types)
+        is TyArray ->
+            stack.add(parentTy.base)
+        is TyPointer ->
+            stack.add(parentTy.referenced)
+        is TyReference ->
+            stack.add(parentTy.referenced)
+        is TySlice ->
+            stack.add(parentTy.elementType)
+        is TyTraitObject ->
+            stack.addAll(parentTy.trait.subst.types)
+        is TyTuple ->
+            stack.addAll(parentTy.types)
+        is TyFunction -> {
+            stack.addAll(parentTy.paramTypes)
+            stack.add(parentTy.retType)
+        }
+    }
+}
+
+fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
+    when {
+        this is TyReference -> Pair(referenced, mutability)
+        this is TyPointer && explicit -> Pair(referenced, mutability)
+        else -> null
+    }
+
+// TODO
+fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
+    when (this) {
+        is TyUnknown, is TyReference, is TyPointer, is TyFunction -> false
+        is TyTuple -> types.any { it.isMovesByDefault(lookup) }
+        else -> lookup.isCopy(this).not()
+    }

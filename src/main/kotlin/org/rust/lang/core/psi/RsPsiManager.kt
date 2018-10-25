@@ -51,14 +51,15 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
     }
 
     inner class CacheInvalidator : PsiTreeChangeAdapter() {
-        override fun childRemoved(event: PsiTreeChangeEvent) = onPsiChange(event)
+        override fun beforeChildRemoval(event: PsiTreeChangeEvent) = onPsiChange(event)
+        override fun beforeChildReplacement(event: PsiTreeChangeEvent) = onPsiChange(event, event.oldChild)
         override fun childReplaced(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun childAdded(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun childrenChanged(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun childMoved(event: PsiTreeChangeEvent) = onPsiChange(event)
         override fun propertyChanged(event: PsiTreeChangeEvent) = onPsiChange(event)
 
-        private fun onPsiChange(event: PsiTreeChangeEvent) {
+        private fun onPsiChange(event: PsiTreeChangeEvent, child: PsiElement? = event.child) {
             // `GenericChange` event means that "something changed in the file" and sends
             // after all events for concrete PSI changes in a file.
             // We handle more concrete events and so should ignore generic event
@@ -69,7 +70,6 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
             val file = event.file ?: event.child as? PsiFile
             if (file?.fileType != RsFileType) return
 
-            val child = event.child
             if (child is PsiComment || child is PsiWhiteSpace) return
 
             updateModificationCount(child ?: event.parent)

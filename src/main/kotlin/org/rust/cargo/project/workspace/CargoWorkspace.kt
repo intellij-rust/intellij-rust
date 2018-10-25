@@ -101,12 +101,13 @@ interface CargoWorkspace {
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace = WorkspaceImpl.deserialize(manifestPath, data)
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace =
+            WorkspaceImpl.deserialize(manifestPath, data)
     }
 }
 
 
-private class WorkspaceImpl constructor(
+private class WorkspaceImpl(
     override val manifestPath: Path,
     override val workspaceRootPath: Path?,
     packagesData: Collection<CargoWorkspaceData.Package>
@@ -126,6 +127,7 @@ private class WorkspaceImpl constructor(
     }
 
     val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
+
     override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? {
         val canonicalFile = root.canonicalFile ?: return null
         return targetByCrateRootUrl[canonicalFile.url]
@@ -172,7 +174,11 @@ private class WorkspaceImpl constructor(
         val result = WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
-            packages.map { it.asPackageData(edition) }
+            packages.map { pkg ->
+                // Currently, stdlib doesn't use 2018 edition
+                val packageEdition = if (pkg.origin == PackageOrigin.STDLIB) pkg.edition else edition
+                pkg.asPackageData(packageEdition)
+            }
         )
 
         val oldIdToPackage = packages.associateBy { it.id }

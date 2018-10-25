@@ -27,8 +27,8 @@ import org.rust.lang.core.types.type
 data class TyAdt private constructor(
     val item: RsStructOrEnumItemElement,
     val typeArguments: List<Ty>,
-    val lifetimeArguments: List<Region>
-) : Ty(mergeFlags(typeArguments) or mergeFlags(lifetimeArguments)) {
+    val regionArguments: List<Region>
+) : Ty(mergeFlags(typeArguments) or mergeFlags(regionArguments)) {
 
     // This method is rarely called (in comparison with folding),
     // so we can implement it in a such inefficient way
@@ -37,14 +37,14 @@ data class TyAdt private constructor(
             val typeSubst = item.typeParameters.withIndex().associate { (i, param) ->
                 TyTypeParameter.named(param) to typeArguments.getOrElse(i) { TyUnknown }
             }
-            val lifetimeSubst = item.lifetimeParameters.withIndex().associate { (i, param) ->
-                ReEarlyBound(param) to lifetimeArguments.getOrElse(i) { ReUnknown }
+            val regionSubst = item.lifetimeParameters.withIndex().associate { (i, param) ->
+                ReEarlyBound(param) to regionArguments.getOrElse(i) { ReUnknown }
             }
-            return Substitution(typeSubst, lifetimeSubst)
+            return Substitution(typeSubst, regionSubst)
         }
 
     override fun superFoldWith(folder: TypeFolder): TyAdt =
-        TyAdt(item, typeArguments.map { it.foldWith(folder) }, lifetimeArguments.map { it.foldWith(folder) })
+        TyAdt(item, typeArguments.map { it.foldWith(folder) }, regionArguments.map { it.foldWith(folder) })
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         typeArguments.any { visitor.visitTy(it) }
@@ -52,7 +52,7 @@ data class TyAdt private constructor(
     companion object {
         fun valueOf(struct: RsStructOrEnumItemElement): TyAdt {
             val item = CompletionUtil.getOriginalOrSelf(struct)
-            return TyAdt(item, defaultTypeArguments(struct), defaultLifetimeArguments(struct))
+            return TyAdt(item, defaultTypeArguments(struct), defaultRegionArguments(struct))
         }
     }
 }
@@ -62,5 +62,5 @@ private fun defaultTypeArguments(item: RsStructOrEnumItemElement): List<Ty> =
         param.typeReference?.type ?: TyTypeParameter.named(param)
     }
 
-private fun defaultLifetimeArguments(item: RsStructOrEnumItemElement): List<Region> =
+private fun defaultRegionArguments(item: RsStructOrEnumItemElement): List<Region> =
     item.lifetimeParameters.map { param -> ReEarlyBound(param) }

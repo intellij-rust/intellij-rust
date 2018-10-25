@@ -9,6 +9,7 @@ alobb
 alygin
 andruhon
 anton-okolelov
+amakeev
 ashleysommer
 AtomicInteger
 atsky
@@ -46,6 +47,7 @@ la10736
 LiamClark
 Litarvan
 madisp
+majecty
 maraisr
 matklad
 mbStavola
@@ -58,6 +60,7 @@ mkaput
 mrhota
 msmorgan
 netvl
+nicholastmosher
 Nilera
 ninjabear
 oistein

@@ -12,6 +12,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
@@ -34,9 +35,11 @@ import java.util.concurrent.TimeUnit
  * Cargo itself via `cargo metadata` command.
  */
 interface CargoProjectsService {
-    fun findProjectForFile(file: VirtualFile): CargoProject?
     val allProjects: Collection<CargoProject>
     val hasAtLeastOneValidProject: Boolean
+
+    fun findProjectForFile(file: VirtualFile): CargoProject?
+    fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package?
 
     fun attachCargoProject(manifest: Path): Boolean
     fun detachCargoProject(cargoProject: CargoProject)
@@ -74,7 +77,14 @@ interface CargoProjectsService {
 
 val Project.cargoProjects get() = service<CargoProjectsService>()
 
-interface CargoProject {
+/**
+ * Instances of this class are immutable and will be re-created on each project refresh.
+ * This class implements [UserDataHolderEx] interface and therefore any data can be attached
+ * to it. Note that since instances of this class are re-created on each project refresh,
+ * user data will be flushed on project refresh too
+ */
+interface CargoProject : UserDataHolderEx {
+    val project: Project
     val manifest: Path
     val rootDir: VirtualFile?
     val workspaceRootDir: VirtualFile?

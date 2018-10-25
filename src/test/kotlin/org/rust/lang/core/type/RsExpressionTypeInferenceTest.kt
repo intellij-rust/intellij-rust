@@ -1048,11 +1048,20 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ i32
     """)
 
-    fun `test type of ambiguously resolved paths is unknown`() = testExpr("""
+    fun `test type of ambiguously resolved paths is unknown 1`() = testExpr("""
         struct S;
         struct S;
         fn main() {
             let a: S;
+            a;
+        } //^ <unknown>
+    """)
+
+    fun `test type of ambiguously resolved paths is unknown 2`() = testExpr("""
+        struct S;
+        struct S;
+        fn main() {
+            let a = S;
             a;
         } //^ <unknown>
     """)
@@ -1065,5 +1074,39 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let b = a();
             b;
         } //^ <unknown>
+    """)
+
+    fun `test type coercion in tuple`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Foo;
+        struct Bar;
+
+        impl Deref for Foo {
+            type Target = Bar;
+        }
+
+        fn main() {
+            let a: (&Bar, &Bar) = (&Foo, &Foo);
+                                //^ (&Bar, &Bar)
+        }
+    """)
+
+    fun `test type coercion in array`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Foo;
+        struct Bar;
+
+        impl Deref for Foo {
+            type Target = Bar;
+        }
+
+        fn main() {
+            let a: [&Bar, 2] = [&Foo, &Foo];
+                             //^ [&Bar; 2]
+        }
     """)
 }

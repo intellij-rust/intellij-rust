@@ -12,9 +12,17 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
+import org.rust.stdext.withPrevious
+
+private const val MAX_SHORT_TYPE_LEN = 50
 
 val Ty.shortPresentableText: String
-    get() = TypeRenderer.DEFAULT.render(this, level = 3)
+    get() = generateSequence(1) { it + 1 }
+        .map { TypeRenderer.SHORT.render(this, level = it) }
+        .withPrevious()
+        .takeWhile { (cur, prev) ->
+            cur != prev && (prev == null || cur.length <= MAX_SHORT_TYPE_LEN)
+        }.last().first
 
 val Ty.insertionSafeText: String
     get() = TypeRenderer.INSERTION_SAFE.render(this)
@@ -54,7 +62,7 @@ private data class TypeRenderer(
             }
         }
 
-        if (level == 0) return "_"
+        if (level == 0) return "…"
 
         val render = { subTy: Ty ->
             render(subTy, level - 1)
@@ -65,7 +73,7 @@ private data class TypeRenderer(
                 ty.paramTypes.joinTo(this, ", ", "fn(", ")", transform = render)
                 if (ty.retType != TyUnit) {
                     append(" -> ")
-                    append(ty.retType)
+                    append(render(ty.retType))
                 }
             }
             is TySlice -> "[${render(ty.elementType)}]"
@@ -123,13 +131,13 @@ private data class TypeRenderer(
     }
 
     private fun formatGenerics(adt: TyAdt, render: (Ty) -> String): String {
-        val typeArguments = adt.typeArguments.map(render)
-        val lifetimeArguments = if (includeLifetimeArguments) {
-            adt.lifetimeArguments.map { render(it) }
+        val typeArgumentNames = adt.typeArguments.map(render)
+        val regionArgumentNames = if (includeLifetimeArguments) {
+            adt.regionArguments.map { render(it) }
         } else {
             emptyList()
         }
-        val generics = lifetimeArguments + typeArguments
+        val generics = regionArgumentNames + typeArgumentNames
         return if (generics.isEmpty()) "" else generics.joinToString(", ", "<", ">")
     }
 
@@ -139,7 +147,7 @@ private data class TypeRenderer(
         includeAssoc: Boolean = true
     ): String {
         val tySubst = trait.element.typeParameters.map { render(trait.subst[it] ?: TyUnknown) }
-        val reSubst = if (includeLifetimeArguments) {
+        val regionSubst = if (includeLifetimeArguments) {
             trait.element.lifetimeParameters.map { render(trait.subst[it] ?: ReUnknown) }
         } else {
             emptyList()
@@ -152,12 +160,13 @@ private data class TypeRenderer(
         } else {
             emptyList()
         }
-        val visibleTypes = reSubst + tySubst + assoc
+        val visibleTypes = regionSubst + tySubst + assoc
         return if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">")
     }
 
     companion object {
         val DEFAULT: TypeRenderer = TypeRenderer()
+        val SHORT: TypeRenderer = TypeRenderer(unknown = "?")
         val DEFAULT_WITHOUT_TYPE_ARGUMENTS: TypeRenderer = TypeRenderer(includeTypeArguments = false)
         val INSERTION_SAFE: TypeRenderer = TypeRenderer(
             unknown = "_",

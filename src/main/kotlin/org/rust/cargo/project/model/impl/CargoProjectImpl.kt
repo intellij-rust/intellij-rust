@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -122,14 +123,18 @@ class CargoProjectsServiceImpl(
             }
         })
 
-    override fun findProjectForFile(file: VirtualFile): CargoProject? =
-        directoryIndex.getInfoForFile(file).takeIf { it !== noProjectMarker }
+    private val packageIndex: CargoPackageIndex = CargoPackageIndex(project, this)
 
     override val allProjects: Collection<CargoProject>
         get() = projects.currentState
 
     override val hasAtLeastOneValidProject: Boolean
         get() = hasAtLeastOneValidProject(allProjects)
+
+    override fun findProjectForFile(file: VirtualFile): CargoProject? =
+        directoryIndex.getInfoForFile(file).takeIf { it !== noProjectMarker }
+
+    override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? = packageIndex.findPackageForFile(file)
 
     override fun attachCargoProject(manifest: Path): Boolean {
         if (isExistingProject(allProjects, manifest)) return false
@@ -181,10 +186,10 @@ class CargoProjectsServiceImpl(
                         directoryIndex.resetIndex()
                         ProjectRootManagerEx.getInstanceEx(project)
                             .makeRootsChange(EmptyRunnable.getInstance(), false, true)
+                        project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
+                            .cargoProjectsUpdated(projects)
                     }
                 }
-                project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
-                    .cargoProjectsUpdated(projects)
 
                 projects
             }
@@ -267,14 +272,14 @@ data class CargoProjectImpl(
     override val workspaceStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
     override val stdlibStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
-) : CargoProject {
+) : UserDataHolderBase(), CargoProject {
 
     private val projectDirectory get() = manifest.parent
-    private val project get() = projectService.project
+    override val project get() = projectService.project
     private val toolchain get() = project.toolchain
-    override val workspace: CargoWorkspace? = run {
-        val rawWorkspace = rawWorkspace ?: return@run null
-        val stdlib = stdlib ?: return@run rawWorkspace
+    override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val rawWorkspace = rawWorkspace ?: return@lazy null
+        val stdlib = stdlib ?: return@lazy rawWorkspace
         rawWorkspace.withStdlib(stdlib)
     }
 

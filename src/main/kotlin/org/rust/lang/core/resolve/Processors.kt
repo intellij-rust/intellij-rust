@@ -115,7 +115,7 @@ operator fun RsResolveProcessor.invoke(name: String, e: RsElement, subst: Substi
     this(SimpleScopeEntry(name, e, subst))
 
 fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean =
-    this(LazyScopeEntry(name, lazy(e)))
+    this(LazyScopeEntry(name, lazy(LazyThreadSafetyMode.NONE, e)))
 
 operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     val name = e.name ?: return false
@@ -150,8 +150,13 @@ fun processAllWithSubst(
 
 fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, mod: RsMod): RsResolveProcessor {
     return fun(it: ScopeEntry): Boolean {
-        val visible = it.element as? RsVisible ?: return processor(it)
-        if (visible.isVisibleFrom(mod)) return processor(it)
-        return false
+        val element = it.element
+        if (element is RsVisible && !element.isVisibleFrom(mod)) return false
+
+        val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
+            element.containingMod != mod
+        if (isHidden) return false
+
+        return processor(it)
     }
 }

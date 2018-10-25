@@ -70,6 +70,41 @@ class RsWrongLifetimeParametersNumberInspectionTest : RsInspectionsTestBase(RsWr
         enum Err3<'d> { A(&'d Box<<error>Foo1</error>> ) }
     """)
 
+    fun `test E0106 missing lifetime in associated constant`() = checkByText("""
+        trait TErr {
+            const C: <error descr="Missing lifetime specifier [E0106]">&</error>str;
+        }
+
+        struct SErr;
+        impl SErr {
+            const C: <error descr="Missing lifetime specifier [E0106]">&</error>str = "foo";
+        }
+
+        enum EErr {}
+        impl EErr {
+            const C: <error descr="Missing lifetime specifier [E0106]">&</error>str = "foo";
+        }
+
+        // There should be no error for non-associated constant.
+        const C: &str = "foo";
+
+        // These should have no errors since they declare a lifetime.
+        trait TOk<'a> {
+            const C: &'a str;
+        }
+
+        struct SOk;
+        impl <'a> SOk {
+            const C: &'a str = "foo";
+        }
+
+        enum EOk {}
+        impl <'a> EOk {
+            const C: &'a str = "foo";
+        }
+
+    """)
+
     fun `test E0107 wrong number of lifetime parameters`() = checkByText("""
         struct Foo0;
         struct Foo1<'a>(&'a str);
@@ -78,12 +113,11 @@ class RsWrongLifetimeParametersNumberInspectionTest : RsInspectionsTestBase(RsWr
         struct Ok<'a> { a: Foo0, b: Foo1<'a>, c: Foo2<'a, 'a> }
 
         struct Err<'a, 'b, 'c> {
-            a: <error descr="Wrong number of lifetime parameters: expected 0, found 2 [E0107]">Foo0<'a, 'b></error>,
-            b: <error descr="Wrong number of lifetime parameters: expected 1, found 3 [E0107]">Foo1<'a, 'b, 'c></error>,
-            c: <error descr="Wrong number of lifetime parameters: expected 2, found 1 [E0107]">Foo2<'a></error>,
+            a: <error descr="Wrong number of lifetime arguments: expected 0, found 2 [E0107]">Foo0<'a, 'b></error>,
+            b: <error descr="Wrong number of lifetime arguments: expected 1, found 3 [E0107]">Foo1<'a, 'b, 'c></error>,
+            c: <error descr="Wrong number of lifetime arguments: expected 2, found 1 [E0107]">Foo2<'a></error>,
         }
-        type TErr<'a> = <error>Foo2<'a></error>;
-        enum EErr<'a> { E(Box<<error>Foo1<'a, 'a></error>>) }
+        type TErr<'a> = <error descr="Wrong number of lifetime arguments: expected 2, found 1 [E0107]">Foo2<'a></error>;
+        enum EErr<'a> { E(Box<<error descr="Wrong number of lifetime arguments: expected 1, found 2 [E0107]">Foo1<'a, 'a></error>>) }
     """)
-
 }

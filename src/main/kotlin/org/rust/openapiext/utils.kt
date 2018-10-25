@@ -13,9 +13,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,6 +24,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.reference.SoftReference
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
 import java.nio.file.Path
@@ -120,3 +119,9 @@ inline fun testAssert(action: () -> Boolean, lazyMessage: () -> Any) {
 
 fun <T> runWithCheckCanceled(callable: () -> T): T =
     ApplicationUtil.runWithCheckCanceled(callable, ProgressManager.getInstance().progressIndicator)
+
+inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, defaultValue: () -> T): T =
+    getUserData(key)?.get() ?: run {
+        val value = defaultValue()
+        putUserDataIfAbsent(key, SoftReference(value)).get() ?: value
+    }

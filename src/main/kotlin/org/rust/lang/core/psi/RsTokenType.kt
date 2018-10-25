@@ -36,7 +36,8 @@ val RS_KEYWORDS = tokenSetOf(
     SELF, STATIC, STRUCT, SUPER,
     TRAIT, TYPE_KW,
     UNION, UNSAFE, USE,
-    WHERE, WHILE
+    WHERE, WHILE,
+    YIELD
 )
 
 val RS_OPERATORS = tokenSetOf(

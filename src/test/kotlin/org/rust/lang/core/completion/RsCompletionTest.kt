@@ -5,6 +5,10 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
         fn foo(quux: i32) { qu/*caret*/ }
@@ -62,6 +66,14 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo(f: E) { match f {
             E::Frobnicate(/*caret*/) => {}
         }}
+    """)
+
+    fun `test struct-like enum with braces`() = doSingleCompletion("""
+        enum E { Frobnicate { f: i32 } }
+        fn main() { E::Frob/*caret*/ {} }
+    """, """
+        enum E { Frobnicate { f: i32 } }
+        fn main() { E::Frobnicate {/*caret*/} }
     """)
 
     fun `test function call with parens with arg`() = doSingleCompletion("""
@@ -653,24 +665,15 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test private function`() = checkNoCompletion("""
-        mod foo { fn bar() {} }
-        fn main() {
-            foo::ba/*caret*/
-        }
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test private extern crate`() = checkNoCompletion("""
+        mod foo { extern crate std; }
+        pub use foo::st/*caret*/
     """)
 
-    fun `test private mod`() = checkNoCompletion("""
-        mod foo { mod bar {} }
-        fn main() {
-            foo::ba/*caret*/
-        }
-    """)
-
-    fun `test private enum`() = checkNoCompletion("""
-        mod foo { enum MyEnum {} }
-        fn main() {
-            foo::MyEn/*caret*/
-        }
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test no std completion`() = checkNoCompletion("""
+        extern crate dep_lib_target;
+        pub use dep_lib_target::st/*caret*/
     """)
 }

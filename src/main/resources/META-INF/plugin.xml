@@ -9,8 +9,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2018/09/26/changelog-83.html">
-                 https://intellij-rust.github.io/2018/09/26/changelog-83.html
+        <a href="https://intellij-rust.github.io/2018/10/22/changelog-85.html">
+                 https://intellij-rust.github.io/2018/10/22/changelog-85.html
     ]]>
     </change-notes>
 
@@ -30,7 +30,7 @@
         <!-- Rust -->
 
         <!-- Project Creation -->
-
+        <projectOpenProcessor id="Cargo" implementation="org.rust.cargo.project.CargoProjectOpenProcessor"/>
         <directoryProjectGenerator implementation="org.rust.ide.newProject.RsDirectoryProjectGenerator"/>
 
         <!-- File-type Factory -->
@@ -128,7 +128,8 @@
 
         <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.RsExpressionTypeProvider"/>
         <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.RsParameterInfoHandler"/>
-        <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.RsGenericParameterInfoHandler"/>
+        <codeInsight.parameterInfo language="Rust"
+                                   implementationClass="org.rust.ide.hints.RsGenericParameterInfoHandler"/>
         <codeInsight.parameterNameHints language="Rust"
                                         implementationClass="org.rust.ide.hints.RsInlayParameterHintsProvider"/>
 
@@ -222,11 +223,15 @@
                       id="RsAngleBraceTypedHandler"/>
         <typedHandler implementation="org.rust.ide.typing.RsDotTypedHandler"
                       id="RsDotTypedHandler"/>
+        <typedHandler implementation="org.rust.ide.typing.RsAttributeParenthesisTypedHandler"
+                      id="RsAttributeParenthesisTypedHandler"/>
 
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsRawLiteralHashesDeleter"
                                   id="RsRawLiteralHashesDeleter"/>
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsAngleBraceBackspaceHandler"
                                   id="RsAngleBraceBackspaceHandler"/>
+        <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsAttributeParenthesisBackspaceHandler"
+                                  id="RsAttributeParenthesisBackspaceHandler"/>
 
         <joinLinesHandler implementation="org.rust.ide.actions.RsJoinLinesHandler"
                           id="RsJoinLinesHandler"/>
@@ -594,11 +599,19 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.SplitIfIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.RsShowRecursiveMacroExpansionIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RsShowSingleStepMacroExpansionIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.NestUseStatementsIntention</className>
             <category>Rust</category>
         </intentionAction>
 
@@ -607,8 +620,9 @@
         <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
         <runConfigurationProducer
-            implementation="org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer"/>
-        <runConfigurationProducer implementation="org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer"/>
+            implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
+        <!-- To register a new producer, add it to the `producers` list in the `CompositeCargoRunConfigurationProducer`
+             producer instead of registering it here. -->
 
         <projectTaskRunner implementation="org.rust.cargo.runconfig.RsProjectTasksRunner"/>
 
@@ -796,6 +810,11 @@
             <reference id="Rust.ShowSingleStepMacroExpansionAction"/>
         </group>
 
+        <action class="org.rust.lang.refactoring.generateConstructor.GenerateConstructorAction"
+                id="Rust.GenerateConstructor"
+                text="Generate Constructor">
+            <add-to-group group-id="GenerateGroup"/>
+        </action>
         <group id="Rust.Cargo">
             <reference id="Rust.RefreshCargoProject"/>
             <reference id="Rust.CargoCommand"/>

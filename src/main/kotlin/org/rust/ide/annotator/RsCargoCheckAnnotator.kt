@@ -11,7 +11,6 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.ProblemGroup
-import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -49,7 +48,7 @@ data class CargoCheckAnnotationInfo(
 class CargoCheckAnnotationResult(commandOutput: List<String>) {
     companion object {
         private val parser = JsonParser()
-        private val messageRegex = """\s*\{\s*"message".*""".toRegex()
+        private val messageRegex = """\s*\{.*"message".*""".toRegex()
     }
 
     val messages: List<CargoTopMessage> =
@@ -111,21 +110,17 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 
 // NB: executed asynchronously off EDT, so care must be taken not to access
 // disposed objects
-// BACKCOMPAT: 2018.1
-@Suppress("DEPRECATION", "OverridingDeprecatedMember")
 private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? {
     // We have to save the file to disk to give cargo a chance to check fresh file content.
-    object : WriteAction<Unit>() {
-        override fun run(result: Result<Unit>) {
-            val fileDocumentManager = FileDocumentManager.getInstance()
-            val document = fileDocumentManager.getDocument(info.file)
-            if (document == null) {
-                fileDocumentManager.saveAllDocuments()
-            } else if (fileDocumentManager.isDocumentUnsaved(document)) {
-                fileDocumentManager.saveDocument(document)
-            }
+    WriteAction.computeAndWait<Unit, Throwable> {
+        val fileDocumentManager = FileDocumentManager.getInstance()
+        val document = fileDocumentManager.getDocument(info.file)
+        if (document == null) {
+            fileDocumentManager.saveAllDocuments()
+        } else if (fileDocumentManager.isDocumentUnsaved(document)) {
+            fileDocumentManager.saveDocument(document)
         }
-    }.execute()
+    }
 
     val output = try {
         info.toolchain.cargoOrWrapper(info.projectPath).checkProject(info.module.project, info.module, info.projectPath)

@@ -381,7 +381,11 @@ WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypePar
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ForLifetimes ::= for '<' LifetimesParams '>'
+ForLifetimes ::= for '<' LifetimesParams '>' {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ExternAbi ::= extern STRING_LITERAL?
 
@@ -866,6 +870,7 @@ TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
 // There are `no_struct_lit_expr` and `any_expr` productions for this two cases.
 // `expr` production is an implementation detail. It passes the context information to the child expressions.
 Expr ::= RetExpr
+       | YieldExpr
        | LambdaExpr
        | AssignBinExpr
 
@@ -900,7 +905,7 @@ Expr ::= RetExpr
 }
 
 private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | '..=' | true | false | box | QUOTE_IDENTIFIER
-  | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe
+  | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe | yield
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 NoStructLitExpr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' Expr>> >> { elementType = Expr }
@@ -1141,6 +1146,10 @@ LitExpr ::= OuterAttr*
  mixin = "org.rust.lang.core.psi.ext.RsLitExprMixin"
 }
 
+YieldExpr ::= OuterAttr* yield Expr? {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Macros
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1149,7 +1158,8 @@ LitExpr ::= OuterAttr*
 Macro ::= AttrsAndVis "macro_rules" '!' identifier MacroBody <<macroSemicolon>>{
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.macros.RsExpandedElement" ]
   extends = "org.rust.lang.core.psi.ext.RsMacroImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

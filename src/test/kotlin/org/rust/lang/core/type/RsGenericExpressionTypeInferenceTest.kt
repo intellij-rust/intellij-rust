@@ -334,6 +334,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test struct field shorthand`() = testExpr("""
+        enum E<T> { A, B(T) }
+        struct S<T> { item: E<T> }
+        fn foo() -> S<u8> {
+            let item = E::A;
+                     //^ E<u8>
+            S { item }
+        }
+    """)
+
     fun `test struct expr with 2 fields of same type 1`() = testExpr("""
         struct X;
         struct S<T> { a: T, b: T }
@@ -1461,5 +1471,18 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
                 self.wrap().unwrap()
             }               //^ Self
         }
+    """)
+
+    fun `test type arguments remap on collapse to trait`() = testExpr("""
+        struct S;
+        trait Tr<A> { fn foo<B>(a: A, b: B) -> Self; }
+        impl Tr<u8> for S { fn foo<C>(a: u8, b: C) -> Self { unimplemented!() } }
+        impl Tr<u16> for S { fn foo<D>(a: u16, b: D) -> Self { unimplemented!() } }
+
+        fn main() {
+            let a = 0;
+            let s = S::foo::<u64>(0u8, a);
+            (a, s);
+        } //^ (u64, S)
     """)
 }

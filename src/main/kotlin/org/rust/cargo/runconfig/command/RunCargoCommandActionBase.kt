@@ -5,16 +5,16 @@
 
 package org.rust.cargo.runconfig.command
 
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.DumbAwareAction
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.cargo.runconfig.hasCargoProject
 import javax.swing.Icon
 
-abstract class RunCargoCommandActionBase(icon: Icon) : AnAction(icon) {
+abstract class RunCargoCommandActionBase(icon: Icon) : DumbAwareAction(null, null, icon) {
     override fun update(e: AnActionEvent) {
         val hasCargoProject = e.project?.hasCargoProject == true
         e.presentation.isEnabledAndVisible = hasCargoProject
