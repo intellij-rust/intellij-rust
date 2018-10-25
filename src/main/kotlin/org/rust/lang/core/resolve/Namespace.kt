@@ -22,7 +22,6 @@ val VALUES: Set<Namespace> = EnumSet.of(Namespace.Values)
 val LIFETIMES: Set<Namespace> = EnumSet.of(Namespace.Lifetimes)
 val MACROS: Set<Namespace> = EnumSet.of(Namespace.Macros)
 val TYPES_N_VALUES: Set<Namespace> = EnumSet.of(Namespace.Types, Namespace.Values)
-val TYPES_N_MACROS: Set<Namespace> = EnumSet.of(Namespace.Types, Namespace.Macros)
 val TYPES_N_VALUES_N_MACROS: Set<Namespace> = EnumSet.of(Namespace.Types, Namespace.Values, Namespace.Macros)
 
 val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
