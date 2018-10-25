@@ -28,6 +28,11 @@ val RsFunction.isTest: Boolean get() {
     return stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 }
 
+val RsFunction.isBench: Boolean get() {
+    val stub = stub
+    return stub?.isBench ?: queryAttributes.hasAtomAttribute("bench")
+}
+
 val RsFunction.isConst: Boolean get() {
     val stub = stub
     return stub?.isConst ?: (const != null)
