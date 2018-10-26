@@ -263,6 +263,10 @@ class RsPsiFactory(private val project: Project) {
     fun createColon(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.colon!!
 
+    fun createIn(): PsiElement =
+        createFromText<RsConstant>("pub(in self) const C: () = ();")?.vis?.visRestriction?.`in` ?:
+            error("Failed to create `in` element")
+
     fun createNewline(): PsiElement = createWhitespace("\n")
 
     fun createWhitespace(ws: String): PsiElement =
@@ -324,6 +328,10 @@ class RsPsiFactory(private val project: Project) {
                 else -> createExpressionOfType("${mutsToRefs(muts)}${expr.text}")
             }
         else expr
+
+    fun createVisRestriction(pathText: String): RsVisRestriction =
+        createFromText<RsFunction>("pub(in $pathText) fn foo() {}")?.vis?.visRestriction
+            ?: error("Failed to create vis restriction element")
 
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E

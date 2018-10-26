@@ -61,6 +61,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitTypeParameter(o: RsTypeParameter) = checkDuplicates(holder, o)
             override fun visitLifetimeParameter(o: RsLifetimeParameter) = checkLifetimeParameter(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
+            override fun visitVisRestriction(o: RsVisRestriction) = checkVisRestriction(holder, o)
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
             override fun visitMethodCall(o: RsMethodCall) = checkMethodCallExpr(holder, o)
@@ -235,6 +236,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkCrateVisibilityModifier(holder: AnnotationHolder, vis: RsVis) {
         val crateModifier = vis.crate ?: return
         checkFeature(holder, crateModifier, CRATE_VISIBILITY_MODIFIER, "`crate` visibility modifier")
+    }
+
+    private fun checkVisRestriction(holder: AnnotationHolder, visRestriction: RsVisRestriction) {
+        val path = visRestriction.path
+        // pub(foo) or pub(super::bar)
+        if (visRestriction.`in` == null && (path.path != null || path.kind == PathKind.IDENTIFIER)) {
+            RsDiagnostic.IncorrectVisibilityRestriction(visRestriction).addToHolder(holder)
+        }
     }
 
     private fun checkFeature(
