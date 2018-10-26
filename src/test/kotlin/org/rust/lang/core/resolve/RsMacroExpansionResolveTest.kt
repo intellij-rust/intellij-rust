@@ -353,4 +353,21 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
             }       //^ lib.rs
         }
     """)
+
+    fun `test expand macro inside stubbed file`() = stubOnlyResolve("""
+    //- bar.rs
+        pub struct S;
+        impl S { fn bar(&self) {} }
+        foo!();
+    //- main.rs
+        macro_rules! foo {
+            () => {
+                fn foo() -> S {}
+            }
+        }
+        mod bar;
+        fn main() {
+            bar::foo().bar();
+        }            //^ bar.rs
+    """)
 }

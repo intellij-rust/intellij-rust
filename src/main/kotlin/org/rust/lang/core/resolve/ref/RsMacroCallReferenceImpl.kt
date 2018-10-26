@@ -8,7 +8,7 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.resolve.collectResolveVariants
+import org.rust.lang.core.resolve.pickFirstResolveVariant
 import org.rust.lang.core.resolve.processMacroCallVariants
 
 class RsMacroCallReferenceImpl(macroInvocation: RsMacroCall) : RsReferenceCached<RsMacroCall>(macroInvocation) {
@@ -17,7 +17,7 @@ class RsMacroCallReferenceImpl(macroInvocation: RsMacroCall) : RsReferenceCached
         get() = referenceNameElement
 
     override fun resolveInner(): List<RsElement> =
-        collectResolveVariants(element.referenceName) { processMacroCallVariants(element, it) }
+        listOfNotNull(pickFirstResolveVariant(element.referenceName) { processMacroCallVariants(element, it) })
 
     override fun getVariants(): Array<out Any> = emptyArray() // handled by completion contributor
 }

@@ -83,8 +83,7 @@ class RsMacroResolveTest : RsResolveTestBase() {
 
     // Macros are scoped by lexical order
     // see https://github.com/intellij-rust/intellij-rust/issues/1474
-    fun `test resolve macro mod wrong order`() = expect<IllegalStateException> {
-        checkByCode("""
+    fun `test resolve macro mod wrong order`() = checkByCode("""
         mod b {
             fn main() {
                 foo_bar!();
@@ -96,7 +95,38 @@ class RsMacroResolveTest : RsResolveTestBase() {
             macro_rules! foo_bar { () => () }
         }
     """)
-    }
+
+    fun `test resolve macro in lexical order 1`() = checkByCode("""
+        macro_rules! foo { () => () }
+        #[macro_use]
+        mod a {
+            macro_rules! foo { () => () }
+            #[macro_use]
+            mod b {
+                macro_rules! foo { () => () }
+                macro_rules! foo { () => () }
+            }  //X
+        }
+        fn main() {
+            foo!();
+        } //^
+    """)
+
+    fun `test resolve macro in lexical order 2`() = checkByCode("""
+       #[macro_use]
+        pub mod a {
+            macro_rules! foo { () => () }
+            macro_rules! foo { () => () }
+            //X
+            pub mod b {
+                pub fn foo() {
+                    foo!();
+                    //^
+                }
+            }
+
+        }
+    """)
 
     fun `test resolve macro missing macro_use`() = checkByCode("""
         // Missing #[macro_use] here
