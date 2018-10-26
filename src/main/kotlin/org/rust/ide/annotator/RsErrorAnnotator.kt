@@ -187,7 +187,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
 
         val parent = path.parent
-        if (path.self != null && parent !is RsPath && parent !is RsUseSpeck) {
+        if (path.self != null && parent !is RsPath && parent !is RsUseSpeck && parent !is RsVisRestriction) {
             val function = path.ancestorStrict<RsFunction>()
             if (function == null) {
                 holder.createErrorAnnotation(path, "self value is not available in this context")
@@ -203,7 +203,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val useSpeck = path.ancestorStrict<RsUseSpeck>()
         val edition = path.containingCargoTarget?.edition
 
-        if (crate != null) {
+        // `pub(crate)` should be annotated
+        if (crate != null && (qualifier != null || path.ancestorStrict<RsVisRestriction>() == null)) {
             if (qualifier != null || useSpeck != null && useSpeck.qualifier != null) {
                 RsDiagnostic.UndeclaredTypeOrModule(crate).addToHolder(holder)
             } else if (edition == Edition.EDITION_2015) {
