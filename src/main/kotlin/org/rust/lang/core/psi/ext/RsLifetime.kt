@@ -15,7 +15,7 @@ import org.rust.lang.core.stubs.RsLifetimeStub
 import org.rust.lang.refactoring.RsNamesValidator
 
 
-val RsLifetime.isPredefined: Boolean get() = referenceName in RsNamesValidator.PredefinedLifetimes
+val RsLifetime.isPredefined: Boolean get() = referenceName in RsNamesValidator.RESERVED_LIFETIME_NAMES
 
 abstract class RsLifetimeImplMixin : RsStubbedNamedElementImpl<RsLifetimeStub>, RsLifetime {
 
