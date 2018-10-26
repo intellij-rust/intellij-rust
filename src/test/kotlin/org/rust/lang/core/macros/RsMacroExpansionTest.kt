@@ -575,6 +575,17 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         Option<i32>
     """)
 
+    // There was a problem with "debug" macro related to the fact that we parse macro call
+    // with such name as a specific syntax construction
+    fun `test macro with name "debug"`() = doTest("""
+       macro_rules! debug {
+           ($ t:ty) => { fn foo() -> $ t {} }
+       }
+       debug!(i32);
+    """, """
+        fn foo() -> i32 {}
+    """)
+
     fun `test expend macro definition`() = doTest("""
        macro_rules! foo {
            () => {
