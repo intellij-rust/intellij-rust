@@ -7,7 +7,6 @@
 
 package org.rust.lang.core
 
-import com.intellij.util.text.SemVer
 import org.rust.lang.core.FeatureState.*
 
 val ASM = CompilerFeature("asm", ACTIVE, "1.0.0")
@@ -379,22 +378,3 @@ val TERMINATION_TRAIT_TEST = CompilerFeature("termination_trait_test", ACCEPTED,
 val GLOBAL_ALLOCATOR = CompilerFeature("global_allocator", ACCEPTED, "1.28.0")
 // Allows `#[repr(transparent)]` attribute on newtype structs
 val REPR_TRANSPARENT = CompilerFeature("repr_transparent", ACCEPTED, "1.28.0")
-
-data class CompilerFeature(val name: String, val state: FeatureState, val since: SemVer) {
-    constructor(name: String, state: FeatureState, since: String) : this(name, state, SemVer.parseFromText(since)!!)
-}
-
-enum class FeatureState {
-    /**
-     * Represents active features that are currently being implemented or
-     * currently being considered for addition/removal.
-     * Such features can be used only with nightly compiler with the corresponding feature attribute
-     */
-    ACTIVE,
-    /**
-     * Those language feature has since been Accepted (it was once Active)
-     * so such language features can be used with stable/beta compiler since some version
-     * without any additional attributes
-     */
-    ACCEPTED
-}
