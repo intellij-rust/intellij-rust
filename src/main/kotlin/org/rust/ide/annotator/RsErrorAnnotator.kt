@@ -31,10 +31,7 @@ import org.rust.lang.core.FeatureState.ACCEPTED
 import org.rust.lang.core.FeatureState.ACTIVE
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.StdKnownItems
-import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.inference
@@ -88,10 +85,10 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun checkTryExpr(holder: AnnotationHolder, o: RsTryExpr) {
-        val items = StdKnownItems.relativeTo(o)
+        val items = o.knownItems;
         val lookup = ImplLookup.relativeTo(o)
-        val tryTrait = items.findTryTrait() ?: return
-        val fromTrait = items.findFromTrait() ?: return
+        val tryTrait = items.Try ?: return
+        val fromTrait = items.From ?: return
 
         val tryExprTy = o.expr.type
         val errorTy = findErrorTyUsingTryTrait(tryExprTy, tryTrait, lookup)

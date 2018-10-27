@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTryExpr
 import org.rust.lang.core.psi.ext.expandedMembers
 import org.rust.lang.core.psi.ext.withSubst
-import org.rust.lang.core.resolve.StdKnownItems
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 
@@ -31,8 +31,8 @@ class ImplementFromTraitFix(
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         if (intoTy is TyAdt) {
             val item = intoTy.item
-            val traitItem = StdKnownItems.relativeTo(item)
-                .findFromTrait()?.withSubst(fromTy) ?: return
+            val traitItem = item.knownItems
+                .From?.withSubst(fromTy) ?: return
             val members = traitItem.element.expandedMembers
             val templateItem = RsPsiFactory(project)
                 .createMembers(members, traitItem.subst)
