@@ -17,9 +17,10 @@ val NON_ASCII_IDENTS = CompilerFeature("non_ascii_idents", ACTIVE, "1.0.0")
 val PLUGIN_REGISTRAR = CompilerFeature("plugin_registrar", ACTIVE, "1.0.0")
 val THREAD_LOCAL = CompilerFeature("thread_local", ACTIVE, "1.0.0")
 val TRACE_MACROS = CompilerFeature("trace_macros", ACTIVE, "1.0.0")
-// rustc internal, for now:
+// rustc internal, for now
 val INTRINSICS = CompilerFeature("intrinsics", ACTIVE, "1.0.0")
 val LANG_ITEMS = CompilerFeature("lang_items", ACTIVE, "1.0.0")
+val FORMAT_ARGS_NL = CompilerFeature("format_args_nl", ACTIVE, "1.29.0")
 val LINK_LLVM_INTRINSICS = CompilerFeature("link_llvm_intrinsics", ACTIVE, "1.0.0")
 val LINKAGE = CompilerFeature("linkage", ACTIVE, "1.0.0")
 val QUOTE = CompilerFeature("quote", ACTIVE, "1.0.0")
@@ -41,6 +42,7 @@ val NEEDS_PANIC_RUNTIME = CompilerFeature("needs_panic_runtime", ACTIVE, "1.10.0
 // OIBIT specific features
 val OPTIN_BUILTIN_TRAITS = CompilerFeature("optin_builtin_traits", ACTIVE, "1.0.0")
 // Allows use of #[staged_api]
+//
 // rustc internal
 val STAGED_API = CompilerFeature("staged_api", ACTIVE, "1.0.0")
 // Allows using #![no_core]
@@ -77,10 +79,22 @@ val ALLOW_INTERNAL_UNSTABLE = CompilerFeature("allow_internal_unstable", ACTIVE,
 val ALLOW_INTERNAL_UNSAFE = CompilerFeature("allow_internal_unsafe", ACTIVE, "1.0.0")
 // #23121. Array patterns have some hazards yet.
 val SLICE_PATTERNS = CompilerFeature("slice_patterns", ACTIVE, "1.0.0")
-// Allows the definition of `const fn` functions.
+// Allows the definition of `const fn` functions with some advanced features.
 val CONST_FN = CompilerFeature("const_fn", ACTIVE, "1.2.0")
 // Allows let bindings and destructuring in `const fn` functions and constants.
 val CONST_LET = CompilerFeature("const_let", ACTIVE, "1.22.1")
+// Allows accessing fields of unions inside const fn.
+val CONST_FN_UNION = CompilerFeature("const_fn_union", ACTIVE, "1.27.0")
+// Allows casting raw pointers to `usize` during const eval.
+val CONST_RAW_PTR_TO_USIZE_CAST = CompilerFeature("const_raw_ptr_to_usize_cast", ACTIVE, "1.27.0")
+// Allows dereferencing raw pointers during const eval.
+val CONST_RAW_PTR_DEREF = CompilerFeature("const_raw_ptr_deref", ACTIVE, "1.27.0")
+// Allows reinterpretation of the bits of a value of one type as another type during const eval.
+val CONST_TRANSMUTE = CompilerFeature("const_transmute", ACTIVE, "1.29.0")
+// Allows comparing raw pointers during const eval.
+val CONST_COMPARE_RAW_POINTERS = CompilerFeature("const_compare_raw_pointers", ACTIVE, "1.27.0")
+// Allows panicking during const eval (produces compile-time errors)
+val CONST_PANIC = CompilerFeature("const_panic", ACTIVE, "1.30.0")
 // Allows using #[prelude_import] on glob `use` items.
 //
 // rustc internal
@@ -89,19 +103,20 @@ val PRELUDE_IMPORT = CompilerFeature("prelude_import", ACTIVE, "1.2.0")
 val DEFAULT_TYPE_PARAMETER_FALLBACK = CompilerFeature("default_type_parameter_fallback", ACTIVE, "1.3.0")
 // Allows associated type defaults
 val ASSOCIATED_TYPE_DEFAULTS = CompilerFeature("associated_type_defaults", ACTIVE, "1.2.0")
-// allow `repr(simd)`, and importing the various simd intrinsics
+// Allows `repr(simd)`, and importing the various simd intrinsics
 val REPR_SIMD = CompilerFeature("repr_simd", ACTIVE, "1.4.0")
-// allow `extern "platform-intrinsic" { ... }`
+// Allows `extern "platform-intrinsic" { ... }`
 val PLATFORM_INTRINSICS = CompilerFeature("platform_intrinsics", ACTIVE, "1.4.0")
-// allow `#[unwind(..)]`
+// Allows `#[unwind(..)]`
 // rustc internal for rust runtime
 val UNWIND_ATTRIBUTES = CompilerFeature("unwind_attributes", ACTIVE, "1.4.0")
-// allow the use of `#[naked]` on functions.
+// Allows the use of `#[naked]` on functions.
 val NAKED_FUNCTIONS = CompilerFeature("naked_functions", ACTIVE, "1.9.0")
-// allow `#[no_debug]`
+// Allows `#[no_debug]`
 val NO_DEBUG = CompilerFeature("no_debug", ACTIVE, "1.5.0")
-// allow `#[omit_gdb_pretty_printer_section]`
-// rustc internal.
+// Allows `#[omit_gdb_pretty_printer_section]`
+//
+// rustc internal
 val OMIT_GDB_PRETTY_PRINTER_SECTION = CompilerFeature("omit_gdb_pretty_printer_section", ACTIVE, "1.5.0")
 // Allows cfg(target_vendor = "...").
 val CFG_TARGET_VENDOR = CompilerFeature("cfg_target_vendor", ACTIVE, "1.5.0")
@@ -121,10 +136,8 @@ val SPECIALIZATION = CompilerFeature("specialization", ACTIVE, "1.7.0")
 val CFG_TARGET_HAS_ATOMIC = CompilerFeature("cfg_target_has_atomic", ACTIVE, "1.9.0")
 // The `!` type. Does not imply exhaustive_patterns (below) any more.
 val NEVER_TYPE = CompilerFeature("never_type", ACTIVE, "1.13.0")
-// Allows exhaustive pattern matching on types that contain uninhabited types.
+// Allows exhaustive pattern matching on types that contain uninhabited types
 val EXHAUSTIVE_PATTERNS = CompilerFeature("exhaustive_patterns", ACTIVE, "1.13.0")
-// Allows all literals in attribute lists and values of key-value pairs.
-val ATTR_LITERALS = CompilerFeature("attr_literals", ACTIVE, "1.13.0")
 // Allows untagged unions `union U { ... }`
 val UNTAGGED_UNIONS = CompilerFeature("untagged_unions", ACTIVE, "1.13.0")
 // Used to identify the `compiler_builtins` crate
@@ -132,7 +145,6 @@ val UNTAGGED_UNIONS = CompilerFeature("untagged_unions", ACTIVE, "1.13.0")
 val COMPILER_BUILTINS = CompilerFeature("compiler_builtins", ACTIVE, "1.13.0")
 // Allows #[link(..., cfg(..))]
 val LINK_CFG = CompilerFeature("link_cfg", ACTIVE, "1.14.0")
-val USE_EXTERN_MACROS = CompilerFeature("use_extern_macros", ACTIVE, "1.15.0")
 // `extern "ptx-*" fn()`
 val ABI_PTX = CompilerFeature("abi_ptx", ACTIVE, "1.15.0")
 // The `repr(i128)` annotation for enums
@@ -140,8 +152,6 @@ val REPR128 = CompilerFeature("repr128", ACTIVE, "1.16.0")
 // The `unadjusted` ABI. Perma unstable.
 // rustc internal
 val ABI_UNADJUSTED = CompilerFeature("abi_unadjusted", ACTIVE, "1.16.0")
-// Procedural macros 2.0.
-val PROC_MACRO = CompilerFeature("proc_macro", ACTIVE, "1.16.0")
 // Declarative macros 2.0 (`macro`).
 val DECL_MACRO = CompilerFeature("decl_macro", ACTIVE, "1.17.0")
 // Allows #[link(kind="static-nobundle"...)]
@@ -152,20 +162,19 @@ val ABI_MSP430_INTERRUPT = CompilerFeature("abi_msp430_interrupt", ACTIVE, "1.16
 // rustc internal
 val SANITIZER_RUNTIME = CompilerFeature("sanitizer_runtime", ACTIVE, "1.17.0")
 // Used to identify crates that contain the profiler runtime
+//
 // rustc internal
 val PROFILER_RUNTIME = CompilerFeature("profiler_runtime", ACTIVE, "1.18.0")
 // `extern "x86-interrupt" fn()`
 val ABI_X86_INTERRUPT = CompilerFeature("abi_x86_interrupt", ACTIVE, "1.17.0")
-// Allows the `catch {...}` expression
-val CATCH_EXPR = CompilerFeature("catch_expr", ACTIVE, "1.17.0")
-// Used to preserve symbols (see llvm.used)
-val USED = CompilerFeature("used", ACTIVE, "1.18.0")
+// Allows the `try {...}` expression
+val TRY_BLOCKS = CompilerFeature("try_blocks", ACTIVE, "1.29.0")
 // Allows module-level inline assembly by way of global_asm!()
 val GLOBAL_ASM = CompilerFeature("global_asm", ACTIVE, "1.18.0")
 // Allows overlapping impls of marker traits
 val OVERLAPPING_MARKER_TRAITS = CompilerFeature("overlapping_marker_traits", ACTIVE, "1.18.0")
-// Allows use of the :vis macro fragment specifier
-val MACRO_VIS_MATCHER = CompilerFeature("macro_vis_matcher", ACTIVE, "1.18.0")
+// Trait attribute to allow overlapping impls
+val MARKER_TRAIT_ATTR = CompilerFeature("marker_trait_attr", ACTIVE, "1.30.0")
 // rustc internal
 val ABI_THISCALL = CompilerFeature("abi_thiscall", ACTIVE, "1.19.0")
 // Allows a test to fail without failing the whole suite
@@ -192,36 +201,24 @@ val NON_EXHAUSTIVE = CompilerFeature("non_exhaustive", ACTIVE, "1.22.0")
 val CRATE_VISIBILITY_MODIFIER = CompilerFeature("crate_visibility_modifier", ACTIVE, "1.23.0")
 // extern types
 val EXTERN_TYPES = CompilerFeature("extern_types", ACTIVE, "1.23.0")
-// Allow trait methods with arbitrary self types
+// Allows trait methods with arbitrary self types
 val ARBITRARY_SELF_TYPES = CompilerFeature("arbitrary_self_types", ACTIVE, "1.23.0")
-// `crate` in paths
-val CRATE_IN_PATHS = CompilerFeature("crate_in_paths", ACTIVE, "1.23.0")
 // In-band lifetime bindings (e.g. `fn foo(x: &'a u8) -> &'a u8`)
 val IN_BAND_LIFETIMES = CompilerFeature("in_band_lifetimes", ACTIVE, "1.23.0")
-// generic associated types (RFC 1598)
+// Generic associated types (RFC 1598)
 val GENERIC_ASSOCIATED_TYPES = CompilerFeature("generic_associated_types", ACTIVE, "1.23.0")
-// Resolve absolute paths as paths from other crates
-val EXTERN_ABSOLUTE_PATHS = CompilerFeature("extern_absolute_paths", ACTIVE, "1.24.0")
-// `foo.rs` as an alternative to `foo/mod.rs`
-val NON_MODRS_MODS = CompilerFeature("non_modrs_mods", ACTIVE, "1.24.0")
 // `extern` in paths
 val EXTERN_IN_PATHS = CompilerFeature("extern_in_paths", ACTIVE, "1.23.0")
 // Use `?` as the Kleene "at most one" operator
 val MACRO_AT_MOST_ONCE_REP = CompilerFeature("macro_at_most_once_rep", ACTIVE, "1.25.0")
-// Infer outlives requirements; RFC 2093
-val INFER_OUTLIVES_REQUIREMENTS = CompilerFeature("infer_outlives_requirements", ACTIVE, "1.26.0")
+// Infer static outlives requirements; RFC 2093
+val INFER_STATIC_OUTLIVES_REQUIREMENTS = CompilerFeature("infer_static_outlives_requirements", ACTIVE, "1.26.0")
 // Multiple patterns with `|` in `if let` and `while let`
 val IF_WHILE_OR_PATTERNS = CompilerFeature("if_while_or_patterns", ACTIVE, "1.26.0")
-// Parentheses in patterns
-val PATTERN_PARENTHESES = CompilerFeature("pattern_parentheses", ACTIVE, "1.26.0")
 // Allows `#[repr(packed)]` attribute on structs
 val REPR_PACKED = CompilerFeature("repr_packed", ACTIVE, "1.26.0")
 // `use path as _;` and `extern crate c as _;`
 val UNDERSCORE_IMPORTS = CompilerFeature("underscore_imports", ACTIVE, "1.26.0")
-// The #[wasm_custom_section] attribute
-val WASM_CUSTOM_SECTION = CompilerFeature("wasm_custom_section", ACTIVE, "1.26.0")
-// Allows keywords to be escaped for use as identifiers
-val RAW_IDENTIFIERS = CompilerFeature("raw_identifiers", ACTIVE, "1.26.0")
 // Allows macro invocations in `extern {}` blocks
 val MACROS_IN_EXTERN = CompilerFeature("macros_in_extern", ACTIVE, "1.27.0")
 // `existential type`
@@ -236,23 +233,13 @@ val AVX512_TARGET_FEATURE = CompilerFeature("avx512_target_feature", ACTIVE, "1.
 val MMX_TARGET_FEATURE = CompilerFeature("mmx_target_feature", ACTIVE, "1.27.0")
 val SSE4A_TARGET_FEATURE = CompilerFeature("sse4a_target_feature", ACTIVE, "1.27.0")
 val TBM_TARGET_FEATURE = CompilerFeature("tbm_target_feature", ACTIVE, "1.27.0")
-// Allows macro invocations of the form `#[foo::bar]`
-val PROC_MACRO_PATH_INVOC = CompilerFeature("proc_macro_path_invoc", ACTIVE, "1.27.0")
+val WASM_TARGET_FEATURE = CompilerFeature("wasm_target_feature", ACTIVE, "1.30.0")
 // Allows macro invocations on modules expressions and statements and
 // procedural macros to expand to non-items.
-val PROC_MACRO_MOD = CompilerFeature("proc_macro_mod", ACTIVE, "1.27.0")
-val PROC_MACRO_EXPR = CompilerFeature("proc_macro_expr", ACTIVE, "1.27.0")
-val PROC_MACRO_NON_ITEMS = CompilerFeature("proc_macro_non_items", ACTIVE, "1.27.0")
-val PROC_MACRO_GEN = CompilerFeature("proc_macro_gen", ACTIVE, "1.27.0")
+val PROC_MACRO_HYGIENE = CompilerFeature("proc_macro_hygiene", ACTIVE, "1.30.0")
 // #[doc(alias = "...")]
 val DOC_ALIAS = CompilerFeature("doc_alias", ACTIVE, "1.27.0")
-// Access to crate names passed via `--extern` through prelude
-val EXTERN_PRELUDE = CompilerFeature("extern_prelude", ACTIVE, "1.27.0")
-// Scoped attributes
-val TOOL_ATTRIBUTES = CompilerFeature("tool_attributes", ACTIVE, "1.25.0")
-// Scoped lints
-val TOOL_LINTS = CompilerFeature("tool_lints", ACTIVE, "1.28.0")
-// allow irrefutable patterns in if-let and while-let statements (RFC 2086)
+// Allows irrefutable patterns in if-let and while-let statements (RFC 2086)
 val IRREFUTABLE_LET_PATTERNS = CompilerFeature("irrefutable_let_patterns", ACTIVE, "1.27.0")
 // Allows use of the :literal macro fragment specifier (RFC 1576)
 val MACRO_LITERAL_MATCHER = CompilerFeature("macro_literal_matcher", ACTIVE, "1.27.0")
@@ -260,7 +247,9 @@ val MACRO_LITERAL_MATCHER = CompilerFeature("macro_literal_matcher", ACTIVE, "1.
 val TRIVIAL_BOUNDS = CompilerFeature("trivial_bounds", ACTIVE, "1.28.0")
 // 'a: { break 'a; }
 val LABEL_BREAK_VALUE = CompilerFeature("label_break_value", ACTIVE, "1.28.0")
-// #[panic_implementation]
+// Integer match exhaustiveness checking
+val EXHAUSTIVE_INTEGER_PATTERNS = CompilerFeature("exhaustive_integer_patterns", ACTIVE, "1.30.0")
+// RFC 2070: #[panic_implementation] / #[panic_handler]
 val PANIC_IMPLEMENTATION = CompilerFeature("panic_implementation", ACTIVE, "1.28.0")
 // #[doc(keyword = "...")]
 val DOC_KEYWORD = CompilerFeature("doc_keyword", ACTIVE, "1.28.0")
@@ -269,7 +258,36 @@ val ASYNC_AWAIT = CompilerFeature("async_await", ACTIVE, "1.28.0")
 // #[alloc_error_handler]
 val ALLOC_ERROR_HANDLER = CompilerFeature("alloc_error_handler", ACTIVE, "1.29.0")
 val ABI_AMDGPU_KERNEL = CompilerFeature("abi_amdgpu_kernel", ACTIVE, "1.29.0")
-
+// Perma-unstable; added for testing E0705
+val TEST_2018_FEATURE = CompilerFeature("test_2018_feature", ACTIVE, "1.31.0")
+// Support for arbitrary delimited token streams in non-macro attributes
+val UNRESTRICTED_ATTRIBUTE_TOKENS = CompilerFeature("unrestricted_attribute_tokens", ACTIVE, "1.30.0")
+// Allows `use x::y;` to resolve through `self::x`, not just `::x`
+val UNIFORM_PATHS = CompilerFeature("uniform_paths", ACTIVE, "1.30.0")
+// Allows `Self` in type definitions
+val SELF_IN_TYPEDEFS = CompilerFeature("self_in_typedefs", ACTIVE, "1.30.0")
+// Allows unsized rvalues at arguments and parameters
+val UNSIZED_LOCALS = CompilerFeature("unsized_locals", ACTIVE, "1.30.0")
+// #![test_runner]
+// #[test_case]
+val CUSTOM_TEST_FRAMEWORKS = CompilerFeature("custom_test_frameworks", ACTIVE, "1.30.0")
+// Non-builtin attributes in inner attribute position
+val CUSTOM_INNER_ATTRIBUTES = CompilerFeature("custom_inner_attributes", ACTIVE, "1.30.0")
+// Self struct constructor  (RFC 2302)
+val SELF_STRUCT_CTOR = CompilerFeature("self_struct_ctor", ACTIVE, "1.30.0")
+// allow mixing of bind-by-move in patterns and references to
+// those identifiers in guards, *if* we are using MIR-borrowck
+// (aka NLL). Essentially this means you need to be on
+// edition:2018 or later.
+val BIND_BY_MOVE_PATTERN_GUARDS = CompilerFeature("bind_by_move_pattern_guards", ACTIVE, "1.30.0")
+// Allows `impl Trait` in bindings (`let`, `const`, `static`)
+val IMPL_TRAIT_IN_BINDINGS = CompilerFeature("impl_trait_in_bindings", ACTIVE, "1.30.0")
+// #[cfg_attr(predicate, multiple, attributes, here)]
+val CFG_ATTR_MULTI = CompilerFeature("cfg_attr_multi", ACTIVE, "1.31.0")
+// Allows `const _: TYPE = VALUE`
+val UNDERSCORE_CONST_NAMES = CompilerFeature("underscore_const_names", ACTIVE, "1.31.0")
+// `extern crate foo as bar;` puts `bar` into extern prelude.
+val EXTERN_CRATE_ITEM_PRELUDE = CompilerFeature("extern_crate_item_prelude", ACTIVE, "1.31.0")
 
 val ASSOCIATED_TYPES = CompilerFeature("associated_types", ACCEPTED, "1.0.0")
 // allow overloading augmented assignment operations like `a += b`
@@ -378,3 +396,40 @@ val TERMINATION_TRAIT_TEST = CompilerFeature("termination_trait_test", ACCEPTED,
 val GLOBAL_ALLOCATOR = CompilerFeature("global_allocator", ACCEPTED, "1.28.0")
 // Allows `#[repr(transparent)]` attribute on newtype structs
 val REPR_TRANSPARENT = CompilerFeature("repr_transparent", ACCEPTED, "1.28.0")
+// Defining procedural macros in `proc-macro` crates
+val PROC_MACRO = CompilerFeature("proc_macro", ACCEPTED, "1.29.0")
+// `foo.rs` as an alternative to `foo/mod.rs`
+val NON_MODRS_MODS = CompilerFeature("non_modrs_mods", ACCEPTED, "1.30.0")
+// Allows use of the :vis macro fragment specifier
+val MACRO_VIS_MATCHER = CompilerFeature("macro_vis_matcher", ACCEPTED, "1.30.0")
+// Allows importing and reexporting macros with `use`,
+// enables macro modularization in general.
+val USE_EXTERN_MACROS = CompilerFeature("use_extern_macros", ACCEPTED, "1.30.0")
+// Allows keywords to be escaped for use as identifiers
+val RAW_IDENTIFIERS = CompilerFeature("raw_identifiers", ACCEPTED, "1.30.0")
+// Attributes scoped to tools
+val TOOL_ATTRIBUTES = CompilerFeature("tool_attributes", ACCEPTED, "1.30.0")
+// Allows multi-segment paths in attributes and derives
+val PROC_MACRO_PATH_INVOC = CompilerFeature("proc_macro_path_invoc", ACCEPTED, "1.30.0")
+// Allows all literals in attribute lists and values of key-value pairs.
+val ATTR_LITERALS = CompilerFeature("attr_literals", ACCEPTED, "1.30.0")
+// Infer outlives requirements; RFC 2093
+val INFER_OUTLIVES_REQUIREMENTS = CompilerFeature("infer_outlives_requirements", ACCEPTED, "1.30.0")
+val PANIC_HANDLER = CompilerFeature("panic_handler", ACCEPTED, "1.30.0")
+// Used to preserve symbols (see llvm.used)
+val USED = CompilerFeature("used", ACCEPTED, "1.30.0")
+// `crate` in paths
+val CRATE_IN_PATHS = CompilerFeature("crate_in_paths", ACCEPTED, "1.30.0")
+// Resolve absolute paths as paths from other crates
+val EXTERN_ABSOLUTE_PATHS = CompilerFeature("extern_absolute_paths", ACCEPTED, "1.30.0")
+// Access to crate names passed via `--extern` through prelude
+val EXTERN_PRELUDE = CompilerFeature("extern_prelude", ACCEPTED, "1.30.0")
+// Parentheses in patterns
+val PATTERN_PARENTHESES = CompilerFeature("pattern_parentheses", ACCEPTED, "1.31.0")
+// Allows the definition of `const fn` functions.
+val MIN_CONST_FN = CompilerFeature("min_const_fn", ACCEPTED, "1.31.0")
+// Scoped lints
+val TOOL_LINTS = CompilerFeature("tool_lints", ACCEPTED, "1.31.0")
+// impl<I:Iterator> Iterator for &mut Iterator
+// impl Debug for Foo<'_>
+val IMPL_HEADER_LIFETIME_ELISION = CompilerFeature("impl_header_lifetime_elision", ACCEPTED, "1.31.0")
