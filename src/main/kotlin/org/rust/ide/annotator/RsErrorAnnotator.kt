@@ -257,29 +257,21 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val rsElement = element.ancestorOrSelf<RsElement>() ?: return
         val version = rsElement.cargoProject?.rustcInfo?.version ?: return
 
-        val diagnostic = when (feature.state) {
-            ACTIVE -> {
-                if (version.channel != RustChannel.NIGHTLY) {
-                    RsDiagnostic.ExperimentalFeature(element, presentableFeatureName)
-                } else {
-                    val crateRoot = rsElement.crateRoot ?: return
-                    val attrs = RsFeatureIndex.getFeatureAttributes(element.project, feature.name)
-                    if (attrs.none { it.crateRoot == crateRoot }) {
-                        val fix = AddFeatureAttributeFix(feature.name, crateRoot)
-                        RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, fix)
-                    } else {
-                        null
-                    }
-                }
-
-            }
-            ACCEPTED -> if (version.semver < feature.since) {
+        if (feature.state == ACTIVE || feature.state == ACCEPTED && version.semver < feature.since) {
+            val diagnostic = if (version.channel != RustChannel.NIGHTLY) {
                 RsDiagnostic.ExperimentalFeature(element, presentableFeatureName)
             } else {
-                null
+                val crateRoot = rsElement.crateRoot ?: return
+                val attrs = RsFeatureIndex.getFeatureAttributes(element.project, feature.name)
+                if (attrs.none { it.crateRoot == crateRoot }) {
+                    val fix = AddFeatureAttributeFix(feature.name, crateRoot)
+                    RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, fix)
+                } else {
+                    null
+                }
             }
+            diagnostic?.addToHolder(holder)
         }
-        diagnostic?.addToHolder(holder)
     }
 
     private fun checkLabel(holder: AnnotationHolder, label: RsLabel) {

@@ -1245,6 +1245,15 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         use crate::foo::Foo;
     """)
 
+    @MockRustcVersion("1.30.0")
+    fun `test crate in path feature E0658 4`() = checkErrors("""
+        mod foo {
+            pub struct Foo;
+        }
+
+        use crate::foo::Foo;
+    """)
+
     @MockRustcVersion("1.28.0")
     fun `test crate visibility restriction`() = checkErrors("""
         pub(crate) fn foo() {}
