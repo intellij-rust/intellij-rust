@@ -12,6 +12,7 @@ import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.tasks.Jar
+import java.io.Writer
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.file.Path
@@ -301,6 +302,50 @@ fun commitNightly() {
     "git add .travis.yml".execute()
     listOf("git", "commit", "-m", ":arrow_up: nightly IDEA & rust").execute()
     "git push origin nightly".execute()
+}
+
+task("updateCompilerFeatures") {
+    doLast {
+        val featureGateUrl = URL("https://raw.githubusercontent.com/rust-lang/rust/master/src/libsyntax/feature_gate.rs")
+        val text = featureGateUrl.openStream().bufferedReader().readText()
+        val file = File("src/main/kotlin/org/rust/lang/core/CompilerFeatures.kt")
+        file.bufferedWriter().use {
+            it.writeln("""
+                /*
+                 * Use of this source code is governed by the MIT license that can be
+                 * found in the LICENSE file.
+                 */
+
+                @file:Suppress("unused")
+
+                package org.rust.lang.core
+
+                import org.rust.lang.core.FeatureState.*
+
+            """.trimIndent())
+            it.writeFeatures("active", text)
+            it.writeln()
+            it.writeFeatures("accepted", text)
+        }
+    }
+}
+
+fun Writer.writeFeatures(featureSet: String, text: String) {
+    """((\s*//.*\n)*)\s*\($featureSet, (\w+), (\"\d+\.\d+\.\d+\"), .*\),"""
+        .toRegex(RegexOption.MULTILINE)
+        .findAll(text)
+        .forEach { matcher ->
+            val (comments, _, featureName, version) = matcher.destructured
+            if (comments.isNotEmpty()) {
+                writeln(comments.trimIndent().trim())
+            }
+            writeln("""val ${featureName.toUpperCase()} = CompilerFeature("$featureName", ${featureSet.toUpperCase()}, $version)""")
+        }
+}
+
+fun Writer.writeln(str: String = "") {
+    write(str)
+    write("\n")
 }
 
 fun hasProp(name: String): Boolean = extra.has(name)
