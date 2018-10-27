@@ -94,6 +94,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val fromTrait = items.From ?: return
 
         val tryExprTy = o.expr.type
+        if (tryExprTy is TyUnknown) return
         val errorTy = findErrorType(tryExprTy, tryTrait, lookup)
         if (errorTy == null) {
             RsDiagnostic.TryTraitIsNotImplemented(o, tryExprTy).addToHolder(holder)
