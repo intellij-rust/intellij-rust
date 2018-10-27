@@ -801,7 +801,7 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         fn foo() {}
         fn bat() {}
         fn bar() {
-            use self::{foo};
+            use self::foo;
             use self::{foo,bat};
         }
     """)
@@ -1295,16 +1295,16 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
 
     fun `test not allowed try expr`() = checkErrors("""
     fn foo(){
-        let a = 92<error descr="the `?` operator can only be applied to values that implement `std::ops::Try`">?</error>;
+        let a = <error descr="the `?` operator can only be applied to values that implement `std::ops::Try` [E0277]">92?</error>;
     }
     """)
 
 
     fun `test try expr in function that not allow try expr`() = checkErrors("""
-       fn foo()->i32{
-            Ok(92)<error descr="the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `std::ops::Try`)">?</error>;
-            92
-       }
+    fn foo()->i32{
+        <error descr="the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `std::ops::Try`) [E0277]">Ok(92)?</error>;
+        92
+    }
     """)
 
     fun `test try expr unknown type`() = checkErrors("""

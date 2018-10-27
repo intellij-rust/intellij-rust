@@ -96,20 +96,14 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val tryExprTy = o.expr.type
         val errorTy = findErrorType(tryExprTy, tryTrait, lookup)
         if (errorTy == null) {
-            holder.createErrorAnnotation(
-                o.q,
-                "the `?` operator can only be applied to values that implement `std::ops::Try`"
-            )
+            RsDiagnostic.TryTraitIsNotImplemented(o, tryExprTy).addToHolder(holder)
             return
         }
 
         val returnTy = findParentFnOrLambdaRetTy(o)
         val returnErrorTy = returnTy?.let { findErrorType(it, tryTrait, lookup) }
         if (returnTy == null || returnErrorTy == null) {
-            holder.createErrorAnnotation(
-                o.q,
-                "the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `std::ops::Try`)"
-            )
+            RsDiagnostic.TryTraitIsNotImplementedForFooReturnType(o, returnTy).addToHolder(holder)
             return
         }
 
@@ -120,6 +114,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 o.q,
                 "the trait `std::convert::From<${errorTy.insertionSafeText}>` is not implemented for `${returnErrorTy.insertionSafeText}`"
             )
+            RsDiagnostic.TraitFromTraitIsNotSatisfied(o, returnErrorTy, errorTy)
             if (returnErrorTy is TyAdt && o.crateRoot == returnErrorTy.item.crateRoot) {
                 annotation.registerFix(ImplementFromTraitFix(o, errorTy, returnErrorTy))
             }
