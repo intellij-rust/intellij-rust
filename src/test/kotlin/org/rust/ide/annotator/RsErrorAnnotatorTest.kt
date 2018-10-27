@@ -747,7 +747,7 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
-    fun `testE0424 self in impl`() = checkErrors("""
+    fun `test self in static method E0424`() = checkErrors("""
         struct Foo;
 
         impl Foo {
@@ -757,8 +757,23 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
+    fun `test self in vis restriction in static method no E0424`() = checkErrors("""
+        struct Foo;
+
+        impl Foo {
+            pub(self) fn foo() {}
+        }
+    """)
+
     fun `test self expression outside function`() = checkErrors("""
         const C: () = <error descr="self value is not available in this context">self</error>;
+    """)
+
+    fun `test do not annotate 'self' in visibility restriction`() = checkErrors("""
+        struct Foo {
+            pub(self) attr1: bool,
+            pub(in self) attr2: bool
+        }
     """)
 
     fun `test ignore non static E0424`() = checkErrors("""
@@ -1228,6 +1243,11 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         }
 
         use crate::foo::Foo;
+    """)
+
+    @MockRustcVersion("1.28.0")
+    fun `test crate visibility restriction`() = checkErrors("""
+        pub(crate) fn foo() {}
     """)
 
     fun `test E0404 expected trait`() = checkErrors("""
