@@ -46,7 +46,7 @@ abstract class RsResolveTestBase : RsTestBase() {
         val target = findElementInEditor<T>("X")
 
         check(resolved == target) {
-            "$refElement `${refElement.text}` should resolve to $target, was $resolved instead"
+            "$refElement `${refElement.text}` should resolve to $target (${target.text}), was $resolved (${resolved.text}) instead"
         }
     }
 
