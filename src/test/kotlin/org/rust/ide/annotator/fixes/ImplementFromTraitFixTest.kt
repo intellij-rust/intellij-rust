@@ -5,23 +5,22 @@
 
 package org.rust.ide.annotator.fixes
 
-import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.MockRustcVersion
+import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.annotator.RsAnnotationTestBase
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class ImplementFromTraitFixTest : RsAnnotationTestBase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithStdlibRustProjectDescriptor
-
     fun `test non available`() = checkFixIsUnavailable(
-        "Create 'From<A>' for type 'B'", """
+        "Create 'From<AError>' for type 'BError'", """
 #![feature(try_trait)]
 use std::ops;
 use std::ops::Try;
-struct A{}
-struct B{}
+struct A; struct AError;
+struct B; struct BError;
 
-impl From<A> for B {
+impl From<AError> for BError {
     fn from(_: A) -> Self {
         unimplemented!()
     }
@@ -29,7 +28,7 @@ impl From<A> for B {
 
 impl ops::Try for B{
     type Ok = ();
-    type Error = B;
+    type Error = BError;
 
     fn into_result(self) -> Result<<Self as Try>::Ok, <Self as Try>::Error> {
         unimplemented!()
@@ -45,7 +44,7 @@ impl ops::Try for B{
 }
 impl ops::Try for A{
     type Ok = ();
-    type Error = A;
+    type Error = AError;
 
 
     fn into_result(self) -> Result<<Self as Try>::Ok, <Self as Try>::Error> {
@@ -73,17 +72,17 @@ fn main(){
 
     @MockRustcVersion("1.29.0")
     fun `test non available in stable`() = checkFixIsUnavailable(
-        "Create 'From<A>' for type 'B'", """
+        "Create 'From<AError>' for type 'BError'", """
 use std::ops;
 use std::ops::Try;
-struct A{}
-struct B{}
+struct A; struct AError;
+struct B; struct BError;
 
 
 
 impl ops::Try for B{
     type Ok = ();
-    type Error = B;
+    type Error = BError;
 
     fn into_result(self) -> Result<<Self as Try>::Ok, <Self as Try>::Error> {
         unimplemented!()
@@ -99,7 +98,7 @@ impl ops::Try for B{
 }
 impl ops::Try for A{
     type Ok = ();
-    type Error = A;
+    type Error = AError;
 
 
     fn into_result(self) -> Result<<Self as Try>::Ok, <Self as Try>::Error> {
@@ -126,17 +125,17 @@ fn main(){
     )
 
     @MockRustcVersion("1.29.0-nightly")
-    fun testSimple() = checkFixByText("Create 'From<A>' for type 'B'", """
+    fun testSimple() = checkFixByText("Create 'From<AError>' for type 'BError'", """
 #![feature(try_trait)]
 use std::ops;
 use std::ops::Try;
-struct A{}
-struct B{}
+struct A; struct AError;
+struct B; struct BError;
 
 
 impl ops::Try for B{
     type Ok = ();
-    type Error = B;
+    type Error = BError;
 
     fn into_result(self) -> Result<<Self as Try>::Ok, <Self as Try>::Error> {
         unimplemented!()
@@ -152,7 +151,7 @@ impl ops::Try for B{
 }
 impl ops::Try for A{
     type Ok = ();
-    type Error = A;
+    type Error = AError;
 
 
     fn into_result(self) -> Result<<Self as Try>::Ok, <Self as Try>::Error> {
@@ -169,7 +168,7 @@ impl ops::Try for A{
 }
 
 fn foo()->A{A{}}
-fn bar()->B{foo()<error descr="the trait `std::convert::From<A>` is not implemented for `B`">?<caret></error>; B{}}
+fn bar()->B{foo()<error descr="the trait `std::convert::From<AError>` is not implemented for `BError`">?<caret></error>; B{}}
 fn main(){
     bar();
 }
@@ -178,11 +177,11 @@ fn main(){
 #![feature(try_trait)]
 use std::ops;
 use std::ops::Try;
-struct A{}
-struct B{}
+struct A; struct AError;
+struct B; struct BError;
 
-impl From<A> for B {
-    fn from(_: A) -> Self {
+impl From<AError> for BError {
+    fn from(_: AError) -> Self {
         unimplemented!()
     }
 }
@@ -190,7 +189,7 @@ impl From<A> for B {
 
 impl ops::Try for B{
     type Ok = ();
-    type Error = B;
+    type Error = BError;
 
     fn into_result(self) -> Result<<Self as Try>::Ok, <Self as Try>::Error> {
         unimplemented!()
@@ -206,7 +205,7 @@ impl ops::Try for B{
 }
 impl ops::Try for A{
     type Ok = ();
-    type Error = A;
+    type Error = AError;
 
 
     fn into_result(self) -> Result<<Self as Try>::Ok, <Self as Try>::Error> {

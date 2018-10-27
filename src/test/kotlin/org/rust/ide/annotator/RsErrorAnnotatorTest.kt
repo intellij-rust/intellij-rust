@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.testFramework.LightProjectDescriptor
 import org.rust.MockEdition
 import org.rust.MockRustcVersion
 import org.rust.ProjectDescriptor
@@ -1295,9 +1294,9 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
     """)
 
     fun `test not allowed try expr`() = checkErrors("""
-       fn foo(){
-     let a = 2<error descr="the `?` operator can only be applied to values that implement `std::ops::Try`">?</error>;
-       }
+    fn foo(){
+        let a = 92<error descr="the `?` operator can only be applied to values that implement `std::ops::Try`">?</error>;
+    }
     """)
 
 
@@ -1307,4 +1306,10 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
             92
        }
     """)
+
+    fun `test try expr unknown type`() = checkErrors("""
+    fn foo() {
+        something_unknown?;
+    }
+""")
 }
