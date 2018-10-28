@@ -247,7 +247,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     """, NameResolutionTestmarks.otherVersionOfSameCrate)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test resolve reference without extern crate item 1`() = stubOnlyResolve("""
+    fun `test resolve reference without extern crate item 1 (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
     //- lib.rs
@@ -256,12 +256,54 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test resolve reference without extern crate item 2`() = stubOnlyResolve("""
+    fun `test resolve reference without extern crate item 2 (edition 2018)`() = stubOnlyResolve("""
     //- dep-lib/lib.rs
         pub struct Foo;
     //- lib.rs
         fn foo() -> dep_lib_target::Foo { unimplemented!() }
                                    //^ dep-lib/lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    fun `test resolve reference without extern crate item 1 (edition 2015)`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        use dep_lib_target::Foo;
+                //^ dep-lib/lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    fun `test resolve reference without extern crate item 2 (edition 2015)`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        fn foo() -> dep_lib_target::Foo { unimplemented!() }
+                                   //^ dep-lib/lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve module instead of crate (edition 2018)`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        mod dep_lib_target {
+            pub struct Foo;
+        }
+        fn foo() -> dep_lib_target::Foo { unimplemented!() }
+                                   //^ lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    fun `test resolve module instead of crate (edition 2015)`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        mod dep_lib_target {
+            pub struct Foo;
+        }
+        fn foo() -> dep_lib_target::Foo { unimplemented!() }
+                                   //^ lib.rs
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
@@ -273,7 +315,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
         fn foo() -> dep_lib_target::Foo { unimplemented!() }
                                    //^ dep-lib/lib.rs
-    """, ItemResolutionTestmarks.externCrateItemWithoutAlias)
+    """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate item alias 1 (edition 2018)`() = stubOnlyResolve("""
@@ -306,7 +348,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
         fn foo() -> dep_lib_target::Foo { unimplemented!() }
                                    //^ dep-lib/lib.rs
-    """, ItemResolutionTestmarks.externCrateItemAliasWithSameName)
+    """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test extern crate in super chain (edition 2018)`() = stubOnlyResolve("""
