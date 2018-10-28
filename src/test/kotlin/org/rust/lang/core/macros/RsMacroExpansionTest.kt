@@ -596,4 +596,19 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         macro_rules! bar { () => {} }
     """)
+
+    fun `test expand vis matcher`() = doTest("""
+        macro_rules! foo {
+            ($ vis:vis $ name:ident) => { $ vis fn $ name() {}};
+        }
+        foo!(pub foo);
+        foo!(pub(crate) bar);
+        foo!(pub(in a::b) baz);
+    """, """
+        pub fn foo() {}
+    """, """
+        pub(crate) fn bar() {}
+    """, """
+        pub(in a::b) fn baz() {}
+    """)
 }
