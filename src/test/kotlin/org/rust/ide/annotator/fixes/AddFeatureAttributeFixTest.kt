@@ -43,7 +43,7 @@ class AddFeatureAttributeFixTest : RsAnnotationTestBase() {
         use <error>crate/*caret*/</error>::foo::Foo;
     """)
 
-    @MockRustcVersion("1.30.0-nightly")
+    @MockRustcVersion("1.29.0-nightly")
     fun `test add crate_in_paths feature`() = checkFixByText("Add `crate_in_paths` feature", """
         use <error>crate/*caret*/</error>::foo::Foo;
     """, """
