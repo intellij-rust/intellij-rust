@@ -342,6 +342,7 @@ private class MacroPattern private constructor(
                 "block" -> RustParser.SimpleBlock(adaptBuilder, 0)
                 "item" -> parseItem(adaptBuilder)
                 "meta" -> RustParser.MetaItemWithoutTT(adaptBuilder, 0)
+                "vis" -> RustParser.Vis(adaptBuilder, 0)
                 "tt" -> RustParser.TT(adaptBuilder, 0)
                 else -> false
             }
