@@ -136,6 +136,7 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
         private var toOpen: File? = null
         private val helloWorld = """fn main() { println!("Hello, World!") }"""
         private val simpleTest = """#[test] fn test_simple() { assert_eq!(2 + 2, 5) }"""
+        private val simpleBench = """#[bench] fn bench_simple() {}"""
         private val hello = """pub fn hello() -> String { return "Hello, World!".to_string(); }"""
 
         fun bin(name: String, path: String, @Language("Rust") code: String = helloWorld): TestProjectBuilder {
@@ -150,6 +151,11 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
 
         fun test(name: String, path: String, @Language("Rust") code: String = simpleTest): TestProjectBuilder {
             addTarget(name, TargetKind.TEST, CrateType.BIN, Edition.EDITION_2015, path, code)
+            return this
+        }
+
+        fun bench(name: String, path: String, @Language("Rust") code: String = simpleBench): TestProjectBuilder {
+            addTarget(name, TargetKind.BENCH, CrateType.BIN, Edition.EDITION_2015, path, code)
             return this
         }
 

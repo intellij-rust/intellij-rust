@@ -1,0 +1,10 @@
+<configurations>
+  <configuration name="Bench multiple selected files" class="CargoCommandConfiguration">
+    <option name="channel" value="DEFAULT" />
+    <option name="command" value="bench --package test-package --bench foo --bench baz &quot;&quot;" />
+    <option name="allFeatures" value="true" />
+    <option name="backtrace" value="SHORT" />
+    <option name="workingDirectory" value="file:///my-crate" />
+    <envs />
+  </configuration>
+</configurations>
