@@ -30,9 +30,9 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     """)
 
     fun `test function in a module`() = doTestByText("""
-        mod tests { // - Test lib::tests
+        mod module { // - Test module
             #[test]
-            fn has_icon() { assert(true) } // - Test tests::has_icon
+            fn has_icon() { assert(true) } // - Test module::has_icon
             fn no_icon() { assert(true) }
         }
     """)
