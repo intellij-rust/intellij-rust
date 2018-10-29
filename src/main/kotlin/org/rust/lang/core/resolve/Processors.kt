@@ -77,6 +77,18 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
     return result
 }
 
+fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Unit): RsElement? {
+    var result: RsElement? = null
+    f { e ->
+        if (e.name == referenceName) {
+            result = e.element
+            return@f result != null
+        }
+        false
+    }
+    return result
+}
+
 fun collectCompletionVariants(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {
     val result = mutableListOf<LookupElement>()
     f { e ->

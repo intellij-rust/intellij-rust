@@ -587,14 +587,27 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """)
 
     fun `test expend macro definition`() = doTest("""
-       macro_rules! foo {
-           () => {
-               macro_rules! bar { () => {} }
-           }
-       }
-       foo!();
+        macro_rules! foo {
+            () => {
+                macro_rules! bar { () => {} }
+            }
+        }
+        foo!();
     """, """
         macro_rules! bar { () => {} }
+    """)
+
+    fun `test macro defined with a macro`() = doTest("""
+        macro_rules! foo {
+            () => {
+                macro_rules! bar { () => { fn foo() {} } }
+                bar!();
+            }
+        }
+        foo!();
+    """, """
+        macro_rules! bar { () => { fn foo() {} } }
+        fn foo() {}
     """)
 
     fun `test expand vis matcher`() = doTest("""
