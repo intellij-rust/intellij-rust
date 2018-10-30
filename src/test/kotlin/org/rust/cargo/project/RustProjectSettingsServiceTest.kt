@@ -7,6 +7,7 @@ package org.rust.cargo.project
 
 import com.intellij.testFramework.LightPlatformTestCase
 import org.intellij.lang.annotations.Language
+import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl
 import org.rust.cargo.project.settings.impl.XML_FORMAT_VERSION
@@ -99,5 +100,32 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(true, service.runExternalLinterOnTheFly)
         assertEquals("", service.externalLinterArguments)
         assertEquals(MacroExpansionEngine.DISABLED, service.macroExpansionEngine)
+    }
+
+    fun `test defaults`() {
+        val service = RustProjectSettingsServiceImpl(LightPlatformTestCase.getProject())
+        @Language("XML")
+        val text = """
+            <State>
+            </State>
+        """.trimIndent()
+        service.loadState(elementFromXmlString(text))
+
+        assertEquals(XML_FORMAT_VERSION, service.version)
+        assertEquals(null, service.toolchain)
+        assertEquals(true, service.autoUpdateEnabled)
+        assertEquals(ExternalLinter.CARGO_CHECK, service.externalLinter)
+        assertEquals(null, service.explicitPathToStdlib)
+        assertEquals(false, service.runExternalLinterOnTheFly)
+        assertEquals("", service.externalLinterArguments)
+        assertEquals(true, service.compileAllTargets)
+        assertEquals(false, service.useOffline)
+        assertEquals(MacroExpansionEngine.OLD, service.macroExpansionEngine)
+        assertEquals(true, service.showTestToolWindow)
+        assertEquals(true, service.doctestInjectionEnabled)
+        assertEquals(false, service.runRustfmtOnSave)
+        assertEquals(false, service.useSkipChildren)
+        assertEquals(RustProjectSettingsService.FeaturesSetting.Default, service.cargoFeatures)
+        assertEquals(listOf<String>(), service.cargoFeaturesAdditional)
     }
 }
