@@ -25,7 +25,8 @@ fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
     // fn moo(...)
     //     -> ...
     //     where ... {}
-        childType == RET_TYPE || childType == WHERE_CLAUSE -> Indent.getNormalIndent()
+        childType == RET_TYPE ||
+            (childType == WHERE_CLAUSE && ctx.rustSettings.INDENT_WHERE_CLAUSE) -> Indent.getNormalIndent()
 
     // Indent blocks excluding braces
         node.isDelimitedBlock -> getIndentIfNotDelim(child, node)
