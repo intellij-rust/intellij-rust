@@ -1,4 +1,4 @@
-from lldb import SBValue, SBType, SBError
+from lldb import SBValue, SBError
 from lldb.formatters import Logger
 
 
@@ -36,7 +36,7 @@ from lldb.formatters import Logger
 
 class DefaultSynthteticProvider:
     def __init__(self, valobj, dict):
-        # type: (SBValue, dict) -> StdVecSyntheticProvider
+        # type: (SBValue, dict) -> DefaultSynthteticProvider
         logger = Logger.Logger()
         logger >> "Default synthetic provider for " + str(valobj.GetName())
         self.valobj = valobj
@@ -62,6 +62,34 @@ class DefaultSynthteticProvider:
         return self.valobj.MightHaveChildren()
 
 
+class EmptySyntheticProvider:
+    def __init__(self, valobj, dict):
+        # type: (SBValue, dict) -> EmptySyntheticProvider
+        logger = Logger.Logger()
+        logger >> "[EmptySyntheticProvider] for " + str(valobj.GetName())
+        self.valobj = valobj
+
+    def num_children(self):
+        # type: () -> int
+        return 0
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        return None
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        return None
+
+    def update(self):
+        # type: () -> None
+        pass
+
+    def has_children(self):
+        # type: () -> bool
+        return False
+
+
 def SizeSummaryProvider(valobj, dict):
     # type: (SBValue, dict) -> str
     return 'size=' + str(valobj.GetNumChildren())
@@ -79,7 +107,7 @@ class StdVecSyntheticProvider:
     def __init__(self, valobj, dict):
         # type: (SBValue, dict) -> StdVecSyntheticProvider
         logger = Logger.Logger()
-        logger >> "Providing synthetic children for a Vec named " + str(valobj.GetName())
+        logger >> "[StdVecSyntheticProvider] for " + str(valobj.GetName())
         self.valobj = valobj
         self.update()
 
@@ -104,11 +132,11 @@ class StdVecSyntheticProvider:
 
     def update(self):
         # type: () -> None
-        self.length = self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()  # type: int
-        self.buf = self.valobj.GetChildMemberWithName("buf")  # type: SBValue
-        self.data_ptr = self.buf.GetChildAtIndex(0).GetChildAtIndex(0).GetChildAtIndex(0)  # type: SBValue
-        self.element_type = self.data_ptr.GetType().GetPointeeType()  # type: SBType
-        self.element_type_size = self.element_type.GetByteSize()  # type: int
+        self.length = self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
+        self.buf = self.valobj.GetChildMemberWithName("buf")
+        self.data_ptr = self.buf.GetChildAtIndex(0).GetChildAtIndex(0).GetChildAtIndex(0)
+        self.element_type = self.data_ptr.GetType().GetPointeeType()
+        self.element_type_size = self.element_type.GetByteSize()
 
     def has_children(self):
         # type: () -> bool
@@ -118,6 +146,8 @@ class StdVecSyntheticProvider:
 def StdStringSummaryProvider(valobj, dict):
     # type: (SBValue, dict) -> str
     assert valobj.GetNumChildren() == 1
+    logger = Logger.Logger()
+    logger >> "[StdStringSummaryProvider] for " + str(valobj.GetName())
 
     vec = valobj.GetChildAtIndex(0)
     length = vec.GetNumChildren()
@@ -128,6 +158,8 @@ def StdStringSummaryProvider(valobj, dict):
 def StdStrSummaryProvider(valobj, dict):
     # type: (SBValue, dict) -> str
     assert valobj.GetNumChildren() == 2
+    logger = Logger.Logger()
+    logger >> "[StdStrSummaryProvider] for " + str(valobj.GetName())
 
     length = valobj.GetChildMemberWithName("length").GetValueAsUnsigned()
     data_ptr = valobj.GetChildMemberWithName("data_ptr")
@@ -140,3 +172,97 @@ def StdStrSummaryProvider(valobj, dict):
         return '"%s"' % data
     else:
         return '<error: %s>' % error.GetCString()
+
+
+class StructSyntheticProvider:
+    """Pretty-printer for structs and struct enum variants"""
+
+    def __init__(self, valobj, dict, is_variant=False):
+        # type: (SBValue, dict) -> StructSyntheticProvider
+        logger = Logger.Logger()
+        self.valobj = valobj
+        self.is_variant = is_variant
+        self.type = valobj.GetType()
+        self.fields = {}
+
+        if is_variant:
+            logger >> "[StructVariantSyntheticProvider] for " + str(valobj.GetName())
+            self.fields_count = self.type.GetNumberOfFields() - 1
+            real_fields = self.type.fields[1:]
+        else:
+            logger >> "[StructSyntheticProvider] for " + str(valobj.GetName())
+            self.fields_count = self.type.GetNumberOfFields()
+            real_fields = self.type.fields
+
+        for number, field in enumerate(real_fields):
+            self.fields[field.name] = number
+
+    def num_children(self):
+        # type: () -> int
+        return self.fields_count
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        return self.fields.get(name, -1)
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        if self.is_variant:
+            field = self.type.GetFieldAtIndex(index + 1)
+        else:
+            field = self.type.GetFieldAtIndex(index)
+        return self.valobj.GetChildMemberWithName(field.name)
+
+    def update(self):
+        # type: () -> None
+        pass
+
+    def has_children(self):
+        # type: () -> bool
+        return True
+
+
+class TupleSyntheticProvider:
+    """Pretty-printer for tuples and tuple enum variants"""
+
+    def __init__(self, valobj, dict, is_variant=False):
+        # type: (SBValue, dict) -> TupleSyntheticProvider
+        logger = Logger.Logger()
+        self.valobj = valobj
+        self.is_variant = is_variant
+        self.type = valobj.GetType()
+
+        if is_variant:
+            logger >> "[TupleVariantSyntheticProvider] for " + str(valobj.GetName())
+            self.size = self.type.GetNumberOfFields() - 1
+        else:
+            logger >> "[TupleSyntheticProvider] for " + str(valobj.GetName())
+            self.size = self.type.GetNumberOfFields()
+
+    def num_children(self):
+        # type: () -> int
+        return self.size
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        if name.isdigit():
+            return int(name)
+        else:
+            return -1
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        if self.is_variant:
+            field = self.type.GetFieldAtIndex(index + 1)
+        else:
+            field = self.type.GetFieldAtIndex(index)
+        element = self.valobj.GetChildMemberWithName(field.name)
+        return self.valobj.CreateValueFromData(str(index), element.GetData(), element.GetType())
+
+    def update(self):
+        # type: () -> None
+        pass
+
+    def has_children(self):
+        # type: () -> bool
+        return True
