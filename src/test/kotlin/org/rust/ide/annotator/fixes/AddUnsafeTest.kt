@@ -46,6 +46,20 @@ class AddUnsafeTest : RsAnnotationTestBase() {
         }
     """)
 
+    fun `test add unsafe to function (external linkage)`() = checkFixByText("Add unsafe to function", """
+        extern "C" { fn foo(); }
+
+        fn test() {
+            <error>foo()/*caret*/</error>;
+        }
+    """, """
+        extern "C" { fn foo(); }
+
+        unsafe fn test() {
+            foo();
+        }
+    """)
+
     fun `test add unsafe to block`() = checkFixByText("Add unsafe to block", """
         unsafe fn foo() {}
 
@@ -115,6 +129,20 @@ class AddUnsafeTest : RsAnnotationTestBase() {
         fn main() {
             let char_ptr: *const char = 42 as *const _;
             let val = unsafe { *char_ptr };
+        }
+    """)
+
+    fun `test wrap function call with unsafe block (external linkage)`() = checkFixByText("Surround with unsafe block", """
+        extern "C" { fn foo(); }
+
+        fn test() {
+            <error>foo()/*caret*/</error>;
+        }
+    """, """
+        extern "C" { fn foo(); }
+
+        fn test() {
+            unsafe { foo(); }
         }
     """)
 }

@@ -120,6 +120,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
     private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCall) {
         val fn = o.reference.resolve() as? RsFunction ?: return
+
         if (fn.isUnsafe) {
             checkUnsafeCall(holder, o.parentDotExpr)
         }
@@ -128,6 +129,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
         val path = (o.expr as? RsPathExpr)?.path ?: return
         val fn = path.reference.resolve() as? RsFunction ?: return
+
         if (fn.isUnsafe) {
             checkUnsafeCall(holder, o)
         }
