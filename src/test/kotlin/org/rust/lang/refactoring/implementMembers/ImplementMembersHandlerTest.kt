@@ -319,6 +319,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             const C5: &'a C;
             fn f6(_: &'a D<'a, D<'a, D<'a, S<'a>>>>) -> &'a D<'a, D<'a, D<'a, S<'a>>>>;
             const C6: &'a D<'a, D<'a, D<'a, S<'a>>>>;
+            fn f7(&self) -> &str;
         }
         impl<'b> T<'b> for S<'b> {/*caret*/}
     """, listOf(
@@ -333,7 +334,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
         ImplementMemberSelection("f5(_: &'a C) -> &'a C", true),
         ImplementMemberSelection("C5: &'a C", true),
         ImplementMemberSelection("f6(_: &'a D<'a, D<'a, D<'a, S<'a>>>>) -> &'a D<'a, D<'a, D<'a, S<'a>>>>", true),
-        ImplementMemberSelection("C6: &'a D<'a, D<'a, D<'a, S<'a>>>>", true)
+        ImplementMemberSelection("C6: &'a D<'a, D<'a, D<'a, S<'a>>>>", true),
+        ImplementMemberSelection("f7(&self) -> &str", true)
     ), """
     struct S<'a> { x: &'a str }
     struct D<'a, T> { x: &'a T }
@@ -353,6 +355,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         const C5: &'a C;
         fn f6(_: &'a D<'a, D<'a, D<'a, S<'a>>>>) -> &'a D<'a, D<'a, D<'a, S<'a>>>>;
         const C6: &'a D<'a, D<'a, D<'a, S<'a>>>>;
+        fn f7(&self) -> &str;
     }
     impl<'b> T<'b> for S<'b> {
         fn f1(&'b self) -> &'b str {
@@ -390,6 +393,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
 
         const C6: &'b D<'b, D<'b, D<'b, S<'b>>>> = unimplemented!();
+
+        fn f7(&self) -> &str {
+            unimplemented!()
+        }
     }
     """)
 
