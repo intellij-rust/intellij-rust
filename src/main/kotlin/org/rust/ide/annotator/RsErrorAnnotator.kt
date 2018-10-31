@@ -90,6 +90,21 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         checkReferenceIsPublic(field, o, holder)
     }
 
+    private fun checkStaticUsageIsSafe(ref: RsReferenceElement, holder: AnnotationHolder) {
+        val element = ref.reference.resolve() as? RsConstant ?: return
+        val constantType = when {
+            element.kind == RsConstantKind.MUT_STATIC -> "mutable"
+            element.kind == RsConstantKind.STATIC && element.parent is RsForeignModItem -> "extern"
+            else -> return
+        }
+
+        val expr = ref.ancestorOrSelf<RsExpr>() ?: return
+        if (expr.isInUnsafeBlockOrFn()) return
+
+        RsDiagnostic.UnsafeError(expr, "Use of $constantType static is unsafe and requires unsafe function or block")
+            .addToHolder(holder)
+    }
+
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
         val element = ref.reference.resolve() as? RsVisible ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
@@ -215,6 +230,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             }
         }
 
+        checkStaticUsageIsSafe(path, holder)
         checkReferenceIsPublic(path, path, holder)
     }
 
