@@ -557,7 +557,7 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, CONST_MASK, psi.isConst)
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
             flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
-            flags = BitUtil.set(flags, VARIADIC_MASK, psi.isExtern)
+            flags = BitUtil.set(flags, VARIADIC_MASK, psi.isVariadic)
             return RsFunctionStub(parentStub, this,
                 name = psi.name,
                 abiName = psi.abiName,
