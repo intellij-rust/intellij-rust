@@ -5,7 +5,6 @@
 
 package org.rust.ide.update
 
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -16,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryAdapter
 import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
@@ -24,6 +22,7 @@ import com.intellij.util.io.HttpRequests
 import org.jdom.JDOMException
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.plugin
 import java.io.IOException
 import java.net.URLEncoder
 import java.net.UnknownHostException
@@ -57,8 +56,6 @@ class UpdateComponent : ApplicationComponent, Disposable {
 
     companion object {
         private val LAST_UPDATE: String = "org.rust.LAST_UPDATE"
-        private val PLUGIN_ID: String = "org.rust.lang"
-
         private val LOG = Logger.getInstance(UpdateComponent::class.java)
 
         fun update() {
@@ -90,7 +87,7 @@ class UpdateComponent : ApplicationComponent, Disposable {
         private val updateUrl: String get() {
             val applicationInfo = ApplicationInfoEx.getInstanceEx()
             val buildNumber = applicationInfo.build.asString()
-            val plugin = PluginManager.getPlugin(PluginId.getId(PLUGIN_ID))!!
+            val plugin = plugin()
             val pluginId = plugin.pluginId.idString
             val os = URLEncoder.encode("${SystemInfo.OS_NAME} ${SystemInfo.OS_VERSION}", Charsets.UTF_8.name())
             val uid = PermanentInstallationID.get()
