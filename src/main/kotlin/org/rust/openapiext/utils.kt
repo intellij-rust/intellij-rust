@@ -5,9 +5,12 @@
 
 package org.rust.openapiext
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -125,3 +128,7 @@ inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, default
         val value = defaultValue()
         putUserDataIfAbsent(key, SoftReference(value)).get() ?: value
     }
+
+const val PLUGIN_ID: String = "org.rust.lang"
+
+fun plugin(): IdeaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(PLUGIN_ID))!!
