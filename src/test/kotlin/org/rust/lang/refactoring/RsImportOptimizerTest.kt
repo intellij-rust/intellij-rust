@@ -6,14 +6,21 @@
 package org.rust.lang.refactoring
 
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 class RsImportOptimizerTest: RsTestBase() {
 
     fun `test should do nothing`() = doTest("""
         use foo;
+
+        fn main() {}
     """, """
         use foo;
+
+        fn main() {}
     """)
 
     fun `test extern crates should be sorted`() = doTest("""
@@ -62,6 +69,8 @@ class RsImportOptimizerTest: RsTestBase() {
 
         use foo;
         use bar;
+
+        fn main() {}
     """, """
         #![allow(non_snake_case)]
         extern crate log;
@@ -69,6 +78,7 @@ class RsImportOptimizerTest: RsTestBase() {
         use bar;
         use foo;
 
+        fn main() {}
     """)
 
     fun `test should be after inner attributes 2`() = doTest("""
@@ -76,57 +86,81 @@ class RsImportOptimizerTest: RsTestBase() {
 
         use foo;
         use bar;
+
+        fn main() {}
     """, """
         #![allow(non_snake_case)]
 
         use bar;
         use foo;
 
+        fn main() {}
     """)
 
     fun `test sort alphabetical of useItem`() = doTest("""
         use foo;
         use bar;
+
+        fn main() {}
     """, """
         use bar;
         use foo;
 
+        fn main() {}
     """)
 
     fun `test sort alphabetical of multi layer paths`() = doTest("""
         use test::foo;
         use test::bar;
+
+        fn main() {}
     """, """
         use test::bar;
         use test::foo;
 
+        fn main() {}
     """)
 
     fun `test sort alphabetical of useSpeck`() = doTest("""
         use foo::{test, foo, bar};
+
+        fn main() {}
     """, """
         use foo::{bar, foo, test};
+
+        fn main() {}
     """)
 
     fun `test sort alphabetical with self at start`() = doTest("""
         use foo::{test, foo, bar, self};
+
+        fn main() {}
     """, """
         use foo::{self, bar, foo, test};
+
+        fn main() {}
     """)
 
     fun `test sort alphabetical with self at star`() = doTest("""
         use foo::{test, foo, bar, *};
+
+        fn main() {}
     """, """
         use foo::{*, bar, foo, test};
+
+        fn main() {}
     """)
 
     fun `test sort alphabetical with multiple layer`() = doTest("""
         use foo::bar;
         use bar::bar;
+
+        fn main() {}
     """, """
         use bar::bar;
         use foo::bar;
 
+        fn main() {}
     """)
 
     fun `test sort alphabetical with multiple layer of groups`() = doTest("""
@@ -134,11 +168,15 @@ class RsImportOptimizerTest: RsTestBase() {
             baz::{Test, quux::Bar},
             bar::{Foo, Bar},
         };
+
+        fn main() {}
     """, """
         use foo::{
             bar::{Bar, Foo},
             baz::{quux::Bar, Test},
         };
+
+        fn main() {}
     """)
 
     fun `test should sort mod areas by its own`() = doTest("""
@@ -169,27 +207,46 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
-    fun `test remove curly braces simple`() = doTest(
-        "use std::{mem};",
-        "use std::mem;"
-    )
+    fun `test remove curly braces simple`() = doTest("""
+        use std::{mem};
 
-    fun `test remove curly braces with no path`() = doTest(
-        "use {std};",
-        "use std;"
-    )
+        fn main() {}
+    """, """
+        use std::mem;
 
-    fun `test remove curly braces longer`() = doTest(
-        "use foo::bar::baz::{qux};",
-        "use foo::bar::baz::qux;"
-    )
+        fn main() {}
+    """)
+
+    fun `test remove curly braces with no path`() = doTest("""
+        use {std};
+
+        fn main() {}
+    """, """
+        use std;
+
+        fn main() {}
+    """)
+
+    fun `test remove curly braces longer`() = doTest("""
+        use foo::bar::baz::{qux};
+
+        fn main() {}
+    """, """
+        use foo::bar::baz::qux;
+
+        fn main() {}
+    """)
 
     fun `test remove curly braces extra`() = doTest("""
         #[macro_use]
         pub use /*comment*/ std::{mem};
+
+        fn main() {}
     """, """
         #[macro_use]
         pub use /*comment*/ std::mem;
+
+        fn main() {}
     """)
 
     fun `test do not move use items from test mod`() = doTest("""
@@ -232,7 +289,105 @@ class RsImportOptimizerTest: RsTestBase() {
         }
     """)
 
-    private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String){
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test group imports by semantics`() = doTest("""
+        extern crate dep_lib_target;
+
+        use bbb::{fff, eee};
+        use aaa::bbb::ccc;
+        use std::string;
+        use std::{mem, io};
+        use dep_lib_target;
+        fn main() {}
+    """, """
+        extern crate dep_lib_target;
+
+        use std::{io, mem};
+        use std::string;
+
+        use dep_lib_target;
+
+        use aaa::bbb::ccc;
+        use bbb::{eee, fff};
+
+        fn main() {}
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test group imports by semantics with mod`() = doTest("""
+        use bbb::{fff, eee};
+        use super::ccc::bbb;
+        use aaa::bbb;
+        use crate::bbb::ccc;
+        use crate::aaa::bbb;
+        use self::aaa;
+        use sss::aaa;
+        use std::{mem, string, io};
+        mod aaa {
+            use bbb::*;
+            use xxx::yyy;
+            use super::aaa::bbb::ccc;
+            use std::io;
+            pub mod bbb {
+                pub mod ccc {}
+            }
+        }
+    """, """
+        use std::{io, mem, string};
+
+        use aaa::bbb;
+        use bbb::{eee, fff};
+        use sss::aaa;
+
+        use crate::aaa::bbb;
+        use crate::bbb::ccc;
+
+        use super::ccc::bbb;
+
+        use self::aaa;
+
+        mod aaa {
+            use std::io;
+
+            use bbb::*;
+            use xxx::yyy;
+
+            use super::aaa::bbb::ccc;
+
+            pub mod bbb {
+                pub mod ccc {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test group imports by semantics remove extra newlines`() = doTest("""
+        use aaa::bbb;
+        mod aaa {
+            pub mod bbb {
+            }
+        }
+
+        use ccc;
+        use std::{mem, string, io};
+
+
+        mod ccc {}
+    """, """
+        use std::{io, mem, string};
+
+        use aaa::bbb;
+        use ccc;
+
+        mod aaa {
+            pub mod bbb {
+            }
+        }
+
+        mod ccc {}
+    """)
+
+    private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) {
         checkByText(code.trimIndent(), excepted.trimIndent()) {
             myFixture.performEditorAction("OptimizeImports")
         }
