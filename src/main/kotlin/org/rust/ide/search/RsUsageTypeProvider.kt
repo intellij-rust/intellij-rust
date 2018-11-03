@@ -16,7 +16,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
     private val IMPL = UsageType("impl")
 
     private val TYPE_REFERENCE = UsageType("type reference")
-    private val TRAIT_REF = UsageType("trait ref")
+    private val TRAIT_REFERENCE = UsageType("trait reference")
 
     private val EXPR = UsageType("expr")
     private val DOT_EXPR = UsageType("dot expr")
@@ -69,7 +69,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
             is RsUseSpeck -> USE
             is RsStructLiteral -> INIT_STRUCT
             is RsStructLiteralField -> INIT_FIELD
-            is RsTraitRef -> TRAIT_REF
+            is RsTraitRef -> TRAIT_REFERENCE
             is RsMethodCall -> METHOD_CALL
             is RsMetaItem -> META_ITEM
             is RsFieldLookup -> FIELD

@@ -98,9 +98,9 @@ class RsFindUsagesTest : RsTestBase() {
         trait B {}
             //^
         struct A;
-        impl B for A {}// - trait ref
+        impl B for A {}// - trait reference
 
-        fn bar<T: B>() {}// - trait ref
+        fn bar<T: B>() {}// - trait reference
 
         mod a {
             use super::B;// - use
