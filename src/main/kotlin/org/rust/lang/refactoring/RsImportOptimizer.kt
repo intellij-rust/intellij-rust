@@ -6,13 +6,13 @@
 package org.rust.lang.refactoring
 
 import com.intellij.lang.ImportOptimizer
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.formatter.processors.asTrivial
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsAttr
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.childrenOfType
+import org.rust.lang.core.psi.ext.*
 
 class RsImportOptimizer : ImportOptimizer {
     override fun supports(file: PsiFile?): Boolean = file is RsFile
@@ -72,18 +72,63 @@ class RsImportOptimizer : ImportOptimizer {
             val first = mod.childrenOfType<RsElement>()
                 .firstOrNull { it.textOffset >= offset && it !is RsExternCrateItem && it !is RsAttr } ?: return
             val psiFactory = RsPsiFactory(mod.project)
-            val sortedUses = uses
-                .sortedBy { it.useSpeck?.pathText }
-                .mapNotNull { it.copy() as? RsUseItem }
-            sortedUses
-                .mapNotNull { it.useSpeck }
-                .forEach { optimizeUseSpeck(psiFactory, it) }
-            for (importPath in sortedUses) {
-                mod.addBefore(importPath, first)
+            val sortedUsesGroups = uses
+                .map { UseItemWrapper(it) }
+                .groupBy({ it.packageGroupLevel }, { it })
+                .map { (groupLevel, useItemWrapper) ->
+                    val useItems = useItemWrapper
+                        .sortedBy { it.useSpeckText }
+                        .mapNotNull { it.useItem.copy() as? RsUseItem }
+                    groupLevel to useItems
+                }
+                .sortedBy { it.first }
+            sortedUsesGroups.forEach { (_, group) ->
+                group
+                    .mapNotNull { it.useSpeck }
+                    .forEach { optimizeUseSpeck(psiFactory, it) }
             }
-            uses.forEach { it.delete() }
+
+            for ((_, sortedUses) in sortedUsesGroups) {
+                var lastAddedUseItem: PsiElement? = null
+                for (importPath in sortedUses) {
+                    lastAddedUseItem = mod.addBefore(importPath, first)
+                    mod.addAfter(psiFactory.createNewline(), lastAddedUseItem)
+                }
+                mod.addAfter(psiFactory.createNewline(), lastAddedUseItem)
+            }
+            uses.forEach {
+                (it.nextSibling as? PsiWhiteSpace)?.delete()
+                it.delete()
+            }
         }
     }
 }
 
 private val RsUseSpeck.pathText get() = path?.text?.toLowerCase()
+
+private class UseItemWrapper(val useItem: RsUseItem) {
+    private val basePath: RsPath? = useItem.useSpeck?.path?.basePath()
+
+    val useSpeckText: String? = useItem.useSpeck?.pathText
+
+    // `use` order:
+    // 1. Standard library (stdlib)
+    // 2. Related third party (extern crate)
+    // 3. Local
+    //    - otherwise
+    //    - crate::
+    //    - super::
+    //    - self::
+    val packageGroupLevel: Int = when {
+        basePath?.self != null -> 6
+        basePath?.`super` != null -> 5
+        basePath?.crate != null -> 4
+        else -> when (basePath?.reference?.resolve()?.containingCargoPackage?.origin) {
+            PackageOrigin.WORKSPACE -> 3
+            PackageOrigin.TRANSITIVE_DEPENDENCY -> 2
+            PackageOrigin.DEPENDENCY -> 2
+            PackageOrigin.STDLIB -> 1
+            else -> 3
+        }
+    }
+}
