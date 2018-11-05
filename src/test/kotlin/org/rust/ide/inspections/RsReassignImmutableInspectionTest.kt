@@ -24,7 +24,7 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
     fun `test E0384 reassign mutable static`() = checkByText("""
         fn main() {
             static mut X: u32 = 5;
-            X = 3;
+            unsafe { X = 3; }
         }
     """)
 
