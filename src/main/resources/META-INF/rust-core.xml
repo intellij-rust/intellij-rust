@@ -851,6 +851,8 @@
 
         <lang.namesValidator language="Rust" implementationClass="org.rust.ide.refactoring.RsNamesValidator"/>
 
+        <inlineActionHandler implementation="org.rust.ide.refactoring.inline.RsInlineFunctionHandler"/>
+
         <!-- Postfix templates -->
         <codeInsight.template.postfixTemplateProvider language="Rust"
                                                       implementationClass="org.rust.ide.template.postfix.RsPostfixTemplateProvider"/>

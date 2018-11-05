@@ -183,9 +183,8 @@ class RsPsiFactory(
         createFromText("fn main() { $text 92; }")
             ?: error("Failed to create statement from text: `$text`")
 
-    fun createLetDeclaration(name: String, expr: RsExpr, mutable: Boolean = false, type: RsTypeReference? = null): RsLetDecl =
-        createStatement("let ${"mut".iff(mutable)}$name${if (type != null) ": ${type.text}" else ""} = ${expr.text};") as RsLetDecl
-
+    fun createLetDeclaration(name: String, expr: RsExpr?, mutable: Boolean = false, type: RsTypeReference? = null): RsLetDecl =
+        createStatement("let ${"mut".iff(mutable)}$name${if (type != null) ": ${type.text}" else ""} ${if (expr != null) "= ${expr.text}" else ""};") as RsLetDecl
 
     fun createType(text: CharSequence): RsTypeReference =
         tryCreateType(text)
