@@ -539,6 +539,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.UnwrapToMatchIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.UnwrapToTryIntention</className>
             <category>Rust</category>
         </intentionAction>
