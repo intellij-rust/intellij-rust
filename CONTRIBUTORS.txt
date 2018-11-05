@@ -30,6 +30,7 @@ farodin91
 FatalCatharsis
 Filippok
 framlog
+garyttierney
 greg-kargin
 Guillaume Eveillard
 harrisjt
@@ -37,6 +38,7 @@ HeyLey
 himikof
 HybridEidolon
 idubrov
+isamborskiy
 JakubAdamWieczorek
 johnthagen
 jonas-schievink
@@ -61,7 +63,6 @@ mrhota
 msmorgan
 netvl
 nicholastmosher
-Nilera
 ninjabear
 oistein
 oleg-semenov

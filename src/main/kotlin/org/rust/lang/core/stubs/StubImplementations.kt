@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 143
+        override fun getStubVersion(): Int = 145
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -521,6 +521,7 @@ class RsFunctionStub(
     override val isPublic: Boolean get() = BitUtil.isSet(flags, PUBLIC_MASK)
     val isAbstract: Boolean get() = BitUtil.isSet(flags, ABSTRACT_MASK)
     val isTest: Boolean get() = BitUtil.isSet(flags, TEST_MASK)
+    val isBench: Boolean get() = BitUtil.isSet(flags, BENCH_MASK)
     val isCfg: Boolean get() = BitUtil.isSet(flags, CFG_MASK)
     val isConst: Boolean get() = BitUtil.isSet(flags, CONST_MASK)
     val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
@@ -551,11 +552,12 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, PUBLIC_MASK, psi.isPublic)
             flags = BitUtil.set(flags, ABSTRACT_MASK, psi.isAbstract)
             flags = BitUtil.set(flags, TEST_MASK, psi.isTest)
+            flags = BitUtil.set(flags, BENCH_MASK, psi.isBench)
             flags = BitUtil.set(flags, CFG_MASK, psi.queryAttributes.hasCfgAttr())
             flags = BitUtil.set(flags, CONST_MASK, psi.isConst)
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
             flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
-            flags = BitUtil.set(flags, VARIADIC_MASK, psi.isExtern)
+            flags = BitUtil.set(flags, VARIADIC_MASK, psi.isVariadic)
             return RsFunctionStub(parentStub, this,
                 name = psi.name,
                 abiName = psi.abiName,
@@ -570,11 +572,12 @@ class RsFunctionStub(
         private val PUBLIC_MASK: Int = makeBitMask(0)
         private val ABSTRACT_MASK: Int = makeBitMask(1)
         private val TEST_MASK: Int = makeBitMask(2)
-        private val CFG_MASK: Int = makeBitMask(3)
-        private val CONST_MASK: Int = makeBitMask(4)
-        private val UNSAFE_MASK: Int = makeBitMask(5)
-        private val EXTERN_MASK: Int = makeBitMask(6)
-        private val VARIADIC_MASK: Int = makeBitMask(7)
+        private val BENCH_MASK: Int = makeBitMask(3)
+        private val CFG_MASK: Int = makeBitMask(4)
+        private val CONST_MASK: Int = makeBitMask(5)
+        private val UNSAFE_MASK: Int = makeBitMask(6)
+        private val EXTERN_MASK: Int = makeBitMask(7)
+        private val VARIADIC_MASK: Int = makeBitMask(8)
     }
 }
 

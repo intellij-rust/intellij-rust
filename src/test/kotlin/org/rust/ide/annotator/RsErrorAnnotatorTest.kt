@@ -129,7 +129,7 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
             fn variadic_2(p1: u32, p2: u32, ...);
         }
 
-        fn main() {
+        unsafe fn test() {
             variadic_1<error descr="This function takes at least 1 parameter but 0 parameters were supplied [E0060]">()</error>;
             variadic_1(42);
             variadic_1(42, 43);
@@ -810,7 +810,7 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
             use m::*;
 
             fn main() {
-                foo(1, 2, 3);
+                unsafe { foo(1, 2, 3); }
                 bar<error>(92)</error>;
                 let _ = S {};
             }  //^
@@ -1271,5 +1271,23 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         impl <error descr="Expected trait, found module `a` [E0404]">a</error> for S {}
         fn foo<A: <error descr="Expected trait, found struct `S` [E0404]">S</error>>() {}
         impl Trait for S {}
+    """)
+
+    fun `test extern static requires unsafe`() = checkErrors("""
+        extern {
+            static C: i32;
+        }
+
+        fn main() {
+            let a = <error descr="Use of extern static is unsafe and requires unsafe function or block [E0133]">C</error>;
+        }
+    """)
+
+    fun `test need unsafe static mutable`() = checkErrors("""
+        static mut test : u8 = 0;
+
+        fn main() {
+            <error descr="Use of mutable static is unsafe and requires unsafe function or block [E0133]">test</error> += 1;
+        }
     """)
 }

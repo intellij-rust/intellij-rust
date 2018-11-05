@@ -28,6 +28,11 @@ val RsFunction.isTest: Boolean get() {
     return stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
 }
 
+val RsFunction.isBench: Boolean get() {
+    val stub = stub
+    return stub?.isBench ?: queryAttributes.hasAtomAttribute("bench")
+}
+
 val RsFunction.isConst: Boolean get() {
     val stub = stub
     return stub?.isConst ?: (const != null)
@@ -82,7 +87,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 
     override val isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
 
-    override val isUnsafe: Boolean get() = this.stub?.isUnsafe ?: (unsafe != null)
+    override val isUnsafe: Boolean get() = this.stub?.isUnsafe ?: (unsafe != null || parent is RsForeignModItem)
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 

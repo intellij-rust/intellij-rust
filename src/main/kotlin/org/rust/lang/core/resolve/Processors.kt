@@ -32,10 +32,19 @@ interface ScopeEntry {
  * to the resolve processor
  */
 enum class ScopeEvent : ScopeEntry {
-    // Communicate to the resolve processor that we are about
-    // to process wildecard imports. This is basically a hack
-    // to make winapi 0.2 work in a reasonable amount of time.
-    STAR_IMPORTS;
+    /**
+     * Communicate to the resolve processor that we are about to process wildecard imports.
+     * This is basically a hack to make winapi 0.2 work in a reasonable amount of time.
+     */
+    STAR_IMPORTS,
+    /**
+     * Communicate to the resolve processor that we are about to process dependency crates
+     * (regardless of `extern crate` declarations). It's used to support new paths (since
+     * Rust 1.30 and Rust 2018 edition), where non-global path can start with a crate name,
+     * but local modules have higher priority (if there are a crate and module with the same
+     * names, the module wins)
+     */
+    IMPLICIT_CRATES;
 
     override val element: RsElement? get() = null
 }
@@ -53,7 +62,9 @@ fun collectPathResolveVariants(
 ): List<BoundElement<RsElement>> {
     val result = mutableListOf<BoundElement<RsElement>>()
     f { e ->
-        if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
+        if ((e == ScopeEvent.STAR_IMPORTS || e == ScopeEvent.IMPLICIT_CRATES) && result.isNotEmpty()) {
+            return@f true
+        }
 
         if (e.name == referenceName) {
             val element = e.element ?: return@f false
@@ -71,6 +82,18 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
 
         if (e.name == referenceName) {
             result += e.element ?: return@f false
+        }
+        false
+    }
+    return result
+}
+
+fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Unit): RsElement? {
+    var result: RsElement? = null
+    f { e ->
+        if (e.name == referenceName) {
+            result = e.element
+            return@f result != null
         }
         false
     }

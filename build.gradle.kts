@@ -6,28 +6,17 @@ import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.SourceSet
 import org.jetbrains.grammarkit.tasks.GenerateLexer
 import org.jetbrains.grammarkit.tasks.GenerateParser
-// since kotlin 1.3-rc `KotlinSourceSet` moved back to `org.jetbrains.kotlin.gradle.plugin` package
-import org.jetbrains.kotlin.gradle.plugin.source.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.tasks.Jar
 import java.io.Writer
+import org.jetbrains.intellij.tasks.PrepareSandboxTask
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.file.Path
 import kotlin.concurrent.thread
-
-buildscript {
-    repositories {
-        maven { setUrl("https://jitpack.io") }
-        maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
-    }
-    dependencies {
-        classpath("com.github.hurricup:gradle-grammar-kit-plugin:2018.1.7")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3-M2")
-    }
-}
 
 val CI = System.getenv("CI") != null
 
@@ -36,7 +25,9 @@ val platformVersion = prop("platformVersion")
 
 plugins {
     idea
-    id("org.jetbrains.intellij") version "0.3.7"
+    kotlin("jvm") version "1.3.0"
+    id("org.jetbrains.intellij") version "0.3.12"
+    id("org.jetbrains.grammarkit") version "2018.2.1"
     id("de.undercouch.download") version "3.4.3"
     id("net.saliman.properties") version "1.4.6"
 }
@@ -58,7 +49,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
     }
 
     idea {
@@ -132,7 +122,7 @@ project(":") {
     }
 
     dependencies {
-        compile("org.jetbrains:markdown:0.1.28") {
+        compile("org.jetbrains:markdown:0.1.30") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
@@ -206,6 +196,12 @@ project(":") {
                 .map { it.configurations }
                 .flatMap { listOf(it.compile, it.testCompile) }
                 .forEach { it.resolve() }
+        }
+    }
+
+    tasks.withType<PrepareSandboxTask> {
+        from("prettyPrinters") {
+            into("${intellij.pluginName}/prettyPrinters")
         }
     }
 }

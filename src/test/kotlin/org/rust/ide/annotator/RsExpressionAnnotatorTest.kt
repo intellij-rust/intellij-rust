@@ -149,6 +149,14 @@ class RsExpressionAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
+    fun `test external ABI is unsafe`() = checkErrors("""
+        extern "C" { fn foo(); }
+
+        fn main() {
+            <error descr="Call to unsafe function requires unsafe function or block [E0133]">foo()</error>;
+        }
+    """)
+
     fun `test is unsafe block`() = checkErrors("""
         unsafe fn foo() {}
 
