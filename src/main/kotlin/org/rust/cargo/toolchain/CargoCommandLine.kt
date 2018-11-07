@@ -26,11 +26,12 @@ data class CargoCommandLine(
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
-    val allFeatures: Boolean = true
+    val allFeatures: Boolean = true,
+    val nocapture: Boolean = false
 ) {
 
     /** Appends [arg] to Cargo options, in other words, inserts [arg] before `--` arg in [additionalArguments]. */
-    fun addArgToCargo(arg: String): CargoCommandLine {
+    fun withCargoArgument(arg: String): CargoCommandLine {
         val (cargoArgs, binaryArgs) = splitOnDoubleDash()
         if (arg in cargoArgs) return this
         return if (binaryArgs.isEmpty()) {
@@ -41,7 +42,7 @@ data class CargoCommandLine(
     }
 
     /** Appends [arg] to binary options, in other words, inserts [arg] after `--` arg in [additionalArguments]. */
-    fun addArgToBinary(arg: String): CargoCommandLine {
+    fun withBinaryArgument(arg: String): CargoCommandLine {
         val (cargoArgs, binaryArgs) = splitOnDoubleDash()
         if (arg in binaryArgs) return this
         return copy(additionalArguments = cargoArgs + "--" + arg + binaryArgs)

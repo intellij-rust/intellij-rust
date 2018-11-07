@@ -104,7 +104,7 @@ sealed class TestConfig {
     fun cargoCommandLine(): CargoCommandLine {
         var commandLine = CargoCommandLine.forTargets(targets, commandName, listOf(path))
         if (exact) {
-            commandLine = commandLine.addArgToBinary("--exact")
+            commandLine = commandLine.withBinaryArgument("--exact")
         }
         return commandLine
     }

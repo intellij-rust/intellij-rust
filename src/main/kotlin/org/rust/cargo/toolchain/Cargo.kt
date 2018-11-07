@@ -108,8 +108,15 @@ class Cargo(private val cargoExecutable: Path) {
         generalCommandLine(commandLine, false)
 
     private fun generalCommandLine(rawCommandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
-        val commandLine = if (rawCommandLine.command == "test" && rawCommandLine.allFeatures) {
-            rawCommandLine.addArgToCargo("--all-features")
+        val commandLine = if (rawCommandLine.command == "test") {
+            var tmpCommandLine = rawCommandLine
+            if (rawCommandLine.allFeatures) {
+                tmpCommandLine = tmpCommandLine.withCargoArgument("--all-features")
+            }
+            if (rawCommandLine.nocapture) {
+                tmpCommandLine = tmpCommandLine.withBinaryArgument("--nocapture")
+            }
+            tmpCommandLine
         } else {
             rawCommandLine
         }
