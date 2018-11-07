@@ -16,6 +16,7 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
 import org.rust.cargo.runconfig.test.CargoTestLocator.getTestFnUrl
 import org.rust.cargo.runconfig.test.CargoTestLocator.getTestModUrl
 import org.rust.stdext.removeLast
+import java.io.File
 
 private typealias NodeId = String
 
@@ -64,7 +65,7 @@ class CargoTestEventsConverter(
             }
             startsWith("target") -> {
                 check(suitesStack.isEmpty())
-                val target = text.substringAfterLast("/").substringBeforeLast("-")
+                val target = text.substringAfterLast(File.separator).substringBeforeLast("-")
                 suitesStack.add(target)
                 true
             }
