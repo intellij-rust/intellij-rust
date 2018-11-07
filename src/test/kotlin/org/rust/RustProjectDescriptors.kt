@@ -30,6 +30,10 @@ object WithStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor)
 
 object WithStdlibAndDependencyRustProjectDescriptor : WithRustup(WithDependencyRustProjectDescriptor)
 
+object WithStdlibWithSymlinkRustProjectDescriptor : WithCustomStdlibRustProjectDescriptor(DefaultDescriptor, {
+    System.getenv("RUST_SRC_WITH_SYMLINK")
+})
+
 open class RustProjectDescriptorBase : LightProjectDescriptor() {
 
     open val skipTestReason: String? = null
@@ -76,8 +80,8 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
     override val skipTestReason: String?
         get() {
             if (rustup == null) return "No rustup"
-            if (stdlib == null) return "No stdib"
-            return null
+            if (stdlib == null) return "No stdlib"
+            return delegate.skipTestReason
         }
 
     override val rustcInfo: RustcInfo?
@@ -92,6 +96,29 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
         val stdlib = StandardLibrary.fromFile(stdlib!!)!!
         return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib)
     }
+
+    override fun setUp(fixture: CodeInsightTestFixture) {
+        delegate.setUp(fixture)
+    }
+}
+
+open class WithCustomStdlibRustProjectDescriptor(
+    private val delegate: RustProjectDescriptorBase,
+    private val explicitStdlibPath: () -> String?
+) : RustProjectDescriptorBase() {
+
+    private val stdlib: StandardLibrary? by lazy {
+        val path = explicitStdlibPath() ?: return@lazy null
+        StandardLibrary.fromPath(path)
+    }
+
+    override val skipTestReason: String? get() {
+        if (stdlib == null) return "No stdlib"
+        return delegate.skipTestReason
+    }
+
+    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace =
+        delegate.testCargoProject(module, contentRoot).withStdlib(stdlib!!)
 
     override fun setUp(fixture: CodeInsightTestFixture) {
         delegate.setUp(fixture)
