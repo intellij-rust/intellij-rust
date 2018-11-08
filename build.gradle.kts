@@ -23,6 +23,11 @@ val CI = System.getenv("CI") != null
 val channel = prop("publishChannel")
 val platformVersion = prop("platformVersion")
 
+val excludedJars = listOf(
+    "java-api.jar",
+    "java-impl.jar"
+)
+
 plugins {
     idea
     kotlin("jvm") version "1.3.0"
@@ -94,6 +99,11 @@ allprojects {
     }
 
     afterEvaluate {
+        val mainSourceSet = sourceSets.getByName("main")
+        val mainClassPath = mainSourceSet.compileClasspath
+        val exclusion = mainClassPath.filter { it.name in excludedJars }
+        mainSourceSet.compileClasspath = mainClassPath - exclusion
+
         tasks.withType<AbstractTestTask> {
             testLogging {
                 if (hasProp("showTestStatus") && prop("showTestStatus").toBoolean()) {

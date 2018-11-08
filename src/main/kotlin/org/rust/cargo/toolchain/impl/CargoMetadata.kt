@@ -211,7 +211,7 @@ object CargoMetadata {
     }
 
     private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CargoWorkspaceData.Package? {
-        val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))) {
+        val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
         return CargoWorkspaceData.Package(
@@ -227,9 +227,7 @@ object CargoMetadata {
     }
 
     private fun Target.clean(root: VirtualFile): CargoWorkspaceData.Target? {
-
-        val mainFile = root.findFileByMaybeRelativePath(src_path)
-
+        val mainFile = root.findFileByMaybeRelativePath(src_path)?.canonicalFile
         return mainFile?.let {
             CargoWorkspaceData.Target(it.url, name, cleanKind, cleanCrateTypes, edition.cleanEdition())
         }

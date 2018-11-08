@@ -45,6 +45,7 @@ class CargoCommandConfiguration(
     var channel: RustChannel = RustChannel.DEFAULT
     var command: String = "run"
     var allFeatures: Boolean = true
+    var nocapture: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
@@ -54,6 +55,7 @@ class CargoCommandConfiguration(
         element.writeEnum("channel", channel)
         element.writeString("command", command)
         element.writeBool("allFeatures", allFeatures)
+        element.writeBool("nocapture", nocapture)
         element.writeEnum("backtrace", backtrace)
         element.writePath("workingDirectory", workingDirectory)
         env.writeExternal(element)
@@ -68,6 +70,7 @@ class CargoCommandConfiguration(
         element.readEnum<RustChannel>("channel")?.let { channel = it }
         element.readString("command")?.let { command = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
+        element.readBool("nocapture")?.let { nocapture = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
         element.readPath("workingDirectory")?.let { workingDirectory = it }
         env = EnvironmentVariablesData.readExternal(element)
@@ -77,6 +80,7 @@ class CargoCommandConfiguration(
         channel = cmd.channel
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
         allFeatures = cmd.allFeatures
+        nocapture = cmd.nocapture
         backtrace = cmd.backtraceMode
         workingDirectory = cmd.workingDirectory
         env = cmd.environmentVariables
@@ -96,7 +100,7 @@ class CargoCommandConfiguration(
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
         clean().ok?.let {
-            if (command.startsWith("test")) {
+            if (command.startsWith("test") && !command.contains("--nocapture") && !nocapture) {
                 CargoTestRunState(environment, it)
             } else {
                 CargoRunState(environment, it)
@@ -126,7 +130,16 @@ class CargoCommandConfiguration(
             if (args.isEmpty()) {
                 return CleanConfiguration.error("No command specified")
             }
-            CargoCommandLine(args.first(), workingDirectory, args.drop(1), backtrace, channel, env, allFeatures)
+            CargoCommandLine(
+                args.first(),
+                workingDirectory,
+                args.drop(1),
+                backtrace,
+                channel,
+                env,
+                allFeatures,
+                nocapture
+            )
         }
 
         val toolchain = project.toolchain
