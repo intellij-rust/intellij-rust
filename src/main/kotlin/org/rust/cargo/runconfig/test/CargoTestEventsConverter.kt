@@ -10,6 +10,7 @@ import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
 import jetbrains.buildServer.messages.serviceMessages.CompilationFinished
 import jetbrains.buildServer.messages.serviceMessages.CompilationStarted
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
@@ -63,7 +64,11 @@ class CargoTestEventsConverter(
                 visitor.visitCompilationFinished(CompilationFinished("rustc"))
                 true
             }
-            startsWith("target") -> {
+            // On Windows, we do not use the `--color=always` option in tests (see `Force colors` comment in
+            // Cargo.generalCommandLine). Therefore, if on Unix the "Running target/debug/deps/target_name-hash"
+            // line is divided into two parts - colored "Running" and everything else - then on Windows the entire
+            // line is send in one message.
+            SystemInfo.isWindows && startsWith("running") || !SystemInfo.isWindows && startsWith("target") -> {
                 check(suitesStack.isEmpty())
                 val target = text.substringAfterLast(File.separator).substringBeforeLast("-")
                 suitesStack.add(target)
