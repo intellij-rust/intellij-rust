@@ -38,6 +38,9 @@ val PsiElement.rightSiblings: Sequence<PsiElement>
 val PsiElement.leftSiblings: Sequence<PsiElement>
     get() = generateSequence(this.prevSibling) { it.prevSibling }
 
+val PsiElement.childrenWithLeaves: Sequence<PsiElement>
+    get() = generateSequence(this.firstChild) { it.nextSibling }
+
 /**
  * Extracts node's element type
  */
