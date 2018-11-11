@@ -32,6 +32,7 @@ env:
 install: true
 
 before_script:
+  - choco install jdk8
   - find /c -name "java"
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
