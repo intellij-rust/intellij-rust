@@ -33,7 +33,8 @@ install:
   - choco install jdk8
 
 before_script:
-  - echo $HOME
+  - bash
+  - echo $PATH
   - echo $JAVA_HOME
 #  - find /c -name "java"
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
