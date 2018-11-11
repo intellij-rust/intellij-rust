@@ -20,14 +20,15 @@ env:
   matrix:
     # 182 platform
     - RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=182.4892.20 # modified by script
-    - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182
-    - RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=2018.2
-    # 183 platform
-    - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183
+#    - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182
+#    - RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182 ORG_GRADLE_PROJECT_sinceBuild=182 ORG_GRADLE_PROJECT_ideaVersion=2018.2
+#    # 183 platform
+#    - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183
 
 install: true
 
 before_script:
+  - find /c -name "java"
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
   - rustup component add rust-src
