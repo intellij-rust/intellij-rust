@@ -29,11 +29,13 @@ env:
 #    # 183 platform
 #    - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183
 
-install: true
+install:
+  - choco install jdk8
 
 before_script:
-  - choco install jdk8
-  - find /c -name "java"
+  - echo $HOME
+  - echo $JAVA_HOME
+#  - find /c -name "java"
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
   - rustup component add rust-src
