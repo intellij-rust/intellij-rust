@@ -7,7 +7,7 @@ branches:
     - master
     - trying
 
-language: java
+#language: java
 
 jdk: oraclejdk8
 
