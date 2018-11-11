@@ -11,6 +11,10 @@ language: shell
 
 jdk: oraclejdk8
 
+addons:
+  chocolatey:
+    packages: jdk8
+
 env:
   global:
     - OLD_RUST_VERSION=1.25.0
