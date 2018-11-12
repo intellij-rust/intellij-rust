@@ -1272,22 +1272,4 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         fn foo<A: <error descr="Expected trait, found struct `S` [E0404]">S</error>>() {}
         impl Trait for S {}
     """)
-
-    fun `test extern static requires unsafe`() = checkErrors("""
-        extern {
-            static C: i32;
-        }
-
-        fn main() {
-            let a = <error descr="Use of extern static is unsafe and requires unsafe function or block [E0133]">C</error>;
-        }
-    """)
-
-    fun `test need unsafe static mutable`() = checkErrors("""
-        static mut test : u8 = 0;
-
-        fn main() {
-            <error descr="Use of mutable static is unsafe and requires unsafe function or block [E0133]">test</error> += 1;
-        }
-    """)
 }

@@ -68,3 +68,9 @@ fn <FUNCTION>main</FUNCTION>() {
         <MACRO>println!</MACRO>("Hello\x20W\u{f3}rld!\u{abcdef}");
     }
 }
+
+fn <FUNCTION>test</FUNCTION>() {
+    <KEYWORD_UNSAFE>unsafe</KEYWORD_UNSAFE> {
+        <UNSAFE_CODE>a_function</UNSAFE_CODE>(1);
+    }
+}

@@ -33,4 +33,9 @@
             <option name="FOREGROUND" value="606060" />
         </value>
     </option>
+    <option name="org.rust.UNSAFE_CODE">
+        <value>
+            <option name="BACKGROUND" value="4D3E3E" />
+        </value>
+    </option>
 </list>
