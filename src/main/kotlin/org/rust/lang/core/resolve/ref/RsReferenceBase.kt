@@ -14,10 +14,10 @@ import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.escapeIdentifierIfNeeded
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.escapeIdentifierIfNeeded
 
 abstract class RsReferenceBase<T : RsWeakReferenceElement>(
     element: T

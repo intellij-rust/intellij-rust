@@ -13,6 +13,7 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.expandMacro
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsMacroCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference

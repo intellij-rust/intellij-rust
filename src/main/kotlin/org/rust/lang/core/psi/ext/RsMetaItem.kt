@@ -11,6 +11,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsMetaItem
+import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsMetaItemStub
 
