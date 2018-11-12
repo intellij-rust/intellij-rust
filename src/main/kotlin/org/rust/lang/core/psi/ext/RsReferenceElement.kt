@@ -12,7 +12,8 @@ interface RsWeakReferenceElement : RsElement {
 
     val referenceNameElement: PsiElement?
 
-    val referenceName: String?
+    @JvmDefault
+    val referenceName: String? get() = referenceNameElement?.unescapedText
 
     override fun getReference(): RsReference?
 }
@@ -21,7 +22,8 @@ interface RsReferenceElement : RsWeakReferenceElement {
 
     override val referenceNameElement: PsiElement
 
-    override val referenceName: String
+    @JvmDefault
+    override val referenceName: String get() = referenceNameElement.unescapedText
 
     override fun getReference(): RsReference
 }

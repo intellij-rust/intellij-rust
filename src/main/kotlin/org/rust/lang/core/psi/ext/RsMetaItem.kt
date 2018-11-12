@@ -16,7 +16,7 @@ import org.rust.lang.core.stubs.RsMetaItemStub
 
 val RsMetaItem.name: String? get() {
     val stub = stub
-    return if (stub != null) stub.name else identifier?.text
+    return if (stub != null) stub.name else identifier?.unescapedText
 }
 
 val RsMetaItem.value: String? get() {

@@ -39,7 +39,7 @@ val RsMacroCall.macroName: String
     get() {
         val stub = stub
         if (stub != null) return stub.macroName
-        return referenceNameElement.text
+        return referenceNameElement.unescapedText
     }
 
 val RsMacroCall.macroBody: String?

@@ -61,7 +61,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
             "Path must contain identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
         }
 
-    override val referenceName: String get() = stub?.referenceName ?: referenceNameElement.text
+    override val referenceName: String get() = stub?.referenceName ?: super.referenceName
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
