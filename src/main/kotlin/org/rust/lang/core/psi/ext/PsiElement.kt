@@ -113,11 +113,3 @@ fun PsiElement.isAncestorOf(child: PsiElement): Boolean =
 
 val PsiElement.endOffsetInParent: Int
     get() = startOffsetInParent + textLength
-
-fun String.unescapeIdentifier(): String = removePrefix("r#")
-fun String.escapeIdentifierIfNeeded(): String = if (isValidRustVariableIdentifier(this)) this else "r#$this"
-
-val PsiElement.unescapedText: String get() {
-    val text = text ?: return ""
-    return if (this is LeafPsiElement) text.unescapeIdentifier() else text
-}

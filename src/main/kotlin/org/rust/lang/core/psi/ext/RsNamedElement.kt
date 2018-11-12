@@ -16,6 +16,7 @@ import com.intellij.psi.stubs.StubElement
 import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.stubs.RsNamedStub
 
 interface RsNamedElement : RsElement, PsiNamedElement, NavigatablePsiElement

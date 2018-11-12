@@ -10,8 +10,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.spellchecker.inspections.IdentifierSplitter
 import com.intellij.spellchecker.tokenizer.TokenConsumer
 import com.intellij.spellchecker.tokenizer.Tokenizer
+import org.rust.lang.core.psi.RS_RAW_PREFIX
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
-import org.rust.lang.core.psi.ext.unescapeIdentifier
+import org.rust.lang.core.psi.unescapeIdentifier
 
 // Inspired by `PsiIdentifierOwnerTokenizer`
 object RsNameIdentifierOwnerTokenizer : Tokenizer<RsNameIdentifierOwner>() {
@@ -31,7 +32,7 @@ object RsNameIdentifierOwnerTokenizer : Tokenizer<RsNameIdentifierOwner>() {
         }
         val text = identifier.text
         val unescapedText = text.unescapeIdentifier()
-        if (text.startsWith("r#")) {
+        if (text.startsWith(RS_RAW_PREFIX)) {
             offset += 2
         }
         consumer.consumeToken(parent, unescapedText, true, offset, TextRange.allOf(unescapedText), IdentifierSplitter.getInstance())
