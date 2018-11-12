@@ -1070,12 +1070,30 @@ class RsResolveTest : RsResolveTestBase() {
         }         //^ unresolved
     """)
 
-    fun `test raw identifier`() = checkByCode("""
+    fun `test raw identifier 1`() = checkByCode("""
         fn foo() {
             let r#match = 42;
               //X
             r#match;
           //^
+        }
+    """)
+
+    fun `test raw identifier 2`() = checkByCode("""
+        fn foo() {}
+           //X
+        fn main() {
+            r#foo();
+             //^
+        }
+    """)
+
+    fun `test raw identifier 3`() = checkByCode("""
+        struct r#Foo;
+               //X
+        fn main() {
+            let f = Foo;
+                   //^
         }
     """)
 
