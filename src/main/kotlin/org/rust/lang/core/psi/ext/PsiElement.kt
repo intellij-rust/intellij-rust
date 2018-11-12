@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -116,6 +115,7 @@ val PsiElement.endOffsetInParent: Int
     get() = startOffsetInParent + textLength
 
 fun String.unescapeIdentifier(): String = removePrefix("r#")
+fun String.escapeIdentifierIfNeeded(): String = if (isValidRustVariableIdentifier(this)) this else "r#$this"
 
 val PsiElement.unescapedText: String get() {
     val text = text ?: return ""
