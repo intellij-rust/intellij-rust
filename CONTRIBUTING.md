@@ -171,6 +171,7 @@ change. Common tags are:
   * ANN for error highlighting and annotators
   * INSP for inspections
   * INT for intentions
+  * REF for refactorings
   * RUN for run configurations
   * QDOC for quick documentation
   * PERF for performance optimizations
