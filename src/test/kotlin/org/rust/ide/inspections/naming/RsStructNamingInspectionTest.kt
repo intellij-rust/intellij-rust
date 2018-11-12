@@ -30,4 +30,16 @@ class RsStructNamingInspectionTest : RsInspectionsTestBase(RsStructNamingInspect
             let a = StructFoo {};
         }
     """)
+
+    fun `test struct with raw identifier`() = checkFixByText("Rename to `FooBar`", """
+        struct <warning descr="Type `foo_bar` should have a camel case name such as `FooBar`">r#foo_bar/*caret*/</warning>;
+        fn main() {
+            let a = foo_bar;
+        }
+    """, """
+        struct FooBar;
+        fn main() {
+            let a = FooBar;
+        }
+    """)
 }
