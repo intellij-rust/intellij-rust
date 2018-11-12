@@ -64,9 +64,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitVis(o: RsVis) = checkVis(holder, o)
             override fun visitVisRestriction(o: RsVisRestriction) = checkVisRestriction(holder, o)
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
-            override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
-            override fun visitMethodCall(o: RsMethodCall) = checkMethodCallExpr(holder, o)
-            override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnaryExpr(holder, o)
             override fun visitExternCrateItem(o: RsExternCrateItem) = checkExternCrate(holder, o)
             override fun visitDotExpr(o: RsDotExpr) = checkDotExpr(holder, o)
             override fun visitArrayType(o: RsArrayType) = collectDiagnostics(holder, o)
@@ -88,21 +85,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     private fun checkDotExpr(holder: AnnotationHolder, o: RsDotExpr) {
         val field = o.fieldLookup ?: o.methodCall ?: return
         checkReferenceIsPublic(field, o, holder)
-    }
-
-    private fun checkStaticUsageIsSafe(ref: RsReferenceElement, holder: AnnotationHolder) {
-        val element = ref.reference.resolve() as? RsConstant ?: return
-        val constantType = when {
-            element.kind == RsConstantKind.MUT_STATIC -> "mutable"
-            element.kind == RsConstantKind.STATIC && element.parent is RsForeignModItem -> "extern"
-            else -> return
-        }
-
-        val expr = ref.ancestorOrSelf<RsExpr>() ?: return
-        if (expr.isInUnsafeBlockOrFn()) return
-
-        RsDiagnostic.UnsafeError(expr, "Use of $constantType static is unsafe and requires unsafe function or block")
-            .addToHolder(holder)
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
@@ -131,57 +113,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             }
         }
         error.addToHolder(holder)
-    }
-
-    private fun checkMethodCallExpr(holder: AnnotationHolder, o: RsMethodCall) {
-        val fn = o.reference.resolve() as? RsFunction ?: return
-
-        if (fn.isUnsafe) {
-            checkUnsafeCall(holder, o.parentDotExpr)
-        }
-    }
-
-    private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
-        val path = (o.expr as? RsPathExpr)?.path ?: return
-        val fn = path.reference.resolve() as? RsFunction ?: return
-
-        if (fn.isUnsafe) {
-            checkUnsafeCall(holder, o)
-        }
-    }
-
-    private fun PsiElement.isInUnsafeBlockOrFn(parentsToSkip: Int = 0): Boolean {
-        val parent = this.ancestors
-            .drop(parentsToSkip)
-            .find {
-                when (it) {
-                    is RsBlockExpr -> it.unsafe != null
-                    is RsFunction -> true
-                    else -> false
-                }
-            } ?: return false
-
-        return parent is RsBlockExpr || (parent is RsFunction && parent.isUnsafe)
-    }
-
-    private fun checkUnsafeCall(holder: AnnotationHolder, o: RsExpr) {
-        if (!o.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
-            RsDiagnostic.UnsafeError(o, "Call to unsafe function requires unsafe function or block").addToHolder(holder)
-        }
-    }
-
-    private fun checkUnsafePtrDereference(holder: AnnotationHolder, o: RsUnaryExpr) {
-        if (o.expr?.type !is TyPointer) return
-
-        if (!o.isInUnsafeBlockOrFn()) {
-            RsDiagnostic.UnsafeError(o, "Dereference of raw pointer requires unsafe function or block").addToHolder(holder)
-        }
-    }
-
-    private fun checkUnaryExpr(holder: AnnotationHolder, unaryExpr: RsUnaryExpr) {
-        if (unaryExpr.operatorType == UnaryOperator.DEREF) {
-            checkUnsafePtrDereference(holder, unaryExpr)
-        }
     }
 
     private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
@@ -230,7 +161,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             }
         }
 
-        checkStaticUsageIsSafe(path, holder)
         checkReferenceIsPublic(path, path, holder)
     }
 
