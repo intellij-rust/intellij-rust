@@ -10,12 +10,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
-
 
 val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) {
     if (it is PsiFile) null else it.parent
@@ -114,3 +114,10 @@ fun PsiElement.isAncestorOf(child: PsiElement): Boolean =
 
 val PsiElement.endOffsetInParent: Int
     get() = startOffsetInParent + textLength
+
+fun String.unescapeIdentifier(): String = removePrefix("r#")
+
+val PsiElement.unescapedText: String get() {
+    val text = text ?: return ""
+    return if (this is LeafPsiElement) text.unescapeIdentifier() else text
+}

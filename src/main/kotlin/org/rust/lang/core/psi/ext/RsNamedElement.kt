@@ -27,7 +27,7 @@ abstract class RsNamedElementImpl(node: ASTNode) : RsElementImpl(node),
 
     override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)
 
-    override fun getName(): String? = nameIdentifier?.text
+    override fun getName(): String? = nameIdentifier?.unescapedText
 
     override fun setName(name: String): PsiElement? {
         nameIdentifier?.replace(RsPsiFactory(project).createIdentifier(name))
@@ -45,12 +45,11 @@ where StubT : RsNamedStub, StubT : StubElement<*> {
 
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getNameIdentifier(): PsiElement?
-        = findChildByType(IDENTIFIER)
+    override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)
 
     override fun getName(): String? {
         val stub = stub
-        return if (stub != null) stub.name else nameIdentifier?.text
+        return if (stub != null) stub.name else nameIdentifier?.unescapedText
     }
 
     override fun setName(name: String): PsiElement? {
