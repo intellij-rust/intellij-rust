@@ -21,21 +21,21 @@ abstract class RsNamingInspection(
     val elementType: String,
     val styleName: String,
     val lint: RsLint,
-    elementTitle: String = elementType
+    private val elementTitle: String = elementType
 ) : RsLocalInspectionTool() {
-    val dispName = elementTitle + " naming convention"
-    override fun getDisplayName() = dispName
+    override fun getDisplayName() = "$elementTitle naming convention"
 
     fun inspect(id: PsiElement?, holder: ProblemsHolder, fix: Boolean = true) {
         if (id == null) return
-        val (isOk, suggestedName) = checkName(id.text)
+        val name = id.unescapedText
+        val (isOk, suggestedName) = checkName(name)
         if (isOk || suggestedName == null || lint.levelFor(id) == RsLintLevel.ALLOW) return
 
         val fixEl = id.parent
         val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
         holder.registerProblem(
             id,
-            "$elementType `${id.text}` should have $styleName case name such as `$suggestedName`",
+            "$elementType `$name` should have $styleName case name such as `$suggestedName`",
             *fixes)
     }
 
