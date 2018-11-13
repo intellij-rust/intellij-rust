@@ -17,14 +17,16 @@ class RustType:
     COMPRESSED_ENUM = "CompressedEnum"
     REGULAR_UNION = "RegularUnion"
 
-    STD_VEC = "StdVec"
     STD_STRING = "StdString"
     STD_STR = "StdStr"
+    STD_VEC = "StdVec"
+    STD_VEC_DEQUE = "StdVecDeque"
 
 
-STD_VEC_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)Vec<.+>$")
-STD_STRING_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)String$")
+STD_STRING_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)String$")
 STD_STR_REGEX = re.compile(r"^&str$")
+STD_VEC_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)Vec<.+>$")
+STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)VecDeque<.+>$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
@@ -47,12 +49,14 @@ def classify_rust_type(type):
             return RustType.EMPTY
 
         name = type.GetName()
-        if re.match(STD_VEC_REGEX, name):
-            return RustType.STD_VEC
         if re.match(STD_STRING_REGEX, name):
             return RustType.STD_STRING
         if re.match(STD_STR_REGEX, name):
             return RustType.STD_STR
+        if re.match(STD_VEC_REGEX, name):
+            return RustType.STD_VEC
+        if re.match(STD_VEC_DEQUE_REGEX, name):
+            return RustType.STD_VEC_DEQUE
 
         if fields[0].name == ENUM_DISR_FIELD_NAME:
             if len(fields) == 1:
@@ -92,12 +96,14 @@ def summary_lookup(valobj, dict):
     """Returns the summary provider for the given value"""
     rust_type = classify_rust_type(valobj.GetType())
 
-    if rust_type == RustType.STD_VEC:
-        return SizeSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_STRING:
         return StdStringSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_STR:
         return StdStrSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_VEC:
+        return SizeSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_VEC_DEQUE:
+        return SizeSummaryProvider(valobj, dict)
 
     return ""
 
@@ -107,8 +113,6 @@ def synthetic_lookup(valobj, dict):
     """Returns the synthetic provider for the given value"""
     rust_type = classify_rust_type(valobj.GetType())
 
-    if rust_type == RustType.STD_VEC:
-        return StdVecSyntheticProvider(valobj, dict)
     if rust_type == RustType.STRUCT:
         return StructSyntheticProvider(valobj, dict)
     if rust_type == RustType.STRUCT_VARIANT:
@@ -125,5 +129,10 @@ def synthetic_lookup(valobj, dict):
         return synthetic_lookup(valobj.GetChildAtIndex(discriminant), dict)
     if rust_type == RustType.SINGLETON_ENUM:
         return synthetic_lookup(valobj.GetChildAtIndex(0), dict)
+
+    if rust_type == RustType.STD_VEC:
+        return StdVecSyntheticProvider(valobj, dict)
+    if rust_type == RustType.STD_VEC_DEQUE:
+        return StdVecDequeSyntheticProvider(valobj, dict)
 
     return DefaultSynthteticProvider(valobj, dict)
