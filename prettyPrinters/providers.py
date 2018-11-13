@@ -410,3 +410,86 @@ class StdRcSyntheticProvider:
     def has_children(self):
         # type: () -> bool
         return True
+
+
+class StdCellSyntheticProvider:
+    """Pretty-printer for std::cell::Cell"""
+
+    def __init__(self, valobj, dict):
+        # type: (SBValue, dict) -> StdCellSyntheticProvider
+        self.valobj = valobj
+        self.value = valobj.GetChildMemberWithName("value").GetChildAtIndex(0)
+
+    def num_children(self):
+        # type: () -> int
+        return 1
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        if name == "value":
+            return 0
+        return -1
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        if index == 0:
+            return self.value
+        return None
+
+    def update(self):
+        # type: () -> None
+        pass
+
+    def has_children(self):
+        # type: () -> bool
+        return True
+
+
+def StdRefSummaryProvider(valobj, dict):
+    # type: (SBValue, dict) -> str
+    borrow = valobj.GetChildMemberWithName("borrow").GetValueAsSigned()
+    return "borrow={}".format(borrow) if borrow >= 0 else "borrow_mut={}".format(-borrow)
+
+
+class StdRefSyntheticProvider:
+    """Pretty-printer for std::cell::Ref, std::cell::RefMut, and std::cell::RefCell"""
+
+    def __init__(self, valobj, dict, is_cell=False):
+        # type: (SBValue, dict, bool) -> StdRefSyntheticProvider
+        self.valobj = valobj
+        self.borrow = valobj.GetChildMemberWithName("borrow").GetChildAtIndex(0).GetChildAtIndex(0)
+        if not is_cell:
+            self.borrow = self.borrow.GetChildAtIndex(0)
+        self.value = valobj.GetChildMemberWithName("value").GetChildAtIndex(0)
+
+        self.value_builder = ValueBuilder(valobj)
+
+        self.update()
+
+    def num_children(self):
+        # type: () -> int
+        # Actually there are 2 children, but only the `value` should be shown as a child
+        return 1
+
+    def get_child_index(self, name):
+        if name == "value":
+            return 0
+        if name == "borrow":
+            return 1
+        return -1
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        if index == 0:
+            return self.value
+        if index == 1:
+            return self.value_builder.from_int("borrow", self.borrow_count)
+        return None
+
+    def update(self):
+        # type: () -> None
+        self.borrow_count = self.borrow.GetValueAsSigned()
+
+    def has_children(self):
+        # type: () -> bool
+        return True
