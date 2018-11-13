@@ -38,6 +38,7 @@ import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.util.CargoArgsParser
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.withWorkDirectory
@@ -64,20 +65,18 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         state as CargoRunState
         val cmd = state.commandLine
-
-        val (buildArgs, execArgs) = cmd.splitOnDoubleDash()
+        val (commandArguments, executableArguments) = CargoArgsParser.parseArgs(cmd.command, cmd.additionalArguments)
 
         val buildCommand = if (cmd.command == "run") {
-            cmd.copy(command = "build", additionalArguments = buildArgs)
+            cmd.copy(command = "build", additionalArguments = commandArguments)
         } else {
-            check(cmd.command == "test")
             cmd.prependArgument("--no-run")
         }
 
         val runCommand = { executablePath: Path ->
             GeneralCommandLine(executablePath)
                 .withWorkDirectory(cmd.workingDirectory)
-                .withParameters(execArgs)
+                .withParameters(executableArguments)
                 .withEnvironment(cmd.environmentVariables.envs)
         }
 
