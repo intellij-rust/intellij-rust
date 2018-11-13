@@ -1,4 +1,4 @@
-from lldb import SBValue, SBError
+from lldb import SBValue, SBData, SBError, eBasicTypeLong, eBasicTypeUnsignedLong
 from lldb.formatters import Logger
 
 
@@ -32,6 +32,27 @@ from lldb.formatters import Logger
 #   3. https://lldb.llvm.org/python_reference/lldb.formatters.cpp.libcxx-pysrc.html
 #   4. https://github.com/llvm-mirror/lldb/tree/master/examples/summaries/cocoa
 ################################################################################################################
+
+
+class ValueBuilder:
+    def __init__(self, valobj):
+        # type: (SBValue) -> ValueBuilder
+        self.valobj = valobj
+        process = valobj.GetProcess()
+        self.endianness = process.GetByteOrder()
+        self.pointer_size = process.GetAddressByteSize()
+
+    def from_int(self, name, value):
+        # type: (str, int) -> SBValue
+        type = self.valobj.GetType().GetBasicType(eBasicTypeLong)
+        data = SBData.CreateDataFromSInt64Array(self.endianness, self.pointer_size, [value])
+        return self.valobj.CreateValueFromData(name, data, type)
+
+    def from_uint(self, name, value):
+        # type: (str, int) -> SBValue
+        type = self.valobj.GetType().GetBasicType(eBasicTypeUnsignedLong)
+        data = SBData.CreateDataFromUInt64Array(self.endianness, self.pointer_size, [value])
+        return self.valobj.CreateValueFromData(name, data, type)
 
 
 class DefaultSynthteticProvider:
@@ -130,7 +151,7 @@ class StructSyntheticProvider:
     """Pretty-printer for structs and struct enum variants"""
 
     def __init__(self, valobj, dict, is_variant=False):
-        # type: (SBValue, dict) -> StructSyntheticProvider
+        # type: (SBValue, dict, bool) -> StructSyntheticProvider
         logger = Logger.Logger()
         self.valobj = valobj
         self.is_variant = is_variant
@@ -178,7 +199,7 @@ class TupleSyntheticProvider:
     """Pretty-printer for tuples and tuple enum variants"""
 
     def __init__(self, valobj, dict, is_variant=False):
-        # type: (SBValue, dict) -> TupleSyntheticProvider
+        # type: (SBValue, dict, bool) -> TupleSyntheticProvider
         logger = Logger.Logger()
         self.valobj = valobj
         self.is_variant = is_variant
@@ -310,6 +331,81 @@ class StdVecDequeSyntheticProvider:
         self.data_ptr = self.buf.GetChildMemberWithName("ptr").GetChildAtIndex(0).GetChildAtIndex(0)
         self.element_type = self.data_ptr.GetType().GetPointeeType()
         self.element_type_size = self.element_type.GetByteSize()
+
+    def has_children(self):
+        # type: () -> bool
+        return True
+
+
+def StdRcSummaryProvider(valobj, dict):
+    # type: (SBValue, dict) -> str
+    strong = valobj.GetChildMemberWithName("strong").GetValueAsUnsigned()
+    weak = valobj.GetChildMemberWithName("weak").GetValueAsUnsigned()
+    return "strong={}, weak={}".format(strong, weak)
+
+
+class StdRcSyntheticProvider:
+    """Pretty-printer for alloc::rc::Rc<T> and alloc::sync::Arc<T>
+
+    struct Rc<T> { ptr: NonNull<RcBox<T>>, ... }
+    struct NonNull<T> { pointer: NonZero<*const T> }
+    struct NonZero<T>(T)
+    struct RcBox<T> { strong: Cell<usize>, weak: Cell<usize>, value: T }
+    struct Cell<T> { value: UnsafeCell<T> }
+    struct UnsafeCell<T> { value: T }
+
+    struct Arc<T> { ptr: NonNull<ArcInner<T>>, ... }
+    struct NonNull<T> { pointer: NonZero<*const T> }
+    struct NonZero<T>(T)
+    struct ArcInner<T> { strong: atomic::AtomicUsize, weak: atomic::AtomicUsize, data: T }
+    struct AtomicUsize { v: UnsafeCell<usize> }
+    struct UnsafeCell<T> { value: T }
+    """
+
+    def __init__(self, valobj, dict, is_atomic=False):
+        # type: (SBValue, dict, bool) -> StdRcSyntheticProvider
+        self.valobj = valobj
+
+        self.ptr = self.valobj.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer").GetChildAtIndex(0)
+        self.value = self.ptr.GetChildMemberWithName("data" if is_atomic else "value")
+
+        self.strong = self.ptr.GetChildMemberWithName("strong").GetChildAtIndex(0).GetChildMemberWithName("value")
+        self.weak = self.ptr.GetChildMemberWithName("weak").GetChildAtIndex(0).GetChildMemberWithName("value")
+
+        self.value_builder = ValueBuilder(valobj)
+
+        self.update()
+
+    def num_children(self):
+        # type: () -> int
+        # Actually there are 3 children, but only the `value` should be shown as a child
+        return 1
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        if name == "value":
+            return 0
+        if name == "strong":
+            return 1
+        if name == "weak":
+            return 2
+        return -1
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        if index == 0:
+            return self.value
+        if index == 1:
+            return self.value_builder.from_uint("strong", self.strong_count)
+        if index == 2:
+            return self.value_builder.from_uint("weak", self.weak_count)
+
+        return None
+
+    def update(self):
+        # type: () -> None
+        self.strong_count = self.strong.GetValueAsUnsigned()
+        self.weak_count = self.weak.GetValueAsUnsigned()
 
     def has_children(self):
         # type: () -> bool
