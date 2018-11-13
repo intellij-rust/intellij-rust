@@ -116,13 +116,17 @@ class CargoTestEventsConverter(
                 messages.add(createTestStartedMessage(testMessage.name))
             }
             "ok" -> {
-                messages.add(createTestFinishedMessage(testMessage.name, getTestDuration(testMessage.name)))
+                val duration = getTestDuration(testMessage.name)
+                messages.add(createTestFinishedMessage(testMessage.name, duration))
                 recordSuiteChildFinished(testMessage.name)
                 processFinishedSuites(messages)
             }
             "failed" -> {
-                messages.add(createTestFailedMessage(testMessage.name, getTestResult(testMessage.stdout)))
-                messages.add(createTestFinishedMessage(testMessage.name, getTestDuration(testMessage.name)))
+                val duration = getTestDuration(testMessage.name)
+                val (stdout, failedMessage) = parseFailedTestOutput(testMessage.stdout ?: "")
+                if (stdout.isNotEmpty()) messages.add(createTestStdOutMessage(testMessage.name, stdout + '\n'))
+                messages.add(createTestFailedMessage(testMessage.name, failedMessage))
+                messages.add(createTestFinishedMessage(testMessage.name, duration))
                 recordSuiteChildFinished(testMessage.name)
                 processFinishedSuites(messages)
             }
@@ -154,11 +158,7 @@ class CargoTestEventsConverter(
         return messages
     }
 
-    private fun getTestResult(testStdout: String?): String =
-        testStdout
-            ?.lineSequence()
-            ?.dropWhile { !it.trimStart().startsWith("thread", true) }
-            ?.joinToString("\n") ?: ""
+    private data class FailedTestOutput(val stdout: String, val failedMessage: String)
 
     private fun recordTestStartTime(test: NodeId) {
         testsStartTimes[test] = System.currentTimeMillis()
@@ -248,10 +248,11 @@ class CargoTestEventsConverter(
                 .addAttribute("parentNodeId", test.parent)
                 .addAttribute("locationHint", getTestFnUrl(test))
 
-        private fun createTestFailedMessage(test: NodeId, message: String): ServiceMessageBuilder =
+        private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder =
             ServiceMessageBuilder.testFailed(test.name)
                 .addAttribute("nodeId", test)
-                .addAttribute("message", message)
+                .addAttribute("message", "")
+                .addAttribute("details", failedMessage)
 
         private fun createTestFinishedMessage(test: NodeId, duration: String): ServiceMessageBuilder =
             ServiceMessageBuilder.testFinished(test.name)
@@ -262,9 +263,21 @@ class CargoTestEventsConverter(
             ServiceMessageBuilder.testIgnored(test.name)
                 .addAttribute("nodeId", test)
 
+        private fun createTestStdOutMessage(test: NodeId, stdout: String): ServiceMessageBuilder =
+            ServiceMessageBuilder.testStdOut(test.name)
+                .addAttribute("nodeId", test)
+                .addAttribute("out", stdout)
+
         private fun createTestCountMessage(testCount: String): ServiceMessageBuilder =
             ServiceMessageBuilder("testCount")
                 .addAttribute("count", testCount)
+
+        private fun parseFailedTestOutput(output: String): FailedTestOutput {
+            val partitionPredicate: (String) -> Boolean = { !it.trimStart().startsWith("thread", true) }
+            val stdout = output.lineSequence().takeWhile(partitionPredicate).joinToString("\n")
+            val failedMessage = output.lineSequence().dropWhile(partitionPredicate).joinToString("\n")
+            return FailedTestOutput(stdout, failedMessage)
+        }
 
         private data class LibtestSuiteMessage(
             val type: String,
