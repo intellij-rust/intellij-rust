@@ -95,54 +95,6 @@ def SizeSummaryProvider(valobj, dict):
     return 'size=' + str(valobj.GetNumChildren())
 
 
-class StdVecSyntheticProvider:
-    """Pretty-printer for alloc::vec::Vec<T>
-
-    struct Vec<T> { buf: RawVec<T>, len: usize }
-    struct RawVec<T> { ptr: Unique<T>, cap: usize, ... }
-    struct Unique<T: ?Sized> { pointer: NonZero<*const T>, ... }
-    struct NonZero<T>(T)
-    """
-
-    def __init__(self, valobj, dict):
-        # type: (SBValue, dict) -> StdVecSyntheticProvider
-        logger = Logger.Logger()
-        logger >> "[StdVecSyntheticProvider] for " + str(valobj.GetName())
-        self.valobj = valobj
-        self.update()
-
-    def num_children(self):
-        # type: () -> int
-        return self.length
-
-    def get_child_index(self, name):
-        # type: (str) -> int
-        index = name.lstrip('[').rstrip(']')
-        if index.isdigit():
-            return int(index)
-        else:
-            return -1
-
-    def get_child_at_index(self, index):
-        # type: (int) -> SBValue
-        start = self.data_ptr.GetValueAsUnsigned()
-        address = start + index * self.element_type_size
-        element = self.data_ptr.CreateValueFromAddress("[%s]" % index, address, self.element_type)
-        return element
-
-    def update(self):
-        # type: () -> None
-        self.length = self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
-        self.buf = self.valobj.GetChildMemberWithName("buf")
-        self.data_ptr = self.buf.GetChildAtIndex(0).GetChildAtIndex(0).GetChildAtIndex(0)
-        self.element_type = self.data_ptr.GetType().GetPointeeType()
-        self.element_type_size = self.element_type.GetByteSize()
-
-    def has_children(self):
-        # type: () -> bool
-        return True
-
-
 def StdStringSummaryProvider(valobj, dict):
     # type: (SBValue, dict) -> str
     assert valobj.GetNumChildren() == 1
@@ -262,6 +214,102 @@ class TupleSyntheticProvider:
     def update(self):
         # type: () -> None
         pass
+
+    def has_children(self):
+        # type: () -> bool
+        return True
+
+
+class StdVecSyntheticProvider:
+    """Pretty-printer for alloc::vec::Vec<T>
+
+    struct Vec<T> { buf: RawVec<T>, len: usize }
+    struct RawVec<T> { ptr: Unique<T>, cap: usize, ... }
+    struct Unique<T: ?Sized> { pointer: NonZero<*const T>, ... }
+    struct NonZero<T>(T)
+    """
+
+    def __init__(self, valobj, dict):
+        # type: (SBValue, dict) -> StdVecSyntheticProvider
+        logger = Logger.Logger()
+        logger >> "[StdVecSyntheticProvider] for " + str(valobj.GetName())
+        self.valobj = valobj
+        self.update()
+
+    def num_children(self):
+        # type: () -> int
+        return self.length
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        index = name.lstrip('[').rstrip(']')
+        if index.isdigit():
+            return int(index)
+        else:
+            return -1
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        start = self.data_ptr.GetValueAsUnsigned()
+        address = start + index * self.element_type_size
+        element = self.data_ptr.CreateValueFromAddress("[%s]" % index, address, self.element_type)
+        return element
+
+    def update(self):
+        # type: () -> None
+        self.length = self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
+        self.buf = self.valobj.GetChildMemberWithName("buf")
+        self.data_ptr = self.buf.GetChildAtIndex(0).GetChildAtIndex(0).GetChildAtIndex(0)
+        self.element_type = self.data_ptr.GetType().GetPointeeType()
+        self.element_type_size = self.element_type.GetByteSize()
+
+    def has_children(self):
+        # type: () -> bool
+        return True
+
+
+class StdVecDequeSyntheticProvider:
+    """Pretty-printer for alloc::collections::vec_deque::VecDeque<T>
+
+    struct VecDeque<T> { tail: usize, head: usize, buf: RawVec<T> }
+    """
+
+    def __init__(self, valobj, dict):
+        # type: (SBValue, dict) -> StdVecDequeSyntheticProvider
+        logger = Logger.Logger()
+        logger >> "[StdVecDequeSyntheticProvider] for " + str(valobj.GetName())
+        self.valobj = valobj
+        self.update()
+
+    def num_children(self):
+        # type: () -> int
+        return self.size
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        index = name.lstrip('[').rstrip(']')
+        if index.isdigit() and self.tail <= index and (self.tail + index) % self.cap < self.head:
+            return int(index)
+        else:
+            return -1
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        start = self.data_ptr.GetValueAsUnsigned()
+        address = start + ((index + self.tail) % self.cap) * self.element_type_size
+        element = self.data_ptr.CreateValueFromAddress("[%s]" % index, address, self.element_type)
+        return element
+
+    def update(self):
+        # type: () -> None
+        self.head = self.valobj.GetChildMemberWithName("head").GetValueAsUnsigned()
+        self.tail = self.valobj.GetChildMemberWithName("tail").GetValueAsUnsigned()
+        self.buf = self.valobj.GetChildMemberWithName("buf")
+        self.cap = self.buf.GetChildMemberWithName("cap").GetValueAsUnsigned()
+        self.size = self.head - self.tail if self.head >= self.tail else self.cap + self.head - self.tail
+        self.data_ptr = self.buf.GetChildMemberWithName("ptr").GetChildAtIndex(0).GetChildAtIndex(0)
+        self.element_type = self.data_ptr.GetType().GetPointeeType()
+        self.element_type_size = self.element_type.GetByteSize()
 
     def has_children(self):
         # type: () -> bool
