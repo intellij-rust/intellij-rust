@@ -52,11 +52,8 @@ data class CargoCommandLine(
      * Splits [additionalArguments] into parts before and after `--`.
      * For `cargo run --release -- foo bar`, returns (["--release"], ["foo", "bar"])
      */
-    fun splitOnDoubleDash(): Pair<List<String>, List<String>> {
-        val idx = additionalArguments.indexOf("--")
-        if (idx == -1) return additionalArguments to emptyList()
-        return additionalArguments.take(idx) to additionalArguments.drop(idx + 1)
-    }
+    fun splitOnDoubleDash(): Pair<List<String>, List<String>> =
+        org.rust.cargo.util.splitOnDoubleDash(additionalArguments)
 
     companion object {
         fun forTargets(
