@@ -782,7 +782,7 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let a: (u8,) = (1, 2);
         }                    //^ i32
-    """)
+    """, allowErrors = true)
 
     fun `test argument expr of unresolved method`() = testExpr("""
         struct S;
