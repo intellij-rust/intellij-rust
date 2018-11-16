@@ -249,4 +249,14 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             }
         }
     """, checkWarn = false)
+
+    /** Issue [#3040](https://github.com/intellij-rust/intellij-rust/issues/3040) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0507 when deref Box`() = checkByText("""
+        fn main() {
+            struct S;
+            let a = *Box::new(S);
+            let (b, c) = *Box::new((S, S));
+        }
+    """, checkWarn = false)
 }

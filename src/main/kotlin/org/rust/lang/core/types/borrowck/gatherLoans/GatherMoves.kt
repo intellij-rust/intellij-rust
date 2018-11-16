@@ -16,6 +16,7 @@ import org.rust.lang.core.types.infer.Cmt
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TySlice
+import org.rust.lang.core.types.ty.isBox
 
 class GatherMoveContext(private val bccx: BorrowCheckContext, private val moveData: MoveData) {
     data class GatherMoveInfo(
@@ -65,7 +66,9 @@ class GatherMoveContext(private val bccx: BorrowCheckContext, private val moveDa
         return when (category) {
             is Rvalue, is Local -> null
 
-            is StaticItem, is Deref -> cmt
+            is Deref -> if (category.cmt.ty.isBox) null else cmt
+
+            is StaticItem -> cmt
 
             is Interior.Field, is Interior.Pattern -> {
                 val base = (category as Interior).cmt
