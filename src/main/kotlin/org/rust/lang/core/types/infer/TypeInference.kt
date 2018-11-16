@@ -350,7 +350,9 @@ class RsInferenceContext(
             ty1 is TyArray && ty2 is TyArray &&
                 (ty1.size == null || ty2.size == null || ty1.size == ty2.size) -> combineTypes(ty1.base, ty2.base)
             ty1 is TySlice && ty2 is TySlice -> combineTypes(ty1.elementType, ty2.elementType)
-            ty1 is TyTuple && ty2 is TyTuple -> combinePairs(ty1.types.zip(ty2.types))
+            ty1 is TyTuple && ty2 is TyTuple && ty1.types.size == ty2.types.size -> {
+                combinePairs(ty1.types.zip(ty2.types))
+            }
             ty1 is TyFunction && ty2 is TyFunction && ty1.paramTypes.size == ty2.paramTypes.size -> {
                 combinePairs(ty1.paramTypes.zip(ty2.paramTypes)) && combineTypes(ty1.retType, ty2.retType)
             }
