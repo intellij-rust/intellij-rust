@@ -747,6 +747,7 @@
                 icon="AllIcons.Actions.Compile"
                 use-shortcut-of="CompileDirty">
             <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
+            <add-to-group group-id="TouchBarDefault" relative-to-action="RunConfiguration" anchor="before"/>
         </action>
 
         <action id="Rust.RsPromoteModuleToDirectoryAction"
