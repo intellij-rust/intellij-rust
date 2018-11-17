@@ -267,7 +267,7 @@ class RsAssocTypeNamingInspection : RsCamelCaseNamingInspection("Type", "Associa
         object : RsVisitor() {
             override fun visitTypeAlias(el: RsTypeAlias) {
                 if (el.owner is RsAbstractableOwner.Trait) {
-                    inspect(el.identifier, holder, false)
+                    inspect(el.identifier, holder)
                 }
             }
         }
