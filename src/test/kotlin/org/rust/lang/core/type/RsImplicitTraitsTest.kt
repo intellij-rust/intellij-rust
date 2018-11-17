@@ -124,6 +124,13 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test Self is Sized if trait is Sized (vie where clause)`() = doTest("""
+        trait Foo where Self: Sized {
+            fn foo(self: Self);
+                        //^ Sized
+        }
+    """)
+
     fun `test Self is Sized in Sized type impl`() = doTest("""
         trait Foo {
             fn foo(self: Self);
