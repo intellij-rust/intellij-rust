@@ -391,6 +391,16 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test self implements trait from where clause bound`() = checkByCode("""
+        trait Bar {
+            fn bar(&self);
+             //X
+        }
+        trait Foo where Self : Bar {
+            fn foo(&self) { self.bar(); }
+        }                      //^
+    """)
+
     fun `test match enum tuple variant`() = checkByCode("""
         enum E { V(S) }
         struct S;
