@@ -67,10 +67,11 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
         val cmd = state.commandLine
         val (commandArguments, executableArguments) = CargoArgsParser.parseArgs(cmd.command, cmd.additionalArguments)
 
-        val buildCommand = if (cmd.command == "run") {
-            cmd.copy(command = "build", additionalArguments = commandArguments)
-        } else {
+        val isTestRun = cmd.command == "test"
+        val buildCommand = if (isTestRun) {
             cmd.prependArgument("--no-run")
+        } else {
+            cmd.copy(command = "build", additionalArguments = commandArguments)
         }
 
         val runCommand = { executablePath: Path ->
@@ -80,7 +81,7 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
                 .withEnvironment(cmd.environmentVariables.envs)
         }
 
-        return buildProjectAndGetBinaryArtifactPath(environment.project, buildCommand, state)
+        return buildProjectAndGetBinaryArtifactPath(environment.project, buildCommand, state, isTestRun)
             .then { binary ->
                 val path = binary?.path ?: return@then null
                 val commandLine = runCommand(path)
@@ -120,7 +121,12 @@ private sealed class DebugBuildResult {
  *   * the second time to get json output
  * See https://github.com/rust-lang/cargo/issues/3855
  */
-private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: CargoCommandLine, state: CargoRunState): Promise<Binary?> {
+private fun buildProjectAndGetBinaryArtifactPath(
+    project: Project,
+    command: CargoCommandLine,
+    state: CargoRunState,
+    testsOnly: Boolean
+): Promise<Binary?> {
     val promise = AsyncPromise<Binary?>()
     val cargo = state.cargo()
 
@@ -170,20 +176,29 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
                         result = output.stdoutLines
                             .mapNotNull {
                                 try {
-                                    parser.parse(it)
+                                    val jsonElement = parser.parse(it)
+                                    val jsonObject = if (jsonElement.isJsonObject) {
+                                        jsonElement.asJsonObject
+                                    } else {
+                                        return@mapNotNull null
+                                    }
+                                    CargoMetadata.Artifact.fromJson(jsonObject)
                                 } catch (e: JsonSyntaxException) {
                                     null
                                 }
                             }
-                            .mapNotNull { if (it.isJsonObject) it.asJsonObject else null }
-                            .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
                             .filter { (target, profile) ->
-                                val kind = target.cleanKind
-                                kind == TargetKind.BIN
-                                    // TODO: support cases when crate types list contains not only binary
-                                    || kind == TargetKind.EXAMPLE && target.cleanCrateTypes.singleOrNull() == CrateType.BIN
-                                    || kind == TargetKind.TEST
-                                    || (kind == TargetKind.LIB && profile.test)
+                                val isSuitableTarget = when (target.cleanKind) {
+                                    TargetKind.BIN -> true
+                                    TargetKind.EXAMPLE -> {
+                                        // TODO: support cases when crate types list contains not only binary
+                                        target.cleanCrateTypes.singleOrNull() == CrateType.BIN
+                                    }
+                                    TargetKind.TEST -> true
+                                    TargetKind.LIB -> profile.test
+                                    else -> false
+                                }
+                                isSuitableTarget && (!testsOnly || profile.test)
                             }
                             .flatMap { it.filenames.filter { !it.endsWith(".dSYM") } } // FIXME: correctly launch debug binaries for macos
                             .let(DebugBuildResult::Binaries)
