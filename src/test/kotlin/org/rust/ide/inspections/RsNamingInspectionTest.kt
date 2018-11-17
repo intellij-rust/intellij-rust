@@ -13,14 +13,14 @@ import org.rust.WithStdlibRustProjectDescriptor
  */
 abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspectionsTestBase(inspection) {
     class RsAssocTypeNamingInspectionTest : RsNamingInspectionTest(RsAssocTypeNamingInspection()) {
-        fun testAssociatedTypes() = checkByText("""
+        fun `test associated types`() = checkByText("""
             trait Foo {
                 type AssocTypeOk;
                 type <warning descr="Type `assoc_foo` should have a camel case name such as `AssocFoo`">assoc_foo</warning>;
             }
         """)
 
-        fun testAssociatedTypesSuppression() = checkByText("""
+        fun `test associated types suppression`() = checkByText("""
             #[allow(non_camel_case_types)]
             trait Foo {
                 type assoc_foo;
@@ -29,7 +29,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
         // TODO: Uncomment when associated types support renaming
         //
-        // fun testAssociatedTypesFix() = checkFixByText("Rename to `AssocFoo`", """
+        // fun `test associated types fix`() = checkFixByText("Rename to `AssocFoo`", """
         //     trait Foo {
         //         type <warning descr="Type `assoc_foo` should have a camel case name such as `AssocFoo`">ass<caret>oc_foo</warning>;
         //         fn bar(foo: &Self::assoc_foo) {}
@@ -43,17 +43,17 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsConstNamingInspectionTest : RsNamingInspectionTest(RsConstNamingInspection()) {
-        fun testConstants() = checkByText("""
+        fun `test constants`() = checkByText("""
             const CONST_OK: u32 = 12;
             const <warning descr="Constant `const_foo` should have an upper case name such as `CONST_FOO`">const_foo</warning>: u32 = 12;
         """)
 
-        fun testConstantsSuppression() = checkByText("""
+        fun `test constants suppression`() = checkByText("""
             #[allow(non_upper_case_globals)]
             const const_foo: u32 = 12;
         """)
 
-        fun testConstantsFix() = checkFixByText("Rename to `CONST_FOO`", """
+        fun `test constants fix`() = checkFixByText("Rename to `CONST_FOO`", """
             const <warning descr="Constant `ConstFoo` should have an upper case name such as `CONST_FOO`">Con<caret>stFoo</warning>: u32 = 42;
             fn const_use() {
                 let a = ConstFoo;
@@ -67,17 +67,17 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsEnumNamingInspectionTest: RsNamingInspectionTest(RsEnumNamingInspection()) {
-        fun testEnums() = checkByText("""
+        fun `test enums`() = checkByText("""
             enum EnumOk {}
             enum <warning descr="Type `enum_foo` should have a camel case name such as `EnumFoo`">enum_foo</warning> {}
         """)
 
-        fun testEnumsSuppression() = checkByText("""
+        fun `test enums suppression`() = checkByText("""
             #[allow(non_camel_case_types)]
             enum enum_foo {}
         """)
 
-        fun testEnumsFix() = checkFixByText("Rename to `EnumFoo`", """
+        fun `test enums fix`() = checkFixByText("Rename to `EnumFoo`", """
             enum <warning descr="Type `enum_foo` should have a camel case name such as `EnumFoo`">enum_f<caret>oo</warning> { Var }
             fn enum_use() {
                 let a = enum_foo::Var;
@@ -91,21 +91,21 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsEnumVariantNamingInspectionTest: RsNamingInspectionTest(RsEnumVariantNamingInspection()) {
-        fun testEnumVariants() = checkByText("""
+        fun `test enum variants`() = checkByText("""
             enum EnumVars {
                 VariantOk,
                 <warning descr="Enum variant `variant_foo` should have a camel case name such as `VariantFoo`">variant_foo</warning>
             }
         """)
 
-        fun testEnumVariantsSuppression() = checkByText("""
+        fun `test enum variants suppression`() = checkByText("""
             #[allow(non_camel_case_types)]
             enum EnumVars {
                 variant_foo
             }
         """)
 
-        fun testEnumVariantsFix() = checkFixByText("Rename to `VarBar`", """
+        fun `test enum variants fix`() = checkFixByText("Rename to `VarBar`", """
             enum ToFix {
                 <warning descr="Enum variant `var_bar` should have a camel case name such as `VarBar`">var_b<caret>ar</warning>
             }
@@ -123,7 +123,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsFieldNamingInspectionTest: RsNamingInspectionTest(RsFieldNamingInspection()) {
-        fun testEnumVariantFields() = checkByText("""
+        fun `test enum variant fields`() = checkByText("""
             enum EnumVarFields {
                 Variant {
                     field_ok: u32,
@@ -132,7 +132,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testEnumVariantFieldsSuppression() = checkByText("""
+        fun `test enum variant fields suppression`() = checkByText("""
             #[allow(non_snake_case)]
             enum EnumVarFields {
                 Variant {
@@ -141,7 +141,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testEnumVariantFieldsFix() = checkFixByText("Rename to `field_foo`", """
+        fun `test enum variant fields fix`() = checkFixByText("Rename to `field_foo`", """
             enum EnumToFix {
                 Test {
                     <warning descr="Field `FieldFoo` should have a snake case name such as `field_foo`">Fi<caret>eldFoo</warning>: u32
@@ -161,14 +161,14 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testStructFields() = checkByText("""
+        fun `test struct fields`() = checkByText("""
             struct Foo {
                 field_ok: u32,
                 <warning descr="Field `FieldFoo` should have a snake case name such as `field_foo`">FieldFoo</warning>: u32
             }
         """)
 
-        fun testStructFieldsSuppression() = checkByText("""
+        fun `test struct fields suppression`() = checkByText("""
             #[allow(non_snake_case)]
             pub struct HoverParams {
                 pub textDocument: Document,
@@ -176,7 +176,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testStructFieldsFix() = checkFixByText("Rename to `is_deleted`", """
+        fun `test struct fields fix`() = checkFixByText("Rename to `is_deleted`", """
             struct Foo {
                 <warning descr="Field `IsDeleted` should have a snake case name such as `is_deleted`">IsDelete<caret>d</warning>: bool
             }
@@ -195,7 +195,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsFunctionNamingInspectionTest: RsNamingInspectionTest(RsFunctionNamingInspection()) {
-        fun testFunctions() = checkByText("""
+        fun `test functions`() = checkByText("""
             fn fn_ok() {}
             fn <warning descr="Function `FN_BAR` should have a snake case name such as `fn_bar`">FN_BAR</warning>() {}
 
@@ -204,12 +204,12 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testFunctionsSuppression() = checkByText("""
+        fun `test functions suppression`() = checkByText("""
             #[allow(non_snake_case)]
             fn FN_BAR() {}
         """)
 
-        fun testFunctionsFix() = checkFixByText("Rename to `fun_foo`", """
+        fun `test functions fix`() = checkFixByText("Rename to `fun_foo`", """
             fn <warning descr="Function `FUN_FOO` should have a snake case name such as `fun_foo`">F<caret>UN_FOO</warning>() {}
             fn fun_use() {
                 FUN_FOO();
@@ -223,19 +223,19 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsArgumentNamingInspectionTest: RsNamingInspectionTest(RsArgumentNamingInspection()) {
-        fun testFunctionArguments() = checkByText("""
+        fun `test function arguments`() = checkByText("""
             fn fn_par(
                 par_ok: u32,
                 <warning descr="Argument `ParFoo` should have a snake case name such as `par_foo`">ParFoo</warning>: u32) {
             }
         """)
 
-        fun testFunctionArgumentsSuppression() = checkByText("""
+        fun `test function arguments suppression`() = checkByText("""
             #[allow(non_snake_case)]
             fn fn_par(ParFoo: u32) {}
         """)
 
-        fun testFunctionArgumentsFix() = checkFixByText("Rename to `arg_baz`", """
+        fun `test function arguments fix`() = checkFixByText("Rename to `arg_baz`", """
             fn test (<warning descr="Argument `Arg__Baz_` should have a snake case name such as `arg_baz`">Arg__<caret>Baz_</warning>: u32) {
                 println!("{}", Arg__Baz_);
             }
@@ -245,7 +245,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testMethodArguments() = checkByText("""
+        fun `test method arguments`() = checkByText("""
             struct Foo {}
             impl Foo {
                 fn fn_par(
@@ -255,7 +255,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testMethodArgumentsSuppression() = checkByText("""
+        fun `test method arguments suppression`() = checkByText("""
             #![allow(non_snake_case)]
             struct Foo {}
             impl Foo {
@@ -263,7 +263,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testMethodArgumentsFix() = checkFixByText("Rename to `m_arg`", """
+        fun `test method arguments fix`() = checkFixByText("Rename to `m_arg`", """
             struct Foo;
             impl Foo {
                 fn print(&self, <warning descr="Argument `mArg` should have a snake case name such as `m_arg`">m<caret>Arg</warning>: u32) {
@@ -281,7 +281,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsLifetimeNamingInspectionTest: RsNamingInspectionTest(RsLifetimeNamingInspection()) {
-        fun testLifetimes() = checkByText("""
+        fun `test lifetimes`() = checkByText("""
             fn lifetimes<
                 'lifetime_ok,
                 '__,
@@ -289,12 +289,12 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testLifetimesSuppression() = checkByText("""
+        fun `test lifetimes suppression`() = checkByText("""
             #[allow(non_snake_case)]
             fn lifetimes<'LifetimeFoo>() {}
         """)
 
-        fun testLifetimesFix() = checkFixByText("Rename to `'lifetime_foo`", """
+        fun `test lifetimes fix`() = checkFixByText("Rename to `'lifetime_foo`", """
             fn lifetimes<
                 <warning descr="Lifetime `'LifetimeFoo` should have a snake case name such as `'lifetime_foo`">'Lifetime<caret>Foo</warning>>(x: &'LifetimeFoo u32) {
             }
@@ -306,17 +306,17 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsMacroNamingInspectionTest: RsNamingInspectionTest(RsMacroNamingInspection()) {
-        fun testMacros() = checkByText("""
+        fun `test macros`() = checkByText("""
             macro_rules! macro_ok { () => {}; }
             macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">MacroFoo</warning> { () => {}; }
         """)
 
-        fun testMacrosSuppression() = checkByText("""
+        fun `test macros suppression`() = checkByText("""
             #[allow(non_snake_case)]
             macro_rules! MacroFoo { () => {}; }
         """)
 
-        fun testMacrosFix() = checkFixByText("Rename to `macro_foo`", """
+        fun `test macros fix`() = checkFixByText("Rename to `macro_foo`", """
             macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">Macro<caret>Foo</warning> { () => {}; }
             MacroFoo!();
         """, """
@@ -326,7 +326,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsMethodNamingInspectionTest: RsNamingInspectionTest(RsMethodNamingInspection()) {
-        fun testMethods() = checkByText("""
+        fun `test methods`() = checkByText("""
             struct Foo {}
             impl Foo {
                 fn met_ok(&self) {}
@@ -334,7 +334,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testMethodsSuppression() = checkByText("""
+        fun `test methods suppression`() = checkByText("""
             #![allow(non_snake_case)]
             struct Foo {}
             impl Foo {
@@ -342,7 +342,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testMethodsFix() = checkFixByText("Rename to `met_bar`", """
+        fun `test methods fix`() = checkFixByText("Rename to `met_bar`", """
             struct Foo;
             impl Foo {
                 fn <warning descr="Method `MetBar` should have a snake case name such as `met_bar`">MetB<caret>ar</warning>(&self) {}
@@ -362,14 +362,14 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
         """)
 
-        fun testTraitMethods() = checkByText("""
+        fun `test trait methods`() = checkByText("""
             trait Foo {
                 fn met_ok() {}
                 fn <warning descr="Method `MET_BAR` should have a snake case name such as `met_bar`">MET_BAR</warning>() {}
             }
         """)
 
-        fun testTraitMethodsSuppression() = checkByText("""
+        fun `test trait methods suppression`() = checkByText("""
             trait Foo {
                 #[allow(non_snake_case)]
                 fn MET_BAR() {}
@@ -378,7 +378,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
         // TODO: Uncomment when trait methods support renaming
         //
-        // fun testTraitMethodsFix() = checkFixByText("Rename to `bar_baz`", """
+        // fun `test trait methods fix`() = checkFixByText("Rename to `bar_baz`", """
         //     trait Foo {
         //         fn <warning descr="Method `BarBaz` should have a snake case name such as `bar_baz`">Bar<caret>Baz</warning>() {}
         //     }
@@ -398,22 +398,22 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsModuleNamingInspectionTest: RsNamingInspectionTest(RsModuleNamingInspection()) {
-        fun testModules() = checkByText("""
+        fun `test modules`() = checkByText("""
             mod module_ok {}
             mod <warning descr="Module `moduleA` should have a snake case name such as `module_a`">moduleA</warning> {}
         """)
 
-        fun testModulesSuppression() = checkByText("""
+        fun `test modules suppression`() = checkByText("""
             #[allow(non_snake_case)]
             mod moduleA {}
         """)
 
-        fun testModulesSuppressionBadStyle() = checkByText("""
+        fun `test modules suppression bad style`() = checkByText("""
             #[allow(bad_style)]
             mod moduleA {}
         """)
 
-        fun testModulesFix() = checkFixByText("Rename to `mod_foo`", """
+        fun `test modules fix`() = checkFixByText("Rename to `mod_foo`", """
             mod <warning descr="Module `modFoo` should have a snake case name such as `mod_foo`">modF<caret>oo</warning> {
                 pub const ONE: u32 = 1;
             }
@@ -431,17 +431,17 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsStaticConstNamingInspectionTest: RsNamingInspectionTest(RsStaticConstNamingInspection()) {
-        fun testStatics() = checkByText("""
+        fun `test statics`() = checkByText("""
             static STATIC_OK: u32 = 12;
             static <warning descr="Static constant `static_foo` should have an upper case name such as `STATIC_FOO`">static_foo</warning>: u32 = 12;
         """)
 
-        fun testStaticsSuppression() = checkByText("""
+        fun `test statics suppression`() = checkByText("""
             #[allow(non_upper_case_globals)]
             static static_foo: u32 = 12;
         """)
 
-        fun testStaticsFix() = checkFixByText("Rename to `STATIC_FOO`", """
+        fun `test statics fix`() = checkFixByText("Rename to `STATIC_FOO`", """
             static <warning descr="Static constant `staticFoo` should have an upper case name such as `STATIC_FOO`">sta<caret>ticFoo</warning>: u32 = 43;
             fn static_use() {
                 let a = staticFoo;
@@ -455,17 +455,17 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsStructNamingInspectionTest: RsNamingInspectionTest(RsStructNamingInspection()) {
-        fun testStructs() = checkByText("""
+        fun `test structs`() = checkByText("""
             struct StructOk {}
             struct <warning descr="Type `struct_foo` should have a camel case name such as `StructFoo`">struct_foo</warning> {}
         """)
 
-        fun testStructsSuppression() = checkByText("""
+        fun `test structs suppression`() = checkByText("""
             #[allow(non_camel_case_types)]
             struct struct_foo {}
         """)
 
-        fun testStructsFix() = checkFixByText("Rename to `StructFoo`", """
+        fun `test structs fix`() = checkFixByText("Rename to `StructFoo`", """
             struct <warning descr="Type `Struct_foo` should have a camel case name such as `StructFoo`">Stru<caret>ct_foo</warning> {}
             fn struct_use() {
                 let a = Struct_foo {};
@@ -479,17 +479,17 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsTraitNamingInspectionTest: RsNamingInspectionTest(RsTraitNamingInspection()) {
-        fun testTraits() = checkByText("""
+        fun `test traits`() = checkByText("""
             trait TraitOk {}
             trait <warning descr="Trait `trait_foo` should have a camel case name such as `TraitFoo`">trait_foo</warning> {}
         """)
 
-        fun testTraitsSuppression() = checkByText("""
+        fun `test traits suppression`() = checkByText("""
             #[allow(non_camel_case_types)]
             trait trait_foo {}
         """)
 
-        fun testTraitsFix() = checkFixByText("Rename to `HotFix`", """
+        fun `test traits fix`() = checkFixByText("Rename to `HotFix`", """
              trait <warning descr="Trait `hot_fix` should have a camel case name such as `HotFix`">ho<caret>t_fix</warning> {}
              struct Patch {}
              impl hot_fix for Patch {}
@@ -501,17 +501,17 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsTypeAliasNamingInspectionTest: RsNamingInspectionTest(RsTypeAliasNamingInspection()) {
-        fun testTypeAliases() = checkByText("""
+        fun `test type aliases`() = checkByText("""
             type TypeOk = u32;
             type <warning descr="Type `type_foo` should have a camel case name such as `TypeFoo`">type_foo</warning> = u32;
         """)
 
-        fun testTypeAliasesSuppression() = checkByText("""
+        fun `test type aliases suppression`() = checkByText("""
             #[allow(non_camel_case_types)]
             type type_foo = u32;
         """)
 
-        fun testTypeAliasesFix() = checkFixByText("Rename to `ULong`", """
+        fun `test type aliases fix`() = checkFixByText("Rename to `ULong`", """
              type <warning descr="Type `u_long` should have a camel case name such as `ULong`">u_<caret>long</warning> = u64;
              const ZERO: u_long = 0;
          """, """
@@ -521,32 +521,32 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsTypeParameterNamingInspectionTest: RsNamingInspectionTest(RsTypeParameterNamingInspection()) {
-        fun testTypeParameters() = checkByText("""
+        fun `test type parameters`() = checkByText("""
             fn type_params<
                 SomeType: Clone,
                 <warning descr="Type parameter `some_Type` should have a camel case name such as `SomeType`">some_Type</warning>: Clone> () {
             }
         """)
 
-        fun testTypeParametersSuppression() = checkByText("""
+        fun `test type parameters suppression`() = checkByText("""
             #[allow(non_camel_case_types)]
             fn type_params<some_Type: Clone> () {}
         """)
 
-        fun testTypeParametersFix() = checkFixByText("Rename to `To`", """
+        fun `test type parameters fix`() = checkFixByText("Rename to `To`", """
             fn type_params<<warning descr="Type parameter `to` should have a camel case name such as `To`">t<caret>o</warning>: Clone> () {}
          """, """
             fn type_params<To: Clone> () {}
          """)
 
-        fun testTypeParametersWithWhere() = checkByText("""
+        fun `test type parameters with where`() = checkByText("""
             fn type_params<
                 SomeType,
                 <warning descr="Type parameter `some_Type` should have a camel case name such as `SomeType`">some_Type</warning>>() where some_Type: Clone {
             }
         """)
 
-        fun testTypeParametersWithWhereFix() = checkFixByText("Rename to `Base`", """
+        fun `test type parameters with where fix`() = checkFixByText("Rename to `Base`", """
             fn type_params<<warning descr="Type parameter `base` should have a camel case name such as `Base`">b<caret>ase</warning>>(b: &base) where base: Clone {}
          """, """
             fn type_params<Base>(b: &Base) where Base: Clone {}
@@ -554,28 +554,28 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
     }
 
     class RsVariableNamingInspectionTest: RsNamingInspectionTest(RsVariableNamingInspection()) {
-        fun testVariables() = checkByText("""
+        fun `test variables`() = checkByText("""
             fn loc_var() {
                 let var_ok = 12;
                 let <warning descr="Variable `VarFoo` should have a snake case name such as `var_foo`">VarFoo</warning> = 12;
             }
         """)
 
-        fun testVariablesSuppression() = checkByText("""
+        fun `test variables suppression`() = checkByText("""
             #![allow(non_snake_case)]
             fn loc_var() {
                 let VarFoo = 12;
             }
         """)
 
-        fun testVariablesWithinStruct() = checkByText("""
+        fun `test variables within struct`() = checkByText("""
             struct Foo { fld: u32 }
             fn test() {
                 let Foo { fld: <warning descr="Variable `FLD_VAL` should have a snake case name such as `fld_val`">FLD_VAL</warning> } = Foo { fld: 17 };
             }
         """)
 
-        fun testVariablesFix() = checkFixByText("Rename to `dwarfs_count`", """
+        fun `test variables fix`() = checkFixByText("Rename to `dwarfs_count`", """
             fn test() {
                 let <warning descr="Variable `DWARFS_COUNT` should have a snake case name such as `dwarfs_count`">DWARF<caret>S_COUNT</warning> = 7;
                 let legs_count = DWARFS_COUNT * 2;
@@ -587,14 +587,14 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
             }
          """)
 
-        fun testTupleVariables() = checkByText("""
+        fun `test tuple variables`() = checkByText("""
             fn loc_var() {
                 let (var1_ok, var2_ok) = (17, 83);
                 let (<warning descr="Variable `VarFoo` should have a snake case name such as `var_foo`">VarFoo</warning>, var2_ok) = (120, 30);
             }
         """)
 
-        fun testTupleVariablesFix() = checkFixByText("Rename to `real`", """
+        fun `test tuple variables fix`() = checkFixByText("Rename to `real`", """
             fn test() {
                 let (<warning descr="Variable `Real` should have a snake case name such as `real`">Re<caret>al</warning>, imaginary) = (7.2, 3.5);
                 println!("{} + {}i", Real, imaginary);
@@ -608,7 +608,7 @@ abstract class RsNamingInspectionTest(inspection: RsNamingInspection) : RsInspec
 
         // Issue #730. The inspection must not be applied in the following cases
         @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-        fun testVariablesNotApplied() = checkByText("""
+        fun `test variables not applied`() = checkByText("""
             fn test_not_applied() {
                 match Some(()) {
                     None => ()
