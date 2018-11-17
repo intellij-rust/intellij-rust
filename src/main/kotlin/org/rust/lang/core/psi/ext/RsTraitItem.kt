@@ -76,6 +76,20 @@ private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
     return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
 }
 
+val RsTraitItem.isSized: Boolean get() {
+    val stub = stub
+    if (stub != null) return implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
+
+    val whereBounds =
+        whereClause?.wherePredList.orEmpty()
+            .filter { (it.typeReference?.typeElement as? RsBaseType)?.name == "Self" }
+            .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
+    val bounds = typeParamBounds?.polyboundList.orEmpty() + whereBounds
+    // ugly solution, the trait might be refer as std::marker::Sized, or in other way
+    // TODO: parse it properly
+    return bounds.any { it.text.contains(Regex("Sized")) && it.q == null }
+}
+
 fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
     val typeParameterList = typeParameterList?.typeParameterList.orEmpty()
     val substitution = if (typeParameterList.size != subst.size) {
