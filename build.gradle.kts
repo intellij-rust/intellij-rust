@@ -112,6 +112,13 @@ allprojects {
                 }
             }
         }
+
+        // We need to prevent the platform-specific shared JNA library to loading from the system library paths,
+        // because otherwise it can lead to compatibility issues.
+        // Also note that IDEA does the same thing at startup, and not only for tests.
+        tasks.withType<Test>().configureEach {
+            systemProperty("jna.nosys", "true")
+        }
     }
 }
 
