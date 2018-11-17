@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.runconfig
+package org.rustSlowTests.cargo.runconfig.test
 
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.testframework.TestProxyRoot
@@ -12,6 +12,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.UIUtil
 import org.rust.stdext.removeLast
+import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
 class TestRunnerTest : RunConfigurationTestBase() {
 
