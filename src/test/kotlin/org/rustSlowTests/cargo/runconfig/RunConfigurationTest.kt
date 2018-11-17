@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.runconfig
+package org.rustSlowTests.cargo.runconfig
 
 import org.rust.fileTree
 

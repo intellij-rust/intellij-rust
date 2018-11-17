@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.runconfig
+package org.rustSlowTests.cargo.runconfig
 
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.actions.ConfigurationContext
@@ -17,6 +17,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.runconfig.RsRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
