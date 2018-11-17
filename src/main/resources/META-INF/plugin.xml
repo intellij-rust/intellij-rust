@@ -73,7 +73,7 @@
         <!-- Refactoring support -->
 
         <lang.refactoringSupport language="Rust"
-                                 implementationClass="org.rust.lang.refactoring.RsRefactoringSupportProvider"/>
+                                 implementationClass="org.rust.ide.refactoring.RsRefactoringSupportProvider"/>
 
         <!-- Commenter -->
 
@@ -110,7 +110,7 @@
 
         <!-- Imports -->
 
-        <lang.importOptimizer language="Rust" implementationClass="org.rust.lang.refactoring.RsImportOptimizer"/>
+        <lang.importOptimizer language="Rust" implementationClass="org.rust.ide.refactoring.RsImportOptimizer"/>
         <autoImportOptionsProvider instance="org.rust.ide.settings.RsAutoImportOptions"/>
 
         <!-- Navigation -->
@@ -182,12 +182,12 @@
 
         <!-- Rename Processor -->
 
-        <renamePsiElementProcessor implementation="org.rust.lang.refactoring.RsRenameProcessor"/>
+        <renamePsiElementProcessor implementation="org.rust.ide.refactoring.RsRenameProcessor"/>
 
         <!-- Implement methods -->
 
         <codeInsight.implementMethod language="Rust"
-                                     implementationClass="org.rust.lang.refactoring.implementMembers.ImplementMembersHandler"/>
+                                     implementationClass="org.rust.ide.refactoring.implementMembers.ImplementMembersHandler"/>
 
         <!-- Resolve -->
 
@@ -690,7 +690,7 @@
 
         <!-- Refactoring -->
 
-        <lang.namesValidator language="Rust" implementationClass="org.rust.lang.refactoring.RsNamesValidator"/>
+        <lang.namesValidator language="Rust" implementationClass="org.rust.ide.refactoring.RsNamesValidator"/>
 
         <!-- Postfix templates -->
         <codeInsight.template.postfixTemplateProvider language="Rust"
@@ -751,21 +751,21 @@
         </action>
 
         <action id="Rust.RsPromoteModuleToDirectoryAction"
-                class="org.rust.lang.refactoring.RsPromoteModuleToDirectoryAction"
+                class="org.rust.ide.refactoring.RsPromoteModuleToDirectoryAction"
                 text="Promote module to directory"
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsDowngradeModuleToFile"
-                class="org.rust.lang.refactoring.RsDowngradeModuleToFile"
+                class="org.rust.ide.refactoring.RsDowngradeModuleToFile"
                 text="Downgrade module to file"
                 description="Move this module to a single file">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsConvertToNamedFields"
-                class="org.rust.lang.refactoring.RsConvertToNamedFieldsAction"
+                class="org.rust.ide.refactoring.RsConvertToNamedFieldsAction"
                 text="Convert to named fields"
                 description="Move this module to a single file">
             <add-to-group group-id="RefactoringMenu"/>
@@ -818,7 +818,7 @@
             <reference id="Rust.ShowSingleStepMacroExpansionAction"/>
         </group>
 
-        <action class="org.rust.lang.refactoring.generateConstructor.GenerateConstructorAction"
+        <action class="org.rust.ide.refactoring.generateConstructor.GenerateConstructorAction"
                 id="Rust.GenerateConstructor"
                 text="Generate Constructor">
             <add-to-group group-id="GenerateGroup"/>

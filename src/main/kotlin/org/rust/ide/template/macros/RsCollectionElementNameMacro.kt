@@ -13,7 +13,7 @@ import com.intellij.codeInsight.template.Result
 import com.intellij.codeInsight.template.TextResult
 import com.intellij.codeInsight.template.macro.MacroBase
 import com.intellij.openapi.util.text.StringUtil
-import org.rust.lang.refactoring.RsNamesValidator
+import org.rust.ide.refactoring.RsNamesValidator
 
 class RsCollectionElementNameMacro : MacroBase("rustCollectionElementName", "rustCollectionElementName()") {
     override fun calculateResult(params: Array<out Expression>, context: ExpressionContext, quick: Boolean): Result? {

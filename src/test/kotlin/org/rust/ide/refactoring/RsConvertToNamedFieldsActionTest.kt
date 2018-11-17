@@ -7,7 +7,6 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.lang.refactoring.RsConvertToNamedFieldsAction
 
 class RsConvertToNamedFieldsActionTest : RsTestBase() {
     fun `test works for structs`() = doTest("""
