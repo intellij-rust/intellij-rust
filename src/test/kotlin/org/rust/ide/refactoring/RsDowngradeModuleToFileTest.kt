@@ -11,7 +11,6 @@ import com.intellij.testFramework.TestDataProvider
 import org.rust.FileTree
 import org.rust.RsTestBase
 import org.rust.fileTree
-import org.rust.lang.refactoring.RsDowngradeModuleToFile
 
 class RsDowngradeModuleToFileTest : RsTestBase() {
     fun `test works on file`() = checkAvailable(
