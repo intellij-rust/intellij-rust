@@ -70,6 +70,28 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test extern static is not type`() = checkByCode("""
+        extern "C" {
+            static Foo: i32;
+        }
+        struct Foo;
+              //X
+
+        fn bar(foo: Foo) {}
+                   //^
+    """)
+
+    fun `test extern fn is not type`() = checkByCode("""
+        extern "C" {
+            fn Foo();
+        }
+        struct Foo;
+              //X
+
+        fn bar(foo: Foo) {}
+                   //^
+    """)
+
     fun `test path`() = checkByCode("""
         mod m {
             fn foo() {}
@@ -190,5 +212,4 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
             let _: T::X = T::X;
         }                  //^
     """)
-
 }

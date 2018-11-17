@@ -72,8 +72,9 @@ fun processItemDeclarations(
             is RsFunction, is RsConstant ->
                 if (Namespace.Values in ns && processor(item as RsNamedElement)) return true
 
-            is RsForeignModItem ->
+            is RsForeignModItem -> if (Namespace.Values in ns) {
                 if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
+            }
 
             is RsExternCrateItem -> {
                 if (item.isPublic || withPrivateImports) {
