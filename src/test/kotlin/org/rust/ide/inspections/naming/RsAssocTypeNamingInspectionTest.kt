@@ -23,17 +23,15 @@ class RsAssocTypeNamingInspectionTest : RsInspectionsTestBase(RsAssocTypeNamingI
         }
     """)
 
-    // TODO: Uncomment when associated types support renaming
-    //
-    // fun `test associated types fix`() = checkFixByText("Rename to `AssocFoo`", """
-    //     trait Foo {
-    //         type <warning descr="Type `assoc_foo` should have a camel case name such as `AssocFoo`">ass<caret>oc_foo</warning>;
-    //         fn bar(foo: &Self::assoc_foo) {}
-    //     }
-    // """, """
-    //     trait Foo {
-    //         type AssocFoo;
-    //         fn bar(foo: &Self::AssocFoo) {}
-    //     }
-    // """)
+    fun `test associated types fix`() = checkFixByText("Rename to `AssocFoo`", """
+        trait Foo {
+            type <warning descr="Type `assoc_foo` should have a camel case name such as `AssocFoo`">ass<caret>oc_foo</warning>;
+            fn bar(foo: &Self::assoc_foo) {}
+        }
+    """, """
+        trait Foo {
+            type AssocFoo;
+            fn bar(foo: &Self::AssocFoo) {}
+        }
+    """)
 }
