@@ -741,7 +741,7 @@ sealed class RsDiagnostic(
         )
     }
 
-    class TryTraitIsNotImplementedForFooReturnType(
+    class TryTraitIsNotImplementedForReturnType(
         element: RsElement,
         private val ty: Ty?
     ) : RsDiagnostic(element) {
