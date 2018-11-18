@@ -34,14 +34,13 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
-import org.rust.cargo.runconfig.CargoRunState
+import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.util.CargoArgsParser
 import org.rust.debugger.settings.RsDebuggerSettings
-import org.rust.openapiext.GeneralCommandLine
-import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -63,8 +62,8 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
-        state as CargoRunState
-        val cmd = state.commandLine
+        state as CargoRunStateBase
+        val cmd = Cargo.patchArgs(state.prepareCommandLine(), true)
         val (commandArguments, executableArguments) = CargoArgsParser.parseArgs(cmd.command, cmd.additionalArguments)
 
         val isTestRun = cmd.command == "test"
@@ -74,22 +73,24 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
             cmd.copy(command = "build", additionalArguments = commandArguments)
         }
 
-        val runCommand = { executablePath: Path ->
-            GeneralCommandLine(executablePath)
-                .withWorkDirectory(cmd.workingDirectory)
-                .withParameters(executableArguments)
-                .withEnvironment(cmd.environmentVariables.envs)
+        val getRunCommand = { executablePath: Path ->
+            with(buildCommand) {
+                Cargo.createGeneralCommandLine(
+                    executablePath,
+                    workingDirectory,
+                    backtraceMode,
+                    environmentVariables,
+                    executableArguments
+                )
+            }
         }
 
         return buildProjectAndGetBinaryArtifactPath(environment.project, buildCommand, state, isTestRun)
             .then { binary ->
                 val path = binary?.path ?: return@then null
-                val commandLine = runCommand(path)
-                check(commandLine.workDirectory != null) {
-                    "LLDB requires working directory"
-                }
+                val runCommand = getRunCommand(path)
                 val sysroot = state.computeSysroot()
-                val runParameters = RsDebugRunParameters(environment.project, commandLine)
+                val runParameters = RsDebugRunParameters(environment.project, runCommand)
                 XDebuggerManager.getInstance(environment.project)
                     .startSession(environment, object : XDebugProcessConfiguratorStarter() {
                         override fun start(session: XDebugSession): XDebugProcess =
@@ -124,7 +125,7 @@ private sealed class DebugBuildResult {
 private fun buildProjectAndGetBinaryArtifactPath(
     project: Project,
     command: CargoCommandLine,
-    state: CargoRunState,
+    state: CargoRunStateBase,
     testsOnly: Boolean
 ): Promise<Binary?> {
     val promise = AsyncPromise<Binary?>()
@@ -149,6 +150,7 @@ private fun buildProjectAndGetBinaryArtifactPath(
         }
 
         RunContentExecutor(project, processForUser)
+            .apply { state.createFilters().forEach { withFilter(it) } }
             .withAfterCompletion {
                 if (processForUserOutput.exitCode != 0) {
                     promise.setResult(null)

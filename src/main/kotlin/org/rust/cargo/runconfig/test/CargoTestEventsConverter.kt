@@ -10,9 +10,6 @@ import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
-import jetbrains.buildServer.messages.serviceMessages.CompilationFinished
-import jetbrains.buildServer.messages.serviceMessages.CompilationStarted
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
 import org.rust.cargo.runconfig.test.CargoTestLocator.getTestFnUrl
 import org.rust.cargo.runconfig.test.CargoTestLocator.getTestModUrl
@@ -36,7 +33,7 @@ class CargoTestEventsConverter(
     private val pendingFinishedSuites: MutableSet<NodeId> = linkedSetOf()
 
     override fun processServiceMessages(text: String, outputType: Key<*>, visitor: ServiceMessageVisitor): Boolean {
-        if (handleSimpleMessage(text, visitor)) return false
+        if (handleExecutableName(text)) return false
 
         val jsonElement: JsonElement
         try {
@@ -53,29 +50,14 @@ class CargoTestEventsConverter(
     }
 
     /** @return true if message successfully processed. */
-    private fun handleSimpleMessage(text: String, visitor: ServiceMessageVisitor): Boolean {
-        fun startsWith(prefix: String): Boolean = text.trim().startsWith(prefix, true)
-        return when {
-            startsWith("compiling") -> {
-                visitor.visitCompilationStarted(CompilationStarted("rustc"))
-                true
-            }
-            startsWith("finished") -> {
-                visitor.visitCompilationFinished(CompilationFinished("rustc"))
-                true
-            }
-            // On Windows, we do not use the `--color=always` option in tests (see `Force colors` comment in
-            // Cargo.generalCommandLine). Therefore, if on Unix the "Running target/debug/deps/target_name-hash"
-            // line is divided into two parts - colored "Running" and everything else - then on Windows the entire
-            // line is send in one message.
-            SystemInfo.isWindows && startsWith("running") || !SystemInfo.isWindows && startsWith("target") -> {
-                check(suitesStack.isEmpty())
-                val target = text.substringAfterLast(File.separator).substringBeforeLast("-")
-                suitesStack.add(target)
-                true
-            }
-            else -> false
-        }
+    private fun handleExecutableName(text: String): Boolean {
+        if (suitesStack.isNotEmpty() || !TARGET_PATH_PART_REGEX.containsMatchIn(text)) return false
+        val targetName = text
+            .substringAfterLast(File.separatorChar)
+            .substringBefore(' ')
+            .substringBeforeLast('-')
+        suitesStack.add(targetName)
+        return true
     }
 
     private fun handleTestMessage(
@@ -218,6 +200,8 @@ class CargoTestEventsConverter(
     }
 
     companion object {
+        private val ESCAPED_SEPARATOR: String = File.separator.replace("\\", "\\\\")
+        private val TARGET_PATH_PART_REGEX: Regex = Regex("[ $ESCAPED_SEPARATOR]target$ESCAPED_SEPARATOR")
         private const val ROOT_SUITE: String = "0"
         private const val NAME_SEPARATOR: String = "::"
 

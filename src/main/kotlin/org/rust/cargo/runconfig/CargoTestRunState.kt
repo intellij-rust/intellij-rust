@@ -13,31 +13,29 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.autotest.ToggleAutoTestAction
-import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.test.CargoTestConsoleProperties
+import org.rust.cargo.runconfig.console.CargoTestConsoleBuilder
 import org.rust.cargo.toolchain.CargoCommandLine
 
 class CargoTestRunState(
     environment: ExecutionEnvironment,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
-) : CargoRunState(environment, config) {
+) : CargoRunStateBase(environment, config) {
+
+    init {
+        consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as RunConfiguration, environment.executor)
+        createFilters().forEach { consoleBuilder.addFilter(it) }
+    }
 
     override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult {
         val processHandler = startProcess()
-
-        val consoleProperties = CargoTestConsoleProperties(environment.runProfile as RunConfiguration, executor)
-        val consoleView = SMTestRunnerConnectionUtil
-            .createAndAttachConsole("Cargo Test", processHandler, consoleProperties) as SMTRunnerConsoleView
-        createFilters().forEach { consoleView.addMessageFilter(it) }
-
-        return DefaultExecutionResult(consoleView, processHandler)
-            .apply { setRestartActions(ToggleAutoTestAction()) }
+        val console = createConsole(executor)
+        console?.attachToProcess(processHandler)
+        return DefaultExecutionResult(console, processHandler).apply { setRestartActions(ToggleAutoTestAction()) }
     }
 
     override fun prepareCommandLine(): CargoCommandLine =
-        commandLine.copy(additionalArguments = patchArgs(commandLine))
+        super.prepareCommandLine().copy(additionalArguments = patchArgs(commandLine))
 
     companion object {
         @VisibleForTesting
