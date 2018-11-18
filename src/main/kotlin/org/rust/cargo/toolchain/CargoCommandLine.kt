@@ -29,23 +29,14 @@ data class CargoCommandLine(
     val allFeatures: Boolean = false,
     val nocapture: Boolean = false
 ) {
-
-    /** Appends [arg] to Cargo options, in other words, inserts [arg] before `--` arg in [additionalArguments]. */
-    fun withCargoArgument(arg: String): CargoCommandLine {
-        val (cargoArgs, binaryArgs) = splitOnDoubleDash()
-        if (arg in cargoArgs) return this
-        return if (binaryArgs.isEmpty()) {
-            copy(additionalArguments = cargoArgs + arg)
-        } else {
-            copy(additionalArguments = cargoArgs + arg + "--" + binaryArgs)
-        }
-    }
-
-    /** Appends [arg] to binary options, in other words, inserts [arg] after `--` arg in [additionalArguments]. */
-    fun withBinaryArgument(arg: String): CargoCommandLine {
-        val (cargoArgs, binaryArgs) = splitOnDoubleDash()
-        if (arg in binaryArgs) return this
-        return copy(additionalArguments = cargoArgs + "--" + arg + binaryArgs)
+    /**
+     * Adds [arg] to [additionalArguments] as an positional argument, in other words, inserts [arg] right after
+     * `--` argument in [additionalArguments].
+     * */
+    fun withPositionalArgument(arg: String): CargoCommandLine {
+        val (pre, post) = splitOnDoubleDash()
+        if (arg in post) return this
+        return copy(additionalArguments = pre + "--" + arg + post)
     }
 
     /**

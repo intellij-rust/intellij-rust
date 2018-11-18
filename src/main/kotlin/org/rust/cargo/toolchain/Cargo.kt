@@ -8,6 +8,7 @@ package org.rust.cargo.toolchain
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
@@ -102,59 +103,29 @@ class Cargo(private val cargoExecutable: Path) {
     }
 
     fun toColoredCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
-        generalCommandLine(commandLine, true)
+        toGeneralCommandLine(commandLine, colors = true)
 
     fun toGeneralCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
-        generalCommandLine(commandLine, false)
+        toGeneralCommandLine(commandLine, colors = false)
 
-    private fun generalCommandLine(rawCommandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine {
-        val commandLine = if (rawCommandLine.command == "test") {
-            var tmpCommandLine = rawCommandLine
-            if (rawCommandLine.allFeatures) {
-                tmpCommandLine = tmpCommandLine.withCargoArgument("--all-features")
+    private fun toGeneralCommandLine(commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine =
+        with(patchArgs(commandLine, colors)) {
+            val parameters = buildList<String> {
+                if (channel != RustChannel.DEFAULT) {
+                    add("+$channel")
+                }
+                add(command)
+                addAll(additionalArguments)
             }
-            if (rawCommandLine.nocapture) {
-                tmpCommandLine = tmpCommandLine.withBinaryArgument("--nocapture")
-            }
-            tmpCommandLine
-        } else {
-            rawCommandLine
+            createGeneralCommandLine(
+                cargoExecutable,
+                workingDirectory,
+                backtraceMode,
+                environmentVariables,
+                parameters,
+                http
+            )
         }
-
-        val cmdLine = GeneralCommandLine(cargoExecutable)
-            .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(commandLine.workingDirectory)
-            .withEnvironment("TERM", "ansi")
-            .withRedirectErrorStream(true)
-
-        withProxyIfNeeded(cmdLine, http)
-
-        when (commandLine.backtraceMode) {
-            BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
-            BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "full")
-            BacktraceMode.NO -> Unit
-        }
-        commandLine.environmentVariables.configureCommandLine(cmdLine, true)
-
-        // Force colors
-        val forceColors = colors
-            // Hey, wanna repeat https://github.com/rust-lang/cargo/pull/4162 for rustc,
-            // so that we can enable colors on windows?
-            && !SystemInfo.isWindows
-            && commandLine.command in COLOR_ACCEPTING_COMMANDS
-            && commandLine.additionalArguments.none { it.startsWith("--color") }
-
-        val parameters = buildList<String> {
-            if (commandLine.channel != RustChannel.DEFAULT) {
-                add("+${commandLine.channel}")
-            }
-            add(commandLine.command)
-            if (forceColors) add("--color=always")
-            addAll(commandLine.additionalArguments)
-        }
-
-        return cmdLine.withParameters(parameters)
-    }
 
     @Throws(ExecutionException::class)
     private fun CargoCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
@@ -171,9 +142,57 @@ class Cargo(private val cargoExecutable: Path) {
         _http = http
     }
 
-    private companion object {
-        val COLOR_ACCEPTING_COMMANDS = listOf(
+    companion object {
+        private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
             "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"
         )
+
+        fun patchArgs(commandLine: CargoCommandLine, colors: Boolean): CargoCommandLine {
+            val (pre, post) = commandLine.splitOnDoubleDash()
+                .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
+
+            if (commandLine.command == "test") {
+                if (commandLine.allFeatures && !pre.contains("--all-features")) pre.add("--all-features")
+                if (commandLine.nocapture && !pre.contains("--nocapture")) post.add(0, "--nocapture")
+            }
+
+            // Force colors
+            val forceColors = colors
+                // Hey, wanna repeat https://github.com/rust-lang/cargo/pull/4162 for rustc,
+                // so that we can enable colors on windows?
+                && !SystemInfo.isWindows
+                && commandLine.command in COLOR_ACCEPTING_COMMANDS
+                && commandLine.additionalArguments.none { it.startsWith("--color") }
+            if (forceColors) pre.add(0, "--color=always")
+
+            return commandLine.copy(additionalArguments = if (post.isEmpty()) pre else pre + "--" + post)
+        }
+
+        fun createGeneralCommandLine(
+            executablePath: Path,
+            workingDirectory: Path,
+            backtraceMode: BacktraceMode,
+            environmentVariables: EnvironmentVariablesData,
+            parameters: List<String>,
+            http: HttpConfigurable = HttpConfigurable.getInstance()
+        ): GeneralCommandLine {
+            val cmdLine = GeneralCommandLine(executablePath)
+                .withWorkDirectory(workingDirectory)
+                .withEnvironment("TERM", "ansi")
+                .withRedirectErrorStream(true)
+                .withParameters(parameters)
+                // Explicitly use UTF-8.
+                // Even though default system encoding is usually not UTF-8 on Windows,
+                // most Rust programs are UTF-8 only.
+                .withCharset(Charsets.UTF_8)
+            withProxyIfNeeded(cmdLine, http)
+            when (backtraceMode) {
+                BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
+                BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "full")
+                BacktraceMode.NO -> Unit
+            }
+            environmentVariables.configureCommandLine(cmdLine, true)
+            return cmdLine
+        }
     }
 }
