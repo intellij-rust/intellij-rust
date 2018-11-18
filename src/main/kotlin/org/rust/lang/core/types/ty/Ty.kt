@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
@@ -157,3 +158,6 @@ fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
         is TyTuple -> types.any { it.isMovesByDefault(lookup) }
         else -> lookup.isCopy(this).not()
     }
+
+val Ty.isBox: Boolean
+    get() = this is TyAdt && item == RsLangItemIndex.findBoxItem(item.project)
