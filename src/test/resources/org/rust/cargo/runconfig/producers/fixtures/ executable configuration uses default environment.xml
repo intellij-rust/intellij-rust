@@ -1,10 +1,10 @@
 <configurations>
   <configuration name="Run hello" class="CargoCommandConfiguration">
-    <option name="channel" value="DEFAULT" />
+    <option name="channel" value="NIGHTLY" />
     <option name="command" value="run --package test-package --bin hello" />
-    <option name="allFeatures" value="true" />
-    <option name="nocapture" value="false" />
-    <option name="backtrace" value="SHORT" />
+    <option name="allFeatures" value="false" />
+    <option name="nocapture" value="true" />
+    <option name="backtrace" value="FULL" />
     <option name="workingDirectory" value="file:///my-crate" />
     <envs>
       <env name="FOO" value="BAR" />
