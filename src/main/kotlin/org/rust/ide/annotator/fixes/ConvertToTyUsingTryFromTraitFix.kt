@@ -11,14 +11,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.tyToStringWithoutTypeArgs
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.withSubst
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.knownItems
-import org.rust.lang.core.types.TraitRef
+import org.rust.ide.utils.findParentFnOrLambdaRetTy
+import org.rust.ide.utils.isFnRetTyResultAndMatchErrTy
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.type
 
 /**
  * Base class for converting the given `expr` to the type [ty] using trait [traitName]. The conversion process is
@@ -68,29 +65,6 @@ abstract class ConvertToTyUsingTryTraitAndUnpackFix(
             else -> startElement.replace(rsPsiFactory.createNoArgsMethodCall(fromCall, "unwrap"))
         }
     }
-}
-
-private fun findParentFunctionOrLambdaRsRetType(element: RsExpr): RsRetType? {
-    var parent = element.parent
-    while (parent != null) {
-        when (parent) {
-            is RsFunction -> return parent.retType
-            is RsLambdaExpr -> return parent.retType
-            else -> parent = parent.parent
-        }
-    }
-    return null
-}
-
-fun findParentFnOrLambdaRetTy(element: RsExpr): Ty? =
-    findParentFunctionOrLambdaRsRetType(element)?.typeReference?.type
-
-fun isFnRetTyResultAndMatchErrTy(element: RsExpr, fnRetTy: Ty, errTy: Ty): Boolean {
-    val items = element.knownItems
-    val lookup = ImplLookup(element.project, items)
-    return fnRetTy is TyAdt && fnRetTy.item == items.Result
-        && lookup.canSelect(TraitRef(fnRetTy.typeArguments.get(1), (items.From
-        ?: return false).withSubst(errTy)))
 }
 
 private const val TRY_FROM_TRAIT = "TryFrom"

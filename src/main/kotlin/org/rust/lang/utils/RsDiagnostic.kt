@@ -767,7 +767,6 @@ sealed class RsDiagnostic(
         )
     }
 
-
     class ExperimentalFeature(
         element: PsiElement,
         private val presentableFeatureName: String,

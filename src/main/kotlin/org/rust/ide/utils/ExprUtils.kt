@@ -7,14 +7,17 @@ package org.rust.ide.utils
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ArithmeticOp
-import org.rust.lang.core.psi.ext.LogicOp
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.LogicOp.AND
 import org.rust.lang.core.psi.ext.LogicOp.OR
-import org.rust.lang.core.psi.ext.UnaryOperator
-import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.psi.ext.EqualityOp.EQ
 import org.rust.lang.core.psi.ext.EqualityOp.EXCLEQ
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.type
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -241,4 +244,34 @@ fun RsCondition.skipParenExprDown(): RsExpr {
         child = child.expr
     }
     return child
+}
+
+/***
+ * @return a retType of parent lambda or function
+ */
+fun findParentFnOrLambdaRetTy(element: RsExpr): Ty? =
+    findParentFunctionOrLambdaRsRetType(element)?.typeReference?.type
+
+/***
+ * Check if fnRetTy is Result<OkTy,ErrorTy> and ErrorTy could be create from errTy
+ *
+ */
+fun isFnRetTyResultAndMatchErrTy(element: RsExpr, fnRetTy: Ty, errTy: Ty): Boolean {
+    val items = element.knownItems
+    val lookup = ImplLookup(element.project, items)
+    return fnRetTy is TyAdt && fnRetTy.item == items.Result
+        && lookup.canSelect(TraitRef(fnRetTy.typeArguments.get(1), (items.From
+        ?: return false).withSubst(errTy)))
+}
+
+private fun findParentFunctionOrLambdaRsRetType(element: RsExpr): RsRetType? {
+    var parent = element.parent
+    while (parent != null) {
+        when (parent) {
+            is RsFunction -> return parent.retType
+            is RsLambdaExpr -> return parent.retType
+            else -> parent = parent.parent
+        }
+    }
+    return null
 }

@@ -16,14 +16,10 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.ide.annotator.fixes.*
-import org.rust.ide.annotator.fixes.AddCrateKeywordFix
-import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
-import org.rust.ide.annotator.fixes.AddModuleFileFix
-import org.rust.ide.annotator.fixes.AddTurbofishFix
-import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
-import org.rust.lang.core.CRATE_IN_PATHS
-import org.rust.ide.annotator.fixes.ImplementFromTraitFix
 import org.rust.ide.presentation.insertionSafeText
+import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
+import org.rust.ide.utils.findParentFnOrLambdaRetTy
+import org.rust.ide.utils.isFnRetTyResultAndMatchErrTy
 import org.rust.lang.core.CRATE_IN_PATHS
 import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature
