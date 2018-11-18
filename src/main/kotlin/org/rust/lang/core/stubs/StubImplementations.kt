@@ -897,50 +897,25 @@ class RsTraitTypeStub(
 
 class RsBaseTypeStub private constructor(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    private val variant: Variant
+    val kind: RsBaseTypeKindEnum
 ) : StubBase<RsBaseType>(parent, elementType) {
-
-    val isUnit: Boolean
-        get() = variant == Variant.UNIT
-    val isNever: Boolean
-        get() = variant == Variant.NEVER
-    val isUnderscore: Boolean
-        get() = variant == Variant.UNDERSCORE
 
     object Type : RsStubElementType<RsBaseTypeStub, RsBaseType>("BASE_TYPE") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, Variant.valueOf(dataStream.readByte().toInt()))
+            RsBaseTypeStub(parentStub, this, dataStream.readEnum())
 
         override fun serialize(stub: RsBaseTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeByte(stub.variant.ordinal)
+            writeEnum(stub.kind)
         }
 
         override fun createPsi(stub: RsBaseTypeStub) =
             RsBaseTypeImpl(stub, this)
 
         override fun createStub(psi: RsBaseType, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, Variant.fromPsi(psi))
-    }
-
-    private enum class Variant {
-        DEFAULT, UNIT, NEVER, UNDERSCORE;
-
-        companion object {
-            private val _values = values()
-
-            fun valueOf(ordinal: Int): Variant =
-                _values[ordinal]
-
-            fun fromPsi(psi: RsBaseType): Variant = when {
-                psi.isUnit -> UNIT
-                psi.isNever -> NEVER
-                psi.isUnderscore -> UNDERSCORE
-                else -> DEFAULT
-            }
-        }
+            RsBaseTypeStub(parentStub, this, psi.kindEnum)
     }
 }
 
