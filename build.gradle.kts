@@ -146,9 +146,10 @@ project(":") {
     }
 
     sourceSets {
-        getByName("main").kotlin.srcDirs("src/$platformVersion/kotlin")
+        getByName("main").kotlin.srcDirs("src/$platformVersion/main/kotlin")
+        getByName("test").kotlin.srcDirs("src/$platformVersion/test/kotlin")
         create("debugger") {
-            kotlin.srcDirs("debugger/src/main/kotlin", "debugger/src/$platformVersion/kotlin")
+            kotlin.srcDirs("debugger/src/main/kotlin", "debugger/src/$platformVersion/main/kotlin")
             compileClasspath += getByName("main").compileClasspath +
                 getByName("main").output +
                 files("deps/clion-$clionVersion/lib/clion.jar")
