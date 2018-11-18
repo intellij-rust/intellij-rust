@@ -883,7 +883,7 @@ class RsTraitTypeStub(
             )
 
         override fun serialize(stub: RsTraitTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeBoolean(stub.isImpl)
+            writeBoolean(stub.isImpl)
         }
 
         override fun createPsi(stub: RsTraitTypeStub) = RsTraitTypeImpl(stub, this)
@@ -932,7 +932,7 @@ class RsArrayTypeStub(
             RsArrayTypeStub(parentStub, this, dataStream.readBoolean())
 
         override fun serialize(stub: RsArrayTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeBoolean(stub.isSlice)
+            writeBoolean(stub.isSlice)
         }
 
         override fun createPsi(stub: RsArrayTypeStub) =
@@ -1259,5 +1259,5 @@ private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
     }
 }
 
-private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E?) = writeByte(e?.ordinal ?: -1)
-private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readByte().toInt()]
+private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
+private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readUnsignedByte()]
