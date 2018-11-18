@@ -16,7 +16,6 @@ import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.ext.RsBaseTypeKind.*
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.Testmark
@@ -379,10 +378,10 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
         is RsBaseType -> {
             val kind = typeElement.kind
             when (kind) {
-                BtUnit -> buffer += "()"
-                BtNever -> buffer += "!"
-                BtUnderscore -> buffer += "_"
-                is BtPath -> {
+                RsBaseTypeKind.Unit -> buffer += "()"
+                RsBaseTypeKind.Never -> buffer += "!"
+                RsBaseTypeKind.Underscore -> buffer += "_"
+                is RsBaseTypeKind.Path -> {
                     val path = kind.path
                     if (path.hasCself) {
                         buffer += "Self"

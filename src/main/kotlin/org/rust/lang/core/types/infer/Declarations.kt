@@ -7,7 +7,6 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.ext.RsBaseTypeKind.*
 import org.rust.lang.core.resolve.ref.advancedDeepResolve
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.regions.ReEarlyBound
@@ -27,10 +26,10 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
         is RsBaseType -> {
             val kind = type.kind
             when (kind) {
-                BtUnit -> TyUnit
-                BtNever -> TyNever
-                BtUnderscore -> TyInfer.TyVar()
-                is BtPath -> {
+                RsBaseTypeKind.Unit -> TyUnit
+                RsBaseTypeKind.Never -> TyNever
+                RsBaseTypeKind.Underscore -> TyInfer.TyVar()
+                is RsBaseTypeKind.Path -> {
                     val path = kind.path
                     val primitiveType = TyPrimitive.fromPath(path)
                     if (primitiveType != null) return primitiveType
