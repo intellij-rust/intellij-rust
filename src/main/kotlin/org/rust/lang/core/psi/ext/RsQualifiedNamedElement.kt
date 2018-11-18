@@ -13,7 +13,6 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsBaseTypeKind.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ParentItemType.*
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
@@ -274,10 +273,10 @@ data class RsQualifiedName private constructor(
                 is RsBaseType -> {
                     val kind = type.kind
                     when (kind) {
-                        BtUnit -> Item("unit", PRIMITIVE)
-                        BtNever -> Item("never", PRIMITIVE)
-                        BtUnderscore -> return null
-                        is BtPath -> {
+                        RsBaseTypeKind.Unit -> Item("unit", PRIMITIVE)
+                        RsBaseTypeKind.Never -> Item("never", PRIMITIVE)
+                        RsBaseTypeKind.Underscore -> return null
+                        is RsBaseTypeKind.Path -> {
                             val path = kind.path
                             val primitiveType = TyPrimitive.fromPath(path)
                             if (primitiveType != null) return Item(primitiveType.name, PRIMITIVE)

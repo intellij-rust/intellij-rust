@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 146
+        override fun getStubVersion(): Int = 147
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -775,28 +775,23 @@ class RsTypeParameterStub(
 
 class RsValueParameterStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val patText: String?,
-    val typeReferenceText: String?
+    val patText: String?
 ) : StubBase<RsValueParameter>(parent, elementType) {
 
     object Type : RsStubElementType<RsValueParameterStub, RsValueParameter>("VALUE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsValueParameterStub(parentStub, this,
-                dataStream.readNameAsString(),
                 dataStream.readNameAsString()
             )
 
         override fun serialize(stub: RsValueParameterStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                dataStream.writeName(stub.patText)
-                dataStream.writeName(stub.typeReferenceText)
-            }
+            dataStream.writeName(stub.patText)
 
         override fun createPsi(stub: RsValueParameterStub): RsValueParameter =
             RsValueParameterImpl(stub, this)
 
         override fun createStub(psi: RsValueParameter, parentStub: StubElement<*>?) =
-            RsValueParameterStub(parentStub, this, psi.patText, psi.typeReferenceText)
+            RsValueParameterStub(parentStub, this, psi.patText)
     }
 }
 
@@ -897,7 +892,7 @@ class RsTraitTypeStub(
 
 class RsBaseTypeStub private constructor(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val kind: RsBaseTypeKindEnum
+    val kind: RsBaseTypeStubKind
 ) : StubBase<RsBaseType>(parent, elementType) {
 
     object Type : RsStubElementType<RsBaseTypeStub, RsBaseType>("BASE_TYPE") {
@@ -915,7 +910,7 @@ class RsBaseTypeStub private constructor(
             RsBaseTypeImpl(stub, this)
 
         override fun createStub(psi: RsBaseType, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, psi.kindEnum)
+            RsBaseTypeStub(parentStub, this, psi.stubKind)
     }
 }
 

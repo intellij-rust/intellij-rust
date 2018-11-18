@@ -6,7 +6,7 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsBaseTypeKind.*
+import org.rust.lang.core.psi.ext.RsBaseTypeKind
 import org.rust.lang.core.psi.ext.isPointer
 import org.rust.lang.core.psi.ext.kind
 import org.rust.lang.core.psi.ext.typeElement
@@ -37,10 +37,10 @@ data class TyFingerprint constructor(
                 is RsBaseType -> {
                     val kind = type.kind
                     when (kind) {
-                        BtUnit -> TyFingerprint("()")
-                        BtNever -> TyFingerprint("!")
-                        BtUnderscore -> return emptyList()
-                        is BtPath -> {
+                        RsBaseTypeKind.Unit -> TyFingerprint("()")
+                        RsBaseTypeKind.Never -> TyFingerprint("!")
+                        RsBaseTypeKind.Underscore -> return emptyList()
+                        is RsBaseTypeKind.Path -> {
                             val name = kind.path.referenceName
                             when (name) {
                                 in typeParameters -> TYPE_PARAMETER_FINGERPRINT
