@@ -44,7 +44,7 @@ class CargoCommandConfiguration(
 
     var channel: RustChannel = RustChannel.DEFAULT
     var command: String = "run"
-    var allFeatures: Boolean = true
+    var allFeatures: Boolean = false
     var nocapture: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory

@@ -203,7 +203,7 @@ class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
 
         modifyTemplateConfiguration {
             channel = RustChannel.NIGHTLY
-            allFeatures = false
+            allFeatures = true
             nocapture = true
             backtrace = BacktraceMode.FULL
             env = EnvironmentVariablesData.create(mapOf("FOO" to "BAR"), true)
