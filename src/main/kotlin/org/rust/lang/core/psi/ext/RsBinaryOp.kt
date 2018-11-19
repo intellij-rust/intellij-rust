@@ -29,7 +29,5 @@ abstract class RsBinaryOpImplMixin : RsStubbedElementImpl<RsBinaryOpStub>, RsBin
 
     override val referenceNameElement: PsiElement get() = operator
 
-    override val referenceName: String get() = referenceNameElement.text
-
     override fun getReference(): RsReference = RsBinaryOpReferenceImpl(this)
 }

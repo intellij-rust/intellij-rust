@@ -34,4 +34,16 @@ class RsFunctionNamingInspectionTest : RsInspectionsTestBase(RsFunctionNamingIns
             fun_foo();
         }
     """)
+
+    fun `test function with raw identifier`() = checkFixByText("Rename to `extern`", """
+        fn <warning descr="Function `Extern` should have a snake case name such as `extern`">r#Extern/*caret*/</warning>() {}
+        fn main() {
+            r#Extern();
+        }
+    """, """
+        fn r#extern() {}
+        fn main() {
+            r#extern();
+        }
+    """)
 }

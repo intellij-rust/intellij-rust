@@ -10,15 +10,15 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
 import com.intellij.spellchecker.tokenizer.Tokenizer
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
+import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 
 class RsSpellcheckingStrategy : SpellcheckingStrategy() {
 
     override fun isMyContext(element: PsiElement) = RsLanguage.`is`(element.language)
 
-    override fun getTokenizer(element: PsiElement?): Tokenizer<*> =
-        if (element?.node?.elementType == STRING_LITERAL)
-            StringLiteralTokenizer
-        else
-            super.getTokenizer(element)
+    override fun getTokenizer(element: PsiElement?): Tokenizer<*> = when {
+        element?.node?.elementType == STRING_LITERAL -> StringLiteralTokenizer
+        element is RsNameIdentifierOwner -> RsNameIdentifierOwnerTokenizer
+        else -> super.getTokenizer(element)
+    }
 }
-

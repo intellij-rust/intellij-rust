@@ -152,5 +152,19 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """, NameResolutionTestmarks.missingMacroUse)
 
+    fun `test raw identifier 1`() = checkByCode("""
+        macro_rules! r#match { () => () }
+                     //X
+        r#match!();
+           //^
+    """)
+
+    fun `test raw identifier 2`() = checkByCode("""
+        macro_rules! foo { () => () }
+                    //X
+        r#foo!();
+         //^
+    """)
+
     // More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest]
 }

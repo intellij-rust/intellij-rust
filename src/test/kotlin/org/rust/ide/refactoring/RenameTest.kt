@@ -159,8 +159,8 @@ class RenameTest : RsTestBase() {
         pub enum Spam { Quux, Eggs }
     """, """
     //- main.rs
-        use foo::Spam;
-        mod foo;
+        use r#mod::Spam;
+        mod r#mod;
 
         fn main() { let _ = Spam::Quux; }
     //- mod.rs
@@ -168,6 +168,31 @@ class RenameTest : RsTestBase() {
     """) {
         val file = myFixture.configureFromTempProjectFile("foo.rs")
         myFixture.renameElement(file, "mod.rs")
+    }
+
+    fun `test rename file to keyword`() = checkByDirectory("""
+    //- main.rs
+        mod foo;
+        use foo::bar;
+
+        fn main() {
+            bar();
+        }
+    //- foo.rs
+        pub fn bar() { println!("Bar"); }
+    """, """
+    //- main.rs
+        mod r#match;
+        use r#match::bar;
+
+        fn main() {
+            bar();
+        }
+    //- match.rs
+        pub fn bar() { println!("Bar"); }
+    """) {
+        val file = myFixture.configureFromTempProjectFile("foo.rs")
+        myFixture.renameElement(file, "match")
     }
 
     fun `test does not rename lambda parameter shadowed in an outer comment`() = doTest("new_name", """
@@ -187,6 +212,30 @@ class RenameTest : RsTestBase() {
                 // Prints out `new_name`.
             });
             // `param` printed out.
+        }
+    """)
+
+    fun `test rename raw identifier 1`() = doTest("bar", """
+        fn foo() {}
+        fn main() {
+            r#foo/*caret*/();
+        }
+    """, """
+        fn bar() {}
+        fn main() {
+            bar();
+        }
+    """)
+
+    fun `test rename raw identifier 2`() = doTest("match", """
+        fn foo() {}
+        fn main() {
+            foo/*caret*/();
+        }
+    """, """
+        fn r#match() {}
+        fn main() {
+            r#match();
         }
     """)
 

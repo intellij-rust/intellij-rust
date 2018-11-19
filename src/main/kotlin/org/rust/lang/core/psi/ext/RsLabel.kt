@@ -15,8 +15,6 @@ abstract class RsLabelImplMixin (node: ASTNode) : RsElementImpl(node), RsLabel {
 
     override val referenceNameElement: PsiElement get() = quoteIdentifier
 
-    override val referenceName: String get() = referenceNameElement.text
-
     override fun getReference(): RsReference = RsLabelReferenceImpl(this)
 
 }

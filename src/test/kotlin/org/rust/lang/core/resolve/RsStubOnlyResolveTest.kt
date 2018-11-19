@@ -436,4 +436,17 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         use crate::bar::Foo;
             //^ main.rs
     """)
+
+    fun `test raw identifier`() = stubOnlyResolve("""
+    //- main.rs
+        mod r#match;
+        use r#match::bar;
+
+        fn main() {
+            bar();
+           //^ match.rs
+        }
+    //- match.rs
+        pub fn bar() { println!("Bar"); }
+    """)
 }

@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
-
 val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) {
     if (it is PsiFile) null else it.parent
 }

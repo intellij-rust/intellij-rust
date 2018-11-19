@@ -416,6 +416,13 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }
     }
 
+    fun `test raw identifier in derive trait`() = stubOnlyResolve("""
+    //- main.rs
+        #[derive(r#Debug)]
+                 //^ ...libcore/fmt/mod.rs
+        struct Foo;
+    """)
+
     fun `test infer lambda expr`() = stubOnlyResolve("""
     //- main.rs
         struct S;

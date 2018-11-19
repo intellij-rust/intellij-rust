@@ -38,7 +38,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createIdentifier(text: String): PsiElement =
-        createFromText<RsModDeclItem>("mod $text;")?.identifier
+        createFromText<RsModDeclItem>("mod ${text.escapeIdentifierIfNeeded()};")?.identifier
             ?: error("Failed to create identifier: `$text`")
 
     fun createQuoteIdentifier(text: String): PsiElement =
