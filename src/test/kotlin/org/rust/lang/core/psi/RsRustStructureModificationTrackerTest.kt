@@ -65,6 +65,15 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         fn foo(/*caret*/) {}
     """)
 
+    //TODO really should not inc
+    fun `test fn param name`() = doTest(INC, """
+        fn foo(a/*caret*/: i32) {}
+    """)
+
+    fun `test fn param type`() = doTest(INC, """
+        fn foo(a: i32/*caret*/) {}
+    """)
+
     fun `test fn return type 1`() = doTest(INC, """
         fn foo()/*caret*/ {}
     """, "-> u8")
