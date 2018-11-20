@@ -1176,6 +1176,12 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
+    fun `test trait bound Sized detection`() = checkErrors("""
+        trait Foo: Clone + Sized {
+            fn foo() -> (Self, Self);
+        }
+    """)
+
     @MockRustcVersion("1.27.1")
     fun `test crate visibility feature E0658`() = checkErrors("""
         <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;

@@ -72,22 +72,16 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
 }
 
 private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
-    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
-    return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-}
-
-val RsTraitItem.isSized: Boolean get() {
-    val stub = stub
-    if (stub != null) return implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
-
     val whereBounds =
         whereClause?.wherePredList.orEmpty()
             .filter { (it.typeReference?.typeElement as? RsBaseType)?.path?.hasCself == true }
             .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
     val bounds = typeParamBounds?.polyboundList.orEmpty() + whereBounds
-    // ugly solution, the trait might be refer as std::marker::Sized, or in other way
-    // TODO: parse it properly
-    return bounds.any { it.text.contains(Regex("Sized")) && it.q == null }
+    return bounds.asSequence().mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+}
+
+val RsTraitItem.isSized: Boolean get() {
+    return implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
 }
 
 fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
