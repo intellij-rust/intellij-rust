@@ -8,7 +8,6 @@ package org.rust.cargo.runconfig.producers
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
-import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.ide.DataManager
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
@@ -38,7 +37,7 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
 
     protected fun modifyTemplateConfiguration(f: CargoCommandConfiguration.() -> Unit) {
-        val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
+        val configurationType = CargoCommandConfigurationType.getInstance()
         val factory = configurationType.factory
         val template = RunManager.getInstance(project).getConfigurationTemplate(factory).configuration as CargoCommandConfiguration
         template.f()

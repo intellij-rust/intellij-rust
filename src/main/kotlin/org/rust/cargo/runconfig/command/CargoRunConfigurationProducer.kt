@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 
 abstract class CargoRunConfigurationProducer
-    : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType()) {
+    : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType.getInstance()) {
     public override fun setupConfigurationFromContext(
         configuration: CargoCommandConfiguration,
         context: ConfigurationContext,
