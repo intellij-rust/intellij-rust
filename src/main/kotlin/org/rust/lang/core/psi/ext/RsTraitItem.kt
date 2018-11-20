@@ -82,7 +82,7 @@ val RsTraitItem.isSized: Boolean get() {
 
     val whereBounds =
         whereClause?.wherePredList.orEmpty()
-            .filter { (it.typeReference?.typeElement as? RsBaseType)?.name == "Self" }
+            .filter { (it.typeReference?.typeElement as? RsBaseType)?.path?.hasCself == true }
             .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
     val bounds = typeParamBounds?.polyboundList.orEmpty() + whereBounds
     // ugly solution, the trait might be refer as std::marker::Sized, or in other way
