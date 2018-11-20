@@ -26,8 +26,10 @@ abstract class RsReferenceCached<T : RsWeakReferenceElement>(
 
     private fun cachedMultiResolve(): List<PsiElementResolveResult> {
         return RsResolveCache.getInstance(element.project)
-            .resolveWithCaching(element, Resolver).orEmpty()
+            .resolveWithCaching(element, cacheDependency, Resolver).orEmpty()
     }
+
+    protected open val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.RUST_STRUCTURE
 
     private object Resolver : (RsWeakReferenceElement) -> List<PsiElementResolveResult> {
         override fun invoke(ref: RsWeakReferenceElement): List<PsiElementResolveResult> {
