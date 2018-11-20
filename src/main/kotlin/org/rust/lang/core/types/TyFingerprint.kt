@@ -6,7 +6,10 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsBaseTypeKind
+import org.rust.lang.core.psi.ext.isPointer
+import org.rust.lang.core.psi.ext.kind
+import org.rust.lang.core.psi.ext.typeElement
 import org.rust.lang.core.types.ty.*
 import java.io.DataInput
 import java.io.DataOutput
@@ -31,16 +34,20 @@ data class TyFingerprint constructor(
             val type = ref.typeElement
             val fingerprint = when (type) {
                 is RsTupleType -> TyFingerprint("(tuple)")
-                is RsBaseType -> when {
-                    type.isUnit -> TyFingerprint("()")
-                    type.isNever -> TyFingerprint("!")
-                    else -> {
-                        val name = type.name ?: return emptyList()
-                        when (name) {
-                            in typeParameters -> TYPE_PARAMETER_FINGERPRINT
-                            in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
-                            in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
-                            else -> TyFingerprint(name)
+                is RsBaseType -> {
+                    val kind = type.kind
+                    when (kind) {
+                        RsBaseTypeKind.Unit -> TyFingerprint("()")
+                        RsBaseTypeKind.Never -> TyFingerprint("!")
+                        RsBaseTypeKind.Underscore -> return emptyList()
+                        is RsBaseTypeKind.Path -> {
+                            val name = kind.path.referenceName
+                            when (name) {
+                                in typeParameters -> TYPE_PARAMETER_FINGERPRINT
+                                in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
+                                in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
+                                else -> TyFingerprint(name)
+                            }
                         }
                     }
                 }

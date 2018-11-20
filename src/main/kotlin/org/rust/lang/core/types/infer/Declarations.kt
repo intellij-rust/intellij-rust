@@ -24,31 +24,34 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
         is RsTupleType -> TyTuple(type.typeReferenceList.map { inferTypeReferenceType(it) })
 
         is RsBaseType -> {
-            if (type.isUnit) return TyUnit
-            if (type.isNever) return TyNever
-            if (type.isUnderscore) return TyInfer.TyVar()
+            val kind = type.kind
+            when (kind) {
+                RsBaseTypeKind.Unit -> TyUnit
+                RsBaseTypeKind.Never -> TyNever
+                RsBaseTypeKind.Underscore -> TyInfer.TyVar()
+                is RsBaseTypeKind.Path -> {
+                    val path = kind.path
+                    val primitiveType = TyPrimitive.fromPath(path)
+                    if (primitiveType != null) return primitiveType
+                    val boundElement = path.reference.advancedDeepResolve() ?: return TyUnknown
+                    val (target, subst) = boundElement
 
-            val path = type.path ?: return TyUnknown
-
-            val primitiveType = TyPrimitive.fromPath(path)
-            if (primitiveType != null) return primitiveType
-            val boundElement = path.reference.advancedDeepResolve() ?: return TyUnknown
-            val (target, subst) = boundElement
-
-            when {
-                target is RsTraitOrImpl && type.isCself -> {
-                    if (target is RsImplItem) {
-                        target.typeReference?.type ?: TyUnknown
-                    } else {
-                        TyTypeParameter.self(target)
+                    when {
+                        target is RsTraitOrImpl && path.hasCself -> {
+                            if (target is RsImplItem) {
+                                target.typeReference?.type ?: TyUnknown
+                            } else {
+                                TyTypeParameter.self(target)
+                            }
+                        }
+                        target is RsTraitItem -> {
+                            TyTraitObject(boundElement.downcast()!!, defaultTraitObjectRegion ?: ReUnknown)
+                        }
+                        else -> {
+                            val element = target as? RsTypeDeclarationElement ?: return TyUnknown
+                            element.declaredType.substituteWithTraitObjectRegion(subst, defaultTraitObjectRegion ?: ReStatic)
+                        }
                     }
-                }
-                target is RsTraitItem -> {
-                    TyTraitObject(boundElement.downcast()!!, defaultTraitObjectRegion ?: ReUnknown)
-                }
-                else -> {
-                    val element = target as? RsTypeDeclarationElement ?: return TyUnknown
-                    element.declaredType.substituteWithTraitObjectRegion(subst, defaultTraitObjectRegion ?: ReStatic)
                 }
             }
         }

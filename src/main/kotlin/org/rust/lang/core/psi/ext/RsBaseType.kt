@@ -6,14 +6,43 @@
 package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.RsBaseType
-
-val RsBaseType.isCself: Boolean get() {
-    val path = path
-    return path != null && !path.hasColonColon && path.hasCself
-}
-
-val RsBaseType.isUnit: Boolean get() = (stub?.isUnit) ?: (lparen != null && rparen != null)
-val RsBaseType.isNever: Boolean get() = (stub?.isNever) ?: (excl != null)
-val RsBaseType.isUnderscore: Boolean get() = (stub?.isUnderscore) ?: (underscore != null)
+import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.tokenSetOf
 
 val RsBaseType.name: String? get() = path?.referenceName
+
+val RsBaseType.kind: RsBaseTypeKind
+    get() = when (stubKind) {
+        RsBaseTypeStubKind.UNIT -> RsBaseTypeKind.Unit
+        RsBaseTypeStubKind.NEVER -> RsBaseTypeKind.Never
+        RsBaseTypeStubKind.UNDERSCORE -> RsBaseTypeKind.Underscore
+        RsBaseTypeStubKind.PATH -> RsBaseTypeKind.Path(path ?: error("Malformed RsBaseType element: `$text`"))
+    }
+
+sealed class RsBaseTypeKind {
+    object Unit : RsBaseTypeKind()
+    object Never : RsBaseTypeKind()
+    object Underscore : RsBaseTypeKind()
+    data class Path(val path: RsPath) : RsBaseTypeKind()
+}
+
+private val RS_BASE_TYPE_KINDS = tokenSetOf(LPAREN, EXCL, UNDERSCORE, PATH)
+
+val RsBaseType.stubKind: RsBaseTypeStubKind get() {
+    val stub = stub
+    if (stub != null) return stub.kind
+
+    val child = node.findChildByType(RS_BASE_TYPE_KINDS)
+    return when (child?.elementType) {
+        LPAREN -> RsBaseTypeStubKind.UNIT
+        EXCL -> RsBaseTypeStubKind.NEVER
+        UNDERSCORE -> RsBaseTypeStubKind.UNDERSCORE
+        PATH -> RsBaseTypeStubKind.PATH
+        else -> error("Malformed RsBaseType element: `$text`")
+    }
+}
+
+enum class RsBaseTypeStubKind {
+    UNIT, NEVER, UNDERSCORE, PATH;
+}

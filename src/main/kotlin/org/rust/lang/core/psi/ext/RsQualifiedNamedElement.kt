@@ -271,11 +271,13 @@ data class RsQualifiedName private constructor(
 
                 }
                 is RsBaseType -> {
-                    when {
-                        type.isNever -> Item("never", PRIMITIVE)
-                        type.isUnit -> Item("unit", PRIMITIVE)
-                        else -> {
-                            val path = type.path ?: return null
+                    val kind = type.kind
+                    when (kind) {
+                        RsBaseTypeKind.Unit -> Item("unit", PRIMITIVE)
+                        RsBaseTypeKind.Never -> Item("never", PRIMITIVE)
+                        RsBaseTypeKind.Underscore -> return null
+                        is RsBaseTypeKind.Path -> {
+                            val path = kind.path
                             val primitiveType = TyPrimitive.fromPath(path)
                             if (primitiveType != null) return Item(primitiveType.name, PRIMITIVE)
                             (path.reference.resolve() as? RsQualifiedNamedElement)?.toParentItem()

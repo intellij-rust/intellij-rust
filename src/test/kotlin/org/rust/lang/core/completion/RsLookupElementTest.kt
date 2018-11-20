@@ -113,8 +113,8 @@ class RsLookupElementTest : RsTestBase() {
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
-        check(presentation.icon != null)
-        check(presentation.itemText == "foo")
+        assertNotNull(presentation.icon)
+        assertEquals("foo", presentation.itemText)
     }
 
     private fun check(@Language("Rust") code: String, tailText: String? = null, typeText: String? = null) {
@@ -124,8 +124,8 @@ class RsLookupElementTest : RsTestBase() {
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
-        check(presentation.icon != null)
-        check(presentation.tailText == tailText)
-        check(presentation.typeText == typeText)
+        assertNotNull(presentation.icon)
+        assertEquals(tailText, presentation.tailText)
+        assertEquals(typeText, presentation.typeText)
     }
 }

@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 146
+        override fun getStubVersion(): Int = 147
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -775,28 +775,23 @@ class RsTypeParameterStub(
 
 class RsValueParameterStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val patText: String?,
-    val typeReferenceText: String?
+    val patText: String?
 ) : StubBase<RsValueParameter>(parent, elementType) {
 
     object Type : RsStubElementType<RsValueParameterStub, RsValueParameter>("VALUE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsValueParameterStub(parentStub, this,
-                dataStream.readNameAsString(),
                 dataStream.readNameAsString()
             )
 
         override fun serialize(stub: RsValueParameterStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                dataStream.writeName(stub.patText)
-                dataStream.writeName(stub.typeReferenceText)
-            }
+            dataStream.writeName(stub.patText)
 
         override fun createPsi(stub: RsValueParameterStub): RsValueParameter =
             RsValueParameterImpl(stub, this)
 
         override fun createStub(psi: RsValueParameter, parentStub: StubElement<*>?) =
-            RsValueParameterStub(parentStub, this, psi.patText, psi.typeReferenceText)
+            RsValueParameterStub(parentStub, this, psi.patText)
     }
 }
 
@@ -883,7 +878,7 @@ class RsTraitTypeStub(
             )
 
         override fun serialize(stub: RsTraitTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeBoolean(stub.isImpl)
+            writeBoolean(stub.isImpl)
         }
 
         override fun createPsi(stub: RsTraitTypeStub) = RsTraitTypeImpl(stub, this)
@@ -897,50 +892,25 @@ class RsTraitTypeStub(
 
 class RsBaseTypeStub private constructor(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    private val variant: Variant
+    val kind: RsBaseTypeStubKind
 ) : StubBase<RsBaseType>(parent, elementType) {
-
-    val isUnit: Boolean
-        get() = variant == Variant.UNIT
-    val isNever: Boolean
-        get() = variant == Variant.NEVER
-    val isUnderscore: Boolean
-        get() = variant == Variant.UNDERSCORE
 
     object Type : RsStubElementType<RsBaseTypeStub, RsBaseType>("BASE_TYPE") {
 
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, Variant.valueOf(dataStream.readByte().toInt()))
+            RsBaseTypeStub(parentStub, this, dataStream.readEnum())
 
         override fun serialize(stub: RsBaseTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeByte(stub.variant.ordinal)
+            writeEnum(stub.kind)
         }
 
         override fun createPsi(stub: RsBaseTypeStub) =
             RsBaseTypeImpl(stub, this)
 
         override fun createStub(psi: RsBaseType, parentStub: StubElement<*>?) =
-            RsBaseTypeStub(parentStub, this, Variant.fromPsi(psi))
-    }
-
-    private enum class Variant {
-        DEFAULT, UNIT, NEVER, UNDERSCORE;
-
-        companion object {
-            private val _values = values()
-
-            fun valueOf(ordinal: Int): Variant =
-                _values[ordinal]
-
-            fun fromPsi(psi: RsBaseType): Variant = when {
-                psi.isUnit -> UNIT
-                psi.isNever -> NEVER
-                psi.isUnderscore -> UNDERSCORE
-                else -> DEFAULT
-            }
-        }
+            RsBaseTypeStub(parentStub, this, psi.stubKind)
     }
 }
 
@@ -957,7 +927,7 @@ class RsArrayTypeStub(
             RsArrayTypeStub(parentStub, this, dataStream.readBoolean())
 
         override fun serialize(stub: RsArrayTypeStub, dataStream: StubOutputStream) = with(dataStream) {
-            dataStream.writeBoolean(stub.isSlice)
+            writeBoolean(stub.isSlice)
         }
 
         override fun createPsi(stub: RsArrayTypeStub) =
@@ -1284,5 +1254,5 @@ private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
     }
 }
 
-private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E?) = writeByte(e?.ordinal ?: -1)
-private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readByte().toInt()]
+private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
+private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readUnsignedByte()]
