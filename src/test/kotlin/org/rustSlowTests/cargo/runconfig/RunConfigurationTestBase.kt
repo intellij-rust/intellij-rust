@@ -8,7 +8,6 @@ package org.rustSlowTests.cargo.runconfig
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
-import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.*
@@ -24,7 +23,7 @@ import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 
 abstract class RunConfigurationTestBase : RustWithToolchainTestBase() {
     protected fun createConfiguration(): CargoCommandConfiguration {
-        val configurationType = ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
+        val configurationType = CargoCommandConfigurationType.getInstance()
         val factory = configurationType.factory
         return factory.createTemplateConfiguration(myModule.project) as CargoCommandConfiguration
     }
