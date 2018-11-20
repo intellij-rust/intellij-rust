@@ -19,6 +19,8 @@ class RsLifetimeReferenceImpl(
 
     override val RsLifetime.referenceAnchor: PsiElement get() = quoteIdentifier
 
+    override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
+
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processLifetimeResolveVariants(element, it) }
 

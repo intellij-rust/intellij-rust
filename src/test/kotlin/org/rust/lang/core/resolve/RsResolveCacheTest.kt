@@ -22,7 +22,7 @@ class RsResolveCacheTest : RsTestBase() {
         use a/*caret*/::S;
         type T = S;
                //^
-    """, "\bb", Testmarks.cacheCleared)
+    """, "\bb", Testmarks.rustStructureDependentCacheCleared)
 
     fun `test resolve correctly without global cache invalidation 1`() = checkResolvedToXY("""
         struct S1;
@@ -32,7 +32,7 @@ class RsResolveCacheTest : RsTestBase() {
         fn main() {
             let a: S1/*caret*/;
         }        //^
-    """, "\b2")
+    """, "\b2", Testmarks.removeChangedElement)
 
     fun `test resolve correctly without global cache invalidation 2`() = checkResolvedToXY("""
         mod a { pub struct S; }
@@ -44,7 +44,7 @@ class RsResolveCacheTest : RsTestBase() {
                 ::S;
                 //^
         }
-    """, "\bb")
+    """, "\bb", Testmarks.removeChangedElement)
 
     fun `test resolve correctly without global cache invalidation 3`() = checkResolvedToXY("""
         struct S;
@@ -59,7 +59,7 @@ class RsResolveCacheTest : RsTestBase() {
                 ::Item;
                 //^
         }
-    """, "\b2")
+    """, "\b2", Testmarks.removeChangedElement)
 
     fun `test edit local pat binding`() = checkResolvedAndThenUnresolved("""
         fn main() {

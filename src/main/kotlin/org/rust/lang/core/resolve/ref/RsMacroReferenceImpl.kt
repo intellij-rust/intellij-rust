@@ -17,6 +17,8 @@ class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceCached<RsMacr
     override val RsMacroReference.referenceAnchor: PsiElement
         get() = referenceNameElement
 
+    override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL
+
     override fun getVariants(): Array<out Any> =
         collectCompletionVariants { processMacroReferenceVariants(element, it) }
 
