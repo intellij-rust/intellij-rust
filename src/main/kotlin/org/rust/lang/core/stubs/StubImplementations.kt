@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 147
+        override fun getStubVersion(): Int = 148
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -1030,7 +1030,10 @@ class RsMacroCallStub(
 ) : StubBase<RsMacroCall>(parent, elementType) {
 
     object Type : RsStubElementType<RsMacroCallStub, RsMacroCall>("MACRO_CALL") {
-        override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent is RsMod
+        override fun shouldCreateStub(node: ASTNode): Boolean {
+            val parent = node.psi.parent
+            return parent is RsMod || parent is RsMembers
+        }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacroCallStub(parentStub, this,
