@@ -304,9 +304,6 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         checkFeature(holder, crateModifier, CRATE_VISIBILITY_MODIFIER, "`crate` visibility modifier")
     }
 
-    /**
-     * @return true only if feature is active
-     */
     private fun checkVisRestriction(holder: AnnotationHolder, visRestriction: RsVisRestriction) {
         val path = visRestriction.path
         // pub(foo) or pub(super::bar)
@@ -315,6 +312,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    /**
+     * @return true only if feature is active
+     */
     private fun checkFeature(
         holder: AnnotationHolder,
         element: PsiElement,
@@ -324,30 +324,23 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         val rsElement = element.ancestorOrSelf<RsElement>() ?: return false
         val version = rsElement.cargoProject?.rustcInfo?.version ?: return false
 
-        val diagnostic = when (feature.state) {
-            ACTIVE -> {
-                if (version.channel != RustChannel.NIGHTLY) {
-                    RsDiagnostic.ExperimentalFeature(element, presentableFeatureName)
-                } else {
-                    val crateRoot = rsElement.crateRoot ?: return false
-                    val attrs = RsFeatureIndex.getFeatureAttributes(element.project, feature.name)
-                    if (attrs.none { it.crateRoot == crateRoot }) {
-                        val fix = AddFeatureAttributeFix(feature.name, crateRoot)
-                        RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, fix)
-                    } else {
-                        null
-                    }
-                }
-
-            }
-            ACCEPTED -> if (version.semver < feature.since) {
+        if (feature.state == ACTIVE || feature.state == ACCEPTED && version.semver < feature.since) {
+            val diagnostic = if (version.channel != RustChannel.NIGHTLY) {
                 RsDiagnostic.ExperimentalFeature(element, presentableFeatureName)
             } else {
-                null
+                val crateRoot = rsElement.crateRoot ?: return false
+                val attrs = RsFeatureIndex.getFeatureAttributes(element.project, feature.name)
+                if (attrs.none { it.crateRoot == crateRoot }) {
+                    val fix = AddFeatureAttributeFix(feature.name, crateRoot)
+                    RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, fix)
+                } else {
+                    null
+                }
             }
-        } ?: return true
-        diagnostic.addToHolder(holder)
-        return false
+            diagnostic?.addToHolder(holder)
+            return false
+        }
+        return true
     }
 
     private fun checkLabel(holder: AnnotationHolder, label: RsLabel) {
@@ -683,6 +676,7 @@ private fun checkTypesAreSized(holder: AnnotationHolder, fn: RsFunction) {
 private fun checkTryTraitFeature(o: RsExpr): Boolean {
     //if (!checkFeature(holder, o, %FEATURE NAME%, %FEATURE DESCRIPTION%)) return false
     val version = o.cargoProject?.rustcInfo?.version ?: return false
+
     return version.channel == RustChannel.NIGHTLY
 }
 
