@@ -151,11 +151,16 @@ fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
         else -> null
     }
 
-// TODO
+/**
+ * TODO:
+ * There are some problems with `Self` inference (e.g. https://github.com/intellij-rust/intellij-rust/issues/2530)
+ * so for now just assume `Self` is always copyable
+ */
 fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
     when (this) {
         is TyUnknown, is TyReference, is TyPointer, is TyFunction -> false
         is TyTuple -> types.any { it.isMovesByDefault(lookup) }
+        is TyTypeParameter -> parameter != TyTypeParameter.Self
         else -> lookup.isCopy(this).not()
     }
 
