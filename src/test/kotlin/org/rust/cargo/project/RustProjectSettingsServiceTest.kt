@@ -27,6 +27,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="compileAllTargets" value="false" />
               <option name="expandMacros" value="false" />
               <option name="explicitPathToStdlib" value="/stdlib" />
+              <option name="showTestToolWindow" value="false" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useCargoCheckAnnotator" value="true" />
               <option name="useCargoCheckForBuild" value="false" />
@@ -49,6 +50,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
             compileAllTargets = false,
             useOfflineForCargoCheck = true,
             expandMacros = false,
+            showTestToolWindow = false,
             useSkipChildren = true
         ))
     }
