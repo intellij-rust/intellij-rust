@@ -259,4 +259,14 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let (b, c) = *Box::new((S, S));
         }
     """, checkWarn = false)
+
+    /** Issue [#3062](https://github.com/intellij-rust/intellij-rust/issues/3062) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0507 when deref copyable self`() = checkByText("""
+        trait Dummy where Self: Copy {
+            fn dummy(&self) -> Self {
+                *self
+            }
+        }
+    """, checkWarn = false)
 }
