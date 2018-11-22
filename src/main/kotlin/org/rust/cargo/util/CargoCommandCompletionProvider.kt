@@ -131,7 +131,6 @@ private class OptBuilder(
         release()
         jobs()
         features()
-        triple()
         verbose()
     }
 
@@ -142,8 +141,6 @@ private class OptBuilder(
         flag("all-features")
         flag("no-default-features")
     }
-
-    fun triple() = flag("triple")
 
     private fun targetCompleter(kind: CargoWorkspace.TargetKind): ArgCompleter = { ctx ->
         ctx.currentWorkspace?.packages.orEmpty()
