@@ -31,6 +31,7 @@ class RustProjectSettingsServiceImpl(
         var compileAllTargets: Boolean = true,
         var useOfflineForCargoCheck: Boolean = false,
         var expandMacros: Boolean = true,
+        var showTestToolWindow: Boolean = true,
         var useSkipChildren: Boolean = false
     )
 
@@ -56,6 +57,7 @@ class RustProjectSettingsServiceImpl(
                 compileAllTargets = state.compileAllTargets,
                 useOfflineForCargoCheck = state.useOfflineForCargoCheck,
                 expandMacros = state.expandMacros,
+                showTestToolWindow = state.showTestToolWindow,
                 useSkipChildren = state.useSkipChildren
             )
         }
@@ -69,6 +71,7 @@ class RustProjectSettingsServiceImpl(
                 compileAllTargets = value.compileAllTargets,
                 useOfflineForCargoCheck = value.useOfflineForCargoCheck,
                 expandMacros = value.expandMacros,
+                showTestToolWindow = value.showTestToolWindow,
                 useSkipChildren = value.useSkipChildren
             )
             if (state != newState) {

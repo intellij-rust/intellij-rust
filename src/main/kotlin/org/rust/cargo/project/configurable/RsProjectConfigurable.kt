@@ -33,6 +33,9 @@ class RsProjectConfigurable(
     private val expandMacrosCheckbox: JBCheckBox = JBCheckBox()
     private var expandMacros: Boolean by CheckboxDelegate(expandMacrosCheckbox)
 
+    private val showTestToolWindowCheckbox: JBCheckBox = JBCheckBox()
+    private var showTestToolWindow: Boolean by CheckboxDelegate(showTestToolWindowCheckbox)
+
     private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
     private val hintCheckboxes: Map<String, JBCheckBox> =
         hintProvider.supportedOptions.associate { it.id to JBCheckBox() }
@@ -44,6 +47,10 @@ class RsProjectConfigurable(
         row("Expand declarative macros (may be slow):", expandMacrosCheckbox, """
             Allow plugin to process declarative macro invocations
             to extract information for name resolution and type inference.
+        """)
+        row("Show test tool window:", showTestToolWindowCheckbox, """
+            Show test results in run tool window when testing session begins
+            instead of raw console.
         """)
         val supportedHintOptions = hintProvider.supportedOptions
         if (supportedHintOptions.isNotEmpty()) {
@@ -65,6 +72,7 @@ class RsProjectConfigurable(
             explicitPathToStdlib = settings.explicitPathToStdlib
         )
         expandMacros = settings.expandMacros
+        showTestToolWindow = settings.showTestToolWindow
 
         for (option in hintProvider.supportedOptions) {
             checkboxForOption(option).isSelected = option.get()
@@ -83,7 +91,8 @@ class RsProjectConfigurable(
         settings.data = currentData.copy(
             toolchain = rustProjectSettings.data.toolchain,
             explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib,
-            expandMacros = expandMacros
+            expandMacros = expandMacros,
+            showTestToolWindow = showTestToolWindow
         )
     }
 
@@ -93,6 +102,7 @@ class RsProjectConfigurable(
         return data.toolchain?.location != settings.toolchain?.location
             || data.explicitPathToStdlib != settings.explicitPathToStdlib
             || expandMacros != settings.expandMacros
+            || showTestToolWindow != settings.showTestToolWindow
     }
 
     private fun checkboxForOption(opt: Option): JBCheckBox = hintCheckboxes[opt.id]!!

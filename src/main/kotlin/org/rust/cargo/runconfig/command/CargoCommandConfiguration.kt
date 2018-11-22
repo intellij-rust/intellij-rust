@@ -20,6 +20,7 @@ import com.intellij.util.execution.ParametersListUtil
 import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.CargoTestRunState
@@ -100,7 +101,10 @@ class CargoCommandConfiguration(
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
         clean().ok?.let {
-            if (command.startsWith("test") && !command.contains("--nocapture") && !nocapture) {
+            if (command.startsWith("test") &&
+                project.rustSettings.showTestToolWindow &&
+                !command.contains("--nocapture") &&
+                !nocapture) {
                 CargoTestRunState(environment, it)
             } else {
                 CargoRunState(environment, it)
