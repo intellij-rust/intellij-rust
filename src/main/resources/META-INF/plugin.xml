@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
     <id>org.rust.lang</id>
     <name>Rust</name>
 
@@ -18,6 +18,8 @@
          on how to target different products -->
 
     <depends>com.intellij.modules.lang</depends>
+
+    <xi:include href="/META-INF/platform-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
     <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
     <depends optional="true" config-file="toml-only.xml">org.toml.lang</depends>
