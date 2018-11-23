@@ -99,7 +99,8 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
         val returnTy = findParentFnOrLambdaRetTy(o)
         val returnErrorTy = returnTy?.let { findErrorType(it, tryTrait, lookup) }
-        if (returnTy == null || returnErrorTy == null) {
+        if (returnTy == null || returnTy is TyUnknown) return
+        if (returnErrorTy == null) {
             RsDiagnostic.TryTraitIsNotImplementedForReturnType(o, returnTy).addToHolder(holder)
             return
         }
