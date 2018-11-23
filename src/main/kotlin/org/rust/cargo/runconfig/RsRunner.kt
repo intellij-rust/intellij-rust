@@ -11,8 +11,13 @@ import com.intellij.execution.runners.DefaultProgramRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 
 class RsRunner : DefaultProgramRunner() {
-    override fun canRun(executorId: String, profile: RunProfile): Boolean =
-        executorId == DefaultRunExecutor.EXECUTOR_ID && profile is CargoCommandConfiguration
+    override fun canRun(executorId: String, profile: RunProfile): Boolean {
+        if (executorId != DefaultRunExecutor.EXECUTOR_ID || profile !is CargoCommandConfiguration) {
+            return false
+        }
+        val cleaned = profile.clean().ok ?: return false
+        return cleaned.cmd.command != "test"
+    }
 
     override fun getRunnerId(): String = "RustRunner"
 }
