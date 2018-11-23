@@ -33,20 +33,20 @@ class CargoTestEventsConverter(
     private val pendingFinishedSuites: MutableSet<NodeId> = linkedSetOf()
 
     override fun processServiceMessages(text: String, outputType: Key<*>, visitor: ServiceMessageVisitor): Boolean {
-        if (handleExecutableName(text)) return false
+        if (handleExecutableName(text)) return true
 
         val jsonElement: JsonElement
         try {
             jsonElement = parser.parse(text)
-            if (!jsonElement.isJsonObject) return false
+            if (!jsonElement.isJsonObject) return true
         } catch (es: JsonSyntaxException) {
-            return false
+            return true
         }
 
         if (handleTestMessage(jsonElement, outputType, visitor)) return true
         if (handleSuiteMessage(jsonElement, outputType, visitor)) return true
 
-        return false
+        return true
     }
 
     /** @return true if message successfully processed. */

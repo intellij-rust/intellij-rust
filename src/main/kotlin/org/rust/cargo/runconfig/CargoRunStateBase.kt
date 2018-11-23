@@ -23,7 +23,7 @@ import org.rust.cargo.toolchain.RustToolchain
 
 abstract class CargoRunStateBase(
     environment: ExecutionEnvironment,
-    config: CargoCommandConfiguration.CleanConfiguration.Ok
+    val config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CommandLineState(environment) {
     private val toolchain: RustToolchain = config.toolchain
     val commandLine: CargoCommandLine = config.cmd
@@ -56,7 +56,7 @@ abstract class CargoRunStateBase(
 
     open fun prepareCommandLine(): CargoCommandLine = commandLine
 
-    override fun startProcess(): ProcessHandler {
+    public override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
             .toColoredCommandLine(prepareCommandLine())
         val handler = KillableColoredProcessHandler(cmd)

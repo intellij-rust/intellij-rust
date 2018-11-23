@@ -130,3 +130,6 @@ private fun createRunConfiguration(
         runManager.setTemporaryConfiguration(this)
     }
 }
+
+fun CargoCommandLine.prependArgument(arg: String): CargoCommandLine =
+    copy(additionalArguments = listOf(arg) + additionalArguments)
