@@ -1311,5 +1311,17 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
     fn foo() {
         something_unknown?;
     }
-""")
+    """)
+
+    fun `test foo unknown return type`() = checkErrors("""
+    fn foo() -> something_unknown {
+        Ok(25)?;
+    }
+    """)
+
+    fun `test non triable in foo unknown return type`() = checkErrors("""
+    fn foo() -> something_unknown {
+        <error descr="the `?` operator can only be applied to values that implement `std::ops::Try` [E0277]">92?</error>;
+    }
+    """)
 }
