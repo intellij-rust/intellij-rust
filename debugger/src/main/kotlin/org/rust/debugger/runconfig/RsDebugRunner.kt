@@ -39,6 +39,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.prependArgument
 import org.rust.cargo.util.CargoArgsParser
 import org.rust.debugger.settings.RsDebuggerSettings
 import java.nio.file.Path
@@ -245,6 +246,3 @@ private fun buildProjectAndGetBinaryArtifactPath(
 private fun Project.showErrorDialog(message: String) {
     Messages.showErrorDialog(this, message, ERROR_MESSAGE_TITLE)
 }
-
-private fun CargoCommandLine.prependArgument(arg: String): CargoCommandLine =
-    copy(additionalArguments = listOf(arg) + additionalArguments)
