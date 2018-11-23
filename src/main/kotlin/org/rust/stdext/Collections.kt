@@ -118,6 +118,9 @@ inline fun <T, R> Iterable<T>.mapToSet(transform: (T) -> R): Set<R> =
 inline fun <T, R: Any> Iterable<T>.mapNotNullToSet(transform: (T) -> R?): Set<R> =
     mapNotNullTo(HashSet(mapCapacity(collectionSizeOrDefault(10))), transform)
 
+fun <T> Set<T>.intersects(other: Iterable<T>): Boolean =
+    other.any { this.contains(it) }
+
 inline fun <T> Iterable<T>.joinToWithBuffer(
     buffer: StringBuilder,
     separator: CharSequence = ", ",
