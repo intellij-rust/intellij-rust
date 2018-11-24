@@ -1324,4 +1324,31 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
         <error descr="the `?` operator can only be applied to values that implement `std::ops::Try` [E0277]">92?</error>;
     }
     """)
+
+    fun `test non triable in void foo `() = checkErrors("""
+    fn foo() {
+        <error descr="the `?` operator can only be applied to values that implement `std::ops::Try` [E0277]">92?</error>;
+    }
+    """)
+
+    fun `test triable in void foo `() = checkErrors("""
+    fn foo() {
+        <error descr="the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `std::ops::Try`) [E0277]">Ok(92)?</error>;
+    }
+    """)
+
+    fun `test non compatible errorTys`() = checkErrors("""
+    struct FooError;
+    struct ExprError;
+    fn foo() -> Result<i32, FooError> {
+        Err(ExprError{})<error descr="the trait `std::convert::From<ExprError>` is not implemented for `FooError`">?</error>
+    }
+    """)
+
+    fun `test unresolved errorTys`() = checkErrors("""
+    struct ExprError;
+    fn foo() -> Result<i32, FooError> {
+        Err(ExprError{})?
+    }
+    """)
 }

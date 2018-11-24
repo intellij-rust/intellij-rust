@@ -99,15 +99,15 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
 
         val returnTy = findParentFnOrLambdaRetTy(o)
         val returnErrorTy = returnTy?.let { findErrorType(it, tryTrait, lookup) }
-        if (returnTy == null || returnTy is TyUnknown) return
-        if (returnErrorTy == null) {
+        if (returnTy is TyUnknown) return
+        if (returnTy == null || returnErrorTy == null) {
             RsDiagnostic.TryTraitIsNotImplementedForReturnType(o, returnTy).addToHolder(holder)
             return
         }
 
         if (isFnRetTyResultAndMatchErrTy(o.expr, returnTy, errorTy) || !checkTryTraitFeature(o)) return
 
-        if (!lookup.canSelect(TraitRef(returnErrorTy, fromTrait.withSubst(errorTy)))) {
+        if (!(returnErrorTy is TyUnknown) && !lookup.canSelect(TraitRef(returnErrorTy, fromTrait.withSubst(errorTy)))) {
             val annotation = holder.createErrorAnnotation(
                 o.q,
                 "the trait `std::convert::From<${errorTy.insertionSafeText}>` is not implemented for `${returnErrorTy.insertionSafeText}`"
