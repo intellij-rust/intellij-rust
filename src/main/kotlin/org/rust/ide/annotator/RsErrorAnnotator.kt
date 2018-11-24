@@ -15,11 +15,15 @@ import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.ide.annotator.fixes.*
+import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
+import org.rust.ide.annotator.fixes.AddModuleFileFix
+import org.rust.ide.annotator.fixes.AddTurbofishFix
+import org.rust.ide.annotator.fixes.ImplementFromTraitFix
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.utils.findParentFnOrLambdaRetTy
 import org.rust.ide.utils.isFnRetTyResultAndMatchErrTy
+import org.rust.ide.utils.isResult
 import org.rust.lang.core.CRATE_IN_PATHS
 import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature
@@ -105,9 +109,10 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             return
         }
 
-        if (isFnRetTyResultAndMatchErrTy(o.expr, returnTy, errorTy) || !checkTryTraitFeature(o)) return
-
-        if (!(returnErrorTy is TyUnknown) && !lookup.canSelect(TraitRef(returnErrorTy, fromTrait.withSubst(errorTy)))) {
+        if (isFnRetTyResultAndMatchErrTy(o.expr, returnTy, errorTy)) return
+        if (returnErrorTy is TyUnknown) return
+        if ((isResult(returnTy, items) || checkTryTraitFeature(o))
+            && !lookup.canSelect(TraitRef(returnErrorTy, fromTrait.withSubst(errorTy)))) {
             val annotation = holder.createErrorAnnotation(
                 o.q,
                 "the trait `std::convert::From<${errorTy.insertionSafeText}>` is not implemented for `${returnErrorTy.insertionSafeText}`"
