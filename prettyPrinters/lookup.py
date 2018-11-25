@@ -21,12 +21,16 @@ class RustType:
     STD_STR = "StdStr"
     STD_VEC = "StdVec"
     STD_VEC_DEQUE = "StdVecDeque"
+    STD_RC = "StdRc"
+    STD_ARC = "StdArc"
 
 
 STD_STRING_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)String$")
 STD_STR_REGEX = re.compile(r"^&str$")
 STD_VEC_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)Vec<.+>$")
 STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)VecDeque<.+>$")
+STD_RC_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)Rc<.+>$")
+STD_ARC_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)Arc<.+>$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
@@ -57,6 +61,10 @@ def classify_rust_type(type):
             return RustType.STD_VEC
         if re.match(STD_VEC_DEQUE_REGEX, name):
             return RustType.STD_VEC_DEQUE
+        if re.match(STD_RC_REGEX, name):
+            return RustType.STD_RC
+        if re.match(STD_ARC_REGEX, name):
+            return RustType.STD_ARC
 
         if fields[0].name == ENUM_DISR_FIELD_NAME:
             if len(fields) == 1:
@@ -104,6 +112,10 @@ def summary_lookup(valobj, dict):
         return SizeSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_VEC_DEQUE:
         return SizeSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_RC:
+        return StdRcSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_ARC:
+        return StdRcSummaryProvider(valobj, dict)
 
     return ""
 
@@ -134,5 +146,10 @@ def synthetic_lookup(valobj, dict):
         return StdVecSyntheticProvider(valobj, dict)
     if rust_type == RustType.STD_VEC_DEQUE:
         return StdVecDequeSyntheticProvider(valobj, dict)
+
+    if rust_type == RustType.STD_RC:
+        return StdRcSyntheticProvider(valobj, dict)
+    if rust_type == RustType.STD_ARC:
+        return StdRcSyntheticProvider(valobj, dict, is_atomic=True)
 
     return DefaultSynthteticProvider(valobj, dict)
