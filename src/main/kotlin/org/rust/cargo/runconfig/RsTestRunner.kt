@@ -30,7 +30,7 @@ class RsTestRunner : AsyncProgramRunner<RunnerSettings>() {
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> =
-        buildTests(environment.project, state as CargoTestRunState)
+        buildTests(environment.project, state as CargoRunStateBase)
             .then { exitCode ->
                 if (exitCode != 0) return@then null
                 showRunContent(state.execute(environment.executor, this), environment)
@@ -39,7 +39,7 @@ class RsTestRunner : AsyncProgramRunner<RunnerSettings>() {
     override fun getRunnerId(): String = "RsTestRunner"
 }
 
-private fun buildTests(project: Project, state: CargoTestRunState): Promise<Int?> {
+private fun buildTests(project: Project, state: CargoRunStateBase): Promise<Int?> {
     val buildProcessHandler = run {
         val buildCmd = state.commandLine.prependArgument("--no-run")
         val buildConfig = CargoCommandConfiguration.CleanConfiguration.Ok(buildCmd, state.config.toolchain)
