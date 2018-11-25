@@ -7,6 +7,7 @@ package org.rust.lang.doc
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
@@ -57,7 +58,7 @@ fun RsDocAndAttributeOwner.documentationAsHtml(): String? {
         } else null
     } else null
     val text = documentation() ?: return null
-    val flavour = RustDocMarkdownFlavourDescriptor(baseURI)
+    val flavour = RustDocMarkdownFlavourDescriptor(this, baseURI)
     val root = MarkdownParser(flavour).buildMarkdownTreeFromString(text)
     return HtmlGenerator(text, root, flavour).generateHtml()
         .replace(tmpUriPrefix, DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)
@@ -104,6 +105,7 @@ private val RsMetaItem.docAttr: String?
     get() = if (name == "doc") litExpr?.stringLiteralValue else null
 
 private class RustDocMarkdownFlavourDescriptor(
+    private val context: PsiElement,
     private val uri: URI? = null,
     private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor()
 ) : MarkdownFlavourDescriptor by gfm {
@@ -115,6 +117,11 @@ private class RustDocMarkdownFlavourDescriptor(
         // h1 and h2 are too large
         generatingProviders[MarkdownElementTypes.ATX_1] = SimpleTagProvider("h2")
         generatingProviders[MarkdownElementTypes.ATX_2] = SimpleTagProvider("h3")
+        // BACKCOMPAT: 2018.2
+        val codeFenceProvider = createCodeFenceProvider(context)
+        if (codeFenceProvider != null) {
+            generatingProviders[MarkdownElementTypes.CODE_FENCE] = codeFenceProvider
+        }
         return generatingProviders
     }
 }
