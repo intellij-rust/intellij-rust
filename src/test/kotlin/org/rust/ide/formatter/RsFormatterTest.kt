@@ -90,6 +90,28 @@ class RsFormatterTest : RsFormatterTestBase() {
         """)
     }
 
+    fun `test indent where clause on`() {
+        custom().INDENT_WHERE_CLAUSE = true
+        doTextTest("""
+            pub fn do_stuff<T>(&self, item: &T)
+                        where T: ToString {}
+        """, """
+            pub fn do_stuff<T>(&self, item: &T)
+                where T: ToString {}
+        """)
+    }
+
+    fun `test indent where clause off`() {
+        custom().INDENT_WHERE_CLAUSE = false
+        doTextTest("""
+            pub fn do_stuff<T>(&self, item: &T)
+                        where T: ToString {}
+        """, """
+            pub fn do_stuff<T>(&self, item: &T)
+            where T: ToString {}
+        """)
+    }
+
     fun `test align type params on`() {
         custom().ALIGN_TYPE_PARAMS = true
         doTest()
