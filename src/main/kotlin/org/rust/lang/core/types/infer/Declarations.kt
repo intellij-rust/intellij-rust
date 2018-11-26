@@ -104,7 +104,7 @@ fun RsLifetime?.resolve(): Region {
     this ?: return ReUnknown
     if (referenceName == "'static") return ReStatic
     val resolved = reference.resolve()
-    return if (resolved is RsLifetimeParameter) ReEarlyBound(resolved) else ReUnknown
+    return if (resolved is RsLifetimeParameter) ReEarlyBound.named(resolved) else ReUnknown
 }
 
 private fun <T> TypeFoldable<T>.substituteWithTraitObjectRegion(
@@ -113,7 +113,7 @@ private fun <T> TypeFoldable<T>.substituteWithTraitObjectRegion(
 ): T = foldWith(object : TypeFolder {
     override fun foldTy(ty: Ty): Ty = when {
         ty is TyTypeParameter -> handleTraitObject(ty) ?: ty
-        ty.needToSubstitute -> ty.superFoldWith(this)
+        ty.needsSubst -> ty.superFoldWith(this)
         else -> ty
     }
 

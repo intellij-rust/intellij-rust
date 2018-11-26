@@ -434,7 +434,7 @@ class RegionContext private constructor(
         var borrowCmtCategory = borrowCmt.category ?: return
 
         if (borrowCmtCategory is Local) {
-            val maybePat = borrowCmtCategory.element
+            val maybePat = borrowCmtCategory.declaration // TODO: check
             if (maybePat is RsPatBinding) {
                 val cause = Reborrow(element)
                 val scope = regionScopeTree.getVariableScope(maybePat)
