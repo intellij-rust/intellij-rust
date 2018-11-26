@@ -23,6 +23,10 @@ class RustType:
     STD_VEC_DEQUE = "StdVecDeque"
     STD_RC = "StdRc"
     STD_ARC = "StdArc"
+    STD_CELL = "StdCell"
+    STD_REF = "StdRef"
+    STD_REF_MUT = "StdRefMut"
+    STD_REF_CELL = "StdRefCell"
 
 
 STD_STRING_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)String$")
@@ -31,6 +35,10 @@ STD_VEC_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)Vec<.+>$")
 STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)VecDeque<.+>$")
 STD_RC_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)Rc<.+>$")
 STD_ARC_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)Arc<.+>$")
+STD_CELL_REGEX = re.compile(r"^(core::([a-zA-Z_]+::)+)Cell<.+>$")
+STD_REF_REGEX = re.compile(r"^(core::([a-zA-Z_]+::)+)Ref<.+>$")
+STD_REF_MUT_REGEX = re.compile(r"^(core::([a-zA-Z_]+::)+)RefMut<.+>$")
+STD_REF_CELL_REGEX = re.compile(r"^(core::([a-zA-Z_]+::)+)RefCell<.+>$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
@@ -65,6 +73,14 @@ def classify_rust_type(type):
             return RustType.STD_RC
         if re.match(STD_ARC_REGEX, name):
             return RustType.STD_ARC
+        if re.match(STD_CELL_REGEX, name):
+            return RustType.STD_CELL
+        if re.match(STD_REF_REGEX, name):
+            return RustType.STD_REF
+        if re.match(STD_REF_MUT_REGEX, name):
+            return RustType.STD_REF_MUT
+        if re.match(STD_REF_CELL_REGEX, name):
+            return RustType.STD_REF_CELL
 
         if fields[0].name == ENUM_DISR_FIELD_NAME:
             if len(fields) == 1:
@@ -116,6 +132,12 @@ def summary_lookup(valobj, dict):
         return StdRcSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_ARC:
         return StdRcSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_REF:
+        return StdRefSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_REF_MUT:
+        return StdRefSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_REF_CELL:
+        return StdRefSummaryProvider(valobj, dict)
 
     return ""
 
@@ -151,5 +173,14 @@ def synthetic_lookup(valobj, dict):
         return StdRcSyntheticProvider(valobj, dict)
     if rust_type == RustType.STD_ARC:
         return StdRcSyntheticProvider(valobj, dict, is_atomic=True)
+
+    if rust_type == RustType.STD_CELL:
+        return StdCellSyntheticProvider(valobj, dict)
+    if rust_type == RustType.STD_REF:
+        return StdRefSyntheticProvider(valobj, dict)
+    if rust_type == RustType.STD_REF_MUT:
+        return StdRefSyntheticProvider(valobj, dict)
+    if rust_type == RustType.STD_REF_CELL:
+        return StdRefSyntheticProvider(valobj, dict, is_cell=True)
 
     return DefaultSynthteticProvider(valobj, dict)
