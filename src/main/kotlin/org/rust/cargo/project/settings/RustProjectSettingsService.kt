@@ -25,6 +25,7 @@ interface RustProjectSettingsService {
         val useOffline: Boolean,
         val expandMacros: Boolean,
         val showTestToolWindow: Boolean,
+        val doctestInjectionEnabled: Boolean,
         val useSkipChildren: Boolean
     )
 
@@ -44,6 +45,7 @@ interface RustProjectSettingsService {
     val useOffline: Boolean get() = data.useOffline
     val expandMacros: Boolean get() = data.expandMacros
     val showTestToolWindow: Boolean get() = data.showTestToolWindow
+    val doctestInjectionEnabled: Boolean get() = data.doctestInjectionEnabled
     val useSkipChildren: Boolean get() = data.useSkipChildren
 
     /*

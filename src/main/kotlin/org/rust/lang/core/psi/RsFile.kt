@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
@@ -65,6 +66,11 @@ class RsFile(
 
     override val isCrateRoot: Boolean
         get() {
+            // Doctest injection file should be a crate root to resolve absolute paths inside injection.
+            // Doctest contains a single "extern crate $crateName;" declaration at the top level, so
+            // we should be able to resolve it by absolute path
+            if (originalFile.isDoctestInjection) return true
+
             val file = originalFile.virtualFile ?: return false
             return cargoWorkspace?.isCrateRoot(file) ?: false
         }

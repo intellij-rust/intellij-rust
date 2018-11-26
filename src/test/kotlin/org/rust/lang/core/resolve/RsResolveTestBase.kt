@@ -22,12 +22,17 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.Testmark
 
 abstract class RsResolveTestBase : RsTestBase() {
-
     protected open fun checkByCode(@Language("Rust") code: String) =
-        checkByCodeGeneric<RsNamedElement>(code)
+        checkByCode(code, "main.rs")
 
-    protected inline fun <reified T : NavigatablePsiElement> checkByCodeGeneric(@Language("Rust") code: String) {
-        InlineFile(code)
+    protected open fun checkByCode(@Language("Rust") code: String, fileName: String) =
+        checkByCodeGeneric<RsNamedElement>(code, fileName)
+
+    protected inline fun <reified T : NavigatablePsiElement> checkByCodeGeneric(
+        @Language("Rust") code: String,
+        fileName: String = "main.rs"
+    ) {
+        InlineFile(code, fileName)
 
         val (refElement, data, offset) = findElementWithDataAndOffsetInEditor<RsWeakReferenceElement>("^")
 

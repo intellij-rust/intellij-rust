@@ -6,6 +6,8 @@
 package org.rust.ide.inspections.import
 
 import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 class AutoImportFixTest : AutoImportFixTestBase() {
@@ -1813,4 +1815,87 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = Baz/*caret*/;
         }
     """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import outer item in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    //- lib.rs
+        /// ```
+        /// foo/*caret*/();
+        /// ```
+        pub fn foo() {}
+    """, """
+    //- lib.rs
+        /// ```
+        /// use test_package::foo;
+        /// foo();
+        /// ```
+        pub fn foo() {}
+    """,  AutoImportFix.Testmarks.doctestInjectionImport)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import second outer item in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    //- lib.rs
+        /// ```
+        /// use test_package::foo;
+        /// foo();
+        /// bar/*caret*/();
+        /// ```
+        pub fn foo() {}
+        pub fn bar() {}
+    """, """
+    //- lib.rs
+        /// ```
+        /// use test_package::{foo, bar};
+        /// foo();
+        /// bar();
+        /// ```
+        pub fn foo() {}
+        pub fn bar() {}
+    """,  AutoImportFix.Testmarks.doctestInjectionImport)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import second outer item without grouping in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    //- lib.rs
+        /// ```
+        /// use test_package::foo;
+        /// foo();
+        /// baz/*caret*/();
+        /// ```
+        pub fn foo() {}
+        pub mod bar { pub fn baz() {} }
+    """, """
+    //- lib.rs
+        /// ```
+        /// use test_package::foo;
+        /// use test_package::bar::baz;
+        /// foo();
+        /// baz();
+        /// ```
+        pub fn foo() {}
+        pub mod bar { pub fn baz() {} }
+    """, AutoImportFix.Testmarks.insertNewLineBeforeUseItem)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import outer item in doctest injection with inner module`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    //- lib.rs
+        /// ```
+        /// mod bar {
+        ///     fn baz() {
+        ///         foo/*caret*/();
+        ///     }
+        /// }
+        /// ```
+        pub fn foo() {}
+    """, """
+    //- lib.rs
+        /// ```
+        /// mod bar {
+        ///     use test_package::foo;
+        /// fn baz() {
+        ///         foo();
+        ///     }
+        /// }
+        /// ```
+        pub fn foo() {}
+    """,  AutoImportFix.Testmarks.doctestInjectionImport)
 }

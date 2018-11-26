@@ -46,11 +46,13 @@
 
         <lang.parserDefinition language="Rust" implementationClass="org.rust.lang.core.parser.RustParserDefinition"/>
         <stubElementTypeHolder class="org.rust.lang.core.psi.RsElementTypes"/>
+        <lang.ast.factory language="Rust" implementationClass="org.rust.lang.core.RsASTFactory"/>
 
         <!-- Code insight settings -->
 
         <applicationService serviceInterface="org.rust.ide.settings.RsCodeInsightSettings"
                             serviceImplementation="org.rust.ide.settings.RsCodeInsightSettings"/>
+        <editorActionHandler action="EditorEnter" implementationClass="org.rust.ide.actions.RsEnterHandler"/>
 
         <!-- Selection Handler -->
 
@@ -162,6 +164,7 @@
 
         <!-- Annotator -->
 
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsDoctestAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsSyntaxErrorsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsEdition2018KeywordsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsLiteralAnnotator"/>
@@ -757,6 +760,7 @@
         <lang.elementManipulator forClass="org.rust.lang.core.psi.RsLitExpr"
                                  implementationClass="org.rust.ide.injected.RsStringLiteralManipulator"/>
         <multiHostInjector implementation="org.rust.ide.injected.RsRegExpInjector"/>
+        <multiHostInjector implementation="org.rust.ide.injected.RsDoctestLanguageInjector"/>
 
 
         <projectService serviceImplementation="org.rust.lang.core.resolve.ref.RsResolveCache"/>

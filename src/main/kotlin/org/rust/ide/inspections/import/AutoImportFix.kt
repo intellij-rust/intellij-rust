@@ -17,6 +17,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.search.RsCargoProjectScope
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -55,10 +56,10 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         }
 
         if (candidates.size == 1) {
-            element.containingMod.importItem(candidates.first())
+            candidates.first().import(element)
         } else {
             DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
-                chooseItemAndImport(project, it, candidates, element.containingMod)
+                chooseItemAndImport(project, it, candidates, element)
             }
         }
         isConsumed = true
@@ -68,11 +69,11 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         project: Project,
         dataContext: DataContext,
         items: List<ImportCandidate>,
-        mod: RsMod
+        context: RsElement
     ) {
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
             project.runWriteCommandAction {
-                mod.importItem(selectedValue)
+                selectedValue.import(context)
             }
         }
     }
@@ -364,6 +365,8 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         val pathInUseItem = Testmark("pathInUseItem")
         val externCrateItemInNotCrateRoot = Testmark("externCrateItemInNotCrateRoot")
         val nameInScope = Testmark("nameInScope")
+        val doctestInjectionImport = Testmark("doctestInjectionImport")
+        val insertNewLineBeforeUseItem = Testmark("insertNewLineBeforeUseItem")
     }
 }
 
@@ -447,23 +450,23 @@ private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElem
 }
 
 /**
- * Inserts an use declaration to the receiver mod for importing the selected `candidate`.
+ * Inserts a use declaration to the mod where [context] located for importing the selected candidate ([this]).
  * This action requires write access.
  */
-fun RsMod.importItem(candidate: ImportCandidate) {
+fun ImportCandidate.import(context: RsElement) {
     checkWriteAccessAllowed()
-    val psiFactory = RsPsiFactory(project)
+    val psiFactory = RsPsiFactory(context.project)
     // depth of `mod` relative to module with `extern crate` item
     // we uses this info to create correct relative use item path if needed
     var relativeDepth: Int? = null
 
-    val isEdition2018 = isEdition2018
-    val info = candidate.info
+    val isEdition2018 = context.isEdition2018
+    val info = info
     // if crate of importing element differs from current crate
     // we need to add new extern crate item
     if (info is ImportInfo.ExternCrateImportInfo) {
         val target = info.target
-        val crateRoot = crateRoot
+        val crateRoot = context.crateRoot
         val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
         when {
             // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
@@ -490,7 +493,19 @@ fun RsMod.importItem(candidate: ImportCandidate) {
         0 -> "self::"
         else -> "super::".repeat(relativeDepth)
     }
-    insertUseItem(psiFactory, "$prefix${info.usePath}")
+
+    val insertionScope = if (context.isDoctestInjection) {
+        // In doctest injections all our code is located inside one invisible (main) function.
+        // If we try to change PSI outside of that function, we'll take a crash.
+        // So here we limit the module search with the last function (and never inert to an RsFile)
+        AutoImportFix.Testmarks.doctestInjectionImport.hit()
+        val scope = context.ancestors.find { it is RsMod && it !is RsFile }
+            ?: context.ancestors.findLast { it is RsFunction }
+        ((scope as? RsFunction)?.block ?: scope) as RsItemsOwner
+    } else {
+        context.containingMod
+    }
+    insertionScope.insertUseItem(psiFactory, "$prefix${info.usePath}")
 }
 
 private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
@@ -504,13 +519,15 @@ private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: Str
     }
 }
 
-private fun RsMod.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
+private fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
     val useItem = psiFactory.createUseItem(usePath)
     if (tryGroupWithOtherUseItems(psiFactory, useItem)) return
     val anchor = childrenOfType<RsUseItem>().lastElement ?: childrenOfType<RsExternCrateItem>().lastElement
     if (anchor != null) {
         val insertedUseItem = addAfter(useItem, anchor)
-        if (anchor is RsExternCrateItem) {
+        if (anchor is RsExternCrateItem || isDoctestInjection) {
+            // Formatting is disabled in injections, so we have to add new line manually
+            AutoImportFix.Testmarks.insertNewLineBeforeUseItem.hit()
             addBefore(psiFactory.createNewline(), insertedUseItem)
         }
     } else {
@@ -519,7 +536,7 @@ private fun RsMod.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
     }
 }
 
-private fun RsMod.tryGroupWithOtherUseItems(psiFactory: RsPsiFactory, newUseItem: RsUseItem): Boolean {
+private fun RsItemsOwner.tryGroupWithOtherUseItems(psiFactory: RsPsiFactory, newUseItem: RsUseItem): Boolean {
     val newParentPath = newUseItem.parentPath ?: return false
     val newImportingName = newUseItem.importingNames?.singleOrNull() ?: return false
     return childrenOfType<RsUseItem>().any { it.tryGroupWith(psiFactory, newParentPath, newImportingName) }

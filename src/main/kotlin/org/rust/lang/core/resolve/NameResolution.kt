@@ -23,6 +23,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.core.macros.MACRO_CRATE_IDENTIFIER_PREFIX
 import org.rust.lang.core.macros.RsExpandedElement
@@ -238,6 +239,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 }
 
 fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+    val isDoctestInjection = element.isDoctestInjection
     val target = element.containingCargoTarget ?: return false
     val pkg = target.pkg
 
@@ -247,9 +249,10 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
         val libTarget = pkg.libTarget ?: return false
         // When crate depends on another version of the same crate
         // we shouldn't add current package into resolve/completion results
-        if (otherVersionOfSameCrate.hitOnFalse(libTarget == target)) return false
+        if (otherVersionOfSameCrate.hitOnFalse(libTarget == target) && !isDoctestInjection) return false
 
         if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
+        if (isDoctestInjection && pkg.origin != PackageOrigin.STDLIB && libTarget != target) return false
         visitedDeps += pkg.name
         return processor.lazy(dependencyName ?: libTarget.normName) {
             libTarget.crateRoot?.toPsiFile(element.project)?.rustFile
