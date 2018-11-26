@@ -26,16 +26,11 @@ sealed class RsAbstractableOwner {
 
 val RsAbstractable.owner: RsAbstractableOwner
     get() {
-        val stubOnlyParent = when (this) {
-            is RsConstant -> stub?.parentStub?.psi ?: parent
-            is RsFunction -> stub?.parentStub?.psi ?: parent
-            is RsTypeAlias -> stub?.parentStub?.psi ?: parent
-            else -> error("unreachable")
-        }
-        return when (stubOnlyParent) {
+        val context = context
+        return when (context) {
             is RsForeignModItem -> RsAbstractableOwner.Foreign
             is RsMembers -> {
-                val traitOrImpl = parent.parent
+                val traitOrImpl = context.context
                 when (traitOrImpl) {
                     is RsImplItem -> RsAbstractableOwner.Impl(traitOrImpl, isInherent = traitOrImpl.traitRef == null)
                     is RsTraitItem -> RsAbstractableOwner.Trait(traitOrImpl)

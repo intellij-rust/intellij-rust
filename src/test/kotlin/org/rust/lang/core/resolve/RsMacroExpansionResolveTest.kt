@@ -221,6 +221,44 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         }           //^
     """)
 
+    fun `test method defined with a stubbed macro`() = stubOnlyResolve("""
+    //- foo.rs
+        macro_rules! foo {
+            ($ i:ident, $ j:ty) => { pub fn $ i(&self) -> $ j { unimplemented!() } }
+        }
+        pub struct Foo;
+        impl Foo { foo!(foo, super::Bar); }
+    //- main.rs
+        mod foo;
+        use foo::Foo;
+
+        struct Bar;
+        impl Bar { fn bar(&self) {} }
+        fn main() {
+            Foo.foo().bar();
+        }           //^ main.rs
+    """)
+
+    // This is a test for RsAbstractable.owner when RsAbstractable is expanded from a macro
+    fun `test generic trait method defined with a stubbed macro`() = stubOnlyResolve("""
+    //- foo.rs
+        macro_rules! foo {
+            ($ i:ident, $ j:ty) => { pub fn $ i(&self) -> $ j { unimplemented!() } }
+        }
+        pub struct Foo<T>(T);
+        trait Trait<T> { foo!(foo, T); }
+        impl<T> Trait<T> for Foo<T> {}
+    //- main.rs
+        mod foo;
+        use foo::Foo;
+
+        struct Bar;
+        impl Bar { fn bar(&self) {} }
+        fn main() {
+            Foo(Bar).foo().bar();
+        }                //^ main.rs
+    """)
+
     fun `test trait method defined with a macro`() = checkByCode("""
         macro_rules! foo {
             ($ i:ident, $ j:ty) => { fn $ i(&self) -> $ j { unimplemented!() } }
