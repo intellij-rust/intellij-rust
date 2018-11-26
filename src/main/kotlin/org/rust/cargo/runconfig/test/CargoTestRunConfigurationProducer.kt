@@ -9,7 +9,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.isTest
-import org.rust.lang.core.psi.ext.processExpandedItems
+import org.rust.lang.core.psi.ext.processExpandedItemsExceptImpls
 
 class CargoTestRunConfigurationProducer : CargoTestRunConfigurationProducerBase() {
     override val commandName: String = "test"
@@ -23,6 +23,6 @@ class CargoTestRunConfigurationProducer : CargoTestRunConfigurationProducerBase(
 
     companion object {
         private fun hasTestFunction(mod: RsMod): Boolean =
-            mod.processExpandedItems { it is RsFunction && it.isTest || it is RsMod && hasTestFunction(it) }
+            mod.processExpandedItemsExceptImpls { it is RsFunction && it.isTest || it is RsMod && hasTestFunction(it) }
     }
 }
