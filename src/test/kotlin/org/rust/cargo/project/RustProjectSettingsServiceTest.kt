@@ -25,6 +25,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
             <State>
               <option name="autoUpdateEnabled" value="false" />
               <option name="compileAllTargets" value="false" />
+              <option name="doctestInjectionEnabled" value="false" />
               <option name="expandMacros" value="false" />
               <option name="explicitPathToStdlib" value="/stdlib" />
               <option name="showTestToolWindow" value="false" />
@@ -52,6 +53,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
             useOffline = true,
             expandMacros = false,
             showTestToolWindow = false,
+            doctestInjectionEnabled = false,
             useSkipChildren = true
         ))
     }

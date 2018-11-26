@@ -7,6 +7,7 @@ package org.rust.ide.typing
 
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
@@ -16,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.util.text.CharArrayUtil
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
@@ -37,6 +39,9 @@ class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         if (file !is RsFile) {
             return Result.Continue
         }
+
+        // Any indent handling in doctest injections is disabled for now due to some bugs
+        if (editor is EditorWindow && file.isDoctestInjection) return Result.DefaultSkipIndent
 
         // get current document and commit any changes, so we'll get latest PSI
         val document = editor.document

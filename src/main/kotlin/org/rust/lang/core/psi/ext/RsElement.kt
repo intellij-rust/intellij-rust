@@ -7,8 +7,11 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.StubBasedPsiElementBase
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.stubs.IStubElementType
@@ -16,6 +19,7 @@ import com.intellij.psi.stubs.StubElement
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
@@ -40,6 +44,7 @@ val RsElement.cargoProject: CargoProject?
 val RsElement.cargoWorkspace: CargoWorkspace?
     get() {
         val psiFile = contextualFile.originalFile
+        psiFile.virtualFile?.getInjectedFromIfDoctestInjection(project)?.cargoWorkspace?.let { return it }
         psiFile.getUserData(CARGO_WORKSPACE)?.let { return it }
         return psiFile.cargoProject?.workspace
     }
@@ -47,22 +52,32 @@ val RsElement.cargoWorkspace: CargoWorkspace?
 private val PsiFile.cargoProject: CargoProject?
     get() {
         val vFile = virtualFile ?: return null
+        vFile.getInjectedFromIfDoctestInjection(project)?.let { return (it as PsiFile).cargoProject }
         return project.cargoProjects.findProjectForFile(vFile)
     }
-
 
 val RsElement.containingCargoTarget: CargoWorkspace.Target?
     get() {
         val ws = cargoWorkspace ?: return null
         val root = crateRoot ?: return null
         val file = root.contextualFile.originalFile.virtualFile ?: return null
-        return ws.findTargetByCrateRoot(file)
+        return ws.findTargetByCrateRoot(
+            file.getInjectedFromIfDoctestInjection(project)?.crateRoot?.contextualFile?.originalFile?.virtualFile
+                ?: file
+        )
     }
+
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
 val PsiElement.isEdition2018: Boolean get() =
     contextOrSelf<RsElement>()?.containingCargoTarget?.edition == CargoWorkspace.Edition.EDITION_2018
+
+/** @see org.rust.ide.injected.RsDoctestLanguageInjector */
+private fun VirtualFile.getInjectedFromIfDoctestInjection(project: Project): RsFile? {
+    if (!isDoctestInjection(project)) return null
+    return ((this as? VirtualFileWindow)?.delegate?.toPsiFile(project) as? RsFile)
+}
 
 /**
  * It is possible to match value with constant-like element, e.g.
