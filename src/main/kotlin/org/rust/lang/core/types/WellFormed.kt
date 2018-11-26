@@ -45,9 +45,9 @@ data class WfPredicates(val ctx: RsInferenceContext, val body: RsElement, val ca
                     out.add(Obligation(Predicate.TypeOutlives(subTy.region, subTy.referenced, body)))
                 }
                 is TyInfer -> {
-                    val resolved = ctx.shallowResolve(ty)
+                    val resolved = ctx.shallowResolve(subTy)
                     if (resolved is TyInfer) {  // not yet resolved...
-                        if (ty == resolved) return false  // ...this is the type we started from! no progress.
+                        if (subTy == resolved) return false  // ...this is the type we started from! no progress.
                         out.add(Obligation(Predicate.WellFormed(resolved, body)))
                     } else {
                         // Yes, resolved, proceed with the result.

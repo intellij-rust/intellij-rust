@@ -431,7 +431,7 @@ class RegionContext private constructor(
         typeMustOutlive(origin, borrowCmt.ty, borrowRegion)
 
         var tempBorrowKind = borrowKind
-        var borrowCmtCategory = borrowCmt.category
+        var borrowCmtCategory = borrowCmt.category ?: return
 
         if (borrowCmtCategory is Local) {
             val maybePat = borrowCmtCategory.element
@@ -454,13 +454,13 @@ class RegionContext private constructor(
                         pointerKind.region,
                         pointerKind.borrowKind
                     ) ?: return
-                    borrowCmtCategory = cmt.category
+                    borrowCmtCategory = cmt.category ?: return
                     tempBorrowKind = kind
                 }
 
                 // Borrowing interior or owned data requires the base to be valid and borrowable in the same fashion.
-                borrowCmtCategory is Downcast -> borrowCmtCategory = borrowCmtCategory.cmt.category
-                borrowCmtCategory is Interior -> borrowCmtCategory = borrowCmtCategory.cmt.category
+                borrowCmtCategory is Downcast -> borrowCmtCategory = borrowCmtCategory.cmt.category ?: return
+                borrowCmtCategory is Interior -> borrowCmtCategory = borrowCmtCategory.cmt.category ?: return
 
                 borrowCmtCategory is Deref && borrowCmtCategory.pointerKind is UnsafePointer
                     || borrowCmtCategory is StaticItem
