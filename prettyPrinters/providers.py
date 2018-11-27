@@ -135,6 +135,9 @@ def StdStrSummaryProvider(valobj, dict):
     logger >> "[StdStrSummaryProvider] for " + str(valobj.GetName())
 
     length = valobj.GetChildMemberWithName("length").GetValueAsUnsigned()
+    if length == 0:
+        return '""'
+
     data_ptr = valobj.GetChildMemberWithName("data_ptr")
 
     start = data_ptr.GetValueAsUnsigned()
