@@ -10,21 +10,21 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
-import org.rust.lang.core.resolve.ref.RsResolveCache
+import org.rust.lang.core.resolve.ref.RsResolveCache.Testmarks
 import org.rust.openapiext.Testmark
 
 class RsResolveCacheTest : RsTestBase() {
     fun `test cache invalidated on rust structure change`() = checkResolvedToXY("""
-        mod a { struct S; }
-                     //X
-        mod b { struct S; }
-                     //Y
+        mod a { pub struct S; }
+                         //X
+        mod b { pub struct S; }
+                         //Y
         use a/*caret*/::S;
         type T = S;
                //^
-    """, "\bb", RsResolveCache.Testmarks.cacheCleared)
+    """, "\bb", Testmarks.cacheCleared)
 
-    fun `test resolve correctly without global cache invalidation`() = checkResolvedToXY("""
+    fun `test resolve correctly without global cache invalidation 1`() = checkResolvedToXY("""
         struct S1;
              //X
         struct S2;
@@ -32,6 +32,33 @@ class RsResolveCacheTest : RsTestBase() {
         fn main() {
             let a: S1/*caret*/;
         }        //^
+    """, "\b2")
+
+    fun `test resolve correctly without global cache invalidation 2`() = checkResolvedToXY("""
+        mod a { pub struct S; }
+                         //X
+        mod b { pub struct S; }
+                         //Y
+        fn main() {
+            let _: a/*caret*/
+                ::S;
+                //^
+        }
+    """, "\bb")
+
+    fun `test resolve correctly without global cache invalidation 3`() = checkResolvedToXY("""
+        struct S;
+        trait Trait1 { type Item; }
+                            //X
+        trait Trait2 { type Item; }
+                            //Y
+        impl Trait1 for S { type Item = (); }
+        impl Trait2 for S { type Item = (); }
+        fn main() {
+            let _: <S as Trait1/*caret*/>
+                ::Item;
+                //^
+        }
     """, "\b2")
 
     fun `test edit local pat binding`() = checkResolvedAndThenUnresolved("""
@@ -57,6 +84,18 @@ class RsResolveCacheTest : RsTestBase() {
         }
     """, "1")
 
+    fun `test edit label usage`() = checkResolvedToXY("""
+        fn main() {
+            'label1: loop {
+              //X
+                'label2: loop {
+                 //Y
+                    break 'label1/*caret*/
+                }         //^
+            }
+        }
+    """, "\b2")
+
     fun `test edit local lifetime declaration`() = checkResolvedAndThenUnresolved("""
         fn main() {
             let _: &dyn for<'lifetime/*caret*/>
@@ -65,6 +104,16 @@ class RsResolveCacheTest : RsTestBase() {
         }               //^
     """, "1")
 
+    fun `test edit local lifetime usage`() = checkResolvedToXY("""
+        fn main() {
+            let _: &dyn for<'lifetime1,
+                            //X
+                            'lifetime2>
+                            //Y
+                Trait<'lifetime1/*caret*/>;
+        }               //^
+    """, "\b2")
+
     fun `test edit fn-signature lifetime declaration`() = checkResolvedAndThenUnresolved("""
         fn foo<'lifetime/*caret*/>() {
                 //X
@@ -72,7 +121,16 @@ class RsResolveCacheTest : RsTestBase() {
         }                     //^
     """, "1")
 
-    fun `test macro meta variable reference`() = checkResolvedAndThenUnresolved("""
+    fun `test edit fn-signature lifetime usage`() = checkResolvedToXY("""
+        fn foo<'lifetime1,
+                //X
+                'lifetime2>() {
+                //Y
+            let _: &dyn Trait<'lifetime1/*caret*/>;
+        }                     //^
+    """, "\b2")
+
+    fun `test edit macro meta variable declaration`() = checkResolvedAndThenUnresolved("""
         macro_rules! foo {
             ($ item_var/*caret*/:item) => {
                 //X
@@ -80,6 +138,59 @@ class RsResolveCacheTest : RsTestBase() {
             };    //^
         }
     """, "1")
+
+    fun `test edit macro meta variable usage`() = checkResolvedToXY("""
+        macro_rules! foo {
+            ($ item_var1:item,
+                //X
+            $ item_var2:item) => {
+                //Y
+                $ item_var1/*caret*/
+            };    //^
+        }
+    """, "\b2")
+
+    fun `test struct literal field reference edit field declaration`() = checkResolvedAndThenUnresolved("""
+        struct S {
+            field/*caret*/: i32
+        }   //X
+        fn main() {
+            S { field: 0 };
+        }       //^
+    """, "1")
+
+    fun `test struct literal field reference edit usage`() = checkResolvedToXY("""
+        struct S {
+            field1: i32,
+            //X
+            field2: i32
+        }   //Y
+        fn main() {
+            S { field1/*caret*/: 0 };
+        }       //^
+    """, "\b2")
+
+    fun `test edit macro declaration`() = checkResolvedAndThenUnresolved("""
+        macro_rules! foo/*caret*/ {
+                    //X
+            () => { fn foo() {} };
+        }
+        foo!();
+        //^
+    """, "1")
+
+    fun `test edit macro call`() = checkResolvedToXY("""
+        macro_rules! foo1 {
+                    //X
+            () => { fn foo() {} };
+        }
+        macro_rules! foo2 {
+                    //Y
+            () => { fn foo() {} };
+        }
+        foo1/*caret*/!();
+        //^
+    """, "\b2")
 
     private fun checkResolvedToXY(@Language("Rust") code: String, textToType: String) {
         InlineFile(code).withCaret()
