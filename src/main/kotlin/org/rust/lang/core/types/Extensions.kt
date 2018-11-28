@@ -5,12 +5,14 @@
 
 package org.rust.lang.core.types
 
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -28,12 +30,18 @@ import org.rust.openapiext.recursionGuard
 private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
     val structureModificationTracker = project.rustStructureModificationTracker
 
-    // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
-    // cached value will be invalidated if the modification counter is incremented.
-    return if (this is RsModificationTrackerOwner) {
-        Result.create(value, structureModificationTracker, modificationTracker)
-    } else {
-        Result.create(value, structureModificationTracker)
+    return when {
+        // The case of injected language. Injected PSI don't have it's own event system, so can only
+        // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
+        // literal. If a user change the literal, we can only be notified that the literal is changed.
+        // So we have to invalidate the cached value on any PSI change
+        containingFile.virtualFile is VirtualFileWindow -> Result.create(value, PsiModificationTracker.MODIFICATION_COUNT)
+
+        // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
+        // cached value will be invalidated if the modification counter is incremented.
+        this is RsModificationTrackerOwner -> Result.create(value, structureModificationTracker, modificationTracker)
+
+        else -> Result.create(value, structureModificationTracker)
     }
 }
 
@@ -45,7 +53,7 @@ val RsTypeElement.lifetimeElidable: Boolean
     get() {
         val typeOwner = owner.parent
 
-        val isAssociatedConstant =  typeOwner is RsConstant && typeOwner.owner.isImplOrTrait
+        val isAssociatedConstant = typeOwner is RsConstant && typeOwner.owner.isImplOrTrait
 
         return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl
             && typeOwner !is RsTypeAlias && !isAssociatedConstant
