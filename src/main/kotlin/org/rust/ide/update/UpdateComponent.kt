@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.rust.ide.update
 
 import com.intellij.ide.util.PropertiesComponent
@@ -28,6 +30,7 @@ import java.net.URLEncoder
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
+// BACKCOMPAT: 2018.2
 class UpdateComponent : ApplicationComponent, Disposable {
     override fun getComponentName(): String = javaClass.name
 
@@ -37,13 +40,9 @@ class UpdateComponent : ApplicationComponent, Disposable {
         }
     }
 
-    override fun disposeComponent() {
-        // NOP
-    }
-
     override fun dispose() = disposeComponent()
 
-
+    // BACKCOMPAT: 2018.2
     object EDITOR_LISTENER : EditorFactoryAdapter() {
         override fun editorCreated(event: EditorFactoryEvent) {
             val document = event.editor.document
@@ -96,4 +95,3 @@ class UpdateComponent : ApplicationComponent, Disposable {
         }
     }
 }
-
