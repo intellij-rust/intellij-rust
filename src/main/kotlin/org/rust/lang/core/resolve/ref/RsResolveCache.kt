@@ -7,6 +7,7 @@
 
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -14,6 +15,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
+import com.intellij.psi.impl.AnyPsiChangeListener
+import com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -40,12 +43,18 @@ import java.util.concurrent.ConcurrentMap
 class RsResolveCache(messageBus: MessageBus) {
     /** The cache is cleared on [RsPsiManager.rustStructureModificationTracker] increment */
     private val rustStructureDependentCache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
+    /** The cache is cleared on [ANY_PSI_CHANGE_TOPIC] event */
+    private val anyPsiChangeDependentCache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
     private val guard = RecursionManager.createGuard("RsResolveCache")
 
     init {
         val connection = messageBus.connect()
         connection.subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
             override fun rustStructureChanged() = onRustStructureChanged()
+        })
+        connection.subscribe(ANY_PSI_CHANGE_TOPIC, object : AnyPsiChangeListener {
+            override fun afterPsiChanged(isPhysical: Boolean) = anyPsiChangeDependentCache.clear()
+            override fun beforePsiChanged(isPhysical: Boolean) {}
         })
         connection.subscribe(RUST_PSI_CHANGE_TOPIC, object : RustPsiChangeListener {
             override fun rustPsiChanged(element: PsiElement) = onRustPsiChanged(element)
@@ -61,7 +70,15 @@ class RsResolveCache(messageBus: MessageBus) {
     @Suppress("UNCHECKED_CAST")
     fun <K : PsiElement, V> resolveWithCaching(key: K, dep: ResolveCacheDependency, resolver: (K) -> V): V? {
         ProgressManager.checkCanceled()
-        val map = getCacheFor(key, dep)
+        val refinedDep = when {
+            // The case of injected language. Injected PSI don't have it's own event system, so can only
+            // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
+            // literal. If a user change the literal, we can only be notified that the literal is changed.
+            // So we have to invalidate caches for injected PSI on any PSI change
+            key.containingFile.virtualFile is VirtualFileWindow -> ResolveCacheDependency.ANY_PSI_CHANGE
+            else -> dep
+        }
+        val map = getCacheFor(key, refinedDep)
         return map[key] as V? ?: run {
             val stamp = guard.markStack()
             val result = guard.doPreventingRecursion(key, true) { resolver(key) }
@@ -99,6 +116,7 @@ class RsResolveCache(messageBus: MessageBus) {
 
             }
             ResolveCacheDependency.RUST_STRUCTURE -> rustStructureDependentCache
+            ResolveCacheDependency.ANY_PSI_CHANGE -> anyPsiChangeDependentCache
         }
     }
 
@@ -167,7 +185,13 @@ enum class ResolveCacheDependency {
      * Depends on both [LOCAL] and [RUST_STRUCTURE]. It is not the same as "any PSI change", because,
      * for example, local changes from other functions will not invalidate the value
      */
-    LOCAL_AND_RUST_STRUCTURE
+    LOCAL_AND_RUST_STRUCTURE,
+
+    /**
+     * Depends on [com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT]. I.e. depends on
+     * any PSI change, not only in rust files
+     */
+    ANY_PSI_CHANGE,
 }
 
 private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {
