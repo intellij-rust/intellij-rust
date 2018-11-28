@@ -241,16 +241,12 @@ val PROC_MACRO_HYGIENE = CompilerFeature("proc_macro_hygiene", ACTIVE, "1.30.0")
 val DOC_ALIAS = CompilerFeature("doc_alias", ACTIVE, "1.27.0")
 // Allows irrefutable patterns in if-let and while-let statements (RFC 2086)
 val IRREFUTABLE_LET_PATTERNS = CompilerFeature("irrefutable_let_patterns", ACTIVE, "1.27.0")
-// Allows use of the :literal macro fragment specifier (RFC 1576)
-val MACRO_LITERAL_MATCHER = CompilerFeature("macro_literal_matcher", ACTIVE, "1.27.0")
 // inconsistent bounds in where clauses
 val TRIVIAL_BOUNDS = CompilerFeature("trivial_bounds", ACTIVE, "1.28.0")
 // 'a: { break 'a; }
 val LABEL_BREAK_VALUE = CompilerFeature("label_break_value", ACTIVE, "1.28.0")
 // Integer match exhaustiveness checking
 val EXHAUSTIVE_INTEGER_PATTERNS = CompilerFeature("exhaustive_integer_patterns", ACTIVE, "1.30.0")
-// RFC 2070: #[panic_implementation] / #[panic_handler]
-val PANIC_IMPLEMENTATION = CompilerFeature("panic_implementation", ACTIVE, "1.28.0")
 // #[doc(keyword = "...")]
 val DOC_KEYWORD = CompilerFeature("doc_keyword", ACTIVE, "1.28.0")
 // Allows async and await syntax
@@ -286,8 +282,8 @@ val IMPL_TRAIT_IN_BINDINGS = CompilerFeature("impl_trait_in_bindings", ACTIVE, "
 val CFG_ATTR_MULTI = CompilerFeature("cfg_attr_multi", ACTIVE, "1.31.0")
 // Allows `const _: TYPE = VALUE`
 val UNDERSCORE_CONST_NAMES = CompilerFeature("underscore_const_names", ACTIVE, "1.31.0")
-// `extern crate foo as bar;` puts `bar` into extern prelude.
-val EXTERN_CRATE_ITEM_PRELUDE = CompilerFeature("extern_crate_item_prelude", ACTIVE, "1.31.0")
+// `reason = ` in lint attributes and `expect` lint attribute
+val LINT_REASONS = CompilerFeature("lint_reasons", ACTIVE, "1.31.0")
 
 val ASSOCIATED_TYPES = CompilerFeature("associated_types", ACCEPTED, "1.0.0")
 // allow overloading augmented assignment operations like `a += b`
@@ -433,3 +429,7 @@ val TOOL_LINTS = CompilerFeature("tool_lints", ACCEPTED, "1.31.0")
 // impl<I:Iterator> Iterator for &mut Iterator
 // impl Debug for Foo<'_>
 val IMPL_HEADER_LIFETIME_ELISION = CompilerFeature("impl_header_lifetime_elision", ACCEPTED, "1.31.0")
+// `extern crate foo as bar;` puts `bar` into extern prelude.
+val EXTERN_CRATE_ITEM_PRELUDE = CompilerFeature("extern_crate_item_prelude", ACCEPTED, "1.31.0")
+// Allows use of the :literal macro fragment specifier (RFC 1576)
+val MACRO_LITERAL_MATCHER = CompilerFeature("macro_literal_matcher", ACCEPTED, "1.31.0")
