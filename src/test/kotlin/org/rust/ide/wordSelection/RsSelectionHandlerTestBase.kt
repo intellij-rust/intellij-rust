@@ -19,4 +19,8 @@ abstract class RsSelectionHandlerTestBase : RsTestBase() {
             myFixture.checkResult(text, false)
         }
     }
+
+    fun doTestWithTrimmedMargins(before: String, vararg after: String) {
+        doTest(before.trimMargin(), *after.map { it.trimMargin() }.toTypedArray())
+    }
 }

@@ -34,13 +34,14 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
-import org.rust.cargo.runconfig.CargoRunState
+import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.prependArgument
+import org.rust.cargo.util.CargoArgsParser
 import org.rust.debugger.settings.RsDebuggerSettings
-import org.rust.openapiext.GeneralCommandLine
-import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -62,34 +63,35 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
-        state as CargoRunState
-        val cmd = state.commandLine
+        state as CargoRunStateBase
+        val cmd = Cargo.patchArgs(state.prepareCommandLine(), true)
+        val (commandArguments, executableArguments) = CargoArgsParser.parseArgs(cmd.command, cmd.additionalArguments)
 
-        val (buildArgs, execArgs) = cmd.splitOnDoubleDash()
-
-        val buildCommand = if (cmd.command == "run") {
-            cmd.copy(command = "build", additionalArguments = buildArgs)
-        } else {
-            check(cmd.command == "test")
+        val isTestRun = cmd.command == "test"
+        val buildCommand = if (isTestRun) {
             cmd.prependArgument("--no-run")
+        } else {
+            cmd.copy(command = "build", additionalArguments = commandArguments)
         }
 
-        val runCommand = { executablePath: Path ->
-            GeneralCommandLine(executablePath)
-                .withWorkDirectory(cmd.workingDirectory)
-                .withParameters(execArgs)
-                .withEnvironment(cmd.environmentVariables.envs)
+        val getRunCommand = { executablePath: Path ->
+            with(buildCommand) {
+                Cargo.createGeneralCommandLine(
+                    executablePath,
+                    workingDirectory,
+                    backtraceMode,
+                    environmentVariables,
+                    executableArguments
+                )
+            }
         }
 
-        return buildProjectAndGetBinaryArtifactPath(environment.project, buildCommand, state)
+        return buildProjectAndGetBinaryArtifactPath(environment.project, buildCommand, state, isTestRun)
             .then { binary ->
                 val path = binary?.path ?: return@then null
-                val commandLine = runCommand(path)
-                check(commandLine.workDirectory != null) {
-                    "LLDB requires working directory"
-                }
+                val runCommand = getRunCommand(path)
                 val sysroot = state.computeSysroot()
-                val runParameters = RsDebugRunParameters(environment.project, commandLine)
+                val runParameters = RsDebugRunParameters(environment.project, runCommand)
                 XDebuggerManager.getInstance(environment.project)
                     .startSession(environment, object : XDebugProcessConfiguratorStarter() {
                         override fun start(session: XDebugSession): XDebugProcess =
@@ -121,7 +123,12 @@ private sealed class DebugBuildResult {
  *   * the second time to get json output
  * See https://github.com/rust-lang/cargo/issues/3855
  */
-private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: CargoCommandLine, state: CargoRunState): Promise<Binary?> {
+private fun buildProjectAndGetBinaryArtifactPath(
+    project: Project,
+    command: CargoCommandLine,
+    state: CargoRunStateBase,
+    testsOnly: Boolean
+): Promise<Binary?> {
     val promise = AsyncPromise<Binary?>()
     val cargo = state.cargo()
 
@@ -144,6 +151,7 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
         }
 
         RunContentExecutor(project, processForUser)
+            .apply { state.createFilters().forEach { withFilter(it) } }
             .withAfterCompletion {
                 if (processForUserOutput.exitCode != 0) {
                     promise.setResult(null)
@@ -171,20 +179,29 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
                         result = output.stdoutLines
                             .mapNotNull {
                                 try {
-                                    parser.parse(it)
+                                    val jsonElement = parser.parse(it)
+                                    val jsonObject = if (jsonElement.isJsonObject) {
+                                        jsonElement.asJsonObject
+                                    } else {
+                                        return@mapNotNull null
+                                    }
+                                    CargoMetadata.Artifact.fromJson(jsonObject)
                                 } catch (e: JsonSyntaxException) {
                                     null
                                 }
                             }
-                            .mapNotNull { if (it.isJsonObject) it.asJsonObject else null }
-                            .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
                             .filter { (target, profile) ->
-                                val kind = target.cleanKind
-                                kind == TargetKind.BIN
-                                    // TODO: support cases when crate types list contains not only binary
-                                    || kind == TargetKind.EXAMPLE && target.cleanCrateTypes.singleOrNull() == CrateType.BIN
-                                    || kind == TargetKind.TEST
-                                    || (kind == TargetKind.LIB && profile.test)
+                                val isSuitableTarget = when (target.cleanKind) {
+                                    TargetKind.BIN -> true
+                                    TargetKind.EXAMPLE -> {
+                                        // TODO: support cases when crate types list contains not only binary
+                                        target.cleanCrateTypes.singleOrNull() == CrateType.BIN
+                                    }
+                                    TargetKind.TEST -> true
+                                    TargetKind.LIB -> profile.test
+                                    else -> false
+                                }
+                                isSuitableTarget && (!testsOnly || profile.test)
                             }
                             .flatMap { it.filenames.filter { !it.endsWith(".dSYM") } } // FIXME: correctly launch debug binaries for macos
                             .let(DebugBuildResult::Binaries)
@@ -229,6 +246,3 @@ private fun buildProjectAndGetBinaryArtifactPath(project: Project, command: Carg
 private fun Project.showErrorDialog(message: String) {
     Messages.showErrorDialog(this, message, ERROR_MESSAGE_TITLE)
 }
-
-private fun CargoCommandLine.prependArgument(arg: String): CargoCommandLine =
-    copy(additionalArguments = listOf(arg) + additionalArguments)

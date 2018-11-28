@@ -26,37 +26,25 @@ data class CargoCommandLine(
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
-    val allFeatures: Boolean = true,
+    val allFeatures: Boolean = false,
     val nocapture: Boolean = false
 ) {
-
-    /** Appends [arg] to Cargo options, in other words, inserts [arg] before `--` arg in [additionalArguments]. */
-    fun withCargoArgument(arg: String): CargoCommandLine {
-        val (cargoArgs, binaryArgs) = splitOnDoubleDash()
-        if (arg in cargoArgs) return this
-        return if (binaryArgs.isEmpty()) {
-            copy(additionalArguments = cargoArgs + arg)
-        } else {
-            copy(additionalArguments = cargoArgs + arg + "--" + binaryArgs)
-        }
-    }
-
-    /** Appends [arg] to binary options, in other words, inserts [arg] after `--` arg in [additionalArguments]. */
-    fun withBinaryArgument(arg: String): CargoCommandLine {
-        val (cargoArgs, binaryArgs) = splitOnDoubleDash()
-        if (arg in binaryArgs) return this
-        return copy(additionalArguments = cargoArgs + "--" + arg + binaryArgs)
+    /**
+     * Adds [arg] to [additionalArguments] as an positional argument, in other words, inserts [arg] right after
+     * `--` argument in [additionalArguments].
+     * */
+    fun withPositionalArgument(arg: String): CargoCommandLine {
+        val (pre, post) = splitOnDoubleDash()
+        if (arg in post) return this
+        return copy(additionalArguments = pre + "--" + arg + post)
     }
 
     /**
      * Splits [additionalArguments] into parts before and after `--`.
      * For `cargo run --release -- foo bar`, returns (["--release"], ["foo", "bar"])
      */
-    fun splitOnDoubleDash(): Pair<List<String>, List<String>> {
-        val idx = additionalArguments.indexOf("--")
-        if (idx == -1) return additionalArguments to emptyList()
-        return additionalArguments.take(idx) to additionalArguments.drop(idx + 1)
-    }
+    fun splitOnDoubleDash(): Pair<List<String>, List<String>> =
+        org.rust.cargo.util.splitOnDoubleDash(additionalArguments)
 
     companion object {
         fun forTargets(
@@ -142,3 +130,6 @@ private fun createRunConfiguration(
         runManager.setTemporaryConfiguration(this)
     }
 }
+
+fun CargoCommandLine.prependArgument(arg: String): CargoCommandLine =
+    copy(additionalArguments = listOf(arg) + additionalArguments)

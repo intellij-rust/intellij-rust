@@ -8,6 +8,8 @@ package org.rust.cargo.runconfig.producers
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.psi.PsiElement
 import org.rust.cargo.runconfig.test.CargoBenchRunConfigurationProducer
+import org.rust.cargo.toolchain.BacktraceMode
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
@@ -184,6 +186,10 @@ class BenchRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
         }
 
         modifyTemplateConfiguration {
+            channel = RustChannel.NIGHTLY
+            allFeatures = true
+            nocapture = true
+            backtrace = BacktraceMode.FULL
             env = EnvironmentVariablesData.create(mapOf("FOO" to "BAR"), true)
         }
 

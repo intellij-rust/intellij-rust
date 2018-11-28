@@ -74,6 +74,11 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                     "Type parameters")
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
+                    "INDENT_WHERE_CLAUSE",
+                    "Indent where clause",
+                    "Type parameters")
+
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_WHERE_BOUNDS",
                     "Align where clause bounds",
                     "Type parameters")

@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
@@ -150,10 +151,18 @@ fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
         else -> null
     }
 
-// TODO
+/**
+ * TODO:
+ * There are some problems with `Self` inference (e.g. https://github.com/intellij-rust/intellij-rust/issues/2530)
+ * so for now just assume `Self` is always copyable
+ */
 fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
     when (this) {
         is TyUnknown, is TyReference, is TyPointer, is TyFunction -> false
         is TyTuple -> types.any { it.isMovesByDefault(lookup) }
+        is TyTypeParameter -> parameter != TyTypeParameter.Self
         else -> lookup.isCopy(this).not()
     }
+
+val Ty.isBox: Boolean
+    get() = this is TyAdt && item == RsLangItemIndex.findBoxItem(item.project)

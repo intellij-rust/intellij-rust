@@ -98,9 +98,9 @@ class RsFindUsagesTest : RsTestBase() {
         trait B {}
             //^
         struct A;
-        impl B for A {}// - trait ref
+        impl B for A {}// - trait reference
 
-        fn bar<T: B>() {}// - trait ref
+        fn bar<T: B>() {}// - trait reference
 
         mod a {
             use super::B;// - use
@@ -148,6 +148,14 @@ class RsFindUsagesTest : RsTestBase() {
             println!("{:?}", b);// - macro argument
             bar(b);// - argument
         }
+    """)
+
+    fun `test macro call`() = doTestByText("""
+        macro_rules! foo {
+                   //^
+            () => { }
+        }
+        foo!();// - macro call
     """)
 
     private fun doTestByText(@Language("Rust") code: String) {

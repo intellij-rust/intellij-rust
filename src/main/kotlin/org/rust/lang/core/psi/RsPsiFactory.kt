@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
+import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.Substitution
@@ -21,7 +22,6 @@ import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
-import org.rust.lang.refactoring.extractFunction.RsExtractFunctionConfig
 
 class RsPsiFactory(private val project: Project) {
     fun createFile(text: CharSequence): RsFile =
@@ -38,7 +38,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createIdentifier(text: String): PsiElement =
-        createFromText<RsModDeclItem>("mod $text;")?.identifier
+        createFromText<RsModDeclItem>("mod ${text.escapeIdentifierIfNeeded()};")?.identifier
             ?: error("Failed to create identifier: `$text`")
 
     fun createQuoteIdentifier(text: String): PsiElement =

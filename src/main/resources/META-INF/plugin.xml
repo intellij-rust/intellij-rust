@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
     <id>org.rust.lang</id>
     <name>Rust</name>
 
@@ -9,8 +9,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2018/11/07/changelog-86.html">
-                 https://intellij-rust.github.io/2018/11/07/changelog-86.html
+        <a href="https://intellij-rust.github.io/2018/11/26/changelog-87.html">
+                 https://intellij-rust.github.io/2018/11/26/changelog-87.html
     ]]>
     </change-notes>
 
@@ -18,6 +18,8 @@
          on how to target different products -->
 
     <depends>com.intellij.modules.lang</depends>
+
+    <xi:include href="/META-INF/platform-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
     <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
     <depends optional="true" config-file="toml-only.xml">org.toml.lang</depends>
@@ -50,6 +52,9 @@
 
         <!-- Selection Handler -->
 
+        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsBlockSelectionHandler"/>
+        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsGroupSelectionHandler"/>
+        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsFieldLikeSelectionHandler"/>
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsListSelectionHandler"/>
 
         <!-- Syntax Highlighter -->
@@ -70,7 +75,7 @@
         <!-- Refactoring support -->
 
         <lang.refactoringSupport language="Rust"
-                                 implementationClass="org.rust.lang.refactoring.RsRefactoringSupportProvider"/>
+                                 implementationClass="org.rust.ide.refactoring.RsRefactoringSupportProvider"/>
 
         <!-- Commenter -->
 
@@ -107,7 +112,7 @@
 
         <!-- Imports -->
 
-        <lang.importOptimizer language="Rust" implementationClass="org.rust.lang.refactoring.RsImportOptimizer"/>
+        <lang.importOptimizer language="Rust" implementationClass="org.rust.ide.refactoring.RsImportOptimizer"/>
         <autoImportOptionsProvider instance="org.rust.ide.settings.RsAutoImportOptions"/>
 
         <!-- Navigation -->
@@ -179,12 +184,12 @@
 
         <!-- Rename Processor -->
 
-        <renamePsiElementProcessor implementation="org.rust.lang.refactoring.RsRenameProcessor"/>
+        <renamePsiElementProcessor implementation="org.rust.ide.refactoring.RsRenameProcessor"/>
 
         <!-- Implement methods -->
 
         <codeInsight.implementMethod language="Rust"
-                                     implementationClass="org.rust.lang.refactoring.implementMembers.ImplementMembersHandler"/>
+                                     implementationClass="org.rust.ide.refactoring.implementMembers.ImplementMembersHandler"/>
 
         <!-- Resolve -->
 
@@ -622,6 +627,7 @@
         <!-- Run Configurations -->
 
         <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
+        <programRunner implementation="org.rust.cargo.runconfig.RsTestRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
         <runConfigurationProducer
             implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
@@ -687,7 +693,7 @@
 
         <!-- Refactoring -->
 
-        <lang.namesValidator language="Rust" implementationClass="org.rust.lang.refactoring.RsNamesValidator"/>
+        <lang.namesValidator language="Rust" implementationClass="org.rust.ide.refactoring.RsNamesValidator"/>
 
         <!-- Postfix templates -->
         <codeInsight.template.postfixTemplateProvider language="Rust"
@@ -744,24 +750,25 @@
                 icon="AllIcons.Actions.Compile"
                 use-shortcut-of="CompileDirty">
             <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
+            <add-to-group group-id="TouchBarDefault" relative-to-action="RunConfiguration" anchor="before"/>
         </action>
 
         <action id="Rust.RsPromoteModuleToDirectoryAction"
-                class="org.rust.lang.refactoring.RsPromoteModuleToDirectoryAction"
+                class="org.rust.ide.refactoring.RsPromoteModuleToDirectoryAction"
                 text="Promote module to directory"
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsDowngradeModuleToFile"
-                class="org.rust.lang.refactoring.RsDowngradeModuleToFile"
+                class="org.rust.ide.refactoring.RsDowngradeModuleToFile"
                 text="Downgrade module to file"
                 description="Move this module to a single file">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsConvertToNamedFields"
-                class="org.rust.lang.refactoring.RsConvertToNamedFieldsAction"
+                class="org.rust.ide.refactoring.RsConvertToNamedFieldsAction"
                 text="Convert to named fields"
                 description="Move this module to a single file">
             <add-to-group group-id="RefactoringMenu"/>
@@ -814,7 +821,7 @@
             <reference id="Rust.ShowSingleStepMacroExpansionAction"/>
         </group>
 
-        <action class="org.rust.lang.refactoring.generateConstructor.GenerateConstructorAction"
+        <action class="org.rust.ide.refactoring.generateConstructor.GenerateConstructorAction"
                 id="Rust.GenerateConstructor"
                 text="Generate Constructor">
             <add-to-group group-id="GenerateGroup"/>

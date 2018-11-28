@@ -19,6 +19,7 @@ import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsTypeCheckInspection
+import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -29,7 +30,6 @@ import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.asTy
 import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.refactoring.implementMembers.ImplementMembersFix
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
 import org.rust.stdext.buildList

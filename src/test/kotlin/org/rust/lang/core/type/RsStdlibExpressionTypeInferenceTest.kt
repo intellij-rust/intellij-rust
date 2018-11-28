@@ -192,6 +192,114 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test env`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = env!("PATH");
+            a;
+          //^ &str
+        }
+    """)
+
+    fun `test env 2 args`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = env!("PATH", "PATH env variable not found");
+            a;
+          //^ &str
+        }
+    """)
+
+    fun `test option_env`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = option_env!("PATH");
+            a;
+          //^ Option<&str>
+        }
+    """)
+
+    fun `test concat`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = concat!("hello", 10);
+            a;
+          //^ &str
+        }
+    """)
+
+    fun `test line`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = line!();
+            a;
+          //^ u32
+        }
+    """)
+
+    fun `test column`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = column!();
+            a;
+          //^ u32
+        }
+    """)
+
+    fun `test file`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = file!();
+            a;
+          //^ &str
+        }
+    """)
+
+    fun `test stringify`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = stringify!(1 + 1);
+            a;
+          //^ &str
+        }
+    """)
+
+    fun `test include_str`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = include_str!("file.txt");
+            a;
+          //^ &str
+        }
+    """)
+
+    fun `test include_bytes`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = include_bytes!("file.txt");
+            a;
+          //^ &[u8; <unknown>]
+        }
+    """)
+
+    fun `test module_path`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = module_path!();
+            a;
+          //^ &str
+        }
+    """)
+
+    fun `test cfg`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = cfg!(windows);
+            a;
+          //^ bool
+        }
+    """)
+
     fun `test assert!`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {

@@ -10,13 +10,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.ResolveResult
+import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.escapeIdentifierIfNeeded
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.refactoring.RsNamesValidator
 
 abstract class RsReferenceBase<T : RsWeakReferenceElement>(
     element: T
@@ -57,8 +58,8 @@ abstract class RsReferenceBase<T : RsWeakReferenceElement>(
                 IDENTIFIER -> {
                     // Renaming files is tricky: we don't want to change `RenamePsiFileProcessor`,
                     // so we must be ready for invalid names here
-                    val name = newName.replace(".rs", "")
-                    if (!RsNamesValidator().isIdentifier(name, identifier.project)) return
+                    val name = newName.replace(".rs", "").escapeIdentifierIfNeeded()
+                    if (!isValidRustVariableIdentifier(name)) return
                     factory.createIdentifier(name)
 
                 }

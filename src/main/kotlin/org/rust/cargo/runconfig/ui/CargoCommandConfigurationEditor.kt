@@ -94,8 +94,8 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     }
 
     private val environmentVariables = EnvironmentVariablesComponent()
-    private val allFeatures = CheckBox("Use all features in tests", true)
-    private val nocapture = CheckBox("Show stdout/stderr in tests", false)
+    private val allFeatures = CheckBox("Use all features in tests", false)
+    private val nocapture = CheckBox("Show stdout/stderr in tests (and disable test tool window)", false)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         channel.selectedIndex = configuration.channel.index

@@ -5,11 +5,13 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.stubs.StubElement
-import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsModItem
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.SmartList
+import org.rust.lang.core.psi.*
 
 interface RsItemsOwner : RsElement
 
@@ -40,7 +42,30 @@ val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
         }.filterIsInstance<RsElement>()
     }
 
-fun RsItemsOwner.processExpandedItems(processor: (RsItemElement) -> Boolean): Boolean {
+inline fun RsItemsOwner.processExpandedItemsExceptImpls(processor: (RsItemElement) -> Boolean): Boolean {
+    for (element in expandedItemsExceptImpls) {
+        if (processor(element)) return true
+    }
+    return false
+}
+
+private val EXPANDED_ITEMS_KEY: Key<CachedValue<List<RsItemElement>>> = Key.create("EXPANDED_ITEMS_KEY")
+
+val RsItemsOwner.expandedItemsExceptImpls: List<RsItemElement>
+    get() = CachedValuesManager.getCachedValue(this, EXPANDED_ITEMS_KEY) {
+        val items = SmartList<RsItemElement>()
+        processExpandedItemsInternal {
+            // optimization: impls are not named elements, so we don't need them for name resolution
+            if (it !is RsImplItem) items.add(it)
+            false
+        }
+        CachedValueProvider.Result.create(
+            if (items.isNotEmpty()) items else emptyList(),
+            project.rustStructureModificationTracker
+        )
+    }
+
+private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsItemElement) -> Boolean): Boolean {
     return itemsAndMacros.any { it.processItem(processor) }
 }
 

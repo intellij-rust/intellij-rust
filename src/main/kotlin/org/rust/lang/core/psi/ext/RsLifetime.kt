@@ -8,11 +8,11 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.lang.core.psi.RsLifetime
 import org.rust.lang.core.resolve.ref.RsLifetimeReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsLifetimeStub
-import org.rust.lang.refactoring.RsNamesValidator
 
 
 val RsLifetime.isPredefined: Boolean get() = referenceName in RsNamesValidator.RESERVED_LIFETIME_NAMES

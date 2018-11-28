@@ -19,6 +19,8 @@ class RsLabelReferenceImpl(
 
     override val RsLabel.referenceAnchor: PsiElement get() = quoteIdentifier
 
+    override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL
+
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processLabelResolveVariants(element, it) }
 

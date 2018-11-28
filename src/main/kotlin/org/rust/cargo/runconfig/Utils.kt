@@ -18,15 +18,18 @@ import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.toolchain.CargoCommandLine
 
 fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): CargoCommandLine =
-    if (environmentVariables.envs.isEmpty())
-        copy(environmentVariables = default.env)
-    else
-        this
+    copy(
+        backtraceMode = default.backtrace,
+        channel = default.channel,
+        environmentVariables = default.env,
+        allFeatures = default.allFeatures,
+        nocapture = default.nocapture
+    )
 
 fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommandLine, name: String? = null): RunnerAndConfigurationSettings {
     val runnerAndConfigurationSettings =
         createRunConfiguration(name
-            ?: cargoCommandLine.command, CargoCommandConfigurationType().factory)
+            ?: cargoCommandLine.command, CargoCommandConfigurationType.getInstance().factory)
     val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
     configuration.setFromCmd(cargoCommandLine)
     return runnerAndConfigurationSettings

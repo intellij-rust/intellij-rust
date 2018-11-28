@@ -10,8 +10,6 @@ import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter
 import com.intellij.openapi.util.Key
-import jetbrains.buildServer.messages.serviceMessages.CompilationFinished
-import jetbrains.buildServer.messages.serviceMessages.CompilationStarted
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
 import org.rust.cargo.runconfig.test.CargoTestLocator.getTestFnUrl
 import org.rust.cargo.runconfig.test.CargoTestLocator.getTestModUrl
@@ -35,42 +33,31 @@ class CargoTestEventsConverter(
     private val pendingFinishedSuites: MutableSet<NodeId> = linkedSetOf()
 
     override fun processServiceMessages(text: String, outputType: Key<*>, visitor: ServiceMessageVisitor): Boolean {
-        if (handleSimpleMessage(text, visitor)) return false
+        if (handleExecutableName(text)) return true
 
         val jsonElement: JsonElement
         try {
             jsonElement = parser.parse(text)
-            if (!jsonElement.isJsonObject) return false
+            if (!jsonElement.isJsonObject) return true
         } catch (es: JsonSyntaxException) {
-            return false
+            return true
         }
 
         if (handleTestMessage(jsonElement, outputType, visitor)) return true
         if (handleSuiteMessage(jsonElement, outputType, visitor)) return true
 
-        return false
+        return true
     }
 
     /** @return true if message successfully processed. */
-    private fun handleSimpleMessage(text: String, visitor: ServiceMessageVisitor): Boolean {
-        fun startsWith(prefix: String): Boolean = text.trim().startsWith(prefix, true)
-        return when {
-            startsWith("compiling") -> {
-                visitor.visitCompilationStarted(CompilationStarted("rustc"))
-                true
-            }
-            startsWith("finished") -> {
-                visitor.visitCompilationFinished(CompilationFinished("rustc"))
-                true
-            }
-            startsWith("target") -> {
-                check(suitesStack.isEmpty())
-                val target = text.substringAfterLast(File.separator).substringBeforeLast("-")
-                suitesStack.add(target)
-                true
-            }
-            else -> false
-        }
+    private fun handleExecutableName(text: String): Boolean {
+        if (suitesStack.isNotEmpty() || !TARGET_PATH_PART_REGEX.containsMatchIn(text)) return false
+        val targetName = text
+            .substringAfterLast(File.separatorChar)
+            .substringBefore(' ')
+            .substringBeforeLast('-')
+        suitesStack.add(targetName)
+        return true
     }
 
     private fun handleTestMessage(
@@ -111,13 +98,17 @@ class CargoTestEventsConverter(
                 messages.add(createTestStartedMessage(testMessage.name))
             }
             "ok" -> {
-                messages.add(createTestFinishedMessage(testMessage.name, getTestDuration(testMessage.name)))
+                val duration = getTestDuration(testMessage.name)
+                messages.add(createTestFinishedMessage(testMessage.name, duration))
                 recordSuiteChildFinished(testMessage.name)
                 processFinishedSuites(messages)
             }
             "failed" -> {
-                messages.add(createTestFailedMessage(testMessage.name, getTestResult(testMessage.stdout)))
-                messages.add(createTestFinishedMessage(testMessage.name, getTestDuration(testMessage.name)))
+                val duration = getTestDuration(testMessage.name)
+                val (stdout, failedMessage) = parseFailedTestOutput(testMessage.stdout ?: "")
+                if (stdout.isNotEmpty()) messages.add(createTestStdOutMessage(testMessage.name, stdout + '\n'))
+                messages.add(createTestFailedMessage(testMessage.name, failedMessage))
+                messages.add(createTestFinishedMessage(testMessage.name, duration))
                 recordSuiteChildFinished(testMessage.name)
                 processFinishedSuites(messages)
             }
@@ -149,11 +140,7 @@ class CargoTestEventsConverter(
         return messages
     }
 
-    private fun getTestResult(testStdout: String?): String =
-        testStdout
-            ?.lineSequence()
-            ?.dropWhile { !it.trimStart().startsWith("thread", true) }
-            ?.joinToString("\n") ?: ""
+    private data class FailedTestOutput(val stdout: String, val failedMessage: String)
 
     private fun recordTestStartTime(test: NodeId) {
         testsStartTimes[test] = System.currentTimeMillis()
@@ -213,6 +200,8 @@ class CargoTestEventsConverter(
     }
 
     companion object {
+        private val ESCAPED_SEPARATOR: String = File.separator.replace("\\", "\\\\")
+        private val TARGET_PATH_PART_REGEX: Regex = Regex("[ $ESCAPED_SEPARATOR]target$ESCAPED_SEPARATOR")
         private const val ROOT_SUITE: String = "0"
         private const val NAME_SEPARATOR: String = "::"
 
@@ -243,10 +232,11 @@ class CargoTestEventsConverter(
                 .addAttribute("parentNodeId", test.parent)
                 .addAttribute("locationHint", getTestFnUrl(test))
 
-        private fun createTestFailedMessage(test: NodeId, message: String): ServiceMessageBuilder =
+        private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder =
             ServiceMessageBuilder.testFailed(test.name)
                 .addAttribute("nodeId", test)
-                .addAttribute("message", message)
+                .addAttribute("message", "")
+                .addAttribute("details", failedMessage)
 
         private fun createTestFinishedMessage(test: NodeId, duration: String): ServiceMessageBuilder =
             ServiceMessageBuilder.testFinished(test.name)
@@ -257,9 +247,21 @@ class CargoTestEventsConverter(
             ServiceMessageBuilder.testIgnored(test.name)
                 .addAttribute("nodeId", test)
 
+        private fun createTestStdOutMessage(test: NodeId, stdout: String): ServiceMessageBuilder =
+            ServiceMessageBuilder.testStdOut(test.name)
+                .addAttribute("nodeId", test)
+                .addAttribute("out", stdout)
+
         private fun createTestCountMessage(testCount: String): ServiceMessageBuilder =
             ServiceMessageBuilder("testCount")
                 .addAttribute("count", testCount)
+
+        private fun parseFailedTestOutput(output: String): FailedTestOutput {
+            val partitionPredicate: (String) -> Boolean = { !it.trimStart().startsWith("thread", true) }
+            val stdout = output.lineSequence().takeWhile(partitionPredicate).joinToString("\n")
+            val failedMessage = output.lineSequence().dropWhile(partitionPredicate).joinToString("\n")
+            return FailedTestOutput(stdout, failedMessage)
+        }
 
         private data class LibtestSuiteMessage(
             val type: String,

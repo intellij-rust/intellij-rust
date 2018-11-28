@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
@@ -49,7 +50,10 @@ abstract class RsCompletionTestBase : RsTestBase() {
     }
 
     protected fun doSingleCompletionMultifile(@Language("Rust") before: String, @Language("Rust") after: String) {
-        fileTreeFromText(before).createAndOpenFileWithCaretMarker()
+        val testProject = fileTreeFromText(before).createAndOpenFileWithCaretMarker()
+        checkAstNotLoaded(VirtualFileFilter { file ->
+            !file.path.endsWith(testProject.fileWithCaret)
+        })
         executeSoloCompletion()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
@@ -70,7 +74,10 @@ abstract class RsCompletionTestBase : RsTestBase() {
     }
 
     protected fun checkNoCompletionWithMultifile(@Language("Rust") code: String) {
-        fileTreeFromText(code).createAndOpenFileWithCaretMarker()
+    val testProject = fileTreeFromText(code).createAndOpenFileWithCaretMarker()
+        checkAstNotLoaded(VirtualFileFilter { file ->
+            !file.path.endsWith(testProject.fileWithCaret)
+        })
         noCompletionCheck()
     }
 

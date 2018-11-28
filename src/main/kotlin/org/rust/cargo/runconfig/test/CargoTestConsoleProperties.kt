@@ -14,19 +14,22 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 
 class CargoTestConsoleProperties(
-    runconfig: RunConfiguration,
+    config: RunConfiguration,
     executor: Executor
-) : SMTRunnerConsoleProperties(runconfig, "Cargo Test", executor),
-    SMCustomMessagesParsing {
+) : SMTRunnerConsoleProperties(config, TEST_FRAMEWORK_NAME, executor), SMCustomMessagesParsing {
 
     init {
         isIdBasedTestTree = true
     }
 
-    override fun getTestLocator(): SMTestLocator? = CargoTestLocator
+    override fun getTestLocator(): SMTestLocator = CargoTestLocator
 
     override fun createTestEventsConverter(
         testFrameworkName: String,
         consoleProperties: TestConsoleProperties
     ): OutputToGeneralTestEventsConverter = CargoTestEventsConverter(testFrameworkName, consoleProperties)
+
+    companion object {
+        const val TEST_FRAMEWORK_NAME: String = "Cargo Test"
+    }
 }

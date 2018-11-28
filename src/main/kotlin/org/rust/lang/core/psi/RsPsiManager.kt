@@ -24,6 +24,12 @@ val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> = Topic.crea
     Topic.BroadcastDirection.TO_PARENT
 )
 
+val RUST_PSI_CHANGE_TOPIC: Topic<RustPsiChangeListener> = Topic.create(
+    "RUST_PSI_CHANGE_TOPIC",
+    RustPsiChangeListener::class.java,
+    Topic.BroadcastDirection.TO_PARENT
+)
+
 interface RsPsiManager {
     /**
      * A project-global modification tracker that increments on each PSI change that can affect
@@ -35,6 +41,10 @@ interface RsPsiManager {
 
 interface RustStructureChangeListener {
     fun rustStructureChanged()
+}
+
+interface RustPsiChangeListener {
+    fun rustPsiChanged(element: PsiElement)
 }
 
 class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
@@ -94,6 +104,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         if (owner == null || !owner.incModificationCount(psi)) {
             incRustStructureModificationCount()
         }
+        project.messageBus.syncPublisher(RUST_PSI_CHANGE_TOPIC).rustPsiChanged(psi)
     }
 
     private fun incRustStructureModificationCount() {

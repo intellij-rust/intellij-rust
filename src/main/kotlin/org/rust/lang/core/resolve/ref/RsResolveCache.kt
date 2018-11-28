@@ -15,36 +15,40 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.util.CachedValue
-import com.intellij.psi.util.CachedValueProvider.Result
+import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
-import org.rust.lang.core.psi.RUST_STRUCTURE_CHANGE_TOPIC
-import org.rust.lang.core.psi.RustStructureChangeListener
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsModificationTrackerOwner
+import org.rust.lang.core.psi.ext.RsWeakReferenceElement
+import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
-import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.openapiext.Testmark
 import java.lang.ref.ReferenceQueue
 import java.util.concurrent.ConcurrentMap
 
 /**
  * The implementation is inspired by Intellij platform's [com.intellij.psi.impl.source.resolve.ResolveCache].
- * The main difference from the platform one: we invalidate the cache after rust structure change, when
+ * The main difference from the platform one: we invalidate the cache depends on [ResolveCacheDependency], when
  * platform cache invalidates on any PSI change.
- * See [org.rust.lang.core.psi.RsPsiManager.rustStructureModificationTracker].
  *
- * Use with caution: You should ensure that your resolve depends on rust structure only.
- * I.e. you can't use this cache for local variable references
+ * See [RsPsiManager.rustStructureModificationTracker].
  */
 class RsResolveCache(messageBus: MessageBus) {
-    private val cache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
+    /** The cache is cleared on [RsPsiManager.rustStructureModificationTracker] increment */
+    private val rustStructureDependentCache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
     private val guard = RecursionManager.createGuard("RsResolveCache")
 
     init {
-        messageBus.connect().subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
+        val connection = messageBus.connect()
+        connection.subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
             override fun rustStructureChanged() = onRustStructureChanged()
+        })
+        connection.subscribe(RUST_PSI_CHANGE_TOPIC, object : RustPsiChangeListener {
+            override fun rustPsiChanged(element: PsiElement) = onRustPsiChanged(element)
         })
     }
 
@@ -55,9 +59,9 @@ class RsResolveCache(messageBus: MessageBus) {
      * Expected resolve results: [PsiElement], [ResolveResult] or a [List]/[Array] of [ResolveResult]
      */
     @Suppress("UNCHECKED_CAST")
-    fun <K : PsiElement, V> resolveWithCaching(key: K, resolver: (K) -> V): V? {
+    fun <K : PsiElement, V> resolveWithCaching(key: K, dep: ResolveCacheDependency, resolver: (K) -> V): V? {
         ProgressManager.checkCanceled()
-        val map = getCacheFor(key)
+        val map = getCacheFor(key, dep)
         return map[key] as V? ?: run {
             val stamp = guard.markStack()
             val result = guard.doPreventingRecursion(key, true) { resolver(key) }
@@ -70,29 +74,31 @@ class RsResolveCache(messageBus: MessageBus) {
         }
     }
 
-    private fun getCacheFor(element: PsiElement): ConcurrentMap<PsiElement, Any?> {
-        // 1. The global resolve cache invalidates only on rust structure changes.
-        // 2. If some reference element is located inside RsModificationTrackerOwner,
-        //    the global cache will not be invalidated on its change
-        // 3. PSI uses default identity-based equals/hashCode
-        // 4. Intellij does incremental updates of a mutable PSI tree.
-        //
-        // It means that some reference element may be changed and then should be
-        // re-resolved to another target. But if we use the global cache, we will
-        // retrieve its previous resolve result from the cache. So if the reference
-        // element is located inside RsModificationTrackerOwner, we should use a
-        // separate cache for it.
-        val owner = element.findModificationTrackerOwner()
-        return if (owner != null) {
-            CachedValuesManager.getCachedValue(owner, LOCAL_CACHE_KEY) {
-                Result.create(
-                    createWeakMap(),
-                    owner.project.rustStructureModificationTracker,
-                    owner.modificationTracker
-                )
+    private fun getCacheFor(element: PsiElement, dep: ResolveCacheDependency): ConcurrentMap<PsiElement, Any?> {
+        return when (dep) {
+            ResolveCacheDependency.LOCAL, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE -> {
+                val owner = element.findModificationTrackerOwner()
+                return if (owner != null) {
+                    CachedValuesManager.getCachedValue(owner, LOCAL_CACHE_KEY) {
+                        if (dep == ResolveCacheDependency.LOCAL) {
+                            CachedValueProvider.Result.create(
+                                createWeakMap(),
+                                owner.modificationTracker
+                            )
+                        } else {
+                            CachedValueProvider.Result.create(
+                                createWeakMap(),
+                                owner.project.rustStructureModificationTracker,
+                                owner.modificationTracker
+                            )
+                        }
+                    }
+                } else {
+                    rustStructureDependentCache
+                }
+
             }
-        } else {
-            cache
+            ResolveCacheDependency.RUST_STRUCTURE -> rustStructureDependentCache
         }
     }
 
@@ -105,8 +111,31 @@ class RsResolveCache(messageBus: MessageBus) {
     }
 
     private fun onRustStructureChanged() {
-        Testmarks.cacheCleared.hit()
-        cache.clear()
+        Testmarks.rustStructureDependentCacheCleared.hit()
+        rustStructureDependentCache.clear()
+    }
+
+    private fun onRustPsiChanged(element: PsiElement) {
+        // 1. The global resolve cache invalidates only on rust structure changes.
+        // 2. If some reference element is located inside RsModificationTrackerOwner,
+        //    the global cache will not be invalidated on its change
+        // 3. PSI uses default identity-based equals/hashCode
+        // 4. Intellij does incremental updates of a mutable PSI tree.
+        //
+        // It means that some reference element may be changed and then should be
+        // re-resolved to another target. But if we use the global cache, we will
+        // retrieve its previous resolve result from the cache. So if some reference
+        // element is changed, we should remove it (and its ancestors) from the
+        // global cache
+
+        val referenceElement = element.parent as? RsWeakReferenceElement ?: return
+        val referenceNameElement = referenceElement.referenceNameElement ?: return
+        if (referenceNameElement == element) {
+            Testmarks.removeChangedElement.hit()
+            referenceElement.ancestors.filter { it is RsWeakReferenceElement }.forEach {
+                rustStructureDependentCache.remove(it)
+            }
+        }
     }
 
     companion object {
@@ -115,8 +144,30 @@ class RsResolveCache(messageBus: MessageBus) {
     }
 
     object Testmarks {
-        val cacheCleared = Testmark("cacheCleared")
+        val rustStructureDependentCacheCleared = Testmark("cacheCleared")
+        val removeChangedElement = Testmark("removeChangedElement")
     }
+}
+
+enum class ResolveCacheDependency {
+    /**
+     * Depends on the nearest [RsModificationTrackerOwner] and falls back to
+     * [RsPsiManager.rustStructureModificationTracker] if the tracker owner is not found.
+     *
+     * See [findModificationTrackerOwner]
+     */
+    LOCAL,
+
+    /**
+     * Depends on [RsPsiManager.rustStructureModificationTracker]
+     */
+    RUST_STRUCTURE,
+
+    /**
+     * Depends on both [LOCAL] and [RUST_STRUCTURE]. It is not the same as "any PSI change", because,
+     * for example, local changes from other functions will not invalidate the value
+     */
+    LOCAL_AND_RUST_STRUCTURE
 }
 
 private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {

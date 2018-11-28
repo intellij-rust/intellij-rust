@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 
@@ -16,8 +17,14 @@ class RemoveParenthesesFromExprIntention : RsElementBaseIntentionAction<RsParenE
     override fun getFamilyName(): String = text
 
     fun isAvailable(expr: RsParenExpr?): Boolean {
-        if (expr?.ancestorStrict<RsCondition>() == null && expr?.ancestorStrict<RsMatchExpr>() == null) return true
-        val child = expr.children.singleOrNull()
+        if (PsiTreeUtil.getContextOfType(
+                expr,
+                false,
+                RsCondition::class.java,
+                RsMatchExpr::class.java,
+                RsForExpr::class.java
+            ) == null) return true
+        val child = expr?.children?.singleOrNull()
         return when (child) {
             is RsStructLiteral -> false
             is RsBinaryExpr -> child.exprList.all { it !is RsStructLiteral }

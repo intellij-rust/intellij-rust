@@ -676,4 +676,16 @@ class RsCompletionTest : RsCompletionTestBase() {
         extern crate dep_lib_target;
         pub use dep_lib_target::st/*caret*/
     """)
+
+    fun `test complete with identifier escaping`() = doSingleCompletion("""
+        fn r#else() {}
+        fn main() {
+            els/*caret*/
+        }
+    """, """
+        fn r#else() {}
+        fn main() {
+            r#else()/*caret*/
+        }
+    """)
 }

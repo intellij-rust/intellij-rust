@@ -34,6 +34,10 @@ class RsSpellCheckerTest : RsTestBase() {
         }
     """)
 
+    fun `test raw identifiers`() = doTest("""
+        fn r#<TYPO>wodrl</TYPO>() {}
+    """)
+
     private fun doTest(@Language("Rust") text: String, processComments: Boolean = true, processLiterals: Boolean = true) {
         val inspection = SpellCheckingInspection()
         inspection.processLiterals = processLiterals

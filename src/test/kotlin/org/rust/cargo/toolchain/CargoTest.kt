@@ -24,10 +24,10 @@ class CargoTest : RsTestBase() {
 
     fun `test basic command`() = checkCommandLine(
         cargo.toGeneralCommandLine(CargoCommandLine("test", wd, listOf("--all"))), """
-        cmd: /usr/bin/cargo test --all --all-features
+        cmd: /usr/bin/cargo test --all
         env: RUST_BACKTRACE=short, TERM=ansi
         """, """
-        cmd: C:/usr/bin/cargo.exe test --all --all-features
+        cmd: C:/usr/bin/cargo.exe test --all
         env: RUST_BACKTRACE=short, TERM=ansi
     """)
 

@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.refactoring.isValidRustVariableIdentifier
+import org.rust.ide.presentation.stubOnlyText
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyUnknown
@@ -56,13 +58,13 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
         }
 
         is RsConstant -> base
-            .withTypeText(typeReference?.text)
-        is RsFieldDecl -> base.withTypeText(typeReference?.text)
+            .withTypeText(typeReference?.stubOnlyText)
+        is RsFieldDecl -> base.withTypeText(typeReference?.stubOnlyText)
         is RsTraitItem -> base
 
         is RsFunction -> base
-            .withTypeText(retType?.typeReference?.text ?: "()")
-            .withTailText(valueParameterList?.text?.replace("\\s+".toRegex(), " ") ?: "()")
+            .withTypeText(retType?.typeReference?.stubOnlyText ?: "()")
+            .withTailText(valueParameterList?.stubOnlyText ?: "()")
             .appendTailText(extraTailText, true)
 
         is RsStructItem -> base
@@ -88,15 +90,18 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
     }
 }
 
-private fun getFieldsOwnerTailText(owner: RsFieldsOwner) = when {
+private fun getFieldsOwnerTailText(owner: RsFieldsOwner): String = when {
     owner.blockFields != null -> " { ... }"
     owner.tupleFields != null ->
-        owner.positionalFields.joinToString(prefix = "(", postfix = ")") { it.typeReference.text }
+        owner.positionalFields.joinToString(prefix = "(", postfix = ")") { it.typeReference.stubOnlyText }
     else -> ""
 }
 
 private fun getInsertHandler(element: RsElement, scopeName: String, context: InsertionContext) {
     val curUseItem = context.getElementOfType<RsUseItem>()
+    if (element is RsNameIdentifierOwner && !isValidRustVariableIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
+        context.document.insertString(context.startOffset, RS_RAW_PREFIX)
+    }
     when (element) {
 
         is RsMod -> {

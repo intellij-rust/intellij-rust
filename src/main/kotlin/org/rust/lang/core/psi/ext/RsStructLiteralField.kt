@@ -22,7 +22,5 @@ abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsElementImpl(node
     override fun getReference(): RsReference = RsStructLiteralFieldReferenceImpl(this)
 
     override val referenceNameElement: PsiElement get() = identifier
-
-    override val referenceName: String get() = referenceNameElement.text
 }
 

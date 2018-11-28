@@ -10,6 +10,7 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.stdext.intersects
 import java.util.*
 
 fun processItemOrEnumVariantDeclarations(
@@ -30,7 +31,6 @@ fun processItemOrEnumVariantDeclarations(
     return false
 }
 
-
 fun processItemDeclarations(
     scope: RsItemsOwner,
     ns: Set<Namespace>,
@@ -46,23 +46,24 @@ fun processItemDeclarations(
         originalProcessor(e)
     }
 
-    fun processItem(item: RsItemElement): Boolean {
+    loop@ for (item in scope.expandedItemsExceptImpls) {
         when (item) {
             is RsUseItem ->
                 if (item.isPublic || withPrivateImports) {
-                    val rootSpeck = item.useSpeck ?: return false
+                    val rootSpeck = item.useSpeck ?: continue@loop
                     rootSpeck.forEachLeafSpeck { speck ->
                         (if (speck.isStarImport) starImports else itemImports) += speck
                     }
                 }
 
             // Unit like structs are both types and values
-            is RsStructItem ->
-                if (item.namespaces.intersect(ns).isNotEmpty() && processor(item)) return true
+            is RsStructItem -> {
+                if (item.namespaces.intersects(ns) && processor(item)) return true
+            }
 
             is RsModDeclItem -> if (Namespace.Types in ns) {
-                val name = item.name ?: return false
-                val mod = item.reference.resolve() ?: return false
+                val name = item.name ?: continue@loop
+                val mod = item.reference.resolve() ?: continue@loop
                 if (processor(name, mod)) return true
             }
 
@@ -72,21 +73,18 @@ fun processItemDeclarations(
             is RsFunction, is RsConstant ->
                 if (Namespace.Values in ns && processor(item as RsNamedElement)) return true
 
-            is RsForeignModItem ->
+            is RsForeignModItem -> if (Namespace.Values in ns) {
                 if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
+            }
 
             is RsExternCrateItem -> {
                 if (item.isPublic || withPrivateImports) {
-                    val mod = item.reference.resolve() ?: return false
+                    val mod = item.reference.resolve() ?: continue@loop
                     if (processor(item.nameWithAlias, mod)) return true
                 }
             }
         }
-        return false
     }
-
-    if (scope.processExpandedItems(::processItem)) return true
-
 
     if (Namespace.Types in ns) {
         if (scope is RsFile && scope.isCrateRoot && withPrivateImports) {
@@ -155,7 +153,7 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
     if (processor.lazy(name) {
         variants = ref.multiResolve()
             .filterIsInstance<RsNamedElement>()
-            .filter { ns.intersect(it.namespaces).isNotEmpty() }
+            .filter { ns.intersects(it.namespaces) }
         val first = variants.firstOrNull()
         if (first != null) {
             visitedNamespaces.addAll(first.namespaces)

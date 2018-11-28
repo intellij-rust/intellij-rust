@@ -16,7 +16,6 @@ import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
-
 val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) {
     if (it is PsiFile) null else it.parent
 }
@@ -37,6 +36,9 @@ val PsiElement.rightSiblings: Sequence<PsiElement>
 
 val PsiElement.leftSiblings: Sequence<PsiElement>
     get() = generateSequence(this.prevSibling) { it.prevSibling }
+
+val PsiElement.childrenWithLeaves: Sequence<PsiElement>
+    get() = generateSequence(this.firstChild) { it.nextSibling }
 
 /**
  * Extracts node's element type

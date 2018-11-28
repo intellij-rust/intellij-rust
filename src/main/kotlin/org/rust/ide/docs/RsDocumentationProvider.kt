@@ -376,10 +376,19 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
     val typeElement = element.typeElement
     when (typeElement) {
         is RsBaseType -> {
-            when {
-                typeElement.isUnit -> buffer += "()"
-                typeElement.isCself -> buffer += "Self"
-                else -> typeElement.path?.generateDocumentation(buffer)
+            val kind = typeElement.kind
+            when (kind) {
+                RsBaseTypeKind.Unit -> buffer += "()"
+                RsBaseTypeKind.Never -> buffer += "!"
+                RsBaseTypeKind.Underscore -> buffer += "_"
+                is RsBaseTypeKind.Path -> {
+                    val path = kind.path
+                    if (path.hasCself) {
+                        buffer += "Self"
+                    } else {
+                        path.generateDocumentation(buffer)
+                    }
+                }
             }
         }
         is RsTupleType -> typeElement.typeReferenceList.joinToWithBuffer(buffer, ", ", "(", ")") { generateDocumentation(it) }

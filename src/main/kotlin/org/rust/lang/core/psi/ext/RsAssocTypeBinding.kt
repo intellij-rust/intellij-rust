@@ -30,5 +30,5 @@ abstract class RsAssocTypeBindingMixin : RsStubbedNamedElementImpl<RsAssocTypeBi
 
     override val referenceNameElement: PsiElement get() = identifier
 
-    override val referenceName: String get() = stub?.name ?: referenceNameElement.text
+    override val referenceName: String get() = stub?.name ?: super.referenceName
 }

@@ -86,6 +86,7 @@ allprojects {
             jvmTarget = "1.8"
             languageVersion = "1.2"
             apiVersion = "1.2"
+            freeCompilerArgs = listOf("-Xjvm-default=enable")
         }
     }
 
@@ -111,6 +112,13 @@ allprojects {
                     exceptionFormat = TestExceptionFormat.FULL
                 }
             }
+        }
+
+        // We need to prevent the platform-specific shared JNA library to loading from the system library paths,
+        // because otherwise it can lead to compatibility issues.
+        // Also note that IDEA does the same thing at startup, and not only for tests.
+        tasks.withType<Test>().configureEach {
+            systemProperty("jna.nosys", "true")
         }
     }
 }
@@ -139,9 +147,17 @@ project(":") {
     }
 
     sourceSets {
-        getByName("main").kotlin.srcDirs("src/$platformVersion/kotlin")
+        getByName("main").apply {
+            kotlin.srcDirs("src/$platformVersion/main/kotlin")
+            resources.srcDirs("src/$platformVersion/main/resources")
+        }
+        getByName("test").apply {
+            kotlin.srcDirs("src/$platformVersion/test/kotlin")
+            resources.srcDirs("src/$platformVersion/test/resources")
+        }
         create("debugger") {
-            kotlin.srcDirs("debugger/src/main/kotlin", "debugger/src/$platformVersion/kotlin")
+            kotlin.srcDirs("debugger/src/main/kotlin", "debugger/src/$platformVersion/main/kotlin")
+            resources.srcDirs("debugger/src/main/resources", "debugger/src/$platformVersion/main/resources")
             compileClasspath += getByName("main").compileClasspath +
                 getByName("main").output +
                 files("deps/clion-$clionVersion/lib/clion.jar")
