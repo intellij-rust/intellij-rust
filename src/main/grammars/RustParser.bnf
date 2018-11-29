@@ -1295,7 +1295,7 @@ InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
   pin = 1
   elementType = Block
 }
-private BlockElement ::= !'}' (ExprStmtOrLastExpr | Stmt | Item) {
+private BlockElement ::= !'}' (Macro | ExprStmtOrLastExpr | Stmt | Item) {
   pin = 1
   recoverWhile = BlockElement_recover
 }
