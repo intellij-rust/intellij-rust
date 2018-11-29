@@ -12,7 +12,7 @@ env:
   global:
     - OLD_RUST_VERSION=1.25.0
     - CURRENT_RUST_VERSION=1.30.0
-    - NIGHLY_RUST_VERSION=nightly-2018-11-09
+    - NIGHLY_RUST_VERSION=nightly-2018-11-27
     - RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
   matrix:
     # 182 platform
