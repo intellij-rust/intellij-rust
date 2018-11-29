@@ -1269,7 +1269,7 @@ private meta any_braces ::=
 { pin = 1 }
 
 // Macro wrappers
-MacroExpr ::= OuterAttr* MacroCallNoSemicolons {
+MacroExpr ::= MacroCallNoSemicolons {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 PatMacro ::= MacroCallNoSemicolons
@@ -1295,7 +1295,7 @@ InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
   pin = 1
   elementType = Block
 }
-private BlockElement ::= !'}' (ExprStmtOrLastExpr | Stmt | Item) {
+private BlockElement ::= !'}' (Macro | ExprStmtOrLastExpr | Stmt | Item) {
   pin = 1
   recoverWhile = BlockElement_recover
 }

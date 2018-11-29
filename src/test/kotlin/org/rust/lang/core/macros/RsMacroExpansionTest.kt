@@ -624,4 +624,15 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         pub(in a::b) fn baz() {}
     """)
+
+    fun `test expand macro defined in function`() = doTest("""
+        fn main() {
+            macro_rules! foo {
+                () => { 2 + 2 };
+            }
+            foo!();
+        }
+    """, """
+        2 + 2
+    """)
 }
