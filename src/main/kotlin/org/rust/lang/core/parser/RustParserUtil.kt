@@ -341,7 +341,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean =
         tokenType == RsElementTypes.MACRO_EXPR &&
-            '{' == b.originalText.subSequence(startOffset, endOffset).find { it == '{' || it == '[' || it == '(' }
+            '}' == b.originalText.subSequence(startOffset, endOffset).findLast { it == '}' || it == ']' || it == ')' }
 
     private fun contextualKeyword(b: PsiBuilder, keyword: String, elementType: IElementType): Boolean {
         // Tricky: the token can be already remapped by some previous rule that was backtracked
