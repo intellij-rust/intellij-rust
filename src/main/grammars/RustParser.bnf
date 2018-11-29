@@ -1269,7 +1269,7 @@ private meta any_braces ::=
 { pin = 1 }
 
 // Macro wrappers
-MacroExpr ::= OuterAttr* MacroCallNoSemicolons {
+MacroExpr ::= MacroCallNoSemicolons {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 PatMacro ::= MacroCallNoSemicolons

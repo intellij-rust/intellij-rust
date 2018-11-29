@@ -21,6 +21,9 @@ default!(String);
 
 thread_local!(static HANDLE: Handle = Handle(0));
 
+#[cfg(foo)]
+foo!();
+
 fn foo() {
     println!("{}", 92);
     let v1 = vec![1, 2, 3];
@@ -66,4 +69,7 @@ fn foo() {
 
     trace!(target: "smbc", "open_with {:?}", options);
     debug!(log, "debug values"; "x" => 1, "y" => -1);
+
+    #[cfg(foo)]
+    foo!();
 }
