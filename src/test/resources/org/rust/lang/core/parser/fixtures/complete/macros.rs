@@ -71,5 +71,6 @@ fn foo() {
     debug!(log, "debug values"; "x" => 1, "y" => -1);
 
     #[cfg(foo)]
-    foo!();
+    foo! {}
+    let a = 0; // needed to check that we parsed the call as a stmt
 }
