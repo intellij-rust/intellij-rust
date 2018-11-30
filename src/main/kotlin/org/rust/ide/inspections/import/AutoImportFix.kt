@@ -25,6 +25,8 @@ import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
+import org.rust.lang.core.types.canBeImported
+import org.rust.lang.core.types.importItem
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.openapiext.Testmark
@@ -52,10 +54,12 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         }
 
         if (candidates.size == 1) {
-            importItem(project, candidates.first(), element)
+            project.runWriteCommandAction {
+                importItem(project, candidates.first(), element.containingMod)
+            }
         } else {
             DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
-                chooseItemAndImport(project, it, candidates, element)
+                chooseItemAndImport(project, it, candidates, element.containingMod)
             }
         }
         isConsumed = true
@@ -68,80 +72,9 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         originalElement: RsElement
     ) {
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
-            importItem(project, selectedValue, originalElement)
-        }
-    }
-
-    private fun importItem(
-        project: Project,
-        candidate: ImportCandidate,
-        originalElement: RsElement
-    ): Unit = project.runWriteCommandAction {
-        val mod = originalElement.containingMod
-        val psiFactory = RsPsiFactory(project)
-        // depth of `mod` relative to module with `extern crate` item
-        // we uses this info to create correct relative use item path if needed
-        var relativeDepth: Int? = null
-
-        val isEdition2018 = originalElement.containingCargoTarget?.edition == CargoWorkspace.Edition.EDITION_2018
-        val info = candidate.info
-        // if crate of importing element differs from current crate
-        // we need to add new extern crate item
-        if (info is ImportInfo.ExternCrateImportInfo) {
-            val target = info.target
-            val crateRoot = originalElement.crateRoot
-            val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
-            when {
-                // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
-                // we don't add corresponding extern crate item manually
-                // because it will be done by compiler implicitly
-                attributes == RsFile.Attributes.NONE && target.isStd -> Testmarks.autoInjectedStdCrate.hit()
-                // if crate of imported element is `core` and there is `#![no_std]`
-                // we don't add corresponding extern crate item manually for the same reason
-                attributes == RsFile.Attributes.NO_STD && target.isCore -> Testmarks.autoInjectedCoreCrate.hit()
-                else -> {
-                    if (info.needInsertExternCrateItem && !isEdition2018) {
-                        crateRoot?.insertExternCrateItem(psiFactory, info.externCrateName)
-                    } else {
-                        if (info.depth != null) {
-                            Testmarks.externCrateItemInNotCrateRoot.hit()
-                            relativeDepth = info.depth
-                        }
-                    }
-                }
+            project.runWriteCommandAction {
+                importItem(project, selectedValue, originalElement.containingMod)
             }
-        }
-
-        val prefix = when (relativeDepth) {
-            null -> if (info is ImportInfo.LocalImportInfo && isEdition2018) "crate::" else ""
-            0 -> "self::"
-            else -> "super::".repeat(relativeDepth)
-        }
-        mod.insertUseItem(psiFactory, "$prefix${info.usePath}")
-    }
-
-    private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
-        val externCrateItem = psiFactory.createExternCrateItem(crateName)
-        val lastExternCrateItem = childrenOfType<RsExternCrateItem>().lastElement
-        if (lastExternCrateItem != null) {
-            addAfter(externCrateItem, lastExternCrateItem)
-        } else {
-            addBefore(externCrateItem, firstItem)
-            addAfter(psiFactory.createNewline(), firstItem)
-        }
-    }
-
-    private fun RsMod.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
-        val useItem = psiFactory.createUseItem(usePath)
-        val anchor = childrenOfType<RsUseItem>().lastElement ?: childrenOfType<RsExternCrateItem>().lastElement
-        if (anchor != null) {
-            val insertedUseItem = addAfter(useItem, anchor)
-            if (anchor is RsExternCrateItem) {
-                addBefore(psiFactory.createNewline(), insertedUseItem)
-            }
-        } else {
-            addBefore(useItem, firstItem)
-            addAfter(psiFactory.createNewline(), firstItem)
         }
     }
 
@@ -235,51 +168,6 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 trait
             }
             return if (traits.filterInScope(methodCall).isNotEmpty()) null else traits
-        }
-
-        // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)`
-        // but in our case `mod` is always same and `mod` needs only to get set of its super mods
-        // so we pass `superMods` instead of `mod` for optimization
-        private fun QualifiedNamedItem.canBeImported(superMods: LinkedHashSet<RsMod>): ImportInfo? {
-            if (item !is RsVisible) return null
-
-            val ourSuperMods = this.superMods ?: return null
-            val parentMod = ourSuperMods.getOrNull(0) ?: return null
-
-            // try to find latest common ancestor module of `parentMod` and `mod` in module tree
-            // we need to do it because we can use direct child items of any super mod with any visibility
-            val lca = ourSuperMods.find { it in superMods }
-            val crateRelativePath = crateRelativePath ?: return null
-
-            val (shouldBePublicMods, importInfo) = if (lca == null) {
-                if (!isPublic) return null
-                val target = containingCargoTarget ?: return null
-                val externCrateMod = ourSuperMods.last()
-
-                val externCrateWithDepth = superMods.withIndex().mapNotNull { (index, superMod) ->
-                    val externCrateItem = superMod.childrenOfType<RsExternCrateItem>()
-                        .find { it.reference.resolve() == externCrateMod } ?: return@mapNotNull null
-                    val depth = if (superMod.isCrateRoot) null else index
-                    externCrateItem to depth
-                }.singleOrNull()
-
-                val (externCrateName, needInsertExternCrateItem, depth) = if (externCrateWithDepth == null) {
-                    Triple(target.normName, true, null)
-                } else {
-                    val (externCrateItem, depth) = externCrateWithDepth
-                    Triple(externCrateItem.nameWithAlias, false, depth)
-                }
-
-                val importInfo = ImportInfo.ExternCrateImportInfo(target, externCrateName,
-                    needInsertExternCrateItem, depth, crateRelativePath)
-                ourSuperMods to importInfo
-            } else {
-                // if current item is direct child of some ancestor of `mod` then it can be not public
-                if (parentMod == lca) return ImportInfo.LocalImportInfo(crateRelativePath)
-                if (!isPublic) return null
-                ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(crateRelativePath)
-            }
-            return if (shouldBePublicMods.all { it.isPublic }) return importInfo else null
         }
 
         private fun RsPath.canBeResolvedToSuitableItem(
