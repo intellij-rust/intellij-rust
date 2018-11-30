@@ -240,8 +240,8 @@ OUTER_EOL_DOC = ({EOL_DOC_LINE}{EOL_WS})*{EOL_DOC_LINE}
 
   {INT_LITERAL}                   { return INTEGER_LITERAL; }
 
-  // Correctly handle 1.f32 and 0..9
-  {FLT_LITERAL_TDOT} / [^.\p{xidstart}] { return FLOAT_LITERAL; }
+  // Correctly handle 1.f32, 1._x and 0..9
+  {FLT_LITERAL_TDOT} / [^._\p{xidstart}] { return FLOAT_LITERAL; }
 
   "b" {CHAR_LITERAL}              { return BYTE_LITERAL; }
 
