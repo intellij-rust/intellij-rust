@@ -160,8 +160,8 @@ fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
     when (this) {
         is TyUnknown, is TyReference, is TyPointer, is TyFunction -> false
         is TyTuple -> types.any { it.isMovesByDefault(lookup) }
-        is TyTypeParameter -> parameter != TyTypeParameter.Self
-        else -> lookup.isCopy(this).not()
+        is TyTypeParameter -> !(parameter == TyTypeParameter.Self || lookup.isCopy(this))
+        else -> !lookup.isCopy(this)
     }
 
 val Ty.isBox: Boolean

@@ -269,4 +269,12 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             }
         }
     """, checkWarn = false)
+
+    /** Issue [#3093](https://github.com/intellij-rust/intellij-rust/issues/3093) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0507 on copyable type parameter`() = checkByText("""
+        fn foo<X: Copy>(x: &[X]) -> X {
+            x[0]
+        }
+    """, checkWarn = false)
 }
