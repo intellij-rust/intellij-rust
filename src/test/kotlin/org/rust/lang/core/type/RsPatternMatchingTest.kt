@@ -49,6 +49,61 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test let remaining front single`() = expect<IllegalStateException> {
+        testExpr("""
+        struct S;
+        struct T;
+        struct U;
+
+        fn main() {
+            let (.., t, u) = (S, T, U);
+            u;
+          //^ U
+        }
+    """)
+    }
+
+    fun `test let remaining front multiple`() = expect<IllegalStateException> {
+        testExpr("""
+        struct S;
+        struct T;
+        struct U;
+
+        fn main() {
+            let (.., u) = (S, T, U);
+            u;
+          //^ U
+        }
+    """)
+    }
+
+    fun `test let remaining back single`() = testExpr("""
+        struct S;
+        struct T;
+        struct U;
+
+        fn main() {
+            let (s, t, ..) = (S, T, U);
+            t;
+          //^ T
+        }
+    """)
+
+    fun `test let remaining middle multiple`() = expect<IllegalStateException> {
+        testExpr("""
+        struct S;
+        struct T;
+        struct U;
+        struct V;
+
+        fn main() {
+            let (s, .., v) = (S, T, U, V);
+            v;
+          //^ V
+        }
+    """)
+    }
+
     fun `test nested struct pattern`() = testExpr("""
         struct S;
         struct T {
