@@ -460,10 +460,16 @@ class StdRefSyntheticProvider:
     def __init__(self, valobj, dict, is_cell=False):
         # type: (SBValue, dict, bool) -> StdRefSyntheticProvider
         self.valobj = valobj
-        self.borrow = valobj.GetChildMemberWithName("borrow").GetChildAtIndex(0).GetChildAtIndex(0)
-        if not is_cell:
-            self.borrow = self.borrow.GetChildAtIndex(0)
-        self.value = valobj.GetChildMemberWithName("value").GetChildAtIndex(0)
+
+        borrow = valobj.GetChildMemberWithName("borrow")
+        value = valobj.GetChildMemberWithName("value")
+        if is_cell:
+            self.borrow = borrow.GetChildMemberWithName("value").GetChildMemberWithName("value")
+            self.value = value.GetChildMemberWithName("value")
+        else:
+            self.borrow = borrow.GetChildMemberWithName("borrow").GetChildMemberWithName(
+                "value").GetChildMemberWithName("value")
+            self.value = value.Dereference()
 
         self.value_builder = ValueBuilder(valobj)
 
