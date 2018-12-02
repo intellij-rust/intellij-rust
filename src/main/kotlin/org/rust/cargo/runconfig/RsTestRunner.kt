@@ -29,19 +29,22 @@ class RsTestRunner : AsyncProgramRunner<RunnerSettings>() {
         return cleaned.cmd.command == "test"
     }
 
-    override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> =
-        buildTests(environment.project, state as CargoRunStateBase)
+    override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
+        state as CargoRunStateBase
+        val onlyBuild = "--no-run" in state.commandLine.additionalArguments
+        return buildTests(environment.project, state, onlyBuild)
             .then { exitCode ->
-                if (exitCode != 0) return@then null
+                if (onlyBuild || exitCode != 0) return@then null
                 showRunContent(state.execute(environment.executor, this), environment)
             }
+    }
 
     override fun getRunnerId(): String = "RsTestRunner"
 }
 
-private fun buildTests(project: Project, state: CargoRunStateBase): Promise<Int?> {
+private fun buildTests(project: Project, state: CargoRunStateBase, cmdHasNoRun: Boolean): Promise<Int?> {
     val buildProcessHandler = run {
-        val buildCmd = state.commandLine.prependArgument("--no-run")
+        val buildCmd = if (cmdHasNoRun) state.commandLine else state.commandLine.prependArgument("--no-run")
         val buildConfig = CargoCommandConfiguration.CleanConfiguration.Ok(buildCmd, state.config.toolchain)
         val buildState = CargoRunState(state.environment, buildConfig)
         buildState.startProcess()
