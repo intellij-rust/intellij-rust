@@ -26,6 +26,8 @@ import java.nio.file.Paths
 
 object DefaultDescriptor : RustProjectDescriptorBase()
 
+object EmptyDescriptor : LightProjectDescriptor()
+
 object WithStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor)
 
 object WithStdlibAndDependencyRustProjectDescriptor : WithRustup(WithDependencyRustProjectDescriptor)

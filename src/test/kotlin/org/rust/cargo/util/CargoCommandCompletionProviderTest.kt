@@ -49,7 +49,6 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         listOf(
             "--release", "--jobs",
             "--features", "--all-features", "--no-default-features",
-            "--triple",
             "--verbose", "--quiet",
             "--bin", "--example", "--package",
             "--manifest-path"
