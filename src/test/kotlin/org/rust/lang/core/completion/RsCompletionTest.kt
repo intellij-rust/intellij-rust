@@ -688,4 +688,10 @@ class RsCompletionTest : RsCompletionTestBase() {
             r#else()/*caret*/
         }
     """)
+
+    fun `test complete lifetime`() = doSingleCompletion("""
+        fn foo<'aaaaaa>(x:&'a/*caret*/ str) {}
+    """, """
+        fn foo<'aaaaaa>(x:&'aaaaaa/*caret*/ str) {}
+    """)
 }
