@@ -408,7 +408,7 @@ class StdRcSyntheticProvider:
     def update(self):
         # type: () -> None
         self.strong_count = self.strong.GetValueAsUnsigned()
-        self.weak_count = self.weak.GetValueAsUnsigned()
+        self.weak_count = self.weak.GetValueAsUnsigned() - 1
 
     def has_children(self):
         # type: () -> bool
