@@ -19,16 +19,15 @@ class RsNamesValidator : NamesValidator {
         return getLexerType(name) in RS_KEYWORDS
     }
 
-    override fun isIdentifier(name: String, project: Project?): Boolean {
-        return when (getLexerType(name)) {
-            IDENTIFIER, QUOTE_IDENTIFIER -> true
-            else -> false
-        }
-    }
-
+    override fun isIdentifier(name: String, project: Project?): Boolean = isIdentifier(name)
 
     companion object {
         val RESERVED_LIFETIME_NAMES: Set<String> = setOf("'static", "'_")
+
+        fun isIdentifier(name: String): Boolean = when (getLexerType(name)) {
+            IDENTIFIER, QUOTE_IDENTIFIER -> true
+            else -> false
+        }
     }
 }
 
