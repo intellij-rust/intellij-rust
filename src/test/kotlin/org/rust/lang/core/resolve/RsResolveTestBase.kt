@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -20,7 +21,11 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.Testmark
 
 abstract class RsResolveTestBase : RsTestBase() {
-    protected open fun checkByCode(@Language("Rust") code: String) {
+
+    protected open fun checkByCode(@Language("Rust") code: String) =
+        checkByCodeGeneric<RsNamedElement>(code)
+
+    protected inline fun <reified T : NavigatablePsiElement> checkByCodeGeneric(@Language("Rust") code: String) {
         InlineFile(code)
 
         val (refElement, data, offset) = findElementWithDataAndOffsetInEditor<RsWeakReferenceElement>("^")
@@ -34,7 +39,7 @@ abstract class RsResolveTestBase : RsTestBase() {
         }
 
         val resolved = refElement.checkedResolve(offset)
-        val target = findElementInEditor<RsNamedElement>("X")
+        val target = findElementInEditor<T>("X")
 
         check(resolved == target) {
             "$refElement `${refElement.text}` should resolve to $target, was $resolved instead"
@@ -51,7 +56,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected fun stubOnlyResolve(@Language("Rust") code: String, mark: Testmark) =
         mark.checkHit { stubOnlyResolve(code) }
 
-    protected inline fun <reified T: PsiElement> stubOnlyResolve(fileTree: FileTree, customCheck: (PsiElement) -> Unit = {}) {
+    protected inline fun <reified T : PsiElement> stubOnlyResolve(fileTree: FileTree, customCheck: (PsiElement) -> Unit = {}) {
         val testProject = fileTree.createAndOpenFileWithCaretMarker()
 
         checkAstNotLoaded(VirtualFileFilter { file ->
