@@ -75,7 +75,7 @@ fun RsExpr.suggestedNames(): SuggestedNames {
     }
 
     if (parent is RsStructLiteralField) {
-        names.addName(parent.identifier.text)
+        names.addName(parent.identifier?.text)
     }
 
     val topName = names.firstOrNull() ?: "x"

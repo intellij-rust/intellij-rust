@@ -280,7 +280,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
         if (withType is TyAdt) {
             val structFields = (withType.item as? RsStructItem)?.namedFields.orEmpty()
             for (field in structFields) {
-                val isMentioned = fields.any { it.identifier.text == field.identifier.text }
+                val isMentioned = fields.any { it.identifier?.text == field.identifier.text }
                 if (!isMentioned) {
                     val interior = Categorization.Interior.Field(withCmt, field.name)
                     val fieldCmt = Cmt(withExpr, interior, withCmt.mutabilityCategory.inherit(), withType)

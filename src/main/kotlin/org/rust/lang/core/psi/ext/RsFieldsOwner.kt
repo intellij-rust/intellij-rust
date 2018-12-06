@@ -12,10 +12,13 @@ import org.rust.lang.core.psi.RsTupleFields
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
 
-interface RsFieldsOwner : RsElement{
+interface RsFieldsOwner : RsElement {
     val blockFields: RsBlockFields?
     val tupleFields: RsTupleFields?
 }
+
+val RsFieldsOwner.fields: List<RsFieldDecl>
+    get() = namedFields + positionalFields
 
 val RsFieldsOwner.namedFields: List<RsNamedFieldDecl>
     get() = blockFields?.namedFieldDeclList.orEmpty()

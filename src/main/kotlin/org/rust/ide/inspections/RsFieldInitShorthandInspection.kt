@@ -19,7 +19,7 @@ class RsFieldInitShorthandInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitStructLiteralField(o: RsStructLiteralField) {
             val init = o.expr ?: return
-            if (!(init is RsPathExpr && init.text == o.identifier.text)) return
+            if (!(init is RsPathExpr && init.text == o.identifier?.text)) return
             holder.registerProblem(
                 o,
                 "Expression can be simplified",

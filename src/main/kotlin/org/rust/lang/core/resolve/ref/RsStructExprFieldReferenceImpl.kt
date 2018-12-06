@@ -33,12 +33,14 @@ class RsStructLiteralFieldReferenceImpl(
         return if (element.colon != null) {
             super.handleElementRename(newName)
         } else {
+            val identifier = element.identifier ?: return element
+
             val psiFactory = RsPsiFactory(element.project)
             val newIdent = psiFactory.createIdentifier(newName)
             val colon = psiFactory.createColon()
-            val initExpression = psiFactory.createExpression(element.identifier.text)
+            val initExpression = psiFactory.createExpression(identifier.text)
 
-            element.identifier.replace(newIdent)
+            identifier.replace(newIdent)
             element.add(colon)
             element.add(initExpression)
             return element
