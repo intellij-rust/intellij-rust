@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.lang.core.psi.ext.RsFieldDecl
+
 class RsResolveTest : RsResolveTestBase() {
 
     fun `test function argument`() = checkByCode("""
@@ -566,8 +568,16 @@ class RsResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
+    fun `test struct field positional`() = checkByCodeGeneric<RsFieldDecl>("""
+        struct S(i32, i32)
+                     //X
+        fn main() {
+            let _ = S { 1: 92 };
+        }             //^
+    """)
+
     // Perhaps this should resolve to the local instead?
-    fun `test struct field shorthand`() = checkByCode("""
+    fun `test struct field shorthand named`() = checkByCode("""
         struct S { foo: i32, bar: i32 }
                             //X
         fn main() {

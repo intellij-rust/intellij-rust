@@ -804,6 +804,20 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }        //^ i32
     """)
 
+    fun `test resolved named field expr`() = testExpr("""
+        struct S { f: u8 }
+        fn main() {
+            S { f: 1 };
+        }        //^ u8
+    """)
+
+    fun `test resolved positional field expr`() = testExpr("""
+        struct S(u8);
+        fn main() {
+            S { 0: 1 };
+        }        //^ u8
+    """)
+
     fun `test struct with alias`() = testExpr("""
         struct S;
         type T1 = S;
