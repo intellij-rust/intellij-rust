@@ -12,10 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.annotator.calculateMissingFields
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.canBeInstantiatedIn
-import org.rust.lang.core.psi.ext.namedFields
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -54,7 +51,7 @@ class AddStructFieldsFix(
             RsPsiFactory(project),
             decl.knownItems,
             body,
-            decl.namedFields,
+            decl.fields,
             fieldsToAdd,
             body.containingMod
         )
@@ -69,8 +66,8 @@ class AddStructFieldsFix(
         psiFactory: RsPsiFactory,
         items: KnownItems,
         structLiteral: RsStructLiteralBody,
-        declaredFields: List<RsNamedFieldDecl>,
-        fieldsToAdd: List<RsNamedFieldDecl>,
+        declaredFields: List<RsFieldDecl>,
+        fieldsToAdd: List<RsFieldDecl>,
         mod: RsMod
     ): RsStructLiteralField? {
         val forceMultiLine = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
@@ -102,7 +99,7 @@ class AddStructFieldsFix(
     private fun findPlaceToAdd(
         fieldToAdd: RsStructLiteralField,
         existingFields: List<RsStructLiteralField>,
-        declaredFields: List<RsNamedFieldDecl>
+        declaredFields: List<RsFieldDecl>
     ): RsStructLiteralField? {
         // If `fieldToAdd` is first in the original declaration, add it first
         if (fieldToAdd.referenceName == declaredFields.firstOrNull()?.name) {
@@ -142,13 +139,13 @@ class AddStructFieldsFix(
     private fun specializedCreateStructLiteralField(
         factory: RsPsiFactory,
         items: KnownItems,
-        fieldDecl: RsNamedFieldDecl,
+        fieldDecl: RsFieldDecl,
         mod: RsMod
     ): RsStructLiteralField? {
-        val fieldType = fieldDecl.typeReference?.type ?: return null
-        val name = fieldDecl.name ?: return null
+        val fieldName = fieldDecl.name ?: return null
+        val fieldType =  fieldDecl.typeReference?.type ?: return null
         val fieldLiteral = defaultValueExprFor(factory, items, mod, fieldType)
-        return factory.createStructLiteralField(name, fieldLiteral)
+        return factory.createStructLiteralField(fieldName, fieldLiteral)
     }
 
     private fun defaultValueExprFor(factory: RsPsiFactory, items: KnownItems, mod: RsMod, ty: Ty): RsExpr {

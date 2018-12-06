@@ -10,11 +10,8 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsNamedFieldDecl
 import org.rust.lang.core.psi.RsPsiImplUtil
-import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.stubs.RsNamedFieldDeclStub
 import javax.swing.Icon
-
-val RsNamedFieldDecl.parentStruct: RsStructItem? get() = stubAncestorStrict()
 
 abstract class RsNamedFieldDeclImplMixin : RsStubbedNamedElementImpl<RsNamedFieldDeclStub>, RsNamedFieldDecl {
     constructor(node: ASTNode) : super(node)
