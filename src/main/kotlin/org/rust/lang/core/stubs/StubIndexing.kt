@@ -66,7 +66,7 @@ fun IndexSink.indexTypeAlias(stub: RsTypeAliasStub) {
     }
 }
 
-fun IndexSink.indexFieldDecl(stub: RsFieldDeclStub) {
+fun IndexSink.indexNamedFieldDecl(stub: RsNamedFieldDeclStub) {
     indexNamedStub(stub)
 }
 

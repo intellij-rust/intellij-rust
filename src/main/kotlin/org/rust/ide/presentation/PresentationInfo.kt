@@ -44,7 +44,7 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
     val declInfo = when (this) {
         is RsFunction -> Pair("function", createDeclarationInfo(this, identifier, false, listOf(whereClause, retType, valueParameterList)))
         is RsStructItem -> Pair("struct", createDeclarationInfo(this, identifier, false, if (blockFields != null) listOf(whereClause) else listOf(whereClause, tupleFields)))
-        is RsFieldDecl -> Pair("field", createDeclarationInfo(this, identifier, false, listOf(typeReference)))
+        is RsNamedFieldDecl -> Pair("field", createDeclarationInfo(this, identifier, false, listOf(typeReference)))
         is RsEnumItem -> Pair("enum", createDeclarationInfo(this, identifier, false, listOf(whereClause)))
         is RsEnumVariant -> Pair("enum variant", createDeclarationInfo(this, identifier, false, listOf(tupleFields)))
         is RsTraitItem -> Pair("trait", createDeclarationInfo(this, identifier, false, listOf(whereClause)))

@@ -40,7 +40,7 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
             is RsConstant -> {
                 psi.typeReference?.let { append(": ${it.text}") }
             }
-            is RsFieldDecl -> {
+            is RsNamedFieldDecl -> {
                 psi.typeReference?.let { append(": ${it.text}") }
             }
             is RsEnumVariant -> {

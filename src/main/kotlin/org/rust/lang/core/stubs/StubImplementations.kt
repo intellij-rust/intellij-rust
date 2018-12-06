@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 148
+        override fun getStubVersion(): Int = 149
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -93,7 +93,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "BLOCK_FIELDS" -> RsPlaceholderStub.Type("BLOCK_FIELDS", ::RsBlockFieldsImpl)
     "TUPLE_FIELDS" -> RsPlaceholderStub.Type("TUPLE_FIELDS", ::RsTupleFieldsImpl)
     "TUPLE_FIELD_DECL" -> RsPlaceholderStub.Type("TUPLE_FIELD_DECL", ::RsTupleFieldDeclImpl)
-    "FIELD_DECL" -> RsFieldDeclStub.Type
+    "NAMED_FIELD_DECL" -> RsNamedFieldDeclStub.Type
     "ALIAS" -> RsAliasStub.Type
 
     "USE_SPECK" -> RsUseSpeckStub.Type
@@ -653,34 +653,34 @@ class RsTypeAliasStub(
 }
 
 
-class RsFieldDeclStub(
+class RsNamedFieldDeclStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
     override val isPublic: Boolean
-) : StubBase<RsFieldDecl>(parent, elementType),
+) : StubBase<RsNamedFieldDecl>(parent, elementType),
     RsNamedStub,
     RsVisibilityStub {
 
-    object Type : RsStubElementType<RsFieldDeclStub, RsFieldDecl>("FIELD_DECL") {
-        override fun createPsi(stub: RsFieldDeclStub) =
-            RsFieldDeclImpl(stub, this)
+    object Type : RsStubElementType<RsNamedFieldDeclStub, RsNamedFieldDecl>("NAMED_FIELD_DECL") {
+        override fun createPsi(stub: RsNamedFieldDeclStub) =
+            RsNamedFieldDeclImpl(stub, this)
 
-        override fun createStub(psi: RsFieldDecl, parentStub: StubElement<*>?) =
-            RsFieldDeclStub(parentStub, this, psi.name, psi.isPublic)
+        override fun createStub(psi: RsNamedFieldDecl, parentStub: StubElement<*>?) =
+            RsNamedFieldDeclStub(parentStub, this, psi.name, psi.isPublic)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsFieldDeclStub(parentStub, this,
+            RsNamedFieldDeclStub(parentStub, this,
                 dataStream.readNameAsString(),
                 dataStream.readBoolean()
             )
 
-        override fun serialize(stub: RsFieldDeclStub, dataStream: StubOutputStream) =
+        override fun serialize(stub: RsNamedFieldDeclStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isPublic)
             }
 
-        override fun indexStub(stub: RsFieldDeclStub, sink: IndexSink) = sink.indexFieldDecl(stub)
+        override fun indexStub(stub: RsNamedFieldDeclStub, sink: IndexSink) = sink.indexNamedFieldDecl(stub)
     }
 }
 

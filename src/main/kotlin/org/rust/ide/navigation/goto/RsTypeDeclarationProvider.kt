@@ -8,8 +8,8 @@ package org.rust.ide.navigation.goto
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsNamedFieldDecl
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.types.ty.*
@@ -20,7 +20,7 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
     override fun getSymbolTypeDeclarations(element: PsiElement): Array<PsiElement>? {
         val type = when (element) {
             is RsFunction -> element.retType?.typeReference?.type
-            is RsFieldDecl -> element.typeReference?.type
+            is RsNamedFieldDecl -> element.typeReference?.type
             is RsConstant -> element.typeReference?.type
             is RsPatBinding -> element.type
             else -> null

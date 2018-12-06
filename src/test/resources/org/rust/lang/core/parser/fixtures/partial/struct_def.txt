@@ -7,7 +7,7 @@ FILE
     RsBlockFieldsImpl(BLOCK_FIELDS)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RsFieldDeclImpl(FIELD_DECL)
+      RsNamedFieldDeclImpl(NAMED_FIELD_DECL)
         PsiElement(identifier)('f1')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
@@ -17,7 +17,7 @@ FILE
               PsiElement(identifier)('i32')
       PsiElement(,)(',')
       PsiWhiteSpace('\n    ')
-      RsFieldDeclImpl(FIELD_DECL)
+      RsNamedFieldDeclImpl(NAMED_FIELD_DECL)
         PsiElement(identifier)('f2')
       PsiErrorElement:':' expected, got '}'
         <empty list>
@@ -32,7 +32,7 @@ FILE
     RsBlockFieldsImpl(BLOCK_FIELDS)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RsFieldDeclImpl(FIELD_DECL)
+      RsNamedFieldDeclImpl(NAMED_FIELD_DECL)
         PsiElement(identifier)('f1')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')

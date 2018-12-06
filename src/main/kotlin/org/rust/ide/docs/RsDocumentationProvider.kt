@@ -152,7 +152,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
 private fun RsDocAndAttributeOwner.header(buffer: StringBuilder) {
     val rawLines = when (this) {
-        is RsFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
+        is RsNamedFieldDecl -> listOfNotNull((parent?.parent as? RsDocAndAttributeOwner)?.presentableQualifiedName)
         is RsStructOrEnumItemElement,
         is RsTraitItem,
         is RsMacro -> listOfNotNull(presentableQualifiedModName)
@@ -175,7 +175,7 @@ private fun RsDocAndAttributeOwner.header(buffer: StringBuilder) {
 
 private fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
     val rawLines = when (this) {
-        is RsFieldDecl -> listOfNotNull(presentationInfo?.signatureText)
+        is RsNamedFieldDecl -> listOfNotNull(presentationInfo?.signatureText)
         is RsFunction -> {
             val buffer = StringBuilder()
             declarationModifiers.joinTo(buffer, " ")

@@ -36,7 +36,7 @@ class RsCompletionSortingTest : RsTestBase() {
 
         fn bar(a: S) { a./*caret*/ }
     """, listOf(
-        RsFieldDecl::class to "foo",
+        RsNamedFieldDecl::class to "foo",
         RsFunction::class to "foo"
     ))
 

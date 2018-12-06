@@ -69,8 +69,8 @@ class AddStructFieldsFix(
         psiFactory: RsPsiFactory,
         items: KnownItems,
         structLiteral: RsStructLiteralBody,
-        declaredFields: List<RsFieldDecl>,
-        fieldsToAdd: List<RsFieldDecl>,
+        declaredFields: List<RsNamedFieldDecl>,
+        fieldsToAdd: List<RsNamedFieldDecl>,
         mod: RsMod
     ): RsStructLiteralField? {
         val forceMultiLine = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
@@ -102,7 +102,7 @@ class AddStructFieldsFix(
     private fun findPlaceToAdd(
         fieldToAdd: RsStructLiteralField,
         existingFields: List<RsStructLiteralField>,
-        declaredFields: List<RsFieldDecl>
+        declaredFields: List<RsNamedFieldDecl>
     ): RsStructLiteralField? {
         // If `fieldToAdd` is first in the original declaration, add it first
         if (fieldToAdd.referenceName == declaredFields.firstOrNull()?.name) {
@@ -142,7 +142,7 @@ class AddStructFieldsFix(
     private fun specializedCreateStructLiteralField(
         factory: RsPsiFactory,
         items: KnownItems,
-        fieldDecl: RsFieldDecl,
+        fieldDecl: RsNamedFieldDecl,
         mod: RsMod
     ): RsStructLiteralField? {
         val fieldType = fieldDecl.typeReference?.type ?: return null

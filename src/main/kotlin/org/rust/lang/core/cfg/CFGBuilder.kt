@@ -114,7 +114,7 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         finishWithAstNode(letDecl, exit)
     }
 
-    override fun visitFieldDecl(fieldDecl: RsFieldDecl) = finishWith(pred)
+    override fun visitNamedFieldDecl(fieldDecl: RsNamedFieldDecl) = finishWith(pred)
 
     override fun visitLabelDecl(labelDecl: RsLabelDecl) = finishWith(pred)
 

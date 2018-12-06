@@ -8,18 +8,18 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.psi.RsFieldDecl
+import org.rust.lang.core.psi.RsNamedFieldDecl
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.stubs.RsFieldDeclStub
+import org.rust.lang.core.stubs.RsNamedFieldDeclStub
 import javax.swing.Icon
 
-val RsFieldDecl.parentStruct: RsStructItem? get() = stubAncestorStrict()
+val RsNamedFieldDecl.parentStruct: RsStructItem? get() = stubAncestorStrict()
 
-abstract class RsFieldDeclImplMixin : RsStubbedNamedElementImpl<RsFieldDeclStub>, RsFieldDecl {
+abstract class RsNamedFieldDeclImplMixin : RsStubbedNamedElementImpl<RsNamedFieldDeclStub>, RsNamedFieldDecl {
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RsFieldDeclStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+    constructor(stub: RsNamedFieldDeclStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.FIELD)

@@ -55,7 +55,7 @@ val RsTypeElement.lifetimeElidable: Boolean
 
         val isAssociatedConstant = typeOwner is RsConstant && typeOwner.owner.isImplOrTrait
 
-        return typeOwner !is RsFieldDecl && typeOwner !is RsTupleFieldDecl
+        return typeOwner !is RsNamedFieldDecl && typeOwner !is RsTupleFieldDecl
             && typeOwner !is RsTypeAlias && !isAssociatedConstant
     }
 

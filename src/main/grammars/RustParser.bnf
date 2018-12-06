@@ -632,7 +632,7 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
 
 private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
 
-BlockFields ::= '{' (FieldDecl (',' | &'}'))* '}' {
+BlockFields ::= '{' (NamedFieldDecl (',' | &'}'))* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -651,15 +651,15 @@ VariantDiscriminant ::= '=' AnyExpr {
   implements = "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
 }
 
-FieldDecl ::= AttrsAndVis identifier TypeAscription {
+NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsVisibilityOwner"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsFieldDeclImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RsFieldDeclStub"
+  mixin = "org.rust.lang.core.psi.ext.RsNamedFieldDeclImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsNamedFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   recoverWhile = Field_recover
 }

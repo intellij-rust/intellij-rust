@@ -121,7 +121,7 @@ class CommaList(
         }
 
         private val ALL = listOf(
-            CommaList(BLOCK_FIELDS, LBRACE, RBRACE, { it.elementType == FIELD_DECL }),
+            CommaList(BLOCK_FIELDS, LBRACE, RBRACE, { it.elementType == NAMED_FIELD_DECL }),
             CommaList(STRUCT_LITERAL_BODY, LBRACE, RBRACE, { it.elementType == STRUCT_LITERAL_FIELD }),
             CommaList(ENUM_BODY, LBRACE, RBRACE, { it.elementType == ENUM_VARIANT }),
             CommaList(USE_GROUP, LBRACE, RBRACE, { it.elementType == USE_SPECK }),

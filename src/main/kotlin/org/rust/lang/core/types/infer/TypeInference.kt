@@ -1258,7 +1258,7 @@ class RsFnInferenceContext(
         val fieldElement = field.element
 
         val raw = when (fieldElement) {
-            is RsFieldDecl -> fieldElement.typeReference?.type
+            is RsNamedFieldDecl -> fieldElement.typeReference?.type
             is RsTupleFieldDecl -> fieldElement.typeReference.type
             else -> null
         } ?: TyUnknown
