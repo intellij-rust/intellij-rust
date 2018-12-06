@@ -88,7 +88,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsEnumVariant -> RsColor.ENUM_VARIANT
     is RsExternCrateItem -> RsColor.CRATE
     is RsConstant -> RsColor.CONSTANT
-    is RsFieldDecl -> RsColor.FIELD
+    is RsNamedFieldDecl -> RsColor.FIELD
     is RsFunction -> when (element.owner) {
         is RsAbstractableOwner.Foreign, is RsAbstractableOwner.Free -> RsColor.FUNCTION
         is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl ->
@@ -134,7 +134,7 @@ private fun partToHighlight(element: RsElement): TextRange? {
         is RsEnumItem -> element.identifier
         is RsEnumVariant -> element.identifier
         is RsExternCrateItem -> element.identifier
-        is RsFieldDecl -> element.identifier
+        is RsNamedFieldDecl -> element.identifier
         is RsFunction -> element.identifier
         is RsMethodCall -> element.referenceNameElement
         is RsModDeclItem -> element.identifier

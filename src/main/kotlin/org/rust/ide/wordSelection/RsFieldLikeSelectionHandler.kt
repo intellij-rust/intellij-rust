@@ -33,6 +33,6 @@ class RsFieldLikeSelectionHandler : ExtendWordSelectionHandlerBase() {
 
     companion object {
         fun isFieldLikeDecl(e: PsiElement) =
-            e is RsFieldDecl || e is RsStructLiteralField || e is RsEnumVariant || e is RsMatchArm
+            e is RsNamedFieldDecl || e is RsStructLiteralField || e is RsEnumVariant || e is RsMatchArm
     }
 }

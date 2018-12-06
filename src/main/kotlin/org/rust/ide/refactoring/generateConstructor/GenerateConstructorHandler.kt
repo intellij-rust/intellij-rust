@@ -95,7 +95,7 @@ data class ConstructorArgument(
             return if (structItem.isTupleStruct) {
                 fromTupleList(structItem.tupleFields?.tupleFieldDeclList.orEmpty())
             } else {
-                fromFieldList(structItem.blockFields?.fieldDeclList.orEmpty())
+                fromFieldList(structItem.blockFields?.namedFieldDeclList.orEmpty())
             }
         }
 
@@ -106,7 +106,7 @@ data class ConstructorArgument(
             }
         }
 
-        private fun fromFieldList(fieldDeclList: List<RsFieldDecl>): List<ConstructorArgument> {
+        private fun fromFieldList(fieldDeclList: List<RsNamedFieldDecl>): List<ConstructorArgument> {
             return fieldDeclList.map {
                 ConstructorArgument(
                     it.identifier.text ?: "()",

@@ -11,7 +11,10 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsAbstractableOwner
+import org.rust.lang.core.psi.ext.RsConstantKind
+import org.rust.lang.core.psi.ext.kind
+import org.rust.lang.core.psi.ext.owner
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -240,7 +243,7 @@ class RsStructNamingInspection : RsCamelCaseNamingInspection("Type", "Struct") {
 class RsFieldNamingInspection : RsSnakeCaseNamingInspection("Field") {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
-            override fun visitFieldDecl(el: RsFieldDecl) = inspect(el.identifier, holder)
+            override fun visitNamedFieldDecl(el: RsNamedFieldDecl) = inspect(el.identifier, holder)
         }
 }
 
