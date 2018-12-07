@@ -1,6 +1,7 @@
+import sys
+
 from lldb import SBValue, SBData, SBError, eBasicTypeLong, eBasicTypeUnsignedLong
 from lldb.formatters import Logger
-
 
 #################################################################################################################
 # This file contains two kinds of pretty-printers: summary and synthetic.
@@ -32,6 +33,8 @@ from lldb.formatters import Logger
 #   3. https://lldb.llvm.org/python_reference/lldb.formatters.cpp.libcxx-pysrc.html
 #   4. https://github.com/llvm-mirror/lldb/tree/master/examples/summaries/cocoa
 ################################################################################################################
+
+PY3 = sys.version_info[0] == 3
 
 
 class ValueBuilder:
@@ -124,8 +127,9 @@ def StdStringSummaryProvider(valobj, dict):
 
     vec = valobj.GetChildAtIndex(0)
     length = vec.GetNumChildren()
-    chars = [chr(vec.GetChildAtIndex(i).GetValueAsUnsigned()) for i in range(length)]
-    return '"%s"' % "".join(chars)
+    chars = [vec.GetChildAtIndex(i).GetValueAsUnsigned() for i in range(length)]
+    data = bytes(chars).decode(encoding='UTF-8') if PY3 else "".join(chr(char) for char in chars)
+    return '"%s"' % data
 
 
 def StdStrSummaryProvider(valobj, dict):
@@ -144,11 +148,8 @@ def StdStrSummaryProvider(valobj, dict):
     error = SBError()
     process = data_ptr.GetProcess()
     data = process.ReadMemory(start, length, error)
-    if error.Success():
-        return '"%s"' % data
-    else:
-        return '<error: %s>' % error.GetCString()
-
+    data = data.decode(encoding='UTF-8') if PY3 else data
+    return '"%s"' % data
 
 class StructSyntheticProvider:
     """Pretty-printer for structs and struct enum variants"""
