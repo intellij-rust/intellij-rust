@@ -68,8 +68,9 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
         val (commandArguments, executableArguments) = CargoArgsParser.parseArgs(cmd.command, cmd.additionalArguments)
 
         val isTestRun = cmd.command == "test"
+        val cmdHasNoRun = "--no-run" in cmd.additionalArguments
         val buildCommand = if (isTestRun) {
-            cmd.prependArgument("--no-run")
+            if (cmdHasNoRun) cmd else cmd.prependArgument("--no-run")
         } else {
             cmd.copy(command = "build", additionalArguments = commandArguments)
         }
@@ -88,6 +89,7 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
 
         return buildProjectAndGetBinaryArtifactPath(environment.project, buildCommand, state, isTestRun)
             .then { binary ->
+                if (isTestRun && cmdHasNoRun) return@then null
                 val path = binary?.path ?: return@then null
                 val runCommand = getRunCommand(path)
                 val sysroot = state.computeSysroot()
