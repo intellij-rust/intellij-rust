@@ -5,47 +5,55 @@
 
 package org.rust.lang.refactoring.inline
 
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.HelpID
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.RsElement
 
 class RsInlineMethodHandler: InlineActionHandler() {
-    override fun isEnabledOnElement(element: PsiElement?): Boolean  = element is RsElement
+    override fun isEnabledOnElement(element: PsiElement?): Boolean  =
+        element is RsFunction && element.navigationElement is RsFunction
 
     override fun isEnabledOnElement(element: PsiElement?, editor: Editor?): Boolean =
         isEnabledOnElement(element)
 
     override fun inlineElement(project: Project, editor: Editor, element: PsiElement) {
-        val function = RsInlineMethodProcessor.getFunction(element)
-            ?: TODO("handle no referencing function")
+        val function = element as RsFunction
 
-        function.block ?: TODO("handle no method")
+        val body = function.block
+        if (body == null){
+            errorHint(project, editor, "cannot inline method with no body")
+            return
+        }
+
+        val reference = TargetElementUtil.findReference(editor, editor.caretModel.offset)
+
 
         if (RsInlineMethodProcessor.checkMultipleReturns(function)) {
-            TODO("cannot inline fun with multiple returns")
+            errorHint(project, editor, "cannot inline method with more than one exit points")
+            return
         }
 
+        var allowInlineThisOnly = false
         if (RsInlineMethodProcessor.checkRecursiveCall(function)) {
-            TODO("cannot inline recursive function")
+            if (reference != null) {
+                allowInlineThisOnly = true
+            } else {
+                errorHint(project, editor, "cannot inline method with recursive calls")
+                return
+            }
         }
-    }
 
-    private fun showErrorHint(project: Project, editor: Editor?, message: String) {
-        CommonRefactoringUtil.showErrorHint(
-            project,
-            editor,
-            message,
-            RefactoringBundle.message("inline.method.title"),
-            HelpID.INLINE_VARIABLE
-        )
+        if (reference != null) {
+            RsInlineMethodProcessor.checkIfLoopCondition(function, reference.element)
+        }
+
     }
 
     override fun isEnabledForLanguage(l: Language?): Boolean = l == RsLanguage
@@ -55,4 +63,9 @@ class RsInlineMethodHandler: InlineActionHandler() {
 
     override fun canInlineElement(element: PsiElement): Boolean =
         element is RsFunction
+
+    private fun errorHint(project: Project, editor: Editor, message: String) {
+//        CommonRefactoringUtil.showErrorHint(project, editor, message, "Rs Inline Method", "refactoring.inlineMethod")
+        Messages.showErrorDialog(project, message, "method inline is not possible")
+    }
 }

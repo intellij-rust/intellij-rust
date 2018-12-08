@@ -8,8 +8,8 @@ package org.rust.lang.refactoring.inline
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.*
+import org.rust.stdext.buildList
 
 class RsInlineMethodProcessor {
     companion object {
@@ -18,8 +18,14 @@ class RsInlineMethodProcessor {
                 .filter { it.ancestorStrict<RsFunction>() == fn }
                 .size
 
-            fn.block?.rbrace?.prevSibling?.let {
-                if (it is RsExpr && it !is RsRetExpr) {
+//            fn.block?.rbrace?.prevSibling?.let {
+//                if (it is RsExpr && it !is RsRetExpr) {
+//                    ++returnsCount
+//                }
+//            }
+
+            fn.block!!.expr?.let {
+                if (it !is RsRetExpr) {
                     ++returnsCount
                 }
             }
@@ -28,42 +34,35 @@ class RsInlineMethodProcessor {
         }
 
         fun checkRecursiveCall(fn: RsFunction) : Boolean {
-            fn.descendantsOfType<RsMethodCall>().forEach {
-                if (getFunction(it) == fn) {
-                    return true
-                }
-            }
-
-            fn.descendantsOfType<RsCallExpr>().forEach {
-                if (getFunction(it) == fn) {
-                    return true
-                }
-            }
-
-            return false
+            return fn.descendantsOfType<RsPath>()
+                .map { it.reference.resolve() }
+                .any { it == fn}
         }
 
-        fun getFunction(element: PsiElement) : RsFunction? {
-            return when(element) {
-                is RsFunction -> element
-                is RsCallExpr -> (element.expr as? RsPathExpr)?.path
-                is RsMethodCall -> element.reference.resolve()
-                else -> null
-            }?.let { it.reference?.resolve() as? RsFunction }
+        fun checkIfLoopCondition(fn: RsFunction, element: PsiElement): Boolean {
+            val block = fn.block!!
+            val statements = block.stmtList
+
+            val hasStatements = when(block.expr) {
+                null -> statements.size > 1 || statements.size == 1 && statements[0].descendantsOfType<RsRetExpr>().isEmpty()
+                else -> statements.size > 0
+            }
+
+            return hasStatements && element.ancestorOrSelf<RsWhileExpr>() != null
         }
     }
 
 
-    private fun collectElements(start: PsiElement, stop: PsiElement?, pred: (PsiElement) -> Boolean): Array<out PsiElement> {
-        check(stop == null || start.parent == stop.parent)
-
-        val psiSeq = generateSequence(start) {
-            if (it.nextSibling == stop)
-                null
-            else
-                it.nextSibling
-        }
-
-        return PsiUtilCore.toPsiElementArray(psiSeq.filter(pred).toList())
-    }
+//    private fun collectElements(start: PsiElement, stop: PsiElement?, pred: (PsiElement) -> Boolean): Array<out PsiElement> {
+//        check(stop == null || start.parent == stop.parent)
+//
+//        val psiSeq = generateSequence(start) {
+//            if (it.nextSibling == stop)
+//                   null
+//            else
+//                it.nextSibling
+//        }
+//
+//        return PsiUtilCore.toPsiElementArray(psiSeq.filter(pred).toList())
+//    }
 }
