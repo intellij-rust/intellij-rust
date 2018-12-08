@@ -96,7 +96,15 @@ allprojects {
     }
 
     sourceSets {
-        getByName("main").java.srcDirs("src/gen")
+        getByName("main").apply {
+            java.srcDirs("src/gen")
+            kotlin.srcDirs("src/$platformVersion/main/kotlin")
+            resources.srcDirs("src/$platformVersion/main/resources")
+        }
+        getByName("test").apply {
+            kotlin.srcDirs("src/$platformVersion/test/kotlin")
+            resources.srcDirs("src/$platformVersion/test/resources")
+        }
     }
 
     afterEvaluate {
@@ -147,14 +155,6 @@ project(":") {
     }
 
     sourceSets {
-        getByName("main").apply {
-            kotlin.srcDirs("src/$platformVersion/main/kotlin")
-            resources.srcDirs("src/$platformVersion/main/resources")
-        }
-        getByName("test").apply {
-            kotlin.srcDirs("src/$platformVersion/test/kotlin")
-            resources.srcDirs("src/$platformVersion/test/resources")
-        }
         create("debugger") {
             kotlin.srcDirs("debugger/src/main/kotlin", "debugger/src/$platformVersion/main/kotlin")
             resources.srcDirs("debugger/src/main/resources", "debugger/src/$platformVersion/main/resources")
