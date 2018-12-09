@@ -16,8 +16,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
@@ -111,14 +109,3 @@ val PsiFile.rustFile: RsFile? get() = this as? RsFile
 
 val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
 val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
-
-// TODO: generalize it for other features
-// TODO: maybe save info about features into file stub?
-val RsFile.hasUseExternMacrosFeature: Boolean get() {
-    if (queryAttributes.hasAttributeWithArg("feature", "use_extern_macros")) return true
-    val pkg = containingCargoPackage ?: return false
-    // Current implementation of `lib.rs` in `std` crate uses `use_extern_macros` in the following way
-    // `#![cfg_attr(stage0, feature(use_extern_macros))]`
-    // that prevents us to extract info directly.
-    return pkg.origin == PackageOrigin.STDLIB && pkg.name == STD
-}
