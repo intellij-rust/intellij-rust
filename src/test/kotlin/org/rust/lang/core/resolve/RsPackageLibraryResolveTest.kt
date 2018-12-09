@@ -261,6 +261,34 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test import macro by qualified path without extern crate`() = stubOnlyResolve("""
+    //- lib.rs
+        fn bar() {
+            dep_lib_target::foo!();
+        }                 //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    // TODO
+    fun `test import macro by qualified path with aliased extern crate`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+        //- lib.rs
+            extern crate dep_lib_target as aliased;
+            fn bar() {
+                aliased::foo!();
+            }          //^ dep-lib/lib.rs
+        //- dep-lib/lib.rs
+            #[macro_export]
+            macro_rules! foo {
+                () => {};
+            }
+        """)
+    }
+
     fun `test import from crate root without 'pub' vis`() = stubOnlyResolve("""
     //- lib.rs
         mod foo {

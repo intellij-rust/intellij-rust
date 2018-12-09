@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.macros
 
+import org.rust.lang.core.resolve.NameResolutionTestmarks
+
 class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     fun `test ident`() = doTest("""
         macro_rules! foo {
@@ -635,4 +637,17 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         2 + 2
     """)
+
+    fun test() = doTest("""
+       macro_rules! foo {
+           () => { $ crate::bar!(); };
+       }
+       #[macro_export]
+       macro_rules! bar {
+           () => { fn foo() {} };
+       }
+       foo!();
+    """, """
+        fn foo() {}
+    """ to NameResolutionTestmarks.dollarCrateMagicIdentifier)
 }

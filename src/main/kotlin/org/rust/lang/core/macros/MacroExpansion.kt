@@ -31,7 +31,7 @@ fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<List<RsExpandedEl
         else -> {
             val project = context.project
             if (!project.rustSettings.expandMacros) return NULL_RESULT
-            val def = call.reference.resolve() as? RsMacro ?: return NULL_RESULT
+            val def = call.path.reference.resolve() as? RsMacro ?: return NULL_RESULT
             val expander = MacroExpander(project)
             val result = expander.expandMacro(def, call)
             result?.forEach {
