@@ -225,6 +225,30 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
     return false
 }
 
+private fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
+    val refinedName = when {
+        name.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && context.findMacroCallExpandedFrom() != null -> {
+            NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
+            val refinedName = name.removePrefix(MACRO_CRATE_IDENTIFIER_PREFIX)
+            if (refinedName == "self") {
+                return context.crateRoot as? RsFile
+            }
+            refinedName
+        }
+        else -> name
+    }
+    var found: RsFile? = null
+    processExternCrateResolveVariants(context, false) {
+        if (it.name == refinedName) {
+            found = it.element as? RsFile
+            true
+        } else {
+            false
+        }
+    }
+    return found
+}
+
 private val RsPath.qualifier: RsPath?
     get() {
         path?.let { return it }
@@ -270,8 +294,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
 
             val containingMod = path.containingMod
             if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
-                containingMod is RsFile && containingMod.isCrateRoot &&
-                containingMod.hasUseExternMacrosFeature) {
+                containingMod is RsFile && containingMod.isCrateRoot) {
                 if (processAll(exportedMacros(base), processor)) return true
             }
         }
@@ -499,13 +522,7 @@ fun processMacroCallVariants(element: PsiElement, processor: RsResolveProcessor)
     return processAll(exportedMacros(prelude), processor)
 }
 
-private class MacroResolver private constructor(
-    context: PsiElement
-) {
-    private val hasExternMacrosFeature = lazy {
-        (context.ancestorOrSelf<RsElement>()?.crateRoot as? RsFile)?.hasUseExternMacrosFeature ?: false
-    }
-
+private class MacroResolver private constructor() {
     private val exportingMacrosCrates = mutableMapOf<String, RsFile>()
     private val useItems = mutableListOf<RsUseItem>()
 
@@ -534,6 +551,12 @@ private class MacroResolver private constructor(
             }
         }) {
             return true
+        }
+
+        val crateRoot = startElement.contextOrSelf<RsElement>()?.crateRoot as? RsFile
+        if (crateRoot != null) {
+            NameResolutionTestmarks.processSelfCrateExportedMacros.hit()
+            if (processAll(exportedMacros(crateRoot), processor)) return true
         }
 
         return processRemainedExportedMacros(processor)
@@ -628,11 +651,8 @@ private class MacroResolver private constructor(
                         // via #[macro_reexport] attribute (old way)
                         if (processAll(reexportedMacros, processor)) return true
                     } else {
-                        // or from `use` items (new way).
-                        // It requires `#![feature(use_extern_macros)]`
-                        if (hasExternMacrosFeature.value) {
-                            exportingMacrosCrates[item.nameWithAlias] = mod
-                        }
+                        // or from `use` items (new way)
+                        exportingMacrosCrates[item.nameWithAlias] = mod
                     }
                 }
 
@@ -645,25 +665,19 @@ private class MacroResolver private constructor(
     }
 
     private fun processRemainedExportedMacros(processor: (RsMacro) -> Boolean): Boolean {
-        // Really we are not very accurate here because we use extern crate from same parent
-        // Ideally we should take into account all extern crate from super mods
-        // but it's ok for now
-        if (exportingMacrosCrates.isNotEmpty()) {
-            for (useItem in useItems) {
-                if (processAll(collectExportedMacros(useItem, exportingMacrosCrates), processor)) return true
-            }
+        for (useItem in useItems) {
+            if (processAll(collectMacrosImportedWithUseItem(useItem, exportingMacrosCrates), processor)) return true
         }
-
         return false
     }
 
     companion object {
         fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: (RsMacro) -> Boolean): Boolean =
-            MacroResolver(startElement).processMacrosInLexicalOrderUpward(startElement, processor)
+            MacroResolver().processMacrosInLexicalOrderUpward(startElement, processor)
 
         private fun visibleMacros(scope: RsItemsOwner): List<RsMacro> =
             CachedValuesManager.getCachedValue(scope) {
-                val macros = MacroResolver(scope).collectMacrosInScopeDownward(scope)
+                val macros = MacroResolver().collectMacrosInScopeDownward(scope)
                 CachedValueProvider.Result.create(macros, scope.project.rustStructureModificationTracker)
             }
 
@@ -716,7 +730,7 @@ private fun exportedMacrosInternal(scope: RsFile): List<RsMacro> {
             for (useItem in scope.stubChildrenOfType<RsUseItem>()) {
                 // only public use items can reexport macros
                 if (!useItem.isPublic) continue
-                addAll(collectExportedMacros(useItem, exportingMacrosCrates))
+                addAll(collectMacrosImportedWithUseItem(useItem, exportingMacrosCrates))
             }
         }
     }
@@ -742,52 +756,57 @@ private fun reexportedMacros(item: RsExternCrateItem): List<RsMacro>? {
     return exportingMacroNames.mapNotNull { nameToExportedMacro[it] }
 }
 
-private fun collectExportedMacros(
+private fun collectMacrosImportedWithUseItem(
     useItem: RsUseItem,
     exportingMacrosCrates: Map<String, RsMod>
 ): List<RsMacro> {
+    // We don't want to perform path resolution during macro resolve (because it can recursively perform
+    // macro resolve and so be slow and incorrect).
+    // We assume that macro can only be imported by 2-segment path (`foo::bar`), where the first segment
+    // is a name of the crate (may be aliased) and the second segment is the name of the macro.
     return buildList {
         val root = useItem.useSpeck ?: return@buildList
 
-        fun forEachRootUseSpeck(useSpeck: RsUseSpeck, consumer: (RsUseSpeck, RsPath) -> Unit) {
-            val path = useSpeck.path
-            if (path != null) {
-                consumer(useSpeck, path)
+        for ((crateName, macroName) in collect2segmentPaths(root)) {
+            val crateRoot = exportingMacrosCrates[crateName] as? RsFile
+                ?: findDependencyCrateByName(useItem, crateName)
+                ?: continue
+            val exportedMacros = exportedMacros(crateRoot)
+            addAll(if (macroName == null) {
+                exportedMacros
             } else {
-                useSpeck.useGroup?.useSpeckList?.forEach { forEachRootUseSpeck(it, consumer) }
-            }
+                exportedMacros.filter { it.name == macroName }
+            })
         }
+    }
+}
 
-        forEachRootUseSpeck(root) { speck, path ->
-            val basePath = path.basePath()
-            // If path name is not in `exportingMacrosCrates` then
-            // it can't be resolved to extern crate mod exporting macros.
-            // Note, it significantly improves performance of macro resolution
-            val expectedMod = exportingMacrosCrates[basePath.referenceName] ?: return@forEachRootUseSpeck
+/** Represents a path of 2 segments `foo::bar`. For wildcard `foo::*` path [rightSegment] is null */
+private data class TwoSegmentPath(val leftSegment: String, val rightSegment: String?)
 
-            val mod = basePath.reference.resolve() as? RsFile ?: return@forEachRootUseSpeck
-            // Don't try to resolve leaf items if `mod` can't bring macros at all
-            if (mod == expectedMod) {
-                val crateExportedMacros = lazy { exportedMacros(mod) }
+/** For given `use foo::{bar, baz::quux, spam::{eggs}}` return the only `[foo::bar]`. */
+private fun collect2segmentPaths(rootSpeck: RsUseSpeck): List<TwoSegmentPath> {
+    val result = mutableListOf<TwoSegmentPath>()
 
-                speck.forEachLeafSpeck { leafSpeck ->
-                    // We should use multi resolve here
-                    // because single use speck can import module and macro at same time
-                    val resolvedItems = leafSpeck.path?.reference?.multiResolve().orEmpty()
-
-                    if (leafSpeck.isStarImport) {
-                        if (mod == resolvedItems.singleOrNull()) {
-                            addAll(crateExportedMacros.value)
-                        }
-                    } else {
-                        val exportedMacros = resolvedItems.filterIsInstance<RsMacro>()
-                            .filter { it in crateExportedMacros.value }
-                        addAll(exportedMacros)
-                    }
-                }
+    fun go(speck: RsUseSpeck) {
+        val path = speck.path
+        val qualifier = path?.qualifier
+        val group = speck.useGroup
+        if (path != null && qualifier != null && qualifier.qualifier != null) return
+        val firstSegment = qualifier ?: path
+        val lastSegment = path ?: qualifier
+        when {
+            group == null && firstSegment != null && (path != null || speck.isStarImport) -> {
+                result += TwoSegmentPath(firstSegment.referenceName, path?.referenceName)
+            }
+            group != null && firstSegment == lastSegment -> {
+                group.useSpeckList.forEach { go(it) }
             }
         }
     }
+    go(rootSpeck)
+
+    return result
 }
 
 private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
@@ -1095,6 +1114,8 @@ object NameResolutionTestmarks {
     val shadowingStdCrates = Testmark("shadowingStdCrates")
     val missingMacroExport = Testmark("missingMacroExport")
     val missingMacroUse = Testmark("missingMacroUse")
+    val processSelfCrateExportedMacros = Testmark("processSelfCrateExportedMacros")
+    val dollarCrateMagicIdentifier = Testmark("dollarCrateMagicIdentifier")
     val selfInGroup = Testmark("selfInGroup")
     val otherVersionOfSameCrate = Testmark("otherVersionOfSameCrate")
 }
