@@ -60,7 +60,7 @@ FILE
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
       PsiElement(identifier)('bar')
-      PsiErrorElement:'!' expected, got 'fn'
+      PsiErrorElement:'!' or '::' expected, got 'fn'
         <empty list>
       PsiWhiteSpace('\n    ')
       RsFunctionImpl(FUNCTION)

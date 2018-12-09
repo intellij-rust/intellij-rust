@@ -28,6 +28,7 @@ import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.expandAllMacrosRecursively
 import org.rust.lang.core.psi.ext.expansion
+import org.rust.lang.core.psi.ext.macroName
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -89,9 +90,9 @@ private fun<T> Project.computeWithCancelableProgress(title: String, supplier: ()
 
 private fun getMacroExpansionViewTitle(macroToExpand: RsMacroCall, expandRecursively: Boolean): String =
     if (expandRecursively) {
-        "Recursive expansion of ${macroToExpand.referenceName}! macro"
+        "Recursive expansion of ${macroToExpand.macroName}! macro"
     } else {
-        "First level expansion of ${macroToExpand.referenceName}! macro"
+        "First level expansion of ${macroToExpand.macroName}! macro"
     }
 
 private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Boolean): List<RsExpandedElement> {

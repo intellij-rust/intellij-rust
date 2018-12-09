@@ -53,5 +53,5 @@ FILE
   PsiElement(+)('+')
   PsiWhiteSpace(' ')
   PsiElement(identifier)('A')
-  PsiErrorElement:'!' expected, got ';'
+  PsiErrorElement:'!' or '::' expected, got ';'
     PsiElement(;)(';')

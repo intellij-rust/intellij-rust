@@ -252,10 +252,12 @@ private val RsPath.qualifier: RsPath?
     }
 
 fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-
+    val parent = path.context
+    if (parent is RsMacroCall) {
+        return processMacroCallPathResolveVariants(path, isCompletion, processor)
+    }
     val qualifier = path.qualifier
     val typeQual = path.typeQual
-    val parent = path.context
     val ns = when (parent) {
         is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
         is RsUseSpeck -> when {
@@ -270,6 +272,11 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         }
         is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
         else -> TYPES_N_VALUES
+    }
+
+    // RsPathExpr can became a macro by adding a trailing `!`, so we add macros to completion
+    if (isCompletion && parent is RsPathExpr && qualifier?.path == null) {
+        if (processMacroCallPathResolveVariants(path, true, processor)) return true
     }
 
     if (qualifier != null) {
@@ -506,11 +513,33 @@ fun processAssocTypeVariants(trait: RsTraitItem, processor: RsResolveProcessor):
     return false
 }
 
-fun processMacroCallVariants(element: PsiElement, processor: RsResolveProcessor): Boolean {
+private fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+    // Allowed only 1 or 2-segment paths: `foo!()` or `foo::bar!()`, but not foo::bar::baz!();
+    val qualifier = path.qualifier
+    if (qualifier?.path != null) return false
+    return if (qualifier == null) {
+        if (isCompletion) {
+            processMacroCallVariantsInScope(path, processor)
+        } else {
+            val resolved = pickFirstResolveVariant(path.referenceName) { processMacroCallVariantsInScope(path, it) }
+                as? RsMacro
+            resolved?.let { processor(it) } ?: false
+        }
+    } else {
+        processMacrosExportedByCrateName(path, qualifier.referenceName, processor)
+    }
+}
 
-    if (MacroResolver.processMacrosInLexicalOrderUpward(element) { processor(it) }) return true
+fun processMacrosExportedByCrateName(context: RsElement, crateName: String, processor: RsResolveProcessor): Boolean {
+    val crateRoot = findDependencyCrateByName(context, crateName) ?: return false
+    val exportedMacros = exportedMacros(crateRoot)
+    return processAll(exportedMacros, processor)
+}
 
-    val prelude = (element.contextOrSelf<RsElement>())?.findDependencyCrateRoot(STD) ?: return false
+fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolveProcessor): Boolean {
+    if (MacroResolver.processMacrosInLexicalOrderUpward(context) { processor(it) }) return true
+
+    val prelude = context.contextOrSelf<RsElement>()?.findDependencyCrateRoot(STD) ?: return false
     return processAll(exportedMacros(prelude), processor)
 }
 

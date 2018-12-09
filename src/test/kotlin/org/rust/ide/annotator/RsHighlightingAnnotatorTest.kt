@@ -38,19 +38,18 @@ class RsHighlightingAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
-    private val `$` = '$'
-
     fun `test macro`() = checkInfo("""
         fn <info>main</info>() {
-            <info>println!</info>["Hello, World!"];
-            <info>unreachable!</info>();
+            <info>println</info><info>!</info>["Hello, World!"];
+            <info>unreachable</info><info>!</info>();
+            std::<info>unreachable</info><info>!</info>();
         }
         <info>macro_rules!</info> foo {
-            (x => $`$`<info>e</info>:expr) => (println!("mode X: {}", $`$`<info>e</info>));
-            (y => $`$`<info>e</info>:expr) => (println!("mode Y: {}", $`$`<info>e</info>));
+            (x => $ <info>e</info>:expr) => (println!("mode X: {}", $ <info>e</info>));
+            (y => $ <info>e</info>:expr) => (println!("mode Y: {}", $ <info>e</info>));
         }
         impl T {
-            <info>foo!</info>();
+            <info>foo</info><info>!</info>();
         }
     """)
 

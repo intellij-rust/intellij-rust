@@ -11,12 +11,8 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.expandMacro
-import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
-import org.rust.lang.core.resolve.ref.RsMacroCallReferenceImpl
-import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsMacroCallStub
 
 
@@ -25,23 +21,11 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>, RsM
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsMacroCallStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RsReference = RsMacroCallReferenceImpl(this)
-
-    override val referenceName: String
-        get() = macroName
-
-    override val referenceNameElement: PsiElement
-        get() = findChildByType(IDENTIFIER)!!
-
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
 
 val RsMacroCall.macroName: String
-    get() {
-        val stub = stub
-        if (stub != null) return stub.macroName
-        return referenceNameElement.unescapedText
-    }
+    get() = path.referenceName
 
 val RsMacroCall.macroBody: String?
     get() {
