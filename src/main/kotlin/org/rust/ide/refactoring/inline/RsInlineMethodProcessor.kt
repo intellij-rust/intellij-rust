@@ -3,13 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.refactoring.inline
+package org.rust.ide.refactoring.inline
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.stdext.buildList
 
 class RsInlineMethodProcessor {
     companion object {

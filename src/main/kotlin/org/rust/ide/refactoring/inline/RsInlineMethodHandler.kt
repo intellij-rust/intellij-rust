@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.refactoring.inline
+package org.rust.ide.refactoring.inline
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.Language
@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFunction
 
