@@ -18,12 +18,6 @@ class RsInlineMethodProcessor {
                 .filter { it.ancestorStrict<RsFunction>() == fn }
                 .size
 
-//            fn.block?.rbrace?.prevSibling?.let {
-//                if (it is RsExpr && it !is RsRetExpr) {
-//                    ++returnsCount
-//                }
-//            }
-
             fn.block!!.expr?.let {
                 if (it !is RsRetExpr) {
                     ++returnsCount

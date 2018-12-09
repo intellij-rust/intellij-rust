@@ -17,10 +17,9 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFunction
 
 class RsInlineMethodHandler: InlineActionHandler() {
-    override fun isEnabledOnElement(element: PsiElement?): Boolean  =
-        element is RsFunction && element.navigationElement is RsFunction
+    override fun isEnabledOnElement(element: PsiElement): Boolean  = canInlineElement(element)
 
-    override fun isEnabledOnElement(element: PsiElement?, editor: Editor?): Boolean =
+    override fun isEnabledOnElement(element: PsiElement, editor: Editor?): Boolean =
         isEnabledOnElement(element)
 
     override fun inlineElement(project: Project, editor: Editor, element: PsiElement) {
@@ -50,22 +49,24 @@ class RsInlineMethodHandler: InlineActionHandler() {
             }
         }
 
-        if (reference != null) {
-            RsInlineMethodProcessor.checkIfLoopCondition(function, reference.element)
+        if (reference != null && RsInlineMethodProcessor.checkIfLoopCondition(function, reference.element)) {
+            errorHint(project, editor, "cannot inline multiline method into \"while\" loop condition")
+            return
         }
 
+        // TODO: inline dialog call here
     }
 
     override fun isEnabledForLanguage(l: Language?): Boolean = l == RsLanguage
 
-    override fun canInlineElementInEditor(element: PsiElement, editor: Editor?): Boolean =
-        canInlineElement(element)
+    override fun canInlineElementInEditor(element: PsiElement, editor: Editor?): Boolean = canInlineElement(element)
 
     override fun canInlineElement(element: PsiElement): Boolean =
-        element is RsFunction
+        element is RsFunction && element.navigationElement is RsFunction
 
     private fun errorHint(project: Project, editor: Editor, message: String) {
 //        CommonRefactoringUtil.showErrorHint(project, editor, message, "Rs Inline Method", "refactoring.inlineMethod")
+        // TODO: figure out how to display an error in more correct way
         Messages.showErrorDialog(project, message, "method inline is not possible")
     }
 }
