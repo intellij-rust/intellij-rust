@@ -8,10 +8,7 @@ package org.rust.lang.core.type
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.ty.TyBool
-import org.rust.lang.core.types.ty.TyChar
-import org.rust.lang.core.types.ty.TyFloat
-import org.rust.lang.core.types.ty.TyInteger
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 class RsImplicitTraitsTest : RsTypificationTestBase() {
@@ -25,6 +22,11 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
 
     fun `test slice is not Sized`() = doTest("""
         fn foo() -> Box<[i32]> { unimplemented!() }
+                      //^ !Sized
+    """)
+
+    fun `test str is not Sized`() = doTest("""
+        fn foo() -> Box<str> { unimplemented!() }
                       //^ !Sized
     """)
 
@@ -145,7 +147,7 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
     private fun checkPrimitiveTypes(traitName: String) {
         val allIntegers = TyInteger.VALUES.toTypedArray()
         val allFloats = TyFloat.VALUES.toTypedArray()
-        for (ty in listOf(TyBool, TyChar, *allIntegers, *allFloats)) {
+        for (ty in listOf(TyBool, TyChar, TyUnit, TyNever, *allIntegers, *allFloats)) {
             doTest("""
                 fn foo() -> $ty { unimplemented!() }
                           //^ $traitName
