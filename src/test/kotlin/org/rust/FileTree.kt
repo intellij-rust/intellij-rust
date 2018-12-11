@@ -27,7 +27,7 @@ fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree =
 fun fileTreeFromText(@Language("Rust") text: String): FileTree {
     val fileSeparator = """^\s*//- (\S+)\s*$""".toRegex(RegexOption.MULTILINE)
     val fileNames = fileSeparator.findAll(text).map { it.groupValues[1] }.toList()
-    val fileTexts = fileSeparator.split(text).filter(String::isNotBlank).map { it.trimIndent() }
+    val fileTexts = fileSeparator.split(text).dropWhile(String::isBlank).map { it.trimIndent() }
 
     check(fileNames.size == fileTexts.size) {
         "Have you placed `//- filename.rs` markers?"
