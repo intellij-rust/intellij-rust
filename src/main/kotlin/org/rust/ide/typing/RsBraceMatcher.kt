@@ -146,7 +146,7 @@ private class RsBaseBraceMatcher : PairedBraceMatcher {
                 SEMICOLON,
                 COMMA,
                 RPAREN,
-                RBRACE,
+                RBRACK,
                 RBRACE, LBRACE
             )
         )
