@@ -27,6 +27,7 @@ class RsCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
 
         override fun initTabs(settings: CodeStyleSettings?) {
             addIndentOptionsTab(settings)
+            addSpacesTab(settings)
             addWrappingAndBracesTab(settings)
             addBlankLinesTab(settings)
         }
