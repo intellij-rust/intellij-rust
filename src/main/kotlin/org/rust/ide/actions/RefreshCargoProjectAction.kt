@@ -21,9 +21,7 @@ class RefreshCargoProjectAction : CargoProjectActionBase() {
 
     override fun update(e: AnActionEvent) {
         val project = e.project
-        if (project == null || project.toolchain == null || !project.hasCargoProject) {
-            e.presentation.isEnabled = false
-        }
+        e.presentation.isEnabled = project != null && project.toolchain != null && project.hasCargoProject
     }
 
     override fun actionPerformed(e: AnActionEvent) {
