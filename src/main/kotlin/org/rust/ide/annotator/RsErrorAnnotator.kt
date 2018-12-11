@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.Annotator
@@ -14,7 +15,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.toolchain.RustChannel
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
@@ -22,13 +22,12 @@ import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAM
 import org.rust.lang.core.CRATE_IN_PATHS
 import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature
-import org.rust.lang.core.FeatureState.ACCEPTED
-import org.rust.lang.core.FeatureState.ACTIVE
+import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
+import org.rust.lang.core.FeatureAvailability.NOT_AVAILABLE
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
-import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -270,26 +269,20 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         holder: AnnotationHolder,
         element: PsiElement,
         feature: CompilerFeature,
-        presentableFeatureName: String
+        presentableFeatureName: String,
+        vararg fixes: LocalQuickFix
     ) {
-        val rsElement = element.ancestorOrSelf<RsElement>() ?: return
-        val version = rsElement.cargoProject?.rustcInfo?.version ?: return
-
-        if (feature.state == ACTIVE || feature.state == ACCEPTED && version.semver < feature.since) {
-            val diagnostic = if (version.channel != RustChannel.NIGHTLY) {
-                RsDiagnostic.ExperimentalFeature(element, presentableFeatureName)
-            } else {
-                val crateRoot = rsElement.crateRoot ?: return
-                val attrs = RsFeatureIndex.getFeatureAttributes(element.project, feature.name)
-                if (attrs.none { it.crateRoot == crateRoot }) {
-                    val fix = AddFeatureAttributeFix(feature.name, crateRoot)
-                    RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, fix)
-                } else {
-                    null
-                }
+        val availability = feature.availability(element)
+        val diagnostic = when (availability) {
+            NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, fixes.toList())
+            CAN_BE_ADDED -> {
+                val fix = AddFeatureAttributeFix(feature.name, element)
+                RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, listOf(*fixes, fix))
             }
-            diagnostic?.addToHolder(holder)
+            else -> return
         }
+
+        diagnostic.addToHolder(holder)
     }
 
     private fun checkLabel(holder: AnnotationHolder, label: RsLabel) {

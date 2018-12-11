@@ -5,10 +5,30 @@
 
 package org.rust.lang.core
 
+import com.intellij.psi.PsiElement
 import com.intellij.util.text.SemVer
+import org.rust.cargo.toolchain.RustChannel
+import org.rust.lang.core.FeatureAvailability.*
+import org.rust.lang.core.FeatureState.ACCEPTED
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.cargoProject
+import org.rust.lang.core.stubs.index.RsFeatureIndex
 
 data class CompilerFeature(val name: String, val state: FeatureState, val since: SemVer) {
     constructor(name: String, state: FeatureState, since: String) : this(name, state, SemVer.parseFromText(since)!!)
+
+    fun availability(element: PsiElement): FeatureAvailability {
+        val rsElement = element.ancestorOrSelf<RsElement>() ?: return UNKNOWN
+        val version = rsElement.cargoProject?.rustcInfo?.version ?: return UNKNOWN
+
+        if (state == ACCEPTED && version.semver >= since) return AVAILABLE
+        if (version.channel != RustChannel.NIGHTLY) return NOT_AVAILABLE
+
+        val crateRoot = rsElement.crateRoot ?: return UNKNOWN
+        val attrs = RsFeatureIndex.getFeatureAttributes(element.project, name)
+        return if (attrs.any { it.crateRoot == crateRoot }) AVAILABLE else CAN_BE_ADDED
+    }
 }
 
 enum class FeatureState {
@@ -24,4 +44,11 @@ enum class FeatureState {
      * without any additional attributes
      */
     ACCEPTED
+}
+
+enum class FeatureAvailability {
+    AVAILABLE,
+    CAN_BE_ADDED,
+    NOT_AVAILABLE,
+    UNKNOWN
 }
