@@ -5,7 +5,12 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDirectory
+import org.rust.lang.RsConstants
+import org.rust.lang.RsFileType
+import org.rust.lang.core.psi.RsFile
+import org.rust.openapiext.findFileByMaybeRelativePath
 import java.util.*
 
 interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
@@ -27,9 +32,39 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
      */
     val modName: String?
 
+    /**
+     *  Returns value of `path` attribute related to this module.
+     *  If module doesn't have `path` attribute, returns null.
+     *
+     *  Note, in case of non inline module (i.e. declared via `mod foo;`)
+     *  `path` attribute belongs to module declaration but not to module item itself
+     */
+    val pathAttribute: String?
+
     val ownsDirectory: Boolean
 
-    val ownedDirectory: PsiDirectory?
+    /**
+     *  Returns directory where direct submodules should be located
+     */
+    @JvmDefault
+    val ownedDirectory: PsiDirectory? get() {
+        if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return contextualFile.originalFile.parent
+
+        val explicitPath = pathAttribute
+        val (parentDirectory, path) = if (explicitPath != null) {
+            contextualFile.originalFile.parent to explicitPath
+        } else {
+            `super`?.ownedDirectory to name
+        }
+
+        if (path == null) return null
+
+        // Don't use `FileUtil#getNameWithoutExtension` to correctly process relative paths like `./foo`
+        val directoryPath = FileUtil.toSystemIndependentName(path).removeSuffix(".${RsFileType.defaultExtension}")
+        val directory = parentDirectory?.virtualFile
+            ?.findFileByMaybeRelativePath(directoryPath) ?: return null
+        return parentDirectory.manager.findDirectory(directory)
+    }
 
     val isCrateRoot: Boolean
 }

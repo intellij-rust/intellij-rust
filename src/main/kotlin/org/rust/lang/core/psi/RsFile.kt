@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
@@ -58,13 +57,13 @@ class RsFile(
         return declaration?.name ?: if (name != RsConstants.MOD_RS_FILE) FileUtil.getNameWithoutExtension(name) else parent?.name
     }
 
+    override val pathAttribute: String?
+        get() = declaration?.pathAttribute
+
     override val crateRelativePath: String? get() = RsPsiImplUtil.modCrateRelativePath(this)
 
     override val ownsDirectory: Boolean
         get() = name == RsConstants.MOD_RS_FILE || isCrateRoot
-
-    override val ownedDirectory: PsiDirectory?
-        get() = originalFile.parent
 
     override val isCrateRoot: Boolean
         get() {

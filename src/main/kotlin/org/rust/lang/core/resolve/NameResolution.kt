@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValueProvider
@@ -30,7 +31,11 @@ import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.NameResolutionTestmarks.crateRootModule
 import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
+import org.rust.lang.core.resolve.NameResolutionTestmarks.modDeclExplicitPathInInlineModule
+import org.rust.lang.core.resolve.NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule
+import org.rust.lang.core.resolve.NameResolutionTestmarks.modRsFile
 import org.rust.lang.core.resolve.NameResolutionTestmarks.otherVersionOfSameCrate
 import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
@@ -129,10 +134,12 @@ fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, p
  *
  *  ```
  *  // foo.rs
- *  pub mod bar; // looks up `bar.rs` or `bar/mod.rs` in the same dir
+ *  pub mod bar; // looks up `bar.rs` or `bar/mod.rs` in the same dir if `foo` is crate root,
+ *               // `foo/bar.rs` or `foo/bar/mod.rs` otherwise
  *
  *  pub mod nested {
- *      pub mod baz; // looks up `nested/baz.rs` or `nested/baz/mod.rs`
+ *      pub mod baz; // looks up `nested/baz.rs` or `nested/baz/mod.rs` if `foo` is crate root,
+ *                   // `foo/nested/baz.rs` or `foo/nested/baz/mod.rs` otherwise
  *  }
  *
  *  ```
@@ -142,13 +149,27 @@ fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, p
  *  | from a subdirectory path that mirrors the module hierarchy.
  *
  * Reference:
- *      https://github.com/rust-lang/rust/blob/master/src/doc/reference.md#modules
+ *      https://github.com/rust-lang-nursery/reference/blob/master/src/items/modules.md
  */
 fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolveProcessor): Boolean {
-    val dir = modDecl.containingMod.ownedDirectory ?: return false
+    val containingMod = modDecl.containingMod
+
+    val ownedDirectory = containingMod.ownedDirectory
+    val inModRs = modDecl.contextualFile.name == RsConstants.MOD_RS_FILE
+    val inCrateRoot = containingMod.isCrateRoot
 
     val explicitPath = modDecl.pathAttribute
     if (explicitPath != null) {
+        // Explicit path is relative to:
+        // * owned directory when module declared in inline module
+        // * parent of module declaration otherwise
+        val dir = if (containingMod is RsFile) {
+            modDeclExplicitPathInNonInlineModule.hit()
+            modDecl.contextualFile.parent
+        } else {
+            modDeclExplicitPathInInlineModule.hit()
+            ownedDirectory
+        } ?: return false
         val vFile = dir.virtualFile.findFileByRelativePath(FileUtil.toSystemIndependentName(explicitPath))
             ?: return false
         val mod = vFile.toPsiFile(modDecl.project)?.rustFile ?: return false
@@ -156,25 +177,53 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
         val name = modDecl.name ?: return false
         return processor(name, mod)
     }
+    if (ownedDirectory == null) return false
     if (modDecl.isLocal) return false
 
-    for (file in dir.files) {
-        if (file == modDecl.contextualFile.originalFile || file.name == RsConstants.MOD_RS_FILE) continue
-        val mod = file.rustFile ?: continue
+    fun fileName(file: PsiFile): String {
         val fileName = FileUtil.getNameWithoutExtension(file.name)
         val modDeclName = modDecl.referenceName
         // Handle case-insensitive filesystem (windows)
-        val name = if (modDeclName.toLowerCase() == fileName.toLowerCase()) {
-            modDeclName
-        } else {
-            fileName
-        }
+        return if (modDeclName.toLowerCase() == fileName.toLowerCase()) modDeclName else fileName
+    }
+
+    for (file in ownedDirectory.files) {
+        if (file == modDecl.contextualFile.originalFile || file.name == RsConstants.MOD_RS_FILE) continue
+        val mod = file.rustFile ?: continue
+        val name = fileName(file)
         if (processor(name, mod)) return true
     }
 
-    for (d in dir.subdirectories) {
-        val mod = d.findFile(RsConstants.MOD_RS_FILE)?.rustFile ?: continue
-        if (processor(d.name, mod)) return true
+    for (d in ownedDirectory.subdirectories) {
+        val mod = d.findFile(RsConstants.MOD_RS_FILE)?.rustFile
+        if (mod != null) {
+            if (processor(d.name, mod)) return true
+        }
+
+        // Submodule file of crate root (for example, `mod foo;` in `src/main.rs`)
+        // can be located in the same directory with parent module (i.e. in `src/foo.rs`)
+        // or in `mod.rs` of subdirectory of crate root dir (i.e. in `src/foo/mod.rs`)
+        // Both cases are handled above
+        if (inCrateRoot) {
+            crateRootModule.hit()
+            continue
+        }
+
+        // We shouldn't search possible module files in subdirectories
+        // if module declaration is located in `mod.rs`
+        if (inModRs) {
+            modRsFile.hit()
+            continue
+        }
+
+        if (d.name == containingMod.modName) {
+            for (file in d.files) {
+                if (file.name == RsConstants.MOD_RS_FILE) continue
+                val rustFile = file.rustFile ?: continue
+                val fileName = fileName(file)
+                if (processor(fileName, rustFile)) return true
+            }
+        }
     }
 
     return false
@@ -1089,6 +1138,10 @@ object NameResolutionTestmarks {
     val missingMacroUse = Testmark("missingMacroUse")
     val selfInGroup = Testmark("selfInGroup")
     val otherVersionOfSameCrate = Testmark("otherVersionOfSameCrate")
+    val crateRootModule = Testmark("crateRootModule")
+    val modRsFile = Testmark("modRsFile")
+    val modDeclExplicitPathInInlineModule = Testmark("modDeclExplicitPathInInlineModule")
+    val modDeclExplicitPathInNonInlineModule = Testmark("modDeclExplicitPathInNonInlineModule")
 }
 
 private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)
