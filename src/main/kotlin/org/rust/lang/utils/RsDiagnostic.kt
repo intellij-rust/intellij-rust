@@ -731,13 +731,13 @@ sealed class RsDiagnostic(
     class ExperimentalFeature(
         element: PsiElement,
         private val presentableFeatureName: String,
-        private val fix: AddFeatureAttributeFix? = null
+        private val fixes: List<LocalQuickFix>
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0658,
             header = escapeString("$presentableFeatureName is experimental"),
-            fixes = listOfNotNull(fix)
+            fixes = fixes
         )
     }
 
@@ -820,6 +820,17 @@ sealed class RsDiagnostic(
             fixes = listOf(FixVisRestriction(visRestriction))
         )
     }
+
+    class ModuleNotFound(
+        private val modDecl: RsModDeclItem
+    ) : RsDiagnostic(modDecl.identifier) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            UNKNOWN_SYMBOL,
+            E0583,
+            "File not found for module `${modDecl.name}`",
+            fixes = listOf(AddModuleFileFix(modDecl, expandModuleFirst = false))
+        )
+    }
 }
 
 enum class RsErrorCode {
@@ -828,7 +839,7 @@ enum class RsErrorCode {
     E0200, E0201, E0202, E0261, E0262, E0263, E0277,
     E0308, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0463,
-    E0569, E0594,
+    E0569, E0583, E0594,
     E0603, E0614, E0616, E0624, E0658,
     E0704;
 
@@ -839,7 +850,7 @@ enum class RsErrorCode {
 }
 
 enum class Severity {
-    INFO, WARN, ERROR
+    INFO, WARN, ERROR, UNKNOWN_SYMBOL
 }
 
 class PreparedAnnotation(
@@ -868,6 +879,8 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
         simpleHeader(prepared.errorCode, prepared.header),
         "<html>${htmlHeader(prepared.errorCode, prepared.header)}<br>${prepared.description}</html>"
     )
+
+    ann.highlightType = prepared.severity.toProblemHighlightType()
 
     for (fix in prepared.fixes) {
         if (fix is IntentionAction) {
@@ -905,12 +918,13 @@ private fun Severity.toProblemHighlightType(): ProblemHighlightType = when (this
     INFO -> ProblemHighlightType.INFORMATION
     WARN -> ProblemHighlightType.WEAK_WARNING
     ERROR -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    UNKNOWN_SYMBOL -> ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
 }
 
 private fun Severity.toHighlightSeverity(): HighlightSeverity = when (this) {
     INFO -> HighlightSeverity.INFORMATION
     WARN -> HighlightSeverity.WARNING
-    ERROR -> HighlightSeverity.ERROR
+    ERROR, UNKNOWN_SYMBOL -> HighlightSeverity.ERROR
 }
 
 private fun simpleHeader(error: RsErrorCode, description: String): String =

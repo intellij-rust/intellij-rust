@@ -24,6 +24,7 @@ import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
 import org.rust.lang.core.FeatureAvailability.NOT_AVAILABLE
+import org.rust.lang.core.NON_MODRS_MODS
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
@@ -299,7 +300,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         checkDuplicates(holder, modDecl)
         val pathAttribute = modDecl.pathAttribute
 
-        // mods inside blocks require explicit path  attribute
+        // mods inside blocks require explicit path attribute
         // https://github.com/rust-lang/rust/pull/31534
         if (modDecl.isLocal && pathAttribute == null) {
             val message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
@@ -308,19 +309,21 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
 
         if (!modDecl.containingMod.ownsDirectory && pathAttribute == null) {
-            // We don't want to show the warning if there is no cargo project
-            // associated with the current module. Without it we can't know for
-            // sure that a mod is not a directory owner.
-            if (modDecl.cargoWorkspace != null) {
-                holder.createErrorAnnotation(modDecl, "Cannot declare a new module at this location")
-                    .registerFix(AddModuleFileFix(modDecl, expandModuleFirst = true))
+            val featureAvailability = NON_MODRS_MODS.availability(modDecl)
+            if (featureAvailability == NOT_AVAILABLE || featureAvailability == CAN_BE_ADDED) {
+                // We don't want to show the warning if there is no cargo project
+                // associated with the current module. Without it we can't know for
+                // sure that a mod is not a directory owner.
+                if (modDecl.cargoWorkspace != null) {
+                    val addModule = AddModuleFileFix(modDecl, expandModuleFirst = true)
+                    checkFeature(holder, modDecl, NON_MODRS_MODS, "mod statements in non-mod.rs files", addModule)
+                }
+                return
             }
-            return
         }
 
         if (modDecl.reference.resolve() == null) {
-            holder.createErrorAnnotation(modDecl, "Unresolved module")
-                .registerFix(AddModuleFileFix(modDecl, expandModuleFirst = false))
+            RsDiagnostic.ModuleNotFound(modDecl).addToHolder(holder)
         }
     }
 
