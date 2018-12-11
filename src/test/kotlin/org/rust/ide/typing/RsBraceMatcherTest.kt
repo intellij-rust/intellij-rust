@@ -30,6 +30,12 @@ class RsBraceMatcherTest : RsTestBase() {
         "fn foo(<caret>){}"
     )
 
+    fun `test pair parenthesis before bracket`() = doTest(
+        "fn main() { let _ = &[foo<caret>]; }",
+        '(',
+        "fn main() { let _ = &[foo(<caret>)]; }"
+    )
+
     fun `test match parenthesis`() = doMatch("fn foo<caret>(x: (i32, ()) ) {}", ")")
 
     fun `test match square brackets`() = doMatch("fn foo(x: <caret>[i32; 192]) {}", "]")
