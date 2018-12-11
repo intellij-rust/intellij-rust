@@ -19,4 +19,6 @@ class RsCodeStyleSettings(container: CodeStyleSettings) :
     @JvmField var ALLOW_ONE_LINE_MATCH = false
     @JvmField var MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS = 1
     @JvmField var PRESERVE_PUNCTUATION = false
+
+    @JvmField var SPACE_AROUND_ASSOC_TYPE_BINDING = false
 }
