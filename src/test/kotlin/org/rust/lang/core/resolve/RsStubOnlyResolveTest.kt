@@ -71,6 +71,37 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn quux() {}
     """)
 
+    fun `test module path in mod rs`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+    //- foo/mod.rs
+        #[path="baz.rs"]
+        mod bar;
+
+        fn foo() {
+            self::bar::baz();
+                      //^ foo/baz.rs
+        }
+    //- foo/baz.rs
+        pub fn baz() {}
+    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule)
+
+    fun `test module path in non crate root`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+    //- foo.rs
+        #[path="baz.rs"]
+        mod bar;
+
+        fn foo() {
+            self::bar::baz();
+                      //^ baz.rs
+        }
+    //- baz.rs
+        pub fn baz() {}
+    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule)
+
+
     fun `test invalid path`() = stubOnlyResolve("""
     //- main.rs
         use foo::bar;
@@ -243,6 +274,72 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test path inside inline module in crate root`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo {
+            #[path="baz.rs"]
+            pub mod bar;
+        }
+
+        fn main() {
+            self::foo::bar::foo();
+                           //^ foo/baz.rs
+        }
+    //- foo/baz.rs
+        fn foo() {}
+    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
+
+    fun `test path inside inline module in mod rs`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+    //- foo/mod.rs
+        mod bar {
+            #[path="qwe.rs"]
+            pub mod baz;
+        }
+
+        fn foo() {
+            self::bar::baz::baz();
+                           //^ foo/bar/qwe.rs
+        }
+    //- foo/bar/qwe.rs
+        fn baz() {}
+    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
+
+    fun `test path inside inline module in non crate root`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+    //- foo.rs
+        mod bar {
+            #[path="qwe.rs"]
+            pub mod baz;
+        }
+
+        fn foo() {
+            self::bar::baz::baz();
+                           //^ foo/bar/qwe.rs
+        }
+    //- foo/bar/qwe.rs
+        pub fn baz() {}
+    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
+
+    fun `test inline module path in non crate root`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+    //- foo.rs
+        #[path="bar"]
+        pub mod bar {
+            pub mod baz;
+        }
+
+        fn foo() {
+            self::bar::baz::baz();
+                           //^ bar/baz.rs
+        }
+    //- bar/baz.rs
+        pub fn baz() {}
+    """)
+
     fun `test use from child`() = stubOnlyResolve("""
     //- main.rs
         use child::{foo};
@@ -271,25 +368,6 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             pub fn hello() {}
         """)
     }
-
-    // We resolve mod_decls even if the parent module does not own a directory and mod_decl should not be allowed.
-    // This way, we don't need to know the set of crate roots for resolve, which helps indexing.
-    // The `mod_decl not allowed here` error is then reported by an annotator.
-    fun `test mod decl not own`() = stubOnlyResolve("""
-    //- foo.rs
-        pub mod bar;
-
-        mod foo {
-            pub use super::bar::baz;
-                              //^ bar.rs
-        }
-
-    //- bar.rs
-        pub fn baz() {}
-
-    //- main.rs
-        // Empty file
-    """)
 
     fun `test mod decl wrong path`() = stubOnlyResolve("""
     //- main.rs
@@ -449,4 +527,38 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     //- match.rs
         pub fn bar() { println!("Bar"); }
     """)
+
+    fun `test module structure without mod rs 1`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+    //- foo.rs
+        mod bar;
+            //^ foo/bar.rs
+
+    //- foo/bar.rs
+        pub struct Bar;
+    """)
+
+    fun `test module structure without mod rs 2`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+    //- foo/mod.rs
+        mod bar;
+            //^ foo/bar.rs
+
+    //- foo/bar.rs
+        pub struct Bar;
+    //- foo/foo/bar.rs
+        pub struct Baz;
+    """, NameResolutionTestmarks.modRsFile)
+
+    fun `test module structure without mod rs 3`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+           //^ foo.rs
+    //- foo.rs
+        pub struct Foo;
+    //- main/foo.rs
+        pub struct Bar;
+    """, NameResolutionTestmarks.crateRootModule)
 }
