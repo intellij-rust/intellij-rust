@@ -11,6 +11,7 @@ import org.rust.ide.formatter.RsFmtContext
 import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsIfExpr
 
 fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
     val parentType = node.elementType
@@ -39,15 +40,21 @@ fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
                 Indent.getNoneIndent()
             }
 
-    //     let_ =
+    //  Indent let declarations
+        parentType == LET_DECL -> Indent.getContinuationWithoutFirstIndent()
+
+    //     let _ =
     //     92;
     // =>
     //     let _ =>
     //         92;
-        childPsi is RsExpr && (parentType == MATCH_ARM || parentType == LET_DECL || parentType == CONSTANT) ->
+        childPsi is RsExpr && (parentType == MATCH_ARM || parentType == CONSTANT) ->
             Indent.getNormalIndent()
 
-    // Indent expressions (chain calls, binary expressions, ...)
+    // Indent if-expressions
+        parentPsi is RsIfExpr -> Indent.getNoneIndent()
+
+    // Indent other expressions (chain calls, binary expressions, ...)
         parentPsi is RsExpr -> Indent.getContinuationWithoutFirstIndent()
 
     // Where clause bounds
