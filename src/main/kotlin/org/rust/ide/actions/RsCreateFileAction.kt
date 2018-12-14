@@ -16,7 +16,7 @@ import org.rust.ide.icons.RsIcons
 class RsCreateFileAction : CreateFileFromTemplateAction(RsCreateFileAction.CAPTION, "", RsIcons.RUST_FILE),
                            DumbAware {
 
-    override fun getActionName(directory: PsiDirectory?, newName: String?, templateName: String?): String = CAPTION
+    override fun getActionName(directory: PsiDirectory?, newName: String, templateName: String?): String = CAPTION
 
     override fun buildDialog(project: Project?, directory: PsiDirectory?,
                              builder: CreateFileFromTemplateDialog.Builder) {
