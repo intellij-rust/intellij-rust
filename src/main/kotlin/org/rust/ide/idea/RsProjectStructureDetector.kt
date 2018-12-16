@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+package org.rust.ide.idea
+
 import com.intellij.ide.util.importProject.ModuleDescriptor
 import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
@@ -11,8 +13,6 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.ide.idea.CargoConfigurationWizardStep
-import org.rust.ide.idea.RsModuleType
 import java.io.File
 import javax.swing.Icon
 
@@ -51,4 +51,3 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
                                    stepIcon: Icon?): List<ModuleWizardStep> =
         listOf(CargoConfigurationWizardStep.importExistingProject(builder.context, projectDescriptor))
 }
-
