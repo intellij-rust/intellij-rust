@@ -12,8 +12,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.openapiext.runWriteCommandAction
 
 class RsInlineMethodHandler: InlineActionHandler() {
     override fun isEnabledOnElement(element: PsiElement): Boolean  = canInlineElement(element)
@@ -54,6 +58,12 @@ class RsInlineMethodHandler: InlineActionHandler() {
         }
 
         // TODO: inline dialog call here
+
+
+        project.runWriteCommandAction {
+            val factory = RsPsiFactory(project)
+            RsInlineMethodProcessor.replaceLastExprToStatement(function, factory)
+        }
     }
 
     override fun isEnabledForLanguage(l: Language?): Boolean = l == RsLanguage
@@ -67,5 +77,9 @@ class RsInlineMethodHandler: InlineActionHandler() {
 //        CommonRefactoringUtil.showErrorHint(project, editor, message, "Rs Inline Method", "refactoring.inlineMethod")
         // TODO: figure out how to display an error in more correct way
         Messages.showErrorDialog(project, message, "method inline is not possible")
+    }
+
+    private fun doSillyInline(ref: PsiReference?, body: RsBlock?) {
+
     }
 }

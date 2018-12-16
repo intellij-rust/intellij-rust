@@ -11,6 +11,18 @@ import org.rust.lang.core.psi.ext.*
 
 class RsInlineMethodProcessor {
     companion object {
+        fun replaceLastExprToStatement(fn: RsFunction, factory: RsPsiFactory) {
+            val expr = fn.block!!.expr ?: return
+            var text = ""
+            if (expr !is RsRetExpr)
+                text += "return "
+            text += expr.text
+            text += ";"
+
+            val stmt = factory.createStatement(text)
+            expr.replace(stmt)
+        }
+
         fun checkMultipleReturns(fn: RsFunction): Boolean {
             var returnsCount = fn.descendantsOfType<RsRetExpr>()
                 .filter { it.ancestorStrict<RsFunction>() == fn }
