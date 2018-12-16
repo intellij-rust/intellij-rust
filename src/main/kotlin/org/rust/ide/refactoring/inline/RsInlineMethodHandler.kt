@@ -12,11 +12,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
+import com.intellij.psi.util.PsiTreeUtil
+//import com.intellij.psi.util.parentOfType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsStmt
 import org.rust.openapiext.runWriteCommandAction
 
 class RsInlineMethodHandler: InlineActionHandler() {
@@ -35,7 +37,7 @@ class RsInlineMethodHandler: InlineActionHandler() {
         }
 
         val reference = TargetElementUtil.findReference(editor, editor.caretModel.offset)
-
+        element.findElementAt(editor.caretModel.offset)
 
         if (RsInlineMethodProcessor.checkMultipleReturns(function)) {
             errorHint(project, editor, "cannot inline method with more than one exit points")
@@ -63,6 +65,8 @@ class RsInlineMethodHandler: InlineActionHandler() {
         project.runWriteCommandAction {
             val factory = RsPsiFactory(project)
             RsInlineMethodProcessor.replaceLastExprToStatement(function, factory)
+            val statement = PsiTreeUtil.getParentOfType(reference?.element, RsStmt::class.java)
+            doSillyInline(statement!!, body)
         }
     }
 
@@ -79,7 +83,9 @@ class RsInlineMethodHandler: InlineActionHandler() {
         Messages.showErrorDialog(project, message, "method inline is not possible")
     }
 
-    private fun doSillyInline(ref: PsiReference?, body: RsBlock?) {
-
+    private fun doSillyInline(ref: RsStmt, body: RsBlock?) {
+        body!!.stmtList.forEach {
+            ref.parent.addBefore(it, ref)
+        }
     }
 }
