@@ -66,7 +66,7 @@ class RsInlineMethodHandler: InlineActionHandler() {
             val factory = RsPsiFactory(project)
             RsInlineMethodProcessor.replaceLastExprToStatement(function, factory)
             val statement = PsiTreeUtil.getParentOfType(reference?.element, RsStmt::class.java)
-            doSillyInline(statement!!, body)
+            doSillyInline(statement!!, body, factory)
         }
     }
 
@@ -83,9 +83,8 @@ class RsInlineMethodHandler: InlineActionHandler() {
         Messages.showErrorDialog(project, message, "method inline is not possible")
     }
 
-    private fun doSillyInline(ref: RsStmt, body: RsBlock?) {
-        body!!.stmtList.forEach {
-            ref.parent.addBefore(it, ref)
-        }
+    private fun doSillyInline(ref: RsStmt, body: RsBlock, factory: RsPsiFactory) {
+        ref.parent.addBefore(body, ref)
+        ref.parent.addBefore(factory.createNewline(), ref)
     }
 }
