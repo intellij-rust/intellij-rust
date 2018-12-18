@@ -32,6 +32,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test empty generics`() = doTest(true)
     fun `test structs`() = doTest(true)
     fun `test struct literals`() = doTest(true)
+    fun `test try`() = doTest(true)
     fun `test try operator`() = doTest(true)
     fun `test match`() = doTest(true)
     fun `test oror`() = doTest(true)
@@ -44,6 +45,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test match call ambiguity`() = doTest(true)
     fun `test visibility`() = doTest(true)
     fun `test polybounds`() = doTest(true)
+    fun `test async await`() = doTest(true)
 
     fun `test issue320`() = doTest(true)
     fun `test diesel macros`() = doTest(true)
