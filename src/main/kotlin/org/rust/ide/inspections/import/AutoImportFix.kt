@@ -83,7 +83,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         // we uses this info to create correct relative use item path if needed
         var relativeDepth: Int? = null
 
-        val isEdition2018 = originalElement.containingCargoTarget?.edition == CargoWorkspace.Edition.EDITION_2018
+        val isEdition2018 = originalElement.isEdition2018
         val info = candidate.info
         // if crate of importing element differs from current crate
         // we need to add new extern crate item
