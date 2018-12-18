@@ -8,16 +8,11 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.type
 
 
 class RsMethodCallReferenceImpl(
@@ -26,19 +21,6 @@ class RsMethodCallReferenceImpl(
     RsReference {
 
     override val RsMethodCall.referenceAnchor: PsiElement get() = referenceNameElement
-
-    override fun getVariants(): Array<out Any> {
-        val lookup = ImplLookup.relativeTo(element)
-        val receiver = element.receiver.type
-        return collectCompletionVariants {
-            processMethodCallExprResolveVariants(lookup, receiver,
-                filterCompletionVariantsByVisibility(
-                    filterMethodCompletionVariantsByTraitBounds(it, lookup, receiver),
-                    element.containingMod
-                )
-            )
-        }
-    }
 
     override fun multiResolve(): List<RsElement> =
         element.inference?.getResolvedMethod(element)?.map { it.element } ?: emptyList()
@@ -50,21 +32,6 @@ class RsFieldLookupReferenceImpl(
     RsReference {
 
     override val RsFieldLookup.referenceAnchor: PsiElement get() = referenceNameElement
-
-    override fun getVariants(): Array<out Any> {
-        val lookup = ImplLookup.relativeTo(element)
-        val receiver = element.receiver.type
-        return collectCompletionVariants {
-            processDotExprResolveVariants(
-                lookup,
-                receiver,
-                filterCompletionVariantsByVisibility(
-                    filterMethodCompletionVariantsByTraitBounds(it, lookup, receiver),
-                    element.containingMod
-                )
-            )
-        }
-    }
 
     override fun multiResolve(): List<RsElement> =
         element.inference?.getResolvedField(element) ?: emptyList()
@@ -132,28 +99,4 @@ private fun <T : ScopeEntry> collectResolveVariants(referenceName: String, f: ((
         false
     }
     return result
-}
-
-private fun filterMethodCompletionVariantsByTraitBounds(
-    processor: RsResolveProcessor,
-    lookup: ImplLookup,
-    receiver: Ty
-): RsResolveProcessor {
-    // Don't filter partially unknown types
-    if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor
-
-    val cache = mutableMapOf<RsImplItem, Boolean>()
-    return fun(it: ScopeEntry): Boolean {
-        // If not a method (actually a field) or a trait method - just process it
-        if (it !is MethodResolveVariant || it.source !is TraitImplSource.ExplicitImpl) return processor(it)
-        // Filter methods by trait bounds (try to select all obligations for each impl)
-        // We're caching evaluation results here because we can often complete methods
-        // in the same impl and always have the same receiver type
-        val canEvaluate = cache.getOrPut(it.source.value) {
-            lookup.ctx.canEvaluateBounds(it.source.value, receiver)
-        }
-        if (canEvaluate) return processor(it)
-
-        return false
-    }
 }

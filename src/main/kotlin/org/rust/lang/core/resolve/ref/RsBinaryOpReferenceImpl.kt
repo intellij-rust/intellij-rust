@@ -26,6 +26,4 @@ class RsBinaryOpReferenceImpl(
         val operator = element.operatorType as? OverloadableBinaryOperator ?: return emptyList()
         return collectResolveVariants(operator.fnName) { processBinaryOpVariants(element, operator, it) }
     }
-
-    override fun getVariants(): Array<out Any> = emptyArray()
 }

@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementResolveResult
@@ -46,6 +47,8 @@ abstract class RsReferenceBase<T : RsWeakReferenceElement>(
         }
         return element
     }
+
+    override fun getVariants(): Array<out LookupElement> = LookupElement.EMPTY_ARRAY
 
     override fun equals(other: Any?): Boolean = other is RsReferenceBase<*> && element === other.element
 

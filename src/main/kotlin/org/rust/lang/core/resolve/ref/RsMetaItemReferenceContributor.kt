@@ -33,9 +33,6 @@ private class RsDeriveTraitReferenceImpl(
 
     override val RsMetaItem.referenceAnchor: PsiElement? get() = element.identifier
 
-    // Completion in `#[derive]` attribute is provided by `RsDeriveCompletionProvider`
-    override fun getVariants(): Array<Any> = emptyArray()
-
     override fun resolveInner(): List<RsElement> {
         val traitName = element.name ?: return emptyList()
         return collectResolveVariants(traitName) { processDeriveTraitResolveVariants(element, traitName, it) }

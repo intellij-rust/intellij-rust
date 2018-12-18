@@ -55,7 +55,7 @@ object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
             leftSiblings.getOrNull(2)?.elementType != COLONCOLON ||
                 leftSiblings.getOrNull(3)?.elementType != IDENTIFIER)
 
-        result.addAllElements(collectCompletionVariants { originalProcessor ->
+        collectCompletionVariants(result) { originalProcessor ->
             val processor: (ScopeEntry) -> Boolean = { entry ->
                 val macro = entry.element
                 val hide = mod != null && macro is RsMacro && isHidden(macro, mod)
@@ -68,7 +68,7 @@ object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
             } else {
                 processMacroCallVariantsInScope(position, processor)
             }
-        }.asList())
+        }
     }
 
     val elementPattern: ElementPattern<PsiElement>

@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.ext.elementType
 class RsCompletionContributor : CompletionContributor() {
 
     init {
+        extend(CompletionType.BASIC, RsCommonCompletionProvider.elementPattern, RsCommonCompletionProvider)
         extend(CompletionType.BASIC, RsDeriveCompletionProvider.elementPattern, RsDeriveCompletionProvider)
         extend(CompletionType.BASIC, AttributeCompletionProvider.elementPattern, AttributeCompletionProvider)
         extend(CompletionType.BASIC, RsMacroCompletionProvider.elementPattern, RsMacroCompletionProvider)
