@@ -73,6 +73,8 @@
         DEFAULT   = 'default_kw'
         AUTO      = 'auto_kw'
         DYN       = 'dyn_kw'
+        ASYNC     = 'async_kw'
+        TRY       = 'try_kw'
 
         SHEBANG_LINE = 'shebang_line'
         RESERVED_KEYWORD = 'reserved_keyword'
@@ -245,6 +247,9 @@ private default_ ::= <<defaultKeyword>>
 private union ::= <<unionKeyword>>
 private auto ::= <<autoKeyword>>
 private dyn ::= <<dynKeyword>>
+private async ::= <<asyncKeyword>>
+private asyncBlock ::= <<asyncBlockKeyword>>
+private try ::= <<tryKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
 
@@ -268,7 +273,7 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   recoverWhile = Item_recover
 }
 private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
-  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn"
+  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async"
 private Item_recover ::= !('}' | Item_first )
 
 private Items ::= Item_with_recover*
@@ -400,6 +405,7 @@ Function ::= OuterAttr*
              default_?
              Vis?
              const? unsafe? ExternAbi?
+             async?
              fn identifier
              TypeParameterList?
              FnParameters
@@ -905,7 +911,7 @@ Expr ::= RetExpr
 }
 
 private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | '..=' | true | false | box | QUOTE_IDENTIFIER
-  | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe | yield
+  | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe | yield | "async" | "try"
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 NoStructLitExpr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' Expr>> >> { elementType = Expr }
@@ -913,7 +919,7 @@ AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Exp
 StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
 StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
 
-BlockExpr ::= OuterAttr* [ unsafe &'{' ] SimpleBlock {
+BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] SimpleBlock {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -989,7 +995,7 @@ UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' mut?) Expr {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-LambdaExpr ::= OuterAttr* move? LambdaParameters RetType? AnyExpr {
+LambdaExpr ::= OuterAttr* asyncBlock? move? LambdaParameters RetType? AnyExpr {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

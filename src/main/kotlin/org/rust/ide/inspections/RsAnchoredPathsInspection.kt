@@ -7,12 +7,11 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.fixes.AddCrateKeywordFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.basePath
-import org.rust.lang.core.psi.ext.containingCargoTarget
+import org.rust.lang.core.psi.ext.isEdition2018
 import org.rust.lang.core.psi.ext.qualifier
 
 class RsAnchoredPathsInspection : RsLocalInspectionTool() {
@@ -20,9 +19,7 @@ class RsAnchoredPathsInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
         override fun visitPath(path: RsPath) {
             val parent = path.parent
-            val edition = path.containingCargoTarget?.edition
-
-            if (edition == CargoWorkspace.Edition.EDITION_2018 && parent is RsUseSpeck && parent.qualifier == null) {
+            if (path.isEdition2018 && parent is RsUseSpeck && parent.qualifier == null) {
                 checkPathInUseItem(path, holder)
             }
         }
