@@ -19,6 +19,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.resolve.ref.RsPathReference
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.runWriteCommandAction
 
 class RsInlineMethodHandler: InlineActionHandler() {
@@ -64,12 +65,12 @@ class RsInlineMethodHandler: InlineActionHandler() {
 
         project.runWriteCommandAction {
             val factory = RsPsiFactory(project)
-            RsInlineMethodProcessor.replaceLastExprToStatement(function, factory)
+
 
             if (reference != null) {
 //                val statement =
-                val ref = reference as RsPathReference
-                RsInlineMethodProcessor(factory).inlineWithLetBindingsAdded(ref, function, factory)
+                val ref = reference as RsReference
+                RsInlineMethodProcessor(factory).inlineWithLetBindingsAdded(ref, function)
             }
         }
     }

@@ -10,28 +10,12 @@ import org.rust.ide.annotator.isMut
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsPathReference
+import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.factory
 import org.rust.lang.core.types.type
 
 class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
     companion object {
-        fun replaceLastExprToStatement(fn: RsFunction, factory: RsPsiFactory) {
-            val expr = fn.block!!.expr ?: return
-            var text = ""
-            if (expr !is RsRetExpr)
-                text += "return "
-            text += expr.text
-            text += ";"
-
-//            val text = buildString {
-//                if (expr !is RetExpt) append "return "
-//                append expr.text
-//            }
-
-            val stmt = factory.createStatement(text)
-            expr.replace(stmt)
-        }
-
         fun checkMultipleReturns(fn: RsFunction): Boolean {
             var returnsCount = fn.descendantsOfType<RsRetExpr>()
                 .filter { it.ancestorStrict<RsFunction>() == fn }
@@ -73,8 +57,9 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
     }
 
-    fun inlineWithLetBindingsAdded(ref: RsPathReference, function: RsFunction, factory: RsPsiFactory) {
+    fun inlineWithLetBindingsAdded(ref: RsReference, function: RsFunction) {
         val body = function.block!!.copy() as RsBlock
+        replaceLastExprToStatement(body)
         val enclosingStatement = ref.element.ancestorOrSelf<RsStmt>() ?: return
         val caller = ref.element.ancestors
             .filter{it is RsCallExpr || it is RsDotExpr }.firstOrNull() ?: return
@@ -130,7 +115,23 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
     }
 
+    private fun replaceLastExprToStatement(body: RsBlock) {
+        val expr = body.expr ?: return
+//        var text = ""
+//        if (expr !is RsRetExpr)
+//            text += "return "
+//        text += expr.text
+//        text += ";"
 
+        val text = buildString {
+            if (expr !is RsRetExpr) append("return ")
+            append(expr.text)
+            append(";")
+        }
+
+        val stmt = factory.createStatement(text)
+        expr.replace(stmt)
+    }
 
 
 //    private fun collectElements(start: PsiElement, stop: PsiElement?, pred: (PsiElement) -> Boolean): Array<out PsiElement> {
