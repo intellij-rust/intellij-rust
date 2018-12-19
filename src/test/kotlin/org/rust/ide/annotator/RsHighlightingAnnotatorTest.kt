@@ -5,6 +5,8 @@
 
 package org.rust.ide.annotator
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.colors.RsColor
 
 class RsHighlightingAnnotatorTest : RsAnnotationTestBase() {
@@ -119,12 +121,19 @@ class RsHighlightingAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test crate`() = checkHighlighting("""
+        extern crate <CRATE>dep_lib_target</CRATE>;
+        
+        use <CRATE>std</CRATE>::<MODULE>io</MODULE>::<TRAIT>Read</TRAIT>;
+    """)
+
     fun `test dont touch ast in other files`() = checkDontTouchAstInOtherFiles("""
         //- main.rs
-            mod aux;
+            mod <MODULE>aux</MODULE>;
 
             fn <FUNCTION>main</FUNCTION>() {
-                let _ = aux::<STRUCT>S</STRUCT>;
+                let _ = <MODULE>aux</MODULE>::<STRUCT>S</STRUCT>;
             }
 
         //- aux.rs

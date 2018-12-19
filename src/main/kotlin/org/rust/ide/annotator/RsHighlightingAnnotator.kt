@@ -24,6 +24,7 @@ class RsHighlightingAnnotator : Annotator {
         val (partToHighlight, color) = when {
             element is RsPatBinding && !element.isReferenceToConstant -> highlightNotReference(element)
             element is RsMacroCall -> highlightNotReference(element)
+            element is RsModDeclItem -> highlightNotReference(element)
             element is RsReferenceElement -> highlightReference(element)
             else -> highlightNotReference(element)
         } ?: return
@@ -101,7 +102,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     }
     is RsMethodCall -> RsColor.METHOD
     is RsModDeclItem -> RsColor.MODULE
-    is RsModItem -> RsColor.MODULE
+    is RsMod -> if (element.isCrateRoot) RsColor.CRATE else RsColor.MODULE
     is RsPatBinding -> {
         if (element.ancestorStrict<RsValueParameter>() != null) RsColor.PARAMETER else null
     }
