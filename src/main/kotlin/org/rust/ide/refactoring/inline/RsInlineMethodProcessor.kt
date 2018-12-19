@@ -26,7 +26,6 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
                     ++returnsCount
                 }
             }
-
             return returnsCount > 1
         }
 
@@ -47,14 +46,6 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
 
             return hasStatements && element.ancestorOrSelf<RsWhileExpr>() != null
         }
-    }
-
-    fun doSillyInline(ref: RsPathReference, body: RsBlock, factory: RsPsiFactory) {
-        body.lbrace.delete()
-        body.rbrace?.delete()
-        val enclosingStatement = ref.element.ancestorOrSelf<RsStmt>() ?: return
-        enclosingStatement.parent.addBefore(body, enclosingStatement)
-        enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
     }
 
     fun inlineWithLetBindingsAdded(ref: RsReference, function: RsFunction) {
@@ -98,9 +89,7 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
             enclosingStatement.parent.addBefore(retLetBinding, enclosingStatement)
             enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
             retExpr.replace(factory.createExpression("$retName = ${retExpr.expr!!.text}"))
-//            val retAssignment = factory.createStatement("$retName = $retExpr")
             val retVar = factory.createExpression(retName)
-//            retExpr.replace(retAssignment)
             caller.replace(retVar)
         }
 
@@ -110,19 +99,12 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
 
         }
 
-
         enclosingStatement.parent.addBefore(body, enclosingStatement)
         enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
     }
 
     private fun replaceLastExprToStatement(body: RsBlock) {
         val expr = body.expr ?: return
-//        var text = ""
-//        if (expr !is RsRetExpr)
-//            text += "return "
-//        text += expr.text
-//        text += ";"
-
         val text = buildString {
             if (expr !is RsRetExpr) append("return ")
             append(expr.text)
@@ -132,18 +114,4 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         val stmt = factory.createStatement(text)
         expr.replace(stmt)
     }
-
-
-//    private fun collectElements(start: PsiElement, stop: PsiElement?, pred: (PsiElement) -> Boolean): Array<out PsiElement> {
-//        check(stop == null || start.parent == stop.parent)
-//
-//        val psiSeq = generateSequence(start) {
-//            if (it.nextSibling == stop)
-//                   null
-//            else
-//                it.nextSibling
-//        }
-//
-//        return PsiUtilCore.toPsiElementArray(psiSeq.filter(pred).toList())
-//    }
 }
