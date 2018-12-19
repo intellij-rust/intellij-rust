@@ -22,13 +22,6 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.isUnitTestMode
 
 class RsHighlightingMutableAnnotator : Annotator {
-    companion object {
-        private val MUTABLE_HIGHTLIGHTING = HighlightSeverity(
-            "MUTABLE_HIGHTLIGHTING",
-            HighlightSeverity.INFORMATION.myVal + 3
-        )
-    }
-
 
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val ref = when (element) {
@@ -66,16 +59,16 @@ class RsHighlightingMutableAnnotator : Annotator {
     }
 
     private fun addHighlightingAnnotation(holder: AnnotationHolder, target: PsiElement, key: RsColor) {
-        // These following lines allow to test the mutable highlight for it own using INFORMATION and the description.
-        val annotationSeverity = if (isUnitTestMode) HighlightSeverity.INFORMATION else MUTABLE_HIGHTLIGHTING
-        val annotationText = if (isUnitTestMode) key.attributesDescriptor.displayName else null
-        holder.createAnnotation(
-            annotationSeverity,
-            target.textRange,
-            annotationText
-        ).textAttributes = key.textAttributesKey
+        val annotationSeverity = if (isUnitTestMode) key.testSeverity else MUTABLE_HIGHLIGHTING
+        holder.createAnnotation(annotationSeverity, target.textRange, null).textAttributes = key.textAttributesKey
     }
 
+    companion object {
+        private val MUTABLE_HIGHLIGHTING = HighlightSeverity(
+            "MUTABLE_HIGHLIGHTING",
+            HighlightSeverity.INFORMATION.myVal + 3
+        )
+    }
 }
 
 val RsElement.isMut: Boolean

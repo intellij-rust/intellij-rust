@@ -5,6 +5,9 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
@@ -12,11 +15,15 @@ import org.rust.fileTreeFromText
 import org.rust.openapiext.Testmark
 
 abstract class RsAnnotationTestBase : RsTestBase() {
+
     protected fun doTest(vararg additionalFilenames: String) {
         myFixture.testHighlighting(fileName, *additionalFilenames)
     }
 
-    protected fun checkInfo(@Language("Rust") text: String)  =
+    protected fun checkHighlighting(@Language("Rust") text: String) =
+        checkByText(text, checkWarn = false, checkWeakWarn = false, checkInfo = false, ignoreExtraHighlighting = true)
+
+    protected fun checkInfo(@Language("Rust") text: String) =
         checkByText(text, checkWarn = false, checkWeakWarn = false, checkInfo = true)
 
     protected fun checkWarnings(@Language("Rust") text: String) =
@@ -30,11 +37,13 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
+        ignoreExtraHighlighting: Boolean = false,
         testmark: Testmark? = null
     ) = check(text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
+        ignoreExtraHighlighting = ignoreExtraHighlighting,
         configure = this::configureByText,
         testmark = testmark)
 
@@ -68,11 +77,13 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
+        ignoreExtraHighlighting: Boolean = false,
         testmark: Testmark? = null
     ) = check(text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
+        ignoreExtraHighlighting = ignoreExtraHighlighting,
         configure = this::configureByFileTree,
         testmark = testmark)
 
@@ -96,11 +107,13 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
+        ignoreExtraHighlighting: Boolean = false,
         testmark: Testmark? = null
     ) = checkFixIsUnavailable(fixName, text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
+        ignoreExtraHighlighting = ignoreExtraHighlighting,
         configure = this::configureByText,
         testmark = testmark)
 
@@ -110,11 +123,13 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
+        ignoreExtraHighlighting: Boolean = false,
         testmark: Testmark? = null
     ) = checkFixIsUnavailable(fixName, text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
+        ignoreExtraHighlighting = ignoreExtraHighlighting,
         configure = this::configureByFileTree,
         testmark = testmark)
 
@@ -123,12 +138,13 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkWarn: Boolean,
         checkInfo: Boolean,
         checkWeakWarn: Boolean,
+        ignoreExtraHighlighting: Boolean,
         configure: (String) -> Unit,
         testmark: Testmark? = null
     ) {
         val action: () -> Unit = {
             configure(text)
-            myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn)
+            myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
         }
         testmark?.checkHit(action) ?: action()
     }
@@ -157,10 +173,11 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkWarn: Boolean,
         checkInfo: Boolean,
         checkWeakWarn: Boolean,
+        ignoreExtraHighlighting: Boolean,
         configure: (String) -> Unit,
         testmark: Testmark? = null
     ) {
-        check(text, checkWarn, checkInfo, checkWeakWarn, configure, testmark)
+        check(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, configure, testmark)
         check(myFixture.filterAvailableIntentions(fixName).isEmpty()) {
             "Fix $fixName should not be possible to apply."
         }
@@ -182,5 +199,10 @@ abstract class RsAnnotationTestBase : RsTestBase() {
 
         myFixture.configureFromTempProjectFile(testFilePath)
         myFixture.testHighlighting(false, checkInfo, false)
+    }
+
+    protected fun registerSeverities(severities: List<HighlightSeverity>) {
+        val testSeverityProvider = RsTestSeverityProvider(severities)
+        PlatformTestUtil.registerExtension(SeveritiesProvider.EP_NAME, testSeverityProvider, testRootDisposable)
     }
 }
