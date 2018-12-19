@@ -303,7 +303,7 @@ class FlowedMoveData private constructor(
 
 data class MovePlace(val name: RsNamedElement)
 
-data class Move(
+class Move(
     val path: MovePath,
     val element: RsElement,
     val kind: MoveKind,
@@ -312,7 +312,7 @@ data class Move(
     val nextMove: Move?
 )
 
-data class MovePath(
+class MovePath(
     val loanPath: LoanPath,
     var parent: MovePath? = null,
     var firstMove: Move? = null,

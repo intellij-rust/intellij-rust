@@ -301,6 +301,9 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
     override fun visitTupleExpr(tupleExpr: RsTupleExpr) =
         finishWith { straightLine(tupleExpr, pred, tupleExpr.exprList) }
 
+    override fun visitStructLiteral(structLiteral: RsStructLiteral) =
+        finishWith { straightLine(structLiteral, pred, structLiteral.structLiteralBody.structLiteralFieldList.map { it.expr }) }
+
     override fun visitCastExpr(castExpr: RsCastExpr) =
         finishWith { straightLine(castExpr, pred, listOf(castExpr.expr)) }
 

@@ -137,6 +137,15 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    fun `test move in struct literal`() = checkByText("""
+        struct S;
+        struct T { s1: S, s2: S }
+        fn main() {
+            let s = S;
+            let t = T { s1: s, s2: <error descr="Use of moved value">s<caret></error> };
+        }
+    """, checkWarn = false)
+
     fun `test no move error E0382 when matching path`() = checkByText("""
         enum Kind { A, B }
         pub struct DeadlineError(Kind);

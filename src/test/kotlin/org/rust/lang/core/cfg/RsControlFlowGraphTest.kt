@@ -364,22 +364,26 @@ class RsControlFlowGraphTest : RsTestBase() {
     )
 
     fun `test patterns`() = testCFG("""
-        struct S { data: i32 }
+        struct S { data1: i32, data2: i32 }
 
         fn main() {
-            let x = S { data: 42 };
-            let S { data: a } = s;
+            let x = S { data1: 42, data2: 24 };
+            let S { data1: a, data2: b } = s;
             let (x, (y, z)) = (1, (2, 3));
             [0, 1 + a];
         }
     """, """
         Entry
+        42
+        24
+        S { data1: 42, data2: 24 }
         x
-        let x = S { data: 42 };
+        let x = S { data1: 42, data2: 24 };
         s
         a
-        S { data: a }
-        let S { data: a } = s;
+        b
+        S { data1: a, data2: b }
+        let S { data1: a, data2: b } = s;
         1
         2
         3
