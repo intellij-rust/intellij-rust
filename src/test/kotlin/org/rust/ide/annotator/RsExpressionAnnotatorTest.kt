@@ -51,6 +51,9 @@ class RsExpressionAnnotatorTest : RsAnnotationTestBase() {
             bar: i32
         }
 
+        #[derive(Default)]
+        struct T(i32, i32);
+
         struct Empty {}
 
         enum E {
@@ -66,13 +69,28 @@ class RsExpressionAnnotatorTest : RsAnnotationTestBase() {
                 bar: 11,
             };
 
+            let _ = T {
+                0: 92,
+                1: 11,
+                <error descr="No such field">2</error>: 62,
+            };
+
             let _ = S {
                 foo: 92,
                 ..S::default()
             };
 
+            let _ = T {
+                0: 92,
+                ..T::default()
+            };
+
             let _ = <error descr="Some fields are missing">S</error> {
                 foo: 92,
+            };
+
+            let _ = <error descr="Some fields are missing">T</error> {
+                0: 92,
             };
 
             let _ = <error descr="Some fields are missing">S</error> {
@@ -80,10 +98,21 @@ class RsExpressionAnnotatorTest : RsAnnotationTestBase() {
                 <error descr="Duplicate field">foo</error>: 2,
             };
 
+            let _ = <error descr="Some fields are missing">T</error> {
+                0: 1,
+                <error descr="Duplicate field">0</error>: 2,
+            };
+
             let _ = S {
                 foo: 1,
                 <error descr="Duplicate field">foo</error>: 2,
                 ..S::default()
+            };
+
+            let _ = T {
+                0: 1,
+                <error descr="Duplicate field">0</error>: 2,
+                ..T::default()
             };
 
             let _ = Empty { };

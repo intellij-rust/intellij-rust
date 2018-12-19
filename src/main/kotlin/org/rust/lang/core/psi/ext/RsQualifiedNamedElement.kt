@@ -250,7 +250,7 @@ data class RsQualifiedName private constructor(
                     }
                 }
                 is RsEnumVariant -> element.parentEnum
-                is RsFieldDecl -> element.parentStruct
+                is RsNamedFieldDecl -> element.parentStruct
                 else -> return null
             }
             return parentItem?.toParentItem()
@@ -315,7 +315,7 @@ data class RsQualifiedName private constructor(
             val name = name ?: return null
             val type = when (this) {
                 is RsEnumVariant -> VARIANT
-                is RsFieldDecl -> if (parentStruct != null) STRUCTFIELD else return null
+                is RsNamedFieldDecl -> if (parentStruct != null) STRUCTFIELD else return null
                 is RsTypeAlias -> ASSOCIATEDTYPE
                 is RsConstant -> ASSOCIATEDCONSTANT
                 is RsFunction -> if (isAbstract) TYMETHOD else METHOD

@@ -7,7 +7,7 @@ FILE
     RsBlockFieldsImpl(BLOCK_FIELDS)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RsFieldDeclImpl(FIELD_DECL)
+      RsNamedFieldDeclImpl(NAMED_FIELD_DECL)
         PsiElement(identifier)('f')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')

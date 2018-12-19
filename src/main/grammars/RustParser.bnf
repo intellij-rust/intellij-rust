@@ -638,7 +638,7 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
 
 private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
 
-BlockFields ::= '{' (FieldDecl (',' | &'}'))* '}' {
+BlockFields ::= '{' (NamedFieldDecl (',' | &'}'))* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -657,23 +657,21 @@ VariantDiscriminant ::= '=' AnyExpr {
   implements = "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
 }
 
-FieldDecl ::= AttrsAndVis identifier TypeAscription {
+NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.ext.RsVisibilityOwner"
+  implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
-  mixin = "org.rust.lang.core.psi.ext.RsFieldDeclImplMixin"
-  stubClass = "org.rust.lang.core.stubs.RsFieldDeclStub"
+  mixin = "org.rust.lang.core.psi.ext.RsNamedFieldDeclImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsNamedFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   recoverWhile = Field_recover
 }
 private Field_recover ::= !('}' | ',')
 
 TupleFieldDecl ::= AttrsAndVis TypeReference {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
-                 "org.rust.lang.core.psi.ext.RsVisibilityOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl" ]
   mixin = "org.rust.lang.core.psi.ext.RsTupleFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1005,7 +1003,7 @@ StructLiteral ::= <<checkStructAllowed>> OuterAttr* PathGenericArgsWithColonsNoT
 
 StructLiteralBody ::= '{' StructLiteralField_with_recover* ('..'  AnyExpr)? '}' { pin = 1 }
 
-StructLiteralField ::= OuterAttr* identifier [ ':' AnyExpr ] {
+StructLiteralField ::= OuterAttr* (identifier | INTEGER_LITERAL) [ ':' AnyExpr ] {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsStructLiteralFieldImplMixin"
@@ -1016,7 +1014,7 @@ private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
   recoverWhile = StructLiteralField_recover
 }
 
-private StructLiteralField_recover ::= !(identifier | ',' | '}' | '..' | '#')
+private StructLiteralField_recover ::= !(identifier | INTEGER_LITERAL | ',' | '}' | '..' | '#')
 
 PathExpr ::= OuterAttr* PathGenericArgsWithColons {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

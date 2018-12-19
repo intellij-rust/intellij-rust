@@ -55,7 +55,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitModItem(o: RsModItem) = checkDuplicates(holder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
-            override fun visitFieldDecl(o: RsFieldDecl) = checkDuplicates(holder, o)
+            override fun visitNamedFieldDecl(o: RsNamedFieldDecl) = checkDuplicates(holder, o)
             override fun visitRetExpr(o: RsRetExpr) = checkRetExpr(holder, o)
             override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
@@ -111,7 +111,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         if (element.isVisibleFrom(oMod)) return
 
         val error = when {
-            element is RsFieldDecl -> {
+            element is RsNamedFieldDecl -> {
                 val structName = element.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
                 RsDiagnostic.StructFieldAccessError(ref, ref.referenceName, structName)
             }
@@ -461,7 +461,7 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
     }
 
     private fun isInEnumVariantField(o: RsVis): Boolean {
-        val field = o.parent as? RsFieldDecl
+        val field = o.parent as? RsNamedFieldDecl
             ?: o.parent as? RsTupleFieldDecl
             ?: return false
         return field.parent.parent is RsEnumVariant
@@ -487,7 +487,7 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierO
     val name = element.name!!
     val identifier = element.nameIdentifier ?: element
     val message = when {
-        element is RsFieldDecl -> RsDiagnostic.DuplicateFieldError(identifier, name)
+        element is RsNamedFieldDecl -> RsDiagnostic.DuplicateFieldError(identifier, name)
         element is RsEnumVariant -> RsDiagnostic.DuplicateEnumVariantError(identifier, name)
         element is RsLifetimeParameter -> RsDiagnostic.DuplicateLifetimeError(identifier, name)
         element is RsPatBinding && owner is RsValueParameterList -> RsDiagnostic.DuplicateBindingError(identifier, name)

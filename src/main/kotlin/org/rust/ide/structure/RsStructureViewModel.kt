@@ -33,7 +33,7 @@ class RsStructureViewModel(editor: Editor?, file: RsFile)
 
     override fun isAlwaysLeaf(element: StructureViewTreeElement): Boolean =
         when (element.value) {
-            is RsFieldDecl,
+            is RsNamedFieldDecl,
             is RsModDeclItem,
             is RsConstant,
             is RsTypeAlias -> true
@@ -67,8 +67,8 @@ private class RsStructureViewElement(
                     }
                 }
                 is RsMod -> extractItems(psi)
-                is RsStructItem -> psi.blockFields?.fieldDeclList.orEmpty()
-                is RsEnumVariant -> psi.blockFields?.fieldDeclList.orEmpty()
+                is RsStructItem -> psi.blockFields?.namedFieldDeclList.orEmpty()
+                is RsEnumVariant -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsFunction -> psi.block?.let { extractItems(it) }.orEmpty()
                 else -> emptyList()
             }

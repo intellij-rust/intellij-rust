@@ -12,10 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.annotator.calculateMissingFields
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.canBeInstantiatedIn
-import org.rust.lang.core.psi.ext.namedFields
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -54,7 +51,7 @@ class AddStructFieldsFix(
             RsPsiFactory(project),
             decl.knownItems,
             body,
-            decl.namedFields,
+            decl.fields,
             fieldsToAdd,
             body.containingMod
         )
@@ -145,10 +142,10 @@ class AddStructFieldsFix(
         fieldDecl: RsFieldDecl,
         mod: RsMod
     ): RsStructLiteralField? {
-        val fieldType = fieldDecl.typeReference?.type ?: return null
-        val name = fieldDecl.name ?: return null
+        val fieldName = fieldDecl.name ?: return null
+        val fieldType =  fieldDecl.typeReference?.type ?: return null
         val fieldLiteral = defaultValueExprFor(factory, items, mod, fieldType)
-        return factory.createStructLiteralField(name, fieldLiteral)
+        return factory.createStructLiteralField(fieldName, fieldLiteral)
     }
 
     private fun defaultValueExprFor(factory: RsPsiFactory, items: KnownItems, mod: RsMod, ty: Ty): RsExpr {

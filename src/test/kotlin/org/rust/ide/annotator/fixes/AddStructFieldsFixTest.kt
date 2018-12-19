@@ -11,7 +11,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.annotator.RsAnnotationTestBase
 
 class AddStructFieldsFixTest : RsAnnotationTestBase() {
-    fun `test no fields`() = checkBothQuickFix("""
+    fun `test no named fields`() = checkBothQuickFix("""
         struct S { foo: i32, bar: f64 }
 
         fn main() {
@@ -22,6 +22,20 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
 
         fn main() {
             let _ = S { foo: /*caret*/0, bar: 0.0 };
+        }
+    """)
+
+    fun `test no positional fields`() = checkBothQuickFix("""
+        struct S(i32, f64);
+
+        fn main() {
+            let _ = <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct S(i32, f64);
+
+        fn main() {
+            let _ = S { 0: /*caret*/0, 1: 0.0 };
         }
     """)
 
@@ -72,23 +86,23 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
     """)
 
     fun `test some existing fields`() = checkBothQuickFix("""
-        struct S { a: i32, b: i32, c: i32, d: i32 }
+        struct S(i32, i32, i32, i32);
 
         fn main() {
             let _ = <error>S</error> {
-                a: 92,
-                c: 92/*caret*/
+                0: 92,
+                2: 92/*caret*/
             };
         }
     """, """
-        struct S { a: i32, b: i32, c: i32, d: i32 }
+        struct S(i32, i32, i32, i32);
 
         fn main() {
             let _ = S {
-                a: 92,
-                b: /*caret*/0,
-                c: 92,
-                d: 0
+                0: 92,
+                1: /*caret*/0,
+                2: 92,
+                3: 0
             };
         }
     """)

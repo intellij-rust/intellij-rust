@@ -7,7 +7,6 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsFieldDecl
 import org.rust.lang.core.psi.RsStructLiteral
 import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.resolve.ref.RsReference
@@ -21,6 +20,6 @@ abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsElementImpl(node
 
     override fun getReference(): RsReference = RsStructLiteralFieldReferenceImpl(this)
 
-    override val referenceNameElement: PsiElement get() = identifier
+    override val referenceNameElement: PsiElement get() = identifier ?: integerLiteral!!
 }
 
