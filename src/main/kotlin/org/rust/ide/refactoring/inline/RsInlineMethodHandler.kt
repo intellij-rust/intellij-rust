@@ -15,10 +15,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 //import com.intellij.psi.util.parentOfType
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStmt
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.openapiext.runWriteCommandAction
 
 class RsInlineMethodHandler: InlineActionHandler() {
@@ -37,7 +37,7 @@ class RsInlineMethodHandler: InlineActionHandler() {
         }
 
         val reference = TargetElementUtil.findReference(editor, editor.caretModel.offset)
-        element.findElementAt(editor.caretModel.offset)
+        val f = element.findElementAt(editor.caretModel.offset)
 
         if (RsInlineMethodProcessor.checkMultipleReturns(function)) {
             errorHint(project, editor, "cannot inline method with more than one exit points")
@@ -65,8 +65,12 @@ class RsInlineMethodHandler: InlineActionHandler() {
         project.runWriteCommandAction {
             val factory = RsPsiFactory(project)
             RsInlineMethodProcessor.replaceLastExprToStatement(function, factory)
-            val statement = PsiTreeUtil.getParentOfType(reference?.element, RsStmt::class.java)
-            doSillyInline(statement!!, body, factory)
+
+            if (reference != null) {
+//                val statement =
+                val ref = reference as RsPathReference
+                RsInlineMethodProcessor(factory).inlineWithLetBindingsAdded(ref, function, factory)
+            }
         }
     }
 
@@ -83,8 +87,4 @@ class RsInlineMethodHandler: InlineActionHandler() {
         Messages.showErrorDialog(project, message, "method inline is not possible")
     }
 
-    private fun doSillyInline(ref: RsStmt, body: RsBlock, factory: RsPsiFactory) {
-        ref.parent.addBefore(body, ref)
-        ref.parent.addBefore(factory.createNewline(), ref)
-    }
 }
