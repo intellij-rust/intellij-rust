@@ -107,8 +107,12 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
             val retMutable = true
             val retType = function.retType?.typeReference
 
-            val retLetBinding = factory.createLetDeclaration(retName, retExpr.expr!!, retMutable, retType)
-            retExpr.ancestorStrict<RsStmt>()!!.replace(retLetBinding)
+            val retLetBinding = factory.createLetDeclaration(retName, null, retMutable, retType)
+
+            enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
+            enclosingStatement.parent.addBefore(retLetBinding, enclosingStatement)
+            enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
+            retExpr.replace(factory.createExpression("$retName = ${retExpr.expr!!.text}"))
 //            val retAssignment = factory.createStatement("$retName = $retExpr")
             val retVar = factory.createExpression(retName)
 //            retExpr.replace(retAssignment)
