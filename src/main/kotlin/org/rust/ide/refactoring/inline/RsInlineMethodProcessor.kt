@@ -104,7 +104,7 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         val retExpr = body.descendantsOfType<RsRetExpr>().firstOrNull()
         if (retExpr != null && retExpr.expr != null) {
             val retName = "ret"
-            val retMutable = true
+            val retMutable = false
             val retType = function.retType?.typeReference
 
             val retLetBinding = factory.createLetDeclaration(retName, null, retMutable, retType)
