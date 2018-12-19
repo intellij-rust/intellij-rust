@@ -5,6 +5,7 @@
 
 package org.rust.ide.colors
 
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
@@ -70,5 +71,6 @@ enum class RsColor(val humanName: String, val default: TextAttributesKey? = null
 
     val textAttributesKey = TextAttributesKey.createTextAttributesKey("org.rust.$name", default)
     val attributesDescriptor = AttributesDescriptor(humanName, textAttributesKey)
+    val testSeverity: HighlightSeverity = HighlightSeverity(name, HighlightSeverity.INFORMATION.myVal)
 }
 
