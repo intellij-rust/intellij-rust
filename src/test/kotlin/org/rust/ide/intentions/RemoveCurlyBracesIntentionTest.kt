@@ -17,11 +17,10 @@ class RemoveCurlyBracesIntentionTest : RsIntentionTestBase(RemoveCurlyBracesInte
         "use foo::bar::/*caret*/baz::qux;"
     )
 
-// TODO: ideally this should work
-//    fun `test remove curly braces alias`() = doAvailableTest(
-//        "use std::{mem as mem/*caret*/ory};",
-//        "use std::mem as mem/*caret*/ory;"
-//    )
+    fun `test remove curly braces alias`() = doAvailableTest(
+        "use std::{mem as mem/*caret*/ory};",
+        "use std::mem as mem/*caret*/ory;"
+    )
 
     fun `test remove curly braces extra`() = doAvailableTest(
         "#[macro_use] pub use /*comment*/ std::{me/*caret*/m};",
