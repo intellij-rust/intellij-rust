@@ -246,4 +246,34 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
             };
         }
 """)
+
+    fun `test if-expressions`() = doTextTest("""
+        fn main() {
+            let _ =
+                if (true) { true }
+                else if (false) { false }
+                else { true };
+
+            let _ =
+                // comment 1
+                if (true) { true }
+                // comment 2
+                else if (false) { false }
+                // comment 3
+                else { true };
+        }
+    """, """
+        fn main() {
+            let _ =
+                if (true) { true } else if (false) { false } else { true };
+
+            let _ =
+                // comment 1
+                if (true) { true }
+                // comment 2
+                else if (false) { false }
+                // comment 3
+                else { true };
+        }
+""")
 }

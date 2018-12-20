@@ -133,7 +133,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
         .beforeInside(LBRACK, INDEX_EXPR).spaces(0)
         .afterInside(VALUE_PARAMETER_LIST, LAMBDA_EXPR).spacing(1, 1, 0, true, 1)
         .between(MATCH_ARM, MATCH_ARM).spacing(1, 1, if (rustSettings.ALLOW_ONE_LINE_MATCH) 0 else 1, true, 1)
-        .before(ELSE_BRANCH).spacing(1, 1, 0, false, 0)
+        .between(BLOCK, ELSE_BRANCH).spacing(1, 1, 0, false, 0)
         .betweenInside(ELSE, BLOCK, ELSE_BRANCH).spacing(1, 1, 0, false, 0)
 
         //== macros
