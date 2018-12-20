@@ -40,7 +40,8 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
             val statements = block.stmtList
 
             val hasStatements = when(block.expr) {
-                null -> statements.size > 1 || statements.size == 1 && statements[0].descendantsOfType<RsRetExpr>().isEmpty()
+                null -> statements.size > 1 ||
+                        statements.size == 1 && statements[0].descendantsOfType<RsRetExpr>().isEmpty()
                 else -> statements.size > 0
             }
 
@@ -50,6 +51,7 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
 
     fun inlineWithLetBindingsAdded(ref: RsReference, function: RsFunction) {
         val body = function.block!!.copy() as RsBlock
+
         replaceLastExprToStatement(body)
         val enclosingStatement = ref.element.ancestorOrSelf<RsStmt>() ?: return
         val caller = ref.element.ancestors
@@ -63,6 +65,12 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         } ?: return
 
         if (funcArguments.size != callArguments.size) {
+            return
+        }
+
+        // TODO: deal with self parameter
+        if (body.stmtList.isEmpty() && body.expr != null) {
+            caller.replace(body.expr!!)
             return
         }
 
@@ -85,9 +93,9 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
 
             val retLetBinding = factory.createLetDeclaration(retName, null, retMutable, retType)
 
-            enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
-            enclosingStatement.parent.addBefore(retLetBinding, enclosingStatement)
-            enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
+            enclosingStatement.addLeftSibling(factory.createNewline())
+            enclosingStatement.addLeftSibling(retLetBinding)
+            enclosingStatement.addLeftSibling(factory.createNewline())
             retExpr.replace(factory.createExpression("$retName = ${retExpr.expr!!.text}"))
             val retVar = factory.createExpression(retName)
             caller.replace(retVar)
@@ -96,11 +104,10 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         letBindings.forEach {
             body.addAfter(factory.createNewline(), body.lbrace)
             body.addAfter(it, body.lbrace)
-
         }
 
-        enclosingStatement.parent.addBefore(body, enclosingStatement)
-        enclosingStatement.parent.addBefore(factory.createNewline(), enclosingStatement)
+        enclosingStatement.addLeftSibling(body)
+        enclosingStatement.addLeftSibling(factory.createNewline())
     }
 
     private fun replaceLastExprToStatement(body: RsBlock) {
@@ -113,5 +120,9 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
 
         val stmt = factory.createStatement(text)
         expr.replace(stmt)
+    }
+
+    private fun PsiElement.addLeftSibling(element: PsiElement) {
+        this.parent.addBefore(element, this)
     }
 }
