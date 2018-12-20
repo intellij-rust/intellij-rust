@@ -333,6 +333,18 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test nested braces`() = checkByCode("""
+        mod foo {
+            pub fn bar() {}
+        }        //X
+
+        use {{foo::{{bar}}}};
+
+        fn main() {
+            bar();
+        } //^
+    """)
+
     fun `test colon braces`() = checkByCode("""
         struct Spam;
               //X
