@@ -6,6 +6,8 @@
 package org.rust.ide.refactoring.inline
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.annotator.isMut
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -50,14 +52,14 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
     }
 
     fun inlineWithLetBindingsAdded(ref: RsReference, function: RsFunction) {
-        val body = function.block!!.copy() as RsBlock
-
+        val functionDup = function.copy() as RsFunction
+        val body = functionDup.block!!
         replaceLastExprToStatement(body)
         val enclosingStatement = ref.element.ancestorOrSelf<RsStmt>() ?: return
         val caller = ref.element.ancestors
             .filter{it is RsCallExpr || it is RsDotExpr }.firstOrNull() ?: return
 
-        val funcArguments = function.valueParameters
+        val funcArguments = functionDup.valueParameters
         val callArguments = when (caller) {
             is RsCallExpr -> {caller.valueArgumentList.exprList}
             is RsDotExpr -> {caller.methodCall?.valueArgumentList?.exprList}
@@ -65,7 +67,7 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         } ?: return
 
         if (funcArguments.size != callArguments.size) {
-            return
+            return // TODO: throw
         }
 
         // TODO: deal with self parameter
@@ -75,7 +77,17 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         }
 
         val letBindings = mutableListOf<RsLetDecl>()
-        callArguments.zip(funcArguments).forEach {
+        val funcScope = LocalSearchScope(body)
+        callArguments.zip(funcArguments).forEach zip@{
+
+            if (it.first is RsLitExpr) {
+                val binding = it.second.descendantOfTypeStrict<RsPatBinding>()!!
+                ReferencesSearch.search(binding, funcScope).findAll().forEach {
+                    ref -> ref.element.ancestorOrSelf<RsExpr>()!!.replace(it.first)
+                }
+                return@zip
+            }
+
             val name = it.second.patText
             val expr = it.first
             val mutable = it.second.typeReference?.isMut ?: false
@@ -85,8 +97,20 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
             letBindings.add(letBinding)
         }
 
+        letBindings.forEach {
+            body.addAfter(factory.createNewline(), body.lbrace)
+            body.addAfter(it, body.lbrace)
+        }
+
+
         val retExpr = body.descendantsOfType<RsRetExpr>().firstOrNull()
         if (retExpr != null && retExpr.expr != null) {
+            val statements = body.stmtList
+            if (statements.size == 1) {
+                caller.replace(retExpr.expr!!)
+                return
+            }
+
             val retName = "ret"
             val retMutable = false
             val retType = function.retType?.typeReference
@@ -99,15 +123,17 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
             retExpr.replace(factory.createExpression("$retName = ${retExpr.expr!!.text}"))
             val retVar = factory.createExpression(retName)
             caller.replace(retVar)
-        }
+        } else {
+            caller.delete()
 
-        letBindings.forEach {
-            body.addAfter(factory.createNewline(), body.lbrace)
-            body.addAfter(it, body.lbrace)
         }
 
         enclosingStatement.addLeftSibling(body)
         enclosingStatement.addLeftSibling(factory.createNewline())
+
+        if (enclosingStatement.descendantsOfType<RsExpr>().isEmpty()) {
+            enclosingStatement.delete()
+        }
     }
 
     private fun replaceLastExprToStatement(body: RsBlock) {
