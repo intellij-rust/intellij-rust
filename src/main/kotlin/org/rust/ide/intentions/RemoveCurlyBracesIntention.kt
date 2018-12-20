@@ -74,7 +74,12 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
         newSubPath.replace(path.copy())
         path.replace(newPath)
         useSpeck.coloncolon?.delete()
-        useGroup.delete()
+        val alias = newUseSpeck.alias
+        if (alias != null) {
+            useGroup.replace(alias.copy())
+        } else {
+            useGroup.delete()
+        }
 
         editor.caretModel.moveToOffset(newOffset)
     }
