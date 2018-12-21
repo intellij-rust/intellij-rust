@@ -20,6 +20,7 @@ import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
+import org.rust.ide.presentation.insertionSafeText
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -59,7 +60,7 @@ sealed class RsDiagnostic(
                 fixes = buildList {
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
-                    } else  if (element is RsElement) {
+                    } else if (element is RsElement) {
                         val items = element.knownItems
                         val lookup = ImplLookup(element.project, items)
                         if (isFromActualImplForExpected(items, lookup)) {
@@ -135,7 +136,7 @@ sealed class RsDiagnostic(
         private fun errTyOfTryFromActualImplForTy(ty: Ty, items: KnownItems, lookup: ImplLookup): Ty? {
             val fromTrait = items.TryFrom ?: return null
             val result = lookup.selectProjectionStrict(TraitRef(ty, fromTrait.withSubst(actualTy)),
-                fromTrait.associatedTypesTransitively.find { it.name == "Error"} ?: return null)
+                fromTrait.associatedTypesTransitively.find { it.name == "Error" } ?: return null)
             return result.ok()?.value
         }
 
@@ -197,7 +198,7 @@ sealed class RsDiagnostic(
             // for the first type X in the "actual sequence" that is also in the "expected sequence"; get the number of
             // dereferences we need to apply to get to X from `actualTy` and number of references to get to `expectedTy`
             val derefs = actualCoercionSeq.indexOfFirst { refSeqEnd = tyToExpectedRefSeq[it]; refSeqEnd != null }
-            val refs = expectedRefSeq.subList(0, refSeqEnd?: return null)
+            val refs = expectedRefSeq.subList(0, refSeqEnd ?: return null)
             // check that mutability of references would not contradict the `element`
             val isSuitableMutability = refs.isEmpty() || !refs.last().isMut || (element as RsExpr).isMutable &&
                 // covers cases like `let mut x: &T = ...`
@@ -725,6 +726,44 @@ sealed class RsDiagnostic(
             header = escapeString("the trait bound `$ty: std::marker::Sized` is not satisfied"),
             description = escapeString("`$ty` does not have a constant size known at compile-time"),
             fixes = listOf(ConvertToReferenceFix(element), ConvertToBoxFix(element))
+        )
+    }
+
+    class TryTraitIsNotImplemented(
+        element: RsTryExpr,
+        private val ty: Ty
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0277,
+            header = escapeString("the `?` operator can only be applied to values that implement `std::ops::Try`"),
+            description = escapeString("the `?` operator cannot be applied to type `$ty`")
+        )
+    }
+
+    class TryTraitIsNotImplementedForReturnType(
+        element: RsElement,
+        private val ty: Ty?
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0277,
+            header = escapeString("the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `std::ops::Try`)"),
+            description = escapeString("cannot use the `?` operator in a function that returns `${ty?.insertionSafeText}`")
+        )
+    }
+
+    class TraitFromTraitIsNotSatisfied(
+        val tryExpr: RsTryExpr,
+        private val intoTy: Ty,
+        private val fromTy: Ty
+    ) : RsDiagnostic(tryExpr) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0277,
+            header = escapeString("the trait bound `${intoTy.insertionSafeText}: std::convert::From<${fromTy.insertionSafeText}>` is not satisfied"),
+            description = escapeString("the trait `std::convert::From<${fromTy.insertionSafeText}>` is not implemented for `${intoTy.insertionSafeText}`"),
+            fixes = listOf(ImplementFromTraitFix(tryExpr, fromTy, intoTy))
         )
     }
 

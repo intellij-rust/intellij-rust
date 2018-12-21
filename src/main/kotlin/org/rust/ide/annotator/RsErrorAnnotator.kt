@@ -18,7 +18,12 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
+import org.rust.ide.annotator.fixes.ImplementFromTraitFix
+import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
+import org.rust.ide.utils.findParentFnOrLambdaRetTy
+import org.rust.ide.utils.isFnRetTyResultAndMatchErrTy
+import org.rust.ide.utils.isResult
 import org.rust.lang.core.CRATE_IN_PATHS
 import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
 import org.rust.lang.core.CompilerFeature
@@ -26,9 +31,12 @@ import org.rust.lang.core.FeatureState.ACCEPTED
 import org.rust.lang.core.FeatureState.ACTIVE
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.Namespace
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.stubs.index.RsFeatureIndex
+import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -72,10 +80,54 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
             override fun visitArrayType(o: RsArrayType) = collectDiagnostics(holder, o)
             override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(holder, o)
             override fun visitPolybound(o: RsPolybound) = checkPolybound(holder, o)
+            override fun visitTryExpr(o: RsTryExpr) = checkTryExpr(holder, o)
             override fun visitTraitRef(o: RsTraitRef) = checkTraitRef(holder, o)
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkTryExpr(holder: AnnotationHolder, o: RsTryExpr) {
+        val items = o.knownItems
+        val lookup = ImplLookup(o.project, items)
+        val tryTrait = items.Try ?: return
+        val fromTrait = items.From ?: return
+
+        val tryExprTy = o.expr.type
+        if (tryExprTy is TyUnknown) return
+        val errorTy = findErrorType(tryExprTy, tryTrait, lookup)
+        if (errorTy == null) {
+            RsDiagnostic.TryTraitIsNotImplemented(o, tryExprTy).addToHolder(holder)
+            return
+        }
+
+        val returnTy = findParentFnOrLambdaRetTy(o)
+        val returnErrorTy = returnTy?.let { findErrorType(it, tryTrait, lookup) }
+        if (returnTy is TyUnknown) return
+        if (returnTy == null || returnErrorTy == null) {
+            RsDiagnostic.TryTraitIsNotImplementedForReturnType(o, returnTy).addToHolder(holder)
+            return
+        }
+
+        if (isFnRetTyResultAndMatchErrTy(o.expr, returnTy, errorTy)) return
+        if (returnErrorTy is TyUnknown) return
+        if ((isResult(returnTy, items) || checkTryTraitFeature(o))
+            && !lookup.canSelect(TraitRef(returnErrorTy, fromTrait.withSubst(errorTy)))) {
+            val annotation = holder.createErrorAnnotation(
+                o.q,
+                "the trait `std::convert::From<${errorTy.insertionSafeText}>` is not implemented for `${returnErrorTy.insertionSafeText}`"
+            )
+            RsDiagnostic.TraitFromTraitIsNotSatisfied(o, returnErrorTy, errorTy)
+            if (returnErrorTy is TyAdt && o.crateRoot == returnErrorTy.item.crateRoot) {
+                annotation.registerFix(ImplementFromTraitFix(o, errorTy, returnErrorTy))
+            }
+        }
+    }
+
+    private fun findErrorType(type: Ty, tryTrait: RsTraitItem, lookup: ImplLookup): Ty? {
+        val assocType = tryTrait.findAssociatedType("Error") ?: return null
+        return lookup.selectProjectionStrict(TraitRef(type, tryTrait.withSubst(type)),
+            assocType).ok()?.value
     }
 
     private fun checkTraitRef(holder: AnnotationHolder, o: RsTraitRef) {
@@ -266,20 +318,23 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
         }
     }
 
+    /**
+     * @return true only if feature is active
+     */
     private fun checkFeature(
         holder: AnnotationHolder,
         element: PsiElement,
         feature: CompilerFeature,
         presentableFeatureName: String
-    ) {
-        val rsElement = element.ancestorOrSelf<RsElement>() ?: return
-        val version = rsElement.cargoProject?.rustcInfo?.version ?: return
+    ): Boolean {
+        val rsElement = element.ancestorOrSelf<RsElement>() ?: return false
+        val version = rsElement.cargoProject?.rustcInfo?.version ?: return false
 
         if (feature.state == ACTIVE || feature.state == ACCEPTED && version.semver < feature.since) {
             val diagnostic = if (version.channel != RustChannel.NIGHTLY) {
                 RsDiagnostic.ExperimentalFeature(element, presentableFeatureName)
             } else {
-                val crateRoot = rsElement.crateRoot ?: return
+                val crateRoot = rsElement.crateRoot ?: return false
                 val attrs = RsFeatureIndex.getFeatureAttributes(element.project, feature.name)
                 if (attrs.none { it.crateRoot == crateRoot }) {
                     val fix = AddFeatureAttributeFix(feature.name, crateRoot)
@@ -289,7 +344,9 @@ class RsErrorAnnotator : Annotator, HighlightRangeExtension {
                 }
             }
             diagnostic?.addToHolder(holder)
+            return false
         }
+        return true
     }
 
     private fun checkLabel(holder: AnnotationHolder, label: RsLabel) {
@@ -619,3 +676,14 @@ private fun checkTypesAreSized(holder: AnnotationHolder, fn: RsFunction) {
         RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
     }
 }
+
+
+//TODO:change when 'try_trait' feature will be added to CompilerFeatures
+private fun checkTryTraitFeature(o: RsExpr): Boolean {
+    //if (!checkFeature(holder, o, %FEATURE NAME%, %FEATURE DESCRIPTION%)) return false
+    val version = o.cargoProject?.rustcInfo?.version ?: return false
+
+    return version.channel == RustChannel.NIGHTLY
+}
+
+

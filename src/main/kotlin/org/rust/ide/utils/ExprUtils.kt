@@ -7,14 +7,18 @@ package org.rust.ide.utils
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ArithmeticOp
-import org.rust.lang.core.psi.ext.LogicOp
-import org.rust.lang.core.psi.ext.LogicOp.AND
-import org.rust.lang.core.psi.ext.LogicOp.OR
-import org.rust.lang.core.psi.ext.UnaryOperator
-import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.EqualityOp.EQ
 import org.rust.lang.core.psi.ext.EqualityOp.EXCLEQ
+import org.rust.lang.core.psi.ext.LogicOp.AND
+import org.rust.lang.core.psi.ext.LogicOp.OR
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.type
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -44,12 +48,12 @@ fun RsExpr.isPure(): Boolean? {
         is RsArrayExpr -> when (semicolon) {
             null -> exprList.allMaybe(RsExpr::isPure)
             else -> exprList[0].isPure() // Array literal of form [expr; size],
-        // size is a compile-time constant, so it is always pure
+            // size is a compile-time constant, so it is always pure
         }
         is RsStructLiteral -> when (structLiteralBody.dotdot) {
             null -> structLiteralBody.structLiteralFieldList
-                    .map { it.expr }
-                    .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
+                .map { it.expr }
+                .allMaybe { it?.isPure() } // TODO: Why `it` can be null?
             else -> null // TODO: handle update case (`Point{ y: 0, z: 10, .. base}`)
         }
         is RsBinaryExpr -> when (operatorType) {
@@ -62,7 +66,7 @@ fun RsExpr.isPure(): Boolean? {
         is RsBreakExpr, is RsContExpr, is RsRetExpr, is RsTryExpr -> false   // Changes execution flow
         is RsPathExpr, is RsLitExpr, is RsUnitExpr -> true
 
-    // TODO: more complex analysis of blocks of code and search of implemented traits
+        // TODO: more complex analysis of blocks of code and search of implemented traits
         is RsBlockExpr, // Have to analyze lines, very hard case
         is RsCastExpr, // `expr.isPure()` maybe not true, think about side-effects, may panic while cast
         is RsCallExpr, // All arguments and function itself must be pure, very hard case
@@ -241,4 +245,37 @@ fun RsCondition.skipParenExprDown(): RsExpr {
         child = child.expr
     }
     return child
+}
+
+/***
+ * @return a retType of parent lambda or function
+ */
+fun findParentFnOrLambdaRetTy(element: RsExpr): Ty? =
+    findParentFunctionOrLambdaRsRetType(element)?.typeReference?.type
+
+/***
+ * Check if fnRetTy is Result<OkTy,ErrorTy> and ErrorTy could be create from errTy
+ *
+ */
+fun isFnRetTyResultAndMatchErrTy(element: RsExpr, fnRetTy: Ty, errTy: Ty): Boolean {
+    val items = element.knownItems
+    val lookup = ImplLookup(element.project, items)
+    return isResult(fnRetTy, items)
+        && lookup.canSelect(TraitRef((fnRetTy as TyAdt).typeArguments.get(1), (items.From
+        ?: return false).withSubst(errTy)))
+}
+
+fun isResult(fnRetTy: Ty, items: KnownItems) =
+    fnRetTy is TyAdt && fnRetTy.item == items.Result
+
+private fun findParentFunctionOrLambdaRsRetType(element: RsExpr): RsRetType? {
+    var parent = element.parent
+    while (parent != null) {
+        when (parent) {
+            is RsFunction -> return parent.retType
+            is RsLambdaExpr -> return parent.retType
+            else -> parent = parent.parent
+        }
+    }
+    return null
 }

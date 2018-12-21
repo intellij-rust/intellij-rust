@@ -53,6 +53,7 @@ class KnownItems(
     fun findTrait(path: String): RsTraitItem? =
         findItem(path) as? RsTraitItem
 
+
     val Vec: RsStructOrEnumItemElement? get() = findStructOrEnum("alloc::vec::Vec")
     val String: RsStructOrEnumItemElement? get() = findStructOrEnum("alloc::string::String")
     val Arguments: RsStructOrEnumItemElement? get() = findStructOrEnum("core::fmt::Arguments")
@@ -72,6 +73,7 @@ class KnownItems(
     val Default: RsTraitItem? get() = findTrait("core::default::Default")
     val ToOwned: RsTraitItem? get() = findTrait("alloc::borrow::ToOwned")
     val ToString: RsTraitItem? get() = findTrait("alloc::string::ToString")
+    val Try: RsTraitItem? get() = findTrait("std::ops::Try")
 
     // Lang items
 
