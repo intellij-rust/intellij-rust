@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.annotator.isMut
+import org.rust.ide.refactoring.introduceVariable.suggestedNames
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsPathReference
@@ -112,7 +113,7 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
                 return
             }
 
-            val retName = "ret"
+            val retName = retExpr.suggestedNames().default
             val retMutable = false
             val retType = function.retType?.typeReference
 
