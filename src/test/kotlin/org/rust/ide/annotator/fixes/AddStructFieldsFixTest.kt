@@ -66,7 +66,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         struct S { a: i32, b: String }
 
         fn main() {
-            S { a: 92, b: /*caret*/String::new() };
+            S { a: 92, b: /*caret*/"".to_string() };
         }
     """)
 
@@ -81,7 +81,7 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
         struct S { a: i32, b: String }
 
         fn main() {
-            S { a: 92, b: /*caret*/String::new() };
+            S { a: 92, b: /*caret*/"".to_string() };
         }
     """)
 
@@ -171,9 +171,9 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
 
         fn main() {
             Mesh{
-                name: String::new(),
-                vertices: Vec::new(),
-                faces: Vec::new(),
+                name: "".to_string(),
+                vertices: vec![],
+                faces: vec![],
                 material: None
             };
         }
@@ -261,13 +261,13 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
                 f64_field: 0.0,
                 slice_field: [],
                 array_field: [],
-                str_field: String::new(),
-                vec_field: Vec::new(),
+                str_field: "".to_string(),
+                vec_field: vec![],
                 opt_field: None,
-                ref_field: &String::new(),
-                ref_mut_field: &mut String::new(),
-                tuple_field: (false, '', 0, String::new()),
-                aliased_field: String::new(),
+                ref_field: &"".to_string(),
+                ref_mut_field: &mut "".to_string(),
+                tuple_field: (false, '', 0, "".to_string()),
+                aliased_field: "".to_string(),
                 unsupported_type_field: ()
             };
         }
@@ -309,12 +309,12 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
 
         fn main() {
             Mesh{
-                name: String::new(),
-                vertices: Vec::new(),
-                faces: Vec::new(),
+                name: "".to_string(),
+                vertices: vec![],
+                faces: vec![],
                 material: None,
                 metadata: MetaData {
-                    author: String::new(),
+                    author: "".to_string(),
                     licence: None,
                     specVersion: 0
                 }
@@ -370,15 +370,15 @@ class AddStructFieldsFixTest : RsAnnotationTestBase() {
 
         fn main() {
             Mesh{
-                name: String::new(),
-                vertices: Vec::new(),
-                faces: Vec::new(),
+                name: "".to_string(),
+                vertices: vec![],
+                faces: vec![],
                 material: None,
                 metadata: MetaData {
-                    author: String::new(),
+                    author: "".to_string(),
                     licence: None,
                     specVersion: 0,
-                    tool: ToolInfo { name: String::new(), toolVersion: String::new() }
+                    tool: ToolInfo { name: "".to_string(), toolVersion: "".to_string() }
                 }
             };
         }

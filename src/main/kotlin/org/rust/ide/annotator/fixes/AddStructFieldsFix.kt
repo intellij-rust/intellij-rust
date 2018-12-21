@@ -162,8 +162,8 @@ class AddStructFieldsFix(
                 val item = ty.item
                 when (item) {
                     items.Option -> factory.createExpression("None")
-                    items.String -> factory.createExpression("String::new()")
-                    items.Vec -> factory.createExpression("Vec::new()")
+                    items.String -> factory.createExpression("\"\".to_string()")
+                    items.Vec -> factory.createExpression("vec![]")
                     else -> {
                         if (recursive && item is RsStructItem && item.canBeInstantiatedIn(mod)) {
                             // `!!` is because it isn't possible to acquire TyAdt with anonymous item
