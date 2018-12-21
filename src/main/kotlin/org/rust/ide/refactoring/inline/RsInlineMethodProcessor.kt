@@ -80,8 +80,8 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         val funcScope = LocalSearchScope(body)
         callArguments.zip(funcArguments).forEach zip@{
 
-            if (it.first is RsLitExpr) {
-                val binding = it.second.descendantOfTypeStrict<RsPatBinding>()!!
+            val binding = it.second.descendantOfTypeStrict<RsPatBinding>()!!
+            if (!binding.isMut && it.first is RsLitExpr) {
                 ReferencesSearch.search(binding, funcScope).findAll().forEach {
                     ref -> ref.element.ancestorOrSelf<RsExpr>()!!.replace(it.first)
                 }
@@ -98,8 +98,9 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         }
 
         letBindings.forEach {
-            body.addAfter(factory.createNewline(), body.lbrace)
+
             body.addAfter(it, body.lbrace)
+            body.addAfter(factory.createNewline(), body.lbrace)
         }
 
 
