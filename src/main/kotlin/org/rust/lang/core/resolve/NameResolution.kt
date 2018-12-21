@@ -115,10 +115,18 @@ fun processFieldExprResolveVariants(
     return false
 }
 
-fun processStructLiteralFieldResolveVariants(field: RsStructLiteralField, processor: RsResolveProcessor): Boolean {
+fun processStructLiteralFieldResolveVariants(
+    field: RsStructLiteralField,
+    isCompletion: Boolean,
+    processor: RsResolveProcessor
+): Boolean {
     val resolved = field.parentStructLiteral.path.reference.deepResolve()
     val structOrEnumVariant = resolved as? RsFieldsOwner ?: return false
-    return processFieldDeclarations(structOrEnumVariant, processor)
+    if (processFieldDeclarations(structOrEnumVariant, processor)) return true
+    if (!isCompletion && field.expr == null) {
+        processNestedScopesUpwards(field, processor, VALUES)
+    }
+    return false
 }
 
 fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsMethodResolveProcessor): Boolean =

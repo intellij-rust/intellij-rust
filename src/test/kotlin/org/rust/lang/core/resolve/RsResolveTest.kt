@@ -576,17 +576,6 @@ class RsResolveTest : RsResolveTestBase() {
         }             //^
     """)
 
-    // Perhaps this should resolve to the local instead?
-    fun `test struct field shorthand named`() = checkByCode("""
-        struct S { foo: i32, bar: i32 }
-                            //X
-        fn main() {
-            let foo = 92;
-            let bar = 62;
-            let _ = S { bar, foo };
-        }              //^
-    """)
-
     fun `test struct field with alias`() = checkByCode("""
         struct S { foo: i32 }
                   //X
