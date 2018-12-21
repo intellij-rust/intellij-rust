@@ -6,11 +6,13 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.ref.RsPatBindingReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
@@ -84,4 +86,6 @@ abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
 
         return super.getUseScope()
     }
+
+    override fun getPresentation(): ItemPresentation = getPresentation(this)
 }

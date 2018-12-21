@@ -85,6 +85,14 @@ class RsExpressionAnnotatorTest : RsAnnotationTestBase() {
                 ..T::default()
             };
 
+            let foo = 42;
+            let bar = 24;
+
+            let _ = S {
+                foo,
+                bar
+            };
+
             let _ = <error descr="Some fields are missing">S</error> {
                 foo: 92,
             };
