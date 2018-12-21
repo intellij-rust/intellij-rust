@@ -18,6 +18,15 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test struct field shorthand`() = doTest("""
+        struct S { foo: i32, bar: fn() }
+        fn foo() {}
+        fn main() {
+            let bar = 62;
+            let _ = S { bar, foo };
+        }                   //^
+    """)
+
     fun `test field expr`() = doTest("""
         struct S { foo: i32, foo: () }
         fn f(s: S) {

@@ -21,13 +21,13 @@ class RsStructLiteralFieldReferenceImpl(
 
     override val RsStructLiteralField.referenceAnchor: PsiElement get() = referenceNameElement
 
+    override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
+
     override fun getVariants(): Array<out LookupElement> =
-        collectCompletionVariants { processStructLiteralFieldResolveVariants(element, it) }
+        collectCompletionVariants { processStructLiteralFieldResolveVariants(element, true, it) }
 
     override fun resolveInner(): List<RsElement> =
-        collectResolveVariants(element.referenceName) {
-            processStructLiteralFieldResolveVariants(element, it)
-        }
+        collectResolveVariants(element.referenceName) { processStructLiteralFieldResolveVariants(element, false, it) }
 
     override fun handleElementRename(newName: String): PsiElement {
         return if (element.colon != null) {

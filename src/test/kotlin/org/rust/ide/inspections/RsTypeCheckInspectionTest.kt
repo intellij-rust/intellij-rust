@@ -93,6 +93,14 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
         }
     """)
 
+    fun `test type mismatch E0308 struct shorthand`() = checkByText("""
+        struct S { f: u8 }
+        fn main () {
+            let f = "42";
+            S { <error>f</error> };
+        }
+    """)
+
     fun `test type mismatch E0308 function parameter`() = checkByText("""
         fn foo(_: u8) {}
         fn main () {

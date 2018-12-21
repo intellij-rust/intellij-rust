@@ -257,8 +257,8 @@ class RsInferenceContext(
         }
     }
 
-    fun reportTypeMismatch(expr: RsExpr, expected: Ty, actual: Ty) {
-        addDiagnostic(RsDiagnostic.TypeError(expr, expected, actual))
+    fun reportTypeMismatch(element: RsElement, expected: Ty, actual: Ty) {
+        addDiagnostic(RsDiagnostic.TypeError(element, expected, actual))
     }
 
     fun canCombineTypes(ty1: Ty, ty2: Ty): Boolean {
@@ -604,7 +604,7 @@ class RsFnInferenceContext(
     private val lookup get() = ctx.lookup
     private val items get() = ctx.items
     private val fulfill get() = ctx.fulfill
-    private val RsStructLiteralField.type: Ty get() = resolveToDeclaration?.typeReference?.type ?: TyUnknown
+    private val RsStructLiteralField.type: Ty get() = resolveToDeclaration()?.typeReference?.type ?: TyUnknown
 
     private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
         if (!ty.hasTyInfer) return ty
@@ -715,11 +715,11 @@ class RsFnInferenceContext(
     fun inferTypeCoercableTo(expr: RsExpr, expected: Ty): Ty =
         expr.inferTypeCoercableTo(expected)
 
-    private fun coerce(expr: RsExpr, inferred: Ty, expected: Ty): Boolean {
-        return coerceResolved(expr, resolveTypeVarsWithObligations(inferred), resolveTypeVarsWithObligations(expected))
+    private fun coerce(element: RsElement, inferred: Ty, expected: Ty): Boolean {
+        return coerceResolved(element, resolveTypeVarsWithObligations(inferred), resolveTypeVarsWithObligations(expected))
     }
 
-    private fun coerceResolved(expr: RsExpr, inferred: Ty, expected: Ty): Boolean {
+    private fun coerceResolved(element: RsElement, inferred: Ty, expected: Ty): Boolean {
         val ok = tryCoerce(inferred, expected)
         if (!ok) {
             // ignoring possible false-positives (it's only basic experimental type checking)
@@ -735,8 +735,8 @@ class RsFnInferenceContext(
             if (!expected.containsTyOfClass(ignoredTys) && !inferred.containsTyOfClass(ignoredTys)) {
                 // another awful hack: check that inner expressions did not annotated as an error
                 // to disallow annotation intersections. This should be done in a different way
-                if (ctx.diagnostics.all { !expr.isAncestorOf(it.element) }) {
-                    ctx.reportTypeMismatch(expr, expected, inferred)
+                if (ctx.diagnostics.all { !element.isAncestorOf(it.element) }) {
+                    ctx.reportTypeMismatch(element, expected, inferred)
                 }
             }
         }
@@ -1010,18 +1010,14 @@ class RsFnInferenceContext(
 
     private fun inferStructTypeArguments(literal: RsStructLiteral, typeParameters: Substitution) {
         literal.structLiteralBody.structLiteralFieldList.filterNotNull().forEach { field ->
-            val fieldType = field.type.substitute(typeParameters)
+            val fieldTy = field.type.substitute(typeParameters)
             val expr = field.expr
 
             if (expr != null) {
-                expr.inferTypeCoercableTo(fieldType)
+                expr.inferTypeCoercableTo(fieldTy)
             } else {
-                // Handle struct field shorthand by looking up the matching declaration in scope.
-                RsCodeFragmentFactory(field.project).createPath(field.referenceName, field)?.let { path ->
-                    val local = resolvePath(path, lookup).singleOrNull()?.element
-                    val ty = (local as? RsPatBinding)?.let { ctx.getBindingType(it) } ?: TyUnknown
-                    tryCoerce(ty, fieldType)
-                }
+                val bindingTy = field.resolveToBinding()?.let { ctx.getBindingType(it) } ?: TyUnknown
+                coerce(field, bindingTy, fieldTy)
             }
         }
     }
