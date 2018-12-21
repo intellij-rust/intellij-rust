@@ -71,12 +71,6 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
             return // TODO: throw
         }
 
-        // TODO: deal with self parameter
-        if (body.stmtList.isEmpty() && body.expr != null) {
-            caller.replace(body.expr!!)
-            return
-        }
-
         val letBindings = mutableListOf<RsLetDecl>()
         val funcScope = LocalSearchScope(body)
         callArguments.zip(funcArguments).forEach zip@{
@@ -89,21 +83,42 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
                 return@zip
             }
 
-            val name = it.second.patText
             val expr = it.first
-            val mutable = it.second.typeReference?.isMut ?: false
+            val name = it.second.patText ?: expr.suggestedNames().default
+            val mutable = binding.isMut
             val ty = factory.tryCreateType(expr.type.toString())
 
-            val letBinding = factory.createLetDeclaration(name!!, expr, mutable, ty)
+            val letBinding = factory.createLetDeclaration(name, expr, mutable, ty)
             letBindings.add(letBinding)
         }
 
-        letBindings.forEach {
+        val selfParam = functionDup.selfParameter
+        if (selfParam != null) {
+            val selfExprText = buildString {
+                if (selfParam.and != null) append("&")
+                if (selfParam.mut != null) append("mut")
+                append(" ")
+                append((caller as RsDotExpr).expr.text)
+            }
+            val selfExpr = factory.tryCreateExpression(selfExprText)!!
 
+            val selfName = selfExpr.suggestedNames().default
+            val mutable = false
+            val ty = factory.tryCreateType(selfExpr.type.toString())
+
+            val letBinding = factory.createLetDeclaration(selfName, selfExpr, mutable, ty)
+            letBindings.add(letBinding)
+
+            val selfVariable = factory.tryCreateExpression(selfName)!!
+            ReferencesSearch.search(selfParam.navigationElement, funcScope).findAll().forEach{
+                it.element.ancestorOrSelf<RsExpr>()!!.replace(selfVariable)
+            }
+        }
+
+        letBindings.forEach {
             body.addAfter(it, body.lbrace)
             body.addAfter(factory.createNewline(), body.lbrace)
         }
-
 
         val retExpr = body.descendantsOfType<RsRetExpr>().firstOrNull()
         if (retExpr != null && retExpr.expr != null) {
@@ -127,7 +142,6 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
             caller.replace(retVar)
         } else {
             caller.delete()
-
         }
 
         enclosingStatement.addLeftSibling(body)

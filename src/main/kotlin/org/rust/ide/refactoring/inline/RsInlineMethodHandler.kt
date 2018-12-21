@@ -72,6 +72,8 @@ class RsInlineMethodHandler: InlineActionHandler() {
                 val ref = reference as RsReference
                 RsInlineMethodProcessor(factory).inlineWithLetBindingsAdded(ref, function)
             }
+
+            editor.selectionModel
         }
     }
 
