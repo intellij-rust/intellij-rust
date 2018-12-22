@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import org.rust.ide.annotator.calculateMissingFields
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsStructKind.STRUCT
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -149,6 +150,7 @@ class AddStructFieldsFix(
     }
 
     private fun defaultValueExprFor(factory: RsPsiFactory, items: KnownItems, mod: RsMod, ty: Ty): RsExpr {
+        val defaultValue = { factory.createExpression("()") }
         return when (ty) {
             is TyBool -> factory.createExpression("false")
             is TyInteger -> factory.createExpression("0")
@@ -160,27 +162,51 @@ class AddStructFieldsFix(
             }
             is TyAdt -> {
                 val item = ty.item
+                val name = item.name!! // `!!` is because it isn't possible to acquire TyAdt with anonymous item
                 when (item) {
                     items.Option -> factory.createExpression("None")
                     items.String -> factory.createExpression("\"\".to_string()")
                     items.Vec -> factory.createExpression("vec![]")
-                    else -> {
-                        if (recursive && item is RsStructItem && item.canBeInstantiatedIn(mod)) {
-                            // `!!` is because it isn't possible to acquire TyAdt with anonymous item
-                            val structLiteral = factory.createStructLiteral(ty.item.name!!)
-                            fillStruct(
-                                factory,
-                                items,
-                                structLiteral.structLiteralBody,
-                                item.namedFields,
-                                item.namedFields,
-                                mod
-                            )
-                            structLiteral
-                        } else {
-                            factory.createExpression("()")
+                    is RsStructItem -> if (item.kind == STRUCT && item.canBeInstantiatedIn(mod)) {
+                        when {
+                            item.blockFields != null -> {
+                                val structLiteral = factory.createStructLiteral(name)
+                                if (recursive) {
+                                    fillStruct(
+                                        factory,
+                                        items,
+                                        structLiteral.structLiteralBody,
+                                        item.namedFields,
+                                        item.namedFields,
+                                        mod
+                                    )
+                                }
+                                structLiteral
+                            }
+                            item.tupleFields != null -> {
+                                val argExprs = if (recursive) {
+                                    item.positionalFields
+                                        .map { it.typeReference.type }
+                                        .map { defaultValueExprFor(factory, items, mod, it) }
+                                } else {
+                                    emptyList()
+                                }
+                                factory.createFunctionCall(name, argExprs)
+                            }
+                            else -> factory.createExpression(name)
                         }
+                    } else {
+                        defaultValue()
                     }
+                    is RsEnumItem -> {
+                        val variantWithoutFields = item.enumBody
+                            ?.enumVariantList
+                            ?.find { it.isFieldless }
+                            ?.name
+                        variantWithoutFields?.let { factory.createExpression("$name::$it") }
+                            ?: defaultValue()
+                    }
+                    else -> defaultValue()
                 }
             }
             is TySlice, is TyArray -> factory.createExpression("[]")
@@ -190,7 +216,7 @@ class AddStructFieldsFix(
                 }
                 factory.createExpression(text)
             }
-            else -> factory.createExpression("()")
+            else -> defaultValue()
         }
     }
 }
