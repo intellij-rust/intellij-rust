@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.completion.CompletionResultSet
 import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
@@ -100,15 +100,13 @@ fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Un
     return result
 }
 
-fun collectCompletionVariants(f: (RsResolveProcessor) -> Unit): Array<LookupElement> {
-    val result = mutableListOf<LookupElement>()
+fun collectCompletionVariants(result: CompletionResultSet, f: (RsResolveProcessor) -> Unit) {
     f { e ->
         val element = e.element ?: return@f false
         if (element is RsFunction && element.isTest) return@f false
-        result += createLookupElement(element, e.name)
+        result.addElement(createLookupElement(element, e.name))
         false
     }
-    return result.toTypedArray()
 }
 
 private data class SimpleScopeEntry(

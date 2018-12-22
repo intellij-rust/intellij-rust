@@ -5,6 +5,7 @@
 
 package org.rust.toml
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
@@ -41,7 +42,7 @@ private class CargoDependencyReferenceImpl(key: TomlKey) : PsiReferenceBase<Toml
         return PsiManager.getInstance(project).findFile(crateRoot) as? RsFile
     }
 
-    override fun getVariants(): Array<Any> = emptyArray()
+    override fun getVariants(): Array<out LookupElement> = LookupElement.EMPTY_ARRAY
 
     override fun calculateDefaultRangeInElement(): TextRange = TextRange.from(0, element.textLength)
 }

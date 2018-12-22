@@ -8,7 +8,6 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsMacroReference
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.resolve.collectCompletionVariants
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processMacroReferenceVariants
 
@@ -18,9 +17,6 @@ class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceCached<RsMacr
         get() = referenceNameElement
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL
-
-    override fun getVariants(): Array<out Any> =
-        collectCompletionVariants { processMacroReferenceVariants(element, it) }
 
     override fun resolveInner(): List<RsElement>
         = collectResolveVariants(element.referenceName) { processMacroReferenceVariants(element, it) }
