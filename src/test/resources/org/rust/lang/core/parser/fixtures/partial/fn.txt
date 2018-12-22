@@ -100,7 +100,7 @@ FILE
       <empty list>
   PsiWhiteSpace(' ')
   PsiElement(identifier)('add')
-  PsiErrorElement:'!' expected, got '('
+  PsiErrorElement:'!' or '::' expected, got '('
     PsiElement(()('(')
   PsiElement(DUMMY_BLOCK)
     PsiElement())(')')

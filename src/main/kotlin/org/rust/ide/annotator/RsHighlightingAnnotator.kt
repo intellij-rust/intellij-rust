@@ -35,12 +35,14 @@ class RsHighlightingAnnotator : Annotator {
 
         val isPrimitiveType = element is RsPath && TyPrimitive.fromPath(element) != null
 
-        val color = if (isPrimitiveType) {
-            RsColor.PRIMITIVE_TYPE
-        } else {
-            val ref = element.reference.resolve() ?: return null
-            // Highlight the element dependent on what it's referencing.
-            colorFor(ref)
+        val color = when {
+            isPrimitiveType -> RsColor.PRIMITIVE_TYPE
+            element.parent is RsMacroCall -> RsColor.MACRO
+            else -> {
+                val ref = element.reference.resolve() ?: return null
+                // Highlight the element dependent on what it's referencing.
+                colorFor(ref)
+            }
         }
         return color?.let { element.referenceNameElement.textRange to it }
     }
@@ -120,9 +122,7 @@ private fun partToHighlight(element: RsElement): TextRange? {
     }
 
     if (element is RsMacroCall) {
-        var range = element.referenceNameElement.textRange ?: return null
-        range = range.union(element.excl.textRange)
-        return range
+        return element.excl.textRange
     }
 
     val name = when (element) {

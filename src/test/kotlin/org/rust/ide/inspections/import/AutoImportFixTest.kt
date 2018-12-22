@@ -72,7 +72,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import function`() = checkAutoImportFixByText("""
         mod foo {
-            pub fn bar() -> i32 { unimplemented!() }
+            pub fn bar() -> i32 { 0 }
         }
 
         fn main() {
@@ -82,7 +82,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         use foo::bar;
 
         mod foo {
-            pub fn bar() -> i32 { unimplemented!() }
+            pub fn bar() -> i32 { 0 }
         }
 
         fn main() {
@@ -135,7 +135,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     fun `test import module`() = checkAutoImportFixByText("""
         mod foo {
             pub mod bar {
-                pub fn foo_bar() -> i32 { unimplemented!() }
+                pub fn foo_bar() -> i32 { 0 }
             }
         }
 
@@ -147,7 +147,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         mod foo {
             pub mod bar {
-                pub fn foo_bar() -> i32 { unimplemented!() }
+                pub fn foo_bar() -> i32 { 0 }
             }
         }
 

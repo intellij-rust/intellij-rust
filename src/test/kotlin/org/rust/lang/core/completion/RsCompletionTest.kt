@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
@@ -513,6 +514,47 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete macro with qualified path`() = doSingleCompletionMultifile("""
+    //- lib.rs
+        fn bar() {
+            dep_lib_target::fo/*caret*/
+        }
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo_bar { () => () }
+    """, """
+        fn bar() {
+            dep_lib_target::foo_bar!(/*caret*/)
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete outer macro with qualified path 1`() = doSingleCompletionMultifile("""
+    //- lib.rs
+        dep_lib_target::fo/*caret*/
+        fn foo(){}
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo_bar { () => () }
+    """, """
+        dep_lib_target::foo_bar!(/*caret*/)
+        fn foo(){}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test complete outer macro with qualified path 2`() = doSingleCompletionMultifile("""
+    //- lib.rs
+        ::dep_lib_target::fo/*caret*/
+        fn foo(){}
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo_bar { () => () }
+    """, """
+        ::dep_lib_target::foo_bar!(/*caret*/)
+        fn foo(){}
+    """)
+
     fun `test macro don't suggests as function name`() = checkNoCompletion("""
         macro_rules! foo_bar { () => () }
         fn foo/*caret*/() {
@@ -536,6 +578,16 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() {
             Foo::f/*caret*/
         }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no completion for outer macro with qualified path of 3 segments`() = checkNoCompletionWithMultifile("""
+    //- lib.rs
+        quux::dep_lib_target::fo/*caret*/
+        fn foo(){}
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo_bar { () => () }
     """)
 
     fun `test hidden macro completes in the same module`() = doSingleCompletion("""

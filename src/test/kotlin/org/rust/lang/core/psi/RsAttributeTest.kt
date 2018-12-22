@@ -208,7 +208,7 @@ class RsAttributeTest : RsTestBase() {
 
         #[outer]
         makro!();
-        //^
+           //^
         """, Outer)
 
     fun `test let statement`() = expect<IllegalStateException> {

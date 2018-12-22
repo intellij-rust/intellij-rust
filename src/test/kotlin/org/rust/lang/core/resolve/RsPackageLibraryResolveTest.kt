@@ -108,8 +108,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     fun `test macro reexport in use item`() = stubOnlyResolve("""
     //- lib.rs
-        #![feature(use_extern_macros)]
-
         #[macro_use]
         extern crate dep_lib_target;
 
@@ -124,8 +122,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     fun `test new macro reexport`() = stubOnlyResolve("""
     //- lib.rs
-        #![feature(use_extern_macros)]
-
         extern crate dep_lib_target;
 
         pub use dep_lib_target::foo;
@@ -148,8 +144,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     fun `test new macro reexport with crate alias`() = stubOnlyResolve("""
     //- lib.rs
-        #![feature(use_extern_macros)]
-
         extern crate dep_lib_target as dep_lib;
 
         pub use dep_lib::foo;
@@ -172,8 +166,6 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     fun `test new macro reexport from inner module`() = stubOnlyResolve("""
     //- lib.rs
-        #![feature(use_extern_macros)]
-
         extern crate dep_lib_target;
 
         pub use dep_lib_target::foo;
@@ -197,25 +189,105 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test reexported macros are visible in reexporting mod`() = stubOnlyResolve("""
+    fun `test import macro by use item`() = stubOnlyResolve("""
     //- lib.rs
-        #![feature(use_extern_macros)]
-
         extern crate dep_lib_target;
-
-        pub use dep_lib_target::foo;
-
+        use dep_lib_target::foo;
         fn bar() {
             foo!();
-            //^ dep-lib/lib.rs
-        }
-
+        } //^ dep-lib/lib.rs
     //- dep-lib/lib.rs
         #[macro_export]
         macro_rules! foo {
             () => {};
         }
     """, NameResolutionTestmarks.missingMacroUse)
+
+    fun `test import macro by use item without extern crate`() = stubOnlyResolve("""
+    //- lib.rs
+        use dep_lib_target::foo;
+        fn bar() {
+            foo!();
+        } //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    fun `test import macro by complex use item without extern crate`() = stubOnlyResolve("""
+    //- lib.rs
+        use {{dep_lib_target::{{foo}}}};
+        fn bar() {
+            foo!();
+        } //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    fun `test local definition wins over imported by use item`() = stubOnlyResolve("""
+    //- lib.rs
+        use dep_lib_target::foo;
+        macro_rules! foo {
+            () => {};
+        }
+        fn bar() {
+            foo!();
+        } //^ lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    fun `test import macro by non-root use item with aliased extern crate`() = stubOnlyResolve("""
+    //- lib.rs
+        extern crate dep_lib_target as aliased;
+        mod bar {
+            use aliased::foo;
+            fn bar() {
+                foo!();
+            } //^ dep-lib/lib.rs
+        }
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    fun `test import macro by qualified path without extern crate`() = stubOnlyResolve("""
+    //- lib.rs
+        fn bar() {
+            dep_lib_target::foo!();
+        }                 //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    // TODO
+    fun `test import macro by qualified path with aliased extern crate`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+        //- lib.rs
+            extern crate dep_lib_target as aliased;
+            fn bar() {
+                aliased::foo!();
+            }          //^ dep-lib/lib.rs
+        //- dep-lib/lib.rs
+            #[macro_export]
+            macro_rules! foo {
+                () => {};
+            }
+        """)
+    }
 
     fun `test import from crate root without 'pub' vis`() = stubOnlyResolve("""
     //- lib.rs

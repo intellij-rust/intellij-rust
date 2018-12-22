@@ -68,5 +68,5 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
      * @param navElement the element we going to navigate to ([PsiElement.getNavigationElement])
      */
     override fun getGotoDeclarationTarget(element: PsiElement, navElement: PsiElement?): PsiElement? =
-        element.findMacroCallExpandedFrom()?.referenceNameElement
+        element.findMacroCallExpandedFrom()?.path
 }

@@ -37,7 +37,7 @@ class RsEdition2018KeywordsAnnotator : Annotator {
 
         fun isEdition2018Keyword(element: PsiElement): Boolean =
             element.elementType == IDENTIFIER && element.text in EDITION_2018_RESERVED_NAMES &&
-                element.parent !is RsMacro && element.parent !is RsMacroCall ||
+                element.parent !is RsMacro && element.parent?.parent !is RsMacroCall ||
                 element.elementType in RS_EDITION_2018_KEYWORDS
     }
 }

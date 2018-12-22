@@ -1203,8 +1203,7 @@ MacroExpansionGroupSeparator ::= <<macroBindingGroupSeparatorToken>>
 
 
 MacroCall ::= MacroHead <<macroSemicolon>> {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.macros.RsExpandedElement" ]
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
@@ -1219,7 +1218,7 @@ MacroCallNoSemicolons ::= MacroHead {
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
 }
 
-private MacroHead ::= AttrsAndVis &(identifier '!') (SpecialMacro | CommonMacro)
+private MacroHead ::= AttrsAndVis &(PathWithoutTypes '!') (SpecialMacro | CommonMacro)
 
 MacroArgument ::= <<any_braces CompactTT>>
 // `CompactTT` differs from `TT` in that it does not create an additional `TT` nodes for each unpaired token
@@ -1229,40 +1228,40 @@ CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
 //noinspection BnfUnusedRule
 TT ::= <<any_braces TT*>> | <<unpairedToken>>
 
-private CommonMacro ::= identifier '!' identifier? MacroArgument { pin = 2 }
+private CommonMacro ::= PathWithoutTypes '!' identifier? MacroArgument { pin = 2 }
 private SpecialMacro ::= TryMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro
 
-private TryMacro ::= "try" '!' TryMacroArgument { pin = 2 }
+private TryMacro ::= &("try" '!') PathWithoutTypes '!' TryMacroArgument { pin = 3 }
 TryMacroArgument ::= <<any_braces AnyExpr>>
 
 // https://doc.rust-lang.org/std/fmt/
 private FormatLikeMacro ::=
-  ("format" | "format_args" | "write" | "writeln" | "print" | "println" | "eprint" | "eprintln" | "panic" | "unimplemented" | "unreachable")
-  '!' FormatMacroArgument { pin = 2 }
+  &(("format" | "format_args" | "write" | "writeln" | "print" | "println" | "eprint" | "eprintln" | "panic" | "unimplemented" | "unreachable") '!')
+  PathWithoutTypes '!' FormatMacroArgument { pin = 3 }
 
 FormatMacroArgument ::= <<any_braces [ <<comma_separated_list FormatMacroArg>> ] >>
 FormatMacroArg ::= [ identifier '=' ] AnyExpr
 
 
 private AssertMacro ::=
-  ("assert" | "debug_assert" | "assert_eq" | "assert_ne" | "debug_assert_eq" | "debug_assert_ne")
-  '!' AssertMacroArgument { pin = 2 }
+  &(("assert" | "debug_assert" | "assert_eq" | "assert_ne" | "debug_assert_eq" | "debug_assert_ne") '!')
+  PathWithoutTypes '!' AssertMacroArgument { pin = 3 }
 
 AssertMacroArgument ::= <<any_braces (AnyExpr [ ',' <<comma_separated_list FormatMacroArg>> ])>>
 
 
-private VecMacro ::= "vec" '!' VecMacroArgument { pin = 2 }
+private VecMacro ::= &("vec" '!') PathWithoutTypes '!' VecMacroArgument { pin = 3 }
 VecMacroArgument ::= <<any_braces ArrayInitializer >>
 
 
 private LogMacro ::=
-  ( "trace" | "log" | "warn" | "debug" | "error" | "info" )
-  '!' LogMacroArgument
+  &(( "trace" | "log" | "warn" | "debug" | "error" | "info" ) '!')
+  PathWithoutTypes '!' LogMacroArgument
 
 LogMacroArgument ::=
   <<any_braces (('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?)>>
 
-private IncludeMacro ::= ("include" | "include_str" | "include_bytes") '!' IncludeMacroArgument
+private IncludeMacro ::= &(("include" | "include_str" | "include_bytes") '!') PathWithoutTypes '!' IncludeMacroArgument
 
 IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>>
 

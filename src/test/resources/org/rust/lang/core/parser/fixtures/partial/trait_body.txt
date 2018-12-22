@@ -19,7 +19,7 @@ FILE
           PsiElement({)('{')
           PsiWhiteSpace('\n        ')
           PsiElement(identifier)('intellijidearulezz')
-          PsiErrorElement:'!' expected, got '}'
+          PsiErrorElement:'!' or '::' expected, got '}'
             <empty list>
           PsiWhiteSpace('\n    ')
           PsiElement(})('}')
@@ -33,7 +33,7 @@ FILE
           PsiElement({)('{')
           PsiWhiteSpace('\n        ')
           PsiElement(identifier)('intellijidearulezzz')
-          PsiErrorElement:'!' expected, got 'fn'
+          PsiErrorElement:'!' or '::' expected, got 'fn'
             <empty list>
           PsiWhiteSpace('\n        ')
           RsFunctionImpl(FUNCTION)
