@@ -10,15 +10,10 @@ import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
-//import com.intellij.psi.util.parentOfType
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.runWriteCommandAction
 
@@ -38,7 +33,6 @@ class RsInlineMethodHandler: InlineActionHandler() {
         }
 
         val reference = TargetElementUtil.findReference(editor, editor.caretModel.offset)
-        val f = element.findElementAt(editor.caretModel.offset)
 
         if (RsInlineMethodProcessor.checkMultipleReturns(function)) {
             errorHint(project, editor, "cannot inline method with more than one exit points")
@@ -60,20 +54,13 @@ class RsInlineMethodHandler: InlineActionHandler() {
             return
         }
 
-        // TODO: inline dialog call here
-
-
         project.runWriteCommandAction {
             val factory = RsPsiFactory(project)
 
-
             if (reference != null) {
-//                val statement =
                 val ref = reference as RsReference
                 RsInlineMethodProcessor(factory).inlineWithLetBindingsAdded(ref, function)
             }
-
-            editor.selectionModel
         }
     }
 
@@ -85,9 +72,11 @@ class RsInlineMethodHandler: InlineActionHandler() {
         element is RsFunction && element.navigationElement is RsFunction
 
     private fun errorHint(project: Project, editor: Editor, message: String) {
-//        CommonRefactoringUtil.showErrorHint(project, editor, message, "Rs Inline Method", "refactoring.inlineMethod")
-        // TODO: figure out how to display an error in more correct way
-        Messages.showErrorDialog(project, message, "method inline is not possible")
+        CommonRefactoringUtil.showErrorHint(
+            project,
+            editor,
+            message,
+            "inline.method.title",
+            "refactoring.inlineMethod")
     }
-
 }

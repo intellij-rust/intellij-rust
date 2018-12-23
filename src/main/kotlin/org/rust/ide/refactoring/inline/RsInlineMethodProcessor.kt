@@ -33,9 +33,7 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         }
 
         fun checkRecursiveCall(fn: RsFunction) : Boolean {
-            return fn.descendantsOfType<RsPath>()
-                .map { it.reference.resolve() }
-                .any { it == fn}
+            return fn.descendantsOfType<RsPath>().any { it.reference.resolve() == fn}
         }
 
         fun checkIfLoopCondition(fn: RsFunction, element: PsiElement): Boolean {
@@ -100,8 +98,8 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
                 append(" ")
                 append((caller as RsDotExpr).expr.text)
             }
-            val selfExpr = factory.tryCreateExpression(selfExprText)!!
 
+            val selfExpr = factory.tryCreateExpression(selfExprText)!!
             val selfName = selfExpr.suggestedNames().default
             val mutable = false
             val ty = factory.tryCreateType(selfExpr.type.toString())
@@ -123,14 +121,15 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         val retExpr = body.descendantsOfType<RsRetExpr>().firstOrNull()
         if (retExpr != null && retExpr.expr != null) {
             val statements = body.stmtList
+            val expr = retExpr.expr!!
             if (statements.size == 1) {
-                caller.replace(retExpr.expr!!)
+                caller.replace(expr)
                 return
             }
 
             val retName = retExpr.suggestedNames().default
             val retMutable = false
-            val retType = function.retType?.typeReference
+            val retType = factory.tryCreateType(expr.type.toString())
 
             val retLetBinding = factory.createLetDeclaration(retName, null, retMutable, retType)
 
