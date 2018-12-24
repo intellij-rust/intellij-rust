@@ -9,7 +9,7 @@ import org.rust.MockEdition
 import org.rust.MockRustcVersion
 import org.rust.cargo.project.workspace.CargoWorkspace
 
-class RsErrorAnnotatorTest : RsAnnotationTestBase() {
+class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
 
     @MockRustcVersion("1.29.0")
     fun `test invalid module declarations`() = checkByFileTree("""

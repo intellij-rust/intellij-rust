@@ -5,9 +5,10 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.annotator.RsAnnotationTestBase
+import org.rust.ide.annotator.RsAnnotatorTestBase
+import org.rust.ide.annotator.RsErrorAnnotator
 
-class FixVisRestrictionTest : RsAnnotationTestBase() {
+class FixVisRestrictionTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
 
     fun `test fix visibility restriction 1`() = checkFixByText("Fix visibility restriction", """
         mod foo {

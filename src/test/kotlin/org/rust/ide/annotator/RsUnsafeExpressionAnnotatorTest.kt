@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-class RsUnsafeExpressionAnnotatorTest : RsAnnotationTestBase() {
+class RsUnsafeExpressionAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class.java) {
     fun `test extern static requires unsafe`() = checkErrors("""
         extern {
             static C: i32;

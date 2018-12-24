@@ -6,7 +6,6 @@
 package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
@@ -21,9 +20,9 @@ import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
 import org.rust.openapiext.isUnitTestMode
 
-class RsHighlightingMutableAnnotator : Annotator {
+class RsHighlightingMutableAnnotator : RsAnnotatorBase() {
 
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val ref = when (element) {
             is RsPath -> element.reference.resolve() ?: return
             is RsSelfParameter -> element

@@ -8,7 +8,7 @@ package org.rust.ide.annotator
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
 
-class RsEdition2018KeywordsAnnotatorTest : RsAnnotationTestBase() {
+class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018KeywordsAnnotator::class.java) {
 
     fun `test edition 2018 keywords in edition 2015`() = checkErrors("""
         fn main() {

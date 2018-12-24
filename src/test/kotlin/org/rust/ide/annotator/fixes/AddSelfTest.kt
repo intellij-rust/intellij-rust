@@ -5,9 +5,10 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.annotator.RsAnnotationTestBase
+import org.rust.ide.annotator.RsAnnotatorTestBase
+import org.rust.ide.annotator.RsErrorAnnotator
 
-class AddSelfTest : RsAnnotationTestBase() {
+class AddSelfTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     fun `test has no parameters`() = checkFixByText("Add self to function", """
         struct S;
 

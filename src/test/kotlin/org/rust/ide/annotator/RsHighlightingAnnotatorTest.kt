@@ -9,7 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.colors.RsColor
 
-class RsHighlightingAnnotatorTest : RsAnnotationTestBase() {
+class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class.java) {
 
     override fun setUp() {
         super.setUp()

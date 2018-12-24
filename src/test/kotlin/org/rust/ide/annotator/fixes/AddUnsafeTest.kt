@@ -5,9 +5,10 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.annotator.RsAnnotationTestBase
+import org.rust.ide.annotator.RsAnnotatorTestBase
+import org.rust.ide.annotator.RsUnsafeExpressionAnnotator
 
-class AddUnsafeTest : RsAnnotationTestBase() {
+class AddUnsafeTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class.java) {
     fun `test add unsafe to function`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 

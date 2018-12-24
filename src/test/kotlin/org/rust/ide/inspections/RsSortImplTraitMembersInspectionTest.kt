@@ -54,7 +54,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             type x;
         }
 
-        <error descr="Not all trait items implemented, missing: `x` [E0046]">/*caret*/impl Foo for ()</error> {
+        /*caret*/impl Foo for () {
         }
     """)
 
@@ -63,7 +63,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         }
 
         /*caret*/impl Foo for () {
-            type <error descr="Method `x` is not a member of trait `Foo` [E0407]">x</error> = ();
+            type x = ();
         }
     """)
 
@@ -71,8 +71,8 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         trait Foo {
             type x;
         }
-        <error descr="Not all trait items implemented, missing: `x` [E0046]">/*caret*/impl Foo for ()</error> {
-            type <error descr="Method `y` is not a member of trait `Foo` [E0407]">y</error> = ();
+        /*caret*/impl Foo for () {
+            type y = ();
         }
     """)
 
@@ -84,7 +84,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         /*caret*/impl Foo for () {
             fn g() {}
             fn f() {}
-            fn <error descr="Method `h` is not a member of trait `Foo` [E0407]">h</error>() {}
+            fn h() {}
         }
     """, testmark = RsSortImplTraitMembersInspection.Testmarks.implMemberNotInTrait)
 
@@ -299,7 +299,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
 
         struct S;
 
-        <error descr="Not all trait items implemented, missing: `T` [E0046]"><weak_warning descr="Different impl member order from the trait">impl Foo for S/*caret*/</weak_warning></error> {
+        <weak_warning descr="Different impl member order from the trait">impl Foo for S/*caret*/</weak_warning> {
             fn foo() { unimplemented!() }
             const C: i32 = unimplemented!();
         }

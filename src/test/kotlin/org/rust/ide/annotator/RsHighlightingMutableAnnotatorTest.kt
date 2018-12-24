@@ -10,7 +10,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor.MUT_BINDING
 import org.rust.ide.colors.RsColor.MUT_PARAMETER
 
-class RsHighlightingMutableAnnotatorTest : RsAnnotationTestBase() {
+class RsHighlightingMutableAnnotatorTest : RsAnnotatorTestBase(RsHighlightingMutableAnnotator::class.java) {
 
     override fun setUp() {
         super.setUp()
