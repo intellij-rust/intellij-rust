@@ -6,9 +6,10 @@
 package org.rust.ide.annotator.fixes
 
 import org.rust.MockRustcVersion
-import org.rust.ide.annotator.RsAnnotationTestBase
+import org.rust.ide.annotator.RsAnnotatorTestBase
+import org.rust.ide.annotator.RsErrorAnnotator
 
-class AddFeatureAttributeFixTest : RsAnnotationTestBase() {
+class AddFeatureAttributeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
 
     @MockRustcVersion("1.27.1")
     fun `test add crate_visibility_modifier feature is unavailable`() = checkFixIsUnavailable(

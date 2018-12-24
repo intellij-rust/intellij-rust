@@ -52,7 +52,7 @@ class RsWhileTrueLoopInspectionTest : RsInspectionsTestBase(RsWhileTrueLoopInspe
 
     fun `test with unnecessary parentheses around while`() = checkFix("""
         fn main() {
-            <weak_warning descr="Denote infinite loops with `loop { ... }`">while/*caret*/ <weak_warning descr="Predicate expression has unnecessary parentheses">(true)</weak_warning></weak_warning> {
+            <weak_warning descr="Denote infinite loops with `loop { ... }`">while/*caret*/ (true)</weak_warning> {
                 let a = 42;
                 println!("{}", a);
             }

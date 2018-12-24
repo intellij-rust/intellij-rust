@@ -7,13 +7,12 @@ package org.rust.ide.annotator
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 
-class RsLiteralAnnotator : Annotator {
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+class RsLiteralAnnotator : RsAnnotatorBase() {
+    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (element !is RsLitExpr) return
         val literal = element.kind
 
