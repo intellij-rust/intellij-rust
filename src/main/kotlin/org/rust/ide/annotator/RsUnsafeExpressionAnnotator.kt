@@ -99,8 +99,8 @@ class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
 
         return parent is RsBlockExpr || (parent is RsFunction && parent.isUnsafe)
     }
-}
 
-fun AnnotationHolder.createUnsafeAnnotation(element: PsiElement, message: String) {
-    createWeakWarningAnnotation(element, message).textAttributes = RsColor.UNSAFE_CODE.textAttributesKey
+    private fun AnnotationHolder.createUnsafeAnnotation(element: PsiElement, message: String) {
+        createInfoAnnotation(element, message).textAttributes = RsColor.UNSAFE_CODE.textAttributesKey
+    }
 }
