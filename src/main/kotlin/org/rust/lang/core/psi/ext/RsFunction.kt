@@ -77,6 +77,19 @@ val RsFunction.returnType: Ty get() {
 
 val RsFunction.abi: RsExternAbi? get() = externAbi ?: (parent as? RsForeignModItem)?.externAbi
 
+val RsFunction.declaration: String
+    get() = buildString {
+        if (const != null)
+            append("${const!!.text} ")
+        append(identifier.text)
+        if (typeParameterList != null)
+            append(typeParameterList!!.text)
+        if (valueParameterList != null)
+            append(valueParameterList!!.text)
+        if (retType != null)
+            append(retType!!.text)
+    }
+
 abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction, RsModificationTrackerOwner {
 
     constructor(node: ASTNode) : super(node)

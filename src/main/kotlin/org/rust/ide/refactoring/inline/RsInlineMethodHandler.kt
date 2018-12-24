@@ -8,9 +8,12 @@ package org.rust.ide.refactoring.inline
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.Language
 import com.intellij.lang.refactoring.InlineActionHandler
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
@@ -54,14 +57,24 @@ class RsInlineMethodHandler: InlineActionHandler() {
             return
         }
 
-        project.runWriteCommandAction {
-            val factory = RsPsiFactory(project)
-
-            if (reference != null) {
-                val ref = reference as RsReference
-                RsInlineMethodProcessor(factory).inlineWithLetBindingsAdded(ref, function)
+        val dialog = RsInlineMethodDialog(function, reference as RsReference, allowInlineThisOnly)
+        if (/*withPrompt && */!ApplicationManager.getApplication().isUnitTestMode && dialog.shouldBeShown()) {
+            dialog.show()
+            if (!dialog.isOK) {
+                val statusBar = WindowManager.getInstance().getStatusBar(function.project)
+                statusBar?.info = RefactoringBundle.message("press.escape.to.remove.the.highlighting")
             }
+        } else {
+            dialog.doAction()
         }
+//        project.runWriteCommandAction {
+//            val factory = RsPsiFactory(project)
+//
+//            if (reference != null) {
+//                val ref = reference as RsReference
+//                RsInlineMethodProcessor(factory).inlineWithLetBindingsAdded(ref, function)
+//            }
+//        }
     }
 
     override fun isEnabledForLanguage(l: Language?): Boolean = l == RsLanguage

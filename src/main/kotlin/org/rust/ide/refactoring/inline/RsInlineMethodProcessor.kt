@@ -5,19 +5,85 @@
 
 package org.rust.ide.refactoring.inline
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.usageView.UsageInfo
+import com.intellij.usageView.UsageViewBundle
+import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.annotator.isMut
 import org.rust.ide.refactoring.introduceVariable.suggestedNames
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.factory
 import org.rust.lang.core.types.type
 
-class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
+class RsInlineMethodProcessor(
+    private val project: Project,
+    private val function: RsFunction,
+    private val ref: RsReference?,
+    private val inlineThisOnly: Boolean,
+    private val removeDefinition: Boolean,
+    private val factory: RsPsiFactory = RsPsiFactory(project)
+) : BaseRefactoringProcessor(project) {
+
+    override fun findUsages(): Array<UsageInfo> {
+        if (inlineThisOnly && ref != null) {
+            return arrayOf(UsageInfo(ref))
+        }
+
+        val projectScope = GlobalSearchScope.projectScope(project)
+        val usages = mutableListOf<PsiReference>()
+        runReadAction {
+            usages.addAll(ReferencesSearch.search(function, projectScope).findAll())
+        }
+
+        val usagesAsReference = usages.filter {it.element.ancestorOrSelf<RsPathExpr>() != null}
+
+        if (!usagesAsReference.isEmpty() && removeDefinition) {
+            throw IllegalArgumentException(
+                "Cannot remove function definition: function reference inline is not supported")
+        }
+
+        usages.removeAll(usagesAsReference)
+        return usages.map(::UsageInfo).toTypedArray()
+    }
+
+    override fun performRefactoring(usages: Array<out UsageInfo>) {
+        runWriteAction {
+            usages.asIterable().forEach loop@{
+                val reference = it.reference as? RsReference ?: return@loop
+                inlineWithLetBindingsAdded(reference, function)
+            }
+        }
+    }
+
+    override fun getCommandName(): String = "Inline function ${function.declaration}"
+
+    override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
+        return object : UsageViewDescriptor {
+            override fun getCommentReferencesText(usagesCount: Int, filesCount: Int) =
+                RefactoringBundle.message("comments.elements.header",
+                    UsageViewBundle.getOccurencesString(usagesCount, filesCount))
+
+            override fun getCodeReferencesText(usagesCount: Int, filesCount: Int) =
+                RefactoringBundle.message("invocations.to.be.inlined",
+                    UsageViewBundle.getReferencesString(usagesCount, filesCount))
+
+            override fun getElements() = arrayOf(function)
+
+            override fun getProcessedElementsHeader() = "Method to inline"
+        }
+    }
+
     companion object {
         fun checkMultipleReturns(fn: RsFunction): Boolean {
             var returnsCount = fn.descendantsOfType<RsRetExpr>()
@@ -50,7 +116,7 @@ class RsInlineMethodProcessor(val factory: RsPsiFactory)  {
         }
     }
 
-    fun inlineWithLetBindingsAdded(ref: RsReference, function: RsFunction) {
+    private fun inlineWithLetBindingsAdded(ref: RsReference, function: RsFunction) {
         val functionDup = function.copy() as RsFunction
         val body = functionDup.block!!
         replaceLastExprToStatement(body)
