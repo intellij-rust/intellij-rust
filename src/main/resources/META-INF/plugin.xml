@@ -161,13 +161,13 @@
 
         <!-- Annotator -->
 
-        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingAnnotator"/>
-        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingMutableAnnotator"/>
-        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsLiteralAnnotator"/>
-        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsExpressionAnnotator"/>
-        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsErrorAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsSyntaxErrorsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsEdition2018KeywordsAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsLiteralAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsHighlightingMutableAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsExpressionAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsErrorAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsUnsafeExpressionAnnotator"/>
         <externalAnnotator language="Rust" implementationClass="org.rust.ide.annotator.RsCargoCheckAnnotator"/>
         <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
