@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.typecheck
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.RsTypeCheckInspection
 
 class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
     fun `test type mismatch E0308 primitive`() = checkByText("""
