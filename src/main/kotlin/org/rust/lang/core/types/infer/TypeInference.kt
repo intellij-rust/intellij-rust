@@ -1508,6 +1508,13 @@ class RsFnInferenceContext(
             return inferTryExprOrMacroType(tryArg.expr, allowOption = false)
         }
 
+        val awaitArg = expr.macroCall.awaitMacroArgument
+        if (awaitArg != null) {
+            // TODO: type inference for async/await
+            awaitArg.expr.inferType()
+            return TyUnknown
+        }
+
         inferChildExprsRecursively(expr.macroCall)
         val vecArg = expr.macroCall.vecMacroArgument
         if (vecArg != null) {
