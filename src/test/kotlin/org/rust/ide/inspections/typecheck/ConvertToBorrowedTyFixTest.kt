@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator.fixes
+package org.rust.ide.inspections.typecheck
 
 class ConvertToBorrowedTyFixTest : ConvertToTyUsingTraitFixTestBase(
     false, "Borrow", "borrow", "use std::borrow::Borrow;")
