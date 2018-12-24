@@ -10,19 +10,75 @@ import org.rust.MockRustcVersion
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsErrorAnnotatorTest : RsAnnotationTestBase() {
-    override val dataPath = "org/rust/ide/annotator/fixtures/errors"
 
-    fun `test invalid module declarations`() = doTest("helper.rs")
+    @MockRustcVersion("1.29.0")
+    fun `test invalid module declarations`() = checkByFileTree("""
+    //- main.rs
+        mod module;
+    //- module.rs
+        /*caret*/
+        <error descr="mod statements in non-mod.rs files is experimental [E0658]">mod foo;</error>
 
-    fun `test create file quick fix`() = checkByDirectory {
-        openFileInEditor("mod.rs")
-        applyQuickFix("Create module file")
-    }
+        #[path="helper.rs"]
+        mod foobar;
 
-    fun `test create file and expand module quick fix`() = checkByDirectory {
-        openFileInEditor("foo.rs")
-        applyQuickFix("Create module file")
-    }
+        #[path=""] mod <error descr="File not found for module `nonono` [E0583]">nonono</error>;
+
+        mod inner {
+            mod <error descr="File not found for module `bar` [E0583]">bar</error>;
+        }
+
+        fn foo() {
+            mod foo {
+                <error descr="Cannot declare a non-inline module inside a block unless it has a path attribute">mod bar;</error>
+            }
+        }
+    //- helper.rs
+    """)
+
+    fun `test create file quick fix`() = checkFixByFileTree("Create module file", """
+    //- main.rs
+        mod bar;
+    //- bar/mod.rs
+        mod <error descr="File not found for module `foo` [E0583]">/*caret*/foo</error>;
+
+        fn main() {
+            println!("Hello, World!");
+        }
+    """, """
+    //- main.rs
+        mod bar;
+    //- bar/mod.rs
+        mod foo;
+
+        fn main() {
+            println!("Hello, World!");
+        }
+    //- bar/foo.rs
+    """)
+
+    @MockRustcVersion("1.29.0")
+    fun `test create file and expand module quick fix`() = checkFixByFileTree("Create module file", """
+    //- main.rs
+        mod foo;
+    //- foo.rs
+        <error descr="mod statements in non-mod.rs files is experimental [E0658]">mod bar/*caret*/;</error>
+    """, """
+    //- main.rs
+        mod foo;
+    //- foo/mod.rs
+        mod bar;
+    //- foo/bar.rs
+    """)
+
+    // TODO: check `Create module file` quick fix
+    @MockRustcVersion("1.31.0")
+    fun `test create module file`() = checkByFileTree("""
+    //- main.rs
+        mod foo;
+    //- foo.rs
+        mod <error descr="File not found for module `bar` [E0583]">/*caret*/bar</error>;
+    """)
 
     fun `test paths`() = checkErrors("""
         fn main() {
@@ -650,7 +706,7 @@ class RsErrorAnnotatorTest : RsAnnotationTestBase() {
             trait <error descr="A type named `DUP_T` has already been defined in this module [E0428]">DUP_T</error> {}
             enum <error>DUP_T</error> {}
 
-            <error descr="Unresolved module">mod foo;</error>
+            mod <error>foo</error>;
             fn foo() {}
         }
     """)

@@ -12,20 +12,18 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.childrenOfType
-import org.rust.lang.core.psi.ext.name
+import org.rust.lang.core.psi.ext.*
 
 class AddFeatureAttributeFix(
     private val featureName: String,
-    crateRoot: RsMod
-) : LocalQuickFixAndIntentionActionOnPsiElement(crateRoot) {
+    element: PsiElement
+) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
 
     override fun getFamilyName(): String = "Add feature attribute"
     override fun getText(): String = "Add `$featureName` feature"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val mod = startElement as RsMod
+        val mod = startElement.ancestorOrSelf<RsElement>()?.crateRoot ?: return
         val lastFeatureAttribute = mod.childrenOfType<RsInnerAttr>()
             .lastOrNull { it.metaItem.name == "feature" }
 
