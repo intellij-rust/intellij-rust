@@ -286,4 +286,11 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             x[0]
         }
     """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0507 on copyable array`() = checkByText("""
+        fn copy(arr: &[i32; 4]) -> [i32; 4] {
+            *arr
+        }
+    """, checkWarn = false)
 }

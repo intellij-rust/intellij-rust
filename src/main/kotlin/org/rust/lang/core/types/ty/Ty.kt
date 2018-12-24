@@ -160,6 +160,7 @@ fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
     when (this) {
         is TyUnknown, is TyReference, is TyPointer, is TyFunction -> false
         is TyTuple -> types.any { it.isMovesByDefault(lookup) }
+        is TyArray -> base.isMovesByDefault(lookup)
         is TyTypeParameter -> !(parameter == TyTypeParameter.Self || lookup.isCopy(this))
         else -> !lookup.isCopy(this)
     }
