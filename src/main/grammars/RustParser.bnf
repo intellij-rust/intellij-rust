@@ -1229,10 +1229,13 @@ CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
 TT ::= <<any_braces TT*>> | <<unpairedToken>>
 
 private CommonMacro ::= PathWithoutTypes '!' identifier? MacroArgument { pin = 2 }
-private SpecialMacro ::= TryMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro
+private SpecialMacro ::= TryMacro | AwaitMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro
 
 private TryMacro ::= &("try" '!') PathWithoutTypes '!' TryMacroArgument { pin = 3 }
 TryMacroArgument ::= <<any_braces AnyExpr>>
+
+private AwaitMacro ::= &("await" '!') PathWithoutTypes '!' AwaitMacroArgument { pin = 3 }
+AwaitMacroArgument ::= <<any_braces AnyExpr>>
 
 // https://doc.rust-lang.org/std/fmt/
 private FormatLikeMacro ::=

@@ -8,7 +8,9 @@ fn main() {
     let _ = await;
 
     let _ = async!();
-    let _ = await!();
+    let _ = await!(await);
+    let _ = await!(foo());
+    let _ = await!(async { () });
 
     async { () };
     async || { () };
