@@ -38,7 +38,7 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotationTestBase() {
     fun `test reserved keywords in macro names in edition 2018`() = checkErrors("""
         fn main() {
             let x = async!();
-            let y = await!();
+            let y = await!(x);
             let z = try!(());
         }
     """)

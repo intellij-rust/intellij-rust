@@ -351,6 +351,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ !
     """)
 
+    fun `test await macro argument`() = testExpr("""
+        fn main() {
+            let a = await!(42);
+        }                //^ i32
+    """)
+
     fun `test enum variant A`() = testExpr("""
         enum E { A(i32), B { val: bool }, C }
         fn main() {
