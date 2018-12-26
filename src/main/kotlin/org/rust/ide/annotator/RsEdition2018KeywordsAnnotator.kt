@@ -8,17 +8,19 @@ package org.rust.ide.annotator
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.colors.RsColor
-import org.rust.lang.core.psi.RS_EDITION_2018_KEYWORDS
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.RsMacro
-import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.isEdition2018
 
 class RsEdition2018KeywordsAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         if (!isEdition2018Keyword(element)) return
+
+        // Macro def/call bodies should not be analyzed
+        if (PsiTreeUtil.getParentOfType(element, RsMacroBody::class.java, RsMacroArgument::class.java) != null) return
 
         val isEdition2018 = element.isEdition2018
         val isIdentifier = element.elementType == IDENTIFIER
