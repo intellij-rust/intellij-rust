@@ -220,6 +220,13 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create type from text: `$text`")
     }
 
+    fun createTypeParameterList(
+        params: String
+    ): RsTypeParameterList {
+        return createFromText<RsFunction>("fn foo<$params>() {}")?.typeParameterList
+            ?: error("Failed to create type parameters from text: `<$params`>")
+    }
+
     fun createTypeArgumentList(
         params: Iterable<String>
     ): RsTypeArgumentList {
