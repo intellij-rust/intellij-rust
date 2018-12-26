@@ -666,13 +666,20 @@ sealed class RsDiagnostic(
     }
 
     class UndeclaredLifetimeError(
-        element: RsReferenceElement
-    ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0261,
-            errorText()
-        )
+        val lifetime: RsLifetime
+    ) : RsDiagnostic(lifetime) {
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                E0261,
+                errorText(),
+                fixes = if (CreateLifetimeParameterFromUsageFix.isAvailable(lifetime)) {
+                    listOf(CreateLifetimeParameterFromUsageFix(lifetime))
+                } else {
+                    emptyList()
+                }
+            )
+        }
 
         private fun errorText(): String {
             val lifetimeText = escapeString(element.text)
