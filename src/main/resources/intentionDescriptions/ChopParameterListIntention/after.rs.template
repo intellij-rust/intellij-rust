@@ -1,0 +1,7 @@
+fn foo(
+    <spot>param1: i32,
+    param2: i32,
+    param3: i32</spot>
+) {
+    bar();
+}
