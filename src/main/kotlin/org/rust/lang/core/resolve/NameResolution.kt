@@ -1183,8 +1183,10 @@ private fun walkUp(
 }
 
 fun isSuperChain(path: RsPath): Boolean {
-    val qual = path.path
-    return (path.referenceName == "super" || path.referenceName == "self") && (qual == null || isSuperChain(qual))
+    val qualifier = path.path
+    val referenceName = path.referenceName
+    return (referenceName == "super" || referenceName == "self" || referenceName == "crate") &&
+        (qualifier == null || isSuperChain(qualifier))
 }
 
 
