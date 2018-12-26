@@ -76,4 +76,15 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotationTestBase() {
             try { () };
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test don't analyze macro def-call bodies`() = checkErrors("""
+        macro_rules! foo {
+            () => { async };
+        }
+
+        fn main() {
+            foo!(async)
+        }
+    """)
 }
