@@ -21,6 +21,7 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
     override fun getCodeSample(settingsType: SettingsType): String =
         when (settingsType) {
             INDENT_SETTINGS -> INDENT_SAMPLE
+            SPACING_SETTINGS -> SPACING_SAMPLE
             WRAPPING_AND_BRACES_SETTINGS -> WRAPPING_AND_BRACES_SAMPLE
             BLANK_LINES_SETTINGS -> BLANK_LINES_SAMPLE
             else -> ""
@@ -39,6 +40,13 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                     "MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS",
                     "Between declarations:",
                     CodeStyleSettingsCustomizable.BLANK_LINES)
+            }
+
+            SPACING_SETTINGS -> {
+                consumer.showCustomOption(RsCodeStyleSettings::class.java,
+                    "SPACE_AROUND_ASSOC_TYPE_BINDING",
+                    "Around associated type bindings",
+                    CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS)
             }
 
             WRAPPING_AND_BRACES_SETTINGS -> {
@@ -127,6 +135,16 @@ impl Vector {
         }
     }
 }
+""")
+
+private val SPACING_SAMPLE = sample("""
+trait Trait0<A, B, T: Trait1<A>> {
+    type Output;
+}
+
+trait Trait1<T> {}
+
+fn method<A, B, T, C>(value: T) where T: Trait0<A, B, T, Output=C> {}
 """)
 
 
