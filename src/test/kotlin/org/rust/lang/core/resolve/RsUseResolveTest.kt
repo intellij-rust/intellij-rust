@@ -557,6 +557,18 @@ class RsUseResolveTest : RsResolveTestBase() {
         }                                   //^
     """)
 
+    fun `test private reexport with crate keyword`() = checkByCode("""
+        mod a {
+            pub struct Foo;
+        }            //X
+        use a::Foo;
+        mod b {
+            use crate::Foo;
+
+            type T = Foo;
+        }          //^
+    """)
+
     fun `test can't import methods`() = checkByCode("""
         mod m {
             pub enum E {}
