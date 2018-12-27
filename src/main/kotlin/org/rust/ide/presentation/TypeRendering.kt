@@ -100,12 +100,16 @@ private data class TypeRenderer(
             is TyTypeParameter -> ty.name ?: anonymous
             is TyProjection -> buildString {
                 val traitName = ty.trait.element.name ?: return anonymous
-                append("<")
-                append(ty.type)
-                append(" as ")
-                append(traitName)
-                if (includeTypeArguments) append(formatTraitGenerics(ty.trait, render, false))
-                append(">::")
+                if (ty.type.isSelf) {
+                    append("Self::")
+                } else {
+                    append("<")
+                    append(ty.type)
+                    append(" as ")
+                    append(traitName)
+                    if (includeTypeArguments) append(formatTraitGenerics(ty.trait, render, false))
+                    append(">::")
+                }
                 append(ty.target.name)
             }
             is TyTraitObject -> formatTrait(ty.trait, render)
