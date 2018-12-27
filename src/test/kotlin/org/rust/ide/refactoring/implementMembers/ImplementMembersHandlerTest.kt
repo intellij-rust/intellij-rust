@@ -580,6 +580,33 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test self associated type`() = doTest("""
+        trait T {
+            type Item;
+            fn foo() -> Self::Item;
+        }
+        struct S;
+        impl T for S {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("Item", true, isSelected = true),
+        ImplementMemberSelection("foo() -> Self::Item", true, isSelected = true)
+    ), """
+        trait T {
+            type Item;
+            fn foo() -> Self::Item;
+        }
+        struct S;
+        impl T for S {
+            type Item = ();
+
+            fn foo() -> Self::Item {
+                unimplemented!()
+            }
+        }
+    """)
+
     fun `test with members defined by a macro`() = doTest("""
         macro_rules! foo {
             ($ i:ident, $ j:tt) => { fn $ i() $ j }

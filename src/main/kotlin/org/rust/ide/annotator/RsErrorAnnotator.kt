@@ -30,7 +30,10 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.types.inference
-import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.ty.isSelf
+import org.rust.lang.core.types.ty.isSized
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
@@ -529,7 +532,7 @@ private fun checkTypesAreSized(holder: AnnotationHolder, fn: RsFunction) {
 
     fun isError(ty: Ty): Boolean = !ty.isSized() &&
         // Self type in trait method is not an error
-        !(owner is RsAbstractableOwner.Trait && ty is TyTypeParameter && ty.parameter is TyTypeParameter.Self)
+        !(owner is RsAbstractableOwner.Trait && ty.isSelf)
 
     for (arg in arguments) {
         val typeReference = arg.typeReference ?: continue

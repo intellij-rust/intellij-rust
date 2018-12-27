@@ -91,6 +91,9 @@ tailrec fun Ty.isSized(): Boolean {
     }
 }
 
+val Ty.isSelf: Boolean
+    get() = this is TyTypeParameter && this.parameter is TyTypeParameter.Self
+
 fun Ty.walk(): TypeIterator = TypeIterator(this)
 
 class TypeIterator(root: Ty) : Iterator<Ty> {
