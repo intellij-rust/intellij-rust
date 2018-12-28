@@ -8,6 +8,7 @@ package org.rust.ide.formatter
 import com.intellij.psi.formatter.FormatterTestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import kotlin.reflect.KMutableProperty0
 
 abstract class RsFormatterTestBase : FormatterTestCase() {
     override fun getTestDataPath() = "src/test/resources"
@@ -30,4 +31,20 @@ abstract class RsFormatterTestBase : FormatterTestCase() {
         super.doTextTest(text.trimIndent(), text.trimIndent())
     }
 
+    fun doTextTest(
+        optionProperty: KMutableProperty0<Boolean>,
+        @Language("Rust") before: String,
+        @Language("Rust") afterOn: String = before,
+        @Language("Rust") afterOff: String = before
+    ) {
+        val initialValue = optionProperty.get()
+        optionProperty.set(true)
+        try {
+            super.doTextTest(before.trimIndent(), afterOn.trimIndent())
+            optionProperty.set(false)
+            super.doTextTest(before.trimIndent(), afterOff.trimIndent())
+        } finally {
+            optionProperty.set(initialValue)
+        }
+    }
 }
