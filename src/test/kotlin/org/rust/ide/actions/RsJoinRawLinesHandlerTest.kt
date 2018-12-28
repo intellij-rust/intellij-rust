@@ -18,6 +18,45 @@ class RsJoinRawLinesHandlerTest : RsJoinLinesHandlerTestBase() {
         }
     """)
 
+    fun `test unsafe block expression`() = doTest("""
+        fn main() {
+            let _ = unsafe /*caret*/{
+                42
+            };
+        }
+    """, """
+        fn main() {
+            let _ = unsafe {/*caret*/ 42
+            };
+        }
+    """)
+
+    fun `test async block expression`() = doTest("""
+        fn main() {
+            let _ = async /*caret*/{
+                42
+            };
+        }
+    """, """
+        fn main() {
+            let _ = async {/*caret*/ 42
+            };
+        }
+    """)
+
+    fun `test try block expression`() = doTest("""
+        fn main() {
+            let _ = try /*caret*/{
+                42
+            };
+        }
+    """, """
+        fn main() {
+            let _ = try {/*caret*/ 42
+            };
+        }
+    """)
+
     fun `test match expression last arm`() = doTest("""
         fn main() {
             match n {
