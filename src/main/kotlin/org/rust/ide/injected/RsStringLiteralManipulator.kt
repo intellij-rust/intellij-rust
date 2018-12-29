@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.AbstractElementManipulator
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsLiteralKind
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.kind
 
 class RsStringLiteralManipulator : AbstractElementManipulator<RsLitExpr>() {
@@ -17,8 +18,12 @@ class RsStringLiteralManipulator : AbstractElementManipulator<RsLitExpr>() {
             // FIXME not supported for now
             return element
         }
-        element.updateText(newContent)
-        return element
+
+        val oldText = element.text
+        val newText = "${oldText.substring(0, range.startOffset)}$newContent${oldText.substring(range.endOffset)}"
+
+        val newLitExpr = RsPsiFactory(element.project).createExpression(newText)
+        return element.replace(newLitExpr) as RsLitExpr
     }
 
     override fun getRangeInElement(element: RsLitExpr): TextRange {
