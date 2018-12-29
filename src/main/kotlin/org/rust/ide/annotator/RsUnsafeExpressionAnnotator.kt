@@ -92,7 +92,7 @@ class RsUnsafeExpressionAnnotator : Annotator {
             .drop(parentsToSkip)
             .find {
                 when (it) {
-                    is RsBlockExpr -> it.unsafe != null
+                    is RsBlockExpr -> it.isUnsafe
                     is RsFunction -> true
                     else -> false
                 }
