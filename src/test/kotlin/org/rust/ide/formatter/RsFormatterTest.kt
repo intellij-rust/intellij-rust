@@ -682,6 +682,14 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test space around assoc type binding`() = doTextTest(custom()::SPACE_AROUND_ASSOC_TYPE_BINDING, """
+        fn foo<T, C>(value: T) where T: Trait<Output    =   C> {}
+    """, """
+        fn foo<T, C>(value: T) where T: Trait<Output = C> {}
+    """, """
+        fn foo<T, C>(value: T) where T: Trait<Output=C> {}
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.rust
 }
