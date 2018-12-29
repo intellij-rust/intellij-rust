@@ -50,7 +50,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
                         if (grandpa is RsMatchArm && grandpa.lastChild?.elementType != COMMA) {
                             grandpa.add(psiFactory.createComma())
                         }
-                        newExpr.textRange.startOffset
+                        newExpr.startOffset
                     }
                 }
 
@@ -58,7 +58,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
 
             is RsIfExpr, is RsElseBranch -> {
                 val newBlock = psiFactory.createBlockExpr(expr.text).block
-                return block.replace(newBlock).textRange.startOffset
+                return block.replace(newBlock).startOffset
             }
         }
 

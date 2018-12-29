@@ -14,8 +14,9 @@ import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.types.type
+import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.types.ty.TyBool
+import org.rust.lang.core.types.type
 import org.rust.lang.utils.negate
 import org.rust.openapiext.isUnitTestMode
 
@@ -45,7 +46,7 @@ class RsTopMostInScopeSelector(pred: ((RsExpr) -> Boolean) = { true }) : RsExprP
     override fun getExpressionsInternal(context: PsiElement, document: Document, offset: Int): List<PsiElement> =
         context
             .ancestors
-            .takeWhile { it !is RsBlock && it.textRange.endOffset == context.textRange.endOffset }
+            .takeWhile { it !is RsBlock && it.endOffset == context.endOffset }
             .filter { it is RsExpr && pred(it) }
             .toList()
 

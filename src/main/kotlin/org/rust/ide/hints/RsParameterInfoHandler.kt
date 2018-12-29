@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.stdext.buildList
 
 /**
@@ -51,7 +52,7 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
         if (element !is RsValueArgumentList) return
         val argsDescr = RsArgumentsDescription.findDescription(element) ?: return
         context.itemsToShow = arrayOf(argsDescr)
-        context.showHint(element, element.textRange.startOffset, this)
+        context.showHint(element, element.startOffset, this)
     }
 
     override fun updateParameterInfo(place: PsiElement, context: UpdateParameterInfoContext) {
@@ -101,7 +102,7 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
         if (descr.arguments.isNotEmpty()) {
             index += generateSequence(callArgs.firstChild, { c -> c.nextSibling })
                 .filter { it.text == "," }
-                .count({ it.textRange.startOffset < place.textRange.startOffset }) + 1
+                .count({ it.startOffset < place.startOffset }) + 1
             if (index >= descr.arguments.size) {
                 index = -1
             }

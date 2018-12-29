@@ -16,6 +16,7 @@ import org.rust.ide.utils.findExpressionInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.runWriteCommandAction
 import java.util.*
 
@@ -98,7 +99,7 @@ private class ExpressionReplacer(
 
 
     fun replaceElementForAllExpr(exprs: List<PsiElement>) {
-        val anchor = findAnchor(exprs.minBy { it.textRange.startOffset } ?: chosenExpr)
+        val anchor = findAnchor(exprs.minBy { it.startOffset } ?: chosenExpr)
             ?: return
 
         val suggestedNames = chosenExpr.suggestedNames()

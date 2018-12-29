@@ -8,7 +8,9 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsWhereClause
 import org.rust.lang.core.psi.ext.*
 
 class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<RsWhereClause>() {
@@ -39,7 +41,7 @@ class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<
         val types = typeParameterList.typeParameterList.mapNotNull { typeParameterText(it, it.bounds) }
 
         val newElement = RsPsiFactory(project).createTypeParameterList(lifetimes + types)
-        val offset = typeParameterList.textRange.startOffset + newElement.textLength
+        val offset = typeParameterList.startOffset + newElement.textLength
         typeParameterList.replace(newElement)
         ctx.delete()
         editor.caretModel.moveToOffset(offset)

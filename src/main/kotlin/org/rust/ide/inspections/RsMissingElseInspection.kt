@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.rightSiblings
+import org.rust.lang.core.psi.ext.startOffset
 
 /**
  * Checks for potentially missing `else`s.
@@ -34,12 +35,12 @@ class RsMissingElseInspection : RsLocalInspectionTool() {
                     .extractIf() ?: return
                 val condition = nextIf.condition ?: return
                 val rangeStart = expr.startOffsetInParent + firstIf.textLength
-                val rangeLen = condition.expr.textRange.startOffset - firstIf.textRange.startOffset - firstIf.textLength
+                val rangeLen = condition.expr.startOffset - firstIf.startOffset - firstIf.textLength
                 holder.registerProblem(
                     expr.parent,
                     TextRange(rangeStart, rangeStart + rangeLen),
                     "Suspicious if. Did you mean `else if`?",
-                    SubstituteTextFix.insert("Change to `else if`", nextIf.containingFile, nextIf.textRange.startOffset, "else "))
+                    SubstituteTextFix.insert("Change to `else if`", nextIf.containingFile, nextIf.startOffset, "else "))
             }
         }
 

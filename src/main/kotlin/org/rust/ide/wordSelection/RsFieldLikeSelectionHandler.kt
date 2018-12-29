@@ -13,20 +13,22 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.rightSiblings
+import org.rust.lang.core.psi.ext.startOffset
 
 class RsFieldLikeSelectionHandler : ExtendWordSelectionHandlerBase() {
     override fun canSelect(e: PsiElement): Boolean = isFieldLikeDecl(e)
 
     override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange>? {
-        val start = e.textRange.startOffset
-        var end = e.textRange.endOffset
+        val start = e.startOffset
+        var end = e.endOffset
 
         // expand the end to include the adjacent comma after the field:
         e.rightSiblings
             .firstOrNull { it !is PsiComment && it !is PsiWhiteSpace }
             ?.takeIf { it.elementType == RsElementTypes.COMMA }
-            ?.let { end = it.textRange.endOffset }
+            ?.let { end = it.endOffset }
 
         return ExtendWordSelectionHandlerBase.expandToWholeLine(editorText, TextRange.create(start, end))
     }

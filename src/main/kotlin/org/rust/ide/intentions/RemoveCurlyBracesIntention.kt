@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.formatter.processors.asTrivial
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 
 /**
  * Removes the curly braces on singleton imports, changing from this
@@ -58,8 +60,8 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
         // Save the cursor position, adjusting for curly brace removal
         val caret = editor.caretModel.offset
         val newOffset = when {
-            caret < useGroup.textRange.startOffset -> caret
-            caret < useGroup.textRange.endOffset -> caret - 1
+            caret < useGroup.startOffset -> caret
+            caret < useGroup.endOffset -> caret - 1
             else -> caret - 2
         }
 

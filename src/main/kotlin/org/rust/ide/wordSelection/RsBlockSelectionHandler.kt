@@ -11,10 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.childrenWithLeaves
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.leftSiblings
-import org.rust.lang.core.psi.ext.rightSiblings
+import org.rust.lang.core.psi.ext.*
 
 class RsBlockSelectionHandler : ExtendWordSelectionHandlerBase() {
     override fun canSelect(e: PsiElement): Boolean =
@@ -33,8 +30,8 @@ class RsBlockSelectionHandler : ExtendWordSelectionHandlerBase() {
                 ?.leftSiblings?.firstOrNull { it !is PsiWhiteSpace }
                 ?: return null
 
-        val startOffset = startNode.textRange.startOffset
-        val endOffset = endNode.textRange.endOffset
+        val startOffset = startNode.startOffset
+        val endOffset = endNode.endOffset
         if (startOffset >= endOffset) return null
 
         val range = TextRange.create(startOffset, endOffset)

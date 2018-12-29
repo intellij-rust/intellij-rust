@@ -134,8 +134,8 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
             val trailingSpace = rbrace.prevSibling as? PsiWhiteSpace ?: return false
 
             val leftEl = block.prevSibling as? PsiWhiteSpace ?: lbrace
-            val range1 = TextRange(leftEl.textOffset, leadingSpace.textRange.endOffset)
-            val range2 = TextRange(trailingSpace.textOffset, rbrace.textRange.endOffset)
+            val range1 = TextRange(leftEl.textOffset, leadingSpace.endOffset)
+            val range2 = TextRange(trailingSpace.textOffset, rbrace.endOffset)
             val group = FoldingGroup.newGroup("one-liner")
             descriptors += FoldingDescriptor(lbrace.node, range1, group)
             descriptors += FoldingDescriptor(rbrace.node, range2, group)
@@ -170,7 +170,7 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
             if (lastNode == startNode) return
 
             if (lastNode != null) {
-                val range = TextRange(startNode.textRange.startOffset, lastNode.textRange.endOffset)
+                val range = TextRange(startNode.startOffset, lastNode.endOffset)
                 descriptors += FoldingDescriptor(startNode.node, range)
                 ranges.add(range)
             }
@@ -196,21 +196,21 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 }
 
 private fun Document.areOnAdjacentLines(first: PsiElement, second: PsiElement): Boolean =
-    getLineNumber(first.textRange.endOffset) + 1 == getLineNumber(second.textRange.startOffset)
+    getLineNumber(first.endOffset) + 1 == getLineNumber(second.startOffset)
 
 private fun RsBlock.isSingleLine(doc: Document, maxLength: Int): Boolean {
     // remove all leading and trailing spaces before counting lines
     val startContents = lbrace.rightSiblings.dropWhile { it is PsiWhiteSpace }.firstOrNull() ?: return false
     if (startContents.node.elementType == RBRACE) return false
     val endContents = rbrace?.leftSiblings?.dropWhile { it is PsiWhiteSpace }?.firstOrNull() ?: return false
-    if (endContents.textRange.endOffset - startContents.textOffset > maxLength) return false
+    if (endContents.endOffset - startContents.textOffset > maxLength) return false
 
-    return doc.getLineNumber(startContents.textOffset) == doc.getLineNumber(endContents.textRange.endOffset)
+    return doc.getLineNumber(startContents.textOffset) == doc.getLineNumber(endContents.endOffset)
 }
 
 private fun PsiElement.getOffsetInLine(doc: Document): Int {
-    val blockLine = doc.getLineNumber(textRange.startOffset)
+    val blockLine = doc.getLineNumber(startOffset)
     return leftLeaves
-        .takeWhile { doc.getLineNumber(it.textRange.endOffset) == blockLine }
+        .takeWhile { doc.getLineNumber(it.endOffset) == blockLine }
         .sumBy { el -> el.text.lastIndexOf('\n').let { el.text.length - max(it + 1, 0) } }
 }

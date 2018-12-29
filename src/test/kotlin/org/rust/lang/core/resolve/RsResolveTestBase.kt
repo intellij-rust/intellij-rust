@@ -17,6 +17,7 @@ import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.Testmark
 
@@ -120,7 +121,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     }
 }
 
-fun PsiElement.findReference(offset: Int): PsiReference? = findReferenceAt(offset - textRange.startOffset)
+fun PsiElement.findReference(offset: Int): PsiReference? = findReferenceAt(offset - startOffset)
 
 fun PsiElement.checkedResolve(offset: Int): PsiElement {
     val reference = findReference(offset) ?: error("element doesn't have reference")

@@ -10,6 +10,8 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 
 fun expandLazyStatic(call: RsMacroCall): List<RsExpandedElement>? {
     val arg = call.macroArgument?.compactTT ?: return null
@@ -48,13 +50,13 @@ private fun parseLazyStaticRef(start: PsiElement, parent: RsCompactTT): LazyStat
     val eq = start.firstSibling(RsElementTypes.EQ) ?: return null
     val semi = start.firstSibling(RsElementTypes.SEMICOLON) ?: return null
 
-    val typeStart = colon.textRange.endOffset - parent.textRange.startOffset
-    val typeEnd = eq.textRange.startOffset - parent.textRange.startOffset
+    val typeStart = colon.endOffset - parent.startOffset
+    val typeEnd = eq.startOffset - parent.startOffset
     if (typeStart >= typeEnd) return null
     val typeText = parent.text.substring(typeStart, typeEnd)
 
-    val exprStart = eq.textRange.endOffset - parent.textRange.startOffset
-    val exprEnd = semi.textRange.startOffset - parent.textRange.startOffset
+    val exprStart = eq.endOffset - parent.startOffset
+    val exprEnd = semi.startOffset - parent.startOffset
     if (exprStart >= exprEnd) return null
     val exprText = parent.text.substring(exprStart, exprEnd)
 

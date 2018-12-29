@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.RsValueParameterList
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.startOffset
 
 abstract class ChopListIntentionBase<TList : RsElement, TElement : RsElement>(
     listClass: Class<TList>,
@@ -28,7 +29,7 @@ abstract class ChopListIntentionBase<TList : RsElement, TElement : RsElement>(
 
     override fun invoke(project: Project, editor: Editor, ctx: TList) {
         val document = editor.document
-        val startOffset = ctx.textRange.startOffset
+        val startOffset = ctx.startOffset
 
         val elements = ctx.elements
         val last = elements.last()
@@ -37,7 +38,7 @@ abstract class ChopListIntentionBase<TList : RsElement, TElement : RsElement>(
         }
         elements.asReversed().forEach {
             if (!hasLineBreakBefore(it)) {
-                document.insertString(it.textRange.startOffset, "\n")
+                document.insertString(it.startOffset, "\n")
             }
         }
         val documentManager = PsiDocumentManager.getInstance(project)
