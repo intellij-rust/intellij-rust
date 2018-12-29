@@ -239,6 +239,38 @@ class RenameTest : RsTestBase() {
         }
     """)
 
+    fun `test handle file references in include macro`() = checkByDirectory("""
+        //- main.rs
+            include!("foo.rs");
+        //- foo.rs
+            fn foo() {}
+    """, """
+        //- main.rs
+            include!("bar.rs");
+        //- bar.rs
+            fn foo() {}
+    """) {
+        val file = myFixture.configureFromTempProjectFile("foo.rs")
+        myFixture.renameElement(file, "bar.rs")
+    }
+
+    fun `test handle file references in path attribute`() = checkByDirectory("""
+        //- main.rs
+            #[path = "foo.rs"]
+            mod baz;
+        //- foo.rs
+            fn foo() {}
+    """, """
+        //- main.rs
+            #[path = "bar.rs"]
+            mod baz;
+        //- bar.rs
+            fn foo() {}
+    """) {
+        val file = myFixture.configureFromTempProjectFile("foo.rs")
+        myFixture.renameElement(file, "bar.rs")
+    }
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,
