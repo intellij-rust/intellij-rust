@@ -14,6 +14,8 @@ import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -30,7 +32,7 @@ private val RsPat.inlayInfo: List<InlayInfo>
             .map { it.patBinding to it.patBinding.type }
             .filterNot { it.first.referenceName.startsWith("_") } // "ignored" bindings
             .filterNot { it.second is TyUnknown }
-            .map { InlayInfo(": " + it.second.shortPresentableText, it.first.textRange.endOffset) }
+            .map { InlayInfo(": " + it.second.shortPresentableText, it.first.endOffset) }
             .toList()
     }
 
@@ -76,9 +78,9 @@ enum class HintType(desc: String, enabled: Boolean) {
                 }
                 return hints
                     .filter { (hint, arg) -> !arg.text.endsWith(hint) }
-                    .map { (hint, arg) -> InlayInfo("$hint:", arg.textRange.startOffset) }
+                    .map { (hint, arg) -> InlayInfo("$hint:", arg.startOffset) }
             }
-            return hints.map { (hint, arg) -> InlayInfo("$hint:", arg.textRange.startOffset) }
+            return hints.map { (hint, arg) -> InlayInfo("$hint:", arg.startOffset) }
         }
 
         fun onlyOneParam(hints: List<Pair<String, RsExpr>>, callInfo: CallInfo, elem: PsiElement): Boolean {

@@ -12,6 +12,7 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer
 import com.intellij.spellchecker.tokenizer.Tokenizer
 import org.rust.lang.core.psi.RS_RAW_PREFIX
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psi.unescapeIdentifier
 
 // Inspired by `PsiIdentifierOwnerTokenizer`
@@ -22,10 +23,10 @@ object RsNameIdentifierOwnerTokenizer : Tokenizer<RsNameIdentifierOwner>() {
         val range = identifier.textRange
         if (range.isEmpty) return
 
-        var offset = range.startOffset - element.textRange.startOffset
+        var offset = range.startOffset - element.startOffset
         val parent = if (offset < 0) {
             val commonParent = PsiTreeUtil.findCommonParent(identifier, element) ?: return
-            offset = range.startOffset - commonParent.textRange.startOffset
+            offset = range.startOffset - commonParent.startOffset
             commonParent
         } else {
             element

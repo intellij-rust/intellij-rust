@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.surroundWith.addStatements
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.ext.endOffset
 
 sealed class RsStatementsSurrounderBase<out T : RsExpr> : Surrounder {
     protected abstract fun createTemplate(project: Project): Pair<T, RsBlock>
@@ -21,7 +22,7 @@ sealed class RsStatementsSurrounderBase<out T : RsExpr> : Surrounder {
     abstract class SimpleBlock<out T : RsExpr> : RsStatementsSurrounderBase<T>() {
         final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
             val template = surroundWithTemplate(project, elements)
-            return TextRange.from(template.firstChild.textRange.endOffset, 0)
+            return TextRange.from(template.firstChild.endOffset, 0)
         }
     }
 

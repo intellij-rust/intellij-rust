@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.startOffset
 
 class RsFindUsagesTest : RsTestBase() {
     fun `test variable usages`() = doTestByText("""
@@ -183,5 +184,5 @@ class RsFindUsagesTest : RsTestBase() {
         val COMPARE_SEPARATOR = " | "
     }
 
-    val PsiElement.line: Int? get() = containingFile.viewProvider.document?.getLineNumber(textRange.startOffset)
+    val PsiElement.line: Int? get() = containingFile.viewProvider.document?.getLineNumber(startOffset)
 }

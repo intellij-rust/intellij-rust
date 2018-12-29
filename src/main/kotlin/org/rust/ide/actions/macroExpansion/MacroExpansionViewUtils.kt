@@ -26,9 +26,7 @@ import org.rust.lang.core.macros.parseExpandedTextWithContext
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.expandAllMacrosRecursively
-import org.rust.lang.core.psi.ext.expansion
-import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.ext.*
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -156,11 +154,7 @@ private class MacroExpansionViewComponent(expansions: List<RsExpandedElement>) :
 }
 
 private fun formatPsiFile(element: PsiFile) {
-    CodeStyleManager.getInstance(element.project).reformatText(
-        element,
-        element.textRange.startOffset,
-        element.textRange.endOffset
-    )
+    CodeStyleManager.getInstance(element.project).reformatText(element, element.startOffset, element.endOffset)
 }
 
 private fun Project.createReadOnlyEditorWithElements(expansions: Collection<PsiElement>): EditorEx {

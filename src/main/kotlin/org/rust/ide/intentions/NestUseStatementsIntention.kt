@@ -68,7 +68,7 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
             ctx.root.addAfter(RsPsiFactory(project).createComma(), inserted)
         }
 
-        editor.caretModel.moveToOffset(inserted!!.textRange.startOffset + ctx.cursorOffset)
+        editor.caretModel.moveToOffset(inserted!!.startOffset + ctx.cursorOffset)
     }
 
     private fun makeGroupedPath(basePath: String, useSpecks: List<RsUseSpeck>): String {

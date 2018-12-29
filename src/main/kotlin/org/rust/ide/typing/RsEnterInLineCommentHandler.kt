@@ -21,6 +21,7 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_CO
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.doc.psi.RsDocKind
 
 class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
@@ -119,6 +120,6 @@ class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
     private fun PsiElement.isEolWhitespace(caretOffset: Int): Boolean {
         if (node?.elementType != WHITE_SPACE) return false
         val pos = node.text.indexOf('\n')
-        return pos == -1 || caretOffset <= pos + textRange.startOffset
+        return pos == -1 || caretOffset <= pos + startOffset
     }
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.endOffset
 
 class AutoImportHintFix(
     element: RsElement,
@@ -36,7 +37,7 @@ class AutoImportHintFix(
         val message = ShowAutoImportPass.getMessage(multiple, hint)
         val element = startElement
         HintManager.getInstance().showQuestionHint(
-            editor, message, element.textOffset, element.textRange.endOffset) {
+            editor, message, element.textOffset, element.endOffset) {
             delegate.invoke(element.project)
             true
         }

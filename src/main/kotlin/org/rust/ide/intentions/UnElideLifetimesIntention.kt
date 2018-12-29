@@ -45,7 +45,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         } else {
             val lifeTime = (retType.replace(createRefType(project, retType, "'unknown"))
                 as RsRefLikeType).lifetime ?: return
-            editor.selectionModel.setSelection(lifeTime.textRange.startOffset + 1, lifeTime.textRange.endOffset)
+            editor.selectionModel.setSelection(lifeTime.startOffset + 1, lifeTime.endOffset)
         }
     }
 

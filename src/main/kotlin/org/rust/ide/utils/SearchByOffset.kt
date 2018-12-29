@@ -13,9 +13,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsStmt
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsStmt
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 
 fun findExpressionAtCaret(file: RsFile, offset: Int): RsExpr? {
     val expr = file.expressionAtOffset(offset)
@@ -69,14 +71,14 @@ fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Arra
 
     // Find edge direct children of parent within selection.
     // element1 has to be first leaf of left child, and element2 - last leaf of right child
-    val realStartOffset = element1.textRange.startOffset
-    val realEndOffset = element2.textRange.endOffset
+    val realStartOffset = element1.startOffset
+    val realEndOffset = element2.endOffset
 
     element1 = element1.getTopmostParentInside(parent)
-    if (realStartOffset != element1.textRange.startOffset) return emptyArray()
+    if (realStartOffset != element1.startOffset) return emptyArray()
 
     element2 = element2.getTopmostParentInside(parent)
-    if (realEndOffset != element2.textRange.endOffset) return emptyArray()
+    if (realEndOffset != element2.endOffset) return emptyArray()
 
     // Now collect non-whitespace children of parent between (inclusive) element1 and element2
     val elements = collectElements(element1, element2.nextSibling) { it !is PsiWhiteSpace }
@@ -101,7 +103,7 @@ fun PsiFile.getElementRange(startOffset: Int, endOffset: Int): Pair<PsiElement, 
     val element2 = findElementAtIgnoreWhitespaceAfter(endOffset - 1) ?: return null
 
     // Elements have crossed (for instance when selection was inside single whitespace block)
-    if (element1.textRange.startOffset >= element2.textRange.endOffset) return null
+    if (element1.startOffset >= element2.endOffset) return null
 
     return element1 to element2
 }

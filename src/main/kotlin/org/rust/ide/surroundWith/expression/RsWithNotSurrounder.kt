@@ -11,8 +11,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsParenExpr
-import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsUnaryExpr
+import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.type
 
@@ -29,7 +30,7 @@ class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
         expression.type == TyBool
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange {
-        val offset = expression.textRange.endOffset
+        val offset = expression.endOffset
         return TextRange.from(offset, 0)
     }
 }

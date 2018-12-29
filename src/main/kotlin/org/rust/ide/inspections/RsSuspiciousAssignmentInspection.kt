@@ -14,7 +14,9 @@ import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.operator
+import org.rust.lang.core.psi.ext.startOffset
 
 /**
  * Checks for use of the non-existent =*, =! and =- operators that are probably typos but can be compiled.
@@ -45,13 +47,13 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
                     //      ^^^^             unaryExpr
                     //      ^                op
                     //        ^^             unaryBody
-                    val uExprOffset = unaryBody.textRange.startOffset - expr.left.textRange.startOffset
+                    val uExprOffset = unaryBody.startOffset - expr.left.startOffset
                     val left = expr.left.text.compact()
                     val right = expr.text.substring(uExprOffset).compact()
                     val right2 = if (right == LONG_TEXT_SUBST) "($op$right)" else "$op$right"
                     val subst1 = "$left $op= $right"
                     val subst2 = "$left = $right2"
-                    val substRange = TextRange(expr.left.textRange.endOffset, unaryBody.textRange.startOffset)
+                    val substRange = TextRange(expr.left.endOffset, unaryBody.startOffset)
                     val file = expr.containingFile
                     holder.registerProblem(
                         expr,
@@ -66,7 +68,7 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
     /**
      * Computes the distance between the start points of this PSI element and another one.
      */
-    private fun PsiElement.distanceTo(other: PsiElement) = other.textRange.startOffset - textRange.startOffset
+    private fun PsiElement.distanceTo(other: PsiElement) = other.startOffset - startOffset
 
     private fun String.compact() = if (length <= LONG_TEXT_THRESHOLD) this else LONG_TEXT_SUBST
 
