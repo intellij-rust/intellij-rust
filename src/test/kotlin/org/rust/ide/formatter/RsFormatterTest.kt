@@ -6,24 +6,45 @@
 package org.rust.ide.formatter
 
 import org.intellij.lang.annotations.Language
-import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.RsLanguage
 
 class RsFormatterTest : RsFormatterTestBase() {
     fun `test blocks`() = doTest()
     fun `test items`() = doTest()
     fun `test expressions`() = doTest()
-    fun `test argument alignment`() = doTest()
     fun `test argument indent`() = doTest()
     fun `test traits`() = doTest()
     fun `test tuple alignment`() = doTest()
-    fun `test chain call alignment off`() = doTest()
     fun `test chain call indent`() = doTest()
 
-    fun `test chain call alignment`() {
-        common().ALIGN_MULTILINE_CHAINED_METHODS = true
-        doTest()
-    }
+    fun `test chain call alignment`() = doTextTest(common()::ALIGN_MULTILINE_CHAINED_METHODS, """
+        fn main() {
+            let foo = moo.boo().goo()
+             .foo().bar()
+                                     .map(|x| x.foo().doo()
+                                       .moo().boo()
+                                                    .bar().baz())
+                      .baz().moo();
+        }
+    """, """
+        fn main() {
+            let foo = moo.boo().goo()
+                         .foo().bar()
+                         .map(|x| x.foo().doo()
+                                   .moo().boo()
+                                   .bar().baz())
+                         .baz().moo();
+        }
+    """, """
+        fn main() {
+            let foo = moo.boo().goo()
+                .foo().bar()
+                .map(|x| x.foo().doo()
+                    .moo().boo()
+                    .bar().baz())
+                .baz().moo();
+        }
+    """)
 
     fun `test pub`() = doTextTest("""
         pub ( crate ) struct S1;
@@ -53,82 +74,285 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
-    fun `test align params off`() {
-        common().ALIGN_MULTILINE_PARAMETERS = false
-        doTest()
-    }
+    fun `test align params`() = doTextTest(common()::ALIGN_MULTILINE_PARAMETERS, """
+        fn foo(x: i32,
+        y: i32,
+                    z: i32) {
 
-    fun `test align params in calls off`() {
-        common().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false
-        doTest()
-    }
+        }
 
-    fun `test align ret off`() {
-        custom().ALIGN_RET_TYPE = false
-        doTest()
-    }
+        pub fn new<S>(shape: S,
+                            material_idx: usize)
+              -> Primitive
+                        where S: Shape + 'static {}
 
-    fun `test align where on`() {
-        custom().ALIGN_WHERE_CLAUSE = true
-        doTest()
-    }
+        fn main() {
+            fooooo(1,
+            2,
+                           3)
+        }
 
-    fun `test align where bounds off`() {
-        custom().ALIGN_WHERE_BOUNDS = false
-        doTextTest("""
-            impl moo {
-                pub fn with_bindings<R, F, I>(&mut self, bindings: I, f: F) -> R
-                    where F: FnOnce(&mut TypeContext<'a>) -> R,
-                          I: IntoIterator<Item=(&'a Ident, Type)> {}
+        extern {
+            fn variadic(a: i32,
+                                    b: i32,
+            c: i32,
+                                ...)
+        -> i32;
+        }
+    """, """
+        fn foo(x: i32,
+               y: i32,
+               z: i32) {}
+
+        pub fn new<S>(shape: S,
+                      material_idx: usize)
+                      -> Primitive
+            where S: Shape + 'static {}
+
+        fn main() {
+            fooooo(1,
+                   2,
+                   3)
+        }
+
+        extern {
+            fn variadic(a: i32,
+                        b: i32,
+                        c: i32,
+                        ...)
+                        -> i32;
+        }
+    """, """
+        fn foo(x: i32,
+            y: i32,
+            z: i32) {}
+
+        pub fn new<S>(shape: S,
+            material_idx: usize)
+            -> Primitive
+            where S: Shape + 'static {}
+
+        fn main() {
+            fooooo(1,
+                   2,
+                   3)
+        }
+
+        extern {
+            fn variadic(a: i32,
+                b: i32,
+                c: i32,
+                ...)
+                -> i32;
+        }
+    """)
+
+    fun `test align params in calls`() = doTextTest(common()::ALIGN_MULTILINE_PARAMETERS_IN_CALLS, """
+        fn main() {
+            foooo(123,
+                  456,
+                  789);
+
+            write!(123,
+                   456,
+                   789);
+
+            let fooooooo = (123,
+                            456,
+                            789);
+
+            match 1 {
+                FooSome(1234, true,
+                        5678, false,
+                        91011, "foobar") => 10
             }
-        """, """
-            impl moo {
-                pub fn with_bindings<R, F, I>(&mut self, bindings: I, f: F) -> R
-                    where F: FnOnce(&mut TypeContext<'a>) -> R,
-                        I: IntoIterator<Item=(&'a Ident, Type)> {}
+        }
+    """, afterOff = """
+        fn main() {
+            foooo(123,
+                456,
+                789);
+
+            write!(123,
+                456,
+                789);
+
+            let fooooooo = (123,
+                456,
+                789);
+
+            match 1 {
+                FooSome(1234, true,
+                    5678, false,
+                    91011, "foobar") => 10
             }
-        """)
-    }
+        }
+    """)
 
-    fun `test indent where clause on`() {
-        custom().INDENT_WHERE_CLAUSE = true
-        doTextTest("""
-            pub fn do_stuff<T>(&self, item: &T)
-                        where T: ToString {}
-        """, """
-            pub fn do_stuff<T>(&self, item: &T)
-                where T: ToString {}
-        """)
-    }
+    fun `test align return type`() = doTextTest(custom()::ALIGN_RET_TYPE, """
+        fn foo1(x: i32, y: String)
+            -> String {}
 
-    fun `test indent where clause off`() {
-        custom().INDENT_WHERE_CLAUSE = false
-        doTextTest("""
-            pub fn do_stuff<T>(&self, item: &T)
-                        where T: ToString {}
-        """, """
-            pub fn do_stuff<T>(&self, item: &T)
+        fn foo2(x: i32,
+                y: String)
+           -> String {}
+
+        fn foo3(
+            x: i32,
+            y: String)
+                -> String {}
+
+        fn foo4(
+            x: i32,
+            y: String
+        )             -> String {}
+
+        fn foo5<T>(t: T)
+            -> T
+                  where T: Clone {}
+    """, """
+        fn foo1(x: i32, y: String)
+                -> String {}
+
+        fn foo2(x: i32,
+                y: String)
+                -> String {}
+
+        fn foo3(
+            x: i32,
+            y: String)
+            -> String {}
+
+        fn foo4(
+            x: i32,
+            y: String,
+        ) -> String {}
+
+        fn foo5<T>(t: T)
+                   -> T
+            where T: Clone {}
+    """, """
+        fn foo1(x: i32, y: String)
+            -> String {}
+
+        fn foo2(x: i32,
+                y: String)
+            -> String {}
+
+        fn foo3(
+            x: i32,
+            y: String)
+            -> String {}
+
+        fn foo4(
+            x: i32,
+            y: String,
+        ) -> String {}
+
+        fn foo5<T>(t: T)
+            -> T
+            where T: Clone {}
+    """)
+
+    fun `test align where`() = doTextTest(custom()::ALIGN_WHERE_CLAUSE, """
+        fn fooooooooo(a: i32,
+                      b: i32,
+                      c: i32)
+            where T: 'static {}
+    """, afterOn = """
+        fn fooooooooo(a: i32,
+                      b: i32,
+                      c: i32)
+                      where T: 'static {}
+    """)
+
+    fun `test align where bounds`() = doTextTest(custom()::ALIGN_WHERE_BOUNDS, """
+        impl moo {
+            pub fn with_bindings<R, F, I>(&mut self, bindings: I, f: F) -> R
+                where F: FnOnce(&mut TypeContext<'a>) -> R,
+                         I: IntoIterator<Item=(&'a Ident, Type)> {}
+        }
+    """, """
+        impl moo {
+            pub fn with_bindings<R, F, I>(&mut self, bindings: I, f: F) -> R
+                where F: FnOnce(&mut TypeContext<'a>) -> R,
+                      I: IntoIterator<Item=(&'a Ident, Type)> {}
+        }
+    """, """
+        impl moo {
+            pub fn with_bindings<R, F, I>(&mut self, bindings: I, f: F) -> R
+                where F: FnOnce(&mut TypeContext<'a>) -> R,
+                    I: IntoIterator<Item=(&'a Ident, Type)> {}
+        }
+    """)
+
+    fun `test indent where clause`() = doTextTest(custom()::INDENT_WHERE_CLAUSE, """
+        pub fn do_stuff<T>(&self, item: &T)
+                    where T: ToString {}
+    """, """
+        pub fn do_stuff<T>(&self, item: &T)
             where T: ToString {}
-        """)
-    }
+    """, """
+        pub fn do_stuff<T>(&self, item: &T)
+        where T: ToString {}
+    """)
 
-    fun `test align type params on`() {
-        custom().ALIGN_TYPE_PARAMS = true
-        doTest()
-    }
+    fun `test align type params`() = doTextTest(custom()::ALIGN_TYPE_PARAMS, """
+        struct Foo<T: A + B + 'c,
+            K: X + Y + 'z> {}
+
+        struct Foo<'x: 'y + 'z,
+            K: X + Y + 'z> {}
+
+        struct Foo<T> where T: for<'a,
+        'b> Fn(i32) -> () {
+        a: T
+        }
+    """, """
+        struct Foo<T: A + B + 'c,
+                   K: X + Y + 'z> {}
+
+        struct Foo<'x: 'y + 'z,
+                   K: X + Y + 'z> {}
+
+        struct Foo<T> where T: for<'a,
+                                   'b> Fn(i32) -> () {
+            a: T
+        }
+    """, """
+        struct Foo<T: A + B + 'c,
+            K: X + Y + 'z> {}
+
+        struct Foo<'x: 'y + 'z,
+            K: X + Y + 'z> {}
+
+        struct Foo<T> where T: for<'a,
+            'b> Fn(i32) -> () {
+            a: T
+        }
+    """)
 
     fun `test min number of blank lines`() {
         custom().MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS = 2
         doTest()
     }
 
-    fun `test align return type`() = doTest()
-
-    fun `test allow one line match off`() = doTest()
-    fun `test allow one line match`() {
-        custom().ALLOW_ONE_LINE_MATCH = true
-        doTest()
-    }
+    fun `test one line match`() = doTextTest(custom()::ALLOW_ONE_LINE_MATCH, """
+        fn main() {
+            let x = match func() { Ok(v) => v.unwrap_or(0), Err(_) => ()};
+        }
+    """, """
+        fn main() {
+            let x = match func() { Ok(v) => v.unwrap_or(0), Err(_) => () };
+        }
+    """, """
+        fn main() {
+            let x = match func() {
+                Ok(v) => v.unwrap_or(0),
+                Err(_) => ()
+            };
+        }
+    """)
 
     fun `test macro use`() = doTest()
     fun `test attributes`() = doTest()
@@ -458,7 +682,14 @@ class RsFormatterTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test space around assoc type binding`() = doTextTest(custom()::SPACE_AROUND_ASSOC_TYPE_BINDING, """
+        fn foo<T, C>(value: T) where T: Trait<Output    =   C> {}
+    """, """
+        fn foo<T, C>(value: T) where T: Trait<Output = C> {}
+    """, """
+        fn foo<T, C>(value: T) where T: Trait<Output=C> {}
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.rust
-
 }
