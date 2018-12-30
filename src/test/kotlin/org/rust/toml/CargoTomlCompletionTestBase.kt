@@ -7,9 +7,10 @@ package org.rust.toml
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.intellij.lang.annotations.Language
 
 abstract class CargoTomlCompletionTestBase : LightCodeInsightFixtureTestCase() {
-    protected fun doSingleCompletion(before: String, after: String) {
+    protected fun doSingleCompletion(@Language("TOML") before: String, @Language("TOML") after: String) {
         checkByText(before, after) { executeSoloCompletion() }
     }
 
