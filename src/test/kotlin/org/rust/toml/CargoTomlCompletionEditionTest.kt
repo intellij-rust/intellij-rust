@@ -21,7 +21,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
     fun after() = tearDown()
 
     @Test
-    fun test() {
+    fun keyCompletion() {
         doSingleCompletion("""
         $sectionName
         edi<caret>
@@ -32,9 +32,70 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
         )
     }
 
+    @Test
+    fun value2018CompletionWithoutQuotes() {
+        doSingleCompletion("""
+        $sectionName
+        edition = 8<caret>
+    """, """
+        $sectionName
+        edition = "2018"
+    """)
+    }
+
+    @Test
+    fun value2018CompletionWithQuotes() {
+        doSingleCompletion("""
+        $sectionName
+        edition = "8<caret>"
+    """, """
+        $sectionName
+        edition = "2018"
+    """)
+    }
+
+    @Test
+    fun value2015CompletionWithoutQuotes() {
+        doSingleCompletion("""
+        $sectionName
+        edition = 5<caret>
+    """, """
+        $sectionName
+        edition = "2015"
+    """)
+    }
+
+    @Test
+    fun value2015CompletionWithQuotes() {
+        doSingleCompletion("""
+        $sectionName
+        edition = "5<caret>"
+    """, """
+        $sectionName
+        edition = "2015"
+    """)
+    }
+
+    @Test
+    fun otherValuesAreNotCompleted() {
+        checkNoCompletion("""
+        $sectionName
+        edition = "3<caret>"
+    """)
+    }
+
+    @Test
+    fun valuesForDifferentKeyAreNotCompleted() {
+        checkNoCompletion("""
+        $sectionName
+        edidition = "8<caret>"
+    """)
+    }
+
     companion object {
-        @Parameterized.Parameters(name = "{index}: 'edition' key completion in \"{0}\" cargo toml section")
-        @JvmStatic fun data() = listOf(
+        @Parameterized.Parameters(name = "{index}: 'edition' completion in \"{0}\" cargo toml section")
+        @JvmStatic
+        fun data() = listOf(
             arrayOf("[package]"),
             arrayOf("[lib]"),
             arrayOf("[[bench]]"),
