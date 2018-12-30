@@ -10,6 +10,8 @@ import com.intellij.openapi.util.TextRange
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsForExpr
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 
 class RsWithForSurrounder : RsStatementsSurrounderBase.BlockWithCondition<RsForExpr>() {
     override fun getTemplateDescription(): String = "for { }"
@@ -21,7 +23,7 @@ class RsWithForSurrounder : RsStatementsSurrounderBase.BlockWithCondition<RsForE
 
     override fun conditionRange(expression: RsForExpr): TextRange =
         TextRange(
-            expression.pat!!.textRange.startOffset,
-            expression.expr!!.textRange.endOffset
+            expression.pat!!.startOffset,
+            expression.expr!!.endOffset
         )
 }

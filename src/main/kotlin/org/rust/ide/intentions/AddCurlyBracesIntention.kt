@@ -9,11 +9,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsUseSpeck
-import org.rust.lang.core.psi.ext.isStarImport
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isStarImport
+import org.rust.lang.core.psi.ext.startOffset
 
 /**
  * Adds curly braces to singleton imports, changing from this
@@ -79,6 +80,6 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
         ctx.useSpeck.add(newColonColon)
         ctx.useSpeck.add(newGroup)
 
-        editor.caretModel.moveToOffset(ctx.semicolon.textRange.startOffset - 1)
+        editor.caretModel.moveToOffset(ctx.semicolon.startOffset - 1)
     }
 }

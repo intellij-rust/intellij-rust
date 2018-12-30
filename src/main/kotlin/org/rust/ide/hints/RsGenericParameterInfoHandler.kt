@@ -27,7 +27,7 @@ class RsGenericParameterInfoHandler : ParameterInfoHandler<RsTypeArgumentList, H
 
     override fun showParameterInfo(element: RsTypeArgumentList, context: CreateParameterInfoContext) {
         context.highlightedElement = null
-        context.showHint(element, element.textRange.startOffset, this)
+        context.showHint(element, element.startOffset, this)
     }
 
     // TODO: don't disappear in nested generic types

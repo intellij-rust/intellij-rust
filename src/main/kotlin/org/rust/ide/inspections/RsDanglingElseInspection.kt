@@ -14,6 +14,8 @@ import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsElseBranch
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 
 /**
  * Detects `else if` statements broken by new lines. A partial analogue
@@ -46,7 +48,7 @@ class RsDanglingElseInspection : RsLocalInspectionTool() {
                     SubstituteTextFix.replace(
                         "Join `else if`",
                         expr.containingFile,
-                        TextRange(elseEl.textRange.endOffset, ifEl.textRange.startOffset),
+                        TextRange(elseEl.endOffset, ifEl.startOffset),
                         " "
                     ))
             }

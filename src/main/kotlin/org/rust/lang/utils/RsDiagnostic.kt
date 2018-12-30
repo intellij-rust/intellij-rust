@@ -866,8 +866,8 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
 
     val textRange = if (endElement != null) {
         TextRange.create(
-            element.textRange.startOffset,
-            endElement.textRange.endOffset
+            element.startOffset,
+            endElement.endOffset
         )
     } else {
         element.textRange

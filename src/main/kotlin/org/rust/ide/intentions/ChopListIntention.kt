@@ -7,36 +7,19 @@ package org.rust.ide.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.RsValueParameterList
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.leftSiblings
-import org.rust.lang.core.psi.ext.rightSiblings
+import org.rust.lang.core.psi.ext.startOffset
 
-abstract class ChopListIntention<TList : RsElement, TElement : RsElement>(
-    private val listClass: Class<TList>,
-    private val elementClass: Class<TElement>,
+abstract class ChopListIntentionBase<TList : RsElement, TElement : RsElement>(
+    listClass: Class<TList>,
+    elementClass: Class<TElement>,
     intentionText: String
-) : RsElementBaseIntentionAction<TList>() {
-
-    init {
-        text = intentionText
-    }
-
-    override fun getFamilyName() = text
-
-    private val PsiElement.listContext: TList?
-        get() = PsiTreeUtil.getParentOfType(this, listClass, true)
-
-    private val TList.elements: List<TElement>
-        get() = PsiTreeUtil.getChildrenOfTypeAsList(this, elementClass)
-
+) : ListIntentionBase<TList, TElement>(listClass, elementClass, intentionText) {
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): TList? {
         val list = element.listContext ?: return null
         val elements = list.elements
@@ -46,7 +29,7 @@ abstract class ChopListIntention<TList : RsElement, TElement : RsElement>(
 
     override fun invoke(project: Project, editor: Editor, ctx: TList) {
         val document = editor.document
-        val startOffset = ctx.textRange.startOffset
+        val startOffset = ctx.startOffset
 
         val elements = ctx.elements
         val last = elements.last()
@@ -55,7 +38,7 @@ abstract class ChopListIntention<TList : RsElement, TElement : RsElement>(
         }
         elements.asReversed().forEach {
             if (!hasLineBreakBefore(it)) {
-                document.insertString(it.textRange.startOffset, "\n")
+                document.insertString(it.startOffset, "\n")
             }
         }
         val documentManager = PsiDocumentManager.getInstance(project)
@@ -67,23 +50,9 @@ abstract class ChopListIntention<TList : RsElement, TElement : RsElement>(
             }
         }
     }
-
-    private fun hasLineBreakAfter(element: TElement): Boolean {
-        return element.rightSiblings.lineBreak() != null
-    }
-
-    private fun hasLineBreakBefore(element: TElement): Boolean {
-        return element.leftSiblings.lineBreak() != null
-    }
-
-    private fun Sequence<PsiElement>.lineBreak(): PsiWhiteSpace? {
-        return dropWhile { it !is PsiWhiteSpace && it !is PsiComment }
-            .takeWhile { it is PsiWhiteSpace || it is PsiComment }
-            .firstOrNull { it is PsiWhiteSpace && it.textContains('\n') } as? PsiWhiteSpace
-    }
 }
 
-class ChopParameterListIntention : ChopListIntention<RsValueParameterList, RsValueParameter>(
+class ChopParameterListIntention : ChopListIntentionBase<RsValueParameterList, RsValueParameter>(
     RsValueParameterList::class.java,
     RsValueParameter::class.java,
     "Put parameters on separate lines"

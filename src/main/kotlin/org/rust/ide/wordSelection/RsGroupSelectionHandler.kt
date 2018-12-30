@@ -15,6 +15,8 @@ import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMembers
 import org.rust.lang.core.psi.RsStmt
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 import java.util.*
 
 class RsGroupSelectionHandler : ExtendWordSelectionHandlerBase() {
@@ -63,7 +65,7 @@ class RsGroupSelectionHandler : ExtendWordSelectionHandlerBase() {
         while (endElement is PsiWhiteSpace) endElement = endElement.prevSibling
 
         result.addAll(ExtendWordSelectionHandlerBase.expandToWholeLine(
-            editorText, TextRange(startElement.textRange.startOffset, endElement.textRange.endOffset)))
+            editorText, TextRange(startElement.startOffset, endElement.endOffset)))
 
         return result
     }

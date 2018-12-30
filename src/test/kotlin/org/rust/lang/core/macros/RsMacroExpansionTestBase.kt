@@ -13,7 +13,9 @@ import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.expandAllMacrosRecursively
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.Testmark
 
 abstract class RsMacroExpansionTestBase : RsTestBase() {
@@ -71,12 +73,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
             val formattedExpandedText = RsPsiFactory(project)
                 .parseExpandedTextWithContext(macroCall, expandedText)
                 .map {
-                    CodeStyleManager.getInstance(project).reformatRange(
-                        it,
-                        it.textRange.startOffset,
-                        it.textRange.endOffset,
-                        true
-                    )
+                    CodeStyleManager.getInstance(project).reformatRange(it, it.startOffset, it.endOffset, true)
                 }.joinToString("\n") { it.text }
 
             throw ComparisonFailure(

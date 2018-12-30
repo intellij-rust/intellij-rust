@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsStmt
+import org.rust.lang.core.psi.ext.endOffset
 
 /**
  * Fixer that adds missing semicolons at the end of statements.
@@ -23,13 +24,13 @@ class SemicolonFixer : SmartEnterProcessorWithFixers.Fixer<RsSmartEnterProcessor
     private fun fixLastExprInBlock(editor: Editor, element: PsiElement) {
         val parent = element.parent
         if (parent is RsBlock && element == parent.expr) {
-            editor.document.insertString(element.textRange.endOffset, ";")
+            editor.document.insertString(element.endOffset, ";")
         }
     }
 
     private fun fixStatement(editor: Editor, element: PsiElement) {
         if (element is RsStmt && element.semicolon == null) {
-            editor.document.insertString(element.textRange.endOffset, ";")
+            editor.document.insertString(element.endOffset, ";")
         }
     }
 }

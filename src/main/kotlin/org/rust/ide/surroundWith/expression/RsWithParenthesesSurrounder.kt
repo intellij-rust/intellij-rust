@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsParenExpr
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.endOffset
 
 class RsWithParenthesesSurrounder : RsExpressionSurrounderBase<RsParenExpr>() {
     override fun getTemplateDescription(): String = "(expr)"
@@ -25,7 +26,7 @@ class RsWithParenthesesSurrounder : RsExpressionSurrounderBase<RsParenExpr>() {
     override fun isApplicable(expression: RsExpr): Boolean = true
 
     override fun doPostprocessAndGetSelectionRange(editor: Editor, expression: PsiElement): TextRange {
-        val offset = expression.textRange.endOffset
+        val offset = expression.endOffset
         return TextRange.from(offset, 0)
     }
 }

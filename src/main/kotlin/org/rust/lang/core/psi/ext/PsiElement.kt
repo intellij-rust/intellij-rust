@@ -111,5 +111,11 @@ fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
 fun PsiElement.isAncestorOf(child: PsiElement): Boolean =
     child.ancestors.contains(this)
 
+val PsiElement.startOffset: Int
+    get() = textRange.startOffset
+
+val PsiElement.endOffset: Int
+    get() = textRange.endOffset
+
 val PsiElement.endOffsetInParent: Int
     get() = startOffsetInParent + textLength

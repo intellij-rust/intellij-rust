@@ -78,8 +78,8 @@ private fun PsiElement.braceListBodyText(): CharSequence? =
 private fun PsiElement.textBetweenParens(bra: PsiElement?, ket: PsiElement?): CharSequence? {
     if (bra == null || ket == null || bra == ket) return null
     return containingFile.text.subSequence(
-        bra.textRange.endOffset,
-        ket.textRange.startOffset
+        bra.endOffset,
+        ket.startOffset
     )
 }
 

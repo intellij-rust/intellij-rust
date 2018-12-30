@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.ext.startOffset
 
 
 /**
@@ -28,7 +29,7 @@ class RemoveRefFix(
 
     override fun invoke(project: Project, file: PsiFile, argEl: PsiElement, endElement: PsiElement) {
         if (argEl.text != null && argEl.text[0] == '&') {
-            val offset = argEl.textRange.startOffset
+            val offset = argEl.startOffset
             val document = PsiDocumentManager.getInstance(project).getDocument(argEl.containingFile)
             document?.deleteString(offset, offset + 1)
         }
