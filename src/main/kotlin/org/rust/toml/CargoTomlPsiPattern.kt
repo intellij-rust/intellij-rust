@@ -42,6 +42,18 @@ object CargoTomlPsiPattern {
         cargoTomlPsiElement<PsiElement>()
             .withParent(TomlKey::class.java)
 
+    fun inValueWithKey(key: String): PsiElementPattern.Capture<PsiElement> {
+        val hasChildWithText = cargoTomlPsiElement<TomlKeyValue>()
+            .withChild(cargoTomlPsiElement<TomlKey>().withText(key))
+
+        return cargoTomlPsiElement<PsiElement>()
+            .inside(psiElement<TomlKeyValue>(TOML_KEY_VALUE_CONTEXT_NAME))
+            .with("inValueWithKey_$key") { _, context ->
+                val keyValue = context?.get(TOML_KEY_VALUE_CONTEXT_NAME) ?: return@with false
+                hasChildWithText.accepts(keyValue)
+            }
+    }
+
     private val onDependencyTableHeader: PsiElementPattern.Capture<TomlTableHeader> =
         cargoTomlPsiElement<TomlTableHeader>()
             .with("dependenciesCondition") { header ->

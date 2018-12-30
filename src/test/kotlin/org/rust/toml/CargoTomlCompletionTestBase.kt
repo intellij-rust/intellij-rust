@@ -42,7 +42,7 @@ abstract class CargoTomlCompletionTestBase : LightCodeInsightFixtureTestCase() {
         myFixture.checkResult(after)
     }
 
-    protected fun checkNoCompletion(code: String) {
+    protected fun checkNoCompletion(@Language("TOML") code: String) {
         myFixture.configureByText("Cargo.toml", code)
         noCompletionCheck()
     }

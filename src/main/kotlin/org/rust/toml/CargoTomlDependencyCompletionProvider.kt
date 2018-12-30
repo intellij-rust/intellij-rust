@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.completion.getElementOfType
@@ -18,6 +19,20 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.isAncestorOf
 import org.toml.lang.psi.*
 
+private fun getClosestKeyValueAncestor(position: PsiElement): TomlKeyValue? {
+    val parent = position.parent ?: return null
+    val keyValue = parent.ancestorOrSelf<TomlKeyValue>()
+        ?: error("PsiElementPattern must not allow values outside of TomlKeyValues")
+    // If a value is already present we should ensure that the value is a literal
+    // and the caret is inside the value to forbid completion in cases like
+    // `key = "" <caret>`
+    val value = keyValue.value
+    return when {
+        value == null || !(value !is TomlLiteral || !value.isAncestorOf(position)) -> keyValue
+        else -> null
+    }
+}
+
 abstract class TomlKeyValueCompletionProviderBase : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val parent = parameters.position.parent ?: return
@@ -26,14 +41,7 @@ abstract class TomlKeyValueCompletionProviderBase : CompletionProvider<Completio
                 ?: error("PsiElementPattern must not allow keys outside of TomlKeyValues")
             completeKey(keyValue, result)
         } else {
-            val keyValue = parent.ancestorOrSelf<TomlKeyValue>()
-                ?: error("PsiElementPattern must not allow values outside of TomlKeyValues")
-            // If a value is already present we should ensure that the value is a literal
-            // and the caret is inside the value to forbid completion in cases like
-            // `key = "" <caret>`
-            val value = keyValue.value
-            if (value != null && (value !is TomlLiteral || !value.isAncestorOf(parameters.position))) return
-
+            val keyValue = getClosestKeyValueAncestor(parameters.position) ?: return
             completeValue(keyValue, result)
         }
     }
@@ -108,6 +116,13 @@ class CargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueComplet
             ?: error("PsiElementPattern must not allow keys outside of TomlTable")
         return table.header.names.lastOrNull()
             ?: error("PsiElementPattern must not allow KeyValues in tables without header")
+    }
+}
+
+class CargoTomlKnownValuesCompletionProvider(private val knownValues: List<String>) : CompletionProvider<CompletionParameters>() {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+        val keyValue = getClosestKeyValueAncestor(parameters.position) ?: return
+        result.addAllElements(knownValues.map { LookupElementBuilder.create(it).withInsertHandler(StringValueInsertionHandler(keyValue)) })
     }
 }
 
