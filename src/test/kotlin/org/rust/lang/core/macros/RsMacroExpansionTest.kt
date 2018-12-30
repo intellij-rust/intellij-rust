@@ -627,6 +627,30 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         pub(in a::b) fn baz() {}
     """)
 
+    fun `test expand lifetime matcher`() = doTest("""
+        macro_rules! foo {
+            ($ lt:lifetime) => { struct Ref<$ lt>(&$ lt str);};
+        }
+        foo!('a);
+        foo!('lifetime);
+    """, """
+        struct Ref<'a>(&'a str);
+    """, """
+        struct Ref<'lifetime>(&'lifetime str);
+    """)
+
+    fun `test expand literal matcher`() = doTest("""
+        macro_rules! foo {
+            ($ type:ty $ lit:literal) => { const VALUE: $ type = $ lit;};
+        }
+        foo!(u8 0);
+        foo!(&'static str "value");
+    """, """
+        const VALUE: u8 = 0;
+    """, """
+        const VALUE: &'static str = "value";
+    """)
+
     fun `test expand macro defined in function`() = doTest("""
         fn main() {
             macro_rules! foo {
