@@ -344,6 +344,8 @@ private class MacroPattern private constructor(
                 "meta" -> RustParser.MetaItemWithoutTT(adaptBuilder, 0)
                 "vis" -> RustParser.Vis(adaptBuilder, 0)
                 "tt" -> RustParser.TT(adaptBuilder, 0)
+                "lifetime" -> RustParser.Lifetime(adaptBuilder, 0)
+                "literal" -> RustParser.LitExpr(adaptBuilder, 0)
                 else -> false
             }
             GeneratedParserUtilBase.exit_section_(adaptBuilder, 0, marker, root, parsed, true) { _, _ -> false }
