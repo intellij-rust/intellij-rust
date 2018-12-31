@@ -463,7 +463,8 @@ task("updateCompilerFeatures") {
 
                 package org.rust.lang.core
 
-                import org.rust.lang.core.FeatureState.*
+                import org.rust.lang.core.FeatureState.ACCEPTED
+                import org.rust.lang.core.FeatureState.ACTIVE
 
             """.trimIndent())
             it.writeFeatures("active", text)
