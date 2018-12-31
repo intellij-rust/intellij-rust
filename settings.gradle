@@ -1,2 +1,7 @@
 rootProject.name = 'intellij-rust'
-include 'intellij-toml'
+include 'idea',
+        'debugger',
+        'toml',
+        'copyright',
+        'intelliLang',
+        'intellij-toml'
