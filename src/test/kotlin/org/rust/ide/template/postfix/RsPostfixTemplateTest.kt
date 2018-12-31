@@ -8,6 +8,7 @@ package org.rust.ide.template.postfix
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
+import com.intellij.openapi.application.runReadAction
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
@@ -59,14 +60,16 @@ abstract class RsPostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsT
                 }
             }
 
-        check(
+        val result = runReadAction {
             PostfixLiveTemplate.isApplicableTemplate(
                 provider,
                 postfixTemplate.key,
                 myFixture.file,
                 myFixture.editor
-            ) == isApplicable
-        ) {
+            )
+        }
+
+        check(result == isApplicable) {
             "postfixTemplate ${if (isApplicable) "should" else "shouldn't"} be applicable to given case:\n\n$testCase"
         }
     }
