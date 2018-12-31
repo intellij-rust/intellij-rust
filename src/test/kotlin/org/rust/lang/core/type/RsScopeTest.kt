@@ -6,11 +6,11 @@
 package org.rust.lang.core.type
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.util.parentOfType
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.regions.getRegionScopeTree
@@ -100,7 +100,7 @@ class RsScopeTest : RsTestBase() {
     fun `test match arm scope is match expr scope`() = doTest("""
         fn foo() -> i32 {
             let x = 42;
-   /*start*/match x {
+    /*start*/match x {
                 y => { 42 }
               //^
             }/*end*/
@@ -164,7 +164,7 @@ class RsScopeTest : RsTestBase() {
         val scopeWithScopeTrees = mutableListOf<Pair<Scope, ScopeTree>>()
         for ((pat, data, _) in patAndDataAndOffsets) {
             check(data.isEmpty()) { "Did not expect marker data" }
-            val contextOwner = checkNotNull(pat.parentOfType<RsInferenceContextOwner>()) { "Cannot find pat owner" }
+            val contextOwner = checkNotNull(pat.ancestorOrSelf<RsInferenceContextOwner>()) { "Cannot find pat owner" }
             val scopeTree = getRegionScopeTree(contextOwner)
             val scope = checkNotNull(scopeTree.getVariableScope(pat)) { "Cannot infer scope of pat: `${pat.text}`" }
             scopeWithScopeTrees.add(Pair(scope, scopeTree))
