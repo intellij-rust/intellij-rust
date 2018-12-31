@@ -143,6 +143,8 @@ val LINK_CFG = CompilerFeature("link_cfg", ACTIVE, "1.14.0")
 val ABI_PTX = CompilerFeature("abi_ptx", ACTIVE, "1.15.0")
 // The `repr(i128)` annotation for enums.
 val REPR128 = CompilerFeature("repr128", ACTIVE, "1.16.0")
+// Allows the use of `#[ffi_returns_twice]` on foreign functions.
+val FFI_RETURNS_TWICE = CompilerFeature("ffi_returns_twice", ACTIVE, "1.34.0")
 // The `unadjusted` ABI; perma-unstable.
 //
 // rustc internal
@@ -267,8 +269,12 @@ val LINT_REASONS = CompilerFeature("lint_reasons", ACTIVE, "1.31.0")
 val TYPE_ALIAS_ENUM_VARIANTS = CompilerFeature("type_alias_enum_variants", ACTIVE, "1.31.0")
 // Re-Rebalance coherence
 val RE_REBALANCE_COHERENCE = CompilerFeature("re_rebalance_coherence", ACTIVE, "1.32.0")
+// Const generic types.
+val CONST_GENERICS = CompilerFeature("const_generics", ACTIVE, "1.34.0")
 // #[optimize(X)]
 val OPTIMIZE_ATTRIBUTE = CompilerFeature("optimize_attribute", ACTIVE, "1.34.0")
+// #[repr(align(X))] on enums
+val REPR_ALIGN_ENUM = CompilerFeature("repr_align_enum", ACTIVE, "1.34.0")
 
 val ASSOCIATED_TYPES = CompilerFeature("associated_types", ACCEPTED, "1.0.0")
 // Allows overloading augmented assignment operations like `a += b`.
