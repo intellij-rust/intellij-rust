@@ -233,6 +233,9 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    // Match ergonomics are enabled if a reference value (on the right side)
+    // is matched by a non reference pattern (on the left side)
+    // See https://github.com/rust-lang/rfcs/blob/master/text/2005-match-ergonomics.md
     fun `test match ergonomics tuple 1`() = testExpr("""
         fn main() {
             let (a, b) = &(1, 2);
@@ -275,6 +278,16 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         } //^ &mut i32
     """)
 
+    // https://github.com/rust-lang/rust/issues/46688
+    fun `test match ergonomics tuple 7`() = expect<IllegalStateException> {
+        testExpr("""
+        fn main() {
+            let (_, &a) = &(1, &2);
+            a;
+        } //^ i32
+    """)
+    }
+
     fun `test match ergonomics tuple ref`() = testExpr("""
         fn main() {
             let (ref a,) = &(1,);
@@ -282,7 +295,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         } //^ &i32
     """)
 
-    fun `test match ergonomics enum 1`() = testExpr("""
+    fun `test match ergonomics enum`() = testExpr("""
         enum E { A(i32) }
         fn main() {
             let E::A(a) = &E::A(1);
@@ -290,7 +303,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         } //^ &i32
     """)
 
-    fun `test match ergonomics enum 2`() = testExpr("""
+    fun `test match ergonomics enum ref`() = testExpr("""
         enum E { A(i32) }
         fn main() {
             let E::A(ref a) = &E::A(1);
@@ -298,7 +311,37 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         } //^ &i32
     """)
 
-    fun `test match ergonomics struct 1`() = testExpr("""
+    fun `test match ergonomics enum mut`() = expect<IllegalStateException> {
+        testExpr("""
+        enum E { A(i32) }
+        fn main() {
+            let E::A(mut a) = &E::A(1);
+            a;
+        } //^ i32
+    """)
+    }
+
+    // This produces "error[E0596]: cannot borrow anonymous field of immutable binding as mutable"
+    // but still infers the type &mut i32
+    fun `test match ergonomics enum ref mut incorrect`() = expect<IllegalStateException> {
+        testExpr("""
+        enum E { A(i32) }
+        fn main() {
+            let E::A(ref mut a) = &E::A(1);
+            a;
+        } //^ &mut i32
+    """)
+    }
+
+    fun `test match ergonomics enum ref mut`() = testExpr("""
+        enum E { A(i32) }
+        fn main() {
+            let E::A(ref mut a) = &mut E::A(1);
+            a;
+        } //^ &mut i32
+    """)
+
+    fun `test match ergonomics struct short`() = testExpr("""
         struct S { a: i32 }
         fn main() {
             let S { a } = &S{ a: 1 };
@@ -306,7 +349,15 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         } //^ &i32
     """)
 
-    fun `test match ergonomics struct 2`() = testExpr("""
+    fun `test match ergonomics struct long`() = testExpr("""
+        struct S { a: i32 }
+        fn main() {
+            let S { a: a } = &S{ a: 1 };
+            a;
+        } //^ &i32
+    """)
+
+    fun `test match ergonomics struct ref short`() = testExpr("""
         struct S { a: i32 }
         fn main() {
             let S { ref a } = &S{ a: 1 };
@@ -314,13 +365,51 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         } //^ &i32
     """)
 
-    fun `test match ergonomics struct 3`() = testExpr("""
+    fun `test match ergonomics struct ref long`() = testExpr("""
         struct S { a: i32 }
         fn main() {
             let S { a: ref a } = &S{ a: 1 };
             a;
         } //^ &i32
     """)
+
+    fun `test match ergonomics struct mut short`() = expect<IllegalStateException> {
+        testExpr("""
+        struct S { a: i32 }
+        fn main() {
+            let S { mut a } = &S { a: 1 };
+            a;
+        } //^ i32
+    """)
+    }
+
+    fun `test match ergonomics struct mut long`() = expect<IllegalStateException> {
+        testExpr("""
+        struct S { a: i32 }
+        fn main() {
+            let S { a: mut a } = &S { a: 1 };
+            a;
+        } //^ i32
+    """)
+    }
+
+    fun `test match ergonomics struct ref mut short`() = testExpr("""
+        struct S { a: i32 }
+        fn main() {
+            let S { ref mut a } = &S { a: 1 };
+            a;
+        } //^ &mut i32
+    """)
+
+    fun `test match ergonomics struct ref mut long`() = expect<IllegalStateException> {
+        testExpr("""
+        struct S { a: i32 }
+        fn main() {
+            let S { a: ref mut a } = &S { a: 1 };
+            a;
+        } //^ &mut i32
+    """)
+    }
 
     fun `test match ergonomics slice 1`() = testExpr("""
         fn main() {
