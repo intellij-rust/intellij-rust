@@ -21,7 +21,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
     fun after() = tearDown()
 
     @Test
-    fun keyCompletion() {
+    fun `key completion`() {
         doSingleCompletion("""
         $sectionName
         edi<caret>
@@ -33,7 +33,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
     }
 
     @Test
-    fun value2018CompletionWithoutQuotes() {
+    fun `value 2018 completion without quotes`() {
         doSingleCompletion("""
         $sectionName
         edition = 8<caret>
@@ -44,7 +44,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
     }
 
     @Test
-    fun value2018CompletionWithQuotes() {
+    fun `value 2018 completion with quotes`() {
         doSingleCompletion("""
         $sectionName
         edition = "8<caret>"
@@ -55,7 +55,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
     }
 
     @Test
-    fun value2015CompletionWithoutQuotes() {
+    fun `value 2015 completion without quotes`() {
         doSingleCompletion("""
         $sectionName
         edition = 5<caret>
@@ -66,7 +66,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
     }
 
     @Test
-    fun value2015CompletionWithQuotes() {
+    fun `value 2015 completion with quotes`() {
         doSingleCompletion("""
         $sectionName
         edition = "5<caret>"
@@ -77,7 +77,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
     }
 
     @Test
-    fun otherValuesAreNotCompleted() {
+    fun `other values are not completed`() {
         checkNoCompletion("""
         $sectionName
         edition = "3<caret>"
@@ -85,7 +85,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
     }
 
     @Test
-    fun valuesForDifferentKeyAreNotCompleted() {
+    fun `values for different keys are not completed`() {
         checkNoCompletion("""
         $sectionName
         edidition = "8<caret>"
