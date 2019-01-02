@@ -39,17 +39,24 @@ private val RsPat.inlayInfo: List<InlayInfo>
 enum class HintType(desc: String, enabled: Boolean) {
     LET_BINDING_HINT("Show local variable type hints", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
-            val element = elem as? RsLetDecl ?: return emptyList()
-            if (element.typeReference != null) return emptyList()
+            val (expr, pats) = when (elem) {
+                is RsLetDecl -> {
+                    if (elem.typeReference != null) return emptyList()
+                    elem.expr to listOfNotNull(elem.pat)
+                }
+                is RsCondition -> elem.expr to listOfNotNull(elem.pat)
+                is RsMatchExpr -> elem.expr to elem.matchBody?.matchArmList?.flatMap { it.patList }
+                else -> return emptyList()
+            }
+
             if (smart) {
-                val expr = element.expr
                 val declaration = expr?.declaration
                 if (declaration is RsStructItem || declaration is RsEnumVariant) return emptyList()
             }
-            return element.pat?.inlayInfo ?: emptyList()
+            return pats?.flatMap { it.inlayInfo } ?: emptyList()
         }
 
-        override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl
+        override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl || elem is RsCondition || elem is RsMatchExpr
     },
     PARAMETER_HINT("Show argument name hints", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
@@ -83,7 +90,7 @@ enum class HintType(desc: String, enabled: Boolean) {
             return hints.map { (hint, arg) -> InlayInfo("$hint:", arg.startOffset) }
         }
 
-        fun onlyOneParam(hints: List<Pair<String, RsExpr>>, callInfo: CallInfo, elem: PsiElement): Boolean {
+        private fun onlyOneParam(hints: List<Pair<String, RsExpr>>, callInfo: CallInfo, elem: PsiElement): Boolean {
             if (callInfo.selfParameter != null && elem is RsCallExpr && hints.size == 2) {
                 return true
             }

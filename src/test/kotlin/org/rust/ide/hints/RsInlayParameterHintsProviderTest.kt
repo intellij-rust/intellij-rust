@@ -267,6 +267,39 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         check(inlays.size == 1)
     }
 
+    fun `test hints in if let expr`() = checkByText("""
+        enum Option<T> {
+            Some(T), None
+        }
+        fn main() {
+            let result = Option::Some((1, 2));
+            if let Option::Some((x/*hint text=": i32"*/, y/*hint text=": i32"*/)) = result {}
+        }
+    """, enabledHints = HintType.LET_BINDING_HINT)
+
+    fun `test hints in while let expr`() = checkByText("""
+        enum Option<T> {
+            Some(T), None
+        }
+        fn main() {
+            let result = Option::Some((1, 2));
+            while let Option::Some((x/*hint text=": i32"*/, y/*hint text=": i32"*/)) = result {}
+        }
+    """, enabledHints = HintType.LET_BINDING_HINT)
+
+    fun `test hints in match expr`() = checkByText("""
+        enum Option<T> {
+            Some(T), None
+        }
+        fn main() {
+            let result = Option::Some((1, 2));
+            match result {
+                Option::Some((x/*hint text=": i32"*/, y/*hint text=": i32"*/)) => (),
+                _ => ()
+            }
+        }
+    """)
+
     private fun checkByText(
         @Language("Rust") code: String,
         enabledHints: HintType? = null,
