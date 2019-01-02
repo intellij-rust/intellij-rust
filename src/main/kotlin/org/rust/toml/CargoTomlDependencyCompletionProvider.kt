@@ -5,18 +5,15 @@
 
 package org.rust.toml
 
-import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.tree.IElementType
 import com.intellij.util.ProcessingContext
-import org.rust.lang.core.completion.getElementOfType
-import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.isAncestorOf
-import org.toml.lang.psi.*
+import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlTable
 
 abstract class TomlKeyValueCompletionProviderBase : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -26,14 +23,7 @@ abstract class TomlKeyValueCompletionProviderBase : CompletionProvider<Completio
                 ?: error("PsiElementPattern must not allow keys outside of TomlKeyValues")
             completeKey(keyValue, result)
         } else {
-            val keyValue = parent.ancestorOrSelf<TomlKeyValue>()
-                ?: error("PsiElementPattern must not allow values outside of TomlKeyValues")
-            // If a value is already present we should ensure that the value is a literal
-            // and the caret is inside the value to forbid completion in cases like
-            // `key = "" <caret>`
-            val value = keyValue.value
-            if (value != null && (value !is TomlLiteral || !value.isAncestorOf(parameters.position))) return
-
+            val keyValue = getClosestKeyValueAncestor(parameters.position) ?: return
             completeValue(keyValue, result)
         }
     }
@@ -110,27 +100,3 @@ class CargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueComplet
             ?: error("PsiElementPattern must not allow KeyValues in tables without header")
     }
 }
-
-/** Inserts `=` between key and value if missed and wraps inserted string with quotes if needed */
-private class StringValueInsertionHandler(val keyValue: TomlKeyValue) : InsertHandler<LookupElement> {
-    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-        var startOffset = context.startOffset
-        val value = context.getElementOfType<TomlValue>()
-        val hasEq = keyValue.children.any { it.elementType == TomlElementTypes.EQ }
-        val hasQuotes = value != null && (value !is TomlLiteral || value.literalType != TomlElementTypes.NUMBER)
-
-        if (!hasEq) {
-            context.document.insertString(startOffset - if (hasQuotes) 1 else 0, "= ")
-            PsiDocumentManager.getInstance(context.project).commitDocument(context.document)
-            startOffset += 2
-        }
-
-        if (!hasQuotes) {
-            context.document.insertString(startOffset, "\"")
-            context.document.insertString(context.selectionEndOffset, "\"")
-        }
-    }
-}
-
-private val TomlLiteral.literalType: IElementType
-    get() = children.first().elementType

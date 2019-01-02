@@ -78,6 +78,7 @@ exclude = ["build/**/*.o", "doc/**/*.html"]
 include = ["src/**/*", "Cargo.toml"]
 publish = false
 workspace = "path/to/workspace/root"
+edition = "2018"
 
 description = "..."
 homepage = "..."
@@ -134,6 +135,7 @@ doc = true
 plugin = false
 proc-macro = false
 harness = true
+edition = "2018"
 
 [[example]]
 name = "foo"
@@ -146,6 +148,7 @@ plugin = false
 proc-macro = false
 harness = true
 required-features = ["postgres", "tools"]
+edition = "2018"
 
 [[bin]]
 name = "foo"
@@ -158,6 +161,7 @@ plugin = false
 proc-macro = false
 harness = true
 required-features = ["postgres", "tools"]
+edition = "2018"
 
 [[test]]
 name = "foo"
@@ -170,6 +174,7 @@ plugin = false
 proc-macro = false
 harness = true
 required-features = ["postgres", "tools"]
+edition = "2018"
 
 [[bench]]
 name = "foo"
@@ -182,6 +187,7 @@ plugin = false
 proc-macro = false
 harness = true
 required-features = ["postgres", "tools"]
+edition = "2018"
 
 [patch.crates-io]
 foo = { git = 'https://github.com/example/foo' }
