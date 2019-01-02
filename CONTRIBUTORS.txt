@@ -7,9 +7,9 @@ alexpana
 allengeorge
 alobb
 alygin
+amakeev
 andruhon
 anton-okolelov
-amakeev
 ashleysommer
 AtomicInteger
 atsky
@@ -83,6 +83,7 @@ shssoichiro
 sirgl
 slavam2605
 sohich
+SomeoneToIgnore
 stigger
 t-kameyama
 ThoseGrapefruits
