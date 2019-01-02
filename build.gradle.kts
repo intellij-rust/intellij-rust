@@ -135,6 +135,8 @@ allprojects {
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
 val clionVersion = prop("clionVersion")
 
+val rustProjects = rootProject.subprojects.filter { it.name != "intellij-toml" }
+
 project(":") {
     val versionSuffix = "-$platformVersion$channelSuffix"
     version = "0.2.0.${prop("buildNumber")}$versionSuffix"
@@ -214,7 +216,29 @@ project(":") {
     tasks.withType<PrepareSandboxTask> {
         from("prettyPrinters") {
             into("${intellij.pluginName}/prettyPrinters")
+            include("*.py")
         }
+        for (rustProject in rustProjects) {
+            val jar: Jar by rustProject.tasks
+            from(jar.outputs.files) {
+                into("${intellij.pluginName}/lib")
+                include("*.jar")
+            }
+            dependsOn(jar)
+        }
+    }
+
+    val copyXmls = task<Copy>("copyXmls") {
+        val mainMetaInf = "${project.sourceSets.getByName("main").output.resourcesDir}/META-INF"
+        for (rustProject in rustProjects) {
+            from("${rustProject.projectDir}/src/main/resources/META-INF")
+        }
+        into(mainMetaInf)
+        include("*.xml")
+    }
+
+    tasks.withType<Jar> {
+        dependsOn(copyXmls)
     }
 }
 
