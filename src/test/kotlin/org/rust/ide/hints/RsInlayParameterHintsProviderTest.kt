@@ -5,80 +5,73 @@
 
 package org.rust.ide.hints
 
+import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.fileTreeFromText
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.RsMethodCall
 
 class RsInlayParameterHintsProviderTest : RsTestBase() {
 
-    fun `test fn first arg`() = checkByText<RsCallExpr>("""
-        fn foo(arg: u32) {}
-        fn main() { foo(/*caret*/0); }
-    """, "arg:", 0)
-
-    fun `test fn second arg`() = checkByText<RsCallExpr>("""
+    fun `test fn args`() = checkByText("""
         fn foo(arg: u32, arg2: u32) {}
-        fn main() { foo(0, /*caret*/1); }
-    """, "arg2:", 1)
+        fn main() { foo(/*hint text="arg:"*/0, /*hint text="arg2:"*/1); }
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test arg out of bounds`() = checkByText<RsCallExpr>("""
+    fun `test arg out of bounds`() = checkByText("""
         fn foo(arg: u32) {}
-        fn main() { foo(0, /*caret*/1); }
-    """, "<none>", -1)
+        fn main() { foo(/*hint text="arg:"*/0, 1); }
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test method second arg`() = checkByText<RsMethodCall>("""
+    fun `test method args`() = checkByText("""
         struct S;
         impl S {
             fn foo(self, arg: u32, arg2: u32) {}
         }
         fn main() {
             let s = S;
-            s.foo(0, /*caret*/1);
+            s.foo(/*hint text="arg:"*/0, /*hint text="arg2:"*/1);
         }
-    """, "arg2:", 1)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test struct fn arg`() = checkByText<RsCallExpr>("""
+    fun `test struct fn arg`() = checkByText("""
         struct S;
         impl S {
             fn foo(self, arg: u32) {}
         }
         fn main() {
             let s = S;
-            S::foo(s, /*caret*/0);
+            S::foo(/*hint text="self:"*/s, /*hint text="arg:"*/0);
         }
-    """, "arg:", 1)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test let decl`() = checkByText<RsLetDecl>("""
+    fun `test let decl`() = checkByText("""
         struct S;
         fn main() {
-            let s/*caret*/ = S;
+            let s/*hint text=": S"*/ = S;
         }
-    """, ": S", 0, smart = false)
+    """, enabledHints = HintType.LET_BINDING_HINT, smart = false)
 
-    fun `test let stmt without expression`() = checkByText<RsLetDecl>("""
+    fun `test let stmt without expression`() = checkByText("""
         struct S;
         fn main() {
-            let s/*caret*/;
+            let s/*hint text=": S"*/;
             s = S;
         }
-    """, ": S", 0, smart = false)
+    """, enabledHints = HintType.LET_BINDING_HINT, smart = false)
 
-    fun `test no redundant hints`() = checkNoHint<RsLetDecl>("""
+    fun `test no redundant hints`() = checkByText("""
         fn main() {
             let _ = 1;
             let _a = 1;
             let a = UnknownType;
         }
-    """, smart = false)
+    """, enabledHints = HintType.LET_BINDING_HINT, smart = false)
 
-    fun `test smart hint don't show redundant hints`() = checkNoHint<RsLetDecl>("""
+    fun `test smart hint don't show redundant hints`() = checkByText("""
         struct S;
         struct TupleStruct(f32);
         struct BracedStruct { f: f32 }
@@ -94,24 +87,24 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             let no_hint = E::B { f: 1.0 };
             let no_hint = E::T(1.0);
         }
-    """)
+    """, enabledHints = HintType.LET_BINDING_HINT)
 
-    fun `test let decl tuple`() = checkByText<RsLetDecl>("""
+    fun `test let decl tuple`() = checkByText("""
         struct S;
         fn main() {
-            let (s/*caret*/,c) = (S,S);
+            let (s/*hint text=": S"*/, c/*hint text=": S"*/) = (S, S);
         }
-    """, ": S", 0)
+    """, enabledHints = HintType.LET_BINDING_HINT)
 
-    fun `test smart hint same parameter name`() = checkByText<RsCallExpr>("""
+    fun `test smart hint same parameter name`() = checkByText("""
         fn foo(arg: u32, arg2: u32) {}
         fn main() {
             let arg = 0;
-            foo(arg, /*caret*/1);
+            foo(arg, /*hint text="arg2:"*/1);
         }
-    """, "arg2:", 0)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test smart hint method start with set`() = checkNoHint<RsMethodCall>("""
+    fun `test smart hint method start with set`() = checkByText("""
         struct S;
         impl S {
             fn set_foo(self, arg: u32) {}
@@ -120,36 +113,36 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             let s = S;
             s.set_foo(1);
         }
-    """)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test smart hint self call start with set`() = checkNoHint<RsCallExpr>("""
+    fun `test smart hint self call start with set`() = checkByText("""
         struct S;
         impl S {
             fn set_foo(self, arg: u32) {}
         }
         fn main() {
             let s = S;
-            S::set_foo(s, /*caret*/0);
+            S::set_foo(s, 0);
         }
-    """)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test smart hint same function name and single parameter`() = checkNoHint<RsCallExpr>("""
+    fun `test smart hint same function name and single parameter`() = checkByText("""
         fn foo(arg: u32) {}
         fn main() {
             let foo = 0;
             foo(foo);
         }
-    """)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test smart hint parameter name and ref input`() = checkNoHint<RsCallExpr>("""
+    fun `test smart hint parameter name and ref input`() = checkByText("""
         fn foo(arg: &u32) {}
         fn main() {
             let arg = 0;
             foo(&arg);
         }
-    """)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test smart hint same method name and single parameter`() = checkNoHint<RsMethodCall>("""
+    fun `test smart hint same method name and single parameter`() = checkByText("""
         struct S;
         impl S {
             fn foo(self, foo: u32) {}
@@ -158,9 +151,9 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             let s = S;
             s.foo(10);
         }
-    """)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test smart hint same method name (self call) and single parameter`() = checkNoHint<RsCallExpr>("""
+    fun `test smart hint same method name (self call) and single parameter`() = checkByText("""
         struct S;
         impl S {
             fn foo(self, foo: u32) {}
@@ -169,9 +162,9 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             let s = S;
             S::foo(s, 10);
         }
-    """)
+    """, enabledHints = HintType.PARAMETER_HINT)
 
-    fun `test smart should not annotate tuples`() = checkNoHint<RsCallExpr>("""
+    fun `test smart should not annotate tuples`() = checkByText("""
         enum Option<T> {
             Some(T),
             None
@@ -179,7 +172,7 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let s = Option::Some(10);
         }
-    """)
+    """, enabledHints = HintType.LET_BINDING_HINT)
 
     private val fnTypes = """
         #[lang = "fn_once"]
@@ -192,16 +185,16 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         trait Fn<Args>: FnMut<Args> { }
     """
 
-    fun `test lambda type hint`() = checkByText<RsLambdaExpr>("""
+    fun `test lambda type hint`() = checkByText("""
         $fnTypes
         struct S;
         fn with_s<F: Fn(S)>(f: F) {}
         fn main() {
-            with_s(|s/*caret*/| s.bar())
+            with_s(|s/*hint text=": S"*/| s.bar())
         }
-    """, ": S", 0)
+    """, enabledHints = HintType.LAMBDA_PARAMETER_HINT)
 
-    fun `test lambda type not shown if redundant`() = checkNoHint<RsLambdaExpr>("""
+    fun `test lambda type not shown if redundant`() = checkByText("""
         $fnTypes
         struct S;
         fn with_s<F: Fn(S)>(f: F) {}
@@ -209,18 +202,18 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
             with_s(|s: S| s.bar())
             with_s(|_| ())
         }
-    """)
+    """, enabledHints = HintType.LAMBDA_PARAMETER_HINT)
 
-    fun `test lambda type should show after an defined type correct`() = checkByText<RsLambdaExpr>("""
+    fun `test lambda type should show after an defined type correct`() = checkByText("""
         $fnTypes
         struct S;
         fn foo<T: Fn(S, S, (S, S)) -> ()>(action: T) {}
         fn main() {
-            foo(|x, y: S, z/*caret*/| {});
+            foo(|x/*hint text=": S"*/, y: S, z/*hint text=": (S, S)"*/| {});
         }
-    """, ": (S, S)", 1)
+    """, enabledHints = HintType.LAMBDA_PARAMETER_HINT)
 
-    fun `test don't render horrendous types in their full glory`() = checkByText<RsLetDecl>("""
+    fun `test don't render horrendous types in their full glory`() = checkByText("""
         struct S<T, U>;
 
         impl<T, U> S<T, U> {
@@ -231,16 +224,16 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
 
         fn main() {
             let s: S<(), ()> = unimplemented!();
-            let foo/*caret*/ = s
+            let foo/*hint text=": S<fn(i32) -> i32, S<fn(i32) -> i32, S<…, …>>>"*/ = s
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x);
         }
-    """, ": S<fn(i32) -> i32, S<fn(i32) -> i32, S<…, …>>>", 0)
+    """, enabledHints = HintType.LET_BINDING_HINT)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test inlay hint for loops`() = checkByText<RsForExpr>("""
+    fun `test inlay hint for loops`() = checkByText("""
         struct S;
         struct I;
         impl Iterator for I {
@@ -249,9 +242,9 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
 
         fn main() {
-            for s/*caret*/ in I { }
+            for s/*hint text=": S"*/ in I { }
         }
-    """, ": S", 0)
+    """, enabledHints = HintType.FOR_PARAMETER_HINT)
 
     fun `test don't touch ast`() {
         fileTreeFromText("""
@@ -274,30 +267,28 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         check(inlays.size == 1)
     }
 
-    private inline fun <reified T : PsiElement> checkNoHint(@Language("Rust") code: String, smart: Boolean = true) {
-        InlineFile(code)
+    private fun checkByText(
+        @Language("Rust") code: String,
+        enabledHints: HintType? = null,
+        smart: Boolean = true
+    ) {
+        InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
+        if (enabledHints != null) {
+            for (hintType in HintType.values()) {
+                hintType.option.set(hintType == enabledHints)
+            }
+        }
         HintType.SMART_HINTING.set(smart)
-        val handler = RsInlayParameterHintsProvider()
-        val targets = myFixture.file.descendantsOfType<T>()
-        val inlays = targets.flatMap { handler.getParameterHints(it) }
-        check(inlays.isEmpty()) {
-            "Expected no hints, but ${inlays.map { it.text }} shown"
+
+        try {
+            myFixture.testInlays({ (it.renderer as HintRenderer).text }) { it.renderer is HintRenderer }
+        } finally {
+            HintType.values().forEach { it.option.set(true) }
+            HintType.SMART_HINTING.set(true)
         }
     }
 
-    private inline fun <reified T : PsiElement> checkByText(@Language("Rust") code: String, hint: String, pos: Int, smart: Boolean = true) {
-        InlineFile(code)
-        HintType.SMART_HINTING.set(smart)
-
-        val target = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
-            ?.ancestorOrSelf<T>() ?: Companion.fail("Should find parent")
-        val inlays = RsInlayParameterHintsProvider().getParameterHints(target)
-        if (pos != -1) {
-            check(pos < inlays.size) {
-                "Expected at least ${pos + 1} hints, got ${inlays.map { it.text }}"
-            }
-            assertEquals(hint, inlays[pos].text)
-            assertEquals(myFixture.editor.caretModel.offset, inlays[pos].offset)
-        }
+    companion object {
+        private val HINT_COMMENT_PATTERN = Regex("""/\*(hint.*?)\*/""")
     }
 }
