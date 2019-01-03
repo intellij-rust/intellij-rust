@@ -746,4 +746,25 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         fn foo<'aaaaaa>(x:&'aaaaaa/*caret*/ str) {}
     """)
+
+    fun `test super completion`() = doSingleCompletion("""
+        pub mod foo {
+            fn bar() {
+                self::su/*caret*/
+            }
+        }
+    """, """
+        pub mod foo {
+            fn bar() {
+                self::super::/*caret*/
+            }
+        }
+    """)
+
+    fun `test not super completion after named path segment`() = checkNoCompletion("""
+        pub mod foo {}
+        fn main() {
+            foo::su/*caret*/
+        }
+    """)
 }
