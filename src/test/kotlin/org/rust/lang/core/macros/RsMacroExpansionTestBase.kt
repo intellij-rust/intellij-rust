@@ -7,7 +7,7 @@ package org.rust.lang.core.macros
 
 import com.intellij.psi.codeStyle.CodeStyleManager
 import junit.framework.ComparisonFailure
-import org.apache.commons.lang3.StringUtils.deleteWhitespace
+import org.apache.commons.lang.StringUtils.deleteWhitespace
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsMacroCall

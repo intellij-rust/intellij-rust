@@ -54,6 +54,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven { setUrl("https://dl.bintray.com/jetbrains/markdown") }
     }
 
     idea {
@@ -132,9 +133,11 @@ allprojects {
 }
 
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
+val clionVersion = prop("clionVersion")
+
+val rustProjects = rootProject.subprojects.filter { it.name != "intellij-toml" }
 
 project(":") {
-    val clionVersion = prop("clionVersion")
     val versionSuffix = "-$platformVersion$channelSuffix"
     version = "0.2.0.${prop("buildNumber")}$versionSuffix"
     intellij {
@@ -143,29 +146,14 @@ project(":") {
         setPlugins(project(":intellij-toml"), "IntelliLang", "copyright")
     }
 
-    repositories {
-        maven { setUrl("https://dl.bintray.com/jetbrains/markdown") }
-    }
+    val testOutput = configurations.create("testOutput")
 
     dependencies {
         compile("org.jetbrains:markdown:0.1.30") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
-    }
-
-    sourceSets {
-        create("debugger") {
-            kotlin.srcDirs("debugger/src/main/kotlin", "debugger/src/$platformVersion/main/kotlin")
-            resources.srcDirs("debugger/src/main/resources", "debugger/src/$platformVersion/main/resources")
-            compileClasspath += getByName("main").compileClasspath +
-                getByName("main").output +
-                files("deps/clion-$clionVersion/lib/clion.jar")
-        }
-    }
-
-    tasks.withType<Jar> {
-        from(sourceSets.getByName("debugger").output)
+        testOutput(sourceSets.getByName("test").output)
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
@@ -228,7 +216,74 @@ project(":") {
     tasks.withType<PrepareSandboxTask> {
         from("prettyPrinters") {
             into("${intellij.pluginName}/prettyPrinters")
+            include("*.py")
         }
+        for (rustProject in rustProjects) {
+            val jar: Jar by rustProject.tasks
+            from(jar.outputs.files) {
+                into("${intellij.pluginName}/lib")
+                include("*.jar")
+            }
+            dependsOn(jar)
+        }
+    }
+
+    val copyXmls = task<Copy>("copyXmls") {
+        val mainMetaInf = "${project.sourceSets.getByName("main").output.resourcesDir}/META-INF"
+        for (rustProject in rustProjects) {
+            from("${rustProject.projectDir}/src/main/resources/META-INF")
+        }
+        into(mainMetaInf)
+        include("*.xml")
+    }
+
+    tasks.withType<Jar> {
+        dependsOn(copyXmls)
+    }
+}
+
+project(":idea") {
+    dependencies {
+        compile(project(":"))
+        testCompile(project(":", "testOutput"))
+    }
+}
+
+project(":debugger") {
+    dependencies {
+        compile(project(":"))
+        compileOnly(files("${rootProject.projectDir}/deps/clion-$clionVersion/lib/clion.jar"))
+        testCompile(project(":", "testOutput"))
+    }
+}
+
+project(":toml") {
+    intellij {
+        setPlugins(project(":intellij-toml"))
+    }
+    dependencies {
+        compile(project(":"))
+        testCompile(project(":", "testOutput"))
+    }
+}
+
+project(":intelliLang") {
+    intellij {
+        setPlugins("IntelliLang")
+    }
+    dependencies {
+        compile(project(":"))
+        testCompile(project(":", "testOutput"))
+    }
+}
+
+project(":copyright") {
+    intellij {
+        setPlugins("copyright")
+    }
+    dependencies {
+        compile(project(":"))
+        testCompile(project(":", "testOutput"))
     }
 }
 
