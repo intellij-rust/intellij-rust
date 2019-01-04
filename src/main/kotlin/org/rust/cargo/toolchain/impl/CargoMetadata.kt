@@ -15,6 +15,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.openapiext.findFileByMaybeRelativePath
+import org.rust.stdext.mapToSet
 
 /**
  * Classes mirroring JSON output of `cargo metadata`.
@@ -170,9 +171,29 @@ object CargoMetadata {
         val id: PackageId,
 
         /**
-         * id's of dependent packages
+         * Id's of dependent packages
          */
-        val dependencies: List<PackageId>
+        val dependencies: List<PackageId>,
+
+        /**
+         * List of dependency info
+         *
+         * Contains additional info compared with [dependencies] like custom package name.
+         * Can be null for old cargo version
+         */
+        val deps: List<Dep>?
+    )
+
+    data class Dep(
+        /**
+         * Id of dependent package
+         */
+        val pkg: PackageId,
+
+        /**
+         * Dependency name that should be used in code as extern crate name
+         */
+        val name: String?
     )
 
     // The next two things do not belong here,
@@ -203,8 +224,13 @@ object CargoMetadata {
             "Your version of Cargo is no longer supported, please upgrade Cargo.")
         return CargoWorkspaceData(
             project.packages.mapNotNull { it.clean(fs, it.id in members) },
-            project.resolve.nodes.associate { (id, dependencies) ->
-                id to dependencies.toSet()
+            project.resolve.nodes.associate { (id, dependencies, deps) ->
+                val dependencySet = if (deps != null) {
+                    deps.mapToSet { (pkgId, name) -> CargoWorkspaceData.Dependency(pkgId, name) }
+                } else {
+                    dependencies.mapToSet { CargoWorkspaceData.Dependency(it) }
+                }
+                id to dependencySet
             },
             project.workspace_root
         )

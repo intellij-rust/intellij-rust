@@ -16,6 +16,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.CargoWorkspaceData.Dependency
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Package
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -173,9 +174,9 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
             // Our package depends on dep_lib 0.0.1 and nosrc_lib
-            packages[0].id to setOf(packages[1].id, packages[2].id),
+            packages[0].id to setOf(Dependency(packages[1].id), Dependency(packages[2].id)),
             // dep_lib 0.0.1 depends on dep_lib 0.0.2
-            packages[1].id to setOf(packages[4].id)
+            packages[1].id to setOf(Dependency(packages[4].id))
         )))
     }
 }
