@@ -53,14 +53,14 @@ interface CargoWorkspace {
         val targets: Collection<Target>
         val libTarget: Target? get() = targets.find { it.isLib }
 
-        val dependencies: Collection<Package>
+        val dependencies: Collection<Dependency>
 
         val workspace: CargoWorkspace
 
         val edition: Edition
 
         fun findDependency(normName: String): Target? =
-            if (this.normName == normName) libTarget else dependencies.find { it.normName == normName }?.libTarget
+            if (this.normName == normName) libTarget else dependencies.find { it.name == normName }?.pkg?.libTarget
     }
 
     interface Target {
@@ -81,6 +81,11 @@ interface CargoWorkspace {
         val pkg: Package
 
         val edition: Edition
+    }
+
+    interface Dependency {
+        val pkg: Package
+        val name: String
     }
 
     enum class TargetKind {
@@ -152,15 +157,18 @@ private class WorkspaceImpl(
         run {
             val oldIdToPackage = packages.associateBy { it.id }
             val newIdToPackage = result.packages.associateBy { it.id }
-            val stdlibPackages = result.packages.filter { it.origin == PackageOrigin.STDLIB }
+            val stdlibDependencies = result.packages.filter { it.origin == PackageOrigin.STDLIB }.map { DependencyImpl(it) }
             newIdToPackage.forEach { (id, pkg) ->
                 if (id !in stdAll) {
-                    pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { newIdToPackage[it.id] })
-                    pkg.dependencies.addAll(stdlibPackages.filter { it.id in stdRoots })
-                    val explicitDeps = pkg.dependencies.map { it.id }.toSet()
-                    pkg.dependencies.addAll(stdlibPackages.filter { it.id in stdGated && it.id !in explicitDeps })
+                    pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
+                        val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
+                        DependencyImpl(dependencyPackage, name)
+                    })
+                    pkg.dependencies.addAll(stdlibDependencies.filter { it.pkg.id in stdRoots })
+                    val explicitDeps = pkg.dependencies.map { it.pkg.id }.toSet()
+                    pkg.dependencies.addAll(stdlibDependencies.filter { it.pkg.id in stdGated && it.pkg.id !in explicitDeps })
                 } else {
-                    pkg.dependencies.addAll(stdlibPackages)
+                    pkg.dependencies.addAll(stdlibDependencies)
                 }
             }
         }
@@ -183,7 +191,10 @@ private class WorkspaceImpl(
         val oldIdToPackage = packages.associateBy { it.id }
         val newIdToPackage = result.packages.associateBy { it.id }
         newIdToPackage.forEach { (id, pkg) ->
-            pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { newIdToPackage[it.id] })
+            pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
+                val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
+                DependencyImpl(dependencyPackage, name)
+            })
         }
 
         return result
@@ -209,7 +220,10 @@ private class WorkspaceImpl(
                 val idToPackage = result.packages.associateBy { it.id }
                 idToPackage.forEach { (id, pkg) ->
                     val deps = data.dependencies[id].orEmpty()
-                    pkg.dependencies.addAll(deps.mapNotNull { idToPackage[it] })
+                    pkg.dependencies.addAll(deps.mapNotNull { (id, name) ->
+                        val dependencyPackage = idToPackage[id] ?: return@mapNotNull null
+                        DependencyImpl(dependencyPackage, name)
+                    })
                 }
             }
 
@@ -219,7 +233,7 @@ private class WorkspaceImpl(
             // - otherwise, it's TRANSITIVE_DEPENDENCY (handled in constructor as well)
             result.packages.filter { it.origin == PackageOrigin.WORKSPACE }
                 .flatMap { it.dependencies }
-                .forEach { it.origin = PackageOrigin.min(it.origin, PackageOrigin.DEPENDENCY) }
+                .forEach { it.pkg.origin = PackageOrigin.min(it.pkg.origin, PackageOrigin.DEPENDENCY) }
 
             return result
         }
@@ -256,7 +270,7 @@ private class PackageImpl(
     override val rootDirectory: Path
         get() = Paths.get(VirtualFileManager.extractPath(contentRootUrl))
 
-    override val dependencies: MutableList<PackageImpl> = ArrayList()
+    override val dependencies: MutableList<DependencyImpl> = ArrayList()
 
     override fun toString()
         = "Package(name='$name', contentRootUrl='$contentRootUrl')"
@@ -278,6 +292,12 @@ private class TargetImpl(
         = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }
 
+private class DependencyImpl(override val pkg: PackageImpl, name: String? = null) : CargoWorkspace.Dependency {
+    override val name: String = name ?: (pkg.targets.find { it.isLib }?.normName ?: pkg.normName)
+
+    operator fun component1(): PackageImpl = pkg
+    operator fun component2(): String = name
+}
 
 private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): CargoWorkspaceData.Package =
     CargoWorkspaceData.Package(

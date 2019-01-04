@@ -258,7 +258,7 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
 
     if (processPackage(pkg)) return true
     val explicitDepsFirst = pkg.dependencies.sortedBy {
-        when (it.origin) {
+        when (it.pkg.origin) {
             PackageOrigin.WORKSPACE,
             PackageOrigin.DEPENDENCY,
             PackageOrigin.TRANSITIVE_DEPENDENCY -> {
@@ -268,8 +268,8 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
             PackageOrigin.STDLIB -> 1
         }
     }
-    for (p in explicitDepsFirst) {
-        if (processPackage(p)) return true
+    for (dependency in explicitDepsFirst) {
+        if (processPackage(dependency.pkg)) return true
     }
     return false
 }
