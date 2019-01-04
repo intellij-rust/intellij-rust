@@ -242,7 +242,7 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
     val pkg = target.pkg
 
     val visitedDeps = mutableSetOf<String>()
-    fun processPackage(pkg: CargoWorkspace.Package): Boolean {
+    fun processPackage(pkg: CargoWorkspace.Package, dependencyName: String? = null): Boolean {
         if (isCompletion && pkg.origin != PackageOrigin.DEPENDENCY) return false
         val libTarget = pkg.libTarget ?: return false
         // When crate depends on another version of the same crate
@@ -251,7 +251,7 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
 
         if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
         visitedDeps += pkg.name
-        return processor.lazy(libTarget.normName) {
+        return processor.lazy(dependencyName ?: libTarget.normName) {
             libTarget.crateRoot?.toPsiFile(element.project)?.rustFile
         }
     }
@@ -269,7 +269,7 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
         }
     }
     for (dependency in explicitDepsFirst) {
-        if (processPackage(dependency.pkg)) return true
+        if (processPackage(dependency.pkg, dependency.name)) return true
     }
     return false
 }
