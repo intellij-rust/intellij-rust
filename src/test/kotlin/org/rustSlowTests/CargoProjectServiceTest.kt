@@ -5,14 +5,14 @@
 
 package org.rustSlowTests
 
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.fileTree
 import org.rust.openapiext.pathAsPath
 import java.util.concurrent.TimeUnit
 
 
-class CargoProjectServiceTest : RustWithToolchainTestBase() {
+class CargoProjectServiceTest : RsWithToolchainTestBase() {
     fun `test finds project for file`() {
         val testProject = fileTree {
             dir("a") {

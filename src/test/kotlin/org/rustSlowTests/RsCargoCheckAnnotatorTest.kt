@@ -7,13 +7,13 @@ package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.fileTree
 import org.rust.ide.annotator.RsCargoCheckAnnotator
 
-class RsCargoCheckAnnotatorTest : RustWithToolchainTestBase() {
+class RsCargoCheckAnnotatorTest : RsWithToolchainTestBase() {
 
     override fun setUp() {
         super.setUp()

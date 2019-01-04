@@ -10,11 +10,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.TestActionEvent
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.fileTree
 import org.rust.ide.actions.RustfmtFileAction
 
-class RustfmtTest : RustWithToolchainTestBase() {
+class RustfmtTest : RsWithToolchainTestBase() {
 
     fun `test rustfmt action`() {
         fileTree {
