@@ -6,11 +6,11 @@
 package org.rustSlowTests
 
 import com.intellij.openapi.util.SystemInfo
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
 
-class CargoProjectResolveTest : RustWithToolchainTestBase() {
+class CargoProjectResolveTest : RsWithToolchainTestBase() {
 
     fun `test resolve feature gated crate`() = buildProject {
         toml("Cargo.toml", """

@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ui.UIUtil
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -20,7 +20,7 @@ import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.stdext.Timings
 
 
-class RsHighlightingPerformanceTest : RustWithToolchainTestBase() {
+class RsHighlightingPerformanceTest : RsWithToolchainTestBase() {
     // It is a performance test, but we don't want to waste time
     // measuring CPU performance
     override fun isPerformanceTest(): Boolean = false

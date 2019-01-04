@@ -15,13 +15,13 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.ide.DataManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.runconfig.RsRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 
-abstract class RunConfigurationTestBase : RustWithToolchainTestBase() {
+abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
     protected fun createConfiguration(): CargoCommandConfiguration {
         val configurationType = CargoCommandConfigurationType.getInstance()
         val factory = configurationType.factory

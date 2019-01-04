@@ -8,12 +8,12 @@ package org.rust.cargo.project.model.impl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.fileTree
 import org.rust.lang.core.psi.RsPath
 
-class CargoTomlWatcherIntegrationTest : RustWithToolchainTestBase() {
+class CargoTomlWatcherIntegrationTest : RsWithToolchainTestBase() {
     fun `test Cargo toml is refreshed`() {
         val p = fileTree {
             toml("Cargo.toml", """
