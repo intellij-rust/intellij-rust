@@ -344,9 +344,12 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         }
 
         val (base, subst) = qualifier.reference.advancedResolve() ?: return false
+        val isSuperChain = isSuperChain(qualifier)
         if (base is RsMod) {
             val s = base.`super`
-            if (s != null && processor("super", s)) return true
+            // `super` is allowed only after `self` and `super`
+            // so we add `super` in completion only when it produces valid path
+            if (s != null && (!isCompletion || isSuperChain) && processor("super", s)) return true
 
             val containingMod = path.containingMod
             if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
@@ -358,7 +361,6 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             selfInGroup.hit()
             if (processor("self", base)) return true
         }
-        val isSuperChain = isSuperChain(qualifier)
         if (processItemOrEnumVariantDeclarations(base, ns, processor, withPrivateImports = isSuperChain)) return true
         if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) {
             // Foo::<Bar>::baz
