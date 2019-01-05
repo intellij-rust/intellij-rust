@@ -8,6 +8,7 @@ package org.rust.cargo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
+import com.intellij.util.text.SemVer
 import org.rust.FileTree
 import org.rust.FileTreeBuilder
 import org.rust.TestProject
@@ -16,10 +17,13 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.fileTree
 
-// This class allows to execute real Cargo during the tests.
-// Unlike `RustTestCaseBase` it does not use in-memory temporary VFS
-// and instead copies real files.
-abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtureBuilder<*>>() {
+/**
+ * This class allows executing real Cargo during the tests.
+ *
+ * Unlike [org.rust.RsTestBase] it does not use in-memory temporary VFS
+ * and instead copies real files.
+ */
+abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtureBuilder<*>>() {
     open val dataPath: String = ""
 
     private val toolchain = RustToolchain.suggest()
@@ -36,9 +40,27 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
     }
 
     override fun runTest() {
+        val toolchain = toolchain
         if (toolchain == null) {
-            System.err.println("SKIP $name: no Rust toolchain found")
+            System.err.println("SKIP \"$name\": no Rust toolchain found")
             return
+        }
+        val minRustVersion = findAnnotationInstance<MinRustcVersion>()
+        if (minRustVersion != null) {
+            val requiredVersion = SemVer.parseFromText(minRustVersion.version)
+            if (requiredVersion == null) {
+                fail("Invalid version value: ${minRustVersion.version}")
+            }
+            val rustcVersion = toolchain.queryVersions().rustc
+            if (rustcVersion == null) {
+                System.err.println("SKIP \"$name\": failed to query Rust version")
+                return
+            }
+
+            if (rustcVersion.semver < requiredVersion) {
+                println("SKIP \"$name\": $requiredVersion Rust version required, ${rustcVersion.semver} found")
+                return
+            }
         }
         super.runTest()
     }
@@ -58,4 +80,8 @@ abstract class RustWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixt
 
     protected fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
         fileTree { builder() }.create()
+
+    /** Tries to find the specified annotation on the current test method and then on the current class */
+    private inline fun <reified T : Annotation> findAnnotationInstance(): T? =
+        javaClass.getMethod(name).getAnnotation(T::class.java) ?: javaClass.getAnnotation(T::class.java)
 }

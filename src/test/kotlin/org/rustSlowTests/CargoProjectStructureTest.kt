@@ -7,12 +7,12 @@ package org.rustSlowTests
 
 import com.intellij.testFramework.PlatformTestUtil
 import org.rust.FileTreeBuilder
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.toolwindow.CargoProjectStructure
 import org.rust.fileTree
 
-class CargoProjectStructureTest : RustWithToolchainTestBase() {
+class CargoProjectStructureTest : RsWithToolchainTestBase() {
 
     fun `test targets`() = doTest("""
         Root

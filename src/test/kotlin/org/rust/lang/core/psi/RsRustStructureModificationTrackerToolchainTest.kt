@@ -5,11 +5,11 @@
 
 package org.rust.lang.core.psi
 
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.fileTree
 
-class RsRustStructureModificationTrackerToolchainTest : RustWithToolchainTestBase() {
+class RsRustStructureModificationTrackerToolchainTest : RsWithToolchainTestBase() {
     fun `test mod count incremented on project refresh`() {
         fileTree {
             toml("Cargo.toml", """

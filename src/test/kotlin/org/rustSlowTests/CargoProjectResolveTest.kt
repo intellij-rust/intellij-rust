@@ -6,11 +6,12 @@
 package org.rustSlowTests
 
 import com.intellij.openapi.util.SystemInfo
-import org.rust.cargo.RustWithToolchainTestBase
+import org.rust.cargo.MinRustcVersion
+import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
 
-class CargoProjectResolveTest : RustWithToolchainTestBase() {
+class CargoProjectResolveTest : RsWithToolchainTestBase() {
 
     fun `test resolve feature gated crate`() = buildProject {
         toml("Cargo.toml", """
@@ -296,4 +297,100 @@ class CargoProjectResolveTest : RustWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("hello/src/main.rs", toCrate = "rand 0.3.14")
         checkReferenceIsResolved<RsPath>("bar/src/lib.rs", toCrate = "rand 54.0.0")
     }
+
+    @MinRustcVersion("1.31.0")
+    fun `test cargo rename`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "intellij-rust-test"
+            version = "0.1.0"
+            authors = []
+            edition = "2018"
+
+            [dependencies]
+            my_log = { package = "log", version = "0.4.6" }
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                use my_log::Log;
+                    //^
+            """)
+        }
+    }.checkReferenceIsResolved<RsPath>("src/main.rs", toCrate = "log 0.4.6")
+
+    @MinRustcVersion("1.31.0")
+    fun `test cargo rename of local dependency`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "intellij-rust-test"
+            version = "0.1.0"
+            authors = []
+            edition = "2018"
+
+            [dependencies]
+            bar = { package = "foo", path = "./foo" }
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                use bar::foo;
+                    //^
+            """)
+        }
+
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    pub fn foo() {}
+                """)
+            }
+        }
+    }.checkReferenceIsResolved<RsPath>("src/main.rs")
+
+    @MinRustcVersion("1.31.0")
+    fun `test cargo rename of local dependency with custom lib target name`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "intellij-rust-test"
+            version = "0.1.0"
+            authors = []
+            edition = "2018"
+
+            [dependencies]
+            bar = { package = "foo", path = "./foo" }
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                use bar::foo;
+                    //^
+            """)
+        }
+
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+
+                [lib]
+                name = "lib_foo"
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    pub fn foo() {}
+                """)
+            }
+        }
+    }.checkReferenceIsResolved<RsPath>("src/main.rs")
 }

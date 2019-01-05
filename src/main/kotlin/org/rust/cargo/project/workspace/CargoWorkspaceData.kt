@@ -16,14 +16,9 @@ typealias PackageId = String
  */
 data class CargoWorkspaceData(
     val packages: List<Package>,
-    val dependencies: Map<PackageId, Set<PackageId>>,
+    val dependencies: Map<PackageId, Set<Dependency>>,
     val workspaceRoot: String? = null
 ) {
-    data class DependencyNode(
-        val packageIndex: Int,
-        val dependenciesIndexes: Collection<Int>
-    )
-
     data class Package(
         val id: PackageId,
         val contentRootUrl: String,
@@ -41,5 +36,10 @@ data class CargoWorkspaceData(
         val kind: CargoWorkspace.TargetKind,
         val crateTypes: List<CargoWorkspace.CrateType>,
         val edition: CargoWorkspace.Edition
+    )
+
+    data class Dependency(
+        val id: PackageId,
+        val name: String? = null
     )
 }
