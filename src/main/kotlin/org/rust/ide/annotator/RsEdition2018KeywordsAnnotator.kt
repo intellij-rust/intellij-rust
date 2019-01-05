@@ -12,15 +12,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.isEdition2018
 
 class RsEdition2018KeywordsAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         if (!isEdition2018Keyword(element)) return
-
-        // Macro def/call bodies should not be analyzed
-        if (PsiTreeUtil.getParentOfType(element, RsMacroBody::class.java, RsMacroArgument::class.java) != null) return
 
         val isEdition2018 = element.isEdition2018
         val isIdentifier = element.elementType == IDENTIFIER
@@ -37,9 +35,13 @@ class RsEdition2018KeywordsAnnotator : Annotator {
     companion object {
         private val EDITION_2018_RESERVED_NAMES: Set<String> = hashSetOf("async", "await", "try")
 
+        private val IGNORED_ELEMENTS: Array<Class<out RsElement>> =
+            arrayOf(RsMacroBody::class.java, RsMacroArgument::class.java, RsUseItem::class.java)
+
         fun isEdition2018Keyword(element: PsiElement): Boolean =
-            element.elementType == IDENTIFIER && element.text in EDITION_2018_RESERVED_NAMES &&
+            (element.elementType == IDENTIFIER && element.text in EDITION_2018_RESERVED_NAMES &&
                 element.parent !is RsMacro && element.parent?.parent !is RsMacroCall ||
-                element.elementType in RS_EDITION_2018_KEYWORDS
+                element.elementType in RS_EDITION_2018_KEYWORDS) &&
+                PsiTreeUtil.getParentOfType(element, *IGNORED_ELEMENTS) == null
     }
 }
