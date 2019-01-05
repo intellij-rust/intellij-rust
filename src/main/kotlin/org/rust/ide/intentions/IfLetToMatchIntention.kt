@@ -10,6 +10,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isIrrefutable
+import org.rust.lang.core.psi.ext.isStdOptionOrResult
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.type
 
 class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention.Context>() {
     override fun getText(): String = "Convert if let statement to match"
@@ -47,23 +52,55 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (ifStmt, target, matchArms, elseBody) = ctx
+        val item = (target.type as? TyAdt)?.item as? RsEnumItem
 
-        //var generatedCode = "match ${target.text} {"
-        var generatedCode = buildString {
+        val generatedCode = buildString {
             append("match ")
             append(target.text)
             append(" {")
-            append(matchArms.map { arm -> "${arm.matchArm.text} => ${arm.body.text}" }
-                .joinToString(", "))
-            if (elseBody != null) {
-                append(", _ => ")
-                append(elseBody.text)
+            matchArms.forEach {
+                append('\n')
+                append(it.matchArm.text)
+                append(" => ")
+                append(it.body.text)
+            }
+            if (elseBody != null || !isExhaustiveOptionOrResult(item, matchArms)) {
+                append('\n')
+                append(missingBranch(item, matchArms))
+                append(" => ")
+                append(elseBody?.text ?: "{}")
             }
             append("}")
         }
 
         val matchExpression = RsPsiFactory(project).createExpression(generatedCode) as RsMatchExpr
         ifStmt.replace(matchExpression)
+    }
+
+    private fun isExhaustiveOptionOrResult(item: RsEnumItem?, arms: List<MatchArm>): Boolean {
+        if (item == null || !item.isStdOptionOrResult) return false
+        if (arms.any { !it.matchArm.isIrrefutable }) return false
+
+        return arms.map { it.matchArm.text.substringBefore('(') }.let {
+            if (item == item.knownItems.Option) {
+                "Some" in it && "None" in it
+            } else {
+                "Ok" in it && "Err" in it
+            }
+        }
+    }
+
+    private fun missingBranch(item: RsEnumItem?, arms: List<MatchArm>): String {
+        if (item == null || !item.isStdOptionOrResult || arms.size != 1) return "_"
+        val pat = arms.first().matchArm
+        if (!pat.isIrrefutable) return "_"
+        return when (pat.text.substringBefore('(')) {
+            "Some" -> "None"
+            "Ok" -> "Err(..)"
+            "Err" -> "Ok(..)"
+            "None" -> "Some(..)"
+            else -> "_"
+        }
     }
 
     private fun extractIfLetStatementIfAny(iflet: RsIfExpr, ctx: Context? = null): Context? {
