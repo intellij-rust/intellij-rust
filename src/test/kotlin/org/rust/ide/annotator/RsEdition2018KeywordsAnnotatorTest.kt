@@ -78,7 +78,11 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotationTestBase() {
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test don't analyze macro def-call bodies`() = checkErrors("""
+    fun `test don't analyze macro def-call bodies and use items`() = checkErrors("""
+        use dummy::async;
+        use dummy::await;
+        use dummy::{async, await};
+
         macro_rules! foo {
             () => { async };
         }
