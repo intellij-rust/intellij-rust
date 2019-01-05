@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.psi.ext.isStdOptionOrResult
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
@@ -25,7 +25,7 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
         if (!matchExpr.matchBody?.matchArmList.isNullOrEmpty()) return null
         val item = (matchExpr.expr?.type as? TyAdt)?.item as? RsEnumItem ?: return null
         // TODO: check enum variants can be used without enum name qualifier
-        val name = if (!isStdOptionOrResult(item)) {
+        val name = if (!item.isStdOptionOrResult) {
             item.name ?: return null
         } else null
         val variants = item.enumBody?.enumVariantList ?: return null
@@ -49,13 +49,6 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
         val lbraceOffset = (body.matchArmList.firstOrNull()?.expr as? RsBlockExpr)
             ?.block?.lbrace?.textOffset ?: return
         editor.caretModel.moveToOffset(lbraceOffset + 1)
-    }
-
-    private fun isStdOptionOrResult(element: RsEnumItem): Boolean {
-        val knownItems = element.knownItems
-        val option = knownItems.Option
-        val result = knownItems.Result
-        return element == option || element == result
     }
 
     data class Context(

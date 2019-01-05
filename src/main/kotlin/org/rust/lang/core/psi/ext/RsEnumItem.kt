@@ -12,6 +12,7 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsPsiImplUtil
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.stubs.RsEnumItemStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
@@ -34,4 +35,11 @@ abstract class RsEnumItemImplMixin : RsStubbedNamedElementImpl<RsEnumItemStub>, 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+}
+
+val RsEnumItem.isStdOptionOrResult: Boolean get() {
+    val knownItems = knownItems
+    val option = knownItems.Option
+    val result = knownItems.Result
+    return this == option || this == result
 }
