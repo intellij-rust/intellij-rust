@@ -65,4 +65,26 @@ class AddMutableFixText : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
             }
         }
     """)
+
+    fun `test add mutable fix to parameter with lifetime`() = checkFixByText("Make `obj` mutable", """
+        struct A {}
+
+        impl A {
+            fn foo(&mut self) {  }
+
+            fn bar<'a>(&self, obj: &'a A) {
+                <error>obj/*caret*/</error>.foo()
+            }
+        }
+    """, """
+        struct A {}
+
+        impl A {
+            fn foo(&mut self) {  }
+
+            fn bar<'a>(&self, obj: &'a mut A) {
+                obj.foo()
+            }
+        }
+    """)
 }
