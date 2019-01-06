@@ -263,6 +263,16 @@ project(":idea") {
     }
 }
 
+project(":clion") {
+    intellij {
+        version = clionVersion
+    }
+    dependencies {
+        compile(project(":"))
+        testCompile(project(":", "testOutput"))
+    }
+}
+
 project(":debugger") {
     intellij {
         version = clionVersion
