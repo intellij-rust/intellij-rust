@@ -16,8 +16,14 @@ class RsProjectTasksRunner : ProjectTaskRunner() {
         project.buildProject()
     }
 
-    override fun canRun(projectTask: ProjectTask): Boolean =
-        projectTask is ModuleBuildTask && projectTask.module.cargoProjectRoot != null
+    override fun canRun(projectTask: ProjectTask): Boolean {
+        @Suppress("UnstableApiUsage")
+        return when (projectTask) {
+            is ModuleBuildTask -> projectTask.module.cargoProjectRoot != null
+            is ProjectModelBuildTask<*> -> projectTask.buildableElement is CargoBuildableElement
+            else -> false
+        }
+    }
 
     override fun createExecutionEnvironment(project: Project, task: ExecuteRunConfigurationTask, executor: Executor?): ExecutionEnvironment? =
         null
