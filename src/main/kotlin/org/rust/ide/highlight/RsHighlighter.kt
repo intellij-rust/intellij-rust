@@ -52,7 +52,7 @@ class RsHighlighter : SyntaxHighlighterBase() {
             DOC_CODE_SPAN -> RsColor.DOC_CODE
             DOC_CODE_FENCE -> RsColor.DOC_CODE
 
-            LPAREN, RPAREN -> RsColor.PARENTHESIS
+            LPAREN, RPAREN -> RsColor.PARENTHESES
             LBRACE, RBRACE -> RsColor.BRACES
             LBRACK, RBRACK -> RsColor.BRACKETS
 
