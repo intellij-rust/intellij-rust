@@ -62,7 +62,7 @@ enum class RsColor(val humanName: String, val default: TextAttributesKey? = null
     SEMICOLON("Braces and Operators//Semicolon", Default.SEMICOLON),
     DOT("Braces and Operators//Dot", Default.DOT),
     COMMA("Braces and Operators//Comma", Default.COMMA),
-    PARENTHESIS("Braces and Operators//Parenthesis", Default.PARENTHESES),
+    PARENTHESES("Braces and Operators//Parentheses", Default.PARENTHESES),
 
     ATTRIBUTE("Attribute", Default.METADATA),
     UNSAFE_CODE("Unsafe code")
