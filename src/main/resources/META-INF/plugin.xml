@@ -411,6 +411,11 @@
                          implementationClass="org.rust.ide.inspections.RsTryMacroInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="While true loop"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsWhileTrueLoopInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="println!(&quot;&quot;) usage"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsSimplifyPrintInspection"/>
