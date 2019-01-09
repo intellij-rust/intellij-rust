@@ -105,6 +105,25 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
         }
     """)
 
+    fun `test option with unnecessary parentheses around pattern`() = doAvailableTest("""
+        fn main() {
+            let x = Some(42);
+            if let (((None))) = x {/*caret*/
+                println!("none")
+            }
+        }
+    """, """
+        fn main() {
+            let x = Some(42);
+            match x {
+                (((None))) => {
+                    println!("none")
+                }
+                Some(..) => {}
+            }
+        }
+    """)
+
     fun `test option full 1`() = doAvailableTest("""
         fn main() {
             let x = Some(42);
@@ -145,6 +164,29 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
                     println!("none")
                 }
                 Some(..) => {
+                    println!("some")
+                }
+            }
+        }
+    """)
+
+    fun `test option full with unnecessary parentheses around pattern`() = doAvailableTest("""
+        fn main() {
+            let x = Some(42);
+            if let ((((None)))) = x {/*caret*/
+                println!("none")
+            } else if let Some(a) = x {
+                println!("some")
+            }
+        }
+    """, """
+        fn main() {
+            let x = Some(42);
+            match x {
+                ((((None)))) => {
+                    println!("none")
+                }
+                Some(a) => {
                     println!("some")
                 }
             }
