@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
+import com.intellij.codeInsight.completion.CompletionUtil
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParameter
@@ -67,13 +68,16 @@ class TyTypeParameter private constructor(
             )
         }
 
-        fun named(parameter: RsTypeParameter): TyTypeParameter =
-            TyTypeParameter(
-                Named(parameter),
-                parameter.isSized,
-                { traitBounds(parameter) },
-                { regionBounds(parameter) }
+        fun named(parameter: RsTypeParameter): TyTypeParameter {
+            // Treat the same parameters from original/copy files as equals
+            val originalParameter = CompletionUtil.getOriginalOrSelf(parameter)
+            return TyTypeParameter(
+                Named(originalParameter),
+                originalParameter.isSized,
+                { traitBounds(originalParameter) },
+                { regionBounds(originalParameter) }
             )
+        }
     }
 }
 
