@@ -5,9 +5,9 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CodeStyleManager
 import junit.framework.ComparisonFailure
-import org.apache.commons.lang.StringUtils.deleteWhitespace
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsMacroCall
@@ -69,7 +69,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         val expand = { macroCall.expandAllMacrosRecursively() }
         val expandedText = mark?.checkHit(expand) ?: expand()
 
-        if (deleteWhitespace(expectedExpansion) != deleteWhitespace(expandedText)) {
+        if (!StringUtil.equalsIgnoreWhitespaces(expectedExpansion, expandedText)) {
             val formattedExpandedText = RsPsiFactory(project)
                 .parseExpandedTextWithContext(macroCall, expandedText)
                 .map {
