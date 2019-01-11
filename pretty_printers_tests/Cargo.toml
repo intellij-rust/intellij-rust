@@ -1,0 +1,16 @@
+[package]
+name = "pretty_printers_test"
+version = "0.1.0"
+
+[dependencies]
+toml = "0.4.10"
+serde = "1.0"
+serde_derive = "1.0.81"
+
+[lib]
+name = "test_runner"
+path = "src/test_runner.rs"
+
+[[bin]]
+name = "pretty_printers_test"
+path = "src/main.rs"
