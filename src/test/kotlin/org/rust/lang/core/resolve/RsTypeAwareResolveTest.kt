@@ -693,4 +693,81 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                      //^
         }
     """)
+
+    fun `test Self-qualified path in trait impl is resolved to assoc type of current impl`() = checkByCode("""
+        struct S;
+        trait Trait {
+            type Item;
+            fn foo() -> Self::Item;
+        }
+
+        impl Trait for S {
+            type Item = i32;
+                //X
+            fn foo() -> Self::Item { unreachable!() }
+        }                    //^
+    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+
+    fun `test Self-qualified path in trait impl is not resolved to assoc type of another trait`() = checkByCode("""
+        struct S;
+        trait Trait1 { type Item; }
+        trait Trait2 { fn foo() -> i32; }
+
+        impl Trait1 for S {
+            type Item = i32;
+        }
+
+        impl Trait2 for S {
+            fn foo() -> Self::Item { unreachable!() }
+        }                    //^ unresolved
+    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+
+    fun `test Self-qualified path in trait impl is resolved to assoc type of super trait`() = checkByCode("""
+        struct S;
+        trait Trait1 { type Item; }
+        trait Trait2: Trait1 { fn foo() -> i32; }
+
+        impl Trait1 for S {
+            type Item = i32;
+        }       //X
+
+        impl Trait2 for S {
+            fn foo() -> Self::Item { unreachable!() }
+        }                    //^
+    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+
+    fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 1)`() = checkByCode("""
+        struct S;
+        trait Trait1<T> { type Item; }
+        trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
+
+        impl Trait1<i32> for S {
+            type Item = i32;
+        }       //X
+        impl Trait1<u8> for S {
+            type Item = u8;
+        }
+        impl Trait2<i32> for S {
+            fn foo() -> Self::Item { unreachable!() }
+        }                   //^
+    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+
+    // TODO support default type parameters
+    fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 2)`() = expect<IllegalStateException> {
+        checkByCode("""
+        struct S;
+        trait Trait1<T=u8> { type Item; }
+        trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
+
+        impl Trait1<i32> for S {
+            type Item = i32;
+        }       //X
+        impl Trait1 for S {
+            type Item = u8;
+        }
+        impl Trait2<i32> for S {
+            fn foo() -> Self::Item { unreachable!() }
+        }                   //^
+        """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+    }
 }
