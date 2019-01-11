@@ -24,7 +24,6 @@ import org.rust.lang.core.types.ty.TyInteger.*
 import org.rust.openapiext.ProjectCache
 import org.rust.openapiext.testAssert
 import org.rust.stdext.buildList
-import org.rust.stdext.zipValues
 import kotlin.LazyThreadSafetyMode.NONE
 
 enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
@@ -419,7 +418,7 @@ class ImplLookup(
             element == items.Sized -> sizedTraitCandidates(ref.selfTy, element)
             ref.selfTy is TyTypeParameter -> {
                 ref.selfTy.getTraitBoundsTransitively().asSequence()
-                    .filter { ctx.probe { combineBoundElements(it, ref.trait) } }
+                    .filter { ctx.probe { ctx.combineBoundElements(it, ref.trait) } }
                     .map { SelectionCandidate.TypeParameter(it) }
                     .toList()
             }
@@ -508,7 +507,7 @@ class ImplLookup(
             }
             is SelectionCandidate.TypeParameter -> {
                 testAssert { !candidate.bound.containsTyOfClass(TyInfer::class.java) }
-                combineBoundElements(candidate.bound, ref.trait)
+                ctx.combineBoundElements(candidate.bound, ref.trait)
                 Selection(candidate.bound.element, emptyList())
             }
             SelectionCandidate.TraitObject -> {
@@ -519,23 +518,18 @@ class ImplLookup(
                 }
                 // should be nonnull because already checked in `assembleCandidates`
                 val be = traits.find { it.element == ref.trait.element } ?: error("Corrupted trait selection")
-                combineBoundElements(be, ref.trait)
+                ctx.combineBoundElements(be, ref.trait)
                 Selection(be.element, emptyList())
             }
             is SelectionCandidate.HardcodedImpl -> {
                 val impl = getHardcodedImpls(ref.selfTy).first { be ->
                     be.element == ref.trait.element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)) }
                 }
-                combineBoundElements(impl, ref.trait)
+                ctx.combineBoundElements(impl, ref.trait)
                 Selection(impl.element, emptyList(), mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())
             }
         }
     }
-
-    private fun <T : RsElement> combineBoundElements(be1: BoundElement<T>, be2: BoundElement<T>): Boolean =
-        be1.element == be2.element &&
-            ctx.combinePairs(be1.subst.zipTypeValues(be2.subst)) &&
-            ctx.combinePairs(zipValues(be1.assoc, be2.assoc))
 
     fun coercionSequence(baseTy: Ty): Sequence<Ty> {
         val result = mutableSetOf<Ty>()

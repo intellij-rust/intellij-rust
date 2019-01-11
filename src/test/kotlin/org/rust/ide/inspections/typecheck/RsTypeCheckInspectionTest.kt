@@ -194,4 +194,20 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
             T::from(0i8);
         }
     """)
+
+    /** Issue [3125](https://github.com/intellij-rust/intellij-rust/issues/3125) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test issue 3125`() = checkByText("""
+        struct S;
+
+        trait Trait {
+            type Item;
+            fn foo() -> Self::Item;
+        }
+
+        impl Trait for S {
+            type Item = &'static str;
+            fn foo() -> Self::Item { <error>0</error> }
+        }
+    """)
 }
