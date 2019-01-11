@@ -1,0 +1,8 @@
+test_dir = "./tests"
+pretty_printers_path = "./../prettyPrinters/"
+lldb_batchmode = "./lldb_batchmode.py"
+lldb_lookup = "lookup"
+lldb_python = "./../deps/clion/bin/lldb/linux/lib/python3.6/site-packages"
+python = "python3"
+print_lldb_stdout = true
+lldb_native_rust = false
