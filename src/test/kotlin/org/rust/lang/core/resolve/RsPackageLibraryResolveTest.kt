@@ -203,6 +203,20 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """, NameResolutionTestmarks.missingMacroUse)
 
+    fun `test import macro by use item wildcard`() = stubOnlyResolve("""
+    //- lib.rs
+        extern crate dep_lib_target;
+        use dep_lib_target::*;
+        fn bar() {
+            foo!();
+        } //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """, NameResolutionTestmarks.missingMacroUse)
+
     fun `test import macro by use item without extern crate`() = stubOnlyResolve("""
     //- lib.rs
         use dep_lib_target::foo;
@@ -216,9 +230,35 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test import macro by use item wildcard without extern crate`() = stubOnlyResolve("""
+    //- lib.rs
+        use dep_lib_target::*;
+        fn bar() {
+            foo!();
+        } //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
     fun `test import macro by complex use item without extern crate`() = stubOnlyResolve("""
     //- lib.rs
         use {{dep_lib_target::{{foo}}}};
+        fn bar() {
+            foo!();
+        } //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    fun `test import macro by complex use item wildcard without extern crate`() = stubOnlyResolve("""
+    //- lib.rs
+        use {{dep_lib_target::{{*}}}};
         fn bar() {
             foo!();
         } //^ dep-lib/lib.rs

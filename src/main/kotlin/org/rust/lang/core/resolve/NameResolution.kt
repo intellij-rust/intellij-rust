@@ -869,15 +869,16 @@ private fun collect2segmentPaths(rootSpeck: RsUseSpeck): List<TwoSegmentPath> {
     val result = mutableListOf<TwoSegmentPath>()
 
     fun go(speck: RsUseSpeck) {
+        val starImport = speck.isStarImport
         val path = speck.path
-        val qualifier = path?.qualifier
+        val qualifier = path?.qualifier ?: speck.qualifier
         val group = speck.useGroup
         if (path != null && qualifier != null && qualifier.qualifier != null) return
         val firstSegment = qualifier ?: path
         val lastSegment = path ?: qualifier
         when {
-            group == null && firstSegment != null && (path != null || speck.isStarImport) -> {
-                result += TwoSegmentPath(firstSegment.referenceName, path?.referenceName)
+            group == null && firstSegment != null && (path != null || starImport) -> {
+                result += TwoSegmentPath(firstSegment.referenceName, if (starImport) null else path?.referenceName)
             }
             group != null && firstSegment == lastSegment -> {
                 group.useSpeckList.forEach { go(it) }
