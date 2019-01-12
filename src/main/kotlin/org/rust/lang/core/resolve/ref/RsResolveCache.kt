@@ -70,12 +70,17 @@ class RsResolveCache(messageBus: MessageBus) {
     @Suppress("UNCHECKED_CAST")
     fun <K : PsiElement, V> resolveWithCaching(key: K, dep: ResolveCacheDependency, resolver: (K) -> V): V? {
         ProgressManager.checkCanceled()
-        val refinedDep = when {
+        val virtualFile = key.containingFile.virtualFile
+        val refinedDep = when (virtualFile) {
+            // If virtualFile is null then event system is not enabled for this PSI file (see
+            // PsiFileImpl.getVirtualFile) and we can't track PSI modifications, so depend on
+            // any change. This is a case of completion, for example
+            null -> ResolveCacheDependency.ANY_PSI_CHANGE
             // The case of injected language. Injected PSI don't have it's own event system, so can only
             // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
             // literal. If a user change the literal, we can only be notified that the literal is changed.
             // So we have to invalidate caches for injected PSI on any PSI change
-            key.containingFile.virtualFile is VirtualFileWindow -> ResolveCacheDependency.ANY_PSI_CHANGE
+            is VirtualFileWindow -> ResolveCacheDependency.ANY_PSI_CHANGE
             else -> dep
         }
         val map = getCacheFor(key, refinedDep)
