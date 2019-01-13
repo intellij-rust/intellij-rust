@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.runconfig.getAppropriateCargoProject
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.run
 
 class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
@@ -17,7 +16,6 @@ class RunClippyAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val cargoProject = getAppropriateCargoProject(e.dataContext) ?: return
-        val channel = cargoProject.rustcInfo?.version?.channel ?: RustChannel.DEFAULT
-        CargoCommandLine.forProject(cargoProject, "clippy", channel = channel).run(project, cargoProject)
+        CargoCommandLine.forProject(cargoProject, "clippy").run(project, cargoProject)
     }
 }
