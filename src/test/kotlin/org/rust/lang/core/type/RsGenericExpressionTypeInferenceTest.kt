@@ -1485,4 +1485,15 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             (a, s);
         } //^ (u64, S)
     """)
+
+    fun `test trait bound for reference type`() = testExpr("""
+        struct S;
+        trait Foo<T> {}
+        impl Foo<i32> for &S {}
+        fn foo<'a, T1, T2>(t: &'a T1) -> T2 where &'a T1: Foo<T2> { unimplemented!() }
+        fn main() {
+            let a = foo(&S);
+            a;
+        } //^ i32
+    """)
 }

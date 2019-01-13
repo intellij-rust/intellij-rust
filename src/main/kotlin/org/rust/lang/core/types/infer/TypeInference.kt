@@ -1724,20 +1724,16 @@ val RsGenericDeclaration.bounds: List<TraitRef>
     }
 
 private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
-    val whereBounds = this.whereClause?.wherePredList.orEmpty().asSequence()
+    val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
         .flatMap {
-            val (element, subst) = (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve()
-                ?: return@flatMap emptySequence<TraitRef>()
-            val selfTy = ((element as? RsTypeDeclarationElement)?.declaredType)
-                ?.substitute(subst)
-                ?: return@flatMap emptySequence<TraitRef>()
+            val selfTy = it.typeReference?.type ?: return@flatMap emptySequence<TraitRef>()
             it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
         }
-
-    return (typeParameters.asSequence().flatMap {
+    val bounds = typeParameters.asSequence().flatMap {
         val selfTy = TyTypeParameter.named(it)
         it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
-    } + whereBounds).toList()
+    }
+    return (bounds + whereBounds).toList()
 }
 
 private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()

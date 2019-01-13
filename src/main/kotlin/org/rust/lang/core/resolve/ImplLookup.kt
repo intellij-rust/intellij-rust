@@ -349,6 +349,12 @@ class ImplLookup(
     }
 
     private fun selectCandidate(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
+        if (ref.selfTy is TyReference && ref.selfTy.referenced is TyInfer.TyVar) {
+            // This condition is related to TyFingerprint internals: TyFingerprint should not be created for
+            // TyInfer.TyVar, and TyReference is a single special case: it unwraps during TyFingerprint creation
+            return SelectionResult.Ambiguous()
+        }
+
         val candidates = assembleCandidates(ref)
 
         return when (candidates.size) {
