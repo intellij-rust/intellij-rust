@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 151
+        override fun getStubVersion(): Int = 152
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -126,7 +126,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "ASSOC_TYPE_BINDING" -> RsAssocTypeBindingStub.Type
 
     "TYPE_PARAM_BOUNDS" -> RsPlaceholderStub.Type("TYPE_PARAM_BOUNDS", ::RsTypeParamBoundsImpl)
-    "POLYBOUND" -> RsPlaceholderStub.Type("POLYBOUND", ::RsPolyboundImpl)
+    "POLYBOUND" -> RsPolyboundStub.Type
     "BOUND" -> RsPlaceholderStub.Type("BOUND", ::RsBoundImpl)
     "WHERE_CLAUSE" -> RsPlaceholderStub.Type("WHERE_CLAUSE", ::RsWhereClauseImpl)
     "WHERE_PRED" -> RsPlaceholderStub.Type("WHERE_PRED", ::RsWherePredImpl)
@@ -1237,6 +1237,30 @@ class RsAssocTypeBindingStub(
 
         override fun createStub(psi: RsAssocTypeBinding, parentStub: StubElement<*>?) =
             RsAssocTypeBindingStub(parentStub, this, psi.identifier.text)
+    }
+}
+
+class RsPolyboundStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val hasQ: Boolean
+) : StubBase<RsPolybound>(parent, elementType) {
+
+    object Type : RsStubElementType<RsPolyboundStub, RsPolybound>("POLYBOUND") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsPolyboundStub(parentStub, this,
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RsPolyboundStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeBoolean(stub.hasQ)
+            }
+
+        override fun createPsi(stub: RsPolyboundStub): RsPolybound =
+            RsPolyboundImpl(stub, this)
+
+        override fun createStub(psi: RsPolybound, parentStub: StubElement<*>?) =
+            RsPolyboundStub(parentStub, this, psi.hasQ)
     }
 }
 
