@@ -5,126 +5,139 @@
 
 package org.rust.ide.annotator
 
-class RsHighlightingAnnotatorTest : RsAnnotationTestBase() {
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.ide.colors.RsColor
 
-    fun `test attributes`() = checkInfo("""
-        <info>#[cfg_attr(foo)]</info>
-        fn <info>main</info>() {
-            <info>#![crate_type = <info>"lib"</info>]</info>
+class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class.java) {
+
+    override fun setUp() {
+        super.setUp()
+        registerSeverities(RsColor.values().map(RsColor::testSeverity))
+    }
+
+    fun `test attributes`() = checkHighlighting("""
+        <ATTRIBUTE>#[cfg_attr(foo)]</ATTRIBUTE>
+        fn <FUNCTION>main</FUNCTION>() {
+            <ATTRIBUTE>#![crate_type = <STRING>"lib"</STRING>]</ATTRIBUTE>
         }
     """)
 
-    fun `test fields and methods`() = checkInfo("""
-        struct <info>T</info>(<info>i32</info>);
-        struct <info>S</info>{ <info>field</info>: <info>T</info>}
-        fn <info>main</info>() {
-            let s = <info>S</info>{ <info>field</info>: <info>T</info>(92) };
-            s.<info>field</info>.0;
+    fun `test fields and methods`() = checkHighlighting("""
+        struct <STRUCT>T</STRUCT>(<PRIMITIVE_TYPE>i32</PRIMITIVE_TYPE>);
+        struct <STRUCT>S</STRUCT>{ <FIELD>field</FIELD>: <STRUCT>T</STRUCT>}
+        fn <FUNCTION>main</FUNCTION>() {
+            let s = <STRUCT>S</STRUCT>{ <FIELD>field</FIELD>: <STRUCT>T</STRUCT>(92) };
+            s.<FIELD>field</FIELD>.0;
         }
     """)
 
-    fun `test functions`() = checkInfo("""
-        fn <info>main</info>() {}
-        struct <info>S</info>;
-        impl <info>S</info> {
-            fn <info>foo</info>() {}
+    fun `test functions`() = checkHighlighting("""
+        fn <FUNCTION>main</FUNCTION>() {}
+        struct <STRUCT>S</STRUCT>;
+        impl <STRUCT>S</STRUCT> {
+            fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>() {}
         }
-        trait <info>T</info> {
-            fn <info>foo</info>();
-            fn <info>bar</info>() {}
+        trait <TRAIT>T</TRAIT> {
+            fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>();
+            fn <ASSOC_FUNCTION>bar</ASSOC_FUNCTION>() {}
         }
-        impl <info>T</info> for <info>S</info> {
-            fn <info>foo</info>() {}
+        impl <TRAIT><TRAIT>T</TRAIT></TRAIT> for <STRUCT>S</STRUCT> {
+            fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>() {}
         }
     """)
 
-    fun `test macro`() = checkInfo("""
-        fn <info>main</info>() {
-            <info>println</info><info>!</info>["Hello, World!"];
-            <info>unreachable</info><info>!</info>();
-            std::<info>unreachable</info><info>!</info>();
+    fun `test macro`() = checkHighlighting("""
+        fn <FUNCTION>main</FUNCTION>() {
+            <MACRO>println</MACRO><MACRO>!</MACRO>["Hello, World!"];
+            <MACRO>unreachable</MACRO><MACRO>!</MACRO>();
         }
-        <info>macro_rules!</info> foo {
-            (x => $ <info>e</info>:expr) => (println!("mode X: {}", $ <info>e</info>));
-            (y => $ <info>e</info>:expr) => (println!("mode Y: {}", $ <info>e</info>));
+        <MACRO>macro_rules!</MACRO> foo {
+            (x => $ <FUNCTION>e</FUNCTION>:expr) => (println!("mode X: {}", $ <FUNCTION>e</FUNCTION>));
+            (y => $ <FUNCTION>e</FUNCTION>:expr) => (println!("mode Y: {}", $ <FUNCTION>e</FUNCTION>));
         }
         impl T {
-            <info>foo</info><info>!</info>();
+            <MACRO>foo</MACRO><MACRO>!</MACRO>();
+    """)
+
+    fun `test type parameters`() = checkHighlighting("""
+        trait <TRAIT>MyTrait</TRAIT> {
+            type <TYPE_ALIAS>AssocType</TYPE_ALIAS>;
+            fn <METHOD>some_fn</METHOD>(&<SELF_PARAMETER>self</SELF_PARAMETER>);
+        }
+        struct <STRUCT>MyStruct</STRUCT><<TYPE_PARAMETER>N</TYPE_PARAMETER>: ?<TRAIT>Sized</TRAIT>+<TRAIT>Debug</TRAIT>+<TRAIT>MyTrait</TRAIT>> {
+            <FIELD>N</FIELD>: my_field
         }
     """)
 
-    fun `test type parameters`() = checkInfo("""
-        trait <info>MyTrait</info> {
-            type <info>AssocType</info>;
-            fn <info>some_fn</info>(&<info>self</info>);
+    fun `test function arguments`() = checkHighlighting("""
+        struct <STRUCT>Foo</STRUCT> {}
+        impl <STRUCT>Foo</STRUCT> {
+            fn <METHOD>bar</METHOD>(&<SELF_PARAMETER>self</SELF_PARAMETER>, (<PARAMETER>i</PARAMETER>, <PARAMETER>j</PARAMETER>): (<PRIMITIVE_TYPE>i32</PRIMITIVE_TYPE>, <PRIMITIVE_TYPE>i32</PRIMITIVE_TYPE>)) {}
         }
-        struct <info>MyStruct</info><<info>N</info>: ?<info>Sized</info>+<info>Debug</info>+<info><info>MyTrait</info></info>> {
-            <info>N</info>: my_field
+        fn <FUNCTION>baz</FUNCTION>(<PARAMETER>u</PARAMETER>: <PRIMITIVE_TYPE>u32</PRIMITIVE_TYPE>) {}
+    """)
+
+    fun `test contextual keywords`() = checkHighlighting("""
+        trait <TRAIT>T</TRAIT> {
+            fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>();
+        }
+        <KEYWORD>union</KEYWORD> <STRUCT>U</STRUCT> { }
+        impl <TRAIT>T</TRAIT> for <STRUCT>U</STRUCT> {
+            <KEYWORD>default</KEYWORD> fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>() {}
         }
     """)
 
-    fun `test function arguments`() = checkInfo("""
-        struct <info>Foo</info> {}
-        impl <info>Foo</info> {
-            fn <info>bar</info>(&<info>self</info>, (<info>i</info>, <info>j</info>): (<info>i32</info>, <info>i32</info>)) {}
-        }
-        fn <info>baz</info>(<info>u</info>: <info>u32</info>) {}
-    """)
-
-    fun `test contextual keywords`() = checkInfo("""
-        trait <info>T</info> {
-            fn <info>foo</info>();
-        }
-        <info>union</info> <info>U</info> { }
-        impl <info>T</info> for <info>U</info> {
-            <info>default</info> fn <info>foo</info>() {}
+    fun `test ? operator`() = checkHighlighting("""
+        fn <FUNCTION>foo</FUNCTION>() -> Result<<PRIMITIVE_TYPE>i32</PRIMITIVE_TYPE>, ()>{
+            Ok(Ok(1)<Q_OPERATOR>?</Q_OPERATOR> * 2)
         }
     """)
 
-    fun `test ? operator`() = checkInfo("""
-        fn <info>foo</info>() -> Result<<info>i32</info>, ()>{
-            Ok(Ok(1)<info>?</info> * 2)
+    fun `test type alias`() = checkHighlighting("""
+        type <TYPE_ALIAS>Bar</TYPE_ALIAS> = <PRIMITIVE_TYPE>u32</PRIMITIVE_TYPE>;
+        fn <FUNCTION>main</FUNCTION>() {
+            let a: <TYPE_ALIAS>Bar</TYPE_ALIAS> = 10;
         }
     """)
 
-    fun `test type alias`() = checkInfo("""
-        type <info>Bar</info> = <info>u32</info>;
-        fn <info>main</info>() {
-            let a: <info>Bar</info> = 10;
+    fun `test self is not over annotated`() = checkHighlighting("""
+        pub use self::<MODULE>foo</MODULE>;
+
+        mod <MODULE>foo</MODULE> {
+            pub use self::<MODULE>bar</MODULE>;
+
+            pub mod <MODULE>bar</MODULE> {}
         }
     """)
 
-    fun `test self is not over annotated`() = checkInfo("""
-        pub use self::<info>foo</info>;
-
-        mod <info>foo</info> {
-            pub use self::<info>bar</info>;
-
-            pub mod <info>bar</info> {}
-        }
-    """)
-
-    fun `test primitive`() = checkInfo("""
-        fn <info>main</info>() -> <info>bool</info> {
-            let a: <info>u8</info> = 42;
-            let b: <info>f32</info> = 10.0;
-            let c: &<info>str</info> = "example";
-            <info>char</info>::is_lowercase('a');
+    fun `test primitive`() = checkHighlighting("""
+        fn <FUNCTION>main</FUNCTION>() -> <PRIMITIVE_TYPE>bool</PRIMITIVE_TYPE> {
+            let a: <PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE> = 42;
+            let b: <PRIMITIVE_TYPE>f32</PRIMITIVE_TYPE> = 10.0;
+            let c: &<PRIMITIVE_TYPE>str</PRIMITIVE_TYPE> = "example";
+            <PRIMITIVE_TYPE>char</PRIMITIVE_TYPE>::is_lowercase('a');
             true
         }
     """)
 
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test crate`() = checkHighlighting("""
+        extern crate <CRATE>dep_lib_target</CRATE>;
+        
+        use <CRATE>std</CRATE>::<MODULE>io</MODULE>::<TRAIT>Read</TRAIT>;
+    """)
+
     fun `test dont touch ast in other files`() = checkDontTouchAstInOtherFiles("""
         //- main.rs
-            mod aux;
+            mod <MODULE>aux</MODULE>;
 
-            fn <info>main</info>() {
-                let _ = aux::<info>S</info>;
+            fn <FUNCTION>main</FUNCTION>() {
+                let _ = <MODULE>aux</MODULE>::<STRUCT>S</STRUCT>;
             }
 
         //- aux.rs
             pub struct S;
-        """,
-        checkInfo = true
+        """
     )
 }

@@ -6,7 +6,6 @@
 package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.*
@@ -16,8 +15,8 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
-class RsUnsafeExpressionAnnotator : Annotator {
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
+    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
             override fun visitCallExpr(o: RsCallExpr) = checkCall(o, holder)
             override fun visitMethodCall(o: RsMethodCall) = checkMethodCall(o, holder)
@@ -100,8 +99,8 @@ class RsUnsafeExpressionAnnotator : Annotator {
 
         return parent is RsBlockExpr || (parent is RsFunction && parent.isUnsafe)
     }
-}
 
-fun AnnotationHolder.createUnsafeAnnotation(element: PsiElement, message: String) {
-    createWeakWarningAnnotation(element, message).textAttributes = RsColor.UNSAFE_CODE.textAttributesKey
+    private fun AnnotationHolder.createUnsafeAnnotation(element: PsiElement, message: String) {
+        createInfoAnnotation(element, message).textAttributes = RsColor.UNSAFE_CODE.textAttributesKey
+    }
 }

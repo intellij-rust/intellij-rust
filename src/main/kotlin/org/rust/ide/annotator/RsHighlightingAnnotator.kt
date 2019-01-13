@@ -6,7 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
@@ -14,19 +14,22 @@ import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
+import org.rust.openapiext.isUnitTestMode
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
-class RsHighlightingAnnotator : Annotator {
+class RsHighlightingAnnotator : RsAnnotatorBase() {
 
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val (partToHighlight, color) = when {
             element is RsPatBinding && !element.isReferenceToConstant -> highlightNotReference(element)
             element is RsMacroCall -> highlightNotReference(element)
+            element is RsModDeclItem -> highlightNotReference(element)
             element is RsReferenceElement -> highlightReference(element)
             else -> highlightNotReference(element)
         } ?: return
 
-        holder.createInfoAnnotation(partToHighlight, null).textAttributes = color.textAttributesKey
+        val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
+        holder.createAnnotation(severity, partToHighlight, null).textAttributes = color.textAttributesKey
     }
 
     private fun highlightReference(element: RsReferenceElement): Pair<TextRange, RsColor>? {
@@ -98,7 +101,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     }
     is RsMethodCall -> RsColor.METHOD
     is RsModDeclItem -> RsColor.MODULE
-    is RsModItem -> RsColor.MODULE
+    is RsMod -> if (element.isCrateRoot) RsColor.CRATE else RsColor.MODULE
     is RsPatBinding -> {
         if (element.ancestorStrict<RsValueParameter>() != null) RsColor.PARAMETER else null
     }

@@ -7,37 +7,38 @@ package org.rust.ide.annotator
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.ide.colors.RsColor
+import org.rust.ide.colors.RsColor.MUT_BINDING
+import org.rust.ide.colors.RsColor.MUT_PARAMETER
 
-class RsHighlightingMutableAnnotatorTest : RsAnnotationTestBase() {
+class RsHighlightingMutableAnnotatorTest : RsAnnotatorTestBase(RsHighlightingMutableAnnotator::class.java) {
 
-    val MUT_PARAMETER = RsColor.MUT_PARAMETER.humanName
-    val MUT_BINDING = RsColor.MUT_BINDING.humanName
+    override fun setUp() {
+        super.setUp()
+        registerSeverities(listOf(MUT_BINDING.testSeverity, MUT_PARAMETER.testSeverity))
+    }
 
-    fun `test mut self highlight`() = checkInfo("""
-        struct <info>Foo</info> {}
-        impl <info>Foo</info> {
-            fn <info>bar</info>(&mut <info><info descr="$MUT_PARAMETER">self</info></info>) {
-                <info descr="$MUT_PARAMETER">self</info>.<info>bar</info>();
+    fun `test mut self highlight`() = checkHighlighting("""
+        struct Foo {}
+        impl Foo {
+            fn bar(&mut <MUT_PARAMETER>self</MUT_PARAMETER>) {
+                <MUT_PARAMETER>self</MUT_PARAMETER>.bar();
             }
         }
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test mut binding`() {
-        checkInfo("""
-            fn <info descr="null">main</info>() {
-                let mut <info descr="$MUT_BINDING">a</info> = 1;
-                let b = <info descr="$MUT_BINDING">a</info>;
-                let <info descr="null">Some</info>(ref mut <info descr="$MUT_BINDING">c</info>) = <info descr="null">Some</info>(10);
-                let <info descr="$MUT_BINDING">d</info> = <info descr="$MUT_BINDING">c</info>;
-            }
-        """)
-    }
+    fun `test mut binding`() = checkHighlighting("""
+        fn main() {
+            let mut <MUT_BINDING>a</MUT_BINDING> = 1;
+            let b = <MUT_BINDING>a</MUT_BINDING>;
+            let Some(ref mut <MUT_BINDING>c</MUT_BINDING>) = Some(10);
+            let <MUT_BINDING>d</MUT_BINDING> = <MUT_BINDING>c</MUT_BINDING>;
+        }
+    """)
 
-    fun `test mut parameter`() = checkInfo("""
-        fn <info>test</info>(mut <info><info descr="$MUT_PARAMETER">para</info></info>: <info>i32</info>) {
-            let b = <info><info descr="$MUT_PARAMETER">para</info></info>;
+    fun `test mut parameter`() = checkHighlighting("""
+        fn test(mut <MUT_PARAMETER>para</MUT_PARAMETER>: i32) {
+            let b = <MUT_PARAMETER>para</MUT_PARAMETER>;
         }
     """)
 }

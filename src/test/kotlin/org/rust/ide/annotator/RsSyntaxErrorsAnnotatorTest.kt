@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-class RsSyntaxErrorsAnnotatorTest : RsAnnotationTestBase() {
+class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class.java) {
     fun `test E0379 const trait function`() = checkErrors("""
         trait Foo {
             fn foo();

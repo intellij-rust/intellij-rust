@@ -7,7 +7,6 @@ package org.rust.ide.annotator
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
@@ -17,9 +16,8 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.deepResolve
 import java.util.*
 
-
-class RsExpressionAnnotator : Annotator {
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+class RsExpressionAnnotator : RsAnnotatorBase() {
+    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         element.accept(RedundantParenthesisVisitor(holder))
         if (element is RsStructLiteral) {
             val decl = element.path.reference.deepResolve() as? RsFieldsOwner

@@ -9,7 +9,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -19,9 +18,8 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
-
-class RsSyntaxErrorsAnnotator : Annotator {
-    override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+class RsSyntaxErrorsAnnotator : RsAnnotatorBase() {
+    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
             is RsFunction -> checkFunction(holder, element)
             is RsStructItem -> checkStructItem(holder, element)

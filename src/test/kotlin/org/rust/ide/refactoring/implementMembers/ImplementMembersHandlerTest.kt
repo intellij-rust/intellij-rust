@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.ide.annotator.RsAnnotatorBase
+import org.rust.ide.annotator.RsErrorAnnotator
 
 
 class ImplementMembersHandlerTest : RsTestBase() {
@@ -16,9 +18,12 @@ class ImplementMembersHandlerTest : RsTestBase() {
         myFixture.performEditorAction("ImplementMethods")
     }
 
-    fun `test available via quick fix`() = invokeVia {
-        val action = myFixture.findSingleIntention("Implement members")
-        myFixture.launchAction(action)
+    fun `test available via quick fix`() {
+        RsAnnotatorBase.enableAnnotator(RsErrorAnnotator::class.java, testRootDisposable)
+        invokeVia {
+            val action = myFixture.findSingleIntention("Implement members")
+            myFixture.launchAction(action)
+        }
     }
 
     private fun invokeVia(actionInvoker: () -> Unit) {

@@ -5,7 +5,7 @@
 
 package org.rust.ide.annotator
 
-class RsUnsafeExpressionAnnotatorTest : RsAnnotationTestBase() {
+class RsUnsafeExpressionAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class.java) {
     fun `test extern static requires unsafe`() = checkErrors("""
         extern {
             static C: i32;
@@ -16,13 +16,13 @@ class RsUnsafeExpressionAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
-    fun `test extern static in unsafe block`() = checkWarnings("""
+    fun `test extern static in unsafe block`() = checkHighlighting("""
         extern {
             static C: i32;
         }
 
         fn main() {
-            unsafe { let a = <weak_warning descr="Use of unsafe extern static">C</weak_warning>; }
+            unsafe { let a = <info descr="Use of unsafe extern static">C</info>; }
         }
     """)
 
@@ -34,11 +34,11 @@ class RsUnsafeExpressionAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
-    fun `test mutable static in unsafe block`() = checkWarnings("""
+    fun `test mutable static in unsafe block`() = checkHighlighting("""
         static mut test : u8 = 0;
 
         fn main() {
-            unsafe { <weak_warning descr="Use of unsafe mutable static">test</weak_warning> += 1; }
+            unsafe { <info descr="Use of unsafe mutable static">test</info> += 1; }
         }
     """)
 
@@ -111,9 +111,9 @@ class RsUnsafeExpressionAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
-    fun `test unsafe call unsafe`() = checkWarnings("""
+    fun `test unsafe call unsafe`() = checkHighlighting("""
         unsafe fn foo() {}
-        unsafe fn bar() { <weak_warning descr="Call to unsafe function">foo</weak_warning>(); }
+        unsafe fn bar() { <info descr="Call to unsafe function">foo</info>(); }
     """)
 
     fun `test pointer dereference`() = checkErrors("""
@@ -123,19 +123,19 @@ class RsUnsafeExpressionAnnotatorTest : RsAnnotationTestBase() {
         }
     """)
 
-    fun `test pointer dereference in unsafe block`() = checkWarnings("""
+    fun `test pointer dereference in unsafe block`() = checkHighlighting("""
         fn main() {
             let char_ptr: *const char = 42 as *const _;
-            let val = unsafe { <weak_warning descr="Unsafe dereference of raw pointer">*char_ptr</weak_warning> };
+            let val = unsafe { <info descr="Unsafe dereference of raw pointer">*char_ptr</info> };
         }
     """)
 
-    fun `test pointer dereference in unsafe fn`() = checkWarnings("""
+    fun `test pointer dereference in unsafe fn`() = checkHighlighting("""
         fn main() {
         }
         unsafe fn foo() {
             let char_ptr: *const char = 42 as *const _;
-            let val = <weak_warning descr="Unsafe dereference of raw pointer">*char_ptr</weak_warning>;
+            let val = <info descr="Unsafe dereference of raw pointer">*char_ptr</info>;
         }
     """)
 }
