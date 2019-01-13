@@ -368,7 +368,7 @@ TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ] {
 
 Polybound ::= '(' PolyboundInner ')' | PolyboundInner {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "org.rust.lang.core.stubs.RsPolyboundStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

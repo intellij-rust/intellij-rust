@@ -1741,8 +1741,8 @@ private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
 }
 
 private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()
+    .filter { !it.hasQ } // ignore `?Sized`
     .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
-    .filter { !it.element.isSizedTrait }
     .map { TraitRef(selfTy, it) }
 
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =

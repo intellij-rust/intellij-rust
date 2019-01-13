@@ -78,7 +78,9 @@ private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
         .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
     // trait Foo: Bar {}
     val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds
-    return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+    return bounds
+        .filter { !it.hasQ } // ignore `?Sized`
+        .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
 }
 
 val RsTraitItem.isSized: Boolean get() {
