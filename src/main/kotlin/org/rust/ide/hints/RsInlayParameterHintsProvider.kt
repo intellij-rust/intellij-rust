@@ -29,10 +29,22 @@ private val RsPat.inlayInfo: List<InlayInfo>
             descendantsOfType<RsPatIdent>()
         }
         return idents.asSequence()
+            .filter {
+                val patBinding = it.patBinding
+                when {
+                    // "ignored" bindings like `let _a = 123;`
+                    patBinding.referenceName.startsWith("_") -> false
+                    // match foo {
+                    //     None -> {} // None is enum variant, so we don't want to provide type hint for it
+                    //     _ -> {}
+                    // }
+                    patBinding.reference.resolve() is RsEnumVariant -> false
+                    else -> true
+                }
+            }
             .map { it.patBinding to it.patBinding.type }
-            .filterNot { it.first.referenceName.startsWith("_") } // "ignored" bindings
             .filterNot { it.second is TyUnknown }
-            .map { InlayInfo(": " + it.second.shortPresentableText, it.first.endOffset) }
+            .map { (patBinding, type) -> InlayInfo(": " + type.shortPresentableText, patBinding.endOffset) }
             .toList()
     }
 
@@ -49,11 +61,14 @@ enum class HintType(desc: String, enabled: Boolean) {
                 else -> return emptyList()
             }
 
+            var finalPats = pats.orEmpty()
             if (smart) {
                 val declaration = expr?.declaration
-                if (declaration is RsStructItem || declaration is RsEnumVariant) return emptyList()
+                if (declaration is RsStructItem || declaration is RsEnumVariant) {
+                    finalPats = finalPats.filter { it !is RsPatIdent }
+                }
             }
-            return pats?.flatMap { it.inlayInfo } ?: emptyList()
+            return finalPats.flatMap { it.inlayInfo }
         }
 
         override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl || elem is RsCondition || elem is RsMatchExpr
