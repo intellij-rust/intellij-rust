@@ -298,7 +298,38 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
                 _ => ()
             }
         }
-    """)
+    """, enabledHints = HintType.LET_BINDING_HINT)
+
+    fun `test show hints only for new local variables and ignore enum variants`() = checkByText("""
+        enum Option<T> {
+            Some(T), None
+        }
+
+        use Option::{Some, None};
+
+        fn main() {
+            let result = Some(1);
+            match result {
+                None => (),
+                Name/*hint text=": Option<i32>"*/ => ()
+            }
+        }
+    """, enabledHints = HintType.LET_BINDING_HINT)
+
+    fun `test show hints for inner pat bindings`() = checkByText("""
+        enum Option<T> {
+            Some(T), None
+        }
+
+        use Option::{Some, None};
+
+        fn main() {
+            match Option::Some((1, 2)) {
+                Some((x/*hint text=": i32"*/, 5)) => (),
+                y => ()
+            }
+        }
+    """, enabledHints = HintType.LET_BINDING_HINT)
 
     private fun checkByText(
         @Language("Rust") code: String,
