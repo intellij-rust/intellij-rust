@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.isIrrefutable
-import org.rust.lang.core.psi.ext.isStdOptionOrResult
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
@@ -78,21 +75,13 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     }
 
     private fun isExhaustiveOptionOrResult(item: RsEnumItem?, arms: List<MatchArm>): Boolean {
-        if (item == null || !item.isStdOptionOrResult) return false
-        if (arms.any { !it.matchArm.isIrrefutable }) return false
-
-        return arms.map { it.matchArm.text.substringBefore('(') }.let {
-            if (item == item.knownItems.Option) {
-                "Some" in it && "None" in it
-            } else {
-                "Ok" in it && "Err" in it
-            }
-        }
+        val patterns = arms.map(MatchArm::matchArm).filter(RsPat::isIrrefutable)
+        return matchStdOptionOrResult(item, patterns, true)
     }
 
     private fun missingBranch(item: RsEnumItem?, arms: List<MatchArm>): String {
         if (item == null || !item.isStdOptionOrResult || arms.size != 1) return "_"
-        val pat = arms.first().matchArm
+        val pat = arms.first().matchArm.skipUnnecessaryTupDown()
         if (!pat.isIrrefutable) return "_"
         return when (pat.text.substringBefore('(')) {
             "Some" -> "None"
