@@ -29,27 +29,49 @@ private val RsPat.inlayInfo: List<InlayInfo>
             descendantsOfType<RsPatIdent>()
         }
         return idents.asSequence()
+            .filter {
+                val patBinding = it.patBinding
+                when {
+                    // "ignored" bindings like `let _a = 123;`
+                    patBinding.referenceName.startsWith("_") -> false
+                    // match foo {
+                    //     None -> {} // None is enum variant, so we don't want to provide type hint for it
+                    //     _ -> {}
+                    // }
+                    patBinding.reference.resolve() is RsEnumVariant -> false
+                    else -> true
+                }
+            }
             .map { it.patBinding to it.patBinding.type }
-            .filterNot { it.first.referenceName.startsWith("_") } // "ignored" bindings
             .filterNot { it.second is TyUnknown }
-            .map { InlayInfo(": " + it.second.shortPresentableText, it.first.endOffset) }
+            .map { (patBinding, type) -> InlayInfo(": " + type.shortPresentableText, patBinding.endOffset) }
             .toList()
     }
 
 enum class HintType(desc: String, enabled: Boolean) {
     LET_BINDING_HINT("Show local variable type hints", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
-            val element = elem as? RsLetDecl ?: return emptyList()
-            if (element.typeReference != null) return emptyList()
-            if (smart) {
-                val expr = element.expr
-                val declaration = expr?.declaration
-                if (declaration is RsStructItem || declaration is RsEnumVariant) return emptyList()
+            val (expr, pats) = when (elem) {
+                is RsLetDecl -> {
+                    if (elem.typeReference != null) return emptyList()
+                    elem.expr to listOfNotNull(elem.pat)
+                }
+                is RsCondition -> elem.expr to listOfNotNull(elem.pat)
+                is RsMatchExpr -> elem.expr to elem.matchBody?.matchArmList?.flatMap { it.patList }
+                else -> return emptyList()
             }
-            return element.pat?.inlayInfo ?: emptyList()
+
+            var finalPats = pats.orEmpty()
+            if (smart) {
+                val declaration = expr?.declaration
+                if (declaration is RsStructItem || declaration is RsEnumVariant) {
+                    finalPats = finalPats.filter { it !is RsPatIdent }
+                }
+            }
+            return finalPats.flatMap { it.inlayInfo }
         }
 
-        override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl
+        override fun isApplicable(elem: PsiElement): Boolean = elem is RsLetDecl || elem is RsCondition || elem is RsMatchExpr
     },
     PARAMETER_HINT("Show argument name hints", true) {
         override fun provideHints(elem: PsiElement): List<InlayInfo> {
@@ -83,7 +105,7 @@ enum class HintType(desc: String, enabled: Boolean) {
             return hints.map { (hint, arg) -> InlayInfo("$hint:", arg.startOffset) }
         }
 
-        fun onlyOneParam(hints: List<Pair<String, RsExpr>>, callInfo: CallInfo, elem: PsiElement): Boolean {
+        private fun onlyOneParam(hints: List<Pair<String, RsExpr>>, callInfo: CallInfo, elem: PsiElement): Boolean {
             if (callInfo.selfParameter != null && elem is RsCallExpr && hints.size == 2) {
                 return true
             }
