@@ -22,31 +22,23 @@ import org.rust.lang.core.types.type
 import org.rust.stdext.buildList
 
 private val RsPat.inlayInfo: List<InlayInfo>
-    get() {
-        val idents = if (this is RsPatIdent) {
-            listOf(this)
-        } else {
-            descendantsOfType<RsPatIdent>()
-        }
-        return idents.asSequence()
-            .filter {
-                val patBinding = it.patBinding
-                when {
-                    // "ignored" bindings like `let _a = 123;`
-                    patBinding.referenceName.startsWith("_") -> false
-                    // match foo {
-                    //     None -> {} // None is enum variant, so we don't want to provide type hint for it
-                    //     _ -> {}
-                    // }
-                    patBinding.reference.resolve() is RsEnumVariant -> false
-                    else -> true
-                }
+    get() = descendantsOfType<RsPatBinding>().asSequence()
+        .filter { patBinding ->
+            when {
+                // "ignored" bindings like `let _a = 123;`
+                patBinding.referenceName.startsWith("_") -> false
+                // match foo {
+                //     None -> {} // None is enum variant, so we don't want to provide type hint for it
+                //     _ -> {}
+                // }
+                patBinding.reference.resolve() is RsEnumVariant -> false
+                else -> true
             }
-            .map { it.patBinding to it.patBinding.type }
-            .filterNot { it.second is TyUnknown }
-            .map { (patBinding, type) -> InlayInfo(": " + type.shortPresentableText, patBinding.endOffset) }
-            .toList()
-    }
+        }
+        .map { it to it.type }
+        .filterNot { (_, type) -> type is TyUnknown }
+        .map { (patBinding, type) -> InlayInfo(": " + type.shortPresentableText, patBinding.endOffset) }
+        .toList()
 
 enum class HintType(desc: String, enabled: Boolean) {
     LET_BINDING_HINT("Show local variable type hints", true) {

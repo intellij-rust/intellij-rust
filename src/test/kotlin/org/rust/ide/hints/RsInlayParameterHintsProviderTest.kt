@@ -96,6 +96,16 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """, enabledHints = HintType.LET_BINDING_HINT)
 
+    fun `test pat field`() = checkByText("""
+        struct S;
+        struct TupleStruct(S);
+        struct BracedStruct { a: S, b: S }
+        fn main() {
+            let TupleStruct(x/*hint text=": S"*/) = TupleStruct(S);
+            let BracedStruct { a: a/*hint text=": S"*/, b/*hint text=": S"*/ } = BracedStruct { a: S, b: S };
+        }
+    """, enabledHints = HintType.LET_BINDING_HINT, smart = false)
+
     fun `test smart hint same parameter name`() = checkByText("""
         fn foo(arg: u32, arg2: u32) {}
         fn main() {
