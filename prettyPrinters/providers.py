@@ -119,6 +119,12 @@ def SizeSummaryProvider(valobj, dict):
     return 'size=' + str(valobj.GetNumChildren())
 
 
+def vec_to_string(vec):
+    length = vec.GetNumChildren()
+    chars = [vec.GetChildAtIndex(i).GetValueAsUnsigned() for i in range(length)]
+    return bytes(chars).decode(encoding='UTF-8') if PY3 else "".join(chr(char) for char in chars)
+
+
 def StdStringSummaryProvider(valobj, dict):
     # type: (SBValue, dict) -> str
     assert valobj.GetNumChildren() == 1
@@ -130,6 +136,16 @@ def StdStringSummaryProvider(valobj, dict):
     chars = [vec.GetChildAtIndex(i).GetValueAsUnsigned() for i in range(length)]
     data = bytes(chars).decode(encoding='UTF-8') if PY3 else "".join(chr(char) for char in chars)
     return '"%s"' % data
+
+
+def StdOsStringSummaryProvider(valobj, dict):
+    # type: (SBValue, dict) -> str
+    logger = Logger.Logger()
+    logger >> "[StdOsStringSummaryProvider] for " + str(valobj.GetName())
+    buf = valobj.GetChildAtIndex(0).GetChildAtIndex(0)
+    is_windows = "Wtf8Buf" in buf.type.name
+    vec = buf.GetChildAtIndex(0) if is_windows else buf
+    return '"%s"' % vec_to_string(vec)
 
 
 def StdStrSummaryProvider(valobj, dict):
