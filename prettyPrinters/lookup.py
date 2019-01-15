@@ -1,5 +1,6 @@
-import lldb
 import re
+
+import lldb
 
 from providers import *
 
@@ -18,6 +19,7 @@ class RustType:
     REGULAR_UNION = "RegularUnion"
 
     STD_STRING = "StdString"
+    STD_OS_STRING = "StdOsString"
     STD_STR = "StdStr"
     STD_VEC = "StdVec"
     STD_VEC_DEQUE = "StdVecDeque"
@@ -31,6 +33,7 @@ class RustType:
 
 STD_STRING_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)String$")
 STD_STR_REGEX = re.compile(r"^&str$")
+STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::(\w+::)+)OsString$")
 STD_VEC_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)Vec<.+>$")
 STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)VecDeque<.+>$")
 STD_RC_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)Rc<.+>$")
@@ -63,6 +66,8 @@ def classify_rust_type(type):
         name = type.GetName()
         if re.match(STD_STRING_REGEX, name):
             return RustType.STD_STRING
+        if re.match(STD_OS_STRING_REGEX, name):
+            return RustType.STD_OS_STRING
         if re.match(STD_STR_REGEX, name):
             return RustType.STD_STR
         if re.match(STD_VEC_REGEX, name):
@@ -122,6 +127,8 @@ def summary_lookup(valobj, dict):
 
     if rust_type == RustType.STD_STRING:
         return StdStringSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_OS_STRING:
+        return StdOsStringSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_STR:
         return StdStrSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_VEC:
