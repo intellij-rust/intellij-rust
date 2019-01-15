@@ -1,0 +1,142 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.ide.template.postfix
+
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.codeStyle.CodeStyleManager
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.ty.TyStr
+import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.type
+
+class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val macroName: String = "println") :
+    PostfixTemplateWithExpressionSelector(null, macroName, "$macroName!(\"{:?}\", expr);",
+        RsTopMostInScopeSelector { it.isNotIgnored && (it.implementsDebug || it.implementsDisplay) }, provider) {
+
+    private enum class Fmt(val text: String) {
+        None(""),
+        Display("{}"),
+        Debug("{:?}");
+
+        companion object {
+            fun fromExpr(expr: RsExpr): Fmt = when {
+                (expr.type as? TyReference)?.referenced is TyStr -> Fmt.None
+                expr.implementsDebug -> Fmt.Debug
+                else -> Fmt.Display
+            }
+        }
+    }
+
+    private class MacroCreator(private val editor: Editor, private val psiFactory: RsPsiFactory,
+                               macroName: String, private val fmt: Fmt) {
+        private val macroStart = "$macroName!("
+
+        fun createMacro(expressionText: String, addTrailingSemicolon: Boolean = true): RsExpr {
+            val macroExpression = if (fmt == Fmt.None) {
+                psiFactory.createExpression("$macroStart$expressionText)")
+            } else {
+                psiFactory.createExpression("$macroStart\"${fmt.text}\", $expressionText)")
+            }
+            if (addTrailingSemicolon) {
+                macroExpression.add(psiFactory.createSemicolon())
+            }
+            return macroExpression
+        }
+
+        fun replaceWithMacro(expression: PsiElement, addTrailingComma: Boolean = false) {
+            val newElement = expression.replace(createMacro(expression.text, expression.parent is RsBlock))
+            if (addTrailingComma) {
+                newElement.add(psiFactory.createComma())
+            }
+            editor.caretModel.moveToOffset(newElement.endOffset)
+        }
+    }
+
+    override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
+        if (expression !is RsExpr) return
+
+        val psiFactory = RsPsiFactory(expression.project)
+        val macroCreator = MacroCreator(editor, psiFactory, macroName, Fmt.fromExpr(expression))
+
+        val parent = expression.parent
+        when (parent) {
+            is RsLetDecl -> {
+                val expressionText = parent.pat?.text ?: return
+                addMacroNextToElement(macroCreator.createMacro(expressionText), parent, psiFactory, editor)
+                if (parent.semicolon == null) {
+                    parent.add(psiFactory.createSemicolon())
+                }
+            }
+            is RsMatchArm -> {
+                val matchBody = parent.ancestorStrict<RsMatchBody>() ?: return
+                if (matchBody.containsUnitArm) {
+                    macroCreator.replaceWithMacro(expression, parent.comma == null)
+                } else {
+                    surroundWithBlockExpression(macroCreator.createMacro(expression.text), expression, psiFactory, editor)
+                }
+            }
+            is RsBinaryExpr -> addMacroNextToElement(macroCreator.createMacro(expression.text), parent, psiFactory, editor)
+            else -> macroCreator.replaceWithMacro(expression)
+        }
+    }
+
+    private fun addMacroNextToElement(macro: RsExpr, element: PsiElement, psiFactory: RsPsiFactory, editor: Editor) {
+        val childToContainer = element.closestContainerAncestor ?: return
+        val container = childToContainer.second
+        if (container is RsMatchArm) {
+            surroundWithBlockExpression(macro, childToContainer.first, psiFactory, editor)
+        } else {
+            val newElement = container.addAfter(macro, childToContainer.first.getNextNonCommentSibling()?.prevSibling)
+            editor.caretModel.moveToOffset(newElement.endOffset)
+            newElement.add(psiFactory.createNewline())
+            CodeStyleManager.getInstance(newElement.project).reformat(container.ancestorStrict<RsBlock>() ?: container)
+        }
+    }
+
+    private fun surroundWithBlockExpression(macro: RsExpr, originalExpression: PsiElement, psiFactory: RsPsiFactory, editor: Editor) {
+        val newBlock = psiFactory.createBlockExpr("${macro.text}\n${originalExpression.text}")
+        val newElement = originalExpression.replace(newBlock) as RsBlockExpr
+        editor.caretModel.moveToOffset(newElement.block.children[0].endOffset)
+    }
+}
+
+private val PsiElement.closestContainerAncestor: Pair<PsiElement, PsiElement>?
+    get() = ancestorPairs.dropWhile { it.second !is RsBlock && it.second !is RsMatchArm }.firstOrNull()
+
+private val RsMatchBody.containsUnitArm: Boolean
+    get() = matchArmList.any { it.expr?.type is TyUnit }
+
+private val RsExpr.isNotIgnored: Boolean
+    get() {
+        val parent = parent ?: return false
+        return when (parent) {
+            is RsLetDecl -> parent.pat !is RsPatWild
+            is RsMatchArm, is RsStmt, is RsBlock, is RsBinaryExpr -> true
+            else -> false
+        }
+    }
+
+private val RsExpr.implementsDebug: Boolean
+    get() = isImplementsTrait(this, "std::fmt::Debug")
+
+private val RsExpr.implementsDisplay: Boolean
+    get() = isImplementsTrait(this, "std::fmt::Display")
+
+private fun isImplementsTrait(expr: RsExpr, traitName: String, vararg subst: Ty): Boolean {
+    val items = expr.knownItems
+    val implLookup = ImplLookup(expr.project, items)
+    val trait = items.findItem(traitName) as? RsTraitItem ?: return false
+    // Debug and Display are implemented for references: https://doc.rust-lang.org/src/core/fmt/mod.rs.html#1907-1924
+    return implLookup.canSelectWithDeref(TraitRef(expr.type, trait.withSubst(*subst)))
+}
