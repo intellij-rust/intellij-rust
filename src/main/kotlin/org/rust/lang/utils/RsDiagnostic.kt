@@ -788,12 +788,14 @@ sealed class RsDiagnostic(
 
     class CannotAssignToImmutable(
         element: PsiElement,
-        private val message: String
+        private val message: String,
+        private val fix: AddMutableFix? = null
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0594,
-            "Cannot assign to $message"
+            "Cannot assign to $message",
+            fixes = listOfNotNull(fix)
         )
     }
 
