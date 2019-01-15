@@ -10,6 +10,7 @@ import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr
+import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.isMutable
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
@@ -22,8 +23,7 @@ class RsReassignImmutableInspection : RsLocalInspectionTool() {
                 val left = expr.left
                 if (expr.isAssignBinaryExpr && left is RsPathExpr && !left.isMutable) {
                     // TODO: perform some kind of data-flow analysis
-                    val declaration = left.path.reference.resolve()
-                    val letExpr = declaration?.ancestorStrict<RsLetDecl>()
+                    val letExpr = left.declaration?.ancestorStrict<RsLetDecl>()
                     if (letExpr == null) registerProblem(holder, expr, left)
 
                     // this brings false-negative, because it doesn't check initialization properly:
