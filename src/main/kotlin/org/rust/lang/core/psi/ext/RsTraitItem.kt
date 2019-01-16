@@ -72,8 +72,19 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
 }
 
 private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
-    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence()
-    return bounds.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+    // trait Foo where Self: Bar {}
+    val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
+        .filter { (it.typeReference?.typeElement as? RsBaseType)?.path?.hasCself == true }
+        .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
+    // trait Foo: Bar {}
+    val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds
+    return bounds
+        .filter { !it.hasQ } // ignore `?Sized`
+        .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+}
+
+val RsTraitItem.isSized: Boolean get() {
+    return implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
 }
 
 fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {

@@ -7,6 +7,8 @@ package org.rust.ide.annotator
 
 import org.rust.MockEdition
 import org.rust.MockRustcVersion
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
@@ -1230,6 +1232,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         trait Foo {
             fn foo() -> Self;
         }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test Self type inside trait is sized if have Sized bound E0277`() = checkErrors("""
+        trait Foo: Sized {
+            fn foo() -> (Self, Self);
+        }
+        trait Bar where Self: Sized {
+            fn foo() -> (Self, Self);
+        }
+        // TODO
+//        trait Baz {
+//            fn foo() -> (Self, Self) where Self: Sized;
+//        }
     """)
 
     @MockRustcVersion("1.27.1")

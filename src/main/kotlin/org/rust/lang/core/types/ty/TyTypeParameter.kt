@@ -56,7 +56,7 @@ class TyTypeParameter private constructor(
 
         fun self(item: RsTraitOrImpl): TyTypeParameter {
             val isSized = when (item) {
-                is RsTraitItem -> item.implementedTrait?.flattenHierarchy.orEmpty().any { it.element.isSizedTrait }
+                is RsTraitItem -> item.isSized
                 is RsImplItem -> item.typeReference?.type?.isSized() == true
                 else -> error("item must be instance of `RsTraitItem` or `RsImplItem`")
             }
