@@ -94,23 +94,23 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
         fn main() {
             let test = 4.println/*caret*/;
         }
-    """.trimIndent(), """
+    """, """
         fn main() {
             let test = 4;
             println!("{:?}", test);/*caret*/
         }
-    """.trimIndent())
+    """)
 
     fun `test let expression without semicolon`() = doTest("""
         fn main() {
             let test = 4.println/*caret*/
         }
-    """.trimIndent(), """
+    """, """
         fn main() {
             let test = 4;
             println!("{:?}", test);/*caret*/
         }
-    """.trimIndent())
+    """)
 
     fun `test let expression with a comment not in the end of a block`() = doTest("""
         fn main() {
@@ -118,14 +118,14 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
             let b = a - 42 * 3.println/*caret*/; // this is a comment
             let c = a + b;
         }
-    """.trimIndent(), """
+    """, """
         fn main() {
             let a = 123;
             let b = a - 42 * 3; // this is a comment
             println!("{:?}", b);/*caret*/
             let c = a + b;
         }
-    """.trimIndent())
+    """)
 
     fun `test inner println in the let expression`() = doTest("""
         fn main() {
@@ -133,14 +133,14 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
             let b = a - 42.println/*caret*/ * 3; // this is a comment
             let c = a + b;
         }
-    """.trimIndent(), """
+    """, """
         fn main() {
             let a = 123;
             let b = a - 42 * 3; // this is a comment
             println!("{:?}", 42);/*caret*/
             let c = a + b;
         }
-    """.trimIndent())
+    """)
 
     fun `test inner println in the match expression`() = doTest("""
         enum E<T> { A(T), B }
