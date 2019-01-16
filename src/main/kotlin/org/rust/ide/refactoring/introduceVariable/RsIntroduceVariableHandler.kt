@@ -13,6 +13,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.rust.ide.refactoring.findCandidateExpressionsToExtract
+import org.rust.ide.refactoring.showExpressionChooser
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.Testmark
 
@@ -33,7 +35,7 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
                 CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)
             }
             1 -> extractExpression(editor, exprs.single())
-            else -> showIntroduceVariableTargetExpressionChooser(editor, exprs) {
+            else -> showExpressionChooser(editor, exprs) {
                 extractExpression(editor, it)
             }
         }

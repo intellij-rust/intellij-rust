@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring.introduceVariable
+package org.rust.ide.refactoring
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.toSnakeCase
-import org.rust.ide.refactoring.isValidRustVariableIdentifier
+import org.rust.ide.refactoring.introduceVariable.IntroduceVariableTestmarks
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -31,7 +31,7 @@ class SuggestedNames(
 const val FRESHEN_LIMIT = 1000
 
 /**
- * This suggests names for an expression about to be bound to a local variable
+ * This suggests names for an expression about to be bound to a local variable / method parameter
  *
  * If the type is resolved and nominal, suggest it.
  * If its an argument to a function call, suggest the name of the argument in the function definition.

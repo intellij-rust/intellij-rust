@@ -9,8 +9,6 @@ import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.ide.refactoring.introduceVariable.IntroduceVariableTestmarks
-import org.rust.ide.refactoring.introduceVariable.IntroduceVariableUi
-import org.rust.ide.refactoring.introduceVariable.withMockIntroduceVariableTargetExpressionChooser
 import org.rust.lang.core.psi.RsExpr
 import org.rust.openapiext.Testmark
 
@@ -303,7 +301,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
 
     private fun doIntroduce(expressions: List<String>, target: Int, replaceAll: Boolean) {
         var shownTargetChooser = false
-        withMockIntroduceVariableTargetExpressionChooser(object : IntroduceVariableUi {
+        withMockTargetExpressionChooser(object : ExtractExpressionUi {
             override fun chooseTarget(exprs: List<RsExpr>): RsExpr {
                 shownTargetChooser = true
                 TestCase.assertEquals(exprs.map { it.text }, expressions)
