@@ -8,8 +8,8 @@ package org.rust.ide.refactoring.implementMembers
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.ide.refactoring.introduceVariable.findCandidateExpressionsToExtract
-import org.rust.ide.refactoring.introduceVariable.suggestedNames
+import org.rust.ide.refactoring.findCandidateExpressionsToExtract
+import org.rust.ide.refactoring.suggestedNames
 import org.rust.lang.core.psi.RsFile
 
 class RsNameSuggestionsKtTest : RsTestBase() {

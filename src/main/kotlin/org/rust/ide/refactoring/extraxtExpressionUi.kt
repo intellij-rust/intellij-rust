@@ -3,18 +3,22 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring.introduceVariable
+package org.rust.ide.refactoring
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
 import com.intellij.refactoring.IntroduceTargetChooser
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsFunction
 import org.rust.openapiext.isUnitTestMode
 
 
-fun showIntroduceVariableTargetExpressionChooser(
+fun showExpressionChooser(
     editor: Editor,
     exprs: List<RsExpr>,
     callback: (RsExpr) -> Unit
@@ -22,7 +26,7 @@ fun showIntroduceVariableTargetExpressionChooser(
     if (isUnitTestMode) {
         callback(MOCK!!.chooseTarget(exprs))
     } else {
-        IntroduceTargetChooser.showChooser(editor, exprs, callback.asPass, { it.text })
+        IntroduceTargetChooser.showChooser(editor, exprs, callback.asPass) { it.text }
     }
 }
 
@@ -47,19 +51,29 @@ fun showOccurrencesChooser(
     }
 }
 
+fun showErrorMessageForExtractParameter(project: Project, editor: Editor, message: String) {
+    val title = RefactoringBundle.message("introduce.parameter.title")
+    val helpId = "refactoring.extractParameter"
+    CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)
+
+}
+
 private val <T> ((T) -> Unit).asPass: Pass<T>
     get() = object : Pass<T>() {
         override fun pass(t: T) = this@asPass(t)
     }
 
-interface IntroduceVariableUi {
+interface ExtractExpressionUi {
     fun chooseTarget(exprs: List<RsExpr>): RsExpr
     fun chooseOccurrences(expr: RsExpr, occurrences: List<RsExpr>): List<RsExpr>
+    fun chooseMethod(methods: List<RsFunction>): RsFunction {
+        return methods.first()
+    }
 }
 
-private var MOCK: IntroduceVariableUi? = null
+var MOCK: ExtractExpressionUi? = null
 @TestOnly
-fun withMockIntroduceVariableTargetExpressionChooser(mock: IntroduceVariableUi, f: () -> Unit) {
+fun withMockTargetExpressionChooser(mock: ExtractExpressionUi, f: () -> Unit) {
     MOCK = mock
     try {
         f()
@@ -67,4 +81,3 @@ fun withMockIntroduceVariableTargetExpressionChooser(mock: IntroduceVariableUi, 
         MOCK = null
     }
 }
-

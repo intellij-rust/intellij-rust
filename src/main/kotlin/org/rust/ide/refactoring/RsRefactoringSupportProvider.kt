@@ -9,6 +9,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionHandler
+import org.rust.ide.refactoring.introduceParameter.RsIntroduceParameterHandler
 import org.rust.ide.refactoring.introduceVariable.RsIntroduceVariableHandler
 import org.rust.lang.core.psi.RsPatBinding
 
@@ -22,4 +23,6 @@ class RsRefactoringSupportProvider : RefactoringSupportProvider() {
         RsIntroduceVariableHandler()
 
     override fun getExtractMethodHandler(): RefactoringActionHandler = RsExtractFunctionHandler()
+
+    override fun getIntroduceParameterHandler(): RefactoringActionHandler = RsIntroduceParameterHandler()
 }
