@@ -41,6 +41,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val visitor = object : RsVisitor() {
             override fun visitBaseType(o: RsBaseType) = checkBaseType(holder, o)
+            override fun visitCondition(o: RsCondition) = checkCondition(holder, o)
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
             override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkDuplicates(holder, o)
@@ -363,6 +364,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.TooFewParamsError(args, expectedCount, realCount).addToHolder(holder)
         } else if (!variadic && realCount != expectedCount) {
             RsDiagnostic.TooManyParamsError(args, expectedCount, realCount).addToHolder(holder)
+        }
+    }
+
+    private fun checkCondition(holder: AnnotationHolder, element: RsCondition) {
+        val pat = element.pat ?: return
+        if (pat.skipUnnecessaryTupDown().isIrrefutable) {
+            checkFeature(holder, pat, IRREFUTABLE_LET_PATTERNS, "irrefutable let pattern")
         }
     }
 

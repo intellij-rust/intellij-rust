@@ -325,6 +325,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
+    @MockRustcVersion("1.33.0-nightly")
     fun `test type placeholder in signatures E0121`() = checkErrors("""
         fn ok(_: &'static str) {
             let four = |x: _| 4;
@@ -1404,6 +1405,39 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             let s = Box::new(S { x: Box::new(0) });
             let box x = s;
             let S { box x } = x;
+        }
+    """)
+
+    @MockRustcVersion("1.31.0")
+    fun `test irrefutable let pattern E0658 1`() = checkErrors("""
+        fn main() {
+            if let <error descr="irrefutable let pattern is experimental [E0658]">x</error> = 42 {}
+            while let <error descr="irrefutable let pattern is experimental [E0658]">x</error> = 42 {}
+        }
+    """)
+
+    @MockRustcVersion("1.32.0-nightly")
+    fun `test irrefutable let pattern E0658 2`() = checkErrors("""
+        fn main() {
+            if let <error descr="irrefutable let pattern is experimental [E0658]">x</error> = 42 {}
+            while let <error descr="irrefutable let pattern is experimental [E0658]">x</error> = 42 {}
+        }
+    """)
+
+    @MockRustcVersion("1.32.0-nightly")
+    fun `test irrefutable let pattern E0658 3`() = checkErrors("""
+        #![feature(irrefutable_let_patterns)]
+        fn main() {
+            if let x = 42 {}
+            while let x = 42 {}
+        }
+    """)
+
+    @MockRustcVersion("1.33.0-nightly")
+    fun `test irrefutable let pattern E0658 4`() = checkErrors("""
+        fn main() {
+            if let x = 42 {}
+            while let x = 42 {}
         }
     """)
 }
