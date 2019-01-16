@@ -12,10 +12,10 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.refactoring.findOccurrences
+import org.rust.ide.refactoring.introduceVariable.RustInPlaceVariableIntroducer
 import org.rust.ide.refactoring.moveEditorToNameElement
 import org.rust.ide.refactoring.showOccurrencesChooser
 import org.rust.ide.refactoring.suggestedNames
@@ -114,7 +114,8 @@ private class ParamIntroducer(
         documentManager.doPostponedOperationsAndUnblockDocument(editor.document)
 
         if (newParameter != null) {
-            MemberInplaceRenamer(newParameter, newParameter, editor).performInplaceRename()
+            RustInPlaceVariableIntroducer(newParameter, editor, project, "choose a parameter", emptyArray())
+                .performInplaceRefactoring(suggestedNames.all)
         }
     }
 
