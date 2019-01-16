@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.rustFile
+import org.rust.lang.core.resolve.ImplLookup
 import org.rust.openapiext.toPsiFile
 
 interface RsElement : PsiElement {
@@ -111,3 +112,6 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }
+
+val RsElement.implLookup: ImplLookup
+    get() = ImplLookup.relativeTo(this)

@@ -70,6 +70,7 @@ class KnownItems(
     val BorrowMut: RsTraitItem? get() = findTrait("core::borrow::BorrowMut")
     val Hash: RsTraitItem? get() = findTrait("core::hash::Hash")
     val Default: RsTraitItem? get() = findTrait("core::default::Default")
+    val Display: RsTraitItem? get() = findTrait("core::fmt::Display")
     val ToOwned: RsTraitItem? get() = findTrait("alloc::borrow::ToOwned")
     val ToString: RsTraitItem? get() = findTrait("alloc::string::ToString")
 
