@@ -11,18 +11,21 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyStr
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 
 class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val macroName: String = "println") :
-    PostfixTemplateWithExpressionSelector(null, macroName, "$macroName!(\"{:?}\", expr);",
-        RsTopMostInScopeSelector { it.isNotIgnored && (it.implementsDebug || it.implementsDisplay) }, provider) {
+    PostfixTemplateWithExpressionSelector(
+        null,
+        macroName,
+        "$macroName!(\"{:?}\", expr);",
+        RsTopMostInScopeSelector { it.isNotIgnored && (it.isDebug || it.isDisplay) },
+        provider
+    ) {
 
     private enum class Fmt(val text: String) {
         None(""),
@@ -32,7 +35,7 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
         companion object {
             fun fromExpr(expr: RsExpr): Fmt = when {
                 (expr.type as? TyReference)?.referenced is TyStr -> Fmt.None
-                expr.implementsDebug -> Fmt.Debug
+                expr.isDebug -> Fmt.Debug
                 else -> Fmt.Display
             }
         }
@@ -127,16 +130,9 @@ private val RsExpr.isNotIgnored: Boolean
         }
     }
 
-private val RsExpr.implementsDebug: Boolean
-    get() = isImplementsTrait(this, "std::fmt::Debug")
+private val RsExpr.isDebug: Boolean
+    get() = knownItems.Debug?.withSubst()?.let { implLookup.canSelectWithDeref(TraitRef(type, it)) } ?: false
 
-private val RsExpr.implementsDisplay: Boolean
-    get() = isImplementsTrait(this, "std::fmt::Display")
+private val RsExpr.isDisplay: Boolean
+    get() = knownItems.Display?.withSubst()?.let { implLookup.canSelectWithDeref(TraitRef(type, it)) } ?: false
 
-private fun isImplementsTrait(expr: RsExpr, traitName: String, vararg subst: Ty): Boolean {
-    val items = expr.knownItems
-    val implLookup = ImplLookup(expr.project, items)
-    val trait = items.findItem(traitName) as? RsTraitItem ?: return false
-    // Debug and Display are implemented for references: https://doc.rust-lang.org/src/core/fmt/mod.rs.html#1907-1924
-    return implLookup.canSelectWithDeref(TraitRef(expr.type, trait.withSubst(*subst)))
-}
