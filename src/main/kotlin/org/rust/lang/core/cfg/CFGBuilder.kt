@@ -8,6 +8,7 @@ package org.rust.lang.core.cfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.isLazy
+import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Graph
@@ -119,8 +120,14 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
     override fun visitLabelDecl(labelDecl: RsLabelDecl) = finishWith(pred)
 
     override fun visitExprStmt(exprStmt: RsExprStmt) {
-        val exit = process(exprStmt.expr, pred)
-        finishWithAstNode(exprStmt, exit)
+        val expr = exprStmt.expr
+        val exprExit = process(expr, pred)
+        if (expr.type is TyNever) {
+            addReturningEdge(exprExit)
+            finishWith { addUnreachableNode() }
+        } else {
+            finishWithAstNode(exprStmt, exprExit)
+        }
     }
 
     override fun visitPatIdent(patIdent: RsPatIdent) =
