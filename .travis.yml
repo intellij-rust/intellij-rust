@@ -10,7 +10,7 @@ jdk: oraclejdk8
 
 env:
   global:
-    - OLD_RUST_VERSION=1.25.0
+    - OLD_RUST_VERSION=1.26.0
     - CURRENT_RUST_VERSION=1.31.0
     - NIGHLY_RUST_VERSION=nightly-2018-12-06
     - RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
@@ -36,6 +36,7 @@ before_script:
 
 script:
   - travis_wait ./gradlew check -Pkotlin.incremental=false --no-daemon
+  - (cd ./pretty_printers_tests; cargo run)
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
