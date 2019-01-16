@@ -9,13 +9,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiParserFacade
-import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer
-import org.rust.ide.refactoring.findOccurrences
-import org.rust.ide.refactoring.moveEditorToNameElement
-import org.rust.ide.refactoring.showOccurrencesChooser
-import org.rust.ide.refactoring.suggestedNames
+import org.rust.ide.refactoring.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.startOffset
@@ -74,7 +69,7 @@ private class ExpressionReplacer(
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         if (nameElem != null) {
-            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
+            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
                 .performInplaceRefactoring(suggestedNames.all)
         }
     }
@@ -96,7 +91,7 @@ private class ExpressionReplacer(
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         if (nameElem != null) {
-            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
+            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
                 .performInplaceRefactoring(suggestedNames.all)
         }
     }
@@ -132,11 +127,3 @@ private fun findAnchor(expr: PsiElement): PsiElement? {
 
     return anchor
 }
-
-class RustInPlaceVariableIntroducer(
-    elementToRename: PsiNamedElement,
-    editor: Editor,
-    project: Project,
-    title: String,
-    occurrences: Array<PsiElement>
-) : InplaceVariableIntroducer<PsiElement>(elementToRename, editor, project, title, occurrences, null)
