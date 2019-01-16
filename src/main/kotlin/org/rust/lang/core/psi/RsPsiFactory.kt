@@ -286,6 +286,12 @@ class RsPsiFactory(private val project: Project) {
         createFromText<RsImplItem>("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
             ?: error("Failed to create RsImplItem element")
 
+    fun createSimpleValueParameterList(name: String, type: RsTypeReference): RsValueParameterList {
+        return createFromText<RsFunction>("fn main($name: ${type.text}){}")
+            ?.valueParameterList
+            ?: error("Failed to create parameter element")
+    }
+
     fun createValueParameter(name: String, type: RsTypeReference, mutable: Boolean = false, lifetime: RsLifetime? = null): RsValueParameter {
         return createFromText<RsFunction>("fn main($name: &${if (lifetime != null) lifetime.text + " " else ""}${if (mutable) "mut " else ""}${type.text}){}")
             ?.valueParameterList?.valueParameterList?.get(0)
