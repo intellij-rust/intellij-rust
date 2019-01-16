@@ -69,7 +69,7 @@ class IterPostfixTemplate(provider: RsPostfixTemplateProvider) :
     StringBasedPostfixTemplate(
         "iter",
         "for x in expr",
-        RsTopMostInScopeSelector { it.isIntoIterator || it.isIterator },
+        RsTopMostInScopeSelector { it.isIntoIterator },
         provider
     ) {
     override fun getTemplateString(element: PsiElement): String =
@@ -84,6 +84,3 @@ class IterPostfixTemplate(provider: RsPostfixTemplateProvider) :
 
 private val RsExpr.isIntoIterator: Boolean
     get() = ImplLookup(project, knownItems).isIntoIterator(type)
-
-private val RsExpr.isIterator: Boolean
-    get() = ImplLookup(project, knownItems).isIterator(type)
