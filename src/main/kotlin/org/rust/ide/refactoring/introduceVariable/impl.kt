@@ -133,7 +133,7 @@ private fun findAnchor(expr: PsiElement): PsiElement? {
     return anchor
 }
 
-private class RustInPlaceVariableIntroducer(
+class RustInPlaceVariableIntroducer(
     elementToRename: PsiNamedElement,
     editor: Editor,
     project: Project,
