@@ -15,7 +15,10 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.presentation.insertionSafeText
-import org.rust.ide.refactoring.*
+import org.rust.ide.refactoring.findOccurrences
+import org.rust.ide.refactoring.moveEditorToNameElement
+import org.rust.ide.refactoring.showOccurrencesChooser
+import org.rust.ide.refactoring.suggestedNames
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyNever
@@ -101,7 +104,7 @@ private class ParamIntroducer(
                     .forEach { introduceParam(it, suggestedNames.default, typeRef) }
             }
             val newParam = introduceParam(function, suggestedNames.default, typeRef)
-            val name = psiFactory.createIdentifier(suggestedNames.default)
+            val name = psiFactory.createExpression(suggestedNames.default)
             exprs.forEach { it.replace(name) }
             moveEditorToNameElement(editor, newParam)
         }
