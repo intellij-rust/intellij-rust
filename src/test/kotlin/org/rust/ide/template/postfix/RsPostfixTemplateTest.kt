@@ -39,12 +39,12 @@ abstract class RsPostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsT
         @Language("Rust") after: String,
         checkSyntaxErrors: Boolean = true
     ) {
-        InlineFile(before).withCaret()
-        checkApplicability(before, true)
+        InlineFile(before.trimIndent()).withCaret()
+        checkApplicability(before.trimIndent(), true)
         myFixture.type('\t')
         if (checkSyntaxErrors) myFixture.checkHighlighting(false, false, false)
 
-        myFixture.checkResult(replaceCaretMarker(after))
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
     protected fun doTestNotApplicable(@Language("Rust") testCase: String) {
