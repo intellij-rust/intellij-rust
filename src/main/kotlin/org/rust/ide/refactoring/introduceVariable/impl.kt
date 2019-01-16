@@ -5,40 +5,17 @@
 
 package org.rust.ide.refactoring.introduceVariable
 
-import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer
-import org.rust.ide.utils.findExpressionAtCaret
-import org.rust.ide.utils.findExpressionInRange
+import org.rust.ide.refactoring.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.runWriteCommandAction
-import java.util.*
 
-
-fun findCandidateExpressionsToExtract(editor: Editor, file: RsFile): List<RsExpr> {
-    val selection = editor.selectionModel
-    return if (selection.hasSelection()) {
-        // If there's an explicit selection, suggest only one expression
-        listOfNotNull(findExpressionInRange(file, selection.selectionStart, selection.selectionEnd))
-    } else {
-        val expr = findExpressionAtCaret(file, editor.caretModel.offset)
-            ?: return emptyList()
-        // Finds possible expressions that might want to be bound to a local variable.
-        // We don't go further than the current block scope,
-        // further more path expressions don't make sense to bind to a local variable so we exclude them.
-        expr.ancestors
-            .takeWhile { it !is RsBlock }
-            .filterIsInstance<RsExpr>()
-            .filter { it !is RsPathExpr }
-            .toList()
-    }
-}
 
 fun extractExpression(editor: Editor, expr: RsExpr) {
     if (!expr.isValid) return
@@ -87,7 +64,7 @@ private class ExpressionReplacer(
         val nameElem: RsPatBinding? = project.runWriteCommandAction {
             val statement = psiFactory.createLetDeclaration(suggestedNames.default, expr)
             val newStatement = elementToReplace.replace(statement)
-            moveEditorToNameElement(newStatement)
+            moveEditorToNameElement(editor, newStatement)
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
@@ -108,7 +85,7 @@ private class ExpressionReplacer(
         val nameElem: RsPatBinding? = project.runWriteCommandAction {
             val newElement = introduceLet(project, anchor, let)
             exprs.forEach { it.replace(name) }
-            moveEditorToNameElement(newElement)
+            moveEditorToNameElement(editor, newElement)
         }
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
@@ -140,14 +117,6 @@ private class ExpressionReplacer(
 
         return context?.addBefore(let, context.addBefore(newline, anchor))
     }
-
-    private fun moveEditorToNameElement(element: PsiElement?): RsPatBinding? {
-        val newName = element?.findBinding()
-
-        editor.caretModel.moveToOffset(newName?.identifier?.textRange?.startOffset ?: 0)
-
-        return newName
-    }
 }
 
 /**
@@ -164,29 +133,6 @@ private fun findAnchor(expr: PsiElement): PsiElement? {
 
     return anchor
 }
-
-/**
- * Finds occurrences in the sub scope of expr, so that all will be replaced if replace all is selected.
- */
-private fun findOccurrences(expr: RsExpr): List<RsExpr> {
-    val visitor = object : PsiRecursiveElementVisitor() {
-        val foundOccurrences = ArrayList<RsExpr>()
-
-        override fun visitElement(element: PsiElement) {
-            if (element is RsExpr && PsiEquivalenceUtil.areElementsEquivalent(expr, element)) {
-                foundOccurrences.add(element)
-            } else {
-                super.visitElement(element)
-            }
-        }
-    }
-
-    val block = expr.ancestorOrSelf<RsBlock>() ?: return emptyList()
-    block.acceptChildren(visitor)
-    return visitor.foundOccurrences
-}
-
-private fun PsiElement.findBinding() = PsiTreeUtil.findChildOfType(this, RsPatBinding::class.java)
 
 private class RustInPlaceVariableIntroducer(
     elementToRename: PsiNamedElement,
