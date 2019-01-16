@@ -127,15 +127,10 @@ def vec_to_string(vec):
 
 def StdStringSummaryProvider(valobj, dict):
     # type: (SBValue, dict) -> str
-    assert valobj.GetNumChildren() == 1
     logger = Logger.Logger()
     logger >> "[StdStringSummaryProvider] for " + str(valobj.GetName())
-
     vec = valobj.GetChildAtIndex(0)
-    length = vec.GetNumChildren()
-    chars = [vec.GetChildAtIndex(i).GetValueAsUnsigned() for i in range(length)]
-    data = bytes(chars).decode(encoding='UTF-8') if PY3 else "".join(chr(char) for char in chars)
-    return '"%s"' % data
+    return '"%s"' % vec_to_string(vec)
 
 
 def StdOsStringSummaryProvider(valobj, dict):
@@ -150,7 +145,6 @@ def StdOsStringSummaryProvider(valobj, dict):
 
 def StdStrSummaryProvider(valobj, dict):
     # type: (SBValue, dict) -> str
-    assert valobj.GetNumChildren() == 2
     logger = Logger.Logger()
     logger >> "[StdStrSummaryProvider] for " + str(valobj.GetName())
 
@@ -166,6 +160,7 @@ def StdStrSummaryProvider(valobj, dict):
     data = process.ReadMemory(start, length, error)
     data = data.decode(encoding='UTF-8') if PY3 else data
     return '"%s"' % data
+
 
 class StructSyntheticProvider:
     """Pretty-printer for structs and struct enum variants"""

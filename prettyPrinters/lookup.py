@@ -31,17 +31,17 @@ class RustType:
     STD_REF_CELL = "StdRefCell"
 
 
-STD_STRING_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)String$")
+STD_STRING_REGEX = re.compile(r"^(alloc::(\w+::)+)String$")
 STD_STR_REGEX = re.compile(r"^&str$")
 STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::(\w+::)+)OsString$")
-STD_VEC_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)Vec<.+>$")
-STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::([a-zA-Z_]+::)+)VecDeque<.+>$")
-STD_RC_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)Rc<.+>$")
-STD_ARC_REGEX = re.compile(r"^(alloc::([a-zA-Z]+::)+)Arc<.+>$")
-STD_CELL_REGEX = re.compile(r"^(core::([a-zA-Z_]+::)+)Cell<.+>$")
-STD_REF_REGEX = re.compile(r"^(core::([a-zA-Z_]+::)+)Ref<.+>$")
-STD_REF_MUT_REGEX = re.compile(r"^(core::([a-zA-Z_]+::)+)RefMut<.+>$")
-STD_REF_CELL_REGEX = re.compile(r"^(core::([a-zA-Z_]+::)+)RefCell<.+>$")
+STD_VEC_REGEX = re.compile(r"^(alloc::(\w+::)+)Vec<.+>$")
+STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::(\w+::)+)VecDeque<.+>$")
+STD_RC_REGEX = re.compile(r"^(alloc::(\w+::)+)Rc<.+>$")
+STD_ARC_REGEX = re.compile(r"^(alloc::(\w+::)+)Arc<.+>$")
+STD_CELL_REGEX = re.compile(r"^(core::(\w+::)+)Cell<.+>$")
+STD_REF_REGEX = re.compile(r"^(core::(\w+::)+)Ref<.+>$")
+STD_REF_MUT_REGEX = re.compile(r"^(core::(\w+::)+)RefMut<.+>$")
+STD_REF_CELL_REGEX = re.compile(r"^(core::(\w+::)+)RefCell<.+>$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
@@ -70,14 +70,17 @@ def classify_rust_type(type):
             return RustType.STD_OS_STRING
         if re.match(STD_STR_REGEX, name):
             return RustType.STD_STR
+
         if re.match(STD_VEC_REGEX, name):
             return RustType.STD_VEC
         if re.match(STD_VEC_DEQUE_REGEX, name):
             return RustType.STD_VEC_DEQUE
+
         if re.match(STD_RC_REGEX, name):
             return RustType.STD_RC
         if re.match(STD_ARC_REGEX, name):
             return RustType.STD_ARC
+
         if re.match(STD_CELL_REGEX, name):
             return RustType.STD_CELL
         if re.match(STD_REF_REGEX, name):
@@ -131,14 +134,17 @@ def summary_lookup(valobj, dict):
         return StdOsStringSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_STR:
         return StdStrSummaryProvider(valobj, dict)
+
     if rust_type == RustType.STD_VEC:
         return SizeSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_VEC_DEQUE:
         return SizeSummaryProvider(valobj, dict)
+
     if rust_type == RustType.STD_RC:
         return StdRcSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_ARC:
         return StdRcSummaryProvider(valobj, dict)
+
     if rust_type == RustType.STD_REF:
         return StdRefSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_REF_MUT:
@@ -164,7 +170,6 @@ def synthetic_lookup(valobj, dict):
         return TupleSyntheticProvider(valobj, dict, is_variant=True)
     if rust_type == RustType.EMPTY:
         return EmptySyntheticProvider(valobj, dict)
-
     if rust_type == RustType.REGULAR_ENUM:
         discriminant = valobj.GetChildAtIndex(0).GetChildAtIndex(0).GetValueAsUnsigned()
         return synthetic_lookup(valobj.GetChildAtIndex(discriminant), dict)
