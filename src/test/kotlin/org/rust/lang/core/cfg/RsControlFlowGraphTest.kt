@@ -406,6 +406,29 @@ class RsControlFlowGraphTest : RsTestBase() {
     """
     )
 
+    fun `test noreturn`() = testCFG("""
+        fn main() {
+            if true {
+                noreturn();
+            }
+            42;
+        }
+
+        fn noreturn() -> ! { panic!() }
+    """, """
+        Entry
+        true
+        noreturn
+        noreturn()
+        Exit
+        IF
+        IF;
+        42
+        42;
+        BLOCK
+    """
+    )
+
     protected fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
         val block = myFixture.file.descendantsOfType<RsBlock>().firstOrNull() ?: return

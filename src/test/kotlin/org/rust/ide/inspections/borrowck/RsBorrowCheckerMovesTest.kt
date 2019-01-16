@@ -293,4 +293,33 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             *arr
         }
     """, checkWarn = false)
+
+    /** Issue [#3251](https://github.com/intellij-rust/intellij-rust/issues/3251) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0382 after noreturn`() = checkByText("""
+        fn noreturn() -> ! { panic!() }
+
+        struct S;
+        fn consume(s: S) {}
+
+        fn main() {
+            let s = S;
+            if true {
+                consume(s);
+                noreturn();
+            }
+            consume(s);
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0382 after expr stmt with never type`() = checkByText("""
+        struct S;
+        fn main() {
+            let s = S;
+            let s1 = s;
+            panic!();
+            let s2 = s;
+        }
+    """, checkWarn = false)
 }
