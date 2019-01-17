@@ -12,10 +12,10 @@ import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
 import com.jetbrains.cidr.execution.debugger.backend.LLValue
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrDebuggerTypesHelper
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrMemberValue
-import org.rust.lang.core.psi.RsCodeFragmentFactory
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.getNextNonCommentSibling
+import org.rust.lang.core.resolve.VALUES
+import org.rust.lang.core.resolve.processNestedScopesUpwards
 
 class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper(process) {
     override fun createReferenceFromText(`var`: LLValue, context: PsiElement): PsiReference? = null
@@ -33,10 +33,17 @@ class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper
 }
 
 private fun resolveToDeclaration(ctx: PsiElement?, name: String): PsiElement? {
-    val composite = ctx?.getNextNonCommentSibling()?.ancestorOrSelf<RsElement>()
-        ?: return null
-    val path = RsCodeFragmentFactory(composite.project).createPath(name, composite)
-        ?: return null
+    val composite = ctx?.ancestorOrSelf<RsElement>() ?: return null
 
-    return path.reference.resolve()
+    var resolved: PsiElement? = null
+    processNestedScopesUpwards(composite, { entry ->
+        if (entry.name == name) {
+            resolved = entry.element
+            true
+        } else {
+            false
+        }
+    }, VALUES)
+
+    return resolved
 }
