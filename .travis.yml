@@ -15,8 +15,6 @@ env:
     - NIGHLY_RUST_VERSION=nightly-2018-12-06
     - RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
   matrix:
-    # 182 platform
-    - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=182
     # 183 platform
     - RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183 ORG_GRADLE_PROJECT_ideaVersion=183.5429.1 # modified by script
     - RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183
