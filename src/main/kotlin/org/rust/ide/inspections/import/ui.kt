@@ -142,8 +142,12 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
 
             border = BorderFactory.createEmptyBorder(0, 0, 0, 2)
             horizontalTextPosition = SwingConstants.LEFT
-            background = if (isSelected) UIUtil.getListSelectionBackground() else UIUtil.getListBackground()
-            foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
+            // BACKCOMPAT: 2018.3
+            @Suppress("DEPRECATION")
+            background = UIUtil.getListBackground(isSelected)
+            // BACKCOMPAT: 2018.3
+            @Suppress("DEPRECATION")
+            foreground = UIUtil.getListForeground(isSelected)
             return component
         }
 
