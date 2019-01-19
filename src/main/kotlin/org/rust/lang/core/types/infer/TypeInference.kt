@@ -862,6 +862,7 @@ class RsFnInferenceContext(
         val generics = parentFn.generics
         for (fn in variants) {
             for ((key, newValue) in generics.zip(fn.positionalTypeArguments)) {
+                @Suppress("NAME_SHADOWING")
                 collapsed.compute(key) { key, oldValue ->
                     if (oldValue == null || oldValue == newValue) newValue else TyInfer.TyVar(key)
                 }

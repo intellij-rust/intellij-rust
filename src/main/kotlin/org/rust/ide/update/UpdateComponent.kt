@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-@file:Suppress("DEPRECATION")
-
 package org.rust.ide.update
 
 import com.intellij.ide.util.PropertiesComponent
@@ -12,11 +10,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.EditorFactoryAdapter
 import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
@@ -30,8 +28,7 @@ import java.net.URLEncoder
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
-// BACKCOMPAT: 2018.2
-class UpdateComponent : ApplicationComponent, Disposable {
+class UpdateComponent : BaseComponent, Disposable {
     override fun getComponentName(): String = javaClass.name
 
     override fun initComponent() {
@@ -42,8 +39,7 @@ class UpdateComponent : ApplicationComponent, Disposable {
 
     override fun dispose() = disposeComponent()
 
-    // BACKCOMPAT: 2018.2
-    object EDITOR_LISTENER : EditorFactoryAdapter() {
+    object EDITOR_LISTENER : EditorFactoryListener {
         override fun editorCreated(event: EditorFactoryEvent) {
             val document = event.editor.document
             val file = FileDocumentManager.getInstance().getFile(document)
