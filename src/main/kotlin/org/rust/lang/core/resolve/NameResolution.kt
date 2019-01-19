@@ -937,7 +937,7 @@ private fun processAssociatedItems(
     ns: Set<Namespace>,
     processor: (AssocItemScopeEntry) -> Boolean
 ): Boolean {
-    val traitBounds = (type as? TyTypeParameter)?.getTraitBoundsTransitively()
+    val traitBounds = (type as? TyTypeParameter)?.let { lookup.getEnvBoundTransitivelyFor(it).toList() }
     val visitedInherent = mutableSetOf<String>()
     fun processTraitOrImpl(traitOrImpl: TraitImplSource, inherent: Boolean): Boolean {
         fun inherentProcessor(entry: RsNamedElement): Boolean {
