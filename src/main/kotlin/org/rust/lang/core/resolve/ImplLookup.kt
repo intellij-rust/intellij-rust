@@ -6,10 +6,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.RsCodeFragmentFactory
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
@@ -142,9 +139,42 @@ sealed class TraitImplSource {
     data class Hardcoded(override val value: RsTraitItem): TraitImplSource()
 }
 
+/**
+ * When type checking, we use the `ParamEnv` to track details about the set of where-clauses
+ * that are in scope at this particular point.
+ * Note: ParamEnv of an associated item (method) also contains bounds of its trait/impl
+ * Note: callerBounds should have type `List<Predicate>` to also support lifetime bounds
+ */
+data class ParamEnv(val callerBounds: List<TraitRef>) {
+    fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> =
+        callerBounds.asSequence().filter { it.selfTy == ty }.map { it.trait }
+
+    companion object {
+        val EMPTY: ParamEnv = ParamEnv(emptyList())
+        val LEGACY: ParamEnv = ParamEnv(emptyList())
+
+        fun buildFor(decl: RsGenericDeclaration): ParamEnv = ParamEnv(buildList {
+            addAll(decl.bounds)
+            if (decl is RsAbstractable) {
+                val owner = decl.owner
+                when (owner) {
+                    is RsAbstractableOwner.Trait -> {
+                        add(TraitRef(TyTypeParameter.self(), owner.trait.withDefaultSubst()))
+                        addAll(owner.trait.bounds)
+                    }
+                    is RsAbstractableOwner.Impl -> {
+                        addAll(owner.impl.bounds)
+                    }
+                }
+            }
+        })
+    }
+}
+
 class ImplLookup(
     private val project: Project,
-    private val items: KnownItems
+    private val items: KnownItems,
+    private val paramEnv: ParamEnv = ParamEnv.EMPTY
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
@@ -180,15 +210,23 @@ class ImplLookup(
         RsInferenceContext(this, items)
     }
 
+    fun getEnvBoundTransitivelyFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> {
+        if (paramEnv == ParamEnv.LEGACY && ty is TyTypeParameter) {
+            @Suppress("DEPRECATION")
+            return ty.getTraitBoundsTransitively().asSequence()
+        }
+        return paramEnv.boundsFor(ty).flatMap { it.flattenHierarchy.asSequence() }
+    }
+
     fun findImplsAndTraits(ty: Ty): Set<TraitImplSource> {
-        return findImplsAndTraitsCache.getOrPut(project, freshen(ty)) { rawFindImplsAndTraits(ty) }
+        val cached = findImplsAndTraitsCache.getOrPut(project, freshen(ty)) { rawFindImplsAndTraits(ty) }
+        return getEnvBoundTransitivelyFor(ty)
+            .asIterable().mapTo(cached.toMutableSet()) { TraitImplSource.TraitBound(it.element) }
     }
 
     private fun rawFindImplsAndTraits(ty: Ty): Set<TraitImplSource> {
         val implsAndTraits = hashSetOf<TraitImplSource>()
         when (ty) {
-            is TyTypeParameter ->
-                ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.TraitBound(it.element) }
             is TyTraitObject ->
                 ty.trait.flattenHierarchy.mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
             is TyFunction -> {
@@ -420,12 +458,6 @@ class ImplLookup(
             // The `Sized` trait is hardcoded in the compiler. It cannot be implemented in source code.
             // Trying to do so would result in a E0322.
             element == items.Sized -> sizedTraitCandidates(ref.selfTy, element)
-            ref.selfTy is TyTypeParameter -> {
-                ref.selfTy.getTraitBoundsTransitively().asSequence()
-                    .filter { ctx.probe { ctx.combineBoundElements(it, ref.trait) } }
-                    .map { SelectionCandidate.TypeParameter(it) }
-                    .toList()
-            }
             ref.selfTy is TyAnon -> buildList {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
                     ?.let { add(SelectionCandidate.TraitObject) }
@@ -435,6 +467,12 @@ class ImplLookup(
             }
             element.isAuto -> autoTraitCandidates(ref.selfTy, element)
             else -> buildList {
+                getEnvBoundTransitivelyFor(ref.selfTy).asSequence()
+                    .filter { ctx.probe { ctx.combineBoundElements(it, ref.trait) } }
+                    .map { SelectionCandidate.TypeParameter(it) }
+                    .forEach(::add)
+                if (ref.selfTy is TyTypeParameter) return@buildList
+
                 addAll(assembleImplCandidates(ref))
                 addAll(assembleDerivedCandidates(ref))
                 if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
@@ -633,12 +671,12 @@ class ImplLookup(
 
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
         return when (selfTy) {
-            is TyTypeParameter -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
+            is TyTypeParameter -> lookupAssocTypeInBounds(getEnvBoundTransitivelyFor(selfTy), res.impl, assocType)
             is TyTraitObject -> selfTy.trait.assoc[assocType]
             else -> {
                 lookupAssocTypeInSelection(res, assocType)
-                    ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy), res.impl, assocType)
-                    ?: (selfTy as? TyAnon)?.let { lookupAssocTypeInBounds(it.getTraitBoundsTransitively(), res.impl, assocType) }
+                    ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy).asSequence(), res.impl, assocType)
+                    ?: (selfTy as? TyAnon)?.let { lookupAssocTypeInBounds(it.getTraitBoundsTransitively().asSequence(), res.impl, assocType) }
             }
         }
     }
@@ -647,7 +685,7 @@ class ImplLookup(
         selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.type?.substitute(selection.subst)
 
     private fun lookupAssocTypeInBounds(
-        subst: Collection<BoundElement<RsTraitItem>>,
+        subst: Sequence<BoundElement<RsTraitItem>>,
         trait: RsTraitOrImpl,
         assocType: RsTypeAlias
     ): Ty? {
@@ -706,8 +744,21 @@ class ImplLookup(
         }
 
     companion object {
-        fun relativeTo(psi: RsElement): ImplLookup =
-            ImplLookup(psi.project, psi.knownItems)
+        fun relativeTo(psi: RsElement): ImplLookup {
+            val parentItem = psi.contextOrSelf<RsItemElement>()
+            val paramEnv = if (parentItem is RsGenericDeclaration) {
+                if (psi.contextOrSelf<RsWherePred>() == null) {
+                    ParamEnv.buildFor(parentItem)
+                } else {
+                    // We should mock ParamEnv here. Otherwise we run into infinite recursion
+                    // This is mostly a hack. It should be solved in the future somehow
+                    ParamEnv.LEGACY
+                }
+            } else {
+                ParamEnv.EMPTY
+            }
+            return ImplLookup(psi.project, psi.knownItems, paramEnv)
+        }
 
         private val findImplsAndTraitsCache =
             ProjectCache<Ty, Set<TraitImplSource>>("findImplsAndTraitsCache")
