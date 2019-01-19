@@ -20,9 +20,10 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.isStdDerivable
+import org.rust.lang.core.psi.ext.isKnownDerivable
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.StdDerivableTrait
+import org.rust.lang.core.resolve.KnownDerivableTrait
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.withDependencies
 
 object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -40,11 +41,12 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
             .findImplsAndTraits(owner.declaredType)
             .mapNotNull {
                 val (trait, _) = it.value.implementedTrait ?: return@mapNotNull null
-                if (trait.isStdDerivable) trait.name else null
+                if (trait.isKnownDerivable) trait.name else null
             }
 
-        StdDerivableTrait.values()
+        KnownDerivableTrait.values()
             .filter { it.name !in alreadyDerived }
+            .filter { it.findTrait(owner.knownItems) != null } // check available
             .forEach { trait ->
                 val traitWithDependencies = trait.withDependencies
                     .filter { it.name !in alreadyDerived }

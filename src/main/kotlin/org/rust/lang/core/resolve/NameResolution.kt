@@ -567,8 +567,14 @@ fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolvePro
 }
 
 fun processDeriveTraitResolveVariants(element: RsMetaItem, traitName: String, processor: RsResolveProcessor): Boolean {
-    val traits = RsNamedElementIndex.findDerivableTraits(element.project, traitName)
-    return processAll(traits, processor)
+    val knownDerive = KNOWN_DERIVABLE_TRAITS[traitName]?.findTrait(element.knownItems)
+    return if (knownDerive != null) {
+        processor(knownDerive)
+    } else {
+        val traits = RsNamedElementIndex.findElementsByName(element.project, traitName)
+            .filterIsInstance<RsTraitItem>()
+        processAll(traits, processor)
+    }
 }
 
 fun processBinaryOpVariants(element: RsBinaryOp, operator: OverloadableBinaryOperator,

@@ -23,22 +23,6 @@ import org.rust.openapiext.testAssert
 import org.rust.stdext.buildList
 import kotlin.LazyThreadSafetyMode.NONE
 
-enum class StdDerivableTrait(val modName: String, val dependencies: Array<StdDerivableTrait> = emptyArray()) {
-    Clone("clone"),
-    Copy("marker", arrayOf(Clone)),
-    Debug("fmt"),
-    Default("default"),
-    Hash("hash"),
-    PartialEq("cmp"),
-    Eq("cmp", arrayOf(PartialEq)),
-    PartialOrd("cmp", arrayOf(PartialEq)),
-    Ord("cmp", arrayOf(PartialOrd, Eq, PartialEq))
-}
-
-val StdDerivableTrait.withDependencies: List<StdDerivableTrait> get() = listOf(this, *dependencies)
-
-val STD_DERIVABLE_TRAITS: Map<String, StdDerivableTrait> = StdDerivableTrait.values().associate { it.name to it }
-
 private val RsTraitItem.typeParamSingle: TyTypeParameter?
     get() =
         typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
@@ -252,7 +236,7 @@ class ImplLookup(
         return (ty as? TyAdt)?.item?.derivedTraits.orEmpty()
             // select only std traits because we are sure
             // that they are resolved correctly
-            .filter { it.isStdDerivable }
+            .filter { it.isKnownDerivable }
     }
 
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
@@ -508,7 +492,7 @@ class ImplLookup(
         return (ref.selfTy as? TyAdt)?.item?.derivedTraits.orEmpty()
             // select only std traits because we are sure
             // that they are resolved correctly
-            .filter { it.isStdDerivable }
+            .filter { it.isKnownDerivable }
             .filter { it == ref.trait.element }
             .map { SelectionCandidate.DerivedTrait(it) }
     }
