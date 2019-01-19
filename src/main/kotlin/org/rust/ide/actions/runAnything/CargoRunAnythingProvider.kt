@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.runAnything
+package org.rust.ide.actions.runAnything
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem

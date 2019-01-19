@@ -1,13 +1,2 @@
 <idea-plugin>
-
-    <extensions defaultExtensionNs="com.intellij">
-
-        <!-- Run Anything -->
-
-        <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
-                                       implementation="org.rust.ide.runAnything.CargoRunAnythingProvider"/>
-        <runAnything.helpGroup implementation="org.rust.ide.runAnything.CargoRunAnythingHelpGroup"/>
-
-    </extensions>
-
 </idea-plugin>
