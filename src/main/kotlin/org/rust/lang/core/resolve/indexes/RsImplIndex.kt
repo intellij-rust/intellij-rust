@@ -39,6 +39,13 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             return (impls.asSequence() + freeImpls.asSequence()).filter { it.crateRoot != null }
         }
 
+        /** return impls for generic type `impl<T> Trait for T {}` */
+        fun findFreeImpls(project: Project): Sequence<RsImplItem> {
+            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, GlobalSearchScope.allScope(project))
+            // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
+            return freeImpls.asSequence().filter { it.crateRoot != null }
+        }
+
         fun index(stub: RsImplItemStub, sink: IndexSink) {
             val impl = stub.psi
             val typeRef = impl.typeReference ?: return
