@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.psi.ext.valueParameters
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.type
@@ -159,7 +160,8 @@ private class ExitPointVisitor(
     }
 
     override fun visitMacroExpr(macroExpr: RsMacroExpr) {
-        if (macroExpr.macroCall.tryMacroArgument != null) sink(ExitPoint.TryExpr(macroExpr))
+        val macroCall = macroExpr.macroCall
+        if (macroCall.macroName == "try" && macroCall.exprMacroArgument != null) sink(ExitPoint.TryExpr(macroExpr))
         if (macroExpr.type == TyNever) sink(ExitPoint.DivergingExpr(macroExpr))
     }
 
