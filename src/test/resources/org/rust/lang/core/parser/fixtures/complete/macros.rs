@@ -77,4 +77,7 @@ fn foo() {
     macro_rules! bar {
         () => {};
     }
+
+    dbg!();
+    dbg!("Some text");
 }

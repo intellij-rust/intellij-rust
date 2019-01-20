@@ -1229,13 +1229,11 @@ CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
 TT ::= <<any_braces TT*>> | <<unpairedToken>>
 
 private CommonMacro ::= PathWithoutTypes '!' identifier? MacroArgument { pin = 2 }
-private SpecialMacro ::= TryMacro | AwaitMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro
+private SpecialMacro ::= ExprMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro
 
-private TryMacro ::= &("try" '!') PathWithoutTypes '!' TryMacroArgument { pin = 3 }
-TryMacroArgument ::= <<any_braces AnyExpr>>
-
-private AwaitMacro ::= &("await" '!') PathWithoutTypes '!' AwaitMacroArgument { pin = 3 }
-AwaitMacroArgument ::= <<any_braces AnyExpr>>
+private ExprMacro ::= &(("try" | "await" | "dbg") '!') PathWithoutTypes '!' ExprMacroArgument { pin = 3 }
+// Expression node is optional to avoid parsing error when expr is not typed yet (like `dbg!()`)
+ExprMacroArgument ::= <<any_braces AnyExpr?>>
 
 // https://doc.rust-lang.org/std/fmt/
 private FormatLikeMacro ::=
