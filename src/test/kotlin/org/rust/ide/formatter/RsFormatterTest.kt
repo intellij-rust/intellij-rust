@@ -405,6 +405,10 @@ class RsFormatterTest : RsFormatterTestBase() {
             ("255.0.0.0", true),
             ];
 
+            try!(
+            foo()
+            );
+
             format!(
             "Hello, World"
             );
@@ -417,6 +421,18 @@ class RsFormatterTest : RsFormatterTestBase() {
             error!(
             "Hello, World"
             );
+
+            dbg!(
+            "hello!"
+            );
+
+            await!(
+            "hello!"
+            );
+
+            include_str!(
+            "foo/bar.txt"
+            );
         }
     """, """
         fn main() {
@@ -427,6 +443,10 @@ class RsFormatterTest : RsFormatterTestBase() {
                 ("1.1.1.1", true),
                 ("255.0.0.0", true),
             ];
+
+            try!(
+                foo()
+            );
 
             format!(
                 "Hello, World"
@@ -439,6 +459,18 @@ class RsFormatterTest : RsFormatterTestBase() {
 
             error!(
                 "Hello, World"
+            );
+
+            dbg!(
+                "hello!"
+            );
+
+            await!(
+                "hello!"
+            );
+
+            include_str!(
+                "foo/bar.txt"
             );
         }
     """)
