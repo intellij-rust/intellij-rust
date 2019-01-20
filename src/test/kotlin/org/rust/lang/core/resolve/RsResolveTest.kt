@@ -519,6 +519,15 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test dbg argument`() = checkByCode("""
+        fn main() {
+            let x = 42;
+              //X
+            dbg!(x);
+               //^
+        }
+    """)
+
     fun `test enum variant 1`() = checkByCode("""
         enum E { X }
                //X

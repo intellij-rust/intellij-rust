@@ -1502,22 +1502,25 @@ class RsFnInferenceContext(
         return result
     }
 
-    private fun inferMacroExprType(expr: RsMacroExpr): Ty {
-        val tryArg = expr.macroCall.tryMacroArgument
-        if (tryArg != null) {
-            // See RsTryExpr where we handle the ? expression in a similar way
-            return inferTryExprOrMacroType(tryArg.expr, allowOption = false)
+    private fun inferMacroExprType(macroExpr: RsMacroExpr): Ty {
+        val name = macroExpr.macroCall.macroName
+        val exprArg = macroExpr.macroCall.exprMacroArgument
+        if (exprArg != null) {
+            val expr = exprArg.expr ?: return TyUnknown
+            return when (name) {
+                // See RsTryExpr where we handle the ? expression in a similar way
+                "try" -> inferTryExprOrMacroType(expr, allowOption = false)
+                "dbg" -> expr.inferType()
+                else -> {
+                    // TODO: type inference for async/await
+                    expr.inferType()
+                    TyUnknown
+                }
+            }
         }
 
-        val awaitArg = expr.macroCall.awaitMacroArgument
-        if (awaitArg != null) {
-            // TODO: type inference for async/await
-            awaitArg.expr.inferType()
-            return TyUnknown
-        }
-
-        inferChildExprsRecursively(expr.macroCall)
-        val vecArg = expr.macroCall.vecMacroArgument
+        inferChildExprsRecursively(macroExpr.macroCall)
+        val vecArg = macroExpr.macroCall.vecMacroArgument
         if (vecArg != null) {
             val elementType = if (vecArg.semicolon != null) {
                 // vec![value; repeat]
@@ -1530,7 +1533,6 @@ class RsFnInferenceContext(
             return items.findVecForElementTy(elementType)
         }
 
-        val name = expr.macroCall.macroName
         return when {
             "print" in name || "assert" in name -> TyUnit
             name == "format" -> items.String.asTy()
@@ -1547,9 +1549,9 @@ class RsFnInferenceContext(
             name == "cfg" -> TyBool
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
             name == "write" || name == "writeln" -> {
-                (expr.macroCall.expansion?.singleOrNull() as? RsExpr)?.inferType() ?: TyUnknown
+                (macroExpr.macroCall.expansion?.singleOrNull() as? RsExpr)?.inferType() ?: TyUnknown
             }
-            expr.macroCall.formatMacroArgument != null || expr.macroCall.logMacroArgument != null -> TyUnit
+            macroExpr.macroCall.formatMacroArgument != null || macroExpr.macroCall.logMacroArgument != null -> TyUnit
 
             else -> TyUnknown
         }

@@ -1129,4 +1129,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
                              //^ [&Bar; 2]
         }
     """)
+
+    fun `test dbg macro call type`() = testExpr("""
+        fn main() {
+            let a = dbg!(123);
+            a;
+          //^ i32
+        }
+    """)
 }
