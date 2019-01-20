@@ -635,4 +635,12 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             for x in &mut vec { x; }
         }                     //^ &mut i32
     """)
+
+    fun `test iterate for impl Iterator type`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo() -> impl Iterator<Item=u8> { unimplemented!() }
+        fn main() {
+            for x in foo() { x; }
+        }                  //^ u8
+    """)
 }
