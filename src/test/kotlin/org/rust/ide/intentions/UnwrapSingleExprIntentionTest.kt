@@ -76,6 +76,18 @@ class UnwrapSingleExprIntentionTest : RsIntentionTestBase(UnwrapSingleExprIntent
         }
     """)
 
+    fun `test unavailable unwrap braces async`() = doUnavailableTest("""
+        fn main() {
+            let wellThen = async/*caret*/ { magic() };
+        }
+    """)
+
+    fun `test unavailable unwrap braces try`() = doUnavailableTest("""
+        fn main() {
+            let wellThen = try/*caret*/ { magic() };
+        }
+    """)
+
     fun `test available unwrap braces single expression match`() = doAvailableTest("""
         fn main() {
             match x {
