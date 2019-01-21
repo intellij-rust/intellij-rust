@@ -73,6 +73,7 @@ class KnownItems(
     val Display: RsTraitItem? get() = findTrait("core::fmt::Display")
     val ToOwned: RsTraitItem? get() = findTrait("alloc::borrow::ToOwned")
     val ToString: RsTraitItem? get() = findTrait("alloc::string::ToString")
+    val Try: RsTraitItem? get() = findTrait("std::ops::Try")
 
     // Lang items
 

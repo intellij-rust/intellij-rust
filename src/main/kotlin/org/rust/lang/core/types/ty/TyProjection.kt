@@ -54,7 +54,7 @@ data class TyProjection private constructor(
         type.visitWith(visitor)
 
     companion object {
-        private fun valueOf(type: Ty, target: RsTypeAlias): TyProjection = TyProjection(
+        fun valueOf(type: Ty, target: RsTypeAlias): TyProjection = TyProjection(
             type,
             (target.owner as? RsAbstractableOwner.Trait)?.trait?.withDefaultSubst()
                 ?: error("Tried to construct an associated type from RsTypeAlias declared out of a trait"),
