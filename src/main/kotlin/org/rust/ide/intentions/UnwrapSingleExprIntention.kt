@@ -12,9 +12,7 @@ import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.getNextNonCommentSibling
-import org.rust.lang.core.psi.ext.isUnsafe
+import org.rust.lang.core.psi.ext.*
 
 class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
     override fun getText() = "Remove braces from single expression"
@@ -22,7 +20,7 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsBlockExpr? {
         val blockExpr = element.ancestorStrict<RsBlockExpr>() ?: return null
-        if (blockExpr.isUnsafe) return null
+        if (blockExpr.isUnsafe || blockExpr.isAsync || blockExpr.isTry) return null
         val block = blockExpr.block
 
         return if (block.expr != null && block.lbrace.getNextNonCommentSibling() == block.expr)
