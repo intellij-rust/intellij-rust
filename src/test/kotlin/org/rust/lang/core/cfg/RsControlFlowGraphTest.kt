@@ -80,6 +80,78 @@ class RsControlFlowGraphTest : RsTestBase() {
     """
     )
 
+    fun `test if`() = testCFG("""
+        fn foo() {
+            if true { 1 };
+        }
+    """, """
+        Entry
+        true
+        1
+        BLOCK
+        IF
+        IF;
+        BLOCK
+        Exit
+    """
+    )
+
+    fun `test if else`() = testCFG("""
+        fn foo() {
+            if true { 1 } else { 2 };
+        }
+    """, """
+        Entry
+        true
+        1
+        BLOCK
+        IF
+        IF;
+        BLOCK
+        Exit
+        2
+        BLOCK
+    """
+    )
+
+    fun `test if let`() = testCFG("""
+        fn foo() {
+            if let Some(s) = x { 1 };
+        }
+    """, """
+        Entry
+        x
+        s
+        Some(s)
+        1
+        BLOCK
+        IF
+        IF;
+        BLOCK
+        Exit
+    """
+    )
+
+    fun `test if let else`() = testCFG("""
+        fn foo() {
+            if let Some(s) = x { 1 } else { 2 };
+        }
+    """, """
+        Entry
+        x
+        s
+        Some(s)
+        1
+        BLOCK
+        IF
+        IF;
+        BLOCK
+        Exit
+        2
+        BLOCK
+    """
+    )
+
     fun `test if else with unreachable`() = testCFG("""
         fn main() {
             let x = 1;
@@ -156,10 +228,10 @@ class RsControlFlowGraphTest : RsTestBase() {
     """
     )
 
-    fun `test while with assign`() = testCFG("""
+    fun `test while let`() = testCFG("""
         fn main() {
             while let x = f() {
-                something;
+                1;
             }
         }
     """, """
@@ -167,12 +239,12 @@ class RsControlFlowGraphTest : RsTestBase() {
         Dummy
         f
         f()
-        x
         WHILE
         BLOCK
         Exit
-        something
-        something;
+        x
+        1
+        1;
         BLOCK
     """
     )
