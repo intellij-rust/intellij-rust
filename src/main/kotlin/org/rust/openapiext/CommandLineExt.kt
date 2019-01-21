@@ -6,6 +6,7 @@
 package org.rust.openapiext
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
@@ -15,6 +16,10 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.net.HttpConfigurable
+import org.rust.cargo.CargoConstants
+import org.rust.cargo.toolchain.BacktraceMode
+import org.rust.cargo.toolchain.withProxyIfNeeded
 import java.nio.file.Path
 
 private val LOG = Logger.getInstance("org.rust.openapiext.CommandLineExt")
@@ -44,6 +49,33 @@ fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutpu
 
     return output
 }
+//
+//fun createGeneralCommandLine(
+//    executablePath: Path,
+//    workingDirectory: Path,
+//    backtraceMode: BacktraceMode,
+//    environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
+//    parameters: List<String> = emptyList(),
+//    http: HttpConfigurable = HttpConfigurable.getInstance()
+//): GeneralCommandLine {
+//    val cmdLine = GeneralCommandLine(executablePath)
+//        .withWorkDirectory(workingDirectory)
+//        .withEnvironment("TERM", "ansi")
+//        .withRedirectErrorStream(true)
+//        .withParameters(parameters)
+//        // Explicitly use UTF-8.
+//        // Even though default system encoding is usually not UTF-8 on Windows,
+//        // most Rust programs are UTF-8 only.
+//        .withCharset(Charsets.UTF_8)
+//    withProxyIfNeeded(cmdLine, http)
+//    when (backtraceMode) {
+//        BacktraceMode.SHORT -> cmdLine.withEnvironment(CargoConstants.RUST_BACTRACE_ENV_VAR, "short")
+//        BacktraceMode.FULL -> cmdLine.withEnvironment(CargoConstants.RUST_BACTRACE_ENV_VAR, "full")
+//        BacktraceMode.NO -> Unit
+//    }
+//    environmentVariables.configureCommandLine(cmdLine, true)
+//    return cmdLine
+//}
 
 @Throws(ExecutionException::class)
 fun GeneralCommandLine.execute(

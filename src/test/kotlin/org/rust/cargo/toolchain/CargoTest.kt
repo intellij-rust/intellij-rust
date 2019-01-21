@@ -5,13 +5,11 @@
 
 package org.rust.cargo.toolchain
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.net.HttpConfigurable
-import org.rust.RsTestBase
-import java.nio.file.Paths
 
-class CargoTest : RsTestBase() {
+class CargoTest : ToolCommandLineTestBase() {
+
+    private val cargo: Cargo get() = toolchain.rawCargo()
 
     fun `test run arguments preserved`() = checkCommandLine(
         cargo.toColoredCommandLine(CargoCommandLine("run", wd, listOf("--bin", "parity", "--", "--prune", "archive"))), """
@@ -78,34 +76,5 @@ class CargoTest : RsTestBase() {
         env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
-    private fun checkCommandLine(cmd: GeneralCommandLine, expected: String, expectedWin: String) {
-        val cleaned = (if (SystemInfo.isWindows) expectedWin else expected).trimIndent()
-        val actual = cmd.debug().trim()
-        check(cleaned == actual) {
-            "Expected:\n$cleaned\nActual:\n$actual"
-        }
-    }
 
-    private fun GeneralCommandLine.debug(): String {
-        val env = environment.entries.sortedBy { it.key }
-
-        var result = buildString {
-            append("cmd: $commandLineString")
-            append("\n")
-            append("env: ${env.joinToString { (key, value) -> "$key=$value" }}")
-        }
-
-        if (SystemInfo.isWindows) {
-            result = result.toUnixSlashes().replace(drive, "C:/")
-        }
-
-        return result
-    }
-
-    private val toolchain get() = RustToolchain(Paths.get("/usr/bin"))
-    private val cargo = toolchain.rawCargo()
-    private val drive = Paths.get("/").toAbsolutePath().toString().toUnixSlashes()
-    private val wd = Paths.get("/my-crate")
-
-    private fun String.toUnixSlashes(): String = replace("\\", "/")
 }

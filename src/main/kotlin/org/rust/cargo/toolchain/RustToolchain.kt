@@ -43,8 +43,8 @@ data class RustToolchain(val location: Path) {
         return Cargo(pathToExecutable(cargoWrapper))
     }
 
-    fun rustup(cargoProjectDirectory: Path): Rustup? =
-        if (isRustupAvailable)
+    fun rustup(cargoProjectDirectory: Path, checkAvailability: Boolean = true): Rustup? =
+        if (!checkAvailability || isRustupAvailable)
             Rustup(this, pathToExecutable(RUSTUP), cargoProjectDirectory)
         else
             null

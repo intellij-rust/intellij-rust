@@ -9,10 +9,12 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.util.net.HttpConfigurable
 import java.net.URI
 
-fun withProxyIfNeeded(cmdLine: GeneralCommandLine, http: HttpConfigurable) {
+fun GeneralCommandLine.withProxyIfNeeded(http: HttpConfigurable): GeneralCommandLine {
     if (http.USE_HTTP_PROXY && http.PROXY_HOST.isNotEmpty()) {
-        cmdLine.withEnvironment("http_proxy", http.proxyUri.toString())
+        withEnvironment("http_proxy", http.proxyUri.toString())
+        withEnvironment("https_proxy", http.proxyUri.toString())
     }
+    return this
 }
 
 private val HttpConfigurable.proxyUri: URI

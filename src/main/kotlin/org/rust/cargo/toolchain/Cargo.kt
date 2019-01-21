@@ -185,7 +185,7 @@ class Cargo(private val cargoExecutable: Path) {
                 // Even though default system encoding is usually not UTF-8 on Windows,
                 // most Rust programs are UTF-8 only.
                 .withCharset(Charsets.UTF_8)
-            withProxyIfNeeded(cmdLine, http)
+                .withProxyIfNeeded(http)
             when (backtraceMode) {
                 BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
                 BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "full")

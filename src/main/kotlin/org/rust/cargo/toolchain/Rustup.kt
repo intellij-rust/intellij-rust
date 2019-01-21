@@ -5,12 +5,16 @@
 
 package org.rust.cargo.toolchain
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.net.HttpConfigurable
+import org.jetbrains.annotations.TestOnly
 import org.rust.openapiext.*
 import java.nio.file.Path
 
@@ -21,6 +25,16 @@ class Rustup(
     private val rustup: Path,
     private val projectDirectory: Path
 ) {
+
+    private var _http: HttpConfigurable? = null
+    private val http: HttpConfigurable
+        get() = _http ?: HttpConfigurable.getInstance()
+
+    @TestOnly
+    fun setHttp(http: HttpConfigurable) {
+        _http = http
+    }
+
     @Suppress("unused")
     sealed class DownloadResult<out T> {
         class Ok<T>(val value: T) : DownloadResult<T>()
@@ -28,10 +42,7 @@ class Rustup(
     }
 
     fun downloadStdlib(): DownloadResult<VirtualFile> {
-        val downloadProcessOutput = GeneralCommandLine(rustup)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("component", "add", "rust-src")
-            .execute(null)
+        val downloadProcessOutput = addComponentCommand("rust-src").execute(null)
 
         return if (downloadProcessOutput?.isSuccess == true) {
             val sources = getStdlibFromSysroot() ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
@@ -46,16 +57,21 @@ class Rustup(
 
     fun downloadRustfmt(owner: Disposable): DownloadResult<Unit> {
         return try {
-            GeneralCommandLine(rustup)
-                .withWorkDirectory(projectDirectory)
-                .withParameters("component", "add", "rustfmt-preview")
-                .execute(owner, false)
+            addComponentCommand("rustfmt-preview").execute(owner, false)
             DownloadResult.Ok(Unit)
         } catch (e: ExecutionException) {
             val message = "rustup failed: `${e.message}`"
             LOG.warn(message)
             DownloadResult.Err(message)
         }
+    }
+
+    @VisibleForTesting
+    fun addComponentCommand(componentName: String): GeneralCommandLine {
+        return GeneralCommandLine(rustup)
+            .withWorkDirectory(projectDirectory)
+            .withProxyIfNeeded(http)
+            .withParameters("component", "add", componentName)
     }
 
     fun getStdlibFromSysroot(): VirtualFile? {
