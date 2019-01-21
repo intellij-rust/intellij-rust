@@ -174,21 +174,30 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         //        |                  |
         //       / \                / \
         //      /   \              /   \
-        //     v 2   v 3          v 2   *
+        //     v 2   *            v 2   *
+        //   [pat]?  |          [pat]?  |
+        //     |     |            |     |
+        //     v     v 3          v     |
         //   [then][else]       [then]  |
         //     |     |            |     |
         //     v 4   v 5          v 3   v 4
         //     [ifExpr]          [ifExpr]
         //
-        val conditionExit = process(ifExpr.condition, pred)
-        val thenExit = process(ifExpr.block, conditionExit)
+        val pat = ifExpr.condition?.pat
+        val expr = ifExpr.condition?.expr
+
+        val exprExit = process(expr, pred)
+        val patExit = process(pat, exprExit)
+
+        val thenExit = process(ifExpr.block, patExit)
+
         val elseBranch = ifExpr.elseBranch
 
         if (elseBranch != null) {
-            val elseExit = process(elseBranch.block, conditionExit)
+            val elseExit = process(elseBranch.block, exprExit)
             finishWith { addAstNode(ifExpr, thenExit, elseExit) }
         } else {
-            finishWith { addAstNode(ifExpr, conditionExit, thenExit) }
+            finishWith { addAstNode(ifExpr, exprExit, thenExit) }
         }
     }
 
@@ -202,24 +211,31 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         //           v 2       |
         //   +-----[cond]      |
         //   |       |         |
+        //   |       v         |
+        //   |      [pat]?     |
+        //   |       |         |
         //   |       v 4       |
         //   |     [body] -----+
         //   v 3
         // [whileExpr]
         //
         val loopBack = addDummyNode(pred)
-        val exprExit = addAstNode(whileExpr)
-        val loopScope = LoopScope(whileExpr, loopBack, exprExit)
+        val whileExprExit = addAstNode(whileExpr)
+        val loopScope = LoopScope(whileExpr, loopBack, whileExprExit)
 
         withLoopScope(loopScope) {
-            val conditionExit = process(whileExpr.condition, loopBack)
-            addContainedEdge(conditionExit, exprExit)
+            val pat = whileExpr.condition?.pat
+            val expr = whileExpr.condition?.expr
 
-            val bodyExit = process(whileExpr.block, conditionExit)
+            val exprExit = process(expr, loopBack)
+            addContainedEdge(exprExit, whileExprExit)
+
+            val patExit = process(pat, exprExit)
+            val bodyExit = process(whileExpr.block, patExit)
             addContainedEdge(bodyExit, loopBack)
         }
 
-        finishWith(exprExit)
+        finishWith(whileExprExit)
     }
 
     override fun visitLoopExpr(loopExpr: RsLoopExpr) {
@@ -244,12 +260,6 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         }
 
         finishWith(exprExit)
-    }
-
-    override fun visitCondition(condition: RsCondition) {
-        val initExit = process(condition.expr, pred)
-        val exit = process(condition.pat, initExit)
-        finishWith(exit)
     }
 
     override fun visitForExpr(forExpr: RsForExpr) {
@@ -291,6 +301,7 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
 
     // TODO: this cases require regions which are not implemented yet
     override fun visitBreakExpr(breakExpr: RsBreakExpr) = finishWith(pred)
+
     override fun visitContExpr(contExpr: RsContExpr) = finishWith(pred)
 
     override fun visitArrayExpr(arrayExpr: RsArrayExpr) =
