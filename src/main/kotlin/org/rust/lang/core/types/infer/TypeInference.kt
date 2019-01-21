@@ -607,6 +607,7 @@ class RsFnInferenceContext(
     private val ctx: RsInferenceContext,
     private val returnTy: Ty
 ) {
+    private var tryTy: Ty? = returnTy
     private val lookup get() = ctx.lookup
     private val items get() = ctx.items
     private val fulfill get() = ctx.fulfill
@@ -622,6 +623,33 @@ class RsFnInferenceContext(
 
     private fun selectObligationsWherePossible() {
         fulfill.selectWherePossible()
+    }
+
+    private fun inferBlockExprType(blockExpr: RsBlockExpr, expected: Ty? = null): Ty =
+        when {
+            blockExpr.isTry -> inferTryBlockExprType(blockExpr, expected)
+            blockExpr.isAsync -> inferAsyncBlockExprType(blockExpr)
+            else -> blockExpr.block.inferType(expected)
+        }
+
+    private fun inferTryBlockExprType(blockExpr: RsBlockExpr, expected: Ty? = null): Ty {
+        require(blockExpr.isTry)
+        val oldTryTy = tryTy
+        try {
+            tryTy = expected ?: TyInfer.TyVar()
+            val resultTy = tryTy ?: TyUnknown
+            val okTy = blockExpr.block.inferType()
+            registerTryProjection(blockExpr.knownItems, resultTy, "Ok", okTy)
+            return resultTy
+        } finally {
+            tryTy = oldTryTy
+        }
+    }
+
+    private fun inferAsyncBlockExprType(blockExpr: RsBlockExpr): TyUnknown {
+        require(blockExpr.isAsync)
+        blockExpr.block.inferType()
+        return TyUnknown
     }
 
     fun inferFnBody(block: RsBlock): Ty =
@@ -688,7 +716,7 @@ class RsFnInferenceContext(
             is RsCallExpr -> inferCallExprType(this, expected)
             is RsDotExpr -> inferDotExprType(this, expected)
             is RsLitExpr -> inferLitExprType(this, expected)
-            is RsBlockExpr -> this.block.inferType(expected)
+            is RsBlockExpr -> inferBlockExprType(this, expected)
             is RsIfExpr -> inferIfExprType(this, expected)
             is RsLoopExpr -> inferLoopExprType(this)
             is RsWhileExpr -> inferWhileExprType(this)
@@ -1426,17 +1454,22 @@ class RsFnInferenceContext(
     private fun isPrimitiveOrInferPrimitive(lhsType: Ty) =
         lhsType is TyPrimitive || lhsType is TyInfer.IntVar || lhsType is TyInfer.FloatVar
 
-    private fun inferTryExprType(expr: RsTryExpr): Ty =
-        inferTryExprOrMacroType(expr.expr, allowOption = true)
+    private fun inferTryExprType(expr: RsTryExpr): Ty {
+        val base = expr.expr.inferType() as? TyAdt ?: return TyUnknown
+        // TODO: make it work with generic `std::ops::Try` trait
+        if (base.item != items.Result && base.item != items.Option) return TyUnknown
+        TypeInferenceMarks.questionOperator.hit()
+        val okTy = base.typeArguments.getOrElse(0) { TyUnknown }
+        val errTy = base.typeArguments.getOrElse(1) { TyUnknown }
+        val resultTy = tryTy ?: return okTy
+        registerTryProjection(expr.knownItems, resultTy, "Error", errTy)
+        return okTy
+    }
 
-    private fun inferTryExprOrMacroType(arg: RsExpr, allowOption: Boolean): Ty {
-        val base = arg.inferType() as? TyAdt ?: return TyUnknown
-        //TODO: make it work with generic `std::ops::Try` trait
-        if (base.item == items.Result || (allowOption && base.item == items.Option)) {
-            TypeInferenceMarks.questionOperator.hit()
-            return base.typeArguments.firstOrNull() ?: TyUnknown
-        }
-        return TyUnknown
+    private fun inferTryMacroArgumentType(expr: RsExpr): Ty {
+        val base = expr.inferType() as? TyAdt ?: return TyUnknown
+        if (base.item != items.Result) return TyUnknown
+        return base.typeArguments.firstOrNull() ?: TyUnknown
     }
 
     private fun inferRangeType(expr: RsRangeExpr): Ty {
@@ -1514,8 +1547,7 @@ class RsFnInferenceContext(
         if (exprArg != null) {
             val expr = exprArg.expr ?: return TyUnknown
             return when (name) {
-                // See RsTryExpr where we handle the ? expression in a similar way
-                "try" -> inferTryExprOrMacroType(expr, allowOption = false)
+                "try" -> inferTryMacroArgumentType(expr)
                 "dbg" -> expr.inferType()
                 else -> {
                     // TODO: type inference for async/await
@@ -1662,6 +1694,14 @@ class RsFnInferenceContext(
             ctx.combineTypes(ty1, ty2)
             ty1
         }
+    }
+
+    private fun registerTryProjection(knownItems: KnownItems, resultTy: Ty, assocTypeName: String, assocTypeTy: Ty) {
+        val tryTrait = knownItems.Try ?: return
+        val assocType = tryTrait.findAssociatedType(assocTypeName) ?: return
+        val projection = TyProjection.valueOf(resultTy, assocType)
+        val obligation = Obligation(Predicate.Projection(projection, assocTypeTy))
+        fulfill.registerPredicateObligation(obligation)
     }
 
     private fun <T> TyWithObligations<T>.register(): T {
