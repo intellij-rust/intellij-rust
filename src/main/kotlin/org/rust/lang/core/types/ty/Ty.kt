@@ -65,14 +65,21 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
     return typeParameterValues.typeParameterByName(name)
 }
 
+/**
+ * See [org.rust.lang.core.type.RsImplicitTraitsTest]
+ */
 tailrec fun Ty.isSized(): Boolean {
     return when (this) {
-        is TyPrimitive,
+        is TyNumeric,
+        is TyBool,
+        is TyChar,
+        is TyUnit,
+        is TyNever,
         is TyReference,
         is TyPointer,
         is TyArray,
         is TyFunction -> true
-        is TySlice, is TyTraitObject -> false
+        is TyStr, is TySlice, is TyTraitObject -> false
         is TyTypeParameter -> isSized
         is TyAdt -> {
             val item = item as? RsStructItem ?: return true

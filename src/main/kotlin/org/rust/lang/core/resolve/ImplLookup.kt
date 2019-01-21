@@ -414,6 +414,8 @@ class ImplLookup(
     private fun assembleCandidates(ref: TraitRef): List<SelectionCandidate> {
         val element = ref.trait.element
         return when {
+            // The `Sized` trait is hardcoded in the compiler. It cannot be implemented in source code.
+            // Trying to do so would result in a E0322.
             element == items.Sized -> sizedTraitCandidates(ref.selfTy, element)
             ref.selfTy is TyTypeParameter -> {
                 ref.selfTy.getTraitBoundsTransitively().asSequence()
