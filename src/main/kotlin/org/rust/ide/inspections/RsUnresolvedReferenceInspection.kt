@@ -19,6 +19,8 @@ import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.endOffsetInParent
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import javax.swing.JComponent
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
@@ -36,7 +38,10 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
                 val referenceName = basePath.identifier?.text
                 // Don't highlight generic parameters
-                val range = TextRange(0, path.typeArgumentList?.startOffsetInParent ?: path.textLength)
+                val range = TextRange(
+                    0,
+                    path.typeArgumentList?.getPrevNonCommentSibling()?.endOffsetInParent ?: path.textLength
+                )
                 holder.registerProblem(path, candidates, referenceName, range)
             }
 
