@@ -58,6 +58,12 @@ class ValueBuilder:
         return self.valobj.CreateValueFromData(name, data, type)
 
 
+def unwrap_unique_or_non_null(unique_or_nonnull):
+    # BACKCOMPAT: rust 1.32 https://github.com/rust-lang/rust/commit/7a0911528058e87d22ea305695f4047572c5e067
+    ptr = unique_or_nonnull.GetChildMemberWithName("pointer")
+    return ptr if ptr.TypeIsPointerType() else ptr.GetChildAtIndex(0)
+
+
 class DefaultSynthteticProvider:
     def __init__(self, valobj, dict):
         # type: (SBValue, dict) -> DefaultSynthteticProvider
@@ -261,7 +267,8 @@ class StdVecSyntheticProvider:
 
     struct Vec<T> { buf: RawVec<T>, len: usize }
     struct RawVec<T> { ptr: Unique<T>, cap: usize, ... }
-    struct Unique<T: ?Sized> { pointer: NonZero<*const T>, ... }
+    rust 1.31.1: struct Unique<T: ?Sized> { pointer: NonZero<*const T>, ... }
+    rust 1.33.0: struct Unique<T: ?Sized> { pointer: *const T, ... }
     struct NonZero<T>(T)
     """
 
@@ -295,7 +302,9 @@ class StdVecSyntheticProvider:
         # type: () -> None
         self.length = self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
         self.buf = self.valobj.GetChildMemberWithName("buf")
-        self.data_ptr = self.buf.GetChildAtIndex(0).GetChildAtIndex(0).GetChildAtIndex(0)
+
+        self.data_ptr = unwrap_unique_or_non_null(self.buf.GetChildMemberWithName("ptr"))
+
         self.element_type = self.data_ptr.GetType().GetPointeeType()
         self.element_type_size = self.element_type.GetByteSize()
 
@@ -343,7 +352,9 @@ class StdVecDequeSyntheticProvider:
         self.buf = self.valobj.GetChildMemberWithName("buf")
         self.cap = self.buf.GetChildMemberWithName("cap").GetValueAsUnsigned()
         self.size = self.head - self.tail if self.head >= self.tail else self.cap + self.head - self.tail
-        self.data_ptr = self.buf.GetChildMemberWithName("ptr").GetChildAtIndex(0).GetChildAtIndex(0)
+
+        self.data_ptr = unwrap_unique_or_non_null(self.buf.GetChildMemberWithName("ptr"))
+
         self.element_type = self.data_ptr.GetType().GetPointeeType()
         self.element_type_size = self.element_type.GetByteSize()
 
@@ -363,25 +374,24 @@ class StdRcSyntheticProvider:
     """Pretty-printer for alloc::rc::Rc<T> and alloc::sync::Arc<T>
 
     struct Rc<T> { ptr: NonNull<RcBox<T>>, ... }
-    struct NonNull<T> { pointer: NonZero<*const T> }
+    rust 1.31.1: struct NonNull<T> { pointer: NonZero<*const T> }
+    rust 1.33.0: struct NonNull<T> { pointer: *const T }
     struct NonZero<T>(T)
     struct RcBox<T> { strong: Cell<usize>, weak: Cell<usize>, value: T }
     struct Cell<T> { value: UnsafeCell<T> }
     struct UnsafeCell<T> { value: T }
 
     struct Arc<T> { ptr: NonNull<ArcInner<T>>, ... }
-    struct NonNull<T> { pointer: NonZero<*const T> }
-    struct NonZero<T>(T)
     struct ArcInner<T> { strong: atomic::AtomicUsize, weak: atomic::AtomicUsize, data: T }
     struct AtomicUsize { v: UnsafeCell<usize> }
-    struct UnsafeCell<T> { value: T }
     """
 
     def __init__(self, valobj, dict, is_atomic=False):
         # type: (SBValue, dict, bool) -> StdRcSyntheticProvider
         self.valobj = valobj
 
-        self.ptr = self.valobj.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer").GetChildAtIndex(0)
+        self.ptr = unwrap_unique_or_non_null(self.valobj.GetChildMemberWithName("ptr"))
+
         self.value = self.ptr.GetChildMemberWithName("data" if is_atomic else "value")
 
         self.strong = self.ptr.GetChildMemberWithName("strong").GetChildAtIndex(0).GetChildMemberWithName("value")
