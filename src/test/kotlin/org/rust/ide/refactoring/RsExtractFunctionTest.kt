@@ -917,6 +917,36 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    fun `test extract literal expr`() = doTest("""
+            fn main() {
+                let a = <selection>42</selection>;
+            }
+        """, """
+            fn main() {
+                let a = bar();
+            }
+
+            fn bar() -> i32 {
+                42
+            }
+        """,
+        false,
+        "bar")
+
+    fun `test extract block expr`() = doTest("""
+            fn main() {
+                let a = <selection>{ 42 }</selection>;
+            }
+        """, """
+            fn main() {
+                let a = bar();
+            }
+
+            fn bar() -> i32 { 42 }
+        """,
+        false,
+        "bar")
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String,
                        pub: Boolean,
