@@ -6,7 +6,9 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.containerExpr
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr
 import org.rust.lang.core.psi.ext.isDereference
 import org.rust.lang.core.psi.ext.unwrapParenExprs
@@ -31,20 +33,23 @@ class RsAssignToImmutableInspection : RsLocalInspectionTool() {
         if (left.isMutable) return
 
         when (left) {
-            is RsDotExpr -> registerProblem(holder, expr, "field of immutable binding")
-            is RsIndexExpr -> registerProblem(holder, expr, "indexed content of immutable binding")
+            is RsDotExpr -> registerProblem(holder, "field of immutable binding", expr, left.expr)
+            is RsIndexExpr -> registerProblem(holder, "indexed content of immutable binding", expr, left.containerExpr)
             is RsUnaryExpr -> if (left.isDereference) registerDereferenceProblem(left, holder, expr)
         }
     }
 
     private fun registerDereferenceProblem(left: RsUnaryExpr, holder: ProblemsHolder, expr: RsBinaryExpr) {
         when (left.expr?.type) {
-            is TyReference -> registerProblem(holder, expr, "immutable borrowed content")
-            is TyPointer -> registerProblem(holder, expr, "immutable dereference of raw pointer")
+            is TyReference -> registerProblem(holder, "immutable borrowed content", expr)
+            is TyPointer -> registerProblem(holder, "immutable dereference of raw pointer", expr)
         }
     }
 
-    private fun registerProblem(holder: ProblemsHolder, expr: RsExpr, message: String) {
-        RsDiagnostic.CannotAssignToImmutable(expr, message).addToHolder(holder)
+    private fun registerProblem(holder: ProblemsHolder, message: String, expr: RsExpr, assigneeExpr: RsExpr? = null) {
+        val fix = assigneeExpr
+            ?.takeIf { it.type !is TyReference }
+            ?.let { AddMutableFix.createIfCompatible(it) }
+        RsDiagnostic.CannotAssignToImmutable(expr, message, fix).addToHolder(holder)
     }
 }
