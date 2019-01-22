@@ -12,7 +12,6 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.refactoring.*
@@ -101,7 +100,7 @@ private class ParamIntroducer(
                     .forEach { introduceParam(it, suggestedNames.default, typeRef) }
             }
             val newParam = introduceParam(function, suggestedNames.default, typeRef)
-            val name = psiFactory.createIdentifier(suggestedNames.default)
+            val name = psiFactory.createExpression(suggestedNames.default)
             exprs.forEach { it.replace(name) }
             moveEditorToNameElement(editor, newParam)
         }
@@ -111,7 +110,8 @@ private class ParamIntroducer(
         documentManager.doPostponedOperationsAndUnblockDocument(editor.document)
 
         if (newParameter != null) {
-            MemberInplaceRenamer(newParameter, newParameter, editor).performInplaceRename()
+            RsInPlaceVariableIntroducer(newParameter, editor, project, "choose a parameter", emptyArray())
+                .performInplaceRefactoring(suggestedNames.all)
         }
     }
 

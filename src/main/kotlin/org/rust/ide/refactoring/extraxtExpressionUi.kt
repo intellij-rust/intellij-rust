@@ -55,7 +55,6 @@ fun showErrorMessageForExtractParameter(project: Project, editor: Editor, messag
     val title = RefactoringBundle.message("introduce.parameter.title")
     val helpId = "refactoring.extractParameter"
     CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)
-
 }
 
 private val <T> ((T) -> Unit).asPass: Pass<T>

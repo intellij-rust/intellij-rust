@@ -7,12 +7,12 @@ package org.rust.ide.refactoring.introduceVariable
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
-import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiParserFacade
 import org.rust.ide.refactoring.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.runWriteCommandAction
 
@@ -69,7 +69,7 @@ private class ExpressionReplacer(
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         if (nameElem != null) {
-            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
+            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
                 .performInplaceRefactoring(suggestedNames.all)
         }
     }
@@ -80,7 +80,8 @@ private class ExpressionReplacer(
             ?: return
 
         val suggestedNames = chosenExpr.suggestedNames()
-        val (let, name) = createLet(suggestedNames.default) ?: return
+        val let = createLet(suggestedNames.default)
+        val name = psiFactory.createExpression(suggestedNames.default)
 
         val nameElem: RsPatBinding? = project.runWriteCommandAction {
             val newElement = introduceLet(project, anchor, let)
@@ -90,25 +91,18 @@ private class ExpressionReplacer(
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         if (nameElem != null) {
-            RustInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
+            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
                 .performInplaceRefactoring(suggestedNames.all)
         }
     }
 
     /**
      * Creates a let binding for the found expression.
-     * Returning handles to the complete let expr and the identifier inside the newly created let binding.
      */
-    private fun createLet(name: String): Pair<RsLetDecl, PsiElement>? {
+    private fun createLet(name: String): RsLetDecl {
         val parent = chosenExpr.parent
-
         val mutable = parent is RsUnaryExpr && parent.mut != null
-        val let = psiFactory.createLetDeclaration(name, chosenExpr, mutable = mutable)
-
-        val binding = let.findBinding()
-            ?: error("Failed to create a proper let expression: `${let.text}`")
-
-        return let to binding.identifier
+        return psiFactory.createLetDeclaration(name, chosenExpr, mutable)
     }
 
     private fun introduceLet(project: Project, anchor: PsiElement, let: RsLetDecl): PsiElement? {
@@ -133,11 +127,3 @@ private fun findAnchor(expr: PsiElement): PsiElement? {
 
     return anchor
 }
-
-private class RustInPlaceVariableIntroducer(
-    elementToRename: PsiNamedElement,
-    editor: Editor,
-    project: Project,
-    title: String,
-    occurrences: Array<PsiElement>
-) : InplaceVariableIntroducer<PsiElement>(elementToRename, editor, project, title, occurrences, null)
