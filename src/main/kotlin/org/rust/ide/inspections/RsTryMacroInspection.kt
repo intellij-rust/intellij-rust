@@ -20,7 +20,7 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitMacroExpr(o: RsMacroExpr) {
-            if (o.macroCall.macroName != "try" || o.macroCall.tryMacroArgument == null) return
+            if (o.macroCall.macroName != "try" || o.macroCall.exprMacroArgument?.expr == null) return
             holder.registerProblem(
                 o,
                 "try! macro can be replaced with ? operator",
@@ -31,7 +31,7 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
 
                     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                         val macro = descriptor.psiElement as RsMacroExpr
-                        val body = macro.macroCall.tryMacroArgument!!.expr
+                        val body = macro.macroCall.exprMacroArgument?.expr ?: return
                         val tryExpr = RsPsiFactory(project).createExpression("${body.text}?") as RsTryExpr
                         macro.replace(tryExpr)
                     }

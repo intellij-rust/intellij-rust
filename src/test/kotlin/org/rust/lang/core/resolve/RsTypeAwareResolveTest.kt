@@ -681,4 +681,16 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             0u8.foo();
         }     //^ unresolved
     """)
+
+    fun `test dbg macro`() = checkByCode("""
+        struct Foo;
+        impl Foo {
+            fn foo(&self) {}
+              //X
+        }
+        fn main() {
+            dbg!(Foo).foo();
+                     //^
+        }
+    """)
 }
