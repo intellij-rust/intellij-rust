@@ -47,7 +47,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
     private fun addExtractedFunction(project: Project, config: RsExtractFunctionConfig, psiFactory: RsPsiFactory): Boolean {
         val owner = config.containingFunction.owner
 
-        val function = psiFactory.createFunction(config)
+        val function = psiFactory.createFunction(config.functionText)
         val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
         when {
             owner is RsAbstractableOwner.Impl && !owner.isInherent -> {

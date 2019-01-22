@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsStmt
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
 
@@ -62,8 +63,29 @@ fun findExpressionInRange(file: PsiFile, startOffset: Int, endOffset: Int): RsEx
  * as return expression, doesn't allow attrs and items) within selected range.
  */
 fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Array<out PsiElement> {
-    var (element1, element2) = file.getElementRange(startOffset, endOffset) ?: return emptyArray()
+    val (element1, element2) = file.getElementRange(startOffset, endOffset) ?: return emptyArray()
 
+    return findStatementsInRange(element1, element2)
+}
+
+/**
+ * Finds statements (mostly [RsStmt]s, [PsiComment]s and [RsExpr]
+ * as return expression, doesn't allow attrs and items) or a single expr within selected range.
+ */
+fun findStatementsOrExprInRange(file: PsiFile, startOffset: Int, endOffset: Int): Array<out PsiElement> {
+    val (element1, element2) = file.getElementRange(startOffset, endOffset) ?: return emptyArray()
+    val parent = PsiTreeUtil.findCommonParent(element1, element2) ?: return emptyArray()
+
+    val mostDistantParent = parent.ancestors
+        .last { it.textRange == parent.textRange }
+
+    if (mostDistantParent is RsExpr || mostDistantParent is RsStmt)
+        return arrayOf(mostDistantParent)
+
+    return findStatementsInRange(element1, element2)
+}
+
+private fun findStatementsInRange(element1: PsiElement, element2: PsiElement): Array<out PsiElement> {
     // Find parent of selected statement list (syntactically only RsBlock is possible)
     val parent = PsiTreeUtil.findCommonParent(element1, element2)
         ?.ancestorOrSelf<RsBlock>()
@@ -74,12 +96,16 @@ fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Arra
     val realStartOffset = element1.startOffset
     val realEndOffset = element2.endOffset
 
-    element1 = element1.getTopmostParentInside(parent)
-    if (realStartOffset != element1.startOffset) return emptyArray()
+    val checkedElement1 = element1.getTopmostParentInside(parent)
+    if (realStartOffset != checkedElement1.startOffset) return emptyArray()
 
-    element2 = element2.getTopmostParentInside(parent)
-    if (realEndOffset != element2.endOffset) return emptyArray()
+    val checkedElement2 = element2.getTopmostParentInside(parent)
+    if (realEndOffset != checkedElement2.endOffset) return emptyArray()
 
+    return findStatementsInRangeUnchecked(checkedElement1, checkedElement2)
+}
+
+private fun findStatementsInRangeUnchecked(element1: PsiElement, element2: PsiElement): Array<out PsiElement> {
     // Now collect non-whitespace children of parent between (inclusive) element1 and element2
     val elements = collectElements(element1, element2.nextSibling) { it !is PsiWhiteSpace }
 
@@ -93,7 +119,6 @@ fun findStatementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): Arra
 
     return elements
 }
-
 
 /**
  * Finds two edge leaf PSI elements within given range.
