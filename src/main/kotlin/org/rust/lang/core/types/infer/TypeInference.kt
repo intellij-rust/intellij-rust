@@ -34,6 +34,7 @@ import org.rust.openapiext.recursionGuard
 import org.rust.stdext.notEmptyOrLet
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
+import org.rust.stdext.zipValues
 
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
     val items = element.knownItems
@@ -380,6 +381,11 @@ class RsInferenceContext(
             ref1.trait.subst.zipTypeValues(ref2.trait.subst).all { (a, b) ->
                 combineTypes(a, b)
             }
+
+    fun <T : RsElement> combineBoundElements(be1: BoundElement<T>, be2: BoundElement<T>): Boolean =
+        be1.element == be2.element &&
+            combinePairs(be1.subst.zipTypeValues(be2.subst)) &&
+            combinePairs(zipValues(be1.assoc, be2.assoc))
 
     fun shallowResolve(ty: Ty): Ty {
         if (ty !is TyInfer) return ty

@@ -362,8 +362,32 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             if (processor("self", base)) return true
         }
         if (processItemOrEnumVariantDeclarations(base, ns, processor, withPrivateImports = isSuperChain)) return true
-        if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) {
-            // Foo::<Bar>::baz
+        if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
+            val shadowingProcessor = run {
+                // Self-qualified type paths `Self::Item` inside impl items are restricted to resolve
+                // to only members of the current impl or implemented trait or its parent traits
+                if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
+                    NameResolutionTestmarks.selfRelatedTypeSpecialCase.hit()
+                    val traits = base.implementedTrait?.flattenHierarchy
+                        ?.map { it.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+                        ?: return@run processor
+
+                    fun(e: AssocItemScopeEntry): Boolean {
+                        if (e.element !is RsTypeAlias) return processor(e)
+
+                        val implementedTrait = e.source.value.implementedTrait
+                            ?.foldTyTypeParameterWith { TyInfer.TyVar(it) }
+                            ?: return processor(e)
+
+                        val isAppropriateTrait = traits.any {
+                            lookup.ctx.probe { lookup.ctx.combineBoundElements(it, implementedTrait) }
+                        }
+                        return if (isAppropriateTrait) processor(e) else false
+                    }
+                } else {
+                    processor
+                }
+            }
             val selfTy = if (base is RsImplItem && qualifier.hasCself) {
                 // impl S { fn foo() { Self::bar() } }
                 base.typeReference?.type ?: TyUnknown
@@ -377,13 +401,12 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
                 }
                 base.declaredType.substitute(realSubst)
             }
-            val isSelf = qualifier.hasColonColon || !qualifier.hasCself
-            val selfSubst = if (isSelf && base !is RsTraitItem) {
+            val selfSubst = if (base !is RsTraitItem) {
                 mapOf(TyTypeParameter.self() to selfTy).toTypeSubst()
             } else {
                 emptySubstitution
             }
-            if (processAssociatedItemsWithSelfSubst(lookup, selfTy, ns, selfSubst, processor)) return true
+            if (processAssociatedItemsWithSelfSubst(lookup, selfTy, ns, selfSubst, shadowingProcessor)) return true
         }
         return false
     }
@@ -973,7 +996,7 @@ private fun processAssociatedItemsWithSelfSubst(
     type: Ty,
     ns: Set<Namespace>,
     selfSubst: Substitution,
-    processor: RsResolveProcessor
+    processor: (AssocItemScopeEntry) -> Boolean
 ): Boolean {
     return processAssociatedItems(lookup, type, ns) {
         processor(it.copy(subst = it.subst + selfSubst))
@@ -1205,6 +1228,7 @@ object NameResolutionTestmarks {
     val modRsFile = Testmark("modRsFile")
     val modDeclExplicitPathInInlineModule = Testmark("modDeclExplicitPathInInlineModule")
     val modDeclExplicitPathInNonInlineModule = Testmark("modDeclExplicitPathInNonInlineModule")
+    val selfRelatedTypeSpecialCase = Testmark("selfRelatedTypeSpecialCase")
 }
 
 private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)
