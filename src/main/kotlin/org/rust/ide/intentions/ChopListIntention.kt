@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.RsValueParameterList
 import org.rust.lang.core.psi.ext.RsElement
@@ -56,4 +58,10 @@ class ChopParameterListIntention : ChopListIntentionBase<RsValueParameterList, R
     RsValueParameterList::class.java,
     RsValueParameter::class.java,
     "Put parameters on separate lines"
+)
+
+class ChopArgumentListIntention : ChopListIntentionBase<RsValueArgumentList, RsExpr>(
+    RsValueArgumentList::class.java,
+    RsExpr::class.java,
+    "Put arguments on separate lines"
 )
