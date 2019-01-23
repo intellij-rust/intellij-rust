@@ -8,6 +8,8 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.RsValueParameter
 import org.rust.lang.core.psi.RsValueParameterList
 import org.rust.lang.core.psi.ext.RsElement
@@ -44,4 +46,10 @@ class JoinParameterListIntention : JoinListIntentionBase<RsValueParameterList, R
     RsValueParameterList::class.java,
     RsValueParameter::class.java,
     "Put parameters on one line"
+)
+
+class JoinArgumentListIntention : JoinListIntentionBase<RsValueArgumentList, RsExpr>(
+    RsValueArgumentList::class.java,
+    RsExpr::class.java,
+    "Put arguments on one line"
 )
