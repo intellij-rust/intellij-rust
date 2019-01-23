@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
+import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.lang.RsFileType
@@ -370,8 +371,11 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
 
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
 
-private fun RsTypeReference.substAndGetText(subst: Substitution): String =
-    type.substitute(subst).insertionSafeTextWithLifetimes
+private fun RsTypeReference.substAndGetText(subst: Substitution): String {
+    val substitutedType = type.substitute(subst)
+    val hasLifetime = refLikeType?.lifetime != null
+    return if (hasLifetime) substitutedType.insertionSafeTextWithLifetimes else substitutedType.insertionSafeText
+}
 
 private fun RsSelfParameter.substAndGetText(subst: Substitution): String =
     buildString {

@@ -8,7 +8,9 @@ package org.rust.ide.refactoring.implementMembers
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.annotator.RsAnnotatorBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
@@ -646,6 +648,27 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
 
             fn baz() {}
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test Debug implementation`() = doTest("""
+        use std::fmt::Debug;
+
+        struct DebugImpl {}
+
+        impl Debug for DebugImpl {
+            /*caret*/
+        }
+    """, listOf(ImplementMemberSelection("fmt(&self, f: &mut Formatter) -> Result", true, isSelected = true)), """
+        use std::fmt::Debug;
+
+        struct DebugImpl {}
+
+        impl Debug for DebugImpl {
+            fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+                unimplemented!()
+            }
         }
     """)
 
