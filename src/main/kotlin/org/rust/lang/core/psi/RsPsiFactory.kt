@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
+import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.lang.RsFileType
@@ -82,7 +83,7 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createStructLiteral(name: String): RsStructLiteral =
-        createExpressionOfType<RsStructLiteral>("$name { }")
+        createExpressionOfType("$name { }")
 
     fun createStructLiteralField(name: String, value: RsExpr? = null): RsStructLiteralField {
         val structLiteralField = createExpressionOfType<RsStructLiteral>("S { $name: () }")
@@ -124,7 +125,7 @@ class RsPsiFactory(private val project: Project) {
     fun createMethodParam(text: String): PsiElement {
         val fnItem: RsFunction = createTraitMethodMember("fn foo($text);")
         return fnItem.selfParameter ?: fnItem.valueParameters.firstOrNull()
-            ?: error("Failed to create method param from text: `$text`")
+        ?: error("Failed to create method param from text: `$text`")
     }
 
     fun createReferenceType(innerTypeText: String, mutable: Boolean): RsRefLikeType =
@@ -155,24 +156,26 @@ class RsPsiFactory(private val project: Project) {
     }
 
     fun createMembers(members: Collection<RsAbstractable>, subst: Substitution = emptySubstitution): RsMembers {
-        val body = members.joinToString(separator = "\n", transform = { when (it) {
-            is RsConstant ->
-                "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
-            is RsTypeAlias ->
-                "    type ${it.name} = ();"
-            is RsFunction ->
-                "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
-            else ->
-                error("Unknown trait member")
-        } })
+        val body = members.joinToString(separator = "\n", transform = {
+            when (it) {
+                is RsConstant ->
+                    "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
+                is RsTypeAlias ->
+                    "    type ${it.name} = ();"
+                is RsFunction ->
+                    "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
+                else ->
+                    error("Unknown trait member")
+            }
+        })
 
         val text = "impl T for S {$body}"
         return createFromText(text) ?: error("Failed to create an impl from text: `$text`")
     }
 
     fun createTraitMethodMember(text: String): RsFunction {
-        val members: RsMembers = createFromText("trait Foo { $text }") ?:
-            error("Failed to create an method member from text: `$text`")
+        val members: RsMembers = createFromText("trait Foo { $text }")
+            ?: error("Failed to create an method member from text: `$text`")
         return members.functionList.first()
     }
 
@@ -264,8 +267,8 @@ class RsPsiFactory(private val project: Project) {
         createFromText<RsConstant>("const C: () = ();")!!.colon!!
 
     fun createIn(): PsiElement =
-        createFromText<RsConstant>("pub(in self) const C: () = ();")?.vis?.visRestriction?.`in` ?:
-            error("Failed to create `in` element")
+        createFromText<RsConstant>("pub(in self) const C: () = ();")?.vis?.visRestriction?.`in`
+            ?: error("Failed to create `in` element")
 
     fun createNewline(): PsiElement = createWhitespace("\n")
 
@@ -279,11 +282,11 @@ class RsPsiFactory(private val project: Project) {
     fun createFunction(
         config: RsExtractFunctionConfig
     ): RsFunction =
-        createFromText<RsFunction>(config.signature)
+        createFromText(config.signature)
             ?: error("Failed to create function element: ${config.name}")
 
     fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
-        createFromText<RsImplItem>("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
+        createFromText("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
             ?: error("Failed to create RsImplItem element")
 
     fun createSimpleValueParameterList(name: String, type: RsTypeReference): RsValueParameterList {
@@ -368,8 +371,11 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
 
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
 
-private fun RsTypeReference.substAndGetText(subst: Substitution): String =
-    type.substitute(subst).insertionSafeTextWithLifetimes
+private fun RsTypeReference.substAndGetText(subst: Substitution): String {
+    val substitutedType = type.substitute(subst)
+    val hasLifetime = refLikeType?.lifetime != null
+    return if (hasLifetime) substitutedType.insertionSafeTextWithLifetimes else substitutedType.insertionSafeText
+}
 
 private fun RsSelfParameter.substAndGetText(subst: Substitution): String =
     buildString {
