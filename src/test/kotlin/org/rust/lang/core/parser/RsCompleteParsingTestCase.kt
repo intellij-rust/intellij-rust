@@ -20,6 +20,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test attributes`() = doTest(true)
     fun `test traits`() = doTest(true)
     fun `test macros`() = doTest(true)
+    fun `test macros 2`() = doTest(true)
     fun `test impls`() = doTest(true)
     fun `test ranges`() = doTest(true)
     fun `test extern crates`() = doTest(true)
