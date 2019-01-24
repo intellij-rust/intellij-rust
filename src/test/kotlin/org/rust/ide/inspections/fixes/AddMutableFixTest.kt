@@ -216,6 +216,26 @@ class AddMutableFixTest : RsMultipleInspectionsTestBase(
         }
     """)
 
+    fun `test fix E0594 assign to immutable reference`() = checkFixByText("Make `s` mutable", """
+        struct S { a: i32 }
+        fn foo(s: &S) {
+            <error>s.a/*caret*/ = 42</error>;
+        }
+    """, """
+        struct S { a: i32 }
+        fn foo(s: &mut S) {
+            s.a = 42;
+        }
+    """)
+
+    fun `test fix E0594 assign to immutable reference with ref keyword`() = checkFixIsUnavailable("Make `s` mutable", """
+        struct S { a: i32 }
+
+        fn foo(ref s: &S) {
+            <error>s.a/*caret*/ = 42</error>;
+        }
+    """)
+
     fun `test add mutable fix to parameter with lifetime`() = checkFixByText("Make `obj` mutable", """
         struct A {}
 
