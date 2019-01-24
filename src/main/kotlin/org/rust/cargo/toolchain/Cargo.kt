@@ -14,7 +14,6 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
@@ -158,9 +157,6 @@ class Cargo(private val cargoExecutable: Path) {
 
             // Force colors
             val forceColors = colors
-                // Hey, wanna repeat https://github.com/rust-lang/cargo/pull/4162 for rustc,
-                // so that we can enable colors on windows?
-                && !SystemInfo.isWindows
                 && commandLine.command in COLOR_ACCEPTING_COMMANDS
                 && commandLine.additionalArguments.none { it.startsWith("--color") }
             if (forceColors) pre.add(0, "--color=always")

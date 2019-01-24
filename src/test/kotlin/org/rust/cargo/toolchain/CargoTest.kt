@@ -18,7 +18,7 @@ class CargoTest : RsTestBase() {
         cmd: /usr/bin/cargo run --color=always --bin parity -- --prune archive
         env: RUST_BACKTRACE=short, TERM=ansi
         """, """
-        cmd: C:/usr/bin/cargo.exe run --bin parity -- --prune archive
+        cmd: C:/usr/bin/cargo.exe run --color=always --bin parity -- --prune archive
         env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
@@ -56,7 +56,7 @@ class CargoTest : RsTestBase() {
         cmd: /usr/bin/cargo run --color=always --release -- foo
         env: RUST_BACKTRACE=short, TERM=ansi
         """, """
-        cmd: C:/usr/bin/cargo.exe run --release -- foo
+        cmd: C:/usr/bin/cargo.exe run --color=always --release -- foo
         env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
@@ -74,7 +74,7 @@ class CargoTest : RsTestBase() {
         cmd: /usr/bin/cargo +nightly run --color=always --release -- foo
         env: RUST_BACKTRACE=short, TERM=ansi
         """, """
-        cmd: C:/usr/bin/cargo.exe +nightly run --release -- foo
+        cmd: C:/usr/bin/cargo.exe +nightly run --color=always --release -- foo
         env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
