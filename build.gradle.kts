@@ -22,6 +22,12 @@ val CI = System.getenv("CI") != null
 
 val channel = prop("publishChannel")
 val platformVersion = prop("platformVersion")
+val baseIDE = prop("baseIDE")
+val baseVersion = when (baseIDE) {
+    "idea" -> prop("ideaVersion")
+    "clion" -> prop("clionVersion")
+    else -> error("Unexpected IDE name: `$baseIDE`")
+}
 
 val excludedJars = listOf(
     "java-api.jar",
@@ -31,7 +37,7 @@ val excludedJars = listOf(
 plugins {
     idea
     kotlin("jvm") version "1.3.11"
-    id("org.jetbrains.intellij") version "0.3.12"
+    id("org.jetbrains.intellij") version "0.4.2"
     id("org.jetbrains.grammarkit") version "2018.2.2"
     id("de.undercouch.download") version "3.4.3"
     id("net.saliman.properties") version "1.4.6"
@@ -64,11 +70,11 @@ allprojects {
     }
 
     intellij {
-        version = prop("ideaVersion")
+        version = baseVersion
         downloadSources = !CI
         updateSinceUntilBuild = true
         instrumentCode = false
-        ideaDependencyCachePath = file("deps").absolutePath
+        ideaDependencyCachePath = dependencyCachePath
 
         tasks.withType<PatchPluginXmlTask> {
             sinceBuild(prop("sinceBuild"))
@@ -132,6 +138,17 @@ allprojects {
     }
 }
 
+
+val Project.dependencyCachePath get(): String {
+    val cachePath = file("${rootProject.projectDir}/deps")
+    // If cache path doesn't exist, we need to create it manually
+    // because otherwise gradle-intellij-plugin will ignore it
+    if (!cachePath.exists()) {
+        cachePath.mkdirs()
+    }
+    return cachePath.absolutePath
+}
+
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
 val clionVersion = prop("clionVersion")
 val clionFullName = if (CI) "clion" else "clion-$clionVersion"
@@ -143,8 +160,13 @@ project(":") {
     version = "0.2.0.${prop("buildNumber")}$versionSuffix"
     intellij {
         pluginName = "intellij-rust"
-//        alternativeIdePath = "deps/clion-$clionVersion"
-        setPlugins(project(":intellij-toml"), "IntelliLang", "copyright")
+        if (baseIDE == "idea") {
+            setPlugins(project(":intellij-toml"), "IntelliLang", "copyright")
+        } else {
+            // BACKCOMPAT: 2018.3
+            // Add `IntelliLang` to plugin list because it is bundled in CLion since 191
+            setPlugins(project(":intellij-toml"))
+        }
     }
 
     val testOutput = configurations.create("testOutput")
@@ -154,6 +176,8 @@ project(":") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
+        // FIXME: hack to correctly run tests with CLion
+        testCompile(project(":debugger"))
         testOutput(sourceSets.getByName("test").output)
     }
 
@@ -179,26 +203,10 @@ project(":") {
         purgeOldFiles = true
     }
 
-    val downloadClion = task<Download>("downloadClion") {
-        onlyIf { !file("${project.projectDir}/deps/clion-$clionVersion.tar.gz").exists() }
-        src("https://download.jetbrains.com/cpp/CLion-$clionVersion.tar.gz")
-        dest(file("${project.projectDir}/deps/clion-$clionVersion.tar.gz"))
-    }
-
-    val unpackClion = task<Copy>("unpackClion") {
-        onlyIf { !file("${project.projectDir}/deps/$clionFullName").exists() }
-        from(tarTree("deps/clion-$clionVersion.tar.gz"))
-        into(file("${project.projectDir}/deps"))
-        doLast {
-            file("${project.projectDir}/deps/clion-$clionVersion").renameTo(file("${project.projectDir}/deps/$clionFullName"))
-        }
-        dependsOn(downloadClion)
-    }
-
     tasks.withType<KotlinCompile> {
         dependsOn(
             generateRustLexer, generateRustDocHighlightingLexer,
-            generateRustParser, unpackClion
+            generateRustParser
         )
     }
 
@@ -209,7 +217,6 @@ project(":") {
     }
 
     task("resolveDependencies") {
-        dependsOn(unpackClion)
         doLast {
             rootProject.allprojects
                 .map { it.configurations }
@@ -248,6 +255,9 @@ project(":") {
 }
 
 project(":idea") {
+    intellij {
+        version = prop("ideaVersion")
+    }
     dependencies {
         compile(project(":"))
         testCompile(project(":", "testOutput"))
@@ -255,9 +265,11 @@ project(":idea") {
 }
 
 project(":debugger") {
+    intellij {
+        version = prop("clionVersion")
+    }
     dependencies {
         compile(project(":"))
-        compileOnly(files("${rootProject.projectDir}/deps/$clionFullName/lib/clion.jar"))
         testCompile(project(":", "testOutput"))
     }
 }
@@ -274,6 +286,9 @@ project(":toml") {
 
 project(":intelliLang") {
     intellij {
+        // BACKCOMPAT: 2018.3
+        // use `baseVersion` because `IntelliLang` is bundled in CLion since 191
+        version = prop("ideaVersion")
         setPlugins("IntelliLang")
     }
     dependencies {
@@ -284,6 +299,7 @@ project(":intelliLang") {
 
 project(":copyright") {
     intellij {
+        version = prop("ideaVersion")
         setPlugins("copyright")
     }
     dependencies {
