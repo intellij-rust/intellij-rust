@@ -23,4 +23,12 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
     fun `test generic type with not inferred type`() = doUnavailableTest(
         """struct A<T>(T);fn main() { let var/*caret*/ = A(a); } """
     )
+
+    fun `test anon type`() = doUnavailableTest("""
+        trait T {}
+        fn foo() -> impl T { unimplemented!() }
+        fn main() {
+            let var/*caret*/ = foo();
+        }
+    """)
 }
