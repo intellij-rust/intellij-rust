@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAnon
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -32,7 +33,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         }
         val ident = letDecl.pat as? RsPatIdent ?: return null
         val type = ident.patBinding.type
-        if (type.containsTyOfClass(listOf(TyUnknown::class.java, TyInfer::class.java))) {
+        if (type.containsTyOfClass(listOf(TyUnknown::class.java, TyInfer::class.java, TyAnon::class.java))) {
             return null
         }
         return Context(type, letDecl)
