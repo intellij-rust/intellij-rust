@@ -57,7 +57,7 @@ class RsInlineMethodHandler: InlineActionHandler() {
             return
         }
 
-        val dialog = RsInlineMethodDialog(function, reference as RsReference, allowInlineThisOnly)
+        val dialog = RsInlineMethodDialog(function, reference as RsReference?, allowInlineThisOnly)
         if (/*withPrompt && */!ApplicationManager.getApplication().isUnitTestMode && dialog.shouldBeShown()) {
             dialog.show()
             if (!dialog.isOK) {

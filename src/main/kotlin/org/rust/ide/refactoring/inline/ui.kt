@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.inline.InlineOptionsDialog
+import com.intellij.refactoring.inline.InlineOptionsWithSearchSettingsDialog
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.psi.ext.declaration
@@ -16,9 +17,9 @@ class RsInlineMethodDialog constructor(
     private val refElement: RsReference?,
     private val allowInlineThisOnly: Boolean,
     project: Project = function.project,
-    private val occurrencesNumber: Int
-    = initOccurrencesNumber(function.descendantsOfType<RsNameIdentifierOwner>().first())
-) : InlineOptionsDialog(project, true, function) {
+    private val occurrencesNumber: Int =
+        initOccurrencesNumber(function)
+) : InlineOptionsWithSearchSettingsDialog(project, true, function) {
 
     public override fun doAction() {
         invokeRefactoring(RsInlineMethodProcessor(
@@ -59,6 +60,30 @@ class RsInlineMethodDialog constructor(
 
     override fun getInlineThisText(): String =
         RefactoringBundle.message("this.invocation.only.and.keep.the.method")
+
+    override fun getKeepTheDeclarationText(): String =
+        RefactoringBundle.message("all.invocations.keep.the.method")
+
+    override fun getHelpId(): String =
+        "refactoring.inlineMethod"
+
+
+    private var searchInCommentsAndStrings = true
+    private var searchInTextOccurrences = true
+
+    override fun isSearchInCommentsAndStrings() =
+        searchInCommentsAndStrings
+
+    override fun saveSearchInCommentsAndStrings(searchInComments: Boolean) {
+        this.searchInCommentsAndStrings = searchInCommentsAndStrings
+    }
+
+    override fun isSearchForTextOccurrences(): Boolean =
+        searchInTextOccurrences
+
+    override fun saveSearchInTextOccurrences(searchInTextOccurrences: Boolean) {
+        this.searchInTextOccurrences = searchInTextOccurrences
+    }
 
     init {
         title = borderTitle

@@ -20,8 +20,10 @@ import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.annotator.isMut
 import org.rust.ide.refactoring.introduceVariable.suggestedNames
+import org.rust.lang.core.cfg.ExitPoint
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.RsMethodCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.factory
 import org.rust.lang.core.types.type
@@ -46,11 +48,14 @@ class RsInlineMethodProcessor(
             usages.addAll(ReferencesSearch.search(function, projectScope).findAll())
         }
 
-        val usagesAsReference = usages.filter {it.element.ancestorOrSelf<RsPathExpr>() != null}
+        val usagesAsReference = usages.filter {
+                it.element.ancestorOrSelf<RsCallExpr>() == null
+                    && it.element.ancestorOrSelf<RsMethodCall>() == null
+            }
 
         if (!usagesAsReference.isEmpty() && removeDefinition) {
             throw IllegalArgumentException(
-                "Cannot remove function definition: function reference inline is not supported")
+                "Cannot remove function definition: function pointer inline is not supported")
         }
 
         usages.removeAll(usagesAsReference)
@@ -86,16 +91,14 @@ class RsInlineMethodProcessor(
 
     companion object {
         fun checkMultipleReturns(fn: RsFunction): Boolean {
-            var returnsCount = fn.descendantsOfType<RsRetExpr>()
-                .filter { it.ancestorStrict<RsFunction>() == fn }
-                .size
-
-            fn.block!!.expr?.let {
-                if (it !is RsRetExpr) {
-                    ++returnsCount
+            var entryCount = 0
+            val sink: (ExitPoint) -> Unit = {
+                if (it !is ExitPoint.TryExpr) {
+                    ++entryCount
                 }
             }
-            return returnsCount > 1
+            ExitPoint.process(fn, sink)
+            return entryCount > 1
         }
 
         fun checkRecursiveCall(fn: RsFunction) : Boolean {
@@ -131,7 +134,7 @@ class RsInlineMethodProcessor(
             else -> null
         } ?: return
 
-        if (funcArguments.size != callArguments.size) {
+        if (funcArguments.size > callArguments.size) {
             return // TODO: throw
         }
 
