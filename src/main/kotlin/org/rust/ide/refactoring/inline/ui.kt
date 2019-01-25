@@ -43,12 +43,14 @@ class RsInlineMethodDialog constructor(
 
     override fun getNameLabelText(): String {
         val occurrencesString =
-            if (occurrencesNumber < 0) ""
-            else
+            if (occurrencesNumber < 0) {
+                ""
+            } else {
                 buildString {
                     append("has $occurrencesNumber occurrence")
                     if (occurrencesNumber != 1) append("s")
                 }
+            }
         return RefactoringBundle.message(
             "inline.method.method.label",
             function.declaration,
@@ -56,8 +58,12 @@ class RsInlineMethodDialog constructor(
     }
 
     override fun getInlineAllText(): String {
-        val text = if (function.isWritable && !allowInlineThisOnly) "all.invocations.and.remove.the.method"
-                    else "all.invocations.in.project"
+        val text =
+            if (function.isWritable && !allowInlineThisOnly) {
+                "all.invocations.and.remove.the.method"
+            } else  {
+                "all.invocations.in.project"
+            }
         return RefactoringBundle.message(text)
     }
 
@@ -67,7 +73,11 @@ class RsInlineMethodDialog constructor(
         RefactoringBundle.message("this.invocation.only.and.keep.the.method")
 
     override fun getKeepTheDeclarationText(): String =
-        RefactoringBundle.message("all.invocations.keep.the.method")
+        if (function.isWritable) {
+            RefactoringBundle.message("all.invocations.keep.the.method")
+        } else {
+            super.getKeepTheDeclarationText()
+        }
 
     override fun getHelpId(): String =
         "refactoring.inlineMethod"
@@ -80,7 +90,7 @@ class RsInlineMethodDialog constructor(
         searchInCommentsAndStrings
 
     override fun saveSearchInCommentsAndStrings(searchInComments: Boolean) {
-        this.searchInCommentsAndStrings = searchInCommentsAndStrings
+        searchInCommentsAndStrings = searchInComments
     }
 
     override fun isSearchForTextOccurrences(): Boolean =
@@ -108,6 +118,7 @@ class RsInlineMethodDialog constructor(
 
             override fun getDoNotShowMessage() = "Do not show in future"
         })
+
         init()
     }
 }
