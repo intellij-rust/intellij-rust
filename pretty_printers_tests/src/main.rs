@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate serde_derive;
 extern crate test_runner;
 extern crate toml;
 
@@ -14,10 +16,33 @@ const SETTINGS: &str = "Settings_macos.toml";
 #[cfg(all(not(target_os = "linux"), not(target_os = "macos")))]
 panic!("Unsupported platform");
 
+#[derive(Deserialize)]
+struct Settings {
+    test_dir: String,
+    pretty_printers_path: String,
+    lldb_batchmode: String,
+    lldb_lookup: String,
+    python: String,
+    print_lldb_stdout: bool,
+    lldb_native_rust: bool,
+}
 
+/// Expects `lldb_python` path as the first argument
 fn main() -> Result<(), ()> {
+    let args: Vec<String> = std::env::args().collect();
+    let lldb_python = args.get(1).expect("You need to pass a path to `lldb_python`").clone();
     let settings = fs::read_to_string(SETTINGS).expect(&format!("Cannot read {}", SETTINGS));
-    let lldb_config: LLDBConfig = toml::from_str(&settings).expect(&format!("Invalid {}", SETTINGS));
+    let settings: Settings = toml::from_str(&settings).expect(&format!("Invalid {}", SETTINGS));
+    let lldb_config = LLDBConfig {
+        test_dir: settings.test_dir,
+        pretty_printers_path: settings.pretty_printers_path,
+        lldb_batchmode: settings.lldb_batchmode,
+        lldb_lookup: settings.lldb_lookup,
+        lldb_python,
+        python: settings.python,
+        print_lldb_stdout: settings.print_lldb_stdout,
+        lldb_native_rust: settings.lldb_native_rust
+    };
 
     let src_dir = Path::new(&lldb_config.test_dir);
     let src_paths: Vec<_> = read_dir(src_dir)
