@@ -1344,4 +1344,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         fn foo<A: <error descr="Expected trait, found struct `S` [E0404]">S</error>>() {}
         impl Trait for S {}
     """)
+
+    @MockRustcVersion("1.21.0")
+    fun `test yield syntax feature E0658 1`() = checkErrors("""
+        fn main() {
+            let mut generator = || {
+                <error descr="`yield` syntax is experimental [E0658]">yield</error> 1;
+                return "foo"
+            };
+        }
+    """)
+
+    @MockRustcVersion("1.21.0-nightly")
+    fun `test yield syntax feature E0658 2`() = checkErrors("""
+        #![feature(generators)]
+
+        fn main() {
+            let mut generator = || {
+                yield 1;
+                return "foo"
+            };
+        }
+    """)
 }
