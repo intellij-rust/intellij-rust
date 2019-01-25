@@ -43,7 +43,7 @@ FILE
           RsBlockExprImpl(BLOCK_EXPR)
             RsBlockImpl(BLOCK)
               PsiElement({)('{')
-              PsiErrorElement:<constant>, <enum item>, <extern crate item>, <foreign mod item>, <function>, <impl item>, <macro call>, <macro>, <mod decl item>, <mod item>, <stmt mode expr>, <stmt>, <struct item>, <trait item>, <type alias> or <use item> expected, got 'mut'
+              PsiErrorElement:<constant>, <enum item>, <extern crate item>, <foreign mod item>, <function>, <impl item>, <macro 2>, <macro call>, <macro>, <mod decl item>, <mod item>, <stmt mode expr>, <stmt>, <struct item>, <trait item>, <type alias> or <use item> expected, got 'mut'
                 PsiElement(mut)('mut')
               PsiWhiteSpace(' ')
               RsCastExprImpl(CAST_EXPR)

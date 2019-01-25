@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 152
+        override fun getStubVersion(): Int = 153
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -134,6 +134,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "RET_TYPE" -> RsPlaceholderStub.Type("RET_TYPE", ::RsRetTypeImpl)
 
     "MACRO" -> RsMacroStub.Type
+    "MACRO_2" -> RsMacro2Stub.Type
     "MACRO_CALL" -> RsMacroCallStub.Type
 
     "INNER_ATTR" -> RsInnerAttrStub.Type
@@ -1020,6 +1021,39 @@ class RsMacroStub(
             RsMacroStub(parentStub, this, psi.name, psi.macroBody?.text)
 
         override fun indexStub(stub: RsMacroStub, sink: IndexSink) = sink.indexMacro(stub)
+    }
+}
+
+class RsMacro2Stub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?,
+    override val isPublic: Boolean
+) : StubBase<RsMacro2>(parent, elementType),
+    RsNamedStub,
+    RsVisibilityStub {
+
+    object Type : RsStubElementType<RsMacro2Stub, RsMacro2>("MACRO_2") {
+        override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent is RsMod
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsMacro2Stub(parentStub, this,
+                dataStream.readNameAsString(),
+                dataStream.readBoolean()
+            )
+
+        override fun serialize(stub: RsMacro2Stub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+                writeBoolean(stub.isPublic)
+            }
+
+        override fun createPsi(stub: RsMacro2Stub): RsMacro2 =
+            RsMacro2Impl(stub, this)
+
+        override fun createStub(psi: RsMacro2, parentStub: StubElement<*>?) =
+            RsMacro2Stub(parentStub, this, psi.name, psi.isPublic)
+
+        override fun indexStub(stub: RsMacro2Stub, sink: IndexSink) = sink.indexMacroDef(stub)
     }
 }
 

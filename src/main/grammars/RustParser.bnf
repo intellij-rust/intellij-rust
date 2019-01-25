@@ -266,6 +266,7 @@ private Item ::= Constant
                | UseItem
                | ExternCrateItem
                | Macro
+               | Macro2
                | MacroCall
 
 private Item_with_recover ::= !('}' | <<eof>>) Item {
@@ -273,7 +274,7 @@ private Item_with_recover ::= !('}' | <<eof>>) Item {
   recoverWhile = Item_recover
 }
 private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
-  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async"
+  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async" | MACRO_KW
 private Item_recover ::= !('}' | Item_first )
 
 private Items ::= Item_with_recover*
@@ -1200,7 +1201,19 @@ MacroReference ::= '$' MetaVarIdentifier {
 MacroExpansionReferenceGroup ::= '$' '(' MacroExpansionContents ')' MacroExpansionGroupSeparator? ('*' | '+' | '?') { pin = 2 }
 MacroExpansionGroupSeparator ::= <<macroBindingGroupSeparatorToken>>
 
+Macro2 ::= AttrsAndVis MACRO_KW identifier ( Macro2FunctionLikeBody | Macro2MatchLikeBody ) {
+  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
+  extends = "org.rust.lang.core.psi.ext.RsMacro2ImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsMacro2Stub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
+  pin = 2
+}
 
+private Macro2FunctionLikeBody ::= '(' MacroPatternContents ')' '{' MacroExpansionContents '}'
+private Macro2MatchLikeBody ::= '{' MacroCase ';'? '}'
 
 MacroCall ::= MacroHead <<macroSemicolon>> {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"

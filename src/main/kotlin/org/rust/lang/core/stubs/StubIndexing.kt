@@ -75,6 +75,10 @@ fun IndexSink.indexMacro(stub: RsMacroStub) {
     RsMacroIndex.index(stub, this)
 }
 
+fun IndexSink.indexMacroDef(stub: RsMacro2Stub) {
+    indexNamedStub(stub)
+}
+
 fun IndexSink.indexUseSpeck(stub: RsUseSpeckStub) {
     RsReexportIndex.index(stub, this)
 }
