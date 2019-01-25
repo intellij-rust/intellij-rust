@@ -18,12 +18,9 @@ import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
-import org.rust.lang.core.CRATE_IN_PATHS
-import org.rust.lang.core.CRATE_VISIBILITY_MODIFIER
-import org.rust.lang.core.CompilerFeature
+import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
 import org.rust.lang.core.FeatureAvailability.NOT_AVAILABLE
-import org.rust.lang.core.NON_MODRS_MODS
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
@@ -68,6 +65,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitBinaryExpr(o: RsBinaryExpr) = checkBinary(holder, o)
             override fun visitExternCrateItem(o: RsExternCrateItem) = checkExternCrate(holder, o)
             override fun visitDotExpr(o: RsDotExpr) = checkDotExpr(holder, o)
+            override fun visitYieldExpr(o: RsYieldExpr) = checkYieldExpr(holder, o)
             override fun visitArrayType(o: RsArrayType) = collectDiagnostics(holder, o)
             override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(holder, o)
             override fun visitPolybound(o: RsPolybound) = checkPolybound(holder, o)
@@ -87,6 +85,10 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     private fun checkDotExpr(holder: AnnotationHolder, o: RsDotExpr) {
         val field = o.fieldLookup ?: o.methodCall ?: return
         checkReferenceIsPublic(field, o, holder)
+    }
+
+    private fun checkYieldExpr(holder: AnnotationHolder, o: RsYieldExpr) {
+        checkFeature(holder, o.yield, GENERATORS, "`yield` syntax")
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
