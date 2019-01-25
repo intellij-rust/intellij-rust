@@ -10,6 +10,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -121,9 +122,13 @@ class RsInlineMethodProcessor(
 
     private fun inlineWithLetBindingsAdded(ref: RsReference, function: RsFunction) {
         val functionDup = function.copy() as RsFunction
-        val body = functionDup.block!!
+        val body = functionDup.block ?: return
         replaceLastExprToStatement(body)
         val enclosingStatement = ref.element.ancestorOrSelf<RsStmt>() ?: return
+        if (!enclosingStatement.isWritable) {
+            return
+        }
+
         val caller = ref.element.ancestors
             .filter{it is RsCallExpr || it is RsDotExpr }.firstOrNull() ?: return
 
@@ -214,6 +219,10 @@ class RsInlineMethodProcessor(
 
         enclosingStatement.addLeftSibling(body)
         enclosingStatement.addLeftSibling(factory.createNewline())
+
+        enclosingStatement.ancestorOrSelf<RsBlock>()?.let {
+            it.replace(CodeStyleManager.getInstance(project).reformat(it))
+        }
 
         if (enclosingStatement.descendantsOfType<RsExpr>().isEmpty()) {
             enclosingStatement.delete()
