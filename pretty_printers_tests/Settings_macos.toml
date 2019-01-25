@@ -2,9 +2,6 @@ test_dir = "./tests"
 pretty_printers_path = "./../prettyPrinters/"
 lldb_batchmode = "./lldb_batchmode.py"
 lldb_lookup = "lookup"
-# BACKCOMPAT: 2018.2
-# Use `lldb` Python module from CLion distribution if it is possible
-lldb_python = "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
 python = "python"
 print_lldb_stdout = true
 lldb_native_rust = false

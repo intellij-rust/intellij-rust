@@ -17,15 +17,18 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.file.Path
 import kotlin.concurrent.thread
+import org.apache.tools.ant.taskdefs.condition.Os.*
 
 val CI = System.getenv("CI") != null
 
 val channel = prop("publishChannel")
 val platformVersion = prop("platformVersion")
 val baseIDE = prop("baseIDE")
+val ideaVersion = prop("ideaVersion")
+val clionVersion = prop("clionVersion")
 val baseVersion = when (baseIDE) {
-    "idea" -> prop("ideaVersion")
-    "clion" -> prop("clionVersion")
+    "idea" -> ideaVersion
+    "clion" -> clionVersion
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
@@ -150,8 +153,6 @@ val Project.dependencyCachePath get(): String {
 }
 
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
-val clionVersion = prop("clionVersion")
-val clionFullName = if (CI) "clion" else "clion-$clionVersion"
 
 val rustProjects = rootProject.subprojects.filter { it.name != "intellij-toml" }
 
@@ -256,7 +257,7 @@ project(":") {
 
 project(":idea") {
     intellij {
-        version = prop("ideaVersion")
+        version = ideaVersion
     }
     dependencies {
         compile(project(":"))
@@ -266,7 +267,7 @@ project(":idea") {
 
 project(":debugger") {
     intellij {
-        version = prop("clionVersion")
+        version = clionVersion
     }
     dependencies {
         compile(project(":"))
@@ -288,7 +289,7 @@ project(":intelliLang") {
     intellij {
         // BACKCOMPAT: 2018.3
         // use `baseVersion` because `IntelliLang` is bundled in CLion since 191
-        version = prop("ideaVersion")
+        version = ideaVersion
         setPlugins("IntelliLang")
     }
     dependencies {
@@ -299,7 +300,7 @@ project(":intelliLang") {
 
 project(":copyright") {
     intellij {
-        version = prop("ideaVersion")
+        version = ideaVersion
         setPlugins("copyright")
     }
     dependencies {
@@ -328,6 +329,18 @@ project(":intellij-toml") {
 
     tasks.withType<KotlinCompile> {
         dependsOn(generateTomlLexer, generateTomlParser)
+    }
+}
+
+task("runPrettyPrintersTests") {
+    doLast {
+        val lldbPath = when {
+            // TODO: Use `lldb` Python module from CLion distribution
+            isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
+            isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.6/site-packages"
+            else -> error("Unsupported OS")
+        }
+        "cargo run --package pretty_printers_test --bin pretty_printers_test -- $lldbPath".execute("pretty_printers_tests")
     }
 }
 
