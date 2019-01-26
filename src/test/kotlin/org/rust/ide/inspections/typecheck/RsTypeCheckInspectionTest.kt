@@ -210,4 +210,13 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
             fn foo() -> Self::Item { <error>0</error> }
         }
     """)
+
+    fun `test type mismatch E0308 yield expr`() = checkByText("""
+        fn main() {
+            || {
+                yield 0;
+                yield <error>"string"</error>;
+            };
+        }
+    """)
 }

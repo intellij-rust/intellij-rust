@@ -110,6 +110,18 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test generator expr`() = testExpr("""
+        fn main() {
+            let x = || {
+                yield 1;
+                return "foo"
+            };
+            x;
+          //^ impl Generator<Yield=i32, Return=&str>
+        }
+    """)
+
     fun `test type parameters`() = testExpr("""
         fn foo<FOO>(foo: FOO) {
             let bar = foo;
