@@ -322,4 +322,20 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let s2 = s;
         }
     """, checkWarn = false)
+
+    /** Issue [#3270](https://github.com/intellij-rust/intellij-rust/issues/3270) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error E0382 if let`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let x: Option<S> = Some(S);
+
+            if let Some(s) = x {
+                Some(s)
+            } else {
+                x
+            };
+        }
+    """, checkWarn = false)
 }

@@ -18,8 +18,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         Entry
         BLOCK
         Exit
-    """
-    )
+    """)
 
     fun `test straightforward`() = testCFG("""
         fn main() {
@@ -77,8 +76,75 @@ class RsControlFlowGraphTest : RsTestBase() {
         y += x;
         BLOCK
         Exit
-    """
-    )
+    """)
+
+    fun `test if`() = testCFG("""
+        fn foo() {
+            if true { 1 };
+        }
+    """, """
+        Entry
+        true
+        1
+        BLOCK
+        IF
+        IF;
+        BLOCK
+        Exit
+    """)
+
+    fun `test if else`() = testCFG("""
+        fn foo() {
+            if true { 1 } else { 2 };
+        }
+    """, """
+        Entry
+        true
+        1
+        BLOCK
+        IF
+        IF;
+        BLOCK
+        Exit
+        2
+        BLOCK
+    """)
+
+    fun `test if let`() = testCFG("""
+        fn foo() {
+            if let Some(s) = x { 1 };
+        }
+    """, """
+        Entry
+        x
+        s
+        Some(s)
+        1
+        BLOCK
+        IF
+        IF;
+        BLOCK
+        Exit
+    """)
+
+    fun `test if let else`() = testCFG("""
+        fn foo() {
+            if let Some(s) = x { 1 } else { 2 };
+        }
+    """, """
+        Entry
+        x
+        s
+        Some(s)
+        1
+        BLOCK
+        IF
+        IF;
+        BLOCK
+        Exit
+        2
+        BLOCK
+    """)
 
     fun `test if else with unreachable`() = testCFG("""
         fn main() {
@@ -101,8 +167,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         return
         Exit
         return
-    """
-    )
+    """)
 
     fun `test loop`() = testCFG("""
         fn main() {
@@ -119,8 +184,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x += 1
         x += 1;
         BLOCK
-    """
-    )
+    """)
 
     fun `test while`() = testCFG("""
         fn main() {
@@ -153,13 +217,12 @@ class RsControlFlowGraphTest : RsTestBase() {
         return
         IF
         BLOCK
-    """
-    )
+    """)
 
-    fun `test while with assign`() = testCFG("""
+    fun `test while let`() = testCFG("""
         fn main() {
             while let x = f() {
-                something;
+                1;
             }
         }
     """, """
@@ -167,15 +230,14 @@ class RsControlFlowGraphTest : RsTestBase() {
         Dummy
         f
         f()
-        x
         WHILE
         BLOCK
         Exit
-        something
-        something;
+        x
+        1
+        1;
         BLOCK
-    """
-    )
+    """)
 
     fun `test while with unreachable`() = testCFG("""
         fn main() {
@@ -218,8 +280,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x += 10
         x += 10;
         return
-    """
-    )
+    """)
 
     fun `test for`() = testCFG("""
         fn main() {
@@ -255,8 +316,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x += i
         x += i;
         BLOCK
-    """
-    )
+    """)
 
     fun `test match`() = testCFG("""
         enum E { A, B(i32), C }
@@ -299,8 +359,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         E::C
         Dummy
         4
-    """
-    )
+    """)
 
     fun `test match 1`() = testCFG("""
         enum E { A(i32), B }
@@ -339,8 +398,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         E::B
         Dummy
         return
-    """
-    )
+    """)
 
     fun `test try`() = testCFG("""
         fn main() {
@@ -360,8 +418,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         y
         y;
         BLOCK
-    """
-    )
+    """)
 
     fun `test patterns`() = testCFG("""
         struct S { data1: i32, data2: i32 }
@@ -403,8 +460,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         [0, 1 + a];
         BLOCK
         Exit
-    """
-    )
+    """)
 
     fun `test noreturn`() = testCFG("""
         fn main() {
@@ -426,10 +482,9 @@ class RsControlFlowGraphTest : RsTestBase() {
         42
         42;
         BLOCK
-    """
-    )
+    """)
 
-    protected fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
+    private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
         val block = myFixture.file.descendantsOfType<RsBlock>().firstOrNull() ?: return
         val cfg = ControlFlowGraph.buildFor(block)
