@@ -361,7 +361,7 @@ class RsInferenceContext(
                 combinePairs(ty1.typeArguments.zip(ty2.typeArguments))
             }
             ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> true
-            ty1 is TyAnon && ty2 is TyAnon && ty1.definition == ty2.definition -> true
+            ty1 is TyAnon && ty2 is TyAnon && ty1.definition != null && ty1.definition == ty2.definition -> true
             ty1 is TyNever || ty2 is TyNever -> true
             else -> false
         }
@@ -608,6 +608,7 @@ class RsFnInferenceContext(
     private val returnTy: Ty
 ) {
     private var tryTy: Ty? = returnTy
+    private var yieldTy: Ty? = null
     private val lookup get() = ctx.lookup
     private val items get() = ctx.items
     private val fulfill get() = ctx.fulfill
@@ -730,6 +731,7 @@ class RsFnInferenceContext(
             is RsIndexExpr -> inferIndexExprType(this)
             is RsMacroExpr -> inferMacroExprType(this)
             is RsLambdaExpr -> inferLambdaExprType(this, expected)
+            is RsYieldExpr -> inferYieldExprType(this)
             is RsRetExpr -> inferRetExprType(this)
             is RsBreakExpr -> inferBreakExprType(this)
             is RsContExpr -> TyNever
@@ -1618,10 +1620,17 @@ class RsFnInferenceContext(
         val isFreshRetTy = expectedRetTy == null
         val retTy = expectedRetTy ?: TyInfer.TyVar()
 
-        expr.expr?.let { RsFnInferenceContext(ctx, retTy).inferLambdaBody(it) }
-
+        val lambdaBodyContext = RsFnInferenceContext(ctx, retTy)
+        expr.expr?.let { lambdaBodyContext.inferLambdaBody(it) }
         val isDefaultRetTy = isFreshRetTy && retTy is TyInfer.TyVar && !ctx.isTypeVarAffected(retTy)
-        return TyFunction(paramTypes, if (isDefaultRetTy) TyUnit else retTy)
+        val actualRetTy = if (isDefaultRetTy) TyUnit else retTy
+
+        val yieldTy = lambdaBodyContext.yieldTy
+        return if (yieldTy == null) {
+            TyFunction(paramTypes, actualRetTy)
+        } else {
+            wrapToGenerator(yieldTy, actualRetTy, expr.knownItems)
+        }
     }
 
     private fun deduceLambdaType(expected: Ty): TyFunction? {
@@ -1668,6 +1677,16 @@ class RsFnInferenceContext(
         }
 
         return TyArray(elementType, size)
+    }
+
+    private fun inferYieldExprType(expr: RsYieldExpr): Ty {
+        val oldYieldTy = yieldTy
+        if (oldYieldTy == null) {
+            yieldTy = expr.expr?.inferType()
+        } else {
+            expr.expr?.inferTypeCoercableTo(oldYieldTy)
+        }
+        return TyUnit
     }
 
     private fun inferRetExprType(expr: RsRetExpr): Ty {
@@ -1760,6 +1779,14 @@ private val RsFunction.typeOfValue: TyFunction
 
         return TyFunction(paramTypes, returnType)
     }
+
+private fun wrapToGenerator(yieldTy: Ty, returnTy: Ty, knownItems: KnownItems): Ty {
+    val generatorTrait = knownItems.Generator ?: return TyUnknown
+    val boundGenerator = generatorTrait
+        .substAssocType("Yield", yieldTy)
+        .substAssocType("Return", returnTy)
+    return TyAnon(null, listOf(boundGenerator))
+}
 
 val RsGenericDeclaration.generics: List<TyTypeParameter>
     get() = typeParameters.map { TyTypeParameter.named(it) }

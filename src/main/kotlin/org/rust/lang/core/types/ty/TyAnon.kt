@@ -10,15 +10,29 @@ import org.rust.lang.core.psi.RsTraitType
 import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.isImpl
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
+import org.rust.lang.core.types.mergeFlags
 
 /**
  * Represents "impl Trait".
  */
-data class TyAnon(val definition: RsTraitType, val traits: List<BoundElement<RsTraitItem>>) : Ty() {
+data class TyAnon(
+    val definition: RsTraitType?,
+    val traits: List<BoundElement<RsTraitItem>>
+) : Ty(traits.fold(0) { acc, trait -> acc or mergeFlags(trait) }) {
 
     init {
-        check(definition.isImpl) { "Can't construct TyAnon from non `impl Trait` definition $definition" }
+        require(definition == null || definition.isImpl) {
+            "Can't construct TyAnon from non `impl Trait` definition $definition"
+        }
     }
+
+    override fun superFoldWith(folder: TypeFolder): Ty =
+        TyAnon(definition, traits.map { it.foldWith(folder) })
+
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
+        traits.any { it.visitWith(visitor) }
 
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         traits.flatMap { it.flattenHierarchy }
