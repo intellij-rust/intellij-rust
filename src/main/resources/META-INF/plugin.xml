@@ -507,6 +507,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.ExtractNestedBlockIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.AddDeriveIntention</className>
             <category>Rust</category>
         </intentionAction>
