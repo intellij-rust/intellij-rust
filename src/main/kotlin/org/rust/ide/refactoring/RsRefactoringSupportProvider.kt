@@ -12,9 +12,14 @@ import org.rust.ide.refactoring.extractFunction.RsExtractFunctionHandler
 import org.rust.ide.refactoring.introduceParameter.RsIntroduceParameterHandler
 import org.rust.ide.refactoring.introduceVariable.RsIntroduceVariableHandler
 import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 
 class RsRefactoringSupportProvider : RefactoringSupportProvider() {
-    override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = element is RsPatBinding
+    override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean =
+        element is RsPatBinding
+
+    override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean =
+        element is RsNameIdentifierOwner
 
     override fun getIntroduceVariableHandler(): RefactoringActionHandler = RsIntroduceVariableHandler()
 
