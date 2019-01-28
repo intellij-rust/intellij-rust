@@ -46,6 +46,8 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
             val lineNumber = doc.getLineNumber(el.textOffset)
             if (lineNumber !in lines) {
                 lines.add(lineNumber)
+                // BACKCOMPAT: 2018.3
+                @Suppress("DEPRECATION")
                 result.add(LineMarkerInfo(
                     el,
                     el.textRange,

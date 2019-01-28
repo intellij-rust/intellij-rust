@@ -10,11 +10,13 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 
+// BACKCOMPAT: 2018.3
+@Suppress("DEPRECATION")
 abstract class CargoRunConfigurationProducer
     : RunConfigurationProducer<CargoCommandConfiguration>(CargoCommandConfigurationType.getInstance()) {
-    public override fun setupConfigurationFromContext(
+    public abstract override fun setupConfigurationFromContext(
         configuration: CargoCommandConfiguration,
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
-    ): Boolean = TODO("not implemented")
+    ): Boolean
 }
