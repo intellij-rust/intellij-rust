@@ -7,12 +7,9 @@ package org.rust.ide.utils
 
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ArithmeticOp
-import org.rust.lang.core.psi.ext.LogicOp
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.LogicOp.AND
 import org.rust.lang.core.psi.ext.LogicOp.OR
-import org.rust.lang.core.psi.ext.UnaryOperator
-import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.psi.ext.EqualityOp.EQ
 import org.rust.lang.core.psi.ext.EqualityOp.EXCLEQ
 
@@ -235,10 +232,6 @@ fun RsExpr.skipParenExprUp(): RsExpr {
  *
  * @return a child expression without parentheses.
  */
-fun RsCondition.skipParenExprDown(): RsExpr {
-    var child = this.expr
-    while (child is RsParenExpr) {
-        child = child.expr
-    }
-    return child
-}
+fun RsCondition.skipParenExprDown(): RsExpr = this.expr.skipParenExprDown()
+
+fun RsExpr.skipParenExprDown(): RsExpr = unwrapParenExprs(this)

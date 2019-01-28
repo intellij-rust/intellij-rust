@@ -453,6 +453,11 @@
                          implementationClass="org.rust.ide.inspections.RsBorrowCheckerInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Constant condition"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsConstantConditionInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Field initialization shorthand"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsFieldInitShorthandInspection"/>
