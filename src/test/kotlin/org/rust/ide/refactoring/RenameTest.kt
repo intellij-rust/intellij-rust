@@ -271,6 +271,138 @@ class RenameTest : RsTestBase() {
         myFixture.renameElement(file, "bar.rs")
     }
 
+    fun `test base function`() = doTest("spam", """
+        struct S;
+        trait T {
+            fn foo/*caret*/();
+        }
+        impl T for S {
+            fn foo() {}
+        }
+    """, """
+        struct S;
+        trait T {
+            fn spam();
+        }
+        impl T for S {
+            fn spam() {}
+        }
+    """)
+
+    fun `test base const`() = doTest("SPAM", """
+        struct S;
+        trait T {
+            const A/*caret*/: i32;
+        }
+        impl T for S {
+            const A: i32 = 42;
+        }
+    """, """
+        struct S;
+        trait T {
+            const SPAM: i32;
+        }
+        impl T for S {
+            const SPAM: i32 = 42;
+        }
+    """)
+
+    fun `test base type alias`() = doTest("SPAM", """
+        struct S;
+        trait T {
+            type A/*caret*/;
+        }
+        impl T for S {
+            type A = ();
+        }
+    """, """
+        struct S;
+        trait T {
+            type SPAM;
+        }
+        impl T for S {
+            type SPAM = ();
+        }
+    """)
+
+    fun `test function implementation`() = doTest("spam", """
+        struct S1;
+        struct S2;
+        trait T {
+            fn foo();
+        }
+        impl T for S {
+            fn foo/*caret*/() {}
+        }
+        impl T for S {
+            fn foo() {}
+        }
+    """, """
+        struct S1;
+        struct S2;
+        trait T {
+            fn spam();
+        }
+        impl T for S {
+            fn spam() {}
+        }
+        impl T for S {
+            fn spam() {}
+        }
+    """)
+
+    fun `test const implementation`() = doTest("SPAM", """
+        struct S1;
+        struct S2;
+        trait T {
+            const A: i32;
+        }
+        impl T for S1 {
+            const A/*caret*/: i32 = 42;
+        }
+        impl T for S2 {
+            const A: i32 = 42;
+        }
+    """, """
+        struct S1;
+        struct S2;
+        trait T {
+            const SPAM: i32;
+        }
+        impl T for S1 {
+            const SPAM: i32 = 42;
+        }
+        impl T for S2 {
+            const SPAM: i32 = 42;
+        }
+    """)
+
+    fun `test type alias implementation`() = doTest("SPAM", """
+        struct S1;
+        struct S2;
+        trait T {
+            type A;
+        }
+        impl T for S1 {
+            type A/*caret*/ = ();
+        }
+        impl T for S2 {
+            type A = ();
+        }
+    """, """
+        struct S1;
+        struct S2;
+        trait T {
+            type SPAM;
+        }
+        impl T for S1 {
+            type SPAM = ();
+        }
+        impl T for S2 {
+            type SPAM = ();
+        }
+    """)
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,
