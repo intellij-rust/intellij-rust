@@ -11,7 +11,6 @@ import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
-import org.rust.ide.presentation.escaped
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.*
@@ -19,6 +18,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.escaped
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.joinToWithBuffer
 

@@ -79,7 +79,7 @@ object CargoTomlPsiPattern {
         cargoTomlPsiElement<TomlTable>()
             .withChild(
                 psiElement<TomlTableHeader>()
-                    .with("specificDependencyCondition") { header, context ->
+                    .with("specificDependencyCondition") { header, _ ->
                         val names = header.names
                         names.getOrNull(names.size - 2)?.isDependencyKey == true
                     }

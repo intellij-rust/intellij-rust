@@ -6,14 +6,13 @@
 package org.rust.ide.hints
 
 import com.intellij.lang.ExpressionTypeProvider
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.types.type
-
+import org.rust.openapiext.escaped
 
 class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
 
@@ -31,7 +30,6 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
             is RsPatBinding -> element.type
             else -> error("Unexpected element type: $element")
         }
-        return StringUtil.escapeXml(type.toString())
+        return type.toString().escaped
     }
-
 }

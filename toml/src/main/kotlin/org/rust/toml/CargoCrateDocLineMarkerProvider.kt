@@ -48,6 +48,8 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
         @Suppress("NAME_SHADOWING")
         val version = version ?: return null
         val anchor = element.bareKey
+        // BACKCOMPAT: 2018.3
+        @Suppress("DEPRECATION")
         return LineMarkerInfo(
             anchor,
             anchor.textRange,

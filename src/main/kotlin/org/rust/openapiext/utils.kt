@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -132,3 +133,7 @@ inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, default
 const val PLUGIN_ID: String = "org.rust.lang"
 
 fun plugin(): IdeaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(PLUGIN_ID))!!
+
+// BACKCOMPAT: 2018.3
+@Suppress("DEPRECATION")
+val String.escaped: String get() = StringUtil.escapeXml(this)
