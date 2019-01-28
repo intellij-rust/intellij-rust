@@ -619,12 +619,15 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo!(pub foo);
         foo!(pub(crate) bar);
         foo!(pub(in a::b) baz);
+        foo!(baz);
     """, """
         pub fn foo() {}
     """, """
         pub(crate) fn bar() {}
     """, """
         pub(in a::b) fn baz() {}
+    """, """
+        fn baz() {}
     """)
 
     fun `test expand lifetime matcher`() = doTest("""
