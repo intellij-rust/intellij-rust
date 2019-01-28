@@ -32,11 +32,6 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val excludedJars = listOf(
-    "java-api.jar",
-    "java-impl.jar"
-)
-
 plugins {
     idea
     kotlin("jvm") version "1.3.11"
@@ -118,11 +113,6 @@ allprojects {
     }
 
     afterEvaluate {
-        val mainSourceSet = sourceSets.getByName("main")
-        val mainClassPath = mainSourceSet.compileClasspath
-        val exclusion = mainClassPath.filter { it.name in excludedJars }
-        mainSourceSet.compileClasspath = mainClassPath - exclusion
-
         tasks.withType<AbstractTestTask> {
             testLogging {
                 if (hasProp("showTestStatus") && prop("showTestStatus").toBoolean()) {
