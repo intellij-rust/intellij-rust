@@ -74,6 +74,7 @@ class KnownItems(
     val ToOwned: RsTraitItem? get() = findTrait("alloc::borrow::ToOwned")
     val ToString: RsTraitItem? get() = findTrait("alloc::string::ToString")
     val Try: RsTraitItem? get() = findTrait("std::ops::Try")
+    val Generator: RsTraitItem? get() = findTrait("core::ops::Generator")
 
     // Lang items
 

@@ -64,6 +64,15 @@ val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlia
 fun RsTraitItem.findAssociatedType(name: String): RsTypeAlias? =
     associatedTypesTransitively.find { it.name == name }
 
+fun RsTraitItem.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> =
+    BoundElement(this).substAssocType(assocName, ty)
+
+fun BoundElement<RsTraitItem>.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> {
+    val assocType = element.findAssociatedType(assocName)
+    val assoc = if (assocType != null && ty != null) assoc + (assocType to ty) else assoc
+    return BoundElement(element, subst, assoc)
+}
+
 fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
     return ReferencesSearch.search(this, this.useScope)
         .mapQuery { it.element.parent?.parent }

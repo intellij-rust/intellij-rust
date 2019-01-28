@@ -789,15 +789,6 @@ private fun prepareSubstAndTraitRefRaw(
     return subst to TraitRef(formalSelfTy.substitute(subst), BoundElement(formalTrait.element, boundSubst))
 }
 
-private fun BoundElement<RsTraitItem>.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> {
-    val assocType = element.findAssociatedType(assocName)
-    val assoc = if (assocType != null && ty != null) mapOf(assocType to ty) else emptyMap()
-    return BoundElement(element, subst, assoc)
-}
-
-private fun RsTraitItem.substAssocType(assocName: String, ty: Ty?): BoundElement<RsTraitItem> =
-    BoundElement(this).substAssocType(assocName, ty)
-
 private fun lookupAssociatedType(impl: RsTraitOrImpl, name: String): Ty {
     return impl.associatedTypesTransitively
         .find { it.name == name }
