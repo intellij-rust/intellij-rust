@@ -195,7 +195,11 @@ class ImplLookup(
                 implsAndTraits += findSimpleImpls(ty).map { TraitImplSource.ExplicitImpl(it) }
                 implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
             }
-            is TyAnon -> ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
+            is TyAnon -> {
+                ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
+                RsImplIndex.findFreeImpls(project)
+                    .mapTo(implsAndTraits) { TraitImplSource.ExplicitImpl(it) }
+            }
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
@@ -422,9 +426,12 @@ class ImplLookup(
                     .map { SelectionCandidate.TypeParameter(it) }
                     .toList()
             }
-            ref.selfTy is TyAnon -> {
+            ref.selfTy is TyAnon -> buildList {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
-                    ?.let { listOf(SelectionCandidate.TraitObject) } ?: emptyList()
+                    ?.let { add(SelectionCandidate.TraitObject) }
+                RsImplIndex.findFreeImpls(project)
+                    .assembleImplCandidates(ref)
+                    .forEach(::add)
             }
             element.isAuto -> autoTraitCandidates(ref.selfTy, element)
             else -> buildList {
@@ -444,16 +451,20 @@ class ImplLookup(
 
     private fun assembleImplCandidates(ref: TraitRef): List<SelectionCandidate> {
         return RsImplIndex.findPotentialImpls(project, ref.selfTy)
-            .mapNotNull { impl ->
-                val formalTraitRef = impl.implementedTrait ?: return@mapNotNull null
-                if (formalTraitRef.element != ref.trait.element) return@mapNotNull null
-                val formalSelfTy = impl.typeReference?.type ?: return@mapNotNull null
-                val (_, implTraitRef) =
-                    prepareSubstAndTraitRefRaw(ctx, impl.generics, formalSelfTy, formalTraitRef, ref.selfTy)
-                if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return@mapNotNull null
-                SelectionCandidate.Impl(impl, formalSelfTy, formalTraitRef)
-            }.toList()
+            .assembleImplCandidates(ref)
+            .toList()
     }
+
+    private fun Sequence<RsImplItem>.assembleImplCandidates(ref: TraitRef): Sequence<SelectionCandidate> =
+        mapNotNull { impl ->
+            val formalTraitRef = impl.implementedTrait ?: return@mapNotNull null
+            if (formalTraitRef.element != ref.trait.element) return@mapNotNull null
+            val formalSelfTy = impl.typeReference?.type ?: return@mapNotNull null
+            val (_, implTraitRef) =
+                prepareSubstAndTraitRefRaw(ctx, impl.generics, formalSelfTy, formalTraitRef, ref.selfTy)
+            if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return@mapNotNull null
+            SelectionCandidate.Impl(impl, formalSelfTy, formalTraitRef)
+        }
 
     private fun assembleDerivedCandidates(ref: TraitRef): List<SelectionCandidate> {
         return (ref.selfTy as? TyAdt)?.item?.derivedTraits.orEmpty()
@@ -624,10 +635,10 @@ class ImplLookup(
         return when (selfTy) {
             is TyTypeParameter -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
             is TyTraitObject -> selfTy.trait.assoc[assocType]
-            is TyAnon -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively(), res.impl, assocType)
             else -> {
                 lookupAssocTypeInSelection(res, assocType)
                     ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy), res.impl, assocType)
+                    ?: (selfTy as? TyAnon)?.let { lookupAssocTypeInBounds(it.getTraitBoundsTransitively(), res.impl, assocType) }
             }
         }
     }

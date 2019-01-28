@@ -900,4 +900,15 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             //^ unresolved
         }
     """, TypeInferenceMarks.cyclicType)
+
+    fun `test resolve generic impl from impl trait`() = checkByCode("""
+        trait Foo {}
+        trait Bar { fn bar(&self) {} }
+                     //X
+        impl<T: Foo> Bar for T {}
+        fn foo() -> impl Foo { unimplemented!() }
+        fn main() {
+            foo().bar();
+        }       //^
+    """)
 }
