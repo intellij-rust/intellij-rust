@@ -7,7 +7,6 @@ package org.rust.ide.presentation
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.util.text.StringUtil
 import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -92,8 +91,6 @@ val RsDocAndAttributeOwner.presentableQualifiedName: String?
         if (this is RsMod) return modName
         return name
     }
-
-val String.escaped: String get() = StringUtil.escapeXml(this)
 
 fun breadcrumbName(e: RsElement): String? {
     fun lastComponentWithoutGenerics(path: RsPath) = path.referenceName
