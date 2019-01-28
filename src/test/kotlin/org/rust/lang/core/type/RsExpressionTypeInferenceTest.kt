@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.type
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test function call`() = testExpr("""
         struct S;
@@ -66,6 +69,44 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let x = {};
             x
           //^ ()
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try block expr (option)`() = testExpr("""
+        fn main() {
+            let x: Option<_> = try { 42 };
+            x;
+          //^ Option<i32>
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try block expr (result)`() = testExpr("""
+        fn main() {
+            let x: Result<_, _> = try { Err(())?; 42 };
+            x;
+          //^ Result<i32, ()>
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try block expr transitive (option)`() = testExpr("""
+        fn main() {
+            let x = try { 42 };
+            let y: Option<_> = x;
+            x;
+          //^ Option<i32>
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try block expr transitive (result)`() = testExpr("""
+        fn main() {
+            let x = try { Err(())?; 42 };
+            let y: Result<_, _> = x;
+            x;
+          //^ Result<i32, ()>
         }
     """)
 
