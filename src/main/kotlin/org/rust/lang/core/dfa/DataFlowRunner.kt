@@ -178,10 +178,25 @@ class DataFlowRunner(val function: RsFunction) {
         is RsLetDecl -> visitLetDeclNode(element, instruction)
         is RsBinaryExpr -> visitBinExpr(element, instruction)
         is RsBlock -> visitEndBlock(element, instruction)
+        is RsBreakExpr, is RsContExpr -> visitFlowInterrupt(instruction)
         is RsRetExpr -> {
+            // TODO: check expr
         }
         is RsExpr -> tryVisitControlFlow(element, instruction)
         else -> addNextInstruction(instruction)
+    }
+
+    private fun visitFlowInterrupt(instruction: DfaInstruction) {
+        val loopElement = instruction.node.firstOutEdge?.data?.exitingScopes?.first() ?: return
+        val block = with(loopElement) {
+            when (this) {
+                is RsWhileExpr -> block
+                is RsLoopExpr -> block
+                is RsForExpr -> block
+                else -> null
+            }
+        } ?: return
+        visitEndBlock(block, instruction)
     }
 
     private fun visitEndBlock(block: RsBlock, instruction: DfaInstruction) {
@@ -190,8 +205,9 @@ class DataFlowRunner(val function: RsFunction) {
     }
 
     private fun visitBinExpr(expr: RsBinaryExpr, instruction: DfaInstruction) {
-        when (expr.operatorType) {
-            is AssignmentOp -> visitAssignmentBinOp(expr, instruction)
+        val op = expr.operatorType
+        when (op) {
+            is AssignmentOp -> visitAssignmentBinOp(op, expr, instruction)
             is BoolOp -> tryVisitControlFlow(expr, instruction)
             else -> addNextInstruction(instruction)
         }
@@ -356,11 +372,14 @@ class DataFlowRunner(val function: RsFunction) {
             .uniteRangeIfNotEmpty(leftVariable, leftFalseResult)
             .uniteRangeIfNotEmpty(rightVariable, rightFalseResult)
 
-        return when {
-            leftTrueResult.isEmpty && rightTrueResult.isEmpty -> DfaCondition(ThreeState.NO, trueState = trueState, falseState = falseState)
-            leftRange in leftTrueResult && rightRange in rightTrueResult -> DfaCondition(ThreeState.YES, trueState = trueState, falseState = falseState)
-            else -> DfaCondition(ThreeState.UNSURE, trueState = trueState, falseState = falseState)
+        val threeState = when {
+            op is EqualityOp && leftRange !is Point && rightRange !is Point -> ThreeState.UNSURE
+            leftTrueResult.isEmpty && rightTrueResult.isEmpty -> ThreeState.NO
+            leftRange in leftTrueResult && rightRange in rightTrueResult -> ThreeState.YES
+            else -> ThreeState.UNSURE
         }
+
+        return DfaCondition(threeState, trueState = trueState, falseState = falseState)
     }
 
     private fun visitLetDeclNode(element: RsLetDecl, instruction: DfaInstruction) {
@@ -432,10 +451,7 @@ class DataFlowRunner(val function: RsFunction) {
 
     private fun valueFromBinExpr(expr: RsBinaryExpr, state: DfaMemoryState): DfaValue {
         val op = expr.operatorType
-        return when (op) {
-            is AssignmentOp -> DfaUnknownValue
-            else -> valueFromBinOp(op, expr, state)
-        }
+        return valueFromBinOp(op, expr, state)
     }
 
     private fun valueFromBinOp(op: BinaryOperator, expr: RsBinaryExpr, state: DfaMemoryState): DfaValue {
@@ -467,11 +483,11 @@ class DataFlowRunner(val function: RsFunction) {
         else -> null
     }
 
-    private fun visitAssignmentBinOp(expr: RsBinaryExpr, instruction: DfaInstruction) {
+    private fun visitAssignmentBinOp(op: AssignmentOp, expr: RsBinaryExpr, instruction: DfaInstruction) {
         val variable = expr.left.toVariable()
         val state = if (variable != null) {
             val state = instruction.state
-            val value = valueFromExpr(expr.right, state)
+            val value = valueFromExpr(if (op is AssignmentOp.EQ) expr.right else expr, state)
             state.plus(variable, value)
         } else {
             instruction.state
@@ -507,12 +523,7 @@ val CFGNode.outgoingNodes: Sequence<CFGNode> get() = generateSequence(this.first
 val CFGNode.nextNode: CFGNode? get() = this.outgoingNodes.lastOrNull()
 val CFGNode.firstControlFlowSplit: Pair<CFGNode, CFGNode>?
     get() {
-        var out = this.outgoingNodes
-        // TODO: remove it
-        while (out.count() != 2) {
-            out = out.firstOrNull()?.outgoingNodes ?: emptySequence()
-            if (out.none()) return null
-        }
+        val out = outgoingNodes
         return out.elementAt(1) to out.elementAt(0)
     }
 val CFGNode.hasSingleOut: Boolean get() = this.outgoingNodes.singleOrNull() != null

@@ -168,6 +168,52 @@ class RsConstantConditionInspectionTest : RsInspectionsTestBase(RsConstantCondit
        }
     """)
 
+    fun `test while with continue`() = checkWithExpandValues("""
+        fn main() {
+            let mut a = 0;
+            while a < 30 {
+                a += 1;
+                if a == 5 {
+                    continue;
+                }
+                if <warning descr="Condition `a == 5` is always `false`">a == 5</warning>  {}
+            }
+        }
+    """)
+
+    fun `test while with break`() = checkWithExpandValues("""
+        fn main() {
+            let mut a = 0;
+            while <warning descr="Condition `a < 30` is always `true`">a < 30</warning> {
+                if a == 5 {
+                    break;
+                }
+                if <warning descr="Condition `a == 8` is always `false`">a == 8</warning> {}
+                if a == 4 {}
+                a += 1;
+            }
+            if <warning descr="Condition `a == 5` is always `true`">a == 5</warning> {}
+        }
+    """)
+
+    fun `test while with inner`() = checkWithExpandValues("""
+        fn main() {
+            let mut i = 0;
+            'outer: while i < 5 {
+                i += 1;
+                let mut j = 0;
+                'inner1: while <warning descr="Condition `j < 5` is always `true`">j < 5</warning> {
+                    j += 1;
+                    if j == 4 {
+                        continue 'outer;
+                    }
+                }
+                // mustn't analyze
+                if true == true {}
+            }
+        }
+    """)
+
     fun `test simple boolean expression with or`() = checkWithExpandValues("""
        fn main() {
             let a/*{true}*/ = true;
@@ -398,6 +444,16 @@ class RsConstantConditionInspectionTest : RsInspectionsTestBase(RsConstantCondit
             }
             if input != 50 {
                if <warning descr="Condition `y == 2 && x == 2` is always `true`">y == 2 && x == 2</warning> {}
+            }
+        }
+    """)
+
+    fun `test equals unknown`() = checkWithExpandValues("""
+        struct S { x: i32 }
+        impl S {
+            fn foo(&self, other: &S) {
+                if self.x == other.x {}
+                if other.x == another.x {}
             }
         }
     """)

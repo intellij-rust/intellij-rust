@@ -12,18 +12,20 @@ data class DfaCondition(val threeState: ThreeState, val trueState: DfaMemoryStat
 
     fun or(other: DfaCondition): DfaCondition {
         val falseState = this.falseState.intersect(other.falseState)
-        return if (falseState.hasEmpty) DfaCondition(ThreeState.YES, DfaMemoryState.EMPTY, DfaMemoryState.EMPTY)
+        return if (falseState.hasEmpty) YES
         else DfaCondition(this.threeState.or(other.threeState), DfaMemoryState.EMPTY, falseState)
     }
 
     fun and(other: DfaCondition): DfaCondition {
         val trueState = this.trueState.intersect(other.trueState)
-        return if (trueState.hasEmpty) DfaCondition(ThreeState.NO, DfaMemoryState.EMPTY, DfaMemoryState.EMPTY)
+        return if (trueState.hasEmpty) NO
         else DfaCondition(this.threeState.and(other.threeState), trueState, DfaMemoryState.EMPTY)
     }
 
     companion object {
         val UNSURE = DfaCondition(ThreeState.UNSURE)
+        val YES = DfaCondition(ThreeState.YES)
+        val NO = DfaCondition(ThreeState.NO)
     }
 }
 
