@@ -62,6 +62,9 @@ val RsFunction.selfParameter: RsSelfParameter?
 val RsFunction.default: PsiElement?
     get() = node.findChildByType(RsElementTypes.DEFAULT)?.psi
 
+val RsFunction.isAsync: Boolean
+    get() = stub?.isAsync ?: (node.findChildByType(RsElementTypes.ASYNC) != null)
+
 val RsFunction.title: String
     get() = when (owner) {
         is RsAbstractableOwner.Free -> "Function `$name`"

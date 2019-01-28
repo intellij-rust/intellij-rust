@@ -664,7 +664,7 @@ class ImplLookup(
     private fun lookupAssocTypeInSelection(selection: Selection, assoc: RsTypeAlias): Ty? =
         selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.type?.substitute(selection.subst)
 
-    private fun lookupAssocTypeInBounds(
+    fun lookupAssocTypeInBounds(
         subst: Sequence<BoundElement<RsTraitItem>>,
         trait: RsTraitOrImpl,
         assocType: RsTypeAlias

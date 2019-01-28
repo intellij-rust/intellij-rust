@@ -528,6 +528,7 @@ class RsFunctionStub(
     val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
     val isExtern: Boolean get() = BitUtil.isSet(flags, EXTERN_MASK)
     val isVariadic: Boolean get() = BitUtil.isSet(flags, VARIADIC_MASK)
+    val isAsync: Boolean get() = BitUtil.isSet(flags, ASYNC_MASK)
 
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
@@ -559,6 +560,7 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
             flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
             flags = BitUtil.set(flags, VARIADIC_MASK, psi.isVariadic)
+            flags = BitUtil.set(flags, ASYNC_MASK, psi.isAsync)
             return RsFunctionStub(parentStub, this,
                 name = psi.name,
                 abiName = psi.abiName,
@@ -579,6 +581,7 @@ class RsFunctionStub(
         private val UNSAFE_MASK: Int = makeBitMask(6)
         private val EXTERN_MASK: Int = makeBitMask(7)
         private val VARIADIC_MASK: Int = makeBitMask(8)
+        private val ASYNC_MASK: Int = makeBitMask(9)
     }
 }
 

@@ -83,8 +83,9 @@ class KnownItems(
     val Display: RsTraitItem? get() = findItem("core::fmt::Display")
     val ToOwned: RsTraitItem? get() = findItem("alloc::borrow::ToOwned")
     val ToString: RsTraitItem? get() = findItem("alloc::string::ToString")
-    val Try: RsTraitItem? get() = findItem("std::ops::Try")
-    val Generator: RsTraitItem? get() = findItem("core::ops::Generator")
+    val Try: RsTraitItem? get() = findItem("core::ops::try::Try")
+    val Generator: RsTraitItem? get() = findItem("core::ops::generator::Generator")
+    val Future: RsTraitItem? get() = findItem("core::future::future::Future")
 
     // Lang items
 
