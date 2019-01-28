@@ -207,6 +207,14 @@ project(":") {
         }
     }
 
+    task("configureCLion") {
+        doLast {
+            intellij {
+                sandboxDirectory = "${project.buildDir.absolutePath}${File.separator}clion-sandbox"
+            }
+        }
+    }
+
     task("resolveDependencies") {
         doLast {
             rootProject.allprojects
