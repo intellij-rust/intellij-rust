@@ -292,7 +292,7 @@ private class MacroPattern private constructor(
 
                     val lastOffset = macroCallBody.currentOffset
                     val parsed = parse(macroCallBody, type)
-                    if (!parsed || lastOffset == macroCallBody.currentOffset) {
+                    if (!parsed || (lastOffset == macroCallBody.currentOffset && type != "vis")) {
                         MacroExpansionMarks.failMatchPatternByBindingType.hit()
                         return null
                     }
@@ -342,7 +342,7 @@ private class MacroPattern private constructor(
                 "block" -> RustParser.SimpleBlock(adaptBuilder, 0)
                 "item" -> parseItem(adaptBuilder)
                 "meta" -> RustParser.MetaItemWithoutTT(adaptBuilder, 0)
-                "vis" -> RustParser.Vis(adaptBuilder, 0)
+                "vis" -> parseVis(adaptBuilder)
                 "tt" -> RustParser.TT(adaptBuilder, 0)
                 "lifetime" -> RustParser.Lifetime(adaptBuilder, 0)
                 "literal" -> RustParser.LitExpr(adaptBuilder, 0)
@@ -415,6 +415,11 @@ private class MacroPattern private constructor(
 
     private fun parseItem(b: PsiBuilder): Boolean =
         parseItemFns.any { it(b, 0) }
+
+    private fun parseVis(b: PsiBuilder): Boolean {
+        RustParser.Vis(b, 0)
+        return true // Vis can be empty
+    }
 
     companion object {
         fun valueOf(psi: RsMacroPatternContents): MacroPattern =
