@@ -122,6 +122,47 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test async block expr`() = testExpr("""
+        fn main() {
+            let x = async { 42 };
+            x;
+          //^ impl Future<Output=i32>
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test async fn`() = testExpr("""
+        async fn foo() -> i32 { 42 }
+        fn main() {
+            let x = foo();
+            x;
+          //^ impl Future<Output=i32>
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test async method`() = testExpr("""
+        struct S;
+        impl S {
+            async fn foo(&self) -> i32 { 42 }
+        }
+        fn main() {
+            let x = S.foo();
+            x;
+          //^ impl Future<Output=i32>
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test async lambda expr`() = testExpr("""
+        fn main() {
+            let x = async || 42;
+            x;
+          //^ fn() -> impl Future<Output=i32>
+        }
+    """)
+
     fun `test type parameters`() = testExpr("""
         fn foo<FOO>(foo: FOO) {
             let bar = foo;
@@ -402,6 +443,15 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = panic!();
             a
         } //^ !
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test await macro`() = testExpr("""
+        fn main() {
+            let x = await!(async { 42 });
+            x;
+          //^ i32
+        }
     """)
 
     fun `test await macro argument`() = testExpr("""
