@@ -1,6 +1,4 @@
 // Inspired by https://github.com/rust-lang/rust/blob/master/src/tools/compiletest/src/runtest.rs
-#[macro_use]
-extern crate serde_derive;
 extern crate toml;
 
 use std::fs::File;
@@ -15,7 +13,7 @@ use std::process::Output;
 static ENABLE_RUST: &'static str = "type category enable Rust";
 static BINARY: &'static str = "testbinary";
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone)]
 pub struct LLDBConfig {
     pub test_dir: String,
     pub pretty_printers_path: String,
