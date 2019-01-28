@@ -164,18 +164,14 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
     """)
 
     fun `test method call on trait from bound on reference type`() = checkByCode("""
-        struct S;
         trait Foo { fn foo(&self) {} }
                      //X
-        impl Foo for &S {}
-
         fn foo<'a, T>(t: &'a T) where &'a T: Foo {
             t.foo();
         }   //^
     """)
 
     fun `test associated function call on trait from bound for type without type parameter`() = checkByCode("""
-        struct S1;
         struct S2;
         trait From<T> { fn from(_: T) -> Self; }
                          //X
