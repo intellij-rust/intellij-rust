@@ -46,10 +46,15 @@ val RsAbstractable.superItem: RsAbstractable?
     get() {
         val rustImplItem = ancestorStrict<RsImplItem>() ?: return null
         val superTrait = rustImplItem.traitRef?.resolveToTrait ?: return null
-        return when (this) {
-            is RsConstant -> superTrait.members?.constantList?.find { it.name == this.name }
-            is RsFunction -> superTrait.members?.functionList?.find { it.name == this.name }
-            is RsTypeAlias -> superTrait.members?.typeAliasList?.find { it.name == this.name }
-            else -> error("unreachable")
-        }
+        return superTrait.findCorrespondingElement(this)
     }
+
+fun RsTraitOrImpl.findCorrespondingElement(element: RsAbstractable): RsAbstractable? {
+    val members = members ?: return null
+    return when (element) {
+        is RsConstant -> members.constantList.find { it.name == element.name }
+        is RsFunction -> members.functionList.find { it.name == element.name }
+        is RsTypeAlias -> members.typeAliasList.find { it.name == element.name }
+        else -> error("unreachable")
+    }
+}
