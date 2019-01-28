@@ -50,6 +50,21 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo_bar { () => {} }
     """)
 
+    fun `test duplicated macro_export macro`() = stubOnlyResolve("""
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+
+        fn main() {
+            foo_bar!();
+        }  //^ unresolved
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo_bar { () => {} }
+        #[macro_export]
+        macro_rules! foo_bar { () => {} }
+    """)
+
     fun `test macro rules missing macro_export`() = stubOnlyResolve("""
     //- main.rs
         #[macro_use]

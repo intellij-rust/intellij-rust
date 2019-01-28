@@ -37,18 +37,31 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
             stub.name?.let { sink.occurrence(KEY, it) }
         }
 
-        fun allExportedMacros(project: Project): Map<RsMod, Set<RsMacro>> {
+        fun allExportedMacros(project: Project): Map<RsMod, List<RsMacro>> {
             return CachedValuesManager.getManager(project).getCachedValue(project) {
-                val result = HashMap<RsMod, MutableSet<RsMacro>>()
+                val result = HashMap<RsMod, MutableList<RsMacro>>()
                 val keys = StubIndex.getInstance().getAllKeys(KEY, project)
                 for (key in keys) {
                     val elements = getElements(KEY, key, project, GlobalSearchScope.allScope(project))
                     for (element in elements) {
                         if (NameResolutionTestmarks.missingMacroExport.hitOnFalse(element.hasMacroExport)) {
                             val crateRoot = element.crateRoot ?: continue
-                            result.getOrPut(crateRoot, ::HashSet) += element
+                            result.getOrPut(crateRoot, ::ArrayList) += element
                         }
                     }
+                }
+
+                // remove macros with same names (may exist under #[cfg] attrs)
+                for (macros in result.values) {
+                    val names = hashSetOf<String>()
+                    val duplicatedNames = hashSetOf<String>()
+                    for (macro in macros) {
+                        val name = macro.name
+                        if (name != null && !names.add(name)) {
+                            duplicatedNames.add(name)
+                        }
+                    }
+                    macros.removeIf { it.name in duplicatedNames }
                 }
                 CachedValueProvider.Result.create(result, project.rustStructureModificationTracker)
             }
