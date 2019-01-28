@@ -508,6 +508,7 @@ val CFGNode.nextNode: CFGNode? get() = this.outgoingNodes.lastOrNull()
 val CFGNode.firstControlFlowSplit: Pair<CFGNode, CFGNode>?
     get() {
         var out = this.outgoingNodes
+        // TODO: remove it
         while (out.count() != 2) {
             out = out.firstOrNull()?.outgoingNodes ?: emptySequence()
             if (out.none()) return null

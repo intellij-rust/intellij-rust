@@ -232,6 +232,6 @@ fun RsExpr.skipParenExprUp(): RsExpr {
  *
  * @return a child expression without parentheses.
  */
-fun RsCondition.skipParenExprDown(): RsExpr = this.expr.skipParenExprDown()
+fun RsCondition.skipParenExprDown(): RsExpr = expr.skipParenExprDown()
 
 fun RsExpr.skipParenExprDown(): RsExpr = unwrapParenExprs(this)

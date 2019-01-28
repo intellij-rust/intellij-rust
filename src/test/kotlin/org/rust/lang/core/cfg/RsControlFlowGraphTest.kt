@@ -526,6 +526,79 @@ class RsControlFlowGraphTest : RsTestBase() {
         42;
         BLOCK
         Exit
+""")
+
+    fun `test break`() = testCFG("""
+        fn main() {
+            'outer: loop {
+                "outer";
+                'inner: loop {
+                    "inner";
+                    break 'outer 77;
+                    42;
+                }
+            };
+            63;
+        }
+ """, """
+        Entry
+        Dummy
+        "outer"
+        "outer";
+        Dummy
+        "inner"
+        "inner";
+        77
+        break 'outer 77
+        LOOP
+        LOOP;
+        63
+        63;
+        BLOCK
+        Exit
+    """)
+
+    fun `test continue`() = testCFG("""
+        fn main() {
+            'outer: for i in 0..1 {
+                'inner1: for j in 1..2 {
+                    'inner2: for k in 2..3 {
+                        'inner2: for l in 3..4 {
+                            continue 'inner1;
+                            42;
+                        }
+                    }
+                }
+            }
+        }
+ """, """
+        Entry
+        Dummy
+        0
+        1
+        0..1
+        FOR
+        BLOCK
+        Exit
+        Dummy
+        1
+        2
+        1..2
+        FOR
+        BLOCK
+        Dummy
+        2
+        3
+        2..3
+        FOR
+        BLOCK
+        Dummy
+        3
+        4
+        3..4
+        FOR
+        BLOCK
+        continue 'inner1
     """)
 
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
