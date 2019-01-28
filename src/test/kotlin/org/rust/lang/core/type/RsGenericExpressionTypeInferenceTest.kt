@@ -1013,6 +1013,21 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test associated type bound 2`() = testExpr("""
+        trait Foo {
+            type Item;
+            fn foo(&self) -> Self::Item;
+        }
+        trait Bar<A> {}
+        fn bar<A: Bar<B>, B>(t: A) -> B { unimplemented!() }
+        fn baz<C, D>(t: C)
+            where C: Foo,
+                  C::Item: Bar<D> {
+            let a = bar(t.foo());
+            a;
+        } //^ D
+    """)
+
     fun `test simple unification`() = testExpr("""
         struct S<T>(T);
 
@@ -1279,6 +1294,15 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         trait Tr1<A> { fn foo(&self) -> A { unimplemented!() } }
         trait Tr2<B>: Tr1<B> {}
         fn bar<T: Tr2<u8>>(t: T) {
+            let a = t.foo();
+            a;
+        } //^ u8
+    """)
+
+    fun `test inherited generic type parameter method with bound for reference type`() = testExpr("""
+        trait Tr1<A> { fn foo(&self) -> A { unimplemented!() } }
+        trait Tr2<B>: Tr1<B> {}
+        fn bar<'a, T>(t: &'a T) where &'a T: Tr2<u8> {
             let a = t.foo();
             a;
         } //^ u8

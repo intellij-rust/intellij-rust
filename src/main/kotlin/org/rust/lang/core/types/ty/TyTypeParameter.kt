@@ -32,6 +32,7 @@ class TyTypeParameter private constructor(
     override fun equals(other: Any?): Boolean = other is TyTypeParameter && other.parameter == parameter
     override fun hashCode(): Int = parameter.hashCode()
 
+    @Deprecated("Use ImplLookup.getEnvBoundTransitivelyFor")
     fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
         traitBounds.flatMap { it.flattenHierarchy }
 

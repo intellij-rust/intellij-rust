@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.withDefaultSubst
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.HAS_TY_PROJECTION_MASK
 import org.rust.lang.core.types.TraitRef

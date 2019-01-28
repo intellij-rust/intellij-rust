@@ -163,6 +163,65 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }         //^
     """)
 
+    fun `test method call on trait from bound on reference type`() = checkByCode("""
+        struct S;
+        trait Foo { fn foo(&self) {} }
+                     //X
+        impl Foo for &S {}
+
+        fn foo<'a, T>(t: &'a T) where &'a T: Foo {
+            t.foo();
+        }   //^
+    """)
+
+    fun `test associated function call on trait from bound for type without type parameter`() = checkByCode("""
+        struct S1;
+        struct S2;
+        trait From<T> { fn from(_: T) -> Self; }
+                         //X
+        fn foo<T>(t: T) -> S2 where S2: From<T> {
+            S2::from(t)
+        }     //^
+    """)
+
+    fun `test method call on trait from bound for associated type`() = checkByCode("""
+        trait Foo {
+            type Item;
+            fn foo(&self) -> Self::Item;
+        }
+        trait Bar<A> { fn bar(&self); }
+                        //X
+        fn baz<T1, T2>(t: T1)
+            where T1: Foo,
+                  T1::Item: Bar<T2> {
+            t.foo().bar();
+        }         //^
+    """)
+
+    fun `test method call on Self trait from bound for Self`() = checkByCode("""
+        trait Foo {
+            fn foo(&self) -> i32;
+        }    //X
+
+        trait Bar: Sized {
+            fn bar(s: Self) where Self: Foo {
+                s.foo();
+            }   //^
+        }
+    """)
+
+    fun `test method call on self trait from bound for Self`() = checkByCode("""
+        trait Foo {
+            fn foo(&self) -> i32;
+        }    //X
+
+        trait Bar: Sized {
+            fn bar(&self) where Self: Foo {
+                self.foo();
+            }      //^
+        }
+    """)
+
     fun `test Result unwrap`() = checkByCode("""
         enum Result<T, E> { Ok(T), Err(E)}
 
