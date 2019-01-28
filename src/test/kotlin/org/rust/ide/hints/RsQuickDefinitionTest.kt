@@ -5,17 +5,9 @@
 
 package org.rust.ide.hints
 
-import com.intellij.codeInsight.hint.ImplementationViewComponent
-import com.intellij.codeInsight.hint.actions.ShowImplementationsAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
 
-class RsQuickDefinitionTest : RsTestBase() {
+class RsQuickDefinitionTest : RsQuickDefinitionTestBase() {
 
     fun `test struct`() = doTest("""
         struct Foo {
@@ -167,18 +159,7 @@ class RsQuickDefinitionTest : RsTestBase() {
 
     private fun doTest(@Language("Rust") code: String, expectedRaw: String) {
         InlineFile(code)
-
-        var actualText: String? = null
-
-        val action = object : ShowImplementationsAction() {
-            override fun showImplementations(impls: Array<out PsiElement>, project: Project, text: String?, editor: Editor?, file: PsiFile?, element: PsiElement?, invokedFromEditor: Boolean, invokedByShortcut: Boolean) {
-                if (impls.isEmpty()) return
-                actualText = ImplementationViewComponent.getNewText(impls[0].navigationElement)
-            }
-        }
-
-        action.performForContext((myFixture.editor as EditorEx).dataContext)
-
+        val actualText = performShowImplementationAction()
         checkNotNull(actualText)
         val expected = expectedRaw.lines()
             .dropWhile { it.isBlank() }
