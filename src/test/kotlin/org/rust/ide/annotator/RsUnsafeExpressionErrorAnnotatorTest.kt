@@ -5,7 +5,14 @@
 
 package org.rust.ide.annotator
 
-class RsUnsafeExpressionAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class.java) {
+import org.rust.ide.colors.RsColor
+
+class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class.java) {
+    override fun setUp() {
+        super.setUp()
+        registerSeverities(listOf(RsColor.UNSAFE_CODE.testSeverity))
+    }
+
     fun `test extern static requires unsafe`() = checkErrors("""
         extern {
             static C: i32;
@@ -16,29 +23,11 @@ class RsUnsafeExpressionAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAn
         }
     """)
 
-    fun `test extern static in unsafe block`() = checkHighlighting("""
-        extern {
-            static C: i32;
-        }
-
-        fn main() {
-            unsafe { let a = <info descr="Use of unsafe extern static">C</info>; }
-        }
-    """)
-
     fun `test need unsafe static mutable`() = checkErrors("""
         static mut test : u8 = 0;
 
         fn main() {
             <error descr="Use of mutable static is unsafe and requires unsafe function or block [E0133]">test</error> += 1;
-        }
-    """)
-
-    fun `test mutable static in unsafe block`() = checkHighlighting("""
-        static mut test : u8 = 0;
-
-        fn main() {
-            unsafe { <info descr="Use of unsafe mutable static">test</info> += 1; }
         }
     """)
 
@@ -86,14 +75,13 @@ class RsUnsafeExpressionAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAn
         }
     """)
 
-
     fun `test is unsafe block`() = checkErrors("""
         unsafe fn foo() {}
 
         fn main() {
             unsafe {
                 {
-                    foo();
+                    <UNSAFE_CODE descr="Call to unsafe function">foo</UNSAFE_CODE>();
                 }
             }
         }
@@ -109,11 +97,6 @@ class RsUnsafeExpressionAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAn
                 }
             }
         }
-    """)
-
-    fun `test unsafe call unsafe`() = checkHighlighting("""
-        unsafe fn foo() {}
-        unsafe fn bar() { <info descr="Call to unsafe function">foo</info>(); }
     """)
 
     fun `test pointer dereference`() = checkErrors("""
