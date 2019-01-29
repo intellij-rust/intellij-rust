@@ -28,9 +28,17 @@ private const val INHERENT_IMPL_MEMBER_PRIORITY = 2.0
 private const val DEFAULT_PRIORITY = 0.0
 private const val MACRO_PRIORITY = -0.1
 
-fun createLookupElement(element: RsElement, scopeName: String): LookupElement {
+private typealias InsertHandler<T> = (InsertionContext, T) -> Unit
+
+fun createLookupElement(
+    element: RsElement,
+    scopeName: String,
+    locationString: String? = null,
+    insertHandler: InsertHandler<LookupElement> = { context, _ -> getInsertHandler(element, scopeName, context) }
+): LookupElement {
     val base = element.getLookupElementBuilder(scopeName)
-        .withInsertHandler { context, _ -> getInsertHandler(element, scopeName, context) }
+        .withInsertHandler(insertHandler)
+        .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
 
     val priority = when {
         element is RsMacro -> MACRO_PRIORITY
@@ -47,7 +55,7 @@ fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     if (priority == DEFAULT_PRIORITY) this else PrioritizedLookupElement.withPriority(this, priority)
 
 private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementBuilder {
-    val base = LookupElementBuilder.create(this, scopeName)
+    val base = LookupElementBuilder.createWithSmartPointer(scopeName, this)
         .withIcon(if (this is RsFile) RsIcons.MODULE else this.getIcon(0))
 
     return when (this) {

@@ -52,26 +52,36 @@ import org.jetbrains.annotations.TestOnly
  */
 class Testmark(val name: String) {
     @Volatile
-    private var state = 0
+    private var state = TestmarkState.NEW
 
     fun hit() {
-        if (state == 1) state = 2
+        if (state == TestmarkState.NOT_HIT) {
+            state = TestmarkState.HIT
+        }
     }
 
     @TestOnly
-    fun <T> checkHit(f: () -> T): T {
-        check(state == 0)
+    fun <T> checkHit(f: () -> T): T = checkHit(TestmarkState.HIT, f)
+
+    @TestOnly
+    fun <T> checkNotHit(f: () -> T): T = checkHit(TestmarkState.NOT_HIT, f)
+
+    @TestOnly
+    private fun <T> checkHit(expected: TestmarkState, f: () -> T): T {
+        check(state == TestmarkState.NEW)
         try {
-            state = 1
+            state = TestmarkState.NOT_HIT
             val result = f()
-            if (state != 2) {
-                fail("Testmark `$name` not hit")
+            if (state != expected) {
+                fail("Testmark `$name` ${if (expected == TestmarkState.HIT) "not " else ""}hit")
             }
             return result
         } finally {
-            state = 0
+            state = TestmarkState.NEW
         }
     }
+
+    private enum class TestmarkState { NEW, NOT_HIT, HIT }
 }
 
 fun Testmark.hitOnFalse(b: Boolean): Boolean {
