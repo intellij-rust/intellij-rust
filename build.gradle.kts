@@ -143,12 +143,13 @@ val Project.dependencyCachePath get(): String {
 }
 
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
+val patchVersion = prop("patchVersion").toInt().let { if (channel.isBlank()) it else it + 1 }
 
 val rustProjects = rootProject.subprojects.filter { it.name != "intellij-toml" }
 
 project(":") {
     val versionSuffix = "-$platformVersion$channelSuffix"
-    version = "0.2.0.${prop("buildNumber")}$versionSuffix"
+    version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
     intellij {
         pluginName = "intellij-rust"
         if (baseIDE == "idea") {
@@ -366,7 +367,8 @@ task("makeRelease") {
             "https://intellij-rust.github.io/$newChangelogPath.html"
         )
         pluginXml.writeText(newText)
-        "git add $pluginXmlPath".execute()
+        updatePatchVersion()
+        "git add $pluginXmlPath gradle.properties".execute()
         "git commit -m Changelog".execute()
         "git push".execute()
         commitNightly()
@@ -390,6 +392,14 @@ fun commitChangelog(): String {
     if (!yes) error("Human says no")
     "git push".execute(website)
     return lastPost
+}
+
+fun updatePatchVersion() {
+    val properties = file("gradle.properties")
+    val propertiesText = properties.readText().replace(Regex("patchVersion=(\\d+)")) {
+        "patchVersion=${it.groupValues[1].toInt() + 1}"
+    }
+    properties.writeText(propertiesText)
 }
 
 fun commitNightly() {
