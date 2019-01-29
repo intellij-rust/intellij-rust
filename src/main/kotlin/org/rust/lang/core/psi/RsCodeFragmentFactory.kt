@@ -32,7 +32,7 @@ class RsCodeFragmentFactory(val project: Project) {
             containingFile?.putUserData(CARGO_WORKSPACE, context.cargoWorkspace)
         }
 
-    fun createPathInTmpMod(context: RsMod, importingPath: RsPath, usePath: String, crateName: String?): RsPath? {
+    fun createPathInTmpMod(context: RsMod, importingPathName: String, usePath: String, crateName: String?): RsPath? {
         val (externCrateItem, useItem) = if (crateName != null) {
             "extern crate $crateName;" to "use self::$usePath;"
         } else {
@@ -44,6 +44,6 @@ class RsCodeFragmentFactory(val project: Project) {
             $useItem
             """)
         mod.setContext(context)
-        return createPath(importingPath.text, mod)
+        return createPath(importingPathName, mod)
     }
 }

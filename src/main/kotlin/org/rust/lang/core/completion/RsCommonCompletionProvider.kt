@@ -8,23 +8,30 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.ProcessingContext
-import org.rust.lang.RsLanguage
+import org.rust.ide.inspections.import.AutoImportFix
+import org.rust.ide.inspections.import.importItem
+import org.rust.ide.inspections.import.toImportContext
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsReferenceElement
-import org.rust.lang.core.psi.ext.hasCself
-import org.rust.lang.core.psi.ext.receiver
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
+import org.rust.lang.core.stubs.index.RsNamedElementIndex
+import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import org.rust.openapiext.Testmark
 
 object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(
@@ -34,6 +41,10 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     ) {
         val element = parameters.position.parent as RsReferenceElement
         if (parameters.position !== element.referenceNameElement) return
+
+        // This set will contain the names of all paths that have been added to the `result` by this provider.
+        val processedPathNames = hashSetOf<String>()
+
         collectCompletionVariants(result) {
             when (element) {
                 is RsAssocTypeBinding -> processAssocTypeVariants(element, it)
@@ -54,7 +65,10 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                         filterAssocTypes(
                             element,
                             filterCompletionVariantsByVisibility(
-                                filterPathCompletionVariantsByTraitBounds(it, lookup),
+                                filterPathCompletionVariantsByTraitBounds(
+                                    addProcessedPathName(it, processedPathNames),
+                                    lookup
+                                ),
                                 element.containingMod
                             )
                         )
@@ -88,12 +102,73 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                 }
             }
         }
+
+        addCompletionsFromIndex(parameters, result, processedPathNames)
+    }
+
+    private fun addCompletionsFromIndex(
+        parameters: CompletionParameters,
+        result: CompletionResultSet,
+        processedPathNames: Set<String>
+    ) {
+        if (!simplePathPattern.accepts(parameters.position)) return
+        // We use the position in the original file in order not to process empty paths
+        val path = parameters.originalPosition?.parent as? RsPath ?: return
+        if (TyPrimitive.fromPath(path) != null) return
+        Testmarks.pathCompletionFromIndex.hit()
+
+        val project = parameters.originalFile.project
+        val importContext = path.toImportContext(project)
+        val pathMod = path.containingMod
+
+        val keys = hashSetOf<String>().apply {
+            val explicitNames = StubIndex.getInstance().getAllKeys(RsNamedElementIndex.KEY, project)
+            val reexportedNames = StubIndex.getInstance().getAllKeys(RsReexportIndex.KEY, project)
+
+            addAll(explicitNames)
+            addAll(reexportedNames)
+
+            // Filters out path names that have already been added to `result`
+            removeAll(processedPathNames)
+        }
+
+        for (elementName in CompletionUtil.sortMatching(result.prefixMatcher, keys)) {
+            val candidates = AutoImportFix.getImportCandidates(importContext, elementName, elementName) {
+                !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
+            }
+
+            candidates
+                .distinctBy { it.qualifiedNamedItem.item }
+                .map { candidate ->
+                    val item = candidate.qualifiedNamedItem.item
+                    createLookupElement(item, elementName, candidate.info.usePath) { _, _ ->
+                        pathMod.importItem(candidate)
+                    }
+                }
+                .forEach(result::addElement)
+        }
     }
 
     val elementPattern: ElementPattern<PsiElement>
-        get() = PlatformPatterns.psiElement()
-            .withParent(psiElement<RsReferenceElement>())
-            .withLanguage(RsLanguage)
+        get() = PlatformPatterns.psiElement().withParent(psiElement<RsReferenceElement>())
+
+    private val simplePathPattern: ElementPattern<PsiElement>
+        get() {
+            val simplePath = psiElement<RsPath>()
+                .with(object : PatternCondition<RsPath>("SimplePath") {
+                    override fun accepts(path: RsPath, context: ProcessingContext?): Boolean =
+                        path.kind == PathKind.IDENTIFIER &&
+                            path.path == null &&
+                            path.typeQual == null &&
+                            !path.hasColonColon &&
+                            path.ancestorStrict<RsUseSpeck>() == null
+                })
+            return PlatformPatterns.psiElement().withParent(simplePath)
+        }
+
+    object Testmarks {
+        val pathCompletionFromIndex = Testmark("pathCompletionFromIndex")
+    }
 }
 
 private fun filterAssocTypes(
@@ -155,4 +230,14 @@ private fun filterMethodCompletionVariantsByTraitBounds(
 
         return false
     }
+}
+
+private fun addProcessedPathName(
+    processor: RsResolveProcessor,
+    processedPathNames: MutableSet<String>
+): RsResolveProcessor = fun(it: ScopeEntry): Boolean {
+    if (it.element != null) {
+        processedPathNames.add(it.name)
+    }
+    return processor(it)
 }
