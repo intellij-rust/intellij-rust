@@ -42,11 +42,21 @@ abstract class RsCompletionTestBase : RsTestBase() {
         }
     }
 
+    protected fun doFirstCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
+        check(hasCaretMarker(before) && hasCaretMarker(after)) {
+            "Please add `/*caret*/` marker"
+        }
+        checkByText(before.trimIndent(), after.trimIndent()) {
+            myFixture.completeBasic()
+            myFixture.type('\n')
+        }
+    }
+
     protected fun doSingleCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
         check(hasCaretMarker(before) && hasCaretMarker(after)) {
             "Please add `/*caret*/` marker"
         }
-        checkByText(before, after) { executeSoloCompletion() }
+        checkByText(before.trimIndent(), after.trimIndent()) { executeSoloCompletion() }
     }
 
     protected fun doSingleCompletionMultifile(@Language("Rust") before: String, @Language("Rust") after: String) {
