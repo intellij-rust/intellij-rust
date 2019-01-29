@@ -22,6 +22,7 @@
     <xi:include href="/META-INF/platform-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
     <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
+    <depends optional="true" config-file="debugger-only.xml">com.intellij.modules.clion</depends>
     <depends optional="true" config-file="toml-only.xml">org.toml.lang</depends>
     <depends optional="true" config-file="copyright-only.xml">com.intellij.copyright</depends>
 
