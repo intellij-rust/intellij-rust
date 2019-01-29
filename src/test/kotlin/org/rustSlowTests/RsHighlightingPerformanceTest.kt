@@ -89,6 +89,18 @@ class RsHighlightingPerformanceTest : RsWithToolchainTestBase() {
                 }
             }
 
+        myFixture.file.descendantsOfType<RsFunction>()
+            .asSequence()
+            .mapNotNull { it.block?.stmtList?.lastOrNull() }
+            .forEach { stmt ->
+                myFixture.editor.caretModel.moveToOffset(stmt.textOffset)
+                myFixture.type("a<caret>;")
+            }
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        timings.measure("completion") {
+            myFixture.completeBasicAllCarets(null)
+        }
+
         return timings
     }
 

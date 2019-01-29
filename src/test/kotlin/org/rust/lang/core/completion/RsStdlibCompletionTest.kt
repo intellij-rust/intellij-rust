@@ -10,9 +10,13 @@ import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibCompletionTest : RsCompletionTestBase() {
-    fun `test prelude`() = @Suppress("DEPRECATION") checkSingleCompletion("drop()", """
+    fun `test prelude`() = doFirstCompletion("""
         fn main() {
             dr/*caret*/
+        }
+    """, """
+        fn main() {
+            drop(/*caret*/)
         }
     """)
 
@@ -44,7 +48,7 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         fn main() { unimplemented!(/*caret*/) }
     """)
 
-    fun `test macro with square brackets`() = doSingleCompletion("""
+    fun `test macro with square brackets`() = doFirstCompletion("""
         fn main() { vec/*caret*/ }
     """, """
         fn main() { vec![/*caret*/] }
