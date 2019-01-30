@@ -15,8 +15,10 @@ import org.rust.lang.core.macros.RsExpandedElement
 class RsShowMacroExpansionActionsTest : RsTestBase() {
 
     fun `test no expansion available when macro is not under caret`() = testNoExpansionHappens("""
-        let a = /*caret*/boo();
-        foo!();
+        fn main() {
+            let a = /*caret*/boo();
+            foo!();
+        }
     """)
 
     fun `test single level expansion is performed by recursive action`() = testRecursiveExpansion("""
@@ -76,17 +78,13 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
         println!();
     """)
 
-    fun `test that recursive expansion of macro without body is just its name`() = testRecursiveExpansion("""
+    fun `test that recursive expansion of macro without body is just its name`() = testMacroExpansionFail("""
             /*caret*/foo!();
-        """, """
-            foo!();
-        """)
+        """, expandRecursively = true)
 
-    fun `test that single step expansion of macro without body is just its name`() = testSingleStepExpansion("""
+    fun `test that single step expansion of macro without body is just its name`() = testMacroExpansionFail("""
         /*caret*/foo!();
-    """, """
-        foo!();
-    """)
+    """, expandRecursively = false)
 
     private fun testNoExpansionHappens(@Language("Rust") code: String) {
         InlineFile(code)
@@ -133,6 +131,29 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
             expected,
             expandedMacroText
         )
+    }
+
+    private fun testMacroExpansionFail(
+        @Language("Rust") code: String,
+        expandRecursively: Boolean
+    ) {
+        InlineFile(code)
+
+        var failed: Boolean = false
+
+        val action = object : RsShowMacroExpansionActionBase(expandRecursively = expandRecursively) {
+            override fun showExpansion(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
+                error("Expected expansion fail, but got expansion: `${expansionDetails.expansions.map { it.text }}`")
+            }
+
+            override fun showError(editor: Editor) {
+                failed = true
+            }
+        }
+
+        action.performForContext(dataContext)
+
+        check(failed)
     }
 
     private val dataContext

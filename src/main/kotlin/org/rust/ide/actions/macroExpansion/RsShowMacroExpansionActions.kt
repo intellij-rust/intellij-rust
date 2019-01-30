@@ -6,6 +6,7 @@
 package org.rust.ide.actions.macroExpansion
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -35,7 +36,11 @@ abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boo
 
         val expansionDetails = expandMacroForViewWithProgress(project, macroToExpand, expandRecursively)
 
-        showExpansion(project, editor, expansionDetails)
+        if (expansionDetails != null) {
+            showExpansion(project, editor, expansionDetails)
+        } else {
+            showError(editor)
+        }
     }
 
     /**
@@ -47,6 +52,10 @@ abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boo
         showMacroExpansionPopup(project, editor, expansionDetails)
     }
 
+    @VisibleForTesting
+    protected open fun showError(editor: Editor) {
+        HintManager.getInstance().showErrorHint(editor, FAILED_TO_EXPAND_MESSAGE)
+    }
 }
 
 /** Action for showing recursive expansion of ordinary macros (not procedural or custom derives). */
