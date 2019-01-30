@@ -533,7 +533,7 @@ private UseSpeck_with_recover ::= !'}' UseSpeck (','|&'}') {
   pin = 1
   recoverWhile = UseSpeck_recover
 }
-private UseSpeck_recover ::= !('}' | self | identifier | '::' | '*' )
+private UseSpeck_recover ::= !('}' | '{' | self | identifier | '::' | '*' )
 
 Alias ::= as identifier {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
