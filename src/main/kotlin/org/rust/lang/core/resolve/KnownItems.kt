@@ -142,6 +142,12 @@ enum class KnownDerivableTrait(
     Eq(KnownItems::Eq, arrayOf(PartialEq)),
     PartialOrd(KnownItems::PartialOrd, arrayOf(PartialEq)),
     Ord(KnownItems::Ord, arrayOf(PartialOrd, Eq, PartialEq)),
+
+    Serialize({ it.findTrait("serde::Serialize") }),
+    Deserialize({ it.findTrait("serde::Deserialize") }),
+
+    // TODO Fail also derives `Display`. Ignore it for now
+    Fail({ it.findTrait("failure::Fail") }, arrayOf(Debug)),
     ;
 
     fun findTrait(items: KnownItems): RsTraitItem? = resolver(items)

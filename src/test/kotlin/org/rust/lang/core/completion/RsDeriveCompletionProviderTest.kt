@@ -7,7 +7,7 @@ package org.rust.lang.core.completion
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.resolve.StdDerivableTrait
+import org.rust.lang.core.resolve.KnownDerivableTrait
 import org.rust.lang.core.resolve.withDependencies
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -37,10 +37,13 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
     """)
 
     fun `test complete with dependencies`() {
-        StdDerivableTrait.values()
+        KnownDerivableTrait.values()
             .filter { it.dependencies.isNotEmpty() }
             .forEach {
                 checkContainsCompletion(it.withDependencies.joinToString(", "), """
+                    #[lang = "failure::Fail"]
+                    trait Fail {}
+
                     #[derive(${it.name.dropLast(1)}/*caret*/)]
                     struct Foo;
                 """)
@@ -101,5 +104,23 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
         impl Clone for Foo {
             fn clone(&self) -> Foo { Foo::Something }
         }
+    """)
+
+    fun `test serde Serialize`() = doSingleCompletion("""
+        #[lang = "serde::Serialize"]
+        trait Serialize {}
+        #[derive(Ser/*caret*/)]
+        struct S;
+    """, """
+        #[lang = "serde::Serialize"]
+        trait Serialize {}
+        #[derive(Serialize/*caret*/)]
+        struct S;
+    """)
+
+    fun `test no serde Serialize completion if no serde traits`() = checkNoCompletion("""
+        trait Serialize {}
+        #[derive(Ser/*caret*/)]
+        struct S;
     """)
 }
