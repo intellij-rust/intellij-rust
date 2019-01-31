@@ -458,6 +458,31 @@ class RsConstantConditionInspectionTest : RsInspectionsTestBase(RsConstantCondit
         }
     """)
 
+    fun `test loop with break`() = checkWithExpandValues("""
+        fn main() {
+            let mut a = 0;
+            loop {
+                a += 1;
+                if a == 11 {
+                    break;
+                }
+            }
+            let a/*{11}*/ = a;
+        }
+    """)
+
+    fun `test loop`() = checkWithExpandValues("""
+        fn main() {
+            let mut a = 0;
+            loop {
+                a += 1;
+            }
+            let a = true;
+            // mustn't analyze
+            if a { }
+        }
+    """)
+
     fun `test too many branches`() = checkByText("""
        <warning descr="Couldn't analyze function TOO_COMPLEX: Too complex data flow: too many branches processed">fn test</warning>(input: i32) {
             ${ifBomb(10)}// 2^deep
@@ -469,6 +494,20 @@ class RsConstantConditionInspectionTest : RsInspectionsTestBase(RsConstantCondit
             ${ifBomb(5, declareVariables(150))}
         }
     """)
+
+    fun `test expand values`() {
+        val actual = """
+            let a/*{11}*/ = 11;
+            let a/*{5..10, 20..30}*/ = ?;
+        """.expandValues
+        val expected = """
+            let a/*{11}*/ = 11;
+if <warning descr="Condition `a == 11` is always `true`">a == 11</warning> {}
+            let a/*{5..10, 20..30}*/ = ?;
+if <warning descr="Condition `5 <= a && a <= 10 || 20 <= a && a <= 30` is always `true`">5 <= a && a <= 10 || 20 <= a && a <= 30</warning> {}
+        """
+        assertEquals(expected, actual)
+    }
 
     private fun ifBomb(deep: Int, prefix: String = ""): String = if (deep <= 0) ""
     else {

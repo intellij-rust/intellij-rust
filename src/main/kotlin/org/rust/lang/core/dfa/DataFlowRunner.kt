@@ -504,7 +504,11 @@ class DataFlowRunner(val function: RsFunction) {
         }
     }
 
-    private fun visitLoopExpr(expr: RsLoopExpr, dummyNode: CFGNode, loopNode: CFGNode, instruction: DfaInstruction): Unit = TODO()
+    private fun visitLoopExpr(expr: RsLoopExpr, dummyNode: CFGNode, loopNode: CFGNode, instruction: DfaInstruction) {
+        if (checkLoopCount(instruction)) {
+            addNextInstruction(instruction)
+        }
+    }
 }
 
 private class InstructionManager(block: RsBlock) {
