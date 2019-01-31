@@ -130,8 +130,14 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
     override fun visitExprStmt(exprStmt: RsExprStmt) =
         processExpr(exprStmt.expr, exprStmt, pred)
 
-    override fun visitPatIdent(patIdent: RsPatIdent) =
-        finishWithAstNode(patIdent, pred)
+    override fun visitPatIdent(patIdent: RsPatIdent) {
+        val subPatExit = process(patIdent.pat, pred)
+        val bindingExit = process(patIdent.patBinding, subPatExit)
+        finishWithAstNode(patIdent, bindingExit)
+    }
+
+    override fun visitPatBinding(patBinding: RsPatBinding) =
+        finishWithAstNode(patBinding, pred)
 
     override fun visitPatRange(patRange: RsPatRange) =
         finishWithAstNode(patRange, pred)

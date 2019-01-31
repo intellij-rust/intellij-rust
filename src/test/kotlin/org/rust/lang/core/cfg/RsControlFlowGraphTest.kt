@@ -36,6 +36,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         1 + 2
         (1 + 2) as i32
         x
+        x
         let x = (1 + 2) as i32;
         0
         5
@@ -45,6 +46,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         5 * 7 + x
         [0, 5 * 7 + x]
         arr
+        arr
         let arr = [0, 5 * 7 + x];
         arr
         x
@@ -52,6 +54,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x + 10
         arr[x + 10]
         -arr[x + 10]
+        mut y
         mut y
         let mut y = -arr[x + 10];
         y
@@ -118,6 +121,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         Entry
         x
         s
+        s
         Some(s)
         1
         BLOCK
@@ -134,6 +138,7 @@ class RsControlFlowGraphTest : RsTestBase() {
     """, """
         Entry
         x
+        s
         s
         Some(s)
         1
@@ -155,6 +160,7 @@ class RsControlFlowGraphTest : RsTestBase() {
     """, """
         Entry
         1
+        x
         x
         let x = 1;
         x
@@ -199,6 +205,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         Entry
         1
         mut x
+        mut x
         let mut x = 1;
         Dummy
         x
@@ -234,6 +241,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         BLOCK
         Exit
         x
+        x
         1
         1;
         BLOCK
@@ -255,6 +263,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         Entry
         1
         mut x
+        mut x
         let mut x = 1;
         Dummy
         x
@@ -263,6 +272,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         WHILE
         WHILE;
         2
+        y
         y
         let y = 2;
         BLOCK
@@ -333,6 +343,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         Entry
         E::A
         x
+        x
         let x = E::A;
         x
         E::A
@@ -342,9 +353,11 @@ class RsControlFlowGraphTest : RsTestBase() {
         MATCH;
         0
         y
+        y
         let y = 0;
         BLOCK
         Exit
+        x
         x
         E::B(x)
         Dummy
@@ -377,8 +390,10 @@ class RsControlFlowGraphTest : RsTestBase() {
         1
         E::A(1)
         x
+        x
         let x = E::A(1);
         x
+        val
         val
         E::A(val)
         Dummy
@@ -391,6 +406,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         MATCH
         MATCH;
         0
+        y
         y
         let y = 0;
         BLOCK
@@ -435,9 +451,12 @@ class RsControlFlowGraphTest : RsTestBase() {
         24
         S { data1: 42, data2: 24 }
         x
+        x
         let x = S { data1: 42, data2: 24 };
         s
         a
+        a
+        b
         b
         S { data1: a, data2: b }
         let S { data1: a, data2: b } = s;
@@ -447,7 +466,10 @@ class RsControlFlowGraphTest : RsTestBase() {
         (2, 3)
         (1, (2, 3))
         x
+        x
         y
+        y
+        z
         z
         (y, z)
         (x, (y, z))
