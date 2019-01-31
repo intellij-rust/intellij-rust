@@ -457,13 +457,7 @@ private class MacroPattern private constructor(
          * Some tokens that treated as keywords by our lexer,
          * but rustc's macro parser treats them as identifiers
          */
-        private val IDENTIFIER_TOKENS = TokenSet.create(
-            RsElementTypes.IDENTIFIER,
-            RsElementTypes.SELF,
-            RsElementTypes.SUPER,
-            RsElementTypes.CRATE,
-            RsElementTypes.CSELF
-        )
+        private val IDENTIFIER_TOKENS = TokenSet.orSet(tokenSetOf(RsElementTypes.IDENTIFIER), RS_KEYWORDS)
     }
 }
 
