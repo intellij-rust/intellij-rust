@@ -19,41 +19,17 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn bar() {}
     """)
 
-    fun `test ident 'self'`() = doTest("""
-        macro_rules! foo {
-            ($ i:ident) => (
-                use foo::{$ i};
-            )
-        }
-        foo! { self }
-    """, """
-        use foo::{self};
-    """)
-
-    fun `test ident 'super', 'crate'`() = doTest("""
-        macro_rules! foo {
-            ($ i:ident) => (
-                use $ i::foo;
-            )
-        }
-        foo! { super }
-        foo! { crate }
-    """, """
-        use super::foo;
-    """, """
-        use crate::foo;
-    """)
-
-    fun `test ident 'Self'`() = doTest("""
-        macro_rules! foo {
-            ($ i:ident) => (
-                impl S { fn foo() -> $ i { S } }
-            )
-        }
-        foo! { Self }
-    """, """
-        impl S { fn foo() -> Self { S } }
-    """)
+    fun `test any rust keyword may be matched as an identifier`() {
+        val keywords = RS_KEYWORDS.types
+        doTest("""
+            macro_rules! foo {
+                ($ i:ident) => (
+                    bar! { $ i }
+                )
+            }
+            ${keywords.joinToString("\n") { "foo! { $it }" }}
+        """, *keywords.map { "bar! { $it }" }.toTypedArray())
+    }
 
     // This test doesn't check result of '$crate' expansion because it's implementation detail.
     // For example rustc expands '$crate' to synthetic token without text representation
