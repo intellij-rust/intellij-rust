@@ -19,6 +19,7 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
+import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.tokenSetOf
@@ -189,7 +190,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun macroIdentifier(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
-            TYPE_KW, CRATE, IDENTIFIER -> {
+            IDENTIFIER, in RS_KEYWORDS -> {
                 b.advanceLexer()
                 true
             }

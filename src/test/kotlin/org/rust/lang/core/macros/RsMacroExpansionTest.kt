@@ -5,6 +5,10 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.psi.tree.TokenSet
+import org.rust.lang.core.psi.RS_KEYWORDS
+import org.rust.lang.core.psi.RsElementTypes.CRATE
+import org.rust.lang.core.psi.tokenSetOf
 import org.rust.lang.core.resolve.NameResolutionTestmarks
 
 class RsMacroExpansionTest : RsMacroExpansionTestBase() {
@@ -19,41 +23,29 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn bar() {}
     """)
 
-    fun `test ident 'self'`() = doTest("""
-        macro_rules! foo {
-            ($ i:ident) => (
-                use foo::{$ i};
-            )
-        }
-        foo! { self }
-    """, """
-        use foo::{self};
-    """)
+    fun `test any rust keyword may be matched as an identifier`() {
+        val keywords = RS_KEYWORDS.types
+        doTest("""
+            macro_rules! foo {
+                ($ i:ident) => (
+                    bar! { $ i }
+                )
+            }
+            ${keywords.joinToString("\n") { "foo! { $it }" }}
+        """, *keywords.map { "bar! { $it }" }.toTypedArray())
+    }
 
-    fun `test ident 'super', 'crate'`() = doTest("""
-        macro_rules! foo {
-            ($ i:ident) => (
-                use $ i::foo;
-            )
-        }
-        foo! { super }
-        foo! { crate }
-    """, """
-        use super::foo;
-    """, """
-        use crate::foo;
-    """)
-
-    fun `test ident 'Self'`() = doTest("""
-        macro_rules! foo {
-            ($ i:ident) => (
-                impl S { fn foo() -> $ i { S } }
-            )
-        }
-        foo! { Self }
-    """, """
-        impl S { fn foo() -> Self { S } }
-    """)
+    fun `test any rust keyword may be used as a metavar name`() {
+        val keywords = TokenSet.andNot(RS_KEYWORDS, tokenSetOf(CRATE)).types
+        doTest(keywords.joinToString("\n") {"""
+            macro_rules! ${it}1 {
+                ($ $it:ident) => (
+                    use $ $it;
+                )
+            }
+            ${it}1! { bar }
+        """}, *keywords.map { "use bar;" }.toTypedArray())
+    }
 
     // This test doesn't check result of '$crate' expansion because it's implementation detail.
     // For example rustc expands '$crate' to synthetic token without text representation
