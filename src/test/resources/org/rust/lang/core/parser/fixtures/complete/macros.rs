@@ -17,6 +17,10 @@ macro_rules! default {
     ($ty: ty) => { /* ANYTHING */ };
 }
 
+macro_rules! foobar {
+    ($self: ident) => {  };
+}
+
 default!(String);
 
 thread_local!(static HANDLE: Handle = Handle(0));
