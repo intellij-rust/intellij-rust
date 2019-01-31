@@ -40,6 +40,9 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
                 borrowCheckResult.usesOfMovedValue.forEach {
                     registerUseOfMovedValueProblem(holder, it.use)
                 }
+                borrowCheckResult.usesOfUninitializedVariable.forEach {
+                    registerUseOfUninitializedVariableProblem(holder, it.use)
+                }
                 borrowCheckResult.moveErrors.forEach {
                     val move = it.from.element.ancestorOrSelf<RsExpr>()
                     if (move != null) registerMoveProblem(holder, move)
@@ -59,6 +62,10 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
     private fun registerMoveProblem(holder: ProblemsHolder, element: RsElement) {
         holder.registerProblem(element, "Cannot move")
+    }
+
+    private fun registerUseOfUninitializedVariableProblem(holder: ProblemsHolder, use: RsElement) {
+        holder.registerProblem(use, "Use of possibly uninitialized variable")
     }
 
     private fun checkMethodRequiresMutable(receiver: RsExpr, fn: RsFunction): Boolean {
