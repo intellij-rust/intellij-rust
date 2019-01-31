@@ -29,10 +29,10 @@ sealed class Scope {
     data class CallSite(override val element: RsElement) : Scope()
 
     /**
-     * Represents the scope of user code running immediately after the initializer expression for the indexed stmt,
-     * until the end of the block.
+     * Represents the scope of user code running immediately after the initializer expression of the [letDecl],
+     * until the end of the block [element].
      */
-    data class Remainder(override val element: RsLetDecl) : Scope()
+    data class Remainder(override val element: RsBlock, val letDecl: RsLetDecl) : Scope()
 }
 
 /**
@@ -45,11 +45,11 @@ val Scope.span: TextRange
         if (this is Scope.Remainder) {
             // Want span for scope starting after the let binding and ending at end of block;
             // reuse span of block and shift `startOffset` forward to end of indexed stmt.
-            val blockSpan = element.parent.textRange
+            val letSpan = letDecl.textRange
 
             // To avoid issues with macro-generated spans, the span of the stmt must be nested.
-            if (blockSpan.startOffset <= span.startOffset && span.endOffset <= blockSpan.endOffset) {
-                return TextRange(span.endOffset, blockSpan.endOffset)
+            if (span.startOffset <= letSpan.startOffset && letSpan.endOffset <= span.endOffset) {
+                return TextRange(letSpan.endOffset, span.endOffset)
             }
         }
         return span
@@ -247,7 +247,7 @@ private class RegionResolutionVisitor(contextOwner: RsInferenceContextOwner) : R
                 // Each LetDecl introduces a subscope for bindings introduced by the declaration.
                 // Each subscope in a block has the previous subscope in the block as a parent, except for the first
                 // such subscope, which has the block itself as a parent.
-                enterScope(Scope.Remainder(stmt))
+                enterScope(Scope.Remainder(block, stmt))
                 ctx.variableParent = ctx.parent
             }
             stmt.accept(this)
