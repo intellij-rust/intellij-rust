@@ -28,6 +28,7 @@ import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.runWriteCommandAction
 
 class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), HighPriorityAction {
@@ -52,10 +53,10 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         }
 
         if (candidates.size == 1) {
-            importItem(project, candidates.first(), element)
+            element.containingMod.importItem(candidates.first())
         } else {
             DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
-                chooseItemAndImport(project, it, candidates, element)
+                chooseItemAndImport(project, it, candidates, element.containingMod)
             }
         }
         isConsumed = true
@@ -68,80 +69,9 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         originalElement: RsElement
     ) {
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
-            importItem(project, selectedValue, originalElement)
-        }
-    }
-
-    private fun importItem(
-        project: Project,
-        candidate: ImportCandidate,
-        originalElement: RsElement
-    ): Unit = project.runWriteCommandAction {
-        val mod = originalElement.containingMod
-        val psiFactory = RsPsiFactory(project)
-        // depth of `mod` relative to module with `extern crate` item
-        // we uses this info to create correct relative use item path if needed
-        var relativeDepth: Int? = null
-
-        val isEdition2018 = originalElement.isEdition2018
-        val info = candidate.info
-        // if crate of importing element differs from current crate
-        // we need to add new extern crate item
-        if (info is ImportInfo.ExternCrateImportInfo) {
-            val target = info.target
-            val crateRoot = originalElement.crateRoot
-            val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
-            when {
-                // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
-                // we don't add corresponding extern crate item manually
-                // because it will be done by compiler implicitly
-                attributes == RsFile.Attributes.NONE && target.isStd -> Testmarks.autoInjectedStdCrate.hit()
-                // if crate of imported element is `core` and there is `#![no_std]`
-                // we don't add corresponding extern crate item manually for the same reason
-                attributes == RsFile.Attributes.NO_STD && target.isCore -> Testmarks.autoInjectedCoreCrate.hit()
-                else -> {
-                    if (info.needInsertExternCrateItem && !isEdition2018) {
-                        crateRoot?.insertExternCrateItem(psiFactory, info.externCrateName)
-                    } else {
-                        if (info.depth != null) {
-                            Testmarks.externCrateItemInNotCrateRoot.hit()
-                            relativeDepth = info.depth
-                        }
-                    }
-                }
+            project.runWriteCommandAction {
+                originalElement.containingMod.importItem(selectedValue)
             }
-        }
-
-        val prefix = when (relativeDepth) {
-            null -> if (info is ImportInfo.LocalImportInfo && isEdition2018) "crate::" else ""
-            0 -> "self::"
-            else -> "super::".repeat(relativeDepth)
-        }
-        mod.insertUseItem(psiFactory, "$prefix${info.usePath}")
-    }
-
-    private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
-        val externCrateItem = psiFactory.createExternCrateItem(crateName)
-        val lastExternCrateItem = childrenOfType<RsExternCrateItem>().lastElement
-        if (lastExternCrateItem != null) {
-            addAfter(externCrateItem, lastExternCrateItem)
-        } else {
-            addBefore(externCrateItem, firstItem)
-            addAfter(psiFactory.createNewline(), firstItem)
-        }
-    }
-
-    private fun RsMod.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
-        val useItem = psiFactory.createUseItem(usePath)
-        val anchor = childrenOfType<RsUseItem>().lastElement ?: childrenOfType<RsExternCrateItem>().lastElement
-        if (anchor != null) {
-            val insertedUseItem = addAfter(useItem, anchor)
-            if (anchor is RsExternCrateItem) {
-                addBefore(psiFactory.createNewline(), insertedUseItem)
-            }
-        } else {
-            addBefore(useItem, firstItem)
-            addAfter(psiFactory.createNewline(), firstItem)
         }
     }
 
@@ -160,36 +90,11 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 return Context(basePath, emptyList())
             }
 
-            val pathMod = path.containingMod
-            val pathSuperMods = LinkedHashSet(pathMod.superMods)
+            val candidates = getImportCandidates(path.toImportContext(project), basePath.referenceName, path.text) {
+                path != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
+            }
 
-            val scope = RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project))
-
-            val explicitItems = RsNamedElementIndex.findElementsByName(project, basePath.referenceName, scope)
-                .asSequence()
-                .filterIsInstance<RsQualifiedNamedElement>()
-                .map { QualifiedNamedItem.ExplicitItem(it) }
-
-            val reexportedItems = RsReexportIndex.findReexportsByName(project, basePath.referenceName, scope)
-                .asSequence()
-                .mapNotNull {
-                    val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
-                    QualifiedNamedItem.ReexportedItem(it, item)
-                }
-
-            val namespaceFilter = path.namespaceFilter
-            val attributes = path.stdlibAttributes
-
-            val candidates = (explicitItems + reexportedItems)
-                .filter { basePath != path || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers) }
-                .flatMap { it.withModuleReexports(project).asSequence() }
-                .mapNotNull { importItem -> importItem.toImportCandidate(pathSuperMods) }
-                // check that result after import can be resolved and resolved element is suitable
-                // if no, don't add it in candidate list
-                .filter { path.canBeResolvedToSuitableItem(project, pathMod, it.info, attributes, namespaceFilter) }
-                .filterImportCandidates(attributes)
-
-            return Context(basePath, candidates)
+            return Context(basePath, candidates.toList())
         }
 
         fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context<Unit>? {
@@ -205,8 +110,49 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 .flatMap { QualifiedNamedItem.ExplicitItem(it).withModuleReexports(project).asSequence() }
                 .mapNotNull { importItem -> importItem.toImportCandidate(superMods) }
                 .filterImportCandidates(attributes)
+                .toList()
 
             return Context(Unit, candidates)
+        }
+
+        /**
+         * Returns a sequence of import candidates, after importing any of which it becomes possible to resolve the
+         * path created from the `importingPathText`.
+         *
+         * @param importContext    The information about a path for which import candidates are looked for.
+         * @param targetName        The name of searched import candidate.
+         * @param importingPathText The text of the path that must resolve to candidates after import.
+         * @param itemFilter        Additional filter for items before they become candidates.
+         * @return the sequence of import candidates.
+         */
+        fun getImportCandidates(
+            importContext: ImportContext,
+            targetName: String,
+            importingPathText: String,
+            itemFilter: (QualifiedNamedItem) -> Boolean
+        ): Sequence<ImportCandidate> {
+            val (project, pathMod, pathSuperMods, scope, namespaceFilter, attributes) = importContext
+
+            val explicitItems = RsNamedElementIndex.findElementsByName(project, targetName, scope)
+                .asSequence()
+                .filterIsInstance<RsQualifiedNamedElement>()
+                .map { QualifiedNamedItem.ExplicitItem(it) }
+
+            val reexportedItems = RsReexportIndex.findReexportsByName(project, targetName, scope)
+                .asSequence()
+                .mapNotNull {
+                    val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
+                    QualifiedNamedItem.ReexportedItem(it, item)
+                }
+
+            return (explicitItems + reexportedItems)
+                .filter(itemFilter)
+                .flatMap { it.withModuleReexports(project).asSequence() }
+                .mapNotNull { it.toImportCandidate(pathSuperMods) }
+                .filterImportCandidates(attributes).asSequence()
+                // check that result after import can be resolved and resolved element is suitable
+                // if no, don't add it in candidate list
+                .filter { canBeResolvedToSuitableItem(importingPathText, project, pathMod, it.info, attributes, namespaceFilter) }
         }
 
         private fun QualifiedNamedItem.toImportCandidate(superMods: LinkedHashSet<RsMod>): ImportCandidate? =
@@ -282,7 +228,8 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             return if (shouldBePublicMods.all { it.isPublic }) return importInfo else null
         }
 
-        private fun RsPath.canBeResolvedToSuitableItem(
+        private fun canBeResolvedToSuitableItem(
+            importingPathName: String,
             project: Project,
             context: RsMod,
             info: ImportInfo,
@@ -297,7 +244,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 info.externCrateName
             }
             val path = RsCodeFragmentFactory(project)
-                .createPathInTmpMod(context, this, info.usePath, externCrateName) ?: return false
+                .createPathInTmpMod(context, importingPathName, info.usePath, externCrateName) ?: return false
             val element = path.reference.deepResolve() as? RsQualifiedNamedElement ?: return false
             if (!namespaceFilter(element)) return false
             return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
@@ -305,8 +252,9 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
         private fun Sequence<ImportCandidate>.filterImportCandidates(
             attributes: RsFile.Attributes
-        ): List<ImportCandidate> = groupBy { it.qualifiedNamedItem.item }
-            .flatMap { (_, candidates) -> filterForSingleItem(candidates, attributes) }
+        ): Sequence<ImportCandidate> = groupBy { it.qualifiedNamedItem.item }
+            .map { (_, candidates) -> candidates }.asSequence()
+            .flatMap { candidates -> filterForSingleItem(candidates, attributes).asSequence() }
 
         private fun filterForSingleItem(
             candidates: List<ImportCandidate>,
@@ -471,6 +419,97 @@ private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean get() =
     }
     else -> { _ -> true }
 }
+
+/**
+ * Inserts an use declaration to the receiver mod for importing the selected `candidate`.
+ * This action requires write access.
+ */
+fun RsMod.importItem(candidate: ImportCandidate) {
+    checkWriteAccessAllowed()
+    val psiFactory = RsPsiFactory(project)
+    // depth of `mod` relative to module with `extern crate` item
+    // we uses this info to create correct relative use item path if needed
+    var relativeDepth: Int? = null
+
+    val isEdition2018 = isEdition2018
+    val info = candidate.info
+    // if crate of importing element differs from current crate
+    // we need to add new extern crate item
+    if (info is ImportInfo.ExternCrateImportInfo) {
+        val target = info.target
+        val crateRoot = crateRoot
+        val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
+        when {
+            // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
+            // we don't add corresponding extern crate item manually
+            // because it will be done by compiler implicitly
+            attributes == RsFile.Attributes.NONE && target.isStd -> AutoImportFix.Testmarks.autoInjectedStdCrate.hit()
+            // if crate of imported element is `core` and there is `#![no_std]`
+            // we don't add corresponding extern crate item manually for the same reason
+            attributes == RsFile.Attributes.NO_STD && target.isCore -> AutoImportFix.Testmarks.autoInjectedCoreCrate.hit()
+            else -> {
+                if (info.needInsertExternCrateItem && !isEdition2018) {
+                    crateRoot?.insertExternCrateItem(psiFactory, info.externCrateName)
+                } else {
+                    if (info.depth != null) {
+                        AutoImportFix.Testmarks.externCrateItemInNotCrateRoot.hit()
+                        relativeDepth = info.depth
+                    }
+                }
+            }
+        }
+    }
+    val prefix = when (relativeDepth) {
+        null -> if (info is ImportInfo.LocalImportInfo && isEdition2018) "crate::" else ""
+        0 -> "self::"
+        else -> "super::".repeat(relativeDepth)
+    }
+    insertUseItem(psiFactory, "$prefix${info.usePath}")
+}
+
+private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
+    val externCrateItem = psiFactory.createExternCrateItem(crateName)
+    val lastExternCrateItem = childrenOfType<RsExternCrateItem>().lastElement
+    if (lastExternCrateItem != null) {
+        addAfter(externCrateItem, lastExternCrateItem)
+    } else {
+        addBefore(externCrateItem, firstItem)
+        addAfter(psiFactory.createNewline(), firstItem)
+    }
+}
+
+private fun RsMod.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
+    val useItem = psiFactory.createUseItem(usePath)
+    val anchor = childrenOfType<RsUseItem>().lastElement ?: childrenOfType<RsExternCrateItem>().lastElement
+    if (anchor != null) {
+        val insertedUseItem = addAfter(useItem, anchor)
+        if (anchor is RsExternCrateItem) {
+            addBefore(psiFactory.createNewline(), insertedUseItem)
+        }
+    } else {
+        addBefore(useItem, firstItem)
+        addAfter(psiFactory.createNewline(), firstItem)
+    }
+}
+
+data class ImportContext(
+    val project: Project,
+    val pathMod: RsMod,
+    val pathSuperMods: LinkedHashSet<RsMod>,
+    val scope: GlobalSearchScope,
+    val namespaceFilter: (RsQualifiedNamedElement) -> Boolean,
+    val attributes: RsFile.Attributes
+)
+
+fun RsPath.toImportContext(project: Project): ImportContext =
+    ImportContext(
+        project = project,
+        pathMod = containingMod,
+        pathSuperMods = LinkedHashSet(containingMod.superMods),
+        scope = RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project)),
+        namespaceFilter = namespaceFilter,
+        attributes = stdlibAttributes
+    )
 
 private val RsElement.stdlibAttributes: RsFile.Attributes
     get() = (crateRoot?.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE

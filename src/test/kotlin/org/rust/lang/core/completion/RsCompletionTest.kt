@@ -324,18 +324,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test alias shadows original name`() = checkNoCompletion("""
-        mod m {
-            pub fn transmogrify() {}
-        }
-
-        use self::m::transmogrify as frobnicate;
-
-        fn main() {
-            trans/*caret*/
-        }
-    """)
-
     fun `test completion respects namespaces`() = checkNoCompletion("""
         fn foobar() {}
 
