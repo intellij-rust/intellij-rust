@@ -18,6 +18,7 @@ import java.net.URL
 import java.nio.file.Path
 import kotlin.concurrent.thread
 import org.apache.tools.ant.taskdefs.condition.Os.*
+import org.jetbrains.intellij.tasks.RunIdeTask
 
 val CI = System.getenv("CI") != null
 
@@ -251,6 +252,10 @@ project(":") {
 
     tasks.withType<Jar> {
         dependsOn(copyXmls)
+    }
+
+    tasks.withType<RunIdeTask> {
+        jvmArgs("-Xmx768m") // Default value for IDEA installation
     }
 }
 
