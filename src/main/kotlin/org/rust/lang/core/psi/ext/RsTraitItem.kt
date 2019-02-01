@@ -12,11 +12,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.util.Query
-import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.resolve.STD_DERIVABLE_TRAITS
+import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.substitute
@@ -37,10 +37,9 @@ val RsTraitItem.isSizedTrait: Boolean get() = langAttribute == "sized"
 val RsTraitItem.isAuto: Boolean
     get() = stub?.isAuto ?: (node.findChildByType(RsElementTypes.AUTO) != null)
 
-val RsTraitItem.isStdDerivable: Boolean get() {
-    val derivableTrait = STD_DERIVABLE_TRAITS[name] ?: return false
-    return containingCargoPackage?.origin == PackageOrigin.STDLIB &&
-        containingMod.modName == derivableTrait.modName
+val RsTraitItem.isKnownDerivable: Boolean get() {
+    val derivableTrait = KNOWN_DERIVABLE_TRAITS[name] ?: return false
+    return derivableTrait.findTrait(knownItems) == this
 }
 
 val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitItem>> get() {

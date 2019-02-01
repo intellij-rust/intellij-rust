@@ -20,10 +20,12 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.isStdDerivable
+import org.rust.lang.core.psi.ext.withDefaultSubst
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.StdDerivableTrait
+import org.rust.lang.core.resolve.KnownDerivableTrait
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.withDependencies
+import org.rust.lang.core.types.TraitRef
 
 object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
@@ -36,27 +38,30 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
 
         val owner = parameters.position.ancestorStrict<RsStructOrEnumItemElement>()
             ?: return
-        val alreadyDerived = ImplLookup.relativeTo(owner)
-            .findImplsAndTraits(owner.declaredType)
-            .mapNotNull {
-                val (trait, _) = it.value.implementedTrait ?: return@mapNotNull null
-                if (trait.isStdDerivable) trait.name else null
-            }
+        val ownerType = owner.declaredType
+        val lookup = ImplLookup.relativeTo(owner)
 
-        StdDerivableTrait.values()
-            .filter { it.name !in alreadyDerived }
-            .forEach { trait ->
-                val traitWithDependencies = trait.withDependencies
-                    .filter { it.name !in alreadyDerived }
+        /** Filter unavailable and already derived */
+        fun Sequence<KnownDerivableTrait>.filterDerivables() = filter {
+            val trait = it.findTrait(owner.knownItems)
+            trait != null && !lookup.canSelect(TraitRef(ownerType, trait.withDefaultSubst()))
+        }
+
+        KnownDerivableTrait.values().asSequence()
+            .filterDerivables()
+            .forEach { derivable ->
+                val traitWithDependencies = derivable.withDependencies.asSequence()
+                    .filterDerivables()
+                    .toList()
                 // if 'traitWithDependencies' contains only one element
-                // then all trait dependencies are already satisfied
-                // and 'traitWithDependencies' contains only 'trait' element
+                // then all derivable dependencies are already satisfied
+                // and 'traitWithDependencies' contains only 'derivable' element
                 if (traitWithDependencies.size > 1) {
                     val element = LookupElementBuilder.create(traitWithDependencies.joinToString(", "))
                         .withIcon(RsIcons.TRAIT.multiple())
                     result.addElement(element.withPriority(GROUP_PRIORITY))
                 }
-                val element = LookupElementBuilder.create(trait.name)
+                val element = LookupElementBuilder.create(derivable.name)
                     .withIcon(RsIcons.TRAIT)
                 result.addElement(element.withPriority(DEFAULT_PRIORITY))
             }

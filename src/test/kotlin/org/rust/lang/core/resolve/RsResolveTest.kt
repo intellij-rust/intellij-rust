@@ -1135,4 +1135,18 @@ class RsResolveTest : RsResolveTestBase() {
                                  //^
         }
     """)
+
+    fun `test derive serde Serialize`() = checkByCode("""
+    //- main.rs
+        #[lang = "serde::Serialize"]
+        trait Serialize { fn serialize(&self); }
+                           //X
+        #[derive(Serialize)]
+        struct Foo;
+
+        fn bar(foo: Foo) {
+            foo.serialize();
+              //^
+        }
+    """)
 }

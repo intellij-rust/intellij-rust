@@ -128,3 +128,31 @@ private class RealKnownItemsLookup(
         }.orElse(null)
     }
 }
+
+enum class KnownDerivableTrait(
+    private val resolver: (KnownItems) -> RsTraitItem?,
+    val dependencies: Array<KnownDerivableTrait> = emptyArray()
+) {
+    Clone(KnownItems::Clone),
+    Copy(KnownItems::Copy, arrayOf(Clone)),
+    Debug(KnownItems::Debug),
+    Default(KnownItems::Default),
+    Hash(KnownItems::Hash),
+    PartialEq(KnownItems::PartialEq),
+    Eq(KnownItems::Eq, arrayOf(PartialEq)),
+    PartialOrd(KnownItems::PartialOrd, arrayOf(PartialEq)),
+    Ord(KnownItems::Ord, arrayOf(PartialOrd, Eq, PartialEq)),
+
+    Serialize({ it.findTrait("serde::Serialize") }),
+    Deserialize({ it.findTrait("serde::Deserialize") }),
+
+    // TODO Fail also derives `Display`. Ignore it for now
+    Fail({ it.findTrait("failure::Fail") }, arrayOf(Debug)),
+    ;
+
+    fun findTrait(items: KnownItems): RsTraitItem? = resolver(items)
+}
+
+val KnownDerivableTrait.withDependencies: List<KnownDerivableTrait> get() = listOf(this, *dependencies)
+
+val KNOWN_DERIVABLE_TRAITS: Map<String, KnownDerivableTrait> = KnownDerivableTrait.values().associate { it.name to it }
