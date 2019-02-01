@@ -135,7 +135,7 @@ fun RsPathReference.advancedDeepResolve(): BoundElement<RsElement>? {
     val boundElement = advancedResolve()?.let { resolved ->
         // Resolve potential `Self` inside `impl`
         if (resolved.element is RsImplItem && element.hasCself) {
-            (resolved.element.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve()
+            (resolved.element.typeReference?.typeElement as? RsBaseType)?.path?.reference?.advancedResolve() ?: resolved
         } else {
             resolved
         }
