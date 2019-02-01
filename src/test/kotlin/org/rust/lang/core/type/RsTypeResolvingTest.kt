@@ -82,6 +82,13 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                                   //^ S
     """)
 
+    fun `test Self type inside impl for primitive type`() = testType("""
+        trait Clone { fn clone(&self) -> Self; }
+        impl Clone for i32 {
+            fn clone(&self) -> Self { *self }
+        }                    //^ i32
+    """)
+
     fun `test primitive bool`() = testType("""
         type T = bool;
                   //^ bool
