@@ -484,6 +484,28 @@ class RsControlFlowGraphTest : RsTestBase() {
         BLOCK
     """)
 
+    fun `test panic macro call`() = testCFG("""
+        fn main() {
+            1;
+            if true { 2; } else { panic!(); }
+            42;
+        }
+    """, """
+        Entry
+        1
+        1;
+        true
+        2
+        2;
+        BLOCK
+        IF
+        IF;
+        42
+        42;
+        BLOCK
+        Exit
+    """)
+
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
         val block = myFixture.file.descendantsOfType<RsBlock>().firstOrNull() ?: return
