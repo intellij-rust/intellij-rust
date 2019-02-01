@@ -256,6 +256,8 @@ project(":") {
 
     tasks.withType<RunIdeTask> {
         jvmArgs("-Xmx768m") // Default value for IDEA installation
+        // uncomment if `unexpected exception ProcessCanceledException` prevents you from debugging a running IDE
+//        jvmArgs("-Didea.ProcessCanceledException=disabled")
     }
 }
 
