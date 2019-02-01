@@ -100,12 +100,20 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         return straightLine(callExpr, funcOrReceiverExit, args)
     }
 
+    private fun processExpr(expr: RsExpr, parent: RsElement, pred: CFGNode) {
+        val exprExit = process(expr, pred)
+        if (expr.type is TyNever) {
+            addReturningEdge(exprExit)
+            finishWith { addUnreachableNode() }
+        } else {
+            finishWithAstNode(parent, exprExit)
+        }
+    }
+
     override fun visitBlock(block: RsBlock) {
         val stmtsExit = block.stmtList.fold(pred) { pred, stmt -> process(stmt, pred) }
-        val blockExpr = block.expr
-        val exprExit = process(blockExpr, stmtsExit)
-
-        finishWithAstNode(block, exprExit)
+        val blockExpr = block.expr ?: return finishWithAstNode(block, stmtsExit)
+        processExpr(blockExpr, block, stmtsExit)
     }
 
     override fun visitLetDecl(letDecl: RsLetDecl) {
@@ -119,16 +127,8 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
 
     override fun visitLabelDecl(labelDecl: RsLabelDecl) = finishWith(pred)
 
-    override fun visitExprStmt(exprStmt: RsExprStmt) {
-        val expr = exprStmt.expr
-        val exprExit = process(expr, pred)
-        if (expr.type is TyNever) {
-            addReturningEdge(exprExit)
-            finishWith { addUnreachableNode() }
-        } else {
-            finishWithAstNode(exprStmt, exprExit)
-        }
-    }
+    override fun visitExprStmt(exprStmt: RsExprStmt) =
+        processExpr(exprStmt.expr, exprStmt, pred)
 
     override fun visitPatIdent(patIdent: RsPatIdent) =
         finishWithAstNode(patIdent, pred)
