@@ -52,8 +52,8 @@ class RustfmtFileAction : DumbAwareAction() {
             if (isUnitTestMode) throw e
             val message = e.message ?: ""
 
-            // #1131 - Check if we get a "does not have the binary `rustfmt`" and let the user know to install fmt
-            if ("does not have the binary `rustfmt`" in message) {
+            // #1131 - Check if we get a "'rustfmt' is not installed" and let the user know to install fmt
+            if ("'rustfmt' is not installed" in message) {
                 val projectDir = project.cargoProjects.findProjectForFile(file)?.manifest?.parent
                 val action = if (projectDir != null) InstallRustfmtAction(projectDir) else null
                 project.showBalloon("Rustfmt is not installed", NotificationType.ERROR, action)
