@@ -16,8 +16,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.ProcessingContext
 import org.rust.ide.inspections.import.AutoImportFix
+import org.rust.ide.inspections.import.ImportContext
 import org.rust.ide.inspections.import.importItem
-import org.rust.ide.inspections.import.toImportContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
@@ -118,7 +118,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         Testmarks.pathCompletionFromIndex.hit()
 
         val project = parameters.originalFile.project
-        val importContext = path.toImportContext(project)
+        val importContext = ImportContext.from(project, path)
         val pathMod = path.containingMod
 
         val keys = hashSetOf<String>().apply {
