@@ -90,11 +90,11 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 return Context(basePath, emptyList())
             }
 
-            val candidates = getImportCandidates(path.toImportContext(project), basePath.referenceName, path.text) {
+            val candidates = getImportCandidates(ImportContext.from(project, path), basePath.referenceName, path.text) {
                 path != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
-            }
+            }.toList()
 
-            return Context(basePath, candidates.toList())
+            return Context(basePath, candidates)
         }
 
         fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context<Unit>? {
@@ -106,7 +106,8 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             val superMods = LinkedHashSet(methodCall.containingMod.superMods)
             val attributes = methodCall.stdlibAttributes
 
-            val candidates = traitsToImport.asSequence()
+            val candidates = traitsToImport
+                .asSequence()
                 .flatMap { QualifiedNamedItem.ExplicitItem(it).withModuleReexports(project).asSequence() }
                 .mapNotNull { importItem -> importItem.toImportCandidate(superMods) }
                 .filterImportCandidates(attributes)
@@ -131,14 +132,14 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             importingPathText: String,
             itemFilter: (QualifiedNamedItem) -> Boolean
         ): Sequence<ImportCandidate> {
-            val (project, pathMod, pathSuperMods, scope, namespaceFilter, attributes) = importContext
+            val project = importContext.project
 
-            val explicitItems = RsNamedElementIndex.findElementsByName(project, targetName, scope)
+            val explicitItems = RsNamedElementIndex.findElementsByName(project, targetName, importContext.scope)
                 .asSequence()
                 .filterIsInstance<RsQualifiedNamedElement>()
                 .map { QualifiedNamedItem.ExplicitItem(it) }
 
-            val reexportedItems = RsReexportIndex.findReexportsByName(project, targetName, scope)
+            val reexportedItems = RsReexportIndex.findReexportsByName(project, targetName, importContext.scope)
                 .asSequence()
                 .mapNotNull {
                     val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
@@ -148,11 +149,11 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             return (explicitItems + reexportedItems)
                 .filter(itemFilter)
                 .flatMap { it.withModuleReexports(project).asSequence() }
-                .mapNotNull { it.toImportCandidate(pathSuperMods) }
-                .filterImportCandidates(attributes).asSequence()
+                .mapNotNull { it.toImportCandidate(importContext.superMods) }
+                .filterImportCandidates(importContext.attributes)
                 // check that result after import can be resolved and resolved element is suitable
                 // if no, don't add it in candidate list
-                .filter { canBeResolvedToSuitableItem(importingPathText, project, pathMod, it.info, attributes, namespaceFilter) }
+                .filter { canBeResolvedToSuitableItem(importingPathText, importContext, it.info) }
         }
 
         private fun QualifiedNamedItem.toImportCandidate(superMods: LinkedHashSet<RsMod>): ImportCandidate? =
@@ -230,30 +231,28 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
         private fun canBeResolvedToSuitableItem(
             importingPathName: String,
-            project: Project,
-            context: RsMod,
-            info: ImportInfo,
-            attributes: RsFile.Attributes,
-            namespaceFilter: (RsQualifiedNamedElement) -> Boolean
+            context: ImportContext,
+            info: ImportInfo
         ): Boolean {
             val externCrateName = if (info !is ImportInfo.ExternCrateImportInfo ||
-                attributes == RsFile.Attributes.NONE && info.target.isStd ||
-                attributes == RsFile.Attributes.NO_STD && info.target.isCore) {
+                context.attributes == RsFile.Attributes.NONE && info.target.isStd ||
+                context.attributes == RsFile.Attributes.NO_STD && info.target.isCore) {
                 null
             } else {
                 info.externCrateName
             }
-            val path = RsCodeFragmentFactory(project)
-                .createPathInTmpMod(context, importingPathName, info.usePath, externCrateName) ?: return false
+            val path = RsCodeFragmentFactory(context.project)
+                .createPathInTmpMod(importingPathName, context.mod, context.ns, info.usePath, externCrateName) ?: return false
             val element = path.reference.deepResolve() as? RsQualifiedNamedElement ?: return false
-            if (!namespaceFilter(element)) return false
+            if (!context.namespaceFilter(element)) return false
             return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
         }
 
         private fun Sequence<ImportCandidate>.filterImportCandidates(
             attributes: RsFile.Attributes
         ): Sequence<ImportCandidate> = groupBy { it.qualifiedNamedItem.item }
-            .map { (_, candidates) -> candidates }.asSequence()
+            .map { (_, candidates) -> candidates }
+            .asSequence()
             .flatMap { candidates -> filterForSingleItem(candidates, attributes).asSequence() }
 
         private fun filterForSingleItem(
@@ -492,25 +491,36 @@ private fun RsMod.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
     }
 }
 
-data class ImportContext(
+@Suppress("DataClassPrivateConstructor")
+data class ImportContext private constructor(
     val project: Project,
-    val pathMod: RsMod,
-    val pathSuperMods: LinkedHashSet<RsMod>,
+    val mod: RsMod,
+    val superMods: LinkedHashSet<RsMod>,
     val scope: GlobalSearchScope,
-    val namespaceFilter: (RsQualifiedNamedElement) -> Boolean,
-    val attributes: RsFile.Attributes
-)
+    val ns: RsPsiFactory.PathNamespace,
+    val attributes: RsFile.Attributes,
+    val namespaceFilter: (RsQualifiedNamedElement) -> Boolean
+) {
+    companion object {
+        fun from(project: Project, path: RsPath): ImportContext = ImportContext(
+            project = project,
+            mod = path.containingMod,
+            superMods = LinkedHashSet(path.containingMod.superMods),
+            scope = RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project)),
+            ns = path.pathNamespace,
+            attributes = path.stdlibAttributes,
+            namespaceFilter = path.namespaceFilter
+        )
+    }
+}
 
-fun RsPath.toImportContext(project: Project): ImportContext =
-    ImportContext(
-        project = project,
-        pathMod = containingMod,
-        pathSuperMods = LinkedHashSet(containingMod.superMods),
-        scope = RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project)),
-        namespaceFilter = namespaceFilter,
-        attributes = stdlibAttributes
-    )
-
+private val RsPath.pathNamespace: RsPsiFactory.PathNamespace get() = when (context) {
+    is RsPathExpr,
+    is RsStructLiteral,
+    is RsPatStruct,
+    is RsPatTupleStruct -> RsPsiFactory.PathNamespace.VALUES
+    else -> RsPsiFactory.PathNamespace.TYPES
+}
 private val RsElement.stdlibAttributes: RsFile.Attributes
     get() = (crateRoot?.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
 private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsAttr }

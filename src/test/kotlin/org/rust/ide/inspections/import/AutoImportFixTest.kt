@@ -132,6 +132,98 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn f<T>(foo: Foo/*caret*/<T>) {}
     """)
 
+    fun `test import item with type params (struct literal)`() = checkAutoImportFixByText("""
+        mod foo {
+            pub struct Foo<T> { x: T }
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::<i32> {};
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo<T> { x: T }
+        }
+
+        fn main() {
+            let f = Foo/*caret*/::<i32> {};
+        }
+    """)
+
+    fun `test import item with type params (tuple struct literal)`() = checkAutoImportFixByText("""
+        mod foo {
+            pub struct Foo<T>(T);
+            impl<T> Foo<T> {
+                fn bar() {}
+            }
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Foo`">Foo::/*caret*/<i32>::bar</error>();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo<T>(T);
+            impl<T> Foo<T> {
+                fn bar() {}
+            }
+        }
+
+        fn main() {
+            let f = Foo::/*caret*/<i32>::bar();
+        }
+    """)
+
+    fun `test import item with type params (pat struct)`() = checkAutoImportFixByText("""
+        mod foo {
+            pub struct Foo<T> { x: T }
+        }
+
+        fn main() {
+            let <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::<i32> { x } = ();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo<T> { x: T }
+        }
+
+        fn main() {
+            let Foo/*caret*/::<i32> { x } = ();
+        }
+    """)
+
+    fun `test import item with type params (pat tuple struct)`() = checkAutoImportFixByText("""
+        mod foo {
+            pub struct Foo<T>(T);
+            impl<T> Foo<T> {
+                fn bar() {}
+            }
+        }
+
+        fn main() {
+            let <error descr="Unresolved reference: `Foo`">Foo::/*caret*/<i32>::bar</error>(x) = ();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo<T>(T);
+            impl<T> Foo<T> {
+                fn bar() {}
+            }
+        }
+
+        fn main() {
+            let Foo::/*caret*/<i32>::bar(x) = ();
+        }
+    """)
+
     fun `test import module`() = checkAutoImportFixByText("""
         mod foo {
             pub mod bar {
