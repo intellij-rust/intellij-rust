@@ -150,6 +150,16 @@ fun <T> TypeFoldable<T>.collectInferTys(): List<TyInfer> {
     return list
 }
 
+fun <T> TypeFoldable<T>.visitInferTys(visitor: (TyInfer) -> Boolean): Boolean {
+    return visitWith(object : TypeVisitor {
+        override fun visitTy(ty: Ty): Boolean = when {
+            ty is TyInfer -> visitor(ty)
+            ty.hasTyInfer -> ty.superVisitWith(this)
+            else -> false
+        }
+    })
+}
+
 private data class HasTypeFlagVisitor(val flag: TypeFlags) : TypeVisitor {
     override fun visitTy(ty: Ty): Boolean = BitUtil.isSet(ty.flags, flag)
     override fun visitRegion(region: Region): Boolean = BitUtil.isSet(region.flags, flag)

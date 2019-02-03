@@ -966,4 +966,42 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             foo().bar();
         }       //^
     """)
+
+    fun `test method refinement after unconstrained integer fallback to i32`() = checkByCode("""
+        pub trait MyAdd<RHS=Self> {
+            type Output;
+            fn my_add(self, rhs: RHS) -> Self::Output;
+        }
+        impl MyAdd for i32 {
+            type Output = i32;
+            fn my_add(self, other: i32) -> i32 { self + other }
+        }    //X
+        impl MyAdd for u8 {
+            type Output = u8;
+            fn my_add(self, other: u8) -> u8 { self + other }
+        }
+        fn main() {
+            0.my_add(0);
+        }   //^
+    """)
+
+    fun `test specific method is not known during type inference`() = checkByCode("""
+        pub trait MyAdd<RHS=Self> {
+            type Output;
+            fn my_add(self, rhs: RHS) -> Self::Output;
+        }
+        impl MyAdd for i32 {
+            type Output = i32;
+            fn my_add(self, other: i32) -> i32 { self + other }
+        }
+        impl MyAdd for u8 {
+            type Output = u8;
+            fn my_add(self, other: u8) -> u8 { self + other }
+        }
+        fn main() {
+            // The first call will be resolved to impl only after typecheck of the
+            // full function body, so second call can't be resolved
+            0.my_add(0).my_add(0);
+        }             //^ unresolved
+    """)
 }

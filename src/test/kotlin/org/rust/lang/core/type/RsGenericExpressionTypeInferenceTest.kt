@@ -1520,4 +1520,23 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ i32
     """)
+
+    fun `test type inferred after unconstrained integer fallback to i32`() = testExpr("""
+        pub trait MyAdd<RHS=Self> {
+            type Output;
+            fn my_add(self, rhs: RHS) -> Self::Output;
+        }
+        impl MyAdd for i32 {
+            type Output = i32;
+            fn my_add(self, other: i32) -> i32 { self + other }
+        }
+        impl MyAdd for u8 {
+            type Output = u8;
+            fn my_add(self, other: u8) -> u8 { self + other }
+        }
+        fn main() {
+            let a = 0.my_add(0);
+            a;
+        } //^ i32
+    """)
 }

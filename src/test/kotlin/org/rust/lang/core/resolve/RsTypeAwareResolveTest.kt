@@ -607,12 +607,11 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }      //^
     """)
 
-    // TODO should be resolved to i32
     fun `test multiple impl trait for integer`() = checkByCode("""
         trait T { fn foo(self); }
-                   //X
         impl T for u8 { fn foo(self) {} }
         impl T for i32 { fn foo(self) {} }
+                          //X
         fn main() {
             0.foo();
         }   //^
