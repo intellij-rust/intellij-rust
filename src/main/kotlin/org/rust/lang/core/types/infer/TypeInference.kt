@@ -176,12 +176,35 @@ class RsInferenceContext(
 
         fulfill.selectWherePossible()
 
+        fallbackUnresolvedTypeVarsIfPossible()
+
+        fulfill.selectWherePossible()
+
         exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
         bindings.replaceAll { _, ty -> fullyResolve(ty) }
 
         performPathsRefinement(lookup)
 
         return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics, adjustments)
+    }
+
+    private fun fallbackUnresolvedTypeVarsIfPossible() {
+        for (ty in exprTypes.values.asSequence() + bindings.values.asSequence()) {
+            ty.visitInferTys { tyInfer ->
+                val rty = shallowResolve(tyInfer)
+                if (rty is TyInfer) {
+                    fallbackIfPossible(rty)
+                }
+                false
+            }
+        }
+    }
+
+    private fun fallbackIfPossible(ty: TyInfer) {
+        when (ty) {
+            is TyInfer.IntVar -> intUnificationTable.unifyVarValue(ty, TyInteger.DEFAULT)
+            is TyInfer.FloatVar -> floatUnificationTable.unifyVarValue(ty, TyFloat.DEFAULT)
+        }
     }
 
     private fun performPathsRefinement(lookup: ImplLookup) {
@@ -407,8 +430,8 @@ class RsInferenceContext(
             if (ty !is TyInfer) return ty
 
             return when (ty) {
-                is TyInfer.IntVar -> intUnificationTable.findValue(ty) ?: TyInteger.DEFAULT
-                is TyInfer.FloatVar -> floatUnificationTable.findValue(ty) ?: TyFloat.DEFAULT
+                is TyInfer.IntVar -> intUnificationTable.findValue(ty) ?: TyUnknown
+                is TyInfer.FloatVar -> floatUnificationTable.findValue(ty) ?: TyUnknown
                 is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(::go) ?: TyUnknown
             }
         }
@@ -555,23 +578,14 @@ class RsInferenceContext(
             val resolvedTy = shallowResolve(ty)
             return when {
                 resolvedTy is TyInfer -> true
-                !resolvedTy.hasTyInfer -> false
-                else -> resolvedTy.superVisitWith(this)
+                resolvedTy.hasTyInfer -> resolvedTy.superVisitWith(this)
+                else -> false
             }
         }
     })
 
-    fun <T : TypeFoldable<T>> hasResolvableTypeVars(_ty: T): Boolean {
-        return _ty.visitWith(object : TypeVisitor {
-            override fun visitTy(ty: Ty): Boolean {
-                return when {
-                    ty is TyInfer -> ty != shallowResolve(ty)
-                    !ty.hasTyInfer -> false
-                    else -> ty.superVisitWith(this)
-                }
-            }
-        })
-    }
+    fun <T : TypeFoldable<T>> hasResolvableTypeVars(ty: T): Boolean =
+        ty.visitInferTys { it != shallowResolve(it) }
 
     /** Return true if [ty] was instantiated or unified with another type variable */
     fun isTypeVarAffected(ty: TyInfer.TyVar): Boolean =

@@ -137,17 +137,21 @@ fun <T> TypeFoldable<T>.containsTyOfClass(vararg classes: Class<*>): Boolean =
 
 fun <T> TypeFoldable<T>.collectInferTys(): List<TyInfer> {
     val list = mutableListOf<TyInfer>()
-    visitWith(object : TypeVisitor {
+    visitInferTys {
+        list.add(it)
+        false
+    }
+    return list
+}
+
+fun <T> TypeFoldable<T>.visitInferTys(visitor: (TyInfer) -> Boolean): Boolean {
+    return visitWith(object : TypeVisitor {
         override fun visitTy(ty: Ty): Boolean = when {
-            ty is TyInfer -> {
-                list.add(ty)
-                false
-            }
+            ty is TyInfer -> visitor(ty)
             ty.hasTyInfer -> ty.superVisitWith(this)
             else -> false
         }
     })
-    return list
 }
 
 private data class HasTypeFlagVisitor(val flag: TypeFlags) : TypeVisitor {
