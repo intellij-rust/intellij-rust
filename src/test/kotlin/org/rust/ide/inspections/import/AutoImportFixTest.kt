@@ -1342,4 +1342,54 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let f = Foo/*caret*/;
         }
     """)
+
+    fun `test import inside nested module`() = checkAutoImportFixByText("""
+        mod b {
+            pub struct S;
+        }
+        mod c {
+            fn x() -> <error descr="Unresolved reference: `S`">S/*caret*/</error> {
+
+            }
+        }
+    """, """
+        mod b {
+            pub struct S;
+        }
+        mod c {
+            use b::S;
+
+            fn x() -> S {
+
+            }
+        }
+    """)
+
+    fun `test import inside nested module with multiple choice`() = checkAutoImportFixByTextWithMultipleChoice("""
+        mod a {
+            pub struct S;
+        }
+        mod b {
+            pub struct S;
+        }
+        mod c {
+            fn x() -> <error descr="Unresolved reference: `S`">S/*caret*/</error> {
+
+            }
+        }
+    """, setOf("a::S", "b::S"), "b::S", """
+        mod a {
+            pub struct S;
+        }
+        mod b {
+            pub struct S;
+        }
+        mod c {
+            use b::S;
+
+            fn x() -> S {
+
+            }
+        }
+    """)
 }
