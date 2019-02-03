@@ -20,9 +20,6 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.rustSettings
@@ -72,14 +69,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         return CargoCheckAnnotationInfo(file.virtualFile, toolchain, ws.contentRoot, module)
     }
 
-    override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? =
-        CachedValuesManager.getManager(info.module.project)
-            .getCachedValue(info.module) {
-                CachedValueProvider.Result.create(
-                    checkProject(info),
-                    PsiModificationTracker.MODIFICATION_COUNT
-                )
-            }
+    override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? = checkProject(info)
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         if (annotationResult == null) return
