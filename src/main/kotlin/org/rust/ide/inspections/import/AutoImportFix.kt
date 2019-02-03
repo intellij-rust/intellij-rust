@@ -66,11 +66,11 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         project: Project,
         dataContext: DataContext,
         items: List<ImportCandidate>,
-        originalElement: RsElement
+        mod: RsMod
     ) {
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
             project.runWriteCommandAction {
-                originalElement.containingMod.importItem(selectedValue)
+                mod.importItem(selectedValue)
             }
         }
     }
