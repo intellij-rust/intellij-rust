@@ -27,6 +27,25 @@ class Rustup(
         class Err(val error: String) : DownloadResult<Nothing>()
     }
 
+    data class Component(val name: String, val isInstalled: Boolean) {
+        companion object {
+            fun from(line: String): Component {
+                val name = line.substringBefore(' ')
+                val isInstalled = line.substringAfter(' ') in listOf("(installed)", "(default)")
+                return Component(name, isInstalled)
+            }
+        }
+    }
+
+    fun listComponents(): List<Component> =
+        GeneralCommandLine(rustup)
+            .withWorkDirectory(projectDirectory)
+            .withParameters("component", "list")
+            .execute(null)
+            ?.stdoutLines
+            ?.map { Component.from(it) }
+            ?: emptyList()
+
     fun downloadStdlib(): DownloadResult<VirtualFile> {
         val downloadProcessOutput = GeneralCommandLine(rustup)
             .withWorkDirectory(projectDirectory)
@@ -44,11 +63,11 @@ class Rustup(
         }
     }
 
-    fun downloadRustfmt(owner: Disposable): DownloadResult<Unit> {
-        return try {
+    fun downloadComponent(owner: Disposable, componentName: String): DownloadResult<Unit> =
+        try {
             GeneralCommandLine(rustup)
                 .withWorkDirectory(projectDirectory)
-                .withParameters("component", "add", "rustfmt-preview")
+                .withParameters("component", "add", componentName)
                 .execute(owner, false)
             DownloadResult.Ok(Unit)
         } catch (e: ExecutionException) {
@@ -56,7 +75,6 @@ class Rustup(
             LOG.warn(message)
             DownloadResult.Err(message)
         }
-    }
 
     fun getStdlibFromSysroot(): VirtualFile? {
         val sysroot = toolchain.getSysroot(projectDirectory) ?: return null
