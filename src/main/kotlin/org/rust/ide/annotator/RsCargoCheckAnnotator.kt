@@ -6,17 +6,24 @@
 package org.rust.ide.annotator
 
 import com.google.gson.JsonParser
+import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.progress.PerformInBackgroundOption
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -34,6 +41,8 @@ import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Path
 import java.util.*
+
+private val LOG = Logger.getInstance(RsCargoCheckAnnotator::class.java)
 
 data class CargoCheckAnnotationInfo(
     val file: VirtualFile,
@@ -99,11 +108,10 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
     }
 }
 
-// NB: executed asynchronously off EDT, so care must be taken not to access
-// disposed objects
+// NB: executed asynchronously off EDT, so care must be taken not to access disposed objects
 private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? {
-    // We have to save the file to disk to give cargo a chance to check fresh file content.
-    WriteAction.computeAndWait<Unit, Throwable> {
+    val indicator = WriteAction.computeAndWait<ProgressIndicator, Throwable> {
+        // We have to save the file to disk to give cargo a chance to check fresh file content.
         val fileDocumentManager = FileDocumentManager.getInstance()
         val document = fileDocumentManager.getDocument(info.file)
         if (document == null) {
@@ -111,13 +119,28 @@ private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationRe
         } else if (fileDocumentManager.isDocumentUnsaved(document)) {
             fileDocumentManager.saveDocument(document)
         }
+
+        BackgroundableProcessIndicator(
+            info.module.project,
+            "Analyzing File with Cargo Check",
+            PerformInBackgroundOption.ALWAYS_BACKGROUND,
+            CommonBundle.getCancelButtonText(),
+            CommonBundle.getCancelButtonText(),
+            true
+        )
     }
 
     val output = try {
-        info.toolchain.cargoOrWrapper(info.projectPath).checkProject(info.module.project, info.module, info.projectPath)
+        ProgressManager.getInstance().runProcess(Computable {
+            info.toolchain
+                .cargoOrWrapper(info.projectPath)
+                .checkProject(info.module.project, info.module, info.projectPath)
+        }, indicator)
     } catch (e: ExecutionException) {
+        LOG.debug(e)
         return null
     }
+
     if (output.isCancelled) return null
     return CargoCheckAnnotationResult(output.stdoutLines)
 }
