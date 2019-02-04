@@ -16,7 +16,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.PerformInBackgroundOption
@@ -25,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
@@ -39,13 +37,13 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.saveAllDocuments
 import java.nio.file.Path
 import java.util.*
 
 private val LOG = Logger.getInstance(RsCargoCheckAnnotator::class.java)
 
 data class CargoCheckAnnotationInfo(
-    val file: VirtualFile,
     val toolchain: RustToolchain,
     val projectPath: Path,
     val module: Module
@@ -73,7 +71,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         val ws = file.cargoWorkspace ?: return null
         val module = ModuleUtil.findModuleForFile(file.virtualFile, file.project) ?: return null
         val toolchain = module.project.toolchain ?: return null
-        return CargoCheckAnnotationInfo(file.virtualFile, toolchain, ws.contentRoot, module)
+        return CargoCheckAnnotationInfo(toolchain, ws.contentRoot, module)
     }
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? = checkProject(info)
@@ -111,15 +109,7 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
 // NB: executed asynchronously off EDT, so care must be taken not to access disposed objects
 private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? {
     val indicator = WriteAction.computeAndWait<ProgressIndicator, Throwable> {
-        // We have to save the file to disk to give cargo a chance to check fresh file content.
-        val fileDocumentManager = FileDocumentManager.getInstance()
-        val document = fileDocumentManager.getDocument(info.file)
-        if (document == null) {
-            fileDocumentManager.saveAllDocuments()
-        } else if (fileDocumentManager.isDocumentUnsaved(document)) {
-            fileDocumentManager.saveDocument(document)
-        }
-
+        saveAllDocuments() // We have to save files to disk to give cargo a chance to check fresh file content
         BackgroundableProcessIndicator(
             info.module.project,
             "Analyzing File with Cargo Check",
