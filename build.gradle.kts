@@ -35,7 +35,7 @@ val baseVersion = when (baseIDE) {
 
 plugins {
     idea
-    kotlin("jvm") version "1.3.11"
+    kotlin("jvm") version "1.3.20"
     id("org.jetbrains.intellij") version "0.4.2"
     id("org.jetbrains.grammarkit") version "2018.2.2"
     id("de.undercouch.download") version "3.4.3"
@@ -90,8 +90,8 @@ allprojects {
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = "1.8"
-            languageVersion = "1.2"
-            apiVersion = "1.2"
+            languageVersion = "1.3"
+            apiVersion = "1.3"
             freeCompilerArgs = listOf("-Xjvm-default=enable")
         }
     }
