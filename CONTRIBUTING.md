@@ -52,12 +52,13 @@ integration with `TOML` plugin.
 The main goal is to separate code that can be compiled only with specific dependencies
 (IDEA, CLion or another plugin) from each other. It helps to avoid accidental using
 of code from wrong optional dependency.
-Also, it should allow us to compile and run tests of core module with different platforms
-like IDEA and CLion but currently it's not implemented yet.
+Also, it allows us to compile and run tests of core module with different platforms
+like IDEA and CLion.
 
 The current Rust plugin modules:
 * `:` - root/core module
 * `:idea` - contains code available only in IDEA
+* `:clion` - contains code available only in CLion
 * `:debugger` - debugger related code
 * `:toml` - integration with TOML plugin
 * `:intelliLang` - integration with [intelliLang](https://github.com/JetBrains/intellij-community/tree/master/plugins/IntelliLang) plugin
