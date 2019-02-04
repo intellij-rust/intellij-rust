@@ -51,14 +51,12 @@ class CargoCheckAnnotationResult(commandOutput: List<String>) {
         private val messageRegex = """\s*\{.*"message".*""".toRegex()
     }
 
-    val messages: List<CargoTopMessage> =
-        commandOutput
-            .filter { messageRegex.matches(it) }
-            .map { parser.parse(it) }
-            .filter { it.isJsonObject }
-            .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
-            // Cargo can duplicate some error messages when `--all-targets` attribute is used
-            .distinct()
+    val messages: List<CargoTopMessage> = commandOutput.asSequence()
+        .filter { messageRegex.matches(it) }
+        .map { parser.parse(it) }
+        .filter { it.isJsonObject }
+        .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
+        .toList()
 }
 
 class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoCheckAnnotationResult>() {
@@ -90,8 +88,11 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         val doc = file.viewProvider.document
             ?: error("Can't find document for $file in Cargo check annotator")
 
-        for ((topMessage) in annotationResult.messages) {
-            val message = filterMessage(file, doc, topMessage) ?: continue
+        val filteredMessages = annotationResult.messages
+            .mapNotNull { (topMessage) -> filterMessage(file, doc, topMessage) }
+            // Cargo can duplicate some error messages when `--all-targets` attribute is used
+            .distinct()
+        for (message in filteredMessages) {
             // We can't control what messages cargo generates, so we can't test them well.
             // Let's use special message for tests to distinguish annotation from `RsCargoCheckAnnotator`
             val annotationMessage = if (isUnitTestMode) TEST_MESSAGE else message.message
