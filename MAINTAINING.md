@@ -17,7 +17,11 @@ Don't forget to say "Thank you!" when merging pull requests! :)
 
 Each non-stalled pull-request should be assigned to a reviewer, who should make
 sure that PR moves forward. However, anybody with r+ can accept any PR, if
-they are confident that the PR is in a good state.  
+they are confident that the PR is in a good state.
+
+To make release creation easier, PR can be labeled by special tags (`feature`, `fix` and `internal`).
+Set suitable tag(s) if you consider that note about PR should be added to changelog. 
+See more about releases in the [corresponding](#Releases) section.
 
 ## Upgrades
 
@@ -58,19 +62,23 @@ because major platform updates can bring a lot of changes.
 
 ## Releases
 
-Nightly is released automatically by TeamCity. Alpha is generally released 
-on mondays. 
+Nightly is released automatically by TeamCity. Alpha is generally released each two weeks.
 
 Release notes live in [intellij-rust.github.io](https://github.com/intellij-rust/intellij-rust.github.io).
-To write notes, run `./changelog.py` to generate template in `_posts`. 
-Go thorough bors merge commits since the latest release and write about them in 
-appropriate section. Don't forget to mention every contributor using `by [@username]` syntax.
+To write notes, run `./changelog.py`. It goes thorough bors merge commits since the latest release and 
+creates a template with default info about merged PRs in `_posts`. 
+The initial section of each point depends on special tags that PR can be labeled. 
+At this moment, `changelog.py` supports `feature`, `fix` and `internal` tags. 
+Note, PR can be marked with any subset of these tags.
+Transform generated text to user-friendly one, add necessary links/gifs. 
+Don't forget to mention every contributor using `by [@username]` syntax.
 
 After finishing with release notes, execute `./gradlew makeRelease` tasks. It'll do the following things:
 
 * add links to the release notes
 * commit and push release notes to intellij-rust.github.io
-* update changelog in `plugin.xml` and push "Changelog" commit to master branch of intellij-rust
+* increase patch version in `gradle.properties` and update changelog in `plugin.xml`
+* push "Changelog" commit to master branch of intellij-rust
 * checkout "nightly" branch, advance versions of EAP idea an nightly rust, and push this branch
 
 
