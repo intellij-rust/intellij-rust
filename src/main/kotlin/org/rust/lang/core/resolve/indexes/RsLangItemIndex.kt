@@ -13,9 +13,8 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.KeyDescriptor
 import org.rust.cargo.util.AutoInjectedCrates
-import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsItemElement
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.stubs.RsFileStub
@@ -27,21 +26,16 @@ class RsLangItemIndex : AbstractStubIndex<String, RsItemElement>() {
     override fun getKeyDescriptor(): KeyDescriptor<String> = EnumeratorStringDescriptor.INSTANCE
 
     companion object {
-        fun findLangItem(project: Project, langAttribute: String, crateName: String = AutoInjectedCrates.CORE): RsTraitItem? {
+        fun findLangItem(
+            project: Project,
+            langAttribute: String,
+            crateName: String = AutoInjectedCrates.CORE
+        ): RsNamedElement? {
             val elements = getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project))
             return if (elements.size < 2) {
-                elements.firstOrNull() as? RsTraitItem
+                elements.firstOrNull() as? RsNamedElement
             } else {
-                elements.find { it.containingCargoPackage?.normName == crateName } as? RsTraitItem
-            }
-        }
-
-        fun findBoxItem(project: Project): RsStructItem? {
-            val elements = getElements(KEY, "owned_box", project, GlobalSearchScope.allScope(project))
-            return if (elements.size < 2) {
-                elements.firstOrNull() as? RsStructItem
-            } else {
-                elements.find { it.containingCargoPackage?.normName == "alloc" } as? RsStructItem
+                elements.find { it.containingCargoPackage?.normName == crateName } as? RsNamedElement
             }
         }
 
