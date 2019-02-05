@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -41,40 +42,49 @@ val RsElement.knownItems: KnownItems
 class KnownItems(
     private val lookup: KnownItemsLookup
 ) {
-    private fun findLangItem(langAttribute: String, crateName: String = CORE): RsTraitItem? =
+    fun findLangItemRaw(langAttribute: String, crateName: String) =
         lookup.findLangItem(langAttribute, crateName)
 
-    fun findItem(path: String): RsNamedElement? =
+    fun findItemRaw(path: String): RsNamedElement? =
         lookup.findItem(path)
 
-    fun findStructOrEnum(path: String): RsStructOrEnumItemElement? =
-        findItem(path) as? RsStructOrEnumItemElement
+    /**
+     * Find some known item by its "lang" attribute
+     * ```rust
+     * #[lang = "deref"]
+     * trait Deref { ... }
+     * ```
+     */
+    inline fun <reified T : RsNamedElement> findLangItem(
+        langAttribute: String,
+        crateName: String = CORE
+    ): T? = findLangItemRaw(langAttribute, crateName) as? T
 
-    fun findTrait(path: String): RsTraitItem? =
-        findItem(path) as? RsTraitItem
+    inline fun <reified T : RsNamedElement> findItem(path: String): T? =
+        findItemRaw(path) as? T
 
-    val Vec: RsStructOrEnumItemElement? get() = findStructOrEnum("alloc::vec::Vec")
-    val String: RsStructOrEnumItemElement? get() = findStructOrEnum("alloc::string::String")
-    val Arguments: RsStructOrEnumItemElement? get() = findStructOrEnum("core::fmt::Arguments")
-    val Option: RsStructOrEnumItemElement? get() = findStructOrEnum("core::option::Option")
-    val Result: RsStructOrEnumItemElement? get() = findStructOrEnum("core::result::Result")
+    val Vec: RsStructOrEnumItemElement? get() = findItem("alloc::vec::Vec")
+    val String: RsStructOrEnumItemElement? get() = findItem("alloc::string::String")
+    val Arguments: RsStructOrEnumItemElement? get() = findItem("core::fmt::Arguments")
+    val Option: RsStructOrEnumItemElement? get() = findItem("core::option::Option")
+    val Result: RsStructOrEnumItemElement? get() = findItem("core::result::Result")
 
-    val Iterator: RsTraitItem? get() = findTrait("core::iter::Iterator")
-    val IntoIterator: RsTraitItem? get() = findTrait("core::iter::IntoIterator")
-    val AsRef: RsTraitItem? get() = findTrait("core::convert::AsRef")
-    val AsMut: RsTraitItem? get() = findTrait("core::convert::AsMut")
-    val From: RsTraitItem? get() = findTrait("core::convert::From")
-    val TryFrom: RsTraitItem? get() = findTrait("core::convert::TryFrom")
-    val FromStr: RsTraitItem? get() = findTrait("core::str::FromStr")
-    val Borrow: RsTraitItem? get() = findTrait("core::borrow::Borrow")
-    val BorrowMut: RsTraitItem? get() = findTrait("core::borrow::BorrowMut")
-    val Hash: RsTraitItem? get() = findTrait("core::hash::Hash")
-    val Default: RsTraitItem? get() = findTrait("core::default::Default")
-    val Display: RsTraitItem? get() = findTrait("core::fmt::Display")
-    val ToOwned: RsTraitItem? get() = findTrait("alloc::borrow::ToOwned")
-    val ToString: RsTraitItem? get() = findTrait("alloc::string::ToString")
-    val Try: RsTraitItem? get() = findTrait("std::ops::Try")
-    val Generator: RsTraitItem? get() = findTrait("core::ops::Generator")
+    val Iterator: RsTraitItem? get() = findItem("core::iter::Iterator")
+    val IntoIterator: RsTraitItem? get() = findItem("core::iter::IntoIterator")
+    val AsRef: RsTraitItem? get() = findItem("core::convert::AsRef")
+    val AsMut: RsTraitItem? get() = findItem("core::convert::AsMut")
+    val From: RsTraitItem? get() = findItem("core::convert::From")
+    val TryFrom: RsTraitItem? get() = findItem("core::convert::TryFrom")
+    val FromStr: RsTraitItem? get() = findItem("core::str::FromStr")
+    val Borrow: RsTraitItem? get() = findItem("core::borrow::Borrow")
+    val BorrowMut: RsTraitItem? get() = findItem("core::borrow::BorrowMut")
+    val Hash: RsTraitItem? get() = findItem("core::hash::Hash")
+    val Default: RsTraitItem? get() = findItem("core::default::Default")
+    val Display: RsTraitItem? get() = findItem("core::fmt::Display")
+    val ToOwned: RsTraitItem? get() = findItem("alloc::borrow::ToOwned")
+    val ToString: RsTraitItem? get() = findItem("alloc::string::ToString")
+    val Try: RsTraitItem? get() = findItem("std::ops::Try")
+    val Generator: RsTraitItem? get() = findItem("core::ops::Generator")
 
     // Lang items
 
@@ -87,24 +97,25 @@ class KnownItems(
     val Clone: RsTraitItem? get() = findLangItem("clone")
     val Copy: RsTraitItem? get() = findLangItem("copy")
     val PartialEq: RsTraitItem? get() = findLangItem("eq")
-    // `Eq` trait doesn't have its own lang attribute, so use `findCoreItem` to find it
-    val Eq: RsTraitItem? get() = findTrait("core::cmp::Eq")
+    // `Eq` trait doesn't have its own lang attribute, so use `findItem` to find it
+    val Eq: RsTraitItem? get() = findItem("core::cmp::Eq")
     // In some old versions of stdlib `PartialOrd` trait has a lang attribute with value "ord",
     // but in the new stdlib it is "partial_ord" ("ord" is used for "Ord" trait). So we try
     // "partial_ord", and on failure we resolve it by path
-    val PartialOrd: RsTraitItem? get() = findLangItem("partial_ord") ?: findTrait("core::cmp::PartialOrd")
+    val PartialOrd: RsTraitItem? get() = findLangItem("partial_ord") ?: findItem("core::cmp::PartialOrd")
     // Some old versions of stdlib contain `Ord` trait without lang attribute
-    val Ord: RsTraitItem? get() = findTrait("core::cmp::Ord")
+    val Ord: RsTraitItem? get() = findItem("core::cmp::Ord")
     val Debug: RsTraitItem? get() = findLangItem("debug_trait")
+    val Box: RsStructItem? get() = findLangItem("owned_box", "alloc")
 }
 
 interface KnownItemsLookup {
-    fun findLangItem(langAttribute: String, crateName: String): RsTraitItem?
+    fun findLangItem(langAttribute: String, crateName: String): RsNamedElement?
     fun findItem(path: String): RsNamedElement?
 }
 
 private object DummyKnownItemsLookup : KnownItemsLookup {
-    override fun findLangItem(langAttribute: String, crateName: String): RsTraitItem? = null
+    override fun findLangItem(langAttribute: String, crateName: String): RsNamedElement? = null
     override fun findItem(path: String): RsNamedElement? = null
 }
 
@@ -113,10 +124,10 @@ private class RealKnownItemsLookup(
     private val workspace: CargoWorkspace
 ) : KnownItemsLookup {
     // WE use Optional because ConcurrentHashMap doesn't allow null values
-    private val langItems: MutableMap<String, Optional<RsTraitItem>> = ContainerUtil.newConcurrentMap()
+    private val langItems: MutableMap<String, Optional<RsNamedElement>> = ContainerUtil.newConcurrentMap()
     private val resolvedItems: MutableMap<String, Optional<RsNamedElement>> = ContainerUtil.newConcurrentMap()
 
-    override fun findLangItem(langAttribute: String, crateName: String): RsTraitItem? {
+    override fun findLangItem(langAttribute: String, crateName: String): RsNamedElement? {
         return langItems.getOrPut(langAttribute) {
             Optional.ofNullable(RsLangItemIndex.findLangItem(project, langAttribute, crateName))
         }.orElse(null)
@@ -143,11 +154,11 @@ enum class KnownDerivableTrait(
     PartialOrd(KnownItems::PartialOrd, arrayOf(PartialEq)),
     Ord(KnownItems::Ord, arrayOf(PartialOrd, Eq, PartialEq)),
 
-    Serialize({ it.findTrait("serde::Serialize") }),
-    Deserialize({ it.findTrait("serde::Deserialize") }),
+    Serialize({ it.findItem("serde::Serialize") }),
+    Deserialize({ it.findItem("serde::Deserialize") }),
 
     // TODO Fail also derives `Display`. Ignore it for now
-    Fail({ it.findTrait("failure::Fail") }, arrayOf(Debug)),
+    Fail({ it.findItem("failure::Fail") }, arrayOf(Debug)),
     ;
 
     fun findTrait(items: KnownItems): RsTraitItem? = resolver(items)

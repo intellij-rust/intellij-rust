@@ -1425,26 +1425,15 @@ class RsFnInferenceContext(
             is BoolOp -> {
                 if (op is OverloadableBinaryOperator) {
                     val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
+                    enforceOverloadedBinopTypes(lhsType, rhsType, op)
 
-                    run {
-                        // TODO replace it via `selectOverloadedOp` and share the code with `AssignmentOp`
-                        // branch when cmp ops will become a real lang items in std
-                        val trait = items.findItem("core::cmp::${op.traitName}") as? RsTraitItem
-                            ?: return@run null
+                    if (!isPrimitiveOrInferPrimitive(lhsType)) {
+                        val lhsAdjustment = BorrowReference(TyReference(lhsType, IMMUTABLE))
+                        ctx.addAdjustment(expr.left, lhsAdjustment)
 
-                        val boundTrait = trait.withSubst(rhsType)
-                        val selection = lookup.select(TraitRef(lhsType, boundTrait)).ok()
-
-                        if (!isPrimitiveOrInferPrimitive(lhsType)) {
-                            val lhsAdjustment = BorrowReference(TyReference(lhsType, IMMUTABLE))
-                            ctx.addAdjustment(expr.left, lhsAdjustment)
-
-                            val rhsAdjustment = BorrowReference(TyReference(rhsType, IMMUTABLE))
-                            expr.right?.let { ctx.addAdjustment(it, rhsAdjustment) }
-                        }
-
-                        selection
-                    }?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
+                        val rhsAdjustment = BorrowReference(TyReference(rhsType, IMMUTABLE))
+                        expr.right?.let { ctx.addAdjustment(it, rhsAdjustment) }
+                    }
                 } else {
                     expr.right?.inferTypeCoercableTo(lhsType)
                 }
@@ -1457,20 +1446,23 @@ class RsFnInferenceContext(
             is AssignmentOp -> {
                 if (op is OverloadableBinaryOperator) {
                     val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
-                    val selection = lookup.selectOverloadedOp(lhsType, rhsType, op).ok()
+                    enforceOverloadedBinopTypes(lhsType, rhsType, op)
 
                     if (!isPrimitiveOrInferPrimitive(lhsType)) {
                         val lhsAdjustment = BorrowReference(TyReference(lhsType, MUTABLE))
                         ctx.addAdjustment(expr.left, lhsAdjustment)
                     }
-
-                    selection?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
                 } else {
                     expr.right?.inferTypeCoercableTo(lhsType)
                 }
                 TyUnit
             }
         }
+    }
+
+    private fun enforceOverloadedBinopTypes(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator) {
+        val selection = lookup.selectOverloadedOp(lhsType, rhsType, op).ok()
+        selection?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
     }
 
     private fun isPrimitiveOrInferPrimitive(lhsType: Ty) =
@@ -1863,7 +1855,7 @@ private fun KnownItems.findOptionForElementTy(elementTy: Ty): Ty {
 }
 
 private fun KnownItems.findRangeTy(rangeName: String, indexType: Ty?): Ty {
-    val ty = (findItem("core::ops::$rangeName") as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown
+    val ty = findItem<RsNamedElement>("core::ops::$rangeName")?.asTy() ?: TyUnknown
 
     if (indexType == null) return ty
 

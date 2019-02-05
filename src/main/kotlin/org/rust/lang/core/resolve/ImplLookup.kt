@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
@@ -162,12 +161,11 @@ class ImplLookup(
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
-    private val binOpsTraitAndOutputCache = mutableMapOf<ArithmeticOp, Pair<RsTraitItem, RsTypeAlias>?>()
     private val arithOps by lazy(NONE) {
-        ArithmeticOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName) }
+        ArithmeticOp.values().mapNotNull { it.findTrait(items) }
     }
     private val assignArithOps by lazy(NONE) {
-        ArithmeticAssignmentOp.values().mapNotNull { RsLangItemIndex.findLangItem(project, it.itemName) }
+        ArithmeticAssignmentOp.values().mapNotNull { it.findTrait(items) }
     }
     private val fnTraits = listOfNotNull(items.Fn, items.FnMut, items.FnOnce)
     val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
@@ -283,7 +281,7 @@ class ImplLookup(
         if (ty is TyInteger || ty is TyInfer.IntVar) {
             // libcore/num/mod.rs
             items.FromStr?.let {
-                impls += it.substAssocType("Err", items.findItem("core::num::ParseIntError").asTy())
+                impls += it.substAssocType("Err", items.findItem<RsStructItem>("core::num::ParseIntError").asTy())
             }
 
             // libcore/hash/mod.rs
@@ -594,11 +592,9 @@ class ImplLookup(
     }
 
     fun findArithmeticBinaryExprOutputType(lhsType: Ty, rhsType: Ty, op: ArithmeticOp): TyWithObligations<Ty>? {
-        val traitAndOutput = binOpsTraitAndOutputCache.getOrPut(op) {
-            val trait = RsLangItemIndex.findLangItem(project, op.itemName) ?: return@getOrPut null
-            trait.findAssociatedType("Output")?.let { trait to it }
-        } ?: return null
-        return selectProjection(traitAndOutput, lhsType, rhsType).ok()
+        val trait = op.findTrait(items) ?: return null
+        val assocType = trait.findAssociatedType("Output") ?: return null
+        return selectProjection(TraitRef(lhsType, trait.withSubst(rhsType)), assocType).ok()
     }
 
     private fun selectProjection(
@@ -680,7 +676,7 @@ class ImplLookup(
     }
 
     fun selectOverloadedOp(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): SelectionResult<Selection> {
-        val trait = RsLangItemIndex.findLangItem(project, op.itemName) ?: return SelectionResult.Err()
+        val trait = op.findTrait(items) ?: return SelectionResult.Err()
         return select(TraitRef(lhsType, trait.withSubst(rhsType)))
     }
 

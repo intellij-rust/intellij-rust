@@ -58,7 +58,7 @@ class RsOperatorsResolve : RsResolveTestBase() {
 
     fun `test comparison binary operators`() = testWithAllOps(ComparisonOp.values()) { _, _, _, sign ->
         """
-        #[lang = "ord"]
+        #[lang = "partial_ord"]
         pub trait PartialOrd<Rhs: ?Sized = Self>: PartialEq<Rhs> {
             fn partial_cmp(&self, other: &Rhs) -> Option<Ordering>;
         }
