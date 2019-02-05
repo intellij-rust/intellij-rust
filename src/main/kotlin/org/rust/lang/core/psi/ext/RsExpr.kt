@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
 /**
@@ -46,6 +47,9 @@ interface OverloadableBinaryOperator {
     operator fun component2(): String = itemName
     operator fun component3(): String = fnName
     operator fun component4(): String = sign
+
+    fun findTrait(items: KnownItems): RsTraitItem? =
+        items.findLangItem(itemName)
 }
 
 sealed class BinaryOperator
@@ -90,6 +94,8 @@ sealed class EqualityOp(
     override val itemName: String = "eq"
     override val fnName: String = "eq"
 
+    override fun findTrait(items: KnownItems): RsTraitItem? = items.PartialEq
+
     companion object {
         fun values(): List<EqualityOp> = listOf(EQ, EXCLEQ)
     }
@@ -106,6 +112,8 @@ sealed class ComparisonOp(
     override val traitName: String = "PartialOrd"
     override val itemName: String = "ord"
     override val fnName: String = "partial_cmp"
+
+    override fun findTrait(items: KnownItems): RsTraitItem? = items.PartialOrd
 
     companion object {
         fun values(): List<ComparisonOp> = listOf(LT, LTEQ, GT, GTEQ)
