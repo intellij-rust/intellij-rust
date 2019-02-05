@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsPsiManager
  * A PSI element that holds modification tracker for some reason.
  * This is mostly used to invalidate cached type inference results.
  */
-interface RsModificationTrackerOwner : RsItemElement {
+interface RsModificationTrackerOwner : RsElement {
     val modificationTracker: ModificationTracker
 
     /**

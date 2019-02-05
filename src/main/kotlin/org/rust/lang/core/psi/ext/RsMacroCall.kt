@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.CachedValuesManager
@@ -16,12 +17,21 @@ import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsMacroCallStub
 
 
-abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>, RsMacroCall {
+abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
+                                      RsMacroCall {
 
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsMacroCallStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+
+    override val modificationTracker: SimpleModificationTracker =
+        SimpleModificationTracker()
+
+    override fun incModificationCount(element: PsiElement): Boolean {
+        modificationTracker.incModificationCount()
+        return false // force rustStructureModificationTracker to be incremented
+    }
 }
 
 val RsMacroCall.macroName: String
