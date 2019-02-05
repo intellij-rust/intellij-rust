@@ -147,6 +147,59 @@ sealed class ArithmeticAssignmentOp(
     }
 }
 
+private val ArithmeticAssignmentOp.nonAssignEquivalent: BinaryOperator get() = when (this) {
+    ArithmeticAssignmentOp.ANDEQ -> LogicOp.AND
+    ArithmeticAssignmentOp.OREQ -> LogicOp.OR
+    ArithmeticAssignmentOp.PLUSEQ -> ArithmeticOp.ADD
+    ArithmeticAssignmentOp.MINUSEQ -> ArithmeticOp.SUB
+    ArithmeticAssignmentOp.MULEQ -> ArithmeticOp.MUL
+    ArithmeticAssignmentOp.DIVEQ -> ArithmeticOp.DIV
+    ArithmeticAssignmentOp.REMEQ -> ArithmeticOp.REM
+    ArithmeticAssignmentOp.XOREQ -> ArithmeticOp.BIT_XOR
+    ArithmeticAssignmentOp.GTGTEQ -> ArithmeticOp.SHR
+    ArithmeticAssignmentOp.LTLTEQ -> ArithmeticOp.SHL
+}
+
+/**
+ * Binary operator categories. These categories summarize the behavior
+ * with respect to the builtin operations supported.
+ * Inspired by rustc
+ */
+enum class BinOpCategory {
+    /** &&, || -- cannot be overridden */
+    Shortcircuit,
+
+    /** <<, >> -- when shifting a single integer, rhs can be any integer type. For simd, types must match */
+    Shift,
+
+    /** +, -, etc -- takes equal types, produces same type as input, applicable to ints/floats/simd */
+    Math,
+
+    /** &, |, ^ -- takes equal types, produces same type as input, applicable to ints/floats/simd/bool */
+    Bitwise,
+
+    /** ==, !=, etc -- takes equal types, produces bools, except for simd, which produce the input type */
+    Comparison
+}
+
+val BinaryOperator.category: BinOpCategory get() = when(this) {
+    is ArithmeticOp -> when (this) {
+        ArithmeticOp.SHL, ArithmeticOp.SHR -> BinOpCategory.Shift
+
+        ArithmeticOp.ADD, ArithmeticOp.SUB, ArithmeticOp.MUL,
+        ArithmeticOp.DIV, ArithmeticOp.REM -> BinOpCategory.Math
+
+        ArithmeticOp.BIT_AND, ArithmeticOp.BIT_OR, ArithmeticOp.BIT_XOR -> BinOpCategory.Bitwise
+    }
+    LogicOp.AND, LogicOp.OR -> BinOpCategory.Shortcircuit
+
+    EqualityOp.EQ, EqualityOp.EXCLEQ, ComparisonOp.LT,
+    ComparisonOp.LTEQ, ComparisonOp.GT, ComparisonOp.GTEQ -> BinOpCategory.Comparison
+
+    is ArithmeticAssignmentOp -> nonAssignEquivalent.category
+    AssignmentOp.EQ -> error("Cannot take a category for assignment op")
+}
+
 val RsBinaryOp.operatorType: BinaryOperator get() = when (op) {
     "+" -> ArithmeticOp.ADD
     "-" -> ArithmeticOp.SUB

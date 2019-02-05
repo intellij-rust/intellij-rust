@@ -1428,7 +1428,7 @@ class RsFnInferenceContext(
     private fun inferBinaryExprType(expr: RsBinaryExpr): Ty {
         val lhsType = resolveTypeVarsWithObligations(expr.left.inferType())
         val op = expr.operatorType
-        return when (op) {
+        val (rhsType, retTy) = when (op) {
             is BoolOp -> {
                 if (op is OverloadableBinaryOperator) {
                     val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
@@ -1439,33 +1439,82 @@ class RsFnInferenceContext(
 
                     val rhsAdjustment = BorrowReference(TyReference(rhsType, IMMUTABLE))
                     expr.right?.let { ctx.addAdjustment(it, rhsAdjustment) }
+
+                    rhsType to TyBool
                 } else {
-                    expr.right?.inferTypeCoercableTo(lhsType)
+                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(lhsType) ?: TyUnknown)
+                    rhsType to TyBool
                 }
-                TyBool
             }
             is ArithmeticOp -> {
                 val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
-                lookup.findArithmeticBinaryExprOutputType(lhsType, rhsType, op)?.register() ?: TyUnknown
+                val retTy = lookup.findArithmeticBinaryExprOutputType(lhsType, rhsType, op)?.register() ?: TyUnknown
+                rhsType to retTy
             }
-            is AssignmentOp -> {
-                if (op is OverloadableBinaryOperator) {
-                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
-                    enforceOverloadedBinopTypes(lhsType, rhsType, op)
+            is ArithmeticAssignmentOp -> {
+                val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
+                enforceOverloadedBinopTypes(lhsType, rhsType, op)
 
-                    val lhsAdjustment = BorrowReference(TyReference(lhsType, MUTABLE))
-                    ctx.addAdjustment(expr.left, lhsAdjustment)
-                } else {
-                    expr.right?.inferTypeCoercableTo(lhsType)
-                }
-                TyUnit
+                val lhsAdjustment = BorrowReference(TyReference(lhsType, MUTABLE))
+                ctx.addAdjustment(expr.left, lhsAdjustment)
+
+                rhsType to TyUnit
+            }
+            AssignmentOp.EQ -> {
+                val rhsType = expr.right?.inferTypeCoercableTo(lhsType) ?: TyUnknown
+                rhsType to TyUnit
             }
         }
+
+        if (op != AssignmentOp.EQ && isBuiltinBinop(lhsType, rhsType, op)) {
+            val builtinRetTy = enforceBuiltinBinopTypes(lhsType, rhsType, op)
+            if (op !is ArithmeticAssignmentOp) {
+                ctx.combineTypes(builtinRetTy, retTy)
+                return builtinRetTy // TODO fix projection and remove. Test on `1 << 2`
+            }
+        }
+
+        return retTy
     }
 
     private fun enforceOverloadedBinopTypes(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator) {
         val selection = lookup.selectOverloadedOp(lhsType, rhsType, op).ok()
         selection?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
+    }
+
+    private fun isBuiltinBinop(lhsType: Ty, rhsType: Ty, op: BinaryOperator): Boolean = when (op.category) {
+        BinOpCategory.Shortcircuit -> true
+
+        BinOpCategory.Shift -> lhsType.isIntegral && rhsType.isIntegral
+
+        BinOpCategory.Math -> lhsType.isIntegral && rhsType.isIntegral ||
+            lhsType.isFloat && rhsType.isFloat
+
+        BinOpCategory.Bitwise -> lhsType.isIntegral && rhsType.isIntegral ||
+            lhsType.isFloat && rhsType.isFloat ||
+            lhsType == TyBool && rhsType == TyBool
+
+        BinOpCategory.Comparison -> lhsType.isScalar && rhsType.isScalar
+    }
+
+    private fun enforceBuiltinBinopTypes(lhsType: Ty, rhsType: Ty, op: BinaryOperator): Ty = when (op.category) {
+        BinOpCategory.Shortcircuit -> {
+            ctx.combineTypes(lhsType, TyBool)
+            ctx.combineTypes(lhsType, TyBool)
+            TyBool
+        }
+
+        BinOpCategory.Shift -> lhsType
+
+        BinOpCategory.Math, BinOpCategory.Bitwise -> {
+            ctx.combineTypes(lhsType, rhsType)
+            lhsType
+        }
+
+        BinOpCategory.Comparison -> {
+            ctx.combineTypes(lhsType, rhsType)
+            TyBool
+        }
     }
 
     private fun inferTryExprType(expr: RsTryExpr): Ty {

@@ -177,3 +177,18 @@ fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
 
 val Ty.isBox: Boolean
     get() = this is TyAdt && item == item.knownItems.Box
+
+val Ty.isIntegral: Boolean
+    get() = this is TyInteger || this is TyInfer.IntVar
+
+val Ty.isFloat: Boolean
+    get() = this is TyFloat || this is TyInfer.FloatVar
+
+val Ty.isScalar: Boolean
+    get() = isIntegral ||
+        isFloat ||
+        this == TyBool ||
+        this == TyChar ||
+        this == TyUnit ||
+        this is TyFunction || // really TyFnDef & TyFnPtr
+        this is TyPointer
