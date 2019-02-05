@@ -643,4 +643,13 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             for x in foo() { x; }
         }                  //^ u8
     """)
+
+    fun `test box expr`() = stubOnlyTypeInfer("""
+    //- main.rs
+        struct S;
+        fn main() {
+            let a = box S;
+            a;
+        } //^ Box<S>
+    """)
 }
