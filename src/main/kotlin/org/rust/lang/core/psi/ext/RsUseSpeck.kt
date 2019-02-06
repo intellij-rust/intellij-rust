@@ -15,8 +15,10 @@ import org.rust.lang.core.stubs.RsUseSpeckStub
 val RsUseSpeck.isStarImport: Boolean get() = stub?.isStarImport ?: (mul != null) // I hate operator precedence
 val RsUseSpeck.qualifier: RsPath? get() {
     val parentUseSpeck = (context as? RsUseGroup)?.parentUseSpeck ?: return null
-    return parentUseSpeck.path ?: parentUseSpeck.qualifier
+    return parentUseSpeck.pathOrQualifier
 }
+
+val RsUseSpeck.pathOrQualifier: RsPath? get() = path ?: qualifier
 
 val RsUseSpeck.nameInScope: String? get() {
     if (useGroup != null) return null
