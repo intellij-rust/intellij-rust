@@ -20,10 +20,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.ui.popup.PopupPositionManager
 import org.rust.lang.RsFileType
-import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.macros.getExpandedElementsFromMacroExpansion
+import org.rust.lang.core.macros.MacroExpansion
+import org.rust.lang.core.macros.expansionContext
+import org.rust.lang.core.macros.getExpansionFromExpandedFile
 import org.rust.lang.core.macros.parseExpandedTextWithContext
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
@@ -36,7 +36,7 @@ const val FAILED_TO_EXPAND_MESSAGE = "Failed to expand the macro"
 data class MacroExpansionViewDetails(
     val macroToExpand: RsMacroCall,
     val title: String,
-    val expansions: List<RsExpandedElement>
+    val expansion: MacroExpansion
 )
 
 /**
@@ -58,9 +58,9 @@ fun expandMacroForViewWithProgress(
 
 /** This function shows macro expansion in floating popup. */
 fun showMacroExpansionPopup(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
-    if (expansionDetails.expansions.isEmpty()) return
+    if (expansionDetails.expansion.elements.isEmpty()) return
 
-    val formattedExpansion = reformatMacroExpansion(expansionDetails.macroToExpand, expansionDetails.expansions)
+    val formattedExpansion = reformatMacroExpansion(expansionDetails.macroToExpand, expansionDetails.expansion)
 
     val component = MacroExpansionViewComponent(formattedExpansion)
 
@@ -97,7 +97,7 @@ private fun getMacroExpansionViewTitle(macroToExpand: RsMacroCall, expandRecursi
         "First level expansion of ${macroToExpand.macroName}! macro"
     }
 
-private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Boolean): List<RsExpandedElement>? {
+private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Boolean): MacroExpansion? {
     if (!expandRecursively) {
         return macroToExpand.expansion
     }
@@ -108,31 +108,34 @@ private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Bo
 
     val expansionText = macroToExpand.expandAllMacrosRecursively()
 
-    return RsPsiFactory(macroToExpand.project)
-        .parseExpandedTextWithContext(macroToExpand, expansionText)
+    return parseExpandedTextWithContext(
+        macroToExpand.expansionContext,
+        RsPsiFactory(macroToExpand.project),
+        expansionText
+    )
 }
 
 private fun reformatMacroExpansion(
     macroToExpand: RsMacroCall,
-    expansions: List<RsExpandedElement>
-): List<RsExpandedElement> {
-    val file = expansions.first().containingFile as RsFile
+    expansion: MacroExpansion
+): MacroExpansion {
+    val file = expansion.file
     runWriteAction { formatPsiFile(file) }
 
-    return getExpandedElementsFromMacroExpansion(macroToExpand, file)
+    return getExpansionFromExpandedFile(macroToExpand.expansionContext, file)
+        ?: error("Can't recover macro expansion after reformat")
 }
 
 /** Simple view to show some code. Inspired by [com.intellij.codeInsight.hint.ImplementationViewComponent] */
-private class MacroExpansionViewComponent(expansions: List<RsExpandedElement>) : JPanel(BorderLayout()) {
+private class MacroExpansionViewComponent(expansion: MacroExpansion) : JPanel(BorderLayout()) {
 
     private val editor: EditorEx
 
     init {
-        require(expansions.isNotEmpty()) { "Must be at least one expansion!" }
+        require(expansion.elements.isNotEmpty()) { "Must be at least one expansion!" }
+        val project = expansion.file.project
 
-        val project = expansions.first().project
-
-        editor = project.createReadOnlyEditorWithElements(expansions)
+        editor = project.createReadOnlyEditorWithElements(expansion.elements)
         setupSimpleEditorLook(editor)
         editor.highlighter = project.createRustHighlighter()
 

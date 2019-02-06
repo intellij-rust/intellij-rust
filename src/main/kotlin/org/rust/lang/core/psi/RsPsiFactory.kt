@@ -72,7 +72,7 @@ class RsPsiFactory(private val project: Project) {
         return result
     }
 
-    fun createBlockExpr(body: String): RsBlockExpr =
+    fun createBlockExpr(body: CharSequence): RsBlockExpr =
         createExpressionOfType("{ $body }")
 
     fun createUnsafeBlockExpr(body: String): RsBlockExpr =
