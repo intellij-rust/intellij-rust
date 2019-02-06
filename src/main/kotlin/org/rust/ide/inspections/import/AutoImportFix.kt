@@ -140,6 +140,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
             val reexportedItems = RsReexportIndex.findReexportsByName(project, targetName, scope)
                 .asSequence()
+                .filter { !it.isStarImport }
                 .mapNotNull {
                     val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
                     QualifiedNamedItem.ReexportedItem(it, item)
