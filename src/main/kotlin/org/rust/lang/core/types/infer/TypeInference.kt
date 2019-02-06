@@ -1397,8 +1397,8 @@ class RsFnInferenceContext(
             UnaryOperator.MINUS -> innerExpr.inferType(expected)
             UnaryOperator.NOT -> innerExpr.inferType(expected)
             UnaryOperator.BOX -> {
-                innerExpr.inferType()
-                TyUnknown
+                val expectedInner = (expected as? TyAdt)?.takeIf { it.item == items.Box }?.typeArguments?.getOrNull(0)
+                items.makeBox(innerExpr.inferType(expectedInner))
             }
         }
     }
@@ -1861,6 +1861,12 @@ private fun KnownItems.findRangeTy(rangeName: String, indexType: Ty?): Ty {
 
     val typeParameter = ty.getTypeParameter("Idx") ?: return ty
     return ty.substitute(mapOf(typeParameter to indexType).toTypeSubst())
+}
+
+fun KnownItems.makeBox(innerTy: Ty): Ty {
+    val box = Box ?: return TyUnknown
+    val boxTy = TyAdt.valueOf(box)
+    return boxTy.substitute(mapOf(boxTy.typeArguments[0] as TyTypeParameter to innerTy).toTypeSubst())
 }
 
 object TypeInferenceMarks {
