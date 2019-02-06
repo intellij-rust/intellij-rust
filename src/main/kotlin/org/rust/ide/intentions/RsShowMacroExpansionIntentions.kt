@@ -6,9 +6,11 @@
 package org.rust.ide.intentions
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.actions.macroExpansion.FAILED_TO_EXPAND_MESSAGE
 import org.rust.ide.actions.macroExpansion.MacroExpansionViewDetails
 import org.rust.ide.actions.macroExpansion.expandMacroForViewWithProgress
 import org.rust.ide.actions.macroExpansion.showMacroExpansionPopup
@@ -26,7 +28,11 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
     override fun invoke(project: Project, editor: Editor, ctx: RsMacroCall) {
         val expansionDetails = expandMacroForViewWithProgress(project, ctx, expandRecursively)
 
-        showExpansion(project, editor, expansionDetails)
+        if (expansionDetails != null) {
+            showExpansion(project, editor, expansionDetails)
+        } else {
+            showError(editor)
+        }
     }
 
     /** Progress window cannot be shown in the write action, so it have to be disabled. **/
@@ -41,6 +47,9 @@ abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: 
         showMacroExpansionPopup(project, editor, expansionDetails)
     }
 
+    private fun showError(editor: Editor) {
+        HintManager.getInstance().showErrorHint(editor, FAILED_TO_EXPAND_MESSAGE)
+    }
 }
 
 class RsShowRecursiveMacroExpansionIntention : RsShowMacroExpansionIntentionBase(expandRecursively = true) {

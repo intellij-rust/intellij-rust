@@ -30,6 +30,8 @@ import org.rust.lang.core.psi.ext.*
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
+const val FAILED_TO_EXPAND_MESSAGE = "Failed to expand the macro"
+
 /** Data class to group title and expansions of macro to show them in the view. */
 data class MacroExpansionViewDetails(
     val macroToExpand: RsMacroCall,
@@ -45,7 +47,7 @@ fun expandMacroForViewWithProgress(
     project: Project,
     ctx: RsMacroCall,
     expandRecursively: Boolean
-): MacroExpansionViewDetails {
+): MacroExpansionViewDetails? {
     val progressTitle = "${if (expandRecursively) "Recursive" else "Single step"} expansion progress..."
 
     return project.computeWithCancelableProgress(progressTitle) {
@@ -73,12 +75,14 @@ fun showMacroExpansionPopup(project: Project, editor: Editor, expansionDetails: 
     PopupPositionManager.positionPopupInBestPosition(popup, editor, null)
 }
 
-private fun expandMacroForView(macroToExpand: RsMacroCall, expandRecursively: Boolean): MacroExpansionViewDetails =
-    MacroExpansionViewDetails(
+private fun expandMacroForView(macroToExpand: RsMacroCall, expandRecursively: Boolean): MacroExpansionViewDetails? {
+    val expansions = getMacroExpansions(macroToExpand, expandRecursively) ?: return null
+    return MacroExpansionViewDetails(
         macroToExpand,
         getMacroExpansionViewTitle(macroToExpand, expandRecursively),
-        getMacroExpansions(macroToExpand, expandRecursively)
+        expansions
     )
+}
 
 private fun<T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T {
     val manager = ProgressManager.getInstance()
@@ -93,9 +97,13 @@ private fun getMacroExpansionViewTitle(macroToExpand: RsMacroCall, expandRecursi
         "First level expansion of ${macroToExpand.macroName}! macro"
     }
 
-private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Boolean): List<RsExpandedElement> {
+private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Boolean): List<RsExpandedElement>? {
     if (!expandRecursively) {
-        return macroToExpand.expansion ?: listOf(macroToExpand)
+        return macroToExpand.expansion
+    }
+
+    if (macroToExpand.expansion == null) {
+        return null
     }
 
     val expansionText = macroToExpand.expandAllMacrosRecursively()
