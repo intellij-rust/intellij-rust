@@ -260,6 +260,21 @@ class RsResolveLinkTest : RsTestBase() {
               //^
     """, "test_package/foo/baz/struct.Baz.html")
 
+    fun `test fqn link with wildcard reexport`() = doTest("""
+        mod foo {
+            pub mod bar {
+                pub mod baz {
+                    pub struct Baz;
+                              //X
+                }
+            }
+            pub use foo::bar::*;
+        }
+
+        struct Foo;
+              //^
+    """, "test_package/foo/baz/struct.Baz.html")
+
     private fun doTest(@Language("Rust") code: String, link: String) {
         InlineFile(code)
         val context = findElementInEditor<RsNamedElement>("^")

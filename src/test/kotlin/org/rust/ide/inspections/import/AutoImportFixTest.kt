@@ -1392,4 +1392,57 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
     """)
+
+    fun `test import with wildcard reexport 1`() = checkAutoImportFixByText("""
+        mod c {
+            mod a {
+                pub struct A;
+            }
+            pub use self::a::*;
+        }
+
+        fn main() {
+            let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
+        }
+    """, """
+        use c::A;
+
+        mod c {
+            mod a {
+                pub struct A;
+            }
+            pub use self::a::*;
+        }
+
+        fn main() {
+            let a = A;
+        }
+    """)
+
+    fun `test import with wildcard reexport 2`() = checkAutoImportFixByText("""
+        mod c {
+            mod a {
+                pub struct A;
+            }
+            pub use self::a::{{*}};
+        }
+
+        fn main() {
+            let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
+        }
+    """, """
+        use c::A;
+
+        mod c {
+            mod a {
+                pub struct A;
+            }
+            pub use self::a::{{*}};
+        }
+
+        fn main() {
+            let a = A;
+        }
+    """)
+
 }
