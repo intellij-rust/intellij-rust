@@ -70,11 +70,12 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         val expandedText = mark?.checkHit(expand) ?: expand()
 
         if (!StringUtil.equalsIgnoreWhitespaces(expectedExpansion, expandedText)) {
-            val formattedExpandedText = RsPsiFactory(project)
-                .parseExpandedTextWithContext(macroCall, expandedText)
-                .map {
-                    CodeStyleManager.getInstance(project).reformatRange(it, it.startOffset, it.endOffset, true)
-                }.joinToString("\n") { it.text }
+            val formattedExpandedText =
+                parseExpandedTextWithContext(macroCall.expansionContext, RsPsiFactory(project), expandedText)
+                    ?.elements.orEmpty()
+                    .map {
+                        CodeStyleManager.getInstance(project).reformatRange(it, it.startOffset, it.endOffset, true)
+                    }.joinToString("\n") { it.text }
 
             throw ComparisonFailure(
                 errorMessage,

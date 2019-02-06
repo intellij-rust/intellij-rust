@@ -91,7 +91,7 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
 
         val failingAction = object : RsShowMacroExpansionActionBase(expandRecursively = true) {
             override fun showExpansion(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
-                fail("No expansion should be showed, but ${expansionDetails.expansions.toText()} was shown!")
+                fail("No expansion should be showed, but ${expansionDetails.expansion.elements.toText()} was shown!")
             }
         }
 
@@ -117,7 +117,7 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
 
         val action = object : RsShowMacroExpansionActionBase(expandRecursively = expandRecursively) {
             override fun showExpansion(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
-                expansions = expansionDetails.expansions
+                expansions = expansionDetails.expansion.elements
             }
         }
 
@@ -143,7 +143,7 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
 
         val action = object : RsShowMacroExpansionActionBase(expandRecursively = expandRecursively) {
             override fun showExpansion(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
-                error("Expected expansion fail, but got expansion: `${expansionDetails.expansions.map { it.text }}`")
+                error("Expected expansion fail, but got expansion: `${expansionDetails.expansion.elements.map { it.text }}`")
             }
 
             override fun showError(editor: Editor) {
