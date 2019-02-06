@@ -1366,4 +1366,44 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             };
         }
     """)
+
+    @MockRustcVersion("1.0.0")
+    fun `test box expression feature E0658 1`() = checkErrors("""
+        struct S;
+        fn main() {
+            let x = <error descr="`box` expression syntax is experimental [E0658]">box</error> S;
+        }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test box expression feature E0658 2`() = checkErrors("""
+        #![feature(box_syntax)]
+
+        struct S;
+        fn main() {
+            let x = box S;
+        }
+    """)
+
+    @MockRustcVersion("1.0.0")
+    fun `test box pattern feature E0658 1`() = checkErrors("""
+        struct S { x: Box<i32> }
+        fn main() {
+            let s = Box::new(S { x: Box::new(0) });
+            let <error descr="`box` pattern syntax is experimental [E0658]">box</error> x = s;
+            let S { <error descr="`box` pattern syntax is experimental [E0658]">box</error> x } = x;
+        }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test box pattern feature E0658 2`() = checkErrors("""
+        #![feature(box_patterns)]
+
+        struct S { x: Box<i32> }
+        fn main() {
+            let s = Box::new(S { x: Box::new(0) });
+            let box x = s;
+            let S { box x } = x;
+        }
+    """)
 }
