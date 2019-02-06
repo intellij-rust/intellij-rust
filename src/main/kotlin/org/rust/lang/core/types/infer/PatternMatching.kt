@@ -79,8 +79,13 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                     is RsPatFieldKind.Full -> kind.pat.extractBindings(fcx, fieldType.toRefIfNeeded(mut), mut != null)
                     is RsPatFieldKind.Shorthand -> {
                         val bindingKind = kind.binding.kind
-                        val bindingType = fieldType.toRefIfNeeded(if (bindingKind is BindByReference) bindingKind.mutability else mut)
-                        fcx.writeBindingTy(kind.binding, bindingType)
+                        val bindingType = if (fieldType is TyAdt && kind.isBox) {
+                            fieldType.typeArguments.singleOrNull() ?: return
+                        }  else {
+                            fieldType
+                        }
+                        val mutability = if (bindingKind is BindByReference) bindingKind.mutability else mut
+                        fcx.writeBindingTy(kind.binding, bindingType.toRefIfNeeded(mutability))
                     }
                 }
             }

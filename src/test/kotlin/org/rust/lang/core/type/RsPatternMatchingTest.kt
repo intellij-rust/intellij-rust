@@ -277,7 +277,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test box pattern`() = stubOnlyTypeInfer("""
+    fun `test box pattern (pat box)`() = stubOnlyTypeInfer("""
     //- main.rs
         #![feature(box_patterns)]
         fn main() {
@@ -285,6 +285,19 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             match a {
                 box b => { b; }
             }            //^ i32
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test box pattern (pat field)`() = stubOnlyTypeInfer("""
+    //- main.rs
+        #![feature(box_patterns)]
+        struct S { x: Box<i32> }
+        fn main() {
+            let a = S { x: Box::new(0) };
+            let S { box x } = a;
+            x;
+          //^ i32
         }
     """)
 
