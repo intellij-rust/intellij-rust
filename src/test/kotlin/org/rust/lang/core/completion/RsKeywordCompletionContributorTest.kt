@@ -506,6 +506,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         const FOO: &str = /*caret*/
     """)
 
+    fun `test complete full kw`() = doSingleCompletion("""
+        fn main() {
+            let/*caret*/
+        }
+    """, """
+        fn main() {
+            let /*caret*/
+        }
+    """)
+
     private fun checkCompletion(
         lookupStrings: List<String>,
         @Language("Rust") before: String,
