@@ -78,4 +78,9 @@ class CargoCrateDocLineMarkerProviderTest : RsTestBase() {
         [dependencies]
         hello_utils = { path = "hello_utils" }
     """)
+
+    fun `test renamed dependencies`() = doTestByText("""
+        [dependencies]
+        config_rs = { package = "config", version = "0.9" }  # - Open documentation for `config@0.9`
+    """)
 }
