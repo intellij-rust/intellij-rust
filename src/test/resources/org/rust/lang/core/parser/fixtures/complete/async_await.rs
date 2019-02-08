@@ -1,4 +1,10 @@
 async fn foo() {}
+async fn bar() {}
+
+trait T {
+    async fn foo();
+    async fn bar();
+}
 
 fn main() {
     let async = ();
