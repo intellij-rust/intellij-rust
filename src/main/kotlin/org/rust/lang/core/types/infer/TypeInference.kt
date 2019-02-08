@@ -1212,7 +1212,12 @@ class RsFnInferenceContext(
             traitToCallee.keys.filterInScope(methodCall).forEach {
                 filtered += traitToCallee.getValue(it)
             }
-            filtered
+            if (filtered.isNotEmpty()) {
+                filtered
+            } else {
+                TypeInferenceMarks.methodPickTraitsOutOfScope.hit()
+                list
+            }
         }.singleOrFilter { callee ->
             // 2. Filter methods by trait bounds (try to select all obligations for each impl)
             TypeInferenceMarks.methodPickCheckBounds.hit()
@@ -1873,6 +1878,7 @@ object TypeInferenceMarks {
     val cyclicType = Testmark("cyclicType")
     val questionOperator = Testmark("questionOperator")
     val methodPickTraitScope = Testmark("methodPickTraitScope")
+    val methodPickTraitsOutOfScope = Testmark("methodPickTraitsOutOfScope")
     val methodPickCheckBounds = Testmark("methodPickCheckBounds")
     val methodPickDerefOrder = Testmark("methodPickDerefOrder")
     val methodPickCollapseTraits = Testmark("methodPickCollapseTraits")
