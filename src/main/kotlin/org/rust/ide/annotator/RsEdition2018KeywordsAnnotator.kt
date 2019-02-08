@@ -7,13 +7,13 @@ package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.colors.RsColor
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RS_EDITION_2018_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.isEdition2018
+import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.RsUseItem
+import org.rust.lang.core.psi.ext.*
 
 class RsEdition2018KeywordsAnnotator : RsAnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
@@ -22,7 +22,7 @@ class RsEdition2018KeywordsAnnotator : RsAnnotatorBase() {
         val isEdition2018 = element.isEdition2018
         val isIdentifier = element.elementType == IDENTIFIER
         when {
-            isEdition2018 && isIdentifier ->
+            isEdition2018 && isIdentifier && isNameIdentifier(element) ->
                 holder.createErrorAnnotation(element, "`${element.text}` is reserved keyword in Edition 2018")
             isEdition2018 && !isIdentifier ->
                 holder.createInfoAnnotation(element, null).textAttributes = RsColor.KEYWORD.textAttributesKey
@@ -34,13 +34,16 @@ class RsEdition2018KeywordsAnnotator : RsAnnotatorBase() {
     companion object {
         private val EDITION_2018_RESERVED_NAMES: Set<String> = hashSetOf("async", "await", "try")
 
-        private val IGNORED_ELEMENTS: Array<Class<out RsElement>> =
-            arrayOf(RsMacroBody::class.java, RsMacroArgument::class.java, RsUseItem::class.java)
-
         fun isEdition2018Keyword(element: PsiElement): Boolean =
             (element.elementType == IDENTIFIER && element.text in EDITION_2018_RESERVED_NAMES &&
                 element.parent !is RsMacro && element.parent?.parent !is RsMacroCall ||
                 element.elementType in RS_EDITION_2018_KEYWORDS) &&
-                PsiTreeUtil.getParentOfType(element, *IGNORED_ELEMENTS) == null
+                element.ancestorStrict<RsUseItem>() == null
+
+        fun isNameIdentifier(element: PsiElement): Boolean {
+            val parent = element.parent
+            return parent is RsReferenceElement && element == parent.referenceNameElement ||
+                parent is RsNameIdentifierOwner && element == parent.nameIdentifier
+        }
     }
 }
