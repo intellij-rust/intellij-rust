@@ -32,13 +32,13 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
         val test = names.getOrNull(names.size - 2)
         val lastName = names.lastOrNull() ?: return emptyList()
         if (test?.isDependencyKey == true) {
-            val version = el.entries.find { it.name == "version" }?.value?.text?.trimVersion
+            val version = el.entries.find { it.name == "version" }?.value?.text?.unquotedText
             val lineMarkerInfo = genLineMarkerInfo(el.header.names.first(), lastName.text, version) ?: return emptyList()
             return listOf(lineMarkerInfo)
         }
         if (!lastName.isDependencyKey) return emptyList()
         return el.entries.mapNotNull {
-            val pkgName = it.name
+            val pkgName = it.crateName
             val pkgVersion = it.version
             genLineMarkerInfo(it.key, pkgName, pkgVersion)
         }
@@ -63,14 +63,23 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
 }
 private val TomlKey.bareKey get() = firstChild
 private val TomlKeyValue.name get() = key.text
+private val TomlKeyValue.crateName: String
+    get() {
+        val rootValue = value
+        return when (rootValue) {
+            is TomlInlineTable -> (rootValue.entries.find { it.name == "package" }?.value?.text?.unquotedText)
+                ?: key.text
+            else -> key.text
+        }
+    }
 private val TomlKeyValue.version: String?
     get() {
         val value = value
         return when (value) {
-            is TomlLiteral -> value.text?.trimVersion
-            is TomlInlineTable -> value.entries.find { it.name == "version" }?.value?.text?.trimVersion
+            is TomlLiteral -> value.text?.unquotedText
+            is TomlInlineTable -> value.entries.find { it.name == "version" }?.value?.text?.unquotedText
             else -> null
         }
     }
 
-private val String.trimVersion get() = this.removePrefix("\"").removeSuffix("\"")
+private val String.unquotedText get() = this.removePrefix("\"").removeSuffix("\"")
