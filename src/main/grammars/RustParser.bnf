@@ -725,7 +725,8 @@ private Member ::= !'}' ( Function | Constant | TypeAlias | MacroCall ) {
   pin = 1
   recoverWhile = Member_recover
 }
-private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default" | '}')
+private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default"
+ | "async" | '}')
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Types
