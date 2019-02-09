@@ -20,8 +20,7 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
-                val owner = m.owner
-                val traitOrImpl = when (owner) {
+                val traitOrImpl = when (val owner = m.owner) {
                     is RsAbstractableOwner.Trait -> typeAscription<RsTraitOrImpl>(owner.trait)
                     is RsAbstractableOwner.Impl -> owner.impl.takeIf { owner.isInherent }
                     else -> null

@@ -271,18 +271,15 @@ data class RsQualifiedName private constructor(
                     }
 
                 }
-                is RsBaseType -> {
-                    val kind = type.kind
-                    when (kind) {
-                        RsBaseTypeKind.Unit -> Item("unit", PRIMITIVE)
-                        RsBaseTypeKind.Never -> Item("never", PRIMITIVE)
-                        RsBaseTypeKind.Underscore -> return null
-                        is RsBaseTypeKind.Path -> {
-                            val path = kind.path
-                            val primitiveType = TyPrimitive.fromPath(path)
-                            if (primitiveType != null) return Item(primitiveType.name, PRIMITIVE)
-                            (path.reference.resolve() as? RsQualifiedNamedElement)?.toParentItem()
-                        }
+                is RsBaseType -> when (val kind = type.kind) {
+                    RsBaseTypeKind.Unit -> Item("unit", PRIMITIVE)
+                    RsBaseTypeKind.Never -> Item("never", PRIMITIVE)
+                    RsBaseTypeKind.Underscore -> return null
+                    is RsBaseTypeKind.Path -> {
+                        val path = kind.path
+                        val primitiveType = TyPrimitive.fromPath(path)
+                        if (primitiveType != null) return Item(primitiveType.name, PRIMITIVE)
+                        (path.reference.resolve() as? RsQualifiedNamedElement)?.toParentItem()
                     }
                 }
                 else -> null

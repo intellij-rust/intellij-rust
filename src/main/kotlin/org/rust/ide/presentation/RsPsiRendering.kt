@@ -59,14 +59,11 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference) {
     when (type) {
         is RsTupleType -> type.typeReferenceList.joinToWithBuffer(this, ", ", "(", ")") { it.appendTypeReference(this) }
 
-        is RsBaseType -> {
-            val kind = type.kind
-            when (kind) {
-                RsBaseTypeKind.Unit -> append("()")
-                RsBaseTypeKind.Never -> append("!")
-                RsBaseTypeKind.Underscore -> append("_")
-                is RsBaseTypeKind.Path -> appendPath(kind.path)
-            }
+        is RsBaseType -> when (val kind = type.kind) {
+            RsBaseTypeKind.Unit -> append("()")
+            RsBaseTypeKind.Never -> append("!")
+            RsBaseTypeKind.Underscore -> append("_")
+            is RsBaseTypeKind.Path -> appendPath(kind.path)
         }
 
         is RsRefLikeType -> {

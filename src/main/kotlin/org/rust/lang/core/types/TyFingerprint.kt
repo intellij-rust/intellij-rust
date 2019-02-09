@@ -34,21 +34,15 @@ data class TyFingerprint constructor(
             val type = ref.typeElement
             val fingerprint = when (type) {
                 is RsTupleType -> TyFingerprint("(tuple)")
-                is RsBaseType -> {
-                    val kind = type.kind
-                    when (kind) {
-                        RsBaseTypeKind.Unit -> TyFingerprint("()")
-                        RsBaseTypeKind.Never -> TyFingerprint("!")
-                        RsBaseTypeKind.Underscore -> return emptyList()
-                        is RsBaseTypeKind.Path -> {
-                            val name = kind.path.referenceName
-                            when (name) {
-                                in typeParameters -> TYPE_PARAMETER_FINGERPRINT
-                                in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
-                                in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
-                                else -> TyFingerprint(name)
-                            }
-                        }
+                is RsBaseType -> when (val kind = type.kind) {
+                    RsBaseTypeKind.Unit -> TyFingerprint("()")
+                    RsBaseTypeKind.Never -> TyFingerprint("!")
+                    RsBaseTypeKind.Underscore -> return emptyList()
+                    is RsBaseTypeKind.Path -> when (val name = kind.path.referenceName) {
+                        in typeParameters -> TYPE_PARAMETER_FINGERPRINT
+                        in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
+                        in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
+                        else -> TyFingerprint(name)
                     }
                 }
                 is RsRefLikeType -> {
