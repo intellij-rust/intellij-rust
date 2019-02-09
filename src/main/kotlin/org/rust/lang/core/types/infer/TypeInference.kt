@@ -13,6 +13,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.annotations.TestOnly
+import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
@@ -1606,7 +1607,7 @@ class RsFnInferenceContext(
             name == "cfg" -> TyBool
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
             name == "write" || name == "writeln" -> {
-                (macroExpr.macroCall.expansion?.singleOrNull() as? RsExpr)?.inferType() ?: TyUnknown
+                (macroExpr.macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
             }
             macroExpr.macroCall.formatMacroArgument != null || macroExpr.macroCall.logMacroArgument != null -> TyUnit
 

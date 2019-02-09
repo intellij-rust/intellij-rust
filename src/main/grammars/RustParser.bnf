@@ -1321,7 +1321,9 @@ private BlockElement ::= !'}' (Macro | ExprStmtOrLastExpr | Stmt | Item) {
 }
 private BlockElement_recover ::= !('}' | Item_first | Expr_first | let | ';')
 
-Stmt ::= LetDecl | EmptyStmt | never ';'
+Stmt ::= LetDecl | EmptyStmt | never ';' {
+  implements = "org.rust.lang.core.macros.RsExpandedElement"
+}
 
 ExprStmtOrLastExpr ::= StmtModeExpr (ExprStmtUpper | LastExprUpper) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

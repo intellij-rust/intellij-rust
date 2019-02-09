@@ -20,7 +20,6 @@ import com.intellij.psi.impl.source.DummyHolderFactory
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParser
@@ -101,7 +100,7 @@ private val STD_MACRO_WHITELIST = setOf("write", "writeln")
 class MacroExpander(val project: Project) {
     private val psiFactory = RsPsiFactory(project)
 
-    fun expandMacro(def: RsMacro, call: RsMacroCall): List<RsExpandedElement>? {
+    fun expandMacro(def: RsMacro, call: RsMacroCall): MacroExpansion? {
         // All std macros contain the only `impl`s which are not supported for now, so ignoring them
         if (def.containingCargoTarget?.pkg?.origin == PackageOrigin.STDLIB && def.name !in STD_MACRO_WHITELIST) {
             return null
@@ -109,7 +108,7 @@ class MacroExpander(val project: Project) {
 
         val expandedText = expandMacroAsText(def, call) ?: return null
 
-        return psiFactory.parseExpandedTextWithContext(call, expandedText)
+        return parseExpandedTextWithContext(call.expansionContext, psiFactory, expandedText)
     }
 
     private fun expandMacroAsText(def: RsMacro, call: RsMacroCall): CharSequence? {
@@ -512,23 +511,6 @@ private fun collectAvailableVars(groupDefinition: RsMacroBindingGroup): Set<Stri
 
     return vars.mapNotNullToSet { it.name }
 }
-
-fun RsPsiFactory.parseExpandedTextWithContext(call: RsMacroCall, expandedText: CharSequence): List<RsExpandedElement> =
-    when (call.context) {
-        is RsMacroExpr -> listOfNotNull(tryCreateExpression(expandedText))
-        is RsPatMacro -> listOfNotNull(tryCreatePat(expandedText))
-        is RsMacroType -> listOfNotNull(tryCreateType(expandedText))
-        else -> createFile(expandedText).childrenOfType<RsExpandedElement>()
-    }
-
-/** If [call] is previously expanded to [expandedFile], this function extract expanded elements from the file */
-fun getExpandedElementsFromMacroExpansion(call: RsMacroCall, expandedFile: RsFile): List<RsExpandedElement> =
-    when (call.context) {
-        is RsMacroExpr -> listOfNotNull(expandedFile.descendantOfTypeStrict<RsExpr>())
-        is RsPatMacro -> listOfNotNull(expandedFile.descendantOfTypeStrict<RsPat>())
-        is RsMacroType -> listOfNotNull(expandedFile.descendantOfTypeStrict<RsTypeReference>())
-        else -> expandedFile.childrenOfType<RsExpandedElement>()
-    }
 
 object MacroExpansionMarks {
     val failMatchPatternByToken = Testmark("failMatchPatternByToken")
