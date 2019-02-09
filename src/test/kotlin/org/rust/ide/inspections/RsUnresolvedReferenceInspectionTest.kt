@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import org.intellij.lang.annotations.Language
+import org.rust.ide.inspections.import.AutoImportFix
 
 class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection()) {
 
@@ -101,6 +102,18 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
             123.foo();
         }
     """)
+
+    fun `test do not highlight unresolved path references if name is in scope`() = checkByText("""
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo {}
+        }
+
+        fn main() {
+            Foo
+        }
+    """, testmark = AutoImportFix.Testmarks.nameInScope)
 
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val defaultValue = (inspection as RsUnresolvedReferenceInspection).ignoreWithoutQuickFix

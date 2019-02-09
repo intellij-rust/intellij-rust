@@ -20,7 +20,9 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.search.RsCargoProjectScope
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.lang.core.resolve.TraitImplSource
+import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
@@ -84,9 +86,18 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             if (TyPrimitive.fromPath(basePath) != null) return null
             if (basePath.reference.multiResolve().isNotEmpty()) return null
 
-            // Don't try to import path in use item
             if (path.ancestorStrict<RsUseSpeck>() != null) {
+                // Don't try to import path in use item
                 Testmarks.pathInUseItem.hit()
+                return Context(basePath, emptyList())
+            }
+
+            val isNameInScope = processNestedScopesUpwards(path, TYPES_N_VALUES) { it.name == basePath.referenceName }
+            if (isNameInScope) {
+                // Don't import names that are already in scope but cannot be resolved
+                // because namespace of psi element prevents correct name resolution.
+                // It's possible for incorrect or incomplete code like "let map = HashMap"
+                Testmarks.nameInScope.hit()
                 return Context(basePath, emptyList())
             }
 
@@ -339,6 +350,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         val autoInjectedCoreCrate = Testmark("autoInjectedCoreCrate")
         val pathInUseItem = Testmark("pathInUseItem")
         val externCrateItemInNotCrateRoot = Testmark("externCrateItemInNotCrateRoot")
+        val nameInScope = Testmark("nameInScope")
     }
 }
 
