@@ -1440,4 +1440,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             while let x = 42 {}
         }
     """)
+
+    @MockRustcVersion("1.31.0")
+    fun `test irrefutable let pattern E0658 for struct literals`() = checkErrors("""
+        struct S { x: i32 }
+        enum E1 {
+            V { x: i32 }
+        }
+        enum E2 {
+            A,
+            V { x: i32 }
+        }
+        fn foo(a: S, b: E1, c: E2, d: Unknown) {
+            if let <error descr="irrefutable let pattern is experimental [E0658]">S { x }</error> = a {}
+            if let <error descr="irrefutable let pattern is experimental [E0658]">E1::V { x }</error> = b {}
+            if let E2::V { x } = c {}
+            if let Unknown { x } = d {}
+        }
+    """)
 }
