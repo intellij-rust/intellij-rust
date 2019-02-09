@@ -139,8 +139,7 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
         fun buildFor(decl: RsGenericDeclaration): ParamEnv = ParamEnv(buildList {
             addAll(decl.bounds)
             if (decl is RsAbstractable) {
-                val owner = decl.owner
-                when (owner) {
+                when (val owner = decl.owner) {
                     is RsAbstractableOwner.Trait -> {
                         add(TraitRef(TyTypeParameter.self(), owner.trait.withDefaultSubst()))
                         addAll(owner.trait.bounds)

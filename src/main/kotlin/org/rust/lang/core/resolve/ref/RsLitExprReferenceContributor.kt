@@ -42,8 +42,7 @@ private class RsLiteralFileReferenceSet(
 ) : FileReferenceSet(str, element, startOffset, null, isCaseSensitive) {
 
     override fun getDefaultContexts(): Collection<PsiFileSystemItem> {
-        val parent = element.parent
-        return when (parent) {
+        return when (val parent = element.parent) {
             is RsIncludeMacroArgument -> parentDirectoryContext
             is RsMetaItem -> {
                 val item = parent.ancestorStrict<RsModDeclItem>() ?: parent.ancestorStrict<RsMod>()

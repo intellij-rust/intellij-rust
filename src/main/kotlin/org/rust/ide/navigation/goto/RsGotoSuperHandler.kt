@@ -46,8 +46,7 @@ fun gotoSuperTarget(source: PsiElement): NavigatablePsiElement? {
         }
     }
 
-    val mod = modOrAbstractable as RsMod
-    return when (mod) {
+    return when (val mod = modOrAbstractable as RsMod) {
         is RsFile -> mod.declaration
         else -> mod.`super`
     }

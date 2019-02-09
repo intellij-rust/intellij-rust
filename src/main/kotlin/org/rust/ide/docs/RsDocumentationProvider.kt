@@ -156,14 +156,11 @@ private fun RsDocAndAttributeOwner.header(buffer: StringBuilder) {
         is RsStructOrEnumItemElement,
         is RsTraitItem,
         is RsMacro -> listOfNotNull(presentableQualifiedModName)
-        is RsAbstractable -> {
-            val owner = owner
-            when (owner) {
-                is RsAbstractableOwner.Foreign,
-                is RsAbstractableOwner.Free -> listOfNotNull(presentableQualifiedModName)
-                is RsAbstractableOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
-                is RsAbstractableOwner.Trait -> owner.trait.declarationText
-            }
+        is RsAbstractable -> when (val owner = owner) {
+            is RsAbstractableOwner.Foreign,
+            is RsAbstractableOwner.Free -> listOfNotNull(presentableQualifiedModName)
+            is RsAbstractableOwner.Impl -> listOfNotNull(presentableQualifiedModName) + owner.impl.declarationText
+            is RsAbstractableOwner.Trait -> owner.trait.declarationText
         }
         else -> listOfNotNull(presentableQualifiedName)
     }
@@ -373,21 +370,17 @@ private fun generatePathDocumentation(element: RsPath, buffer: StringBuilder) {
 }
 
 private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer: StringBuilder) {
-    val typeElement = element.typeElement
-    when (typeElement) {
-        is RsBaseType -> {
-            val kind = typeElement.kind
-            when (kind) {
-                RsBaseTypeKind.Unit -> buffer += "()"
-                RsBaseTypeKind.Never -> buffer += "!"
-                RsBaseTypeKind.Underscore -> buffer += "_"
-                is RsBaseTypeKind.Path -> {
-                    val path = kind.path
-                    if (path.hasCself) {
-                        buffer += "Self"
-                    } else {
-                        path.generateDocumentation(buffer)
-                    }
+    when (val typeElement = element.typeElement) {
+        is RsBaseType -> when (val kind = typeElement.kind) {
+            RsBaseTypeKind.Unit -> buffer += "()"
+            RsBaseTypeKind.Never -> buffer += "!"
+            RsBaseTypeKind.Underscore -> buffer += "_"
+            is RsBaseTypeKind.Path -> {
+                val path = kind.path
+                if (path.hasCself) {
+                    buffer += "Self"
+                } else {
+                    path.generateDocumentation(buffer)
                 }
             }
         }
