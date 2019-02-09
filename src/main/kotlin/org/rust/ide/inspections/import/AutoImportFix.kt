@@ -101,7 +101,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 return Context(basePath, emptyList())
             }
 
-            val candidates = getImportCandidates(ImportContext.from(project, path), basePath.referenceName, path.text) {
+            val candidates = getImportCandidates(ImportContext.from(project, path, false), basePath.referenceName, path.text) {
                 path != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
             }.toList()
 
@@ -397,7 +397,7 @@ sealed class ImportInfo {
 
 data class ImportCandidate(val qualifiedNamedItem: QualifiedNamedItem, val info: ImportInfo)
 
-private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean get() = when (context) {
+private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (context) {
     is RsTypeElement -> { e ->
         when (e) {
             is RsEnumItem,
@@ -409,6 +409,7 @@ private val RsPath.namespaceFilter: (RsQualifiedNamedElement) -> Boolean get() =
     }
     is RsPathExpr -> { e ->
         when (e) {
+            is RsEnumItem -> isCompletion
             // TODO: take into account fields type
             is RsFieldsOwner,
             is RsConstant,
@@ -515,14 +516,14 @@ data class ImportContext private constructor(
     val namespaceFilter: (RsQualifiedNamedElement) -> Boolean
 ) {
     companion object {
-        fun from(project: Project, path: RsPath): ImportContext = ImportContext(
+        fun from(project: Project, path: RsPath, isCompletion: Boolean): ImportContext = ImportContext(
             project = project,
             mod = path.containingMod,
             superMods = LinkedHashSet(path.containingMod.superMods),
             scope = RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project)),
             ns = path.pathNamespace,
             attributes = path.stdlibAttributes,
-            namespaceFilter = path.namespaceFilter
+            namespaceFilter = path.namespaceFilter(isCompletion)
         )
     }
 }

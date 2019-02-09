@@ -6,20 +6,26 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.hasCaretMarker
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
 import org.rust.openapiext.Testmark
 
-@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class RsPathCompletionFromIndexProviderTest : RsCompletionTestBase() {
+class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
+
     fun `test suggest an non-imported symbol from index and add proper import`() = doSingleCompletion("""
+        mod collections {
+            pub struct BTreeMap;
+        }
+
         fn main() {
             let _ = BTreeM/*caret*/
         }
     """, """
-        use std::collections::BTreeMap;
+        use collections::BTreeMap;
+
+        mod collections {
+            pub struct BTreeMap;
+        }
 
         fn main() {
             let _ = BTreeMap/*caret*/
@@ -27,13 +33,21 @@ class RsPathCompletionFromIndexProviderTest : RsCompletionTestBase() {
     """)
 
     fun `test doesn't suggest a symbol that already in scope`() = doSingleCompletion("""
-        use std::collections::BTreeMap;
+        use collections::BTreeMap;
+
+        mod collections {
+            pub struct BTreeMap;
+        }
 
         fn main() {
             let _ = BTreeM/*caret*/
         }
     """, """
-        use std::collections::BTreeMap;
+        use collections::BTreeMap;
+
+        mod collections {
+            pub struct BTreeMap;
+        }
 
         fn main() {
             let _ = BTreeMap/*caret*/
@@ -43,11 +57,19 @@ class RsPathCompletionFromIndexProviderTest : RsCompletionTestBase() {
     fun `test doesn't suggest a symbol that leads to name collision`() = doSingleCompletion("""
         struct BTreeMap;
 
+        mod collections {
+            pub struct BTreeMap;
+        }
+
         fn main() {
             let _ = BTreeM/*caret*/
         }
     """, """
         struct BTreeMap;
+
+        mod collections {
+            pub struct BTreeMap;
+        }
 
         fn main() {
             let _ = BTreeMap/*caret*/
@@ -60,6 +82,30 @@ class RsPathCompletionFromIndexProviderTest : RsCompletionTestBase() {
             let _ = /*caret*/;
         }
     """, Testmarks.pathCompletionFromIndex)
+
+    fun `test enum completion`() = doSingleCompletion("""
+        mod a {
+            pub enum Enum {
+                V1, V2
+            }
+        }
+
+        fn main() {
+            let a = Enu/*caret*/
+        }
+    """, """
+        use a::Enum;
+
+        mod a {
+            pub enum Enum {
+                V1, V2
+            }
+        }
+
+        fn main() {
+            let a = Enum/*caret*/
+        }
+    """)
 
     private fun doTest(@Language("Rust") text: String, testmark: Testmark) {
         check(hasCaretMarker(text)) {

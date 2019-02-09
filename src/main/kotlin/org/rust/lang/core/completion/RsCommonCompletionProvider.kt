@@ -122,7 +122,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         Testmarks.pathCompletionFromIndex.hit()
 
         val project = parameters.originalFile.project
-        val importContext = ImportContext.from(project, path)
+        val importContext = ImportContext.from(project, path, true)
         val pathMod = path.containingMod
 
         val keys = hashSetOf<String>().apply {
