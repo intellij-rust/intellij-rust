@@ -15,7 +15,14 @@ val RsPat.isIrrefutable: Boolean
         is RsPatTup -> patList.all { it.isIrrefutable }
         is RsPatBox -> pat.isIrrefutable
         is RsPatRef -> pat.isIrrefutable
-        is RsPatStruct -> patFieldList.all { it.pat?.isIrrefutable ?: (it.patBinding != null) }
+        is RsPatStruct -> {
+            val canBeIrrefutable = when (val item = path.reference.resolve()) {
+                is RsStructItem -> true
+                is RsEnumVariant -> item.parentEnum.enumBody?.enumVariantList?.size == 1
+                else -> false
+            }
+            canBeIrrefutable && patFieldList.all { it.pat?.isIrrefutable ?: (it.patBinding != null) }
+        }
         is RsPatConst, is RsPatRange -> false
         else -> true
     }
