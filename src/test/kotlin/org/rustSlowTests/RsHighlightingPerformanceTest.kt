@@ -94,12 +94,13 @@ class RsHighlightingPerformanceTest : RsWithToolchainTestBase() {
             .mapNotNull { it.block?.stmtList?.lastOrNull() }
             .forEach { stmt ->
                 myFixture.editor.caretModel.moveToOffset(stmt.textOffset)
-                myFixture.type("a<caret>;")
+                // replace to `myFixture.type("Hash;")` to make it 10x slower
+                myFixture.type("HashMa;")
+                myFixture.editor.caretModel.moveCaretRelatively(-1, 0, false, false, false)
+                timings.measureAverage("completion") {
+                    myFixture.completeBasic()
+                }
             }
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-        timings.measure("completion") {
-            myFixture.completeBasicAllCarets(null)
-        }
 
         return timings
     }
