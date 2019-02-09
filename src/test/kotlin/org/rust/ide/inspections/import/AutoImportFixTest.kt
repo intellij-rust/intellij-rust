@@ -1372,6 +1372,68 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    fun `test suggest single method`() = checkAutoImportFixByText("""
+        struct Foo;
+        struct Bar;
+
+        #[lang="deref"]
+        trait Deref {
+            type Target;
+        }
+
+        impl Deref for Bar {
+            type Target = Foo;
+        }
+        mod a {
+            pub trait X {
+                fn do_x(&self);
+            }
+
+            impl X for ::Foo {
+                fn do_x(&self) {}
+            }
+
+            impl X for ::Bar {
+                fn do_x(&self) {}
+            }
+        }
+
+        fn main() {
+            Bar.<error>do_x/*caret*/</error>();
+        }
+    """, """
+        use a::X;
+
+        struct Foo;
+        struct Bar;
+
+        #[lang="deref"]
+        trait Deref {
+            type Target;
+        }
+
+        impl Deref for Bar {
+            type Target = Foo;
+        }
+        mod a {
+            pub trait X {
+                fn do_x(&self);
+            }
+
+            impl X for ::Foo {
+                fn do_x(&self) {}
+            }
+
+            impl X for ::Bar {
+                fn do_x(&self) {}
+            }
+        }
+
+        fn main() {
+            Bar.do_x/*caret*/();
+        }
+    """)
+
     /** Issue [2822](https://github.com/intellij-rust/intellij-rust/issues/2822) */
     fun `test do not try to import trait object method`() = checkAutoImportFixIsUnavailable("""
         mod foo {
@@ -1536,5 +1598,4 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = A;
         }
     """)
-
 }

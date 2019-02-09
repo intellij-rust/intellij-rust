@@ -263,4 +263,37 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             S.foo();
         }   //^
     """, TypeInferenceMarks.traitSelectionSpecialization)
+
+    fun `test pick correct method from out of scope traits`() = checkByCode("""
+        struct Foo;
+        struct Bar;
+
+        #[lang="deref"]
+        trait Deref {
+            type Target;
+        }
+
+        impl Deref for Bar {
+            type Target = Foo;
+        }
+        mod a {
+            pub trait X {
+                fn do_x(&self);
+            }
+
+            impl X for ::Foo {
+                fn do_x(&self) {}
+            }
+
+            impl X for ::Bar {
+                fn do_x(&self) {}
+                   //X
+            }
+        }
+
+        fn main() {
+            Bar.do_x();
+               //^
+        }
+    """, TypeInferenceMarks.methodPickTraitsOutOfScope)
 }
