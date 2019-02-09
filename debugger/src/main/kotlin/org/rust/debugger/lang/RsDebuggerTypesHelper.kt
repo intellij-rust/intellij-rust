@@ -36,14 +36,14 @@ private fun resolveToDeclaration(ctx: PsiElement?, name: String): PsiElement? {
     val composite = ctx?.ancestorOrSelf<RsElement>() ?: return null
 
     var resolved: PsiElement? = null
-    processNestedScopesUpwards(composite, { entry ->
+    processNestedScopesUpwards(composite, VALUES) { entry ->
         if (entry.name == name) {
             resolved = entry.element
             true
         } else {
             false
         }
-    }, VALUES)
+    }
 
     return resolved
 }

@@ -129,7 +129,7 @@ fun processStructLiteralFieldResolveVariants(
     val structOrEnumVariant = resolved as? RsFieldsOwner ?: return false
     if (processFieldDeclarations(structOrEnumVariant, processor)) return true
     if (!isCompletion && field.expr == null) {
-        processNestedScopesUpwards(field, processor, VALUES)
+        processNestedScopesUpwards(field, VALUES, processor)
     }
     return false
 }
@@ -461,7 +461,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
             if (processItemOrEnumVariantDeclarations(crateRoot, ns, processor, withPrivateImports = true)) return true
         }
     } else {
-        if (processNestedScopesUpwards(path, processor, ns)) return true
+        if (processNestedScopesUpwards(path, ns, processor)) return true
     }
 
     if (!isAbsolute && Namespace.Types in ns && path.kind == PathKind.IDENTIFIER) {
@@ -484,7 +484,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
 }
 
 fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    return processNestedScopesUpwards(binding, { entry ->
+    return processNestedScopesUpwards(binding, if (isCompletion) TYPES_N_VALUES else VALUES) { entry ->
         processor.lazy(entry.name) {
             val element = entry.element ?: return@lazy null
             val isConstant = element.isConstantLike
@@ -494,7 +494,7 @@ fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolea
             }
             if (isConstant || (isCompletion && isPathOrDestructable)) element else null
         }
-    }, if (isCompletion) TYPES_N_VALUES else VALUES)
+    }
 }
 
 fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
@@ -1134,8 +1134,8 @@ private fun processLexicalDeclarations(
 
 fun processNestedScopesUpwards(
     scopeStart: RsElement,
-    processor: RsResolveProcessor,
-    ns: Set<Namespace>
+    ns: Set<Namespace>,
+    processor: RsResolveProcessor
 ): Boolean {
     val prevScope = mutableSetOf<String>()
     if (walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->

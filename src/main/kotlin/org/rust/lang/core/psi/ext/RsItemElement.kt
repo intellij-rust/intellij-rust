@@ -13,9 +13,9 @@ interface RsItemElement : RsVisibilityOwner, RsOuterAttributeOwner, RsExpandedEl
 
 fun <T : RsItemElement> Iterable<T>.filterInScope(scope: RsElement): List<T> {
     val set = toMutableSet()
-    processNestedScopesUpwards(scope, {
+    processNestedScopesUpwards(scope, TYPES) {
         set.remove(it.element)
         set.isEmpty()
-    }, TYPES)
+    }
     return if (set.isEmpty()) toList() else toMutableList().apply { removeAll(set) }
 }
