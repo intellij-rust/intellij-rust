@@ -7,14 +7,11 @@ package org.rust.ide.actions
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -22,11 +19,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.Rustup
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.isUnitTestMode
-import java.nio.file.Path
 
 class RustfmtFileAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
@@ -55,7 +50,7 @@ class RustfmtFileAction : DumbAwareAction() {
             // #1131 - Check if we get a "'rustfmt' is not installed" and let the user know to install fmt
             if ("'rustfmt' is not installed" in message) {
                 val projectDir = project.cargoProjects.findProjectForFile(file)?.manifest?.parent
-                val action = if (projectDir != null) InstallRustfmtAction(projectDir) else null
+                val action = if (projectDir != null) InstallComponentAction(projectDir, "rustfmt-preview") else null
                 project.showBalloon("Rustfmt is not installed", NotificationType.ERROR, action)
             } else {
                 project.showBalloon(message, NotificationType.ERROR)
@@ -69,22 +64,5 @@ class RustfmtFileAction : DumbAwareAction() {
         val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
         if (!(file.isInLocalFileSystem && file.isRustFile)) return null
         return Triple(project, toolchain, file)
-    }
-}
-
-private class InstallRustfmtAction(private val projectDirectory: Path) : DumbAwareAction("Install") {
-
-    override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
-        val rustup = project.toolchain?.rustup(projectDirectory) ?: return
-
-        Notification.get(e).expire()
-        object : Task.Backgroundable(project, "Installing Rustfmt...") {
-            override fun shouldStartInBackground(): Boolean = false
-            override fun run(indicator: ProgressIndicator) {
-                val result = rustup.downloadRustfmt(myProject) as? Rustup.DownloadResult.Err ?: return
-                myProject.showBalloon(result.error, NotificationType.ERROR)
-            }
-        }.queue()
     }
 }
