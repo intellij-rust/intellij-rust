@@ -43,8 +43,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
     override fun getUsageType(element: PsiElement?, targets: Array<out UsageTarget>): UsageType? {
         val parent = element?.goUp<RsPath>() ?: return null
         if (parent is RsBaseType) {
-            val context = parent.goUp<RsBaseType>()
-            return when (context) {
+            return when (val context = parent.goUp<RsBaseType>()) {
                 is RsTypeReference -> {
                     when (context.parent) {
                         is RsImplItem -> IMPL
@@ -74,12 +73,9 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
             is RsMetaItem -> META_ITEM
             is RsFieldLookup -> FIELD
             is RsMacroCall -> MACRO_CALL
-            else -> {
-                val context = parent.parent
-                when (context) {
-                    is RsModDeclItem -> MOD
-                    else -> null
-                }
+            else -> when (parent.parent) {
+                is RsModDeclItem -> MOD
+                else -> null
             }
         }
     }

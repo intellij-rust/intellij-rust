@@ -210,8 +210,7 @@ private fun buildProjectAndGetBinaryArtifactPath(
                     }
 
                     override fun onSuccess() {
-                        val result = result!!
-                        when (result) {
+                        when (val result = result!!) {
                             DebugBuildResult.MSVCToolchain -> {
                                 project.showErrorDialog("MSVC toolchain is not supported for debugging. Please use GNU toolchain.")
                                 promise.setResult(null)
