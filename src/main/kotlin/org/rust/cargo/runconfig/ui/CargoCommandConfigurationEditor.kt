@@ -47,7 +47,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     private val allCargoProjects: List<CargoProject> =
         project.cargoProjects.allProjects.sortedBy { it.presentableName }
 
-    private val command = CargoCommandLineEditor(project, { this.currentWorkspace() })
+    private val command = CargoCommandLineEditor(project) { this.currentWorkspace() }
 
     private val backtraceMode = ComboBox<BacktraceMode>().apply {
         BacktraceMode.values()

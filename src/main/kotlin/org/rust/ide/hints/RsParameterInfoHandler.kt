@@ -100,9 +100,9 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
         val descr = RsArgumentsDescription.findDescription(callArgs) ?: return INVALID_INDEX
         var index = -1
         if (descr.arguments.isNotEmpty()) {
-            index += generateSequence(callArgs.firstChild, { c -> c.nextSibling })
+            index += generateSequence(callArgs.firstChild) { c -> c.nextSibling }
                 .filter { it.text == "," }
-                .count({ it.startOffset < place.startOffset }) + 1
+                .count { it.startOffset < place.startOffset } + 1
             if (index >= descr.arguments.size) {
                 index = -1
             }

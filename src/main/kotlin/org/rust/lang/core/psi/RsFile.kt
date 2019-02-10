@@ -91,12 +91,12 @@ class RsFile(
         // to store references to PSI inside `CachedValueProvider` other than
         // the key PSI element
         val originalFile = originalFile
-        return CachedValuesManager.getCachedValue(originalFile, {
+        return CachedValuesManager.getCachedValue(originalFile) {
             CachedValueProvider.Result.create(
                 RsModulesIndex.getDeclarationFor(originalFile),
                 PsiModificationTracker.MODIFICATION_COUNT
             )
-        })
+        }
     }
 
     enum class Attributes {

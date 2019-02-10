@@ -114,9 +114,8 @@ class RsHighlightingPerformanceTest : RsWithToolchainTestBase() {
             VfsUtil.copyDirectory(
                 this,
                 projectDir,
-                cargoProjectDirectory,
-                { true }
-            )
+                cargoProjectDirectory
+            ) { true }
             fullyRefreshDirectory(cargoProjectDirectory)
         }
 
