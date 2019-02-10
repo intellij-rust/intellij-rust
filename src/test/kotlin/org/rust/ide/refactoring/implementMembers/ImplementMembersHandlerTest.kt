@@ -11,9 +11,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.ide.annotator.RsAnnotatorBase
-import org.rust.ide.annotator.RsErrorAnnotator
-
+import org.rust.ide.inspections.RsTraitImplementationInspection
 
 class ImplementMembersHandlerTest : RsTestBase() {
     fun `test available via override shortcut`() = invokeVia {
@@ -21,7 +19,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     }
 
     fun `test available via quick fix`() {
-        RsAnnotatorBase.enableAnnotator(RsErrorAnnotator::class.java, testRootDisposable)
+        myFixture.enableInspections(RsTraitImplementationInspection())
         invokeVia {
             val action = myFixture.findSingleIntention("Implement members")
             myFixture.launchAction(action)
