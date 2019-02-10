@@ -269,7 +269,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             }
         }
 
-        if (modDecl.reference.resolve() == null) {
+        if (modDecl.reference.resolve() == null && modDecl.semicolon != null) {
             RsDiagnostic.ModuleNotFound(modDecl).addToHolder(holder)
         }
     }
