@@ -67,8 +67,7 @@ private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
 
 private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
     val title = "Type `${ta.identifier.text}`"
-    val owner = ta.owner
-    when (owner) {
+    when (val owner = ta.owner) {
         is RsAbstractableOwner.Free -> {
             deny(ta.default, holder, "$title cannot have the `default` qualifier")
             deny(ta.typeParamBounds, holder, "$title cannot have type parameter bounds")
@@ -90,6 +89,7 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
                 require(ta.typeReference, holder, "Aliased type must be provided for type `${ta.identifier.text}`", ta)
             }
         }
+        RsAbstractableOwner.Foreign -> Unit
     }
 }
 

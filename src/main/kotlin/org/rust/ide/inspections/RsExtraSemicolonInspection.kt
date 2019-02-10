@@ -38,23 +38,21 @@ private fun inspect(holder: ProblemsHolder, fn: RsFunction) {
     val retType = fn.retType?.typeReference ?: return
     if (retType.type == TyUnit) return
     ExitPoint.process(fn) { exitPoint ->
-        when (exitPoint) {
-            is ExitPoint.TailStatement -> {
-                holder.registerProblem(
-                    exitPoint.stmt,
-                    "Function returns () instead of ${retType.text}",
-                    object : LocalQuickFix {
-                        override fun getName() = "Remove semicolon"
+        if (exitPoint is ExitPoint.TailStatement) {
+            holder.registerProblem(
+                exitPoint.stmt,
+                "Function returns () instead of ${retType.text}",
+                object : LocalQuickFix {
+                    override fun getName() = "Remove semicolon"
 
-                        override fun getFamilyName() = name
+                    override fun getFamilyName() = name
 
-                        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                            val statement = (descriptor.psiElement as RsExprStmt)
-                            statement.replace(statement.expr)
-                        }
+                    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+                        val statement = (descriptor.psiElement as RsExprStmt)
+                        statement.replace(statement.expr)
                     }
-                )
-            }
+                }
+            )
         }
     }
 }
