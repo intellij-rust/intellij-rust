@@ -29,11 +29,11 @@ import com.intellij.util.PathUtil
 import org.apache.commons.lang.StringEscapeUtils.escapeHtml
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.*
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.isUnitTestMode
@@ -46,7 +46,8 @@ private val LOG = Logger.getInstance(RsCargoCheckAnnotator::class.java)
 data class CargoCheckAnnotationInfo(
     val toolchain: RustToolchain,
     val projectPath: Path,
-    val module: Module
+    val module: Module,
+    val cargoPackage: CargoWorkspace.Package
 )
 
 class CargoCheckAnnotationResult(commandOutput: List<String>) {
@@ -71,17 +72,15 @@ class RsCargoCheckAnnotator : ExternalAnnotator<CargoCheckAnnotationInfo, CargoC
         val ws = file.cargoWorkspace ?: return null
         val module = ModuleUtil.findModuleForFile(file.virtualFile, file.project) ?: return null
         val toolchain = module.project.toolchain ?: return null
-        return CargoCheckAnnotationInfo(toolchain, ws.contentRoot, module)
+        val cargoPackage = file.containingCargoPackage
+        if (cargoPackage?.origin != PackageOrigin.WORKSPACE) return null
+        return CargoCheckAnnotationInfo(toolchain, ws.contentRoot, module, cargoPackage)
     }
 
     override fun doAnnotate(info: CargoCheckAnnotationInfo): CargoCheckAnnotationResult? = checkProject(info)
 
     override fun apply(file: PsiFile, annotationResult: CargoCheckAnnotationResult?, holder: AnnotationHolder) {
         if (annotationResult == null) return
-
-        val fileOrigin = (file as? RsElement)?.containingCargoPackage?.origin
-        if (fileOrigin != PackageOrigin.WORKSPACE) return
-
         val doc = file.viewProvider.document
             ?: error("Can't find document for $file in Cargo check annotator")
 
@@ -124,7 +123,7 @@ private fun checkProject(info: CargoCheckAnnotationInfo): CargoCheckAnnotationRe
         ProgressManager.getInstance().runProcess(Computable {
             info.toolchain
                 .cargoOrWrapper(info.projectPath)
-                .checkProject(info.module.project, info.module, info.projectPath)
+                .checkProject(info.module.project, info.module, info.projectPath, info.cargoPackage)
         }, indicator)
     } catch (e: ExecutionException) {
         LOG.debug(e)
