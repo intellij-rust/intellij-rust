@@ -205,7 +205,7 @@ private val Array<out PsiElement?>.combinedRange: TextRange?
         .reduce(TextRange::union)
 
 private val PsiElement.rightVisibleLeaves: Sequence<PsiElement>
-    get() = generateSequence(PsiTreeUtil.nextVisibleLeaf(this), { el -> PsiTreeUtil.nextVisibleLeaf(el) })
+    get() = generateSequence(PsiTreeUtil.nextVisibleLeaf(this)) { el -> PsiTreeUtil.nextVisibleLeaf(el) }
 
 private val String.firstLower: String
     get() = if (isEmpty()) this else this[0].toLowerCase() + substring(1)

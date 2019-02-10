@@ -38,7 +38,7 @@ fun fileTreeFromText(@Language("Rust") text: String): FileTree {
         if (path.size == 1) {
             dir.children[name] = Entry.File(contents)
         } else {
-            val childDir = dir.children.getOrPut(name, { Entry.Directory(mutableMapOf()) }) as Entry.Directory
+            val childDir = dir.children.getOrPut(name) { Entry.Directory(mutableMapOf()) } as Entry.Directory
             fill(childDir, path.drop(1), contents)
         }
     }
@@ -160,7 +160,7 @@ class TestProject(
             check(res != null) {
                 "Failed to resolve the reference `${ref.text}` in `$path`."
             }
-            if (toCrate != null && res != null) {
+            if (toCrate != null) {
                 val pkg = res.containingCargoPackage?.let { "${it.name} ${it.version}" } ?: "[nowhere]"
                 check(pkg == toCrate) {
                     "Expected to be resolved to $toCrate but actually resolved to $pkg"

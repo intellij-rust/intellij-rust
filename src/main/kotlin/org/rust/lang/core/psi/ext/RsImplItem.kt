@@ -53,12 +53,12 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         get() = members?.innerAttrList ?: emptyList()
 
     override val associatedTypesTransitively: Collection<RsTypeAlias>
-        get() = CachedValuesManager.getCachedValue(this, {
+        get() = CachedValuesManager.getCachedValue(this) {
             CachedValueProvider.Result.create(
                 doGetAssociatedTypesTransitively(),
                 PsiModificationTracker.MODIFICATION_COUNT
             )
-        })
+        }
 
     private fun doGetAssociatedTypesTransitively(): List<RsTypeAlias> {
         val implAliases = members?.typeAliasList.orEmpty()

@@ -7,7 +7,8 @@ package org.rust.lang.core.lexer
 
 import com.intellij.lexer.Lexer
 import org.rust.lang.core.lexer.RustEscapesLexer.Companion.ESCAPABLE_LITERALS_TOKEN_SET
-import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsElementTypes.BYTE_STRING_LITERAL
+import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
 import java.util.*
 
 class RsEscapesLexingTestCase : RsLexingTestCaseBase() {
@@ -41,9 +42,9 @@ class RsEscapesLexingTestCase : RsLexingTestCaseBase() {
         val random = Random()
         val length = random.nextInt(10)
         val chars = """\xu"vnrt0'"""
-        val xs = CharArray(length, {
+        val xs = CharArray(length) {
             chars[random.nextInt(chars.length)]
-        })
+        }
         return String(xs)
     }
 }

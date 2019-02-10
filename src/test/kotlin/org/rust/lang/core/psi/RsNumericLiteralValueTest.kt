@@ -58,9 +58,9 @@ class RsNumericLiteralValueFuzzyTest {
         val random = Random()
         val length = random.nextInt(10)
         val chars = "0123456789abcdefABCDEFxo._eE-+"
-        val xs = CharArray(length, {
+        val xs = CharArray(length) {
             chars[random.nextInt(chars.length)]
-        })
+        }
         return String(xs)
     }
 }
