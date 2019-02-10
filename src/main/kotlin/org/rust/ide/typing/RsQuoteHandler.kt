@@ -60,7 +60,7 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
         // Let's employ heuristics to find out if it is the case!
         // Specifically, check if the next token can't appear
         // in valid Rust code.
-        val nextChar = chars.getOrElse(iterator.end, { '"' })
+        val nextChar = chars.getOrElse(iterator.end) { '"' }
         if (nextChar == '"') return true
 
         iterator.advance()

@@ -1246,6 +1246,7 @@ private fun RsStubLiteralType?.serialize(dataStream: StubOutputStream) {
         }
         is RsStubLiteralType.Integer -> dataStream.writeByte(kind?.ordinal ?: -1)
         is RsStubLiteralType.Float -> dataStream.writeByte(kind?.ordinal ?: -1)
+        RsStubLiteralType.Boolean -> Unit
     }
 }
 

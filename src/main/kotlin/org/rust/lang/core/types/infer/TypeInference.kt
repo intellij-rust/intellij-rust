@@ -205,6 +205,7 @@ class RsInferenceContext(
         when (ty) {
             is TyInfer.IntVar -> intUnificationTable.unifyVarValue(ty, TyInteger.DEFAULT)
             is TyInfer.FloatVar -> floatUnificationTable.unifyVarValue(ty, TyFloat.DEFAULT)
+            is TyInfer.TyVar -> Unit
         }
     }
 

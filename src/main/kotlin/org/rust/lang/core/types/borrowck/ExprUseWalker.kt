@@ -328,7 +328,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
      * The core driver for walking a pattern; [matchMode] must be established up front, e.g. via [determinePatMoveMode]
      * (see also [walkIrrefutablePat] for patterns that stand alone)
      */
-    private fun walkPat(discriminantCmt: Cmt, pat: RsPat, matchMode: MatchMode) {
+    private fun walkPat(discriminantCmt: Cmt, pat: RsPat, @Suppress("UNUSED_PARAMETER") matchMode: MatchMode) {
         mc.walkPat(discriminantCmt, pat) { subPatCmt, subPat ->
             if (subPat is RsPatIdent && subPat.patBinding.reference.resolve()?.isConstantLike != true) {
                 val binding = subPat.patBinding

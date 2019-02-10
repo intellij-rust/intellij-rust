@@ -504,6 +504,7 @@ class ImplLookup(
         return listOf(candidate)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun autoTraitCandidates(ty: Ty, trait: RsTraitItem): List<SelectionCandidate> {
         // FOr now, just think that any type is Sync + Send
         // TODO implement auto trait logic

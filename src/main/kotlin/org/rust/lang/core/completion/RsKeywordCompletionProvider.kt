@@ -5,7 +5,10 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProvider
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.util.ProcessingContext
@@ -45,5 +48,5 @@ private fun addInsertionHandler(keyword: String, builder: LookupElementBuilder, 
         else -> return builder
     }
 
-    return builder.withInsertHandler({ ctx, _ -> ctx.addSuffix(suffix) })
+    return builder.withInsertHandler { ctx, _ -> ctx.addSuffix(suffix) }
 }
