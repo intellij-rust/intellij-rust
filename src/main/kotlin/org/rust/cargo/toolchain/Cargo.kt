@@ -90,8 +90,13 @@ class Cargo(private val cargoExecutable: Path) {
     }
 
     @Throws(ExecutionException::class)
-    fun checkProject(project: Project, owner: Disposable, projectDirectory: Path): ProcessOutput {
-        val arguments = mutableListOf("--message-format=json", "--all")
+    fun checkProject(
+        project: Project,
+        owner: Disposable,
+        projectDirectory: Path,
+        cargoPackage: CargoWorkspace.Package
+    ): ProcessOutput {
+        val arguments = mutableListOf("--message-format=json", "--package", cargoPackage.name)
 
         if (project.rustSettings.compileAllTargets && checkSupportForBuildCheckAllTargets()) {
             arguments += "--all-targets"
