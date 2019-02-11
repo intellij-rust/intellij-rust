@@ -82,5 +82,13 @@ class IterPostfixTemplate(provider: RsPostfixTemplateProvider) :
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
+class DbgPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("dbg", "dbg!(expr)", RsTopMostInScopeSelector(), provider) {
+
+    override fun getTemplateString(element: PsiElement): String = "dbg!(${element.text})"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
 private val RsExpr.isIntoIterator: Boolean
     get() = ImplLookup(project, knownItems).isIntoIterator(type)

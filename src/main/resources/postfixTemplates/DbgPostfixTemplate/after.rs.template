@@ -1,0 +1,3 @@
+fn foo(slice: &[i32]) {
+    let first = dbg!(slice[0])
+}
