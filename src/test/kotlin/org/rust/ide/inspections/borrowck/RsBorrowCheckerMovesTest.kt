@@ -21,7 +21,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let x = S { data: 42 };
             let mut i = 0;
             while i < 10 {
-                if <error descr="Use of moved value">x.data</error> == 10 { f(<error descr="Use of moved value">x</error>); } else {}
+                if x.data == 10 { f(<error descr="Use of moved value">x</error>); } else {}
                 i += 1;
             }
             <error descr="Use of moved value">x<caret></error>;
@@ -336,6 +336,16 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             } else {
                 x
             };
+        }
+    """, checkWarn = false)
+
+    /** Issue [#3314](https://github.com/intellij-rust/intellij-rust/issues/3314) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error deref str inside binary expr`() = checkByText("""
+        fn main() {
+            let a = "abc";
+            let b = "abc";
+            if *a == *b {}
         }
     """, checkWarn = false)
 }

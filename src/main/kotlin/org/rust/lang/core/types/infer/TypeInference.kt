@@ -1434,13 +1434,11 @@ class RsFnInferenceContext(
                     val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
                     enforceOverloadedBinopTypes(lhsType, rhsType, op)
 
-                    if (!isPrimitiveOrInferPrimitive(lhsType)) {
-                        val lhsAdjustment = BorrowReference(TyReference(lhsType, IMMUTABLE))
-                        ctx.addAdjustment(expr.left, lhsAdjustment)
+                    val lhsAdjustment = BorrowReference(TyReference(lhsType, IMMUTABLE))
+                    ctx.addAdjustment(expr.left, lhsAdjustment)
 
-                        val rhsAdjustment = BorrowReference(TyReference(rhsType, IMMUTABLE))
-                        expr.right?.let { ctx.addAdjustment(it, rhsAdjustment) }
-                    }
+                    val rhsAdjustment = BorrowReference(TyReference(rhsType, IMMUTABLE))
+                    expr.right?.let { ctx.addAdjustment(it, rhsAdjustment) }
                 } else {
                     expr.right?.inferTypeCoercableTo(lhsType)
                 }
@@ -1455,10 +1453,8 @@ class RsFnInferenceContext(
                     val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
                     enforceOverloadedBinopTypes(lhsType, rhsType, op)
 
-                    if (!isPrimitiveOrInferPrimitive(lhsType)) {
-                        val lhsAdjustment = BorrowReference(TyReference(lhsType, MUTABLE))
-                        ctx.addAdjustment(expr.left, lhsAdjustment)
-                    }
+                    val lhsAdjustment = BorrowReference(TyReference(lhsType, MUTABLE))
+                    ctx.addAdjustment(expr.left, lhsAdjustment)
                 } else {
                     expr.right?.inferTypeCoercableTo(lhsType)
                 }
@@ -1471,9 +1467,6 @@ class RsFnInferenceContext(
         val selection = lookup.selectOverloadedOp(lhsType, rhsType, op).ok()
         selection?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
     }
-
-    private fun isPrimitiveOrInferPrimitive(lhsType: Ty) =
-        lhsType is TyPrimitive || lhsType is TyInfer.IntVar || lhsType is TyInfer.FloatVar
 
     private fun inferTryExprType(expr: RsTryExpr): Ty {
         val base = expr.expr.inferType() as? TyAdt ?: return TyUnknown
