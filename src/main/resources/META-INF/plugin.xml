@@ -869,6 +869,10 @@
             <reference id="Rust.AttachCargoProject"/>
             <reference id="Rust.DetachCargoProject"/>
         </group>
+        <action id="Rust.ToggleCargoCheckAction"
+                class="org.rust.ide.actions.ToggleCargoCheckAction"
+                text="Toggle Cargo check">
+        </action>
     </actions>
 
 </idea-plugin>
