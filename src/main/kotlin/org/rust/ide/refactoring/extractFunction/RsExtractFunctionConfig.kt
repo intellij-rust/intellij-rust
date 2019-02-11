@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.presentation.insertionSafeText
-import org.rust.ide.utils.findStatementsInRange
+import org.rust.ide.utils.findStatementsOrExprInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -99,11 +99,22 @@ class RsExtractFunctionConfig private constructor(
                 append(" -> ${returnValue.type.insertionSafeText}")
             }
             append(whereClausesText)
-            val stmts = elements.map { it.text }.toMutableList()
-            if (returnValue?.expression != null) {
-                stmts.add(returnValue.expression)
+        }
+
+    val functionText: String
+        get() = buildString {
+            append(signature)
+            val single = elements.singleOrNull()
+            val body = if (single is RsBlockExpr) {
+                single.block.text
+            } else {
+                val stmts = elements.map { it.text }.toMutableList()
+                if (returnValue?.expression != null) {
+                    stmts.add(returnValue.expression)
+                }
+                "{\n${stmts.joinToString(separator = "\n")}\n}"
             }
-            append("{\n${stmts.joinToString(separator = "\n")}\n}")
+            append(body)
         }
 
     private val typeParametersText: String
@@ -147,7 +158,7 @@ class RsExtractFunctionConfig private constructor(
 
     companion object {
         fun create(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
-            val elements = findStatementsInRange(file, start, end).asList()
+            val elements = findStatementsOrExprInRange(file, start, end).asList()
             if (elements.isEmpty()) return null
             val first = elements.first()
             val last = elements.last()

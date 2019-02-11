@@ -59,6 +59,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- bar/foo.rs
     """)
 
+    fun `test no E0583 if no semicolon after module declaration`() = checkByText("""
+        mod foo<error descr="';' or '{' expected"> </error>
+        // often happens during typing `mod foo {}`
+    """)
+
     @MockRustcVersion("1.29.0")
     fun `test create file and expand module quick fix`() = checkFixByFileTree("Create module file", """
     //- main.rs

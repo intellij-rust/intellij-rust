@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
-import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsPsiFactory.PathNamespace.TYPES
 import org.rust.lang.core.psi.RsPsiFactory.PathNamespace.VALUES
@@ -285,10 +284,10 @@ class RsPsiFactory(private val project: Project) {
             ?: error("Failed to create unsafe element")
 
     fun createFunction(
-        config: RsExtractFunctionConfig
+        text: String
     ): RsFunction =
-        createFromText(config.signature)
-            ?: error("Failed to create function element: ${config.name}")
+        createFromText(text)
+            ?: error("Failed to create function element: text")
 
     fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
         createFromText("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
