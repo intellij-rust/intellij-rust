@@ -6,7 +6,6 @@
 package org.rust.ide.annotator.fixes
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -19,10 +18,8 @@ import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 class CreateLifetimeParameterFromUsageFix(lifetime: RsLifetime) : LocalQuickFixAndIntentionActionOnPsiElement(lifetime) {
-    override fun getFamilyName(): String {
-        return "Create lifetime parameter"
-    }
 
+    override fun getFamilyName(): String = "Create lifetime parameter"
     override fun getText(): String = familyName
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
