@@ -67,9 +67,9 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """, listOf("10", "5 + 10", "foo(5 + 10)"), 1, """
         fn hello() {
-            let x = 5 + 10;
-            foo(x);
-            foo(x);
+            let i = 5 + 10;
+            foo(i);
+            foo(i);
         }
     """, replaceAll = true)
 
@@ -82,9 +82,9 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """, listOf("1", "a + 1"), 1, """
         fn main() {
             let a = 1;
-            let x = a + 1;
-            let b = x;
-            let c = x;
+            let i = a + 1;
+            let b = i;
+            let c = i;
         }
     """, replaceAll = true)
 

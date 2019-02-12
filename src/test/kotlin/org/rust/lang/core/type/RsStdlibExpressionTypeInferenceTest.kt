@@ -7,10 +7,7 @@ package org.rust.lang.core.type
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.psi.ext.ArithmeticAssignmentOp
-import org.rust.lang.core.psi.ext.ArithmeticOp
-import org.rust.lang.core.psi.ext.ComparisonOp
-import org.rust.lang.core.psi.ext.EqualityOp
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 
@@ -544,25 +541,25 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     fun `test all arithmetic ops with all numeric types`() {
-        TyInteger.NAMES.permutations(ArithmeticOp.values().map { it.sign })
-            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", numeric) }
-        TyFloat.NAMES.permutations(ArithmeticOp.values().map { it.sign })
-            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", numeric) }
+        TyInteger.NAMES.permutations(ArithmeticOp.values())
+            .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0", numeric) }
+        TyFloat.NAMES.permutations(ArithmeticOp.values() - ArithmeticOp.SHL - ArithmeticOp.SHR)
+            .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0.0", numeric) }
     }
 
     fun `test all arithmetic assignment ops with all numeric types`() {
-        TyInteger.NAMES.permutations(ArithmeticAssignmentOp.values().map { it.sign })
-            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", "()") }
-        TyFloat.NAMES.permutations(ArithmeticAssignmentOp.values().map { it.sign })
-            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", "()") }
+        TyInteger.NAMES.permutations(ArithmeticAssignmentOp.values())
+            .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0", "()") }
+        TyFloat.NAMES.permutations(ArithmeticAssignmentOp.values() - ArithmeticAssignmentOp.GTGTEQ - ArithmeticAssignmentOp.LTLTEQ)
+            .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0.0", "()") }
     }
 
     fun `test all cmp ops with all numeric types`() {
-        val signs = EqualityOp.values().map { it.sign } + ComparisonOp.values().map { it.sign }
-        TyInteger.NAMES.permutations(signs)
-            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0", "bool") }
-        TyFloat.NAMES.permutations(signs)
-            .forEach { (numeric, sign) -> doTestBinOp(numeric, sign, "0.0", "bool") }
+        val ops: List<OverloadableBinaryOperator> = EqualityOp.values() + ComparisonOp.values()
+        TyInteger.NAMES.permutations(ops)
+            .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0", "bool") }
+        TyFloat.NAMES.permutations(ops)
+            .forEach { (numeric, op) -> doTestBinOp(numeric, op, "0.0", "bool") }
     }
 
     private fun <A, B> Collection<A>.permutations(other: Collection<B>): List<Pair<A, B>> {
@@ -577,18 +574,26 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
 
     private fun doTestBinOp(
         lhsType: String,
-        sign: String,
+        op: OverloadableBinaryOperator,
         rhsLiteral: String,
         expectedOutputType: String
-    ) = stubOnlyTypeInfer("""
-        //- main.rs
-        fn foo(lhs: $lhsType) {
-            let rhs = $rhsLiteral;
-            let x = lhs $sign rhs;
-            (x, rhs);
-          //^ ($expectedOutputType, $lhsType)
+    ) {
+        val sign = op.sign
+        val expectedRhsType = if ((op as BinaryOperator).category == BinOpCategory.Shift) {
+            lhsType // TODO should be "i32", will be fixed with #3015
+        } else {
+            lhsType
         }
-    """)
+        stubOnlyTypeInfer("""
+            //- main.rs
+            fn foo(lhs: $lhsType) {
+                let rhs = $rhsLiteral;
+                let x = lhs $sign rhs;
+                (x, rhs);
+              //^ ($expectedOutputType, $expectedRhsType)
+            }
+        """)
+    }
 
     fun `test write macro`() = stubOnlyTypeInfer("""
     //- main.rs
