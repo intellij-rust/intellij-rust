@@ -475,7 +475,7 @@ private fun PsiBuilder.isSameToken(psi: PsiElement): Boolean {
 private fun RsMacroBindingGroup.matches(contents: RsMacroExpansionContents): Boolean {
     val available = availableVars
     val used = contents.descendantsOfType<RsMacroReference>()
-    return used.all { it.referenceName in available }
+    return used.all { it.referenceName in available || it.referenceName == "crate" }
 }
 
 /**
