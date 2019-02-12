@@ -192,6 +192,13 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() {}
     """)
 
+    fun `test group with $crate usage`() = doTest(MacroExpansionMarks.groupInputEnd1, """
+        macro_rules! foo {
+            ($ ($ i:item)*; $ ($ j:item)*) => ($ ( use $ crate::$ i; )* $ ( use $ crate::$ i; )*)
+        }
+        foo! {;}
+    """, "")
+
     fun `test all items`() = doTest("""
         macro_rules! foo {
             ($ ($ i:item)*) => ($ (
