@@ -598,6 +598,15 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() -> i32 {}
     """)
 
+    fun `test macro with name "vec"`() = doTest("""
+       macro_rules! vec {
+           ($ t:ty) => { fn foo() -> $ t {} }
+       }
+       vec!(i32);
+    """, """
+        fn foo() -> i32 {}
+    """)
+
     fun `test expend macro definition`() = doTest("""
         macro_rules! foo {
             () => {
