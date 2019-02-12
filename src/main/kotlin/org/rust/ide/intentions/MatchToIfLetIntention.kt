@@ -12,9 +12,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.isIrrefutable
-import org.rust.lang.core.psi.ext.matchStdOptionOrResult
-import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.type
 
 class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
     override fun getText() = "Convert match statement to if let"
@@ -35,10 +32,8 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
 
         val nonVoidArm = matchArmList.singleOrNull { it.expr?.isVoid == false } ?: return null
         if (nonVoidArm.matchArmGuard != null || nonVoidArm.outerAttrList.isNotEmpty()) return null
-
         val pattern = nonVoidArm.patList.singleOrNull() ?: return null
-        val item = (matchTarget.type as? TyAdt)?.item as? RsEnumItem
-        if (!isRefutablePattern(item, pattern)) return null
+        if (pattern.isIrrefutable) return null
 
         return Context(matchExpr, matchTarget, nonVoidArm, pattern)
     }
@@ -61,5 +56,3 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
         get() = (this is RsBlockExpr && block.lbrace.getNextNonCommentSibling() == block.rbrace)
             || this is RsUnitExpr
 }
-
-private fun isRefutablePattern(item: RsEnumItem?, pattern: RsPat): Boolean = !pattern.isIrrefutable || matchStdOptionOrResult(item, listOf(pattern))

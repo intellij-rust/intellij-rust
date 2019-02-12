@@ -1447,20 +1447,33 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     """)
 
     @MockRustcVersion("1.31.0")
-    fun `test irrefutable let pattern E0658 for struct literals`() = checkErrors("""
+    fun `test irrefutable let pattern E0658 for struct literals 1`() = checkErrors("""
         struct S { x: i32 }
-        enum E1 {
-            V { x: i32 }
-        }
-        enum E2 {
-            A,
-            V { x: i32 }
-        }
-        fn foo(a: S, b: E1, c: E2, d: Unknown) {
+        struct ST(i32);
+        enum E1 { V { x: i32 } }
+        enum E2 { A, V { x: i32 } }
+        fn foo(a: S, b: ST, c: E1, d: E2, e: Unknown) {
             if let <error descr="irrefutable let pattern is experimental [E0658]">S { x }</error> = a {}
-            if let <error descr="irrefutable let pattern is experimental [E0658]">E1::V { x }</error> = b {}
-            if let E2::V { x } = c {}
-            if let Unknown { x } = d {}
+            if let <error descr="irrefutable let pattern is experimental [E0658]">S(x)</error> = b {}
+            if let <error descr="irrefutable let pattern is experimental [E0658]">E1::V { x }</error> = c {}
+            if let E2::V { x } = d {}
+            if let Unknown { x } = e {}
+        }
+    """)
+
+    @MockRustcVersion("1.32.0-nightly")
+    fun `test irrefutable let pattern E0658 for struct literals 2`() = checkErrors("""
+        #![feature(irrefutable_let_patterns)]
+        struct S { x: i32 }
+        struct ST(i32);
+        enum E1 { V { x: i32 } }
+        enum E2 { A, V { x: i32 } }
+        fn foo(a: S, b: ST, c: E1, d: E2, e: Unknown) {
+            if let S { x } = a {}
+            if let S(x) = b {}
+            if let E1::V { x } = c {}
+            if let E2::V { x } = d {}
+            if let Unknown { x } = e {}
         }
     """)
 }

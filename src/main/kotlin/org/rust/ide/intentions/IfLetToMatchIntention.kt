@@ -10,8 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
+import org.rust.stdext.mapToSet
 
 class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention.Context>() {
     override fun getText(): String = "Convert if let statement to match"
@@ -50,7 +52,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (ifStmt, target, matchArms, elseBody) = ctx
         val item = (target.type as? TyAdt)?.item as? RsEnumItem
-
+        val optionOrResultPats = matchArms.map(MatchArm::matchArm).filter(RsPat::isPossibleOptionOrResultVariant)
         val generatedCode = buildString {
             append("match ")
             append(target.text)
@@ -61,9 +63,9 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
                 append(" => ")
                 append(it.body.text)
             }
-            if (elseBody != null || !isExhaustiveOptionOrResult(item, matchArms)) {
+            if (elseBody != null || item == null || !allOptionOrResultVariantsCovered(item, optionOrResultPats)) {
                 append('\n')
-                append(missingBranch(item, matchArms))
+                append(missingBranch(item, optionOrResultPats))
                 append(" => ")
                 append(elseBody?.text ?: "{}")
             }
@@ -74,16 +76,10 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
         ifStmt.replace(matchExpression)
     }
 
-    private fun isExhaustiveOptionOrResult(item: RsEnumItem?, arms: List<MatchArm>): Boolean {
-        val patterns = arms.map(MatchArm::matchArm).filter(RsPat::isIrrefutable)
-        return matchStdOptionOrResult(item, patterns, true)
-    }
-
-    private fun missingBranch(item: RsEnumItem?, arms: List<MatchArm>): String {
-        if (item == null || !item.isStdOptionOrResult || arms.size != 1) return "_"
-        val pat = arms.first().matchArm.skipUnnecessaryTupDown()
-        if (!pat.isIrrefutable) return "_"
-        return when (pat.text.substringBefore('(')) {
+    private fun missingBranch(item: RsEnumItem?, pats: List<RsPat>): String {
+        if (item == null || !item.isStdOptionOrResult) return "_"
+        val patName = pats.singleOrNull()?.name ?: return "_"
+        return when (patName) {
             "Some" -> "None"
             "Ok" -> "Err(..)"
             "Err" -> "Ok(..)"
@@ -147,4 +143,23 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
 
         return context
     }
+
+    companion object {
+        private fun allOptionOrResultVariantsCovered(item: RsEnumItem?, pats: List<RsPat>): Boolean {
+            if (item == null || !item.isStdOptionOrResult || pats.size < 2) return false
+            val patNames = pats.mapToSet(RsPat::name)
+            val allVariantNames = if (item == item.knownItems.Option) {
+                setOf("Some", "None")
+            } else {
+                setOf("Ok", "Err")
+            }
+            return patNames == allVariantNames
+        }
+    }
 }
+
+private val RsPat.name: String
+    get() = skipUnnecessaryTupDown().text.substringBefore('(')
+
+private val RsPat.isPossibleOptionOrResultVariant: Boolean
+    get() = name == "None" || descendantOfTypeStrict<RsPat>()?.isIrrefutable == true

@@ -6,24 +6,40 @@
 package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.ref.deepResolve
 
 val RsPat.isIrrefutable: Boolean
-    get() = when (this) {
-        is RsPatTupleStruct -> patList.all { it.isIrrefutable }
-        is RsPatSlice -> patList.all { it.isIrrefutable }
-        is RsPatTup -> patList.all { it.isIrrefutable }
-        is RsPatBox -> pat.isIrrefutable
-        is RsPatRef -> pat.isIrrefutable
-        is RsPatStruct -> {
-            val canBeIrrefutable = when (val item = path.reference.resolve()) {
-                is RsStructItem -> true
-                is RsEnumVariant -> item.parentEnum.enumBody?.enumVariantList?.size == 1
-                else -> false
-            }
-            canBeIrrefutable && patFieldList.all { it.pat?.isIrrefutable ?: (it.patBinding != null) }
-        }
-        is RsPatConst, is RsPatRange -> false
+    get() = when (val pat = skipUnnecessaryTupDown()) {
+        is RsPatSlice ->
+            pat.patList.all { it.isIrrefutable }
+        is RsPatTup ->
+            pat.patList.all { it.isIrrefutable }
+        is RsPatBox ->
+            pat.pat.isIrrefutable
+        is RsPatRef ->
+            pat.pat.isIrrefutable
+        is RsPatStruct ->
+            pat.path.isIrrefutable && pat.patFieldList.all { it.pat?.isIrrefutable ?: (it.patBinding != null) }
+        is RsPatTupleStruct ->
+            pat.path.isIrrefutable && pat.patList.all { it.isIrrefutable }
+        is RsPatIdent ->
+            pat.patBinding.isIrrefutable
+        is RsPatConst, is RsPatRange ->
+            false
+        else ->
+            true
+    }
+
+private val RsPath.isIrrefutable: Boolean
+    get() = when (val item = reference.deepResolve()) {
+        is RsStructItem -> true
+        is RsEnumVariant -> item.parentEnum.enumBody?.enumVariantList?.size == 1
+        else -> false
+    }
+
+private val RsPatBinding.isIrrefutable: Boolean
+    get() = when (reference.resolve()) {
+        is RsStructItem, is RsEnumVariant -> false
         else -> true
     }
 
@@ -33,16 +49,4 @@ fun RsPat.skipUnnecessaryTupDown(): RsPat {
         pat = pat.patList.singleOrNull() ?: return pat
     }
     return pat
-}
-
-fun matchStdOptionOrResult(item: RsEnumItem?, patterns: List<RsPat>, allVariants: Boolean = false): Boolean {
-    if (patterns.isEmpty() || item?.isStdOptionOrResult != true) return false
-    val boolOp = if (allVariants) Boolean::and else Boolean::or
-    return patterns.map { it.skipUnnecessaryTupDown().text.substringBefore('(') }.let {
-        if (item == item!!.knownItems.Option) {
-            boolOp("Some" in it, "None" in it)
-        } else {
-            boolOp("Ok" in it, "Err" in it)
-        }
-    }
 }
