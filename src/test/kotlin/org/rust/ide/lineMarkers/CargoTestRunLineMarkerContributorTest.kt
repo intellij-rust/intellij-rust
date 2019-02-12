@@ -169,6 +169,13 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         assertEquals(CargoIcons.TEST, icon)
     }
 
+    /** Issue [3386](https://github.com/intellij-rust/intellij-rust/issues/3386) */
+    fun `test no extra markers next to syntax error elements`() = doTestByText("""
+        fn foo bar<T>(t: T) {}
+        #[test]
+        fn has_icon() { assert(true) } // - Test has_icon
+    """)
+
     private inline fun <reified E : RsElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
         val element = PsiFileFactory.getInstance(project)
             .createFileFromText("main.rs", RsFileType, code)
