@@ -21,6 +21,7 @@ import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.psi.ext.elementType
 import javax.swing.Icon
 
@@ -28,6 +29,7 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
         if (element.elementType != IDENTIFIER) return null
         val parent = element.parent
+        if (parent !is RsNameIdentifierOwner || element != parent.nameIdentifier) return null
         if (parent is RsFunction && CargoExecutableRunConfigurationProducer.isMainFunction(parent)) return null
 
         val state = CargoTestRunConfigurationProducer().findConfig(arrayOf(parent), climbUp = false)
