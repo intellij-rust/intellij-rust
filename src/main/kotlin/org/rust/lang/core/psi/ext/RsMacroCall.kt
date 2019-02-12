@@ -45,6 +45,9 @@ val RsMacroCall.macroBody: String?
         return macroArgument?.compactTT?.text
             ?: formatMacroArgument?.braceListBodyText()?.toString()
             ?: logMacroArgument?.braceListBodyText()?.toString()
+            ?: assertMacroArgument?.braceListBodyText()?.toString()
+            ?: exprMacroArgument?.braceListBodyText()?.toString()
+            ?: vecMacroArgument?.braceListBodyText()?.toString()
     }
 
 val RsMacroCall.expansion: MacroExpansion?
