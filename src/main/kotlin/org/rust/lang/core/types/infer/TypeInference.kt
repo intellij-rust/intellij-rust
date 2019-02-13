@@ -1373,13 +1373,14 @@ class RsFnInferenceContext(
 
     private fun inferForExprType(expr: RsForExpr): Ty {
         val exprTy = resolveTypeVarsWithObligations(expr.expr?.inferType() ?: TyUnknown)
-        expr.pat?.extractBindings(lookup.findIteratorItemType(exprTy)?.register() ?: TyUnknown)
+        val itemTy = resolveTypeVarsWithObligations(lookup.findIteratorItemType(exprTy)?.register() ?: TyUnknown)
+        expr.pat?.extractBindings(itemTy)
         expr.block?.inferType()
         return TyUnit
     }
 
     private fun inferWhileExprType(expr: RsWhileExpr): Ty {
-        expr.condition?.let { it.pat?.extractBindings(it.expr.inferType()) ?: it.expr.inferType(TyBool) }
+        expr.condition?.inferTypes()
         expr.block?.inferType()
         return TyUnit
     }
@@ -1425,7 +1426,7 @@ class RsFnInferenceContext(
         TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable) // TODO infer the actual lifetime
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {
-        expr.condition?.let { it.pat?.extractBindings(it.expr.inferType()) ?: it.expr.inferType(TyBool) }
+        expr.condition?.inferTypes()
         val blockTys = mutableListOf<Ty?>()
         blockTys.add(expr.block?.inferType(expected))
         val elseBranch = expr.elseBranch
@@ -1434,6 +1435,18 @@ class RsFnInferenceContext(
             blockTys.add(elseBranch.block?.inferType(expected))
         }
         return if (expr.elseBranch == null) TyUnit else getMoreCompleteType(blockTys.filterNotNull())
+    }
+
+    private fun RsCondition.inferTypes() {
+        val pat = pat
+        if (pat != null) {
+            // if let Some(a) = ... {}
+            // or
+            // while let Some(a) = ... {}
+            pat.extractBindings(resolveTypeVarsWithObligations(expr.inferType()))
+        } else {
+            expr.inferType(TyBool)
+        }
     }
 
     private fun inferBinaryExprType(expr: RsBinaryExpr): Ty {

@@ -657,4 +657,31 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ Box<S>
     """)
+
+    fun `test iterate "for" complex pattern in complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            for (a, _) in [(Some(42), false)].iter().map(|(n, f)| (n, f)) {
+                a;
+            } //^ &Option<i32>
+        }
+    """)
+
+    fun `test iterate "while let" complex pattern = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            while let Some((a, _)) = [(Some(42), false)].iter().map(|(n, f)| (n, f)).next() {
+                a;
+            } //^ &Option<i32>
+        }
+    """)
+
+    fun `test "if let" complex pattern = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            if let Some((a, _)) = [(Some(42), false)].iter().map(|(n, f)| (n, f)).next() {
+                a;
+            } //^ &Option<i32>
+        }
+    """)
 }
