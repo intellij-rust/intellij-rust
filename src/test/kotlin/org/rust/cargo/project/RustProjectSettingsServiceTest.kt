@@ -31,7 +31,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useCargoCheckAnnotator" value="true" />
               <option name="useCargoCheckForBuild" value="false" />
-              <option name="useOfflineForCargoCheck" value="true" />
+              <option name="useOffline" value="true" />
               <option name="useSkipChildren" value="true" />
             </State>
         """.trimIndent()
@@ -48,7 +48,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
             useCargoCheckForBuild = false,
             useCargoCheckAnnotator = true,
             compileAllTargets = false,
-            useOfflineForCargoCheck = true,
+            useOffline = true,
             expandMacros = false,
             showTestToolWindow = false,
             useSkipChildren = true

@@ -22,8 +22,8 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
     private val useCargoCheckAnnotatorCheckbox: JBCheckBox = JBCheckBox()
     private var useCargoCheckAnnotator: Boolean by CheckboxDelegate(useCargoCheckAnnotatorCheckbox)
 
-    private val useOfflineForCargoCheckCheckbox: JBCheckBox = JBCheckBox()
-    private var useOfflineForCargoCheck: Boolean by CheckboxDelegate(useOfflineForCargoCheckCheckbox)
+    private val useOfflineCheckbox: JBCheckBox = JBCheckBox()
+    private var useOffline: Boolean by CheckboxDelegate(useOfflineCheckbox)
 
     private val compileAllTargetsCheckBox = JBCheckBox()
     private var compileAllTargets: Boolean by CheckboxDelegate(compileAllTargetsCheckBox)
@@ -45,7 +45,7 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
         row("Compile all project targets if possible:", compileAllTargetsCheckBox, """
             Pass `--target-all` option to cargo build/check command.
         """)
-        row("Offline mode (nightly only):", useOfflineForCargoCheckCheckbox, """
+        row("Offline mode (nightly only):", useOfflineCheckbox, """
             Pass `-Z offline` option to cargo not to perform network requests.
             Used only for nightly toolchain.
         """)
@@ -56,7 +56,7 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
             || useCargoCheckForBuild != settings.useCargoCheckForBuild
             || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
             || compileAllTargets != settings.compileAllTargets
-            || useOfflineForCargoCheck != settings.useOfflineForCargoCheck
+            || useOffline != settings.useOffline
     }
 
     override fun apply() {
@@ -66,7 +66,7 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
             useCargoCheckForBuild = useCargoCheckForBuild,
             useCargoCheckAnnotator = useCargoCheckAnnotator,
             compileAllTargets = compileAllTargets,
-            useOfflineForCargoCheck = useOfflineForCargoCheck
+            useOffline = useOffline
         )
     }
 
@@ -75,6 +75,6 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
         useCargoCheckForBuild = settings.useCargoCheckForBuild
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
         compileAllTargets = settings.compileAllTargets
-        useOfflineForCargoCheck = settings.useOfflineForCargoCheck
+        useOffline = settings.useOffline
     }
 }

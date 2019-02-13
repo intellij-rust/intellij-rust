@@ -21,7 +21,7 @@ interface RustProjectSettingsService {
         val useCargoCheckForBuild: Boolean,
         val useCargoCheckAnnotator: Boolean,
         val compileAllTargets: Boolean,
-        val useOfflineForCargoCheck: Boolean,
+        val useOffline: Boolean,
         val expandMacros: Boolean,
         val showTestToolWindow: Boolean,
         val useSkipChildren: Boolean
@@ -39,7 +39,7 @@ interface RustProjectSettingsService {
     val useCargoCheckForBuild: Boolean get() = data.useCargoCheckForBuild
     val useCargoCheckAnnotator: Boolean get() = data.useCargoCheckAnnotator
     val compileAllTargets: Boolean get() = data.compileAllTargets
-    val useOfflineForCargoCheck: Boolean get() = data.useOfflineForCargoCheck
+    val useOffline: Boolean get() = data.useOffline
     val expandMacros: Boolean get() = data.expandMacros
     val showTestToolWindow: Boolean get() = data.showTestToolWindow
     val useSkipChildren: Boolean get() = data.useSkipChildren

@@ -29,7 +29,7 @@ class RustProjectSettingsServiceImpl(
         var useCargoCheckForBuild: Boolean = true,
         var useCargoCheckAnnotator: Boolean = false,
         var compileAllTargets: Boolean = true,
-        var useOfflineForCargoCheck: Boolean = false,
+        var useOffline: Boolean = false,
         var expandMacros: Boolean = true,
         var showTestToolWindow: Boolean = true,
         var useSkipChildren: Boolean = false
@@ -55,7 +55,7 @@ class RustProjectSettingsServiceImpl(
                 useCargoCheckForBuild = state.useCargoCheckForBuild,
                 useCargoCheckAnnotator = state.useCargoCheckAnnotator,
                 compileAllTargets = state.compileAllTargets,
-                useOfflineForCargoCheck = state.useOfflineForCargoCheck,
+                useOffline = state.useOffline,
                 expandMacros = state.expandMacros,
                 showTestToolWindow = state.showTestToolWindow,
                 useSkipChildren = state.useSkipChildren
@@ -69,7 +69,7 @@ class RustProjectSettingsServiceImpl(
                 useCargoCheckForBuild = value.useCargoCheckForBuild,
                 useCargoCheckAnnotator = value.useCargoCheckAnnotator,
                 compileAllTargets = value.compileAllTargets,
-                useOfflineForCargoCheck = value.useOfflineForCargoCheck,
+                useOffline = value.useOffline,
                 expandMacros = value.expandMacros,
                 showTestToolWindow = value.showTestToolWindow,
                 useSkipChildren = value.useSkipChildren
