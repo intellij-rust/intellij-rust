@@ -23,8 +23,12 @@ import org.rust.lang.core.completion.withPriority
 
 class CargoCommandCompletionProvider(
     private val projects: CargoProjectsService,
+    private val implicitTextPrefix: String,
     private val workspaceGetter: () -> CargoWorkspace?
 ) : TextFieldCompletionProvider() {
+
+    constructor(projects: CargoProjectsService, workspaceGetter: () -> CargoWorkspace?)
+        : this(projects, "", workspaceGetter)
 
     constructor(projects: CargoProjectsService, workspace: CargoWorkspace?) : this(projects, { workspace })
 
@@ -54,7 +58,7 @@ class CargoCommandCompletionProvider(
 
     // public for testing
     fun complete(context: String): List<LookupElement> {
-        val args = ParametersListUtil.parse(context)
+        val args = ParametersListUtil.parse(implicitTextPrefix + context)
         if ("--" in args) return emptyList()
         if (args.isEmpty()) {
             return COMMON_COMMANDS.map { it.lookupElement }

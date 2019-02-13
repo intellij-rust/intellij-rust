@@ -47,6 +47,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
             explicitPathToStdlib = "/stdlib",
             useCargoCheckForBuild = false,
             useCargoCheckAnnotator = true,
+            cargoCheckArguments = "",
             compileAllTargets = false,
             useOffline = true,
             expandMacros = false,

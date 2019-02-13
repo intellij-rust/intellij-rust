@@ -24,11 +24,13 @@ import javax.swing.JPanel
 
 class CargoCommandLineEditor(
     private val project: Project,
+    private val implicitTextPrefix: String,
     private val workspaceGetter: () -> CargoWorkspace?
 ) : JPanel(BorderLayout()), TextAccessor {
 
-    constructor(project: Project, workspace: CargoWorkspace?)
-        : this(project, { workspace })
+    constructor(project: Project, workspaceGetter: () -> CargoWorkspace?) : this(project, "", workspaceGetter)
+
+    constructor(project: Project, workspace: CargoWorkspace?) : this(project, { workspace })
 
     private val textField = createTextField("")
     val preferredFocusedComponent: JComponent = textField
@@ -55,8 +57,11 @@ class CargoCommandLineEditor(
     private fun createTextField(value: String): TextFieldWithCompletion =
         TextFieldWithCompletion(
             project,
-            CargoCommandCompletionProvider(project.cargoProjects, workspaceGetter),
-            value, true, false, false
+            CargoCommandCompletionProvider(project.cargoProjects, implicitTextPrefix, workspaceGetter),
+            value,
+            true,
+            false,
+            false
         )
 }
 
