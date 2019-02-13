@@ -657,17 +657,28 @@ class RsFnInferenceContext(
             tryTy = expected ?: TyInfer.TyVar()
             val resultTy = tryTy ?: TyUnknown
             val okTy = blockExpr.block.inferType()
-            registerTryProjection(blockExpr.knownItems, resultTy, "Ok", okTy)
+            registerTryProjection(resultTy, "Ok", okTy)
             return resultTy
         } finally {
             tryTy = oldTryTy
         }
     }
 
-    private fun inferAsyncBlockExprType(blockExpr: RsBlockExpr): TyUnknown {
+    private fun inferAsyncBlockExprType(blockExpr: RsBlockExpr): Ty {
         require(blockExpr.isAsync)
-        blockExpr.block.inferType()
-        return TyUnknown
+        val outputTy = blockExpr.block.inferType()
+        return items.makeFuture(outputTy)
+    }
+
+    private fun lookupFutureOutputTy(ty: Ty?): Ty {
+        if (ty !is TyAnon) return TyUnknown
+        val futureTrait = items.Future ?: return TyUnknown
+        val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
+        return lookup.lookupAssocTypeInBounds(
+            ty.getTraitBoundsTransitively().asSequence(),
+            futureTrait,
+            outputType
+        ) ?: TyUnknown
     }
 
     fun inferFnBody(block: RsBlock): Ty =
@@ -1189,7 +1200,7 @@ class RsFnInferenceContext(
         val methodType = (callee.element.typeOfValue)
             .substitute(typeParameters)
             .foldWith(associatedTypeNormalizer) as TyFunction
-        if (expected != null) ctx.combineTypes(expected, methodType.retType)
+        if (expected != null && !callee.element.isAsync) ctx.combineTypes(expected, methodType.retType)
         // drop first element of paramTypes because it's `self` param
         // and it doesn't have value in `methodCall.valueArgumentList.exprList`
         inferArgumentTypes(methodType.paramTypes.drop(1), argExprs)
@@ -1525,7 +1536,7 @@ class RsFnInferenceContext(
         val okTy = base.typeArguments.getOrElse(0) { TyUnknown }
         val errTy = base.typeArguments.getOrElse(1) { TyUnknown }
         val resultTy = tryTy ?: return okTy
-        registerTryProjection(expr.knownItems, resultTy, "Error", errTy)
+        registerTryProjection(resultTy, "Error", errTy)
         return okTy
     }
 
@@ -1612,8 +1623,8 @@ class RsFnInferenceContext(
             return when (name) {
                 "try" -> inferTryMacroArgumentType(expr)
                 "dbg" -> expr.inferType()
+                "await" -> lookupFutureOutputTy(expr.inferType())
                 else -> {
-                    // TODO: type inference for async/await
                     expr.inferType()
                     TyUnknown
                 }
@@ -1688,9 +1699,9 @@ class RsFnInferenceContext(
 
         val yieldTy = lambdaBodyContext.yieldTy
         return if (yieldTy == null) {
-            TyFunction(paramTypes, actualRetTy)
+            TyFunction(paramTypes, if (expr.isAsync) items.makeFuture(actualRetTy) else actualRetTy)
         } else {
-            wrapToGenerator(yieldTy, actualRetTy, expr.knownItems)
+            items.makeGenerator(yieldTy, actualRetTy)
         }
     }
 
@@ -1776,8 +1787,8 @@ class RsFnInferenceContext(
         }
     }
 
-    private fun registerTryProjection(knownItems: KnownItems, resultTy: Ty, assocTypeName: String, assocTypeTy: Ty) {
-        val tryTrait = knownItems.Try ?: return
+    private fun registerTryProjection(resultTy: Ty, assocTypeName: String, assocTypeTy: Ty) {
+        val tryTrait = items.Try ?: return
         val assocType = tryTrait.findAssociatedType(assocTypeName) ?: return
         val projection = TyProjection.valueOf(resultTy, assocType)
         val obligation = Obligation(Predicate.Projection(projection, assocTypeTy))
@@ -1838,16 +1849,8 @@ private val RsFunction.typeOfValue: TyFunction
 
         paramTypes += valueParameters.map { it.typeReference?.type ?: TyUnknown }
 
-        return TyFunction(paramTypes, returnType)
+        return TyFunction(paramTypes, if (isAsync) knownItems.makeFuture(returnType) else returnType)
     }
-
-private fun wrapToGenerator(yieldTy: Ty, returnTy: Ty, knownItems: KnownItems): Ty {
-    val generatorTrait = knownItems.Generator ?: return TyUnknown
-    val boundGenerator = generatorTrait
-        .substAssocType("Yield", yieldTy)
-        .substAssocType("Return", returnTy)
-    return TyAnon(null, listOf(boundGenerator))
-}
 
 val RsGenericDeclaration.generics: List<TyTypeParameter>
     get() = typeParameters.map { TyTypeParameter.named(it) }
@@ -1916,6 +1919,20 @@ fun KnownItems.makeBox(innerTy: Ty): Ty {
     val box = Box ?: return TyUnknown
     val boxTy = TyAdt.valueOf(box)
     return boxTy.substitute(mapOf(boxTy.typeArguments[0] as TyTypeParameter to innerTy).toTypeSubst())
+}
+
+private fun KnownItems.makeGenerator(yieldTy: Ty, returnTy: Ty): Ty {
+    val generatorTrait = Generator ?: return TyUnknown
+    val boundGenerator = generatorTrait
+        .substAssocType("Yield", yieldTy)
+        .substAssocType("Return", returnTy)
+    return TyAnon(null, listOf(boundGenerator))
+}
+
+private fun KnownItems.makeFuture(outputTy: Ty): Ty {
+    val futureTrait = Future ?: return TyUnknown
+    val boundFuture = futureTrait.substAssocType("Output", outputTy)
+    return TyAnon(null, listOf(boundFuture))
 }
 
 object TypeInferenceMarks {

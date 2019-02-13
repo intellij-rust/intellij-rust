@@ -5,9 +5,6 @@
 
 package org.rust.lang.core.type
 
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
-
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     fun `test function call`() = testExpr("""
         struct S;
@@ -72,8 +69,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test try block expr (option)`() = testExpr("""
+        #[lang = "core::option::Option"]
+        enum Option<T> { None, Some(T) }
+        #[lang = "core::ops::try::Try"]
+        trait Try { type Ok; type Error; }
+        impl<T> Try for Option<T> { type Ok = T; type Error = (); }
         fn main() {
             let x: Option<_> = try { 42 };
             x;
@@ -81,17 +82,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test try block expr (result)`() = testExpr("""
-        fn main() {
-            let x: Result<_, _> = try { Err(())?; 42 };
-            x;
-          //^ Result<i32, ()>
-        }
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test try block expr transitive (option)`() = testExpr("""
+        #[lang = "core::option::Option"]
+        enum Option<T> { None, Some(T) }
+        #[lang = "core::ops::try::Try"]
+        trait Try { type Ok; type Error; }
+        impl<T> Try for Option<T> { type Ok = T; type Error = (); }
         fn main() {
             let x = try { 42 };
             let y: Option<_> = x;
@@ -100,18 +96,9 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test try block expr transitive (result)`() = testExpr("""
-        fn main() {
-            let x = try { Err(())?; 42 };
-            let y: Result<_, _> = x;
-            x;
-          //^ Result<i32, ()>
-        }
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generator expr`() = testExpr("""
+        #[lang = "core::ops::generator::Generator"]
+        trait Generator { type Yield; type Return; }
         fn main() {
             let x = || {
                 yield 1;
@@ -119,6 +106,51 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             };
             x;
           //^ impl Generator<Yield=i32, Return=&str>
+        }
+    """)
+
+    fun `test async block expr`() = testExpr("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn main() {
+            let x = async { 42 };
+            x;
+          //^ impl Future<Output=i32>
+        }
+    """)
+
+    fun `test async fn`() = testExpr("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        async fn foo() -> i32 { 42 }
+        fn main() {
+            let x = foo();
+            x;
+          //^ impl Future<Output=i32>
+        }
+    """)
+
+    fun `test async method`() = testExpr("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        struct S;
+        impl S {
+            async fn foo(&self) -> i32 { 42 }
+        }
+        fn main() {
+            let x = S.foo();
+            x;
+          //^ impl Future<Output=i32>
+        }
+    """)
+
+    fun `test async lambda expr`() = testExpr("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn main() {
+            let x = async || 42;
+            x;
+          //^ fn() -> impl Future<Output=i32>
         }
     """)
 
@@ -402,6 +434,16 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = panic!();
             a
         } //^ !
+    """)
+
+    fun `test await macro`() = testExpr("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn main() {
+            let x = await!(async { 42 });
+            x;
+          //^ i32
+        }
     """)
 
     fun `test await macro argument`() = testExpr("""
