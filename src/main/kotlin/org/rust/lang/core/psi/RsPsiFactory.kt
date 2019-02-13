@@ -293,6 +293,9 @@ class RsPsiFactory(private val project: Project, private val markGenerated: Bool
     fun createColon(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.colon!!
 
+    fun createEq(): PsiElement =
+        createFromText<RsConstant>("const C: () = ();")!!.eq!!
+
     fun createIn(): PsiElement =
         createFromText<RsConstant>("pub(in self) const C: () = ();")?.vis?.visRestriction?.`in`
             ?: error("Failed to create `in` element")

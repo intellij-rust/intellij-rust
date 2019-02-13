@@ -8,6 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.ide.inspections.fixes.DeriveCopyFix
+import org.rust.ide.inspections.fixes.InitializeWithDefaultValueFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.borrowCheckResult
@@ -65,7 +66,8 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
     }
 
     private fun registerUseOfUninitializedVariableProblem(holder: ProblemsHolder, use: RsElement) {
-        holder.registerProblem(use, "Use of possibly uninitialized variable")
+        val fix = InitializeWithDefaultValueFix.createIfCompatible(use)
+        holder.registerProblem(use, "Use of possibly uninitialized variable", fix)
     }
 
     private fun checkMethodRequiresMutable(receiver: RsExpr, fn: RsFunction): Boolean {
