@@ -138,4 +138,15 @@ class RsUnsafeExpressionAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAn
             let val = <info descr="Unsafe dereference of raw pointer">*char_ptr</info>;
         }
     """)
+
+    fun `test function defined in wasm_bindgen extern block is not unsafe`() = checkErrors("""
+        #[wasm_bindgen]
+        extern {
+            fn foo();
+        }
+
+        fn main() {
+            foo();
+        }
+    """)
 }
