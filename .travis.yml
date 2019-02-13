@@ -44,7 +44,7 @@ before_script:
 
 script:
   - travis_wait ./gradlew check -Pkotlin.incremental=false --no-daemon
-  - ./gradlew runPrettyPrintersTests --no-daemon
+  - if [ $RUST_VERSION != $OLD_RUST_VERSION ]; then ./gradlew runPrettyPrintersTests --no-daemon; fi
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
