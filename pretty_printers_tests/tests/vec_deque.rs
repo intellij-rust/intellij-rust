@@ -7,6 +7,15 @@
 // lldb-command:print empty_d
 // lldbg-check:[...]$1 = size=0
 
+// === LLDB TESTS ==================================================================================
+
+// gdb-command:run
+
+// gdb-command:print d
+// gdbg-check:[...]$1 = size=7 = {2, 3, 4, 5, 6, 7, 8}
+// gdb-command:print empty_d
+// gdbg-check:[...]$2 = size=0
+
 use std::collections::VecDeque;
 
 fn main() {

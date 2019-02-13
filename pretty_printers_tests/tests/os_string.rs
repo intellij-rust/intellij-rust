@@ -7,6 +7,15 @@
 // lldb-command:print empty
 // lldbg-check:[...]$1 = "" [...]
 
+// === GDB TESTS ==================================================================================
+
+// gdb-command:run
+
+// gdb-command:print s
+// gdbg-check:[...]$1 = "A∆й中"
+// gdb-command:print empty
+// gdbg-check:[...]$2 = ""
+
 
 use std::ffi::OsString;
 

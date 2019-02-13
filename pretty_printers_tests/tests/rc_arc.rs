@@ -7,6 +7,15 @@
 // lldb-command:print a
 // lldbg-check:[...]$1 = strong=2, weak=1 { data = 42 }
 
+// === GDB TESTS ==================================================================================
+
+// gdb-command:run
+
+// gdb-command:print r
+// gdbg-check:[...]$1 = strong=2, weak=1 = {value = 42, strong = 2, weak = 1}
+// gdb-command:print a
+// gdbg-check:[...]$2 = strong=2, weak=1 = {value = 42, strong = 2, weak = 1}
+
 use std::rc::Rc;
 use std::sync::Arc;
 
