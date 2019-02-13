@@ -15,10 +15,7 @@ import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerCommandException
 import com.jetbrains.cidr.execution.debugger.backend.gdb.GDBDriver
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver
-import org.rust.debugger.GDBRenderers
-import org.rust.debugger.LLDBRenderers
-import org.rust.debugger.LLDB_PP_LOOKUP
-import org.rust.debugger.LLDB_PP_PATH
+import org.rust.debugger.*
 import java.nio.file.InvalidPathException
 
 class RsLocalDebugProcess(
@@ -40,9 +37,9 @@ class RsLocalDebugProcess(
         when (renderers) {
             LLDBRenderers.COMPILER -> {
                 if (sysroot == null) return
-                val rustcPrinterPath = "$sysroot/lib/rustlib/etc/lldb_rust_formatters.py".systemDependentAndEscaped()
+                val path = "$sysroot/lib/rustlib/etc/lldb_rust_formatters.py".systemDependentAndEscaped()
                 try {
-                    executeConsoleCommand(threadId, frameIndex, """command script import "$rustcPrinterPath" """)
+                    executeConsoleCommand(threadId, frameIndex, """command script import "$path" """)
                     executeConsoleCommand(threadId, frameIndex, """type summary add --no-value --python-function lldb_rust_formatters.print_val -x ".*" --category Rust""")
                     executeConsoleCommand(threadId, frameIndex, """type category enable Rust""")
                 } catch (e: DebuggerCommandException) {
@@ -52,11 +49,11 @@ class RsLocalDebugProcess(
             }
 
             LLDBRenderers.BUNDLED -> {
-                val rustPrinterPath = LLDB_PP_PATH.systemDependentAndEscaped()
+                val path = PP_PATH.systemDependentAndEscaped()
                 try {
-                    executeConsoleCommand(threadId, frameIndex, """command script import "$rustPrinterPath" """)
-                    executeConsoleCommand(threadId, frameIndex, """type synthetic add -l $LLDB_PP_LOOKUP.synthetic_lookup -x ".*" --category Rust""")
-                    executeConsoleCommand(threadId, frameIndex, """type summary add -F $LLDB_PP_LOOKUP.summary_lookup  -e -x -h ".*" --category Rust""")
+                    executeConsoleCommand(threadId, frameIndex, """command script import "$path/$LLDB_LOOKUP.py" """)
+                    executeConsoleCommand(threadId, frameIndex, """type synthetic add -l $LLDB_LOOKUP.synthetic_lookup -x ".*" --category Rust""")
+                    executeConsoleCommand(threadId, frameIndex, """type summary add -F $LLDB_LOOKUP.summary_lookup  -e -x -h ".*" --category Rust""")
                     executeConsoleCommand(threadId, frameIndex, """type category enable Rust""")
                 } catch (e: DebuggerCommandException) {
                     printlnToConsole(e.message)
@@ -80,6 +77,20 @@ class RsLocalDebugProcess(
                     """sys.path.insert(0, "$path"); """ +
                     """import gdb_rust_pretty_printing; """ +
                     """gdb_rust_pretty_printing.register_printers(gdb); """
+                try {
+                    executeConsoleCommand(threadId, frameIndex, command)
+                } catch (e: DebuggerCommandException) {
+                    printlnToConsole(e.message)
+                    LOG.warn(e)
+                }
+            }
+
+            GDBRenderers.BUNDLED -> {
+                val path = PP_PATH.systemDependentAndEscaped()
+                val command = """python """ +
+                    """sys.path.insert(0, "$path"); """ +
+                    """import $GDB_LOOKUP; """ +
+                    """$GDB_LOOKUP.register_printers(gdb); """
                 try {
                     executeConsoleCommand(threadId, frameIndex, command)
                 } catch (e: DebuggerCommandException) {
