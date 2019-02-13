@@ -54,7 +54,7 @@ class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
     fun checkMethodCall(o: RsMethodCall, holder: AnnotationHolder) {
         val fn = o.reference.resolve() as? RsFunction ?: return
 
-        if (fn.isUnsafe) {
+        if (fn.isActuallyUnsafe) {
             annotateUnsafeCall(o.parentDotExpr, holder)
         }
     }
@@ -63,7 +63,7 @@ class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
         val path = (element.expr as? RsPathExpr)?.path ?: return
         val fn = path.reference.resolve() as? RsFunction ?: return
 
-        if (fn.isUnsafe) {
+        if (fn.isActuallyUnsafe) {
             annotateUnsafeCall(element, holder)
         }
     }
@@ -97,7 +97,7 @@ class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
                 }
             } ?: return false
 
-        return parent is RsBlockExpr || (parent is RsFunction && parent.isUnsafe)
+        return parent is RsBlockExpr || (parent is RsFunction && parent.isActuallyUnsafe)
     }
 
     private fun AnnotationHolder.createUnsafeAnnotation(element: PsiElement, message: String) {

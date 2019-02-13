@@ -80,6 +80,27 @@ val RsFunction.returnType: Ty get() {
 
 val RsFunction.abi: RsExternAbi? get() = externAbi ?: (parent as? RsForeignModItem)?.externAbi
 
+/**
+ * A function is unsafe if defined with `unsafe` modifier or if defined inside a certain `extern`
+ * block. But [RsFunction.isUnsafe] takes into account only `unsafe` modifier. [isActuallyUnsafe]
+ * takes into account both cases.
+ */
+val RsFunction.isActuallyUnsafe: Boolean
+    get() {
+        if (isUnsafe) return true
+        val context = context
+        return if (context is RsForeignModItem) {
+            // functions inside `extern` block are unsafe in most cases
+            //
+            // #[wasm_bindgen] is a procedural macro that removes the following
+            // extern block, so all function inside it become safe.
+            // See https://github.com/rustwasm/wasm-bindgen
+            !context.queryAttributes.hasAttribute("wasm_bindgen")
+        } else {
+            false
+        }
+    }
+
 abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction, RsModificationTrackerOwner {
 
     constructor(node: ASTNode) : super(node)
@@ -90,7 +111,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
 
     override val isAbstract: Boolean get() = stub?.isAbstract ?: (block == null)
 
-    override val isUnsafe: Boolean get() = this.stub?.isUnsafe ?: (unsafe != null || parent is RsForeignModItem)
+    override val isUnsafe: Boolean get() = this.stub?.isUnsafe ?: (unsafe != null)
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
