@@ -356,7 +356,14 @@ task("runPrettyPrintersTests") {
             isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.6/site-packages"
             else -> error("Unsupported OS")
         }
-        "cargo run --package pretty_printers_test --bin pretty_printers_test -- $lldbPath".execute("pretty_printers_tests")
+        "cargo run --package pretty_printers_test --bin pretty_printers_test -- lldb $lldbPath".execute("pretty_printers_tests")
+
+        val gdbBinary = when {
+            isFamily(FAMILY_MAC) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/mac/bin/gdb"
+            isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/linux/bin/gdb"
+            else -> error("Unsupported OS")
+        }
+        "cargo run --package pretty_printers_test --bin pretty_printers_test -- gdb $gdbBinary".execute("pretty_printers_tests")
     }
 }
 

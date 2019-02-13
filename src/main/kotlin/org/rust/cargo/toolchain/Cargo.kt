@@ -58,7 +58,7 @@ class Cargo(private val cargoExecutable: Path) {
     @Throws(ExecutionException::class)
     fun fullProjectDescription(owner: Project, projectDirectory: Path, listener: ProcessListener? = null): CargoWorkspace {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        if (owner.rustSettings.useOfflineForCargoCheck) {
+        if (owner.rustSettings.useOffline) {
             additionalArgs += "-Zoffline"
         }
 
@@ -100,6 +100,10 @@ class Cargo(private val cargoExecutable: Path) {
 
         if (project.rustSettings.compileAllTargets && checkSupportForBuildCheckAllTargets()) {
             arguments += "--all-targets"
+        }
+
+        if (project.rustSettings.useOffline) {
+            arguments += "-Zoffline"
         }
 
         return CargoCommandLine("check", projectDirectory, arguments)

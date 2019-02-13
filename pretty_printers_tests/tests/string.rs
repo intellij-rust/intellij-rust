@@ -11,6 +11,19 @@
 // lldb-command:print empty_s2
 // lldbg-check:[...]$3 = "" [...]
 
+// === GDB TESTS ==================================================================================
+
+// gdb-command:run
+
+// gdb-command:print s1
+// gdbg-check:[...]$1 = "A∆й中"
+// gdb-command:print s2
+// gdbg-check:[...]$2 = "A∆й中"
+// gdb-command:print empty_s1
+// gdbg-check:[...]$3 = ""
+// gdb-command:print empty_s2
+// gdbg-check:[...]$4 = ""
+
 
 fn main() {
     let s1 = "A∆й中";
