@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
@@ -105,6 +106,8 @@ class Cargo(private val cargoExecutable: Path) {
         if (project.rustSettings.useOffline) {
             arguments += "-Zoffline"
         }
+
+        arguments += ParametersListUtil.parse(project.rustSettings.cargoCheckArguments)
 
         return CargoCommandLine("check", projectDirectory, arguments)
             .execute(owner, ignoreExitCode = true)
