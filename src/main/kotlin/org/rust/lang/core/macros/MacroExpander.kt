@@ -197,18 +197,6 @@ class MacroExpander(val project: Project) {
         }
         append(str)
     }
-
-    private val RsMacro.macroBodyStubbed: RsMacroBody?
-        get() {
-            val stub = stub ?: return macroBody
-            val text = stub.macroBody ?: return null
-            return CachedValuesManager.getCachedValue(this) {
-                CachedValueProvider.Result.create(
-                    psiFactory.createMacroBody(text),
-                    modificationTracker
-                )
-            }
-        }
 }
 
 /**

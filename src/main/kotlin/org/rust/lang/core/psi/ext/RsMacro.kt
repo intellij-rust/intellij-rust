@@ -9,9 +9,13 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.RsMacroBody
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.stubs.RsMacroStub
 import javax.swing.Icon
 
@@ -41,3 +45,16 @@ abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
 
 val RsMacro.hasMacroExport: Boolean
     get() = queryAttributes.hasAttribute("macro_export")
+
+
+val RsMacro.macroBodyStubbed: RsMacroBody?
+    get() {
+        val stub = stub ?: return macroBody
+        val text = stub.macroBody ?: return null
+        return CachedValuesManager.getCachedValue(this) {
+            CachedValueProvider.Result.create(
+                RsPsiFactory(project).createMacroBody(text),
+                modificationTracker
+            )
+        }
+    }
