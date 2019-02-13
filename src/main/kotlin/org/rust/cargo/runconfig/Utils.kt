@@ -53,7 +53,7 @@ fun Project.buildProject() {
             arguments += "--all-targets"
         }
     }
-    if (rustSettings.useOfflineForCargoCheck) {
+    if (rustSettings.useOffline) {
         arguments += "-Zoffline"
     }
 
