@@ -369,7 +369,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkCondition(holder: AnnotationHolder, element: RsCondition) {
         val pat = element.pat ?: return
-        if (pat.skipUnnecessaryTupDown().isIrrefutable) {
+        if (pat.isIrrefutable) {
             checkFeature(holder, pat, IRREFUTABLE_LET_PATTERNS, "irrefutable let pattern")
         }
     }
