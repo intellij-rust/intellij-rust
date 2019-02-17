@@ -13,9 +13,9 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
-import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.util.messages.Topic
 import org.rust.lang.RsFileType
+import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
 
 val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> = Topic.create(
@@ -60,30 +60,28 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         })
     }
 
-    inner class CacheInvalidator : PsiTreeChangeAdapter() {
-        override fun beforeChildRemoval(event: PsiTreeChangeEvent) = onPsiChange(event)
-        override fun beforeChildReplacement(event: PsiTreeChangeEvent) = onPsiChange(event, event.oldChild)
-        override fun childReplaced(event: PsiTreeChangeEvent) = onPsiChange(event)
-        override fun childAdded(event: PsiTreeChangeEvent) = onPsiChange(event)
-        override fun childrenChanged(event: PsiTreeChangeEvent) = onPsiChange(event)
-        override fun childMoved(event: PsiTreeChangeEvent) = onPsiChange(event)
-        override fun propertyChanged(event: PsiTreeChangeEvent) = onPsiChange(event)
-
-        private fun onPsiChange(event: PsiTreeChangeEvent, child: PsiElement? = event.child) {
-            // `GenericChange` event means that "something changed in the file" and sends
-            // after all events for concrete PSI changes in a file.
-            // We handle more concrete events and so should ignore generic event
-            if (event is PsiTreeChangeEventImpl && event.isGenericChange) return
+    inner class CacheInvalidator : RsPsiTreeChangeAdapter() {
+        override fun handleEvent(event: RsPsiTreeChangeEvent) {
+            val element = when (event) {
+                is ChildRemoval.Before -> event.child
+                is ChildReplacement.Before -> event.oldChild
+                is ChildReplacement.After -> event.newChild
+                is ChildAddition.After -> event.child
+                is ChildMovement.After -> event.child
+                is ChildrenChange.After -> if (!event.isGenericChange) event.parent else return
+                else -> return
+            }
 
             // There are some cases when PsiFile stored in the event as a child
             // e.g. file removal by external VFS change
-            val file = event.file ?: event.child as? PsiFile
+            val file = event.file ?: element as? PsiFile
             if (file?.fileType != RsFileType) return
 
-            if (child is PsiComment || child is PsiWhiteSpace) return
+            if (element is PsiComment || element is PsiWhiteSpace) return
 
-            updateModificationCount(child ?: event.parent)
+            updateModificationCount(element)
         }
+
     }
 
     private fun updateModificationCount(psi: PsiElement) {
