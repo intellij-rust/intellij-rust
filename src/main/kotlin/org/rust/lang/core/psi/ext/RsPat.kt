@@ -39,7 +39,7 @@ private val RsPath.isIrrefutable: Boolean
 
 private val RsPatBinding.isIrrefutable: Boolean
     get() = when (reference.resolve()) {
-        is RsStructItem, is RsEnumVariant -> false
+        is RsStructItem, is RsEnumVariant, is RsConstant -> false
         else -> true
     }
 
