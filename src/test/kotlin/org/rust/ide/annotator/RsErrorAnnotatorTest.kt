@@ -1476,4 +1476,16 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             if let Unknown { x } = e {}
         }
     """)
+
+    /** Issue [#3410](https://github.com/intellij-rust/intellij-rust/issues/3410) */
+    @MockRustcVersion("1.32.0")
+    fun `test const pattern is not irrefutable`() = checkErrors("""
+        #[derive(PartialEq, Eq)]
+        struct S(usize);
+        const A: S = S(1);
+
+        fn main() {
+            if let A = S(2) {}
+        }
+        """)
 }
