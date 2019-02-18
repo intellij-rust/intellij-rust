@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
@@ -28,13 +29,11 @@ private const val INHERENT_IMPL_MEMBER_PRIORITY = 2.0
 private const val DEFAULT_PRIORITY = 0.0
 private const val MACRO_PRIORITY = -0.1
 
-private typealias InsertHandler<T> = (InsertionContext, T) -> Unit
-
 fun createLookupElement(
     element: RsElement,
     scopeName: String,
     locationString: String? = null,
-    insertHandler: InsertHandler<LookupElement> = { context, _ -> getInsertHandler(element, scopeName, context) }
+    insertHandler: InsertHandler<LookupElement> = RsDefaultInsertHandler()
 ): LookupElement {
     val base = element.getLookupElementBuilder(scopeName)
         .withInsertHandler(insertHandler)
@@ -105,77 +104,80 @@ private fun getFieldsOwnerTailText(owner: RsFieldsOwner): String = when {
     else -> ""
 }
 
+class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
-private fun getInsertHandler(element: RsElement, scopeName: String, context: InsertionContext) {
-    val curUseItem = context.getElementOfType<RsUseItem>()
-    if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
-        context.document.insertString(context.startOffset, RS_RAW_PREFIX)
-    }
-    when (element) {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        val element = item.psiElement as? RsElement ?: return
+        val scopeName = item.lookupString
 
-        is RsMod -> {
-            when (scopeName) {
-                "self",
-                "super" -> {
-                    val inSelfParam = context.getElementOfType<RsSelfParameter>() != null
-                    if (!(context.isInUseGroup || inSelfParam)) {
-                        context.addSuffix("::")
+        val curUseItem = context.getElementOfType<RsUseItem>()
+        if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
+            context.document.insertString(context.startOffset, RS_RAW_PREFIX)
+        }
+        when (element) {
+
+            is RsMod -> {
+                when (scopeName) {
+                    "self",
+                    "super" -> {
+                        val inSelfParam = context.getElementOfType<RsSelfParameter>() != null
+                        if (!(context.isInUseGroup || inSelfParam)) {
+                            context.addSuffix("::")
+                        }
+                    }
+                    "crate" -> context.addSuffix("::")
+                }
+            }
+
+            is RsConstant -> appendSemicolon(context, curUseItem)
+            is RsTraitItem -> appendSemicolon(context, curUseItem)
+            is RsStructItem -> appendSemicolon(context, curUseItem)
+
+            is RsFunction -> {
+                if (curUseItem != null) {
+                    appendSemicolon(context, curUseItem)
+                } else {
+                    if (!context.alreadyHasCallParens) {
+                        context.document.insertString(context.selectionEndOffset, "()")
+                    }
+                    EditorModificationUtil.moveCaretRelatively(context.editor, if (element.valueParameters.isEmpty()) 2 else 1)
+                    if (!element.valueParameters.isEmpty()) {
+                        AutoPopupController.getInstance(element.project)?.autoPopupParameterInfo(context.editor, element)
                     }
                 }
-                "crate" -> context.addSuffix("::")
             }
-        }
 
-        is RsConstant -> appendSemicolon(context, curUseItem)
-        is RsTraitItem -> appendSemicolon(context, curUseItem)
-        is RsStructItem -> appendSemicolon(context, curUseItem)
-
-        is RsFunction -> {
-            if (curUseItem != null) {
-                appendSemicolon(context, curUseItem)
-            } else {
-                if (!context.alreadyHasCallParens) {
-                    context.document.insertString(context.selectionEndOffset, "()")
-                }
-                EditorModificationUtil.moveCaretRelatively(context.editor, if (element.valueParameters.isEmpty()) 2 else 1)
-                if (!element.valueParameters.isEmpty()) {
-                    AutoPopupController.getInstance(element.project)?.autoPopupParameterInfo(context.editor, element)
+            is RsEnumVariant -> {
+                if (curUseItem == null) {
+                    // Currently this works only for enum variants (and not for structs). It's because in the case of
+                    // struct you may want to append an associated function call after a struct name (e.g. `::new()`)
+                    val (text, shift) = when {
+                        element.tupleFields != null -> Pair("()", 1)
+                        element.blockFields != null -> Pair(" {}", 2)
+                        else -> Pair("", 0)
+                    }
+                    if (!(context.alreadyHasStructBraces || context.alreadyHasCallParens)) {
+                        context.document.insertString(context.selectionEndOffset, text)
+                    }
+                    EditorModificationUtil.moveCaretRelatively(context.editor, shift)
                 }
             }
-        }
 
-        is RsEnumVariant -> {
-            if (curUseItem == null) {
-                // Currently this works only for enum variants (and not for structs). It's because in the case of
-                // struct you may want to append an associated function call after a struct name (e.g. `::new()`)
-                val (text, shift) = when {
-                    element.tupleFields != null -> Pair("()", 1)
-                    element.blockFields != null -> Pair(" {}", 2)
-                    else -> Pair("", 0)
+            is RsMacro -> {
+                if (curUseItem == null) {
+                    val parens = when (element.name) {
+                        "vec" -> "[]"
+                        else -> "()"
+                    }
+                    context.document.insertString(context.selectionEndOffset, "!$parens")
+                    EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                } else {
+                    appendSemicolon(context, curUseItem)
                 }
-                if (!(context.alreadyHasStructBraces || context.alreadyHasCallParens)) {
-                    context.document.insertString(context.selectionEndOffset, text)
-                }
-                EditorModificationUtil.moveCaretRelatively(context.editor, shift)
             }
         }
-
-        is RsMacro -> {
-            if (curUseItem == null) {
-                val parens = when (element.name) {
-                    "vec" -> "[]"
-                    else -> "()"
-                }
-                context.document.insertString(context.selectionEndOffset, "!$parens")
-                EditorModificationUtil.moveCaretRelatively(context.editor, 2)
-            } else {
-                appendSemicolon(context, curUseItem)
-            }
-        }
-
     }
 }
-
 
 private fun appendSemicolon(context: InsertionContext, curUseItem: RsUseItem?) {
     if (curUseItem != null) {

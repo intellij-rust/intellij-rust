@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns
@@ -145,9 +146,9 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                 .distinctBy { it.qualifiedNamedItem.item }
                 .map { candidate ->
                     val item = candidate.qualifiedNamedItem.item
-                    createLookupElement(item, elementName, candidate.info.usePath) { _, _ ->
+                    createLookupElement(item, elementName, candidate.info.usePath, InsertHandler { _, _ ->
                         pathMod.importItem(candidate)
-                    }
+                    })
                 }
                 .forEach(result::addElement)
         }
