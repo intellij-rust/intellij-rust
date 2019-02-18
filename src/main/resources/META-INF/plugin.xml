@@ -491,6 +491,11 @@
                          enabledByDefault="false" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsAnchoredPathsInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Trait implementation"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsTraitImplementationInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
