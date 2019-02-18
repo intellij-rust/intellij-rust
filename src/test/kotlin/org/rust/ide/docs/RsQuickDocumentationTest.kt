@@ -62,7 +62,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <div class='definition'><pre>test_package
-        unsafe extern fn <b>foo</b>()</pre></div>
+        extern fn <b>foo</b>()</pre></div>
     """)
 
     fun `test fn in extern block with abi name`() = doTest("""
@@ -72,7 +72,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, """
         <div class='definition'><pre>test_package
-        unsafe extern "C" fn <b>foo</b>()</pre></div>
+        extern "C" fn <b>foo</b>()</pre></div>
     """)
 
     fun `test extern fn`() = doTest("""
