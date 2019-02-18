@@ -69,6 +69,10 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
                 is ChildAddition.After -> event.child
                 is ChildMovement.After -> event.child
                 is ChildrenChange.After -> if (!event.isGenericChange) event.parent else return
+                is PropertyChange.After -> {
+                    if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) return
+                    event.element ?: return
+                }
                 else -> return
             }
 
