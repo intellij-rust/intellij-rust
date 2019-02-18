@@ -107,6 +107,26 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test insert handler`() = doSingleCompletion("""
+        mod foo {
+            pub fn bar(x: i32) {}
+        }
+
+        fn main() {
+            ba/*caret*/
+        }
+    """, """
+        use foo::bar;
+
+        mod foo {
+            pub fn bar(x: i32) {}
+        }
+
+        fn main() {
+            bar(/*caret*/)
+        }
+    """)
+
     private fun doTest(@Language("Rust") text: String, testmark: Testmark) {
         check(hasCaretMarker(text)) {
             "Please add `/*caret*/` marker"
