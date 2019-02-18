@@ -14,6 +14,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
 import com.intellij.util.messages.Topic
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
@@ -76,14 +77,21 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
                 else -> return
             }
 
-            // There are some cases when PsiFile stored in the event as a child
-            // e.g. file removal by external VFS change
-            val file = event.file ?: element as? PsiFile
-            if (file?.fileType != RsFileType) return
+            val file = event.file
 
-            if (element is PsiComment || element is PsiWhiteSpace) return
+            // if file is null, this is an event about VFS changes
+            if (file == null) {
+                if (element is RsFile ||
+                    element is PsiDirectory && project.cargoProjects.findPackageForFile(element.virtualFile) != null) {
+                    incRustStructureModificationCount()
+                }
+            } else {
+                if (file.fileType != RsFileType) return
 
-            updateModificationCount(element)
+                if (element is PsiComment || element is PsiWhiteSpace) return
+
+                updateModificationCount(element)
+            }
         }
 
     }

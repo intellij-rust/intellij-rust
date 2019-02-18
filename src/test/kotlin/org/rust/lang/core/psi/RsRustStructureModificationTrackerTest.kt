@@ -184,6 +184,22 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         }
     }
 
+    fun `test vfs directory removal`() {
+        val p = fileTreeFromText("""
+        //- main.rs
+            mod foo;
+              //^
+        //- foo/mod.rs
+            fn bar() {}
+        """).createAndOpenFileWithCaretMarker()
+        val file = p.psiFile("foo").virtualFile!!
+        checkModCount(INC) {
+            runWriteAction {
+                file.delete(null)
+            }
+        }
+    }
+
     fun `test vfs file rename`() {
         val p = fileTreeFromText("""
         //- main.rs
