@@ -90,13 +90,18 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
 
                 if (element is PsiComment || element is PsiWhiteSpace) return
 
-                updateModificationCount(element)
+                // Most of events means that some element *itself* is changed, but ChildrenChange means
+                // that changed some of element's children, not the element itself. In this case
+                // we should look up for ModificationTrackerOwner a bit differently
+                val isChildrenChange = event is ChildrenChange
+
+                updateModificationCount(element, isChildrenChange)
             }
         }
 
     }
 
-    private fun updateModificationCount(psi: PsiElement) {
+    private fun updateModificationCount(psi: PsiElement, isChildrenChange: Boolean) {
         // We find the nearest parent item or macro call (because macro call can produce items)
         // If found item implements RsModificationTrackerOwner, we increment its own
         // modification counter. Otherwise we increment global modification counter.
@@ -110,7 +115,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         // about it because it is a rare case and implementing it differently
         // is much more difficult.
 
-        val owner = psi.findModificationTrackerOwner()
+        val owner = psi.findModificationTrackerOwner(!isChildrenChange)
         if (owner == null || !owner.incModificationCount(psi)) {
             incRustStructureModificationCount()
         }
