@@ -5,16 +5,14 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.CompletionUtil
-import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.ImportContext
@@ -124,7 +122,6 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
 
         val project = parameters.originalFile.project
         val importContext = ImportContext.from(project, path, true)
-        val pathMod = path.containingMod
 
         val keys = hashSetOf<String>().apply {
             val explicitNames = StubIndex.getInstance().getAllKeys(RsNamedElementIndex.KEY, project)
@@ -146,8 +143,13 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                 .distinctBy { it.qualifiedNamedItem.item }
                 .map { candidate ->
                     val item = candidate.qualifiedNamedItem.item
-                    createLookupElement(item, elementName, candidate.info.usePath, InsertHandler { _, _ ->
-                        pathMod.importItem(candidate)
+                    createLookupElement(item, elementName, candidate.info.usePath, object : RsDefaultInsertHandler() {
+                        override fun handleInsert(element: RsElement, scopeName: String, context: InsertionContext, item: LookupElement) {
+                            super.handleInsert(element, scopeName, context, item)
+                            context.commitDocument()
+                            val mod = PsiTreeUtil.findElementOfClassAtOffset(context.file, context.startOffset, RsMod::class.java, false) ?: return
+                            mod.importItem(candidate)
+                        }
                     })
                 }
                 .forEach(result::addElement)

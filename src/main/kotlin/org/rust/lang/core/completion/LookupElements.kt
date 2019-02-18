@@ -104,12 +104,20 @@ private fun getFieldsOwnerTailText(owner: RsFieldsOwner): String = when {
     else -> ""
 }
 
-class RsDefaultInsertHandler : InsertHandler<LookupElement> {
+open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
-    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    final override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val element = item.psiElement as? RsElement ?: return
         val scopeName = item.lookupString
+        handleInsert(element, scopeName, context, item)
+    }
 
+    protected open fun handleInsert(
+        element: RsElement,
+        scopeName: String,
+        context: InsertionContext,
+        item: LookupElement
+    ) {
         val curUseItem = context.getElementOfType<RsUseItem>()
         if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
             context.document.insertString(context.startOffset, RS_RAW_PREFIX)
