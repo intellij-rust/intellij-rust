@@ -44,13 +44,7 @@ class AddMutableFix(binding: RsNamedElement) : LocalQuickFixAndIntentionActionOn
 fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = true) {
     when (binding) {
         is RsPatBinding -> {
-            val tuple = binding.ancestorStrict<RsPatTup>()
             val parameter = binding.ancestorStrict<RsValueParameter>()
-
-            if (tuple != null && parameter != null) {
-                return
-            }
-
             val type = parameter?.typeReference?.typeElement
             if (type is RsRefLikeType) {
                 val newParameterExpr = RsPsiFactory(project)
@@ -58,7 +52,8 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
                 parameter.replace(newParameterExpr)
                 return
             }
-            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable = mutable, ref = binding.kind is BindByReference)
+            val isRef = binding.kind is BindByReference
+            val newPatBinding = RsPsiFactory(project).createPatBinding(binding.identifier.text, mutable, isRef)
             binding.replace(newPatBinding)
         }
         is RsSelfParameter -> {
