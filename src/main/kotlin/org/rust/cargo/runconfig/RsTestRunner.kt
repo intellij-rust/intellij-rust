@@ -48,7 +48,7 @@ private fun buildTests(project: Project, state: CargoRunStateBase, cmdHasNoRun: 
     val buildProcessHandler = run {
         val buildCmd = if (cmdHasNoRun) state.commandLine else state.commandLine.prependArgument("--no-run")
         val buildConfig = CargoCommandConfiguration.CleanConfiguration.Ok(buildCmd, state.config.toolchain)
-        val buildState = CargoRunState(state.environment, buildConfig)
+        val buildState = CargoRunState(state.environment, state.runConfiguration, buildConfig)
         buildState.startProcess()
     }
     val exitCode = AsyncPromise<Int?>()

@@ -22,6 +22,7 @@ import org.rust.cargo.toolchain.RustToolchain
 
 abstract class CargoRunStateBase(
     environment: ExecutionEnvironment,
+    val runConfiguration: CargoCommandConfiguration,
     val config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CommandLineState(environment) {
     private val toolchain: RustToolchain = config.toolchain
