@@ -103,9 +103,9 @@ class CargoCommandConfiguration(
                 project.rustSettings.showTestToolWindow &&
                 !command.contains("--nocapture") &&
                 !nocapture) {
-                CargoTestRunState(environment, it)
+                CargoTestRunState(environment, this, it)
             } else {
-                CargoRunState(environment, it)
+                CargoRunState(environment, this, it)
             }
         }
 

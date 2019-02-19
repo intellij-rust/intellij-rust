@@ -19,8 +19,9 @@ import org.rust.cargo.toolchain.CargoCommandLine
 
 class CargoTestRunState(
     environment: ExecutionEnvironment,
+    runConfiguration: CargoCommandConfiguration,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
-) : CargoRunStateBase(environment, config) {
+) : CargoRunStateBase(environment, runConfiguration, config) {
 
     init {
         consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as RunConfiguration, environment.executor)

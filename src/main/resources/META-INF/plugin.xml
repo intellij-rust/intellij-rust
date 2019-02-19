@@ -54,6 +54,9 @@
                             serviceImplementation="org.rust.ide.settings.RsCodeInsightSettings"/>
         <editorActionHandler action="EditorEnter" implementationClass="org.rust.ide.actions.RsEnterHandler"/>
 
+        <applicationService serviceInterface="org.rust.cargo.runconfig.RsRunConfigurationExtensionManager"
+                            serviceImplementation="org.rust.cargo.runconfig.RsRunConfigurationExtensionManager"/>
+
         <!-- Selection Handler -->
 
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsBlockSelectionHandler"/>
@@ -780,6 +783,11 @@
         <projectService serviceImplementation="org.rust.lang.core.resolve.ref.RsResolveCache"/>
 
     </extensions>
+
+    <extensionPoints>
+        <extensionPoint qualifiedName="org.rust.runConfigurationExtension"
+                        interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"/>
+    </extensionPoints>
 
     <application-components>
         <component>
