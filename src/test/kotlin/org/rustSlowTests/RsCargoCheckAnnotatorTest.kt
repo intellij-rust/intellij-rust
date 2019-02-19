@@ -11,7 +11,7 @@ import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.fileTree
-import org.rust.ide.annotator.RsCargoCheckAnnotator
+import org.rust.ide.annotator.cargoCheck.RsCargoCheckAnnotator
 
 class RsCargoCheckAnnotatorTest : RsWithToolchainTestBase() {
 
