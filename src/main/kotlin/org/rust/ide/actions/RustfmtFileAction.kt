@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -61,8 +62,14 @@ class RustfmtFileAction : DumbAwareAction() {
     private fun getContext(e: AnActionEvent): Triple<Project, RustToolchain, VirtualFile>? {
         val project = e.project ?: return null
         val toolchain = project.toolchain ?: return null
-        val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
+        // Event data context doesn't contain the current virtual file
+        // if action is called from toolwindow.
+        // So let's try to find it manually
+        val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: getSelectedFile(project) ?: return null
         if (!(file.isInLocalFileSystem && file.isRustFile)) return null
         return Triple(project, toolchain, file)
     }
+
+    private fun getSelectedFile(project: Project): VirtualFile? =
+        FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
 }

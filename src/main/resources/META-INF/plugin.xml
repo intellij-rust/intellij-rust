@@ -817,7 +817,8 @@
         <action id="Rust.CargoFmtFile"
                 class="org.rust.ide.actions.RustfmtFileAction"
                 text="Reformat File with Rustfmt"
-                description="Reformat current file with rustfmt">
+                description="Reformat current file with rustfmt"
+                icon="AllIcons.Actions.RealIntentionBulb">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
 
@@ -869,6 +870,7 @@
         <group id="Rust.Cargo">
             <reference id="Rust.RefreshCargoProject"/>
             <reference id="Rust.CargoCommand"/>
+            <reference id="Rust.CargoFmtFile"/>
             <reference id="Rust.RunClippy"/>
             <separator/>
             <reference id="Rust.AttachCargoProject"/>
