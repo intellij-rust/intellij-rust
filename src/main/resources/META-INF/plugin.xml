@@ -170,7 +170,6 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsExpressionAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsErrorAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsUnsafeExpressionAnnotator"/>
-        <externalAnnotator language="Rust" implementationClass="org.rust.ide.annotator.RsCargoCheckAnnotator"/>
         <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
 
         <!-- Line Marker Providers -->
@@ -772,6 +771,9 @@
         <component>
             <interface-class>org.rust.lang.core.psi.RsPsiManager</interface-class>
             <implementation-class>org.rust.lang.core.psi.RsPsiManagerImpl</implementation-class>
+        </component>
+        <component>
+            <implementation-class>org.rust.ide.annotator.cargoCheck.RsCargoCheckAnnotatorPassFactory</implementation-class>
         </component>
     </project-components>
 
