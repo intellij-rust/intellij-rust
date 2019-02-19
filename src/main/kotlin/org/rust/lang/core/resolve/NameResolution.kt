@@ -703,10 +703,12 @@ private class MacroResolver private constructor() {
         // `foo` macro, both `parent` and `context` of `foo!` macro call are "main.rs" file.
         // But we want to process macro definition before `bar!` macro call, so we have to use
         // a macro call as a "parent"
-        val parent = (element as? RsExpandedElement)?.expandedFrom ?: element.context ?: return false
-        return when (parent) {
-            is RsFile -> processScopesInLexicalOrderUpward(parent.declaration ?: return false, processor)
-            else -> psiBasedProcessScopesInLexicalOrderUpward(parent, processor)
+        val context = (element as? RsExpandedElement)?.expandedFrom ?: element.context ?: return false
+        return when {
+            context is RsFile -> processScopesInLexicalOrderUpward(context.declaration ?: return false, processor)
+            // Optimization. Let this function be tailrec if go up by real parent (in the same file)
+            context != element.parent -> processScopesInLexicalOrderUpward(context, processor)
+            else -> psiBasedProcessScopesInLexicalOrderUpward(context, processor)
         }
     }
 
