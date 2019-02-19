@@ -14,6 +14,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
 import com.intellij.util.messages.Topic
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
@@ -69,22 +70,38 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
                 is ChildAddition.After -> event.child
                 is ChildMovement.After -> event.child
                 is ChildrenChange.After -> if (!event.isGenericChange) event.parent else return
+                is PropertyChange.After -> {
+                    if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) return
+                    event.element ?: return
+                }
                 else -> return
             }
 
-            // There are some cases when PsiFile stored in the event as a child
-            // e.g. file removal by external VFS change
-            val file = event.file ?: element as? PsiFile
-            if (file?.fileType != RsFileType) return
+            val file = event.file
 
-            if (element is PsiComment || element is PsiWhiteSpace) return
+            // if file is null, this is an event about VFS changes
+            if (file == null) {
+                if (element is RsFile ||
+                    element is PsiDirectory && project.cargoProjects.findPackageForFile(element.virtualFile) != null) {
+                    incRustStructureModificationCount()
+                }
+            } else {
+                if (file.fileType != RsFileType) return
 
-            updateModificationCount(element)
+                if (element is PsiComment || element is PsiWhiteSpace) return
+
+                // Most of events means that some element *itself* is changed, but ChildrenChange means
+                // that changed some of element's children, not the element itself. In this case
+                // we should look up for ModificationTrackerOwner a bit differently
+                val isChildrenChange = event is ChildrenChange
+
+                updateModificationCount(element, isChildrenChange)
+            }
         }
 
     }
 
-    private fun updateModificationCount(psi: PsiElement) {
+    private fun updateModificationCount(psi: PsiElement, isChildrenChange: Boolean) {
         // We find the nearest parent item or macro call (because macro call can produce items)
         // If found item implements RsModificationTrackerOwner, we increment its own
         // modification counter. Otherwise we increment global modification counter.
@@ -98,7 +115,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         // about it because it is a rare case and implementing it differently
         // is much more difficult.
 
-        val owner = psi.findModificationTrackerOwner()
+        val owner = psi.findModificationTrackerOwner(!isChildrenChange)
         if (owner == null || !owner.incModificationCount(psi)) {
             incRustStructureModificationCount()
         }

@@ -32,10 +32,10 @@ interface RsModificationTrackerOwner : RsElement {
     fun incModificationCount(element: PsiElement): Boolean
 }
 
-fun PsiElement.findModificationTrackerOwner(): RsModificationTrackerOwner? {
+fun PsiElement.findModificationTrackerOwner(strict: Boolean = true): RsModificationTrackerOwner? {
     return PsiTreeUtil.getContextOfType(
         this,
-        true,
+        strict,
         RsItemElement::class.java,
         RsMacroCall::class.java,
         RsMacro::class.java

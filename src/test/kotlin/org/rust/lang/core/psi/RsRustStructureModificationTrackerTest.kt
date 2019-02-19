@@ -152,7 +152,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
 
     //
 
-    fun `test external file change`() {
+    fun `test vfs file change`() {
         val p = fileTreeFromText("""
         //- main.rs
             mod foo;
@@ -168,7 +168,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         }
     }
 
-    fun `test external file removal`() {
+    fun `test vfs file removal`() {
         val p = fileTreeFromText("""
         //- main.rs
             mod foo;
@@ -180,6 +180,39 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         checkModCount(INC) {
             runWriteAction {
                 file.delete(null)
+            }
+        }
+    }
+
+    fun `test vfs directory removal`() {
+        val p = fileTreeFromText("""
+        //- main.rs
+            mod foo;
+              //^
+        //- foo/mod.rs
+            fn bar() {}
+        """).createAndOpenFileWithCaretMarker()
+        val file = p.psiFile("foo").virtualFile!!
+        checkModCount(INC) {
+            runWriteAction {
+                file.delete(null)
+            }
+        }
+    }
+
+    fun `test vfs file rename`() {
+        val p = fileTreeFromText("""
+        //- main.rs
+            mod foo;
+              //^
+            mod bar;
+        //- foo.rs
+            fn bar() {}
+        """).createAndOpenFileWithCaretMarker()
+        val file = p.psiFile("foo.rs").virtualFile!!
+        checkModCount(INC) {
+            runWriteAction {
+                file.rename(null, "bar.rs")
             }
         }
     }
