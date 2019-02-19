@@ -162,6 +162,17 @@ class AddMutableFixTest : RsMultipleInspectionsTestBase(
         }
     """)
 
+    /** Issue [3417](https://github.com/intellij-rust/intellij-rust/issues/3417) */
+    fun `test fix E0384 tuple function parameter`() = checkFixByText("Make `test` mutable", """
+        fn test((test, test2): (i32, i32)) {
+            <error>test/*caret*/ = 32</error>;
+        }
+    """, """
+        fn test((mut test, test2): (i32, i32)) {
+            test = 32;
+        }
+    """)
+
     fun `test fix E0594 assign to field`() = checkFixByText("Make `foo` mutable", """
         struct Foo { a: i32 }
         fn main() {

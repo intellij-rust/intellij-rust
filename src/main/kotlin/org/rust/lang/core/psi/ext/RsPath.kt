@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.RsExpandedElement
@@ -39,6 +40,9 @@ tailrec fun RsPath.basePath(): RsPath {
     @Suppress("IfThenToElvis")
     return if (qualifier == null) this else qualifier.basePath()
 }
+
+val RsPath.textRangeOfLastSegment: TextRange
+    get() = TextRange(referenceNameElement.startOffset, typeArgumentList?.endOffset ?: referenceNameElement.endOffset)
 
 enum class PathKind {
     IDENTIFIER,
