@@ -1132,12 +1132,12 @@ DotExpr ::= Expr '.'  MethodOrField {
 private MethodOrField ::= () (MethodCall | FieldLookup) { pin = 1}
 
 FieldLookup ::= identifier | INTEGER_LITERAL {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMethodOrField" ]
   mixin = "org.rust.lang.core.psi.ext.RsFieldLookupImplMixin"
 }
 
 MethodCall ::= identifier ColonTypeArgumentList? ValueArgumentList {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMethodOrField" ]
   mixin = "org.rust.lang.core.psi.ext.RsMethodCallImplMixin"
 }
 
