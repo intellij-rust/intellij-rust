@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.getElements
@@ -25,6 +26,9 @@ class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
             project: Project,
             target: String,
             scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
-        ): Collection<RsNamedElement> = getElements(KEY, target, project, scope)
+        ): Collection<RsNamedElement> {
+            project.macroExpansionManager.ensureUpToDate()
+            return getElements(KEY, target, project, scope)
+        }
     }
 }

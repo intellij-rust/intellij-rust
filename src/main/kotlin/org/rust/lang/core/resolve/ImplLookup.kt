@@ -6,6 +6,8 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
+import org.rust.lang.core.macros.MacroExpansionMode
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
@@ -238,8 +240,16 @@ class ImplLookup(
             .filter { it.isKnownDerivable }
     }
 
+    // TODO rename to BuiltinImpls
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
-        // TODO this code should be completely removed after macros implementation
+        if (project.macroExpansionManager.macroExpansionMode is MacroExpansionMode.New) {
+            if (ty is TyUnit) {
+                return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
+            }
+            return emptyList()
+        }
+
+        // TODO this code should be completely removed after removal of "old" macro expansion engine
         return when (ty) {
             is TyPrimitive -> {
                 primitiveTyHardcodedImplsCache.getOrPut(ty) {

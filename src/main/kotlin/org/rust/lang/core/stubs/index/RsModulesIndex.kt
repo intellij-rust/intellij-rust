@@ -12,9 +12,11 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.PathUtil
+import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.RsConstants
-import org.rust.lang.core.psi.RsModDeclItem
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.pathAttribute
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsModDeclItemStub
@@ -30,8 +32,14 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
 
             var result: RsModDeclItem? = null
 
+            project.macroExpansionManager.ensureUpToDate()
+            val scope = if (project.macroExpansionManager.isResolvingMacro) {
+                GlobalSearchScope.allScope(project)
+            } else {
+                RsWithMacrosProjectScope(project)
+            }
             StubIndex.getInstance().processElements(
-                KEY, key, project, GlobalSearchScope.allScope(project), RsModDeclItem::class.java
+                KEY, key, project, scope, RsModDeclItem::class.java
             ) { modDecl ->
                 if (modDecl.reference.resolve() == mod) {
                     result = modDecl

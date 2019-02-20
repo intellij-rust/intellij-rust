@@ -52,13 +52,14 @@ fun fileTreeFromText(@Language("Rust") text: String): FileTree {
 
 interface FileTreeBuilder {
     fun dir(name: String, builder: FileTreeBuilder.() -> Unit)
+    fun dir(name: String, tree: FileTree)
     fun file(name: String, code: String)
 
     fun rust(name: String, @Language("Rust") code: String) = file(name, code)
     fun toml(name: String, @Language("TOML") code: String) = file(name, code)
 }
 
-class FileTree(private val rootDirectory: Entry.Directory) {
+class FileTree(val rootDirectory: Entry.Directory) {
     fun create(project: Project, directory: VirtualFile): TestProject {
         val filesWithCaret: MutableList<String> = mutableListOf()
 
@@ -189,6 +190,11 @@ private class FileTreeBuilderImpl(val directory: MutableMap<String, Entry> = mut
     override fun dir(name: String, builder: FileTreeBuilder.() -> Unit) {
         check('/' !in name) { "Bad directory name `$name`" }
         directory[name] = FileTreeBuilderImpl().apply { builder() }.intoDirectory()
+    }
+
+    override fun dir(name: String, tree: FileTree) {
+        check('/' !in name) { "Bad directory name `$name`" }
+        directory[name] = tree.rootDirectory
     }
 
     override fun file(name: String, code: String) {

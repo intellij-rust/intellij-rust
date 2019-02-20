@@ -11,6 +11,8 @@ import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
+import org.rust.ide.search.RsWithMacrosProjectScope
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.stubs.RsFileStub
@@ -33,8 +35,9 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             val fingerprint = TyFingerprint.create(target)
                 ?: return emptySequence()
 
-            val impls = getElements(KEY, fingerprint, project, GlobalSearchScope.allScope(project))
-            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, GlobalSearchScope.allScope(project))
+            project.macroExpansionManager.ensureUpToDate()
+            val impls = getElements(KEY, fingerprint, project, RsWithMacrosProjectScope(project))
+            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, RsWithMacrosProjectScope(project))
             // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
             return (impls.asSequence() + freeImpls.asSequence()).filter { it.crateRoot != null }
         }

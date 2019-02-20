@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
@@ -21,22 +22,7 @@ import org.rust.openapiext.Testmark
 abstract class RsMacroExpansionTestBase : RsTestBase() {
     fun doTest(@Language("Rust") code: String, @Language("Rust") vararg expectedExpansions: Pair<String, Testmark?>) {
         InlineFile(code)
-        val calls = myFixture.file.descendantsOfType<RsMacroCall>()
-        check(calls.size == expectedExpansions.size) {
-            "Number of macros calls is not equals to number of expected expansions: " +
-                "${calls.size} != ${expectedExpansions.size}"
-        }
-        calls
-            .zip(expectedExpansions)
-            .forEachIndexed { i, (macroCall, expectedExpansionAndMark) ->
-                val (expectedExpansion, mark) = expectedExpansionAndMark
-                checkMacroExpansion(
-                    macroCall,
-                    expectedExpansion,
-                    "${i + 1} macro comparision failed",
-                    mark
-                )
-            }
+        checkAllMacroExpansionsInFile(myFixture.file, expectedExpansions)
     }
 
     fun doTest(
@@ -54,13 +40,32 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         doTest(code, *expectedExpansions.map { Pair<String, Testmark?>(it, null) }.toTypedArray())
     }
 
+    protected fun checkAllMacroExpansionsInFile(file: PsiFile, expectedExpansions: Array<out Pair<String, Testmark?>>) {
+        val calls = file.descendantsOfType<RsMacroCall>()
+        check(calls.size == expectedExpansions.size) {
+            "Number of macros calls is not equals to number of expected expansions: " +
+                "${calls.size} != ${expectedExpansions.size}"
+        }
+        calls
+            .zip(expectedExpansions)
+            .forEachIndexed { i, (macroCall, expectedExpansionAndMark) ->
+                val (expectedExpansion, mark) = expectedExpansionAndMark
+                checkMacroExpansion(
+                    macroCall,
+                    expectedExpansion,
+                    "${i + 1} macro comparision failed",
+                    mark
+                )
+            }
+    }
+
     fun checkSingleMacro(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
         InlineFile(code)
         val call = findElementInEditor<RsMacroCall>("^")
         checkMacroExpansion(call, expectedExpansion, "Macro comparision failed")
     }
 
-    private fun checkMacroExpansion(
+    protected fun checkMacroExpansion(
         macroCall: RsMacroCall,
         expectedExpansion: String,
         errorMessage: String,

@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -43,6 +44,9 @@ class RsReexportIndex : StringStubIndexExtension<RsUseSpeck>() {
             project: Project,
             target: String,
             scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
-        ): Collection<RsUseSpeck> = getElements(KEY, target, project, scope)
+        ): Collection<RsUseSpeck> {
+            project.macroExpansionManager.ensureUpToDate()
+            return getElements(KEY, target, project, scope)
+        }
     }
 }

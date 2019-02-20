@@ -172,3 +172,7 @@ private class LookbackIterator<T>(private val iterator: Iterator<T>) : Iterator<
         return result
     }
 }
+
+fun <K, V> MutableMap<K, MutableList<V>>.putGrouped(key: K, value: V) {
+    getOrPut(key) { mutableListOf() }.add(value)
+}
