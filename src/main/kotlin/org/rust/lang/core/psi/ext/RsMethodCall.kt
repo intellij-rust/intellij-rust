@@ -8,15 +8,10 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsDotExpr
-import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.resolve.ref.RsMethodCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
-
-val RsMethodCall.parentDotExpr: RsDotExpr get() = parent as RsDotExpr
-val RsMethodCall.receiver: RsExpr get() = parentDotExpr.expr
 val RsMethodCall.textRangeWithoutValueArguments
     get() = TextRange(startOffset, typeArgumentList?.endOffset ?: identifier.endOffset)
 
