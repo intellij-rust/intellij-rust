@@ -41,10 +41,12 @@ interface RsPsiManager {
      * PSI element excluding function bodies (expressions and statements)
      */
     val rustStructureModificationTracker: ModificationTracker
+
+    fun incRustStructureModificationCount()
 }
 
 interface RustStructureChangeListener {
-    fun rustStructureChanged()
+    fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?)
 }
 
 interface RustPsiChangeListener {
@@ -98,13 +100,13 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
                 // we should look up for ModificationTrackerOwner a bit differently
                 val isChildrenChange = event is ChildrenChange
 
-                updateModificationCount(element, isChildrenChange)
+                updateModificationCount(file, element, isChildrenChange)
             }
         }
 
     }
 
-    private fun updateModificationCount(psi: PsiElement, isChildrenChange: Boolean) {
+    private fun updateModificationCount(file: PsiFile, psi: PsiElement, isChildrenChange: Boolean) {
         // We find the nearest parent item or macro call (because macro call can produce items)
         // If found item implements RsModificationTrackerOwner, we increment its own
         // modification counter. Otherwise we increment global modification counter.
@@ -120,18 +122,21 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
 
         val owner = psi.findModificationTrackerOwner(!isChildrenChange)
         if (owner == null || !owner.incModificationCount(psi)) {
-            incRustStructureModificationCount()
+            incRustStructureModificationCount(file, psi)
         }
         project.messageBus.syncPublisher(RUST_PSI_CHANGE_TOPIC).rustPsiChanged(psi)
     }
 
-    private fun incRustStructureModificationCount() {
+    override fun incRustStructureModificationCount() =
+        incRustStructureModificationCount(null, null)
+
+    private fun incRustStructureModificationCount(file: PsiFile? = null, psi: PsiElement? = null) {
         rustStructureModificationTracker.incModificationCount()
-        project.messageBus.syncPublisher(RUST_STRUCTURE_CHANGE_TOPIC).rustStructureChanged()
+        project.messageBus.syncPublisher(RUST_STRUCTURE_CHANGE_TOPIC).rustStructureChanged(file, psi)
     }
 }
 
-private val Project.rustPsiManager: RsPsiManager
+val Project.rustPsiManager: RsPsiManager
     get() = getComponent(RsPsiManager::class.java)
 
 /** @see RsPsiManager.rustStructureModificationTracker */

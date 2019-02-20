@@ -23,6 +23,7 @@ interface RsExpandedElement : RsElement {
 
     companion object {
         fun getContextImpl(psi: RsExpandedElement): PsiElement? {
+            psi.expandedFrom?.let { return it.context }
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
             if (psi is StubBasedPsiElement<*>) {
                 val stub = psi.stub
@@ -46,7 +47,8 @@ fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
  * null if this element is not directly produced by a macro
  */
 val RsExpandedElement.expandedFrom: RsMacroCall?
-    get() = getUserData(RS_EXPANSION_MACRO_CALL) as RsMacroCall?
+    get() = project.macroExpansionManager.getExpandedFrom(this)
+        ?: (getUserData(RS_EXPANSION_MACRO_CALL) as? RsMacroCall)
 
 val RsExpandedElement.expandedFromRecursively: RsMacroCall?
     get() {

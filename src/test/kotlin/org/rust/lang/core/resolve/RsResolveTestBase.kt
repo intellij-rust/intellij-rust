@@ -17,6 +17,7 @@ import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
+import org.rust.lang.core.psi.ext.contextualFile
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.Testmark
@@ -87,7 +88,7 @@ abstract class RsResolveTestBase : RsTestBase() {
         val actualResolveFile = if (element is PsiDirectory) {
             element.virtualFile
         } else {
-            element.containingFile.virtualFile
+            element.contextualFile.virtualFile
         }
 
         val resolveFiles = resolveVariants.split("|")

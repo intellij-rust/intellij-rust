@@ -28,7 +28,7 @@ interface RustProjectSettingsService {
         var externalLinterArguments: String = "",
         var compileAllTargets: Boolean = true,
         var useOffline: Boolean = false,
-        var expandMacros: Boolean = true,
+        var macroExpansionEngine: MacroExpansionEngine = MacroExpansionEngine.OLD,
         var showTestToolWindow: Boolean = true,
         var doctestInjectionEnabled: Boolean = true,
         var runRustfmtOnSave: Boolean = false,
@@ -37,7 +37,8 @@ interface RustProjectSettingsService {
         // Legacy properties needed for migration
         // TODO do migration via XML modification
         var useCargoCheckAnnotator: Boolean = false,
-        var cargoCheckArguments: String = ""
+        var cargoCheckArguments: String = "",
+        var expandMacros: Boolean = true
     ) {
         @get:Transient
         @set:Transient
@@ -46,6 +47,10 @@ interface RustProjectSettingsService {
             set(value) {
                 toolchainHomeDirectory = value?.location?.systemIndependentPath
             }
+    }
+
+    enum class MacroExpansionEngine {
+        DISABLED, OLD, NEW
     }
 
     /**
@@ -62,7 +67,7 @@ interface RustProjectSettingsService {
     val externalLinterArguments: String
     val compileAllTargets: Boolean
     val useOffline: Boolean
-    val expandMacros: Boolean
+    val macroExpansionEngine: MacroExpansionEngine
     val showTestToolWindow: Boolean
     val doctestInjectionEnabled: Boolean
     val runRustfmtOnSave: Boolean

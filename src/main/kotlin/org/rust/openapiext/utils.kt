@@ -5,9 +5,13 @@
 
 package org.rust.openapiext
 
+import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
@@ -17,7 +21,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
@@ -39,6 +48,7 @@ import org.rust.ide.annotator.RsExternalLinterPass
 import java.lang.reflect.Field
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
 
@@ -74,6 +84,13 @@ fun checkIsBackgroundThread() {
     check(!ApplicationManager.getApplication().isDispatchThread) {
         "Long running operation invoked on UI thread"
     }
+}
+
+fun checkIsDispatchThread() =
+    ApplicationManager.getApplication().assertIsDispatchThread()
+
+fun checkIsSmartMode(project: Project) {
+    if (DumbService.getInstance(project).isDumb) throw IndexNotReadyException.create()
 }
 
 fun fullyRefreshDirectory(directory: VirtualFile) {
@@ -205,3 +222,49 @@ fun plugin(): IdeaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(PLUG
 @Suppress("DEPRECATION")
 val String.escaped: String
     get() = StringUtil.escapeXml(this)
+
+fun <T> runReadActionInSmartMode(project: Project, action: () -> T): T {
+    ProgressManager.checkCanceled()
+    if (project.isDisposed) throw ProcessCanceledException()
+    return DumbService.getInstance(project).runReadActionInSmartMode(Computable {
+        ProgressManager.checkCanceled()
+        action()
+    })
+}
+
+fun <T: Any> executeUnderProgressWithWriteActionPriorityWithRetries(indicator: ProgressIndicator, action: () -> T): T {
+    checkReadAccessNotAllowed()
+    var result: T? = null
+    do {
+        val success = runWithWriteActionPriority(SensitiveProgressWrapper(indicator)) {
+            result = action()
+        }
+        if (!success) {
+            indicator.checkCanceled()
+            // wait for write action to complete
+            ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance())
+        }
+    } while (!success)
+    return result!!
+}
+
+fun runWithWriteActionPriority(indicator: ProgressIndicator, action: () -> Unit): Boolean =
+    ProgressIndicatorUtils.runWithWriteActionPriority(action, indicator)
+
+fun submitTransaction(parentDisposable: Disposable, runnable: Runnable) {
+    ApplicationManager.getApplication().invokeLater(Runnable {
+        TransactionGuard.submitTransaction(parentDisposable, runnable)
+    }, ModalityState.any(), Condition.FALSE)
+}
+
+class TransactionExecutor(val project: Project) : Executor {
+    override fun execute(command: Runnable) {
+        submitTransaction(project, command)
+    }
+}
+
+fun <T> executeUnderProgress(indicator: ProgressIndicator, action: () -> T): T {
+    var result: T? = null
+    ProgressManager.getInstance().executeProcessUnderProgress({ result = action() }, indicator)
+    return result!!
+}

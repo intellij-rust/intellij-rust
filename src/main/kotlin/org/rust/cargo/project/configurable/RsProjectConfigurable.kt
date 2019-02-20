@@ -10,17 +10,23 @@ import com.intellij.codeInsight.hints.Option
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.ListCellRendererWrapper
 import com.intellij.ui.components.JBCheckBox
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.ui.layout
 import org.rust.lang.RsLanguage
 import org.rust.openapiext.CheckboxDelegate
+import org.rust.openapiext.ComboBoxDelegate
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 import javax.swing.JComponent
+import javax.swing.JList
 
 class RsProjectConfigurable(
     project: Project
@@ -30,8 +36,19 @@ class RsProjectConfigurable(
         project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
     )
 
-    private val expandMacrosCheckbox: JBCheckBox = JBCheckBox()
-    private var expandMacros: Boolean by CheckboxDelegate(expandMacrosCheckbox)
+    private val macroExpansionEngineComboBox: ComboBox<MacroExpansionEngine> =
+        ComboBox(EnumComboBoxModel(MacroExpansionEngine::class.java)).apply {
+            renderer = object : ListCellRendererWrapper<MacroExpansionEngine>() {
+                override fun customize(list: JList<*>?, value: MacroExpansionEngine, index: Int, selected: Boolean, hasFocus: Boolean) {
+                    setText(when (value) {
+                        MacroExpansionEngine.DISABLED -> "Disabled"
+                        MacroExpansionEngine.OLD -> "Old way (may be slow)"
+                        MacroExpansionEngine.NEW -> "New way (may be unstable)"
+                    })
+                }
+            }
+        }
+    private var macroExpansionEngine: MacroExpansionEngine by ComboBoxDelegate(macroExpansionEngineComboBox)
 
     private val showTestToolWindowCheckbox: JBCheckBox = JBCheckBox()
     private var showTestToolWindow: Boolean by CheckboxDelegate(showTestToolWindowCheckbox)
@@ -47,7 +64,7 @@ class RsProjectConfigurable(
 
     override fun createComponent(): JComponent = layout {
         rustProjectSettings.attachTo(this)
-        row("Expand declarative macros (may be slow):", expandMacrosCheckbox, """
+        row("Expand declarative macros:", macroExpansionEngineComboBox, """
             Allow plugin to process declarative macro invocations
             to extract information for name resolution and type inference.
         """)
@@ -75,7 +92,7 @@ class RsProjectConfigurable(
             toolchain = toolchain,
             explicitPathToStdlib = settings.explicitPathToStdlib
         )
-        expandMacros = settings.expandMacros
+        macroExpansionEngine = settings.macroExpansionEngine
         showTestToolWindow = settings.showTestToolWindow
         doctestInjectionEnabled = settings.doctestInjectionEnabled
 
@@ -95,7 +112,7 @@ class RsProjectConfigurable(
         settings.modify {
             it.toolchain = rustProjectSettings.data.toolchain
             it.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
-            it.expandMacros = expandMacros
+            it.macroExpansionEngine = macroExpansionEngine
             it.showTestToolWindow = showTestToolWindow
             it.doctestInjectionEnabled = doctestInjectionEnabled
         }
@@ -106,7 +123,7 @@ class RsProjectConfigurable(
         if (hintProvider.supportedOptions.any { checkboxForOption(it).isSelected != it.get() }) return true
         return data.toolchain?.location != settings.toolchain?.location
             || data.explicitPathToStdlib != settings.explicitPathToStdlib
-            || expandMacros != settings.expandMacros
+            || macroExpansionEngine != settings.macroExpansionEngine
             || showTestToolWindow != settings.showTestToolWindow
             || doctestInjectionEnabled != settings.doctestInjectionEnabled
     }

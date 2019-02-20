@@ -113,6 +113,8 @@ private fun reformatMacroExpansion(
     expansion: MacroExpansion
 ): MacroExpansion {
     val file = expansion.file
+        .takeIf { it.virtualFile == null }
+        ?: RsPsiFactory(expansion.file.project).createFile(expansion.file.text)
     runWriteAction { formatPsiFile(file) }
 
     return getExpansionFromExpandedFile(macroToExpand.expansionContext, file)

@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
+import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
 import org.rust.lang.core.stubs.index.*
 
@@ -77,6 +78,10 @@ fun IndexSink.indexMacro(stub: RsMacroStub) {
 
 fun IndexSink.indexMacroDef(stub: RsMacro2Stub) {
     indexNamedStub(stub)
+}
+
+fun IndexSink.indexMacroCall(stub: RsMacroCallStub) {
+    RsMacroCallIndex.index(this)
 }
 
 fun IndexSink.indexUseSpeck(stub: RsUseSpeckStub) {

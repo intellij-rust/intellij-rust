@@ -5,17 +5,22 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.macros.expandMacro
+import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsMacroCallStub
+import org.rust.stdext.HashCode
 
 
 abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
@@ -50,9 +55,23 @@ val RsMacroCall.macroBody: String?
             ?: vecMacroArgument?.braceListBodyText()?.toString()
     }
 
+val RsMacroCall.bodyHash: HashCode?
+    get() = CachedValuesManager.getCachedValue(this) {
+        val body = macroBody
+        val hash = body?.let { HashCode.compute(it) }
+        CachedValueProvider.Result.create(hash, modificationTracker)
+    }
+
+fun RsMacroCall.resolveToMacro(): RsMacro? =
+    path.reference.resolve() as? RsMacro
+
 val RsMacroCall.expansion: MacroExpansion?
     get() = CachedValuesManager.getCachedValue(this) {
-        expandMacro(this)
+        val project = project
+        CachedValueProvider.Result.create(
+            project.macroExpansionManager.getExpansionFor(CompletionUtil.getOriginalOrSelf(this)),
+            rustStructureOrAnyPsiModificationTracker
+        )
     }
 
 fun RsMacroCall.expandAllMacrosRecursively(): String =
@@ -63,7 +82,7 @@ private fun RsMacroCall.expandAllMacrosRecursively(depth: Int): String {
 
     fun toExpandedText(element: PsiElement): String =
         when (element) {
-            is RsMacroCall -> element.expandAllMacrosRecursively(depth + 1)
+            is RsMacroCall -> element.expandAllMacrosRecursively(depth)
             is RsElement -> element.directChildren.joinToString(" ") { toExpandedText(it) }
             else -> element.text
         }

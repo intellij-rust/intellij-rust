@@ -10,6 +10,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.configurable.RsProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
+import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.RustProjectSettingsService.State
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RustToolchain
@@ -29,7 +30,7 @@ class RustProjectSettingsServiceImpl(
     override val externalLinterArguments: String get() = state.externalLinterArguments
     override val compileAllTargets: Boolean get() = state.compileAllTargets
     override val useOffline: Boolean get() = state.useOffline
-    override val expandMacros: Boolean get() = state.expandMacros
+    override val macroExpansionEngine: MacroExpansionEngine get() = state.macroExpansionEngine
     override val showTestToolWindow: Boolean get() = state.showTestToolWindow
     override val doctestInjectionEnabled: Boolean get() = state.doctestInjectionEnabled
     override val runRustfmtOnSave: Boolean get() = state.runRustfmtOnSave
@@ -46,6 +47,10 @@ class RustProjectSettingsServiceImpl(
         if (newState.cargoCheckArguments.isNotBlank() && newState.externalLinterArguments.isBlank()) {
             newState.externalLinterArguments = newState.cargoCheckArguments
             newState.cargoCheckArguments = ""
+        }
+        if (!newState.expandMacros) {
+            newState.expandMacros = true
+            newState.macroExpansionEngine = MacroExpansionEngine.DISABLED
         }
         state = newState
     }

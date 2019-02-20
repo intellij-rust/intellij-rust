@@ -5,8 +5,11 @@
 
 package org.rustSlowTests
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
+import org.rust.lang.core.macros.MacroExpansionScope
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -31,7 +34,9 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
         var result = Timings()
         println("${name.substring("test ".length)}:")
         repeat(10) {
+            val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)
             result = result.merge(f())
+            Disposer.dispose(disposable)
             tearDown()
             setUp()
         }
@@ -43,6 +48,10 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
         val base = openRealProject(info) ?: return timings
 
         myFixture.configureFromTempProjectFile(filePath)
+
+        timings.measure("macros") {
+            project.macroExpansionManager.ensureUpToDate()
+        }
 
         val modificationCount = currentPsiModificationCount()
 
