@@ -1,0 +1,6 @@
+fn main() {
+    let v = vec![1, 2, 3];
+    foo(<spot>v</spot>.ref);
+}
+
+fn foo(v: &Vec<i32>) {}

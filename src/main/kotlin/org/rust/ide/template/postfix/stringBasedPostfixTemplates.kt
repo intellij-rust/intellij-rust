@@ -51,6 +51,22 @@ class NotPostfixTemplate(provider: RsPostfixTemplateProvider) :
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
+class RefPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("ref", "&expr", RsTopMostInScopeSelector(), provider) {
+
+    override fun getTemplateString(element: PsiElement): String = "&${element.text}"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
+class RefmPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("refm", "&mut expr", RsTopMostInScopeSelector(), provider) {
+
+    override fun getTemplateString(element: PsiElement): String = "&mut ${element.text}"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
 class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
     StringBasedPostfixTemplate("match", "match expr {...}", RsTopMostInScopeSelector(), provider) {
 
