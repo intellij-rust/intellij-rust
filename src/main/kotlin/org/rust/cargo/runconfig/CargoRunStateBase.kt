@@ -7,7 +7,6 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.filters.Filter
-import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -59,7 +58,7 @@ abstract class CargoRunStateBase(
     public override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargoOrWrapper(cargoProject?.manifest?.parent)
             .toColoredCommandLine(prepareCommandLine())
-        val handler = KillableColoredProcessHandler(cmd)
+        val handler = RsKillableColoredProcessHandler(cmd)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
         return handler
     }

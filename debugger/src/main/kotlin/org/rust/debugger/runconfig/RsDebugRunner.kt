@@ -12,7 +12,10 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.execution.process.*
+import com.intellij.execution.process.CapturingProcessAdapter
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
@@ -36,6 +39,7 @@ import org.jetbrains.concurrency.Promise
 import org.rust.cargo.project.workspace.CargoWorkspace.CrateType
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.runconfig.CargoRunStateBase
+import org.rust.cargo.runconfig.RsKillableColoredProcessHandler
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -137,7 +141,7 @@ private fun buildProjectAndGetBinaryArtifactPath(
     val cargo = state.cargo()
 
     val processForUserOutput = ProcessOutput()
-    val processForUser = KillableColoredProcessHandler(cargo.toColoredCommandLine(command))
+    val processForUser = RsKillableColoredProcessHandler(cargo.toColoredCommandLine(command))
 
     processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
