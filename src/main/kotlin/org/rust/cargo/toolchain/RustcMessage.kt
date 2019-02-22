@@ -6,9 +6,12 @@
 package org.rust.cargo.toolchain
 
 import com.google.gson.Gson
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.google.gson.annotations.SerializedName
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.TextRange
 
+// https://docs.rs/cargo/0.33.0/cargo/util/machine_message/struct.FromCompiler.html
 data class CargoTopMessage(
     val message: RustcMessage,
     val package_id: String,
@@ -27,6 +30,7 @@ data class CargoTopMessage(
     }
 }
 
+// https://doc.rust-lang.org/nightly/nightly-rustc/syntax/json/struct.Diagnostic.html
 data class RustcMessage(
     val children: List<RustcMessage>,
     val code: ErrorCode?,
@@ -36,41 +40,80 @@ data class RustcMessage(
     val spans: List<RustcSpan>
 )
 
+// https://doc.rust-lang.org/nightly/nightly-rustc/syntax/json/struct.DiagnosticCode.html
 data class ErrorCode(
     val code: String,
     val explanation: String?
 )
 
+// https://doc.rust-lang.org/nightly/nightly-rustc/syntax/json/struct.DiagnosticSpan.html
 data class RustcSpan(
-    val byte_end: Int,
-    val byte_start: Int,
-    val column_end: Int,
-    val column_start: Int,
-    val expansion: Expansion?,
     val file_name: String,
-    val is_primary: Boolean,
-    val label: String?,
-    val line_end: Int,
+    val byte_start: Int,
+    val byte_end: Int,
     val line_start: Int,
-    val suggested_replacement: JsonElement,
-    val text: List<RustcText>
-)
+    val line_end: Int,
+    val column_start: Int,
+    val column_end: Int,
+    val is_primary: Boolean,
+    val text: List<RustcText>,
+    val label: String?,
+    val suggested_replacement: String?,
+    val suggestion_applicability: Applicability?,
+    val expansion: Expansion?
+) {
+    fun toTextRange(document: Document): TextRange? {
+        val startOffset = toOffset(document, line_start, column_start)
+        val endOffset = toOffset(document, line_end, column_end)
+        return if (startOffset != null && endOffset != null && startOffset < endOffset) {
+            TextRange(startOffset, endOffset)
+        } else {
+            null
+        }
+    }
 
+    companion object {
+        @Suppress("NAME_SHADOWING")
+        fun toOffset(document: Document, line: Int, column: Int): Int? {
+            val line = line - 1
+            val column = column - 1
+            if (line >= document.lineCount) return null
+            return (document.getLineStartOffset(line) + column)
+                .takeIf { it <= document.textLength }
+        }
+    }
+}
+
+// https://doc.rust-lang.org/nightly/nightly-rustc/syntax/json/struct.DiagnosticSpanMacroExpansion.html
 data class Expansion(
     val def_site_span: RustcSpan?,
     val macro_decl_name: String,
     val span: RustcSpan
 )
 
+// https://doc.rust-lang.org/nightly/nightly-rustc/syntax/json/struct.DiagnosticSpanLine.html
 data class RustcText(
     val highlight_end: Int,
     val highlight_start: Int,
     val text: String?
 )
 
+// https://docs.rs/cargo/0.33.0/cargo/core/manifest/struct.Target.html
 data class Target(
     val crate_types: List<String>,
     val kind: List<String>,
     val name: String,
     val src_path: String
 )
+
+// https://doc.rust-lang.org/nightly/nightly-rustc/syntax/diagnostics/plugin/enum.Applicability.html
+enum class Applicability {
+    @SerializedName("MachineApplicable")
+    MACHINE_APPLICABLE,
+    @SerializedName("MaybeIncorrect")
+    MAYBE_INCORRECT,
+    @SerializedName("HasPlaceholders")
+    HAS_PLACEHOLDERS,
+    @SerializedName("Unspecified")
+    UNSPECIFIED
+}
