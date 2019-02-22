@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.cargoCheck
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
@@ -12,7 +13,11 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProgressIndicator
@@ -29,6 +34,7 @@ import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
+import java.lang.reflect.Field
 
 object RsCargoCheckAnnotator : ExternalAnnotator<RsCargoCheckAnnotationInfo, RsCargoCheckAnnotationResult>() {
     private val LOG: Logger = Logger.getInstance(RsCargoCheckAnnotator::class.java)
@@ -54,7 +60,8 @@ object RsCargoCheckAnnotator : ExternalAnnotator<RsCargoCheckAnnotationInfo, RsC
     // NB: executed asynchronously off EDT, so care must be taken not to access disposed objects
     override fun doAnnotate(info: RsCargoCheckAnnotationInfo): RsCargoCheckAnnotationResult? {
         val indicator = WriteAction.computeAndWait<ProgressIndicator, Throwable> {
-            saveAllDocuments() // We have to save files to disk to give cargo a chance to check fresh file content
+            // We have to save files to disk to give cargo a chance to check fresh file content
+            saveAllDocumentsAsTheyAre()
             BackgroundableProcessIndicator(
                 info.module.project,
                 "Analyzing File with Cargo Check",
@@ -101,3 +108,47 @@ object RsCargoCheckAnnotator : ExternalAnnotator<RsCargoCheckAnnotationInfo, RsC
         }
     }
 }
+
+/**
+ * Calling of [saveAllDocuments] uses [TrailingSpacesStripper] to format all unsaved documents.
+ *
+ * In case of [RsCargoCheckAnnotator] it backfires:
+ * 1. Calling [TrailingSpacesStripper.strip] on *every* file change.
+ * 2. Double run of `cargo check`, because [TrailingSpacesStripper.strip] generates new "PSI change" events.
+ *
+ * This function saves all documents "as they are" (see [FileDocumentManager.saveDocumentAsIs]), but also fires that
+ * these documents should be stripped later (when [saveAllDocuments] is called).
+ */
+private fun saveAllDocumentsAsTheyAre() {
+    val documentManager = FileDocumentManager.getInstance()
+    for (document in documentManager.unsavedDocuments) {
+        documentManager.saveDocumentAsIs(document)
+        documentManager.stripDocumentLater(document)
+    }
+}
+
+@VisibleForTesting
+fun FileDocumentManager.stripDocumentLater(document: Document): Boolean {
+    if (this !is FileDocumentManagerImpl) return false
+    val trailingSpacesStripper = trailingSpacesStripperField
+        ?.get(this) as? TrailingSpacesStripper ?: return false
+    @Suppress("UNCHECKED_CAST")
+    val documentsToStripLater = documentsToStripLaterField
+        ?.get(trailingSpacesStripper) as? MutableSet<Document> ?: return false
+    return documentsToStripLater.add(document)
+}
+
+private val trailingSpacesStripperField: Field? =
+    initFieldSafely<FileDocumentManagerImpl>("myTrailingSpacesStripper")
+
+private val documentsToStripLaterField: Field? =
+    initFieldSafely<TrailingSpacesStripper>("myDocumentsToStripLater")
+
+private inline fun <reified T> initFieldSafely(fieldName: String): Field? =
+    try {
+        T::class.java
+            .getDeclaredField(fieldName)
+            .apply { isAccessible = true }
+    } catch (e: Throwable) {
+        if (isUnitTestMode) throw e else null
+    }
