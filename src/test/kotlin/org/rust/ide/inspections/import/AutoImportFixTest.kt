@@ -250,8 +250,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test insert use item after existing use items`() = checkAutoImportFixByText("""
         mod foo {
-            pub struct Foo;
             pub struct Bar;
+        }
+
+        mod bar {
+            pub struct Foo;
         }
 
         use foo::Bar;
@@ -261,12 +264,15 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """, """
         mod foo {
-            pub struct Foo;
             pub struct Bar;
         }
 
+        mod bar {
+            pub struct Foo;
+        }
+
         use foo::Bar;
-        use foo::Foo;
+        use bar::Foo;
 
         fn main() {
             let f = Foo/*caret*/;
@@ -1596,6 +1602,215 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn main() {
             let a = A;
+        }
+    """)
+
+    fun `test group imports`() = checkAutoImportFixByText("""
+        // comment
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
+        }
+    """, """
+        // comment
+        use foo::{Foo, Bar};
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = Bar/*caret*/;
+        }
+    """)
+
+    fun `test add import to existing group`() = checkAutoImportFixByText("""
+        // comment
+        use foo::{Foo, Bar};
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+            pub struct Baz;
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Baz`">Baz/*caret*/</error>;
+        }
+    """, """
+        // comment
+        use foo::{Foo, Bar, Baz};
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+            pub struct Baz;
+        }
+
+        fn main() {
+            let f = Baz/*caret*/;
+        }
+    """)
+
+    fun `test group imports only at the last level`() = checkAutoImportFixByText("""
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo;
+            pub mod bar {
+                pub struct Bar;
+            }
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
+        }
+    """, """
+        use foo::Foo;
+        use foo::bar::Bar;
+
+        mod foo {
+            pub struct Foo;
+            pub mod bar {
+                pub struct Bar;
+            }
+        }
+
+        fn main() {
+            let f = Bar/*caret*/;
+        }
+    """)
+
+    fun `test group imports only if the other import doesn't have a modifier`() = checkAutoImportFixByText("""
+        pub use foo::Foo;
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
+        }
+    """, """
+        pub use foo::Foo;
+        use foo::Bar;
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = Bar/*caret*/;
+        }
+    """)
+
+    fun `test group imports only if the other import doesn't have an attribute`() = checkAutoImportFixByText("""
+        #[attribute = "value"]
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
+        }
+    """, """
+        #[attribute = "value"]
+        use foo::Foo;
+        use foo::Bar;
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = Bar/*caret*/;
+        }
+    """)
+
+    fun `test group imports with aliases 1`() = checkAutoImportFixByText("""
+        use foo::Foo as F;
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
+        }
+    """, """
+        use foo::{Foo as F, Bar};
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = Bar/*caret*/;
+        }
+    """)
+
+    fun `test group imports with aliases 2`() = checkAutoImportFixByText("""
+        use foo::{Foo as F, Bar as B};
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
+        }
+    """, """
+        use foo::{Foo as F, Bar as B, Bar};
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+        }
+
+        fn main() {
+            let f = Bar/*caret*/;
+        }
+    """)
+
+    fun `test group imports with nested groups`() = checkAutoImportFixByText("""
+        use foo::{{Foo, Bar}};
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+            pub struct Baz;
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Baz`">Baz/*caret*/</error>;
+        }
+    """, """
+        use foo::{{Foo, Bar}, Baz};
+
+        mod foo {
+            pub struct Foo;
+            pub struct Bar;
+            pub struct Baz;
+        }
+
+        fn main() {
+            let f = Baz/*caret*/;
         }
     """)
 }
