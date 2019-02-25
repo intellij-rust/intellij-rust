@@ -18,6 +18,7 @@ import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.ImportCandidate
 import org.rust.ide.inspections.import.ImportContext
 import org.rust.ide.inspections.import.importItem
+import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
@@ -269,6 +270,7 @@ private fun methodAndFieldCompletionProcessor(
 }
 
 private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {
+    if (!RsCodeInsightSettings.getInstance().addTraitImport) return null
     val ancestor = PsiTreeUtil.getParentOfType(methodOrField, RsBlock::class.java, RsMod::class.java) ?: return null
     // `AutoImportFix.getImportCandidates` expects original scope element for correct item filtering
     val scope = CompletionUtil.getOriginalElement(ancestor) as? RsElement ?: return null

@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class RsCodeInsightSettings : PersistentStateComponent<RsCodeInsightSettings> {
 
     var showImportPopup: Boolean = false
+    var addTraitImport: Boolean = true
 
     override fun getState(): RsCodeInsightSettings = this
 

@@ -17,19 +17,28 @@ class RsAutoImportOptions : AutoImportOptionsProvider {
     private val showImportPopupCheckbox: JBCheckBox = JBCheckBox("Show import popup")
     private var showImportPopup: Boolean by CheckboxDelegate(showImportPopupCheckbox)
 
+    private val addTraitImportCheckbox: JBCheckBox = JBCheckBox("Add trait imports while trait methods completion")
+    private var addTraitImport: Boolean by CheckboxDelegate(addTraitImportCheckbox)
+
     override fun createComponent(): JComponent = panel {
         row { showImportPopupCheckbox() }
+        row { addTraitImportCheckbox() }
     }.apply { border = IdeBorderFactory.createTitledBorder("Rust") }
 
     override fun isModified(): Boolean {
-        return showImportPopup != RsCodeInsightSettings.getInstance().showImportPopup
+        return showImportPopup != RsCodeInsightSettings.getInstance().showImportPopup ||
+            addTraitImport != RsCodeInsightSettings.getInstance().addTraitImport
     }
 
     override fun apply() {
-        RsCodeInsightSettings.getInstance().showImportPopup = showImportPopup
+        val settings = RsCodeInsightSettings.getInstance()
+        settings.showImportPopup = showImportPopup
+        settings.addTraitImport = addTraitImport
     }
 
     override fun reset() {
-        showImportPopup = RsCodeInsightSettings.getInstance().showImportPopup
+        val settings = RsCodeInsightSettings.getInstance()
+        showImportPopup = settings.showImportPopup
+        addTraitImport = settings.addTraitImport
     }
 }
