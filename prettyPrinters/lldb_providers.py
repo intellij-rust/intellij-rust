@@ -128,7 +128,7 @@ def SizeSummaryProvider(valobj, dict):
 def vec_to_string(vec):
     length = vec.GetNumChildren()
     chars = [vec.GetChildAtIndex(i).GetValueAsUnsigned() for i in range(length)]
-    return bytes(chars).decode(encoding='UTF-8') if PY3 else "".join(chr(char) for char in chars)
+    return bytes(chars).decode(errors='replace') if PY3 else "".join(chr(char) for char in chars)
 
 
 def StdStringSummaryProvider(valobj, dict):

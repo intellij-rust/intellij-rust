@@ -34,7 +34,7 @@ class TupleProvider:
         self.fields = fields[1:] if is_variant else fields
 
     def to_string(self):
-        return "size=" + str(len(self.fields))
+        return "size={}".format(len(self.fields))
 
     def children(self):
         for i, field in enumerate(self.fields):
@@ -98,10 +98,10 @@ class StdVecProvider:
         self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
 
     def to_string(self):
-        return "size=" + str(self.length)
+        return "size={}".format(self.length)
 
     def children(self):
-        for index in xrange(0, self.length):
+        for index in xrange(self.length):
             yield ("[{}]".format(index), (self.data_ptr + index).dereference())
 
     @staticmethod
@@ -116,10 +116,13 @@ class StdVecDequeProvider:
         self.tail = int(valobj["tail"])
         self.cap = int(valobj["buf"]["cap"])
         self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
-        self.size = self.head - self.tail if self.head >= self.tail else self.cap + self.head - self.tail
+        if self.head >= self.tail:
+            self.size = self.head - self.tail
+        else:
+            self.size = self.cap + self.head - self.tail
 
     def to_string(self):
-        return "size=" + str(self.size)
+        return "size={}".format(self.size)
 
     def children(self):
         for index in xrange(0, self.size):
@@ -219,10 +222,8 @@ class StdBTreeSetProvider:
     def children(self):
         root = self.valobj["map"]["root"]
         node_ptr = root["node"]
-        i = 0
-        for child in children_of_node(node_ptr, root["height"], want_values=False):
+        for i, child in enumerate(children_of_node(node_ptr, root["height"], want_values=False)):
             yield ("[{}]".format(i), child)
-            i = i + 1
 
     @staticmethod
     def display_hint():
