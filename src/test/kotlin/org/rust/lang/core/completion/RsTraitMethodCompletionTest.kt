@@ -5,9 +5,12 @@
 
 package org.rust.lang.core.completion
 
+import org.intellij.lang.annotations.Language
+import org.rust.ide.settings.RsCodeInsightSettings
+
 class RsTraitMethodCompletionTest : RsCompletionTestBase() {
 
-    fun `test auto import trait while method completion 1`() = doSingleCompletion("""
+    fun `test auto import trait while method completion 1`() = doTest("""
         mod baz {
             pub trait Foo {
                 fn foo(&self);
@@ -45,7 +48,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test auto import trait while method completion 2`() = doSingleCompletion("""
+    fun `test auto import trait while method completion 2`() = doTest("""
         mod baz {
             pub trait Foo {
                 fn foo(&self, x: i32);
@@ -83,7 +86,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test auto import trait while method completion 3`() = doSingleCompletion("""
+    fun `test auto import trait while method completion 3`() = doTest("""
         mod baz {
             pub trait Foo {
                 fn foo(&self);
@@ -121,7 +124,7 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test do not insert trait import while method completion when trait in scope`() = doSingleCompletion("""
+    fun `test do not insert trait import while method completion when trait in scope`() = doTest("""
         mod baz {
             pub trait Foo {
                 fn foo(&self);
@@ -158,4 +161,57 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
             Bar.foo()/*caret*/
         }
     """)
+
+    fun `test do not insert trait import while method completion when setting disabled`() = doTest("""
+        mod baz {
+            pub trait Foo {
+                fn foo(&self, x: i32);
+            }
+
+            pub struct Bar;
+
+            impl Foo for Bar {
+                fn foo(&self, x: i32) {}
+            }
+        }
+
+        use baz::Bar;
+
+        fn main() {
+            Bar.fo/*caret*/()
+        }
+    """, """
+        mod baz {
+            pub trait Foo {
+                fn foo(&self, x: i32);
+            }
+
+            pub struct Bar;
+
+            impl Foo for Bar {
+                fn foo(&self, x: i32) {}
+            }
+        }
+
+        use baz::Bar;
+
+        fn main() {
+            Bar.foo(/*caret*/)
+        }
+    """, addTraitImport = false)
+
+    private fun doTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        addTraitImport: Boolean = true
+    ) {
+        val settings = RsCodeInsightSettings.getInstance()
+        val initialValue = settings.addTraitImport
+        settings.addTraitImport = addTraitImport
+        try {
+            doSingleCompletion(before, after)
+        } finally {
+            settings.addTraitImport = initialValue
+        }
+    }
 }
