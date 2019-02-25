@@ -111,19 +111,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context<Unit>? {
             val results = methodCall.inference?.getResolvedMethod(methodCall) ?: emptyList()
             if (results.isEmpty()) return Context(Unit, emptyList())
-
-            val traitsToImport = collectTraitsToImport(methodCall, results) ?: return null
-
-            val superMods = LinkedHashSet(methodCall.containingMod.superMods)
-            val attributes = methodCall.stdlibAttributes
-
-            val candidates = traitsToImport
-                .asSequence()
-                .flatMap { QualifiedNamedItem.ExplicitItem(it).withModuleReexports(project).asSequence() }
-                .mapNotNull { importItem -> importItem.toImportCandidate(superMods) }
-                .filterImportCandidates(attributes)
-                .toList()
-
+            val candidates = getImportCandidates(project, methodCall, results)?.toList() ?: return null
             return Context(Unit, candidates)
         }
 
@@ -168,11 +156,36 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 .filter { canBeResolvedToSuitableItem(importingPathText, importContext, it.info) }
         }
 
+        /**
+         * Returns a sequence of import trait candidates for given [resolvedMethods].
+         * After importing any of which it becomes possible to resolve the corresponding method call correctly.
+         *
+         * Returns null if there aren't traits to import at all. It can mean:
+         * * given [resolvedMethods] don't refer to any trait
+         * * if at least one trait related to [resolvedMethods] is already in scope
+         */
+        fun getImportCandidates(
+            project: Project,
+            scope: RsElement,
+            resolvedMethods: List<MethodResolveVariant>
+        ): Sequence<ImportCandidate>? {
+            val traitsToImport = collectTraitsToImport(scope, resolvedMethods) ?: return null
+
+            val superMods = LinkedHashSet(scope.containingMod.superMods)
+            val attributes = scope.stdlibAttributes
+
+            return traitsToImport
+                .asSequence()
+                .flatMap { QualifiedNamedItem.ExplicitItem(it).withModuleReexports(project).asSequence() }
+                .mapNotNull { importItem -> importItem.toImportCandidate(superMods) }
+                .filterImportCandidates(attributes)
+        }
+
         private fun QualifiedNamedItem.toImportCandidate(superMods: LinkedHashSet<RsMod>): ImportCandidate? =
             canBeImported(superMods)?.let { ImportCandidate(this, it) }
 
         private fun collectTraitsToImport(
-            methodCall: RsMethodCall,
+            scope: RsElement,
             resolveResults: List<MethodResolveVariant>
         ): List<RsTraitItem>? {
             val traits = resolveResults.mapNotNull { variant ->
@@ -193,7 +206,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
                 trait
             }
-            return if (traits.filterInScope(methodCall).isNotEmpty()) null else traits
+            return if (traits.filterInScope(scope).isNotEmpty()) null else traits
         }
 
         // Semantic signature of method is `ImportItem.canBeImported(mod: RsMod)`
