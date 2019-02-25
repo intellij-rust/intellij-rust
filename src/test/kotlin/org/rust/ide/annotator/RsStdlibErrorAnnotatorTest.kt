@@ -11,8 +11,8 @@ import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     fun `test E0428 respects crate aliases`() = checkErrors("""
-        extern crate libc as libc_alias;
-        mod libc {}
+        extern crate core as core_alias;
+        mod core {}
 
         // FIXME: ideally we want to highlight these
         extern crate alloc;
