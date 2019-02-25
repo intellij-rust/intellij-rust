@@ -102,7 +102,7 @@ fun processDotExprResolveVariants(
     processor: (DotExprResolveVariant) -> Boolean
 ): Boolean {
     if (processFieldExprResolveVariants(lookup, receiverType, processor)) return true
-    if (processMethodDeclarationsWithDeref(lookup, receiverType) { processor(it) }) return true
+    if (processMethodDeclarationsWithDeref(lookup, receiverType, processor)) return true
 
     return false
 }
