@@ -1,7 +1,7 @@
 import re
 
 
-class RustType:
+class RustType(object):
     OTHER = "Other"
     STRUCT = "Struct"
     TUPLE = "Tuple"
@@ -48,45 +48,34 @@ TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 ENCODED_ENUM_PREFIX = "RUST$ENCODED$ENUM$"
 ENUM_DISR_FIELD_NAME = "RUST$ENUM$DISR"
 
+STD_TYPE_TO_REGEX = {
+    RustType.STD_STRING: STD_STRING_REGEX,
+    RustType.STD_OS_STRING: STD_OS_STRING_REGEX,
+    RustType.STD_STR: STD_STR_REGEX,
+    RustType.STD_VEC: STD_VEC_REGEX,
+    RustType.STD_VEC_DEQUE: STD_VEC_DEQUE_REGEX,
+    RustType.STD_BTREE_SET: STD_BTREE_SET_REGEX,
+    RustType.STD_BTREE_MAP: STD_BTREE_MAP_REGEX,
+    RustType.STD_RC: STD_RC_REGEX,
+    RustType.STD_ARC: STD_ARC_REGEX,
+    RustType.STD_REF: STD_REF_REGEX,
+    RustType.STD_REF_MUT: STD_REF_MUT_REGEX,
+    RustType.STD_REF_CELL: STD_REF_CELL_REGEX,
+    RustType.STD_CELL: STD_CELL_REGEX,
+}
 
 def is_tuple_fields(fields):
     # type: (list) -> bool
-    return all(re.match(TUPLE_ITEM_REGEX, str(field.name)) for field in fields)
+    return all(TUPLE_ITEM_REGEX.match(str(field.name)) for field in fields)
 
 
 def classify_struct(name, fields):
     if len(fields) == 0:
         return RustType.EMPTY
 
-    if re.match(STD_STRING_REGEX, name):
-        return RustType.STD_STRING
-    if re.match(STD_OS_STRING_REGEX, name):
-        return RustType.STD_OS_STRING
-    if re.match(STD_STR_REGEX, name):
-        return RustType.STD_STR
-
-    if re.match(STD_VEC_REGEX, name):
-        return RustType.STD_VEC
-    if re.match(STD_VEC_DEQUE_REGEX, name):
-        return RustType.STD_VEC_DEQUE
-    if re.match(STD_BTREE_SET_REGEX, name):
-        return RustType.STD_BTREE_SET
-    if re.match(STD_BTREE_MAP_REGEX, name):
-        return RustType.STD_BTREE_MAP
-
-    if re.match(STD_RC_REGEX, name):
-        return RustType.STD_RC
-    if re.match(STD_ARC_REGEX, name):
-        return RustType.STD_ARC
-
-    if re.match(STD_CELL_REGEX, name):
-        return RustType.STD_CELL
-    if re.match(STD_REF_REGEX, name):
-        return RustType.STD_REF
-    if re.match(STD_REF_MUT_REGEX, name):
-        return RustType.STD_REF_MUT
-    if re.match(STD_REF_CELL_REGEX, name):
-        return RustType.STD_REF_CELL
+    for ty, regex in STD_TYPE_TO_REGEX.items():
+        if regex.match(name):
+            return ty
 
     if fields[0].name == ENUM_DISR_FIELD_NAME:
         if len(fields) == 1:
@@ -99,8 +88,7 @@ def classify_struct(name, fields):
     if is_tuple_fields(fields):
         return RustType.TUPLE
 
-    else:
-        return RustType.STRUCT
+    return RustType.STRUCT
 
 
 def classify_union(fields):
