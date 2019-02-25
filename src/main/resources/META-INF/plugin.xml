@@ -208,6 +208,8 @@
 
         <!-- Completion -->
 
+        <codeCompletionConfigurable instance="org.rust.ide.settings.RsCodeCompletionConfigurable"/>
+
         <completion.contributor language="Rust"
                                 implementationClass="org.rust.lang.core.completion.RsCompletionContributor"/>
         <completion.contributor language="Rust"

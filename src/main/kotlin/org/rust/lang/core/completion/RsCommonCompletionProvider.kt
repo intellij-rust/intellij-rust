@@ -87,7 +87,9 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
             addMethodAndFieldCompletion(element, result)
         }
 
-        addCompletionsFromIndex(parameters, result, processedPathNames)
+        if (RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
+            addCompletionsFromIndex(parameters, result, processedPathNames)
+        }
     }
 
     private fun addMethodAndFieldCompletion(element: RsMethodOrField, result: CompletionResultSet) {
