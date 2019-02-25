@@ -13,22 +13,23 @@ import org.rust.lang.core.resolve.NameResolutionTestmarks
 
 class CargoProjectResolveTest : RsWithToolchainTestBase() {
 
-    fun `test resolve feature gated crate`() = buildProject {
-        toml("Cargo.toml", """
-            [package]
-            name = "intellij-rust-test"
-            version = "0.1.0"
-            authors = []
-        """)
-
-        dir("src") {
-            rust("main.rs", """
-                extern crate libc;
-                use libc::int8_t;
-                   //^
-            """)
-        }
-    }.checkReferenceIsResolved<RsPath>("src/main.rs")
+    // TODO: do we need to support stdlib dependencies?
+//    fun `test resolve feature gated crate`() = buildProject {
+//        toml("Cargo.toml", """
+//            [package]
+//            name = "intellij-rust-test"
+//            version = "0.1.0"
+//            authors = []
+//        """)
+//
+//        dir("src") {
+//            rust("main.rs", """
+//                extern crate libc;
+//                use libc::int8_t;
+//                   //^
+//            """)
+//        }
+//    }.checkReferenceIsResolved<RsPath>("src/main.rs")
 
     fun `test resolve external library which hides std crate`() = buildProject {
         toml("Cargo.toml", """
