@@ -26,7 +26,7 @@ class RustProjectSettingsServiceImpl(
         var toolchainHomeDirectory: String? = null,
         var autoUpdateEnabled: Boolean = true,
         var explicitPathToStdlib: String? = null,
-        var useCargoCheckForBuild: Boolean = true,
+        var useCargoCheckForBuild: Boolean = false,
         var useCargoCheckAnnotator: Boolean = false,
         var cargoCheckArguments: String = "",
         var compileAllTargets: Boolean = true,

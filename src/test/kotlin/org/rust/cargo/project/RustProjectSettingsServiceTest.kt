@@ -31,7 +31,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="showTestToolWindow" value="false" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useCargoCheckAnnotator" value="true" />
-              <option name="useCargoCheckForBuild" value="false" />
+              <option name="useCargoCheckForBuild" value="true" />
               <option name="useOffline" value="true" />
               <option name="useSkipChildren" value="true" />
             </State>
@@ -46,7 +46,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
             toolchain = RustToolchain(Paths.get("/")),
             autoUpdateEnabled = false,
             explicitPathToStdlib = "/stdlib",
-            useCargoCheckForBuild = false,
+            useCargoCheckForBuild = true,
             useCargoCheckAnnotator = true,
             cargoCheckArguments = "",
             compileAllTargets = false,
