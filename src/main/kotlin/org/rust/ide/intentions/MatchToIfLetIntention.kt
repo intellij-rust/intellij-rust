@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 import org.rust.lang.core.psi.ext.isIrrefutable
+import org.rust.lang.core.psi.ext.patList
 
 class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
     override fun getText() = "Convert match statement to if let"

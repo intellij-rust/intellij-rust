@@ -8,6 +8,8 @@ package org.rust.lang.core.cfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.isLazy
+import org.rust.lang.core.psi.ext.pat
+import org.rust.lang.core.psi.ext.patList
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type

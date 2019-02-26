@@ -7,6 +7,7 @@ package org.rust.ide.hints
 
 import com.intellij.codeInsight.hint.ImplementationTextSelectioner
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsOrPats
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.endOffset
@@ -19,7 +20,7 @@ class RsImplementationTextSelectioner : ImplementationTextSelectioner {
 
     private val PsiElement.definitionRoot: PsiElement get() {
         var element = this
-        while (element is RsPatBinding || element is RsPat) {
+        while (element is RsPatBinding || element is RsPat || element is RsOrPats) {
             element = element.parent
         }
         return element
