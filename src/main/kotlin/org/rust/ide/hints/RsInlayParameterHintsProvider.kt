@@ -15,6 +15,7 @@ import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.patList
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.ty.TyUnknown
@@ -48,7 +49,7 @@ enum class HintType(desc: String, enabled: Boolean) {
                     if (elem.typeReference != null) return emptyList()
                     elem.expr to listOfNotNull(elem.pat)
                 }
-                is RsCondition -> elem.expr to listOfNotNull(elem.pat)
+                is RsCondition -> elem.expr to elem.patList
                 is RsMatchExpr -> elem.expr to elem.matchBody?.matchArmList?.flatMap { it.patList }
                 else -> return emptyList()
             }
