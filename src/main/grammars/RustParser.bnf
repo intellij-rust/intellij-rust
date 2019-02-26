@@ -485,6 +485,8 @@ PatField ::= identifier ':' Pat | box? PatBinding
 
 BindingMode ::= ref mut? | mut
 
+OrPats ::= '|'? Pat ('|' Pat)*
+
 Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';' {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
@@ -1027,7 +1029,7 @@ WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Condition ::= [ let Pat '=' ] NoStructLitExpr
+Condition ::= [ let OrPats '=' ] NoStructLitExpr
 
 LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
   pin = 'loop'
@@ -1063,8 +1065,8 @@ MatchExpr ::= OuterAttr* match NoStructLitExpr MatchBody {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 MatchBody ::= '{' MatchArm* '}' { pin = 1 }
-MatchArm ::= OuterAttr* '|'? Pat ('|' Pat)* MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
-  pin = 3
+MatchArm ::= OuterAttr* OrPats MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
+  pin = 2
   recoverWhile = MatchArm_recover
 }
 private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}' | '|')

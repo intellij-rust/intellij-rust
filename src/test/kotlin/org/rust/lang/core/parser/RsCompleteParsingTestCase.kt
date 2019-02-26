@@ -47,6 +47,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test visibility`() = doTest(true)
     fun `test polybounds`() = doTest(true)
     fun `test async await`() = doTest(true)
+    fun `test conditions`() = doTest(true)
 
     fun `test issue320`() = doTest(true)
     fun `test diesel macros`() = doTest(true)
