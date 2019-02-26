@@ -16,6 +16,7 @@ class RsCodeInsightSettings : PersistentStateComponent<RsCodeInsightSettings> {
 
     var showImportPopup: Boolean = false
     var addTraitImport: Boolean = true
+    var suggestOutOfScopeItems: Boolean = true
 
     override fun getState(): RsCodeInsightSettings = this
 

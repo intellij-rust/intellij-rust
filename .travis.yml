@@ -19,7 +19,7 @@ matrix:
   include:
     # 183 platform
     - name: idea-183/old-rust
-      env: RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183 ORG_GRADLE_PROJECT_ideaVersion=2018.3
+      env: RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183 ORG_GRADLE_PROJECT_ideaVersion=2018.3.2
     - name: idea-183/stable-rust
       env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183
     - name: clion-183/stable-rust
