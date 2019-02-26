@@ -164,6 +164,16 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test if let with multiple patterns`() = checkByCode("""
+        fn foo(x: V) {
+            if let V1(v) | V2(v) = x {
+                    //X
+                v;
+              //^
+            }
+        }
+    """)
+
     fun `test if let else branch`() = checkByCode("""
         fn foo(x: Option<i32>) {
              //X
@@ -191,6 +201,16 @@ class RsResolveTest : RsResolveTestBase() {
             while let Some(i) = Some(92) { }
             i;
           //^ unresolved
+        }
+    """)
+
+    fun `test while let with multiple patterns`() = checkByCode("""
+        fn foo(x: V) {
+            while let V1(v) | V2(v) = x {
+                       //X
+                v;
+              //^
+            }
         }
     """)
 

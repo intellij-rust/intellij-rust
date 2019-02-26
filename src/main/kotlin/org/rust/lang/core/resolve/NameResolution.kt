@@ -1025,11 +1025,23 @@ private fun processLexicalDeclarations(
         return processAll(boundNames, processor)
     }
 
-    fun processCondition(condition: RsCondition?, processor: RsResolveProcessor): Boolean {
-        if (condition == null || condition == cameFrom) return false
-        val pat = condition.pat
+    fun processOrPats(orPats: RsOrPats, processor: RsResolveProcessor): Boolean {
+        if (Namespace.Values !in ns) return false
+        if (cameFrom == orPats) return false
+        val patList = orPats.patList
+        if (cameFrom in patList) return false
+        // Rust allows to defined several patterns in the single match arm and in if/while expr condition,
+        // but they all must bind the same variables, hence we can inspect
+        // only the first one.
+        val pat = patList.firstOrNull()
         if (pat != null && processPattern(pat, processor)) return true
         return false
+    }
+
+    fun processCondition(condition: RsCondition?, processor: RsResolveProcessor): Boolean {
+        if (condition == null || condition == cameFrom) return false
+        val orPats = condition.orPats ?: return false
+        return processOrPats(orPats, processor)
     }
 
     when (scope) {
@@ -1102,13 +1114,11 @@ private fun processLexicalDeclarations(
         }
 
         is RsIfExpr -> {
-            if (Namespace.Values !in ns) return false
             // else branch of 'if let' expression shouldn't look into condition pattern
             if (scope.elseBranch == cameFrom) return false
             return processCondition(scope.condition, processor)
         }
         is RsWhileExpr -> {
-            if (Namespace.Values !in ns) return false
             return processCondition(scope.condition, processor)
         }
 
@@ -1121,14 +1131,7 @@ private fun processLexicalDeclarations(
         }
 
         is RsMatchArm -> {
-            // Rust allows to defined several patterns in the single match arm,
-            // but they all must bind the same variables, hence we can inspect
-            // only the first one.
-            if (cameFrom in scope.patList) return false
-            if (Namespace.Values !in ns) return false
-            val pat = scope.patList.firstOrNull()
-            if (pat != null && processPattern(pat, processor)) return true
-
+            return processOrPats(scope.orPats, processor)
         }
     }
     return false
