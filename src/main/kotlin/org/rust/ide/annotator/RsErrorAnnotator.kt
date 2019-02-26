@@ -220,12 +220,23 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         presentableFeatureName: String,
         vararg fixes: LocalQuickFix
     ) {
-        val availability = feature.availability(element)
+        checkFeature(holder, element, null, feature, "$presentableFeatureName is experimental", *fixes)
+    }
+
+    private fun checkFeature(
+        holder: AnnotationHolder,
+        startElement: PsiElement,
+        endElement: PsiElement?,
+        feature: CompilerFeature,
+        message: String,
+        vararg fixes: LocalQuickFix
+    ) {
+        val availability = feature.availability(startElement)
         val diagnostic = when (availability) {
-            NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, fixes.toList())
+            NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
             CAN_BE_ADDED -> {
-                val fix = AddFeatureAttributeFix(feature.name, element)
-                RsDiagnostic.ExperimentalFeature(element, presentableFeatureName, listOf(*fixes, fix))
+                val fix = AddFeatureAttributeFix(feature.name, startElement)
+                RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
             }
             else -> return
         }
@@ -332,9 +343,14 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkCondition(holder: AnnotationHolder, element: RsCondition) {
-        val pat = element.pat ?: return
-        if (pat.isIrrefutable) {
+        val pat = element.pat
+        if (pat != null && pat.isIrrefutable) {
             checkFeature(holder, pat, IRREFUTABLE_LET_PATTERNS, "irrefutable let pattern")
+        }
+        val patList = element.patList
+        if (patList.size > 1) {
+            checkFeature(holder, patList.first(), patList.last(),
+                IF_WHILE_OR_PATTERNS, "multiple patterns in `if let` and `while let` are unstable")
         }
     }
 

@@ -737,13 +737,14 @@ sealed class RsDiagnostic(
 
     class ExperimentalFeature(
         element: PsiElement,
-        private val presentableFeatureName: String,
+        endElement: PsiElement?,
+        private val message: String,
         private val fixes: List<LocalQuickFix>
-    ) : RsDiagnostic(element) {
+    ) : RsDiagnostic(element, endElement) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0658,
-            header = escapeString("$presentableFeatureName is experimental"),
+            header = escapeString(message),
             fixes = fixes
         )
     }
