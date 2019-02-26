@@ -1389,9 +1389,7 @@ class RsFnInferenceContext(
         val matchingExprTy = resolveTypeVarsWithObligations(expr.expr?.inferType() ?: TyUnknown)
         val arms = expr.matchBody?.matchArmList.orEmpty()
         for (arm in arms) {
-            for (pat in arm.patList) {
-                pat.extractBindings(matchingExprTy)
-            }
+            arm.orPats.extractBindings(matchingExprTy)
             arm.expr?.inferType(expected)
             arm.matchArmGuard?.expr?.inferType(TyBool)
         }
@@ -1438,12 +1436,15 @@ class RsFnInferenceContext(
     }
 
     private fun RsCondition.inferTypes() {
-        val pat = pat
-        if (pat != null) {
+        val orPats = orPats
+        if (orPats != null) {
             // if let Some(a) = ... {}
+            // if let V1(a) | V2(a) = ... {}
             // or
             // while let Some(a) = ... {}
-            pat.extractBindings(resolveTypeVarsWithObligations(expr.inferType()))
+            // while let V1(a) | V2(a) = ... {}
+            val exprTy = resolveTypeVarsWithObligations(expr.inferType())
+            orPats.extractBindings(exprTy)
         } else {
             expr.inferType(TyBool)
         }
@@ -1821,6 +1822,10 @@ class RsFnInferenceContext(
 
     private fun RsPat.extractBindings(ty: Ty) {
         extractBindings(this@RsFnInferenceContext, ty)
+    }
+
+    private fun RsOrPats.extractBindings(ty: Ty) {
+        patList.forEach { it.extractBindings(ty) }
     }
 
     fun writeBindingTy(psi: RsPatBinding, ty: Ty): Unit =

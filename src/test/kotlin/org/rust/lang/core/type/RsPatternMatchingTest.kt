@@ -17,6 +17,16 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test if let pattern with multiple patterns`() = testExpr("""
+        enum E { L(i32), R(i32) }
+        fn foo(e: E) {
+            if let E::L(x) | E::R(x) = e {
+                x;
+              //^ i32
+            }
+        }
+    """)
+
     fun `test while let pattern`() = testExpr("""
         enum E { L(i32), R(bool) }
         fn main() {
@@ -24,6 +34,16 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             while let E::R(x) = e {
                 x
             } //^ bool
+        }
+    """)
+
+    fun `test while let pattern with multiple patterns`() = testExpr("""
+        enum E { L(i32), R(i32) }
+        fn foo(e: E) {
+            while let E::L(x) | E::R(x) = e {
+                x;
+              //^ i32
+            }
         }
     """)
 
