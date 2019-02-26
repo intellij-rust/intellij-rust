@@ -165,6 +165,6 @@ class RsQuickDefinitionTest : RsQuickDefinitionTestBase() {
             .dropWhile { it.isBlank() }
             .dropLastWhile { it.isBlank() }
             .joinToString("\n")
-        check(actualText == expected)
+        assertEquals(expected, actualText)
     }
 }
