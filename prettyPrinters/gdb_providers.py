@@ -50,7 +50,7 @@ class StdStringProvider:
         self.valobj = valobj
         vec = valobj["vec"]
         self.length = int(vec["len"])
-        self.data_ptr = vec["buf"]["ptr"]["pointer"][ZERO_FIELD]
+        self.data_ptr = unwrap_unique_or_non_null(vec["buf"]["ptr"])
 
     def to_string(self):
         return self.data_ptr.lazy_string(encoding="utf-8", length=self.length)
@@ -68,7 +68,7 @@ class StdOsStringProvider:
         vec = buf[ZERO_FIELD] if is_windows else buf
 
         self.length = int(vec["len"])
-        self.data_ptr = vec["buf"]["ptr"]["pointer"][ZERO_FIELD]
+        self.data_ptr = unwrap_unique_or_non_null(vec["buf"]["ptr"])
 
     def to_string(self):
         return self.data_ptr.lazy_string(encoding="utf-8", length=self.length)
