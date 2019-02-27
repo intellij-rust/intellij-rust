@@ -1,7 +1,7 @@
 import lldb
 
 from lldb_providers import *
-from rust_types import *
+from rust_types import RustType, classify_struct, classify_union
 
 
 def classify_rust_type(type):
