@@ -47,8 +47,10 @@ abstract class RsCompletionTestBase : RsTestBase() {
             "Please add `/*caret*/` marker"
         }
         checkByText(before.trimIndent(), after.trimIndent()) {
-            myFixture.completeBasic()
-            myFixture.type('\n')
+            val variants = myFixture.completeBasic()
+            if (variants != null) {
+                myFixture.type('\n')
+            }
         }
     }
 
