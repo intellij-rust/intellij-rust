@@ -75,6 +75,7 @@ interface CargoWorkspace {
         val isLib: Boolean get() = kind == TargetKind.LIB
         val isBin: Boolean get() = kind == TargetKind.BIN
         val isExample: Boolean get() = kind == TargetKind.EXAMPLE
+        val isProcMacro: Boolean get() = CrateType.PROC_MACRO in crateTypes
 
         val crateRoot: VirtualFile?
 
