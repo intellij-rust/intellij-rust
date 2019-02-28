@@ -132,6 +132,8 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
     fun boundsFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> =
         callerBounds.asSequence().filter { it.selfTy == ty }.map { it.trait }
 
+    fun isEmpty(): Boolean = callerBounds.isEmpty()
+
     companion object {
         val EMPTY: ParamEnv = ParamEnv(emptyList())
         val LEGACY: ParamEnv = ParamEnv(emptyList())
@@ -160,6 +162,8 @@ class ImplLookup(
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
+    private val localTraitSelectionCache: MutableMap<TraitRef, SelectionResult<SelectionCandidate>>? =
+        if (paramEnv.isEmpty()) null else mutableMapOf()
     private val arithOps by lazy(NONE) {
         ArithmeticOp.values().mapNotNull { it.findTrait(items) }
     }
@@ -184,8 +188,6 @@ class ImplLookup(
         val trait = items.IntoIterator ?: return@lazy null
         trait.findAssociatedType("Item")?.let { trait to it }
     }
-
-    private val codeFragmentFactory: RsCodeFragmentFactory by lazy(NONE) { RsCodeFragmentFactory(project) }
 
     val ctx: RsInferenceContext by lazy(NONE) {
         RsInferenceContext(this, items)
@@ -367,7 +369,15 @@ class ImplLookup(
     private fun selectWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
         if (recursionDepth > DEFAULT_RECURSION_LIMIT) return SelectionResult.Err()
         testAssert { !ctx.hasResolvableTypeVars(ref) }
-        return traitSelectionCache.getOrPut(project, freshen(ref)) { selectCandidate(ref, recursionDepth) }
+        val freshenRef = freshen(ref)
+        @Suppress("IfThenToElvis")
+        return if (localTraitSelectionCache != null) {
+            // function-local cache is used when [paramEnv] is not empty, i.e. if there are trait bounds
+            // that affect trait selection
+            localTraitSelectionCache.getOrPut(freshenRef) { selectCandidate(ref, recursionDepth) }
+        } else {
+            globalTraitSelectionCache.getOrPut(project, freshenRef) { selectCandidate(ref, recursionDepth) }
+        }
     }
 
     private fun selectCandidate(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
@@ -453,7 +463,6 @@ class ImplLookup(
                     .map { SelectionCandidate.TypeParameter(it) }
                     .forEach(::add)
                 if (ref.selfTy is TyTypeParameter) return@buildList
-
                 addAll(assembleImplCandidates(ref))
                 addAll(assembleDerivedCandidates(ref))
                 if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
@@ -743,8 +752,8 @@ class ImplLookup(
         private val findImplsAndTraitsCache =
             ProjectCache<Ty, Set<TraitImplSource>>("findImplsAndTraitsCache")
 
-        private val traitSelectionCache =
-            ProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("traitSelectionCache")
+        private val globalTraitSelectionCache =
+            ProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("globalTraitSelectionCache")
     }
 }
 
