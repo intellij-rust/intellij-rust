@@ -598,4 +598,42 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
             }
         }
     """)
+
+    fun `test multiple if let pattern`() = doAvailableTest("""
+        enum V { V1(i32), V2(i32), V3 }
+        fn foo(v: V) {
+            if let V1(x) | V2(x) = v/*caret*/ {
+                println!("{}", x);
+            }
+        }
+    """, """
+        enum V { V1(i32), V2(i32), V3 }
+        fn foo(v: V) {
+            match v {
+                V1(x) | V2(x) => {
+                    println!("{}", x);
+                }
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test multiple if let pattern with leading |`() = doAvailableTest("""
+        enum V { V1(i32), V2(i32), V3 }
+        fn foo(v: V) {
+            if let | V1(x) | V2(x) = v/*caret*/ {
+                println!("{}", x);
+            }
+        }
+    """, """
+        enum V { V1(i32), V2(i32), V3 }
+        fn foo(v: V) {
+            match v {
+                | V1(x) | V2(x) => {
+                    println!("{}", x);
+                }
+                _ => {}
+            }
+        }
+    """)
 }
