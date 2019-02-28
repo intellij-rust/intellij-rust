@@ -675,7 +675,7 @@ private fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Bool
             processMacroCallVariantsInScope(path, processor)
         } else {
             val resolved = pickFirstResolveVariant(path.referenceName) { processMacroCallVariantsInScope(path, it) }
-                as? RsMacro
+                as? RsNamedElement
             resolved?.let { processor(it) } ?: false
         }
     } else {
@@ -700,8 +700,8 @@ private class MacroResolver private constructor() {
     private val exportingMacrosCrates = mutableMapOf<String, RsFile>()
     private val useItems = mutableListOf<RsUseItem>()
 
-    private fun collectMacrosInScopeDownward(scope: RsItemsOwner): List<RsMacro> {
-        val visibleMacros = mutableListOf<RsMacro>()
+    private fun collectMacrosInScopeDownward(scope: RsItemsOwner): List<RsNamedElement> {
+        val visibleMacros = mutableListOf<RsNamedElement>()
 
         for (item in scope.itemsAndMacros) {
             processMacrosAtScopeEntry(item) {
@@ -716,7 +716,7 @@ private class MacroResolver private constructor() {
         return visibleMacros
     }
 
-    private fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: (RsMacro) -> Boolean): Boolean {
+    private fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: (RsNamedElement) -> Boolean): Boolean {
         if (processScopesInLexicalOrderUpward(startElement) {
             if (it is RsElement) {
                 processMacrosAtScopeEntry(it, processor)
@@ -801,7 +801,7 @@ private class MacroResolver private constructor() {
 
     private fun processMacrosAtScopeEntry(
         item: RsElement,
-        processor: (RsMacro) -> Boolean
+        processor: (RsNamedElement) -> Boolean
     ): Boolean {
         when (item) {
             is RsMacro -> if (processor(item)) return true
@@ -840,7 +840,7 @@ private class MacroResolver private constructor() {
         return false
     }
 
-    private fun processRemainedExportedMacros(processor: (RsMacro) -> Boolean): Boolean {
+    private fun processRemainedExportedMacros(processor: (RsNamedElement) -> Boolean): Boolean {
         for (useItem in useItems) {
             if (processAll(collectMacrosImportedWithUseItem(useItem, exportingMacrosCrates), processor)) return true
         }
@@ -848,10 +848,10 @@ private class MacroResolver private constructor() {
     }
 
     companion object {
-        fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: (RsMacro) -> Boolean): Boolean =
+        fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: (RsNamedElement) -> Boolean): Boolean =
             MacroResolver().processMacrosInLexicalOrderUpward(startElement, processor)
 
-        private fun visibleMacros(scope: RsItemsOwner): List<RsMacro> =
+        private fun visibleMacros(scope: RsItemsOwner): List<RsNamedElement> =
             CachedValuesManager.getCachedValue(scope) {
                 val macros = MacroResolver().collectMacrosInScopeDownward(scope)
                 CachedValueProvider.Result.create(macros, scope.rustStructureOrAnyPsiModificationTracker)
@@ -869,7 +869,7 @@ private class MacroResolver private constructor() {
     }
 }
 
-private fun exportedMacros(scope: RsFile): List<RsMacro> {
+private fun exportedMacros(scope: RsFile): List<RsNamedElement> {
     if (!scope.isCrateRoot) {
         LOG.warn("`${scope.virtualFile}` should be crate root")
         return emptyList()
@@ -880,7 +880,12 @@ private fun exportedMacros(scope: RsFile): List<RsMacro> {
     }
 }
 
-private fun exportedMacrosInternal(scope: RsFile): List<RsMacro> {
+private fun exportedMacrosInternal(scope: RsFile): List<RsNamedElement> {
+    if (scope.containingCargoTarget?.isProcMacro == true) {
+        return scope.stubChildrenOfType<RsFunction>()
+            .filter { it.queryAttributes.hasAtomAttribute("proc_macro") }
+    }
+
     val allExportedMacros = RsMacroIndex.allExportedMacros(scope.project)
     return buildList {
         addAll(allExportedMacros[scope].orEmpty())
@@ -926,6 +931,7 @@ private fun reexportedMacros(item: RsExternCrateItem): List<RsMacro>? {
         ?: return emptyList()
     val mod = item.reference.resolve() as? RsFile ?: return emptyList()
     val nameToExportedMacro = exportedMacros(mod).mapNotNull {
+        if (it !is RsMacro) return@mapNotNull null
         val name = it.name ?: return@mapNotNull null
         name to it
     }.toMap()
@@ -935,7 +941,7 @@ private fun reexportedMacros(item: RsExternCrateItem): List<RsMacro>? {
 private fun collectMacrosImportedWithUseItem(
     useItem: RsUseItem,
     exportingMacrosCrates: Map<String, RsMod>
-): List<RsMacro> {
+): List<RsNamedElement> {
     // We don't want to perform path resolution during macro resolve (because it can recursively perform
     // macro resolve and so be slow and incorrect).
     // We assume that macro can only be imported by 2-segment path (`foo::bar`), where the first segment
