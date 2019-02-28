@@ -60,6 +60,10 @@ fun checkReadAccessAllowed() {
     }
 }
 
+fun checkReadAccessNotAllowed() {
+    check(!ApplicationManager.getApplication().isReadAccessAllowed)
+}
+
 fun checkIsBackgroundThread() {
     check(!ApplicationManager.getApplication().isDispatchThread) {
         "Long running operation invoked on UI thread"
