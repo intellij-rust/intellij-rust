@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.ProjectTopics
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -13,10 +14,12 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.messages.Topic
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
 
 val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> = Topic.create(
@@ -134,3 +137,20 @@ private val Project.rustPsiManager: RsPsiManager
 /** @see RsPsiManager.rustStructureModificationTracker */
 val Project.rustStructureModificationTracker: ModificationTracker
     get() = rustPsiManager.rustStructureModificationTracker
+
+/**
+ * Returns [RsPsiManager.rustStructureModificationTracker] or [PsiModificationTracker.MODIFICATION_COUNT]
+ * if `this` element is inside language injection
+ */
+val RsElement.rustStructureOrAnyPsiModificationTracker: Any
+    get() {
+        val containingFile = containingFile
+        return when {
+            // The case of injected language. Injected PSI don't have it's own event system, so can only
+            // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
+            // literal. If a user change the literal, we can only be notified that the literal is changed.
+            // So we have to invalidate the cached value on any PSI change
+            containingFile.virtualFile is VirtualFileWindow -> PsiModificationTracker.MODIFICATION_COUNT
+            else -> containingFile.project.rustStructureModificationTracker
+        }
+    }

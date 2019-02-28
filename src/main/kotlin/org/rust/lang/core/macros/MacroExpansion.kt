@@ -40,7 +40,7 @@ fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> 
                 it.setContext(context)
                 it.setExpandedFrom(call)
             }
-            CachedValueProvider.Result.create(result, project.rustStructureModificationTracker)
+            CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker)
         }
     }
 }
