@@ -5,14 +5,15 @@
 
 package org.rust.ide.annotator.cargoCheck
 
-import com.intellij.openapi.module.Module
-import org.rust.cargo.project.workspace.CargoWorkspace
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.project.Project
 import org.rust.cargo.toolchain.RustToolchain
 import java.nio.file.Path
 
 data class RsCargoCheckAnnotationInfo(
     val toolchain: RustToolchain,
-    val projectPath: Path,
-    val module: Module,
-    val cargoPackage: CargoWorkspace.Package
+    val project: Project,
+    val owner: ComponentManager,
+    val workingDirectory: Path,
+    val packageName: String? = null
 )
