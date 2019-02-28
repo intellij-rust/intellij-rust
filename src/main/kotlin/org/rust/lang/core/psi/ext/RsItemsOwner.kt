@@ -61,7 +61,7 @@ val RsItemsOwner.expandedItemsExceptImpls: List<RsItemElement>
         }
         CachedValueProvider.Result.create(
             if (items.isNotEmpty()) items else emptyList(),
-            project.rustStructureModificationTracker
+            rustStructureOrAnyPsiModificationTracker
         )
     }
 

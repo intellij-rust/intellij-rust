@@ -789,7 +789,7 @@ private class MacroResolver private constructor() {
         private fun visibleMacros(scope: RsItemsOwner): List<RsMacro> =
             CachedValuesManager.getCachedValue(scope) {
                 val macros = MacroResolver().collectMacrosInScopeDownward(scope)
-                CachedValueProvider.Result.create(macros, scope.project.rustStructureModificationTracker)
+                CachedValueProvider.Result.create(macros, scope.rustStructureOrAnyPsiModificationTracker)
             }
 
         private fun <T> processAll(elements: Collection<T>, processor: (T) -> Boolean): Boolean =
@@ -811,7 +811,7 @@ private fun exportedMacros(scope: RsFile): List<RsMacro> {
     }
     return CachedValuesManager.getCachedValue(scope) {
         val macros = exportedMacrosInternal(scope)
-        CachedValueProvider.Result.create(macros, scope.project.rustStructureModificationTracker)
+        CachedValueProvider.Result.create(macros, scope.rustStructureOrAnyPsiModificationTracker)
     }
 }
 
