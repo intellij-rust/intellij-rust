@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -119,3 +120,11 @@ val PsiElement.endOffset: Int
 
 val PsiElement.endOffsetInParent: Int
     get() = startOffsetInParent + textLength
+
+fun PsiElement.rangeWithPrevSpace(prev: PsiElement?) = when (prev) {
+    is PsiWhiteSpace -> textRange.union(prev.textRange)
+    else -> textRange
+}
+
+val PsiElement.rangeWithPrevSpace: TextRange
+    get() = rangeWithPrevSpace(prevSibling)
