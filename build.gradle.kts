@@ -1,26 +1,23 @@
-import org.jetbrains.intellij.tasks.PatchPluginXmlTask
-import org.jetbrains.intellij.tasks.PublishTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import de.undercouch.gradle.tasks.download.Download
-import org.gradle.api.internal.HasConvention
-import org.gradle.api.tasks.SourceSet
-import org.jetbrains.grammarkit.tasks.GenerateLexer
-import org.jetbrains.grammarkit.tasks.GenerateParser
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_1_8
+import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.tasks.Jar
-import java.io.Writer
+import org.jetbrains.grammarkit.tasks.GenerateLexer
+import org.jetbrains.grammarkit.tasks.GenerateParser
+import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
-import java.net.HttpURLConnection
-import java.net.URL
-import java.nio.file.Path
-import kotlin.concurrent.thread
-import org.apache.tools.ant.taskdefs.condition.Os.*
+import org.jetbrains.intellij.tasks.PublishTask
 import org.jetbrains.intellij.tasks.RunIdeTask
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.io.Writer
+import java.net.URL
+import kotlin.concurrent.thread
 
 val CI = System.getenv("CI") != null
+val TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
 
 val channel = prop("publishChannel")
 val platformVersion = prop("platformVersion")
@@ -123,11 +120,16 @@ allprojects {
             }
         }
 
-        // We need to prevent the platform-specific shared JNA library to loading from the system library paths,
-        // because otherwise it can lead to compatibility issues.
-        // Also note that IDEA does the same thing at startup, and not only for tests.
         tasks.withType<Test>().configureEach {
+            // We need to prevent the platform-specific shared JNA library to loading from the system library paths,
+            // because otherwise it can lead to compatibility issues.
+            // Also note that IDEA does the same thing at startup, and not only for tests.
             systemProperty("jna.nosys", "true")
+            if (TEAMCITY) {
+                // Make teamcity builds green if only muted tests fail
+                // https://youtrack.jetbrains.com/issue/TW-16784
+                ignoreFailures = true
+            }
         }
     }
 }
