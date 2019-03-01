@@ -25,45 +25,96 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.cargoCheck.RsCargoCheckFilteredMessage.Companion.filterMessage
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.openapiext.checkReadAccessAllowed
+import org.rust.openapiext.checkReadAccessNotAllowed
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
 import java.lang.reflect.Field
 
-object RsCargoCheckAnnotator : ExternalAnnotator<RsCargoCheckAnnotationInfo, RsCargoCheckAnnotationResult>() {
+object RsCargoCheckAnnotator : ExternalAnnotator<Lazy<RsCargoCheckAnnotationResult?>, RsCargoCheckAnnotationResult>() {
     private val LOG: Logger = Logger.getInstance(RsCargoCheckAnnotator::class.java)
     const val TEST_MESSAGE: String = "CargoCheckAnnotation"
 
-    override fun collectInformation(file: PsiFile): RsCargoCheckAnnotationInfo? {
+    /**
+     * Returns (and cached if absent) lazily computed `cargo check` result.
+     *
+     * Note: before applying this result you need to check that the PSI modification stamp of current project has not
+     * changed after calling this method.
+     *
+     * @see PsiModificationTracker.MODIFICATION_COUNT
+     */
+    override fun collectInformation(file: PsiFile): Lazy<RsCargoCheckAnnotationResult?>? {
+        checkReadAccessAllowed()
         if (file !is RsFile) return null
-        if (!file.project.rustSettings.useCargoCheckAnnotator) return null
-        val ws = file.cargoWorkspace ?: return null
-        val module = ModuleUtil.findModuleForFile(file.virtualFile, file.project) ?: return null
-        val toolchain = module.project.toolchain ?: return null
+        val project = file.project
+        if (!project.rustSettings.useCargoCheckAnnotator) return null
+
         val cargoPackage = file.containingCargoPackage
         if (cargoPackage?.origin != PackageOrigin.WORKSPACE) return null
-        return RsCargoCheckAnnotationInfo(toolchain, ws.contentRoot, module, cargoPackage)
+
+        val info = RsCargoCheckAnnotationInfo(
+            project.toolchain ?: return null,
+            project,
+            ModuleUtil.findModuleForFile(file) ?: project,
+            cargoPackage.workspace.contentRoot,
+            cargoPackage.name
+        )
+
+        return CachedValuesManager.getManager(project)
+            .getCachedValue(info.owner) {
+                // We want to run `cargo check` in background thread and *without* read action.
+                // And also we want to cache result of `cargo check` because `cargo check` is cargo package-global,
+                // but annotator can be invoked separately for each file.
+                // With `CachedValuesManager` our cached value should be invalidated on any PSI change.
+                // Important note about this cache is that modification count will be stored AFTER computation
+                // of a value. If we aren't in read action, PSI can be modified during computation of the value
+                // and so an outdated value will be cached. So we can't use the cache without read action.
+                // What we really want:
+                // 1. Store current PSI modification count;
+                // 2. Run `cargo check` and retrieve results (in background thread and without read action);
+                // 3. Try to cache result use modification count stored in (1). Result can be already outdated here.
+                // We get such behavior by storing `Lazy` computation to the cache. Cache result is created in read
+                // action, so it will be stored within correct PSI modification count. Then, we will retrieve the value
+                // from `Lazy` in a background thread. The value will be computed or retrieved from the already computed
+                // `Lazy` value.
+                CachedValueProvider.Result.create(
+                    lazy {
+                        // This code will be executed out of read action in background thread
+                        if (!isUnitTestMode) checkReadAccessNotAllowed()
+                        checkProject(info)
+                    },
+                    PsiModificationTracker.MODIFICATION_COUNT
+                )
+            }
     }
 
     override fun collectInformation(
         file: PsiFile,
         editor: Editor,
         hasErrors: Boolean
-    ): RsCargoCheckAnnotationInfo? = collectInformation(file)
+    ): Lazy<RsCargoCheckAnnotationResult?>? = collectInformation(file)
+
+    override fun doAnnotate(result: Lazy<RsCargoCheckAnnotationResult?>): RsCargoCheckAnnotationResult? {
+        if (!isUnitTestMode) checkReadAccessNotAllowed()
+        return result.value
+    }
 
     // NB: executed asynchronously off EDT, so care must be taken not to access disposed objects
-    override fun doAnnotate(info: RsCargoCheckAnnotationInfo): RsCargoCheckAnnotationResult? {
+    private fun checkProject(info: RsCargoCheckAnnotationInfo): RsCargoCheckAnnotationResult? {
         val indicator = WriteAction.computeAndWait<ProgressIndicator, Throwable> {
             // We have to save files to disk to give cargo a chance to check fresh file content
             saveAllDocumentsAsTheyAre()
             BackgroundableProcessIndicator(
-                info.module.project,
+                info.project,
                 "Analyzing File with Cargo Check",
                 PerformInBackgroundOption.ALWAYS_BACKGROUND,
                 CommonBundle.getCancelButtonText(),
@@ -75,8 +126,8 @@ object RsCargoCheckAnnotator : ExternalAnnotator<RsCargoCheckAnnotationInfo, RsC
         val output = try {
             ProgressManager.getInstance().runProcess(Computable {
                 info.toolchain
-                    .cargoOrWrapper(info.projectPath)
-                    .checkProject(info.module.project, info.module, info.projectPath, info.cargoPackage)
+                    .cargoOrWrapper(info.workingDirectory)
+                    .checkProject(info.project, info.owner, info.workingDirectory, info.packageName)
             }, indicator)
         } catch (e: ExecutionException) {
             LOG.error(e)
@@ -88,7 +139,12 @@ object RsCargoCheckAnnotator : ExternalAnnotator<RsCargoCheckAnnotationInfo, RsC
     }
 
     override fun apply(file: PsiFile, annotationResult: RsCargoCheckAnnotationResult?, holder: AnnotationHolder) {
+        if (file !is RsFile) return
         if (annotationResult == null) return
+
+        val cargoPackageOrigin = file.containingCargoPackage?.origin
+        if (cargoPackageOrigin != PackageOrigin.WORKSPACE) return
+
         val doc = file.viewProvider.document
             ?: error("Can't find document for $file in cargo check annotator")
 

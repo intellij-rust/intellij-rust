@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 
@@ -34,7 +35,7 @@ class RsCargoCheckAnnotatorPass(
     editor.document
 ) {
     private val annotationHolder: AnnotationHolderImpl = AnnotationHolderImpl(AnnotationSession(file))
-    private var annotationInfo: RsCargoCheckAnnotationInfo? = null
+    private var annotationInfo: Lazy<RsCargoCheckAnnotationResult?>? = null
     private var annotationResult: RsCargoCheckAnnotationResult? = null
 
     override fun doCollectInformation(progress: ProgressIndicator) {
@@ -48,7 +49,7 @@ class RsCargoCheckAnnotatorPass(
     }
 
     override fun doApplyInformationToEditor() {
-        val modificationStampBefore = myDocument?.modificationStamp ?: return
+        val modificationStampBefore = getProjectModificationStamp()
 
         val update = object : Update(file) {
             override fun setRejected() {
@@ -57,12 +58,12 @@ class RsCargoCheckAnnotatorPass(
             }
 
             override fun run() {
-                if (!documentChanged(modificationStampBefore) && !myProject.isDisposed) {
+                if (!projectChanged(modificationStampBefore) && !myProject.isDisposed) {
                     BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, Runnable {
                         doAnnotate()
                         ReadAction.run<RuntimeException> {
                             ProgressManager.checkCanceled()
-                            if (!documentChanged(modificationStampBefore)) {
+                            if (!projectChanged(modificationStampBefore)) {
                                 doApply()
                                 doFinish(getHighlights(), modificationStampBefore)
                             }
@@ -97,7 +98,7 @@ class RsCargoCheckAnnotatorPass(
     private fun doFinish(highlights: List<HighlightInfo>, modificationStampBefore: Long) {
         val document = document ?: return
         ApplicationManager.getApplication().invokeLater({
-            if (!documentChanged(modificationStampBefore) && !myProject.isDisposed) {
+            if (!projectChanged(modificationStampBefore) && !myProject.isDisposed) {
                 UpdateHighlightersUtil.setHighlightersToEditor(
                     myProject,
                     document,
@@ -115,8 +116,11 @@ class RsCargoCheckAnnotatorPass(
     private fun getHighlights(): List<HighlightInfo> =
         annotationHolder.map(HighlightInfo::fromAnnotation)
 
-    private fun documentChanged(modificationStampBefore: Long): Boolean =
-        myDocument?.modificationStamp != modificationStampBefore
+    private fun getProjectModificationStamp(): Long =
+        PsiModificationTracker.SERVICE.getInstance(myProject).modificationCount
+
+    private fun projectChanged(modificationStampBefore: Long): Boolean =
+        getProjectModificationStamp() != modificationStampBefore
 
     companion object {
         private val LOG: Logger = Logger.getInstance(RsCargoCheckAnnotatorPass::class.java)

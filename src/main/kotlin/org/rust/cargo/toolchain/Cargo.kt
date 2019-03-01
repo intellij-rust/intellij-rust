@@ -94,22 +94,26 @@ class Cargo(private val cargoExecutable: Path) {
     fun checkProject(
         project: Project,
         owner: Disposable,
-        projectDirectory: Path,
-        cargoPackage: CargoWorkspace.Package
+        cargoProjectDirectory: Path,
+        cargoPackageName: String? = null
     ): ProcessOutput {
-        val arguments = mutableListOf("--message-format=json", "--package", cargoPackage.name)
+        val arguments = buildList<String> {
+            add("--message-format=json")
 
-        if (project.rustSettings.compileAllTargets && checkSupportForBuildCheckAllTargets()) {
-            arguments += "--all-targets"
+            if (cargoPackageName != null) {
+                add("--package")
+                add(cargoPackageName)
+            } else {
+                add("--all")
+            }
+
+            val settings = project.rustSettings
+            if (settings.compileAllTargets && checkSupportForBuildCheckAllTargets()) add("--all-targets")
+            if (settings.useOffline) add("-Zoffline")
+            addAll(ParametersListUtil.parse(settings.cargoCheckArguments))
         }
 
-        if (project.rustSettings.useOffline) {
-            arguments += "-Zoffline"
-        }
-
-        arguments += ParametersListUtil.parse(project.rustSettings.cargoCheckArguments)
-
-        return CargoCommandLine("check", projectDirectory, arguments)
+        return CargoCommandLine("check", cargoProjectDirectory, arguments)
             .execute(owner, ignoreExitCode = true)
     }
 
