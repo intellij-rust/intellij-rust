@@ -10,7 +10,6 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -399,18 +398,24 @@ private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): Compl
 }
 
 private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject>) {
-    for (cargoProject in cargoProjects) {
-        val workspacePackages = cargoProject.workspace?.packages
-            .orEmpty()
-            .filter { it.origin == PackageOrigin.WORKSPACE }
+    ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+            if (project.isDisposed) return@runWriteAction
+            ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
+                for (cargoProject in cargoProjects) {
+                    val workspacePackages = cargoProject.workspace?.packages
+                        .orEmpty()
+                        .filter { it.origin == PackageOrigin.WORKSPACE }
 
-        for (pkg in workspacePackages) {
-            val packageContentRoot = pkg.contentRoot ?: continue
-            val packageModule = runReadAction { ModuleUtilCore.findModuleForFile(packageContentRoot, project) }
-                ?: continue
-            ModuleRootModificationUtil.updateModel(packageModule) { rootModel ->
-                val contentEntry = rootModel.contentEntries.singleOrNull() ?: return@updateModel
-                contentEntry.setup(packageContentRoot)
+                    for (pkg in workspacePackages) {
+                        val packageContentRoot = pkg.contentRoot ?: continue
+                        val packageModule = ModuleUtilCore.findModuleForFile(packageContentRoot, project) ?: continue
+                        ModuleRootModificationUtil.updateModel(packageModule) { rootModel ->
+                            val contentEntry = rootModel.contentEntries.singleOrNull() ?: return@updateModel
+                            contentEntry.setup(packageContentRoot)
+                        }
+                    }
+                }
             }
         }
     }
