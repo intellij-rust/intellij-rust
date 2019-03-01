@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
 import com.intellij.util.LocalTimeCounter
+import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.lang.RsFileType
@@ -279,6 +280,12 @@ class RsPsiFactory(private val project: Project, private val markGenerated: Bool
         }
         return createExpressionOfType<RsMatchExpr>("match x { $matchBodyText }").matchBody
             ?: error("Failed to create match body from text: `$matchBodyText`")
+    }
+
+    fun createMatchBody(patterns: List<Pattern>, ctx: RsElement? = null): RsMatchBody {
+        val arms = patterns.joinToString("\n") { "${it.text(ctx)} => {}" }
+        return createExpressionOfType<RsMatchExpr>("match x { $arms }").matchBody
+            ?: error("Failed to create match body from patterns: `$arms`")
     }
 
     private inline fun <reified T : RsElement> createFromText(code: String): T? =

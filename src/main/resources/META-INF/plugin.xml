@@ -500,6 +500,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsTraitImplementationInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Match Check"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.checkMatch.RsMatchCheckInspection"/>
+
         <globalInspection language="Rust" groupName="Rust"
                           displayName="External Linter"
                           enabledByDefault="true" level="ERROR"

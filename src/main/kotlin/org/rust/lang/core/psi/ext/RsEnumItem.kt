@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsEnumItem
+import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.stubs.RsEnumItemStub
@@ -41,3 +42,6 @@ val RsEnumItem.isStdOptionOrResult: Boolean get() {
     val result = knownItems.Result
     return this == option || this == result
 }
+
+val RsEnumItem.variants: List<RsEnumVariant>
+    get() = enumBody?.enumVariantList.orEmpty()
