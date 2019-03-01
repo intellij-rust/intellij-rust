@@ -1137,7 +1137,6 @@ class RsResolveTest : RsResolveTestBase() {
     """)
 
     fun `test derive serde Serialize`() = checkByCode("""
-    //- main.rs
         #[lang = "serde::Serialize"]
         trait Serialize { fn serialize(&self); }
                            //X
@@ -1147,6 +1146,31 @@ class RsResolveTest : RsResolveTestBase() {
         fn bar(foo: Foo) {
             foo.serialize();
               //^
+        }
+    """)
+
+    fun `test 'pub (in path)' is crate-relative`() = checkByCode("""
+        mod foo {
+          //X
+            mod bar {
+                pub(in foo) fn baz() {}
+            }        //^
+        }
+    """)
+
+    fun `test 'pub (self)'`() = checkByCode("""
+        mod bar {
+          //X
+            pub(self) fn baz() {}
+        }     //^
+    """)
+
+    fun `test 'pub (super)'`() = checkByCode("""
+        mod foo {
+          //X
+            mod bar {
+                pub(super) fn baz() {}
+            }     //^
         }
     """)
 }

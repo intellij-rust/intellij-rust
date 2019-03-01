@@ -5,10 +5,7 @@
 
 package org.rust.ide.annotator
 
-import org.rust.MockEdition
-import org.rust.MockRustcVersion
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
@@ -1126,6 +1123,46 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         //- bar/baz.rs
             use <error descr="Module `foo::qwe` is private [E0603]">foo::qwe</error>::Foo;
     """, filePath = "bar/baz.rs")
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test item with crate visibility is NOT visible from other crates E0603`() = checkByFileTree("""
+        //- lib.rs
+            #![feature(crate_visibility_modifier)]
+            crate fn foo() {}
+            pub(crate) fn bar() {}
+        //- main.rs
+            extern crate test_package;
+            use <error descr="Function `test_package::foo` is private [E0603]">test_package::foo</error>; /*caret*/
+            use <error descr="Function `test_package::bar` is private [E0603]">test_package::bar</error>; /*caret*/
+    """, checkWarn = false)
+
+    fun `test item with crate visibility is visible in the same crate E0603`() = checkErrors("""
+        #![feature(crate_visibility_modifier)]
+        mod foo {
+            crate fn spam() {}
+            pub(crate) fn eggs() {}
+        }
+        mod bar {
+            use foo::spam;
+            use foo::eggs;
+        }
+    """)
+
+    fun `test restricted visibility E0603`() = checkErrors("""
+        mod foo {
+            pub mod bar {
+                pub(self) fn quux() {}
+                pub(super) fn spam() {}
+                pub(in foo) fn eggs() {}
+            }
+            use <error descr="Function `self::bar::quux` is private [E0603]">self::bar::quux</error>;
+            use self::bar::spam;
+            use self::bar::eggs;
+        }
+        use <error descr="Function `foo::bar::quux` is private [E0603]">foo::bar::quux</error>;
+        use <error descr="Function `foo::bar::spam` is private [E0603]">foo::bar::spam</error>;
+        use <error descr="Function `foo::bar::eggs` is private [E0603]">foo::bar::eggs</error>;
+    """)
 
     fun `test function args should implement Sized trait E0277`() = checkErrors("""
         fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}

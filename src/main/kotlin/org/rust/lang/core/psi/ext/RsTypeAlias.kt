@@ -29,8 +29,6 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
 
     override fun getIcon(flags: Int): Icon? = iconWithVisibility(flags, RsIcons.TYPE)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
     override val isAbstract: Boolean get() = typeReference == null
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)

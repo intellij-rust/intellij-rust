@@ -27,7 +27,7 @@ abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStu
     override val outerAttrList: List<RsOuterAttr>
         get() = stubChildrenOfType()
 
-    override val isPublic: Boolean get() = false // visibility does not affect foreign mods
+    override val visibility: RsVisibility get() = RsVisibility.Private // visibility does not affect foreign mods
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }

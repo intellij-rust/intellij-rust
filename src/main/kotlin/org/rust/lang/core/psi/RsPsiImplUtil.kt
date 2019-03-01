@@ -5,8 +5,9 @@
 
 package org.rust.lang.core.psi
 
-import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.stubs.RsVisibilityStub
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.superMods
 
 /**
  * Mixin methods to implement PSI interfaces without copy pasting and
@@ -14,12 +15,6 @@ import org.rust.lang.core.stubs.RsVisibilityStub
  * default methods in interfaces with mixed Kotlin-Java hierarchies (KT-9073 ).
  */
 object RsPsiImplUtil {
-    fun isPublic(psi: RsVisibilityOwner, stub: RsVisibilityStub?): Boolean =
-        stub?.isPublic ?: isPublicNonStubbed(psi)
-
-    fun isPublicNonStubbed(element: RsVisibilityOwner): Boolean =
-        element.vis != null
-
     fun crateRelativePath(element: RsNamedElement): String? {
         val name = element.name ?: return null
         val qualifier = element.containingMod.crateRelativePath ?: return null

@@ -21,8 +21,6 @@ abstract class RsNamedFieldDeclImplMixin : RsStubbedNamedElementImpl<RsNamedFiel
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.FIELD)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
     // temporary solution.
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 }

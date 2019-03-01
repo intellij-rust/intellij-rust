@@ -13,6 +13,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isPublic
 import org.rust.lang.core.psi.ext.nameInScope
 import org.rust.lang.core.psi.ext.pathOrQualifier
 import org.rust.lang.core.stubs.RsFileStub
