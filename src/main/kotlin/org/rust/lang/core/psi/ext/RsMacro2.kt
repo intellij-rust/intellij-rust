@@ -22,7 +22,5 @@ abstract class RsMacro2ImplMixin : RsStubbedNamedElementImpl<RsMacro2Stub>,
 
     override fun getIcon(flags: Int): Icon? = RsIcons.MACRO
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 }

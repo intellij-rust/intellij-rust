@@ -239,8 +239,16 @@ TraitRef ::= PathGenericArgsWithoutColonsNoTypeQual {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Items
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-Vis ::= crate | pub VisRestriction?
-VisRestriction ::= '(' in? PathWithoutTypes ')'
+Vis ::= crate | pub VisRestriction? {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsVisStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+VisRestriction ::= '(' in? PathWithoutTypes ')' {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 //XXX: don't use contextual keywords in recover, because they remap tokens.
 private default_ ::= <<defaultKeyword>>

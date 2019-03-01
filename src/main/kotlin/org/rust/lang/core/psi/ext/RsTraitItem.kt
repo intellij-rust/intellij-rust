@@ -131,8 +131,6 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.TRAIT)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     override val implementedTrait: BoundElement<RsTraitItem>? get() = BoundElement(this)

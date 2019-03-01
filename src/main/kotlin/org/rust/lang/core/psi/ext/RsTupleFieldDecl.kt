@@ -7,7 +7,6 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
@@ -18,8 +17,6 @@ val RsTupleFieldDecl.position: Int?
 abstract class RsTupleFieldDeclImplMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsTupleFieldDecl {
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
-
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublicNonStubbed(this)
 
     override fun getName(): String? = position?.toString()
 }

@@ -20,6 +20,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTupleFields
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.isPublic
 
 class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
     override fun isAvailableInEditorOnly(): Boolean = true

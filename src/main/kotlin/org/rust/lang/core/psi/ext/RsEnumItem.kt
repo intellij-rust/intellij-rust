@@ -28,8 +28,6 @@ abstract class RsEnumItemImplMixin : RsStubbedNamedElementImpl<RsEnumItemStub>, 
     override fun getIcon(flags: Int): Icon? =
         iconWithVisibility(flags, RsIcons.ENUM)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
