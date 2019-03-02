@@ -5,16 +5,9 @@
 
 package org.rustSlowTests.cargo.runconfig.test
 
-import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.testframework.TestProxyRoot
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
-import com.intellij.openapi.util.Disposer
-import com.intellij.util.ui.UIUtil
-import org.rust.stdext.removeLast
-import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
-class TestRunnerTest : RunConfigurationTestBase() {
+class CargoTestRunnerTest : CargoTestRunnerTestBase() {
 
     fun `test test statuses`() {
         val testProject = buildProject {
@@ -265,13 +258,13 @@ class TestRunnerTest : RunConfigurationTestBase() {
         val configuration = createTestRunConfigurationFromContext()
         val root = executeAndGetTestRoot(configuration)
 
-        val test = findTestByName("tests::test", root)
+        val test = root.findTestByName("tests::test")
         assertEquals("cargo:test://tests::test", test.locationUrl)
 
-        val mod = findTestByName("tests::test_mod", root)
+        val mod = root.findTestByName("tests::test_mod")
         assertEquals("cargo:suite://tests::test_mod", mod.locationUrl)
 
-        val testInner = findTestByName("tests::test_mod::test", root)
+        val testInner = root.findTestByName("tests::test_mod::test")
         assertEquals("cargo:test://tests::test_mod::test", testInner.locationUrl)
     }
 
@@ -307,29 +300,16 @@ class TestRunnerTest : RunConfigurationTestBase() {
         val configuration = createTestRunConfigurationFromContext()
         val root = executeAndGetTestRoot(configuration)
 
-        val test1 = findTestByName("tests::test1", root)
+        val test1 = root.findTestByName("tests::test1")
         check(test1.duration!! > 1000) { "The `test1` duration too short" }
 
-        val test2 = findTestByName("tests::test2", root)
+        val test2 = root.findTestByName("tests::test2")
         check(test2.duration!! < 100) { "The `test2` duration too long" }
 
-        val mod = findTestByName("tests", root)
+        val mod = root.findTestByName("tests")
         check(mod.duration!! == test1.duration!! + test2.duration!!) {
             "The `tests` mod duration is not the sum of durations of containing tests"
         }
-    }
-
-    private fun executeAndGetTestRoot(configuration: RunConfiguration): SMTestProxy.SMRootTestProxy {
-        val result = execute(configuration)
-        val executionConsole = result.executionConsole as SMTRunnerConsoleView
-        val testsRootNode = executionConsole.resultsViewer.testsRootNode
-        with(result.processHandler) {
-            startNotify()
-            waitFor()
-        }
-        UIUtil.dispatchAllInvocationEvents()
-        Disposer.dispose(executionConsole)
-        return testsRootNode
     }
 
     private fun checkTestTree(expectedFormattedTestTree: String) {
@@ -362,27 +342,6 @@ class TestRunnerTest : RunConfigurationTestBase() {
                 append('\n')
                 formatLevel(child, level + 1)
             }
-        }
-
-        private fun findTestByName(testFullName: String, root: SMTestProxy.SMRootTestProxy): SMTestProxy {
-            val fullNameBuffer = mutableListOf<String>()
-
-            fun find(test: SMTestProxy): SMTestProxy? {
-                if (test !is TestProxyRoot) {
-                    fullNameBuffer.add(test.name)
-                }
-                if (testFullName == fullNameBuffer.joinToString("::")) return test
-                for (child in test.children) {
-                    val result = find(child)
-                    if (result != null) return result
-                }
-                if (test !is TestProxyRoot) {
-                    fullNameBuffer.removeLast()
-                }
-                return null
-            }
-
-            return checkNotNull(find(root)) { "Could not find the test" }
         }
     }
 }
