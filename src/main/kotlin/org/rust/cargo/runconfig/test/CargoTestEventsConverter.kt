@@ -10,6 +10,8 @@ import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters
+import com.intellij.openapi.util.text.StringUtil.unquoteString
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
 import org.rust.cargo.runconfig.test.CargoTestLocator.getTestFnUrl
 import org.rust.cargo.runconfig.test.CargoTestLocator.getTestModUrl
@@ -140,8 +142,6 @@ class CargoTestEventsConverter(
         return messages
     }
 
-    private data class FailedTestOutput(val stdout: String, val failedMessage: String)
-
     private fun recordTestStartTime(test: NodeId) {
         testsStartTimes[test] = System.currentTimeMillis()
     }
@@ -205,10 +205,11 @@ class CargoTestEventsConverter(
         private const val ROOT_SUITE: String = "0"
         private const val NAME_SEPARATOR: String = "::"
 
+        private val COMPARISON_ASSERT_REGEX: Regex =
+            Regex("""thread '.*' panicked at 'assertion failed: `\(left == right\)`\s*left: `(.*)`,\s*right: `(.*?)`(:.*)?'""")
+
         private val NodeId.name: String
-            get() {
-                return substringAfterLast(NAME_SEPARATOR)
-            }
+            get() = substringAfterLast(NAME_SEPARATOR)
 
         private val NodeId.parent: NodeId
             get() {
@@ -232,11 +233,16 @@ class CargoTestEventsConverter(
                 .addAttribute("parentNodeId", test.parent)
                 .addAttribute("locationHint", getTestFnUrl(test))
 
-        private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder =
-            ServiceMessageBuilder.testFailed(test.name)
+        private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder {
+            val builder = ServiceMessageBuilder.testFailed(test.name)
                 .addAttribute("nodeId", test)
                 .addAttribute("message", "")
                 .addAttribute("details", failedMessage)
+            val (left, right) = extractDiffResult(failedMessage) ?: return builder
+            return builder
+                .addAttribute("expected", left)
+                .addAttribute("actual", right)
+        }
 
         private fun createTestFinishedMessage(test: NodeId, duration: String): ServiceMessageBuilder =
             ServiceMessageBuilder.testFinished(test.name)
@@ -263,35 +269,45 @@ class CargoTestEventsConverter(
             return FailedTestOutput(stdout, failedMessage)
         }
 
-        private data class LibtestSuiteMessage(
-            val type: String,
-            val event: String,
-            val test_count: String
-        ) {
-            companion object {
-                fun fromJson(json: JsonObject): LibtestSuiteMessage? {
-                    if (json.getAsJsonPrimitive("type")?.asString != "suite") {
-                        return null
-                    }
-                    return Gson().fromJson(json, LibtestSuiteMessage::class.java)
-                }
-            }
+        private fun extractDiffResult(failedMessage: String): DiffResult? {
+            val result = COMPARISON_ASSERT_REGEX.find(failedMessage) ?: return null
+            val left = unquoteString(unescapeStringCharacters(result.groupValues[1]))
+            val right = unquoteString(unescapeStringCharacters(result.groupValues[2]))
+            return DiffResult(left, right)
         }
+    }
+}
 
-        private data class LibtestTestMessage(
-            val type: String,
-            val event: String,
-            val name: String,
-            val stdout: String?
-        ) {
-            companion object {
-                fun fromJson(json: JsonObject): LibtestTestMessage? {
-                    if (json.getAsJsonPrimitive("type")?.asString != "test") {
-                        return null
-                    }
-                    return Gson().fromJson(json, LibtestTestMessage::class.java)
-                }
+private data class FailedTestOutput(val stdout: String, val failedMessage: String)
+private data class DiffResult(val left: String, val right: String)
+
+private data class LibtestSuiteMessage(
+    val type: String,
+    val event: String,
+    val test_count: String
+) {
+    companion object {
+        fun fromJson(json: JsonObject): LibtestSuiteMessage? {
+            if (json.getAsJsonPrimitive("type")?.asString != "suite") {
+                return null
             }
+            return Gson().fromJson(json, LibtestSuiteMessage::class.java)
+        }
+    }
+}
+
+private data class LibtestTestMessage(
+    val type: String,
+    val event: String,
+    val name: String,
+    val stdout: String?
+) {
+    companion object {
+        fun fromJson(json: JsonObject): LibtestTestMessage? {
+            if (json.getAsJsonPrimitive("type")?.asString != "test") {
+                return null
+            }
+            return Gson().fromJson(json, LibtestTestMessage::class.java)
         }
     }
 }
