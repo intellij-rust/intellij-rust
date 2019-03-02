@@ -198,20 +198,20 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
         fn main() {
             Bar.foo(/*caret*/)
         }
-    """, addTraitImport = false)
+    """, importOutOfScopeItems = false)
 
     private fun doTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
-        addTraitImport: Boolean = true
+        importOutOfScopeItems: Boolean = true
     ) {
         val settings = RsCodeInsightSettings.getInstance()
-        val initialValue = settings.addTraitImport
-        settings.addTraitImport = addTraitImport
+        val initialValue = settings.importOutOfScopeItems
+        settings.importOutOfScopeItems = importOutOfScopeItems
         try {
             doSingleCompletion(before, after)
         } finally {
-            settings.addTraitImport = initialValue
+            settings.importOutOfScopeItems = initialValue
         }
     }
 }

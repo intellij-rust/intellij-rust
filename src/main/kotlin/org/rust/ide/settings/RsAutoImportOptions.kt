@@ -17,28 +17,28 @@ class RsAutoImportOptions : AutoImportOptionsProvider {
     private val showImportPopupCheckbox: JBCheckBox = JBCheckBox("Show import popup")
     private var showImportPopup: Boolean by CheckboxDelegate(showImportPopupCheckbox)
 
-    private val addTraitImportCheckbox: JBCheckBox = JBCheckBox("Add trait imports while trait methods completion")
-    private var addTraitImport: Boolean by CheckboxDelegate(addTraitImportCheckbox)
+    private val importOutOfScopeItemsCheckbox: JBCheckBox = JBCheckBox("Import out of scope items while completion")
+    private var importOutOfScopeItems: Boolean by CheckboxDelegate(importOutOfScopeItemsCheckbox)
 
     override fun createComponent(): JComponent = panel {
         row { showImportPopupCheckbox() }
-        row { addTraitImportCheckbox() }
+        row { importOutOfScopeItemsCheckbox() }
     }.apply { border = IdeBorderFactory.createTitledBorder("Rust") }
 
     override fun isModified(): Boolean {
         return showImportPopup != RsCodeInsightSettings.getInstance().showImportPopup ||
-            addTraitImport != RsCodeInsightSettings.getInstance().addTraitImport
+            importOutOfScopeItems != RsCodeInsightSettings.getInstance().importOutOfScopeItems
     }
 
     override fun apply() {
         val settings = RsCodeInsightSettings.getInstance()
         settings.showImportPopup = showImportPopup
-        settings.addTraitImport = addTraitImport
+        settings.importOutOfScopeItems = importOutOfScopeItems
     }
 
     override fun reset() {
         val settings = RsCodeInsightSettings.getInstance()
         showImportPopup = settings.showImportPopup
-        addTraitImport = settings.addTraitImport
+        importOutOfScopeItems = settings.importOutOfScopeItems
     }
 }

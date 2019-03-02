@@ -152,18 +152,40 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test do not import out of scope items when setting disabled`() = doTest("""
+        mod collections {
+            pub struct BTreeMap;
+        }
+
+        fn main() {
+            let _ = BTreeM/*caret*/
+        }
+    """, """
+        mod collections {
+            pub struct BTreeMap;
+        }
+
+        fn main() {
+            let _ = BTreeMap/*caret*/
+        }
+    """, importOutOfScopeItems = false)
+
     private fun doTest(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
-        suggestOutOfScopeItems: Boolean = true
+        suggestOutOfScopeItems: Boolean = true,
+        importOutOfScopeItems: Boolean = true
     ) {
         val settings = RsCodeInsightSettings.getInstance()
-        val initialValue = settings.suggestOutOfScopeItems
+        val suggestInitialValue = settings.suggestOutOfScopeItems
+        val importInitialValue = settings.importOutOfScopeItems
         settings.suggestOutOfScopeItems = suggestOutOfScopeItems
+        settings.importOutOfScopeItems = importOutOfScopeItems
         try {
             doSingleCompletion(before, after)
         } finally {
-            settings.suggestOutOfScopeItems = initialValue
+            settings.suggestOutOfScopeItems = suggestInitialValue
+            settings.importOutOfScopeItems = importInitialValue
         }
     }
 
