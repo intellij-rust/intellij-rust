@@ -150,7 +150,9 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                         override fun handleInsert(element: RsElement, scopeName: String, context: InsertionContext, item: LookupElement) {
                             super.handleInsert(element, scopeName, context, item)
                             context.commitDocument()
-                            context.containingMod?.importItem(candidate)
+                            if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
+                                context.containingMod?.importItem(candidate)
+                            }
                         }
                     })
                 }
@@ -272,7 +274,7 @@ private fun methodAndFieldCompletionProcessor(
 }
 
 private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {
-    if (!RsCodeInsightSettings.getInstance().addTraitImport) return null
+    if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return null
     val ancestor = PsiTreeUtil.getParentOfType(methodOrField, RsBlock::class.java, RsMod::class.java) ?: return null
     // `AutoImportFix.getImportCandidates` expects original scope element for correct item filtering
     val scope = CompletionUtil.getOriginalElement(ancestor) as? RsElement ?: return null
