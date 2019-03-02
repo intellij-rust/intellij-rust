@@ -2,7 +2,8 @@
 
 [![official JetBrains project](http://jb.gg/badges/official-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
-
+[![JetBrains plugins][plugin-version-svg]][plugin-repo]
+[![JetBrains plugins][plugin-downloads-svg]][plugin-repo]
 
 | Build Status |                                                                              |
 |--------------|------------------------------------------------------------------------------|
@@ -62,6 +63,10 @@ with [help wanted].
 <!-- Badges -->
 [gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
 [gitter-chat-svg]: https://badges.gitter.im/Join%20Chat.svg
+
+[plugin-repo]: https://plugins.jetbrains.com/plugin/8182-rust
+[plugin-version-svg]: https://img.shields.io/jetbrains/plugin/v/8182-rust.svg
+[plugin-downloads-svg]: https://img.shields.io/jetbrains/plugin/d/8182-rust.svg
 
 [travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust?branch=master
 [travis-build-status-svg]: https://travis-ci.org/intellij-rust/intellij-rust.svg?branch=master
