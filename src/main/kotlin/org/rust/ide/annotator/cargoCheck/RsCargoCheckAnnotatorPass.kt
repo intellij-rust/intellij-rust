@@ -12,60 +12,72 @@ import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.containingCargoPackage
 
 class RsCargoCheckAnnotatorPass(
     private val factory: RsCargoCheckAnnotatorPassFactory,
     private val file: PsiFile,
     private val editor: Editor
-) : TextEditorHighlightingPass(
-    file.project,
-    editor.document
-) {
+) : TextEditorHighlightingPass(file.project, editor.document), DumbAware {
     private val annotationHolder: AnnotationHolderImpl = AnnotationHolderImpl(AnnotationSession(file))
     private var annotationInfo: Lazy<RsCargoCheckAnnotationResult?>? = null
-    private var annotationResult: RsCargoCheckAnnotationResult? = null
+    private val annotationResult: RsCargoCheckAnnotationResult? get() = annotationInfo?.value
 
     override fun doCollectInformation(progress: ProgressIndicator) {
         annotationHolder.clear()
-        annotationInfo = try {
-            RsCargoCheckAnnotator.collectInformation(file, editor, false)
-        } catch (t: Throwable) {
-            process(t)
-            null
-        }
+        if (file !is RsFile || !isAnnotationPassEnabled) return
+
+        val cargoPackage = file.containingCargoPackage
+        if (cargoPackage?.origin != PackageOrigin.WORKSPACE) return
+
+        val project = file.project
+        annotationInfo = RsCargoCheckUtils.checkLazily(
+            project.toolchain ?: return,
+            project,
+            ModuleUtil.findModuleForFile(file) ?: project,
+            cargoPackage.workspace.contentRoot,
+            cargoPackage.name,
+            isOnFly = true
+        )
     }
 
     override fun doApplyInformationToEditor() {
+        if (!isAnnotationPassEnabled) return
         val modificationStampBefore = getProjectModificationStamp()
 
         val update = object : Update(file) {
             override fun setRejected() {
                 super.setRejected()
-                doFinish(getHighlights(), modificationStampBefore)
+                doFinish(highlights, modificationStampBefore)
             }
 
             override fun run() {
                 if (!projectChanged(modificationStampBefore) && !myProject.isDisposed) {
                     BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, Runnable {
-                        doAnnotate()
-                        ReadAction.run<RuntimeException> {
+                        val annotationResult = annotationResult ?: return@Runnable
+                        runReadAction {
                             ProgressManager.checkCanceled()
                             if (!projectChanged(modificationStampBefore)) {
-                                doApply()
-                                doFinish(getHighlights(), modificationStampBefore)
+                                doApply(annotationResult)
+                                doFinish(highlights, modificationStampBefore)
                             }
                         }
                     })
@@ -76,22 +88,13 @@ class RsCargoCheckAnnotatorPass(
         factory.scheduleExternalActivity(update)
     }
 
-    private fun doAnnotate() {
-        val dumbService = DumbService.getInstance(myProject)
-        if (dumbService.isDumb && !DumbService.isDumbAware(RsCargoCheckAnnotator)) return
+    private fun doApply(annotationResult: RsCargoCheckAnnotationResult) {
+        if (file !is RsFile || !file.isValid) return
         try {
-            annotationResult = RsCargoCheckAnnotator.doAnnotate(annotationInfo ?: return)
+            annotationHolder.createAnnotationsForFile(file, annotationResult)
         } catch (t: Throwable) {
-            process(t)
-        }
-    }
-
-    private fun doApply() {
-        if (annotationResult == null || !file.isValid) return
-        try {
-            RsCargoCheckAnnotator.apply(file, annotationResult, annotationHolder)
-        } catch (t: Throwable) {
-            process(t)
+            if (t is ProcessCanceledException) throw t
+            LOG.error(t)
         }
     }
 
@@ -113,8 +116,8 @@ class RsCargoCheckAnnotatorPass(
         }, ModalityState.stateForComponent(editor.component))
     }
 
-    private fun getHighlights(): List<HighlightInfo> =
-        annotationHolder.map(HighlightInfo::fromAnnotation)
+    private val highlights: List<HighlightInfo>
+        get() = annotationHolder.map(HighlightInfo::fromAnnotation)
 
     private fun getProjectModificationStamp(): Long =
         PsiModificationTracker.SERVICE.getInstance(myProject).modificationCount
@@ -122,13 +125,11 @@ class RsCargoCheckAnnotatorPass(
     private fun projectChanged(modificationStampBefore: Long): Boolean =
         getProjectModificationStamp() != modificationStampBefore
 
+    private val isAnnotationPassEnabled: Boolean
+        get() = file.project.rustSettings.useCargoCheckAnnotator
+
     companion object {
         private val LOG: Logger = Logger.getInstance(RsCargoCheckAnnotatorPass::class.java)
-
-        private fun process(t: Throwable) {
-            if (t is ProcessCanceledException) throw t
-            LOG.error(t)
-        }
     }
 }
 
