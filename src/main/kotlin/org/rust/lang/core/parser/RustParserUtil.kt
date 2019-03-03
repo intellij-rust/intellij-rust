@@ -10,6 +10,8 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.WhitespacesAndCommentsBinder
 import com.intellij.lang.parser.GeneratedParserUtilBase
+import com.intellij.lexer.Lexer
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
@@ -18,12 +20,10 @@ import com.intellij.util.BitUtil
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
-import org.rust.lang.core.psi.RS_KEYWORDS
-import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.tokenSetOf
 import org.rust.stdext.makeBitMask
+import org.rust.stdext.removeLast
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
@@ -385,5 +385,80 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return false
     }
 
-}
+    @JvmStatic
+    fun parseMacroArgumentLazy(builder: PsiBuilder, level: Int): Boolean =
+        parseTokenTreeLazy(builder, level, MACRO_ARGUMENT)
 
+    @JvmStatic
+    fun parseMacroBodyLazy(builder: PsiBuilder, level: Int): Boolean =
+        parseTokenTreeLazy(builder, level, MACRO_BODY)
+
+    private val LEFT_BRACES = tokenSetOf(LPAREN, LBRACE, LBRACK)
+    private val RIGHT_BRACES = tokenSetOf(RPAREN, RBRACE, RBRACK)
+
+    private fun parseTokenTreeLazy(builder: PsiBuilder, level: Int, tokenTypeToCollapse: IElementType): Boolean {
+        val firstToken = builder.tokenType
+        if (firstToken == null || firstToken !in LEFT_BRACES) return false
+
+        val marker = builder.mark()
+
+        builder.advanceLexer()
+
+        val braceStack = mutableListOf<MacroBraces>()
+        braceStack += MacroBraces.fromTokenOrFail(firstToken)
+
+        while (braceStack.isNotEmpty() && !builder.eof()) {
+            val tokenType = builder.tokenType
+            if (tokenType != null) {
+                if (tokenType in LEFT_BRACES) {
+                    braceStack += MacroBraces.fromTokenOrFail(tokenType)
+                } else if (tokenType in RIGHT_BRACES) {
+                    if (braceStack.removeLast() != MacroBraces.fromTokenOrFail(tokenType)) {
+                        marker.rollbackTo()
+                        return false
+                    }
+                }
+            }
+            builder.advanceLexer()
+        }
+
+        if (braceStack.isNotEmpty()) {
+            marker.rollbackTo()
+            return false
+        }
+
+        marker.collapse(tokenTypeToCollapse)
+        return true
+    }
+
+    fun hasProperTokenTreeBraceBalance(text: CharSequence, lexer: Lexer): Boolean {
+        lexer.start(text)
+
+        val firstToken = lexer.tokenType
+        if (firstToken == null || firstToken !in LEFT_BRACES) return false
+
+        lexer.advance()
+
+        val braceStack = mutableListOf<MacroBraces>()
+        braceStack += MacroBraces.fromTokenOrFail(firstToken)
+
+        while (true) {
+            ProgressManager.checkCanceled()
+            val tokenType = lexer.tokenType
+                ?: return braceStack.isEmpty() //eof: checking balance
+
+            if (braceStack.isEmpty()) {
+                //the last brace is not the last token
+                return false
+            }
+
+            if (tokenType in LEFT_BRACES) {
+                braceStack += MacroBraces.fromTokenOrFail(tokenType)
+            } else if (tokenType in RIGHT_BRACES) {
+                if (braceStack.removeLast() != MacroBraces.fromTokenOrFail(tokenType)) return false
+            }
+
+            lexer.advance()
+        }
+    }
+}

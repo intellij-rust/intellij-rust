@@ -40,6 +40,10 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
+            override fun skipChildProcessingWhenBuildingStubs(parent: ASTNode, node: ASTNode): Boolean {
+                val elementType = node.elementType
+                return elementType == RsElementTypes.MACRO_ARGUMENT || elementType == RsElementTypes.MACRO_BODY
+            }
         }
 
         override fun serialize(stub: RsFileStub, dataStream: StubOutputStream) {
