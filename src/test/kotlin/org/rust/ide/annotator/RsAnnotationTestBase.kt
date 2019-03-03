@@ -101,6 +101,17 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkAfter = this::checkByFileTree,
         testmark = testmark)
 
+    protected fun checkFixByFileTreeWithoutHighlighting(
+        fixName: String,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        testmark: Testmark? = null
+    ) = checkFix(fixName, before, after,
+        configure = this::configureByFileTree,
+        checkBefore = {},
+        checkAfter = this::checkByFileTree,
+        testmark = testmark)
+
     protected fun checkFixIsUnavailable(
         fixName: String,
         @Language("Rust") text: String,

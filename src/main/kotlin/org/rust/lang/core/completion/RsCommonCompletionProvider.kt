@@ -17,7 +17,7 @@ import com.intellij.util.ProcessingContext
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.ImportCandidate
 import org.rust.ide.inspections.import.ImportContext
-import org.rust.ide.inspections.import.importItem
+import org.rust.ide.inspections.import.import
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -151,7 +151,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                             super.handleInsert(element, scopeName, context, item)
                             context.commitDocument()
                             if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
-                                context.containingMod?.importItem(candidate)
+                                context.containingMod?.let { candidate.import(it) }
                             }
                         }
                     })
@@ -264,7 +264,7 @@ private fun methodAndFieldCompletionProcessor(
                     super.handleInsert(element, scopeName, context, item)
                     context.commitDocument()
                     if (traitImportCandidate != null) {
-                        context.containingMod?.importItem(traitImportCandidate)
+                        context.containingMod?.let { traitImportCandidate.import(it) }
                     }
                 }
             }))

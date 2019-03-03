@@ -36,6 +36,9 @@ class RsProjectConfigurable(
     private val showTestToolWindowCheckbox: JBCheckBox = JBCheckBox()
     private var showTestToolWindow: Boolean by CheckboxDelegate(showTestToolWindowCheckbox)
 
+    private val doctestInjectionCheckbox: JBCheckBox = JBCheckBox()
+    private var doctestInjectionEnabled: Boolean by CheckboxDelegate(doctestInjectionCheckbox)
+
     private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
     private val hintCheckboxes: Map<String, JBCheckBox> =
         hintProvider.supportedOptions.associate { it.id to JBCheckBox() }
@@ -52,6 +55,7 @@ class RsProjectConfigurable(
             Show test results in run tool window when testing session begins
             instead of raw console.
         """)
+        row("Inject Rust language to documentation comments:", doctestInjectionCheckbox)
         val supportedHintOptions = hintProvider.supportedOptions
         if (supportedHintOptions.isNotEmpty()) {
             block("Hints") {
@@ -73,6 +77,7 @@ class RsProjectConfigurable(
         )
         expandMacros = settings.expandMacros
         showTestToolWindow = settings.showTestToolWindow
+        doctestInjectionEnabled = settings.doctestInjectionEnabled
 
         for (option in hintProvider.supportedOptions) {
             checkboxForOption(option).isSelected = option.get()
@@ -92,7 +97,8 @@ class RsProjectConfigurable(
             toolchain = rustProjectSettings.data.toolchain,
             explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib,
             expandMacros = expandMacros,
-            showTestToolWindow = showTestToolWindow
+            showTestToolWindow = showTestToolWindow,
+            doctestInjectionEnabled = doctestInjectionEnabled
         )
     }
 
@@ -103,6 +109,7 @@ class RsProjectConfigurable(
             || data.explicitPathToStdlib != settings.explicitPathToStdlib
             || expandMacros != settings.expandMacros
             || showTestToolWindow != settings.showTestToolWindow
+            || doctestInjectionEnabled != settings.doctestInjectionEnabled
     }
 
     private fun checkboxForOption(opt: Option): JBCheckBox = hintCheckboxes[opt.id]!!

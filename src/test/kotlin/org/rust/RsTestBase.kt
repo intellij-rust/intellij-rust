@@ -5,7 +5,9 @@
 
 package org.rust
 
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LanguageCommenters
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.StreamUtil
@@ -205,8 +207,17 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             val elementOffset = myFixture.editor.logicalPositionToOffset(previousLine)
             val elementAtMarker = myFixture.file.findElementAt(elementOffset)!!
             val element = elementAtMarker.ancestorOrSelf<T>()
-                ?: error("No ${T::class.java.simpleName} at ${elementAtMarker.text}")
-            result.add(Triple(element, data, elementOffset))
+            if (element != null) {
+                result.add(Triple(element, data, elementOffset))
+            } else {
+                val injectionElement = InjectedLanguageManager.getInstance(project)
+                    .findInjectedElementAt(myFixture.file, elementOffset)
+                    ?.ancestorOrSelf<T>()
+                    ?: error("No ${T::class.java.simpleName} at ${elementAtMarker.text}")
+                val injectionOffset = (injectionElement.containingFile.virtualFile as VirtualFileWindow)
+                    .documentWindow.hostToInjected(elementOffset)
+                result.add(Triple(injectionElement, data, injectionOffset))
+            }
         }
         return result
     }

@@ -33,6 +33,7 @@ class RustProjectSettingsServiceImpl(
         var useOffline: Boolean = false,
         var expandMacros: Boolean = true,
         var showTestToolWindow: Boolean = true,
+        var doctestInjectionEnabled: Boolean = true,
         var useSkipChildren: Boolean = false
     )
 
@@ -60,6 +61,7 @@ class RustProjectSettingsServiceImpl(
                 useOffline = state.useOffline,
                 expandMacros = state.expandMacros,
                 showTestToolWindow = state.showTestToolWindow,
+                doctestInjectionEnabled = state.doctestInjectionEnabled,
                 useSkipChildren = state.useSkipChildren
             )
         }
@@ -75,6 +77,7 @@ class RustProjectSettingsServiceImpl(
                 useOffline = value.useOffline,
                 expandMacros = value.expandMacros,
                 showTestToolWindow = value.showTestToolWindow,
+                doctestInjectionEnabled = value.doctestInjectionEnabled,
                 useSkipChildren = value.useSkipChildren
             )
             if (state != newState) {
