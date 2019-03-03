@@ -15,7 +15,6 @@ import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
@@ -64,14 +63,14 @@ object RsCargoCheckUtils {
     fun checkLazily(
         toolchain: RustToolchain,
         project: Project,
-        owner: ComponentManager,
+        owner: Disposable,
         workingDirectory: Path,
         packageName: String?,
         isOnFly: Boolean
     ): Lazy<RsCargoCheckAnnotationResult?>? {
         checkReadAccessAllowed()
         return CachedValuesManager.getManager(project)
-            .getCachedValue(owner) {
+            .getCachedValue(project) {
                 // We want to run `cargo check` in background thread and *without* read action.
                 // And also we want to cache result of `cargo check` because `cargo check` is cargo package-global,
                 // but annotator can be invoked separately for each file.
