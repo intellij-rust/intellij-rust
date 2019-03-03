@@ -10,6 +10,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.lang.annotation.AnnotationSession
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
@@ -22,8 +23,11 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.impl.AnyPsiChangeListener
+import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.rust.cargo.project.settings.rustSettings
@@ -40,6 +44,7 @@ class RsCargoCheckAnnotatorPass(
     private val annotationHolder: AnnotationHolderImpl = AnnotationHolderImpl(AnnotationSession(file))
     private var annotationInfo: Lazy<RsCargoCheckAnnotationResult?>? = null
     private val annotationResult: RsCargoCheckAnnotationResult? get() = annotationInfo?.value
+    private lateinit var disposable: Disposable
 
     override fun doCollectInformation(progress: ProgressIndicator) {
         annotationHolder.clear()
@@ -49,10 +54,14 @@ class RsCargoCheckAnnotatorPass(
         if (cargoPackage?.origin != PackageOrigin.WORKSPACE) return
 
         val project = file.project
+        disposable = createDisposableOnAnyPsiChange(project.messageBus).also {
+            Disposer.register(ModuleUtil.findModuleForFile(file) ?: project, it)
+        }
+
         annotationInfo = RsCargoCheckUtils.checkLazily(
             project.toolchain ?: return,
             project,
-            ModuleUtil.findModuleForFile(file) ?: project,
+            disposable,
             cargoPackage.workspace.contentRoot,
             cargoPackage.name,
             isOnFly = true
@@ -60,29 +69,22 @@ class RsCargoCheckAnnotatorPass(
     }
 
     override fun doApplyInformationToEditor() {
-        if (!isAnnotationPassEnabled) return
-        val modificationStampBefore = getProjectModificationStamp()
+        if (annotationInfo == null || !isAnnotationPassEnabled) return
 
         val update = object : Update(file) {
-            override fun setRejected() {
-                super.setRejected()
-                doFinish(highlights, modificationStampBefore)
+            override fun run() {
+                BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Runnable {
+                    val annotationResult = annotationResult ?: return@Runnable
+                    runReadAction {
+                        ProgressManager.checkCanceled()
+                        doApply(annotationResult)
+                        ProgressManager.checkCanceled()
+                        doFinish(highlights)
+                    }
+                })
             }
 
-            override fun run() {
-                if (!projectChanged(modificationStampBefore) && !myProject.isDisposed) {
-                    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, Runnable {
-                        val annotationResult = annotationResult ?: return@Runnable
-                        runReadAction {
-                            ProgressManager.checkCanceled()
-                            if (!projectChanged(modificationStampBefore)) {
-                                doApply(annotationResult)
-                                doFinish(highlights, modificationStampBefore)
-                            }
-                        }
-                    })
-                }
-            }
+            override fun canEat(update: Update?): Boolean = true
         }
 
         factory.scheduleExternalActivity(update)
@@ -98,32 +100,24 @@ class RsCargoCheckAnnotatorPass(
         }
     }
 
-    private fun doFinish(highlights: List<HighlightInfo>, modificationStampBefore: Long) {
+    private fun doFinish(highlights: List<HighlightInfo>) {
         val document = document ?: return
         ApplicationManager.getApplication().invokeLater({
-            if (!projectChanged(modificationStampBefore) && !myProject.isDisposed) {
-                UpdateHighlightersUtil.setHighlightersToEditor(
-                    myProject,
-                    document,
-                    0,
-                    file.textLength,
-                    highlights,
-                    colorsScheme,
-                    id
-                )
-                DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.markFileUpToDate(document, id)
-            }
+            UpdateHighlightersUtil.setHighlightersToEditor(
+                myProject,
+                document,
+                0,
+                file.textLength,
+                highlights,
+                colorsScheme,
+                id
+            )
+            DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.markFileUpToDate(document, id)
         }, ModalityState.stateForComponent(editor.component))
     }
 
     private val highlights: List<HighlightInfo>
         get() = annotationHolder.map(HighlightInfo::fromAnnotation)
-
-    private fun getProjectModificationStamp(): Long =
-        PsiModificationTracker.SERVICE.getInstance(myProject).modificationCount
-
-    private fun projectChanged(modificationStampBefore: Long): Boolean =
-        getProjectModificationStamp() != modificationStampBefore
 
     private val isAnnotationPassEnabled: Boolean
         get() = file.project.rustSettings.useCargoCheckAnnotator
@@ -167,4 +161,17 @@ class RsCargoCheckAnnotatorPassFactory(
     companion object {
         private const val TIME_SPAN: Int = 300
     }
+}
+
+private fun createDisposableOnAnyPsiChange(messageBus: MessageBus): Disposable {
+    val child = Disposer.newDisposable("Dispose on PSI change")
+    messageBus.connect(child).subscribe(
+        PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
+        object : AnyPsiChangeListener.Adapter() {
+            override fun beforePsiChanged(isPhysical: Boolean) {
+                Disposer.dispose(child)
+            }
+        }
+    )
+    return child
 }
