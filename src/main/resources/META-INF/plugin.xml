@@ -500,6 +500,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsTraitImplementationInspection"/>
 
+        <globalInspection language="Rust" groupName="Rust"
+                          displayName="Cargo Check"
+                          enabledByDefault="true" level="ERROR"
+                          implementationClass="org.rust.ide.inspections.RsCargoCheckInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
@@ -842,6 +847,10 @@
                 class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
                 text="Run Cargo command"/>
 
+        <action id="Rust.RunCargoCheck"
+                class="org.rust.ide.actions.RsRunCargoCheckAction"
+                text="Run Cargo Check"/>
+
         <action id="Rust.RunClippy"
                 class="org.rust.cargo.runconfig.command.RunClippyAction"
                 text="Run Clippy"/>
@@ -883,6 +892,7 @@
             <reference id="Rust.RefreshCargoProject"/>
             <reference id="Rust.CargoCommand"/>
             <reference id="Rust.CargoFmtFile"/>
+            <reference id="Rust.RunCargoCheck"/>
             <reference id="Rust.RunClippy"/>
             <separator/>
             <reference id="Rust.AttachCargoProject"/>
