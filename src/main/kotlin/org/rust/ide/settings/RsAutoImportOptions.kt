@@ -17,7 +17,7 @@ class RsAutoImportOptions : AutoImportOptionsProvider {
     private val showImportPopupCheckbox: JBCheckBox = JBCheckBox("Show import popup")
     private var showImportPopup: Boolean by CheckboxDelegate(showImportPopupCheckbox)
 
-    private val importOutOfScopeItemsCheckbox: JBCheckBox = JBCheckBox("Import out of scope items while completion")
+    private val importOutOfScopeItemsCheckbox: JBCheckBox = JBCheckBox("Import out-of-scope items on completion")
     private var importOutOfScopeItems: Boolean by CheckboxDelegate(importOutOfScopeItemsCheckbox)
 
     override fun createComponent(): JComponent = panel {
