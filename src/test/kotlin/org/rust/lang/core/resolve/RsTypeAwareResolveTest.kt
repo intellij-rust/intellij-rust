@@ -751,9 +751,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }                   //^
     """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
 
-    // TODO support default type parameters
-    fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 2)`() = expect<IllegalStateException> {
-        checkByCode("""
+    fun `test Self-qualified path in trait impl is resolved to assoc type of super trait (generic trait 2)`() = checkByCode("""
         struct S;
         trait Trait1<T=u8> { type Item; }
         trait Trait2<T>: Trait1<T> { fn foo() -> i32; }
@@ -767,6 +765,5 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         impl Trait2<i32> for S {
             fn foo() -> Self::Item { unreachable!() }
         }                   //^
-        """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
-    }
+    """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
 }

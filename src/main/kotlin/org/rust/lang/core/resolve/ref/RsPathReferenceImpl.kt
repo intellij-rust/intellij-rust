@@ -114,9 +114,27 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         }
 
         val typeParameters = element.typeParameters.map { TyTypeParameter.named(it) }
+        val typeSubst = buildMap<TyTypeParameter, Ty> {
+            putAll(typeParameters.zip(typeParameters).toMap())
+            val typeDefaults = element.typeParameters.mapNotNull {
+                val param = TyTypeParameter.named(it)
+                val default = it.typeReference?.type ?: return@mapNotNull null
+                param to default
+            }.toMap()
+            putAll(typeDefaults)
+            if (typeArguments != null) {
+                putAll(typeParameters.zip(typeArguments).toMap())
+            }
+        }
+
         val regionParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
-        val typeSubst = typeParameters.zip(typeArguments ?: typeParameters).toMap()
-        val regionSubst = regionParameters.zip(regionArguments ?: regionParameters).toMap()
+        val regionSubst = buildMap<ReEarlyBound, Region> {
+            putAll(regionParameters.zip(regionParameters).toMap())
+            if (regionArguments != null) {
+                putAll(regionParameters.zip(regionArguments).toMap())
+            }
+        }
+
         val newSubst = Substitution(typeSubst, regionSubst)
         BoundElement(element, subst + newSubst, assocTypes)
     }
