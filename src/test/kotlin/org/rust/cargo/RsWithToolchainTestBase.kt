@@ -69,12 +69,12 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         super.setUp()
 
         if (toolchain != null) {
-            project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
+            project.rustSettings.modify { it.toolchain = toolchain }
         }
     }
 
     override fun tearDown() {
-        project.rustSettings.data = project.rustSettings.data.copy(toolchain = null)
+        project.rustSettings.modify { it.toolchain = null }
         super.tearDown()
     }
 

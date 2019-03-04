@@ -32,6 +32,6 @@ class ToggleCargoCheckAction : AnAction() {
         val project = e.project ?: return
         val settings = project.rustSettings
         val before = settings.useCargoCheckAnnotator
-        settings.data = settings.data.copy(useCargoCheckAnnotator = !before)
+        settings.modify { it.useCargoCheckAnnotator = !before }
     }
 }

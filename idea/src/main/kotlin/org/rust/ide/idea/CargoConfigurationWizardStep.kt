@@ -61,10 +61,10 @@ class CargoConfigurationWizardStep private constructor(
         override fun update(module: Module, rootModel: ModifiableRootModel) {
             val data = data
             if (data != null) {
-                module.project.rustSettings.data = module.project.rustSettings.data.copy(
-                    toolchain = data.toolchain,
-                    explicitPathToStdlib = data.explicitPathToStdlib
-                )
+                module.project.rustSettings.modify {
+                    it.toolchain = data.toolchain
+                    it.explicitPathToStdlib = data.explicitPathToStdlib
+                }
             }
             // We don't use SDK, but let's inherit one to reduce the amount of
             // "SDK not configured" errors
