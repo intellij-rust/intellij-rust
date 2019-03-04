@@ -6,29 +6,33 @@
 package org.rust.ide.intentions
 
 class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
-    fun `test let not available`() = doUnavailableTest(""""
+    fun `test if let unavailable`() = doUnavailableTest(""""
         fn foo(a: Option<i32>) {
-            if let Some(x) /*caret*/= a {} else {}
+            if/*caret*/ let Some(x) = a {} else {}
         }
     """)
 
     fun `test if without condition unavailable`() = doUnavailableTest("""
-        fn foo() { if /*caret*/ {} else {}}
+        fn foo() {
+            if /*caret*/ {} else {}
+        }
     """)
 
     fun `test if without else branch unavailable`() = doUnavailableTest(""""
         fn foo(a: i32) {
-            if a == 10 /*caret*/ {}
+            if/*caret*/ a == 10  {}
         }
     """)
 
-    fun `test if without then branch`() = doUnavailableTest("""
-        fn foo(a: i32) {if a == 10/*caret*/ else {}}
+    fun `test if without then branch unavailable`() = doUnavailableTest("""
+        fn foo(a: i32) {
+            if a/*caret*/ == 10 else {}
+        }
     """)
 
     fun `test simple inversion`() = doAvailableTest("""
         fn foo() {
-            if 2 =/*caret*/= 2 {
+            if/*caret*/ 2 == 2 {
                 Ok(())
             } else {
                 Err(())
@@ -36,7 +40,7 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
         }
     """, """
         fn foo() {
-            if !(2 == 2) {
+            if 2 != 2 {
                 Err(())
             } else {
                 Ok(())
@@ -46,17 +50,17 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
 
     fun `test simple inversion on one line`() = doAvailableTest("""
         fn foo() {
-            if 2 =/*caret*/= 2 { Ok(()) } else { Err(()) }
+            if/*caret*/ 2 == 2 { Ok(()) } else { Err(()) }
         }
     """, """
         fn foo() {
-            if !(2 == 2) { Err(()) } else { Ok(()) }
+            if 2 != 2 { Err(()) } else { Ok(()) }
         }
     """)
 
-    fun `test bigger condition to simplification`() = doAvailableTest("""
+    fun `test conjunction condition`() = doAvailableTest("""
         fn foo() {
-            if 2 =/*caret*/= 2 && 3 == 3 { Ok(()) } else { Err(()) }
+            if/*caret*/ 2 == 2 && 3 == 3 { Ok(()) } else { Err(()) }
         }
     """, """
         fn foo() {
@@ -64,23 +68,33 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
         }
     """)
 
+    fun `test complex condition`() = doAvailableTest("""
+        fn foo() {
+            if/*caret*/ 2 == 2 && (3 == 3 || 4 == 4) { Ok(()) } else { Err(()) }
+        }
+    """, """
+        fn foo() {
+            if 2 != 2 || !(3 == 3 || 4 == 4) { Err(()) } else { Ok(()) }
+        }
+    """)
+
     fun `test simple inversion strange formatting`() = doAvailableTest("""
         fn foo() {
-            if 2 =/*caret*/= 2 {
+            if/*caret*/ 2 == 2 {
                 Ok(())
             } else { Err(()) }
         }
     """, """
         fn foo() {
-            if !(2 == 2) { Err(()) } else {
+            if 2 != 2 { Err(()) } else {
                 Ok(())
             }
         }
     """)
 
-    fun `test very simple condition`() = doAvailableTest("""
+    fun `test very path expr condition`() = doAvailableTest("""
         fn foo(cond: bool) {
-            if co/*caret*/nd {
+            if/*caret*/ cond {
                 Ok(())
             } else {
                 Err(())
@@ -88,7 +102,7 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
         }
     """, """
         fn foo(cond: bool) {
-            if !(cond) {
+            if !cond {
                 Err(())
             } else {
                 Ok(())
