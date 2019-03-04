@@ -69,15 +69,14 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
     }
 
     override fun apply() {
-        val currentData = settings.data
-        settings.data = currentData.copy(
-            autoUpdateEnabled = autoUpdateEnabled,
-            useCargoCheckForBuild = useCargoCheckForBuild,
-            useCargoCheckAnnotator = useCargoCheckAnnotator,
-            cargoCheckArguments = cargoCheckArguments.text,
-            compileAllTargets = compileAllTargets,
-            useOffline = useOffline
-        )
+        settings.modify {
+            it.autoUpdateEnabled = autoUpdateEnabled
+            it.useCargoCheckForBuild = useCargoCheckForBuild
+            it.useCargoCheckAnnotator = useCargoCheckAnnotator
+            it.cargoCheckArguments = cargoCheckArguments.text
+            it.compileAllTargets = compileAllTargets
+            it.useOffline = useOffline
+        }
     }
 
     override fun reset() {

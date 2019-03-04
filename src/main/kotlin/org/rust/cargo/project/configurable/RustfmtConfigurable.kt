@@ -28,8 +28,7 @@ class RustfmtConfigurable(project: Project) : RsConfigurableBase(project) {
     override fun isModified(): Boolean = settings.useSkipChildren != useSkipChildren
 
     override fun apply() {
-        val currentData = settings.data
-        settings.data = currentData.copy(useSkipChildren = useSkipChildren)
+        settings.modify { it.useSkipChildren = useSkipChildren }
     }
 
     override fun reset() {

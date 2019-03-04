@@ -92,14 +92,13 @@ class RsProjectConfigurable(
             option.set(checkboxForOption(option).isSelected)
         }
 
-        val currentData = settings.data
-        settings.data = currentData.copy(
-            toolchain = rustProjectSettings.data.toolchain,
-            explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib,
-            expandMacros = expandMacros,
-            showTestToolWindow = showTestToolWindow,
-            doctestInjectionEnabled = doctestInjectionEnabled
-        )
+        settings.modify {
+            it.toolchain = rustProjectSettings.data.toolchain
+            it.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
+            it.expandMacros = expandMacros
+            it.showTestToolWindow = showTestToolWindow
+            it.doctestInjectionEnabled = doctestInjectionEnabled
+        }
     }
 
     override fun isModified(): Boolean {

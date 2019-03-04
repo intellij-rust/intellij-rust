@@ -148,7 +148,7 @@ private fun discoverToolchain(project: Project) {
         }
 
         runWriteAction {
-            project.rustSettings.data = project.rustSettings.data.copy(toolchain = toolchain)
+            project.rustSettings.modify { it.toolchain = toolchain }
         }
 
         val tool = if (toolchain.isRustupAvailable) "rustup" else "Cargo at ${toolchain.presentableLocation}"

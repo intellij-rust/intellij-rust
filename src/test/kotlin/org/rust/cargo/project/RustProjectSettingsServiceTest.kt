@@ -9,7 +9,6 @@ import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
 import com.intellij.testFramework.LightPlatformTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.openapiext.elementFromXmlString
@@ -24,6 +23,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         val text = """
             <State>
               <option name="autoUpdateEnabled" value="false" />
+              <option name="cargoCheckArguments" value="--no-default-features" />
               <option name="compileAllTargets" value="false" />
               <option name="doctestInjectionEnabled" value="false" />
               <option name="expandMacros" value="false" />
@@ -38,23 +38,19 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         """.trimIndent()
         service.loadState(elementFromXmlString(text).deserialize())
         val actual = service.state.serialize()!!.toXmlString()
-        check(actual == text.trimIndent()) {
-            "Expected:\n$text\nActual:\n$actual"
-        }
+        assertEquals(text.trimIndent(), actual)
 
-        check(service.data == RustProjectSettingsService.Data(
-            toolchain = RustToolchain(Paths.get("/")),
-            autoUpdateEnabled = false,
-            explicitPathToStdlib = "/stdlib",
-            useCargoCheckForBuild = true,
-            useCargoCheckAnnotator = true,
-            cargoCheckArguments = "",
-            compileAllTargets = false,
-            useOffline = true,
-            expandMacros = false,
-            showTestToolWindow = false,
-            doctestInjectionEnabled = false,
-            useSkipChildren = true
-        ))
+        assertEquals(RustToolchain(Paths.get("/")), service.toolchain)
+        assertEquals(false, service.autoUpdateEnabled)
+        assertEquals("/stdlib", service.explicitPathToStdlib)
+        assertEquals(true, service.useCargoCheckForBuild)
+        assertEquals(true, service.useCargoCheckAnnotator)
+        assertEquals("--no-default-features", service.cargoCheckArguments)
+        assertEquals(false, service.compileAllTargets)
+        assertEquals(true, service.useOffline)
+        assertEquals(false, service.expandMacros)
+        assertEquals(false, service.showTestToolWindow)
+        assertEquals(false, service.doctestInjectionEnabled)
+        assertEquals(true, service.useSkipChildren)
     }
 }

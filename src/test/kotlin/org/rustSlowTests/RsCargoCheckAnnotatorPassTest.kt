@@ -18,7 +18,7 @@ class RsCargoCheckAnnotatorPassTest : RsWithToolchainTestBase() {
 
     override fun setUp() {
         super.setUp()
-        project.rustSettings.data = project.rustSettings.data.copy(useCargoCheckAnnotator = true)
+        project.rustSettings.modify { it.useCargoCheckAnnotator = true }
     }
 
     fun `test no errors if everything is ok`() = doTest("""

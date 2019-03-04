@@ -119,7 +119,7 @@ class MissingToolchainNotificationProvider(
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                 val stdlib = FileChooser.chooseFile(descriptor, this, project, null) ?: return@createActionLabel
                 if (StandardLibrary.fromFile(stdlib) != null) {
-                    project.rustSettings.explicitPathToStdlib = stdlib.path
+                    project.rustSettings.modify { it.explicitPathToStdlib = stdlib.path }
                 } else {
                     project.showBalloon(
                         "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
