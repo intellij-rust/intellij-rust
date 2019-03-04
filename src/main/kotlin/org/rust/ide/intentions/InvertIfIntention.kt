@@ -31,7 +31,7 @@ class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val negatedCondition = ctx.condition.negate() as? RsExpr ?: return
+        val negatedCondition = ctx.condition.expr.negate() as? RsExpr ?: return
 
         val newIfExpr = RsPsiFactory(project).createIfElseExpression(negatedCondition, ctx.elseBlock, ctx.thenBlock)
         val replacedIfExpr = ctx.ifExpr.replace(newIfExpr) as RsIfExpr
