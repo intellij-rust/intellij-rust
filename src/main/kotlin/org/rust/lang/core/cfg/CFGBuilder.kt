@@ -8,7 +8,6 @@ package org.rust.lang.core.cfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.isLazy
-import org.rust.lang.core.psi.ext.pat
 import org.rust.lang.core.psi.ext.patList
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.ty.TyPrimitive
@@ -92,9 +91,19 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         return checkNotNull(result) { "Processing ended inconclusively" }
     }
 
-    private fun allPats(pat: RsPat, subPats: List<RsPat?>): CFGNode {
-        val patsExit = subPats.fold(pred) { pred, subPat -> process(subPat, pred) }
+    private fun processSubPats(pat: RsPat, subPats: List<RsPat>): CFGNode {
+        val patsExit = subPats.fold(pred) { acc, pat -> process(pat, acc) }
         return addAstNode(pat, patsExit)
+    }
+
+    private fun processOrPats(orPats: RsOrPats?, pred: CFGNode): CFGNode {
+        val pats = orPats?.patList ?: return pred
+        val orPatsExit = addDummyNode()
+        for (pat in pats) {
+            val patExit = process(pat, pred)
+            addContainedEdge(patExit, orPatsExit)
+        }
+        return orPatsExit
     }
 
     private fun processCall(callExpr: RsExpr, funcOrReceiver: RsExpr?, args: List<RsExpr?>): CFGNode {
@@ -157,16 +166,16 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         finishWith { straightLine(rangeExpr, pred, rangeExpr.exprList) }
 
     override fun visitPatTup(patTup: RsPatTup) =
-        finishWith { allPats(patTup, patTup.patList) }
+        finishWith { processSubPats(patTup, patTup.patList) }
 
     override fun visitPatTupleStruct(patTupleStruct: RsPatTupleStruct) =
-        finishWith { allPats(patTupleStruct, patTupleStruct.patList) }
+        finishWith { processSubPats(patTupleStruct, patTupleStruct.patList) }
 
     override fun visitPatStruct(patStruct: RsPatStruct) =
-        finishWith { allPats(patStruct, patStruct.patFieldList.map { it.pat }) }
+        finishWith { processSubPats(patStruct, patStruct.patFieldList.mapNotNull { it.pat }) }
 
     override fun visitPatSlice(patSlice: RsPatSlice) =
-        finishWith { allPats(patSlice, patSlice.patList) }
+        finishWith { processSubPats(patSlice, patSlice.patList) }
 
     override fun visitBlockExpr(blockExpr: RsBlockExpr) {
         val blockExit = process(blockExpr.block, pred)
@@ -183,7 +192,7 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         //       / \                / \
         //      /   \              /   \
         //     v 2   *            v 2   *
-        //   [pat]?  |          [pat]?  |
+        //   [pats]? |          [pats]? |
         //     |     |            |     |
         //     v     v 3          v     |
         //   [then][else]       [then]  |
@@ -191,13 +200,13 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         //     v 4   v 5          v 3   v 4
         //     [ifExpr]          [ifExpr]
         //
-        val pat = ifExpr.condition?.pat
         val expr = ifExpr.condition?.expr
+        val orPats = ifExpr.condition?.orPats
 
         val exprExit = process(expr, pred)
-        val patExit = process(pat, exprExit)
+        val orPatsExit = processOrPats(orPats, exprExit)
 
-        val thenExit = process(ifExpr.block, patExit)
+        val thenExit = process(ifExpr.block, orPatsExit)
 
         val elseBranch = ifExpr.elseBranch
 
@@ -232,14 +241,16 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         val loopScope = LoopScope(whileExpr, loopBack, whileExprExit)
 
         withLoopScope(loopScope) {
-            val pat = whileExpr.condition?.pat
+            val orPats = whileExpr.condition?.orPats
             val expr = whileExpr.condition?.expr
 
             val exprExit = process(expr, loopBack)
             addContainedEdge(exprExit, whileExprExit)
 
-            val patExit = process(pat, exprExit)
-            val bodyExit = process(whileExpr.block, patExit)
+            val orPatsExit = processOrPats(orPats, exprExit)
+
+            val bodyExit = process(whileExpr.block, orPatsExit)
+
             addContainedEdge(bodyExit, loopBack)
         }
 
@@ -363,10 +374,10 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
 
         matchExpr.matchBody?.matchArmList?.forEach { arm ->
             val armExit = addDummyNode()
+            val guard = arm.matchArmGuard
 
             arm.patList.forEach { pat ->
                 var patExit = process(pat, discriminantExit)
-                val guard = arm.matchArmGuard
                 if (guard != null) {
                     val guardStart = addDummyNode(patExit)
                     patExit = processGuard(guard, prevGuards, guardStart)
