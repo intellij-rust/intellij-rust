@@ -55,7 +55,7 @@ class RsProjectConfigurable(
             Show test results in run tool window when testing session begins
             instead of raw console.
         """)
-        row("Inject Rust language to documentation comments:", doctestInjectionCheckbox)
+        row("Inject Rust language into documentation comments:", doctestInjectionCheckbox)
         val supportedHintOptions = hintProvider.supportedOptions
         if (supportedHintOptions.isNotEmpty()) {
             block("Hints") {
