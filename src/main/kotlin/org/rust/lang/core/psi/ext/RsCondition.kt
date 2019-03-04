@@ -9,4 +9,3 @@ import org.rust.lang.core.psi.RsCondition
 import org.rust.lang.core.psi.RsPat
 
 val RsCondition.patList: List<RsPat> get() = orPats?.patList.orEmpty()
-val RsCondition.pat: RsPat? get() = patList.firstOrNull()
