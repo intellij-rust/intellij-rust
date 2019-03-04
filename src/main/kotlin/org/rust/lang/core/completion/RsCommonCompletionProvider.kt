@@ -151,7 +151,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                             super.handleInsert(element, scopeName, context, item)
                             context.commitDocument()
                             if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
-                                context.containingMod?.let { candidate.import(it) }
+                                context.getElementOfType<RsElement>()?.let { candidate.import(it) }
                             }
                         }
                     })
@@ -184,9 +184,6 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
 
 private fun isAncestorTypesEquals(psi1: PsiElement, psi2: PsiElement): Boolean =
     psi1.ancestors.zip(psi2.ancestors).all { (a, b) -> a.javaClass == b.javaClass }
-
-private val InsertionContext.containingMod: RsMod?
-    get() = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, RsMod::class.java, false)
 
 private fun filterAssocTypes(
     path: RsPath,
@@ -264,7 +261,7 @@ private fun methodAndFieldCompletionProcessor(
                     super.handleInsert(element, scopeName, context, item)
                     context.commitDocument()
                     if (traitImportCandidate != null) {
-                        context.containingMod?.let { traitImportCandidate.import(it) }
+                        context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
                     }
                 }
             }))
