@@ -146,6 +146,16 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    fun `test move in while let or patterns`() = checkByText("""
+        struct S;
+        enum E { A(S), B(S), C }
+
+        fn foo(e: E) {
+            if let E::A(s) | E::B(s) = e {}
+            while let <error descr="Use of moved value">E::A(s)</error> | <error descr="Use of moved value">E::B(s)</error> = e {}
+        }
+    """, checkWarn = false)
+
     fun `test no move error E0382 when matching path`() = checkByText("""
         enum Kind { A, B }
         pub struct DeadlineError(Kind);
@@ -155,6 +165,17 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
                 use self::Kind::*;
                 match self.0 { A => {} };
                 match self.0 { Kind::B => {} };
+            }
+        }
+    """, checkWarn = false)
+
+    fun `test no move error E0382 if let or patterns`() = checkByText("""
+        struct S;
+        enum E { A(S), B(S), C }
+
+        fn foo(e: E) {
+            if let E::A(s) | E::B(s) = e {
+                s;
             }
         }
     """, checkWarn = false)
