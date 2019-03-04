@@ -47,9 +47,7 @@ class RsAssignToImmutableInspection : RsLocalInspectionTool() {
     }
 
     private fun registerProblem(holder: ProblemsHolder, message: String, expr: RsExpr, assigneeExpr: RsExpr? = null) {
-        val fix = assigneeExpr
-            ?.takeIf { it.type !is TyReference }
-            ?.let { AddMutableFix.createIfCompatible(it) }
+         val fix = assigneeExpr?.let { AddMutableFix.createIfCompatible(it) }
         RsDiagnostic.CannotAssignToImmutable(expr, message, fix).addToHolder(holder)
     }
 }
