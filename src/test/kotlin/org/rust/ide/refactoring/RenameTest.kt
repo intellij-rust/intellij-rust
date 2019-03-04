@@ -403,6 +403,18 @@ class RenameTest : RsTestBase() {
         }
     """)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/3483
+    fun `test change file type`() = checkByDirectory("""
+    //- foo.txt
+        fn foo() {}
+    """, """
+    //- foo.rs
+        fn foo() {}
+    """) {
+        val file = myFixture.configureFromTempProjectFile("foo.txt")
+        myFixture.renameElement(file, "foo.rs")
+    }
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,
