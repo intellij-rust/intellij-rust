@@ -1,0 +1,7 @@
+fn foo(a: i32, b: i32) -> i32 {
+<spot>    if a % 2 != 1 || b % 3 != 2 {
+        a - b
+    } else {
+        a + b
+    }<spot>
+}

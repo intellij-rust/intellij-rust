@@ -71,6 +71,14 @@ class RsPsiFactory(private val project: Project) {
         return result
     }
 
+    fun createIfElseExpression(condition: RsExpr, thenBlock: RsBlock, elseBlock: RsBlock) : RsIfExpr {
+        val resultIfExpr = createExpressionOfType<RsIfExpr>("if ${condition.text} { () } else { () }")
+        resultIfExpr.block!!.replace(thenBlock)
+        resultIfExpr.elseBranch!!.block!!.replace(elseBlock)
+
+        return resultIfExpr
+    }
+
     fun createBlockExpr(body: CharSequence): RsBlockExpr =
         createExpressionOfType("{ $body }")
 
