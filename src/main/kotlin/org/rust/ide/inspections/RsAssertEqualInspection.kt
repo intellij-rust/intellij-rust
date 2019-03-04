@@ -9,7 +9,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.macroName
@@ -81,32 +80,16 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
             return Pair(expr.left, right)
         }
 
-        private fun addArguments(args: List<PsiElement>, anchor: PsiElement, into: PsiElement) {
-            var currentAnchor = anchor
-            args.forEach {
-                currentAnchor = into.addAfter(it, currentAnchor)
-            }
-        }
-
-        private fun buildAssert(project: Project, assertArgument: RsAssertMacroArgument): PsiElement? {
+        private fun buildAssert(project: Project, assertArgument: RsAssertMacroArgument): RsMacroCall? {
             val factory = RsPsiFactory(project)
-            val newAssert = factory.createExpression("$assertName!()") as RsCallExpr
-
-            val (first, second) = comparedAssertArgs(assertArgument) ?: return null
-
-            val args: MutableList<PsiElement> = mutableListOf(
-                first,
-                factory.createComma(),
-                second
-            )
-
-            for (arg: PsiElement in assertArgument.formatMacroArgList) {
-                args.add(factory.createComma())
-                args.add(arg)
+            val (left, right) = comparedAssertArgs(assertArgument) ?: return null
+            val formatArgs = assertArgument.formatMacroArgList
+            val appendix = if (formatArgs.isNotEmpty()) {
+                formatArgs.joinToString(separator = ", ", prefix = ",") { it.text }
+            } else {
+                ""
             }
-
-            addArguments(args, newAssert.valueArgumentList.lparen, newAssert.valueArgumentList)
-            return newAssert
+            return (factory.createExpression("$assertName!(${left.text}, ${right.text}$appendix)") as RsMacroExpr).macroCall
         }
 
     }
