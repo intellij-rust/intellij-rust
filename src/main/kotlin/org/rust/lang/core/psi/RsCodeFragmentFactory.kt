@@ -17,7 +17,7 @@ import org.rust.openapiext.toPsiFile
 
 
 class RsCodeFragmentFactory(val project: Project) {
-    private val psiFactory = RsPsiFactory(project)
+    private val psiFactory = RsPsiFactory(project, markGenerated = false)
 
     fun createCrateRelativePath(pathText: String, target: CargoWorkspace.Target): RsPath? {
         check(pathText.startsWith("::"))
