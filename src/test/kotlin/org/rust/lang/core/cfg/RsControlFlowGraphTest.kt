@@ -123,6 +123,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         s
         s
         Some(s)
+        Dummy
         1
         BLOCK
         IF
@@ -141,6 +142,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         s
         s
         Some(s)
+        Dummy
         1
         BLOCK
         IF
@@ -149,6 +151,28 @@ class RsControlFlowGraphTest : RsTestBase() {
         Exit
         2
         BLOCK
+    """)
+
+    fun `test if let or patterns`() = testCFG("""
+        fn foo() {
+            if let A(s) | B(s) = x { 1 };
+        }
+    """, """
+        Entry
+        x
+        s
+        s
+        A(s)
+        Dummy
+        1
+        BLOCK
+        s
+        s
+        B(s)
+        IF
+        IF;
+        BLOCK
+        Exit
     """)
 
     fun `test if else with unreachable`() = testCFG("""
@@ -242,9 +266,35 @@ class RsControlFlowGraphTest : RsTestBase() {
         Exit
         x
         x
+        Dummy
         1
         1;
         BLOCK
+    """)
+
+    fun `test while let or patterns`() = testCFG("""
+        fn main() {
+            while let A(s) | B(s) = x {
+                1;
+            }
+        }
+    """, """
+        Entry
+        Dummy
+        x
+        WHILE
+        BLOCK
+        Exit
+        s
+        s
+        A(s)
+        Dummy
+        1
+        1;
+        BLOCK
+        s
+        s
+        B(s)
     """)
 
     fun `test while with unreachable`() = testCFG("""
