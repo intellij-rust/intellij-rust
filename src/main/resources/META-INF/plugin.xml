@@ -662,6 +662,10 @@
             <className>org.rust.ide.intentions.JoinArgumentListIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.InvertIfIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
