@@ -1396,5 +1396,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         fn main() {
             if let A = S(2) {}
         }
-        """)
+    """)
+
+    @MockRustcVersion("1.32.0")
+    fun `test if while or patterns 1`() = checkErrors("""
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: V) {
+            if let <error descr="multiple patterns in `if let` and `while let` are unstable [E0658]">V::V1(x) | V::V2(x)</error> = y {}
+        }
+    """)
+
+    @MockRustcVersion("1.32.0-nightly")
+    fun `test if while or patterns 2`() = checkErrors("""
+        #![feature(if_while_or_patterns)]
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: V) {
+            while let V::V1(x) | V::V2(x) = y {}
+        }
+    """)
 }

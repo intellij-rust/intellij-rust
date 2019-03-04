@@ -27,7 +27,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     )
 
     data class MatchArm(
-        val matchArm: RsPat,
+        val orPats: RsOrPats,
         val body: RsBlock
     )
 
@@ -52,14 +52,14 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (ifStmt, target, matchArms, elseBody) = ctx
         val item = (target.type as? TyAdt)?.item as? RsEnumItem
-        val optionOrResultPats = matchArms.map(MatchArm::matchArm).filter(RsPat::isPossibleOptionOrResultVariant)
+        val optionOrResultPats = matchArms.flatMap { it.orPats.patList }.filter(RsPat::isPossibleOptionOrResultVariant)
         val generatedCode = buildString {
             append("match ")
             append(target.text)
             append(" {")
             matchArms.forEach {
                 append('\n')
-                append(it.matchArm.text)
+                append(it.orPats.text)
                 append(" => ")
                 append(it.body.text)
             }
@@ -89,24 +89,18 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     }
 
     private fun extractIfLetStatementIfAny(iflet: RsIfExpr, ctx: Context? = null): Context? {
-
         val condition = iflet.condition ?: return null
 
-        //2) Check that we have a let condition
-        if (condition.let == null) {
-            return null
-        }
+        //2) Extract the match arm conditions
+        val orPats = condition.orPats ?: return null
 
-        //3) Extract the match arm condition
-        val matchArmPat = condition.pat ?: return null
-
-        //4) Extract the target
+        //3) Extract the target
         val target = condition.expr
 
-        //5) Extract the if body
+        //4) Extract the if body
         val ifBody = iflet.block ?: return null
 
-        val matchArm = MatchArm(matchArmPat, ifBody)
+        val matchArm = MatchArm(orPats, ifBody)
         var context = if (ctx != null) {
             //If we reach this code, that mean we are in a `if let Some(value) = x { ... } else if let Other(value) = x { ... }` case
             //                                                                                  ^
@@ -127,7 +121,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
             newContext
         }
 
-        //6) Extract else body if any
+        //5) Extract else body if any
 
         if (iflet.elseBranch != null) {
             val elseBody = iflet.elseBranch!!

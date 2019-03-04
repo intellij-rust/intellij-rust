@@ -287,6 +287,16 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """, enabledHints = HintType.LET_BINDING_HINT)
 
+    fun `test hints in if let expr with multiple patterns`() = checkByText("""
+        enum V<T> {
+            V1(T), V2(T)
+        }
+        fn main() {
+            let result = V::V1((1, 2));
+            if let V::V1(x/*hint text=": (i32, i32)"*/) | V::V2(x/*hint text=": (i32, i32)"*/) = result {}
+        }
+    """, enabledHints = HintType.LET_BINDING_HINT)
+
     fun `test hints in while let expr`() = checkByText("""
         enum Option<T> {
             Some(T), None
@@ -294,6 +304,16 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() {
             let result = Option::Some((1, 2));
             while let Option::Some((x/*hint text=": i32"*/, y/*hint text=": i32"*/)) = result {}
+        }
+    """, enabledHints = HintType.LET_BINDING_HINT)
+
+    fun `test hints in while let expr with multiple patterns`() = checkByText("""
+        enum V<T> {
+            V1(T), V2(T)
+        }
+        fn main() {
+            let result = V::V1((1, 2));
+            while let V::V1(x/*hint text=": (i32, i32)"*/) | V::V2(x/*hint text=": (i32, i32)"*/) = result {}
         }
     """, enabledHints = HintType.LET_BINDING_HINT)
 
