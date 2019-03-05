@@ -98,7 +98,7 @@ private data class WithParent(
 private val STD_MACRO_WHITELIST = setOf("write", "writeln")
 
 class MacroExpander(val project: Project) {
-    private val psiFactory = RsPsiFactory(project)
+    private val psiFactory = RsPsiFactory(project, markGenerated = false)
 
     fun expandMacro(def: RsMacro, call: RsMacroCall): MacroExpansion? {
         // All std macros contain the only `impl`s which are not supported for now, so ignoring them

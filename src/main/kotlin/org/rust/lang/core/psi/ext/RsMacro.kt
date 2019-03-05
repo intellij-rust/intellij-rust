@@ -53,7 +53,7 @@ val RsMacro.macroBodyStubbed: RsMacroBody?
         val text = stub.macroBody ?: return null
         return CachedValuesManager.getCachedValue(this) {
             CachedValueProvider.Result.create(
-                RsPsiFactory(project).createMacroBody(text),
+                RsPsiFactory(project, markGenerated = false).createMacroBody(text),
                 modificationTracker
             )
         }

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
+import com.intellij.util.LocalTimeCounter
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.lang.RsFileType
@@ -25,10 +26,17 @@ import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 
-class RsPsiFactory(private val project: Project) {
+class RsPsiFactory(private val project: Project, private val markGenerated: Boolean = true) {
     fun createFile(text: CharSequence): RsFile =
         PsiFileFactory.getInstance(project)
-            .createFileFromText("DUMMY.rs", RsFileType, text) as RsFile
+            .createFileFromText(
+                "DUMMY.rs",
+                RsFileType,
+                text,
+                /*modificationStamp =*/ LocalTimeCounter.currentTime(), // default value
+                /*eventSystemEnabled =*/ false, // default value
+                /*markAsCopy =*/ markGenerated // `true` by default
+            ) as RsFile
 
     fun createMacroBody(text: String): RsMacroBody? = createFromText(
         "macro_rules! m $text"
