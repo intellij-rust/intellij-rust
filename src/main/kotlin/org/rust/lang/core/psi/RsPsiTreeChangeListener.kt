@@ -58,15 +58,28 @@ sealed class RsPsiTreeChangeEvent {
         override val file: PsiFile?,
         val parent: PsiElement,
         /** Invalid in [ChildReplacement.After] */
-        val oldChild: PsiElement,
-        val newChild: PsiElement
+        val oldChild: PsiElement
     ) : RsPsiTreeChangeEvent() {
-        class Before(file: PsiFile?, parent: PsiElement, oldChild: PsiElement, newChild: PsiElement) : ChildReplacement(file, parent, oldChild, newChild)
-        class After(file: PsiFile?, parent: PsiElement, oldChild: PsiElement, newChild: PsiElement) : ChildReplacement(file, parent, oldChild, newChild)
+
+        abstract val newChild: PsiElement?
+
+        class Before(
+            file: PsiFile?,
+            parent: PsiElement,
+            oldChild: PsiElement,
+            override val newChild: PsiElement?
+        ) : ChildReplacement(file, parent, oldChild)
+
+        class After(
+            file: PsiFile?,
+            parent: PsiElement,
+            oldChild: PsiElement,
+            override val newChild: PsiElement
+        ) : ChildReplacement(file, parent, oldChild)
 
         override fun toString(): String =
             "ChildReplacement.${javaClass.simpleName}(file=$file, parent=`${parent.text}`, " +
-                "oldChild=`${oldChild.safeText}`, newChild=`${newChild.text}`)"
+                "oldChild=`${oldChild.safeText}`, newChild=`${newChild?.text}`)"
     }
 
     sealed class ChildMovement(
