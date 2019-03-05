@@ -253,3 +253,14 @@ tailrec fun unwrapParenExprs(expr: RsExpr): RsExpr =
 
 val RsExpr.isAssignBinaryExpr: Boolean
     get() = this is RsBinaryExpr && this.operatorType is AssignmentOp
+
+val BoolOp.not: BoolOp get() = when (this) {
+        EqualityOp.EQ -> EqualityOp.EXCLEQ
+        EqualityOp.EXCLEQ -> EqualityOp.EQ
+        ComparisonOp.LT -> ComparisonOp.GTEQ
+        ComparisonOp.LTEQ -> ComparisonOp.GT
+        ComparisonOp.GT -> ComparisonOp.LTEQ
+        ComparisonOp.GTEQ -> ComparisonOp.LT
+        LogicOp.AND -> LogicOp.OR
+        LogicOp.OR -> LogicOp.AND
+    }

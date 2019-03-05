@@ -7,6 +7,7 @@ package org.rust.lang.core.cfg
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsLabeledExpression
 import org.rust.lang.core.psi.ext.isLazy
 import org.rust.lang.core.psi.ext.patList
 import org.rust.lang.core.types.ty.TyNever
@@ -18,7 +19,7 @@ import java.util.*
 class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode, val exit: CFGNode) : RsVisitor() {
     class BlockScope(val block: RsBlock, val breakNode: CFGNode)
 
-    class LoopScope(val loop: RsExpr, val continueNode: CFGNode, val breakNode: CFGNode)
+    class LoopScope(val loop: RsLabeledExpression, val continueNode: CFGNode, val breakNode: CFGNode)
 
     enum class ScopeControlFlowKind { BREAK, CONTINUE }
 
@@ -38,6 +39,8 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
     private fun finishWith(value: CFGNode) {
         result = value
     }
+
+    private fun finishWithUnreachableNode() = finishWith(addUnreachableNode())
 
     private fun finishWithAstNode(element: RsElement, pred: CFGNode) =
         finishWith { addAstNode(element, pred) }
@@ -71,6 +74,25 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
     private fun addReturningEdge(fromNode: CFGNode) {
         val data = CFGEdgeData(loopScopes.map { it.loop })
         graph.addEdge(fromNode, exit, data)
+    }
+
+    private fun addLoopInterruptEdge(label: RsLabel?, fromNode: CFGNode, kind: ScopeControlFlowKind) {
+        val exitScope = if (label == null) listOf(loopScopes.peek())
+        else {
+            val index = loopScopes.indexOfFirst { label.quoteIdentifier.text == it.loop.labelDecl?.quoteIdentifier?.text }
+            if (index == -1) loopScopes.toList()
+            else loopScopes.take(index + 1)
+        }
+
+        val data = CFGEdgeData(exitScope.map(LoopScope::loop))
+        val exitNode = with(exitScope.last()) {
+            when (kind) {
+                ScopeControlFlowKind.BREAK -> breakNode
+                ScopeControlFlowKind.CONTINUE -> continueNode
+            }
+        }
+
+        graph.addEdge(fromNode, exitNode, data)
     }
 
     private fun straightLine(expr: RsExpr, pred: CFGNode, subExprs: List<RsExpr?>): CFGNode {
@@ -115,7 +137,7 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         val exprExit = process(expr, pred)
         if (expr.type is TyNever) {
             addReturningEdge(exprExit)
-            finishWith { addUnreachableNode() }
+            finishWithUnreachableNode()
         } else {
             finishWithAstNode(parent, exprExit)
         }
@@ -315,13 +337,21 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         val valueExit = process(retExpr.expr, pred)
         val returnExit = addAstNode(retExpr, valueExit)
         addReturningEdge(returnExit)
-        finishWith { addUnreachableNode() }
+        finishWithUnreachableNode()
     }
 
-    // TODO: this cases require regions which are not implemented yet
-    override fun visitBreakExpr(breakExpr: RsBreakExpr) = finishWith(pred)
+    override fun visitBreakExpr(breakExpr: RsBreakExpr) {
+        val valueExit = process(breakExpr.expr, pred)
+        val breakExit = addAstNode(breakExpr, valueExit)
+        addLoopInterruptEdge(breakExpr.label, breakExit, ScopeControlFlowKind.BREAK)
+        finishWithUnreachableNode()
+    }
 
-    override fun visitContExpr(contExpr: RsContExpr) = finishWith(pred)
+    override fun visitContExpr(contExpr: RsContExpr) {
+        val contExit = addAstNode(contExpr, pred)
+        addLoopInterruptEdge(contExpr.label, contExit, ScopeControlFlowKind.CONTINUE)
+        finishWithUnreachableNode()
+    }
 
     override fun visitArrayExpr(arrayExpr: RsArrayExpr) =
         finishWith { straightLine(arrayExpr, pred, arrayExpr.exprList) }

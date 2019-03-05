@@ -13,6 +13,8 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import org.rust.lang.core.dfa.DataFlowAnalysisResult
+import org.rust.lang.core.dfa.DataFlowRunner
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -116,3 +118,11 @@ val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
 
 fun RsNamedElement?.asTy(): Ty =
     (this as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown
+
+private val DATA_FLOW_ANALYSIS_KEY: Key<CachedValue<DataFlowAnalysisResult>> = Key.create("DATA_FLOW_ANALYSIS_KEY")
+
+val RsFunction.dataFlowAnalysisResult: DataFlowAnalysisResult
+    get() = CachedValuesManager.getCachedValue(this, DATA_FLOW_ANALYSIS_KEY) {
+        val result = DataFlowRunner(this).analyze()
+        createResult(result)
+    }
