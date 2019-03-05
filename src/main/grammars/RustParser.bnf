@@ -1150,7 +1150,8 @@ LitExpr ::= OuterAttr*
   | INTEGER_LITERAL | FLOAT_LITERAL
   | BOOL_LITERAL) {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
- implements = "com.intellij.psi.PsiLanguageInjectionHost"
+ implements = [ "com.intellij.psi.PsiLanguageInjectionHost"
+                "com.intellij.psi.ContributedReferenceHost" ]
  mixin = "org.rust.lang.core.psi.ext.RsLitExprMixin"
 }
 

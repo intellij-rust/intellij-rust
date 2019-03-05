@@ -43,7 +43,7 @@ val RsLitExpr.stubType: RsStubLiteralType? get() {
 val RsLitExpr.integerLiteralValue: String? get() =
     (stub as? RsLitExprStub)?.integerLiteralValue ?: integerLiteral?.text
 
-abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, ContributedReferenceHost, RegExpLanguageHost {
+abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, RegExpLanguageHost {
 
     constructor(node: ASTNode) : super(node)
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
