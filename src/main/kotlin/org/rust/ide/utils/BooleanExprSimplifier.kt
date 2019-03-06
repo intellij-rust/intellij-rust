@@ -42,6 +42,16 @@ class BooleanExprSimplifier(val project: Project) {
                 }
             }
 
+            is RsUnaryExpr -> {
+                val parenExpr = expr.expr as? RsParenExpr ?: return expr
+                val interior = parenExpr.expr
+                if (expr.operatorType == UnaryOperator.NOT && interior is RsBinaryExpr) {
+                    interior.negate() as RsExpr
+                } else {
+                    null
+                }
+            }
+
             is RsParenExpr -> {
                 val interiorSimplified = simplify(expr.expr)
                 interiorSimplified?.let { factory.createExpression("(${it.text})") }
@@ -80,6 +90,15 @@ class BooleanExprSimplifier(val project: Project) {
                 }
 
                 is RsParenExpr -> return canBeSimplified(expr.expr)
+
+                is RsUnaryExpr -> {
+                    if (expr.operatorType != UnaryOperator.NOT) {
+                        return false
+                    }
+                    val parenExpr = expr.expr as? RsParenExpr ?: return false
+                    val binOp = (parenExpr.expr as? RsBinaryExpr)?.operatorType ?: return false
+                    return binOp is EqualityOp || binOp is ComparisonOp
+                }
             }
 
             return false
