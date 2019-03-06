@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.HttpRequests
@@ -23,6 +22,7 @@ import org.jdom.JDOMException
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.plugin
+import org.rust.openapiext.virtualFile
 import java.io.IOException
 import java.net.URLEncoder
 import java.net.UnknownHostException
@@ -42,7 +42,7 @@ class UpdateComponent : BaseComponent, Disposable {
     object EDITOR_LISTENER : EditorFactoryListener {
         override fun editorCreated(event: EditorFactoryEvent) {
             val document = event.editor.document
-            val file = FileDocumentManager.getInstance().getFile(document)
+            val file = document.virtualFile
             if (file != null && file.isRustFile) {
                 update()
             }

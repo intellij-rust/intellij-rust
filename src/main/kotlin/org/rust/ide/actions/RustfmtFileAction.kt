@@ -6,13 +6,10 @@
 package org.rust.ide.actions
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -22,7 +19,9 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.core.psi.isRustFile
+import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.saveAllDocuments
 
 class RustfmtFileAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
@@ -33,13 +32,13 @@ class RustfmtFileAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val (project, toolchain, file) = getContext(e) ?: return
 
-        FileDocumentManager.getInstance().saveAllDocuments()
+        saveAllDocuments()
 
         val rustfmt = toolchain.rustfmt()
         try {
-            ProgressManager.getInstance().runProcessWithProgressSynchronously<ProcessOutput, ExecutionException>({
+            project.computeWithCancelableProgress("Reformatting File with Rustfmt...") {
                 rustfmt.reformatFile(project, file)
-            }, "Reformatting File with Rustfmt...", true, project)
+            }
             // We want to refresh file synchronously only in unit test
             // to get new text right after `reformatFile` call
             VfsUtil.markDirtyAndRefresh(!isUnitTestMode, true, true, file)

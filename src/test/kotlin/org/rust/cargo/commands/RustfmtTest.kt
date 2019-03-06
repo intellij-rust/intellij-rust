@@ -6,13 +6,13 @@
 package org.rust.cargo.commands
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.TestActionEvent
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.fileTree
 import org.rust.ide.actions.RustfmtFileAction
+import org.rust.openapiext.document
 
 class RustfmtTest : RsWithToolchainTestBase() {
 
@@ -57,7 +57,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         }.create().fileWithCaret
 
         val file = myFixture.configureFromTempProjectFile(fileWithCaret).virtualFile
-        val document = FileDocumentManager.getInstance().getDocument(file)!!
+        val document = file.document!!
         val prevText = document.text
         myFixture.type("\n\n\n")
 

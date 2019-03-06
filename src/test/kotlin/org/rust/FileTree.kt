@@ -6,7 +6,6 @@
 package org.rust
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.VfsUtil
@@ -18,6 +17,7 @@ import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.openapiext.saveAllDocuments
 import org.rust.openapiext.toPsiFile
 import kotlin.text.Charsets.UTF_8
 
@@ -112,7 +112,7 @@ class FileTree(private val rootDirectory: Entry.Directory) {
             }
         }
 
-        FileDocumentManager.getInstance().saveAllDocuments()
+        saveAllDocuments()
         go(rootDirectory, baseDir)
     }
 

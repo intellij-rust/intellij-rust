@@ -90,6 +90,12 @@ val VirtualFile.pathAsPath: Path get() = Paths.get(path)
 fun VirtualFile.toPsiFile(project: Project): PsiFile? =
     PsiManager.getInstance(project).findFile(this)
 
+val Document.virtualFile: VirtualFile?
+    get() = FileDocumentManager.getInstance().getFile(this)
+
+val VirtualFile.document: Document?
+    get() = FileDocumentManager.getInstance().getDocument(this)
+
 inline fun <Key, reified Psi : PsiElement> getElements(
     indexKey: StubIndexKey<Key, Psi>,
     key: Key, project: Project,
@@ -175,6 +181,9 @@ inline fun testAssert(action: () -> Boolean, lazyMessage: () -> Any) {
 
 fun <T> runWithCheckCanceled(callable: () -> T): T =
     ApplicationUtil.runWithCheckCanceled(callable, ProgressManager.getInstance().progressIndicator)
+
+fun<T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T =
+    ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
 
 inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, defaultValue: () -> T): T =
     getUserData(key)?.get() ?: run {

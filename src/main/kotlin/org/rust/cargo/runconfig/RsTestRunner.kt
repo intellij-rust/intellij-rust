@@ -14,12 +14,12 @@ import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.prependArgument
+import org.rust.openapiext.saveAllDocuments
 
 class RsTestRunner : AsyncProgramRunner<RunnerSettings>() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
@@ -31,7 +31,7 @@ class RsTestRunner : AsyncProgramRunner<RunnerSettings>() {
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
-        FileDocumentManager.getInstance().saveAllDocuments()
+        saveAllDocuments()
         state as CargoRunStateBase
         val onlyBuild = "--no-run" in state.commandLine.additionalArguments
         return buildTests(environment.project, state, onlyBuild)
