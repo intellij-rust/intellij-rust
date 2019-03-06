@@ -6,7 +6,7 @@
 package org.rust.ide.intentions
 
 class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
-    fun `test if let unavailable`() = doUnavailableTest(""""
+    fun `test if let unavailable`() = doUnavailableTest("""
         fn foo(a: Option<i32>) {
             if/*caret*/ let Some(x) = a {} else {}
         }
@@ -18,7 +18,7 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
         }
     """)
 
-    fun `test if without else branch unavailable`() = doUnavailableTest(""""
+    fun `test if without else branch unavailable`() = doUnavailableTest("""
         fn foo(a: i32) {
             if/*caret*/ a == 10  {}
         }
@@ -32,29 +32,22 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
 
     fun `test simple inversion`() = doAvailableTest("""
         fn foo() {
-            if/*caret*/ 2 == 2 {
-                Ok(())
-            } else {
-                Err(())
-            }
-        }
-    """, """
-        fn foo() {
-            if 2 != 2 {
-                Err(())
-            } else {
-                Ok(())
-            }
-        }
-    """)
-
-    fun `test simple inversion on one line`() = doAvailableTest("""
-        fn foo() {
             if/*caret*/ 2 == 2 { Ok(()) } else { Err(()) }
         }
     """, """
         fn foo() {
             if 2 != 2 { Err(()) } else { Ok(()) }
+        }
+    """)
+
+    // `!(2 == 2)` can be later simplified to `2 != 2` by user via `Simplify boolean expression` intention
+    fun `test simple inversion parens`() = doAvailableTest("""
+        fn foo() {
+            if/*caret*/ (2 == 2) { Ok(()) } else { Err(()) }
+        }
+    """, """
+        fn foo() {
+            if !(2 == 2) { Err(()) } else { Ok(()) }
         }
     """)
 
@@ -70,11 +63,11 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
 
     fun `test complex condition`() = doAvailableTest("""
         fn foo() {
-            if/*caret*/ 2 == 2 && (3 == 3 || 4 == 4) { Ok(()) } else { Err(()) }
+            if/*caret*/ 2 == 2 && (3 == 3 || 4 == 4) && (5 == 5) { Ok(()) } else { Err(()) }
         }
     """, """
         fn foo() {
-            if 2 != 2 || !(3 == 3 || 4 == 4) { Err(()) } else { Ok(()) }
+            if 2 != 2 || !(3 == 3 || 4 == 4) || (5 != 5) { Err(()) } else { Ok(()) }
         }
     """)
 
