@@ -9,7 +9,6 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,6 +28,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustcVersion
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.openapiext.saveAllDocuments
 
 abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCase {
 
@@ -124,7 +124,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     protected fun checkByDirectory(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {
         fileTreeFromText(before).create()
         action()
-        FileDocumentManager.getInstance().saveAllDocuments()
+        saveAllDocuments()
         fileTreeFromText(after).assertEquals(myFixture.findFileInTempDir("."))
     }
 
