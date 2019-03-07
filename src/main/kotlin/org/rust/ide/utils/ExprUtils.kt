@@ -8,13 +8,13 @@ package org.rust.ide.utils
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ArithmeticOp
+import org.rust.lang.core.psi.ext.EqualityOp.EQ
+import org.rust.lang.core.psi.ext.EqualityOp.EXCLEQ
 import org.rust.lang.core.psi.ext.LogicOp
 import org.rust.lang.core.psi.ext.LogicOp.AND
 import org.rust.lang.core.psi.ext.LogicOp.OR
 import org.rust.lang.core.psi.ext.UnaryOperator
 import org.rust.lang.core.psi.ext.operatorType
-import org.rust.lang.core.psi.ext.EqualityOp.EQ
-import org.rust.lang.core.psi.ext.EqualityOp.EXCLEQ
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists

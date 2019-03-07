@@ -52,13 +52,13 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         }
 
     private fun registerProblem(holder: ProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
-        val fix = AddMutableFix.createIfCompatible(nameExpr).let { if (it == null) emptyArray() else arrayOf(it) }
-        holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", *fix)
+        val fix = AddMutableFix.createIfCompatible(nameExpr)
+        holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", fix)
     }
 
     private fun registerUseOfMovedValueProblem(holder: ProblemsHolder, use: RsElement) {
-        val fix = DeriveCopyFix.createIfCompatible(use).let { if (it == null) emptyArray() else arrayOf(it) }
-        holder.registerProblem(use, "Use of moved value", *fix)
+        val fix = DeriveCopyFix.createIfCompatible(use)
+        holder.registerProblem(use, "Use of moved value", fix)
     }
 
     private fun registerMoveProblem(holder: ProblemsHolder, element: RsElement) {
@@ -71,10 +71,8 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
     }
 
     private fun checkMethodRequiresMutable(receiver: RsExpr, fn: RsFunction): Boolean {
-        if (!receiver.isMutable &&
-            fn.selfParameter != null &&
-            fn.selfParameter?.mutability?.isMut == true &&
-            fn.selfParameter?.isRef == true) {
+        val selfParameter = fn.selfParameter ?: return false
+        if (!receiver.isMutable && selfParameter.mutability.isMut && selfParameter.isRef) {
             val type = receiver.type
             return type !is TyReference || !type.mutability.isMut
         }
