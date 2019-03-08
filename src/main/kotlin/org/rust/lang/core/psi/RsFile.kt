@@ -75,9 +75,9 @@ class RsFile(
             return cargoWorkspace?.isCrateRoot(file) ?: false
         }
 
-    override val isPublic: Boolean get() {
-        if (isCrateRoot) return true
-        return declaration?.isPublic == true
+    override val visibility: RsVisibility get() {
+        if (isCrateRoot) return RsVisibility.Public
+        return declaration?.visibility ?: RsVisibility.Private
     }
 
     override val innerAttrList: List<RsInnerAttr>

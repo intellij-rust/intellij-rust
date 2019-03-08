@@ -27,8 +27,6 @@ abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.MODULE)
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
     override val `super`: RsMod get() = containingMod
 
     override val modName: String? get() = name

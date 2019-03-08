@@ -48,8 +48,6 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
         RsConstantKind.STATIC -> RsIcons.STATIC
     })
 
-    override val isPublic: Boolean get() = RsPsiImplUtil.isPublic(this, stub)
-
     override val isAbstract: Boolean get() = expr == null
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)

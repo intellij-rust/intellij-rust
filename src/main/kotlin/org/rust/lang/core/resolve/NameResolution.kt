@@ -459,7 +459,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     }
 
     // Paths in use items are implicitly global.
-    if (isAbsolute || path.contextStrict<RsUseItem>() != null) {
+    if (isAbsolute || path.contextStrict<RsUseItem>() != null || path.contextStrict<RsVisRestriction>() != null) {
         if (crateRoot != null) {
             if (processItemOrEnumVariantDeclarations(crateRoot, ns, processor, withPrivateImports = true)) return true
         }
