@@ -19,6 +19,7 @@ import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.escaped
+import org.rust.openapiext.hitOnFalse
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.joinToWithBuffer
 
@@ -130,9 +131,8 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         }
 
         // macros without #[macro_export] are not public and don't have external documentation
-        if (this is RsMacro && !hasMacroExport) {
-            Testmarks.notExportedMacro.hit()
-            return false
+        if (this is RsMacro) {
+            return Testmarks.notExportedMacro.hitOnFalse(hasMacroExport)
         }
         // TODO: we should take into account real path of item for user, i.e. take into account reexports
         // instead of already resolved item path
