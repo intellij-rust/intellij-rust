@@ -32,9 +32,9 @@ val baseVersion = when (baseIDE) {
 
 plugins {
     idea
-    kotlin("jvm") version "1.3.20"
-    id("org.jetbrains.intellij") version "0.4.2"
-    id("org.jetbrains.grammarkit") version "2018.2.2"
+    kotlin("jvm") version "1.3.21"
+    id("org.jetbrains.intellij") version "0.4.4"
+    id("org.jetbrains.grammarkit") version "2018.3.1"
     id("de.undercouch.download") version "3.4.3"
     id("net.saliman.properties") version "1.4.6"
 }
