@@ -201,7 +201,7 @@ data class RsQualifiedName private constructor(
                 element.containingCargoTarget?.normName ?: return null
             }
 
-            val modSegments = if (parentItem.type == PRIMITIVE) {
+            val modSegments = if (parentItem.type == PRIMITIVE || parentItem.type == MACRO) {
                 listOf()
             } else {
                 val mod = element as? RsMod ?: element.containingMod
