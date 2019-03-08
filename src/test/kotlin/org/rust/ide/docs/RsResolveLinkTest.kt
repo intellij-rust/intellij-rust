@@ -121,7 +121,7 @@ class RsResolveLinkTest : RsTestBase() {
               //^
     """, "test_package/foo/index.html")
 
-    fun `test macro fqn link`() = doTest("""
+    fun `test macro fqn link 1`() = doTest("""
         macro_rules! foo {
                     //X
             () => {};
@@ -130,6 +130,17 @@ class RsResolveLinkTest : RsTestBase() {
         struct Bar;
               //^
     """, "test_package/macro.foo.html")
+
+    fun `test macro fqn link 2`() = doTest("""
+        mod foo {
+            macro_rules! bar {
+                       //X
+                () => {};
+            }
+        }
+        struct Foo;
+             //^
+    """, "test_package/macro.bar.html")
 
     fun `test method fqn link`() = doTest("""
         struct Foo;

@@ -31,6 +31,8 @@ class RsStdlibResolveLinkTest : RsTestBase() {
     fun `test fqn link with reexport`() = doTest("std/cmp/trait.Eq.html", ".../libcore/cmp.rs")
     fun `test mod fqn link with reexport`() = doTest("std/marker/index.html", ".../libcore/marker.rs")
     fun `test method fqn link with reexport`() = doTest("std/result/enum.Result.html#method.unwrap", ".../libcore/result.rs")
+    fun `test macro fqn link`() = doTest("std/macro.println.html", ".../libstd/macros.rs")
+    fun `test macro fqn link with reexport`() = doTest("std/macro.assert_eq.html", ".../libcore/macros.rs")
 
     private fun doTest(link: String, expectedPath: String, @Language("Rust") code: String = DEFAULT_TEXT) {
         check(expectedPath.startsWith("...")) {
