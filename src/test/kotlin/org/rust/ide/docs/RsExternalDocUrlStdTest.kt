@@ -72,7 +72,7 @@ class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
             let x = ptr.is_null();
                           //^
         }
-    """, "https://doc.rust-lang.org/core/primitive.pointer.html#method.is_null")
+    """, "https://doc.rust-lang.org/std/primitive.pointer.html#method.is_null")
 
     fun `test tymethod`() = doUrlTestByText("""
         fn foo<T: Default>() -> T {
