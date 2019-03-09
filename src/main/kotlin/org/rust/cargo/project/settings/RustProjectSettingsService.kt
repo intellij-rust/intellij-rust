@@ -22,7 +22,6 @@ interface RustProjectSettingsService {
         // but if one does not use rustup, it's possible to
         // provide path to stdlib explicitly.
         var explicitPathToStdlib: String? = null,
-        var useCargoCheckForBuild: Boolean = false,
         var useCargoCheckAnnotator: Boolean = false,
         var cargoCheckArguments: String = "",
         var compileAllTargets: Boolean = true,
@@ -50,7 +49,6 @@ interface RustProjectSettingsService {
     val toolchain: RustToolchain?
     val explicitPathToStdlib: String?
     val autoUpdateEnabled: Boolean
-    val useCargoCheckForBuild: Boolean
     val useCargoCheckAnnotator: Boolean
     val cargoCheckArguments: String
     val compileAllTargets: Boolean

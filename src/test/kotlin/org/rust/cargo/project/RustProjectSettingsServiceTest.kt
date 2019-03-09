@@ -31,7 +31,6 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="showTestToolWindow" value="false" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useCargoCheckAnnotator" value="true" />
-              <option name="useCargoCheckForBuild" value="true" />
               <option name="useOffline" value="true" />
               <option name="useSkipChildren" value="true" />
             </State>
@@ -43,7 +42,6 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(RustToolchain(Paths.get("/")), service.toolchain)
         assertEquals(false, service.autoUpdateEnabled)
         assertEquals("/stdlib", service.explicitPathToStdlib)
-        assertEquals(true, service.useCargoCheckForBuild)
         assertEquals(true, service.useCargoCheckAnnotator)
         assertEquals("--no-default-features", service.cargoCheckArguments)
         assertEquals(false, service.compileAllTargets)
