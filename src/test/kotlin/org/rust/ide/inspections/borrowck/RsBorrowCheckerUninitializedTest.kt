@@ -9,26 +9,73 @@ import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
-    fun `test E0381 error no init`() = checkByText("""
+    fun `test E0381 error no init`() = checkFixByText("Initialize with a default value", """
         fn main() {
             let x: i32;
-            <error descr="Use of possibly uninitialized variable">x</error>;
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        fn main() {
+            let x: i32 = 0;
+            x;
         }
     """, checkWarn = false)
 
-    fun `test E0381 error init inside then`() = checkByText("""
+    fun `test E0381 error init inside then`() = checkFixByText("Initialize with a default value", """
         fn main() {
             let x: i32;
             if something { x = 1 } else {};
-            <error descr="Use of possibly uninitialized variable">x</error>;
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        fn main() {
+            let x: i32 = 0;
+            if something { x = 1 } else {};
+            x;
         }
     """, checkWarn = false)
 
-    fun `test E0381 error init inside else`() = checkByText("""
+    fun `test E0381 error init inside then mutable`() = checkFixByText("Initialize with a default value", """
+        fn main() {
+            let mut x: i32;
+            if something { x = 1 } else {};
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        fn main() {
+            let mut x: i32 = 0;
+            if something { x = 1 } else {};
+            x;
+        }
+    """, checkWarn = false)
+
+    fun `test E0381 error fix unavailable tuple 1`() = checkFixIsUnavailable("Initialize with a default value", """
+        fn main() {
+            let (x,): (i32,);
+            if something { x = 1 } else {};
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, checkWarn = false)
+
+    fun `test E0381 error fix unavailable tuple 2`() = checkFixIsUnavailable("Initialize with a default value", """
+        fn main() {
+            let (x, y): (i32, i32);
+            if something { x = 1 } else {};
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, checkWarn = false)
+
+    fun `test E0381 error init inside else`() = checkFixByText("Initialize with a default value", """
         fn main() {
             let x: i32;
             if something {} else { x = 1 };
-            <error descr="Use of possibly uninitialized variable">x</error>;
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        fn main() {
+            let x: i32 = 0;
+            if something {} else { x = 1 };
+            x;
         }
     """, checkWarn = false)
 
@@ -40,14 +87,63 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         }
     """, checkWarn = false)
 
-    fun `test E0381 error init inside match arm`() = checkByText("""
+    fun `test E0381 error init inside match arm`() = checkFixByText("Initialize with a default value", """
         fn main() {
             let x: i32;
             match 42 {
                 0...10 => { x = 1 }
                 _ => {}
             };
-            <error descr="Use of possibly uninitialized variable">x</error>;
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        fn main() {
+            let x: i32 = 0;
+            match 42 {
+                0...10 => { x = 1 }
+                _ => {}
+            };
+            x;
+        }
+    """, checkWarn = false)
+
+    fun `test E0381 error no explicit type`() = checkFixByText("Initialize with a default value", """
+        fn main() {
+            let x;
+            let y: i32 =  <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        fn main() {
+            let x = 0;
+            let y: i32 =  x;
+        }
+    """, checkWarn = false)
+
+    fun `test E0381 error declaration with attribute`() = checkFixByText("Initialize with a default value", """
+        fn main() {
+            #[foobar]
+            let x;
+            let y: i32 =  <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        fn main() {
+            #[foobar]
+            let x = 0;
+            let y: i32 =  x;
+        }
+    """, checkWarn = false)
+
+    fun `test E0381 error declaration with comments`() = checkFixByText("Initialize with a default value", """
+        fn main() {
+            // 123
+            let x; // 321
+            let y: i32 =  <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        fn main() {
+            // 123
+            let x = 0; // 321
+            let y: i32 =  x;
         }
     """, checkWarn = false)
 
