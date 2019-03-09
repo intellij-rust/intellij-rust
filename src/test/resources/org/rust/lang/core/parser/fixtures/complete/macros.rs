@@ -84,4 +84,7 @@ fn foo() {
 
     dbg!();
     dbg!("Some text");
+
+    let mut macro_rules = 0;
+    macro_rules += 1;
 }
