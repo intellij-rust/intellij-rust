@@ -7,6 +7,7 @@ package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.intellij.lang.annotations.Language
+import org.rust.cargo.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -67,6 +68,11 @@ class RsCargoCheckAnnotatorPassTest : RsWithToolchainTestBase() {
     }
 
     // https://github.com/intellij-rust/intellij-rust/issues/1497
+    //
+    // We don't want to run this test with rust below 1.30.0
+    // because the corresponding cargo can fail to run `metadata` command
+    // due to `edition` property in `Cargo.toml` in some dependency of `rand` crate
+    @MinRustcVersion("1.30.0")
     fun `test don't try to highlight non project files`() {
         fileTree {
             toml("Cargo.toml", """

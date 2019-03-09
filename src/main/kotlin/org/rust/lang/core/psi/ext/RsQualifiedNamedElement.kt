@@ -201,7 +201,7 @@ data class RsQualifiedName private constructor(
                 element.containingCargoTarget?.normName ?: return null
             }
 
-            val modSegments = if (parentItem.type == PRIMITIVE) {
+            val modSegments = if (parentItem.type == PRIMITIVE || parentItem.type == MACRO) {
                 listOf()
             } else {
                 val mod = element as? RsMod ?: element.containingMod
@@ -218,13 +218,15 @@ data class RsQualifiedName private constructor(
         fun from(qualifiedNamedItem: QualifiedNamedItem): RsQualifiedName? {
             val crateName = qualifiedNamedItem.containingCargoTarget?.normName ?: return null
             val modSegments = mutableListOf<String>()
-            qualifiedNamedItem.superMods
-                ?.asReversed()
-                ?.drop(1)
-                ?.mapTo(modSegments) { it.modName ?: return null }
-                ?: return null
 
             val (parentItem, childItem) = qualifiedNamedItem.item.toItems() ?: return null
+            if (parentItem.type != MACRO) {
+                qualifiedNamedItem.superMods
+                    ?.asReversed()
+                    ?.drop(1)
+                    ?.mapTo(modSegments) { it.modName ?: return null }
+                    ?: return null
+            }
             if (parentItem.type == MOD) {
                 modSegments += parentItem.name
             }

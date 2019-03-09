@@ -50,14 +50,12 @@ class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
         }
     """, "https://doc.rust-lang.org/core/f64/consts/constant.E.html")
 
-    fun `test macro`() = expect<AssertionFailedError> {
-        doUrlTestByText("""
-            fn main() {
-                println!("Hello!");
-                //^
-            }
-        """, "https://doc.rust-lang.org/std/macro.println.html")
-    }
+    fun `test macro`() = doUrlTestByText("""
+        fn main() {
+            println!("Hello!");
+            //^
+        }
+    """, "https://doc.rust-lang.org/std/macro.println.html")
 
     fun `test method`() = doUrlTestByText("""
         fn main() {
