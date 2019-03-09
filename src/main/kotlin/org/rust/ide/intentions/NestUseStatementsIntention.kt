@@ -86,6 +86,7 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
 
     private fun deleteBasePath(fullPath: String, basePath: String): String {
         return when {
+            fullPath == basePath -> "self"
             fullPath.startsWith(basePath) -> fullPath.removePrefix("$basePath::")
             else -> fullPath
         }

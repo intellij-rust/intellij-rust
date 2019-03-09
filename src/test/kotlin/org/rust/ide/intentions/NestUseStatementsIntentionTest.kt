@@ -251,4 +251,17 @@ class NestUseStatementsIntentionTest : RsIntentionTestBase(NestUseStatementsInte
         use ::a1/*caret*/::b::c;
         use a1::b::c;
     """)
+
+    fun `test converts module to self`() = doAvailableTest("""
+        use foo/*caret*/;
+        use foo::foo;
+        use foo::bar;
+    """, """
+        use foo::{
+            self,
+            foo,
+            bar
+        };
+
+    """)
 }
