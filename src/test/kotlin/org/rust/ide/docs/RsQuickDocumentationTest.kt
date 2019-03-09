@@ -5,6 +5,8 @@
 
 package org.rust.ide.docs
 
+import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
@@ -975,6 +977,26 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         fn <b>foo</b>(&amp;self)</pre></div>
         <div class='content'><p><a href="psi_element://test_package/struct.Foo.html#method.bar"><code>Foo::bar</code></a></p></div>
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test primitive type doc`() {
+        InlineFile("""
+            fn foo() -> i32 {}
+                       //^
+        """)
+
+        val (originalElement, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
+        val element = DocumentationManager.getInstance(project)
+            .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
+        val actual = RsDocumentationProvider().generateDoc(element, originalElement)?.trim()
+            ?: error("Expected not null result")
+
+        val regex = Regex("""
+            <div class='definition'><pre>std
+            primitive type <b>i32</b></pre></div><div class='content'><p>.+</p></div>
+        """.trimIndent(), RegexOption.MULTILINE)
+        assertTrue(actual.matches(regex))
+    }
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
         = doTest(code, expected, RsDocumentationProvider::generateDoc)

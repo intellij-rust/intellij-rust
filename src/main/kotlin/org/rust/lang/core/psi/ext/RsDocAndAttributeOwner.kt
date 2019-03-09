@@ -94,6 +94,14 @@ class QueryAttributes(
         return attrs.any { it.metaItemArgs?.metaItemList?.any { it.name == arg } ?: false }
     }
 
+    // `#[attributeName(key = "value")]`
+    fun hasAttributeWithKeyValue(attributeName: String, key: String, value: String): Boolean {
+        val attrs = attrsByName(attributeName)
+        return attrs.any {
+            it.metaItemArgs?.metaItemList?.any { it.name == key && it.value == value } ?: false
+        }
+    }
+
     fun lookupStringValueForKey(key: String): String? =
         metaItems
             .filter { it.name == key }
