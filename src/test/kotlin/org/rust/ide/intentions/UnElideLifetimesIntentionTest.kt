@@ -18,6 +18,15 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         """
     )
 
+    fun `test unavailable doc comment`() = doUnavailableTest(
+        """
+        /// ```
+        /// /*caret*/
+        /// ```
+        fn bar(x: &i32) {}
+        """
+    )
+
     fun `test unavailable no args`() = doUnavailableTest(
         """
         fn bar(/*caret*/) {}
