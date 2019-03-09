@@ -1182,7 +1182,7 @@ Macro ::= AttrsAndVis "macro_rules" '!' identifier MacroBody <<macroSemicolon>>{
   stubClass = "org.rust.lang.core.stubs.RsMacroStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
-  pin = 2
+  pin = 3
 }
 
 MacroBody ::= <<any_braces (MacroCase ';'?)*>>
