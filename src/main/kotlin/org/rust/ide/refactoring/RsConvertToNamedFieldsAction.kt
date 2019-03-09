@@ -7,20 +7,31 @@ package org.rust.ide.refactoring
 
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.actions.BaseRefactoringAction
+import com.intellij.refactoring.ui.RefactoringDialog
+import com.intellij.ui.EditorTextField
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.GridBag
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.RsEnumVariant
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.RsTupleFields
+import org.rust.lang.core.psi.ext.RsFieldsOwner
+import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.isPublic
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
     override fun isAvailableInEditorOnly(): Boolean = true
@@ -28,7 +39,8 @@ class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = false
 
     override fun isAvailableOnElementInEditorAndFile(element: PsiElement, editor: Editor, file: PsiFile, context: DataContext): Boolean {
-        return findTupleStructBody(element) != null
+        val owner = element.ancestorOrSelf<RsFieldsOwner>() ?: return false
+        return owner.tupleFields != null
     }
 
     override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
@@ -45,34 +57,77 @@ class RsConvertToNamedFieldsAction : BaseRefactoringAction() {
         }
 
         override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-            WriteCommandAction.runWriteCommandAction(project) {
-                doRefactoring(findTupleStructBody(elements.single())!!)
-            }
+            val element = elements.first().ancestorOrSelf<RsFieldsOwner>()!!
+            if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+                val processor = RsConvertToNamedFieldsProcessor(project, element, true)
+                processor.setPreviewUsages(false)
+                processor.run()
+            } else
+                Dialog(project, element).show()
         }
     }
-}
 
-private fun findTupleStructBody(element: PsiElement): RsTupleFields? {
-    val parent = element.ancestorOrSelf<RsTupleFields>()
-    if (parent != null) return parent
+    private class Dialog(project: Project, val element: RsFieldsOwner) : RefactoringDialog(project, false) {
+        val cb = JBCheckBox("Convert all usages", true)
+        val editors = (0..element.tupleFields!!.tupleFieldDeclList.size).map {
+            EditorTextField("_$it").apply {
+                addDocumentListener(object : DocumentListener {
+                    override fun documentChanged(event: DocumentEvent) =
+                        updateErrorInfo(doValidateAll())
+                })
+                selectAll()
+            }
+        }
 
-    val struct = element.ancestorOrSelf<RsStructItem>()
-    if (struct != null) return struct.tupleFields
+        init {
+            super.init()
+            this.title = "Convert to named fields settings"
+        }
 
-    val enumVariant = element.ancestorOrSelf<RsEnumVariant>()
-    if (enumVariant != null) return enumVariant.tupleFields
+        override fun doValidateAll(): List<ValidationInfo> {
+            refactorAction.isEnabled = true
+            return editors
+                .filter { !isValidRustVariableIdentifier(it.text) }
+                .map {
+                    refactorAction.isEnabled = false
+                    ValidationInfo("invalid identifier", it)
+                }
+        }
 
-    return null
-}
+        override fun doAction() =
+            invokeRefactoring(RsConvertToNamedFieldsProcessor(project, element, cb.isSelected, editors.map { it.text }))
 
-private fun doRefactoring(tupleFields: RsTupleFields) {
-    val fields = tupleFields.tupleFieldDeclList.mapIndexed { idx, field ->
-        RsPsiFactory.BlockField(field.isPublic, "_$idx", field.typeReference)
+        override fun createCenterPanel(): JComponent? {
+            val panel = JPanel(BorderLayout(2, 2))
+            panel.preferredSize = Dimension(400, 200)
+
+            val gridPanel = JPanel(GridBagLayout())
+            val gridBuilder = GridBag()
+                .setDefaultWeightX(1.0)
+                .setDefaultFill(GridBagConstraints.HORIZONTAL)
+                .setDefaultInsets(0, 0, 2, 2)
+            gridPanel.add(
+                JBLabel("struct ${(element as RsNameIdentifierOwner).name!!}{"),
+                gridBuilder.nextLine().next()
+            )
+            val input = element.tupleFields!!.tupleFieldDeclList
+                .map {
+                    JBLabel(": " + it.text)
+                }
+                .zip(editors)
+                .fold(gridPanel) { p, (a, b) ->
+                    p.apply {
+                        add(b, gridBuilder.nextLine().next())
+                        add(a, gridBuilder.next())
+                    }
+                }
+            input.border = createContentPaneBorder()
+            input.add(JBLabel("}"), gridBuilder.weighty(1.0).nextLine())
+
+            panel.add(input, BorderLayout.NORTH)
+            panel.add(cb, BorderLayout.SOUTH)
+            return panel
+        }
+
     }
-    val blockFields = RsPsiFactory(tupleFields.project).createBlockFields(fields)
-    val parent = tupleFields.parent
-    if (parent is RsStructItem) {
-        parent.semicolon?.delete()
-    }
-    tupleFields.replace(blockFields)
 }

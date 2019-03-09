@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.RsTupleFields
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
 
-interface RsFieldsOwner : RsElement {
+interface RsFieldsOwner : RsElement, RsNameIdentifierOwner, RsQualifiedNamedElement {
     val blockFields: RsBlockFields?
     val tupleFields: RsTupleFields?
 }
