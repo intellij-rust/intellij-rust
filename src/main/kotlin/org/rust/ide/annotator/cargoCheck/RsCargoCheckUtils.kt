@@ -37,6 +37,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.*
 import org.rust.ide.annotator.cargoCheck.RsCargoCheckFilteredMessage.Companion.filterMessage
 import org.rust.ide.annotator.cargoCheck.RsCargoCheckUtils.TEST_MESSAGE
+import org.rust.ide.annotator.fixes.ApplySuggestionFix
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
@@ -167,6 +168,7 @@ fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: Rs
             .apply {
                 problemGroup = ProblemGroup { annotationMessage }
                 setNeedsUpdateOnTyping(true)
+                message.quickFixes.forEach(::registerFix)
             }
     }
 }
@@ -189,7 +191,8 @@ private data class RsCargoCheckFilteredMessage(
     val severity: HighlightSeverity,
     val textRange: TextRange,
     val message: String,
-    val htmlTooltip: String
+    val htmlTooltip: String,
+    val quickFixes: List<ApplySuggestionFix>
 ) {
     companion object {
         fun filterMessage(file: PsiFile, document: Document, message: RustcMessage): RsCargoCheckFilteredMessage? {
@@ -217,23 +220,7 @@ private data class RsCargoCheckFilteredMessage(
             val spanFilePath = PathUtil.toSystemIndependentName(span.file_name)
             if (!file.virtualFile.path.endsWith(spanFilePath)) return null
 
-            @Suppress("NAME_SHADOWING")
-            fun toOffset(line: Int, column: Int): Int? {
-                val line = line - 1
-                val column = column - 1
-                if (line >= document.lineCount) return null
-                return (document.getLineStartOffset(line) + column)
-                    .takeIf { it <= document.textLength }
-            }
-
-            // The compiler message lines and columns are 1 based while intellij idea are 0 based
-            val startOffset = toOffset(span.line_start, span.column_start)
-            val endOffset = toOffset(span.line_end, span.column_end)
-            val textRange = if (startOffset != null && endOffset != null && startOffset < endOffset) {
-                TextRange(startOffset, endOffset)
-            } else {
-                return null
-            }
+            val textRange = span.toTextRange(document) ?: return null
 
             val tooltip = with(ArrayList<String>()) {
                 val code = message.code.formatAsLink()
@@ -251,7 +238,13 @@ private data class RsCargoCheckFilteredMessage(
                 joinToString("<br>") { formatMessage(it) }
             }
 
-            return RsCargoCheckFilteredMessage(severity, textRange, message.message, tooltip)
+            return RsCargoCheckFilteredMessage(
+                severity,
+                textRange,
+                message.message,
+                tooltip,
+                message.collectQuickFixes(file, document)
+            )
         }
     }
 }
@@ -261,6 +254,27 @@ private fun RustcSpan.isValid(): Boolean =
 
 private fun ErrorCode?.formatAsLink(): String? =
     if (this?.code.isNullOrBlank()) null else "<a href=\"${RsConstants.ERROR_INDEX_URL}#${this?.code}\">${this?.code}</a>"
+
+private fun RustcMessage.collectQuickFixes(file: PsiFile, document: Document): List<ApplySuggestionFix> {
+    val quickFixes = mutableListOf<ApplySuggestionFix>()
+
+    fun go(message: RustcMessage) {
+        val span = message.spans.firstOrNull { it.is_primary && it.isValid() }
+        createQuickFix(file, document, span, message.message)?.let { quickFixes.add(it) }
+        message.children.forEach(::go)
+    }
+
+    go(this)
+    return quickFixes
+}
+
+private fun createQuickFix(file: PsiFile, document: Document, span: RustcSpan?, message: String): ApplySuggestionFix? {
+    if (span?.suggested_replacement == null || span.suggestion_applicability == null) return null
+    val textRange = span.toTextRange(document) ?: return null
+    val endElement = file.findElementAt(textRange.endOffset - 1) ?: return null
+    val startElement = file.findElementAt(textRange.startOffset) ?: endElement
+    return ApplySuggestionFix(message, span.suggested_replacement, startElement, endElement)
+}
 
 private fun formatMessage(message: String): String {
     data class Group(val isList: Boolean, val lines: ArrayList<String>)

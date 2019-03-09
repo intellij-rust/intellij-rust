@@ -64,8 +64,14 @@ class RsCargoCheckInspection : GlobalSimpleInspectionTool() {
         }
     }
 
+    override fun getDisplayName(): String = DISPLAY_NAME
+
+    override fun getShortName(): String = INSPECTION_SHORT_NAME
+
     companion object {
+        const val DISPLAY_NAME: String = "Cargo Check"
         const val INSPECTION_SHORT_NAME: String = "RsCargoCheck"
+
         private val ANNOTATION_RESULT: Key<RsCargoCheckAnnotationResult> = Key.create("ANNOTATION_RESULT")
 
         private fun checkProjectLazily(cargoProject: CargoProject): Lazy<RsCargoCheckAnnotationResult?>? =
