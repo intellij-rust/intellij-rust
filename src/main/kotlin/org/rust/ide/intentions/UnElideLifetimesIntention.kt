@@ -16,6 +16,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsFunction? {
+        if (element is RsDocCommentImpl) return null
         val fn = element.ancestorOrSelf<RsFunction>(stopAt = RsBlock::class.java) ?: return null
 
         if ((fn.retType?.typeReference as? RsRefLikeType)?.lifetime != null) return null
