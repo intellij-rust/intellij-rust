@@ -24,15 +24,14 @@ import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.SimpleTagProvider
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsInnerAttr
-import org.rust.lang.core.psi.RsMetaItem
-import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.doc.psi.RsDocKind
 import java.net.URI
 
@@ -42,7 +41,7 @@ fun RsDocAndAttributeOwner.documentation(): String? =
         .flatMap { it.first.removeDecoration(it.second) }
         .joinToString("\n")
 
-fun RsDocAndAttributeOwner.documentationAsHtml(): String? {
+fun RsDocAndAttributeOwner.documentationAsHtml(originalElement: RsElement = this): String? {
     // We need some host with unique scheme to
     //
     // 1. make `URI#resolve` work properly somewhere in markdown to html converter implementation
@@ -51,16 +50,20 @@ fun RsDocAndAttributeOwner.documentationAsHtml(): String? {
     // We can't use `DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL` scheme here
     // because it contains `_` and it is invalid symbol for URI scheme
     val tmpUriPrefix = "psi://element/"
-    val baseURI = if (this is RsQualifiedNamedElement) {
-        val path = RsQualifiedName.from(this)?.toUrlPath()
-        if (path != null) {
-            try {
-                URI.create("$tmpUriPrefix$path")
-            } catch (e: Exception) {
-                null
-            }
-        } else null
+    val path = when (originalElement) {
+        is RsQualifiedNamedElement -> RsQualifiedName.from(originalElement)?.toUrlPath()
+        // generating documentation for primitive types via the corresponding module
+        is RsPath -> if (TyPrimitive.fromPath(originalElement) != null) "$STD/" else return null
+        else -> return null
+    }
+    val baseURI = if (path != null) {
+        try {
+            URI.create("$tmpUriPrefix$path")
+        } catch (e: Exception) {
+            null
+        }
     } else null
+
     val text = documentation() ?: return null
     val flavour = RustDocMarkdownFlavourDescriptor(this, baseURI)
     val root = MarkdownParser(flavour).buildMarkdownTreeFromString(text)
