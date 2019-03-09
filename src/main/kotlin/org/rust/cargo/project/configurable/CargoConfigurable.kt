@@ -17,9 +17,6 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
     private val autoUpdateEnabledCheckbox: JBCheckBox = JBCheckBox()
     private var autoUpdateEnabled: Boolean by CheckboxDelegate(autoUpdateEnabledCheckbox)
 
-    private val useCargoCheckForBuildCheckbox: JBCheckBox = JBCheckBox()
-    private var useCargoCheckForBuild: Boolean by CheckboxDelegate(useCargoCheckForBuildCheckbox)
-
     private val useCargoCheckAnnotatorCheckbox: JBCheckBox = JBCheckBox()
     private var useCargoCheckAnnotator: Boolean by CheckboxDelegate(useCargoCheckAnnotatorCheckbox)
 
@@ -51,17 +48,12 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
                 Enable external annotator to add code highlighting based on `cargo check` result.
                 Can be CPU-consuming.
             """)
-            row("Use cargo check when build project:", useCargoCheckForBuildCheckbox, """
-                Use `cargo check` instead of `cargo build`.
-                It should decrease action time because it doesn't generate binaries.
-            """)
             row("Additional cargo check arguments:", cargoCheckArguments)
         }
     }
 
     override fun isModified(): Boolean {
         return autoUpdateEnabled != settings.autoUpdateEnabled
-            || useCargoCheckForBuild != settings.useCargoCheckForBuild
             || useCargoCheckAnnotator != settings.useCargoCheckAnnotator
             || compileAllTargets != settings.compileAllTargets
             || useOffline != settings.useOffline
@@ -71,7 +63,6 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
     override fun apply() {
         settings.modify {
             it.autoUpdateEnabled = autoUpdateEnabled
-            it.useCargoCheckForBuild = useCargoCheckForBuild
             it.useCargoCheckAnnotator = useCargoCheckAnnotator
             it.cargoCheckArguments = cargoCheckArguments.text
             it.compileAllTargets = compileAllTargets
@@ -81,7 +72,6 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
 
     override fun reset() {
         autoUpdateEnabled = settings.autoUpdateEnabled
-        useCargoCheckForBuild = settings.useCargoCheckForBuild
         useCargoCheckAnnotator = settings.useCargoCheckAnnotator
         cargoCheckArguments.text = settings.cargoCheckArguments
         compileAllTargets = settings.compileAllTargets

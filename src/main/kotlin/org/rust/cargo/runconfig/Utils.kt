@@ -41,8 +41,6 @@ fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommand
 val Project.hasCargoProject: Boolean get() = cargoProjects.allProjects.isNotEmpty()
 
 fun Project.buildProject() {
-    val command = if (rustSettings.useCargoCheckForBuild) "check" else "build"
-
     val arguments = mutableListOf("--all")
 
     if (rustSettings.compileAllTargets) {
@@ -58,7 +56,7 @@ fun Project.buildProject() {
     }
 
     for (cargoProject in cargoProjects.allProjects) {
-        val cmd = CargoCommandLine.forProject(cargoProject, command, arguments)
+        val cmd = CargoCommandLine.forProject(cargoProject, "build", arguments)
         val runnerAndConfigurationSettings = RunManager.getInstance(this)
             .createCargoCommandRunConfiguration(cmd)
         val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)

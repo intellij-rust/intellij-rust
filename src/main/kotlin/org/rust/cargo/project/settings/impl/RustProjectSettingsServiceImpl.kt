@@ -23,7 +23,6 @@ class RustProjectSettingsServiceImpl(
     override val toolchain: RustToolchain? get() = state.toolchain
     override val explicitPathToStdlib: String? get() = state.explicitPathToStdlib
     override val autoUpdateEnabled: Boolean get() = state.autoUpdateEnabled
-    override val useCargoCheckForBuild: Boolean get() = state.useCargoCheckForBuild
     override val useCargoCheckAnnotator: Boolean get() = state.useCargoCheckAnnotator
     override val cargoCheckArguments: String get() = state.cargoCheckArguments
     override val compileAllTargets: Boolean get() = state.compileAllTargets
