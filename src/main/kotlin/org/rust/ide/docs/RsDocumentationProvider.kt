@@ -119,17 +119,22 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     }
 
     override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String> {
-        if (element !is RsDocAndAttributeOwner ||
-            element !is RsQualifiedNamedElement ||
-            !element.hasExternalDocumentation) return emptyList()
+        val (qualifiedName, origin) = if (element is RsPath) {
+            (RsQualifiedName.from(element) ?: return emptyList()) to STDLIB
+        } else {
+            if (element !is RsDocAndAttributeOwner ||
+                element !is RsQualifiedNamedElement ||
+                !element.hasExternalDocumentation) return emptyList()
+            val origin = element.containingCargoPackage?.origin
+            RsQualifiedName.from(element) to origin
+        }
 
-        val cargoPackage = element.containingCargoPackage
-        val pagePrefix = when (cargoPackage?.origin) {
+        val pagePrefix = when (origin) {
             STDLIB -> STD_DOC_HOST
             else -> if (isUnitTestMode) TEST_HOST else return emptyList()
         }
 
-        val pagePath = RsQualifiedName.from(element)?.toUrlPath() ?: return emptyList()
+        val pagePath = qualifiedName?.toUrlPath() ?: return emptyList()
         return listOf("$pagePrefix/$pagePath")
     }
 
