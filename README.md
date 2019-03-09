@@ -1,6 +1,6 @@
 # Rust plugin for the IntelliJ Platform
 
-[![official JetBrains project](http://jb.gg/badges/official-flat-square.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 [![JetBrains plugins][plugin-version-svg]][plugin-repo]
 [![JetBrains plugins][plugin-downloads-svg]][plugin-repo]
