@@ -50,7 +50,7 @@ class CargoRunAnythingProvider : RunAnythingProviderBase<String>() {
             params.firstOrNull() ?: "--help",
             params.drop(1)
         )
-        commandLine.run(project, cargoProject)
+        commandLine.run(cargoProject)
     }
 
     override fun getCommand(value: String): String = value

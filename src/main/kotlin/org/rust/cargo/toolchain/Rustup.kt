@@ -6,11 +6,17 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.execution.ExecutionException
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.cargo.project.settings.toolchain
+import org.rust.ide.actions.InstallComponentAction
+import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import java.nio.file.Path
 
@@ -80,5 +86,51 @@ class Rustup(
         val sysroot = toolchain.getSysroot(projectDirectory) ?: return null
         val fs = LocalFileSystem.getInstance()
         return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
+    }
+
+    companion object {
+
+        fun checkNeedInstallClippy(project: Project, cargoProjectDirectory: Path): Boolean =
+            checkNeedInstallComponent(project, cargoProjectDirectory, "clippy-preview")
+
+        fun checkNeedInstallRustfmt(project: Project, cargoProjectDirectory: Path): Boolean =
+            checkNeedInstallComponent(project, cargoProjectDirectory, "rustfmt-preview")
+
+        // We don't want to install the component if:
+        // 1. It is already installed
+        // 2. We don't have Rustup
+        // 3. Rustup doesn't have this component
+        private fun checkNeedInstallComponent(
+            project: Project,
+            cargoProjectDirectory: Path,
+            componentName: String
+        ): Boolean {
+            val shortName = componentName.removeSuffix("-preview")
+
+            fun check(): Boolean {
+                val rustup = project.toolchain?.rustup(cargoProjectDirectory)
+                    ?: return false
+                val (_, isInstalled) = rustup.listComponents()
+                    .find { (name, _) -> name.startsWith(shortName) }
+                    ?: return false
+                return !isInstalled
+            }
+
+            val needInstall = if (ApplicationManager.getApplication().isDispatchThread) {
+                project.computeWithCancelableProgress("Checking if ${shortName.capitalize()} is installed...", ::check)
+            } else {
+                check()
+            }
+
+            if (needInstall) {
+                project.showBalloon(
+                    "${shortName.capitalize()} is not installed",
+                    NotificationType.ERROR,
+                    InstallComponentAction(cargoProjectDirectory, componentName)
+                )
+            }
+
+            return needInstall
+        }
     }
 }

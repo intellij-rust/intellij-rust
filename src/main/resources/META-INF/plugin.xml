@@ -785,6 +785,9 @@
         <component>
             <implementation-class>org.rust.ide.update.UpdateComponent</implementation-class>
         </component>
+        <component>
+            <implementation-class>org.rust.cargo.RustfmtWatcher</implementation-class>
+        </component>
     </application-components>
 
     <project-components>
