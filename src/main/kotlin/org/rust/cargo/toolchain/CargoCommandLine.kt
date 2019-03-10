@@ -109,7 +109,8 @@ fun CargoWorkspace.Target.launchCommand(): String? {
     }
 }
 
-fun CargoCommandLine.run(project: Project, cargoProject: CargoProject) {
+fun CargoCommandLine.run(cargoProject: CargoProject) {
+    val project = cargoProject.project
     val runConfiguration =
         if (project.cargoProjects.allProjects.size > 1)
             createRunConfiguration(project, this, name = command + " [" + cargoProject.presentableName + "]")

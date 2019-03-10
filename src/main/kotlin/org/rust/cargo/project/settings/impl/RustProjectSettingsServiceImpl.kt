@@ -32,6 +32,7 @@ class RustProjectSettingsServiceImpl(
     override val expandMacros: Boolean get() = state.expandMacros
     override val showTestToolWindow: Boolean get() = state.showTestToolWindow
     override val doctestInjectionEnabled: Boolean get() = state.doctestInjectionEnabled
+    override val runRustfmtOnSave: Boolean get() = state.runRustfmtOnSave
     override val useSkipChildren: Boolean get() = state.useSkipChildren
 
     override fun getState(): State = state

@@ -34,6 +34,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.reference.SoftReference
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
+import org.rust.cargo.RustfmtWatcher
 import org.rust.ide.annotator.RsExternalLinterPass
 import java.lang.reflect.Field
 import java.nio.file.Path
@@ -136,10 +137,15 @@ fun saveAllDocuments() = FileDocumentManager.getInstance().saveAllDocuments()
  * these documents should be stripped later (when [saveAllDocuments] is called).
  */
 fun saveAllDocumentsAsTheyAre() {
+    checkWriteAccessAllowed()
     val documentManager = FileDocumentManager.getInstance()
-    for (document in documentManager.unsavedDocuments) {
-        documentManager.saveDocumentAsIs(document)
-        documentManager.stripDocumentLater(document)
+    val rustfmtWatcher = RustfmtWatcher.getInstance()
+    rustfmtWatcher.withoutReformatting {
+        for (document in documentManager.unsavedDocuments) {
+            documentManager.saveDocumentAsIs(document)
+            documentManager.stripDocumentLater(document)
+            rustfmtWatcher.reformatDocumentLater(document)
+        }
     }
 }
 
@@ -182,7 +188,7 @@ inline fun testAssert(action: () -> Boolean, lazyMessage: () -> Any) {
 fun <T> runWithCheckCanceled(callable: () -> T): T =
     ApplicationUtil.runWithCheckCanceled(callable, ProgressManager.getInstance().progressIndicator)
 
-fun<T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T =
+fun <T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T =
     ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
 
 inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, defaultValue: () -> T): T =

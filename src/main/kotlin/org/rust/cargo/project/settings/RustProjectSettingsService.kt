@@ -31,6 +31,7 @@ interface RustProjectSettingsService {
         var expandMacros: Boolean = true,
         var showTestToolWindow: Boolean = true,
         var doctestInjectionEnabled: Boolean = true,
+        var runRustfmtOnSave: Boolean = false,
         var useSkipChildren: Boolean = false
     ) {
         @get:Transient
@@ -59,6 +60,7 @@ interface RustProjectSettingsService {
     val expandMacros: Boolean
     val showTestToolWindow: Boolean
     val doctestInjectionEnabled: Boolean
+    val runRustfmtOnSave: Boolean
     val useSkipChildren: Boolean
 
     /*
