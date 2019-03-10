@@ -14,8 +14,7 @@ import com.jetbrains.cidr.execution.debugger.evaluation.CidrDebuggerTypesHelper
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrMemberValue
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.resolve.VALUES
-import org.rust.lang.core.resolve.processNestedScopesUpwards
+import org.rust.lang.core.psi.ext.findInScope
 
 class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper(process) {
     override fun createReferenceFromText(`var`: LLValue, context: PsiElement): PsiReference? = null
@@ -34,16 +33,5 @@ class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper
 
 private fun resolveToDeclaration(ctx: PsiElement?, name: String): PsiElement? {
     val composite = ctx?.ancestorOrSelf<RsElement>() ?: return null
-
-    var resolved: PsiElement? = null
-    processNestedScopesUpwards(composite, VALUES) { entry ->
-        if (entry.name == name) {
-            resolved = entry.element
-            true
-        } else {
-            false
-        }
-    }
-
-    return resolved
+    return composite.findInScope(name)
 }
