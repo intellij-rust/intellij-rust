@@ -137,6 +137,16 @@ val RsMacroCall.expansion: MacroExpansion?
         )
     }
 
+val RsMacroCall.expansionFlatten: List<RsExpandedElement>
+    get() {
+        val list = mutableListOf<RsExpandedElement>()
+        processExpansionRecursively {
+            list.add(it)
+            false
+        }
+        return list
+    }
+
 fun RsMacroCall.expandAllMacrosRecursively(): String =
     expandAllMacrosRecursively(0)
 
