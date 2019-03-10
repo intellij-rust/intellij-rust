@@ -1387,7 +1387,7 @@ class RsFnInferenceContext(
 
     private fun inferMatchExprType(expr: RsMatchExpr, expected: Ty?): Ty {
         val matchingExprTy = resolveTypeVarsWithObligations(expr.expr?.inferType() ?: TyUnknown)
-        val arms = expr.matchBody?.matchArmList.orEmpty()
+        val arms = expr.arms
         for (arm in arms) {
             arm.orPats.extractBindings(matchingExprTy)
             arm.expr?.inferType(expected)

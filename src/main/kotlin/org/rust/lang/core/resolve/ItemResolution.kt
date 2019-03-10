@@ -21,7 +21,7 @@ fun processItemOrEnumVariantDeclarations(
 ): Boolean {
     when (scope) {
         is RsEnumItem -> {
-            if (processAll(scope.enumBody?.enumVariantList.orEmpty(), processor)) return true
+            if (processAll(scope.variants, processor)) return true
         }
         is RsMod -> {
             if (processItemDeclarations(scope, ns, processor, withPrivateImports)) return true
