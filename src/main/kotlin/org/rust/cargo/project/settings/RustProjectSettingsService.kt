@@ -7,46 +7,58 @@ package org.rust.cargo.project.settings
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.Topic
+import com.intellij.util.xmlb.annotations.Transient
 import org.rust.cargo.toolchain.RustToolchain
+import java.nio.file.Paths
 
 interface RustProjectSettingsService {
-    data class Data(
-        val toolchain: RustToolchain?,
-        val autoUpdateEnabled: Boolean,
+
+    data class State(
+        var toolchainHomeDirectory: String? = null,
+        var autoUpdateEnabled: Boolean = true,
         // Usually, we use `rustup` to find stdlib automatically,
         // but if one does not use rustup, it's possible to
         // provide path to stdlib explicitly.
-        val explicitPathToStdlib: String?,
-        val useCargoCheckForBuild: Boolean,
-        val useCargoCheckAnnotator: Boolean,
-        val cargoCheckArguments: String,
-        val compileAllTargets: Boolean,
-        val useOffline: Boolean,
-        val expandMacros: Boolean,
-        val showTestToolWindow: Boolean,
-        val doctestInjectionEnabled: Boolean,
-        val useSkipChildren: Boolean
-    )
+        var explicitPathToStdlib: String? = null,
+        var useCargoCheckForBuild: Boolean = false,
+        var useCargoCheckAnnotator: Boolean = false,
+        var cargoCheckArguments: String = "",
+        var compileAllTargets: Boolean = true,
+        var useOffline: Boolean = false,
+        var expandMacros: Boolean = true,
+        var showTestToolWindow: Boolean = true,
+        var doctestInjectionEnabled: Boolean = true,
+        var useSkipChildren: Boolean = false
+    ) {
+        @get:Transient
+        @set:Transient
+        var toolchain: RustToolchain?
+            get() = toolchainHomeDirectory?.let { RustToolchain(Paths.get(it)) }
+            set(value) {
+                toolchainHomeDirectory = value?.location?.systemIndependentPath
+            }
+    }
 
-    var data: Data
+    /**
+     * Allows to modify settings.
+     * After setting change,
+     */
+    fun modify(action: (State) -> Unit)
 
-    val toolchain: RustToolchain? get() = data.toolchain
-    var explicitPathToStdlib: String?
-        get() = data.explicitPathToStdlib
-        set(value) {
-            data = data.copy(explicitPathToStdlib = value)
-        }
-    val autoUpdateEnabled: Boolean get() = data.autoUpdateEnabled
-    val useCargoCheckForBuild: Boolean get() = data.useCargoCheckForBuild
-    val useCargoCheckAnnotator: Boolean get() = data.useCargoCheckAnnotator
-    val cargoCheckArguments: String get() = data.cargoCheckArguments
-    val compileAllTargets: Boolean get() = data.compileAllTargets
-    val useOffline: Boolean get() = data.useOffline
-    val expandMacros: Boolean get() = data.expandMacros
-    val showTestToolWindow: Boolean get() = data.showTestToolWindow
-    val doctestInjectionEnabled: Boolean get() = data.doctestInjectionEnabled
-    val useSkipChildren: Boolean get() = data.useSkipChildren
+    val toolchain: RustToolchain?
+    val explicitPathToStdlib: String?
+    val autoUpdateEnabled: Boolean
+    val useCargoCheckForBuild: Boolean
+    val useCargoCheckAnnotator: Boolean
+    val cargoCheckArguments: String
+    val compileAllTargets: Boolean
+    val useOffline: Boolean
+    val expandMacros: Boolean
+    val showTestToolWindow: Boolean
+    val doctestInjectionEnabled: Boolean
+    val useSkipChildren: Boolean
 
     /*
      * Show a dialog for toolchain configuration
