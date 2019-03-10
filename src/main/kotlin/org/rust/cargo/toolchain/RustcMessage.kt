@@ -7,7 +7,9 @@ package org.rust.cargo.toolchain
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 
@@ -19,13 +21,21 @@ data class CargoTopMessage(
     val target: Target
 ) {
     companion object {
+
+        private val LOG = Logger.getInstance(CargoTopMessage::class.java)
+
         fun fromJson(json: JsonObject): CargoTopMessage? {
             if (json.getAsJsonPrimitive("reason")?.asString != "compiler-message") {
                 return null
             }
 
-            return Gson().fromJson(json, CargoTopMessage::class.java)
-                ?: error("Failed to parse CargoTopMessage from $json")
+            val message = try {
+                Gson().fromJson(json, CargoTopMessage::class.java)
+            } catch (e: JsonSyntaxException) {
+                LOG.warn(e)
+                null
+            }
+            return message ?: error("Failed to parse CargoTopMessage from $json")
         }
     }
 }
