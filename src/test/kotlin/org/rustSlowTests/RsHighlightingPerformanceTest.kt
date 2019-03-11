@@ -5,34 +5,27 @@
 
 package org.rustSlowTests
 
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.util.ui.UIUtil
-import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.stdext.Timings
 
 
-class RsHighlightingPerformanceTest : RsWithToolchainTestBase() {
+class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
     // It is a performance test, but we don't want to waste time
     // measuring CPU performance
     override fun isPerformanceTest(): Boolean = false
 
     fun `test highlighting Cargo`() =
-        repeatTest { highlightProjectFile("cargo", "https://github.com/rust-lang/cargo", "src/cargo/core/resolver/mod.rs") }
+        repeatTest { highlightProjectFile(CARGO, "src/cargo/core/resolver/mod.rs") }
 
     fun `test highlighting mysql_async`() =
-        repeatTest { highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/conn/mod.rs") }
+        repeatTest { highlightProjectFile(MYSQL_ASYNC, "src/conn/mod.rs") }
 
     fun `test highlighting mysql_async 2`() =
-        repeatTest { highlightProjectFile("mysql_async", "https://github.com/blackbeam/mysql_async", "src/connection_like/mod.rs") }
+        repeatTest { highlightProjectFile(MYSQL_ASYNC, "src/connection_like/mod.rs") }
 
     private fun repeatTest(f: () -> Timings) {
         var result = Timings()
@@ -45,13 +38,9 @@ class RsHighlightingPerformanceTest : RsWithToolchainTestBase() {
         result.report()
     }
 
-    private fun highlightProjectFile(name: String, gitUrl: String, filePath: String): Timings {
+    private fun highlightProjectFile(info: RealProjectInfo, filePath: String): Timings {
         val timings = Timings()
-        val base = openRealProject("testData/$name")
-        if (base == null) {
-            println("SKIP $name: git clone $gitUrl testData/$name")
-            return timings
-        }
+        val base = openRealProject(info) ?: return timings
 
         myFixture.configureFromTempProjectFile(filePath)
 
@@ -107,22 +96,5 @@ class RsHighlightingPerformanceTest : RsWithToolchainTestBase() {
 
     private fun currentPsiModificationCount() =
         PsiModificationTracker.SERVICE.getInstance(project).modificationCount
-
-    private fun openRealProject(path: String): VirtualFile? {
-        val projectDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
-            ?: return null
-        runWriteAction {
-            VfsUtil.copyDirectory(
-                this,
-                projectDir,
-                cargoProjectDirectory
-            ) { true }
-            fullyRefreshDirectory(cargoProjectDirectory)
-        }
-
-        refreshWorkspace()
-        UIUtil.dispatchAllInvocationEvents()
-        return cargoProjectDirectory
-    }
 }
 
