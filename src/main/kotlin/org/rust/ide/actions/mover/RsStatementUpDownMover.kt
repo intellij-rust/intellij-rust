@@ -6,10 +6,12 @@
 package org.rust.ide.actions.mover
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.actions.mover.RsLineMover.Companion.RangeEndpoint
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.isMultiLine
 
 class RsStatementUpDownMover : RsLineMover() {
     private val movableItems = tokenSetOf(
@@ -26,17 +28,19 @@ class RsStatementUpDownMover : RsLineMover() {
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
         psi.ancestors.find { it.elementType in movableItems || it.isBlockExpr }
 
-    override fun fixupSibling(sibling: PsiElement, down: Boolean): PsiElement? {
-        val block = getClosestBlock(sibling, down) ?: return sibling
-        return if (down) block.lbrace else block.rbrace
-    }
-
     override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
         if (isMovingOutOfFunctionBody(sibling, down)) {
             UpDownMoverTestMarks.moveOutOfBody.hit()
             return null
         }
-        return sibling
+        val block = getClosestBlock(sibling, down) ?: return sibling
+        return if (down) block.lbrace else block.rbrace
+    }
+
+    override fun findTargetWhitespace(sibling: PsiElement, down: Boolean): PsiWhiteSpace? {
+        val whitespace = (if (down) sibling.prevSibling else sibling.nextSibling) as? PsiWhiteSpace ?: return null
+        // if there is multi-line whitespace between source and target, it should not be jumped over
+        return whitespace.takeIf { it.isMultiLine() }
     }
 
     private fun getClosestBlock(element: PsiElement, down: Boolean): RsBlock? =

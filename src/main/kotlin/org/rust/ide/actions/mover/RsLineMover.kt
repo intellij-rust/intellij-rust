@@ -11,6 +11,7 @@ import com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
@@ -44,17 +45,28 @@ abstract class RsLineMover : LineMover() {
             return true
         }
 
-        info.toMove = LineRange(firstItem, lastItem)
+        val sourceRange = LineRange(firstItem, lastItem)
+        info.toMove = sourceRange
         info.toMove.firstElement = firstItem
         info.toMove.lastElement = lastItem
 
-        val target = findTargetElement(sibling, down)
-        if (target == null) {
-            info.toMove2 = null
-            return true
+        val whitespace = findTargetWhitespace(sibling, down)
+
+        /** In some cases (e.g. [RsStatementUpDownMover]) we don't want to jump over whitespaces */
+        if (whitespace != null) {
+            val nearLine = if (down) sourceRange.endLine else sourceRange.startLine - 1
+            info.toMove2 = LineRange(nearLine, nearLine + 1)
+            info.toMove2.firstElement = whitespace
+        } else {
+            val target = findTargetElement(sibling, down)
+            if (target != null) {
+                info.toMove2 = LineRange(target)
+                info.toMove2.firstElement = target
+            } else {
+                info.toMove2 = null
+            }
         }
-        info.toMove2 = LineRange(target)
-        info.toMove2.firstElement = target
+
         return true
     }
 
@@ -62,6 +74,7 @@ abstract class RsLineMover : LineMover() {
     protected abstract fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement?
     protected open fun fixupSibling(sibling: PsiElement, down: Boolean): PsiElement? = sibling
     protected open fun canApply(firstMovableElement: PsiElement, secondMovableElement: PsiElement): Boolean = true
+    protected open fun findTargetWhitespace(sibling: PsiElement, down: Boolean): PsiWhiteSpace? = null
 
     companion object {
         enum class RangeEndpoint {
