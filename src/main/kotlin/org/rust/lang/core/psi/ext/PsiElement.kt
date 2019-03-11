@@ -6,10 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
@@ -128,3 +125,21 @@ fun PsiElement.rangeWithPrevSpace(prev: PsiElement?) = when (prev) {
 
 val PsiElement.rangeWithPrevSpace: TextRange
     get() = rangeWithPrevSpace(prevSibling)
+
+private fun PsiElement.getLineCount(): Int {
+    val doc = containingFile?.let { file -> PsiDocumentManager.getInstance(project).getDocument(file) }
+    if (doc != null) {
+        val spaceRange = textRange ?: TextRange.EMPTY_RANGE
+
+        if (spaceRange.endOffset <= doc.textLength) {
+            val startLine = doc.getLineNumber(spaceRange.startOffset)
+            val endLine = doc.getLineNumber(spaceRange.endOffset)
+
+            return endLine - startLine
+        }
+    }
+
+    return (text ?: "").count { it == '\n' } + 1
+}
+
+fun PsiWhiteSpace.isMultiLine(): Boolean = getLineCount() > 1

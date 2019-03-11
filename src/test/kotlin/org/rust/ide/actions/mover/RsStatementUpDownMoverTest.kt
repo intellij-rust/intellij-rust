@@ -408,4 +408,88 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
             }
         }
     """)
+
+    fun `test up empty line`() = moveUp("""
+        fn main() {
+            1;
+
+            2/*caret*/;
+        }
+    """, """
+        fn main() {
+            1;
+            2/*caret*/;
+
+        }
+    """)
+
+    fun `test down empty line`() = moveDown("""
+        fn main() {
+            1/*caret*/;
+
+            2;
+        }
+    """, """
+        fn main() {
+
+            1/*caret*/;
+            2;
+        }
+    """)
+
+    fun `test down empty line block`() = moveDown("""
+        fn main() {
+            1/*caret*/;
+
+            if cond {
+            }
+        }
+    """, """
+        fn main() {
+
+            1/*caret*/;
+            if cond {
+            }
+        }
+    """)
+
+    fun `test up empty line block`() = moveUp("""
+        fn main() {
+            if cond {
+            }
+
+            1/*caret*/;
+        }
+    """, """
+        fn main() {
+            if cond {
+            }
+            1/*caret*/;
+
+        }
+    """)
+
+    fun `test up empty line at start`() = moveUp("""
+        fn main() {
+
+            1/*caret*/;
+        }
+    """, """
+        fn main() {
+            1/*caret*/;
+
+        }
+    """)
+
+    fun `test up empty line at end`() = moveDown("""
+        fn main() {
+            1/*caret*/;
+
+        }
+    """, """
+        fn main() {
+
+            1/*caret*/;
+        }
+    """)
 }
