@@ -74,7 +74,7 @@
         <preFormatProcessor implementation="org.rust.ide.formatter.processors.RsMatchArmCommaFormatProcessor"/>
         <preFormatProcessor implementation="org.rust.ide.formatter.processors.RsStatementSemicolonFormatProcessor"/>
         <preFormatProcessor
-            implementation="org.rust.ide.formatter.processors.RsSingleImportRemoveBracesFormatProcessor"/>
+                implementation="org.rust.ide.formatter.processors.RsSingleImportRemoveBracesFormatProcessor"/>
 
         <!-- Refactoring support -->
 
@@ -261,7 +261,7 @@
 
         <codeStyleSettingsProvider implementation="org.rust.ide.formatter.settings.RsCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider
-            implementation="org.rust.ide.formatter.settings.RsLanguageCodeStyleSettingsProvider"/>
+                implementation="org.rust.ide.formatter.settings.RsLanguageCodeStyleSettingsProvider"/>
 
         <!-- Color Settings -->
 
@@ -501,9 +501,9 @@
                          implementationClass="org.rust.ide.inspections.RsTraitImplementationInspection"/>
 
         <globalInspection language="Rust" groupName="Rust"
-                          displayName="Cargo Check"
+                          displayName="External Linter"
                           enabledByDefault="true" level="ERROR"
-                          implementationClass="org.rust.ide.inspections.RsCargoCheckInspection"/>
+                          implementationClass="org.rust.ide.inspections.RsExternalLinterInspection"/>
 
         <!-- Surrounders -->
 
@@ -678,7 +678,7 @@
         <programRunner implementation="org.rust.cargo.runconfig.RsTestRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
         <runConfigurationProducer
-            implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
+                implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
         <!-- To register a new producer, add it to the `producers` list in the `CompositeCargoRunConfigurationProducer`
              producer instead of registering it here. -->
 
@@ -712,7 +712,7 @@
                     icon="/icons/tool-window.svg"/>
 
         <additionalLibraryRootsProvider
-            implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
+                implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
 
         <!-- Icon Provider -->
 
@@ -788,7 +788,7 @@
             <implementation-class>org.rust.lang.core.psi.RsPsiManagerImpl</implementation-class>
         </component>
         <component>
-            <implementation-class>org.rust.ide.annotator.cargoCheck.RsCargoCheckAnnotatorPassFactory</implementation-class>
+            <implementation-class>org.rust.ide.annotator.RsExternalLinterPassFactory</implementation-class>
         </component>
     </project-components>
 
@@ -847,13 +847,9 @@
                 class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
                 text="Run Cargo command"/>
 
-        <action id="Rust.RunCargoCheck"
-                class="org.rust.ide.actions.RsRunCargoCheckAction"
-                text="Run Cargo Check"/>
-
-        <action id="Rust.RunClippy"
-                class="org.rust.cargo.runconfig.command.RunClippyAction"
-                text="Run Clippy"/>
+        <action id="Rust.RunExternalLinter"
+                class="org.rust.ide.actions.RsRunExternalLinterAction"
+                text="Run External Linter"/>
 
         <action id="Rust.AttachCargoProject"
                 class="org.rust.cargo.project.model.AttachCargoProjectAction"
@@ -892,15 +888,14 @@
             <reference id="Rust.RefreshCargoProject"/>
             <reference id="Rust.CargoCommand"/>
             <reference id="Rust.CargoFmtFile"/>
-            <reference id="Rust.RunCargoCheck"/>
-            <reference id="Rust.RunClippy"/>
+            <reference id="Rust.RunExternalLinter"/>
             <separator/>
             <reference id="Rust.AttachCargoProject"/>
             <reference id="Rust.DetachCargoProject"/>
         </group>
-        <action id="Rust.ToggleCargoCheckAction"
-                class="org.rust.ide.actions.ToggleCargoCheckAction"
-                text="Toggle Cargo check">
+        <action id="Rust.ToggleExternalLinterOnTheFlyAction"
+                class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"
+                text="Run external linter (cargo check / clippy) on the fly">
         </action>
     </actions>
 

@@ -19,9 +19,8 @@ class ApplySuggestionFix(
     startElement: PsiElement,
     endElement: PsiElement
 ) : LocalQuickFixAndIntentionActionOnPsiElement(startElement, endElement) {
-
-    override fun getFamilyName(): String = "Apply the suggested replacement made by rustc"
-    override fun getText(): String = "Rustc: $message"
+    override fun getFamilyName(): String = "Apply the suggested replacement made by external linter"
+    override fun getText(): String = "External Linter: $message"
 
     override fun invoke(
         project: Project,

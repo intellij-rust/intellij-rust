@@ -10,8 +10,11 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
@@ -31,6 +34,8 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.reference.SoftReference
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
+import org.rust.ide.annotator.RsExternalLinterPass
+import java.lang.reflect.Field
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicReference
@@ -114,6 +119,49 @@ val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTe
 
 fun saveAllDocuments() = FileDocumentManager.getInstance().saveAllDocuments()
 
+/**
+ * Calling of [saveAllDocuments] uses [TrailingSpacesStripper] to format all unsaved documents.
+ *
+ * In case of [RsExternalLinterPass] it backfires:
+ * 1. Calling [TrailingSpacesStripper.strip] on *every* file change.
+ * 2. Double run of external linter, because [TrailingSpacesStripper.strip] generates new "PSI change" events.
+ *
+ * This function saves all documents "as they are" (see [FileDocumentManager.saveDocumentAsIs]), but also fires that
+ * these documents should be stripped later (when [saveAllDocuments] is called).
+ */
+fun saveAllDocumentsAsTheyAre() {
+    val documentManager = FileDocumentManager.getInstance()
+    for (document in documentManager.unsavedDocuments) {
+        documentManager.saveDocumentAsIs(document)
+        documentManager.stripDocumentLater(document)
+    }
+}
+
+private fun FileDocumentManager.stripDocumentLater(document: Document): Boolean {
+    if (this !is FileDocumentManagerImpl) return false
+    val trailingSpacesStripper = trailingSpacesStripperField
+        ?.get(this) as? TrailingSpacesStripper ?: return false
+    @Suppress("UNCHECKED_CAST")
+    val documentsToStripLater = documentsToStripLaterField
+        ?.get(trailingSpacesStripper) as? MutableSet<Document> ?: return false
+    return documentsToStripLater.add(document)
+}
+
+private val trailingSpacesStripperField: Field? =
+    initFieldSafely<FileDocumentManagerImpl>("myTrailingSpacesStripper")
+
+private val documentsToStripLaterField: Field? =
+    initFieldSafely<TrailingSpacesStripper>("myDocumentsToStripLater")
+
+private inline fun <reified T> initFieldSafely(fieldName: String): Field? =
+    try {
+        T::class.java
+            .getDeclaredField(fieldName)
+            .apply { isAccessible = true }
+    } catch (e: Throwable) {
+        if (isUnitTestMode) throw e else null
+    }
+
 inline fun testAssert(action: () -> Boolean) {
     testAssert(action) { "Assertion failed" }
 }
@@ -140,4 +188,5 @@ fun plugin(): IdeaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(PLUG
 
 // BACKCOMPAT: 2018.3
 @Suppress("DEPRECATION")
-val String.escaped: String get() = StringUtil.escapeXml(this)
+val String.escaped: String
+    get() = StringUtil.escapeXml(this)
