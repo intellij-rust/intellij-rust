@@ -8,6 +8,7 @@ use              { y ,    };
 use              {        };
 use self :: y :: *;
 use self :: y as z;
+use self :: y as _;
 use self :: y;
 use crate :: y;
 
