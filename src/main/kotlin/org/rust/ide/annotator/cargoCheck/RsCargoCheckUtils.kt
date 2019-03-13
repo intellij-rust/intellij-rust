@@ -13,7 +13,6 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
@@ -66,8 +65,7 @@ object RsCargoCheckUtils {
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
-        packageName: String?,
-        isOnFly: Boolean
+        packageName: String?
     ): Lazy<RsCargoCheckAnnotationResult?>? {
         checkReadAccessAllowed()
         return CachedValuesManager.getManager(project)
@@ -91,21 +89,20 @@ object RsCargoCheckUtils {
                     lazy {
                         // This code will be executed out of read action in background thread
                         if (!isUnitTestMode) checkReadAccessNotAllowed()
-                        check(toolchain, project, owner, workingDirectory, packageName, isOnFly)
+                        checkWrapped(toolchain, project, owner, workingDirectory, packageName)
                     },
                     PsiModificationTracker.MODIFICATION_COUNT
                 )
             }
     }
 
-    private fun check(
+    private fun checkWrapped(
         toolchain: RustToolchain,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
-        packageName: String?,
-        isOnFly: Boolean
-    ): RsCargoCheckAnnotationResult? = if (isOnFly) {
+        packageName: String?
+    ): RsCargoCheckAnnotationResult? {
         val indicator = WriteAction.computeAndWait<ProgressIndicator, Throwable> {
             saveAllDocumentsAsTheyAre()
             BackgroundableProcessIndicator(
@@ -117,14 +114,10 @@ object RsCargoCheckUtils {
                 true
             )
         }
-
-        ProgressManager.getInstance().runProcess(
+        return ProgressManager.getInstance().runProcess(
             Computable { check(toolchain, project, owner, workingDirectory, packageName) },
             indicator
         )
-    } else {
-        ApplicationManager.getApplication().invokeAndWait { saveAllDocumentsAsTheyAre() }
-        check(toolchain, project, owner, workingDirectory, packageName)
     }
 
     private fun check(

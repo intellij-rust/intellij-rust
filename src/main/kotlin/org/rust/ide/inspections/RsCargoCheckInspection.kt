@@ -81,8 +81,7 @@ class RsCargoCheckInspection : GlobalSimpleInspectionTool() {
                     cargoProject.project,
                     cargoProject.project,
                     cargoProject.workingDirectory,
-                    null,
-                    isOnFly = false
+                    null
                 )
             }
 
