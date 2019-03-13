@@ -69,9 +69,17 @@ class RsCargoCheckAnnotatorPass(
     }
 
     override fun doApplyInformationToEditor() {
-        if (annotationInfo == null || !isAnnotationPassEnabled) return
+        if (annotationInfo == null || !isAnnotationPassEnabled) {
+            doFinish(emptyList())
+            return
+        }
 
         val update = object : Update(file) {
+            override fun setRejected() {
+                super.setRejected()
+                doFinish(highlights)
+            }
+
             override fun run() {
                 BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Runnable {
                     val annotationResult = annotationResult ?: return@Runnable
