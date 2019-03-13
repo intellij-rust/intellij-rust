@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Transient
+import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RustToolchain
 import java.nio.file.Paths
 
@@ -22,8 +23,9 @@ interface RustProjectSettingsService {
         // but if one does not use rustup, it's possible to
         // provide path to stdlib explicitly.
         var explicitPathToStdlib: String? = null,
-        var useCargoCheckAnnotator: Boolean = false,
-        var cargoCheckArguments: String = "",
+        var externalLinter: ExternalLinter = ExternalLinter.DEFAULT,
+        var runExternalLinterOnTheFly: Boolean = false,
+        var externalLinterArguments: String = "",
         var compileAllTargets: Boolean = true,
         var useOffline: Boolean = false,
         var expandMacros: Boolean = true,
@@ -49,8 +51,9 @@ interface RustProjectSettingsService {
     val toolchain: RustToolchain?
     val explicitPathToStdlib: String?
     val autoUpdateEnabled: Boolean
-    val useCargoCheckAnnotator: Boolean
-    val cargoCheckArguments: String
+    val externalLinter: ExternalLinter
+    val runExternalLinterOnTheFly: Boolean
+    val externalLinterArguments: String
     val compileAllTargets: Boolean
     val useOffline: Boolean
     val expandMacros: Boolean

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import org.rust.cargo.project.configurable.RsProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.State
+import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RustToolchain
 
 @com.intellij.openapi.components.State(name = "RustProjectSettings")
@@ -23,8 +24,9 @@ class RustProjectSettingsServiceImpl(
     override val toolchain: RustToolchain? get() = state.toolchain
     override val explicitPathToStdlib: String? get() = state.explicitPathToStdlib
     override val autoUpdateEnabled: Boolean get() = state.autoUpdateEnabled
-    override val useCargoCheckAnnotator: Boolean get() = state.useCargoCheckAnnotator
-    override val cargoCheckArguments: String get() = state.cargoCheckArguments
+    override val externalLinter: ExternalLinter get() = state.externalLinter
+    override val runExternalLinterOnTheFly: Boolean get() = state.runExternalLinterOnTheFly
+    override val externalLinterArguments: String get() = state.externalLinterArguments
     override val compileAllTargets: Boolean get() = state.compileAllTargets
     override val useOffline: Boolean get() = state.useOffline
     override val expandMacros: Boolean get() = state.expandMacros
