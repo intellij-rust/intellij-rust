@@ -12,6 +12,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,8 +21,11 @@ import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.ide.actions.InstallComponentAction
+import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.io.File
@@ -97,6 +101,7 @@ class Cargo(private val cargoExecutable: Path) {
         cargoProjectDirectory: Path,
         cargoPackageName: String? = null
     ): ProcessOutput {
+        val settings = project.rustSettings
         val arguments = buildList<String> {
             add("--message-format=json")
 
@@ -107,14 +112,15 @@ class Cargo(private val cargoExecutable: Path) {
                 add("--all")
             }
 
-            val settings = project.rustSettings
             if (settings.compileAllTargets && checkSupportForBuildCheckAllTargets()) add("--all-targets")
             if (settings.useOffline) add("-Zoffline")
-            addAll(ParametersListUtil.parse(settings.cargoCheckArguments))
+            addAll(ParametersListUtil.parse(settings.externalLinterArguments))
         }
 
-        return CargoCommandLine("check", cargoProjectDirectory, arguments)
-            .execute(owner, ignoreExitCode = true)
+        val useClippy = settings.externalLinter == ExternalLinter.CLIPPY
+            && !checkNeedInstallClippy(project, cargoProjectDirectory)
+        val checkCommand = if (useClippy) "clippy" else "check"
+        return CargoCommandLine(checkCommand, cargoProjectDirectory, arguments).execute(owner, ignoreExitCode = true)
     }
 
     fun toColoredCommandLine(commandLine: CargoCommandLine): GeneralCommandLine =
@@ -205,6 +211,31 @@ class Cargo(private val cargoExecutable: Path) {
             }
             environmentVariables.configureCommandLine(cmdLine, true)
             return cmdLine
+        }
+
+        // We don't want to install Clippy if:
+        // 1. It is already installed
+        // 2. We don't have Rustup
+        // 3. Rustup doesn't have Clippy component
+        fun checkNeedInstallClippy(project: Project, cargoProjectDirectory: Path): Boolean {
+            val needInstallClippy = run {
+                val rustup = project.toolchain?.rustup(cargoProjectDirectory)
+                    ?: return@run false
+                val (_, isClippyInstalled) = rustup.listComponents()
+                    .find { (name, _) -> name.startsWith("clippy") }
+                    ?: return@run false
+                !isClippyInstalled
+            }
+
+            if (needInstallClippy) {
+                project.showBalloon(
+                    "Clippy is not installed",
+                    NotificationType.ERROR,
+                    InstallComponentAction(cargoProjectDirectory, "clippy-preview")
+                )
+            }
+
+            return needInstallClippy
         }
     }
 }

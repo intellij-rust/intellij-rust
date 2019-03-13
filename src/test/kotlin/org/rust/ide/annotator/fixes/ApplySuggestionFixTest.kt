@@ -6,8 +6,10 @@
 package org.rust.ide.annotator.fixes
 
 import org.intellij.lang.annotations.Language
+import org.rust.cargo.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.fileTree
 import org.rust.replaceCaretMarker
 
@@ -15,7 +17,7 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
 
     override fun setUp() {
         super.setUp()
-        project.rustSettings.modify { it.useCargoCheckAnnotator = true }
+        project.rustSettings.modify { it.runExternalLinterOnTheFly = true }
     }
 
     fun `test rustc suggestion (machine applicable)`() = checkFixByText("""
@@ -60,7 +62,23 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         }
     """)
 
-    private fun checkFixByText(@Language("Rust") before: String, @Language("Rust") after: String) {
+    @MinRustcVersion("1.29.0")
+    fun `test clippy suggestion`() = checkFixByText("""
+        fn main() {
+            <weak_warning>if true { true } else { false }</weak_warning>;
+        }
+    """, """
+        fn main() {
+            true;
+        }
+    """, externalLinter = ExternalLinter.CLIPPY)
+
+    private fun checkFixByText(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        externalLinter: ExternalLinter = ExternalLinter.DEFAULT
+    ) {
+        project.rustSettings.modify { it.externalLinter = externalLinter }
         fileTree {
             toml("Cargo.toml", """
                 [package]
@@ -77,7 +95,7 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath(filePath)!!)
         myFixture.checkHighlighting()
         val action = myFixture.getAllQuickFixes(filePath)
-            .singleOrNull { it.text.startsWith("Rustc: ") }
+            .singleOrNull { it.text.startsWith("External Linter: ") }
             ?: return // BACKCOMPAT: Rust ???
         myFixture.launchAction(action)
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))

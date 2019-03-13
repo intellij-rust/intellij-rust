@@ -16,6 +16,7 @@ install:
   - rustup-init.exe --default-toolchain %RUST_VERSION% -y
   - set PATH=C:\Users\appveyor\.cargo\bin;%PATH%
   - rustup component add rust-src
+  - rustup component add clippy-preview
   - rustup component add rustfmt-preview
   - for /f "delims=*" %%a in ('rustc --print sysroot') do (Mklink /D "C:\Users\appveyor\.rust-src" "%%a\lib\rustlib\src\rust\src\")
 

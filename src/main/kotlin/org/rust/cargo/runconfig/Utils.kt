@@ -20,6 +20,7 @@ import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.stdext.buildList
 
 fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): CargoCommandLine =
     copy(
@@ -41,18 +42,17 @@ fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommand
 val Project.hasCargoProject: Boolean get() = cargoProjects.allProjects.isNotEmpty()
 
 fun Project.buildProject() {
-    val arguments = mutableListOf("--all")
-
-    if (rustSettings.compileAllTargets) {
-        val allTargets = rustSettings.toolchain
-            ?.rawCargo()
-            ?.checkSupportForBuildCheckAllTargets() ?: false
-        if (allTargets) {
-            arguments += "--all-targets"
+    val arguments = buildList<String> {
+        val settings = rustSettings
+        add("--all")
+        if (settings.compileAllTargets) {
+            val allTargets = settings.toolchain
+                ?.rawCargo()
+                ?.checkSupportForBuildCheckAllTargets()
+                ?: false
+            if (allTargets) add("--all-targets")
         }
-    }
-    if (rustSettings.useOffline) {
-        arguments += "-Zoffline"
+        if (settings.useOffline) add("-Zoffline")
     }
 
     for (cargoProject in cargoProjects.allProjects) {

@@ -16,14 +16,14 @@ import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.command.RunCargoCommandActionBase
 import org.rust.cargo.runconfig.getAppropriateCargoProject
-import org.rust.ide.inspections.RsCargoCheckInspection
+import org.rust.ide.inspections.RsExternalLinterInspection
 
-class RsRunCargoCheckAction : RunCargoCommandActionBase(CargoIcons.CLIPPY) {
+class RsRunExternalLinterAction : RunCargoCommandActionBase(CargoIcons.EXTERNAL_LINTER) {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
         val currentProfile = InspectionProjectProfileManager.getInstance(project).currentProfile
-        val wrapper = currentProfile.getInspectionTool(RsCargoCheckInspection.INSPECTION_SHORT_NAME, project) ?: return
+        val wrapper = currentProfile.getInspectionTool(RsExternalLinterInspection.SHORT_NAME, project) ?: return
         val managerEx = InspectionManager.getInstance(project) as InspectionManagerEx
         val inspectionContext = RunInspectionIntention.createContext(wrapper, managerEx, null)
 

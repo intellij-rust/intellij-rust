@@ -23,16 +23,16 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.ide.actions.RsRunCargoCheckAction.Companion.CARGO_PROJECT
-import org.rust.ide.annotator.cargoCheck.RsCargoCheckAnnotationResult
-import org.rust.ide.annotator.cargoCheck.RsCargoCheckUtils
-import org.rust.ide.annotator.cargoCheck.createAnnotationsForFile
+import org.rust.ide.actions.RsRunExternalLinterAction.Companion.CARGO_PROJECT
+import org.rust.ide.annotator.RsExternalLinterResult
+import org.rust.ide.annotator.RsExternalLinterUtils
+import org.rust.ide.annotator.createAnnotationsForFile
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.isRustFile
 import java.util.*
 
-class RsCargoCheckInspection : GlobalSimpleInspectionTool() {
+class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
     override fun inspectionStarted(
         manager: InspectionManager,
         globalContext: GlobalInspectionContext,
@@ -66,17 +66,17 @@ class RsCargoCheckInspection : GlobalSimpleInspectionTool() {
 
     override fun getDisplayName(): String = DISPLAY_NAME
 
-    override fun getShortName(): String = INSPECTION_SHORT_NAME
+    override fun getShortName(): String = SHORT_NAME
 
     companion object {
-        const val DISPLAY_NAME: String = "Cargo Check"
-        const val INSPECTION_SHORT_NAME: String = "RsCargoCheck"
+        const val DISPLAY_NAME: String = "External Linter"
+        const val SHORT_NAME: String = "RsExternalLinter"
 
-        private val ANNOTATION_RESULT: Key<RsCargoCheckAnnotationResult> = Key.create("ANNOTATION_RESULT")
+        private val ANNOTATION_RESULT: Key<RsExternalLinterResult> = Key.create("ANNOTATION_RESULT")
 
-        private fun checkProjectLazily(cargoProject: CargoProject): Lazy<RsCargoCheckAnnotationResult?>? =
+        private fun checkProjectLazily(cargoProject: CargoProject): Lazy<RsExternalLinterResult?>? =
             runReadAction {
-                RsCargoCheckUtils.checkLazily(
+                RsExternalLinterUtils.checkLazily(
                     cargoProject.project.toolchain ?: return@runReadAction null,
                     cargoProject.project,
                     cargoProject.project,
