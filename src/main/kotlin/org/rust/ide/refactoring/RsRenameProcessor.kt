@@ -10,15 +10,12 @@ import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import org.rust.lang.core.psi.RsLabel
-import org.rust.lang.core.psi.RsLabelDecl
-import org.rust.lang.core.psi.RsLifetime
-import org.rust.lang.core.psi.RsLifetimeParameter
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class RsRenameProcessor : RenamePsiElementProcessor() {
 
-    override fun canProcessElement(element: PsiElement): Boolean = true
+    override fun canProcessElement(element: PsiElement): Boolean = element !is RsTupleFieldDecl
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
         if (element is RsLifetime || element is RsLifetimeParameter || element is RsLabel || element is RsLabelDecl) {
