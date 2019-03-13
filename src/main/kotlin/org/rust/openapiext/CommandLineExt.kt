@@ -13,6 +13,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Path
@@ -81,7 +82,12 @@ fun GeneralCommandLine.execute(
 
     listener?.let { handler.addProcessListener(it) }
     val output = try {
-        handler.runProcess()
+        val indicator = ProgressManager.getGlobalProgressIndicator()
+        if (indicator != null) {
+            handler.runProcessWithProgressIndicator(indicator)
+        } else {
+            handler.runProcess()
+        }
     } finally {
         Disposer.dispose(cargoKiller)
     }
