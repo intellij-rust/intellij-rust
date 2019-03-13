@@ -63,8 +63,7 @@ class RsCargoCheckAnnotatorPass(
             project,
             disposable,
             cargoPackage.workspace.contentRoot,
-            cargoPackage.name,
-            isOnFly = true
+            cargoPackage.name
         )
     }
 
