@@ -9,13 +9,21 @@ import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
+import com.intellij.codeInspection.ex.GlobalInspectionContextUtil
+import com.intellij.codeInspection.reference.RefElement
+import com.intellij.codeInspection.ui.InspectionToolPresentation
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import org.rust.cargo.project.model.CargoProject
@@ -23,26 +31,25 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.ide.actions.RsRunExternalLinterAction.Companion.CARGO_PROJECT
 import org.rust.ide.annotator.RsExternalLinterResult
 import org.rust.ide.annotator.RsExternalLinterUtils
 import org.rust.ide.annotator.createAnnotationsForFile
+import org.rust.ide.annotator.createDisposableOnAnyPsiChange
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.cargoProject
 import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.lang.core.psi.isRustFile
+import org.rust.stdext.buildList
 import java.util.*
 
 class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
+
     override fun inspectionStarted(
         manager: InspectionManager,
         globalContext: GlobalInspectionContext,
         problemDescriptionsProcessor: ProblemDescriptionsProcessor
     ) {
-        val cargoProject = findCargoProject(manager.project, globalContext) ?: return
-        val annotationInfo = checkProjectLazily(cargoProject) ?: return
-        // TODO: do something if the user changes project documents
-        val annotationResult = annotationInfo.value ?: return
-        globalContext.putUserData(ANNOTATION_RESULT, annotationResult)
+        globalContext.putUserData(ANALYZED_FILES, ContainerUtil.newConcurrentSet())
     }
 
     override fun checkFile(
@@ -53,14 +60,53 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         problemDescriptionsProcessor: ProblemDescriptionsProcessor
     ) {
         if (file !is RsFile || file.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
-        val annotationResult = globalContext.getUserData(ANNOTATION_RESULT) ?: return
+        val analyzedFiles = globalContext.getUserData(ANALYZED_FILES) ?: return
+        analyzedFiles.add(file)
+    }
 
-        val annotationHolder = AnnotationHolderImpl(AnnotationSession(file))
-        annotationHolder.createAnnotationsForFile(file, annotationResult)
+    override fun inspectionFinished(
+        manager: InspectionManager,
+        globalContext: GlobalInspectionContext,
+        problemDescriptionsProcessor: ProblemDescriptionsProcessor
+    ) {
+        if (globalContext !is GlobalInspectionContextImpl) return
+        val analyzedFiles = globalContext.getUserData(ANALYZED_FILES) ?: return
 
-        val problemDescriptors = convertToProblemDescriptors(annotationHolder, file)
-        for (descriptor in problemDescriptors) {
-            problemsHolder.registerProblem(descriptor)
+        val project = manager.project
+        val currentProfile = InspectionProjectProfileManager.getInstance(project).currentProfile
+        val toolWrapper = currentProfile.getInspectionTool(SHORT_NAME, project) ?: return
+
+        while (true) {
+            val disposable = project.messageBus.createDisposableOnAnyPsiChange()
+                .also { Disposer.register(project, it) }
+            val cargoProjects = run {
+                val allProjects = project.cargoProjects.allProjects
+                if (allProjects.size == 1) {
+                    setOf(allProjects.first())
+                } else {
+                    analyzedFiles.mapNotNull { it.cargoProject }.toSet()
+                }
+            }
+            val futures = cargoProjects.map {
+                ApplicationManager.getApplication().executeOnPooledThread<RsExternalLinterResult?> {
+                    checkProjectLazily(it, disposable)?.value
+                }
+            }
+            val annotationResults = futures.mapNotNull { it.get() }
+
+            val exit = runReadAction {
+                ProgressManager.checkCanceled()
+                if (Disposer.isDisposed(disposable)) return@runReadAction false
+                if (annotationResults.size < cargoProjects.size) return@runReadAction true
+                for (annotationResult in annotationResults) {
+                    val problemDescriptors = getProblemDescriptors(analyzedFiles, annotationResult)
+                    val presentation = globalContext.getPresentation(toolWrapper)
+                    presentation.addProblemDescriptors(problemDescriptors, globalContext)
+                }
+                true
+            }
+
+            if (exit) break
         }
     }
 
@@ -72,22 +118,24 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         const val DISPLAY_NAME: String = "External Linter"
         const val SHORT_NAME: String = "RsExternalLinter"
 
-        private val ANNOTATION_RESULT: Key<RsExternalLinterResult> = Key.create("ANNOTATION_RESULT")
+        private val ANALYZED_FILES: Key<MutableSet<RsFile>> = Key.create("ANALYZED_FILES")
 
-        private fun checkProjectLazily(cargoProject: CargoProject): Lazy<RsExternalLinterResult?>? =
-            runReadAction {
-                RsExternalLinterUtils.checkLazily(
-                    cargoProject.project.toolchain ?: return@runReadAction null,
-                    cargoProject.project,
-                    cargoProject.project,
-                    cargoProject.workingDirectory,
-                    null
-                )
-            }
+        private fun checkProjectLazily(
+            cargoProject: CargoProject,
+            disposable: Disposable
+        ): Lazy<RsExternalLinterResult?>? = runReadAction {
+            RsExternalLinterUtils.checkLazily(
+                cargoProject.project.toolchain ?: return@runReadAction null,
+                cargoProject.project,
+                disposable,
+                cargoProject.workingDirectory,
+                null
+            )
+        }
 
         /** TODO: Use [ProblemDescriptorUtil.convertToProblemDescriptors] instead */
-        private fun convertToProblemDescriptors(annotations: List<Annotation>, file: PsiFile): Array<ProblemDescriptor> {
-            if (annotations.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY
+        private fun convertToProblemDescriptors(annotations: List<Annotation>, file: PsiFile): List<ProblemDescriptor> {
+            if (annotations.isEmpty()) return emptyList()
 
             val problems = ContainerUtil.newArrayListWithCapacity<ProblemDescriptor>(annotations.size)
             val quickFixMappingCache = ContainerUtil.newIdentityHashMap<IntentionAction, LocalQuickFix>()
@@ -124,7 +172,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
                 problems.add(descriptor)
             }
 
-            return problems.toTypedArray()
+            return problems
         }
 
         private fun toLocalQuickFixes(
@@ -146,16 +194,47 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
                 }
             }.toTypedArray()
         }
-    }
 
-    private fun findCargoProject(project: Project, globalContext: GlobalInspectionContext): CargoProject? {
-        globalContext.getUserData(CARGO_PROJECT)?.let { return it }
+        private fun getProblemDescriptors(
+            analyzedFiles: Set<RsFile>,
+            annotationResult: RsExternalLinterResult
+        ): List<ProblemDescriptor> = buildList {
+            for (file in analyzedFiles) {
+                if (!file.isValid) continue
+                val annotationHolder = AnnotationHolderImpl(AnnotationSession(file))
+                annotationHolder.createAnnotationsForFile(file, annotationResult)
+                addAll(convertToProblemDescriptors(annotationHolder, file))
+            }
+        }
 
-        val cargoProjects = project.cargoProjects
-        cargoProjects.allProjects.singleOrNull()?.let { return it }
+        private fun InspectionToolPresentation.addProblemDescriptors(
+            descriptors: List<ProblemDescriptor>,
+            context: GlobalInspectionContext
+        ) {
+            if (descriptors.isEmpty()) return
+            val problems = hashMapOf<RefElement, MutableList<ProblemDescriptor>>()
 
-        val virtualFile = FileEditorManager.getInstance(project)
-            .selectedFiles.firstOrNull { it.isRustFile && it.isInLocalFileSystem }
-        return virtualFile?.let { cargoProjects.findProjectForFile(it) }
+            for (descriptor in descriptors) {
+                val element = descriptor.psiElement ?: continue
+                val refElement = getProblemElement(element, context) ?: continue
+                val elementProblems = problems.getOrPut(refElement) { mutableListOf() }
+                elementProblems.add(descriptor)
+            }
+
+            for ((refElement, problemDescriptors) in problems) {
+                val descriptions = problemDescriptors.toTypedArray<CommonProblemDescriptor>()
+                addProblemElement(refElement, false, *descriptions)
+            }
+        }
+
+        private fun getProblemElement(element: PsiElement, context: GlobalInspectionContext): RefElement? {
+            val problemElement = element.ancestorOrSelf<RsFile>()
+            val refElement = context.refManager.getReference(problemElement)
+            return if (refElement == null && problemElement != null) {
+                GlobalInspectionContextUtil.retrieveRefElement(element, context)
+            } else {
+                refElement
+            }
+        }
     }
 }
