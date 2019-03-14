@@ -25,9 +25,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.AnyPsiChangeListener
-import com.intellij.psi.impl.PsiManagerImpl
-import com.intellij.util.messages.MessageBus
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.rust.cargo.project.settings.rustSettings
@@ -54,9 +51,8 @@ class RsExternalLinterPass(
         if (cargoPackage?.origin != PackageOrigin.WORKSPACE) return
 
         val project = file.project
-        disposable = createDisposableOnAnyPsiChange(project.messageBus).also {
-            Disposer.register(ModuleUtil.findModuleForFile(file) ?: project, it)
-        }
+        disposable = project.messageBus.createDisposableOnAnyPsiChange()
+            .also { Disposer.register(ModuleUtil.findModuleForFile(file) ?: project, it) }
 
         annotationInfo = RsExternalLinterUtils.checkLazily(
             project.toolchain ?: return,
@@ -168,17 +164,4 @@ class RsExternalLinterPassFactory(
     companion object {
         private const val TIME_SPAN: Int = 300
     }
-}
-
-private fun createDisposableOnAnyPsiChange(messageBus: MessageBus): Disposable {
-    val child = Disposer.newDisposable("Dispose on PSI change")
-    messageBus.connect(child).subscribe(
-        PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
-        object : AnyPsiChangeListener.Adapter() {
-            override fun beforePsiChanged(isPhysical: Boolean) {
-                Disposer.dispose(child)
-            }
-        }
-    )
-    return child
 }

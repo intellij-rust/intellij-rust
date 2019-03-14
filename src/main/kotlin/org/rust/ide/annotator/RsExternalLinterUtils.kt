@@ -21,12 +21,16 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.AnyPsiChangeListener
+import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.PathUtil
+import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.*
@@ -61,7 +65,7 @@ object RsExternalLinterUtils {
         owner: Disposable,
         workingDirectory: Path,
         packageName: String?
-    ): Lazy<RsExternalLinterResult?>? {
+    ): Lazy<RsExternalLinterResult?> {
         checkReadAccessAllowed()
         return CachedValuesManager.getManager(project)
             .getCachedValue(project) {
@@ -135,6 +139,19 @@ object RsExternalLinterUtils {
         if (output.isCancelled) return null
         return RsExternalLinterResult(output.stdoutLines)
     }
+}
+
+fun MessageBus.createDisposableOnAnyPsiChange(): Disposable {
+    val disposable = Disposer.newDisposable("Dispose on PSI change")
+    connect(disposable).subscribe(
+        PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
+        object : AnyPsiChangeListener.Adapter() {
+            override fun beforePsiChanged(isPhysical: Boolean) {
+                Disposer.dispose(disposable)
+            }
+        }
+    )
+    return disposable
 }
 
 fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: RsExternalLinterResult) {
