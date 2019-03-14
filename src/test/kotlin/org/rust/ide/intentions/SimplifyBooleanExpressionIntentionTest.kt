@@ -283,6 +283,16 @@ class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBoole
         }
     """)
 
+    fun `test negation parens`() = doAvailableTest("""
+        fn main() {
+            if !(1 == 2/*caret*/) {}
+        }
+    """, """
+        fn main() {
+            if 1 != 2 {}
+        }
+    """)
+
     fun `test incomplete code`() = doUnavailableTest("""
         fn main() {
             xs.iter()
