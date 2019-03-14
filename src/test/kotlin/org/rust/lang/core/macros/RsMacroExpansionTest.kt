@@ -401,6 +401,28 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         mod plus_matched {}
     """ to null)
 
+    // TODO should work only on 2018 edition
+    fun `test match * vs ? group pattern`() = doTest(MacroExpansionMarks.questionMarkGroupEnd, """
+        macro_rules! foo {
+            ($ ($ i:ident)?) => (
+                mod question_matched {}
+            );
+            ($ ($ i:ident)*) => (
+                mod asterisk_matched {}
+            );
+        }
+
+        foo! {  }
+        foo! { foo }
+        foo! { foo bar }
+    """, """
+        mod question_matched {}
+    """, """
+        mod question_matched {}
+    """, """
+        mod asterisk_matched {}
+    """)
+
     fun `test group pattern with collapsed token as a separator`() = doTest("""
         macro_rules! foo {
             ($ ($ i:ident)&&*) => ($ (
