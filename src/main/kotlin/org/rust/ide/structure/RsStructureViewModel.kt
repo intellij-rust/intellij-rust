@@ -55,7 +55,7 @@ private class RsStructureViewElement(
     private val childElements: List<RsElement>
         get() {
             return when (psi) {
-                is RsEnumItem -> psi.enumBody?.enumVariantList.orEmpty()
+                is RsEnumItem -> psi.variants
                 is RsImplItem, is RsTraitItem -> {
                     val members = (psi as? RsImplItem)?.members
                         ?: (psi as? RsTraitItem)?.members

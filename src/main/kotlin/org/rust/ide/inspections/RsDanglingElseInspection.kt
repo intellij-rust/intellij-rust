@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsElseBranch
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.rangeWithPrevSpace
 import org.rust.lang.core.psi.ext.startOffset
 
 /**
@@ -53,11 +54,6 @@ class RsDanglingElseInspection : RsLocalInspectionTool() {
                     ))
             }
         }
-
-    private fun PsiElement.rangeWithPrevSpace(prev: PsiElement?) = when (prev) {
-        is PsiWhiteSpace -> textRange.union(prev.textRange)
-        else -> textRange
-    }
 
     private val PsiElement.rightSiblings: Sequence<PsiElement>
         get() = generateSequence(this.nextSibling) { it.nextSibling }

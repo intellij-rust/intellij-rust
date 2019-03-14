@@ -198,8 +198,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 val discriminant = expr.expr ?: return
                 val discriminantCmt = mc.processExpr(discriminant)
 
-                val arms = expr.matchBody?.matchArmList ?: return
-                for (arm in arms) {
+                for (arm in expr.arms) {
                     val mode = armMoveMode(discriminantCmt, arm).matchMode
                     walkArm(discriminantCmt, arm, mode)
                 }

@@ -25,6 +25,8 @@ import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.rustFile
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.VALUES
+import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.openapiext.toPsiFile
 
 interface RsElement : PsiElement {
@@ -130,3 +132,16 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 
 val RsElement.implLookup: ImplLookup
     get() = ImplLookup.relativeTo(this)
+
+fun RsElement.findInScope(name: String): PsiElement? {
+    var resolved: PsiElement? = null
+    processNestedScopesUpwards(this, VALUES) { entry ->
+        if (entry.name == name) {
+            resolved = entry.element
+            true
+        } else {
+            false
+        }
+    }
+    return resolved
+}

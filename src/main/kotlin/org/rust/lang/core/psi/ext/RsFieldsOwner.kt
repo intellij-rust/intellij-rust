@@ -61,3 +61,6 @@ val RsFieldsOwner.fieldTypes: List<Ty>
  */
 val RsFieldsOwner.isFieldless: Boolean
     get() = blockFields == null && tupleFields == null
+
+val RsFieldsOwner.size: Int
+    get() = tupleFields?.tupleFieldDeclList?.size ?: blockFields?.namedFieldDeclList?.size ?: 0

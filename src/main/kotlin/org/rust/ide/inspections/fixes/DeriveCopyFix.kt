@@ -73,8 +73,7 @@ class DeriveCopyFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiEl
                     if (fieldTypes.any { it.isMovesByDefault(implLookup) }) return null
                 }
                 is RsEnumItem -> {
-                    val enumVariants = item.enumBody?.enumVariantList ?: return null
-                    for (variant in enumVariants) {
+                    for (variant in item.variants) {
                         if (variant.fieldTypes.any { it.isMovesByDefault(implLookup) }) return null
                     }
                 }

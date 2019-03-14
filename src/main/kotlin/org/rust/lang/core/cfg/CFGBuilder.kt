@@ -7,6 +7,7 @@ package org.rust.lang.core.cfg
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.arms
 import org.rust.lang.core.psi.ext.isLazy
 import org.rust.lang.core.psi.ext.patList
 import org.rust.lang.core.types.ty.TyNever
@@ -372,7 +373,7 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
 
         val prevGuards = ArrayDeque<CFGNode>()
 
-        matchExpr.matchBody?.matchArmList?.forEach { arm ->
+        matchExpr.arms.forEach { arm ->
             val armExit = addDummyNode()
             val guard = arm.matchArmGuard
 
