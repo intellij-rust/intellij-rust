@@ -369,6 +369,12 @@ private class MacroPattern private constructor(
                 break
             }
 
+            if (group.q != null) {
+                // `$(...)?` means "0 or 1 occurrences"
+                MacroExpansionMarks.questionMarkGroupEnd.hit()
+                break
+            }
+
             if (separator != null) {
                 mark?.drop()
                 mark = macroCallBody.mark()
@@ -506,6 +512,7 @@ object MacroExpansionMarks {
     val failMatchPatternByBindingType = Testmark("failMatchPatternByBindingType")
     val failMatchGroupBySeparator = Testmark("failMatchGroupBySeparator")
     val failMatchGroupTooFewElements = Testmark("failMatchGroupTooFewElements")
+    val questionMarkGroupEnd = Testmark("questionMarkGroupEnd")
     val groupInputEnd1 = Testmark("groupInputEnd1")
     val groupInputEnd2 = Testmark("groupInputEnd2")
     val groupInputEnd3 = Testmark("groupInputEnd3")
