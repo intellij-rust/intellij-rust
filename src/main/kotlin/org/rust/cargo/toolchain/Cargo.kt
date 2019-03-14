@@ -12,7 +12,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -21,11 +20,9 @@ import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.ide.actions.InstallComponentAction
-import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.io.File
@@ -68,7 +65,7 @@ class Cargo(private val cargoExecutable: Path) {
         }
 
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
-            .execute(owner, listener)
+            .execute(owner, listener = listener)
             .stdout
             .dropWhile { it != '{' }
         val rawData = try {
@@ -149,10 +146,12 @@ class Cargo(private val cargoExecutable: Path) {
         }
 
     @Throws(ExecutionException::class)
-    private fun CargoCommandLine.execute(owner: Disposable, listener: ProcessListener? = null,
-                                         ignoreExitCode: Boolean = false): ProcessOutput {
-        return toGeneralCommandLine(this).execute(owner, ignoreExitCode, listener)
-    }
+    private fun CargoCommandLine.execute(
+        owner: Disposable,
+        ignoreExitCode: Boolean = false,
+        stdIn: ByteArray? = null,
+        listener: ProcessListener? = null
+    ): ProcessOutput = toGeneralCommandLine(this).execute(owner, ignoreExitCode, stdIn, listener)
 
     private var _http: HttpConfigurable? = null
     private val http: HttpConfigurable
@@ -211,31 +210,6 @@ class Cargo(private val cargoExecutable: Path) {
             }
             environmentVariables.configureCommandLine(cmdLine, true)
             return cmdLine
-        }
-
-        // We don't want to install Clippy if:
-        // 1. It is already installed
-        // 2. We don't have Rustup
-        // 3. Rustup doesn't have Clippy component
-        fun checkNeedInstallClippy(project: Project, cargoProjectDirectory: Path): Boolean {
-            val needInstallClippy = run {
-                val rustup = project.toolchain?.rustup(cargoProjectDirectory)
-                    ?: return@run false
-                val (_, isClippyInstalled) = rustup.listComponents()
-                    .find { (name, _) -> name.startsWith("clippy") }
-                    ?: return@run false
-                !isClippyInstalled
-            }
-
-            if (needInstallClippy) {
-                project.showBalloon(
-                    "Clippy is not installed",
-                    NotificationType.ERROR,
-                    InstallComponentAction(cargoProjectDirectory, "clippy-preview")
-                )
-            }
-
-            return needInstallClippy
         }
     }
 }

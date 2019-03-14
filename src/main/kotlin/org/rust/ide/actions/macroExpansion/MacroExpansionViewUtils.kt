@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
@@ -27,6 +26,7 @@ import org.rust.lang.core.macros.parseExpandedTextWithContext
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.computeWithCancelableProgress
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -49,7 +49,6 @@ fun expandMacroForViewWithProgress(
     expandRecursively: Boolean
 ): MacroExpansionViewDetails? {
     val progressTitle = "${if (expandRecursively) "Recursive" else "Single step"} expansion progress..."
-
     return project.computeWithCancelableProgress(progressTitle) {
         runReadAction { expandMacroForView(ctx, expandRecursively) }
     }
@@ -82,12 +81,6 @@ private fun expandMacroForView(macroToExpand: RsMacroCall, expandRecursively: Bo
         getMacroExpansionViewTitle(macroToExpand, expandRecursively),
         expansions
     )
-}
-
-private fun<T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T {
-    val manager = ProgressManager.getInstance()
-
-    return manager.runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
 }
 
 private fun getMacroExpansionViewTitle(macroToExpand: RsMacroCall, expandRecursively: Boolean): String =

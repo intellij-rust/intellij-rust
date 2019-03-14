@@ -50,6 +50,7 @@ fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutpu
 fun GeneralCommandLine.execute(
     owner: Disposable,
     ignoreExitCode: Boolean = true,
+    stdIn: ByteArray? = null,
     listener: ProcessListener? = null
 ): ProcessOutput {
 
@@ -81,6 +82,11 @@ fun GeneralCommandLine.execute(
     }
 
     listener?.let { handler.addProcessListener(it) }
+
+    if (stdIn != null) {
+        handler.processInput?.use { it.write(stdIn) }
+    }
+
     val output = try {
         val indicator = ProgressManager.getGlobalProgressIndicator()
         if (indicator != null) {

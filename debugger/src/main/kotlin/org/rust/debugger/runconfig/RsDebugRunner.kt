@@ -20,7 +20,6 @@ import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -47,6 +46,7 @@ import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.prependArgument
 import org.rust.cargo.util.CargoArgsParser
 import org.rust.debugger.settings.RsDebuggerSettings
+import org.rust.openapiext.saveAllDocuments
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -68,7 +68,7 @@ class RsDebugRunner : AsyncProgramRunner<RunnerSettings>() {
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
-        FileDocumentManager.getInstance().saveAllDocuments()
+        saveAllDocuments()
         state as CargoRunStateBase
         val cmd = Cargo.patchArgs(state.prepareCommandLine(), true)
         val (commandArguments, executableArguments) = CargoArgsParser.parseArgs(cmd.command, cmd.additionalArguments)

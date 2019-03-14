@@ -6,23 +6,22 @@
 package org.rust.ide.actions
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.process.ProcessOutput
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.ide.notifications.showBalloon
+import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.lang.core.psi.isRustFile
+import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.saveAllDocuments
 
 class RustfmtFileAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
@@ -33,29 +32,22 @@ class RustfmtFileAction : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val (project, toolchain, file) = getContext(e) ?: return
 
-        FileDocumentManager.getInstance().saveAllDocuments()
+        val cargoProject = project.cargoProjects.findProjectForFile(file) ?: return
+        if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
+
+        saveAllDocuments()
 
         val rustfmt = toolchain.rustfmt()
         try {
-            ProgressManager.getInstance().runProcessWithProgressSynchronously<ProcessOutput, ExecutionException>({
-                rustfmt.reformatFile(project, file)
-            }, "Reformatting File with Rustfmt...", true, project)
+            project.computeWithCancelableProgress("Reformatting File with Rustfmt...") {
+                rustfmt.reformatFile(cargoProject, file)
+            }
             // We want to refresh file synchronously only in unit test
             // to get new text right after `reformatFile` call
             VfsUtil.markDirtyAndRefresh(!isUnitTestMode, true, true, file)
         } catch (e: ExecutionException) {
             // Just easy way to know that something wrong happened
             if (isUnitTestMode) throw e
-            val message = e.message ?: ""
-
-            // #1131 - Check if we get a "'rustfmt' is not installed" and let the user know to install fmt
-            if ("'rustfmt' is not installed" in message) {
-                val projectDir = project.cargoProjects.findProjectForFile(file)?.manifest?.parent
-                val action = if (projectDir != null) InstallComponentAction(projectDir, "rustfmt-preview") else null
-                project.showBalloon("Rustfmt is not installed", NotificationType.ERROR, action)
-            } else {
-                project.showBalloon(message, NotificationType.ERROR)
-            }
         }
     }
 

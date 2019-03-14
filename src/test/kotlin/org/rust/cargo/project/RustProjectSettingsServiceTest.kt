@@ -16,7 +16,6 @@ import org.rust.openapiext.elementFromXmlString
 import org.rust.openapiext.toXmlString
 import java.nio.file.Paths
 
-
 class RustProjectSettingsServiceTest : LightPlatformTestCase() {
     fun `test serialization`() {
         val service = RustProjectSettingsServiceImpl(LightPlatformTestCase.getProject())
@@ -31,6 +30,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="externalLinter" value="Clippy" />
               <option name="externalLinterArguments" value="--no-default-features" />
               <option name="runExternalLinterOnTheFly" value="true" />
+              <option name="runRustfmtOnSave" value="true" />
               <option name="showTestToolWindow" value="false" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useOffline" value="true" />
@@ -52,6 +52,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(false, service.expandMacros)
         assertEquals(false, service.showTestToolWindow)
         assertEquals(false, service.doctestInjectionEnabled)
+        assertEquals(true, service.runRustfmtOnSave)
         assertEquals(true, service.useSkipChildren)
     }
 }
