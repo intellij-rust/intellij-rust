@@ -101,13 +101,16 @@ class RsResolveCache(messageBus: MessageBus) {
             ResolveCacheDependency.LOCAL, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE -> {
                 val owner = element.findModificationTrackerOwner()
                 return if (owner != null) {
-                    CachedValuesManager.getCachedValue(owner, LOCAL_CACHE_KEY) {
-                        if (dep == ResolveCacheDependency.LOCAL) {
+                    if (dep == ResolveCacheDependency.LOCAL) {
+                        CachedValuesManager.getCachedValue(owner, LOCAL_CACHE_KEY) {
                             CachedValueProvider.Result.create(
                                 createWeakMap(),
                                 owner.modificationTracker
                             )
-                        } else {
+                        }
+
+                    } else {
+                        CachedValuesManager.getCachedValue(owner, LOCAL_CACHE_KEY2) {
                             CachedValueProvider.Result.create(
                                 createWeakMap(),
                                 owner.project.rustStructureModificationTracker,
@@ -255,6 +258,7 @@ private val EMPTY_RESOLVE_RESULT = StrongValueReference<Any, Array<ResolveResult
 private val EMPTY_LIST = StrongValueReference<Any, List<Any>>(emptyList())
 
 private val LOCAL_CACHE_KEY: Key<CachedValue<ConcurrentMap<PsiElement, Any?>>> = Key.create("LOCAL_CACHE_KEY")
+private val LOCAL_CACHE_KEY2: Key<CachedValue<ConcurrentMap<PsiElement, Any?>>> = Key.create("LOCAL_CACHE_KEY2")
 
 private fun ensureValidResult(result: Any?): Unit = when (result) {
     is ResolveResult -> ensureValidPsi(result)
