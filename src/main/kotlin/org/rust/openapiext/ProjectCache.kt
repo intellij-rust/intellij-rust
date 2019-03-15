@@ -14,7 +14,10 @@ import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.rustStructureModificationTracker
 import java.util.concurrent.ConcurrentMap
 
-class ProjectCache<in T, R>(cacheName: String) {
+class ProjectCache<in T, R>(
+    cacheName: String,
+    private val dependencyGetter: (Project) -> Any = { it.rustStructureModificationTracker }
+) {
     init {
         if (!registered.add(cacheName)) {
             error("""
@@ -31,7 +34,7 @@ class ProjectCache<in T, R>(cacheName: String) {
             .getCachedValue(project, cacheKey, {
                 CachedValueProvider.Result.create(
                     ContainerUtil.newConcurrentMap<T, R>(),
-                    project.rustStructureModificationTracker
+                    dependencyGetter(project)
                 )
             }, false)
         return cache.getOrPut(key) { defaultValue() }
