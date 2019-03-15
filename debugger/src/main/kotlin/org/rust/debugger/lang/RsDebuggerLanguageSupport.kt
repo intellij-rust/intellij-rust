@@ -6,14 +6,13 @@
 package org.rust.debugger.lang
 
 import com.intellij.execution.configurations.RunProfile
-import com.intellij.xdebugger.XExpression
-import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import com.jetbrains.cidr.execution.debugger.*
-import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
+import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
+import com.jetbrains.cidr.execution.debugger.CidrDebuggerLanguageSupport
+import com.jetbrains.cidr.execution.debugger.CidrEvaluator
+import com.jetbrains.cidr.execution.debugger.CidrStackFrame
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver.StandardDebuggerLanguage.RUST
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrDebuggerTypesHelper
-import com.jetbrains.cidr.execution.debugger.evaluation.CidrEvaluatedValue
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 
 class RsDebuggerLanguageSupport : CidrDebuggerLanguageSupport() {
@@ -27,10 +26,6 @@ class RsDebuggerLanguageSupport : CidrDebuggerLanguageSupport() {
     override fun createTypesHelper(process: CidrDebugProcess): CidrDebuggerTypesHelper =
         RsDebuggerTypesHelper(process)
 
-    override fun createEvaluator(frame: CidrStackFrame): CidrEvaluator = object : OCEvaluator(frame) {
-        override fun doEvaluate(driver: DebuggerDriver, position: XSourcePosition?, expr: XExpression): CidrEvaluatedValue {
-            val v = driver.evaluate(frame.threadId, frame.frameIndex, expr.expression)
-            return CidrEvaluatedValue(v, frame.process, position, frame, expr.expression)
-        }
-    }
+    override fun createEvaluator(frame: CidrStackFrame): CidrEvaluator =
+        RsEvaluator(frame)
 }
