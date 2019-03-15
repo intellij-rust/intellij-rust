@@ -12,7 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.util.AutoInjectedCrates
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ParentItemType.*
@@ -196,7 +196,7 @@ data class RsQualifiedName private constructor(
                 parentItem to null
             }
             val crateName = if (parentItem.type == PRIMITIVE) {
-                AutoInjectedCrates.STD
+                STD
             } else {
                 element.containingCargoTarget?.normName ?: return null
             }
@@ -232,6 +232,12 @@ data class RsQualifiedName private constructor(
             }
 
             return RsQualifiedName(crateName, modSegments, parentItem, childItem)
+        }
+
+        @JvmStatic
+        fun from(path: RsPath): RsQualifiedName? {
+            val primitiveType = TyPrimitive.fromPath(path) ?: return null
+            return RsQualifiedName(STD, emptyList(), Item(primitiveType.name, PRIMITIVE), null)
         }
 
         private fun RsQualifiedNamedElement.toItems(): Pair<Item, Item?>? {

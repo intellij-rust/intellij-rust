@@ -11,10 +11,12 @@ import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.Testmark
@@ -25,13 +27,16 @@ import org.rust.stdext.joinToWithBuffer
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
 
-    override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? = buildString {
+    override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
+        val buffer = StringBuilder()
         when (element) {
-            is RsTypeParameter -> definition(this) { generateDoc(element, it) }
-            is RsDocAndAttributeOwner -> generateDoc(element, this)
-            is RsPatBinding -> definition(this) { generateDoc(element, it) }
+            is RsTypeParameter -> definition(buffer) { generateDoc(element, it) }
+            is RsDocAndAttributeOwner -> generateDoc(element, buffer)
+            is RsPatBinding -> definition(buffer) { generateDoc(element, it) }
+            is RsPath -> generateDoc(element, buffer)
             else -> return null
         }
+        return if (buffer.isEmpty()) null else buffer.toString()
     }
 
     override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? = buildString {
@@ -58,9 +63,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         val text = element.documentationAsHtml()
         if (text.isNullOrEmpty()) return
         buffer += "\n" // Just for more pretty html text representation
-        buffer += DocumentationMarkup.CONTENT_START
-        buffer += text
-        buffer += DocumentationMarkup.CONTENT_END
+        content(buffer) { it += text }
     }
 
     private fun generateDoc(element: RsPatBinding, buffer: StringBuilder) {
@@ -84,6 +87,24 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         element.typeReference?.generateDocumentation(buffer, " = ")
     }
 
+    private fun generateDoc(element: RsPath, buffer: StringBuilder) {
+        val primitive = TyPrimitive.fromPath(element) ?: return
+        val std = element.findDependencyCrateRoot(STD) ?: return
+        val primitiveDocs = std.parent?.findFile("primitive_docs.rs")?.rustFile ?: return
+
+        val mod = primitiveDocs.childrenOfType<RsModItem>().find {
+            it.queryAttributes.hasAttributeWithKeyValue("doc", "primitive", primitive.name)
+        } ?: return
+
+        definition(buffer) {
+            it += STD
+            it += "\n"
+            it += "primitive type "
+            it.b { it += primitive.name }
+        }
+        content(buffer) { it += mod.documentationAsHtml(element) }
+    }
+
     override fun getDocumentationElementForLink(psiManager: PsiManager, link: String, context: PsiElement): PsiElement? {
         if (context !is RsElement) return null
         val qualifiedName = RsQualifiedName.from(link)
@@ -98,17 +119,22 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     }
 
     override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String> {
-        if (element !is RsDocAndAttributeOwner ||
-            element !is RsQualifiedNamedElement ||
-            !element.hasExternalDocumentation) return emptyList()
+        val (qualifiedName, origin) = if (element is RsPath) {
+            (RsQualifiedName.from(element) ?: return emptyList()) to STDLIB
+        } else {
+            if (element !is RsDocAndAttributeOwner ||
+                element !is RsQualifiedNamedElement ||
+                !element.hasExternalDocumentation) return emptyList()
+            val origin = element.containingCargoPackage?.origin
+            RsQualifiedName.from(element) to origin
+        }
 
-        val cargoPackage = element.containingCargoPackage
-        val pagePrefix = when (cargoPackage?.origin) {
+        val pagePrefix = when (origin) {
             STDLIB -> STD_DOC_HOST
             else -> if (isUnitTestMode) TEST_HOST else return emptyList()
         }
 
-        val pagePath = RsQualifiedName.from(element)?.toUrlPath() ?: return emptyList()
+        val pagePath = qualifiedName?.toUrlPath() ?: return emptyList()
         return listOf("$pagePrefix/$pagePath")
     }
 
@@ -435,10 +461,16 @@ private fun createLink(buffer: StringBuilder, refText: String, text: String) {
     DocumentationManagerUtil.createHyperlink(buffer, refText, text, true)
 }
 
-private inline fun definition(builder: StringBuilder, block: (StringBuilder) -> Unit) {
-    builder += DocumentationMarkup.DEFINITION_START
-    block(builder)
-    builder += DocumentationMarkup.DEFINITION_END
+private inline fun definition(buffer: StringBuilder, block: (StringBuilder) -> Unit) {
+    buffer += DocumentationMarkup.DEFINITION_START
+    block(buffer)
+    buffer += DocumentationMarkup.DEFINITION_END
+}
+
+private inline fun content(buffer: StringBuilder, block: (StringBuilder) -> Unit) {
+    buffer += DocumentationMarkup.CONTENT_START
+    block(buffer)
+    buffer += DocumentationMarkup.CONTENT_END
 }
 
 private operator fun StringBuilder.plusAssign(value: String?) {

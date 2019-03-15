@@ -101,4 +101,9 @@ class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
                          //^
         }
     """, "https://doc.rust-lang.org/core/raw/struct.TraitObject.html#structfield.data")
+
+    fun `test primitive type`() = doUrlTestByText("""
+        fn foo() -> bool {}
+                   //^
+    """, "https://doc.rust-lang.org/std/primitive.bool.html")
 }
