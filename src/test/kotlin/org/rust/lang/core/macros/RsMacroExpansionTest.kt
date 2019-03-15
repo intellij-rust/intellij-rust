@@ -621,10 +621,10 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     // There was a problem with "debug" macro related to the fact that we parse macro call
     // with such name as a specific syntax construction
     fun `test macro with name "debug"`() = doTest("""
-       macro_rules! debug {
-           ($ t:ty) => { fn foo() -> $ t {} }
-       }
-       debug!(i32);
+        macro_rules! debug {
+            ($ t:ty) => { fn foo() -> $ t {} }
+        }
+        debug!(i32);
     """, """
         fn foo() -> i32 {}
     """)
@@ -724,15 +724,15 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         2 + 2
     """)
 
-    fun test() = doTest("""
-       macro_rules! foo {
-           () => { $ crate::bar!(); };
-       }
-       #[macro_export]
-       macro_rules! bar {
-           () => { fn foo() {} };
-       }
-       foo!();
+    fun `test expand macro qualified with $crate`() = doTest("""
+        macro_rules! foo {
+            () => { $ crate::bar!(); };
+        }
+        #[macro_export]
+        macro_rules! bar {
+            () => { fn foo() {} };
+        }
+        foo!();
     """, """
         fn foo() {}
     """ to NameResolutionTestmarks.dollarCrateMagicIdentifier)
