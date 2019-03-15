@@ -166,6 +166,48 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() { true && false; }
     """)
 
+    fun `test vis matcher`() = doTest("""
+        macro_rules! foo {
+            ($ vis:vis $ name:ident) => { $ vis fn $ name() {}};
+        }
+        foo!(pub foo);
+        foo!(pub(crate) bar);
+        foo!(pub(in a::b) baz);
+        foo!(baz);
+    """, """
+        pub fn foo() {}
+    """, """
+        pub(crate) fn bar() {}
+    """, """
+        pub(in a::b) fn baz() {}
+    """, """
+        fn baz() {}
+    """)
+
+    fun `test lifetime matcher`() = doTest("""
+        macro_rules! foo {
+            ($ lt:lifetime) => { struct Ref<$ lt>(&$ lt str);};
+        }
+        foo!('a);
+        foo!('lifetime);
+    """, """
+        struct Ref<'a>(&'a str);
+    """, """
+        struct Ref<'lifetime>(&'lifetime str);
+    """)
+
+    fun `test literal matcher`() = doTest("""
+        macro_rules! foo {
+            ($ type:ty $ lit:literal) => { const VALUE: $ type = $ lit;};
+        }
+        foo!(u8 0);
+        foo!(&'static str "value");
+    """, """
+        const VALUE: u8 = 0;
+    """, """
+        const VALUE: &'static str = "value";
+    """)
+
     fun `test tt group`() = doTest("""
         macro_rules! foo {
             ($($ i:tt)*) => { $($ i)* }
@@ -669,48 +711,6 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         macro_rules! bar { () => { fn foo() {} } }
         fn foo() {}
-    """)
-
-    fun `test expand vis matcher`() = doTest("""
-        macro_rules! foo {
-            ($ vis:vis $ name:ident) => { $ vis fn $ name() {}};
-        }
-        foo!(pub foo);
-        foo!(pub(crate) bar);
-        foo!(pub(in a::b) baz);
-        foo!(baz);
-    """, """
-        pub fn foo() {}
-    """, """
-        pub(crate) fn bar() {}
-    """, """
-        pub(in a::b) fn baz() {}
-    """, """
-        fn baz() {}
-    """)
-
-    fun `test expand lifetime matcher`() = doTest("""
-        macro_rules! foo {
-            ($ lt:lifetime) => { struct Ref<$ lt>(&$ lt str);};
-        }
-        foo!('a);
-        foo!('lifetime);
-    """, """
-        struct Ref<'a>(&'a str);
-    """, """
-        struct Ref<'lifetime>(&'lifetime str);
-    """)
-
-    fun `test expand literal matcher`() = doTest("""
-        macro_rules! foo {
-            ($ type:ty $ lit:literal) => { const VALUE: $ type = $ lit;};
-        }
-        foo!(u8 0);
-        foo!(&'static str "value");
-    """, """
-        const VALUE: u8 = 0;
-    """, """
-        const VALUE: &'static str = "value";
     """)
 
     fun `test expand macro defined in function`() = doTest("""
