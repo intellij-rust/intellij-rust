@@ -33,11 +33,21 @@ class Rustfmt(private val rustfmtExecutable: Path) {
         if (file.isNotRustFile || !file.isValid) return null
         val arguments = buildList<String> {
             add("--emit=${if (overwriteFile) "files" else "stdout"}")
+
             if (skipChildren) {
                 add("--unstable-features")
                 add("--skip-children")
             }
-            if (stdIn == null) add(file.path)
+
+            if (stdIn == null) {
+                add(file.path)
+            } else {
+                val path = findConfigPathRecursively(file.parent, stopAt = cargoProject.workingDirectory)
+                if (path != null) {
+                    add("--config-path")
+                    add(path.toString())
+                }
+            }
         }
 
         return try {
@@ -80,5 +90,16 @@ class Rustfmt(private val rustfmtExecutable: Path) {
             ?.stdoutLines
             ?.contains(" --skip-children ")
             ?: false
+    }
+
+    companion object {
+        private val CONFIG_FILES: List<String> = listOf("rustfmt.toml", ".rustfmt.toml")
+
+        private fun findConfigPathRecursively(directory: VirtualFile, stopAt: Path): Path? {
+            val path = directory.pathAsPath
+            if (!path.startsWith(stopAt) || path == stopAt) return null
+            if (directory.children.any { it.name in CONFIG_FILES }) return path
+            return findConfigPathRecursively(directory.parent, stopAt)
+        }
     }
 }
