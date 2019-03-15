@@ -11,7 +11,8 @@ import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPatField
 
 val RsPatField.kind: RsPatFieldKind
-    get() = patBinding?.let { RsPatFieldKind.Shorthand(it, box != null) } ?: RsPatFieldKind.Full(identifier!!, pat!!)
+    get() = patBinding?.let { RsPatFieldKind.Shorthand(it, box != null) }
+        ?: RsPatFieldKind.Full(patFieldFull!!.referenceNameElement, patFieldFull!!.pat)
 
 // PatField ::= identifier ':' Pat | box? PatBinding
 sealed class RsPatFieldKind {

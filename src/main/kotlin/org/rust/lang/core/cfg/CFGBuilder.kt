@@ -173,7 +173,7 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         finishWith { processSubPats(patTupleStruct, patTupleStruct.patList) }
 
     override fun visitPatStruct(patStruct: RsPatStruct) =
-        finishWith { processSubPats(patStruct, patStruct.patFieldList.mapNotNull { it.pat }) }
+        finishWith { processSubPats(patStruct, patStruct.patFieldList.mapNotNull { it.patFieldFull?.pat }) }
 
     override fun visitPatSlice(patSlice: RsPatSlice) =
         finishWith { processSubPats(patSlice, patSlice.patList) }
