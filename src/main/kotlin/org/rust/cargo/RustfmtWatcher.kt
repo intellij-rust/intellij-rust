@@ -86,8 +86,7 @@ class RustfmtWatcher : BaseComponent {
             if (!project.rustSettings.runRustfmtOnSave) return
             val rustfmt = project.toolchain?.rustfmt() ?: return
             if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
-            val skipChildren = rustfmt.checkSupportForSkipChildrenFlag(cargoProject)
-            documents.forEach { rustfmt.reformatDocument(cargoProject, it, skipChildren = skipChildren) }
+            documents.forEach { rustfmt.reformatDocument(cargoProject, it) }
         }
     }
 }

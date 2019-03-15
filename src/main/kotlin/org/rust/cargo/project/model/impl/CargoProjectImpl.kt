@@ -47,6 +47,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.AutoInjectedCrates
@@ -284,8 +285,6 @@ data class CargoProjectImpl(
     override val stdlibStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : UserDataHolderBase(), CargoProject {
-
-    private val projectDirectory get() = manifest.parent
     override val project get() = projectService.project
     private val toolchain get() = project.toolchain
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -295,14 +294,14 @@ data class CargoProjectImpl(
     }
 
     override val presentableName: String
-        get() = manifest.parent.fileName.toString()
+        get() = workingDirectory.fileName.toString()
 
     private val rootDirCache = AtomicReference<VirtualFile>()
     override val rootDir: VirtualFile?
         get() {
             val cached = rootDirCache.get()
             if (cached != null && cached.isValid) return cached
-            val file = LocalFileSystem.getInstance().findFileByIoFile(manifest.parent.toFile())
+            val file = LocalFileSystem.getInstance().findFileByIoFile(workingDirectory.toFile())
             rootDirCache.set(file)
             return file
         }
@@ -313,7 +312,7 @@ data class CargoProjectImpl(
     fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)
 
     fun refresh(): CompletableFuture<CargoProjectImpl> {
-        if (!projectDirectory.exists()) {
+        if (!workingDirectory.exists()) {
             return CompletableFuture.completedFuture(copy(
                 stdlibStatus = UpdateStatus.UpdateFailed("Project directory does not exist"))
             )
@@ -332,7 +331,7 @@ data class CargoProjectImpl(
             }
         }
 
-        val rustup = toolchain?.rustup(projectDirectory)
+        val rustup = toolchain?.rustup(workingDirectory)
         if (rustup == null) {
             val explicitPath = project.rustSettings.explicitPathToStdlib
             val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
@@ -366,7 +365,7 @@ data class CargoProjectImpl(
                 "Can't update Cargo project, no Rust toolchain"
             )))
 
-        return fetchCargoWorkspace(project, projectService.taskQueue, toolchain, projectDirectory)
+        return fetchCargoWorkspace(project, projectService.taskQueue, toolchain, workingDirectory)
             .thenApply(this::withWorkspace)
     }
 
@@ -381,7 +380,7 @@ data class CargoProjectImpl(
                 "Can't get rustc info, no Rust toolchain"
             )))
 
-        return fetchRustcInfo(project, projectService.taskQueue, toolchain, projectDirectory)
+        return fetchRustcInfo(project, projectService.taskQueue, toolchain, workingDirectory)
             .thenApply(this::withRustcInfo)
     }
 
