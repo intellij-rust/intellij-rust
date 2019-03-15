@@ -26,8 +26,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.AnyPsiChangeListener
 import com.intellij.psi.impl.PsiManagerImpl
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.MessageBus
@@ -40,10 +38,7 @@ import org.rust.ide.annotator.fixes.ApplySuggestionFix
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.openapiext.checkReadAccessAllowed
-import org.rust.openapiext.checkReadAccessNotAllowed
-import org.rust.openapiext.isUnitTestMode
-import org.rust.openapiext.saveAllDocumentsAsTheyAre
+import org.rust.openapiext.*
 import java.nio.file.Path
 import java.util.*
 
@@ -67,32 +62,28 @@ object RsExternalLinterUtils {
         packageName: String?
     ): Lazy<RsExternalLinterResult?> {
         checkReadAccessAllowed()
-        return CachedValuesManager.getManager(project)
-            .getCachedValue(project) {
-                // We want to run external linter in background thread and *without* read action.
-                // And also we want to cache result of external linter because it is cargo package-global,
-                // but annotator can be invoked separately for each file.
-                // With `CachedValuesManager` our cached value should be invalidated on any PSI change.
-                // Important note about this cache is that modification count will be stored AFTER computation
-                // of a value. If we aren't in read action, PSI can be modified during computation of the value
-                // and so an outdated value will be cached. So we can't use the cache without read action.
-                // What we really want:
-                // 1. Store current PSI modification count;
-                // 2. Run external linter and retrieve results (in background thread and without read action);
-                // 3. Try to cache result use modification count stored in (1). Result can be already outdated here.
-                // We get such behavior by storing `Lazy` computation to the cache. Cache result is created in read
-                // action, so it will be stored within correct PSI modification count. Then, we will retrieve the value
-                // from `Lazy` in a background thread. The value will be computed or retrieved from the already computed
-                // `Lazy` value.
-                CachedValueProvider.Result.create(
-                    lazy {
-                        // This code will be executed out of read action in background thread
-                        if (!isUnitTestMode) checkReadAccessNotAllowed()
-                        checkWrapped(toolchain, project, owner, workingDirectory, packageName)
-                    },
-                    PsiModificationTracker.MODIFICATION_COUNT
-                )
+        return externalLinterLazyResultCache.getOrPut(project, Key(toolchain, workingDirectory, packageName)) {
+            // We want to run external linter in background thread and *without* read action.
+            // And also we want to cache result of external linter because it is cargo package-global,
+            // but annotator can be invoked separately for each file.
+            // With `CachedValuesManager` our cached value should be invalidated on any PSI change.
+            // Important note about this cache is that modification count will be stored AFTER computation
+            // of a value. If we aren't in read action, PSI can be modified during computation of the value
+            // and so an outdated value will be cached. So we can't use the cache without read action.
+            // What we really want:
+            // 1. Store current PSI modification count;
+            // 2. Run external linter and retrieve results (in background thread and without read action);
+            // 3. Try to cache result use modification count stored in (1). Result can be already outdated here.
+            // We get such behavior by storing `Lazy` computation to the cache. Cache result is created in read
+            // action, so it will be stored within correct PSI modification count. Then, we will retrieve the value
+            // from `Lazy` in a background thread. The value will be computed or retrieved from the already computed
+            // `Lazy` value.
+            lazy {
+                // This code will be executed out of read action in background thread
+                if (!isUnitTestMode) checkReadAccessNotAllowed()
+                checkWrapped(toolchain, project, owner, workingDirectory, packageName)
             }
+        }
     }
 
     private fun checkWrapped(
@@ -139,6 +130,17 @@ object RsExternalLinterUtils {
         if (output.isCancelled) return null
         return RsExternalLinterResult(output.stdoutLines)
     }
+
+    private data class Key(
+        val toolchain: RustToolchain,
+        val workingDirectory: Path,
+        val packageName: String?
+    )
+
+    private val externalLinterLazyResultCache =
+        ProjectCache<Key, Lazy<RsExternalLinterResult?>>("externalLinterLazyResultCache") {
+            PsiModificationTracker.MODIFICATION_COUNT
+        }
 }
 
 fun MessageBus.createDisposableOnAnyPsiChange(): Disposable {
