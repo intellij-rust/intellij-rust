@@ -135,6 +135,15 @@ fun processStructLiteralFieldResolveVariants(
     return false
 }
 
+fun processStructPatternFieldResolveVariants(
+    field: RsPatFieldFull,
+    processor: RsResolveProcessor
+): Boolean {
+    val resolved = field.parentStructPattern.path.reference.deepResolve()
+    val resolvedStruct = resolved as? RsFieldsOwner ?: return false
+    return processFieldDeclarations(resolvedStruct, processor)
+}
+
 fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsMethodResolveProcessor): Boolean =
     processMethodDeclarationsWithDeref(lookup, receiverType, processor)
 

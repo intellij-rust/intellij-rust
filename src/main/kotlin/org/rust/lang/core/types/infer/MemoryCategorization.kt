@@ -332,8 +332,8 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
                 for (patField in pat.patFieldList) {
                     val binding = patField.patBinding ?: continue
                     val fieldType = inference.getBindingType(binding)
-                    val fieldName = patField.identifier?.text ?: continue
-                    val fieldPat = patField.pat ?: continue
+                    val fieldName = patField.patFieldFull?.referenceName ?: continue
+                    val fieldPat = patField.patFieldFull?.pat ?: continue
                     val fieldCmt = cmtOfField(pat, cmt, fieldName, fieldType)
                     walkPat(fieldCmt, fieldPat, callback)
                 }

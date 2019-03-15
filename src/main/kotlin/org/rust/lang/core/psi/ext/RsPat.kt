@@ -19,7 +19,9 @@ val RsPat.isIrrefutable: Boolean
         is RsPatRef ->
             pat.pat.isIrrefutable
         is RsPatStruct ->
-            pat.path.isIrrefutable && pat.patFieldList.all { it.pat?.isIrrefutable ?: (it.patBinding != null) }
+            pat.path.isIrrefutable && pat.patFieldList.all {
+                it.patFieldFull?.pat?.isIrrefutable ?: (it.patBinding != null)
+            }
         is RsPatTupleStruct ->
             pat.path.isIrrefutable && pat.patList.all { it.isIrrefutable }
         is RsPatIdent ->
