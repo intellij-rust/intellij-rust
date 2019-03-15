@@ -6,6 +6,8 @@
 package org.rust.lang.core.macros
 
 import com.intellij.psi.tree.TokenSet
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.CRATE
 import org.rust.lang.core.psi.tokenSetOf
@@ -634,6 +636,15 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
        vec!(i32);
     """, """
         fn foo() -> i32 {}
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test standard "vec!"`() = checkSingleMacro("""
+        fn main() {
+            vec![1, 2, 3];
+        } //^
+    """, """
+        <[_]>::into_vec(box [(1), (2), (3)])
     """)
 
     fun `test expend macro definition`() = doTest("""
