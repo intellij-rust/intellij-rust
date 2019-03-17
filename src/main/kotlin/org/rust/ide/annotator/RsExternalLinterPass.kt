@@ -51,13 +51,14 @@ class RsExternalLinterPass(
         if (cargoPackage?.origin != PackageOrigin.WORKSPACE) return
 
         val project = file.project
+        val moduleOrProject: Disposable = ModuleUtil.findModuleForFile(file) ?: project
         disposable = project.messageBus.createDisposableOnAnyPsiChange()
-            .also { Disposer.register(ModuleUtil.findModuleForFile(file) ?: project, it) }
+            .also { Disposer.register(moduleOrProject, it) }
 
         annotationInfo = RsExternalLinterUtils.checkLazily(
             project.toolchain ?: return,
             project,
-            disposable,
+            moduleOrProject,
             cargoPackage.workspace.contentRoot,
             cargoPackage.name
         )
