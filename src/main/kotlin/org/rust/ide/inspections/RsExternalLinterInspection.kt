@@ -89,7 +89,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
             }
             val futures = cargoProjects.map {
                 ApplicationManager.getApplication().executeOnPooledThread<RsExternalLinterResult?> {
-                    checkProjectLazily(it, disposable)?.value
+                    checkProjectLazily(it, project)?.value
                 }
             }
             val annotationResults = futures.mapNotNull { it.get() }
