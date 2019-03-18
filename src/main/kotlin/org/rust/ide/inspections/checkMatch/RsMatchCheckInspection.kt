@@ -12,8 +12,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.checkMatch.Constructor.Companion.allConstructors
 import org.rust.ide.inspections.checkMatch.Usefulness.*
-import org.rust.ide.inspections.fixes.AddRemainingArmsFix
-import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsElementTypes.OR
 import org.rust.lang.core.psi.RsMatchArm
@@ -24,6 +22,8 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
 
 class RsMatchCheckInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Match Check"
@@ -93,13 +93,7 @@ private fun checkExhaustive(match: RsMatchExpr, holder: ProblemsHolder) {
     /** if `_` pattern is useful, the match is not exhaustive */
     if (useful is UsefulWithWitness) {
         val patterns = useful.witnesses.mapNotNull { it.patterns.firstOrNull() }
-        holder.registerProblem(
-            match.match,
-            "Match must be exhaustive",
-            ProblemHighlightType.GENERIC_ERROR,
-            AddRemainingArmsFix(match, patterns),
-            AddWildcardArmFix(match)
-        )
+        RsDiagnostic.NonExhaustiveMatch(match, patterns).addToHolder(holder)
     }
 }
 

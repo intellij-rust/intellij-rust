@@ -463,7 +463,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
     fun `test simple boolean exhaustive`() = checkFixByText("Add remaining patterns", """
         fn main() {
             let a = true;
-            <error descr="Match must be exhaustive">match/*caret*/</error> a {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> a {
                 true => {}
             }
         }
@@ -480,7 +480,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
     fun `test simple int exhaustive`() = checkFixByText("Add _ pattern", """
         fn main() {
             let a = 3;
-            <error descr="Match must be exhaustive">match/*caret*/</error> a {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> a {
                 3 => {}
                 1 => {}
             }
@@ -499,7 +499,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
     fun `test simple double exhaustive`() = checkFixByText("Add _ pattern", """
         fn main() {
             let a = 3.9;
-            <error descr="Match must be exhaustive">match/*caret*/</error> a {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> a {
                 3.1 => {}
                 1.777 => {}
             }
@@ -518,7 +518,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
     fun `test simple string exhaustive`() = checkFixByText("Add remaining patterns", """
         fn main() {
             let a = "str";
-            <error descr="Match must be exhaustive">match/*caret*/</error> a {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> a {
                 "test1" => {}
                 "test2" => {}
             }
@@ -537,7 +537,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
     fun `test simple char exhaustive`() = checkFixByText("Add _ pattern", """
         fn main() {
             let a = 'c';
-            <error descr="Match must be exhaustive">match/*caret*/</error> a {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> a {
                 'w' => {}
                 'h' => {}
             }
@@ -557,7 +557,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         enum E { A, B, C }
         fn main() {
             let a = E::A;
-            <error descr="Match must be exhaustive">match/*caret*/</error> a {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> a {
                 E::B => {}
             }
         }
@@ -578,7 +578,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         fn main() {
             use E::*;
             let a = A;
-            <error descr="Match must be exhaustive">match/*caret*/</error> a {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> a {
                 B => {}
             }
         }
@@ -598,7 +598,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
     fun `test pair of bool exhaustive`() = checkFixByText("Add remaining patterns", """
         fn main() {
             let x = (true, true);
-            <error descr="Match must be exhaustive">match/*caret*/</error> x {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {
                 (false, true) => {}
             }
         }
@@ -616,7 +616,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         enum E { A, B, C }
         fn main() {
             let ab = (E::A, E::B);
-            <error descr="Match must be exhaustive">match/*caret*/</error> ab {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> ab {
                 (E::A, E::A) => {}
             }
         }
@@ -637,7 +637,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         enum Color { Black, White }
         fn main() {
             let dog = Animal::Dog(Color::Black);
-            <error descr="Match must be exhaustive">match/*caret*/</error> dog {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> dog {
                 Animal::Cat(Color::White) => {}
             }
         }
@@ -657,7 +657,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
     fun `test enum pattern with guard exhaustive`() = checkFixByText("Add remaining patterns", """
         enum E { A(i32), B(i32), C }
         fn foo(e: E) {
-            <error descr="Match must be exhaustive">match/*caret*/</error> e {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> e {
                 E::A(_) | E::C => {}
                 E::B(x) if x > 0 => {}
             }
@@ -677,7 +677,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         enum E { A(i32), B }
         use E::*;
         fn foo(e: &E) {
-            <error descr="Match must be exhaustive">match/*caret*/</error> &e {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> &e {
                 B => {}
             }
         }
@@ -696,7 +696,7 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         enum E { A(i32), B }
         use E::*;
         fn foo(e: &E) {
-            <error descr="Match must be exhaustive">match/*caret*/</error> e {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> e {
                 &B => {}
             }
         }
