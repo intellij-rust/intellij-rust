@@ -32,7 +32,12 @@ interface RustProjectSettingsService {
         var showTestToolWindow: Boolean = true,
         var doctestInjectionEnabled: Boolean = true,
         var runRustfmtOnSave: Boolean = false,
-        var useSkipChildren: Boolean = false
+        var useSkipChildren: Boolean = false,
+
+        // Legacy properties needed for migration
+        // TODO do migration via XML modification
+        var useCargoCheckAnnotator: Boolean = false,
+        var cargoCheckArguments: String = ""
     ) {
         @get:Transient
         @set:Transient
