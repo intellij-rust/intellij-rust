@@ -58,7 +58,6 @@ class RsResolveLinkTest : RsTestBase() {
     fun `test assoc type with type qual`() = doTest("""
         trait Foo1 {
             type Bar;
-               //X
         }
 
         trait Foo2 {
@@ -69,7 +68,7 @@ class RsResolveLinkTest : RsTestBase() {
 
         impl Foo1 for S {
             type Bar = ();
-        }
+        }      //X
 
         impl Foo2 for S {
             type Bar = <Self as Foo1>::Bar;
