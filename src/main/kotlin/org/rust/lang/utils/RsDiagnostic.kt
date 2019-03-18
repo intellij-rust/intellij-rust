@@ -19,6 +19,9 @@ import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsTypeCheckInspection
+import org.rust.ide.inspections.checkMatch.Pattern
+import org.rust.ide.inspections.fixes.AddRemainingArmsFix
+import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -841,10 +844,22 @@ sealed class RsDiagnostic(
             fixes = listOf(AddModuleFileFix(modDecl, expandModuleFirst = false))
         )
     }
+
+    class NonExhaustiveMatch(
+        private val matchExpr: RsMatchExpr,
+        private val patterns: List<Pattern>
+    ) : RsDiagnostic(matchExpr.match) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0004,
+            "Match must be exhaustive",
+            fixes = listOf(AddRemainingArmsFix(matchExpr, patterns), AddWildcardArmFix(matchExpr))
+        )
+    }
 }
 
 enum class RsErrorCode {
-    E0046, E0050, E0060, E0061, E0069,
+    E0004, E0046, E0050, E0060, E0061, E0069,
     E0106, E0107, E0121, E0124, E0133, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0261, E0262, E0263, E0277,
     E0308, E0379, E0384,
