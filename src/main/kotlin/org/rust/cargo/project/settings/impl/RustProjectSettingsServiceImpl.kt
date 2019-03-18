@@ -38,6 +38,15 @@ class RustProjectSettingsServiceImpl(
     override fun getState(): State = state
 
     override fun loadState(newState: State) {
+        // TODO do migration via XML modification
+        if (newState.useCargoCheckAnnotator && !newState.runExternalLinterOnTheFly) {
+            newState.useCargoCheckAnnotator = false
+            newState.runExternalLinterOnTheFly = true
+        }
+        if (newState.cargoCheckArguments.isNotBlank() && newState.externalLinterArguments.isBlank()) {
+            newState.externalLinterArguments = newState.cargoCheckArguments
+            newState.cargoCheckArguments = ""
+        }
         state = newState
     }
 
