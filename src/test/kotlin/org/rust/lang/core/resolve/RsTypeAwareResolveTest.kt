@@ -451,8 +451,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test slice resolve UFCS`() = expect<IllegalStateException> {
-        checkByCode("""
+    fun `test slice resolve UFCS`() = checkByCode("""
         impl<T> [T] {
             fn foo(&self) {}
               //X
@@ -464,7 +463,6 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                     //^
         }
     """)
-    }
 
     fun `test array coercing to slice resolve`() = checkByCode("""
         impl<T> [T] {
@@ -766,4 +764,14 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             fn foo() -> Self::Item { unreachable!() }
         }                   //^
     """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
+
+    fun `test explicit UFCS-like type-qualified path`() = checkByCode("""
+        struct S;
+        impl S {
+            fn foo() {}
+        }    //X
+        fn main () {
+            <S>::foo;
+        }      //^
+    """)
 }
