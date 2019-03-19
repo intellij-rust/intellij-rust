@@ -276,6 +276,11 @@
                                    implementationClass="org.rust.ide.inspections.RsInspectionSuppressor"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Deprecated element"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsDeprecationInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Approximate Constants"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsApproxConstantInspection"/>
