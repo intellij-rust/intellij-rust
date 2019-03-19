@@ -1220,8 +1220,27 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
 
         fn main() {
-            let a: [&Bar, 2] = [&Foo, &Foo];
+            let a: [&Bar; 2] = [&Foo, &Foo];
                              //^ [&Bar; 2]
+        }
+    """)
+
+    fun `test type coercion in vec! macro`() = testExpr("""
+        #[lang = "alloc::vec::Vec"]
+        struct Vec<T>(T);
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Foo;
+        struct Bar;
+
+        impl Deref for Foo {
+            type Target = Bar;
+        }
+
+        fn main() {
+            let a: Vec<&Bar> = vec![&Foo, &Foo];
+                             //^ Vec<&Bar>
         }
     """)
 
