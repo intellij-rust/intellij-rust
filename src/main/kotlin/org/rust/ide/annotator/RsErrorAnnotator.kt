@@ -328,8 +328,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkValueArgumentList(holder: AnnotationHolder, args: RsValueArgumentList) {
-        val parent = args.parent
-        val (expectedCount, variadic) = when (parent) {
+        val (expectedCount, variadic) = when (val parent = args.parent) {
             is RsCallExpr -> parent.expectedParamsCount()
             is RsMethodCall -> parent.expectedParamsCount()
             else -> null
@@ -500,8 +499,7 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
             val owner = el.owner
             if (owner.isTraitImpl) return null
             val count = el.valueParameterList?.valueParameterList?.size ?: return null
-            // We can call foo.method(1), or Foo::method(&foo, 1), so need to take coloncolon into account
-            val s = if (path.coloncolon != null && el.selfParameter != null) 1 else 0
+            val s = if (el.selfParameter != null) 1 else 0
             Pair(count + s, el.isVariadic)
         }
         else -> null
