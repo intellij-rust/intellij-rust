@@ -270,6 +270,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
+    fun `test type-qualified UFCS path E0061`() = checkErrors("""
+        struct S;
+        impl S { fn foo(self) { } }
+        fn main() {
+            <S>::foo(S);
+        }
+    """)
+
     fun `test empty return E0069`() = checkErrors("""
         fn ok1() { return; }
         fn ok2() -> () { return; }
