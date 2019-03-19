@@ -13,7 +13,6 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.isPublic
 import org.rust.lang.core.psi.ext.nameInScope
 import org.rust.lang.core.psi.ext.pathOrQualifier
 import org.rust.lang.core.stubs.RsFileStub
@@ -30,7 +29,7 @@ class RsReexportIndex : StringStubIndexExtension<RsUseSpeck>() {
 
         fun index(stub: RsUseSpeckStub, sink: IndexSink) {
             val useSpeck = stub.psi
-            val isPublic = useSpeck.ancestorStrict<RsUseItem>()?.isPublic == true
+            val isPublic = useSpeck.ancestorStrict<RsUseItem>()?.vis != null
             if (!isPublic) return
             val name = if (stub.isStarImport) {
                 useSpeck.pathOrQualifier?.referenceName
