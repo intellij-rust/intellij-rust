@@ -1539,4 +1539,24 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ i32
     """)
+
+    fun `test type coercion in generic associates function args`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Foo;
+        struct Bar;
+
+        impl Deref for Foo {
+            type Target = Bar;
+        }
+
+        struct Box<T>(T);
+        impl<T> Box<T> {
+            pub fn new(x: T) -> Box<T> { unimplemented!() }
+        }
+        fn main() {
+            let _: Box<[&Bar; 1]> = (Box::new([&Foo]));
+        }                         //^ Box<[&Bar; 1]>
+    """)
 }

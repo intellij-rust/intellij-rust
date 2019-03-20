@@ -1299,8 +1299,10 @@ class RsFnInferenceContext(
                 selectObligationsWherePossible()
             }
 
-            // extending argument definitions to be sure that type inference launched for each arg expr
-            val argDefsExt = argDefs.asSequence().infiniteWithTyUnknown()
+            val argDefsExt = argDefs.asSequence()
+                .map(ctx::resolveTypeVarsIfPossible)
+                // extending argument definitions to be sure that type inference launched for each arg expr
+                .infiniteWithTyUnknown()
             for ((type, expr) in argDefsExt.zip(argExprs.asSequence().map(::unwrapParenExprs))) {
                 val isLambda = expr is RsLambdaExpr
                 if (isLambda != checkLambdas) continue
