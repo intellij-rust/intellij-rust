@@ -7,6 +7,7 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -46,13 +47,10 @@ import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
-import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.toTypeSubst
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.hitOnFalse
 import org.rust.openapiext.isUnitTestMode
@@ -339,90 +337,112 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         if (processMacroCallPathResolveVariants(path, true, processor)) return true
     }
 
-    if (qualifier != null) {
-        val primitiveType = TyPrimitive.fromPath(qualifier)
-        if (primitiveType != null) {
-            val selfSubst = mapOf(TyTypeParameter.self() to primitiveType).toTypeSubst()
-            if (processAssociatedItemsWithSelfSubst(lookup, primitiveType, ns, selfSubst, processor)) return true
-        }
+    return when {
+        // foo::bar
+        qualifier != null ->
+            processQualifiedPathResolveVariants(lookup, isCompletion, ns, qualifier, path, parent, processor)
 
-        val (base, subst) = qualifier.reference.advancedResolve() ?: return false
-        val isSuperChain = isSuperChain(qualifier)
-        if (base is RsMod) {
-            val s = base.`super`
-            // `super` is allowed only after `self` and `super`
-            // so we add `super` in completion only when it produces valid path
-            if (s != null && (!isCompletion || isSuperChain) && processor("super", s)) return true
+        // `<T as Trait>::Item` or `<T>::Item`
+        typeQual != null ->
+            processExplicitTypeQualifiedPathResolveVariants(lookup, ns, typeQual, processor)
 
-            val containingMod = path.containingMod
-            if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
-                containingMod is RsFile && containingMod.isCrateRoot) {
-                if (processAll(exportedMacros(base), processor)) return true
-            }
-        }
-        if (parent is RsUseSpeck && path.path == null) {
-            selfInGroup.hit()
-            if (processor("self", base)) return true
-        }
-        if (processItemOrEnumVariantDeclarations(base, ns, processor, withPrivateImports = isSuperChain)) return true
-        if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
-            val shadowingProcessor = run {
-                // Self-qualified type paths `Self::Item` inside impl items are restricted to resolve
-                // to only members of the current impl or implemented trait or its parent traits
-                if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
-                    NameResolutionTestmarks.selfRelatedTypeSpecialCase.hit()
-                    val traits = base.implementedTrait?.flattenHierarchy
-                        ?.map { it.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
-                        ?: return@run processor
+        else -> processUnqualifiedPathResolveVariants(isCompletion, ns, path, parent, processor)
+    }
+}
 
-                    fun(e: AssocItemScopeEntry): Boolean {
-                        if (e.element !is RsTypeAlias) return processor(e)
-
-                        val implementedTrait = e.source.value.implementedTrait
-                            ?.foldTyTypeParameterWith { TyInfer.TyVar(it) }
-                            ?: return processor(e)
-
-                        val isAppropriateTrait = traits.any {
-                            lookup.ctx.probe { lookup.ctx.combineBoundElements(it, implementedTrait) }
-                        }
-                        return if (isAppropriateTrait) processor(e) else false
-                    }
-                } else {
-                    processor
-                }
-            }
-            val selfTy = if (base is RsImplItem && qualifier.hasCself) {
-                // impl S { fn foo() { Self::bar() } }
-                base.typeReference?.type ?: TyUnknown
-            } else {
-                val realSubst = if (qualifier.typeArgumentList != null) {
-                    // If the path contains explicit type arguments `Foo::<_, Bar, _>::baz`
-                    // it means that all possible `TyInfer` has already substituted (with `_`)
-                    subst
-                } else {
-                    subst.mapTypeValues { (_, v) -> v.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
-                }
-                base.declaredType.substitute(realSubst)
-            }
-            val selfSubst = if (base !is RsTraitItem) {
-                mapOf(TyTypeParameter.self() to selfTy).toTypeSubst()
-            } else {
-                emptySubstitution
-            }
-            if (processAssociatedItemsWithSelfSubst(lookup, selfTy, ns, selfSubst, shadowingProcessor)) return true
-        }
-        return false
+/**
+ * foo::bar
+ * |    |
+ * |    [path]
+ * [qualifier]
+ */
+private fun processQualifiedPathResolveVariants(
+    lookup: ImplLookup,
+    isCompletion: Boolean,
+    ns: Set<Namespace>,
+    qualifier: RsPath,
+    path: RsPath,
+    parent: PsiElement?,
+    processor: RsResolveProcessor
+): Boolean {
+    val primitiveType = TyPrimitive.fromPath(qualifier)
+    if (primitiveType != null) {
+        val selfSubst = mapOf(TyTypeParameter.self() to primitiveType).toTypeSubst()
+        if (processAssociatedItemsWithSelfSubst(lookup, primitiveType, ns, selfSubst, processor)) return true
     }
 
-    if (typeQual != null) {
-        // <T as Trait>::Item
-        val trait = typeQual.traitRef?.resolveToBoundTrait ?: return false
-        val selfSubst = mapOf(TyTypeParameter.self() to typeQual.typeReference.type).toTypeSubst()
-        val subst = trait.subst.substituteInValues(selfSubst) + selfSubst
-        if (processAllWithSubst(trait.element.members?.typeAliasList.orEmpty(), subst, processor)) return true
-        return false
-    }
+    val (base, subst) = qualifier.reference.advancedResolve() ?: return false
+    val isSuperChain = isSuperChain(qualifier)
+    if (base is RsMod) {
+        val s = base.`super`
+        // `super` is allowed only after `self` and `super`
+        // so we add `super` in completion only when it produces valid path
+        if (s != null && (!isCompletion || isSuperChain) && processor("super", s)) return true
 
+        val containingMod = path.containingMod
+        if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
+            containingMod is RsFile && containingMod.isCrateRoot) {
+            if (processAll(exportedMacros(base), processor)) return true
+        }
+    }
+    if (parent is RsUseSpeck && path.path == null) {
+        selfInGroup.hit()
+        if (processor("self", base)) return true
+    }
+    if (processItemOrEnumVariantDeclarations(base, ns, processor, withPrivateImports = isSuperChain)) return true
+    if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
+        val baseTy = if (base is RsImplItem && qualifier.hasCself) {
+            // impl S { fn foo() { Self::bar() } }
+            base.typeReference?.type ?: TyUnknown
+        } else {
+            val realSubst = if (qualifier.typeArgumentList != null) {
+                // If the path contains explicit type arguments `Foo::<_, Bar, _>::baz`
+                // it means that all possible `TyInfer` has already substituted (with `_`)
+                subst
+            } else {
+                subst.mapTypeValues { (_, v) -> v.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+            }
+            base.declaredType.substitute(realSubst)
+        }
+
+        // Self-qualified type paths `Self::Item` inside impl items are restricted to resolve
+        // to only members of the current impl or implemented trait or its parent traits
+        val restrictedTraits = if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
+            NameResolutionTestmarks.selfRelatedTypeSpecialCase.hit()
+            base.implementedTrait?.flattenHierarchy
+                ?.map { it.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+        } else {
+            null
+        }
+
+        if (processTypeQualifiedPathResolveVariants(lookup, processor, ns, baseTy, restrictedTraits)) return true
+    }
+    return false
+}
+
+/** `<T as Trait>::Item` or `<T>::Item` */
+private fun processExplicitTypeQualifiedPathResolveVariants(
+    lookup: ImplLookup,
+    ns: Set<Namespace>,
+    typeQual: RsTypeQual,
+    processor: RsResolveProcessor
+): Boolean {
+    val trait = typeQual.traitRef?.resolveToBoundTrait
+        // TODO this is a hack to fix completion test `test associated type in explicit UFCS form`.
+        // Looks like we should use getOriginalOrSelf during resolve
+        ?.let { BoundElement(CompletionUtil.getOriginalOrSelf(it.element), it.subst) }
+        ?.let { it.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+    val type = typeQual.typeReference.type
+    return processTypeQualifiedPathResolveVariants(lookup, processor, ns, type, trait?.let { listOf(it) })
+}
+
+private fun processUnqualifiedPathResolveVariants(
+    isCompletion: Boolean,
+    ns: Set<Namespace>,
+    path: RsPath,
+    parent: PsiElement?,
+    processor: RsResolveProcessor
+): Boolean {
     if (isCompletion) {
         // Complete possible associated types in a case like `Trait</*caret*/>`
         val possibleTypeArgs = parent?.parent?.parent
@@ -436,7 +456,8 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     val crateRoot = path.crateRoot
     val isAbsolute = path.hasColonColon
     if (!isAbsolute) {
-        run { // hacks around $crate macro metavar. See `expandDollarCrateVar` function docs
+        run {
+            // hacks around $crate macro metavar. See `expandDollarCrateVar` function docs
             val referenceName = path.referenceName
             if (referenceName.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && path.findMacroCallExpandedFrom() != null) {
                 val crate = referenceName.removePrefix(MACRO_CRATE_IDENTIFIER_PREFIX)
@@ -483,6 +504,38 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
         }
     }
 
+    return false
+}
+
+private fun processTypeQualifiedPathResolveVariants(
+    lookup: ImplLookup,
+    processor: RsResolveProcessor,
+    ns: Set<Namespace>,
+    baseTy: Ty,
+    restrictedTraits: List<BoundElement<RsTraitItem>>?
+): Boolean {
+    val shadowingProcessor = if (restrictedTraits != null) {
+        fun(e: AssocItemScopeEntry): Boolean {
+            if (e.element !is RsTypeAlias) return processor(e)
+
+            val implementedTrait = e.source.value.implementedTrait
+                ?.foldTyTypeParameterWith { TyInfer.TyVar(it) }
+                ?: return processor(e)
+
+            val isAppropriateTrait = restrictedTraits.any {
+                lookup.ctx.probe { lookup.ctx.combineBoundElements(it, implementedTrait) }
+            }
+            return if (isAppropriateTrait) processor(e) else false
+        }
+    } else {
+        processor
+    }
+    val selfSubst = if (baseTy !is TyTraitObject) {
+        mapOf(TyTypeParameter.self() to baseTy).toTypeSubst()
+    } else {
+        emptySubstitution
+    }
+    if (processAssociatedItemsWithSelfSubst(lookup, baseTy, ns, selfSubst, shadowingProcessor)) return true
     return false
 }
 

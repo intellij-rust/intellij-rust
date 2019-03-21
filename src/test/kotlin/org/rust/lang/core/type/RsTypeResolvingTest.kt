@@ -50,7 +50,7 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
 
         fn main() {
             let _: <S as T>::Assoc = S;
-                 //^ <S as T>::Assoc
+                 //^ S
         }
     """)
 
