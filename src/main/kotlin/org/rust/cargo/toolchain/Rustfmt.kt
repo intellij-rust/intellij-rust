@@ -54,6 +54,7 @@ class Rustfmt(private val rustfmtExecutable: Path) {
             GeneralCommandLine(rustfmtExecutable)
                 .withWorkDirectory(cargoProject.workingDirectory)
                 .withParameters(arguments)
+                .withCharset(Charsets.UTF_8)
                 .execute(owner, false, stdIn = stdIn)
         } catch (e: ExecutionException) {
             if (isUnitTestMode) throw e else null
