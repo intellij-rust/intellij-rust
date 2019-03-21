@@ -5,9 +5,12 @@
 
 package org.rust.cargo.project.settings.impl
 
+import com.intellij.configurationStore.serializeObjectInto
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.util.xmlb.XmlSerializer.deserializeInto
+import org.jdom.Element
 import org.rust.cargo.project.configurable.RsProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
@@ -15,16 +18,19 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.State
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RustToolchain
 
-@com.intellij.openapi.components.State(name = "RustProjectSettings")
+private const val serviceName: String = "RustProjectSettings"
+
+@com.intellij.openapi.components.State(name = serviceName)
 class RustProjectSettingsServiceImpl(
     private val project: Project
-) : PersistentStateComponent<State>, RustProjectSettingsService {
+) : PersistentStateComponent<Element>, RustProjectSettingsService {
     @Volatile
     private var state: State = State()
 
+    override val version: Int? get() = state.version
     override val toolchain: RustToolchain? get() = state.toolchain
-    override val explicitPathToStdlib: String? get() = state.explicitPathToStdlib
     override val autoUpdateEnabled: Boolean get() = state.autoUpdateEnabled
+    override val explicitPathToStdlib: String? get() = state.explicitPathToStdlib
     override val externalLinter: ExternalLinter get() = state.externalLinter
     override val runExternalLinterOnTheFly: Boolean get() = state.runExternalLinterOnTheFly
     override val externalLinterArguments: String get() = state.externalLinterArguments
@@ -36,23 +42,16 @@ class RustProjectSettingsServiceImpl(
     override val runRustfmtOnSave: Boolean get() = state.runRustfmtOnSave
     override val useSkipChildren: Boolean get() = state.useSkipChildren
 
-    override fun getState(): State = state
+    override fun getState(): Element {
+        val element = Element(serviceName)
+        serializeObjectInto(state, element)
+        return element
+    }
 
-    override fun loadState(newState: State) {
-        // TODO do migration via XML modification
-        if (newState.useCargoCheckAnnotator && !newState.runExternalLinterOnTheFly) {
-            newState.useCargoCheckAnnotator = false
-            newState.runExternalLinterOnTheFly = true
-        }
-        if (newState.cargoCheckArguments.isNotBlank() && newState.externalLinterArguments.isBlank()) {
-            newState.externalLinterArguments = newState.cargoCheckArguments
-            newState.cargoCheckArguments = ""
-        }
-        if (!newState.expandMacros) {
-            newState.expandMacros = true
-            newState.macroExpansionEngine = MacroExpansionEngine.DISABLED
-        }
-        state = newState
+    override fun loadState(element: Element) {
+        val rawState = element.clone()
+        rawState.updateToCurrentVersion()
+        deserializeInto(state, rawState)
     }
 
     override fun modify(action: (State) -> Unit) {
