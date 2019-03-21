@@ -50,7 +50,7 @@ class RsPathReferenceImpl(
 
     private fun advancedCachedMultiResolve(): List<BoundElement<RsElement>> {
         return RsResolveCache.getInstance(element.project)
-            .resolveWithCaching(element, ResolveCacheDependency.RUST_STRUCTURE, Resolver)
+            .resolveWithCaching(element, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE, Resolver)
             .orEmpty()
             // We can store a fresh `TyInfer.TyVar` to the cache for `_` path parameter (like `Vec<_>`), but
             // TyVar is mutable type, so we must copy it after retrieving from the cache
