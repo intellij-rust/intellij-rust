@@ -30,7 +30,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
             dir("src") {
                 rust("main.rs", """
                     fn main() {
-                    println!("Hello, world!");
+                    println!("Hello, ΣΠ∫!");
                     }
                 """)
             }
@@ -52,7 +52,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
             dir("src") {
                 rust("main.rs", """
                     fn main() {/*caret*/
-                        println!("Hello, world!");
+                        println!("Hello, ΣΠ∫!");
                     }
                 """)
             }
@@ -81,7 +81,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
             dir("src") {
                 rust("main.rs", """
                     fn main() {/*caret*/
-                        println!("Hello, world!");
+                        println!("Hello, ΣΠ∫!");
                     }
                 """)
             }
