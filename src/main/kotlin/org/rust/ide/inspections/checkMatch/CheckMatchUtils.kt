@@ -95,9 +95,9 @@ private val RsPat.kind: PatternKind
             val indices = item.namedFields.withIndex().associateBy({ it.value.name }, { it.index })
 
             val subPatterns = patFieldList
-                .sortedBy { indices[it.identifier?.text] }
+                .sortedBy { indices[it.patFieldFull?.referenceNameElement?.text] }
                 .map { patField ->
-                    val pat = patField.pat
+                    val pat = patField.patFieldFull?.pat
                     val binding = patField.patBinding
                     pat?.lower
                         ?: binding?.type?.let { ty -> Pattern(ty, PatternKind.Binding(ty, binding.name.orEmpty())) }

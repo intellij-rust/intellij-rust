@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.lang.core.psi.RsTupleFieldDecl
+
 class RsTypeAwareResolveTest : RsResolveTestBase() {
     fun `test self method call expr`() = checkByCode("""
         struct S;
@@ -265,6 +267,50 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                 x;
               //^
             }
+        }
+    """)
+
+    fun `test let struct literal field`() = checkByCode("""
+        struct S { x: f32 }
+                 //X
+        impl S {
+            fn foo(&self) {
+                let S { x: x } = S { x: 0. };
+                                   //^
+                x;
+            }
+        }
+    """)
+
+    fun `test let decl pat struct field`() = checkByCode("""
+        struct S { x: f32 }
+                 //X
+        impl S {
+            fn foo(&self) {
+                let S { x: x } = S { x: 0. };
+                      //^
+                x;
+            }
+        }
+    """)
+
+    fun `test let tuple literal field`() = checkByCodeGeneric<RsTupleFieldDecl>("""
+        struct S (f32);
+                 //X
+        fn foo() {
+            let S { 0: x } = S { 0: 0. };
+                               //^
+            x;
+        }
+    """)
+
+    fun `test let decl pat tuple field`() = checkByCodeGeneric<RsTupleFieldDecl>("""
+        struct S (f32);
+                //X
+        fn foo() {
+            let S { 0: x } = S { 0: 0. };
+                  //^
+            x;
         }
     """)
 
