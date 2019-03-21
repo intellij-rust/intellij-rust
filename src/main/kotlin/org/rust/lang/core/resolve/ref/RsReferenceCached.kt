@@ -28,7 +28,7 @@ abstract class RsReferenceCached<T : RsWeakReferenceElement>(
             .resolveWithCaching(element, cacheDependency, Resolver).orEmpty()
     }
 
-    protected open val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.RUST_STRUCTURE
+    protected open val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 
     private object Resolver : (RsWeakReferenceElement) -> List<PsiElementResolveResult> {
         override fun invoke(ref: RsWeakReferenceElement): List<PsiElementResolveResult> {
