@@ -1107,7 +1107,7 @@ class RsFnInferenceContext(
         // `struct S; S();`
         if (callee is RsPathExpr) {
             ctx.getResolvedPaths(callee).singleOrNull()?.let {
-                if (it is RsFieldsOwner && it.namedFields.isEmpty() && it.positionalFields.isEmpty()) {
+                if (it is RsFieldsOwner && it.fields.isEmpty()) {
                     return ty
                 }
             }

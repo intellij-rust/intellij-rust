@@ -992,14 +992,11 @@ private fun collect2segmentPaths(rootSpeck: RsUseSpeck): List<TwoSegmentPath> {
     return result
 }
 
-private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean {
-    if (processAll(struct.namedFields, processor)) return true
-
-    for ((idx, field) in struct.positionalFields.withIndex()) {
-        if (processor(idx.toString(), field)) return true
+private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolveProcessor): Boolean =
+    struct.fields.any { field ->
+        val name = field.name ?: return@any false
+        processor(name, field)
     }
-    return false
-}
 
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsMethodResolveProcessor): Boolean {
     return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->

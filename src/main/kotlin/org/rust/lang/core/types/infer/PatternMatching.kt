@@ -66,7 +66,7 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, ignoreRef: Boolea
                 ?: ((derefTy as? TyAdt)?.item as? RsStructItem)
                 ?: return
 
-            val structFields = item.namedFields.associateBy { it.name }
+            val structFields = item.fields.associateBy { it.name }
             for (patField in patFieldList) {
                 val kind = patField.kind
                 val fieldType = structFields[kind.fieldName]
