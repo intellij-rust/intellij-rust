@@ -488,4 +488,15 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                                      //^ dep-lib/lib.rs
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve bang proc macro with use item`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        use dep_proc_macro::example_proc_macro;
+        example_proc_macro!();
+        //^ dep-proc-macro/lib.rs
+    """)
 }

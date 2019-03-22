@@ -135,7 +135,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         name: String,
         targetName: String = name,
         version: String = "0.0.1",
-        origin: PackageOrigin = PackageOrigin.DEPENDENCY
+        origin: PackageOrigin = PackageOrigin.DEPENDENCY,
+        crateType: CrateType = CrateType.BIN
     ): Package {
         return Package(
             id = "$name $version",
@@ -146,7 +147,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
                 // don't use `FileUtil.join` here because it uses `File.separator`
                 // which is system dependent although all other code uses `/` as separator
                 Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
-                    TargetKind.LIB, listOf(CrateType.BIN), Edition.EDITION_2015)
+                    TargetKind.LIB, listOf(crateType), Edition.EDITION_2015)
             ),
             source = source,
             origin = origin,
@@ -169,12 +170,13 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib",
                 origin = PackageOrigin.TRANSITIVE_DEPENDENCY),
             externalPackage("$contentRoot/dep-lib-new", "lib.rs", "dep-lib", "dep-lib-target",
-                version = "0.0.2", origin = PackageOrigin.TRANSITIVE_DEPENDENCY)
+                version = "0.0.2", origin = PackageOrigin.TRANSITIVE_DEPENDENCY),
+            externalPackage("$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", crateType = CrateType.PROC_MACRO)
         )
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
-            // Our package depends on dep_lib 0.0.1 and nosrc_lib
-            packages[0].id to setOf(Dependency(packages[1].id), Dependency(packages[2].id)),
+            // Our package depends on dep_lib 0.0.1, nosrc_lib and dep-proc-macro
+            packages[0].id to setOf(Dependency(packages[1].id), Dependency(packages[2].id), Dependency(packages[5].id)),
             // dep_lib 0.0.1 depends on dep_lib 0.0.2
             packages[1].id to setOf(Dependency(packages[4].id))
         )))
