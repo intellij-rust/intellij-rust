@@ -63,4 +63,21 @@
             <option name="RUST_STATEMENT" value="true"/>
         </context>
     </template>
+
+    <template name="impl" description="impl Foo {} declaration" toReformat="true" toShortenFQNames="true"
+              value="impl $NAME$ {&#10;    $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_MOD" value="true"/>
+        </context>
+    </template>
+
+    <template name="implt" description="impl Foo for Bar {} declaration" toReformat="true" toShortenFQNames="true"
+              value="impl $NAME$ for $TRAIT_NAME$ {&#10;    $END$&#10;}">
+        <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="TRAIT_NAME" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_MOD" value="true"/>
+        </context>
+    </template>
 </templateSet>
