@@ -109,6 +109,22 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    fun `test impl`() = expandSnippet("""
+        impl/*caret*/
+    """, """
+        impl /*caret*/ {
+        $indent
+        }
+    """)
+
+    fun `test implt`() = expandSnippet("""
+        implt/*caret*/
+    """, """
+        impl /*caret*/ for  {
+        $indent
+        }
+    """)
+
     private fun expandSnippet(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkByText(before.trimIndent(), after.trimIndent()) {
             myFixture.performEditorAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
