@@ -124,7 +124,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
     """)
     }
 
-    fun `test nested struct pattern`() = testExpr("""
+    fun `test struct pattern`() = testExpr("""
         struct S;
         struct T {
             s: S
@@ -134,6 +134,29 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             let T { s: x } = T { s: S };
             x;
           //^ S
+        }
+    """)
+
+    fun `test tuple struct pattern 1`() = testExpr("""
+        struct S;
+        struct T(S);
+
+        fn main() {
+            let T(x) = T(S);
+            x;
+          //^ S
+        }
+    """)
+
+    fun `test tuple struct pattern 2`() = testExpr("""
+        struct S1;
+        struct S2;
+        struct T(S1, S2);
+
+        fn main() {
+            let T { 1: x, 0: y } = T { 0: S1, 1: S2 };
+            (x, y);
+          //^ (S2, S1)
         }
     """)
 
