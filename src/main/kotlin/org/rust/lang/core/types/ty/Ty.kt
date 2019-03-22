@@ -7,8 +7,7 @@ package org.rust.lang.core.types.ty
 
 import org.rust.ide.presentation.tyToString
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.ext.namedFields
-import org.rust.lang.core.psi.ext.positionalFields
+import org.rust.lang.core.psi.ext.fields
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.*
@@ -83,13 +82,7 @@ tailrec fun Ty.isSized(): Boolean {
         is TyTypeParameter -> isSized
         is TyAdt -> {
             val item = item as? RsStructItem ?: return true
-            val namedFields = item.namedFields
-            val tupleFields = item.positionalFields
-            val typeRef = when {
-                namedFields.isNotEmpty() -> namedFields.last().typeReference
-                tupleFields.isNotEmpty() -> tupleFields.last().typeReference
-                else -> null
-            }
+            val typeRef = item.fields.lastOrNull()?.typeReference
             val type = typeRef?.type?.substitute(typeParameterValues) ?: return true
             type.isSized()
         }
