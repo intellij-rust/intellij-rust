@@ -41,11 +41,9 @@ val RsFieldsOwner.positionalFields: List<RsTupleFieldDecl>
  * ```
  */
 fun RsFieldsOwner.canBeInstantiatedIn(mod: RsMod): Boolean =
-    namedFields.all { it.isVisibleFrom(mod) } && positionalFields.all { it.isVisibleFrom(mod) }
+    fields.all { it.isVisibleFrom(mod) }
 
-val RsFieldsOwner.fieldTypes: List<Ty>
-    get() = blockFields?.namedFieldDeclList?.mapNotNull { it.typeReference?.type }
-        ?: tupleFields?.tupleFieldDeclList?.mapNotNull { it.typeReference.type }.orEmpty()
+val RsFieldsOwner.fieldTypes: List<Ty> get() = fields.mapNotNull { it.typeReference?.type }
 
 /**
  * True for:
@@ -62,5 +60,4 @@ val RsFieldsOwner.fieldTypes: List<Ty>
 val RsFieldsOwner.isFieldless: Boolean
     get() = blockFields == null && tupleFields == null
 
-val RsFieldsOwner.size: Int
-    get() = tupleFields?.tupleFieldDeclList?.size ?: blockFields?.namedFieldDeclList?.size ?: 0
+val RsFieldsOwner.size: Int get() = fields.size
