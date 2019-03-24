@@ -5,7 +5,9 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.stubs.StubElement
@@ -15,6 +17,9 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.SmartList
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
+
+val PsiFileSystemItem.sourceRoot: VirtualFile?
+    get() = virtualFile.let { ProjectRootManager.getInstance(project).fileIndex.getSourceRootForFile(it) }
 
 val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) {
     if (it is PsiFile) null else it.parent

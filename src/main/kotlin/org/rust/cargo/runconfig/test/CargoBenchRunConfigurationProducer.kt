@@ -5,8 +5,8 @@
 
 package org.rust.cargo.runconfig.test
 
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.isBench
 import org.rust.lang.core.psi.ext.processExpandedItemsExceptImpls
@@ -14,11 +14,11 @@ import org.rust.lang.core.psi.ext.processExpandedItemsExceptImpls
 class CargoBenchRunConfigurationProducer : CargoTestRunConfigurationProducerBase() {
     override val commandName: String = "bench"
 
-    override fun isSuitable(element: RsElement): Boolean =
+    override fun isSuitable(element: PsiElement): Boolean =
         when (element) {
             is RsMod -> hasBenchFunction(element)
             is RsFunction -> element.isBench
-            else -> error("expected RsMod or RsFunction")
+            else -> false
         }
 
     companion object {
