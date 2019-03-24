@@ -239,4 +239,48 @@ class BenchRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
         val file2 = myFixture.file
         checkOnFiles(file1, file2)
     }
+
+    fun `test bench producer works for benches source root`() {
+        testProject {
+            bench("foo", "benches/foo.rs", """
+                #[bench] fn bench_foo() {}
+            """)
+        }
+
+        openFileInEditor("benches/foo.rs")
+        val sourceRoot = myFixture.file.containingDirectory
+        checkOnFiles(sourceRoot)
+    }
+
+    fun `test bench producer works for directories inside benches source root`() {
+        testProject {
+            bench("foo", "benches/dir/foo.rs", """
+                #[bench] fn bench_foo() {}
+            """)
+
+            bench("bar", "benches/dir/bar.rs", """
+                fn bench_bar() {}
+            """)
+
+            bench("baz", "benches/dir/baz.rs", """
+                #[bench] fn bench_baz() {}
+            """)
+        }
+
+        openFileInEditor("benches/dir/foo.rs")
+        val dir = myFixture.file.containingDirectory
+        checkOnFiles(dir)
+    }
+
+    fun `test bench producer doesn't works for directories without benches`() {
+        testProject {
+            bench("foo", "benches/foo.rs", """
+                fn foo() {}
+            """)
+        }
+
+        openFileInEditor("benches/foo.rs")
+        val dir = myFixture.file.containingDirectory
+        checkOnFiles(dir)
+    }
 }
