@@ -32,8 +32,8 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
         if (parent !is RsNameIdentifierOwner || element != parent.nameIdentifier) return null
         if (parent is RsFunction && CargoExecutableRunConfigurationProducer.isMainFunction(parent)) return null
 
-        val state = CargoTestRunConfigurationProducer().findConfig(arrayOf(parent), climbUp = false)
-            ?: CargoBenchRunConfigurationProducer().findConfig(arrayOf(parent), climbUp = false)
+        val state = CargoTestRunConfigurationProducer().findTestConfig(listOf(parent), climbUp = false)
+            ?: CargoBenchRunConfigurationProducer().findTestConfig(listOf(parent), climbUp = false)
             ?: return null
         val icon = if (state.commandName == "test") {
             getTestStateIcon(state.sourceElement)

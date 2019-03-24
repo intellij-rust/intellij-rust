@@ -57,7 +57,7 @@ data class CargoCommandLine(
             assert(pkgs.map { it.rootDirectory }.distinct().size == 1)
             val pkg = pkgs.first()
 
-            val targetArgs = targets.flatMap { target ->
+            val targetArgs = targets.distinctBy { it.name }.flatMap { target ->
                 when (target.kind) {
                     CargoWorkspace.TargetKind.BIN -> listOf("--bin", target.name)
                     CargoWorkspace.TargetKind.TEST -> listOf("--test", target.name)
@@ -86,14 +86,22 @@ data class CargoCommandLine(
             command: String,
             additionalArguments: List<String> = emptyList(),
             channel: RustChannel = RustChannel.DEFAULT
-        ): CargoCommandLine {
-            return CargoCommandLine(
-                command,
-                cargoProject.workingDirectory,
-                additionalArguments,
-                channel = channel
-            )
-        }
+        ): CargoCommandLine = CargoCommandLine(
+            command,
+            workingDirectory = cargoProject.workingDirectory,
+            additionalArguments = additionalArguments,
+            channel = channel
+        )
+
+        fun forPackage(
+            cargoPackage: CargoWorkspace.Package,
+            command: String,
+            additionalArguments: List<String> = emptyList()
+        ): CargoCommandLine = CargoCommandLine(
+            command,
+            workingDirectory = cargoPackage.workspace.manifestPath.parent,
+            additionalArguments = listOf("--package", cargoPackage.name) + additionalArguments
+        )
     }
 }
 
