@@ -13,6 +13,8 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.findCargoProject
+import org.rust.openapiext.toPsiDirectory
 
 class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
     fun `test test producer works for annotated functions`() {
@@ -254,5 +256,65 @@ class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
         openFileInEditor("tests/bar.rs")
         val file2 = myFixture.file
         checkOnFiles(file1, file2)
+    }
+
+    fun `test test producer works for tests source root`() {
+        testProject {
+            test("foo", "tests/foo.rs", """
+                #[test] fn test_foo() {}
+            """)
+        }
+
+        openFileInEditor("tests/foo.rs")
+        val sourceRoot = myFixture.file.containingDirectory
+        checkOnFiles(sourceRoot)
+    }
+
+    fun `test test producer works for directories inside tests source root`() {
+        testProject {
+            test("foo", "tests/dir/foo.rs", """
+                #[test] fn test_foo() {}
+            """)
+
+            test("bar", "tests/dir/bar.rs", """
+                fn test_bar() {}
+            """)
+
+            test("baz", "tests/dir/baz.rs", """
+                #[test] fn test_baz() {}
+            """)
+        }
+
+        openFileInEditor("tests/dir/foo.rs")
+        val dir = myFixture.file.containingDirectory
+        checkOnFiles(dir)
+    }
+
+    fun `test test producer doesn't works for directories without tests`() {
+        testProject {
+            test("foo", "tests/foo.rs", """
+                fn foo() {}
+            """)
+        }
+
+        openFileInEditor("tests/foo.rs")
+        val dir = myFixture.file.containingDirectory
+        checkOnFiles(dir)
+    }
+
+    fun `test test producer works for project root`() {
+        testProject {
+            test("foo", "tests/foo.rs", """
+                #[test] fn test_foo() {}
+            """)
+        }
+
+        openFileInEditor("tests/foo.rs")
+        val packageRoot = myFixture.file
+            .containingDirectory
+            .findCargoProject()
+            ?.rootDir
+            ?.toPsiDirectory(project)!!
+        checkOnFiles(packageRoot)
     }
 }

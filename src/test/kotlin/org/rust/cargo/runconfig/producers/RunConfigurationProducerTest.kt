@@ -109,4 +109,28 @@ class RunConfigurationProducerTest : RunConfigurationProducerTestBase() {
         }
         checkOnLeaf()
     }
+
+    fun `test test producer doesn't works for directories inside non-tests source root`() {
+        testProject {
+            test("foo", "src/foo.rs", """
+                #[test] fn test_foo() {}
+            """)
+        }
+
+        openFileInEditor("src/foo.rs")
+        val dir = myFixture.file.containingDirectory
+        checkOnFiles(dir)
+    }
+
+    fun `test bench producer doesn't works for directories inside non-benches source root`() {
+        testProject {
+            test("foo", "src/foo.rs", """
+                #[bench] fn bench_foo() {}
+            """)
+        }
+
+        openFileInEditor("src/foo.rs")
+        val dir = myFixture.file.containingDirectory
+        checkOnFiles(dir)
+    }
 }
