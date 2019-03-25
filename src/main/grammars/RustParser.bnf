@@ -1029,7 +1029,8 @@ private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
 private StructLiteralField_recover ::= !(identifier | INTEGER_LITERAL | ',' | '}' | '..' | '#')
 
 PathExpr ::= OuterAttr* PathGenericArgsWithColons {
- elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
