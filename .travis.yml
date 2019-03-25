@@ -23,12 +23,12 @@ matrix:
     - name: idea-183/stable-rust
       env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183
     - name: clion-183/stable-rust
-      env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183 baseIDE=clion
+      env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=183 ORG_GRADLE_PROJECT_baseIDE=clion
     # 191 platform
     - name: idea-191/nightly-rust
       env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=191
     - name: clion-191/nightly-rust
-      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=191 baseIDE=clion
+      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=191 ORG_GRADLE_PROJECT_baseIDE=clion
 
 install: true
 
