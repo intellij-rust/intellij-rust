@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
@@ -27,12 +28,6 @@ class Rustup(
     private val rustup: Path,
     private val projectDirectory: Path
 ) {
-    @Suppress("unused")
-    sealed class DownloadResult<out T> {
-        class Ok<T>(val value: T) : DownloadResult<T>()
-        class Err(val error: String) : DownloadResult<Nothing>()
-    }
-
     data class Component(val name: String, val isInstalled: Boolean) {
         companion object {
             fun from(line: String): Component {

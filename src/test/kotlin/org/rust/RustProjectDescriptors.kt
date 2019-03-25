@@ -22,7 +22,7 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.util.DownloadResult
 import java.nio.file.Paths
 
 object DefaultDescriptor : RustProjectDescriptorBase()
@@ -78,7 +78,7 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
     private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
 
     private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
-    val stdlib by lazy { (rustup?.downloadStdlib() as? Rustup.DownloadResult.Ok)?.value }
+    val stdlib by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
 
     override val skipTestReason: String?
         get() {

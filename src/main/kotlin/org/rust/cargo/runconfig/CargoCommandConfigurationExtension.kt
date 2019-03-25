@@ -20,12 +20,14 @@ class ConfigurationExtensionContext : UserDataHolderBase()
 abstract class CargoCommandConfigurationExtension : RunConfigurationExtensionBase<CargoCommandConfiguration>() {
     private val LOG: Logger = Logger.getInstance(CargoCommandConfigurationExtension::class.java)
 
-    abstract fun attachToProcess(configuration: CargoCommandConfiguration,
-                                 handler: ProcessHandler,
-                                 environment: ExecutionEnvironment,
-                                 runnerSettings: RunnerSettings?,
-                                 runnerId: String,
-                                 context: ConfigurationExtensionContext)
+    abstract fun attachToProcess(
+        configuration: CargoCommandConfiguration,
+        handler: ProcessHandler,
+        environment: ExecutionEnvironment,
+        runnerSettings: RunnerSettings?,
+        runnerId: String,
+        context: ConfigurationExtensionContext
+    )
 
     abstract fun patchCommandLine(
         configuration: CargoCommandConfiguration,
@@ -35,10 +37,12 @@ abstract class CargoCommandConfigurationExtension : RunConfigurationExtensionBas
         context: ConfigurationExtensionContext
     )
 
-    override fun patchCommandLine(configuration: CargoCommandConfiguration,
-                                  runnerSettings: RunnerSettings?,
-                                  cmdLine: GeneralCommandLine,
-                                  runnerId: String) {
+    override fun patchCommandLine(
+        configuration: CargoCommandConfiguration,
+        runnerSettings: RunnerSettings?,
+        cmdLine: GeneralCommandLine,
+        runnerId: String
+    ) {
         LOG.error("use the other overload of 'patchCommandLine' method")
     }
 

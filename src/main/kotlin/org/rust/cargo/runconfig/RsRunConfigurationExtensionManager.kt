@@ -41,7 +41,6 @@ class RsRunConfigurationExtensionManager : RunConfigurationExtensionsManager<Car
 
     companion object {
         @JvmStatic
-        val instance: RsRunConfigurationExtensionManager
-            get() = service()
+        fun getInstance(): RsRunConfigurationExtensionManager = service()
     }
 }
