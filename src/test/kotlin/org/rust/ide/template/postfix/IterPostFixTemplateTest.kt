@@ -9,7 +9,8 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class IterPostFixTemplateTest : RsPostfixTemplateTest(IterPostfixTemplate(RsPostfixTemplateProvider())) {
+abstract class IterPostFixTemplateTestBase(private val key: String) :
+    RsPostfixTemplateTest(IterPostfixTemplate(key, RsPostfixTemplateProvider())) {
 
     fun `test non iterable expr`() = doTestNotApplicable("""
             let b = 5;
@@ -20,7 +21,7 @@ class IterPostFixTemplateTest : RsPostfixTemplateTest(IterPostfixTemplate(RsPost
     fun `test iterable expr`() = doTest("""
         fn main(){
             let v = vec![1, 2, 3];
-            v.iter().iter/*caret*/
+            v.iter().$key/*caret*/
         }
     """, """
         fn main(){
@@ -34,7 +35,7 @@ class IterPostFixTemplateTest : RsPostfixTemplateTest(IterPostfixTemplate(RsPost
     fun `test intoIterable expr`() = doTest("""
         fn main(){
             let v = vec![1, 2, 3];
-            v.iter/*caret*/
+            v.$key/*caret*/
         }
     """, """
         fn main(){
@@ -45,3 +46,6 @@ class IterPostFixTemplateTest : RsPostfixTemplateTest(IterPostfixTemplate(RsPost
         }
     """)
 }
+
+class IterPostFixTemplateTest : IterPostFixTemplateTestBase("iter")
+class ForPostFixTemplateTest : IterPostFixTemplateTestBase("for")
