@@ -39,12 +39,11 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
 
     override fun patchCommandLine(
         configuration: CargoCommandConfiguration,
-        runnerSettings: RunnerSettings?,
+        environment: ExecutionEnvironment,
         cmdLine: GeneralCommandLine,
-        runnerId: String,
         context: ConfigurationExtensionContext
     ) {
-        if (RsProfilerRunner.RUNNER_ID != runnerId) return
+        if (RsProfilerRunner.RUNNER_ID != environment.runner.runnerId) return
         val project = configuration.project
         val settings = CPPProfilerSettings.instance.state
         val perfPath = settings.executablePath.orEmpty()
@@ -61,11 +60,9 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         configuration: CargoCommandConfiguration,
         handler: ProcessHandler,
         environment: ExecutionEnvironment,
-        runnerSettings: RunnerSettings?,
-        runnerId: String,
         context: ConfigurationExtensionContext
     ) {
-        if (RsProfilerRunner.RUNNER_ID != runnerId) return
+        if (RsProfilerRunner.RUNNER_ID != environment.runner.runnerId) return
         if (handler !is BaseProcessHandler<*>)
             throw ExecutionException("Can't detect target process id")
         val outputFile = context.getUserData(PERF_OUTPUT_FILE_KEY)
