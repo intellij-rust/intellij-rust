@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 /**
  * Tests for Deprecated Attribute inspection.
@@ -239,7 +239,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
     """)
 
     fun `test AST is not loaded when deprecated item in another file`() {
-        checkAstNotLoaded(VirtualFileFilter { "foo.rs" == it.name })
+        (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter { !it.path.endsWith("main.rs") }
         checkByFileTree("""
         //- main.rs
             mod foo;
