@@ -50,7 +50,7 @@ class RsDeprecationInspection : RsLocalInspectionTool() {
         queryAttributes.hasAttributeWithArg(ALLOW_ATTR_NAME, DEPRECATED_ARG_NAME)
 
     private fun RsMetaItem.extractDeprecatedMessage(item: String): String {
-        val (note, since) = if (DEPRECATED_ATTR_NAME == identifier?.text) {
+        val (note, since) = if (DEPRECATED_ATTR_NAME == name) {
             extract(NOTE_PARAM_NAME, SINCE_PARAM_NAME)
         } else {
             extract(REASON_PARAM_NAME, SINCE_PARAM_NAME)
