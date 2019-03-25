@@ -76,11 +76,12 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
 
         RsRunConfigurationExtensionManager.getInstance().patchCommandLine(
             runConfiguration,
-            environment.runnerSettings,
+            environment,
             cmd,
-            environment.runner.runnerId,
             context
         )
+
+        RsRunConfigurationExtensionManager.getInstance().patchCommandLineState(runConfiguration, environment, state, context)
 
         val handler = RsKillableColoredProcessHandler(cmd)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
@@ -89,8 +90,6 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
             runConfiguration,
             handler,
             environment,
-            environment.runnerSettings,
-            environment.runner.runnerId,
             context
         )
 

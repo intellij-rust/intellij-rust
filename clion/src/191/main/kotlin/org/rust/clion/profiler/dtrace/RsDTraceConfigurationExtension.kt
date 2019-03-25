@@ -35,12 +35,11 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
 
     override fun patchCommandLine(
         configuration: CargoCommandConfiguration,
-        runnerSettings: RunnerSettings?,
+        environment: ExecutionEnvironment,
         cmdLine: GeneralCommandLine,
-        runnerId: String,
         context: ConfigurationExtensionContext
     ) {
-        if (RsProfilerRunner.RUNNER_ID != runnerId) return
+        if (RsProfilerRunner.RUNNER_ID != environment.runner.runnerId) return
         val starterPath = profilerStarterPath()
         if (!starterPath.exists()) throw ExecutionException("Internal error: Can't find process starter")
         cmdLine.withEnvironment(DYLD_INSERT_LIBRARIES, starterPath.absolutePath)
@@ -50,11 +49,9 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         configuration: CargoCommandConfiguration,
         handler: ProcessHandler,
         environment: ExecutionEnvironment,
-        runnerSettings: RunnerSettings?,
-        runnerId: String,
         context: ConfigurationExtensionContext
     ) {
-        if (RsProfilerRunner.RUNNER_ID != runnerId) return
+        if (RsProfilerRunner.RUNNER_ID != environment.runner.runnerId) return
 
         val targetProcess = (handler as? BaseProcessHandler<*>)?.process
             ?: throw ExecutionException("Profiler connection error: can't detect target process id")

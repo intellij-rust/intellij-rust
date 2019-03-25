@@ -6,6 +6,7 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.configuration.RunConfigurationExtensionBase
+import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
@@ -24,18 +25,23 @@ abstract class CargoCommandConfigurationExtension : RunConfigurationExtensionBas
         configuration: CargoCommandConfiguration,
         handler: ProcessHandler,
         environment: ExecutionEnvironment,
-        runnerSettings: RunnerSettings?,
-        runnerId: String,
         context: ConfigurationExtensionContext
     )
 
     abstract fun patchCommandLine(
         configuration: CargoCommandConfiguration,
-        runnerSettings: RunnerSettings?,
+        environment: ExecutionEnvironment,
         cmdLine: GeneralCommandLine,
-        runnerId: String,
         context: ConfigurationExtensionContext
     )
+
+    open fun patchCommandLineState(
+        configuration: CargoCommandConfiguration,
+        environment: ExecutionEnvironment,
+        state: CommandLineState,
+        context: ConfigurationExtensionContext
+    ) {
+    }
 
     override fun patchCommandLine(
         configuration: CargoCommandConfiguration,
