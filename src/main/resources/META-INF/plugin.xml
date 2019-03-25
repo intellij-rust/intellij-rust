@@ -137,6 +137,7 @@
 
         <targetElementEvaluator language="Rust"
                                 implementationClass="org.rust.ide.navigation.goto.RsTargetElementEvaluator"/>
+        <generatedSourcesFilter implementation="org.rust.ide.navigation.goto.RsGeneratedSourcesFilter"/>
 
         <!-- Hints -->
 
