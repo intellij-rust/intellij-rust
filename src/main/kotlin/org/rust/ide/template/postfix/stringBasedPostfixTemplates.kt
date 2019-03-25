@@ -81,9 +81,9 @@ class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
     }
 }
 
-class IterPostfixTemplate(provider: RsPostfixTemplateProvider) :
+class IterPostfixTemplate(name: String, provider: RsPostfixTemplateProvider) :
     StringBasedPostfixTemplate(
-        "iter",
+        name,
         "for x in expr",
         RsTopMostInScopeSelector { it.isIntoIterator },
         provider
