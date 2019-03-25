@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemHighlightType.LIKE_DEPRECATED
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.util.parents
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsModDeclItem
@@ -33,7 +32,7 @@ class RsDeprecationInspection : RsLocalInspectionTool() {
                 else -> original
             } ?: return
 
-            if (ref.parents().none { it.hasAllowDeprecatedAttribute() }) {
+            if (ref.ancestors.none { it.hasAllowDeprecatedAttribute() }) {
                 checkAndRegisterAsDeprecated(identifier, targetElement, holder)
             }
         }
