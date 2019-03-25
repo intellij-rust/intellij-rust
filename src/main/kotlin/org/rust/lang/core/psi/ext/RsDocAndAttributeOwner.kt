@@ -120,6 +120,10 @@ class QueryAttributes(
     val reprAttributes: Sequence<RsMetaItem>
         get() = attrsByName("repr")
 
+    // #[deprecated(since, note)], #[rustc_deprecated(since, reason)]
+    val deprecatedAttribute: RsMetaItem?
+        get() = (attrsByName("deprecated") + attrsByName("rustc_deprecated")).firstOrNull()
+
     // `#[attributeName = "Xxx"]`
     private fun getStringAttributes(attributeName: String): Sequence<String?> = attrsByName(attributeName).map { it.value }
 
