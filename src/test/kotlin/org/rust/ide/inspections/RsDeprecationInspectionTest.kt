@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.openapi.vfs.VirtualFileFilter
+
 /**
  * Tests for Deprecated Attribute inspection.
  */
@@ -16,7 +18,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            <warning descr="'foo' is marked as deprecated">foo</warning>();
+            <warning descr="`foo` is deprecated">foo</warning>();
         }
     """)
 
@@ -26,7 +28,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            <warning descr="'foo' is marked as deprecated since version 1.0.0">foo</warning>();
+            <warning descr="`foo` is deprecated since 1.0.0">foo</warning>();
         }
     """)
 
@@ -36,7 +38,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            <warning descr="'foo' is marked as deprecated (here could be your reason)">foo</warning>();
+            <warning descr="`foo` is deprecated: here could be your reason">foo</warning>();
         }
     """)
 
@@ -46,7 +48,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            <warning descr="'foo' is marked as deprecated since version 1.0.0 (here could be your reason)">foo</warning>();
+            <warning descr="`foo` is deprecated since 1.0.0: here could be your reason">foo</warning>();
         }
     """)
 
@@ -56,7 +58,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            <warning descr="'foo' is marked as deprecated since version 1.0.0 (here could be your reason)">foo</warning>();
+            <warning descr="`foo` is deprecated since 1.0.0: here could be your reason">foo</warning>();
         }
     """)
 
@@ -65,7 +67,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         struct Foo;
 
         fn main() {
-            let foo = <warning descr="'Foo' is marked as deprecated">Foo</warning>{};
+            let foo = <warning descr="`Foo` is deprecated">Foo</warning>{};
         }
     """)
 
@@ -80,7 +82,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            let foo = Foo::<warning descr="'new' is marked as deprecated">new</warning>();
+            let foo = Foo::<warning descr="`new` is deprecated">new</warning>();
         }
     """)
 
@@ -90,7 +92,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
 
         struct Foo;
 
-        impl <warning descr="'Bar' is marked as deprecated">Bar</warning> for Foo {
+        impl <warning descr="`Bar` is deprecated">Bar</warning> for Foo {
         }
     """)
 
@@ -110,7 +112,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
 
         fn main() {
             let foo = Foo;
-            foo.<warning descr="'foo' is marked as deprecated">foo</warning>();
+            foo.<warning descr="`foo` is deprecated">foo</warning>();
         }
     """)
 
@@ -123,7 +125,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            <warning descr="'Numbers' is marked as deprecated">Numbers</warning>::One;
+            <warning descr="`Numbers` is deprecated">Numbers</warning>::One;
         }
     """)
 
@@ -136,7 +138,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            Numbers::<warning descr="'One' is marked as deprecated">One</warning>;
+            Numbers::<warning descr="`One` is deprecated">One</warning>;
         }
     """)
 
@@ -145,7 +147,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         type Name = String;
 
         fn main() {
-            let name: <warning descr="'Name' is marked as deprecated">Name</warning> = "test".to_string();
+            let name: <warning descr="`Name` is deprecated">Name</warning> = "test".to_string();
         }
     """)
 
@@ -154,7 +156,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         static SOME_INT: i32 = 5;
 
         fn main() {
-            let a = <warning descr="'SOME_INT' is marked as deprecated">SOME_INT</warning>;
+            let a = <warning descr="`SOME_INT` is deprecated">SOME_INT</warning>;
         }
     """)
 
@@ -165,7 +167,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            let a = <warning descr="'foo' is marked as deprecated">foo</warning>::SOME_INT;
+            let a = <warning descr="`foo` is deprecated">foo</warning>::SOME_INT;
         }
     """)
 
@@ -176,7 +178,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
 
         fn main() {
-            let a = Foo { <warning descr="'x' is marked as deprecated">x</warning>: 123 };
+            let a = Foo { <warning descr="`x` is deprecated">x</warning>: 123 };
         }
     """)
 
@@ -186,9 +188,68 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
             mod foo;
 
             fn main() {
-                let a = /*caret*/<warning descr="'foo' is marked as deprecated">foo</warning>::SOME_INT;
+                let a = /*caret*/<warning descr="`foo` is deprecated">foo</warning>::SOME_INT;
             }
         //- foo.rs
             pub static SOME_INT: i32 = 5;
     """)
+
+    fun `test allow deprecated function`() = checkByText("""
+        #[deprecated]
+        pub fn foo() {
+        }
+
+        #[allow(deprecated)]
+        fn main() {
+            foo();
+        }
+    """)
+
+    fun `test allow deprecated statement`() = checkByText("""
+        #[deprecated]
+        pub fn foo() {
+        }
+
+        fn main() {
+            #[allow(deprecated)]
+            foo();
+        }
+    """)
+
+    fun `test allow deprecated item in module`() = checkByText("""
+        #[allow(deprecated)]
+        mod foo {
+            #[deprecated]
+            static SOME_INT: i32 = 5;
+            static OTHER_INT: i32 = SOME_INT;
+        }
+    """)
+
+    fun `test allow deprecated inner attribute`() = checkByText("""
+        #![allow(deprecated)]
+
+        #[deprecated]
+        fn foo() {
+            println!("TEST")
+        }
+
+        fn main() {
+            foo();
+        }
+    """)
+
+    fun `test AST is not loaded when deprecated item in another file`() {
+        checkAstNotLoaded(VirtualFileFilter { "foo.rs" == it.name })
+        checkByFileTree("""
+        //- main.rs
+            mod foo;
+
+            fn main() {/*caret*/
+                foo::<warning descr="`bar` is deprecated since 1.0.0: here could be your reason">bar</warning>();
+            }
+        //- foo.rs
+            #[deprecated(since="1.0.0", note="here could be your reason")]
+            pub fn bar() {}
+        """)
+    }
 }
