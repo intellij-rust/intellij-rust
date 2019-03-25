@@ -101,15 +101,18 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         }
     """)
 
-    fun `test self is not over annotated`() = checkHighlighting("""
+    fun `test keyword paths are not over annotated`() = checkByText("""
         pub use self::<MODULE>foo</MODULE>;
+        pub use crate::foobar;
 
         mod <MODULE>foo</MODULE> {
             pub use self::<MODULE>bar</MODULE>;
 
             pub mod <MODULE>bar</MODULE> {}
         }
-    """)
+
+        trait <TRAIT>Foo</TRAIT> { fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>(_: Self) -> Self; }
+    """, checkWarn = false, ignoreExtraHighlighting = false)
 
     fun `test primitive`() = checkHighlighting("""
         fn <FUNCTION>main</FUNCTION>() -> <PRIMITIVE_TYPE>bool</PRIMITIVE_TYPE> {
