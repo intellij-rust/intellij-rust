@@ -2,4 +2,14 @@
     <extensions defaultExtensionNs="clion">
         <buildConfigurationProvider implementation="org.rust.clion.cargo.CargoBuildConfigurationProvider"/>
     </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <programRunner implementation="org.rust.clion.profiler.RsProfilerRunner"/>
+        <projectService serviceImplementation="org.rust.clion.profiler.RsCachingStackElementReader"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.rust">
+        <runConfigurationExtension implementation="org.rust.clion.profiler.perf.RsPerfConfigurationExtension"/>
+        <runConfigurationExtension implementation="org.rust.clion.profiler.dtrace.RsDTraceConfigurationExtension"/>
+    </extensions>
 </idea-plugin>

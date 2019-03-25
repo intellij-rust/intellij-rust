@@ -12,8 +12,9 @@ import org.rust.cargo.runconfig.console.CargoConsoleBuilder
 
 class CargoRunState(
     environment: ExecutionEnvironment,
+    runConfiguration: CargoCommandConfiguration,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
-) : CargoRunStateBase(environment, config) {
+) : CargoRunStateBase(environment, runConfiguration, config) {
     init {
         val scope = SearchScopeProvider.createSearchScope(environment.project, environment.runProfile)
         consoleBuilder = CargoConsoleBuilder(environment.project, scope)

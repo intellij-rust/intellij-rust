@@ -44,6 +44,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.AsyncValue
@@ -430,7 +431,7 @@ private fun fetchStdlib(
         progress.isIndeterminate = true
         val download = rustup.downloadStdlib()
         when (download) {
-            is Rustup.DownloadResult.Ok -> {
+            is DownloadResult.Ok -> {
                 val lib = StandardLibrary.fromFile(download.value)
                 if (lib == null) {
                     err("" +
@@ -440,7 +441,7 @@ private fun fetchStdlib(
                     ok(lib)
                 }
             }
-            is Rustup.DownloadResult.Err -> err(
+            is DownloadResult.Err -> err(
                 "download failed: ${download.error}"
             )
         }
