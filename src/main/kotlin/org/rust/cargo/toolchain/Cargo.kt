@@ -12,7 +12,10 @@ import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
@@ -20,13 +23,20 @@ import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.util.DownloadResult
+import org.rust.ide.actions.InstallCargoPackageAction
+import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Path
+
+
+private val LOG = Logger.getInstance(Cargo::class.java)
 
 /**
  * A main gateway for executing cargo commands.
@@ -47,6 +57,25 @@ class Cargo(private val cargoExecutable: Path) {
 
         return lines.any { it.contains(" --all-targets ") }
     }
+
+    fun listPackages(): List<String> =
+        GeneralCommandLine(cargoExecutable)
+            .withParameters("install", "--list")
+            .execute(null)
+            ?.stdoutLines
+            ?: emptyList()
+
+    fun installPackage(owner: Disposable, packageName: String): DownloadResult<Unit> =
+        try {
+            GeneralCommandLine(cargoExecutable)
+                .withParameters("install", packageName)
+                .execute(owner, false)
+            DownloadResult.Ok(Unit)
+        } catch (e: ExecutionException) {
+            val message = "cargo failed: `${e.message}`"
+            LOG.warn(message)
+            DownloadResult.Err(message)
+        }
 
     /**
      * Fetch all dependencies and calculate project information.
@@ -210,6 +239,49 @@ class Cargo(private val cargoExecutable: Path) {
             }
             environmentVariables.configureCommandLine(cmdLine, true)
             return cmdLine
+        }
+
+        fun checkNeedInstallRustfilt(project: Project): Boolean =
+            checkNeedInstallPackage(
+                project,
+                "rustfilt",
+                NotificationType.WARNING,
+                "Symbol names might be mangled and invalid for `Jump to source`"
+            )
+
+        @Suppress("SameParameterValue")
+        private fun checkNeedInstallPackage(
+            project: Project,
+            packageName: String,
+            notificationType: NotificationType,
+            additionalMessage: String? = null
+        ): Boolean {
+            fun isNotInstalled(): Boolean {
+                val cargo = project.toolchain?.rawCargo() ?: return false
+                val installed = cargo.listPackages().any { it.startsWith(packageName) }
+                return !installed
+            }
+
+            val needInstall = if (ApplicationManager.getApplication().isDispatchThread) {
+                project.computeWithCancelableProgress("Checking if $packageName is installed...", ::isNotInstalled)
+            } else {
+                isNotInstalled()
+            }
+
+            if (needInstall) {
+                val message = if (!additionalMessage.isNullOrEmpty()) {
+                    "$packageName is not installed. $additionalMessage"
+                } else {
+                    "$packageName is not installed"
+                }
+                project.showBalloon(
+                    message,
+                    notificationType,
+                    InstallCargoPackageAction(packageName)
+                )
+            }
+
+            return needInstall
         }
     }
 }
