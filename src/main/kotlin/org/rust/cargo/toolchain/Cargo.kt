@@ -246,7 +246,7 @@ class Cargo(private val cargoExecutable: Path) {
                 project,
                 "rustfilt",
                 NotificationType.WARNING,
-                "Symbol names might be mangled and invalid for `Jump to source`"
+                "It may lead to incorrect function names and <code>Jump to Source</code> may not work"
             )
 
         @Suppress("SameParameterValue")
@@ -254,7 +254,7 @@ class Cargo(private val cargoExecutable: Path) {
             project: Project,
             packageName: String,
             notificationType: NotificationType,
-            additionalMessage: String? = null
+            message: String? = null
         ): Boolean {
             fun isNotInstalled(): Boolean {
                 val cargo = project.toolchain?.rawCargo() ?: return false
@@ -269,13 +269,9 @@ class Cargo(private val cargoExecutable: Path) {
             }
 
             if (needInstall) {
-                val message = if (!additionalMessage.isNullOrEmpty()) {
-                    "$packageName is not installed. $additionalMessage"
-                } else {
-                    "$packageName is not installed"
-                }
                 project.showBalloon(
-                    message,
+                    "<code>$packageName</code> is not installed",
+                    message ?: "",
                     notificationType,
                     InstallCargoPackageAction(packageName)
                 )
