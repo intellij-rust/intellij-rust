@@ -23,7 +23,6 @@ class InstallCargoPackageAction(
         val cargo = project.toolchain?.rawCargo() ?: return
         Notification.get(e).expire()
         object : Task.Backgroundable(project, "Installing $packageName...") {
-            override fun shouldStartInBackground(): Boolean = false
             override fun run(indicator: ProgressIndicator) {
                 val result = cargo.installPackage(myProject, packageName) as? DownloadResult.Err ?: return
                 myProject.showBalloon(result.error, NotificationType.ERROR)
