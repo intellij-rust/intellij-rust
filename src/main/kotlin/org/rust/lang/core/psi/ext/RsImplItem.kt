@@ -41,12 +41,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
 
     override val implementedTrait: BoundElement<RsTraitItem>? get() {
         val (trait, subst) = traitRef?.resolveToBoundTrait ?: return null
-        val aliases = members?.typeAliasList.orEmpty().mapNotNull { typeAlias ->
-            trait.members?.typeAliasList.orEmpty()
-                .find { it.name == typeAlias.name }
-                ?.let { it to typeAlias.declaredType }
-        }.toMap()
-        return BoundElement(trait, subst, aliases)
+        return BoundElement(trait, subst)
     }
 
     override val innerAttrList: List<RsInnerAttr>
