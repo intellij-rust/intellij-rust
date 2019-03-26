@@ -5,6 +5,7 @@
 
 package org.rust.clion.profiler.dtrace
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.project.Project
 import com.intellij.profiler.DummyFlameChartBuilder
@@ -24,6 +25,7 @@ import com.intellij.profiler.sudo.SudoProcessHandler
 import com.intellij.profiler.ui.flamechart.NativeCallChartNodeRenderer
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.concurrency.Promise
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.Cargo
 import org.rust.clion.profiler.RsCachingStackElementReader
 import java.io.IOException
@@ -50,10 +52,12 @@ class RsDTraceProfilerProcess private constructor(
     override fun postProcessData(builder: DummyFlameChartBuilder<ThreadInfo, BaseCallStackElement>): DummyFlameChartBuilder<ThreadInfo, BaseCallStackElement> {
         readIndicator.checkCanceled()
 
-        val pb = ProcessBuilder("rustfilt")
+        val toolchainLocation = project.toolchain?.location ?: return builder
+        val pb = ProcessBuilder(toolchainLocation.resolve("rustfilt").toString())
         val process = try {
             pb.start()
         } catch (e: IOException) {
+            LOG.error(e)
             return builder
         }
 
@@ -83,6 +87,7 @@ class RsDTraceProfilerProcess private constructor(
                 }
             }
         } catch (e: IOException) {
+            LOG.error(e)
             builder
         } finally {
             process.destroy()
@@ -114,5 +119,7 @@ class RsDTraceProfilerProcess private constructor(
                 project
             ) { handler, _ -> RsDTraceProfilerProcess(project, targetProcess, System.currentTimeMillis(), handler) }
         }
+
+        private val LOG = Logger.getInstance(RsDTraceProfilerProcess::class.java)
     }
 }
