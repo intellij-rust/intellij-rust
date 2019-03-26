@@ -5,6 +5,7 @@
 
 package org.rust.clion.profiler.dtrace
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.project.Project
 import com.intellij.profiler.DummyFlameChartBuilder
@@ -56,6 +57,7 @@ class RsDTraceProfilerProcess private constructor(
         val process = try {
             pb.start()
         } catch (e: IOException) {
+            LOG.error(e)
             return builder
         }
 
@@ -85,6 +87,7 @@ class RsDTraceProfilerProcess private constructor(
                 }
             }
         } catch (e: IOException) {
+            LOG.error(e)
             builder
         } finally {
             process.destroy()
@@ -116,5 +119,7 @@ class RsDTraceProfilerProcess private constructor(
                 project
             ) { handler, _ -> RsDTraceProfilerProcess(project, targetProcess, System.currentTimeMillis(), handler) }
         }
+
+        private val LOG = Logger.getInstance(RsDTraceProfilerProcess::class.java)
     }
 }
