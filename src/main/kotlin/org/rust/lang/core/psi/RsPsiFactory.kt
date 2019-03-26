@@ -80,7 +80,7 @@ class RsPsiFactory(private val project: Project, private val markGenerated: Bool
         return result
     }
 
-    fun createIfElseExpression(condition: RsExpr, thenBlock: RsBlock, elseBlock: RsBlock) : RsIfExpr {
+    fun createIfElseExpression(condition: RsExpr, thenBlock: RsBlock, elseBlock: RsBlock): RsIfExpr {
         val resultIfExpr = createExpressionOfType<RsIfExpr>("if ${condition.text} { () } else { () }")
         resultIfExpr.block!!.replace(thenBlock)
         resultIfExpr.elseBranch!!.block!!.replace(elseBlock)
@@ -345,6 +345,26 @@ class RsPsiFactory(private val project: Project, private val markGenerated: Bool
         (createStatement("let ${"ref ".iff(ref)}${"mut ".iff(mutable)}$name = 10;") as RsLetDecl).pat
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
+
+    fun createPatStruct(struct: RsStructItem): RsPatStruct {
+        val structName = struct.name ?: error("Failed to create pat struct")
+        val pad = if (struct.namedFields.isEmpty()) "" else " "
+        val body = struct.namedFields
+            .joinToString(separator = ", ", prefix = " {$pad", postfix = "$pad}") { it.name ?: "_" }
+        return createFromText("fn f($structName$body: $structName) {}") ?: error("Failed to create pat struct")
+    }
+
+    fun createPatTupleStruct(struct: RsStructItem): RsPatTupleStruct {
+        val structName = struct.name ?: error("Failed to create pat tuple struct")
+        val body = struct.positionalFields
+            .joinToString(separator = ", ", prefix = "(", postfix = ")") { "_${it.name}" }
+        return createFromText("fn f($structName$body: $structName) {}") ?: error("Failed to create pat tuple struct")
+    }
+
+    fun createPatTuple(fieldNum: Int): RsPatTup {
+        val tuple = (0 until fieldNum).joinToString(separator = ", ", prefix = "(", postfix = ")") { "_$it" }
+        return createFromText("fn f() { let $tuple = x; }") ?: error("Failed to create pat tuple")
+    }
 
     fun createCastExpr(expr: RsExpr, typeText: String): RsCastExpr = when (expr) {
         is RsBinaryExpr -> createExpressionOfType("(${expr.text}) as $typeText")
