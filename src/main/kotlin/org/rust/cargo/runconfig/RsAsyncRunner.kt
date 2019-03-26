@@ -46,7 +46,11 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
         object MSVCToolchain : BuildResult()
     }
 
+    open fun isApplicable(): Boolean = true
+
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
+        if (!isApplicable()) return false
+
         if (executorId != this.executorId || profile !is CargoCommandConfiguration) {
             return false
         }
