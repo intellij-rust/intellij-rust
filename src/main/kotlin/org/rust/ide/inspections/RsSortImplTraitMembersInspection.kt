@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
@@ -33,7 +34,7 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     }
 
     companion object {
-        private fun sortedImplItems(implItems: List<RsItemElement>, traitItems: List<RsItemElement>): List<RsItemElement>? {
+        private fun sortedImplItems(implItems: List<RsAbstractable>, traitItems: List<RsAbstractable>): List<RsAbstractable>? {
             val traitItemMap = traitItems.withIndex().associate { it.value.key() to it.index }
             if (implItems.any { it.key() !in traitItemMap }) {
                 Testmarks.implMemberNotInTrait.hit()
@@ -68,8 +69,8 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     }
 }
 
-private fun RsTraitOrImpl.items(): List<RsItemElement> = members?.children?.mapNotNull {
-    if (it is RsFunction || it is RsConstant || it is RsTypeAlias) it as? RsItemElement else null
-} ?: emptyList()
+private fun RsTraitOrImpl.items(): List<RsAbstractable> {
+    return members?.stubChildrenOfType<RsAbstractable>().orEmpty()
+}
 
-private fun RsItemElement.key() = name to elementType
+private fun RsAbstractable.key(): Pair<String?, IElementType> = name to elementType

@@ -78,13 +78,14 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         ignoreExtraHighlighting: Boolean = false,
+        stubOnly: Boolean = true,
         testmark: Testmark? = null
     ) = check(text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
         ignoreExtraHighlighting = ignoreExtraHighlighting,
-        configure = this::configureByFileTree,
+        configure = { configureByFileTree(it, stubOnly) },
         testmark = testmark)
 
     protected fun checkFixByFileTree(
@@ -94,9 +95,10 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkWarn: Boolean = true,
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
+        stubOnly: Boolean = true,
         testmark: Testmark? = null
     ) = checkFix(fixName, before, after,
-        configure = this::configureByFileTree,
+        configure = { configureByFileTree(it, stubOnly) },
         checkBefore = { myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
         checkAfter = this::checkByFileTree,
         testmark = testmark)
@@ -105,9 +107,10 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         fixName: String,
         @Language("Rust") before: String,
         @Language("Rust") after: String,
+        stubOnly: Boolean = true,
         testmark: Testmark? = null
     ) = checkFix(fixName, before, after,
-        configure = this::configureByFileTree,
+        configure = { configureByFileTree(it, stubOnly) },
         checkBefore = {},
         checkAfter = this::checkByFileTree,
         testmark = testmark)
@@ -135,13 +138,14 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
         ignoreExtraHighlighting: Boolean = false,
+        stubOnly: Boolean = true,
         testmark: Testmark? = null
     ) = checkFixIsUnavailable(fixName, text,
         checkWarn = checkWarn,
         checkInfo = checkInfo,
         checkWeakWarn = checkWeakWarn,
         ignoreExtraHighlighting = ignoreExtraHighlighting,
-        configure = this::configureByFileTree,
+        configure = { configureByFileTree(it, stubOnly) },
         testmark = testmark)
 
     private fun check(
@@ -191,6 +195,14 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         check(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, configure, testmark)
         check(myFixture.filterAvailableIntentions(fixName).isEmpty()) {
             "Fix $fixName should not be possible to apply."
+        }
+    }
+
+    private fun configureByFileTree(text: String, stubOnly: Boolean) {
+        val testProject = configureByFileTree(text)
+        if (stubOnly) {
+            (myFixture as CodeInsightTestFixtureImpl)
+                .setVirtualFileFilter { !it.path.endsWith(testProject.fileWithCaret) }
         }
     }
 

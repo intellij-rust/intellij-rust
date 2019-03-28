@@ -230,7 +230,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 val externCrateMod = ourSuperMods.last()
 
                 val externCrateWithDepth = superMods.withIndex().mapNotNull { (index, superMod) ->
-                    val externCrateItem = superMod.childrenOfType<RsExternCrateItem>()
+                    val externCrateItem = superMod.stubChildrenOfType<RsExternCrateItem>()
                         .find { it.reference.resolve() == externCrateMod } ?: return@mapNotNull null
                     val depth = if (superMod.isCrateRoot) null else index
                     externCrateItem to depth
