@@ -33,7 +33,7 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
         doUrlTest(text, expectedUrl, testmark, this::configureByText)
 
     protected fun doUrlTestByFileTree(@Language("Rust") text: String, expectedUrl: String?, testmark: Testmark? = null) =
-        doUrlTest(text, expectedUrl, testmark, this::configureByFileTree)
+        doUrlTest(text, expectedUrl, testmark) { configureByFileTree(it) }
 
     private fun doUrlTest(
         @Language("Rust") text: String,

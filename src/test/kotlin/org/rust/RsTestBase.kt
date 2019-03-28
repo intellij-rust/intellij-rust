@@ -246,8 +246,8 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         InlineFile(text.trimIndent())
     }
 
-    protected open fun configureByFileTree(text: String) {
-        fileTreeFromText(text).createAndOpenFileWithCaretMarker()
+    protected open fun configureByFileTree(text: String): TestProject {
+        return fileTreeFromText(text).createAndOpenFileWithCaretMarker()
     }
 
     companion object {
