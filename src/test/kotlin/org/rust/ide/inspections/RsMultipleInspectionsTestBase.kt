@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import org.rust.TestProject
 import org.rust.ide.annotator.RsAnnotationTestBase
 
 abstract class RsMultipleInspectionsTestBase(
@@ -18,8 +19,9 @@ abstract class RsMultipleInspectionsTestBase(
         enableInspections()
     }
 
-    override fun configureByFileTree(text: String) {
-        super.configureByFileTree(text)
+    override fun configureByFileTree(text: String): TestProject {
+        val testProject = super.configureByFileTree(text)
         enableInspections()
+        return testProject
     }
 }

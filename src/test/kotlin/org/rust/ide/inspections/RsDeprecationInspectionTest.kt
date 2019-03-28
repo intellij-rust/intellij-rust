@@ -5,8 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-
 /**
  * Tests for Deprecated Attribute inspection.
  */
@@ -238,18 +236,15 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
     """)
 
-    fun `test AST is not loaded when deprecated item in another file`() {
-        (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter { !it.path.endsWith("main.rs") }
-        checkByFileTree("""
-        //- main.rs
-            mod foo;
+    fun `test AST is not loaded when deprecated item in another file`() = checkByFileTree("""
+    //- main.rs
+        mod foo;
 
-            fn main() {/*caret*/
-                foo::<warning descr="`bar` is deprecated since 1.0.0: here could be your reason">bar</warning>();
-            }
-        //- foo.rs
-            #[deprecated(since="1.0.0", note="here could be your reason")]
-            pub fn bar() {}
-        """)
-    }
+        fn main() {/*caret*/
+            foo::<warning descr="`bar` is deprecated since 1.0.0: here could be your reason">bar</warning>();
+        }
+    //- foo.rs
+        #[deprecated(since="1.0.0", note="here could be your reason")]
+        pub fn bar() {}
+    """)
 }
