@@ -152,6 +152,30 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test insert handler for multiple carets`() = doTest("""
+        mod foo {
+            pub fn bar(x: i32) {}
+        }
+
+        fn main() {
+            ba/*caret*/
+            ba/*caret*/
+            ba/*caret*/
+        }
+    """, """
+        use foo::bar;
+
+        mod foo {
+            pub fn bar(x: i32) {}
+        }
+
+        fn main() {
+            bar(/*caret*/)
+            bar(/*caret*/)
+            bar(/*caret*/)
+        }
+    """)
+
     fun `test do not import out of scope items when setting disabled`() = doTest("""
         mod collections {
             pub struct BTreeMap;
