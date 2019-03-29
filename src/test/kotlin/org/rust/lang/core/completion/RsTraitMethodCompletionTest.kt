@@ -124,6 +124,48 @@ class RsTraitMethodCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test auto import trait while method completion for multiple carets`() = doTest("""
+        mod baz {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            pub struct Bar;
+
+            impl Foo for Bar {
+                fn foo(&self) {}
+            }
+        }
+
+        use baz::Bar;
+
+        fn main() {
+            Bar.fo/*caret*/
+            Bar.fo/*caret*/
+            Bar.fo/*caret*/
+        }
+    """, """
+        mod baz {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            pub struct Bar;
+
+            impl Foo for Bar {
+                fn foo(&self) {}
+            }
+        }
+
+        use baz::{Bar, Foo};
+
+        fn main() {
+            Bar.foo()/*caret*/
+            Bar.foo()/*caret*/
+            Bar.foo()/*caret*/
+        }
+    """)
+
     fun `test do not insert trait import while method completion when trait in scope`() = doTest("""
         mod baz {
             pub trait Foo {
