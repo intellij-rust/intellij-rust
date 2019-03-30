@@ -649,22 +649,25 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test Debug implementation`() = doTest("""
-        use std::fmt::Debug;
+    fun `test do not add lifetime in implementation`() = doTest("""
+        struct Foo;
+        struct Bar;
+        trait Baz {
+            fn baz(&self, bar: &mut Bar);
+        }
 
-        struct DebugImpl {}
-
-        impl Debug for DebugImpl {
+        impl Baz for Foo {
             /*caret*/
         }
-    """, listOf(ImplementMemberSelection("fmt(&self, f: &mut Formatter) -> Result", true, isSelected = true)), """
-        use std::fmt::Debug;
+    """, listOf(ImplementMemberSelection("baz(&self, bar: &mut Bar)", true, isSelected = true)), """
+        struct Foo;
+        struct Bar;
+        trait Baz {
+            fn baz(&self, bar: &mut Bar);
+        }
 
-        struct DebugImpl {}
-
-        impl Debug for DebugImpl {
-            fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        impl Baz for Foo {
+            fn baz(&self, bar: &mut Bar) {
                 unimplemented!()
             }
         }
