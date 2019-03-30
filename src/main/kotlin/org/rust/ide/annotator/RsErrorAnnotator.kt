@@ -357,8 +357,9 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
-        if (el.reference.multiResolve().isNotEmpty() || el.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
-        RsDiagnostic.CrateNotFoundError(el, el.identifier.text).addToHolder(holder)
+        if (el.reference.multiResolve().isEmpty() && el.containingCargoPackage?.origin == PackageOrigin.WORKSPACE) {
+            RsDiagnostic.CrateNotFoundError(el, el.referenceName).addToHolder(holder)
+        }
     }
 
     private fun checkPolybound(holder: AnnotationHolder, o: RsPolybound) {

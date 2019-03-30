@@ -559,8 +559,8 @@ Alias ::= as ('_' | identifier) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ExternCrateItem ::= AttrsAndVis extern crate identifier Alias? ';' {
-  pin = "identifier"
+ExternCrateItem ::= AttrsAndVis extern crate (identifier | self) Alias? ';' {
+  pin = 4
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"

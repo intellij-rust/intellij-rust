@@ -19,5 +19,5 @@ class RsExternCrateReferenceImpl(
     override val RsExternCrateItem.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun resolveInner(): List<RsElement> =
-        collectResolveVariants(element.name!!) { processExternCrateResolveVariants(element, false, it) }
+        collectResolveVariants(element.referenceName) { processExternCrateResolveVariants(element, false, it) }
 }
