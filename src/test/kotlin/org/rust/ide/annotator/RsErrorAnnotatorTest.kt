@@ -1447,4 +1447,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             while let V::V1(x) | V::V2(x) = y {}
         }
     """)
+
+    @MockRustcVersion("1.33.0")
+    fun `test extern_crate_self 1`() = checkErrors("""
+        <error descr="`extern crate self` is experimental [E0658]">extern crate self as foo;</error>
+    """)
+
+    @MockRustcVersion("1.33.0-nightly")
+    fun `test extern_crate_self 2`() = checkErrors("""
+        #![feature(extern_crate_self)]
+
+        extern crate self as foo;
+    """)
+
+    @MockRustcVersion("1.33.0-nightly")
+    fun `test extern_crate_self without alias`() = checkErrors("""
+        #![feature(extern_crate_self)]
+        
+        <error descr="`extern crate self` requires `as name`">extern crate self;</error>
+    """)
 }

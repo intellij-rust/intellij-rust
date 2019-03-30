@@ -360,6 +360,15 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         if (el.reference.multiResolve().isEmpty() && el.containingCargoPackage?.origin == PackageOrigin.WORKSPACE) {
             RsDiagnostic.CrateNotFoundError(el, el.referenceName).addToHolder(holder)
         }
+        if (el.self != null) {
+            CompilerFeature.check(holder, el, EXTERN_CRATE_SELF, "`extern crate self`")
+            if (el.alias == null) {
+                // The current version of rustc (1.33.0) prints
+                // "`extern crate self;` requires renaming" error message
+                // but it looks like quite unclear
+                holder.createErrorAnnotation(el, "`extern crate self` requires `as name`")
+            }
+        }
     }
 
     private fun checkPolybound(holder: AnnotationHolder, o: RsPolybound) {
