@@ -1193,4 +1193,24 @@ class RsResolveTest : RsResolveTestBase() {
             }     //^
         }
     """)
+
+    fun `test extern crate self`() = checkByCode("""
+        extern crate self as foo;
+
+        struct Foo;
+              //X
+
+        use foo::Foo;
+                //^
+    """)
+
+    fun `test extern crate self without alias`() = checkByCode("""
+        extern crate self;
+
+        struct Foo;
+              //X
+
+        use self::Foo;
+                //^
+    """, ItemResolutionTestmarks.externCrateSelfWithoutAlias)
 }

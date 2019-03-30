@@ -10,6 +10,7 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.openapiext.Testmark
 import org.rust.stdext.intersects
 import java.util.*
 
@@ -80,7 +81,12 @@ fun processItemDeclarations(
             is RsExternCrateItem -> {
                 if (item.isPublic || withPrivateImports) {
                     val mod = item.reference.resolve() ?: continue@loop
-                    if (processor(item.nameWithAlias, mod)) return true
+                    val nameWithAlias = item.nameWithAlias
+                    if (nameWithAlias != "self") {
+                        if (processor(nameWithAlias, mod)) return true
+                    } else {
+                        ItemResolutionTestmarks.externCrateSelfWithoutAlias.hit()
+                    }
                 }
             }
         }
@@ -169,4 +175,8 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
         if (processor(name, element)) return true
     }
     return false
+}
+
+object ItemResolutionTestmarks {
+    val externCrateSelfWithoutAlias = Testmark("externCrateSelfWithoutAlias")
 }
