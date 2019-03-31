@@ -60,7 +60,12 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             element.header(it)
             element.signature(it)
         }
-        val text = element.documentationAsHtml()
+        var text = element.documentationAsHtml()
+        if (text.isNullOrEmpty() && element is RsAbstractable && element.owner.isTraitImpl) {
+            // Show documentation of the corresponding trait item if own documentation is empty
+            val superElement = element.superItem as? RsDocAndAttributeOwner ?: return
+            text = superElement.documentationAsHtml()
+        }
         if (text.isNullOrEmpty()) return
         buffer += "\n" // Just for more pretty html text representation
         content(buffer) { it += text }
