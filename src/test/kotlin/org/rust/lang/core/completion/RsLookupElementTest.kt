@@ -37,7 +37,7 @@ class RsLookupElementTest : RsTestBase() {
         }
     """, tailText = "(&self, x: i32) of T", typeText = "()")
 
-    fun `test cons item`() = check("""
+    fun `test const item`() = check("""
         const C: S = unimplemented!();
             //^
     """, typeText = "S")
@@ -107,6 +107,24 @@ class RsLookupElementTest : RsTestBase() {
                      //^
     """, tailText = "!", typeText = null)
 
+    fun `test deprecated fn`() = check("""
+        #[deprecated]
+        fn foo() {}
+          //^
+    """, tailText = "()", typeText = "()", isStrikeout = true)
+
+    fun `test deprecated const item`() = check("""
+        #[deprecated]
+        const C: S = unimplemented!();
+            //^
+    """, typeText = "S", isStrikeout = true)
+
+    fun `test deprecated enum`() = check("""
+        #[deprecated]
+        enum E { X, Y }
+           //^
+    """, isStrikeout = true)
+
     fun `test mod`() {
         myFixture.configureByText("foo.rs", "")
         val lookup = createLookupElement((myFixture.file as RsFile), "foo")
@@ -117,7 +135,12 @@ class RsLookupElementTest : RsTestBase() {
         assertEquals("foo", presentation.itemText)
     }
 
-    private fun check(@Language("Rust") code: String, tailText: String? = null, typeText: String? = null) {
+    private fun check(
+        @Language("Rust") code: String,
+        tailText: String? = null,
+        typeText: String? = null,
+        isStrikeout: Boolean = false
+    ) {
         InlineFile(code)
         val element = findElementInEditor<RsNamedElement>()
         val lookup = createLookupElement(element, element.name!!)
@@ -127,5 +150,6 @@ class RsLookupElementTest : RsTestBase() {
         assertNotNull(presentation.icon)
         assertEquals(tailText, presentation.tailText)
         assertEquals(typeText, presentation.typeText)
+        assertEquals(isStrikeout, presentation.isStrikeout)
     }
 }
