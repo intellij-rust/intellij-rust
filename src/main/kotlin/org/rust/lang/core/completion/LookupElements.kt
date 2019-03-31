@@ -29,6 +29,7 @@ private const val FIELD_DECL_PRIORITY = 3.0
 private const val INHERENT_IMPL_MEMBER_PRIORITY = 2.0
 private const val DEFAULT_PRIORITY = 0.0
 private const val MACRO_PRIORITY = -0.1
+private const val DEPRECATED_PRIORITY = -1.0
 
 fun createLookupElement(
     element: RsElement,
@@ -41,6 +42,7 @@ fun createLookupElement(
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
 
     val priority = when {
+        element is RsDocAndAttributeOwner && element.queryAttributes.deprecatedAttribute != null -> DEPRECATED_PRIORITY
         element is RsMacro -> MACRO_PRIORITY
         element is RsEnumVariant -> ENUM_VARIANT_PRIORITY
         element is RsNamedFieldDecl -> FIELD_DECL_PRIORITY
@@ -57,6 +59,7 @@ fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
 private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementBuilder {
     val base = LookupElementBuilder.createWithSmartPointer(scopeName, this)
         .withIcon(if (this is RsFile) RsIcons.MODULE else this.getIcon(0))
+        .withStrikeoutness(this is RsDocAndAttributeOwner && queryAttributes.deprecatedAttribute != null)
 
     return when (this) {
         is RsMod -> if (scopeName == "self" || scopeName == "super" || scopeName == "crate") {
