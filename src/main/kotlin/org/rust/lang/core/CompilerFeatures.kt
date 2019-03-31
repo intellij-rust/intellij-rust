@@ -103,7 +103,7 @@ val REPR_SIMD = CompilerFeature("repr_simd", ACTIVE, "1.4.0")
 val PLATFORM_INTRINSICS = CompilerFeature("platform_intrinsics", ACTIVE, "1.4.0")
 // Allows `#[unwind(..)]`.
 //
-// rustc internal for rust runtime
+// Permits specifying whether a function should permit unwinding or abort on unwind.
 val UNWIND_ATTRIBUTES = CompilerFeature("unwind_attributes", ACTIVE, "1.4.0")
 // Allows the use of `#[naked]` on functions.
 val NAKED_FUNCTIONS = CompilerFeature("naked_functions", ACTIVE, "1.9.0")
@@ -245,8 +245,6 @@ val ALLOC_ERROR_HANDLER = CompilerFeature("alloc_error_handler", ACTIVE, "1.29.0
 val ABI_AMDGPU_KERNEL = CompilerFeature("abi_amdgpu_kernel", ACTIVE, "1.29.0")
 // Added for testing E0705; perma-unstable.
 val TEST_2018_FEATURE = CompilerFeature("test_2018_feature", ACTIVE, "1.31.0")
-// support for arbitrary delimited token streams in non-macro attributes
-val UNRESTRICTED_ATTRIBUTE_TOKENS = CompilerFeature("unrestricted_attribute_tokens", ACTIVE, "1.30.0")
 // Allows unsized rvalues at arguments and parameters.
 val UNSIZED_LOCALS = CompilerFeature("unsized_locals", ACTIVE, "1.30.0")
 // `#![test_runner]`
@@ -275,6 +273,8 @@ val CONST_GENERICS = CompilerFeature("const_generics", ACTIVE, "1.34.0")
 val OPTIMIZE_ATTRIBUTE = CompilerFeature("optimize_attribute", ACTIVE, "1.34.0")
 // #[repr(align(X))] on enums
 val REPR_ALIGN_ENUM = CompilerFeature("repr_align_enum", ACTIVE, "1.34.0")
+// Allows the use of C-variadics
+val C_VARIADIC = CompilerFeature("c_variadic", ACTIVE, "1.34.0")
 
 val ASSOCIATED_TYPES = CompilerFeature("associated_types", ACCEPTED, "1.0.0")
 // Allows overloading augmented assignment operations like `a += b`.
@@ -453,3 +453,5 @@ val IF_WHILE_OR_PATTERNS = CompilerFeature("if_while_or_patterns", ACCEPTED, "1.
 val CFG_TARGET_VENDOR = CompilerFeature("cfg_target_vendor", ACCEPTED, "1.33.0")
 // `extern crate self as foo;` puts local crate root into extern prelude under name `foo`.
 val EXTERN_CRATE_SELF = CompilerFeature("extern_crate_self", ACCEPTED, "1.34.0")
+// support for arbitrary delimited token streams in non-macro attributes
+val UNRESTRICTED_ATTRIBUTE_TOKENS = CompilerFeature("unrestricted_attribute_tokens", ACCEPTED, "1.34.0")
