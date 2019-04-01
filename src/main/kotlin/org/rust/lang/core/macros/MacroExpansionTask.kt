@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -72,6 +73,7 @@ abstract class MacroExpansionTaskBase(
     }
 
     private fun submitExpansionTask() {
+        checkIsBackgroundThread()
         realTaskIndicator.text2 = "Waiting for index"
         val extractableList = runReadActionInSmartMode(project) {
             var extractableList: List<Extractable>?
@@ -91,7 +93,8 @@ abstract class MacroExpansionTaskBase(
         estimateStages.set(extractableList.size)
         doneStages.set(0)
 
-        supplyAsync(ForkJoinPool.commonPool()) {
+        val pool = ForkJoinPool.commonPool()
+        supplyAsync(pool) {
             realTaskIndicator.text2 = "Expanding macros"
 
             val stages2 = extractableList.parallelStream().unordered().flatMap { extractable ->
@@ -147,10 +150,10 @@ abstract class MacroExpansionTaskBase(
             // This callback will be executed regardless of success or exceptional result
             if (success != null) {
                 // Success
-                try {
-                    submitExpansionTask()
-                } catch (e: ProcessCanceledException) {
-                    sync.countDown()
+                if (ApplicationManager.getApplication().isDispatchThread) {
+                    pool.execute(::runNextStep)
+                } else {
+                    runNextStep()
                 }
             } else {
                 val e = (t as? CompletionException)?.cause ?: t
@@ -170,6 +173,14 @@ abstract class MacroExpansionTaskBase(
             sync.countDown()
             MACRO_LOG.error("Error during macro expansion", it)
             Unit
+        }
+    }
+
+    private fun runNextStep() {
+        try {
+            submitExpansionTask()
+        } catch (e: ProcessCanceledException) {
+            sync.countDown()
         }
     }
 
