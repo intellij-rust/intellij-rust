@@ -263,6 +263,10 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
         }
     }
 
+    val crateRoot = element.crateRoot
+    if (crateRoot != null && !isCompletion) {
+        if (processor("self", crateRoot)) return true
+    }
     if (processPackage(pkg)) return true
     val explicitDepsFirst = pkg.dependencies.sortedBy {
         when (it.pkg.origin) {

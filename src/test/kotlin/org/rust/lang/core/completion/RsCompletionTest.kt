@@ -755,4 +755,18 @@ class RsCompletionTest : RsCompletionTestBase() {
             foo::su/*caret*/
         }
     """)
+
+    fun `test self completion with extern crate self without alias`() = doSingleCompletion("""
+        extern crate self;
+
+        mod foo {
+            use sel/*caret*/
+        }
+    """, """
+        extern crate self;
+
+        mod foo {
+            use self::/*caret*/
+        }
+    """)
 }

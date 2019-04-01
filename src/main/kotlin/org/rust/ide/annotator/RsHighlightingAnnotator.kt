@@ -35,6 +35,7 @@ class RsHighlightingAnnotator : RsAnnotatorBase() {
     private fun highlightReference(element: RsReferenceElement): Pair<TextRange, RsColor>? {
         // These should be highlighted as keywords by the lexer
         if (element is RsPath && element.kind != PathKind.IDENTIFIER) return null
+        if (element is RsExternCrateItem && element.self != null) return null
 
         val isPrimitiveType = element is RsPath && TyPrimitive.fromPath(element) != null
 

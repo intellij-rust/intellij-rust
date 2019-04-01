@@ -90,7 +90,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkYieldExpr(holder: AnnotationHolder, o: RsYieldExpr) {
-        CompilerFeature.check(holder, o.yield, GENERATORS, "`yield` syntax")
+        GENERATORS.check(holder, o.yield, "`yield` syntax")
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
@@ -131,12 +131,12 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkPatBox(holder: AnnotationHolder, box: RsPatBox) {
-        CompilerFeature.check(holder, box.box, BOX_PATTERNS, "`box` pattern syntax")
+        BOX_PATTERNS.check(holder, box.box, "`box` pattern syntax")
     }
 
     private fun checkPatField(holder: AnnotationHolder, field: RsPatField) {
         val box = field.box ?: return
-        CompilerFeature.check(holder, box, BOX_PATTERNS, "`box` pattern syntax")
+        BOX_PATTERNS.check(holder, box, "`box` pattern syntax")
     }
 
     private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
@@ -172,7 +172,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             if (qualifier != null || useSpeck != null && useSpeck.qualifier != null) {
                 RsDiagnostic.UndeclaredTypeOrModule(crate).addToHolder(holder)
             } else if (edition == Edition.EDITION_2015) {
-                CompilerFeature.check(holder, crate, CRATE_IN_PATHS, "`crate` in paths")
+                CRATE_IN_PATHS.check(holder, crate, "`crate` in paths")
             }
         }
 
@@ -200,7 +200,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkCrateVisibilityModifier(holder: AnnotationHolder, vis: RsVis) {
         val crateModifier = vis.crate ?: return
-        CompilerFeature.check(holder, crateModifier, CRATE_VISIBILITY_MODIFIER, "`crate` visibility modifier")
+        CRATE_VISIBILITY_MODIFIER.check(holder, crateModifier, "`crate` visibility modifier")
     }
 
     private fun checkVisRestriction(holder: AnnotationHolder, visRestriction: RsVisRestriction) {
@@ -241,10 +241,9 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
                 // sure that a mod is not a directory owner.
                 if (modDecl.cargoWorkspace != null) {
                     val addModule = AddModuleFileFix(modDecl, expandModuleFirst = true)
-                    CompilerFeature.check(
+                    NON_MODRS_MODS.check(
                         holder,
                         modDecl,
-                        NON_MODRS_MODS,
                         "mod statements in non-mod.rs files",
                         addModule
                     )
@@ -290,7 +289,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkUnary(holder: AnnotationHolder, o: RsUnaryExpr) {
         val box = o.box ?: return
-        CompilerFeature.check(holder, box, BOX_SYNTAX, "`box` expression syntax")
+        BOX_SYNTAX.check(holder, box, "`box` expression syntax")
     }
 
     private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
@@ -318,14 +317,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         val patList = element.patList
         val pat = patList.singleOrNull()
         if (pat != null && pat.isIrrefutable) {
-            CompilerFeature.check(holder, pat, IRREFUTABLE_LET_PATTERNS, "irrefutable let pattern")
+            IRREFUTABLE_LET_PATTERNS.check(holder, pat, "irrefutable let pattern")
         }
         if (patList.size > 1) {
-            CompilerFeature.check(
+            IF_WHILE_OR_PATTERNS.check(
                 holder,
                 patList.first(),
                 patList.last(),
-                IF_WHILE_OR_PATTERNS,
                 "multiple patterns in `if let` and `while let` are unstable"
             )
         }
@@ -357,8 +355,18 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
-        if (el.reference.multiResolve().isNotEmpty() || el.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
-        RsDiagnostic.CrateNotFoundError(el, el.identifier.text).addToHolder(holder)
+        if (el.reference.multiResolve().isEmpty() && el.containingCargoPackage?.origin == PackageOrigin.WORKSPACE) {
+            RsDiagnostic.CrateNotFoundError(el, el.referenceName).addToHolder(holder)
+        }
+        if (el.self != null) {
+            EXTERN_CRATE_SELF.check(holder, el, "`extern crate self`")
+            if (el.alias == null) {
+                // The current version of rustc (1.33.0) prints
+                // "`extern crate self;` requires renaming" error message
+                // but it looks like quite unclear
+                holder.createErrorAnnotation(el, "`extern crate self` requires `as name`")
+            }
+        }
     }
 
     private fun checkPolybound(holder: AnnotationHolder, o: RsPolybound) {
