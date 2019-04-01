@@ -35,35 +35,30 @@ data class CompilerFeature(val name: String, val state: FeatureState, val since:
         return if (attrs.any { it.crateRoot == crateRoot }) AVAILABLE else CAN_BE_ADDED
     }
 
-    companion object {
-        fun check(
-            holder: AnnotationHolder,
-            element: PsiElement,
-            feature: CompilerFeature,
-            presentableFeatureName: String,
-            vararg fixes: LocalQuickFix
-        ) = check(holder, element, null, feature, "$presentableFeatureName is experimental", *fixes)
+    fun check(
+        holder: AnnotationHolder,
+        element: PsiElement,
+        presentableFeatureName: String,
+        vararg fixes: LocalQuickFix
+    ) = check(holder, element, null, "$presentableFeatureName is experimental", *fixes)
 
-        fun check(
-            holder: AnnotationHolder,
-            startElement: PsiElement,
-            endElement: PsiElement?,
-            feature: CompilerFeature,
-            message: String,
-            vararg fixes: LocalQuickFix
-        ) {
-            val availability = feature.availability(startElement)
-            val diagnostic = when (availability) {
-                NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
-                CAN_BE_ADDED -> {
-                    val fix = AddFeatureAttributeFix(feature.name, startElement)
-                    RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
-                }
-                else -> return
+    fun check(
+        holder: AnnotationHolder,
+        startElement: PsiElement,
+        endElement: PsiElement?,
+        message: String,
+        vararg fixes: LocalQuickFix
+    ) {
+        val availability = availability(startElement)
+        val diagnostic = when (availability) {
+            NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
+            CAN_BE_ADDED -> {
+                val fix = AddFeatureAttributeFix(name, startElement)
+                RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
             }
-            diagnostic.addToHolder(holder)
+            else -> return
         }
-
+        diagnostic.addToHolder(holder)
     }
 }
 
