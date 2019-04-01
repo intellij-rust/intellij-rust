@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.C_VARIADIC
-import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
@@ -139,7 +138,7 @@ private fun checkValueParameterList(holder: AnnotationHolder, params: RsValuePar
 private fun checkVariadic(holder: AnnotationHolder, fn: RsFunction, dot3: PsiElement?) {
     if (dot3 == null) return
     if (fn.isUnsafe && fn.abiName == "\"C\"") {
-        CompilerFeature.check(holder, dot3, C_VARIADIC, "C-variadic functions")
+        C_VARIADIC.check(holder, dot3, "C-variadic functions")
     } else {
         deny(dot3, holder, "${fn.title} cannot be variadic")
     }
