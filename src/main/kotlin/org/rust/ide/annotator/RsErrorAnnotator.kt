@@ -6,7 +6,6 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.util.Key
@@ -14,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
@@ -53,7 +51,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitLifetime(o: RsLifetime) = checkLifetime(holder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
             override fun visitModItem(o: RsModItem) = checkDuplicates(holder, o)
-            override fun visitPatBox(o: RsPatBox)  = checkPatBox(holder, o)
+            override fun visitPatBox(o: RsPatBox) = checkPatBox(holder, o)
             override fun visitPatField(o: RsPatField) = checkPatField(holder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
@@ -92,7 +90,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkYieldExpr(holder: AnnotationHolder, o: RsYieldExpr) {
-        checkFeature(holder, o.yield, GENERATORS, "`yield` syntax")
+        CompilerFeature.check(holder, o.yield, GENERATORS, "`yield` syntax")
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
@@ -133,12 +131,12 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkPatBox(holder: AnnotationHolder, box: RsPatBox) {
-        checkFeature(holder, box.box, BOX_PATTERNS, "`box` pattern syntax")
+        CompilerFeature.check(holder, box.box, BOX_PATTERNS, "`box` pattern syntax")
     }
 
     private fun checkPatField(holder: AnnotationHolder, field: RsPatField) {
         val box = field.box ?: return
-        checkFeature(holder, box, BOX_PATTERNS, "`box` pattern syntax")
+        CompilerFeature.check(holder, box, BOX_PATTERNS, "`box` pattern syntax")
     }
 
     private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
@@ -174,7 +172,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             if (qualifier != null || useSpeck != null && useSpeck.qualifier != null) {
                 RsDiagnostic.UndeclaredTypeOrModule(crate).addToHolder(holder)
             } else if (edition == Edition.EDITION_2015) {
-                checkFeature(holder, crate, CRATE_IN_PATHS, "`crate` in paths")
+                CompilerFeature.check(holder, crate, CRATE_IN_PATHS, "`crate` in paths")
             }
         }
 
@@ -202,7 +200,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkCrateVisibilityModifier(holder: AnnotationHolder, vis: RsVis) {
         val crateModifier = vis.crate ?: return
-        checkFeature(holder, crateModifier, CRATE_VISIBILITY_MODIFIER, "`crate` visibility modifier")
+        CompilerFeature.check(holder, crateModifier, CRATE_VISIBILITY_MODIFIER, "`crate` visibility modifier")
     }
 
     private fun checkVisRestriction(holder: AnnotationHolder, visRestriction: RsVisRestriction) {
@@ -211,37 +209,6 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         if (visRestriction.`in` == null && (path.path != null || path.kind == PathKind.IDENTIFIER)) {
             RsDiagnostic.IncorrectVisibilityRestriction(visRestriction).addToHolder(holder)
         }
-    }
-
-    private fun checkFeature(
-        holder: AnnotationHolder,
-        element: PsiElement,
-        feature: CompilerFeature,
-        presentableFeatureName: String,
-        vararg fixes: LocalQuickFix
-    ) {
-        checkFeature(holder, element, null, feature, "$presentableFeatureName is experimental", *fixes)
-    }
-
-    private fun checkFeature(
-        holder: AnnotationHolder,
-        startElement: PsiElement,
-        endElement: PsiElement?,
-        feature: CompilerFeature,
-        message: String,
-        vararg fixes: LocalQuickFix
-    ) {
-        val availability = feature.availability(startElement)
-        val diagnostic = when (availability) {
-            NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
-            CAN_BE_ADDED -> {
-                val fix = AddFeatureAttributeFix(feature.name, startElement)
-                RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
-            }
-            else -> return
-        }
-
-        diagnostic.addToHolder(holder)
     }
 
     private fun checkLabel(holder: AnnotationHolder, label: RsLabel) {
@@ -274,7 +241,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
                 // sure that a mod is not a directory owner.
                 if (modDecl.cargoWorkspace != null) {
                     val addModule = AddModuleFileFix(modDecl, expandModuleFirst = true)
-                    checkFeature(holder, modDecl, NON_MODRS_MODS, "mod statements in non-mod.rs files", addModule)
+                    CompilerFeature.check(
+                        holder,
+                        modDecl,
+                        NON_MODRS_MODS,
+                        "mod statements in non-mod.rs files",
+                        addModule
+                    )
                 }
                 return
             }
@@ -317,7 +290,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkUnary(holder: AnnotationHolder, o: RsUnaryExpr) {
         val box = o.box ?: return
-        checkFeature(holder, box, BOX_SYNTAX, "`box` expression syntax")
+        CompilerFeature.check(holder, box, BOX_SYNTAX, "`box` expression syntax")
     }
 
     private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
@@ -345,11 +318,16 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         val patList = element.patList
         val pat = patList.singleOrNull()
         if (pat != null && pat.isIrrefutable) {
-            checkFeature(holder, pat, IRREFUTABLE_LET_PATTERNS, "irrefutable let pattern")
+            CompilerFeature.check(holder, pat, IRREFUTABLE_LET_PATTERNS, "irrefutable let pattern")
         }
         if (patList.size > 1) {
-            checkFeature(holder, patList.first(), patList.last(),
-                IF_WHILE_OR_PATTERNS, "multiple patterns in `if let` and `while let` are unstable")
+            CompilerFeature.check(
+                holder,
+                patList.first(),
+                patList.last(),
+                IF_WHILE_OR_PATTERNS,
+                "multiple patterns in `if let` and `while let` are unstable"
+            )
         }
     }
 

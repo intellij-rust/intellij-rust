@@ -5,6 +5,8 @@
 
 package org.rust.ide.annotator
 
+import org.rust.MockRustcVersion
+
 class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class.java) {
     fun `test E0379 const trait function`() = checkErrors("""
         trait Foo {
@@ -240,5 +242,18 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
 
     fun `test lifetime params after type params`() = checkErrors("""
         fn foo<T, <error descr="Lifetime parameters must be declared prior to type parameters">'a</error>>(bar: &'a T) {}
+    """)
+
+    @MockRustcVersion("1.34.0-nightly")
+    fun `test c-variadic function E0658 1`() = checkErrors("""
+        unsafe extern "C" fn ext_fn1(a: bool, <error descr="C-variadic functions is experimental [E0658]">...</error>) {}
+        unsafe extern "C" fn ext_fn2(a: bool, args: <error descr="C-variadic functions is experimental [E0658]">...</error>) {}
+    """)
+
+    @MockRustcVersion("1.34.0-nightly")
+    fun `test c-variadic function E0658 2`() = checkErrors("""
+        #![feature(c_variadic)]
+        unsafe extern "C" fn ext_fn1(a: bool, ...) {}
+        unsafe extern "C" fn ext_fn2(a: bool, args: ...) {}
     """)
 }
