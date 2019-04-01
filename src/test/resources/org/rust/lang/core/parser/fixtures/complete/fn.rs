@@ -15,3 +15,6 @@ const        fn a() -> () { () }
 const unsafe fn b() -> () { () }
 
 fn diverging() -> ! { panic("! is a type") }
+
+unsafe extern "C" fn ext_fn1(a: bool, ...) {}
+unsafe extern "C" fn ext_fn2(a: bool, args: ...) {}

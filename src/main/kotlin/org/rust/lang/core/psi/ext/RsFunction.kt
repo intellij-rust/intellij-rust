@@ -45,7 +45,7 @@ val RsFunction.isExtern: Boolean get() {
 
 val RsFunction.isVariadic: Boolean get() {
     val stub = stub
-    return stub?.isVariadic ?: (valueParameterList?.dotdotdot != null)
+    return stub?.isVariadic ?: (valueParameterList?.variadic != null)
 }
 
 val RsFunction.abiName: String? get() {
