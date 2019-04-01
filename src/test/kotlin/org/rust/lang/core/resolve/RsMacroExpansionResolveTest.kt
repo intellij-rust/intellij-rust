@@ -5,69 +5,12 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 
+@ExpandMacros
 class RsMacroExpansionResolveTest : RsResolveTestBase() {
-    fun `test lazy static`() = checkByCode("""
-        #[macro_use]
-        extern crate lazy_static;
-
-        struct Foo {}
-        impl Foo {
-            fn new() -> Foo { Foo {} }
-            fn bar(&self) {}
-        }     //X
-
-        lazy_static! { static ref FOO: Foo = Foo::new(); }
-
-        fn main() {
-            FOO.bar()
-        }      //^
-    """)
-
-    fun `test multiple lazy static 1`() = checkByCode("""
-        #[macro_use]
-        extern crate lazy_static;
-
-        struct Foo {}
-        impl Foo {
-            fn new() -> Foo { Foo {} }
-            fn bar (&self) {}
-        }     //X
-
-        lazy_static! {
-            static ref FOO_1: Foo = Foo::new();
-            static ref FOO_2: Foo = Foo::new();
-        }
-
-        fn main() {
-            FOO_1.bar();
-                 //^
-        }
-    """)
-
-    fun `test multiple lazy static 2`() = checkByCode("""
-        #[macro_use]
-        extern crate lazy_static;
-
-        struct Foo {}
-        impl Foo {
-            fn new() -> Foo { Foo {} }
-            fn bar (&self) {}
-        }     //X
-
-        lazy_static! {
-            static ref FOO_1: Foo = Foo::new();
-            static ref FOO_2: Foo = Foo::new();
-        }
-
-        fn main() {
-            FOO_2.bar();
-                 //^
-        }
-    """)
-
     fun `test expand item`() = checkByCode("""
         macro_rules! if_std {
             ($ i:item) => (
@@ -407,5 +350,61 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             bar::foo().bar();
         }            //^ bar.rs
+    """)
+
+    fun `test impl defined by macro`() = checkByCode("""
+        macro_rules! foo {
+            ($ i:ident) => {
+                impl $ i {
+                    fn foo(&self) -> Bar {}
+                }
+            }
+        }
+
+        struct Foo;
+        struct Bar;
+        foo!(Foo);
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test impl defined by macro with method defined by nested macro`() = checkByCode("""
+        macro_rules! bar {
+            ($ i:ident, $ j:ty) => { fn $ i(&self) -> $ j { unimplemented!() } }
+        }
+
+        macro_rules! foo {
+            ($ i:ident) => {
+                impl $ i {
+                    bar!(foo, Bar);
+                }
+            }
+        }
+
+        struct Foo;
+        struct Bar;
+        foo!(Foo);
+        impl Bar { fn bar(&self) {} }
+                    //X
+        fn main() {
+            Foo.foo().bar();
+        }           //^
+    """)
+
+    fun `test mod declared with macro`() = stubOnlyResolve("""
+    //- main.rs
+        macro_rules! foo {
+            () => { mod child; };
+        }
+
+        foo!();
+
+        pub struct S;
+    //- child.rs
+        use super::S;
+                 //^ main.rs
     """)
 }

@@ -12,6 +12,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.Testmark
 
 abstract class RsAnnotationTestBase : RsTestBase() {
@@ -159,6 +160,7 @@ abstract class RsAnnotationTestBase : RsTestBase() {
     ) {
         val action: () -> Unit = {
             configure(text)
+            project.macroExpansionManager.ensureUpToDate()
             myFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
         }
         testmark?.checkHit(action) ?: action()
@@ -175,6 +177,7 @@ abstract class RsAnnotationTestBase : RsTestBase() {
     ) {
         val action: () -> Unit = {
             configure(before)
+            project.macroExpansionManager.ensureUpToDate()
             checkBefore()
             applyQuickFix(fixName)
             checkAfter(after)

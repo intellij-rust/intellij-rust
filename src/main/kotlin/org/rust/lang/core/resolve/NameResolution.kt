@@ -26,10 +26,7 @@ import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
-import org.rust.lang.core.macros.MACRO_CRATE_IDENTIFIER_PREFIX
-import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.macros.expandedFrom
-import org.rust.lang.core.macros.findMacroCallExpandedFrom
+import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
 import org.rust.lang.core.psi.ext.*
@@ -690,7 +687,10 @@ fun processMacrosExportedByCrateName(context: RsElement, crateName: String, proc
 }
 
 fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolveProcessor): Boolean {
-    if (MacroResolver.processMacrosInLexicalOrderUpward(context) { processor(it) }) return true
+    val result = context.project.macroExpansionManager.withResolvingMacro {
+        MacroResolver.processMacrosInLexicalOrderUpward(context) { processor(it) }
+    }
+    if (result) return true
 
     val prelude = context.contextOrSelf<RsElement>()?.findDependencyCrateRoot(STD) ?: return false
     return processAll(exportedMacros(prelude), processor)

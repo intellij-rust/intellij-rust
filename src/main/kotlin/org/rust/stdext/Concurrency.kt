@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.reflect.KProperty
 
 
 /**
@@ -74,7 +75,14 @@ class AsyncValue<T>(initial: T) {
     }
 }
 
-// :-(
-// https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Traversable.html
-fun <T> List<CompletableFuture<T>>.joinAll(): CompletableFuture<List<T>> =
-    CompletableFuture.allOf(*this.toTypedArray()).thenApply { map { it.join() } }
+class ThreadLocalDelegate<T>(initializer: () -> T) {
+    private val tl: ThreadLocal<T> = ThreadLocal.withInitial(initializer)
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+        return tl.get()
+    }
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+        tl.set(value)
+    }
+}

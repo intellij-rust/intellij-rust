@@ -9,6 +9,7 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,6 +28,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustcVersion
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.openapiext.saveAllDocuments
 
@@ -55,6 +57,10 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         setupMockRustcVersion()
         setupMockEdition()
+        findAnnotationInstance<ExpandMacros>()?.let {
+            val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
+            Disposer.register(testRootDisposable, disposable)
+        }
     }
 
     private fun setupMockRustcVersion() {
@@ -240,6 +246,10 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
     protected fun checkAstNotLoaded(fileFilter: VirtualFileFilter) {
         PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileFilter, testRootDisposable)
+    }
+
+    protected fun checkAstNotLoaded() {
+        PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, testRootDisposable)
     }
 
     protected open fun configureByText(text: String) {

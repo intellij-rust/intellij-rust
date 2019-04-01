@@ -5,45 +5,9 @@
 
 package org.rust.lang.core.macros
 
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.PsiModificationTracker
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.childrenOfType
-import org.rust.lang.core.psi.ext.descendantOfTypeStrict
-import org.rust.lang.core.psi.ext.macroName
-
-private val NULL_RESULT: CachedValueProvider.Result<MacroExpansion?> =
-    CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT)
-
-fun expandMacro(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> {
-    val context = call.context as? RsElement ?: return NULL_RESULT
-    return when {
-        call.macroName == "lazy_static" -> {
-            val result = expandLazyStatic(call)
-            if (result == null || result.isEmpty()) return NULL_RESULT
-            result.forEach {
-                it.setContext(context)
-                it.setExpandedFrom(call)
-            }
-            val expansion = MacroExpansion.Items(result.first().containingFile as RsFile, result)
-            CachedValueProvider.Result.create(expansion, call.containingFile)
-        }
-        else -> {
-            val project = context.project
-            if (!project.rustSettings.expandMacros) return NULL_RESULT
-            val def = call.path.reference.resolve() as? RsMacro ?: return NULL_RESULT
-            val expander = MacroExpander(project)
-            val result = expander.expandMacro(def, call)
-            result?.elements?.forEach {
-                it.setContext(context)
-                it.setExpandedFrom(call)
-            }
-            CachedValueProvider.Result.create(result, call.rustStructureOrAnyPsiModificationTracker)
-        }
-    }
-}
+import org.rust.lang.core.psi.ext.stubChildrenOfType
+import org.rust.lang.core.psi.ext.stubDescendantOfTypeOrStrict
 
 enum class MacroExpansionContext {
     EXPR, PAT, TYPE, STMT, ITEM
@@ -109,25 +73,30 @@ private fun prepareExpandedTextForParsing(
 fun getExpansionFromExpandedFile(context: MacroExpansionContext, expandedFile: RsFile): MacroExpansion? {
     return when (context) {
         MacroExpansionContext.EXPR -> {
-            val expr = expandedFile.descendantOfTypeStrict<RsExpr>() ?: return null
+            val expr = expandedFile.stubDescendantOfTypeOrStrict<RsExpr>() ?: return null
             MacroExpansion.Expr(expandedFile, expr)
         }
         MacroExpansionContext.PAT -> {
-            val pat = expandedFile.descendantOfTypeStrict<RsPat>() ?: return null
+            val pat = expandedFile.stubDescendantOfTypeOrStrict<RsPat>() ?: return null
             MacroExpansion.Pat(expandedFile, pat)
         }
         MacroExpansionContext.TYPE -> {
-            val type = expandedFile.descendantOfTypeStrict<RsTypeReference>() ?: return null
+            val type = expandedFile.stubDescendantOfTypeOrStrict<RsTypeReference>() ?: return null
             MacroExpansion.Type(expandedFile, type)
         }
         MacroExpansionContext.STMT -> {
-            val block = expandedFile.descendantOfTypeStrict<RsBlock>() ?: return null
-            val itemsAndStatements = block.childrenOfType<RsExpandedElement>()
+            val block = expandedFile.stubDescendantOfTypeOrStrict<RsBlock>() ?: return null
+            val itemsAndStatements = block.stubChildrenOfType<RsExpandedElement>()
             MacroExpansion.Stmts(expandedFile, itemsAndStatements)
         }
         MacroExpansionContext.ITEM -> {
-            val items = expandedFile.childrenOfType<RsExpandedElement>()
+            val items = expandedFile.stubChildrenOfType<RsExpandedElement>()
             MacroExpansion.Items(expandedFile, items)
         }
     }
+}
+
+fun MacroExpander.expandMacro(def: RsMacro, call: RsMacroCall, factory: RsPsiFactory): MacroExpansion? {
+    val expandedText = expandMacroAsText(def, call) ?: return null
+    return parseExpandedTextWithContext(call.expansionContext, factory, expandedText)
 }

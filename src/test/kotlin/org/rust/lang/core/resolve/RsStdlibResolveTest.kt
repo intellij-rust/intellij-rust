@@ -5,11 +5,13 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.WithStdlibWithSymlinkRustProjectDescriptor
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -559,5 +561,15 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn foo(x: std::rc::Rc<i32>) {}
                          //^ .../liballoc/rc.rs
+    """)
+
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    fun `test AtomicUsize`() = stubOnlyResolve("""
+    //- main.rs
+        use std::sync::atomic::AtomicUsize;
+        fn main() {
+            let a: AtomicUsize;
+            a.store();
+        }   //^ .../libcore/sync/atomic.rs
     """)
 }

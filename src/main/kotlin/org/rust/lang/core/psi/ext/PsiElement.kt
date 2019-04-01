@@ -8,9 +8,11 @@ package org.rust.lang.core.psi.ext
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.SmartList
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
@@ -85,8 +87,89 @@ inline fun <reified T : PsiElement> PsiElement.stubChildrenOfType(): List<T> {
 inline fun <reified T : PsiElement> PsiElement.descendantOfTypeStrict(): T? =
     PsiTreeUtil.findChildOfType(this, T::class.java, /* strict */ true)
 
+inline fun <reified T : PsiElement> PsiElement.descendantOfTypeOrSelf(): T? =
+    PsiTreeUtil.findChildOfType(this, T::class.java, /* strict */ false)
+
 inline fun <reified T : PsiElement> PsiElement.descendantsOfType(): Collection<T> =
     PsiTreeUtil.findChildrenOfType(this, T::class.java)
+
+inline fun <reified T : PsiElement> PsiElement.descendantsOfTypeOrSelf(): Collection<T> =
+    PsiTreeUtil.findChildrenOfAnyType(this, false, T::class.java)
+
+inline fun <reified T : PsiElement> PsiElement.stubDescendantsOfTypeStrict(): Collection<T> =
+    getStubDescendantsOfType(this, true, T::class.java)
+
+inline fun <reified T : PsiElement> PsiElement.stubDescendantsOfTypeOrSelf(): Collection<T> =
+    getStubDescendantsOfType(this, false, T::class.java)
+
+inline fun <reified T : PsiElement> PsiElement.stubDescendantOfTypeOrStrict(): T? =
+    getStubDescendantOfType(this, true, T::class.java)
+
+inline fun <reified T : PsiElement> PsiElement.stubDescendantOfTypeOrSelf(): T? =
+    getStubDescendantOfType(this, false, T::class.java)
+
+fun <T : PsiElement> getStubDescendantsOfType(
+    element: PsiElement?,
+    strict: Boolean,
+    aClass: Class<T>
+): Collection<T> {
+    if (element == null) return emptyList()
+    val stub = (element as? PsiFileImpl)?.stub
+        ?: (element as? StubBasedPsiElement<*>)?.stub
+        ?: return PsiTreeUtil.findChildrenOfAnyType<T>(element, strict, aClass)
+
+    val result = SmartList<T>()
+
+    fun go(childrenStubs: List<StubElement<PsiElement>>) {
+        for (childStub in childrenStubs) {
+            val child = childStub.psi
+            if (aClass.isInstance(child)) {
+                result.add(aClass.cast(child))
+            } else {
+                go(childStub.childrenStubs)
+            }
+        }
+
+    }
+
+    if (strict) {
+        go(stub.childrenStubs)
+    } else {
+        go(listOf(stub))
+    }
+
+    return result
+}
+
+fun <T : PsiElement> getStubDescendantOfType(
+    element: PsiElement?,
+    strict: Boolean,
+    aClass: Class<T>
+): T? {
+    if (element == null) return null
+    val stub = (element as? PsiFileImpl)?.stub
+        ?: (element as? StubBasedPsiElement<*>)?.stub
+        ?: return PsiTreeUtil.findChildOfType<T>(element, aClass, strict)
+
+    fun go(childrenStubs: List<StubElement<PsiElement>>): T? {
+        for (childStub in childrenStubs) {
+            val child = childStub.psi
+            if (aClass.isInstance(child)) {
+                return aClass.cast(child)
+            } else {
+                go(childStub.childrenStubs)?.let { return it }
+            }
+        }
+
+        return null
+    }
+
+    return if (strict) {
+        go(stub.childrenStubs)
+    } else {
+        go(listOf(stub))
+    }
+}
 
 /**
  * Same as [PsiElement.getContainingFile], but return a "fake" file. See [org.rust.lang.core.macros.RsExpandedElement].

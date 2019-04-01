@@ -140,6 +140,7 @@
 
         <targetElementEvaluator language="Rust"
                                 implementationClass="org.rust.ide.navigation.goto.RsTargetElementEvaluator"/>
+        <generatedSourcesFilter implementation="org.rust.ide.navigation.goto.RsGeneratedSourcesFilter"/>
 
         <!-- Hints -->
 
@@ -751,6 +752,7 @@
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsLangItemIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsMacroIndex"/>
+        <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsMacroCallIndex"/>
 
         <!-- Notification Providers -->
 
@@ -795,6 +797,12 @@
 
         <projectService serviceImplementation="org.rust.lang.core.resolve.ref.RsResolveCache"/>
 
+        <!-- Macro expansion service -->
+
+        <indexedRootsProvider implementation="org.rust.lang.core.macros.RsIndexableSetContributor"/>
+        <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
+        <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
+
     </extensions>
 
     <extensionPoints>
@@ -818,6 +826,10 @@
         </component>
         <component>
             <implementation-class>org.rust.ide.annotator.RsExternalLinterPassFactory</implementation-class>
+        </component>
+        <component>
+            <interface-class>org.rust.lang.core.macros.MacroExpansionManager</interface-class>
+            <implementation-class>org.rust.lang.core.macros.MacroExpansionManagerImpl</implementation-class>
         </component>
     </project-components>
 
@@ -925,6 +937,11 @@
         <action id="Rust.ToggleExternalLinterOnTheFlyAction"
                 class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"
                 text="Run external linter (cargo check / clippy) on the fly">
+        </action>
+
+        <action id="Rust.ReexpandMacrosAction"
+                class="org.rust.lang.core.macros.ReexpandMacrosAction"
+                text="Re-expand all Rust macros">
         </action>
     </actions>
 

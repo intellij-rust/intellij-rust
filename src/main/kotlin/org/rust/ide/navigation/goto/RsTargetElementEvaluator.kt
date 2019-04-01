@@ -58,6 +58,8 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
         return item?.derivedTraitsToMetaItems?.get(trait)
     }
 
+    // TODO remove it when all macro expansions will become physical files
+    //  (then they will be handled with RsGeneratedSourcesFilter)
     /**
      * Allows to refine GotoDeclaration target
      *

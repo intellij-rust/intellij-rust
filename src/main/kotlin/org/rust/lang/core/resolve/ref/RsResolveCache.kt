@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.AnyPsiChangeListener
 import com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC
@@ -50,7 +51,7 @@ class RsResolveCache(messageBus: MessageBus) {
     init {
         val connection = messageBus.connect()
         connection.subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
-            override fun rustStructureChanged() = onRustStructureChanged()
+            override fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?) = onRustStructureChanged()
         })
         connection.subscribe(ANY_PSI_CHANGE_TOPIC, object : AnyPsiChangeListener {
             override fun afterPsiChanged(isPhysical: Boolean) = anyPsiChangeDependentCache.clear()

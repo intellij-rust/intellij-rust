@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.import
 
+import org.rust.ExpandMacros
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
@@ -1898,4 +1899,32 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// ```
         pub fn foo() {}
     """,  AutoImportFix.Testmarks.doctestInjectionImport)
+
+    @ExpandMacros
+    fun `test import struct from macro`() = checkAutoImportFixByText("""
+        mod foo {
+            macro_rules! foo {
+                () => { pub struct Foo; };
+            }
+            foo!();
+        }
+
+        fn main() {
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            macro_rules! foo {
+                () => { pub struct Foo; };
+            }
+            foo!();
+        }
+
+        fn main() {
+            let f = Foo/*caret*/;
+        }
+    """)
+
 }

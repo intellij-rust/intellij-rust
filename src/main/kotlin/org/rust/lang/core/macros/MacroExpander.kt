@@ -20,7 +20,6 @@ import com.intellij.psi.impl.source.DummyHolderFactory
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
@@ -96,20 +95,7 @@ private data class WithParent(
 }
 
 class MacroExpander(val project: Project) {
-    private val psiFactory = RsPsiFactory(project, markGenerated = false)
-
-    fun expandMacro(def: RsMacro, call: RsMacroCall): MacroExpansion? {
-        // All std macros contain the only `impl`s which are not supported for now, so ignoring them
-        if (call.containingCargoTarget?.pkg?.origin == PackageOrigin.STDLIB) {
-            return null
-        }
-
-        val expandedText = expandMacroAsText(def, call) ?: return null
-
-        return parseExpandedTextWithContext(call.expansionContext, psiFactory, expandedText)
-    }
-
-    private fun expandMacroAsText(def: RsMacro, call: RsMacroCall): CharSequence? {
+    fun expandMacroAsText(def: RsMacro, call: RsMacroCall): CharSequence? {
         val (case, subst) = findMatchingPattern(def, call) ?: return null
         val macroExpansion = case.macroExpansion ?: return null
 
