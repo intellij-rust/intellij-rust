@@ -13,6 +13,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.lang.core.C_VARIADIC
+import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
@@ -122,15 +124,24 @@ private fun checkValueParameterList(holder: AnnotationHolder, params: RsValuePar
     when (fn.owner) {
         is RsAbstractableOwner.Free -> {
             deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
-            deny(params.dotdotdot, holder, "${fn.title} cannot be variadic")
+            checkVariadic(holder, fn, params.variadic?.dotdotdot)
         }
         is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> {
-            deny(params.dotdotdot, holder, "${fn.title} cannot be variadic")
+            deny(params.variadic?.dotdotdot, holder, "${fn.title} cannot be variadic")
         }
         RsAbstractableOwner.Foreign -> {
             deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
-            checkDot3Parameter(holder, params.dotdotdot)
+            checkDot3Parameter(holder, params.variadic?.dotdotdot)
         }
+    }
+}
+
+private fun checkVariadic(holder: AnnotationHolder, fn: RsFunction, dot3: PsiElement?) {
+    if (dot3 == null) return
+    if (fn.isUnsafe && fn.abiName == "\"C\"") {
+        CompilerFeature.check(holder, dot3, C_VARIADIC, "C-variadic functions")
+    } else {
+        deny(dot3, holder, "${fn.title} cannot be variadic")
     }
 }
 
