@@ -55,6 +55,7 @@ import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
 import org.rust.openapiext.*
 import org.rust.stdext.ThreadLocalDelegate
 import org.rust.stdext.cleanDirectory
+import org.rust.stdext.waitForWithCheckCanceled
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
@@ -107,7 +108,7 @@ class MacroExpansionManagerImpl(
 
     private var dirs: Dirs? = null
     private var innerFuture: Future<MacroExpansionServiceImplInner?>? = null
-    private val inner: MacroExpansionServiceImplInner? get() = innerFuture?.get()
+    private val inner: MacroExpansionServiceImplInner? get() = innerFuture?.waitForWithCheckCanceled()
 
     override fun getState(): PersistentState =
         PersistentState(inner?.save())

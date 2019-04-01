@@ -6,9 +6,9 @@
 package org.rust.stdext
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
 import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.*
 import kotlin.reflect.KProperty
 
 
@@ -84,5 +84,15 @@ class ThreadLocalDelegate<T>(initializer: () -> T) {
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         tl.set(value)
+    }
+}
+
+fun <V> Future<V>.waitForWithCheckCanceled(): V {
+    while (true) {
+        try {
+            return get(10, TimeUnit.MILLISECONDS)
+        } catch (ignored: TimeoutException) {
+            ProgressManager.checkCanceled()
+        }
     }
 }
