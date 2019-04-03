@@ -10,7 +10,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.util.BitUtil
-import org.rust.lang.core.macros.findMacroCallExpandedFrom
+import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsBinaryOp
 import org.rust.lang.core.psi.RsMethodCall
@@ -69,5 +69,5 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
      * @param navElement the element we going to navigate to ([PsiElement.getNavigationElement])
      */
     override fun getGotoDeclarationTarget(element: PsiElement, navElement: PsiElement?): PsiElement? =
-        element.findMacroCallExpandedFrom()?.path
+        element.findNavigationTargetIfMacroExpansion()
 }

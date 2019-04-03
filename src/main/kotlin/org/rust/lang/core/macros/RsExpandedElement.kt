@@ -139,6 +139,16 @@ private fun Int.fromBodyRelativeOffset(call: RsMacroCall): Int? {
     return elementOffset
 }
 
+/**
+ * If receiver element is inside a macro expansion, returns the element inside the macro call
+ * we should navigate to (or the macro call itself if there isn't such element inside a macro call).
+ * Returns null if the element isn't inside a macro expansion
+ */
+fun PsiElement.findNavigationTargetIfMacroExpansion(): PsiElement? {
+    /** @see RsNamedElementImpl.getTextOffset */
+    val element = (this as? RsNameIdentifierOwner)?.nameIdentifier ?: this
+    return element.findElementExpandedFrom() ?: findMacroCallExpandedFrom()?.path
+}
 
 private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
 
