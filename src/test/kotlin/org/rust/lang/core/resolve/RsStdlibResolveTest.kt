@@ -572,4 +572,42 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             a.store();
         }   //^ .../libcore/sync/atomic.rs
     """)
+
+    fun `test non-absolute std-qualified path in non-root module`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo {
+            fn main() {
+                std::mem::size_of::<i32>();
+            }           //^ .../libcore/mem.rs
+        }
+    """)
+
+    fun `test local 'std' module wins`() = checkByCode("""
+        mod foo {
+            mod std {
+                pub mod mem {
+                    pub fn size_of<T>() {}
+                }         //X
+            }
+            fn main() {
+                std::mem::size_of::<i32>();
+            }           //^
+        }
+    """)
+
+    fun `test imported 'std' module wins`() = checkByCode("""
+        mod foo {
+            mod bar {
+                pub mod std {
+                    pub mod mem {
+                        pub fn size_of<T>() {}
+                    }         //X
+                }
+            }
+            use self::bar::std;
+            fn main() {
+                std::mem::size_of::<i32>();
+            }           //^
+        }
+    """)
 }

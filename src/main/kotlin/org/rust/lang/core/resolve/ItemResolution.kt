@@ -92,31 +92,33 @@ fun processItemDeclarations(
         }
     }
 
-    if (Namespace.Types in ns) {
-        if (scope is RsFile && scope.isCrateRoot && withPrivateImports) {
-            // Rust injects implicit `extern crate std` in every crate root module unless it is
-            // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
-            // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
-            //
-            // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
-            // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
-            when (scope.attributes) {
-                RsFile.Attributes.NONE ->
-                    if (processor.lazy(STD) { scope.findDependencyCrateRoot(STD) }) return true
-
-                RsFile.Attributes.NO_STD ->
-                    if (processor.lazy(CORE) { scope.findDependencyCrateRoot(CORE) }) return true
-
-                RsFile.Attributes.NO_CORE -> Unit
-            }
-        }
-    }
-
     for (speck in itemImports) {
         check(speck.useGroup == null)
         val path = speck.path ?: continue
         val name = speck.nameInScope ?: continue
         if (processMultiResolveWithNs(name, ns, path.reference, processor)) return true
+    }
+
+    if (Namespace.Types in ns && scope is RsMod && withPrivateImports) {
+        // Rust injects implicit `extern crate std` in every crate root module unless it is
+        // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
+        // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
+        //
+        // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
+        // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
+        //
+        // Also starting from Rust 1.30 implicit are in the prelude, so they are available
+        // in every modules. See https://github.com/rust-lang/rust/pull/54404/
+        if (!scope.isCrateRoot && processor(ScopeEvent.IMPLICIT_CRATES)) return true
+        when ((scope.crateRoot as? RsFile)?.attributes) {
+            RsFile.Attributes.NONE ->
+                if (processor.lazy(STD) { scope.findDependencyCrateRoot(STD) }) return true
+
+            RsFile.Attributes.NO_STD ->
+                if (processor.lazy(CORE) { scope.findDependencyCrateRoot(CORE) }) return true
+
+            RsFile.Attributes.NO_CORE, null -> Unit
+        }
     }
 
     if (originalProcessor(ScopeEvent.STAR_IMPORTS)) {
