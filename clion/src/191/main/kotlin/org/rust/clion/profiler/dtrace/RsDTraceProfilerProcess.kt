@@ -5,7 +5,6 @@
 
 package org.rust.clion.profiler.dtrace
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.project.Project
 import com.intellij.profiler.DummyFlameChartBuilder
@@ -25,10 +24,8 @@ import com.intellij.profiler.sudo.SudoProcessHandler
 import com.intellij.profiler.ui.flamechart.NativeCallChartNodeRenderer
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.concurrency.Promise
-import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.toolchain.Cargo
 import org.rust.clion.profiler.RsCachingStackElementReader
-import java.io.IOException
+import org.rust.lang.utils.RsDemangler
 
 
 class RsDTraceProfilerProcess private constructor(
@@ -49,50 +46,19 @@ class RsDTraceProfilerProcess private constructor(
             CollapsedProfilerDumpWriter(builder, targetProcess.fullName, attachedTimestamp, { it.fullName() }, { it.name })
         )
 
-    override fun postProcessData(builder: DummyFlameChartBuilder<ThreadInfo, BaseCallStackElement>): DummyFlameChartBuilder<ThreadInfo, BaseCallStackElement> {
-        readIndicator.checkCanceled()
-
-        val toolchainLocation = project.toolchain?.location ?: return builder
-        val pb = ProcessBuilder(toolchainLocation.resolve("rustfilt").toString())
-        val process = try {
-            pb.start()
-        } catch (e: IOException) {
-            LOG.error(e)
-            return builder
+    override fun postProcessData(
+        builder: DummyFlameChartBuilder<ThreadInfo, BaseCallStackElement>
+    ): DummyFlameChartBuilder<ThreadInfo, BaseCallStackElement> =
+        builder.mapTreeElements {
+            if (it !is RsDTraceNavigatableNativeCall) return@mapTreeElements it
+            val library = it.fullName().substringBeforeLast('`')
+            val fullName = it.fullName().substringAfterLast('`')
+            val demangledName = RsDemangler.tryDemangle(fullName)?.format(skipHash = true) ?: return@mapTreeElements it
+            val path = demangledName.substringBeforeLast("::")
+            val method = demangledName.substringAfterLast("::")
+            val nativeCall = NativeCall(library, path, method)
+            RsDTraceNavigatableNativeCall(nativeCall)
         }
-
-        val writer = process.outputStream.bufferedWriter()
-        val reader = process.inputStream.bufferedReader()
-
-        return try {
-            builder.mapTreeElements {
-                if (it is RsDTraceNavigatableNativeCall) {
-                    val fullName = it.fullName()
-                    writer.write(fullName + "\n")
-                    writer.flush()
-
-                    val demangledName = reader.readLine()
-                    if (demangledName != null) {
-                        val library = demangledName.substringBeforeLast('`')
-                        val qualifiedMethod = demangledName.substringAfterLast('`')
-                        val path = qualifiedMethod.substringBeforeLast("::")
-                        val method = qualifiedMethod.substringAfterLast("::")
-                        val nativeCall = NativeCall(library, path, method)
-                        RsDTraceNavigatableNativeCall(nativeCall)
-                    } else {
-                        it
-                    }
-                } else {
-                    it
-                }
-            }
-        } catch (e: IOException) {
-            LOG.error(e)
-            builder
-        } finally {
-            process.destroy()
-        }
-    }
 
     companion object {
         fun attach(
@@ -109,8 +75,6 @@ class RsDTraceProfilerProcess private constructor(
             val settingsCopy = XmlSerializer.deserialize(element, SimpleProfilerSettingsState::class.java)
             settingsCopy.defaultCmdArgs.add("-xmangled")
 
-            Cargo.checkNeedInstallRustfilt(project)
-
             return DTraceProfilerProcessBase.attachBase(
                 targetProcess,
                 backgroundOption,
@@ -119,7 +83,5 @@ class RsDTraceProfilerProcess private constructor(
                 project
             ) { handler, _ -> RsDTraceProfilerProcess(project, targetProcess, System.currentTimeMillis(), handler) }
         }
-
-        private val LOG = Logger.getInstance(RsDTraceProfilerProcess::class.java)
     }
 }

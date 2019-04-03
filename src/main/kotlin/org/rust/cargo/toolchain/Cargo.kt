@@ -241,14 +241,6 @@ class Cargo(private val cargoExecutable: Path) {
             return cmdLine
         }
 
-        fun checkNeedInstallRustfilt(project: Project): Boolean =
-            checkNeedInstallPackage(
-                project,
-                "rustfilt",
-                NotificationType.WARNING,
-                "It may lead to incorrect function names and <code>Jump to Source</code> may not work"
-            )
-
         @Suppress("SameParameterValue")
         private fun checkNeedInstallPackage(
             project: Project,
