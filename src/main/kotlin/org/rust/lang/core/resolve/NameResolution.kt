@@ -982,8 +982,10 @@ private fun collect2segmentPaths(rootSpeck: RsUseSpeck): List<TwoSegmentPath> {
         if (path != null && qualifier != null && qualifier.qualifier != null) return
         val firstSegment = qualifier ?: path
         val lastSegment = path ?: qualifier
+        if (firstSegment != null && firstSegment.kind != PathKind.IDENTIFIER) return
         when {
             group == null && firstSegment != null && (path != null || starImport) -> {
+                if (firstSegment != lastSegment && starImport) return
                 result += TwoSegmentPath(firstSegment.referenceName, if (starImport) null else path?.referenceName)
             }
             group != null && firstSegment == lastSegment -> {
