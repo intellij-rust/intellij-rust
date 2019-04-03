@@ -641,20 +641,22 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p>Inner doc.</p></div>
     """)
 
-    // TODO: fix quick doc for files
-//    fun `test file inner docstring`() = doTest("""
-////^
-//        //! Module level docs.
-//
-//        fn foo() { }
-//
-//        fn main() {
-//            self::foo();
-//        }
-//    """, """
-//        <pre>test_package</pre>
-//        <p>Module level docs.</p>
-//    """)
+    fun `test file inner docstring`() = doTest("""
+        //! Module level docs
+        //! Module level docs
+
+        fn foo() { }
+
+        fn main() {
+            self::foo();
+            //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        </pre></div>
+        <div class='content'><p>Module level docs
+        Module level docs</p></div>
+    """)
 
     //
     fun `test macro outer docstring`() = doTest("""
