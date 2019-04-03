@@ -20,14 +20,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
+import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallCargoPackageAction
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
@@ -48,6 +49,32 @@ private val LOG = Logger.getInstance(Cargo::class.java)
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
 class Cargo(private val cargoExecutable: Path) {
+
+    data class Package(val name: String, val version: SemVer? = null) {
+        companion object {
+            fun from(line: String): Package {
+                val name = line.substringBefore(' ')
+                val rawVersion = line.substringAfter(' ').removePrefix("v").removeSuffix(":")
+                return Package(name, SemVer.parseFromText(rawVersion))
+            }
+        }
+    }
+
+    fun listPackages(): List<Package> =
+        GeneralCommandLine(cargoExecutable)
+            .withParameters("install", "--list")
+            .execute(null)
+            ?.stdoutLines
+            ?.filterNot { it.startsWith(" ") }
+            ?.map { Package.from(it) }
+            .orEmpty()
+
+    fun installPackage(project: Project, packageName: String) {
+        val cargoProject = project.cargoProjects.allProjects.firstOrNull() ?: return
+        val commandLine = CargoCommandLine.forProject(cargoProject, "install", listOf("--force", packageName))
+        commandLine.run(cargoProject, "Install $packageName")
+    }
+
     fun checkSupportForBuildCheckAllTargets(): Boolean {
         val lines = GeneralCommandLine(cargoExecutable)
             .withParameters("help", "check")
@@ -57,25 +84,6 @@ class Cargo(private val cargoExecutable: Path) {
 
         return lines.any { it.contains(" --all-targets ") }
     }
-
-    fun listPackages(): List<String> =
-        GeneralCommandLine(cargoExecutable)
-            .withParameters("install", "--list")
-            .execute(null)
-            ?.stdoutLines
-            ?: emptyList()
-
-    fun installPackage(owner: Disposable, packageName: String): DownloadResult<Unit> =
-        try {
-            GeneralCommandLine(cargoExecutable)
-                .withParameters("install", packageName)
-                .execute(owner, false)
-            DownloadResult.Ok(Unit)
-        } catch (e: ExecutionException) {
-            val message = "cargo failed: `${e.message}`"
-            LOG.warn(message)
-            DownloadResult.Err(message)
-        }
 
     /**
      * Fetch all dependencies and calculate project information.
@@ -241,16 +249,18 @@ class Cargo(private val cargoExecutable: Path) {
             return cmdLine
         }
 
-        @Suppress("SameParameterValue")
         private fun checkNeedInstallPackage(
             project: Project,
             packageName: String,
             notificationType: NotificationType,
-            message: String? = null
+            message: String? = null,
+            minVersion: SemVer? = null
         ): Boolean {
             fun isNotInstalled(): Boolean {
                 val cargo = project.toolchain?.rawCargo() ?: return false
-                val installed = cargo.listPackages().any { it.startsWith(packageName) }
+                val installed = cargo.listPackages().any { (name, version) ->
+                    name == packageName && (minVersion == null || version != null && version >= minVersion)
+                }
                 return !installed
             }
 

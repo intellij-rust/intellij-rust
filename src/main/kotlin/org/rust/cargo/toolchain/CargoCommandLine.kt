@@ -109,13 +109,13 @@ fun CargoWorkspace.Target.launchCommand(): String? {
     }
 }
 
-fun CargoCommandLine.run(cargoProject: CargoProject) {
+fun CargoCommandLine.run(cargoProject: CargoProject, presentableName: String = command) {
     val project = cargoProject.project
     val runConfiguration =
         if (project.cargoProjects.allProjects.size > 1)
-            createRunConfiguration(project, this, name = command + " [" + cargoProject.presentableName + "]")
+            createRunConfiguration(project, this, name = presentableName + " [" + cargoProject.presentableName + "]")
         else
-            createRunConfiguration(project, this)
+            createRunConfiguration(project, this, name = presentableName)
     val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
     ProgramRunnerUtil.executeConfiguration(runConfiguration, executor)
 }
