@@ -19,6 +19,8 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.messages.Topic
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.RsFileType
+import org.rust.lang.core.macros.MacroExpansionMode
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
@@ -94,20 +96,30 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
             } else {
                 if (file.fileType != RsFileType) return
 
-                if (element is PsiComment || element is PsiWhiteSpace) return
+                val isWhitespaceOrComment = element is PsiComment || element is PsiWhiteSpace
+                if (isWhitespaceOrComment &&
+                    project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) {
+                    // Whitespace/comment changes are meaningful if new macro expansion engine is used
+                    return
+                }
 
                 // Most of events means that some element *itself* is changed, but ChildrenChange means
                 // that changed some of element's children, not the element itself. In this case
                 // we should look up for ModificationTrackerOwner a bit differently
                 val isChildrenChange = event is ChildrenChange
 
-                updateModificationCount(file, element, isChildrenChange)
+                updateModificationCount(file, element, isChildrenChange, isWhitespaceOrComment)
             }
         }
 
     }
 
-    private fun updateModificationCount(file: PsiFile, psi: PsiElement, isChildrenChange: Boolean) {
+    private fun updateModificationCount(
+        file: PsiFile,
+        psi: PsiElement,
+        isChildrenChange: Boolean,
+        isWhitespaceOrComment: Boolean
+    ) {
         // We find the nearest parent item or macro call (because macro call can produce items)
         // If found item implements RsModificationTrackerOwner, we increment its own
         // modification counter. Otherwise we increment global modification counter.
@@ -122,6 +134,11 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         // is much more difficult.
 
         val owner = if (DumbService.isDumb(project)) null else psi.findModificationTrackerOwner(!isChildrenChange)
+
+        // Whitespace/comment changes are meaningful for macros only
+        // (b/c they affect range mappings and body hashes)
+        if (isWhitespaceOrComment && owner !is RsMacroCall && owner !is RsMacro) return
+
         if (owner == null || !owner.incModificationCount(psi)) {
             incRustStructureModificationCount(file, psi)
         }

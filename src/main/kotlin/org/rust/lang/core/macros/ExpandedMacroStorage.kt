@@ -664,7 +664,7 @@ private fun calcStubIndex(psi: StubBasedPsiElement<*>): Int {
 private val VirtualFile.fileId: Int
     get() = (this as VirtualFileWithId).id
 
-// Use WeakReference it's relatively easy to load RangeMap again
+/** We use [WeakReference] because uncached [loadRangeMap] is quite cheap */
 private val MACRO_RANGE_MAP_CACHE_KEY: Key<WeakReference<RangeMap>> = Key.create("MACRO_RANGE_MAP_CACHE_KEY")
 private val RANGE_MAP_ATTRIBUTE = FileAttribute(
     "org.rust.macro.RangeMap",
