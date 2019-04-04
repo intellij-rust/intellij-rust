@@ -618,4 +618,23 @@ class RsUseResolveTest : RsResolveTestBase() {
             bar();
         }  //^
     """)
+
+    fun `test cyclic dependent imports`() = expect<IllegalStateException> {
+        checkByCode("""
+        mod a {
+            pub use b::*;
+
+            pub mod c {
+                pub struct Foo;
+            }            //X
+
+            type T = self::Foo;
+        }                //^
+
+        mod b {
+            pub use a::*;
+            pub use self::c::*;
+        }
+    """)
+    }
 }
