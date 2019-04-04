@@ -424,11 +424,13 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierO
 }
 
 private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursively: Boolean): Map<Namespace, Set<PsiElement>> {
+    if (owner.parent is RsFnPointerType) return emptyMap()
+
     val fileMap = fileDuplicatesMap()
     fileMap[owner]?.let { return it }
 
     val duplicates: Map<Namespace, Set<PsiElement>> =
-        owner.namedChildren(recursively)
+        owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)
             .filter { it !is RsExternCrateItem } // extern crates can have aliases.
             .filter { it.name != null }
             .flatMap { it.namespaced }
@@ -452,12 +454,18 @@ private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursive
     return duplicates
 }
 
-private fun PsiElement.namedChildren(recursively: Boolean): Sequence<RsNamedElement> =
-    if (recursively) {
-        descendantsOfType<RsNamedElement>().asSequence()
-    } else {
-        children.asSequence().filterIsInstance<RsNamedElement>()
+private fun PsiElement.namedChildren(recursively: Boolean, stopAt: Class<*>? = null): Sequence<RsNamedElement> {
+    val result = mutableListOf<RsNamedElement>()
+    fun go(element: PsiElement) {
+        if (stopAt?.isInstance(element) == true) return
+        for (child in element.children) {
+            if (child is RsNamedElement) result.add(child)
+            if (recursively) go(child)
+        }
     }
+    go(this)
+    return result.asSequence()
+}
 
 private val DUPLICATES_BY_SCOPE = Key<MutableMap<
     PsiElement,
