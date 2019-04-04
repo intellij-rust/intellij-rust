@@ -5,12 +5,14 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.openapi.util.Computable
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.recursionGuard
 import org.rust.stdext.intersects
 import java.util.*
 
@@ -138,11 +140,13 @@ fun processItemDeclarations(
         val mod = (if (basePath != null) basePath.reference.resolve() else speck.crateRoot)
             ?: continue
 
-        val found = processItemOrEnumVariantDeclarations(mod, ns,
-            { it.name !in directlyDeclaredNames && originalProcessor(it) },
-            withPrivateImports = basePath != null && isSuperChain(basePath)
-        )
-        if (found) return true
+        val found = recursionGuard(mod, Computable {
+            processItemOrEnumVariantDeclarations(mod, ns,
+                { it.name !in directlyDeclaredNames && originalProcessor(it) },
+                withPrivateImports = basePath != null && isSuperChain(basePath)
+            )
+        })
+        if (found == true) return true
     }
 
     return false
