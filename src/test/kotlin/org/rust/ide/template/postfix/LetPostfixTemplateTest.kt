@@ -5,6 +5,9 @@
 
 package org.rust.ide.template.postfix
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class LetPostfixTemplateTest : RsPostfixTemplateTest(LetPostfixTemplate(RsPostfixTemplateProvider())) {
     fun `test not expr`() = doTestNotApplicable("""
         fn foo() {
@@ -22,6 +25,7 @@ class LetPostfixTemplateTest : RsPostfixTemplateTest(LetPostfixTemplate(RsPostfi
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test par expr`() = doTest("""
         fn foo() {
             (1 + 2).let/*caret*/;

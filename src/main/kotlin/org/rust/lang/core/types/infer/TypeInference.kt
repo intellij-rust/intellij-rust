@@ -1471,8 +1471,9 @@ class RsFnInferenceContext(
         val (rhsType, retTy) = when (op) {
             is BoolOp -> {
                 if (op is OverloadableBinaryOperator) {
-                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
-                    enforceOverloadedBinopTypes(lhsType, rhsType, op)
+                    val rhsTypeVar = TyInfer.TyVar()
+                    enforceOverloadedBinopTypes(lhsType, rhsTypeVar, op)
+                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar) ?: TyUnknown)
 
                     val lhsAdjustment = BorrowReference(TyReference(lhsType, IMMUTABLE))
                     ctx.addAdjustment(expr.left, lhsAdjustment)
@@ -1487,13 +1488,15 @@ class RsFnInferenceContext(
                 }
             }
             is ArithmeticOp -> {
-                val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
-                val retTy = lookup.findArithmeticBinaryExprOutputType(lhsType, rhsType, op)?.register() ?: TyUnknown
+                val rhsTypeVar = TyInfer.TyVar()
+                val retTy = lookup.findArithmeticBinaryExprOutputType(lhsType, rhsTypeVar, op)?.register() ?: TyUnknown
+                val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar) ?: TyUnknown)
                 rhsType to retTy
             }
             is ArithmeticAssignmentOp -> {
-                val rhsType = resolveTypeVarsWithObligations(expr.right?.inferType() ?: TyUnknown)
-                enforceOverloadedBinopTypes(lhsType, rhsType, op)
+                val rhsTypeVar = TyInfer.TyVar()
+                enforceOverloadedBinopTypes(lhsType, rhsTypeVar, op)
+                val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar) ?: TyUnknown)
 
                 val lhsAdjustment = BorrowReference(TyReference(lhsType, MUTABLE))
                 ctx.addAdjustment(expr.left, lhsAdjustment)
@@ -1510,7 +1513,6 @@ class RsFnInferenceContext(
             val builtinRetTy = enforceBuiltinBinopTypes(lhsType, rhsType, op)
             if (op !is ArithmeticAssignmentOp) {
                 ctx.combineTypes(builtinRetTy, retTy)
-                return builtinRetTy // TODO fix projection and remove. Test on `1 << 2`
             }
         }
 
@@ -1518,8 +1520,12 @@ class RsFnInferenceContext(
     }
 
     private fun enforceOverloadedBinopTypes(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator) {
-        val selection = lookup.selectOverloadedOp(lhsType, rhsType, op).ok()
-        selection?.nestedObligations?.forEach(fulfill::registerPredicateObligation)
+        selectOverloadedOp(lhsType, rhsType, op)?.let { fulfill.registerPredicateObligation(it) }
+    }
+
+    private fun selectOverloadedOp(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): Obligation? {
+        val trait = op.findTrait(items) ?: return null
+        return Obligation(Predicate.Trait(TraitRef(lhsType, trait.withSubst(rhsType))))
     }
 
     private fun isBuiltinBinop(lhsType: Ty, rhsType: Ty, op: BinaryOperator): Boolean = when (op.category) {

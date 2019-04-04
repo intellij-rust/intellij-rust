@@ -7,7 +7,9 @@ package org.rust.ide.refactoring
 
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.refactoring.introduceVariable.IntroduceVariableTestmarks
 import org.rust.lang.core.psi.RsExpr
 import org.rust.openapiext.Testmark
@@ -60,6 +62,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test replace occurrences forward`() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
@@ -73,6 +76,7 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """, replaceAll = true)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test replace occurrences backward`() = doTest("""
         fn main() {
             let a = 1;
