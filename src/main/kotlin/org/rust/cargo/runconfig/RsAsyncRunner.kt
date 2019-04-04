@@ -43,7 +43,7 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
     class Binary(val path: Path)
     sealed class BuildResult {
         data class Binaries(val paths: List<String>) : BuildResult()
-        object MSVCToolchain : BuildResult()
+        object UnsupportedToolchain : BuildResult()
     }
 
     open fun isApplicable(): Boolean = true
@@ -135,8 +135,11 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
             }
     }
 
-    open fun checkToolchain(project: Project): Boolean = true
+    open fun checkToolchainConfigured(project: Project): Boolean = true
 
+    open fun checkToolchainSupported(state: CargoRunStateBase): Boolean = true
+
+    open fun processUnsupportedToolchain(project: Project, promise: AsyncPromise<Binary?>) {}
 
     private fun buildProjectAndGetBinaryArtifactPath(
         project: Project,
@@ -153,6 +156,11 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
         processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
         ApplicationManager.getApplication().invokeLater {
+            if (!checkToolchainConfigured(project)) {
+                promise.setResult(null)
+                return@invokeLater
+            }
+
             RunContentExecutor(project, processForUser)
                 .apply { state.createFilters().forEach { withFilter(it) } }
                 .withAfterCompletion {
@@ -166,10 +174,11 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
 
                         override fun run(indicator: ProgressIndicator) {
                             indicator.isIndeterminate = true
-                            if (!checkToolchain(project)) {
-                                promise.setResult(null)
+                            if (!checkToolchainSupported(state)) {
+                                result = BuildResult.UnsupportedToolchain
                                 return
                             }
+
                             val processForJson = CapturingProcessHandler(cargo.toGeneralCommandLine(command.prependArgument("--message-format=json")))
                             val output = processForJson.runProcessWithProgressIndicator(indicator)
                             if (output.isCancelled || output.exitCode != 0) {
@@ -211,9 +220,8 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
 
                         override fun onSuccess() {
                             when (val result = result!!) {
-                                is RsAsyncRunner.BuildResult.MSVCToolchain -> {
-                                    project.showErrorDialog("MSVC toolchain is not supported. Please use GNU toolchain.")
-                                    promise.setResult(null)
+                                is RsAsyncRunner.BuildResult.UnsupportedToolchain -> {
+                                    processUnsupportedToolchain(project, promise)
                                 }
                                 is RsAsyncRunner.BuildResult.Binaries -> {
                                     val binaries = result.paths
@@ -243,7 +251,7 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
         return promise
     }
 
-    private fun Project.showErrorDialog(message: String) {
+    protected fun Project.showErrorDialog(message: String) {
         Messages.showErrorDialog(this, message, errorMessageTitle)
     }
 }
