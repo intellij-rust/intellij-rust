@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -282,6 +283,32 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo {
             () => {};
         }
+    """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/3642
+    fun `test issue 3642 1`() = stubOnlyResolve("""
+    //- lib.rs
+        use dep_lib_target::foobar::*;
+        fn bar() {
+            foo!();
+        } //^ unresolved
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/3642
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test issue 3642 2`() = stubOnlyResolve("""
+    //- lib.rs
+        use dep_lib_target::*;
+        fn bar() {
+            foo!();
+        } //^ unresolved
+    //- dep-lib/lib.rs
+        pub use self::*;
     """)
 
     fun `test local definition wins over imported by use item`() = stubOnlyResolve("""
