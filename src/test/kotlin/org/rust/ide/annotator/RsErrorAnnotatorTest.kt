@@ -1467,4 +1467,17 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         
         <error descr="`extern crate self` requires `as name`">extern crate self;</error>
     """)
+
+    fun `test expected function E0618`() = checkErrors("""
+        struct S1;
+        struct S2();
+        enum E { V1, V2(), V3 {} }
+        fn main() {
+            <error descr="Expected function, found `S1` [E0618]">S1</error>();
+            S2();
+            <error>E::V1</error>();
+            E::V2();
+            <error>E::V3</error>();
+        }
+    """)
 }
