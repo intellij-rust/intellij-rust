@@ -43,9 +43,11 @@ import java.util.concurrent.ConcurrentMap
  */
 class RsResolveCache(messageBus: MessageBus) {
     /** The cache is cleared on [RsPsiManager.rustStructureModificationTracker] increment */
-    private val rustStructureDependentCache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
+    @Volatile
+    private var rustStructureDependentCache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
     /** The cache is cleared on [ANY_PSI_CHANGE_TOPIC] event */
-    private val anyPsiChangeDependentCache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
+    @Volatile
+    private var anyPsiChangeDependentCache: ConcurrentMap<PsiElement, Any?> = createWeakMap()
     private val guard = RecursionManager.createGuard("RsResolveCache")
 
     init {
@@ -54,7 +56,10 @@ class RsResolveCache(messageBus: MessageBus) {
             override fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?) = onRustStructureChanged()
         })
         connection.subscribe(ANY_PSI_CHANGE_TOPIC, object : AnyPsiChangeListener {
-            override fun afterPsiChanged(isPhysical: Boolean) = anyPsiChangeDependentCache.clear()
+            override fun afterPsiChanged(isPhysical: Boolean) {
+                anyPsiChangeDependentCache = createWeakMap()
+            }
+
             override fun beforePsiChanged(isPhysical: Boolean) {}
         })
         connection.subscribe(RUST_PSI_CHANGE_TOPIC, object : RustPsiChangeListener {
@@ -139,7 +144,7 @@ class RsResolveCache(messageBus: MessageBus) {
 
     private fun onRustStructureChanged() {
         Testmarks.rustStructureDependentCacheCleared.hit()
-        rustStructureDependentCache.clear()
+        rustStructureDependentCache = createWeakMap()
     }
 
     private fun onRustPsiChanged(element: PsiElement) {
