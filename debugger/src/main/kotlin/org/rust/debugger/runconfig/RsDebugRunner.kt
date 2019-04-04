@@ -20,6 +20,8 @@ import com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchainsConfigurable
+import com.jetbrains.cidr.toolchains.OSType
+import org.jetbrains.concurrency.AsyncPromise
 import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.RsAsyncRunner
 import org.rust.debugger.settings.RsDebuggerSettings
@@ -52,7 +54,7 @@ class RsDebugRunner : RsAsyncRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESS
             .runContentDescriptor
     }
 
-    override fun checkToolchain(project: Project): Boolean {
+    override fun checkToolchainConfigured(project: Project): Boolean {
         val toolchains = CPPToolchains.getInstance()
         val toolchain = toolchains.defaultToolchain
         if (toolchain == null) {
@@ -64,5 +66,13 @@ class RsDebugRunner : RsAsyncRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESS
             return false
         }
         return true
+    }
+
+    override fun checkToolchainSupported(state: CargoRunStateBase): Boolean =
+        !(CPPToolchains.getInstance().osType == OSType.WIN && "msvc" in state.rustVersion().rustc?.host.orEmpty())
+
+    override fun processUnsupportedToolchain(project: Project, promise: AsyncPromise<Binary?>) {
+        project.showErrorDialog("MSVC toolchain is not supported. Please use GNU toolchain.")
+        promise.setResult(null)
     }
 }
