@@ -23,6 +23,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnit
@@ -72,9 +73,19 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(holder, o)
             override fun visitPolybound(o: RsPolybound) = checkPolybound(holder, o)
             override fun visitTraitRef(o: RsTraitRef) = checkTraitRef(holder, o)
+            override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
+        val path = (o.expr as? RsPathExpr)?.path ?: return
+        val deepResolve = path.reference.deepResolve()
+        val owner = deepResolve as? RsFieldsOwner ?: return
+        if (owner.tupleFields == null) {
+            RsDiagnostic.ExpectedFunction(o).addToHolder(holder)
+        }
     }
 
     private fun checkTraitRef(holder: AnnotationHolder, o: RsTraitRef) {
