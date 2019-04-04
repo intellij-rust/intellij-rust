@@ -441,8 +441,8 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let test: Vec<i32> = Vec::new();
             let a = test.into_iter()
-                .filter(|x| x < 30)
-                .filter(|x| x > 10)
+                .filter(|x| *x < 30)
+                .filter(|x| *x > 10)
                 .filter(|x| x % 2 == 0)
                 .next().unwrap();
             a;
@@ -711,5 +711,15 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
           //^ String
         }
+    """)
+
+    fun `test overloaded add String + &String`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = String::new();
+            let b = String::new();
+            let c = a + &b;
+            c;
+        } //^ String
     """)
 }
