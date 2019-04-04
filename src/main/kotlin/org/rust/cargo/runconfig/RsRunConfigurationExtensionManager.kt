@@ -6,8 +6,8 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.configuration.RunConfigurationExtensionsManager
+import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.components.service
@@ -18,24 +18,32 @@ class RsRunConfigurationExtensionManager : RunConfigurationExtensionsManager<Car
         configuration: CargoCommandConfiguration,
         handler: ProcessHandler,
         environment: ExecutionEnvironment,
-        runnerSettings: RunnerSettings?,
-        runnerId: String,
         context: ConfigurationExtensionContext
     ) {
-        processEnabledExtensions(configuration, runnerSettings) {
-            it.attachToProcess(configuration, handler, environment, runnerSettings, runnerId, context)
+        processEnabledExtensions(configuration, environment.runnerSettings) {
+            it.attachToProcess(configuration, handler, environment, context)
         }
     }
 
     fun patchCommandLine(
         configuration: CargoCommandConfiguration,
-        runnerSettings: RunnerSettings?,
+        environment: ExecutionEnvironment,
         cmdLine: GeneralCommandLine,
-        runnerId: String,
         context: ConfigurationExtensionContext
     ) {
-        processEnabledExtensions(configuration, runnerSettings) {
-            it.patchCommandLine(configuration, runnerSettings, cmdLine, runnerId, context)
+        processEnabledExtensions(configuration, environment.runnerSettings) {
+            it.patchCommandLine(configuration, environment, cmdLine, context)
+        }
+    }
+
+    fun patchCommandLineState(
+        configuration: CargoCommandConfiguration,
+        environment: ExecutionEnvironment,
+        state: CommandLineState,
+        context: ConfigurationExtensionContext
+    ) {
+        processEnabledExtensions(configuration, environment.runnerSettings) {
+            it.patchCommandLineState(configuration, environment, state, context)
         }
     }
 
