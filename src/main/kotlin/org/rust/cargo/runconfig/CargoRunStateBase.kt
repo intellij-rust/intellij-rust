@@ -27,7 +27,7 @@ abstract class CargoRunStateBase(
 ) : CommandLineState(environment) {
     private val toolchain: RustToolchain = config.toolchain
     val commandLine: CargoCommandLine = config.cmd
-    private val cargoProject: CargoProject? = CargoCommandConfiguration.findCargoProject(
+    val cargoProject: CargoProject? = CargoCommandConfiguration.findCargoProject(
         environment.project,
         commandLine.additionalArguments,
         commandLine.workingDirectory

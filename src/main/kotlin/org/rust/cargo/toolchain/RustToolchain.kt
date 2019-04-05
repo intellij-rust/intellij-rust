@@ -88,7 +88,8 @@ data class RustToolchain(val location: Path) {
 data class RustcVersion(
     val semver: SemVer,
     val host: String,
-    val channel: RustChannel
+    val channel: RustChannel,
+    val commitHash: String?
 )
 
 private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
@@ -110,11 +111,13 @@ private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
     //  ```
     val releaseRe = """release: (\d+\.\d+\.\d+)(.*)""".toRegex()
     val hostRe = "host: (.*)".toRegex()
+    val commitHashRe = "commit-hash: ([A-Fa-f0-9]{40})".toRegex()
     val find = { re: Regex -> lines.mapNotNull { re.matchEntire(it) }.firstOrNull() }
 
     val releaseMatch = find(releaseRe) ?: return null
     val hostText = find(hostRe)?.groups?.get(1)?.value ?: return null
     val versionText = releaseMatch.groups[1]?.value ?: return null
+    val commitHash = find(commitHashRe)?.groups?.get(1)?.value
 
     val semVer = SemVer.parseFromText(versionText) ?: return null
 
@@ -125,7 +128,7 @@ private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
         releaseSuffix.startsWith("-nightly") -> RustChannel.NIGHTLY
         else -> RustChannel.DEFAULT
     }
-    return RustcVersion(semVer, hostText, channel)
+    return RustcVersion(semVer, hostText, channel, commitHash)
 }
 
 private object Suggestions {
