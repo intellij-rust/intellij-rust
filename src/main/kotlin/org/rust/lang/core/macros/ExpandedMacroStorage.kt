@@ -17,6 +17,8 @@ import com.intellij.psi.PsiAnchor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.StubBasedPsiElement
+import com.intellij.psi.stubs.StubTree
+import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.reference.SoftReference
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
@@ -24,12 +26,10 @@ import org.rust.lang.core.macros.MacroExpansionManagerImpl.Testmarks
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.ext.bodyHash
-import org.rust.lang.core.psi.ext.containingCargoTarget
-import org.rust.lang.core.psi.ext.resolveToMacro
-import org.rust.lang.core.psi.ext.stubDescendantsOfTypeStrict
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.lang.core.stubs.RsMacroCallStub
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import java.io.DataInputStream
@@ -323,7 +323,7 @@ class SourceFile(
 
     private fun freshRebind(prefetchedCalls: List<RsMacroCall>?) {
         val psi = recoverPsi() ?: return
-        val calls = prefetchedCalls ?: psi.stubDescendantsOfTypeStrict<RsMacroCall>().filter { it.isTopLevelExpansion }
+        val calls = prefetchedCalls ?: getMacroCallsInFile(psi)
         for (call in calls) {
             val info1 = ExpandedMacroInfo(this, null, null, call.bodyHash)
             info1.bindAndUpdateStubIndex(call)
@@ -337,7 +337,7 @@ class SourceFile(
         Testmarks.hashBasedRebind.hit()
 
         val psi = recoverPsi() ?: return
-        val calls = prefetchedCalls ?: psi.stubDescendantsOfTypeStrict<RsMacroCall>().filter { it.isTopLevelExpansion }
+        val calls = prefetchedCalls ?: getMacroCallsInFile(psi)
         val unboundInfos = infos.toMutableList()
         unboundInfos.forEach {
             it.cachedMacroCall = null
@@ -380,6 +380,24 @@ class SourceFile(
                 error("Duplicate ${element.text}")
             }
         }
+    }
+
+    private fun getMacroCallsInFile(psi: RsFile): List<RsMacroCall> {
+        // We could use simple
+        // RsMacroCallIndex.getMacroCalls(project, GlobalSearchScope.fileScope(project, psi.virtualFile))
+        // here, but it is too slow to do stub index lookup for single file.
+        //
+        // We check that the file has macro calls without accessing `psi.stub` because `psi.stub`
+        // will store a stub in SoftReference, that leads to to large memory consumption
+        if (psi.derefStub() == null && psi.treeElement == null) {
+            val tree = StubTreeLoader.getInstance().readFromVFile(project, psi.virtualFile) as? StubTree
+            val stub = tree?.root
+            if (stub != null && getStubDescendantsOfType(stub, true, RsMacroCallStub::class.java).isEmpty()) {
+                return emptyList()
+            }
+        }
+
+        return psi.stubDescendantsOfTypeStrict<RsMacroCall>().filter { it.isTopLevelExpansion }
     }
 
     private fun isBoundToPsi() =

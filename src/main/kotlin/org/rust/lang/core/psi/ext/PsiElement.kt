@@ -171,6 +171,33 @@ fun <T : PsiElement> getStubDescendantOfType(
     }
 }
 
+fun <T : StubElement<*>> getStubDescendantsOfType(
+    stub: StubElement<*>,
+    strict: Boolean,
+    aClass: Class<T>
+): Collection<T> {
+    val result = SmartList<T>()
+
+    fun go(childrenStubs: List<StubElement<*>>) {
+        for (childStub in childrenStubs) {
+            if (aClass.isInstance(childStub)) {
+                result.add(aClass.cast(childStub))
+            } else {
+                go(childStub.childrenStubs)
+            }
+        }
+
+    }
+
+    if (strict) {
+        go(stub.childrenStubs)
+    } else {
+        go(listOf(stub))
+    }
+
+    return result
+}
+
 /**
  * Same as [PsiElement.getContainingFile], but return a "fake" file. See [org.rust.lang.core.macros.RsExpandedElement].
  */
