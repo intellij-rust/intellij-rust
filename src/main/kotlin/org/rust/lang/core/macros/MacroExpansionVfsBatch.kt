@@ -7,12 +7,17 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.util.io.*
 import org.apache.commons.lang.RandomStringUtils
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
 interface MacroExpansionVfsBatch {
     interface Path {
@@ -31,7 +36,7 @@ interface MacroExpansionVfsBatch {
 class LocalFsMacroExpansionVfsBatch(
     private val realFsExpansionContentRoot: Path
 ) : MacroExpansionVfsBatch {
-    private val batch: VfsBatch = RefreshBasedVfsBatch()
+    private val batch: VfsBatch = createEventBasedVfsBatch()
 
     override fun resolve(file: VirtualFile): MacroExpansionVfsBatch.Path =
         PathImpl.VFile(file)
@@ -79,7 +84,7 @@ class LocalFsMacroExpansionVfsBatch(
 }
 
 abstract class VfsBatch {
-    protected val dirEvents: MutableList<DirCreateEvent> = mutableListOf()
+    protected val dirEvents: MutableList<DirCreateEvent> = LinkedList()
     protected val fileEvents: MutableList<Event> = mutableListOf()
 
     fun Path.createFile(name: String, content: String): Path =
@@ -90,9 +95,10 @@ abstract class VfsBatch {
         val child = parent.resolve(name)
         check(!child.exists())
         child.createFile()
-        child.write(content) // UTF-8
+        val data = content.toByteArray() // UTF-8
+        Files.write(child, data)
 
-        fileEvents.add(Event.Create(parent, name, content))
+        fileEvents.add(Event.Create(parent, name, child.lastModified().toMillis(), data.size))
         return child
     }
 
@@ -122,7 +128,7 @@ abstract class VfsBatch {
         check(file.isFile())
         file.write(content) // UTF-8
 
-        fileEvents.add(Event.Write(file, content))
+        fileEvents.add(Event.Write(file))
     }
 
     fun deleteFile(file: Path) {
@@ -136,31 +142,46 @@ abstract class VfsBatch {
     protected class DirCreateEvent(val parent: Path, val name: String)
 
     protected sealed class Event {
-        class Create(val parent: Path, val name: String, val content: String): Event()
-        class Write(val file: Path, val content: String): Event()
+        class Create(val parent: Path, val name: String, val lastModified: Long, val length: Int): Event()
+        class Write(val file: Path): Event()
         class Delete(val file: Path): Event()
     }
 
 }
 
-class RefreshBasedVfsBatch : VfsBatch() {
+abstract class EventBasedVfsBatch : VfsBatch() {
     override fun applyToVfs() {
         checkWriteAccessAllowed()
+        if (dirEvents.isEmpty() && fileEvents.isEmpty()) return
 
-        if (fileEvents.isNotEmpty() || dirEvents.isNotEmpty()) {
-            val files = dirEvents.map { it.toFile().toFile() } + fileEvents.map { it.toFile().toFile() }
-            LocalFileSystem.getInstance().refreshIoFiles(files, /* async = */ false, /* recursive = */ false, null)
-            fileEvents.clear()
+        val manager = VirtualFileManager.getInstance() as VirtualFileManagerEx
+        manager.fireBeforeRefreshStart(/*asynchronous = */ false)
+        try {
+            val events = mutableListOf<VFileEvent>()
+            while (!dirEvents.isEmpty()) {
+                val iter = dirEvents.iterator()
+                while (iter.hasNext()) {
+                    val event = iter.next().toVFileEvent()
+                    if (event != null) {
+                        iter.remove()
+                        events.add(event)
+                    }
+                }
+                check(events.isNotEmpty())
+                PersistentFS.getInstance().processEvents(events)
+                events.clear()
+            }
+
+            if (fileEvents.isNotEmpty()) {
+                PersistentFS.getInstance().processEvents(fileEvents.map { it.toVFileEvent()!! })
+                fileEvents.clear()
+            }
+        } finally {
+            manager.fireAfterRefreshFinish(/*asynchronous = */ false)
         }
     }
 
-    private fun DirCreateEvent.toFile(): Path {
-        return parent.resolve(name)
-    }
+    protected abstract fun DirCreateEvent.toVFileEvent(): VFileEvent?
 
-    private fun Event.toFile(): Path = when (this) {
-        is Event.Create -> parent.resolve(name)
-        is Event.Write -> file
-        is Event.Delete -> file
-    }
+    protected abstract fun Event.toVFileEvent(): VFileEvent?
 }
