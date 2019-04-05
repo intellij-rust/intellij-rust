@@ -33,6 +33,20 @@ class RsLocalDebugProcess(
         }
     }
 
+    fun loadRustcSources(sysroot: String, commitHash: String) {
+        postCommand { driver ->
+            val sourceMapCommand = when (driver) {
+                is LLDBDriver -> "settings set target.source-map"
+                is GDBDriver -> "set substitute-path"
+                else -> return@postCommand
+            }
+            val rustcHash = "/rustc/$commitHash/".systemDependentAndEscaped()
+            val rustcSources = "$sysroot/lib/rustlib/src/rust/".systemDependentAndEscaped()
+            val fullCommand = """$sourceMapCommand "$rustcHash" "$rustcSources" """
+            driver.executeConsoleCommand(currentThreadId, currentFrameIndex, fullCommand)
+        }
+    }
+
     private fun LLDBDriver.loadPrettyPrinters(threadId: Long, frameIndex: Int, sysroot: String?, renderers: LLDBRenderers) {
         when (renderers) {
             LLDBRenderers.COMPILER -> {
