@@ -19,8 +19,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiElement
@@ -35,6 +37,8 @@ import com.intellij.util.indexing.IndexableFileSet
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.UIUtil
 import org.apache.commons.lang.RandomStringUtils
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.CargoProject
@@ -62,6 +66,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicReference
 
 interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
@@ -603,7 +608,7 @@ private class MacroExpansionTaskQueue(val project: Project) {
     private val processor = QueueProcessor<ContinuableRunnable>(
         PairConsumer { obj, t -> obj.run(t) },
         true,
-        ThreadToUse.AWT,
+        ThreadToUse.POOLED,
         project.disposed
     )
 
@@ -656,40 +661,56 @@ private class MacroExpansionTaskQueue(val project: Project) {
     }
 
     private class BackgroundableTaskData(val task: Task.Backgroundable) : ContinuableRunnable {
-        private var state: State = State.Pending
+        private var state: AtomicReference<State> = AtomicReference(State.Pending)
 
-        @Synchronized
         override fun run(continuation: Runnable) {
-            // BackgroundableProcessIndicator should be created from EDT
-            checkIsDispatchThread()
-            if (state != State.Pending) {
+            checkIsBackgroundThread()
+            if (state.get() != State.Pending) {
                 continuation.run()
                 return
             }
 
-            val indicator = when {
-                ApplicationManager.getApplication().isHeadlessEnvironment ->
-                    EmptyProgressIndicator()
-
-                task is MacroExpansionTaskBase && task.isProgressBarDelayed ->
-                    DelayedBackgroundableProcessIndicator(task, 2000)
-
-                else -> BackgroundableProcessIndicator(task)
+            if (task is MacroExpansionTaskBase) {
+                val dumbService = DumbService.getInstance(task.project)
+                while (dumbService.isDumb && !task.project.isDisposed) {
+                    Thread.sleep(10)
+                    if (state.get() != State.Pending) {
+                        continuation.run()
+                        return
+                    }
+                }
             }
 
-            state = State.Running(indicator)
+            val indicator = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+                EmptyProgressIndicator()
+            } else {
+                // BackgroundableProcessIndicator should be created from EDT
+                UIUtil.invokeAndWaitIfNeeded(Computable {
+                    if (task is MacroExpansionTaskBase && task.isProgressBarDelayed) {
+                        DelayedBackgroundableProcessIndicator(task, 2000)
+                    } else {
+                        BackgroundableProcessIndicator(task)
+                    }
+                })
+            }
+
+            if (!state.compareAndSet(State.Pending, State.Running(indicator))) {
+                indicator.cancel()
+                if (indicator is Disposable) {
+                    EdtInvocationManager.getInstance().invokeAndWait { Disposer.dispose(indicator) }
+                }
+                continuation.run()
+                return
+            }
 
             val pm = ProgressManager.getInstance() as ProgressManagerImpl
             pm.runProcessWithProgressAsynchronously(task, indicator, continuation, ModalityState.NON_MODAL)
         }
 
-        @Synchronized
         fun cancel() {
-            val state = state
-            when (state) {
-                State.Pending -> this.state = State.Canceled
-                is State.Running -> state.indicator.cancel()
-                State.Canceled -> Unit
+            val oldState = state.getAndSet(State.Canceled)
+            if (oldState is State.Running) {
+                oldState.indicator.cancel()
             }
         }
 
