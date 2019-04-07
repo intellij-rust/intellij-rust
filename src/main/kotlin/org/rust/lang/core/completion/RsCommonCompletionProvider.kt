@@ -51,7 +51,8 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         // This set will contain the names of all paths that have been added to the `result` by this provider.
         val processedPathNames = hashSetOf<String>()
 
-        collectCompletionVariants(result) {
+        val isSimplePath = simplePathPattern.accepts(parameters.position)
+        collectCompletionVariants(result, isSimplePath) {
             when (element) {
                 is RsAssocTypeBinding -> processAssocTypeVariants(element, it)
                 is RsExternCrateItem -> processExternCrateResolveVariants(element, true, it)
@@ -84,15 +85,19 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         }
 
         if (element is RsMethodOrField) {
-            addMethodAndFieldCompletion(element, result)
+            addMethodAndFieldCompletion(element, result, isSimplePath)
         }
 
-        if (RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
+        if (isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
             addCompletionsFromIndex(parameters, result, processedPathNames)
         }
     }
 
-    private fun addMethodAndFieldCompletion(element: RsMethodOrField, result: CompletionResultSet) {
+    private fun addMethodAndFieldCompletion(
+        element: RsMethodOrField,
+        result: CompletionResultSet,
+        forSimplePath: Boolean
+    ) {
         val lookup = ImplLookup.relativeTo(element)
         val receiver = CompletionUtil.getOriginalOrSelf(element.receiver).type
         val processResolveVariants = if (element is RsMethodCall) {
@@ -100,7 +105,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         } else {
             ::processDotExprResolveVariants
         }
-        val processor = methodAndFieldCompletionProcessor(element, result)
+        val processor = methodAndFieldCompletionProcessor(element, result, forSimplePath)
 
         processResolveVariants(
             lookup,
@@ -117,7 +122,6 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         result: CompletionResultSet,
         processedPathNames: Set<String>
     ) {
-        if (!simplePathPattern.accepts(parameters.position)) return
         // We use the position in the original file in order not to process empty paths
         val path = parameters.originalPosition?.parent as? RsPath ?: return
         if (TyPrimitive.fromPath(path) != null) return
@@ -146,15 +150,26 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                 .distinctBy { it.qualifiedNamedItem.item }
                 .map { candidate ->
                     val item = candidate.qualifiedNamedItem.item
-                    createLookupElement(item, elementName, candidate.info.usePath, object : RsDefaultInsertHandler() {
-                        override fun handleInsert(element: RsElement, scopeName: String, context: InsertionContext, item: LookupElement) {
-                            super.handleInsert(element, scopeName, context, item)
-                            context.commitDocument()
-                            if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
-                                context.getElementOfType<RsElement>()?.let { candidate.import(it) }
+                    createLookupElement(
+                        item,
+                        elementName,
+                        true,
+                        candidate.info.usePath,
+                        object : RsDefaultInsertHandler() {
+                            override fun handleInsert(
+                                element: RsElement,
+                                scopeName: String,
+                                context: InsertionContext,
+                                item: LookupElement
+                            ) {
+                                super.handleInsert(element, scopeName, context, item)
+                                context.commitDocument()
+                                if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
+                                    context.getElementOfType<RsElement>()?.let { candidate.import(it) }
+                                }
                             }
                         }
-                    })
+                    )
                 }
                 .forEach(result::addElement)
         }
@@ -248,23 +263,34 @@ private fun filterMethodCompletionVariantsByTraitBounds(
 
 private fun methodAndFieldCompletionProcessor(
     element: RsMethodOrField,
-    result: CompletionResultSet
+    result: CompletionResultSet,
+    forSimplePath: Boolean
 ): RsResolveProcessor = fun(e: ScopeEntry): Boolean {
     when (e) {
-        is FieldResolveVariant -> result.addElement(createLookupElement(e.element, e.name))
+        is FieldResolveVariant -> result.addElement(createLookupElement(e.element, e.name, forSimplePath))
         is MethodResolveVariant -> {
             if (e.element.isTest) return false
             val traitImportCandidate = findTraitImportCandidate(element, e)
 
-            result.addElement(createLookupElement(e.element, e.name, insertHandler = object : RsDefaultInsertHandler() {
-                override fun handleInsert(element: RsElement, scopeName: String, context: InsertionContext, item: LookupElement) {
-                    super.handleInsert(element, scopeName, context, item)
-                    context.commitDocument()
-                    if (traitImportCandidate != null) {
-                        context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
+            result.addElement(createLookupElement(
+                e.element,
+                e.name,
+                forSimplePath,
+                insertHandler = object : RsDefaultInsertHandler() {
+                    override fun handleInsert(
+                        element: RsElement,
+                        scopeName: String,
+                        context: InsertionContext,
+                        item: LookupElement
+                    ) {
+                        super.handleInsert(element, scopeName, context, item)
+                        context.commitDocument()
+                        if (traitImportCandidate != null) {
+                            context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
+                        }
                     }
                 }
-            }))
+            ))
         }
     }
     return false

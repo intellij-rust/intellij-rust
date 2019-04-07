@@ -64,6 +64,38 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "a"
     ))
 
+    fun `test locals before non-locals`() = doTest("""
+        struct foo2;
+        const foo3: () = ();
+        fn foo4() {}
+        macro_rules! foo5 {}
+
+        enum E { foo1 }
+        use E::foo1;
+
+        fn bar(foo5: ()) {
+            let foo6 = 0;
+            struct foo7;
+            const foo8: () = ();
+            fn foo9() {}
+            macro_rules! foo10 {}
+
+            foo/*caret*/
+        }
+    """, listOf(
+        RsPatBinding::class to "foo5",
+        RsPatBinding::class to "foo6",
+        RsStructItem::class to "foo7",
+        RsConstant::class to "foo8",
+        RsFunction::class to "foo9",
+        RsMacro::class to "foo10",
+        RsEnumVariant::class to "foo1",
+        RsStructItem::class to "foo2",
+        RsConstant::class to "foo3",
+        RsFunction::class to "foo4",
+        RsMacro::class to "foo5"
+    ))
+
     private fun doTest(@Language("Rust") code: String, expected: List<Pair<KClass<out RsNamedElement>, String>>) {
         InlineFile(code).withCaret()
         val elements = myFixture.completeBasic()

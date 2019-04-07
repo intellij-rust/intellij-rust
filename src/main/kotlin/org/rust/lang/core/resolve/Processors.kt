@@ -100,11 +100,11 @@ fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Un
     return result
 }
 
-fun collectCompletionVariants(result: CompletionResultSet, f: (RsResolveProcessor) -> Unit) {
+fun collectCompletionVariants(result: CompletionResultSet, forSimplePath: Boolean, f: (RsResolveProcessor) -> Unit) {
     f { e ->
         val element = e.element ?: return@f false
         if (element is RsFunction && element.isTest) return@f false
-        result.addElement(createLookupElement(element, e.name))
+        result.addElement(createLookupElement(element, e.name, forSimplePath))
         false
     }
 }
