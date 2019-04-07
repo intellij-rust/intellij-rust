@@ -23,16 +23,15 @@ import org.rust.lang.core.psi.ext.owner
 abstract class RsNamingInspection(
     val elementType: String,
     val styleName: String,
-    val lint: RsLint,
     private val elementTitle: String = elementType
-) : RsLocalInspectionTool() {
+) : RsLintInspection() {
     override fun getDisplayName() = "$elementTitle naming convention"
 
     fun inspect(id: PsiElement?, holder: ProblemsHolder, fix: Boolean = true) {
         if (id == null) return
         val name = id.unescapedText
         val (isOk, suggestedName) = checkName(name)
-        if (isOk || suggestedName == null || lint.levelFor(id) == RsLintLevel.ALLOW) return
+        if (isOk || suggestedName == null) return
 
         val fixEl = id.parent
         val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
@@ -51,7 +50,9 @@ abstract class RsNamingInspection(
 open class RsCamelCaseNamingInspection(
     elementType: String,
     elementTitle: String = elementType
-) : RsNamingInspection(elementType, "a camel", RsLint.NonCamelCaseTypes, elementTitle) {
+) : RsNamingInspection(elementType, "a camel", elementTitle) {
+
+    override val lint: RsLint = RsLint.NonCamelCaseTypes
 
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
@@ -88,7 +89,10 @@ open class RsCamelCaseNamingInspection(
 /**
  * Checks if the name is snake_case.
  */
-open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection(elementType, "a snake", RsLint.NonSnakeCase) {
+open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection(elementType, "a snake") {
+
+    override val lint: RsLint = RsLint.NonSnakeCase
+
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
         if (!str.isEmpty() && str.all { !it.isLetter() || it.isLowerCase() }) {
@@ -101,7 +105,10 @@ open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection
 /**
  * Checks if the name is UPPER_CASE.
  */
-open class RsUpperCaseNamingInspection(elementType: String) : RsNamingInspection(elementType, "an upper", RsLint.NonUpperCaseGlobals) {
+open class RsUpperCaseNamingInspection(elementType: String) : RsNamingInspection(elementType, "an upper") {
+
+    override val lint: RsLint = RsLint.NonUpperCaseGlobals
+
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
         if (!str.isEmpty() && str.all { !it.isLetter() || it.isUpperCase() }) {
