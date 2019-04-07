@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.io.storage.HeavyProcessLatch
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMembers
@@ -55,21 +56,23 @@ abstract class MacroExpansionTaskBase(
         expansionSteps = getMacrosToExpand().iterator()
 
         indicator.checkCanceled()
-        submitExpansionTask()
+        HeavyProcessLatch.INSTANCE.processStarted("Expanding Rust macros").use {
+            submitExpansionTask()
 
-        MACRO_LOG.trace("Awaiting")
-        val millis = measureNanoTime {
-            // 50ms - default progress bar update interval. See [ProgressDialog.UPDATE_INTERVAL]
-            while (!sync.await(50, TimeUnit.MILLISECONDS)) {
-                indicator.fraction = (currentStep.get() - 1.0 + (doneStages.get().toDouble() / max(estimateStages.get(), 1))) / DEFAULT_RECURSION_LIMIT
+            MACRO_LOG.trace("Awaiting")
+            val millis = measureNanoTime {
+                // 50ms - default progress bar update interval. See [ProgressDialog.UPDATE_INTERVAL]
+                while (!sync.await(50, TimeUnit.MILLISECONDS)) {
+                    indicator.fraction = (currentStep.get() - 1.0 + (doneStages.get().toDouble() / max(estimateStages.get(), 1))) / DEFAULT_RECURSION_LIMIT
 
-                // Type of [indicator] can be [BackgroundableProcessIndicator] which is thread sensitive
-                // and its `checkCanceled` method should be used only from a single thread.
-                // So we propagating cancellation. See [ProgressWindow.MyDelegate.checkCanceled].
-                if (indicator.isCanceled && !subTaskIndicator.isCanceled) subTaskIndicator.cancel()
+                    // Type of [indicator] can be [BackgroundableProcessIndicator] which is thread sensitive
+                    // and its `checkCanceled` method should be used only from a single thread.
+                    // So we propagating cancellation. See [ProgressWindow.MyDelegate.checkCanceled].
+                    if (indicator.isCanceled && !subTaskIndicator.isCanceled) subTaskIndicator.cancel()
+                }
             }
+            MACRO_LOG.trace("Task completed! ${totalExpanded.get()} total calls, millis: " + millis / 1_000_000)
         }
-        MACRO_LOG.trace("Task completed! ${totalExpanded.get()} total calls, millis: " + millis / 1_000_000)
     }
 
     private fun submitExpansionTask() {
