@@ -266,5 +266,6 @@ class TransactionExecutor(val project: Project) : Executor {
 fun <T> executeUnderProgress(indicator: ProgressIndicator, action: () -> T): T {
     var result: T? = null
     ProgressManager.getInstance().executeProcessUnderProgress({ result = action() }, indicator)
-    return result!!
+    @Suppress("UNCHECKED_CAST")
+    return result ?: (null as T)
 }
