@@ -19,9 +19,18 @@ class RsModuleNamingInspectionTest : RsInspectionsTestBase(RsModuleNamingInspect
         mod moduleA {}
     """)
 
-    fun `test modules suppression bad style`() = checkByText("""
+    fun `test modules suppression bad style 1`() = checkByText("""
         #[allow(bad_style)]
         mod moduleA {}
+    """)
+
+    fun `test modules suppression bad style 2`() = checkByFileTree("""
+    //- main.rs
+        #![allow(bad_style)]
+
+        mod x;
+    //- x.rs
+        mod moduleA/*caret*/ {}
     """)
 
     fun `test modules fix`() = checkFixByText("Rename to `mod_foo`", """
