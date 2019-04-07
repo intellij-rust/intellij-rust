@@ -22,8 +22,10 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
-const val KEYWORD_PRIORITY = 10.0
+const val KEYWORD_PRIORITY = 20.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
+private const val LOCAL_PRIORITY = 10.0
+private const val VARIABLE_PRIORITY = 5.0
 private const val ENUM_VARIANT_PRIORITY = 4.0
 private const val FIELD_DECL_PRIORITY = 3.0
 private const val INHERENT_IMPL_MEMBER_PRIORITY = 2.0
@@ -34,6 +36,7 @@ private const val DEPRECATED_PRIORITY = -1.0
 fun createLookupElement(
     element: RsElement,
     scopeName: String,
+    forSimplePath: Boolean,
     locationString: String? = null,
     insertHandler: InsertHandler<LookupElement> = RsDefaultInsertHandler()
 ): LookupElement {
@@ -41,13 +44,19 @@ fun createLookupElement(
         .withInsertHandler(insertHandler)
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
 
-    val priority = when {
+    var priority = when {
         element is RsDocAndAttributeOwner && element.queryAttributes.deprecatedAttribute != null -> DEPRECATED_PRIORITY
         element is RsMacro -> MACRO_PRIORITY
+        element is RsPatBinding -> VARIABLE_PRIORITY
         element is RsEnumVariant -> ENUM_VARIANT_PRIORITY
         element is RsNamedFieldDecl -> FIELD_DECL_PRIORITY
         element is RsAbstractable && element.owner.isInherentImpl -> INHERENT_IMPL_MEMBER_PRIORITY
         else -> DEFAULT_PRIORITY
+    }
+
+    if (forSimplePath && !element.canBeExported) {
+        // It's visible and can't be exported = it's local
+        priority += LOCAL_PRIORITY
     }
 
     return base.withPriority(priority)
@@ -227,3 +236,10 @@ private fun CharSequence.indexOfSkippingSpace(c: Char, startIndex: Int): Int? {
     }
     return null
 }
+
+private val RsElement.canBeExported: Boolean
+    get() {
+        if (this is RsEnumVariant) return true
+        val context = PsiTreeUtil.getContextOfType(this, true, RsItemElement::class.java, RsFile::class.java)
+        return context == null || context is RsMod
+    }
