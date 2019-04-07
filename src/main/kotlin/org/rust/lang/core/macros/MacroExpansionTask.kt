@@ -75,13 +75,15 @@ abstract class MacroExpansionTaskBase(
     private fun submitExpansionTask() {
         checkIsBackgroundThread()
         realTaskIndicator.text2 = "Waiting for index"
-        val extractableList = runReadActionInSmartMode(project) {
-            var extractableList: List<Extractable>?
-            do {
-                extractableList = expansionSteps.nextOrNull()
-                currentStep.incrementAndGet()
-            } while (extractableList != null && extractableList.isEmpty())
-            extractableList
+        val extractableList = executeUnderProgress(subTaskIndicator) {
+            runReadActionInSmartMode(project) {
+                var extractableList: List<Extractable>?
+                do {
+                    extractableList = expansionSteps.nextOrNull()
+                    currentStep.incrementAndGet()
+                } while (extractableList != null && extractableList.isEmpty())
+                extractableList
+            }
         }
 
         if (extractableList == null) {
