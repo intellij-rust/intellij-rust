@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 
 interface RsDocAndAttributeOwner : RsElement, NavigatablePsiElement
@@ -46,6 +47,21 @@ interface RsOuterAttributeOwner : RsDocAndAttributeOwner {
  */
 fun RsOuterAttributeOwner.findOuterAttr(name: String): RsOuterAttr? =
     outerAttrList.find { it.metaItem.name == name }
+
+
+fun RsOuterAttributeOwner.addOuterAttribute(attribute: Attribute, anchor: PsiElement): RsOuterAttr {
+    val attr = RsPsiFactory(project).createOuterAttr(attribute.text)
+    return addBefore(attr, anchor) as RsOuterAttr
+}
+
+fun RsInnerAttributeOwner.addInnerAttribute(attribute: Attribute, anchor: PsiElement): RsInnerAttr {
+    val attr = RsPsiFactory(project).createInnerAttr(attribute.text)
+    return addBefore(attr, anchor) as RsInnerAttr
+}
+
+data class Attribute(val name: String, val argText: String? = null) {
+    val text: String get() = if (argText == null) name else "$name($argText)"
+}
 
 /**
  * Returns [QueryAttributes] for given PSI element.
