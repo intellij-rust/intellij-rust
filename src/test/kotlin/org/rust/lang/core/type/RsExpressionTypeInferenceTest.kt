@@ -1182,13 +1182,30 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     /** part of [issue 2688](https://github.com/intellij-rust/intellij-rust/issues/2688) */
-    fun `test call expr with callee of struct without fields type`() = testExpr("""
+    fun `test call expr with callee of struct without fields type 1`() = testExpr("""
         struct S;
         fn main() {
             let a = S;
             let b = a();
             b;
         } //^ <unknown>
+    """)
+
+    fun `test call expr with callee of struct without fields type 2`() = testExpr("""
+        struct S;
+        fn main() {
+            let a = S();
+            b;
+        } //^ <unknown>
+    """)
+
+    fun `test call expr with callee of struct without fields type 3`() = testExpr("""
+        struct S();
+        fn main() {
+            let a = S;
+            let b = a();
+            b;
+        } //^ S
     """)
 
     fun `test type coercion in tuple`() = testExpr("""
