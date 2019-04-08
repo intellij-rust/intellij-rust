@@ -96,3 +96,34 @@ fun <V> Future<V>.waitForWithCheckCanceled(): V {
         }
     }
 }
+
+/**
+ * Asynchronously applies [action] to each element of [elements] list on [executor].
+ * This function submits next tasks to the [executor] only when previous tasks is finished, so
+ * it is usable when we need to execute a LARGE task on a low-latency executor (e.g. EDT)
+ */
+fun <R, T> executeSequentially(
+    executor: Executor,
+    elements: List<T>,
+    action: (T) -> R
+): CompletableFuture<List<R>> {
+    if (elements.isEmpty()) return CompletableFuture.completedFuture(emptyList())
+    val src = elements.asReversed().toMutableList()
+    val dst = mutableListOf<R>()
+    val future = CompletableFuture<List<R>>()
+    fun go() {
+        try {
+            dst.add(action(src.last()))
+            src.removeLast()
+            if (src.isNotEmpty()) {
+                executor.execute(::go)
+            } else {
+                future.complete(dst)
+            }
+        } catch (t: Throwable) {
+            future.completeExceptionally(t)
+        }
+    }
+    executor.execute(::go)
+    return future
+}
