@@ -63,5 +63,17 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
 
        pub use std::unimplemented;/*caret*/
     """)
+
+    fun `test rustc doc only macro from prelude`() = doSingleCompletion("""
+        fn main() { format_arg/*caret*/ }
+    """, """
+        fn main() { format_args!(/*caret*/) }
+    """)
+
+    fun `test rustc doc only macro from std`() = doSingleCompletion("""
+        fn main() { std::format_arg/*caret*/ }
+    """, """
+        fn main() { std::format_args!(/*caret*/) }
+    """)
 }
 

@@ -610,4 +610,18 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             }           //^
         }
     """)
+
+    fun `test rustc doc only macro from prelude`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            format_args!(true);
+        }   //^ ...libstd/macros.rs
+    """)
+
+    fun `test rustc doc only macro from std`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            std::format_args!(true);
+        }        //^ ...libstd/macros.rs
+    """)
 }
