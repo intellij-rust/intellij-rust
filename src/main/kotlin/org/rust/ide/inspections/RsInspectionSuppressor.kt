@@ -40,7 +40,7 @@ class RsInspectionSuppressor : InspectionSuppressor {
     ) : AbstractBatchSuppressByNoInspectionCommentFix(ID, /* replaceOthers = */ ID == SuppressionUtil.ALL) {
 
         init {
-            text = if (ID == SuppressionUtil.ALL) "Suppress all inspections for item" else "Suppress for item"
+            text = if (ID == SuppressionUtil.ALL) "Suppress all inspections for item" else "Suppress for item with comment"
         }
 
         override fun getContainer(context: PsiElement?): PsiElement? {
