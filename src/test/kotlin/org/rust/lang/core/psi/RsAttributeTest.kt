@@ -47,19 +47,19 @@ class RsAttributeTest : RsTestBase() {
     fun `test file`() = doTest("""
         //^
         #![inner]
-        """, Inner)
+    """, Inner)
 
     fun `test extern crate`() = doTest("""
         #[outer]
         extern crate foo;
         //^
-        """, Outer)
+    """, Outer)
 
     fun `test use`() = doTest("""
         #[outer]
         use foo;
         //^
-        """, Outer)
+    """, Outer)
 
     fun `test mod`() = doTest("""
         #[outer]
@@ -67,13 +67,13 @@ class RsAttributeTest : RsTestBase() {
         //^
             #![inner]
         }
-        """, Both)
+    """, Both)
 
     fun `test mod separate file`() = doTest("""
         #[outer]
         mod m;
         //^
-        """, Outer)
+    """, Outer)
 
     fun `test extern`() = doTest2<RsForeignModItem>("""
         #[outer]
@@ -81,7 +81,7 @@ class RsAttributeTest : RsTestBase() {
         //^
             #![inner]
         }
-        """, Both)
+    """, Both)
 
     fun `test trait`() = doTest("""
         #[outer]
@@ -89,13 +89,13 @@ class RsAttributeTest : RsTestBase() {
         //^
             #![inner]
         }
-        """, Outer)
+    """, Outer)
 
     fun `test struct`() = doTest("""
         #[outer]
         struct S { }
         //^
-        """, Outer)
+    """, Outer)
 
     fun `test struct item`() = doTest("""
         struct S {
@@ -103,7 +103,7 @@ class RsAttributeTest : RsTestBase() {
             s: u16,
           //^
         }
-        """, Outer)
+    """, Outer)
 
     fun `test union`() = doTest("""
         #[outer]
@@ -111,7 +111,7 @@ class RsAttributeTest : RsTestBase() {
         //^
             u1: u16,
         }
-        """, Outer)
+    """, Outer)
 
     fun `test union field`() = doTest("""
         union U {
@@ -120,13 +120,13 @@ class RsAttributeTest : RsTestBase() {
           //^
             u2: i16,
         }
-        """, Outer)
+    """, Outer)
 
     fun `test enum`() = doTest("""
         #[outer]
         enum E { }
         //^
-        """, Outer)
+    """, Outer)
 
     fun `test enum variant`() = doTest("""
         enum E {
@@ -134,7 +134,7 @@ class RsAttributeTest : RsTestBase() {
             EV,
           //^
         }
-        """, Outer)
+    """, Outer)
 
     fun `test impl`() = doTest("""
         struct S { }
@@ -143,7 +143,7 @@ class RsAttributeTest : RsTestBase() {
         //^
             #![inner]
         }
-        """, Both)
+    """, Both)
 
     fun `test impl trait`() = doTest("""
         struct S { }
@@ -153,7 +153,7 @@ class RsAttributeTest : RsTestBase() {
         //^
             #![inner]
         }
-        """, Both)
+    """, Both)
 
     fun `test fn`() = doTest("""
         #[outer]
@@ -161,37 +161,37 @@ class RsAttributeTest : RsTestBase() {
          //^
             #![inner]
         }
-        """, Both)
+    """, Both)
 
     fun `test fn type parameter`() = doTest("""
         fn foo<#[outer] T>( a: u16) {
                       //^
         }
-        """, Outer)
+    """, Outer)
 
     fun `test fn lifetime parameter`() = doTest("""
         fn foo<#[outer] 'a>( a: u16) {
                       //^
         }
-        """, Outer)
+    """, Outer)
 
     fun `test type alias`() = doTest("""
         #[outer]
         type T = u16;
         //^
-        """, Outer)
+    """, Outer)
 
     fun `test const`() = doTest("""
         #[outer]
         const C: u16 = 1;
         //^
-        """, Outer)
+    """, Outer)
 
     fun `test static`() = doTest("""
         #[outer]
         static S: u16 = 1;
         //^
-        """, Outer)
+    """, Outer)
 
     fun `test macro`() = doTest("""
         #[outer]
@@ -199,7 +199,7 @@ class RsAttributeTest : RsTestBase() {
         //^
             () => { };
         }
-        """, Outer)
+    """, Outer)
 
     fun `test macro call`() = doTest("""
         macro_rules! makro {
@@ -209,17 +209,15 @@ class RsAttributeTest : RsTestBase() {
         #[outer]
         makro!();
            //^
-        """, Outer)
+    """, Outer)
 
-    fun `test let statement`() = expect<IllegalStateException> {
-        doTest2<RsStmt>("""
+    fun `test let statement`() = doTest2<RsStmt>("""
         fn main() {
             #[outer]
             let a = 1u16;
             //^
         }
-        """, Outer)
-    }
+    """, Outer)
 
     fun `test fn call expr as statement`() = expect<IllegalStateException> {
         doTest2<RsStmt>("""
@@ -233,13 +231,11 @@ class RsAttributeTest : RsTestBase() {
         """, Outer)
     }
 
-    fun `test literal expr as statement`() = expect<IllegalStateException> {
-        doTest("""
+    fun `test literal expr as statement`() = doTest("""
         fn main() {
             #[outer]
             "Hello Rust!";
             //^
         }
-        """, Outer)
-    }
+    """, Outer)
 }
