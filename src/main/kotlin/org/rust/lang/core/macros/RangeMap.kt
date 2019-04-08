@@ -19,6 +19,8 @@ import java.io.DataOutputStream
 @Suppress("DataClassPrivateConstructor")
 data class RangeMap private constructor(private val ranges: List<MappedTextRange>) {
 
+    fun isEmpty(): Boolean = ranges.isEmpty()
+
     fun mapOffsetFromExpansionToCallBody(offset: Int): Int? {
         return ranges.singleOrNull { range ->
             offset >= range.dstOffset && offset < range.dstEndOffset
