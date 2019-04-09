@@ -112,7 +112,7 @@ enum class RsDocKind {
         }
 
         /**
-         * Get rid of trailing (pseudo-regexp): [ ]+ [*]* * /
+         * Get rid of trailing (pseudo-regexp): `[ ]+ [*]* * /`
          */
         private fun String.trimTrailingAsterisks(): String {
             if (length < 2) return this
