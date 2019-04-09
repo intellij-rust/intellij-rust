@@ -373,6 +373,7 @@ class SourceFile(
     }
 
     private fun detectDuplicates() {
+        if (!isUnitTestMode) return
         val set = mutableSetOf<RsMacroCall>()
         for (info in infos) {
             val element = info.getMacroCall() ?: continue
