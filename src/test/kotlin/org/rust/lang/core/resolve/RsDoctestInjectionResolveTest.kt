@@ -30,12 +30,17 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         /// ```
         pub fn foo() {}
     """)
+
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test outer crate dependency is not resolved`() = checkByCode("""
+    fun `test outer crate dependency`() = stubOnlyResolve("""
+    //- lib.rs
         /// ```
         /// extern crate dep_lib_target;
-        ///             //^ unresolved
+        /// use dep_lib_target::bar;
+        ///                   //^ dep-lib/lib.rs
         /// ```
         pub fn foo() {}
-    """, "lib.rs")
+    //- dep-lib/lib.rs
+        pub fn bar() {}
+    """)
 }
