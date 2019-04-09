@@ -41,9 +41,9 @@ class RsProjectConfigurable(
             renderer = object : ListCellRendererWrapper<MacroExpansionEngine>() {
                 override fun customize(list: JList<*>?, value: MacroExpansionEngine, index: Int, selected: Boolean, hasFocus: Boolean) {
                     setText(when (value) {
-                        MacroExpansionEngine.DISABLED -> "Disabled"
-                        MacroExpansionEngine.OLD -> "Old way (may be slow)"
-                        MacroExpansionEngine.NEW -> "New way (may be unstable)"
+                        MacroExpansionEngine.DISABLED -> "Disable (use only if you have problems with macro expansions)"
+                        MacroExpansionEngine.OLD -> "Expand with default engine"
+                        MacroExpansionEngine.NEW -> "Expand with experimental engine (faster, but not yet stable)"
                     })
                 }
             }
