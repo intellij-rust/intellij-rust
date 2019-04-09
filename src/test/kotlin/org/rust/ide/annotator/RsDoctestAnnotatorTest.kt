@@ -66,6 +66,27 @@ class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class.jav
         |fn foo() {}
         |""")
 
+    fun `test "# " escape`() = doTest("""
+        |/// ```
+        |///<info> # <inject>extern crate foobar;
+        |</inject></info>/// ```
+        |fn foo() {}
+        |""")
+
+    fun `test "##" escape`() = doTest("""
+        |/// ```
+        |///<info> #<inject>#![allow(deprecated)]
+        |</inject></info>/// ```
+        |fn foo() {}
+        |""")
+
+    fun `test "#" escape`() = doTest("""
+        |/// ```
+        |///<info> #<inject>
+        |</inject></info>/// ```
+        |fn foo() {}
+        |""")
+
     fun `test no injection in non-lib target`() = checkByText("""
         /// ```
         /// let a = 0;
