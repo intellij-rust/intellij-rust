@@ -63,6 +63,11 @@ class ExpandedMacroStorage(val project: Project) {
         stepped.fill(null)
     }
 
+    fun processExpandedMacroInfos(action: (ExpandedMacroInfo) -> Unit) {
+        checkReadAccessAllowed()
+        expandedFileToInfo.values.forEach(action)
+    }
+
     private fun getOrPutStagedList(sf: SourceFile): MutableList<SourceFile> {
         var list = stepped[sf.depth]
         if (list == null) {

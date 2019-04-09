@@ -272,16 +272,25 @@ private class MacroExpansionServiceImplInner(
         })
     }
 
-    private fun findAndDeleteLeakedExpansionFiles() {
+    private fun checkStorageConsistency() {
         taskQueue.run(object : Task.Backgroundable(project, "Cleaning outdated macros", false) {
             override fun run(indicator: ProgressIndicator) {
                 checkReadAccessNotAllowed()
+
+                refreshExpansionDirectory()
+                findAndDeleteLeakedExpansionFiles()
+                findAndRemoveInvalidExpandedMacroInfosFromStorage()
+            }
+
+            private fun refreshExpansionDirectory() {
                 val latch = CountDownLatch(1)
                 LocalFileSystem.getInstance().refreshFiles(listOf(dirs.expansionsDirVi), true, true) {
                     latch.countDown()
                 }
                 latch.await()
+            }
 
+            private fun findAndDeleteLeakedExpansionFiles() {
                 val toDelete = mutableListOf<VirtualFile>()
                 runReadAction {
                     VfsUtil.iterateChildrenRecursively(dirs.expansionsDirVi, null, ContentIterator {
@@ -294,9 +303,22 @@ private class MacroExpansionServiceImplInner(
                 if (toDelete.isNotEmpty()) {
                     WriteAction.runAndWait<Throwable> {
                         toDelete.forEach { it.delete(null) }
-                        if (!project.isDisposed) {
-                            project.rustPsiManager.incRustStructureModificationCount()
+                    }
+                }
+            }
+
+            private fun findAndRemoveInvalidExpandedMacroInfosFromStorage() {
+                val toRemove = mutableListOf<ExpandedMacroInfo>()
+                runReadAction {
+                    storage.processExpandedMacroInfos { info ->
+                        if (info.expansionFileUrl != null && info.expansionFile?.isValid != true) {
+                            toRemove.add(info)
                         }
+                    }
+                }
+                if (toRemove.isNotEmpty()) {
+                    WriteAction.runAndWait<Throwable> {
+                        toRemove.forEach { storage.removeInvalidInfo(it, true) }
                     }
                 }
             }
@@ -316,7 +338,7 @@ private class MacroExpansionServiceImplInner(
         if (storage.isEmpty) {
             cleanMacrosDirectory()
         } else {
-            findAndDeleteLeakedExpansionFiles()
+            checkStorageConsistency()
         }
 
         run {
