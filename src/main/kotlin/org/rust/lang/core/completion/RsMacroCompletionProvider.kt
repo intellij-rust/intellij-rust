@@ -55,7 +55,7 @@ object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
             leftSiblings.getOrNull(2)?.elementType != COLONCOLON ||
                 leftSiblings.getOrNull(3)?.elementType != IDENTIFIER)
 
-        collectCompletionVariants(result) { originalProcessor ->
+        collectCompletionVariants(result, forSimplePath = !is2segmentPath) { originalProcessor ->
             val processor: (ScopeEntry) -> Boolean = { entry ->
                 val macro = entry.element
                 val hide = mod != null && macro is RsMacro && isHidden(macro, mod)

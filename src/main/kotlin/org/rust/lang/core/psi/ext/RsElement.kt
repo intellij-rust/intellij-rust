@@ -72,8 +72,8 @@ val RsElement.containingCargoTarget: CargoWorkspace.Target?
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 
-val PsiElement.isEdition2018: Boolean get() =
-    contextOrSelf<RsElement>()?.containingCargoTarget?.edition == CargoWorkspace.Edition.EDITION_2018
+val PsiElement.isEdition2018: Boolean
+    get() = contextOrSelf<RsElement>()?.containingCargoTarget?.edition == CargoWorkspace.Edition.EDITION_2018
 
 /** @see org.rust.ide.injected.RsDoctestLanguageInjector */
 private fun VirtualFile.getInjectedFromIfDoctestInjection(project: Project): RsFile? {
