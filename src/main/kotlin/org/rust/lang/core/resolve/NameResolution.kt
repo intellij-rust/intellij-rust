@@ -256,7 +256,6 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
         if (otherVersionOfSameCrate.hitOnFalse(libTarget == target) && !isDoctestInjection) return false
 
         if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
-        if (isDoctestInjection && pkg.origin != PackageOrigin.STDLIB && libTarget != target) return false
         visitedDeps += pkg.name
         return processor.lazy(dependencyName ?: libTarget.normName) {
             libTarget.crateRoot?.toPsiFile(element.project)?.rustFile
