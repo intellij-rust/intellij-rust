@@ -89,7 +89,8 @@ WHITE_SPACE_CHAR = {EOL_WS} | {LINE_WS}
 HEADING_HASH = "#"{1,6}
 
 // http://spec.commonmark.org/0.25/#links
-LINK_TEXT    = "[" ( [^\]\r\n] | "\\]" )* "]"
+LINK_ELEMENT = [^\]\r\n] | "\\]"
+LINK_TEXT    = "[" ( {LINK_ELEMENT} | "[" {LINK_ELEMENT}* "]" )* "]"
 
 INLINE_LINK  = {LINK_TEXT} "(" ( [^\(\)\r\n] | "\\(" | "\\)" )* ")"
 REF_LINK     = {LINK_TEXT} {LINK_TEXT}?
