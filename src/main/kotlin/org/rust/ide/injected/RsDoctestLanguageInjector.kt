@@ -84,6 +84,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
                 when {
                     text.startsWith("##", codeStart) -> TextRange(codeStart + 1, end)
                     text.startsWith("# ", codeStart) -> TextRange(codeStart + 2, end)
+                    text.startsWith("#\n", codeStart) -> TextRange(codeStart + 1, end)
                     else -> TextRange(start, end)
                 }
             }
