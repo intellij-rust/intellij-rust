@@ -25,7 +25,7 @@ val RsFunction.isAssocFn: Boolean get() = selfParameter == null && owner.isImplO
 
 val RsFunction.isTest: Boolean get() {
     val stub = stub
-    return stub?.isTest ?: queryAttributes.hasAtomAttribute("test")
+    return stub?.isTest ?: (queryAttributes.hasAtomAttribute("test") || queryAttributes.hasAtomAttribute("quickcheck"))
 }
 
 val RsFunction.isBench: Boolean get() {
