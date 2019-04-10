@@ -5,6 +5,8 @@
 
 package org.rust.ide.search
 
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
@@ -159,6 +161,52 @@ class RsFindUsagesTest : RsTestBase() {
         foo!();// - macro call
     """)
 
+    fun `test method from trait`() = doTestByText("""
+        struct B1; struct B2;
+        trait A { fn foo(self, x: i32); }
+                    //^
+        impl A for B1 { fn foo(self, x: i32) {} }
+        impl A for B2 { fn foo(self, x: i32) {} }
+        fn foo(s: impl A) {
+            B1.foo(); // - method call
+            B2.foo(); // - method call
+            s.foo();  // - method call
+        }
+    """)
+
+    fun `test method from impl (use base declaration)`() {
+        Messages.setTestDialog(TestDialog.OK)
+        doTestByText("""
+            struct B1;
+            struct B2;
+            trait A { fn foo(self, x: i32); }
+            impl A for B1 { fn foo(self, x: i32) {} }
+                              //^
+            impl A for B2 { fn foo(self, x: i32) {} }
+            fn foo(s: impl A) {
+                B1.foo(); // - method call
+                B2.foo(); // - method call
+                s.foo();  // - method call
+            }
+        """)
+    }
+
+    fun `test method from impl (don't use base declaration)`() {
+        Messages.setTestDialog(TestDialog.NO)
+        doTestByText("""
+            struct B1; struct B2;
+            trait A { fn foo(self, x: i32); }
+            impl A for B1 { fn foo(self, x: i32) {} }
+                              //^
+            impl A for B2 { fn foo(self, x: i32) {} }
+            fn foo(s: impl A) {
+                B1.foo(); // - method call
+                B2.foo();
+                s.foo();
+            }
+        """)
+    }
+
     private fun doTestByText(@Language("Rust") code: String) {
         InlineFile(code)
         val source = findElementInEditor<RsNamedElement>()
@@ -172,6 +220,7 @@ class RsFindUsagesTest : RsTestBase() {
         myFixture.findUsages(source)
             .filter { it.element != null }
             .map { Pair(it.element?.line ?: -1, RsUsageTypeProvider.getUsageType(it.element).toString()) }
+            .sortedBy { it.first }
 
     private fun markersFrom(text: String) =
         text.split('\n')

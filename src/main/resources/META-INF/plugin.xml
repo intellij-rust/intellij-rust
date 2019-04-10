@@ -110,6 +110,7 @@
         <!-- Usages Provider -->
 
         <lang.findUsagesProvider language="Rust" implementationClass="org.rust.ide.search.RsFindUsagesProvider"/>
+        <findUsagesHandlerFactory implementation="org.rust.ide.search.RsFindUsagesHandlerFactory"/>
         <usageTypeProvider implementation="org.rust.ide.search.RsUsageTypeProvider"/>
 
         <!-- Todos -->
