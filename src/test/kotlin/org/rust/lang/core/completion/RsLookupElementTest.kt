@@ -6,9 +6,12 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.psi.NavigatablePsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsTupleFieldDecl
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsLookupElementTest : RsTestBase() {
@@ -90,9 +93,14 @@ class RsLookupElementTest : RsTestBase() {
         }
     """, tailText = "(i32, String)", typeText = "E")
 
-    fun `test field`() = check("""
+    fun `test named field`() = check("""
         struct S { field: String }
                    //^
+    """, typeText = "String")
+
+    fun `test tuple field`() = checkInner<RsTupleFieldDecl>("""
+        struct S(String);
+                 //^
     """, typeText = "String")
 
     fun `test macro simple`() = check("""
@@ -140,10 +148,17 @@ class RsLookupElementTest : RsTestBase() {
         tailText: String? = null,
         typeText: String? = null,
         isStrikeout: Boolean = false
-    ) {
+    ) = checkInner<RsNamedElement>(code, tailText, typeText, isStrikeout)
+
+    private inline fun <reified T> checkInner(
+        @Language("Rust") code: String,
+        tailText: String? = null,
+        typeText: String? = null,
+        isStrikeout: Boolean = false
+    ) where T : NavigatablePsiElement, T : RsElement {
         InlineFile(code)
-        val element = findElementInEditor<RsNamedElement>()
-        val lookup = createLookupElement(element, element.name!!, false)
+        val element = findElementInEditor<T>()
+        val lookup = createLookupElement(element as RsElement, element.name!!, false)
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)

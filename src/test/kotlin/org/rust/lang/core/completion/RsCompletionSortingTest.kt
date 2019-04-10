@@ -5,10 +5,10 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.psi.NavigatablePsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsNamedElement
 import kotlin.reflect.KClass
 
 
@@ -30,13 +30,23 @@ class RsCompletionSortingTest : RsTestBase() {
         RsMacro::class to "_foo_bar"
     ))
 
-    fun `test fields before members`() = doTest("""
+    fun `test named fields before members`() = doTest("""
         struct S  { foo: i32 }
         impl S { fn foo(&self) {} }
 
         fn bar(a: S) { a./*caret*/ }
     """, listOf(
         RsNamedFieldDecl::class to "foo",
+        RsFunction::class to "foo"
+    ))
+
+    fun `test tuple fields before members`() = doTest("""
+        struct S(i32);
+        impl S { fn foo(&self) {} }
+
+        fn bar(a: S) { a./*caret*/ }
+    """, listOf(
+        RsTupleFieldDecl::class to "0",
         RsFunction::class to "foo"
     ))
 
@@ -96,10 +106,10 @@ class RsCompletionSortingTest : RsTestBase() {
         RsMacro::class to "foo5"
     ))
 
-    private fun doTest(@Language("Rust") code: String, expected: List<Pair<KClass<out RsNamedElement>, String>>) {
+    private fun doTest(@Language("Rust") code: String, expected: List<Pair<KClass<out NavigatablePsiElement>, String>>) {
         InlineFile(code).withCaret()
         val elements = myFixture.completeBasic()
-            .map { it.psiElement!! as RsNamedElement }
+            .map { it.psiElement!! as NavigatablePsiElement }
         check(elements.size == expected.size) {
             "Wrong size of completion variants. Expected ${expected.size}, actual: ${elements.size}"
         }

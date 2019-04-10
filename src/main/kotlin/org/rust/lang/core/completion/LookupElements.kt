@@ -49,7 +49,7 @@ fun createLookupElement(
         element is RsMacro -> MACRO_PRIORITY
         element is RsPatBinding -> VARIABLE_PRIORITY
         element is RsEnumVariant -> ENUM_VARIANT_PRIORITY
-        element is RsNamedFieldDecl -> FIELD_DECL_PRIORITY
+        element is RsFieldDecl -> FIELD_DECL_PRIORITY
         element is RsAbstractable && element.owner.isInherentImpl -> INHERENT_IMPL_MEMBER_PRIORITY
         else -> DEFAULT_PRIORITY
     }
@@ -79,7 +79,7 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
 
         is RsConstant -> base
             .withTypeText(typeReference?.stubOnlyText)
-        is RsNamedFieldDecl -> base.withTypeText(typeReference?.stubOnlyText)
+        is RsFieldDecl -> base.withTypeText(typeReference?.stubOnlyText)
         is RsTraitItem -> base
 
         is RsFunction -> base
