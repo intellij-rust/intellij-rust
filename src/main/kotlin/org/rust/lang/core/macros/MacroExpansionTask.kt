@@ -22,6 +22,7 @@ import org.rust.lang.core.psi.ext.macroBody
 import org.rust.lang.core.psi.ext.resolveToMacro
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.openapiext.*
+import org.rust.stdext.executeSequentially
 import org.rust.stdext.nextOrNull
 import org.rust.stdext.supplyAsync
 import java.nio.file.Path
@@ -126,18 +127,18 @@ abstract class MacroExpansionTaskBase(
             realTaskIndicator.text2 = "Writing expansion results"
 
             if (stages2.isNotEmpty()) {
-                val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot)
                 // TODO support cancellation here
-                val stages3 = stages2.map { stage2 ->
-                    val result = stage2.writeExpansionToFs(fs)
-                    doneStages.incrementAndGet()
-                    result
+                val stages3fs = stages2.chunked(VFS_BATCH_SIZE).map { stages2c ->
+                    val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot)
+                    val stages3 = stages2c.map { stage2 ->
+                        val result = stage2.writeExpansionToFs(fs)
+                        doneStages.incrementAndGet()
+                        result
+                    }
+                    stages3 to fs
                 }
 
-                supplyAsync(transactionExecutor) {
-                    // All changes should be applied in a single write action. Otherwise we'll run into
-                    // dumb mode between two write actions. Also changes applied to vfs should be consistent
-                    // with the changes applied to the storage
+                executeSequentially(transactionExecutor, stages3fs) { (stages3, fs) ->
                     runWriteAction {
                         fs.applyToVfs()
                         for (stage3 in stages3) {
@@ -147,7 +148,7 @@ abstract class MacroExpansionTaskBase(
                     }
                     totalExpanded.addAndGet(stages3.size)
                     Unit
-                }
+                }.thenApply { Unit }
             } else {
                 CompletableFuture.completedFuture(Unit)
             }
@@ -194,6 +195,13 @@ abstract class MacroExpansionTaskBase(
     open fun canEat(other: MacroExpansionTaskBase): Boolean = false
 
     open val isProgressBarDelayed: Boolean get() = true
+
+    companion object {
+        /**
+         * Higher values leads to better throughput (overall expansion time), but worse latency (UI freezes)
+         */
+        private const val VFS_BATCH_SIZE = 50
+    }
 }
 
 interface Extractable {
