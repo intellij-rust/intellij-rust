@@ -47,7 +47,7 @@ data class TyAdt private constructor(
         TyAdt(item, typeArguments.map { it.foldWith(folder) }, regionArguments.map { it.foldWith(folder) })
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        typeArguments.any { visitor.visitTy(it) }
+        typeArguments.any { it.visitWith(visitor) } || regionArguments.any { it.visitWith(visitor) }
 
     companion object {
         fun valueOf(struct: RsStructOrEnumItemElement): TyAdt {
