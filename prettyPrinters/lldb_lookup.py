@@ -31,6 +31,11 @@ def summary_lookup(valobj, dict):
     if rust_type == RustType.STD_VEC_DEQUE:
         return SizeSummaryProvider(valobj, dict)
 
+    if rust_type == RustType.STD_HASH_MAP:
+        return SizeSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_HASH_SET:
+        return SizeSummaryProvider(valobj, dict)
+
     if rust_type == RustType.STD_RC:
         return StdRcSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_ARC:
@@ -71,6 +76,11 @@ def synthetic_lookup(valobj, dict):
         return StdVecSyntheticProvider(valobj, dict)
     if rust_type == RustType.STD_VEC_DEQUE:
         return StdVecDequeSyntheticProvider(valobj, dict)
+
+    if rust_type == RustType.STD_HASH_MAP:
+        return StdHashMapSyntheticProvider(valobj, dict)
+    if rust_type == RustType.STD_HASH_SET:
+        return StdHashMapSyntheticProvider(valobj.GetChildAtIndex(0), dict, show_values=False)
 
     if rust_type == RustType.STD_RC:
         return StdRcSyntheticProvider(valobj, dict)

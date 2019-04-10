@@ -21,6 +21,8 @@ class RustType(object):
     STD_VEC_DEQUE = "StdVecDeque"
     STD_BTREE_SET = "StdBTreeSet"
     STD_BTREE_MAP = "StdBTreeMap"
+    STD_HASH_MAP = "StdHashMap"
+    STD_HASH_SET = "StdHashSet"
     STD_RC = "StdRc"
     STD_ARC = "StdArc"
     STD_CELL = "StdCell"
@@ -36,6 +38,8 @@ STD_VEC_REGEX = re.compile(r"^(alloc::(\w+::)+)Vec<.+>$")
 STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::(\w+::)+)VecDeque<.+>$")
 STD_BTREE_SET_REGEX = re.compile(r"^(alloc::(\w+::)+)BTreeSet<.+>$")
 STD_BTREE_MAP_REGEX = re.compile(r"^(alloc::(\w+::)+)BTreeMap<.+>$")
+STD_HASH_MAP_REGEX = re.compile(r"^(std::collections::(\w+::)+)HashMap<.+>$")
+STD_HASH_SET_REGEX = re.compile(r"^(std::collections::(\w+::)+)HashSet<.+>$")
 STD_RC_REGEX = re.compile(r"^(alloc::(\w+::)+)Rc<.+>$")
 STD_ARC_REGEX = re.compile(r"^(alloc::(\w+::)+)Arc<.+>$")
 STD_CELL_REGEX = re.compile(r"^(core::(\w+::)+)Cell<.+>$")
@@ -54,6 +58,8 @@ STD_TYPE_TO_REGEX = {
     RustType.STD_STR: STD_STR_REGEX,
     RustType.STD_VEC: STD_VEC_REGEX,
     RustType.STD_VEC_DEQUE: STD_VEC_DEQUE_REGEX,
+    RustType.STD_HASH_MAP: STD_HASH_MAP_REGEX,
+    RustType.STD_HASH_SET: STD_HASH_SET_REGEX,
     RustType.STD_BTREE_SET: STD_BTREE_SET_REGEX,
     RustType.STD_BTREE_MAP: STD_BTREE_MAP_REGEX,
     RustType.STD_RC: STD_RC_REGEX,
