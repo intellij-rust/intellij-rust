@@ -66,7 +66,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     private fun setupMockRustcVersion() {
         val annotation = findAnnotationInstance<MockRustcVersion>() ?: return
         val (semVer, channel) = parse(annotation.rustcVersion)
-        val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel))
+        val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel, null))
         project.cargoProjects.setRustcInfo(rustcInfo)
     }
 
@@ -162,7 +162,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         fail("No ${X::class.java} was thrown during the test")
     }
 
-    inner class InlineFile(private @Language("Rust") val code: String, val name: String = "main.rs") {
+    inner class InlineFile(@Language("Rust") private val code: String, val name: String = "main.rs") {
         private val hasCaretMarker = "/*caret*/" in code
 
         init {

@@ -46,6 +46,10 @@ class RsDebugRunner : RsAsyncRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESS
                         ProcessTerminatedListener.attach(processHandler, environment.project)
                         val settings = RsDebuggerSettings.getInstance()
                         loadPrettyPrinters(sysroot, settings.lldbRenderers, settings.gdbRenderers)
+                        val commitHash = state.cargoProject?.rustcInfo?.version?.commitHash
+                        if (sysroot != null && commitHash != null) {
+                            loadRustcSources(sysroot, commitHash)
+                        }
                         start()
                     }
 
