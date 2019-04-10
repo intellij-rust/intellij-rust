@@ -91,6 +91,9 @@ enum class HintType(desc: String, enabled: Boolean) {
                         return emptyList()
                     }
                 }
+                if (hints.all { (hint, _) -> hint == "_"}) {
+                    return emptyList()
+                }
                 return hints
                     .filter { (hint, arg) -> !arg.text.endsWith(hint) }
                     .map { (hint, arg) -> InlayInfo("$hint:", arg.startOffset) }
