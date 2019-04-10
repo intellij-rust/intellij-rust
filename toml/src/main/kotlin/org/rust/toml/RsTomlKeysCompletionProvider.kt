@@ -108,6 +108,8 @@ lto = false
 debug-assertions = false
 codegen-units = 1
 panic = 'unwind'
+incremental = true
+overflow-checks = true
 
 [features]
 default = ["jquery", "uglifier", "session"]
@@ -115,6 +117,7 @@ default = ["jquery", "uglifier", "session"]
 [workspace]
 members = ["path/to/member1", "path/to/member2", "path/to/member3/*"]
 exclude = ["path1", "path/to/dir2"]
+default-members = ["path/to/member2", "path/to/member3/foo"]
 
 [dependencies]
 foo = { git = 'https://github.com/example/foo' }
@@ -128,6 +131,7 @@ gcc = "0.3"
 [lib]
 name = "foo"
 path = "src/lib.rs"
+crate-type = ["dylib", "staticlib", "cdylib", "rlib"]
 test = true
 doctest = true
 bench = true
@@ -145,7 +149,6 @@ doctest = true
 bench = true
 doc = true
 plugin = false
-proc-macro = false
 harness = true
 required-features = ["postgres", "tools"]
 edition = "2018"
@@ -158,7 +161,6 @@ doctest = true
 bench = true
 doc = true
 plugin = false
-proc-macro = false
 harness = true
 required-features = ["postgres", "tools"]
 edition = "2018"
@@ -171,7 +173,6 @@ doctest = true
 bench = true
 doc = true
 plugin = false
-proc-macro = false
 harness = true
 required-features = ["postgres", "tools"]
 edition = "2018"
@@ -184,7 +185,6 @@ doctest = true
 bench = true
 doc = true
 plugin = false
-proc-macro = false
 harness = true
 required-features = ["postgres", "tools"]
 edition = "2018"
