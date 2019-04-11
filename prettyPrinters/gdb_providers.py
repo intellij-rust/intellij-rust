@@ -1,11 +1,13 @@
+from sys import version_info
+
 import gdb
 from gdb import lookup_type
-from sys import version_info
 
 if version_info[0] >= 3:
     xrange = range
 
 ZERO_FIELD = "__0"
+FIRST_FIELD = "__1"
 
 
 def unwrap_unique_or_non_null(unique_or_nonnull):
@@ -249,3 +251,60 @@ class StdBTreeMapProvider:
     @staticmethod
     def display_hint():
         return "map"
+
+
+class StdHashMapProvider:
+    def __init__(self, valobj, show_values=True):
+        self.valobj = valobj
+        self.show_values = show_values
+
+        self.table = self.valobj["table"]
+        self.size = int(self.table["size"])
+        self.hashes = self.table["hashes"]
+        self.hash_uint_type = self.hashes.type
+        self.hash_uint_size = self.hashes.type.sizeof
+        self.modulo = 2 ** self.hash_uint_size
+        self.data_ptr = self.hashes[ZERO_FIELD]["pointer"]
+
+        self.capacity_mask = int(self.table["capacity_mask"])
+        self.capacity = (self.capacity_mask + 1) % self.modulo
+
+        marker = self.table["marker"].type
+        self.pair_type = marker.template_argument(0)
+        self.pair_type_size = self.pair_type.sizeof
+
+        self.valid_indices = []
+        for idx in range(self.capacity):
+            data_ptr = self.data_ptr.cast(self.hash_uint_type.pointer())
+            address = data_ptr + idx
+            hash_uint = address.dereference()
+            hash_ptr = hash_uint[ZERO_FIELD]["pointer"]
+            if int(hash_ptr) != 0:
+                self.valid_indices.append(idx)
+
+    def to_string(self):
+        return "size={}".format(self.size)
+
+    def children(self):
+        start = int(self.data_ptr) & ~1
+
+        hashes = self.hash_uint_size * self.capacity
+        align = self.pair_type_size
+        len_rounded_up = (((((hashes + align) % self.modulo - 1) % self.modulo) & ~(
+                (align - 1) % self.modulo)) % self.modulo - hashes) % self.modulo
+
+        pairs_offset = hashes + len_rounded_up
+        pairs_start = gdb.Value(start + pairs_offset).cast(self.pair_type.pointer())
+
+        for index in range(self.size):
+            table_index = self.valid_indices[index]
+            idx = table_index & self.capacity_mask
+            element = (pairs_start + idx).dereference()
+            if self.show_values:
+                yield ("key{}".format(index), element[ZERO_FIELD])
+                yield ("val{}".format(index), element[FIRST_FIELD])
+            else:
+                yield ("[{}]".format(index), element[ZERO_FIELD])
+
+    def display_hint(self):
+        return "map" if self.show_values else "array"
