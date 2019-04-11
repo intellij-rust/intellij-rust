@@ -9,6 +9,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.evaluation.ExprValue
+import org.rust.lang.utils.evaluation.RsConstExprEvaluator
 
 class CheckMatchException(message: String) : Exception(message)
 
@@ -29,23 +31,7 @@ val Matrix.type: Ty
 fun List<RsMatchArm>.calculateMatrix(): Matrix =
     flatMap { arm -> arm.patList.map { listOf(it.lower) } }
 
-private val RsExpr.value: Constant
-    get() = when (this) {
-        is RsLitExpr -> {
-            val kind = kind
-            when (kind) {
-                is RsLiteralKind.Boolean -> Constant.Boolean(kind.value)
-                is RsLiteralKind.Integer -> Constant.Integer(kind.value ?: 0)
-                is RsLiteralKind.Float -> Constant.Float(kind.value ?: 0.0)
-                is RsLiteralKind.String -> Constant.String(kind.value ?: "")
-                is RsLiteralKind.Char -> Constant.Char(kind.value ?: "")
-                null -> Constant.Unknown
-            }
-        }
-        is RsPathExpr -> Constant.Path(this)
-        is RsUnaryExpr -> TODO()
-        else -> TODO()
-    }
+private val RsExpr.value: ExprValue? get() = RsConstExprEvaluator.evaluate(this)
 
 private val RsPat.type: Ty
     get() = when (this) {
@@ -80,7 +66,10 @@ private val RsPat.kind: PatternKind
             if (pat != null) throw TODO("Support `x @ pat`")
             when (val resolved = patBinding.reference.resolve()) {
                 is RsEnumVariant -> PatternKind.Variant(resolved.parentEnum, resolved, emptyList())
-                is RsConstant -> PatternKind.Const(resolved.expr?.value ?: Constant.Unknown)
+                is RsConstant -> {
+                    val value = resolved.expr?.value ?: throw CheckMatchException("Can't evaluate constant ${resolved.text}")
+                    PatternKind.Const(value)
+                }
                 else -> PatternKind.Binding(patBinding.type, patBinding.name.orEmpty())
             }
         }
@@ -124,14 +113,15 @@ private val RsPat.kind: PatternKind
                     throw CheckMatchException("Unresolved constant")
                 }
             } else {
-                PatternKind.Const(expr.value)
+                val value = expr.value ?: throw CheckMatchException("Can't evaluate constant ${expr.text}")
+                PatternKind.Const(value)
             }
         }
 
         is RsPatRange -> {
-            val a = patConstList.getOrNull(0) ?: throw CheckMatchException("Incomplete range")
-            val b = patConstList.getOrNull(1) ?: throw CheckMatchException("Incomplete range")
-            PatternKind.Range(a.expr.value, b.expr.value, isInclusive)
+            val lc = patConstList.getOrNull(0)?.expr?.value ?: throw CheckMatchException("Incomplete range")
+            val rc = patConstList.getOrNull(1)?.expr?.value ?: throw CheckMatchException("Incomplete range")
+            PatternKind.Range(lc, rc, isInclusive)
         }
 
         is RsPatRef -> PatternKind.Deref(pat.lower)

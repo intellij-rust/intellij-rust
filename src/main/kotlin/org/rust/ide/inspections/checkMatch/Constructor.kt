@@ -13,20 +13,21 @@ import org.rust.lang.core.psi.ext.fieldTypes
 import org.rust.lang.core.psi.ext.size
 import org.rust.lang.core.psi.ext.variants
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.utils.evaluation.ExprValue
 
 sealed class Constructor {
 
     /** The constructor of all patterns that don't vary by constructor, e.g. struct patterns and fixed-length arrays */
     object Single : Constructor() {
-        override fun coveredByRange(from: Constant, to: Constant, included: Boolean): Boolean = true
+        override fun coveredByRange(from: ExprValue, to: ExprValue, included: Boolean): Boolean = true
     }
 
     /** Enum variants */
     data class Variant(val variant: RsEnumVariant) : Constructor()
 
     /** Literal values */
-    data class ConstantValue(val value: Constant) : Constructor() {
-        override fun coveredByRange(from: Constant, to: Constant, included: Boolean): Boolean =
+    data class ConstantValue(val value: ExprValue) : Constructor() {
+        override fun coveredByRange(from: ExprValue, to: ExprValue, included: Boolean): Boolean =
             if (included) {
                 value >= from && value <= to
             } else {
@@ -35,8 +36,8 @@ sealed class Constructor {
     }
 
     /** Ranges of literal values (`2..=5` and `2..5`) */
-    data class ConstantRange(val start: Constant, val end: Constant, val includeEnd: Boolean = false) : Constructor() {
-        override fun coveredByRange(from: Constant, to: Constant, included: Boolean): Boolean =
+    data class ConstantRange(val start: ExprValue, val end: ExprValue, val includeEnd: Boolean = false) : Constructor() {
+        override fun coveredByRange(from: ExprValue, to: ExprValue, included: Boolean): Boolean =
             if (includeEnd) {
                 ((end < to) || (included && to == end)) && (start >= from)
             } else {
@@ -67,7 +68,7 @@ sealed class Constructor {
         else -> 0
     }
 
-    open fun coveredByRange(from: Constant, to: Constant, included: Boolean): Boolean = false
+    open fun coveredByRange(from: ExprValue, to: ExprValue, included: Boolean): Boolean = false
 
     fun subTypes(type: Ty): List<Ty> = when (type) {
         is TyTuple -> type.types
@@ -93,7 +94,7 @@ sealed class Constructor {
     companion object {
         fun allConstructors(ty: Ty): List<Constructor> =
             when {
-                ty is TyBool -> listOf(true, false).map { ConstantValue(Constant.Boolean(it)) }
+                ty is TyBool -> listOf(true, false).map { ConstantValue(ExprValue.Bool(it)) }
 
                 ty is TyAdt && ty.item is RsEnumItem -> ty.item.variants.map { Variant(it) }
 
