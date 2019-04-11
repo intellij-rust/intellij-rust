@@ -710,4 +710,33 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
             }
         }
     """)
+
+    fun `test const int expr evaluation`() = checkByFileTree("""
+    //- main.rs
+        mod foo;
+        const MAX: i32 = 10;
+        const MIN: i32 = -10;
+        const MID: i32 = (MAX + MIN) / 2;
+    //- foo.rs
+        use super::{MAX, MIN, MID};
+        fn foo(v: i32) {
+            match v/*caret*/ {
+                1 => {}
+                MIN...MAX => {}
+                <warning descr="Unreachable pattern">-3</warning> => {}
+                <warning descr="Unreachable pattern">-5..MID</warning> => {}
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test unknown value`() = checkByText("""
+        fn main() {
+            match 42 {
+                0..UNRESOLVED => {}
+                20..50 => {}
+                _ => {}
+            }
+        }
+    """)
 }
