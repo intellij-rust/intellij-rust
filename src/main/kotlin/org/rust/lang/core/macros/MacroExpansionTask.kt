@@ -70,6 +70,11 @@ abstract class MacroExpansionTaskBase(
                     // and its `checkCanceled` method should be used only from a single thread.
                     // So we propagating cancellation. See [ProgressWindow.MyDelegate.checkCanceled].
                     if (indicator.isCanceled && !subTaskIndicator.isCanceled) subTaskIndicator.cancel()
+
+                    // If project is disposed, then queue will be disposed too, so we shouldn't await sub task finish
+                    // (and sub task may not call `sync.countDown()`, so without this `break` we will be blocked
+                    // forever)
+                    if (project.isDisposed) break
                 }
             }
             MACRO_LOG.trace("Task completed! ${totalExpanded.get()} total calls, millis: " + millis / 1_000_000)
@@ -128,9 +133,14 @@ abstract class MacroExpansionTaskBase(
 
             if (stages2.isNotEmpty()) {
                 // TODO support cancellation here
+                //  Cancellation isn't supported because we should provide consistency between the filesystem and
+                //  the storage, so if we created some files, we must add them to the storage, or they will be leaked.
+                // We can cancel task if the project is disposed b/c after project reopen storage consistency will be
+                // re-checked
                 val stages3fs = stages2.chunked(VFS_BATCH_SIZE).map { stages2c ->
                     val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot)
                     val stages3 = stages2c.map { stage2 ->
+                        if (project.isDisposed) throw ProcessCanceledException()
                         val result = stage2.writeExpansionToFs(fs)
                         doneStages.incrementAndGet()
                         result
@@ -138,6 +148,7 @@ abstract class MacroExpansionTaskBase(
                     stages3 to fs
                 }
 
+                // Note that if project is disposed, this task will not be executed or may be executed partially
                 executeSequentially(transactionExecutor, stages3fs) { (stages3, fs) ->
                     runWriteAction {
                         fs.applyToVfs()
