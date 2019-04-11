@@ -60,6 +60,11 @@ object RsConstExprEvaluator {
                     if (integerType == expectedTy) eval(const.expr, depth + 1) else null
                 }
                 is RsParenExpr -> eval(expr.expr, depth + 1)
+                is RsUnaryExpr -> {
+                    if (expr.operatorType != UnaryOperator.MINUS) return null
+                    val value = eval(expr.expr, depth + 1) ?: return null
+                    (-value).validValueOrNull(expectedTy)
+                }
                 is RsBinaryExpr -> {
                     val op = expr.operatorType as? ArithmeticOp ?: return null
                     val leftValue = eval(expr.left, depth + 1) ?: return null
