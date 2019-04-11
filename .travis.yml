@@ -11,7 +11,7 @@ jdk: oraclejdk8
 env:
   global:
     - OLD_RUST_VERSION=1.28.0
-    - CURRENT_RUST_VERSION=1.33.0
+    - CURRENT_RUST_VERSION=1.34.0
     - NIGHLY_RUST_VERSION=nightly-2019-03-08
     - RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
 
