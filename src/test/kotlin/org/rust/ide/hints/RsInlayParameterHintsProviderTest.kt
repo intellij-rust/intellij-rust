@@ -184,6 +184,13 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """, enabledHints = HintType.LET_BINDING_HINT)
 
+    fun `test smart should not annotate tuple structs`() = checkByText("""
+        struct TS(i32, f32);
+        fn main() {
+            let s = TS(5i32, 10.0f32);
+        }
+    """, enabledHints = HintType.PARAMETER_HINT)
+
     private val fnTypes = """
         #[lang = "fn_once"]
         trait FnOnce<Args> { type Output; }
