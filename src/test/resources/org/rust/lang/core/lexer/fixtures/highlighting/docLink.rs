@@ -23,3 +23,6 @@
 /// [foo]
 /// [bar]: /url "title"
 /// [ref]: /uri
+/// [vec[]]
+/// [vec[][][]]
+/// [box<[T]>]
