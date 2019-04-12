@@ -162,6 +162,23 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         }
     """)
 
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/3694
+    fun `test issue 3694`() = doSingleCompletion("""
+        mod foo {
+            pub struct S { field: i32 }
+            fn bar(s: S) {
+                s./*caret*/
+            }
+        }
+    """, """
+        mod foo {
+            pub struct S { field: i32 }
+            fn bar(s: S) {
+                s.field/*caret*/
+            }
+        }
+    """)
+
     fun `test doc(hidden) item`() = checkNoCompletion("""
         mod foo {
             #[doc(hidden)]
