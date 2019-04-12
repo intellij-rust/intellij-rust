@@ -98,8 +98,9 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         result: CompletionResultSet,
         forSimplePath: Boolean
     ) {
-        val lookup = ImplLookup.relativeTo(element)
-        val receiver = CompletionUtil.getOriginalOrSelf(element.receiver).type
+        val receiver = CompletionUtil.getOriginalOrSelf(element.receiver)
+        val lookup = ImplLookup.relativeTo(receiver)
+        val receiverTy = receiver.type
         val processResolveVariants = if (element is RsMethodCall) {
             ::processMethodCallExprResolveVariants
         } else {
@@ -109,10 +110,10 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
 
         processResolveVariants(
             lookup,
-            receiver,
+            receiverTy,
             filterCompletionVariantsByVisibility(
-                filterMethodCompletionVariantsByTraitBounds(processor, lookup, receiver),
-                element.containingMod
+                filterMethodCompletionVariantsByTraitBounds(processor, lookup, receiverTy),
+                receiver.containingMod
             )
         )
     }
