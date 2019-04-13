@@ -1122,14 +1122,14 @@ private fun processLexicalDeclarations(
             if (processItemDeclarations(scope, ns, processor, withPrivateImports = true)) return true
         }
 
-        is RsStructItem,
-        is RsEnumItem,
         is RsTypeAlias -> {
-            scope as RsGenericDeclaration
             if (processAll(scope.typeParameters, processor)) return true
         }
 
+        is RsStructItem,
+        is RsEnumItem,
         is RsTraitOrImpl -> {
+            scope as RsGenericDeclaration
             if (processAll(scope.typeParameters, processor)) return true
             if (processor("Self", scope)) return true
         }
