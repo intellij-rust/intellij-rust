@@ -33,6 +33,15 @@ val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>> get() {
     }
 }
 
+val PsiElement.stubParent: PsiElement
+    get() {
+        if (this is StubBasedPsiElement<*>) {
+            val stub = this.stub
+            if (stub != null) return stub.parentStub.psi
+        }
+        return parent
+    }
+
 val PsiElement.leftLeaves: Sequence<PsiElement>
     get() = generateSequence(this, PsiTreeUtil::prevLeaf).drop(1)
 

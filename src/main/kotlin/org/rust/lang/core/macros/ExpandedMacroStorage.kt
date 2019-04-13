@@ -13,11 +13,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiAnchor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.reference.SoftReference
+import gnu.trove.TIntObjectHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionManagerImpl.Testmarks
@@ -42,17 +44,17 @@ import java.util.zip.InflaterInputStream
 
 class ExpandedMacroStorage(val project: Project) {
     // Data structures are guarded by the platform RWLock
-    private val sourceFiles: MutableMap<String, SourceFile> = hashMapOf()
-    private val expandedFileToInfo: MutableMap<String, ExpandedMacroInfo> = hashMapOf()
+    private val sourceFiles: TIntObjectHashMap<SourceFile> = TIntObjectHashMap()
+    private val expandedFileToInfo: TIntObjectHashMap<ExpandedMacroInfo> = TIntObjectHashMap()
     private val stepped: Array<MutableList<SourceFile>?> = arrayOfNulls(DEFAULT_RECURSION_LIMIT)
 
-    val isEmpty: Boolean get() = sourceFiles.isEmpty()
+    val isEmpty: Boolean get() = sourceFiles.isEmpty
 
     private fun deserialize(sfs: List<SourceFile>) {
         for (sf in sfs) {
-            sourceFiles[sf.fileUrl] = sf
+            sourceFiles.put(sf.fileId, sf)
             getOrPutStagedList(sf).add(sf)
-            expandedFileToInfo.putAll(sf.getExpansionUrls())
+            sf.forEachInfo { if (it.fileId > 0) expandedFileToInfo.put(it.fileId, it) }
         }
     }
 
@@ -65,7 +67,7 @@ class ExpandedMacroStorage(val project: Project) {
 
     fun processExpandedMacroInfos(action: (ExpandedMacroInfo) -> Unit) {
         checkReadAccessAllowed()
-        expandedFileToInfo.values.forEach(action)
+        expandedFileToInfo.forEachValue { action(it); true }
     }
 
     private fun getOrPutStagedList(sf: SourceFile): MutableList<SourceFile> {
@@ -118,7 +120,7 @@ class ExpandedMacroStorage(val project: Project) {
         }
         val info = ExpandedMacroInfo(
             sourceFile,
-            expansion?.url,
+            expansion,
             def?.bodyHash,
             call.bodyHash,
             oldInfo?.stubIndex ?: -1
@@ -127,7 +129,7 @@ class ExpandedMacroStorage(val project: Project) {
         info.bindTo(call)
 
         sourceFile.addInfo(info)
-        info.expansionFileUrl?.let { expandedFileToInfo[it] = info }
+        if (info.fileId > 0) expandedFileToInfo.put(info.fileId, info)
         info.expansionFile?.let { getOrCreateSourceFile(it) }
 
         return info
@@ -136,35 +138,36 @@ class ExpandedMacroStorage(val project: Project) {
     fun removeInvalidInfo(oldInfo: ExpandedMacroInfo, clean: Boolean) {
         checkWriteAccessAllowed()
 
-        expandedFileToInfo.remove(oldInfo.expansionFileUrl)
+        expandedFileToInfo.remove(oldInfo.fileId)
         val sf = oldInfo.sourceFile
         sf.removeInfo(oldInfo)
         if (clean && sf.isEmpty()) {
-            sourceFiles.remove(sf.fileUrl)
+            sourceFiles.remove(sf.fileId)
             stepped[sf.depth]?.remove(sf)
         }
     }
 
     fun getOrCreateSourceFile(callFile: VirtualFile): SourceFile? {
         checkWriteAccessAllowed()
-        return sourceFiles[callFile.url] ?: run {
+        val fileId = callFile.fileId
+        return sourceFiles[fileId] ?: run {
             val depth = (getInfoForExpandedFile(callFile)?.sourceFile?.depth ?: -1) + 1
             if (depth >= DEFAULT_RECURSION_LIMIT) return null
             val sf = SourceFile(this, callFile, depth)
             getOrPutStagedList(sf).add(sf)
-            sourceFiles[callFile.url] = sf
+            sourceFiles.put(fileId, sf)
             sf
         }
     }
 
     fun getSourceFile(callFile: VirtualFile): SourceFile? {
         checkReadAccessAllowed()
-        return sourceFiles[callFile.url]
+        return sourceFiles[callFile.fileId]
     }
 
     fun getInfoForExpandedFile(file: VirtualFile): ExpandedMacroInfo? {
         checkReadAccessAllowed()
-        return expandedFileToInfo[file.url]
+        return expandedFileToInfo[file.fileId]
     }
 
     fun getInfoForCall(call: RsMacroCall): ExpandedMacroInfo? {
@@ -178,7 +181,7 @@ class ExpandedMacroStorage(val project: Project) {
 
     fun unbindPsi() {
         checkReadAccessAllowed()
-        sourceFiles.values.forEach { it.unbindPsi() }
+        sourceFiles.forEachValue { it.unbindPsi(); true }
     }
 
     companion object {
@@ -217,8 +220,8 @@ class ExpandedMacroStorage(val project: Project) {
                 data.writeInt(STORAGE_VERSION)
                 data.writeInt(RsFileStub.Type.stubVersion)
 
-                data.writeInt(storage.sourceFiles.size)
-                storage.sourceFiles.values.forEach { it.writeTo(data) }
+                data.writeInt(storage.sourceFiles.size())
+                storage.sourceFiles.forEachValue { it.writeTo(data); true }
             }
         }
     }
@@ -234,7 +237,8 @@ class SourceFile(
 ) {
     private var cachedPsi: SoftReference<RsFile>? = null
 
-    val fileUrl: String = file.url
+    private val fileUrl: String get() = file.url
+    val fileId: Int get() = file.fileId
 
     val project: Project
         get() = storage.project
@@ -248,8 +252,9 @@ class SourceFile(
         get() = rootSourceFile.loadPsi()?.containingCargoTarget?.pkg?.origin == PackageOrigin.WORKSPACE
 
     @Synchronized
-    fun getExpansionUrls(): List<Pair<String, ExpandedMacroInfo>> =
-        infos.mapNotNull { info -> info.expansionFileUrl?.let { it to info } }
+    fun forEachInfo(action: (ExpandedMacroInfo) -> Unit) {
+        infos.forEach(action)
+    }
 
     @Synchronized
     fun addInfo(info: ExpandedMacroInfo) {
@@ -474,7 +479,7 @@ class SourceFile(
                 modificationStamp,
                 infos
             )
-            serInfos.mapTo(infos) { it.toExpandedMacroInfo(sf) }
+            serInfos.mapNotNullTo(infos) { it.toExpandedMacroInfo(sf) }
             return sf
         }
     }
@@ -488,12 +493,13 @@ private tailrec fun SourceFile.findRootSourceFile(): SourceFile {
 
 class ExpandedMacroInfo(
     val sourceFile: SourceFile,
-    val expansionFileUrl: String?,
+    val expansionFile: VirtualFile?,
     private val defHash: HashCode?,
     val callHash: HashCode?,
     var stubIndex: Int = -1
 ) {
-    val expansionFile: VirtualFile? by CachedVirtualFile(expansionFileUrl)
+    val expansionFileUrl: String? get() = expansionFile?.url
+    val fileId: Int get() = expansionFile?.fileId ?: -1
 
     @Volatile
     var cachedMacroCall: SoftReference<RsMacroCall>? = null
@@ -549,10 +555,11 @@ private data class SerializedExpandedMacroInfo(
     val defHash: HashCode?,
     val stubIndex: Int
 ) {
-    fun toExpandedMacroInfo(sourceFile: SourceFile): ExpandedMacroInfo {
+    fun toExpandedMacroInfo(sourceFile: SourceFile): ExpandedMacroInfo? {
+        val file = expansionFileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
         return ExpandedMacroInfo(
             sourceFile,
-            expansionFileUrl,
+            file,
             callHash,
             defHash,
             stubIndex
@@ -621,3 +628,6 @@ private fun calcStubIndex(psi: StubBasedPsiElement<*>): Int {
     }
     return index
 }
+
+private val VirtualFile.fileId: Int
+    get() = (this as VirtualFileWithId).id
