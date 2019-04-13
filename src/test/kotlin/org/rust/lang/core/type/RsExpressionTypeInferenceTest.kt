@@ -866,6 +866,26 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test Self as struct field type`() = testExpr("""
+        pub struct S<'a> {
+            field: &'a Self
+        }
+        fn bar(s: S) {
+            s.field;
+        }   //^ &S
+    """)
+
+    fun `test Self as enum variant field type`() = testExpr("""
+        pub enum E<'a> {
+            V { field: &'a Self }
+        }
+        fn bar(s: E) {
+            if let E::V { field } = s {
+                field;
+            } //^ &E
+        }
+    """)
+
     fun `test argument expr of unresolved function`() = testExpr("""
         fn main() {
             foo(1);
