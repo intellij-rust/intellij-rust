@@ -57,7 +57,9 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         }
 
         if (candidates.size == 1) {
-            candidates.first().import(element)
+            project.runWriteCommandAction {
+                candidates.first().import(element)
+            }
         } else {
             DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
                 chooseItemAndImport(project, it, candidates, element)
