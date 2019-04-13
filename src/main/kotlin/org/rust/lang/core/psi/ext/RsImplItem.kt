@@ -11,15 +11,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsInnerAttr
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
@@ -51,7 +47,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         get() = CachedValuesManager.getCachedValue(this) {
             CachedValueProvider.Result.create(
                 doGetAssociatedTypesTransitively(),
-                PsiModificationTracker.MODIFICATION_COUNT
+                rustStructureOrAnyPsiModificationTracker
             )
         }
 
