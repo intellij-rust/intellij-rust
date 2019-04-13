@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
@@ -100,7 +99,7 @@ class RsFile(
         return CachedValuesManager.getCachedValue(originalFile) {
             CachedValueProvider.Result.create(
                 RsModulesIndex.getDeclarationFor(originalFile),
-                PsiModificationTracker.MODIFICATION_COUNT
+                originalFile.rustStructureOrAnyPsiModificationTracker
             )
         }
     }
