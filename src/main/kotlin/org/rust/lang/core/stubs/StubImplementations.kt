@@ -33,7 +33,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 160
+        override fun getStubVersion(): Int = 161
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -173,7 +173,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "TRY_EXPR" -> RsExprStub.Type("TRY_EXPR", ::RsTryExprImpl)
     "TUPLE_EXPR" -> RsExprStub.Type("TUPLE_EXPR", ::RsTupleExprImpl)
     "TUPLE_OR_PAREN_EXPR" -> RsExprStub.Type("TUPLE_OR_PAREN_EXPR", ::RsTupleOrParenExprImpl)
-    "UNARY_EXPR" -> RsExprStub.Type("UNARY_EXPR", ::RsUnaryExprImpl)
+    "UNARY_EXPR" -> RsUnaryExprStub.Type
     "UNIT_EXPR" -> RsExprStub.Type("UNIT_EXPR", ::RsUnitExprImpl)
     "WHILE_EXPR" -> RsExprStub.Type("WHILE_EXPR", ::RsWhileExprImpl)
 
@@ -1157,6 +1157,30 @@ class RsLitExprStub(
 
         override fun createPsi(stub: RsLitExprStub): RsLitExpr = RsLitExprImpl(stub, this)
     }
+}
+
+class RsUnaryExprStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    val operatorType: UnaryOperator
+) : RsPlaceholderStub(parent, elementType) {
+    object Type : RsStubElementType<RsUnaryExprStub, RsUnaryExpr>("UNARY_EXPR") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean =
+            createStubIfParentIsStub(node) && node.psi.parent?.parent !is RsFunction
+
+        override fun serialize(stub: RsUnaryExprStub, dataStream: StubOutputStream) {
+            dataStream.writeEnum(stub.operatorType)
+        }
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsUnaryExprStub =
+            RsUnaryExprStub(parentStub, this, dataStream.readEnum())
+
+        override fun createStub(psi: RsUnaryExpr, parentStub: StubElement<*>?): RsUnaryExprStub =
+            RsUnaryExprStub(parentStub, this, psi.operatorType)
+
+        override fun createPsi(stub: RsUnaryExprStub): RsUnaryExpr = RsUnaryExprImpl(stub, this)
+    }
+
 }
 
 sealed class RsStubLiteralType(val typeOrdinal: Int) {
