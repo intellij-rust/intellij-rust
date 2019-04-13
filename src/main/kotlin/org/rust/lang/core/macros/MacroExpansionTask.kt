@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -47,6 +48,8 @@ abstract class MacroExpansionTaskBase(
     private lateinit var realTaskIndicator: ProgressIndicator
     private val subTaskIndicator: ProgressIndicator = EmptyProgressIndicator()
     private lateinit var expansionSteps: Iterator<List<Extractable>>
+    @Volatile
+    private var heavyProcessRequested = false
 
     override fun run(indicator: ProgressIndicator) {
         checkReadAccessNotAllowed()
@@ -57,7 +60,8 @@ abstract class MacroExpansionTaskBase(
         expansionSteps = getMacrosToExpand().iterator()
 
         indicator.checkCanceled()
-        HeavyProcessLatch.INSTANCE.processStarted("Expanding Rust macros").use {
+        var heavyProcessToken: AccessToken? = null
+        try {
             submitExpansionTask()
 
             MACRO_LOG.trace("Awaiting")
@@ -75,9 +79,16 @@ abstract class MacroExpansionTaskBase(
                     // (and sub task may not call `sync.countDown()`, so without this `break` we will be blocked
                     // forever)
                     if (project.isDisposed) break
+
+                    // Enter heavy process mode only if at least one macros is not up-to-date
+                    if (heavyProcessToken == null && heavyProcessRequested) {
+                        heavyProcessToken = HeavyProcessLatch.INSTANCE.processStarted("Expanding Rust macros")
+                    }
                 }
             }
             MACRO_LOG.trace("Task completed! ${totalExpanded.get()} total calls, millis: " + millis / 1_000_000)
+        } finally {
+            heavyProcessToken?.finish()
         }
     }
 
@@ -126,6 +137,11 @@ abstract class MacroExpansionTaskBase(
                     }
                 }
                 doneStages.addAndGet(if (result is EmptyPipeline) Pipeline.STAGES else 1)
+
+                // Enter heavy process mode only if at least one macros is not up-to-date
+                if (result !is EmptyPipeline) {
+                    heavyProcessRequested = true
+                }
                 result
             }.filter { it !is EmptyPipeline }.toList()
 
