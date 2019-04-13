@@ -39,13 +39,14 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         }
     """)
 
-    fun `test simple int useless`() = checkByText("""
+    fun `test integer literals useless`() = checkByText("""
         fn main() {
             let a = 2;
             match a {
-                1 => {}
-                2 => {}
-                <warning descr="Unreachable pattern">1</warning> => {}
+                123 => {},
+                <warning descr="Unreachable pattern">0x7B</warning> => {},
+                <warning descr="Unreachable pattern">0o173</warning> => {},
+                <warning descr="Unreachable pattern">0b01_11_10_11</warning> => {}
                 _ => {}
             }
         }
@@ -397,12 +398,13 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         }
     """)
 
-    fun `test hex useful`() = checkByText("""
+    fun `test integer literals useful`() = checkByText("""
         fn foo(n: i32) {
             match n {
-                0x01 => {}
-                0x02 => {}
-                0x42 => {}
+                123 => {},
+                0x7C => {},
+                0o175 => {},
+                0b01_11_11_10 => {}
                 _ => {}
             }
         }
