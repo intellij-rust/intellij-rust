@@ -1194,6 +1194,13 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test 'pub (self)' mod`() = checkByCode("""
+        mod foo {
+          //X
+            pub(self) mod bar {}
+        }     //^
+    """)
+
     fun `test extern crate self`() = checkByCode("""
         extern crate self as foo;
 

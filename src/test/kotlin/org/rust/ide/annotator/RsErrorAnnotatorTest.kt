@@ -1161,6 +1161,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         use <error descr="Function `foo::bar::eggs` is private [E0603]">foo::bar::eggs</error>;
     """)
 
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/3558
+    fun `test no E0603 for 'pub(in self)' restricted module`() = checkErrors("""
+        pub(self) mod foo {}
+        use self::foo as bar;
+    """)
+
     fun `test function args should implement Sized trait E0277`() = checkErrors("""
         fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
         fn foo2(bar: i32) {}
