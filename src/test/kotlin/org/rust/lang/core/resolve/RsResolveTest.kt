@@ -814,6 +814,20 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test struct Self type`() = checkByCode("""
+        pub struct S<'a> {
+                 //X
+            field: &'a Self
+        }             //^
+    """)
+
+    fun `test enum Self type`() = checkByCode("""
+        pub enum E<'a> {
+               //X
+            V { field: &'a Self }
+        }                //^
+    """)
+
     fun `test union def`() = checkByCode("""
         union U { f: f64, u: u64 }
             //X
