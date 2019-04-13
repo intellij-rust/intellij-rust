@@ -44,14 +44,27 @@ object RsConstExprEvaluator {
         pathExprResolver: ((RsPathExpr) -> RsElement?)
     ): ExprValue.Integer? {
 
+        fun RsLitExpr.eval(expectedTy: TyInteger): Long? {
+            val textValue = integerLiteralValue?.removeSuffix(expectedTy.name) ?: return null
+            val (start, radix) = when (textValue.take(2)) {
+                "0x" -> 2 to 16
+                "0o" -> 2 to 8
+                "0b" -> 2 to 2
+                else -> 0 to 10
+            }
+            val cleanTextValue = textValue.substring(start).filter { it != '_' }
+            return try {
+                java.lang.Long.parseLong(cleanTextValue, radix).validValueOrNull(expectedTy)
+            } catch (e: NumberFormatException) {
+                null
+            }
+        }
+
         fun eval(expr: RsExpr?, depth: Int): Long? {
             // To prevent SO we restrict max depth of expression
             if (depth >= MAX_EXPR_DEPTH) return null
             return when (expr) {
-                is RsLitExpr -> expr.integerLiteralValue
-                    ?.removeSuffix(expectedTy.name)
-                    ?.toLongOrNull()
-                    ?.validValueOrNull(expectedTy)
+                is RsLitExpr -> expr.eval(expectedTy)
                 is RsPathExpr -> {
                     val const = pathExprResolver(expr) as? RsConstant ?: return null
                     if (!const.isConst) return null
