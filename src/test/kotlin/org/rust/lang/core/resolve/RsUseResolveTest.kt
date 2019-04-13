@@ -637,4 +637,13 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
     }
+
+    fun `test underscore import doesn't bring a name into scope`() = checkByCode("""
+        pub mod foo {
+            pub trait Foo {}
+        }
+        use foo::Foo as _;
+        fn bar(a: &Foo) {}
+                  //^ unresolved
+    """)
 }
