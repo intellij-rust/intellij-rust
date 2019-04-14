@@ -253,6 +253,54 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         }   //^
     """, TypeInferenceMarks.methodPickTraitScope)
 
+    fun `test method defined in out of scope trait (with underscore import)`() = checkByCode("""
+        struct S;
+
+        mod a {
+            use super::S;
+            pub trait A { fn foo(&self){} }
+                           //X
+            impl A for S {}
+        }
+
+        mod b {
+            use super::S;
+            pub trait B { fn foo(&self){} }
+            impl B for S {}
+        }
+
+        fn main() {
+            use a::A as _;
+            S.foo();
+        }   //^
+    """, TypeInferenceMarks.methodPickTraitScope)
+
+    fun `test method defined in out of scope trait (with underscore re-export)`() = checkByCode("""
+        struct S;
+
+        mod a {
+            use super::S;
+            pub trait A { fn foo(&self){} }
+                           //X
+            impl A for S {}
+        }
+
+        mod b {
+            use super::S;
+            pub trait B { fn foo(&self){} }
+            impl B for S {}
+        }
+
+        mod c {
+            pub use super::a::A as _;
+        }
+
+        fn main() {
+            use c::*;
+            S.foo();
+        }   //^
+    """, TypeInferenceMarks.methodPickTraitScope)
+
     fun `test specialization simple`() = checkByCode("""
         trait Tr { fn foo(&self); }
         struct S;
