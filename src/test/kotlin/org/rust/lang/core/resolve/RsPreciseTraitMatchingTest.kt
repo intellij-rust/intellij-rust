@@ -301,6 +301,24 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         }   //^
     """, TypeInferenceMarks.methodPickTraitScope)
 
+    fun `test method defined in out of scope trait (inside impl)`() = checkByCode("""
+        mod foo {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }
+
+        struct S2;
+        impl foo::Foo for S2 { fn foo(&self) {} }
+        impl foo::Bar for S2 {} //X
+
+        struct S1(S2);
+        impl foo::Foo for S1 {
+            fn foo(&self) {
+                self.0.foo()
+            }        //^
+        }
+    """, TypeInferenceMarks.methodPickTraitScope)
+
     fun `test specialization simple`() = checkByCode("""
         trait Tr { fn foo(&self); }
         struct S;

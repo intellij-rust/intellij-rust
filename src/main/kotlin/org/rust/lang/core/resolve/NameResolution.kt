@@ -1132,6 +1132,12 @@ private fun processLexicalDeclarations(
             scope as RsGenericDeclaration
             if (processAll(scope.typeParameters, processor)) return true
             if (processor("Self", scope)) return true
+            if (scope is RsImplItem) {
+                scope.traitRef?.let { traitRef ->
+                    // really should be unnamed, but "_" is not a valid name in rust, so I think it's ok
+                    if (processor.lazy("_") { traitRef.resolveToTrait }) return true
+                }
+            }
         }
 
         is RsFunction -> {
