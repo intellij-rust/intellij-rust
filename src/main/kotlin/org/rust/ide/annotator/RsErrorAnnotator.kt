@@ -74,6 +74,9 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitPolybound(o: RsPolybound) = checkPolybound(holder, o)
             override fun visitTraitRef(o: RsTraitRef) = checkTraitRef(holder, o)
             override fun visitCallExpr(o: RsCallExpr) = checkCallExpr(holder, o)
+            override fun visitBlockExpr(o: RsBlockExpr) = checkBlockExpr(holder, o)
+            override fun visitBreakExpr(o: RsBreakExpr) = checkBreakExpr(holder, o)
+            override fun visitContExpr(o: RsContExpr) = checkContExpr(holder, o)
         }
 
         element.accept(visitor)
@@ -385,6 +388,36 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             holder.createErrorAnnotation(o, "Parenthesized lifetime bounds are not supported")
         }
     }
+
+    private fun checkBlockExpr(holder: AnnotationHolder, expr: RsBlockExpr) {
+        val label = expr.labelDecl
+        if (label != null) {
+            LABEL_BREAK_VALUE.check(holder, label, "label on block")
+        }
+    }
+
+    private fun checkBreakExpr(holder: AnnotationHolder, expr: RsBreakExpr) {
+        checkLabelReferenceOwner(holder, expr)
+    }
+
+    private fun checkContExpr(holder: AnnotationHolder, expr: RsContExpr) {
+        checkLabelReferenceOwner(holder, expr)
+    }
+
+    private fun checkLabelReferenceOwner(holder: AnnotationHolder, expr: RsLabelReferenceOwner) {
+        if (expr.label == null) {
+            val block = expr.ancestors.filterIsInstance<RsLabeledExpression>().firstOrNull() as? RsBlockExpr ?: return
+            if (block.labelDecl != null) {
+                val element = when (expr) {
+                    is RsBreakExpr -> expr.`break`
+                    is RsContExpr -> expr.`continue`
+                    else -> return
+                }
+                RsDiagnostic.UnlabeledControlFlowExpr(element).addToHolder(holder)
+            }
+        }
+    }
+
 
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent?.parent

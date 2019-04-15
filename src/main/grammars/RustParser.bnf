@@ -1063,12 +1063,14 @@ LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
 }
 
 ContExpr ::= OuterAttr* continue Label? {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsLabelReferenceOwner"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 BreakExpr ::= OuterAttr* break Label? AnyExpr? {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsLabelReferenceOwner"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
