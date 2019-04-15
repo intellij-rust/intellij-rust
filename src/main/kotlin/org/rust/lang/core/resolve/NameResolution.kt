@@ -593,7 +593,7 @@ fun processLocalVariables(place: RsElement, processor: (RsPatBinding) -> Unit) {
         processLexicalDeclarations(scope, cameFrom, VALUES) { v ->
             val el = v.element
             if (el is RsPatBinding) processor(el)
-            true
+            false
         }
     }
 }

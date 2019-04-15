@@ -28,12 +28,18 @@ class RsFieldInitShorthandInspection : RsLocalInspectionTool() {
                     override fun getFamilyName(): String = "Use initialization shorthand"
 
                     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                        val field = descriptor.psiElement as RsStructLiteralField
-                        field.expr?.delete()
-                        field.colon?.delete()
+                        applyShorthandInit(descriptor.psiElement as RsStructLiteralField)
                     }
                 }
             )
+        }
+    }
+
+    companion object {
+        fun applyShorthandInit(field: RsStructLiteralField)
+        {
+            field.expr?.delete()
+            field.colon?.delete()
         }
     }
 }
