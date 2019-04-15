@@ -1058,6 +1058,17 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test block label`() = checkByCode("""
+        fn main() {
+            let block_with_label = 'block: {
+                                   //X
+                if true { break 'block 1; }
+                               //^
+                3
+            };
+        }
+    """)
+
     fun `test pattern constant binding ambiguity`() = checkByCode("""
         const X: i32 = 0;
             //X
