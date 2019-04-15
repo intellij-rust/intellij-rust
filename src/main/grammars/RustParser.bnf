@@ -937,7 +937,7 @@ AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Exp
 StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
 StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
 
-BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] SimpleBlock {
+BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? SimpleBlock {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1354,6 +1354,7 @@ InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
   pin = 1
   elementType = Block
 }
+
 private BlockElement ::= !'}' (Macro | ExprStmtOrLastExpr | Stmt | Item) {
   pin = 1
   recoverWhile = BlockElement_recover
