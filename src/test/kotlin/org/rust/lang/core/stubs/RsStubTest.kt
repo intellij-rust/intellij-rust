@@ -155,6 +155,59 @@ class RsStubTest : RsTestBase() {
                   LIT_EXPR:RsLitExprStub
     """)
 
+    fun `test nested block is stubbed if contains items`() = doTest("""
+        fn foo() {
+            if true {
+                struct S;
+            } else {
+                foobar();
+            }
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              BLOCK:RsPlaceholderStub
+                STRUCT_ITEM:RsStructItemStub
+    """)
+
+    fun `test literal is not stubbed inside nested block tail expr`() = doTest("""
+        fn foo() {
+            if true {
+                struct S;
+                0
+            } else {
+                0
+            };
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              BLOCK:RsPlaceholderStub
+                STRUCT_ITEM:RsStructItemStub
+    """)
+
+    fun `test expression is not stubbed inside nested block tail expr`() = doTest("""
+        fn foo() {
+            if true {
+                struct S;
+                2 + 2
+            } else {
+                2 + 2
+            };
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              BLOCK:RsPlaceholderStub
+                STRUCT_ITEM:RsStructItemStub
+    """)
+
     private fun doTest(@Language("Rust") code: String, expectedStubText: String) {
         val fileName = "main.rs"
         fileTreeFromText("//- $fileName\n$code").create()

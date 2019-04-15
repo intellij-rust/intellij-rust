@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.ext.RsElement
 open class RsPlaceholderStub(parent: StubElement<*>?, elementType: IStubElementType<*, *>)
     : StubBase<RsElement>(parent, elementType) {
 
-    class Type<PsiT : RsElement>(
+    open class Type<PsiT : RsElement>(
         debugName: String,
         private val psiCtor: (RsPlaceholderStub, IStubElementType<*, *>) -> PsiT
     ) : RsStubElementType<RsPlaceholderStub, PsiT>(debugName) {

@@ -561,4 +561,24 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     //- main/foo.rs
         pub struct Bar;
     """, NameResolutionTestmarks.crateRootModule)
+
+    fun `test scoped resolve inside stubbed function body`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+        fn main() {
+            foo::S.baz();
+        }        //^ foo.rs
+    //- foo.rs
+        pub struct S;
+
+        fn foobar() {
+            if true {
+                impl S {
+                    pub fn baz(&self) {}
+                }
+            } else {
+                struct S;
+            }
+        }
+    """)
 }
