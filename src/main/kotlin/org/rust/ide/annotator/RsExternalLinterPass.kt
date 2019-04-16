@@ -39,9 +39,11 @@ class RsExternalLinterPass(
     private val editor: Editor
 ) : TextEditorHighlightingPass(file.project, editor.document), DumbAware {
     private val annotationHolder: AnnotationHolderImpl = AnnotationHolderImpl(AnnotationSession(file))
+    @Volatile
     private var annotationInfo: Lazy<RsExternalLinterResult?>? = null
     private val annotationResult: RsExternalLinterResult? get() = annotationInfo?.value
-    private lateinit var disposable: Disposable
+    @Volatile
+    private var disposable: Disposable = myProject
 
     override fun doCollectInformation(progress: ProgressIndicator) {
         annotationHolder.clear()
@@ -66,6 +68,7 @@ class RsExternalLinterPass(
 
     override fun doApplyInformationToEditor() {
         if (annotationInfo == null || !isAnnotationPassEnabled) {
+            disposable = myProject
             doFinish(emptyList())
             return
         }
@@ -107,6 +110,7 @@ class RsExternalLinterPass(
     private fun doFinish(highlights: List<HighlightInfo>) {
         val document = document ?: return
         ApplicationManager.getApplication().invokeLater({
+            if (Disposer.isDisposed(disposable)) return@invokeLater
             UpdateHighlightersUtil.setHighlightersToEditor(
                 myProject,
                 document,
