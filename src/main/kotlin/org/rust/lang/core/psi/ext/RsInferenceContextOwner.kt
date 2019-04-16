@@ -21,5 +21,6 @@ val RsInferenceContextOwner.body: RsElement?
         is RsConstant -> expr
         is RsFunction -> block
         is RsVariantDiscriminant -> expr
+        is RsExpressionCodeFragment -> expr
         else -> null
     }
