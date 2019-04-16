@@ -87,6 +87,8 @@
     elementType(".+BinExpr") = BinaryExpr
     elementType(".+BinOp") = BinaryOp
 
+    elementTypeFactory("ExprCodeFragment") = "org.rust.lang.core.psi.RsCodeFragmentElementTypeBaseKt.factory"
+
     extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const)") = Pat
 
     generateTokenAccessors=true
@@ -1406,3 +1408,7 @@ private never ::= !()
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
 private meta list_element ::= <<param>> !'+' (',' | &'>') { pin = 2 }
+
+// This parsing rule is used directly from the code
+//noinspection BnfUnusedRule
+ExprCodeFragment ::= Expr?

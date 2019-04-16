@@ -35,6 +35,9 @@ private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
         // So we have to invalidate the cached value on any PSI change
         containingFile.virtualFile is VirtualFileWindow -> Result.create(value, PsiModificationTracker.MODIFICATION_COUNT)
 
+        // Invalidate cached value of code fragment on any PSI change
+        this is RsCodeFragment -> Result.create(value, PsiModificationTracker.MODIFICATION_COUNT)
+
         // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
         // cached value will be invalidated if the modification counter is incremented.
         this is RsModificationTrackerOwner -> Result.create(value, structureModificationTracker, modificationTracker)
