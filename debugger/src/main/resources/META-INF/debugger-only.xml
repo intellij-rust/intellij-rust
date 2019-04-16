@@ -3,6 +3,8 @@
         <languageSupport language="Rust" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupport"/>
         <editorsExtension implementation="org.rust.debugger.lang.RsDebuggerEditorsExtension"/>
         <lineBreakpointFileTypesProvider implementation="org.rust.debugger.RsLineBreakpointFileTypesProvider"/>
+        <valueRendererFactory implementation="org.rust.debugger.lang.RsTypeRenderFactory" />
+
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
