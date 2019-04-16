@@ -202,7 +202,10 @@ sealed class RsDiagnostic(
             val derefs = actualCoercionSeq.indexOfFirst { refSeqEnd = tyToExpectedRefSeq[it]; refSeqEnd != null }
             val refs = expectedRefSeq.subList(0, refSeqEnd?: return null)
             // check that mutability of references would not contradict the `element`
-            val isSuitableMutability = refs.isEmpty() || !refs.last().isMut || (element as RsExpr).isMutable &&
+            val isSuitableMutability = refs.isEmpty() ||
+                !refs.last().isMut ||
+                element is RsExpr &&
+                element.isMutable &&
                 // covers cases like `let mut x: &T = ...`
                 actualCoercionSeq.subList(0, derefs + 1).all {
                     it !is TyReference || it.mutability.isMut
