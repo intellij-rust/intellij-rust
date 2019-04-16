@@ -66,4 +66,4 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
 }
 
 val RsModDeclItem.hasMacroUse: Boolean get() =
-    queryAttributes.hasAttribute("macro_use")
+    stub?.hasMacroUse ?: queryAttributes.hasAttribute("macro_use")

@@ -36,7 +36,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 168
+        override fun getStubVersion(): Int = 169
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -360,7 +360,9 @@ class RsEnumVariantStub(
 class RsModDeclItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    val isLocal: Boolean    //TODO: get rid of it
+    val isLocal: Boolean,    //TODO: get rid of it
+    // Macro resolve optimization: stub field access is much faster than PSI traversing
+    val hasMacroUse: Boolean
 ) : StubBase<RsModDeclItem>(parent, elementType),
     RsNamedStub {
 
@@ -368,6 +370,7 @@ class RsModDeclItemStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsModDeclItemStub(parentStub, this,
                 dataStream.readNameAsString(),
+                dataStream.readBoolean(),
                 dataStream.readBoolean()
             )
 
@@ -375,13 +378,14 @@ class RsModDeclItemStub(
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.isLocal)
+                writeBoolean(stub.hasMacroUse)
             }
 
         override fun createPsi(stub: RsModDeclItemStub) =
             RsModDeclItemImpl(stub, this)
 
         override fun createStub(psi: RsModDeclItem, parentStub: StubElement<*>?) =
-            RsModDeclItemStub(parentStub, this, psi.name, psi.isLocal)
+            RsModDeclItemStub(parentStub, this, psi.name, psi.isLocal, psi.hasMacroUse)
 
         override fun indexStub(stub: RsModDeclItemStub, sink: IndexSink) = sink.indexModDeclItem(stub)
     }
