@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -61,6 +62,12 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
 
     fun checkSingleMacro(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
         InlineFile(code)
+        val call = findElementInEditor<RsMacroCall>("^")
+        checkMacroExpansion(call, expectedExpansion, "Macro comparision failed")
+    }
+
+    fun checkSingleMacroByTree(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
+        fileTreeFromText(code).createAndOpenFileWithCaretMarker()
         val call = findElementInEditor<RsMacroCall>("^")
         checkMacroExpansion(call, expectedExpansion, "Macro comparision failed")
     }

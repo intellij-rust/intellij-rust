@@ -78,11 +78,12 @@ interface MacroExpansionManager {
 }
 
 inline fun MacroExpansionManager.withResolvingMacro(action: () -> Boolean): Boolean {
+    val old = isResolvingMacro
     isResolvingMacro = true
     try {
         if (action()) return true
     } finally {
-        isResolvingMacro = false
+        isResolvingMacro = old
     }
     return false
 }
