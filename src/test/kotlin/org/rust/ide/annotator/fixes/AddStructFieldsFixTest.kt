@@ -22,7 +22,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         struct S { foo: i32, bar: f64 }
 
         fn main() {
-            let _ = S { foo: /*caret*/0, bar: 0.0 };
+            let _ = S { foo: 0/*caret*/, bar: 0.0 };
         }
     """)
 
@@ -36,7 +36,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         struct S(i32, f64);
 
         fn main() {
-            let _ = S { 0: /*caret*/0, 1: 0.0 };
+            let _ = S { 0: 0/*caret*/, 1: 0.0 };
         }
     """)
 
@@ -52,7 +52,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         type T = S;
 
         fn main() {
-            let _ = T { foo: /*caret*/0, bar: 0.0 };
+            let _ = T { foo: 0/*caret*/, bar: 0.0 };
         }
     """)
 
@@ -67,7 +67,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         struct S { a: i32, b: String }
 
         fn main() {
-            S { a: 92, b: /*caret*/"".to_string() };
+            S { a: 92, b: "".to_string()/*caret*/ };
         }
     """)
 
@@ -82,7 +82,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         struct S { a: i32, b: String }
 
         fn main() {
-            S { a: 92, b: /*caret*/"".to_string() };
+            S { a: 92, b: "".to_string()/*caret*/ };
         }
     """)
 
@@ -101,7 +101,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         fn main() {
             let _ = S {
                 0: 92,
-                1: /*caret*/0,
+                1: 0/*caret*/,
                 2: 92,
                 3: 0
             };
@@ -118,7 +118,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         struct S { a: i32, b: i32 }
 
         fn main() {
-            let _ = S { a: /*caret*/0, b: 0, };
+            let _ = S { a: 0/*caret*/, b: 0, };
         }
     """)
 
@@ -132,7 +132,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         struct S { a: i32, b: i32 }
 
         fn main() {
-            let _ = S { a: 0, b: /*caret*/0 };
+            let _ = S { a: 0, b: 0/*caret*/ };
         }
     """)
 
@@ -146,7 +146,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class.
         struct S { a: i32, b: i32, c: i32, d: i32, e: i32}
 
         fn main() {
-            let _ = S { a: 0, b: /*caret*/0, c: 1, d: 0, e: 2 };
+            let _ = S { a: 0, b: 0/*caret*/, c: 1, d: 0, e: 2 };
         }
     """)
 

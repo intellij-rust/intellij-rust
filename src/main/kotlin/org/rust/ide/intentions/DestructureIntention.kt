@@ -5,8 +5,6 @@
 
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.CodeInsightUtilCore
-import com.intellij.codeInsight.template.TemplateBuilderFactory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -15,6 +13,8 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
+import org.rust.openapiext.buildAndRunTemplate
+import org.rust.openapiext.createSmartPointer
 
 class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.Context>() {
     override fun getText(): String = "Use destructuring declaration"
@@ -71,12 +71,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
          * Then shows the live template and initiates editing process.
          */
         private fun replaceFieldPatsWithPlaceholders(editor: Editor, newPat: RsPat) {
-            val processedPat = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newPat)
-            val templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(processedPat)
-            for (pat in processedPat.childrenOfType<RsPat>()) {
-                templateBuilder.replaceElement(pat, pat.text)
-            }
-            templateBuilder.run(editor, true)
+            editor.buildAndRunTemplate(newPat, newPat.childrenOfType<RsPat>().map { it.createSmartPointer() })
         }
     }
 }
