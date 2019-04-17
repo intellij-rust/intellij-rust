@@ -24,6 +24,8 @@ import org.rust.lang.core.psi.ext.bodyHash
 import org.rust.lang.core.psi.ext.macroBody
 import org.rust.lang.core.psi.ext.resolveToMacro
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
+import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
+import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import org.rust.stdext.executeSequentially
@@ -95,6 +97,7 @@ abstract class MacroExpansionTaskBase(
             }
             MACRO_LOG.trace("Task completed! ${totalExpanded.get()} total calls, millis: " + millis / 1_000_000)
         } finally {
+            RsResolveCache.getInstance(project).endExpandingMacros()
             heavyProcessToken?.finish()
         }
     }
@@ -312,7 +315,7 @@ object ExpansionPipeline {
             }
             val callHash = call.bodyHash
             val oldExpansionFile = info.expansionFile
-            val def = call.resolveToMacro()
+            val def = RsMacroPathReferenceImpl.resolveInBatchMode { call.resolveToMacro() }
                 ?: return if (oldExpansionFile == null) EmptyPipeline else nextStageFail(callHash, null)
 
             val defHash = def.bodyHash

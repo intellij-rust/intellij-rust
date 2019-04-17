@@ -320,7 +320,7 @@ private fun findDependencyCrateByName(context: RsElement, name: String): RsFile?
 fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val parent = path.context
     if (parent is RsMacroCall) {
-        return processMacroCallPathResolveVariants(path, isCompletion, processor)
+        error("Tried to use `processPathResolveVariants` for macro path. See `RsMacroPathReferenceImpl`")
     }
     val qualifier = path.qualifier
     val typeQual = path.typeQual
@@ -676,7 +676,7 @@ fun processAssocTypeVariants(trait: RsTraitItem, processor: RsResolveProcessor):
     return false
 }
 
-private fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     // Allowed only 1 or 2-segment paths: `foo!()` or `foo::bar!()`, but not foo::bar::baz!();
     val qualifier = path.qualifier
     if (qualifier?.path != null) return false

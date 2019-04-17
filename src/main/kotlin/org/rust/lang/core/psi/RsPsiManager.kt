@@ -88,7 +88,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
             if (file == null) {
                 if (element is RsFile ||
                     element is PsiDirectory && project.cargoProjects.findPackageForFile(element.virtualFile) != null) {
-                    incRustStructureModificationCount()
+                    incRustStructureModificationCount(element as? RsFile, element as? RsFile)
                 }
             } else {
                 if (file.fileType != RsFileType) return

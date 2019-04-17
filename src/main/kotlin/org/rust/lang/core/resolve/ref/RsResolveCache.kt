@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.MessageBus
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsModificationTrackerOwner
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
@@ -47,24 +48,23 @@ class RsResolveCache(messageBus: MessageBus) {
     private val _rustStructureDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
     /** The cache is cleared on [ANY_PSI_CHANGE_TOPIC] event */
     private val _anyPsiChangeDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
+    private val _macroCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
     private val guard = RecursionGuardWrapper.createGuard("RsResolveCache")
 
     private val rustStructureDependentCache: ConcurrentMap<PsiElement, Any?>
-        get() = _rustStructureDependentCache.get()
-            ?: createWeakMap<PsiElement, Any?>()
-                .takeIf { _rustStructureDependentCache.compareAndSet(null, it) }
-            ?: _rustStructureDependentCache.get()!! // can be set to null in write action only
+        get() = _rustStructureDependentCache.getOrCreateMap()
 
     private val anyPsiChangeDependentCache: ConcurrentMap<PsiElement, Any?>
-        get() = _anyPsiChangeDependentCache.get()
-            ?: createWeakMap<PsiElement, Any?>()
-                .takeIf { _anyPsiChangeDependentCache.compareAndSet(null, it) }
-            ?: _anyPsiChangeDependentCache.get()!! // can be set to null in write action only
+        get() = _anyPsiChangeDependentCache.getOrCreateMap()
+
+    private val macroCache: ConcurrentMap<PsiElement, Any?>
+        get() = _macroCache.getOrCreateMap()
 
     init {
         val connection = messageBus.connect()
         connection.subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
-            override fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?) = onRustStructureChanged()
+            override fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?) =
+                onRustStructureChanged(file)
         })
         connection.subscribe(ANY_PSI_CHANGE_TOPIC, object : AnyPsiChangeListener {
             override fun afterPsiChanged(isPhysical: Boolean) {
@@ -141,6 +141,7 @@ class RsResolveCache(messageBus: MessageBus) {
             }
             ResolveCacheDependency.RUST_STRUCTURE -> rustStructureDependentCache
             ResolveCacheDependency.ANY_PSI_CHANGE -> anyPsiChangeDependentCache
+            ResolveCacheDependency.MACRO -> macroCache
         }
     }
 
@@ -152,9 +153,16 @@ class RsResolveCache(messageBus: MessageBus) {
         map[element] = result ?: NULL_RESULT as V
     }
 
-    private fun onRustStructureChanged() {
+    private fun onRustStructureChanged(file: PsiFile?) {
         Testmarks.rustStructureDependentCacheCleared.hit()
         _rustStructureDependentCache.set(null)
+        if (file != null && _macroCache.get() != null) {
+            val viFile = file.virtualFile
+            if (viFile != null && !file.project.macroExpansionManager.isExpansionFile(viFile)) {
+                // Invalidate cache only on changes OUTSIDE of expansion files
+                _macroCache.set(null)
+            }
+        }
     }
 
     private fun onRustPsiChanged(element: PsiElement) {
@@ -178,6 +186,10 @@ class RsResolveCache(messageBus: MessageBus) {
                 rustStructureDependentCache.remove(it)
             }
         }
+    }
+
+    fun endExpandingMacros() {
+        _macroCache.set(null)
     }
 
     companion object {
@@ -216,6 +228,29 @@ enum class ResolveCacheDependency {
      * any PSI change, not only in rust files
      */
     ANY_PSI_CHANGE,
+
+    /**
+     * Very specific to the new macro expansion engine. The cache is valid during macro expansion
+     * process (see [org.rust.lang.core.macros.MacroExpansionTaskBase]) and invalidates at the end
+     * of expansion process (see [RsResolveCache.endExpandingMacros]).
+     *
+     * During macro resolve we can multiple times change expansion files and so increment
+     * [RsPsiManager.rustStructureModificationTracker]. But these changes can't affect the values
+     * that stored in the cache previously because of specific order of macro expansion we use.
+     * This dependency should be used only in macro expansion task and only when we call resolve
+     * in the correct order.
+     *
+     * @see RsMacroPathReferenceImpl.resolveInBatchMode
+     */
+    MACRO,
+}
+
+private fun AtomicReference<ConcurrentMap<PsiElement, Any?>?>.getOrCreateMap(): ConcurrentMap<PsiElement, Any?> {
+    while (true) {
+        get()?.let { return it }
+        val map = createWeakMap<PsiElement, Any?>()
+        if (compareAndSet(null, map)) return map
+    }
 }
 
 private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {
