@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring
 
 import com.intellij.lang.ImportOptimizer
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
@@ -17,7 +18,12 @@ import org.rust.lang.core.psi.ext.*
 class RsImportOptimizer : ImportOptimizer {
     override fun supports(file: PsiFile?): Boolean = file is RsFile
 
-    override fun processFile(file: PsiFile?) = Runnable {
+    override fun processFile(file: PsiFile) = Runnable {
+        val documentManager = PsiDocumentManager.getInstance(file.project)
+        val document = documentManager.getDocument(file)
+        if (document != null) {
+            documentManager.commitDocument(document)
+        }
         executeForUseItem(file as RsFile)
         executeForExternCrate(file)
     }
