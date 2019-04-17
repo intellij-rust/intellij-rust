@@ -7,17 +7,20 @@ package org.rust.lang.core.psi
 
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub
@@ -96,7 +99,9 @@ class RsFile(
         // to store references to PSI inside `CachedValueProvider` other than
         // the key PSI element
         val originalFile = originalFile
-        return CachedValuesManager.getCachedValue(originalFile) {
+        // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
+        val key = if (project.macroExpansionManager.isResolvingMacro) MOD_DECL_MACROS_KEY else MOD_DECL_KEY
+        return CachedValuesManager.getCachedValue(originalFile, key) {
             CachedValueProvider.Result.create(
                 RsModulesIndex.getDeclarationFor(originalFile),
                 originalFile.rustStructureOrAnyPsiModificationTracker
@@ -113,3 +118,6 @@ val PsiFile.rustFile: RsFile? get() = this as? RsFile
 
 val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
 val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
+
+private val MOD_DECL_KEY: Key<CachedValue<RsModDeclItem?>> = Key.create("MOD_DECL_KEY")
+private val MOD_DECL_MACROS_KEY: Key<CachedValue<RsModDeclItem?>> = Key.create("MOD_DECL_MACROS_KEY")
