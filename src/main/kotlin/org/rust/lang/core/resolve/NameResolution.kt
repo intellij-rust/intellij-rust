@@ -701,7 +701,7 @@ fun processMacrosExportedByCrateName(context: RsElement, crateName: String, proc
 
 fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolveProcessor): Boolean {
     val result = context.project.macroExpansionManager.withResolvingMacro {
-        MacroResolver.processMacrosInLexicalOrderUpward(context) { processor(it) }
+        MacroResolver.processMacrosInLexicalOrderUpward(context, processor)
     }
     if (result) return true
 
@@ -709,34 +709,11 @@ fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolvePro
     return processAll(exportedMacros(prelude), processor)
 }
 
-private class MacroResolver private constructor() {
-    private val exportingMacrosCrates = mutableMapOf<String, RsFile>()
-    private val useItems = mutableListOf<RsUseItem>()
+private class MacroResolver private constructor(private val processor: RsResolveProcessor): RsVisitor() {
+    private val visitor = MacroResolvingVisitor(reverse = true) { processor(it) }
 
-    private fun collectMacrosInScopeDownward(scope: RsItemsOwner): List<RsNamedElement> {
-        val visibleMacros = mutableListOf<RsNamedElement>()
-
-        for (item in scope.itemsAndMacros) {
-            processMacrosAtScopeEntry(item) {
-                visibleMacros.add(it)
-            }
-        }
-
-        visibleMacros.reverse() // Reverse list to recover lexical order of macro declarations
-
-        processRemainedExportedMacros { visibleMacros.add(it) }
-
-        return visibleMacros
-    }
-
-    private fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: (RsNamedElement) -> Boolean): Boolean {
-        if (processScopesInLexicalOrderUpward(startElement) {
-            if (it is RsElement) {
-                processMacrosAtScopeEntry(it, processor)
-            } else {
-                false
-            }
-        }) {
+    private fun processMacrosInLexicalOrderUpward(startElement: PsiElement): Boolean {
+        if (processScopesInLexicalOrderUpward(startElement)) {
             return true
         }
 
@@ -746,7 +723,7 @@ private class MacroResolver private constructor() {
             if (processAll(exportedMacros(crateRoot), processor)) return true
         }
 
-        return processRemainedExportedMacros(processor)
+        return processRemainedExportedMacros()
     }
 
     /**
@@ -754,23 +731,19 @@ private class MacroResolver private constructor() {
      * until root (file), then it goes up to module declaration of the file (`mod foo;`) and processes its
      * siblings, and so on until crate root
      */
-    private fun processScopesInLexicalOrderUpward(
-        startElement: PsiElement,
-        processor: (PsiElement) -> Boolean
-    ): Boolean {
+    private fun processScopesInLexicalOrderUpward(startElement: PsiElement): Boolean {
         val stub = (startElement as? StubBasedPsiElement<*>)?.greenStub
         return if (stub != null) {
-            stubBasedProcessScopesInLexicalOrderUpward(stub, processor)
+            stubBasedProcessScopesInLexicalOrderUpward(stub)
         } else {
-            psiBasedProcessScopesInLexicalOrderUpward(startElement, processor)
+            psiBasedProcessScopesInLexicalOrderUpward(startElement)
         }
     }
 
-    private tailrec fun psiBasedProcessScopesInLexicalOrderUpward(
-        element: PsiElement,
-        processor: (PsiElement) -> Boolean
-    ): Boolean {
-        if (processAll(element.leftSiblings, processor)) return true
+    private tailrec fun psiBasedProcessScopesInLexicalOrderUpward(element: PsiElement): Boolean {
+        for (e in element.leftSiblings) {
+            if (visitor.processMacros(e)) return true
+        }
 
         // ```
         // //- main.rs
@@ -781,99 +754,124 @@ private class MacroResolver private constructor() {
         // `foo` macro, both `parent` and `context` of `foo!` macro call are "main.rs" file.
         // But we want to process macro definition before `bar!` macro call, so we have to use
         // a macro call as a "parent"
-        val context = (element as? RsExpandedElement)?.expandedFrom ?: element.context ?: return false
+        val expandedFrom = (element as? RsExpandedElement)?.expandedFrom
+        val context = expandedFrom ?: element.context ?: return false
         return when {
-            context is RsFile -> processScopesInLexicalOrderUpward(context.declaration ?: return false, processor)
+            context is RsFile -> processScopesInLexicalOrderUpward(context.declaration ?: return false)
             // Optimization. Let this function be tailrec if go up by real parent (in the same file)
-            context != element.parent -> processScopesInLexicalOrderUpward(context, processor)
-            else -> psiBasedProcessScopesInLexicalOrderUpward(context, processor)
+            context != element.parent -> processScopesInLexicalOrderUpward(context)
+            else -> psiBasedProcessScopesInLexicalOrderUpward(context)
         }
     }
 
-    private tailrec fun stubBasedProcessScopesInLexicalOrderUpward(
-        element: StubElement<*>,
-        processor: (PsiElement) -> Boolean
-    ): Boolean {
+    private tailrec fun stubBasedProcessScopesInLexicalOrderUpward(element: StubElement<*>): Boolean {
         val parentStub = element.parentStub ?: return false
         val siblings = parentStub.childrenStubs
         val index = siblings.indexOf(element)
         check(index != -1) { "Can't find stub index" }
         val leftSiblings = siblings.subList(0, index)
         for (it in leftSiblings) {
-            if (processor(it.psi)) return true
+            if (visitor.processMacros(it.psi)) return true
         }
         // See comment in psiBasedProcessScopesInLexicalOrderUpward
-        val parentPsi = (element.psi as? RsExpandedElement)?.expandedFrom ?: parentStub.psi
+        val expandedFrom = (element.psi as? RsExpandedElement)?.expandedFrom
+        val parentPsi = expandedFrom ?: parentStub.psi
         return when {
-            parentPsi is RsFile -> processScopesInLexicalOrderUpward(parentPsi.declaration ?: return false, processor)
+            parentPsi is RsFile -> processScopesInLexicalOrderUpward(parentPsi.declaration ?: return false)
             // Optimization. Let this function be tailrec if go up by stub parent
-            parentPsi != parentStub.psi -> processScopesInLexicalOrderUpward(parentPsi, processor)
-            else -> stubBasedProcessScopesInLexicalOrderUpward(parentStub, processor)
+            parentPsi != parentStub.psi -> processScopesInLexicalOrderUpward(parentPsi)
+            else -> stubBasedProcessScopesInLexicalOrderUpward(parentStub)
         }
     }
 
-    private fun processMacrosAtScopeEntry(
-        item: RsElement,
-        processor: (RsNamedElement) -> Boolean
-    ): Boolean {
-        when (item) {
-            is RsMacro -> if (processor(item)) return true
-            is RsModItem ->
-                if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
-                    if (processAll(visibleMacros(item), processor)) return true
-                }
-            is RsModDeclItem ->
-                if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
-                    val mod = item.reference.resolve() as? RsMod ?: return false
-                    if (processAll(visibleMacros(mod), processor)) return true
-                }
-            is RsExternCrateItem -> {
-                val mod = item.reference.resolve() as? RsFile ?: return false
-                if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
-                    // If extern crate has `#[macro_use]` attribute
-                    // we can use all exported macros from the corresponding crate
-                    if (processAll(exportedMacros(mod), processor)) return true
-                } else {
-                    // otherwise we can use only reexported macros
-                    val reexportedMacros = reexportedMacros(item)
-                    if (reexportedMacros != null) {
-                        // via #[macro_reexport] attribute (old way)
-                        if (processAll(reexportedMacros, processor)) return true
-                    } else {
-                        // or from `use` items (new way)
-                        exportingMacrosCrates[item.nameWithAlias] = mod
-                    }
-                }
-
-
-            }
-            is RsUseItem -> useItems += item
-        }
-
-        return false
-    }
-
-    private fun processRemainedExportedMacros(processor: (RsNamedElement) -> Boolean): Boolean {
-        for (useItem in useItems) {
-            if (processAll(collectMacrosImportedWithUseItem(useItem, exportingMacrosCrates), processor)) return true
+    private fun processRemainedExportedMacros(): Boolean {
+        for (useItem in visitor.useItems) {
+            if (processAll(collectMacrosImportedWithUseItem(useItem, visitor.exportingMacrosCrates), processor)) return true
         }
         return false
     }
 
     companion object {
-        fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: (RsNamedElement) -> Boolean): Boolean =
-            MacroResolver().processMacrosInLexicalOrderUpward(startElement, processor)
+        fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: RsResolveProcessor): Boolean =
+            MacroResolver(processor).processMacrosInLexicalOrderUpward(startElement)
+    }
+}
 
+private class MacroResolvingVisitor(
+    val reverse: Boolean,
+    val processor: (RsNamedElement) -> Boolean
+) : RsVisitor() {
+    val exportingMacrosCrates = mutableMapOf<String, RsFile>()
+    val useItems = mutableListOf<RsUseItem>()
+    private var visitorResult: Boolean = false
+
+    fun processMacros(element: PsiElement): Boolean =
+        if (element is RsElement) processMacros(element) else false
+
+    private fun processMacros(item: RsElement): Boolean {
+        item.accept(this)
+        return visitorResult
+    }
+
+    override fun visitMacro(item: RsMacro) {
+        visitorResult = processor(item)
+    }
+
+    override fun visitModItem(item: RsModItem) {
+        if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+            val elements = visibleMacros(item)
+            visitorResult = processAll(if (reverse) elements.asReversed() else elements, processor)
+        }
+    }
+
+    override fun visitModDeclItem(item: RsModDeclItem) {
+        if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+            val mod = item.reference.resolve() as? RsMod ?: return
+            val elements = visibleMacros(mod)
+            visitorResult = processAll(if (reverse) elements.asReversed() else elements, processor)
+        }
+    }
+
+    override fun visitExternCrateItem(item: RsExternCrateItem) {
+        val mod = item.reference.resolve() as? RsFile ?: return
+        if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+            // If extern crate has `#[macro_use]` attribute
+            // we can use all exported macros from the corresponding crate
+            visitorResult = processAll(exportedMacros(mod), processor)
+        } else {
+            // otherwise we can use only reexported macros
+            val reexportedMacros = reexportedMacros(item)
+            if (reexportedMacros != null) {
+                // via #[macro_reexport] attribute (old way)
+                visitorResult = processAll(reexportedMacros, processor)
+            } else {
+                // or from `use` items (new way)
+                exportingMacrosCrates[item.nameWithAlias] = mod
+            }
+        }
+    }
+
+    override fun visitUseItem(item: RsUseItem) {
+        useItems += item
+    }
+
+    companion object {
         private fun visibleMacros(scope: RsItemsOwner): List<RsNamedElement> =
             CachedValuesManager.getCachedValue(scope) {
-                val macros = MacroResolver().collectMacrosInScopeDownward(scope)
-                CachedValueProvider.Result.create(macros, scope.rustStructureOrAnyPsiModificationTracker)
+                val visibleMacros = mutableListOf<RsNamedElement>()
+                val visitor = MacroResolvingVisitor(reverse = false) {
+                    visibleMacros.add(it)
+                    false
+                }
+
+                for (item in scope.itemsAndMacros) {
+                    visitor.processMacros(item)
+                }
+
+                CachedValueProvider.Result.create(visibleMacros, scope.rustStructureOrAnyPsiModificationTracker)
             }
 
-        private fun <T> processAll(elements: Collection<T>, processor: (T) -> Boolean): Boolean =
-            processAll(elements.asSequence(), processor)
-
-        private fun <T> processAll(elements: Sequence<T>, processor: (T) -> Boolean): Boolean {
+        private fun processAll(elements: Collection<RsNamedElement>, processor: (RsNamedElement) -> Boolean): Boolean {
             for (e in elements) {
                 if (processor(e)) return true
             }
