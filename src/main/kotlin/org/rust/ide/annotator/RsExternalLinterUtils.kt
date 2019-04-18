@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.google.gson.JsonParser
+import com.google.gson.stream.JsonReader
 import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
@@ -39,6 +40,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.openapiext.*
+import java.io.StringReader
 import java.nio.file.Path
 import java.util.*
 
@@ -183,6 +185,7 @@ fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: Rs
 class RsExternalLinterResult(commandOutput: List<String>) {
     val messages: List<CargoTopMessage> = commandOutput.asSequence()
         .filter { MESSAGE_REGEX.matches(it) }
+        .map { JsonReader(StringReader(it)).apply { isLenient = true } }
         .map { PARSER.parse(it) }
         .filter { it.isJsonObject }
         .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
