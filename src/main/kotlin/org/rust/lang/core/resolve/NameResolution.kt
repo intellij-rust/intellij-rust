@@ -37,10 +37,7 @@ import org.rust.lang.core.resolve.NameResolutionTestmarks.otherVersionOfSameCrat
 import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
-import org.rust.lang.core.resolve.ref.DotExprResolveVariant
-import org.rust.lang.core.resolve.ref.FieldResolveVariant
-import org.rust.lang.core.resolve.ref.MethodResolveVariant
-import org.rust.lang.core.resolve.ref.deepResolve
+import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
@@ -755,6 +752,7 @@ private class MacroResolver private constructor(private val processor: RsResolve
         // But we want to process macro definition before `bar!` macro call, so we have to use
         // a macro call as a "parent"
         val expandedFrom = (element as? RsExpandedElement)?.expandedFrom
+        if (expandedFrom != null && processExpandedFrom(expandedFrom)) return true
         val context = expandedFrom ?: element.context ?: return false
         return when {
             context is RsFile -> processScopesInLexicalOrderUpward(context.declaration ?: return false)
@@ -775,6 +773,7 @@ private class MacroResolver private constructor(private val processor: RsResolve
         }
         // See comment in psiBasedProcessScopesInLexicalOrderUpward
         val expandedFrom = (element.psi as? RsExpandedElement)?.expandedFrom
+        if (expandedFrom != null && processExpandedFrom(expandedFrom)) return true
         val parentPsi = expandedFrom ?: parentStub.psi
         return when {
             parentPsi is RsFile -> processScopesInLexicalOrderUpward(parentPsi.declaration ?: return false)
@@ -782,6 +781,23 @@ private class MacroResolver private constructor(private val processor: RsResolve
             parentPsi != parentStub.psi -> processScopesInLexicalOrderUpward(parentPsi)
             else -> stubBasedProcessScopesInLexicalOrderUpward(parentStub)
         }
+    }
+
+    /**
+     * Optimization: macros often invoke themselves recursively.
+     * If the expansion of `foo` macro contains `foo` macro call, it means:
+     * 1. it's the same macro as a calling one
+     * 2. name resolution result of calling macro should be already cached
+     *
+     * So we can just get this result from the cache directly and avoid expensive name resolution in such cases
+     */
+    private fun processExpandedFrom(expandedFrom: RsMacroCall): Boolean {
+        if (expandedFrom.path.qualifier == null) {
+            val resolved = (expandedFrom.path.reference as? RsMacroPathReferenceImpl)?.resolveIfCached()
+                ?: return false
+            if (processor(expandedFrom.macroName, resolved)) return true
+        }
+        return false
     }
 
     private fun processRemainedExportedMacros(): Boolean {

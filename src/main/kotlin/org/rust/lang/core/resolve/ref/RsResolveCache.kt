@@ -87,18 +87,7 @@ class RsResolveCache(messageBus: MessageBus) {
     @Suppress("UNCHECKED_CAST")
     fun <K : PsiElement, V> resolveWithCaching(key: K, dep: ResolveCacheDependency, resolver: (K) -> V): V? {
         ProgressManager.checkCanceled()
-        val refinedDep = when (key.containingFile.virtualFile) {
-            // If virtualFile is null then event system is not enabled for this PSI file (see
-            // PsiFileImpl.getVirtualFile) and we can't track PSI modifications, so depend on
-            // any change. This is a case of completion, for example
-            null -> ResolveCacheDependency.ANY_PSI_CHANGE
-            // The case of injected language. Injected PSI don't have it's own event system, so can only
-            // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
-            // literal. If a user change the literal, we can only be notified that the literal is changed.
-            // So we have to invalidate caches for injected PSI on any PSI change
-            is VirtualFileWindow -> ResolveCacheDependency.ANY_PSI_CHANGE
-            else -> dep
-        }
+        val refinedDep = refineDependency(key, dep)
         val map = getCacheFor(key, refinedDep)
         return map[key] as V? ?: run {
             val stamp = RecursionManager.markStack()
@@ -111,6 +100,24 @@ class RsResolveCache(messageBus: MessageBus) {
             result
         }
     }
+
+    fun getCached(key: PsiElement, dep: ResolveCacheDependency): Any? {
+        return getCacheFor(key, refineDependency(key, dep))[key]
+    }
+
+    private fun refineDependency(key: PsiElement, dep: ResolveCacheDependency): ResolveCacheDependency =
+        when (key.containingFile.virtualFile) {
+            // If virtualFile is null then event system is not enabled for this PSI file (see
+            // PsiFileImpl.getVirtualFile) and we can't track PSI modifications, so depend on
+            // any change. This is a case of completion, for example
+            null -> ResolveCacheDependency.ANY_PSI_CHANGE
+            // The case of injected language. Injected PSI don't have it's own event system, so can only
+            // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
+            // literal. If a user change the literal, we can only be notified that the literal is changed.
+            // So we have to invalidate caches for injected PSI on any PSI change
+            is VirtualFileWindow -> ResolveCacheDependency.ANY_PSI_CHANGE
+            else -> dep
+        }
 
     private fun getCacheFor(element: PsiElement, dep: ResolveCacheDependency): ConcurrentMap<PsiElement, Any?> {
         return when (dep) {

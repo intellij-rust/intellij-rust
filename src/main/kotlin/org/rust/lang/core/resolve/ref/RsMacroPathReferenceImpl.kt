@@ -56,10 +56,17 @@ class RsMacroPathReferenceImpl(
         listOfNotNull(resolve())
 
     override fun resolve(): RsNamedElement? {
-        val dep = if (isBatchMode) ResolveCacheDependency.MACRO else ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
         return RsResolveCache.getInstance(element.project)
-            .resolveWithCaching(element, dep, Resolver)
+            .resolveWithCaching(element, cacheDep, Resolver)
     }
+
+    fun resolveIfCached(): RsNamedElement? {
+        return RsResolveCache.getInstance(element.project)
+            .getCached(element, cacheDep) as? RsNamedElement
+    }
+
+    private val cacheDep: ResolveCacheDependency
+        get() = if (isBatchMode) ResolveCacheDependency.MACRO else ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 
     private object Resolver : (RsPath) -> RsNamedElement? {
         override fun invoke(element: RsPath): RsNamedElement? {
