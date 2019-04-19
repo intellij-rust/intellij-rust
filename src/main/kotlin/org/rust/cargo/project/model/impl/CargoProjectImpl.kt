@@ -13,6 +13,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.project.Project
@@ -57,7 +59,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 
-@State(name = "CargoProjects")
+@State(name = "CargoProjects", storages = [
+    Storage(StoragePathMacros.WORKSPACE_FILE),
+    Storage("misc.xml", deprecated = true)
+])
 class CargoProjectsServiceImpl(
     val project: Project
 ) : CargoProjectsService, PersistentStateComponent<Element> {
