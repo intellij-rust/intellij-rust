@@ -373,6 +373,12 @@ data class CargoProjectImpl(
         "CargoProject(manifest = $manifest)"
 }
 
+val CargoProjectsService.allPackages: Sequence<CargoWorkspace.Package>
+    get() = allProjects.asSequence().mapNotNull { it.workspace }.flatMap { it.packages.asSequence() }
+
+val CargoProjectsService.allTargets: Sequence<CargoWorkspace.Target>
+    get() = allPackages.flatMap { it.targets.asSequence() }
+
 private fun hasAtLeastOneValidProject(projects: Collection<CargoProject>) =
     projects.any { it.manifest.exists() }
 
