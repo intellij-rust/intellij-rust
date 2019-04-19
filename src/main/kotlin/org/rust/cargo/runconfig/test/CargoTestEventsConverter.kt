@@ -13,8 +13,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters
 import com.intellij.openapi.util.text.StringUtil.unquoteString
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
-import org.rust.cargo.runconfig.test.CargoTestLocator.getTestFnUrl
-import org.rust.cargo.runconfig.test.CargoTestLocator.getTestModUrl
 import org.rust.stdext.removeLast
 import java.io.File
 
@@ -225,7 +223,7 @@ class CargoTestEventsConverter(
             ServiceMessageBuilder.testSuiteStarted(suite.name)
                 .addAttribute("nodeId", suite)
                 .addAttribute("parentNodeId", suite.parent)
-                .addAttribute("locationHint", getTestModUrl(suite))
+                .addAttribute("locationHint", CargoTestLocator.getTestUrl(suite))
 
         private fun createTestSuiteFinishedMessage(suite: NodeId): ServiceMessageBuilder =
             ServiceMessageBuilder.testSuiteFinished(suite.name)
@@ -235,7 +233,7 @@ class CargoTestEventsConverter(
             ServiceMessageBuilder.testStarted(test.name)
                 .addAttribute("nodeId", test)
                 .addAttribute("parentNodeId", test.parent)
-                .addAttribute("locationHint", getTestFnUrl(test))
+                .addAttribute("locationHint", CargoTestLocator.getTestUrl(test))
 
         private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder {
             val builder = ServiceMessageBuilder.testFailed(test.name)

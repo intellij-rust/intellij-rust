@@ -27,7 +27,6 @@ import org.rust.stdext.buildList
 object CargoTestLocator : SMTestLocator {
     private const val NAME_SEPARATOR: String = "::"
     private const val TEST_PROTOCOL: String = "cargo:test"
-    private const val SUITE_PROTOCOL: String = "cargo:suite"
 
     override fun getLocation(
         protocol: String,
@@ -35,7 +34,7 @@ object CargoTestLocator : SMTestLocator {
         project: Project,
         scope: GlobalSearchScope
     ): List<Location<PsiElement>> {
-        if (protocol != TEST_PROTOCOL && protocol != SUITE_PROTOCOL) return emptyList()
+        if (protocol != TEST_PROTOCOL) return emptyList()
         val qualifiedName = toQualifiedName(path)
 
         // `RsQualifiedNamedElement.qualifiedName` starts with Cargo target name, so if the `qualifiedName` doesn't
@@ -64,15 +63,10 @@ object CargoTestLocator : SMTestLocator {
         }
     }
 
-    fun getTestFnUrl(name: String): String = "$TEST_PROTOCOL://$name"
+    fun getTestUrl(name: String): String = "$TEST_PROTOCOL://$name"
 
-    fun getTestFnUrl(function: RsFunction): String =
-        getTestFnUrl(function.qualifiedName ?: "")
-
-    fun getTestModUrl(name: String): String = "$SUITE_PROTOCOL://$name"
-
-    fun getTestModUrl(mod: RsMod): String =
-        getTestModUrl(mod.qualifiedName ?: "")
+    fun getTestUrl(function: RsQualifiedNamedElement): String =
+        this.getTestUrl(function.qualifiedName ?: "")
 
     private fun toQualifiedName(path: String): String {
         val targetName = path.substringBefore(NAME_SEPARATOR).substringBeforeLast("-")

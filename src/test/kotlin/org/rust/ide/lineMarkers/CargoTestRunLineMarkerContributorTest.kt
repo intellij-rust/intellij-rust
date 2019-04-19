@@ -81,8 +81,9 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     """) {
         val instance = TestStateStorage.getInstance(project)
         instance.writeState(
-            CargoTestLocator.getTestFnUrl(it),
-            createRecord(TestStateInfo.Magnitude.PASSED_INDEX.value, Date.from(Instant.now()), 1))
+            CargoTestLocator.getTestUrl(it),
+            createRecord(TestStateInfo.Magnitude.PASSED_INDEX.value, Date.from(Instant.now()), 1)
+        )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
         assertEquals(CargoIcons.TEST_GREEN, icon)
     }
@@ -93,7 +94,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     """) {
         val instance = TestStateStorage.getInstance(project)
         instance.writeState(
-            CargoTestLocator.getTestFnUrl(it),
+            CargoTestLocator.getTestUrl(it),
             createRecord(TestStateInfo.Magnitude.ERROR_INDEX.value, Date.from(Instant.now()), 1)
         )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
@@ -107,7 +108,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     """) {
         val instance = TestStateStorage.getInstance(project)
         instance.writeState(
-            CargoTestLocator.getTestFnUrl(it),
+            CargoTestLocator.getTestUrl(it),
             createRecord(TestStateInfo.Magnitude.IGNORED_INDEX.value, Date.from(Instant.now()), 1)
         )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
@@ -132,8 +133,9 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     """) {
         val instance = TestStateStorage.getInstance(project)
         instance.writeState(
-            CargoTestLocator.getTestModUrl(it),
-            createRecord(TestStateInfo.Magnitude.PASSED_INDEX.value, Date.from(Instant.now()), 1))
+            CargoTestLocator.getTestUrl(it),
+            createRecord(TestStateInfo.Magnitude.PASSED_INDEX.value, Date.from(Instant.now()), 1)
+        )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
         assertEquals(CargoIcons.TEST_GREEN, icon)
     }
@@ -146,7 +148,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     """) {
         val instance = TestStateStorage.getInstance(project)
         instance.writeState(
-            CargoTestLocator.getTestModUrl(it),
+            CargoTestLocator.getTestUrl(it),
             createRecord(TestStateInfo.Magnitude.ERROR_INDEX.value, Date.from(Instant.now()), 1)
         )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
@@ -162,7 +164,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     """) {
         val instance = TestStateStorage.getInstance(project)
         instance.writeState(
-            CargoTestLocator.getTestModUrl(it),
+            CargoTestLocator.getTestUrl(it),
             createRecord(TestStateInfo.Magnitude.IGNORED_INDEX.value, Date.from(Instant.now()), 1)
         )
         val icon = CargoTestRunLineMarkerContributor.getTestStateIcon(it)
