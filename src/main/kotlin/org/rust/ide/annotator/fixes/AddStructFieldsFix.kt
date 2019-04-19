@@ -18,6 +18,8 @@ import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.fields
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.deepResolve
+import org.rust.openapiext.buildAndRunTemplate
+import org.rust.openapiext.createSmartPointer
 
 /**
  * Adds the given fields to the stricture defined by `expr`
@@ -48,15 +50,7 @@ class AddStructFieldsFix(
         val body = structLiteral.structLiteralBody
         val fieldsToAdd = calculateMissingFields(body, decl)
         val defaultValueBuilder = RsDefaultValueBuilder(decl.knownItems, body.containingMod, RsPsiFactory(project), recursive)
-        val firstAdded = defaultValueBuilder.fillStruct(
-            body,
-            decl.fields,
-            fieldsToAdd
-        )
-
-        if (editor != null && firstAdded != null) {
-            val expr = firstAdded.expr
-            if (expr != null) editor.caretModel.moveToOffset(expr.textOffset)
-        }
+        val addedFields = defaultValueBuilder.fillStruct(body, decl.fields, fieldsToAdd)
+        editor?.buildAndRunTemplate(body, addedFields.mapNotNull { it.expr?.createSmartPointer() })
     }
 }

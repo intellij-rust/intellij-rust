@@ -90,10 +90,10 @@ class RsDefaultValueBuilder(
         structLiteral: RsStructLiteralBody,
         declaredFields: List<RsFieldDecl>,
         fieldsToAdd: List<RsFieldDecl>
-    ): RsStructLiteralField? {
+    ): List<RsStructLiteralField> {
         val forceMultiLine = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
 
-        var firstAdded: RsStructLiteralField? = null
+        val addedFields = mutableListOf<RsStructLiteralField>()
         for (fieldDecl in fieldsToAdd) {
             val field = specializedCreateStructLiteralField(fieldDecl) ?: continue
             val addBefore = findPlaceToAdd(field, structLiteral.structLiteralFieldList, declaredFields)
@@ -104,17 +104,14 @@ class RsDefaultValueBuilder(
                 val comma = structLiteral.addBefore(psiFactory.createComma(), addBefore)
                 structLiteral.addBefore(field, comma) as RsStructLiteralField
             }
-
-            if (firstAdded == null) {
-                firstAdded = added
-            }
+            addedFields.add(added)
         }
 
         if (forceMultiLine) {
             structLiteral.addAfter(psiFactory.createNewline(), structLiteral.lbrace)
         }
 
-        return firstAdded
+        return addedFields
     }
 
     private fun findPlaceToAdd(

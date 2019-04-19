@@ -34,9 +34,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
@@ -232,7 +230,7 @@ fun <T> runReadActionInSmartMode(project: Project, action: () -> T): T {
     })
 }
 
-fun <T: Any> executeUnderProgressWithWriteActionPriorityWithRetries(indicator: ProgressIndicator, action: () -> T): T {
+fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(indicator: ProgressIndicator, action: () -> T): T {
     checkReadAccessNotAllowed()
     var result: T? = null
     do {
@@ -269,3 +267,6 @@ fun <T> executeUnderProgress(indicator: ProgressIndicator, action: () -> T): T {
     @Suppress("UNCHECKED_CAST")
     return result ?: (null as T)
 }
+
+fun <T : PsiElement> T.createSmartPointer(): SmartPsiElementPointer<T> =
+    SmartPointerManager.getInstance(project).createSmartPsiElementPointer(this)
