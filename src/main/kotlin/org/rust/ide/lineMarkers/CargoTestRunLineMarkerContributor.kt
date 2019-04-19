@@ -20,8 +20,8 @@ import org.rust.cargo.runconfig.test.CargoTestLocator
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
+import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.elementType
 import javax.swing.Icon
 
@@ -49,17 +49,11 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
     companion object {
         fun getTestStateIcon(sourceElement: PsiElement): Icon? {
-            val url = when (sourceElement) {
-                is RsFunction -> CargoTestLocator.getTestFnUrl(sourceElement)
-                is RsMod -> CargoTestLocator.getTestModUrl(sourceElement)
-                else -> return null
-            }
-
+            if (sourceElement !is RsQualifiedNamedElement) return null
+            val url = CargoTestLocator.getTestUrl(sourceElement)
             val project = sourceElement.project
-
             val magnitude = TestStateStorage.getInstance(project).getState(url)
                 ?.let { TestIconMapper.getMagnitude(it.magnitude) }
-
             return when (magnitude) {
                 TestStateInfo.Magnitude.PASSED_INDEX,
                 TestStateInfo.Magnitude.COMPLETE_INDEX ->
