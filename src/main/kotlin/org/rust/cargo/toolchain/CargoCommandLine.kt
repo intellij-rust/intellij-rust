@@ -17,6 +17,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
+import org.rust.stdext.buildList
 import java.nio.file.Path
 
 data class CargoCommandLine(
@@ -50,7 +51,8 @@ data class CargoCommandLine(
         fun forTargets(
             targets: List<CargoWorkspace.Target>,
             command: String,
-            additionalArguments: List<String> = emptyList()
+            additionalArguments: List<String> = emptyList(),
+            usePackageOption: Boolean = true
         ): CargoCommandLine {
             val pkgs = targets.map { it.pkg }
             // Make sure the selection does not span more than one package.
@@ -68,18 +70,30 @@ data class CargoCommandLine(
                 }
             }
 
-            return CargoCommandLine(
-                command,
-                workingDirectory = pkg.workspace.manifestPath.parent,
-                additionalArguments = listOf("--package", pkg.name) + targetArgs + additionalArguments
-            )
+            val workingDirectory = if (usePackageOption) {
+                pkg.workspace.contentRoot
+            } else {
+                pkg.rootDirectory
+            }
+
+            val commandLineArguments = buildList<String> {
+                if (usePackageOption) {
+                    add("--package")
+                    add(pkg.name)
+                }
+                addAll(targetArgs)
+                addAll(additionalArguments)
+            }
+
+            return CargoCommandLine(command, workingDirectory, commandLineArguments)
         }
 
         fun forTarget(
             target: CargoWorkspace.Target,
             command: String,
-            additionalArguments: List<String> = emptyList()
-        ): CargoCommandLine = forTargets(listOf(target), command, additionalArguments)
+            additionalArguments: List<String> = emptyList(),
+            usePackageOption: Boolean = true
+        ): CargoCommandLine = forTargets(listOf(target), command, additionalArguments, usePackageOption)
 
         fun forProject(
             cargoProject: CargoProject,
