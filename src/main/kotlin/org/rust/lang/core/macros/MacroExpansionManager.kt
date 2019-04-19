@@ -9,9 +9,7 @@ import com.intellij.AppTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.components.State
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -97,7 +95,10 @@ private const val RUST_EXPANDED_MACROS = "rust_expanded_macros"
 fun getBaseMacroExpansionDir(): Path =
     Paths.get(PathManager.getSystemPath()).resolve(RUST_EXPANDED_MACROS)
 
-@State(name = "MacroExpansionManager")
+@State(name = "MacroExpansionManager", storages = [
+    Storage(StoragePathMacros.WORKSPACE_FILE),
+    Storage("misc.xml", deprecated = true)
+])
 class MacroExpansionManagerImpl(
     val project: Project
 ) : MacroExpansionManager,

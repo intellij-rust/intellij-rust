@@ -7,6 +7,8 @@ package org.rust.cargo.project.settings.impl
 
 import com.intellij.configurationStore.serializeObjectInto
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializer.deserializeInto
@@ -20,7 +22,10 @@ import org.rust.cargo.toolchain.RustToolchain
 
 private const val serviceName: String = "RustProjectSettings"
 
-@com.intellij.openapi.components.State(name = serviceName)
+@com.intellij.openapi.components.State(name = serviceName, storages = [
+    Storage(StoragePathMacros.WORKSPACE_FILE),
+    Storage("misc.xml", deprecated = true)
+])
 class RustProjectSettingsServiceImpl(
     private val project: Project
 ) : PersistentStateComponent<Element>, RustProjectSettingsService {
