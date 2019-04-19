@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsVis
 import org.rust.lang.core.psi.tokenSetOf
 import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
@@ -68,4 +69,16 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
     override val referenceName: String get() = stub?.referenceName ?: super.referenceName
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+
+    override val containingMod: RsMod
+        get() {
+            // In the case of path inside vis restriction for mod item, containingMod must be the parent module:
+            // ```
+            // mod foo {
+            //     pub(in self) mod bar {}
+            //          //^ containingMod == `foo`
+            // ```
+            val visParent = contextStrict<RsVis>()?.context
+            return if (visParent is RsMod) visParent.containingMod else super.containingMod
+        }
 }
