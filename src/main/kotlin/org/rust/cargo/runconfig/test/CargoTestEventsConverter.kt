@@ -55,9 +55,9 @@ class CargoTestEventsConverter(
     private fun handleExecutableName(text: String): Boolean {
         if (suitesStack.isNotEmpty() || !TARGET_PATH_PART_REGEX.containsMatchIn(text)) return false
         val targetName = text
+            .trim()
             .substringAfterLast(File.separatorChar)
-            .substringBefore(' ')
-            .substringBeforeLast('-')
+            .substringBeforeLast('.')
         suitesStack.add(targetName)
         return true
     }
@@ -209,7 +209,11 @@ class CargoTestEventsConverter(
             Regex("""thread '.*' panicked at 'assertion failed: `\(left == right\)`\s*left: `(.*)`,\s*right: `(.*?)`(:.*)?'""")
 
         private val NodeId.name: String
-            get() = substringAfterLast(NAME_SEPARATOR)
+            get() {
+                val name = substringAfterLast(NAME_SEPARATOR)
+                // Remove suffix from target name
+                return if (contains(NAME_SEPARATOR)) name else name.substringBeforeLast("-")
+            }
 
         private val NodeId.parent: NodeId
             get() {

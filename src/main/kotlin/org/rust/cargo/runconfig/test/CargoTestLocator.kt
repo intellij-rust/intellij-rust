@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.qualifiedName
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 
 object CargoTestLocator : SMTestLocator {
+    private const val NAME_SEPARATOR: String = "::"
     private const val TEST_PROTOCOL: String = "cargo:test"
     private const val SUITE_PROTOCOL: String = "cargo:suite"
 
@@ -28,12 +29,13 @@ object CargoTestLocator : SMTestLocator {
         scope: GlobalSearchScope
     ): List<Location<PsiElement>> {
         if (protocol != TEST_PROTOCOL && protocol != SUITE_PROTOCOL) return emptyList()
-        val name = path.substringAfterLast("::")
-        val elements = RsNamedElementIndex.findElementsByName(project, name)
-        return elements.asSequence()
+        val qualifiedName = toQualifiedName(path)
+        val name = qualifiedName.substringAfterLast(NAME_SEPARATOR)
+        return RsNamedElementIndex.findElementsByName(project, name, scope)
+            .asSequence()
             .filter { it is RsFunction || it is RsMod }
             .filterIsInstance<RsQualifiedNamedElement>()
-            .filter { it.qualifiedName == path }
+            .filter { it.qualifiedName == qualifiedName }
             .map { PsiLocation.fromPsiElement<PsiElement>(it) }
             .toList()
     }
@@ -47,4 +49,10 @@ object CargoTestLocator : SMTestLocator {
 
     fun getTestModUrl(mod: RsMod): String =
         getTestModUrl(mod.qualifiedName ?: "")
+
+    private fun toQualifiedName(path: String): String {
+        val targetName = path.substringBefore(NAME_SEPARATOR).substringBeforeLast("-")
+        val qualifiedName = path.substringAfter(NAME_SEPARATOR)
+        return "$targetName$NAME_SEPARATOR$qualifiedName"
+    }
 }
