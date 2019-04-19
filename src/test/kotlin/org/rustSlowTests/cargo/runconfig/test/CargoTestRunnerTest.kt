@@ -259,13 +259,13 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
         val root = executeAndGetTestRoot(configuration)
 
         val test = root.findTestByName("tests::test")
-        assertEquals("cargo:test://tests::test", test.locationUrl)
+        assertTrue("cargo:test://tests-[a-f0-9]{16}::test".toRegex().matches(test.locationUrl ?: ""))
 
         val mod = root.findTestByName("tests::test_mod")
-        assertEquals("cargo:suite://tests::test_mod", mod.locationUrl)
+        assertTrue("cargo:suite://tests-[a-f0-9]{16}::test_mod".toRegex().matches(mod.locationUrl ?: ""))
 
         val testInner = root.findTestByName("tests::test_mod::test")
-        assertEquals("cargo:test://tests::test_mod::test", testInner.locationUrl)
+        assertTrue("cargo:test://tests-[a-f0-9]{16}::test_mod::test".toRegex().matches(testInner.locationUrl ?: ""))
     }
 
     fun `test test duration`() {
