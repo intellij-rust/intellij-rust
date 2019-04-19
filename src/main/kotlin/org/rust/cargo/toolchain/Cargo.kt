@@ -249,6 +249,17 @@ class Cargo(private val cargoExecutable: Path) {
             return cmdLine
         }
 
+        fun checkNeedInstallCargoExpand(project: Project): Boolean {
+            val minVersion = SemVer("v0.4.9", 0, 4, 9)
+            return checkNeedInstallPackage(
+                project,
+                "cargo-expand",
+                NotificationType.ERROR,
+                "Need at least cargo-expand $minVersion",
+                minVersion
+            )
+        }
+
         private fun checkNeedInstallPackage(
             project: Project,
             packageName: String,
