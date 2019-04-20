@@ -55,6 +55,8 @@ enum class RsColor(val humanName: String, val default: TextAttributesKey? = null
     DOC_HEADING("Rustdoc//Heading", Default.DOC_COMMENT_TAG),
     DOC_LINK("Rustdoc//Link", Default.DOC_COMMENT_TAG_VALUE),
     DOC_CODE("Rustdoc//Code", Default.DOC_COMMENT_MARKUP),
+    DOC_EMPHASIS("Rustdoc//Emphasis regular"),
+    DOC_EMPHASIS_STRONG("Rustdoc//Emphasis strong"),
 
     BRACES("Braces and Operators//Braces", Default.BRACES),
     BRACKETS("Braces and Operators//Brackets", Default.BRACKETS),

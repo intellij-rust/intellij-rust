@@ -33,6 +33,16 @@
             <option name="FOREGROUND" value="404040"/>
         </value>
     </option>
+    <option name="org.rust.DOC_EMPHASIS">
+        <value>
+            <option name="FONT_TYPE" value="3"/>
+        </value>
+    </option>
+    <option name="org.rust.DOC_EMPHASIS_STRONG">
+        <value>
+            <option name="FONT_TYPE" value="1"/>
+        </value>
+    </option>
     <option name="org.rust.DIMMED_TEXT">
         <value>
             <option name="FOREGROUND" value="CBCBCB" />

@@ -111,7 +111,7 @@ private fun RsDocAndAttributeOwner.innerDocs(): Sequence<Pair<RsDocKind, String>
 private val RsMetaItem.docAttr: String?
     get() = if (name == "doc") litExpr?.stringLiteralValue else null
 
-private class RustDocMarkdownFlavourDescriptor(
+class RustDocMarkdownFlavourDescriptor(
     private val context: PsiElement,
     private val uri: URI? = null,
     private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor()

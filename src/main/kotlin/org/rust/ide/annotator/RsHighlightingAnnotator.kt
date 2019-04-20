@@ -11,6 +11,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
+import org.rust.ide.utils.getAllRegularEmphasis
+import org.rust.ide.utils.getAllStrongEmphasis
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
@@ -25,11 +27,22 @@ class RsHighlightingAnnotator : RsAnnotatorBase() {
             element is RsMacroCall -> highlightNotReference(element)
             element is RsModDeclItem -> highlightNotReference(element)
             element is RsReferenceElement -> highlightReference(element)
+            element is RsDocCommentImpl -> highlightRustDoc(element, holder)
             else -> highlightNotReference(element)
         } ?: return
 
+        doAnnotate(color, partToHighlight, holder)
+    }
+
+    private fun doAnnotate(color: RsColor, partToHighlight: TextRange, holder: AnnotationHolder) {
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
         holder.createAnnotation(severity, partToHighlight, null).textAttributes = color.textAttributesKey
+    }
+
+    private fun highlightRustDoc(element: RsDocCommentImpl, holder: AnnotationHolder): Pair<TextRange, RsColor>? {
+        getAllRegularEmphasis(element).forEach { doAnnotate(RsColor.DOC_EMPHASIS, it, holder) }
+        getAllStrongEmphasis(element).forEach { doAnnotate(RsColor.DOC_EMPHASIS_STRONG, it, holder) }
+        return null
     }
 
     private fun highlightReference(element: RsReferenceElement): Pair<TextRange, RsColor>? {

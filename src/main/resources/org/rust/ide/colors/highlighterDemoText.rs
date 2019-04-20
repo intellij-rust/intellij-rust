@@ -59,6 +59,7 @@ fn <FUNCTION>main</FUNCTION>() {
 }
 
 /// Some documentation `with code`
+/// Emphasis *<DOC_EMPHASIS>regular</DOC_EMPHASIS>* and **<DOC_EMPHASIS_STRONG>strong</DOC_EMPHASIS_STRONG>**
 /// # Heading
 /// [Rust](https://www.rust-lang.org/)
 <ATTRIBUTE>#[cfg(target_os=</ATTRIBUTE>"linux"<ATTRIBUTE>)]</ATTRIBUTE>
