@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import org.rust.cargo.project.model.CargoProject
@@ -41,22 +42,27 @@ interface RsElement : PsiElement {
 val CARGO_WORKSPACE = Key.create<CargoWorkspace>("CARGO_WORKSPACE")
 
 val RsElement.cargoProject: CargoProject?
-    get() = contextualFile.originalFile.cargoProject
+    get() = contextualFile.originalFile.findCargoProject()
 
 val RsElement.cargoWorkspace: CargoWorkspace?
     get() {
         val psiFile = contextualFile.originalFile
         psiFile.virtualFile?.getInjectedFromIfDoctestInjection(project)?.cargoWorkspace?.let { return it }
         psiFile.getUserData(CARGO_WORKSPACE)?.let { return it }
-        return psiFile.cargoProject?.workspace
+        return psiFile.findCargoProject()?.workspace
     }
 
-private val PsiFile.cargoProject: CargoProject?
-    get() {
-        val vFile = virtualFile ?: return null
-        vFile.getInjectedFromIfDoctestInjection(project)?.let { return (it as PsiFile).cargoProject }
-        return project.cargoProjects.findProjectForFile(vFile)
-    }
+fun PsiFileSystemItem.findCargoProject(): CargoProject? {
+    val vFile = virtualFile ?: return null
+    vFile.getInjectedFromIfDoctestInjection(project)?.let { return (it as? PsiFile)?.findCargoProject() }
+    return project.cargoProjects.findProjectForFile(vFile)
+}
+
+fun PsiFileSystemItem.findCargoPackage(): CargoWorkspace.Package? {
+    val vFile = virtualFile ?: return null
+    vFile.getInjectedFromIfDoctestInjection(project)?.let { return (it as? PsiFile)?.findCargoPackage() }
+    return project.cargoProjects.findPackageForFile(vFile)
+}
 
 val RsElement.containingCargoTarget: CargoWorkspace.Target?
     get() {
@@ -68,7 +74,6 @@ val RsElement.containingCargoTarget: CargoWorkspace.Target?
                 ?: file
         )
     }
-
 
 val RsElement.containingCargoPackage: CargoWorkspace.Package? get() = containingCargoTarget?.pkg
 

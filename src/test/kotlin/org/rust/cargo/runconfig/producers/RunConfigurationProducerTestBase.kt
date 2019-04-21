@@ -12,13 +12,16 @@ import com.intellij.ide.DataManager
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataProvider
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.rust.RsTestBase
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
@@ -33,8 +36,17 @@ import java.nio.file.Paths
 abstract class RunConfigurationProducerTestBase : RsTestBase() {
     override val dataPath: String = "org/rust/cargo/runconfig/producers/fixtures"
 
-    // We need to override this because we call [CargoProjectWorkspaceServiceImpl.setRawWorkspace].
-    override fun getProjectDescriptor(): LightProjectDescriptor = LightProjectDescriptor()
+    override fun getProjectDescriptor(): LightProjectDescriptor =
+        object : LightProjectDescriptor() {
+            override fun createSourcesRoot(module: Module): VirtualFile {
+                val root = createSourceRoot(module, "test")
+                val sourceRoots = CargoConstants.ProjectLayout.sources + CargoConstants.ProjectLayout.tests
+                sourceRoots
+                    .map { root.createChildDirectory(this, it) }
+                    .forEach { createContentEntry(module, it) }
+                return root
+            }
+        }
 
     protected fun modifyTemplateConfiguration(f: CargoCommandConfiguration.() -> Unit) {
         val configurationType = CargoCommandConfigurationType.getInstance()

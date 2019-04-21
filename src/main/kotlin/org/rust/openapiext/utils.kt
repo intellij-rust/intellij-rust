@@ -106,6 +106,9 @@ val VirtualFile.pathAsPath: Path get() = Paths.get(path)
 fun VirtualFile.toPsiFile(project: Project): PsiFile? =
     PsiManager.getInstance(project).findFile(this)
 
+fun VirtualFile.toPsiDirectory(project: Project): PsiDirectory? =
+    PsiManager.getInstance(project).findDirectory(this)
+
 val Document.virtualFile: VirtualFile?
     get() = FileDocumentManager.getInstance().getFile(this)
 
