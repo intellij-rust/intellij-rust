@@ -245,15 +245,11 @@
                       id="RsAngleBraceTypedHandler"/>
         <typedHandler implementation="org.rust.ide.typing.RsDotTypedHandler"
                       id="RsDotTypedHandler"/>
-        <typedHandler implementation="org.rust.ide.typing.RsAttributeParenthesisTypedHandler"
-                      id="RsAttributeParenthesisTypedHandler"/>
 
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsRawLiteralHashesDeleter"
                                   id="RsRawLiteralHashesDeleter"/>
         <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsAngleBraceBackspaceHandler"
                                   id="RsAngleBraceBackspaceHandler"/>
-        <backspaceHandlerDelegate implementation="org.rust.ide.typing.RsAttributeParenthesisBackspaceHandler"
-                                  id="RsAttributeParenthesisBackspaceHandler"/>
 
         <joinLinesHandler implementation="org.rust.ide.actions.RsJoinLinesHandler"
                           id="RsJoinLinesHandler"/>
