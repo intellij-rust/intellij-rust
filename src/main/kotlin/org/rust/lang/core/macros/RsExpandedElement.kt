@@ -7,10 +7,10 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
-import com.intellij.psi.StubBasedPsiElement
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.psi.ext.stubParent
 
 /**
  *  [RsExpandedElement]s are those elements which exist in temporary,
@@ -25,11 +25,7 @@ interface RsExpandedElement : RsElement {
         fun getContextImpl(psi: RsExpandedElement): PsiElement? {
             psi.expandedFrom?.let { return it.context }
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
-            if (psi is StubBasedPsiElement<*>) {
-                val stub = psi.stub
-                if (stub != null) return stub.parentStub.psi as RsElement
-            }
-            return psi.parent
+            return psi.stubParent
         }
     }
 }
@@ -47,8 +43,14 @@ fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
  * null if this element is not directly produced by a macro
  */
 val RsExpandedElement.expandedFrom: RsMacroCall?
-    get() = project.macroExpansionManager.getExpandedFrom(this)
-        ?: (getUserData(RS_EXPANSION_MACRO_CALL) as? RsMacroCall)
+    get() {
+        val mgr = project.macroExpansionManager
+        return when (mgr.macroExpansionMode) {
+            MacroExpansionMode.Disabled -> null
+            MacroExpansionMode.Old -> getUserData(RS_EXPANSION_MACRO_CALL) as? RsMacroCall
+            is MacroExpansionMode.New -> mgr.getExpandedFrom(this)
+        }
+    }
 
 val RsExpandedElement.expandedFromRecursively: RsMacroCall?
     get() {
