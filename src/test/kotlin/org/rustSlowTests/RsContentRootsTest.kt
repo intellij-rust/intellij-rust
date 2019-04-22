@@ -12,7 +12,7 @@ import org.rust.cargo.RsWithToolchainTestBase
 
 class RsContentRootsTest : RsWithToolchainTestBase() {
 
-    fun test() {
+    fun `test project with subproject`() {
         val project = buildProject {
             toml("Cargo.toml", """
                 [package]
@@ -63,6 +63,66 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
 
         check(projectFolders)
     }
+
+    fun `test workspace without root package`() {
+        val project = buildProject {
+            toml("Cargo.toml", """
+                [workspace]
+                members = ["package1", "package2"]
+            """)
+            dir("target") {}
+
+            dir("package1") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "package1"
+                    version = "0.1.0"
+                    authors = []
+                """)
+                dir("src") {
+                    rust("main.rs", "")
+                }
+                dir("examples") {}
+                dir("tests") {}
+                dir("benches") {}
+                dir("target") {}
+            }
+            dir("package2") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "package2"
+                    version = "0.1.0"
+                    authors = []
+                """)
+                dir("src") {
+                    rust("main.rs", "")
+                }
+                dir("examples") {}
+                dir("tests") {}
+                dir("benches") {}
+                dir("target") {}
+            }
+        }
+
+        val projectFolders = listOf(
+            ProjectFolder.Excluded(project.findFile("target")),
+            
+            ProjectFolder.Source(project.findFile("package1/src"), false),
+            ProjectFolder.Source(project.findFile("package1/examples"), false),
+            ProjectFolder.Source(project.findFile("package1/tests"), true),
+            ProjectFolder.Source(project.findFile("package1/benches"), true),
+            ProjectFolder.Excluded(project.findFile("package1/target")),
+
+            ProjectFolder.Source(project.findFile("package2/src"), false),
+            ProjectFolder.Source(project.findFile("package2/examples"), false),
+            ProjectFolder.Source(project.findFile("package2/tests"), true),
+            ProjectFolder.Source(project.findFile("package2/benches"), true),
+            ProjectFolder.Excluded(project.findFile("package2/target"))
+        )
+
+        check(projectFolders)
+    }
+
 
     private fun check(projectFolders: List<ProjectFolder>) {
         ModuleRootModificationUtil.updateModel(myModule) { model ->
