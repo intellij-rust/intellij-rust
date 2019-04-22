@@ -6,6 +6,11 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Key
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.SmartList
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
@@ -160,6 +165,15 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
 
     // XXX: there are two `cfg`ed `boxed` modules in liballoc, so
     // we apply "first in the namespace wins" heuristic.
+
+    if (ns.size == 1) {
+        // Optimized version for single namespace.
+        // Also this provides ability to cache ScopeEntries and so necessary for [processItemDeclarationsWithCache]
+        return processor.lazy(name) {
+            ref.multiResolve().find { it is RsNamedElement && ns.intersects(it.namespaces) }
+        }
+    }
+
     var variants: List<RsNamedElement> = emptyList()
     val visitedNamespaces = EnumSet.noneOf(Namespace::class.java)
     if (processor.lazy(name) {
@@ -182,6 +196,43 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
     }
     return false
 }
+
+/**
+ * A cached version of [processItemDeclarations]. Exists only for optimization purposes and can be safely
+ * replaced with [processItemDeclarations]. The cached version is used only when [ns] consists of the
+ * single element that is [Namespace.Types]. This is due to the following reasons:
+ * 1. Types namespace is an absolute record holder in name resolution invocations and time
+ * 2. We can cache only single namespace due to [processMultiResolveWithNs] implementation
+ */
+fun processItemDeclarationsWithCache(
+    scope: RsMod,
+    ns: Set<Namespace>,
+    processor: RsResolveProcessor,
+    withPrivateImports: Boolean
+): Boolean {
+    return if (ns == TYPES) {
+        val key = if (withPrivateImports) CACHED_ITEM_DECLS_WITH_PRIVATE_IMPORTS else CACHED_ITEM_DECLS
+        val cached = CachedValuesManager.getCachedValue(scope, key) {
+            val scopeEntryList = SmartList<ScopeEntry>()
+            processItemDeclarations(scope, TYPES, {
+                scopeEntryList.add(it)
+                false
+            }, withPrivateImports)
+            CachedValueProvider.Result.create(scopeEntryList, scope.rustStructureOrAnyPsiModificationTracker)
+        }
+        for (e in cached) {
+            if (processor(e)) return true
+        }
+        false
+    } else {
+        processItemDeclarations(scope, ns, processor, withPrivateImports)
+    }
+}
+
+private val CACHED_ITEM_DECLS: Key<CachedValue<List<ScopeEntry>>> =
+    Key.create("CACHED_ITEM_DECLS")
+private val CACHED_ITEM_DECLS_WITH_PRIVATE_IMPORTS: Key<CachedValue<List<ScopeEntry>>> =
+    Key.create("CACHED_ITEM_DECLS_WITH_PRIVATE_IMPORTS")
 
 object ItemResolutionTestmarks {
     val externCrateSelfWithoutAlias = Testmark("externCrateSelfWithoutAlias")

@@ -213,7 +213,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
 
     // Test that we don't choke on winapi crate, which uses **A LOT** of
     // glob imports and is just **ENORMOUS**
-    fun `test winapi torture`() = buildProject {
+    fun `test winapi torture (value)`() = buildProject {
         toml("Cargo.toml", """
             [package]
             name = "hello"
@@ -232,6 +232,29 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 fn main() {
                     let _ = foo;
                 }          //^
+            """)
+        }
+    }.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+
+    fun `test winapi torture (type)`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            authors = []
+
+            [dependencies]
+            winapi = "0.2"
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                extern crate winapi;
+                use winapi::*;
+
+                fn main() {
+                    let a: Foo;
+                }         //^
             """)
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
