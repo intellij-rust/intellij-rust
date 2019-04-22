@@ -247,4 +247,109 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         #[deprecated(since="1.0.0", note="here could be your reason")]
         pub fn bar() {}
     """)
+
+    fun `test suppression quick fix for statement 1`() = expect<AssertionError> {
+        checkFixByText("Suppress `deprecated` for statement", """
+            #[deprecated]
+            pub fn foo() {}
+
+            fn main() {
+                <warning descr="`foo` is deprecated">foo/*caret*/</warning>();
+            }
+        """, """
+            #[deprecated]
+            pub fn foo() {}
+
+            fn main() {
+                #[allow(deprecated)]
+                foo/*caret*/();
+            }
+        """)
+    }
+
+    fun `test suppression quick fix for statement 2`() = checkFixByText("Suppress `deprecated` for statement", """
+        #[deprecated]
+        pub struct Foo;
+
+        fn main() {
+            let foo = <warning descr="`Foo` is deprecated">Foo/*caret*/</warning>;
+        }
+    """, """
+        #[deprecated]
+        pub struct Foo;
+
+        fn main() {
+            #[allow(deprecated)] let foo = Foo/*caret*/;
+        }
+    """)
+
+    // TODO: fix field attribute formatting
+    fun `test suppression quick fix for field`() = checkFixByText("Suppress `deprecated` for field x", """
+        #[deprecated]
+        pub struct Foo;
+
+        pub struct Bar {
+            x: <warning descr="`Foo` is deprecated">/*caret*/Foo</warning>
+        }
+    """, """
+        #[deprecated]
+        pub struct Foo;
+
+        pub struct Bar {
+            #[allow(deprecated)]x: /*caret*/Foo
+        }
+    """)
+
+    fun `test suppression quick fix for struct`() = checkFixByText("Suppress `deprecated` for struct Bar", """
+        #[deprecated]
+        pub struct Foo;
+
+        pub struct Bar {
+            x: <warning descr="`Foo` is deprecated">Foo/*caret*/</warning>
+        }
+    """, """
+        #[deprecated]
+        pub struct Foo;
+
+        #[allow(deprecated)]
+        pub struct Bar {
+            x: Foo/*caret*/
+        }
+    """)
+
+    fun `test suppression quick fix for fn`() = checkFixByText("Suppress `deprecated` for fn main", """
+        #[deprecated]
+        pub fn foo() {}
+
+        fn main() {
+            <warning descr="`foo` is deprecated">foo/*caret*/</warning>();
+        }
+    """, """
+        #[deprecated]
+        pub fn foo() {}
+
+        #[allow(deprecated)]
+        fn main() {
+            foo/*caret*/();
+        }
+    """)
+
+    fun `test suppression quick fix for file`() = checkFixByText("Suppress `deprecated` for file main.rs", """
+        #[deprecated]
+        pub fn foo() {}
+
+        fn main() {
+            <warning descr="`foo` is deprecated">foo/*caret*/</warning>();
+        }
+    """, """
+        #![allow(deprecated)]
+
+        #[deprecated]
+        pub fn foo() {}
+
+        fn main() {
+            foo/*caret*/();
+        }
+    """)
+
 }

@@ -13,31 +13,30 @@ import org.rust.lang.core.psi.ext.*
  */
 enum class RsLint(
     val id: String,
+    val groupId: String? = null,
     val defaultLevel: RsLintLevel = RsLintLevel.WARN
 ) {
-    NonSnakeCase("non_snake_case"),
-    NonCamelCaseTypes("non_camel_case_types"),
-    NonUpperCaseGlobals("non_upper_case_globals"),
-    BadStyle("bad_style");
+    NonSnakeCase("non_snake_case", "bad_style"),
+    NonCamelCaseTypes("non_camel_case_types", "bad_style"),
+    NonUpperCaseGlobals("non_upper_case_globals", "bad_style"),
+    Deprecated("deprecated");
 
     /**
      * Returns the level of the lint for the given PSI element.
      */
-    fun levelFor(el: PsiElement)
-        = explicitLevel(el) ?: superModsLevel(el) ?: defaultLevel
+    fun levelFor(el: PsiElement) = explicitLevel(el) ?: superModsLevel(el) ?: defaultLevel
 
-    private fun explicitLevel(el: PsiElement)
-        = el.ancestors
+    private fun explicitLevel(el: PsiElement): RsLintLevel? = el.ancestors
         .filterIsInstance<RsDocAndAttributeOwner>()
         .flatMap { it.queryAttributes.metaItems }
-        .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.name == id || it.name == BadStyle.id } }
+        .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.name == id || it.name == groupId } }
         .mapNotNull { it.name?.let { RsLintLevel.valueForId(it) } }
         .firstOrNull()
 
-    private fun superModsLevel(el: PsiElement)
-        = el.ancestors
+    private fun superModsLevel(el: PsiElement): RsLintLevel? = el.ancestors
         .filterIsInstance<RsMod>()
         .lastOrNull()
         ?.superMods
-        ?.mapNotNull { explicitLevel(it) }?.firstOrNull()
+        ?.mapNotNull { explicitLevel(it) }
+        ?.firstOrNull()
 }

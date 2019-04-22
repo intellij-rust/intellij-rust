@@ -15,8 +15,10 @@ import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 
-class RsDeprecationInspection : RsLocalInspectionTool() {
+class RsDeprecationInspection : RsLintInspection() {
     override fun getDisplayName() = "Deprecated item"
+
+    override val lint: RsLint = RsLint.Deprecated
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
         override fun visitElement(ref: RsElement) {
@@ -32,9 +34,7 @@ class RsDeprecationInspection : RsLocalInspectionTool() {
                 else -> original
             } ?: return
 
-            if (ref.ancestors.none { it.hasAllowDeprecatedAttribute() }) {
-                checkAndRegisterAsDeprecated(identifier, targetElement, holder)
-            }
+            checkAndRegisterAsDeprecated(identifier, targetElement, holder)
         }
     }
 
@@ -44,9 +44,6 @@ class RsDeprecationInspection : RsLocalInspectionTool() {
             holder.registerProblem(identifier, attr.extractDeprecatedMessage(identifier.text), LIKE_DEPRECATED)
         }
     }
-
-    private fun PsiElement.hasAllowDeprecatedAttribute(): Boolean = this is RsDocAndAttributeOwner &&
-        queryAttributes.hasAttributeWithArg(ALLOW_ATTR_NAME, DEPRECATED_ARG_NAME)
 
     private fun RsMetaItem.extractDeprecatedMessage(item: String): String {
         val (note, since) = if (DEPRECATED_ATTR_NAME == name) {
@@ -74,10 +71,7 @@ class RsDeprecationInspection : RsLocalInspectionTool() {
     private data class DeprecatedAttribute(val note: String?, val since: String?)
 
     companion object {
-        private const val ALLOW_ATTR_NAME: String = "allow"
         private const val DEPRECATED_ATTR_NAME: String = "deprecated"
-
-        private const val DEPRECATED_ARG_NAME: String = "deprecated"
 
         private const val SINCE_PARAM_NAME: String = "since"
         private const val NOTE_PARAM_NAME: String = "note"

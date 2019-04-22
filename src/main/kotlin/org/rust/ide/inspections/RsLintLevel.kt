@@ -22,11 +22,11 @@ enum class RsLintLevel(
     WARN("warn"),
 
     /**
-     * Compliler errors.
+     * Compiler errors.
      */
     DENY("deny");
 
     companion object {
-        fun valueForId(id: String) = RsLintLevel.values().filter { it.id == id }.firstOrNull()
+        fun valueForId(id: String) = values().firstOrNull { it.id == id }
     }
 }
