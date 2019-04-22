@@ -27,6 +27,8 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.evaluation.ExprValue
+import org.rust.lang.utils.evaluation.RsConstExprEvaluator
 import org.rust.lang.utils.snapshot.CombinedSnapshot
 import org.rust.lang.utils.snapshot.Snapshot
 import org.rust.openapiext.Testmark
@@ -1759,8 +1761,16 @@ class RsFnInferenceContext(
                 ?.let { expr.initializer?.inferTypeCoercableTo(expectedElemTy) }
                 ?: expr.initializer?.inferType()
                 ?: return TySlice(TyUnknown)
-            expr.sizeExpr?.inferType(TyInteger.USize)
-            val size = calculateArraySize(expr.sizeExpr) { ctx.getResolvedPaths(it).singleOrNull() }
+            val sizeExpr = expr.sizeExpr
+            sizeExpr?.inferType(TyInteger.USize)
+            val size = if (sizeExpr != null) {
+                val exprValue = RsConstExprEvaluator.evaluate(sizeExpr, TyInteger.USize) {
+                    ctx.getResolvedPaths(it).singleOrNull()
+                }
+                (exprValue as? ExprValue.Integer)?.value
+            } else {
+                null
+            }
             elementType to size
         } else {
             val elementTypes = expr.arrayElements?.map { it.inferType(expectedElemTy) }

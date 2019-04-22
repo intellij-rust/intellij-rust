@@ -12,6 +12,7 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.stubs.RsPlaceholderStub
+import org.rust.lang.core.stubs.RsUnaryExprStub
 
 /**
  * Extracts [RsLitExpr] raw value
@@ -27,15 +28,20 @@ enum class UnaryOperator {
     BOX, // `box a`
 }
 
-val RsUnaryExpr.operatorType: UnaryOperator get() = when {
-    mut != null -> UnaryOperator.REF_MUT
-    and != null -> UnaryOperator.REF
-    mul != null -> UnaryOperator.DEREF
-    minus != null -> UnaryOperator.MINUS
-    excl != null -> UnaryOperator.NOT
-    box != null -> UnaryOperator.BOX
-    else -> error("Unknown unary operator type: `$text`")
-}
+val RsUnaryExpr.operatorType: UnaryOperator
+    get() {
+        val stub = stub as? RsUnaryExprStub
+        if (stub != null) return stub.operatorType
+        return when {
+            mut != null -> UnaryOperator.REF_MUT
+            and != null -> UnaryOperator.REF
+            mul != null -> UnaryOperator.DEREF
+            minus != null -> UnaryOperator.MINUS
+            excl != null -> UnaryOperator.NOT
+            box != null -> UnaryOperator.BOX
+            else -> error("Unknown unary operator type: `$text`")
+        }
+    }
 
 interface OverloadableBinaryOperator {
     val traitName: String

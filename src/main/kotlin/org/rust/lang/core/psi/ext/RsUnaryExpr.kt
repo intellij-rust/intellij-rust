@@ -7,4 +7,4 @@ package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.RsUnaryExpr
 
-val RsUnaryExpr.isDereference: Boolean get() = this.mul != null
+val RsUnaryExpr.isDereference: Boolean get() = operatorType == UnaryOperator.DEREF
