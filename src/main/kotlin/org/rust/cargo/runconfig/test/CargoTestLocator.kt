@@ -15,9 +15,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.allTargets
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.qualifiedName
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
@@ -52,8 +50,8 @@ object CargoTestLocator : SMTestLocator {
             val name = qualifiedName.substringAfterLast(NAME_SEPARATOR)
             for (element in RsNamedElementIndex.findElementsByName(project, name, scope)) {
                 val sourceElement = when (element) {
-                    is RsFunction, is RsMod -> element as? RsQualifiedNamedElement
                     is RsModDeclItem -> element.reference.resolve() as? RsFile
+                    is RsQualifiedNamedElement -> element
                     else -> null
                 }
                 if (sourceElement?.qualifiedName == qualifiedName) {
@@ -66,7 +64,7 @@ object CargoTestLocator : SMTestLocator {
     fun getTestUrl(name: String): String = "$TEST_PROTOCOL://$name"
 
     fun getTestUrl(function: RsQualifiedNamedElement): String =
-        this.getTestUrl(function.qualifiedName ?: "")
+        getTestUrl(function.qualifiedName ?: "")
 
     private fun toQualifiedName(path: String): String {
         val targetName = path.substringBefore(NAME_SEPARATOR).substringBeforeLast("-")

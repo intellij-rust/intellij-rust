@@ -18,7 +18,9 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.prependArgument
+import org.rust.cargo.util.CargoArgsParser
 import org.rust.openapiext.saveAllDocuments
 
 class RsTestRunner : AsyncProgramRunner<RunnerSettings>() {
@@ -27,7 +29,7 @@ class RsTestRunner : AsyncProgramRunner<RunnerSettings>() {
             return false
         }
         val cleaned = profile.clean().ok ?: return false
-        return cleaned.cmd.command == "test"
+        return canRunCommandLine(cleaned.cmd)
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
@@ -42,6 +44,15 @@ class RsTestRunner : AsyncProgramRunner<RunnerSettings>() {
     }
 
     override fun getRunnerId(): String = "RsTestRunner"
+
+    companion object {
+        fun canRunCommandLine(cmd: CargoCommandLine): Boolean {
+            if (cmd.command != "test") return false
+            val (commandArguments, _) = CargoArgsParser.parseArgs(cmd.command, cmd.additionalArguments)
+            // https://github.com/intellij-rust/intellij-rust/issues/3707
+            return !commandArguments.contains("--doc")
+        }
+    }
 }
 
 private fun buildTests(project: Project, state: CargoRunStateBase, cmdHasNoRun: Boolean): Promise<Int?> {

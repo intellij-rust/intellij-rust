@@ -5,16 +5,27 @@
 
 package org.rust.cargo.runconfig.test
 
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import com.google.gson.JsonSyntaxException
+import com.google.gson.stream.JsonReader
 import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters
 import com.intellij.openapi.util.text.StringUtil.unquoteString
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
+import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.impl.allPackages
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.runconfig.test.CargoTestEventsConverter.State.*
 import org.rust.stdext.removeLast
 import java.io.File
+import java.io.StringReader
 
 private typealias NodeId = String
 
@@ -22,7 +33,8 @@ class CargoTestEventsConverter(
     testFrameworkName: String,
     consoleProperties: TestConsoleProperties
 ) : OutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties) {
-    private val parser: JsonParser = JsonParser()
+    private val project: Project = consoleProperties.project
+    private var converterState: State = START_MESSAGE
 
     private val suitesStack: MutableList<NodeId> = mutableListOf()
     private val target: NodeId get() = suitesStack.firstOrNull() ?: ROOT_SUITE
@@ -32,43 +44,72 @@ class CargoTestEventsConverter(
     private val testsStartTimes: MutableMap<NodeId, Long> = hashMapOf()
     private val pendingFinishedSuites: MutableSet<NodeId> = linkedSetOf()
 
+    private var doctestPackageCounter: Int = 0
+
     override fun processServiceMessages(text: String, outputType: Key<*>, visitor: ServiceMessageVisitor): Boolean {
-        if (handleExecutableName(text)) return true
+        if (handleStartMessage(text)) return true
 
-        val jsonElement: JsonElement
-        try {
-            jsonElement = parser.parse(text)
-            if (!jsonElement.isJsonObject) return true
-        } catch (es: JsonSyntaxException) {
-            return true
-        }
+        val jsonObject = try {
+            val escapedText = text.replace(DOCTEST_PATH_RE) { it.value.replace("\\", "\\\\") }
+            val reader = JsonReader(StringReader(escapedText)).apply { isLenient = true }
+            PARSER.parse(reader).takeIf { it.isJsonObject }?.asJsonObject
+        } catch (e: JsonSyntaxException) {
+            null
+        } ?: return true
 
-        if (handleTestMessage(jsonElement, outputType, visitor)) return true
-        if (handleSuiteMessage(jsonElement, outputType, visitor)) return true
+        if (handleTestMessage(jsonObject, outputType, visitor)) return true
+        if (handleSuiteMessage(jsonObject, outputType, visitor)) return true
 
         return true
     }
 
     /** @return true if message successfully processed. */
-    private fun handleExecutableName(text: String): Boolean {
-        if (suitesStack.isNotEmpty() || !TARGET_PATH_PART_REGEX.containsMatchIn(text)) return false
-        val targetName = text
-            .trim()
-            .substringAfterLast(File.separatorChar)
-            .substringBefore(" ")
-            .substringBeforeLast(".")
-        suitesStack.add(targetName)
-        return true
-    }
+    private fun handleStartMessage(text: String): Boolean =
+        when (converterState) {
+            START_MESSAGE -> {
+                converterState = when (text.trim().toLowerCase()) {
+                    "running" -> EXECUTABLE_NAME
+                    "doc-tests" -> DOCTESTS_PACKAGE_NAME
+                    else -> START_MESSAGE
+                }
+                converterState != START_MESSAGE
+            }
+            EXECUTABLE_NAME -> {
+                // target/debug/deps/target_name-xxxxxxxxxxxxxxxx[.exe] -> target_name-xxxxxxxxxxxxxxxx
+                val targetNameWithSuffix = text
+                    .trim()
+                    .substringAfterLast(File.separator)
+                    .substringBefore(" ")
+                    .substringBeforeLast(".")
+                suitesStack.add(targetNameWithSuffix)
+                converterState = START_MESSAGE
+                true
+            }
+            DOCTESTS_PACKAGE_NAME -> {
+                // package-name -> target_name-#idoctests
+                // `rustdoc` produces package name instead of target name, but since only library targets can have
+                // doctests we can find the corresponding lib target
+                val packageName = text.trim()
+                val libTargetName = findLibTargetForPackageName(project, packageName)?.normName
+                val targetNameWithSuffix = "${libTargetName ?: packageName}-${doctestPackageCounter++}$DOCTESTS_SUFFIX"
+                suitesStack.add(targetNameWithSuffix)
+                converterState = START_MESSAGE
+                true
+            }
+        }
 
     private fun handleTestMessage(
-        jsonElement: JsonElement,
+        jsonObject: JsonObject,
         outputType: Key<*>,
         visitor: ServiceMessageVisitor
     ): Boolean {
-        val testMessage = LibtestTestMessage.fromJson(jsonElement.asJsonObject)
-            ?.let { it.copy(name = "$target::${it.name}") }
-            ?: return false
+        val testMessage = LibtestTestMessage.fromJson(jsonObject)
+            ?.let {
+                // Parse `rustdoc` test name:
+                // src/lib.rs - qualifiedName (line #i) -> qualifiedName (line #i)
+                val qualifiedName = it.name.substringAfter(" - ")
+                it.copy(name = "$target::$qualifiedName")
+            } ?: return false
         val messages = createServiceMessagesFor(testMessage) ?: return false
         for (message in messages) {
             super.processServiceMessages(message.toString(), outputType, visitor)
@@ -77,11 +118,11 @@ class CargoTestEventsConverter(
     }
 
     private fun handleSuiteMessage(
-        jsonElement: JsonElement,
+        jsonObject: JsonObject,
         outputType: Key<*>,
         visitor: ServiceMessageVisitor
     ): Boolean {
-        val suiteMessage = LibtestSuiteMessage.fromJson(jsonElement.asJsonObject) ?: return false
+        val suiteMessage = LibtestSuiteMessage.fromJson(jsonObject) ?: return false
         val messages = createServiceMessagesFor(suiteMessage) ?: return false
         for (message in messages) {
             super.processServiceMessages(message.toString(), outputType, visitor)
@@ -179,7 +220,7 @@ class CargoTestEventsConverter(
         val suite = node.parent
         if (suite == target) return // Already initialized
 
-        // Pop all non-parent suites from stack and finish them
+        // Pop all non-parent suites from the stack and finish them
         while (suite != currentSuite && !suite.startsWith("$currentSuite$NAME_SEPARATOR")) {
             val lastSuite = suitesStack.removeLast()
             pendingFinishedSuites.add(lastSuite)
@@ -192,26 +233,32 @@ class CargoTestEventsConverter(
         // Initialize parents
         recursivelyInitContainingSuite(suite, messages)
 
-        // Initialize current suite
+        // Initialize the current suite
         messages.add(createTestSuiteStartedMessage(suite))
         recordSuiteChildStarted(suite)
         suitesStack.add(suite)
     }
 
     companion object {
-        private val ESCAPED_SEPARATOR: String = File.separator.replace("\\", "\\\\")
-        private val TARGET_PATH_PART_REGEX: Regex = Regex("[ $ESCAPED_SEPARATOR]target$ESCAPED_SEPARATOR")
+        private val PARSER: JsonParser = JsonParser()
         private const val ROOT_SUITE: String = "0"
         private const val NAME_SEPARATOR: String = "::"
+        private const val DOCTESTS_SUFFIX = "doctests"
 
-        private val COMPARISON_ASSERT_REGEX: Regex =
-            Regex("""thread '.*' panicked at 'assertion failed: `\(left == right\)`\s*left: `(.*)`,\s*right: `(.*?)`(:.*)?'""")
+        private val DOCTEST_PATH_RE: Regex = """"[0-9 a-z_A-Z\-\\.]+ - """.toRegex()
+
+        private val COMPARISON_ASSERT_RE: Regex =
+            """thread '.*' panicked at 'assertion failed: `\(left == right\)`\s*left: `(.*)`,\s*right: `(.*?)`(:.*)?'""".toRegex()
 
         private val NodeId.name: String
-            get() {
-                val name = substringAfterLast(NAME_SEPARATOR)
-                // Remove suffix from target name
-                return if (contains(NAME_SEPARATOR)) name else name.substringBeforeLast("-")
+            get() = if (contains(NAME_SEPARATOR)) {
+                // target_name-xxxxxxxxxxxxxxxx::name1::name2 -> name2
+                substringAfterLast(NAME_SEPARATOR)
+            } else {
+                // target_name-xxxxxxxxxxxxxxxx -> target_name
+                val targetName = substringBeforeLast("-")
+                // Add a tag to distinguish a doc-test suite from a lib suite
+                if (endsWith(DOCTESTS_SUFFIX)) "$targetName (doc-tests)" else targetName
             }
 
         private val NodeId.parent: NodeId
@@ -234,7 +281,11 @@ class CargoTestEventsConverter(
             ServiceMessageBuilder.testStarted(test.name)
                 .addAttribute("nodeId", test)
                 .addAttribute("parentNodeId", test.parent)
-                .addAttribute("locationHint", CargoTestLocator.getTestUrl(test))
+                .addAttribute(
+                    "locationHint",
+                    // target_name::name1::name2 (line #i) -> target_name::name1::name2
+                    CargoTestLocator.getTestUrl(test.substringBefore(" ("))
+                )
 
         private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder {
             val builder = ServiceMessageBuilder.testFailed(test.name)
@@ -273,11 +324,34 @@ class CargoTestEventsConverter(
         }
 
         private fun extractDiffResult(failedMessage: String): DiffResult? {
-            val result = COMPARISON_ASSERT_REGEX.find(failedMessage) ?: return null
+            val result = COMPARISON_ASSERT_RE.find(failedMessage) ?: return null
             val left = unquoteString(unescapeStringCharacters(result.groupValues[1]))
             val right = unquoteString(unescapeStringCharacters(result.groupValues[2]))
             return DiffResult(left, right)
         }
+
+        private fun findLibTargetForPackageName(
+            project: Project,
+            packageName: String
+        ): CargoWorkspace.Target? = project
+            .cargoProjects
+            .allPackages
+            .filter { it.origin == PackageOrigin.WORKSPACE }
+            .mapNotNull { it.libTarget }
+            .filter { it.pkg.name == packageName }
+            .firstOrNull()
+    }
+
+    /**
+     * The [CargoTestEventsConverter] can be in one of three states:
+     * - [START_MESSAGE] -- processes messages pending the next start message ("running" / "doc-tests").
+     * - [EXECUTABLE_NAME] -- the next message contains the name of the executable file.
+     * - [DOCTESTS_PACKAGE_NAME] -- the next message contains the name of the package with doc-tests.
+     */
+    private enum class State {
+        START_MESSAGE,
+        EXECUTABLE_NAME,
+        DOCTESTS_PACKAGE_NAME
     }
 }
 
