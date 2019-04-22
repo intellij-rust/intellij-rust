@@ -908,7 +908,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
-    """, setOf("x::Z", "y::x::Z", "x::y::x::Z"), "x::Z", """
+    """, setOf("x::Z", "y::x::Z"), "x::Z", """
         use x::Z;
 
         pub mod x {
@@ -948,12 +948,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         "x::y::Z",
         "x::u::y::Z",
         "x::u::v::x::y::Z",
-        "x::u::y::v::x::y::Z",
-        "x::y::v::x::u::y::Z",
-        "x::y::v::x::y::Z",
         "u::y::Z",
         "u::v::x::y::Z",
-        "u::y::v::x::y::Z",
         "u::v::x::u::y::Z"
     ), "u::y::Z", """
         use u::y::Z;

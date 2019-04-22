@@ -330,10 +330,6 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         }
 
         private fun filterInPackage(candidates: List<ImportCandidate>): List<ImportCandidate> {
-            val (simpleImports, compositeImports) = candidates.partition {
-                it.qualifiedNamedItem !is QualifiedNamedItem.CompositeItem
-            }
-
             // If there is item reexport from some parent module of current import path
             // we want to drop this import candidate
             //
@@ -345,15 +341,14 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             // we have `mod_a::mod_b::Item` and `mod_a::Item` import candidates.
             // `mod_a::Item` is reexport of `Item` so we don't want to add `mod_a::mod_b::Item`
             // into final import list
-            val candidatesWithSuperMods = simpleImports.mapNotNull {
+            val candidatesWithSuperMods = candidates.mapNotNull {
                 val superMods = it.qualifiedNamedItem.superMods ?: return@mapNotNull null
                 it to superMods
             }
             val parents = candidatesWithSuperMods.mapTo(HashSet()) { (_, superMods) -> superMods[0] }
-            val filteredSimpleImports = candidatesWithSuperMods.mapNotNull { (candidate, superMods) ->
+            return candidatesWithSuperMods.mapNotNull { (candidate, superMods) ->
                 if (superMods.asSequence().drop(1).none { it in parents }) candidate else null
             }
-            return filteredSimpleImports + compositeImports
         }
     }
 

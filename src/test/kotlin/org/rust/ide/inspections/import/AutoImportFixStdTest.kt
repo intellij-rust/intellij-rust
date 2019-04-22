@@ -437,4 +437,16 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
         fn foo(t: Bar/*caret*/) {}
     """)
+
+    fun `test import HashMap`() = checkAutoImportFixByText("""
+        fn main() {
+            let a = <error descr="Unresolved reference: `HashMap`">HashMap::new</error>/*caret*/();
+        }
+    """, """
+        use std::collections::HashMap;
+
+        fn main() {
+            let a = HashMap::new/*caret*/();
+        }
+    """)
 }
