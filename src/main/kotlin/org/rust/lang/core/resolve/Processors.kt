@@ -136,7 +136,7 @@ operator fun RsResolveProcessor.invoke(name: String, e: RsElement, subst: Substi
     this(SimpleScopeEntry(name, e, subst))
 
 fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean =
-    this(LazyScopeEntry(name, lazy(LazyThreadSafetyMode.NONE, e)))
+    this(LazyScopeEntry(name, lazy(LazyThreadSafetyMode.PUBLICATION, e)))
 
 operator fun RsResolveProcessor.invoke(e: RsNamedElement): Boolean {
     val name = e.name ?: return false
