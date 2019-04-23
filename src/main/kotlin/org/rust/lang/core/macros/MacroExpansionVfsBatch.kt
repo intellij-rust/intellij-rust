@@ -98,7 +98,7 @@ abstract class VfsBatch {
         val data = content.toByteArray() // UTF-8
         Files.write(child, data)
 
-        fileEvents.add(Event.Create(parent, name, child.lastModified().toMillis(), data.size))
+        fileEvents.add(Event.Create(parent, name))
         return child
     }
 
@@ -142,7 +142,7 @@ abstract class VfsBatch {
     protected class DirCreateEvent(val parent: Path, val name: String)
 
     protected sealed class Event {
-        class Create(val parent: Path, val name: String, val lastModified: Long, val length: Int): Event()
+        class Create(val parent: Path, val name: String): Event()
         class Write(val file: Path): Event()
         class Delete(val file: Path): Event()
     }
