@@ -87,7 +87,11 @@ class Cargo(private val cargoExecutable: Path) {
      * runs for too long.
      */
     @Throws(ExecutionException::class)
-    fun fullProjectDescription(owner: Project, projectDirectory: Path, listener: ProcessListener? = null): CargoWorkspace {
+    fun fullProjectDescription(
+        owner: Project,
+        projectDirectory: Path,
+        listener: ProcessListener? = null
+    ): CargoWorkspace {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
         if (owner.rustSettings.useOffline) {
             additionalArgs += "-Zoffline"
@@ -108,14 +112,25 @@ class Cargo(private val cargoExecutable: Path) {
     }
 
     @Throws(ExecutionException::class)
-    fun init(owner: Disposable, directory: VirtualFile, createBinary: Boolean) {
+    fun init(
+        owner: Disposable,
+        directory: VirtualFile,
+        createBinary: Boolean,
+        vcs: String? = null
+    ) {
         val path = directory.pathAsPath
         val name = path.fileName.toString().replace(' ', '_')
         val crateType = if (createBinary) "--bin" else "--lib"
-        CargoCommandLine(
-            "init", path,
-            listOf(crateType, "--name", name, path.toString())
-        ).execute(owner)
+
+        val args = mutableListOf(crateType, "--name", name)
+
+        vcs?.let {
+            args.addAll(listOf("--vcs", vcs))
+        }
+
+        args.add(path.toString())
+
+        CargoCommandLine("init", path, args).execute(owner)
         check(File(directory.path, RustToolchain.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)
     }
