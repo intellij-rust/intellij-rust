@@ -300,7 +300,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             """)
 
             dir("src") {
-                rust("main.rs", """
+                rust("lib.rs", """
                     #[cfg(test)]
                     mod /*caret*/suite_should_fail {
                         #[test]
@@ -426,6 +426,244 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             .tests(+)
             ..test_should_pass(+)
         """)
+    }
+
+    fun `test tests in project`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [workspace]
+                members = [
+                    "package1",
+                    "package2",
+                ]
+            """)
+
+            dir("package1") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "package1"
+                    version = "0.1.0"
+                    authors = []
+                """)
+
+                dir("src") {
+                    rust("lib.rs", """
+                        #[test]
+                        fn test() {}
+                    """)
+
+                    rust("main.rs", """
+                        fn main() {}
+
+                        #[test]
+                        fn test() {}
+                    """)
+                }
+
+                dir("tests") {
+                    rust("package1.rs", """
+                        #[test]
+                        fn test() {}
+                    """)
+                }
+            }
+
+            dir("package2") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "package2"
+                    version = "0.1.0"
+                    authors = []
+                """)
+
+                dir("src") {
+                    rust("lib.rs", """
+                        #[test]
+                        fn test() {}
+                    """)
+
+                    rust("main.rs", """
+                        fn main() {}
+
+                        #[test]
+                        fn test() {}
+                    """)
+                }
+
+                dir("tests") {
+                    rust("package2.rs", """
+                        #[test]
+                        fn test() {}
+                    """)
+                }
+            }
+        }
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
+
+        checkTestTree("""
+            [root](+)
+            .package1(+)
+            ..test(+)
+            .package1(+)
+            ..test(+)
+            .package1(+)
+            ..test(+)
+            .package2(+)
+            ..test(+)
+            .package2(+)
+            ..test(+)
+            .package2(+)
+            ..test(+)
+        """, sourceElement)
+    }
+
+    fun `test tests in package`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [workspace]
+                members = [
+                    "package1",
+                    "package2",
+                ]
+            """)
+
+            dir("package1") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "package1"
+                    version = "0.1.0"
+                    authors = []
+                """)
+
+                dir("src") {
+                    rust("lib.rs", """
+                        #[test]
+                        fn test() {}
+                    """)
+
+                    rust("main.rs", """
+                        fn main() {}
+
+                        #[test]
+                        fn test() {}
+                    """)
+                }
+
+                dir("tests") {
+                    rust("package1.rs", """
+                        #[test]
+                        fn test() {}
+                    """)
+                }
+            }
+
+            dir("package2") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "package2"
+                    version = "0.1.0"
+                    authors = []
+                """)
+
+                dir("src") {
+                    rust("lib.rs", """
+                        #[test]
+                        fn test() {}
+                    """)
+                }
+            }
+        }
+        val sourceElement = cargoProjectDirectory.findFileByRelativePath("package1")?.toPsiDirectory(project)!!
+
+        checkTestTree("""
+            [root](+)
+            .package1(+)
+            ..test(+)
+            .package1(+)
+            ..test(+)
+            .package1(+)
+            ..test(+)
+        """, sourceElement)
+    }
+
+    fun `test tests in tests source root`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "package"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #[test]
+                    fn test() {}
+                """)
+            }
+
+            dir("tests") {
+                rust("tests1.rs", """
+                    #[test]
+                    fn test() {}
+                """)
+
+                rust("tests2.rs", """
+                    #[test]
+                    fn test() {}
+                """)
+            }
+        }
+        val sourceElement = cargoProjectDirectory.findFileByRelativePath("tests")?.toPsiDirectory(project)!!
+
+        checkTestTree("""
+            [root](+)
+            .tests1(+)
+            ..test(+)
+            .tests2(+)
+            ..test(+)
+        """, sourceElement)
+    }
+
+    fun `test tests in directory under tests source root`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "package"
+                version = "0.1.0"
+                authors = []
+
+                [[test]]
+                name = "tests1"
+                path = "tests/tests1.rs"
+
+                [[test]]
+                name = "tests2"
+                path = "tests/subdir/tests2.rs"
+            """)
+
+
+            dir("tests") {
+                rust("tests1.rs", """
+                    #[test]
+                    fn test() {}
+                """)
+
+                dir("subdir") {
+                    rust("tests2.rs", """
+                        #[test]
+                        fn test() {}
+                    """)
+                }
+            }
+        }
+        val sourceElement = cargoProjectDirectory.findFileByRelativePath("tests/subdir")?.toPsiDirectory(project)!!
+
+        checkTestTree("""
+            [root](+)
+            .tests2(+)
+            ..test(+)
+        """, sourceElement)
     }
 
     fun `test test location`() {
