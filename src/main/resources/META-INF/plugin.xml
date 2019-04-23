@@ -800,6 +800,11 @@
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
+        <action id="Rust.NewCargoCrate" class="org.rust.ide.actions.RsCreateCrateAction"
+                text="Cargo Crate" description="Create new Cargo crate">
+            <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+        </action>
+
         <action id="Rust.Build"
                 class="org.rust.ide.actions.RsBuildAction"
                 text="Build"
