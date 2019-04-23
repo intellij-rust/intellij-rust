@@ -1119,7 +1119,7 @@ private fun processLexicalDeclarations(
 
     when (scope) {
         is RsMod -> {
-            if (processItemDeclarations(scope, ns, processor, withPrivateImports = true)) return true
+            if (processItemDeclarationsWithCache(scope, ns, processor, withPrivateImports = true)) return true
         }
 
         is RsTypeAlias -> {
@@ -1237,9 +1237,14 @@ fun processNestedScopesUpwards(
         return true
     }
 
+    // Prelude is injected via implicit star import `use std::prelude::v1::*;`
+    if (processor(ScopeEvent.STAR_IMPORTS)) return false
+
     val prelude = findPrelude(scopeStart)
-    val preludeProcessor: (ScopeEntry) -> Boolean = { v -> v.name !in prevScope && processor(v) }
-    if (prelude != null && processItemDeclarations(prelude, ns, preludeProcessor, withPrivateImports = false)) return true
+    if (prelude != null) {
+        val preludeProcessor: (ScopeEntry) -> Boolean = { v -> v.name !in prevScope && processor(v) }
+        return processItemDeclarationsWithCache(prelude, ns, preludeProcessor, withPrivateImports = false)
+    }
 
     return false
 }
