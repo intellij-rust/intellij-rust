@@ -69,6 +69,56 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test labeled block expr 1`() = testExpr("""
+        fn main() {
+            let x = 'a: {
+                if true { break 'a 1u32 }
+                123
+            };
+            x;
+          //^ u32
+        }
+    """)
+
+    fun `test labeled block expr 2`() = testExpr("""
+        fn main() {
+            let x = 'a: {
+                loop {
+                    if true {
+                        break 1u16;
+                    } else {
+                        break 'a 1u32;
+                    }
+                }
+                123
+            };
+            x;
+          //^ u32
+        }
+    """)
+
+    fun `test labeled block expr 3`() = testExpr("""
+        struct S<T>(T);
+        impl<T> S<T> {
+            fn new(t: T) -> S<T> { S(t) }
+        }
+        fn main() {
+            let x = match 123 {
+                1 => 'a: {
+                    if true {
+                        let a = S::new();
+                        break 'a a;
+                               //^ S<u32>
+                    }
+                    S(123)
+                }
+                _ => S::new()
+            }
+            foo(x);
+        }
+        fn foo(s: S<u32>) {}
+    """)
+
     fun `test try block expr (option)`() = testExpr("""
         #[lang = "core::option::Option"]
         enum Option<T> { None, Some(T) }

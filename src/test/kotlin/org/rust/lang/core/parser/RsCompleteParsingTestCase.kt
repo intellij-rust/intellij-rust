@@ -42,6 +42,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test associated types`() = doTest(true)
     fun `test last block is expression`() = doTest(true)
     fun `test loops`() = doTest(true)
+    fun `test blocks`() = doTest(true)
     fun `test block bin expr`() = doTest(true)
     fun `test match call ambiguity`() = doTest(true)
     fun `test visibility`() = doTest(true)

@@ -937,8 +937,9 @@ AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Exp
 StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
 StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
 
-BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] SimpleBlock {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? SimpleBlock {
+  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -1062,12 +1063,14 @@ LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
 }
 
 ContExpr ::= OuterAttr* continue Label? {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsLabelReferenceOwner"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 BreakExpr ::= OuterAttr* break Label? AnyExpr? {
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsLabelReferenceOwner"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -1354,6 +1357,7 @@ InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
   pin = 1
   elementType = Block
 }
+
 private BlockElement ::= !'}' (Macro | ExprStmtOrLastExpr | Stmt | Item) {
   pin = 1
   recoverWhile = BlockElement_recover
