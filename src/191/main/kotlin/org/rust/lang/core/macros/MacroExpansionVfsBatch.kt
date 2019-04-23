@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.macros
 
-import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
@@ -24,15 +24,7 @@ private class EventBasedVfsBatch191 : EventBasedVfsBatch() {
     override fun Event.toVFileEvent(): VFileEvent? = when (this) {
         is Event.Create -> {
             val vParent = LocalFileSystem.getInstance().findFileByPath(parent.toString())!!
-            val attributes = FileAttributes(
-                /* directory = */ false,
-                /* special = */ false,
-                /* symlink = */ false,
-                /* hidden = */ false,
-                /* length = */ length.toLong(),
-                /* lastModified = */ lastModified,
-                /* writable = */ true
-            )
+            val attributes = FileSystemUtil.getAttributes(parent.resolve(name).toString())
             VFileCreateEvent(null, vParent, name, false, attributes, null, true, false)
         }
         is Event.Write -> {
