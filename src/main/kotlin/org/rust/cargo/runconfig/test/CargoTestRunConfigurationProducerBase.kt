@@ -21,6 +21,7 @@ import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
@@ -32,6 +33,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
     private val testConfigProviders: MutableList<TestConfigProvider> = mutableListOf()
 
     init {
+        registerConfigProvider { elements, climbUp -> createConfigFor<RsModDeclItem>(elements, climbUp) }
         registerConfigProvider { elements, climbUp -> createConfigFor<RsFunction>(elements, climbUp) }
         registerConfigProvider { elements, climbUp -> createConfigFor<RsMod>(elements, climbUp) }
         registerConfigProvider { elements, climbUp -> createConfigForMultipleFiles(elements, climbUp) }
@@ -52,7 +54,7 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         sourceElement: Ref<PsiElement>
     ): Boolean {
         val testConfig = findTestConfig(context) ?: return false
-        sourceElement.set(testConfig.sourceElement)
+        sourceElement.set(testConfig.originalElement)
         configuration.name = testConfig.configurationName
         val cmd = testConfig.cargoCommandLine().mergeWithDefault(configuration)
         configuration.setFromCmd(cmd)
@@ -115,13 +117,19 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         elements: List<PsiElement>,
         climbUp: Boolean
     ): TestConfig? {
-        val sourceElement = elements
-            .mapNotNull { findElement<T>(it, climbUp) }
-            .singleOrNull { isSuitable(it) && it.containingCargoTarget != null }
+        val (originalElement, sourceElement) = elements
+            .mapNotNull {
+                val originalElement = findElement<T>(it, climbUp) ?: return@mapNotNull null
+                val sourceElement = getSourceElement(originalElement) ?: return@mapNotNull null
+                originalElement to sourceElement
+            }
+            .singleOrNull { (_, sourceElement) ->
+                isSuitable(sourceElement) && sourceElement.containingCargoTarget != null
+            }
             ?: return null
         val target = sourceElement.containingCargoTarget ?: return null
         val configPath = sourceElement.crateRelativePath.configPath() ?: return null
-        return SingleItemTestConfig(commandName, configPath, target, sourceElement)
+        return SingleItemTestConfig(commandName, configPath, target, sourceElement, originalElement)
     }
 
     private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
@@ -150,6 +158,9 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
         // We need to chop off heading colon `::`, since `crateRelativePath` always returns fully-qualified path
         @JvmStatic
         protected fun String?.configPath(): String? = this?.removePrefix("::")
+
+        fun getSourceElement(element: RsQualifiedNamedElement): RsQualifiedNamedElement? =
+            if (element is RsModDeclItem) element.reference.resolve() as? RsQualifiedNamedElement else element
     }
 }
 
@@ -160,6 +171,7 @@ interface TestConfig {
     val targets: List<CargoWorkspace.Target>
     val configurationName: String
     val sourceElement: PsiElement
+    val originalElement: PsiElement get() = sourceElement
 
     fun cargoCommandLine(): CargoCommandLine {
         var commandLine = CargoCommandLine.forTargets(targets, commandName, listOf(path))
@@ -198,7 +210,8 @@ private class SingleItemTestConfig(
     override val commandName: String,
     override val path: String,
     val target: CargoWorkspace.Target,
-    override val sourceElement: RsElement
+    override val sourceElement: RsElement,
+    override val originalElement: RsElement
 ) : TestConfig {
     override val exact: Boolean
         get() = sourceElement is RsFunction
