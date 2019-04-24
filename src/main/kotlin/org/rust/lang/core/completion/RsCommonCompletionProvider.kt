@@ -42,9 +42,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         result: CompletionResultSet
     ) {
         // Use original position if possible to re-use caches of the real file
-        val position = CompletionUtil.getOriginalElement(parameters.position)
-            ?.takeIf { isAncestorTypesEquals(it, parameters.position) }
-            ?: parameters.position
+        val position = parameters.position.safeGetOriginalOrSafe()
         val element = position.parent as RsReferenceElement
         if (position !== element.referenceNameElement) return
 
@@ -98,7 +96,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         result: CompletionResultSet,
         forSimplePath: Boolean
     ) {
-        val receiver = CompletionUtil.getOriginalOrSelf(element.receiver)
+        val receiver = element.receiver.safeGetOriginalOrSafe()
         val lookup = ImplLookup.relativeTo(receiver)
         val receiverTy = receiver.type
         val processResolveVariants = if (element is RsMethodCall) {
@@ -198,7 +196,13 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     }
 }
 
-private fun isAncestorTypesEquals(psi1: PsiElement, psi2: PsiElement): Boolean =
+private fun <T: PsiElement> T.safeGetOriginalOrSafe(): T {
+    return CompletionUtil.getOriginalElement(this)
+        ?.takeIf { areAncestorTypesEquals(it, this) }
+        ?: this
+}
+
+private fun areAncestorTypesEquals(psi1: PsiElement, psi2: PsiElement): Boolean =
     psi1.ancestors.zip(psi2.ancestors).all { (a, b) -> a.javaClass == b.javaClass }
 
 private fun filterAssocTypes(
