@@ -31,6 +31,10 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.asTy
+import org.rust.lang.core.types.infer.TypeFoldable
+import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.infer.TypeVisitor
+import org.rust.lang.core.types.infer.hasTyInfer
 import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsErrorCode.*
@@ -52,13 +56,21 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val expectedTy: Ty,
         private val actualTy: Ty
-    ) : RsDiagnostic(element, inspectionClass = RsTypeCheckInspection::class.java) {
+    ) : RsDiagnostic(element, inspectionClass = RsTypeCheckInspection::class.java), TypeFoldable<TypeError> {
+        private val description: String? = if (expectedTy.hasTyInfer || actualTy.hasTyInfer) {
+            // if types contain infer types, they will be replaced with more specific (e.g. `{integer}` with `i32`)
+            // so we capture string representation of types right here
+            expectedFound(expectedTy, actualTy)
+        } else {
+            null
+        }
+
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
                 ERROR,
                 E0308,
                 "mismatched types",
-                expectedFound(expectedTy, actualTy),
+                description ?: expectedFound(expectedTy, actualTy),
                 fixes = buildList {
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
@@ -213,6 +225,12 @@ sealed class RsDiagnostic(
             if (!isSuitableMutability) return null
             return DerefRefPath(derefs, refs)
         }
+
+        override fun superFoldWith(folder: TypeFolder): TypeError =
+            TypeError(element, expectedTy.foldWith(folder), actualTy.foldWith(folder))
+
+        override fun superVisitWith(visitor: TypeVisitor): Boolean =
+            expectedTy.visitWith(visitor) || actualTy.visitWith(visitor)
     }
 
     class DerefError(
