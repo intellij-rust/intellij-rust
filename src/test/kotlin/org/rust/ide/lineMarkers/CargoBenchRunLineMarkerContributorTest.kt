@@ -5,6 +5,8 @@
 
 package org.rust.ide.lineMarkers
 
+import org.rust.fileTree
+
 /**
  * Tests for Bench Function Line Marker.
  */
@@ -52,6 +54,23 @@ class CargoBenchRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
             }
         }
     """)
+
+    fun `test mod decl`() = doTestFromFile(
+        "lib.rs",
+        fileTree {
+            rust("tests.rs", """
+                #[bench]
+                fn bench() {}
+            """)
+
+            rust("no_tests.rs", "")
+
+            rust("lib.rs", """
+                mod tests; // - Bench lib::tests
+                mod no_tests;
+            """)
+        }
+    )
 
     fun `test function in a module with test function`() = doTestByText("""
         #[cfg(test)]

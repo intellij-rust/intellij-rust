@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFileFactory
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.runconfig.test.CargoTestLocator
+import org.rust.fileTree
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsElement
@@ -66,6 +67,23 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
             }
         }
     """)
+
+    fun `test mod decl`() = doTestFromFile(
+        "lib.rs",
+        fileTree {
+            rust("tests.rs", """
+                #[test]
+                fn test() {}
+            """)
+
+            rust("no_tests.rs", "")
+
+            rust("lib.rs", """
+                mod tests; // - Test lib::tests
+                mod no_tests;
+            """)
+        }
+    )
 
     fun `test show a test mark as default for test function`() = checkElement<RsFunction>("""
         #[test]

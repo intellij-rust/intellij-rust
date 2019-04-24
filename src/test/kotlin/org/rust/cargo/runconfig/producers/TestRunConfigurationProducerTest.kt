@@ -12,6 +12,7 @@ import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.findCargoProject
 import org.rust.openapiext.toPsiDirectory
@@ -101,6 +102,19 @@ class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
             """).open()
         }
         checkOnTopLevel<RsMod>()
+    }
+
+    fun `test test producer works for module declarations`() {
+        testProject {
+            file("src/tests.rs", """
+                #[test]
+                fn test() {}
+            """)
+            lib("foo", "src/lib.rs", """
+                mod tests/*caret*/;
+            """).open()
+        }
+        checkOnTopLevel<RsModDeclItem>()
     }
 
     fun `test test producer works for nested modules 1`() {

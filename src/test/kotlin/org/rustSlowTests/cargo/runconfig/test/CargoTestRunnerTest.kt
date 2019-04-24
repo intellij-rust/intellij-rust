@@ -163,6 +163,37 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
         """)
     }
 
+    fun `test tests in mod decl`() {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    mod tests/*caret*/;
+                    #[test]
+                    fn test_should_pass() {}
+                """)
+                rust("tests.rs", """
+                    #[test]
+                    fn test_should_pass() {}
+                """)
+            }
+        }
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+
+        checkTestTree("""
+            [root](+)
+            .sandbox(+)
+            ..tests(+)
+            ...test_should_pass(+)
+        """)
+    }
+
     fun `test test in custom bin target`() {
         val testProject = buildProject {
             toml("Cargo.toml", """
