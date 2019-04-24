@@ -769,4 +769,18 @@ class RsCompletionTest : RsCompletionTestBase() {
             use self::/*caret*/
         }
     """)
+
+    fun `test completion after tuple field expr`() = doSingleCompletion("""
+        struct S { field: i32 }
+        fn main() {
+            let x = (0, S { field: 0 });
+            x.1./*caret*/
+        }
+    """, """
+        struct S { field: i32 }
+        fn main() {
+            let x = (0, S { field: 0 });
+            x.1.field/*caret*/
+        }
+    """)
 }
