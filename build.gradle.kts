@@ -25,6 +25,9 @@ val platformVersion = prop("platformVersion")
 val baseIDE = prop("baseIDE")
 val ideaVersion = prop("ideaVersion")
 val clionVersion = prop("clionVersion")
+val ideaLocalPath = sequenceOf("IDEA-JDK11", "IDEA-C-JDK11", "IDEA-U", "IDEA-C")
+    .map { findInToolbox(it, ideaVersion) }.filterNotNull().firstOrNull()?.absolutePath
+val clionLocalPath = findInToolbox("CLion", clionVersion)?.absolutePath
 val baseVersion = when (baseIDE) {
     "idea" -> ideaVersion
     "clion" -> clionVersion
@@ -72,6 +75,7 @@ allprojects {
         updateSinceUntilBuild = true
         instrumentCode = false
         ideaDependencyCachePath = dependencyCachePath
+        localPath = ideaLocalPath
 
         tasks.withType<PatchPluginXmlTask> {
             sinceBuild(prop("sinceBuild"))
@@ -266,6 +270,7 @@ project(":idea") {
 project(":clion") {
     intellij {
         version = clionVersion
+        alternativeIdePath = clionLocalPath
     }
     dependencies {
         compile(project(":"))
@@ -276,6 +281,7 @@ project(":clion") {
 project(":debugger") {
     intellij {
         version = clionVersion
+        alternativeIdePath = clionLocalPath
     }
     dependencies {
         compile(project(":"))
@@ -525,4 +531,26 @@ fun List<String>.execute(wd: String? = null, ignoreExitCode: Boolean = false): S
     errReader.join()
     if (process.exitValue() != 0 && !ignoreExitCode) error("Non-zero exit status for `$this`")
     return result
+}
+
+fun findInToolbox(ide: String, expectedMajorVersion: String): File? {
+    val user = System.getProperty("user.name")
+    val os = System.getProperty("os.name")
+    val root = when {
+        os.startsWith("Windows") -> "C:\\Users\\$user\\AppData\\Local\\JetBrains\\Toolbox\\apps"
+        os == "Linux" -> "/home/$user/.local/share/JetBrains/Toolbox/apps"
+        else -> return null
+    }
+    return file(root)
+        .resolve(ide)
+        .resolve("ch-0")
+        .listFiles()
+        .orEmpty()
+        .filter { it.isDirectory && it.name.startsWith(expectedMajorVersion) }
+        .maxBy {
+            val (_, minor, patch) = it.name.split('.')
+            val minorInt = minor.toIntOrNull() ?: return@maxBy "0"
+            val patchInt = patch.toIntOrNull() ?: return@maxBy "0"
+            String.format("%08d%08d", minorInt, patchInt)
+        }
 }
