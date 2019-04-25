@@ -23,12 +23,10 @@ def lookup(valobj):
 
     if rust_type == RustType.STRUCT:
         return StructProvider(valobj)
-    if rust_type == RustType.STRUCT_VARIANT:
-        return StructProvider(valobj, is_variant=True)
     if rust_type == RustType.TUPLE:
         return TupleProvider(valobj)
-    if rust_type == RustType.TUPLE_VARIANT:
-        return TupleProvider(valobj, is_variant=True)
+    if rust_type == RustType.ENUM:
+        return EnumProvider(valobj)
 
     if rust_type == RustType.STD_STRING:
         return StdStringProvider(valobj)
