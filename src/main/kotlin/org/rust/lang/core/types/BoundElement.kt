@@ -52,7 +52,7 @@ data class BoundElement<out E : RsElement>(
         )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean = assoc.values.any { visitor.visitTy(it) } ||
-        subst.types.any { visitor.visitTy(it) } && subst.regions.any { visitor.visitRegion(it) }
+        subst.types.any { it.visitWith(visitor) } || subst.regions.any { it.visitWith(visitor) }
 
 }
 

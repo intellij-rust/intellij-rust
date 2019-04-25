@@ -15,6 +15,7 @@ import org.rust.lang.core.types.HAS_TY_PROJECTION_MASK
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
+import org.rust.lang.core.types.mergeFlags
 
 /**
  * Represents projection of an associated type.
@@ -38,7 +39,7 @@ data class TyProjection private constructor(
     val type: Ty,
     val trait: BoundElement<RsTraitItem>,
     val target: RsTypeAlias
-): Ty(type.flags or HAS_TY_PROJECTION_MASK) {
+): Ty(type.flags or mergeFlags(trait) or HAS_TY_PROJECTION_MASK) {
 
     /**
      * Extracts the underlying trait reference from this projection.
@@ -52,9 +53,14 @@ data class TyProjection private constructor(
         TyProjection(type.foldWith(folder), trait.foldWith(folder), target)
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        type.visitWith(visitor)
+        type.visitWith(visitor) || trait.visitWith(visitor)
 
     companion object {
+        fun valueOf(type: Ty, trait: BoundElement<RsTraitItem>, target: RsTypeAlias): TyProjection {
+            check(trait.element == (target.owner as? RsAbstractableOwner.Trait)?.trait)
+            return TyProjection(type, trait, target)
+        }
+
         fun valueOf(type: Ty, target: RsTypeAlias): TyProjection = TyProjection(
             type,
             (target.owner as? RsAbstractableOwner.Trait)?.trait?.withDefaultSubst()

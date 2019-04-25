@@ -185,6 +185,8 @@ class RsInferenceContext(
 
         exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
         bindings.replaceAll { _, ty -> fullyResolve(ty) }
+        // replace types in diagnostics for better quick fixes
+        diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it}
 
         performPathsRefinement(lookup)
 
@@ -429,7 +431,7 @@ class RsInferenceContext(
         return ty.foldTyInferWith(this::shallowResolve)
     }
 
-    private fun fullyResolve(ty: Ty): Ty {
+    private fun <T : TypeFoldable<T>> fullyResolve(ty: T): T {
         fun go(ty: Ty): Ty {
             if (ty !is TyInfer) return ty
 
