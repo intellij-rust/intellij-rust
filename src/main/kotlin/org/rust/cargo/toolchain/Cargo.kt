@@ -15,7 +15,6 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
@@ -29,15 +28,13 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.ide.actions.InstallCargoPackageAction
+import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Path
 
-
-private val LOG = Logger.getInstance(Cargo::class.java)
 
 /**
  * A main gateway for executing cargo commands.
@@ -50,29 +47,29 @@ private val LOG = Logger.getInstance(Cargo::class.java)
  */
 class Cargo(private val cargoExecutable: Path) {
 
-    data class Package(val name: String, val version: SemVer? = null) {
+    data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
-            fun from(line: String): Package {
+            fun from(line: String): BinaryCrate {
                 val name = line.substringBefore(' ')
                 val rawVersion = line.substringAfter(' ').removePrefix("v").removeSuffix(":")
-                return Package(name, SemVer.parseFromText(rawVersion))
+                return BinaryCrate(name, SemVer.parseFromText(rawVersion))
             }
         }
     }
 
-    fun listPackages(): List<Package> =
+    fun listInstalledBinaryCrates(): List<BinaryCrate> =
         GeneralCommandLine(cargoExecutable)
             .withParameters("install", "--list")
             .execute(null)
             ?.stdoutLines
             ?.filterNot { it.startsWith(" ") }
-            ?.map { Package.from(it) }
+            ?.map { BinaryCrate.from(it) }
             .orEmpty()
 
-    fun installPackage(project: Project, packageName: String) {
+    fun installBinaryCrate(project: Project, crateName: String) {
         val cargoProject = project.cargoProjects.allProjects.firstOrNull() ?: return
-        val commandLine = CargoCommandLine.forProject(cargoProject, "install", listOf("--force", packageName))
-        commandLine.run(cargoProject, "Install $packageName")
+        val commandLine = CargoCommandLine.forProject(cargoProject, "install", listOf("--force", crateName))
+        commandLine.run(cargoProject, "Install $crateName")
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
@@ -251,7 +248,7 @@ class Cargo(private val cargoExecutable: Path) {
 
         fun checkNeedInstallCargoExpand(project: Project): Boolean {
             val minVersion = SemVer("v0.4.9", 0, 4, 9)
-            return checkNeedInstallPackage(
+            return checkNeedInstallBinaryCrate(
                 project,
                 "cargo-expand",
                 NotificationType.ERROR,
@@ -260,33 +257,33 @@ class Cargo(private val cargoExecutable: Path) {
             )
         }
 
-        private fun checkNeedInstallPackage(
+        private fun checkNeedInstallBinaryCrate(
             project: Project,
-            packageName: String,
+            crateName: String,
             notificationType: NotificationType,
             message: String? = null,
             minVersion: SemVer? = null
         ): Boolean {
             fun isNotInstalled(): Boolean {
                 val cargo = project.toolchain?.rawCargo() ?: return false
-                val installed = cargo.listPackages().any { (name, version) ->
-                    name == packageName && (minVersion == null || version != null && version >= minVersion)
+                val installed = cargo.listInstalledBinaryCrates().any { (name, version) ->
+                    name == crateName && (minVersion == null || version != null && version >= minVersion)
                 }
                 return !installed
             }
 
             val needInstall = if (ApplicationManager.getApplication().isDispatchThread) {
-                project.computeWithCancelableProgress("Checking if $packageName is installed...", ::isNotInstalled)
+                project.computeWithCancelableProgress("Checking if $crateName is installed...", ::isNotInstalled)
             } else {
                 isNotInstalled()
             }
 
             if (needInstall) {
                 project.showBalloon(
-                    "<code>$packageName</code> is not installed",
+                    "<code>$crateName</code> is not installed",
                     message ?: "",
                     notificationType,
-                    InstallCargoPackageAction(packageName)
+                    InstallBinaryCrateAction(crateName)
                 )
             }
 
