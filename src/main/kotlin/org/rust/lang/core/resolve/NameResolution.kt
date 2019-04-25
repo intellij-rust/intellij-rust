@@ -294,7 +294,7 @@ fun processExternCrateResolveVariants(
 
 private fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
     val refinedName = when {
-        name.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && context.findMacroCallExpandedFrom() != null -> {
+        name.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && context.isExpandedFromMacro -> {
             NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
             val refinedName = name.removePrefix(MACRO_CRATE_IDENTIFIER_PREFIX)
             if (refinedName == "self") {
@@ -463,7 +463,7 @@ private fun processUnqualifiedPathResolveVariants(
         run {
             // hacks around $crate macro metavar. See `expandDollarCrateVar` function docs
             val referenceName = path.referenceName
-            if (referenceName.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && path.findMacroCallExpandedFrom() != null) {
+            if (referenceName.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && path.isExpandedFromMacro) {
                 val crate = referenceName.removePrefix(MACRO_CRATE_IDENTIFIER_PREFIX)
                 val result = if (crate == "self") {
                     processor.lazy(referenceName) { path.crateRoot }

@@ -16,6 +16,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.SmartList
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
 import org.rust.lang.core.parser.createRustPsiBuilder
@@ -40,7 +41,7 @@ private data class MacroSubstitution(
      * ```
      * we map "i" to "mod a {}"
      */
-    val variables: Map<String, String>,
+    val variables: Map<String, MetaVarValue>,
 
     /**
      * Contains macro groups values. E.g. for this macro
@@ -86,12 +87,18 @@ private data class WithParent(
     val groups: List<MacroGroup>
         get() = subst.groups
 
-    fun getVar(name: String): String? =
+    fun getVar(name: String): MetaVarValue? =
         subst.variables[name] ?: parent?.getVar(name)
 }
 
+private data class MetaVarValue(
+    val value: String,
+    val type: String,
+    val offsetInCallBody: Int
+)
+
 class MacroExpander(val project: Project) {
-    fun expandMacroAsText(def: RsMacro, call: RsMacroCall): CharSequence? {
+    fun expandMacroAsText(def: RsMacro, call: RsMacroCall): Pair<CharSequence, RangeMap>? {
         val (case, subst) = findMatchingPattern(def, call) ?: return null
         val macroExpansion = case.macroExpansion ?: return null
 
@@ -99,7 +106,7 @@ class MacroExpander(val project: Project) {
             subst,
             WithParent(
                 MacroSubstitution(
-                    singletonMap("crate", expandDollarCrateVar(call, def)),
+                    singletonMap("crate", MetaVarValue(expandDollarCrateVar(call, def), "", -1)),
                     emptyList()
                 ),
                 null
@@ -130,17 +137,42 @@ class MacroExpander(val project: Project) {
         return null
     }
 
-    private fun substituteMacro(root: PsiElement, subst: WithParent): CharSequence? =
-        buildString { if (!substituteMacro(this, root, subst)) return null }
+    private fun substituteMacro(root: PsiElement, subst: WithParent): Pair<CharSequence, RangeMap>? {
+        val sb = StringBuilder()
+        val ranges = SmartList<MappedTextRange>()
+        if (!substituteMacro(sb, ranges, root, subst)) return null
+        return sb to RangeMap.from(ranges)
+    }
 
-    private fun substituteMacro(sb: StringBuilder, root: PsiElement, subst: WithParent): Boolean {
+    private fun substituteMacro(
+        sb: StringBuilder,
+        ranges: MutableList<MappedTextRange>,
+        root: PsiElement,
+        subst: WithParent
+    ): Boolean {
         val children = generateSequence(root.firstChild) { it.nextSibling }.filter { it !is PsiComment }
         for (child in children) {
             when (child) {
                 is RsMacroExpansion, is RsMacroExpansionContents ->
-                    if (!substituteMacro(sb, child, subst)) return false
-                is RsMacroReference ->
-                    sb.safeAppend(subst.getVar(child.referenceName) ?: return false)
+                    if (!substituteMacro(sb, ranges, child, subst)) return false
+                is RsMacroReference -> {
+                    val value = subst.getVar(child.referenceName) ?: return false
+                    val parensNeeded = value.type == "expr"
+                    if (parensNeeded) {
+                        sb.append("(")
+                        sb.append(value.value)
+                        sb.append(")")
+                    } else {
+                        sb.safeAppend(value.value)
+                    }
+                    if (value.offsetInCallBody != -1 && value.value.isNotEmpty()) {
+                        ranges += MappedTextRange(
+                            value.offsetInCallBody,
+                            sb.length - value.value.length - if (parensNeeded) 1 else 0,
+                            value.value.length
+                        )
+                    }
+                }
                 is RsMacroExpansionReferenceGroup -> {
                     child.macroExpansionContents?.let { contents ->
                         val separator = child.macroExpansionGroupSeparator?.text ?: ""
@@ -150,11 +182,12 @@ class MacroExpander(val project: Project) {
                             ?: return false
 
                         matchedGroup.substs.joinToWithBuffer(sb, separator) { sb ->
-                            if (!substituteMacro(sb, contents, WithParent(this, subst))) return false
+                            if (!substituteMacro(sb, ranges, contents, WithParent(this, subst))) return false
                         }
                     }
                 }
                 else -> {
+//                    ranges += MappedTextRange(child.offsetInDefBody, sb.length, child.textLength, SourceType.MACRO_DEFINITION)
                     sb.safeAppend(child.text)
                 }
             }
@@ -240,7 +273,7 @@ private class MacroPattern private constructor(
 
     private fun matchPartial(macroCallBody: PsiBuilder): MacroSubstitution? {
         ProgressManager.checkCanceled()
-        val map = HashMap<String, String>()
+        val map = HashMap<String, MetaVarValue>()
         val groups = mutableListOf<MacroGroup>()
 
         for (psi in pattern) {
@@ -256,12 +289,7 @@ private class MacroPattern private constructor(
                         return null
                     }
                     val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
-
-                    // Wrap expressions in () to avoid problems related to operator precedence during expansion
-                    if (type == "expr")
-                        map[name] = "($text)"
-                    else
-                        map[name] = text
+                    map[name] = MetaVarValue(text, type, lastOffset)
                 }
                 is RsMacroBindingGroup -> {
                     groups += MacroGroup(psi, matchGroup(psi, macroCallBody) ?: return null)

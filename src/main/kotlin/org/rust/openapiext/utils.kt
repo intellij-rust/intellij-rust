@@ -215,6 +215,9 @@ fun <T> Project.computeWithCancelableProgress(title: String, supplier: () -> T):
     return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
 }
 
+inline fun <T> UserDataHolderEx.getOrPut(key: Key<T>, defaultValue: () -> T): T =
+    getUserData(key) ?: putUserDataIfAbsent(key, defaultValue())
+
 inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, defaultValue: () -> T): T =
     getUserData(key)?.get() ?: run {
         val value = defaultValue()

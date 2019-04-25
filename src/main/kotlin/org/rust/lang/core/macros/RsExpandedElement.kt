@@ -8,10 +8,9 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsMacroArgument
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.stubParent
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 
 /**
@@ -58,11 +57,86 @@ val RsExpandedElement.expandedFromRecursively: RsMacroCall?
     }
 
 fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
-    val found = ancestors
-        .filterIsInstance<RsExpandedElement>()
-        .mapNotNull { it.expandedFromRecursively }
-        .firstOrNull()
+    val found = findMacroCallExpandedFromNonRecursive()
     return found?.findMacroCallExpandedFrom() ?: found
+}
+
+fun PsiElement.findMacroCallExpandedFromNonRecursive(): RsMacroCall? {
+    return ancestors
+        .filterIsInstance<RsExpandedElement>()
+        .mapNotNull { it.expandedFrom }
+        .firstOrNull()
+}
+
+val PsiElement.isExpandedFromMacro: Boolean
+    get() = findMacroCallExpandedFromNonRecursive() != null
+
+/**
+ * If receiver element is inside a macro expansion, returns the leaf element inside the macro call
+ * from which the first token of this element is expanded. Always returns an element inside a root
+ * macro call, i.e. outside of any expansion.
+ */
+fun PsiElement.findElementExpandedFrom(): PsiElement? {
+    val mappedElement = findElementExpandedFromNonRecursive() ?: return null
+    return mappedElement.findElementExpandedFrom() ?: mappedElement.takeIf { !it.isExpandedFromMacro }
+}
+
+private fun PsiElement.findElementExpandedFromNonRecursive(): PsiElement? {
+    val call = findMacroCallExpandedFromNonRecursive() ?: return null
+    val mappedOffset = mapOffsetFromExpansionToCallBody(call, startOffset) ?: return null
+    return call.containingFile.findElementAt(mappedOffset)
+        ?.takeIf { it.startOffset == mappedOffset }
+}
+
+private fun mapOffsetFromExpansionToCallBody(call: RsMacroCall, offset: Int): Int? {
+    val expansion = call.expansion ?: return null
+    val fileOffset = call.expansionContext.expansionFileStartOffset
+    return expansion.ranges.mapOffsetFromExpansionToCallBody(offset - fileOffset)
+        ?.fromBodyRelativeOffset(call)
+}
+
+fun PsiElement.findExpansionElements(): List<PsiElement>? {
+    val mappedElements = findExpansionElementsNonRecursive() ?: return null
+    return mappedElements.flatMap { mappedElement ->
+        mappedElement.findExpansionElements() ?: listOf(mappedElement)
+    }
+}
+
+private fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
+    val call = ancestorStrict<RsMacroArgument>()?.ancestorStrict<RsMacroCall>() ?: return null
+    val expansion = call.expansion ?: return null
+    val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return null
+    val expansionFile = expansion.file
+    return mappedOffsets.mapNotNull { mappedOffset ->
+        expansionFile.findElementAt(mappedOffset)
+            ?.takeIf { it.startOffset == mappedOffset }
+    }
+}
+
+private fun mapOffsetFromCallBodyToExpansion(
+    call: RsMacroCall,
+    expansion: MacroExpansion,
+    absOffsetInCallBody: Int
+): List<Int>? {
+    val relOffsetInCallBody = absOffsetInCallBody.toBodyRelativeOffset(call) ?: return null
+    val fileOffset = call.expansionContext.expansionFileStartOffset
+    return expansion.ranges.mapOffsetFromCallBodyToExpansion(relOffsetInCallBody)
+        .map { it + fileOffset }
+        .takeIf { it.isNotEmpty() }
+}
+
+private fun Int.toBodyRelativeOffset(call: RsMacroCall): Int? {
+    val macroOffset = call.macroArgument?.compactTT?.startOffset ?: return null
+    val elementOffset = this - macroOffset
+    check(elementOffset >= 0)
+    return elementOffset
+}
+
+private fun Int.fromBodyRelativeOffset(call: RsMacroCall): Int? {
+    val macroRange = call.macroArgument?.compactTT?.textRange ?: return null
+    val elementOffset = this + macroRange.startOffset
+    check(elementOffset <= macroRange.endOffset)
+    return elementOffset
 }
 
 
