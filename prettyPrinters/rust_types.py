@@ -8,6 +8,7 @@ class RustType(object):
     CSTYLE_VARIANT = "CStyleVariant"
     TUPLE_VARIANT = "TupleVariant"
     STRUCT_VARIANT = "StructVariant"
+    ENUM = "Enum"
     EMPTY = "Empty"
     SINGLETON_ENUM = "SingletonEnum"
     REGULAR_ENUM = "RegularEnum"
@@ -50,7 +51,7 @@ STD_REF_CELL_REGEX = re.compile(r"^(core::(\w+::)+)RefCell<.+>$")
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
 ENCODED_ENUM_PREFIX = "RUST$ENCODED$ENUM$"
-ENUM_DISR_FIELD_NAME = "RUST$ENUM$DISR"
+ENUM_DISR_FIELD_NAME = "<<variant>>"
 
 STD_TYPE_TO_REGEX = {
     RustType.STD_STRING: STD_STRING_REGEX,
@@ -84,12 +85,7 @@ def classify_struct(name, fields):
             return ty
 
     if fields[0].name == ENUM_DISR_FIELD_NAME:
-        if len(fields) == 1:
-            return RustType.CSTYLE_VARIANT
-        if is_tuple_fields(fields[1:]):
-            return RustType.TUPLE_VARIANT
-        else:
-            return RustType.STRUCT_VARIANT
+        return RustType.ENUM
 
     if is_tuple_fields(fields):
         return RustType.TUPLE
