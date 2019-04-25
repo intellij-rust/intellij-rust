@@ -42,7 +42,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         result: CompletionResultSet
     ) {
         // Use original position if possible to re-use caches of the real file
-        val position = parameters.position.safeGetOriginalOrSafe()
+        val position = parameters.position.safeGetOriginalOrSelf()
         val element = position.parent as RsReferenceElement
         if (position !== element.referenceNameElement) return
 
@@ -96,7 +96,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         result: CompletionResultSet,
         forSimplePath: Boolean
     ) {
-        val receiver = element.receiver.safeGetOriginalOrSafe()
+        val receiver = element.receiver.safeGetOriginalOrSelf()
         val lookup = ImplLookup.relativeTo(receiver)
         val receiverTy = receiver.type
         val processResolveVariants = if (element is RsMethodCall) {
@@ -196,7 +196,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     }
 }
 
-private fun <T: PsiElement> T.safeGetOriginalOrSafe(): T {
+private fun <T: PsiElement> T.safeGetOriginalOrSelf(): T {
     return CompletionUtil.getOriginalElement(this)
         ?.takeIf { areAncestorTypesEquals(it, this) }
         ?: this
