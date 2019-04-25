@@ -57,7 +57,7 @@ allprojects {
 
     repositories {
         mavenCentral()
-        maven { setUrl("https://dl.bintray.com/jetbrains/markdown") }
+        maven("https://dl.bintray.com/jetbrains/markdown")
     }
 
     idea {
@@ -100,12 +100,12 @@ allprojects {
     }
 
     sourceSets {
-        getByName("main").apply {
+        main {
             java.srcDirs("src/gen")
             kotlin.srcDirs("src/$platformVersion/main/kotlin")
             resources.srcDirs("src/$platformVersion/main/resources")
         }
-        getByName("test").apply {
+        test {
             kotlin.srcDirs("src/$platformVersion/test/kotlin")
             resources.srcDirs("src/$platformVersion/test/resources")
         }
@@ -223,7 +223,7 @@ project(":") {
             rootProject.allprojects
                 .map { it.configurations }
                 .flatMap { listOf(it.compile, it.testCompile) }
-                .forEach { it.resolve() }
+                .forEach { it.get().resolve() }
         }
     }
 
