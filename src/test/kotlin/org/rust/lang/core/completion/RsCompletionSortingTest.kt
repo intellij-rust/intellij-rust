@@ -9,6 +9,7 @@ import com.intellij.psi.NavigatablePsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsFieldDecl
 import kotlin.reflect.KClass
 
 
@@ -90,7 +91,7 @@ class RsCompletionSortingTest : RsTestBase() {
             fn foo9() {}
             macro_rules! foo10 {}
 
-            foo/*caret*/
+            foo/*caret*/;
         }
     """, listOf(
         RsPatBinding::class to "foo5",
@@ -104,6 +105,228 @@ class RsCompletionSortingTest : RsTestBase() {
         RsConstant::class to "foo3",
         RsFunction::class to "foo4",
         RsMacro::class to "foo5"
+    ))
+
+    fun `test expected types priority (let binding)`() = doTest("""
+        struct foo1<T>(T);
+        struct foo2<T>(T);
+
+        const foo3: foo1<i32> = foo1(1);
+        const foo4: foo1<f32> = foo1(1.0);
+        const foo5: foo2<i32> = foo2(2);
+
+        fn foo6(x: foo1<i32>) -> foo1<i32> {}
+        fn foo7(x: foo1<f32>) -> foo1<f32> {}
+        fn foo8(x: foo2<i32>) -> foo2<i32> {}
+
+        macro_rules! foo9 {}
+
+        enum E { foo10 }
+        use E::foo10;
+
+        fn bar(foo11: foo1<i32>, foo12: foo1<f32>, foo13: foo2<i32>) -> foo1<i32> {
+            let foo14 = foo1(1);
+            let foo15 = foo1(1.0);
+            let foo16 = foo2(2);
+
+            struct foo17;
+
+            const foo18: foo1<i32> = foo1(1);
+            const foo19: foo1<f32> = foo1(1.0);
+            const foo20: foo2<i32> = foo2(2);
+
+            fn foo21() -> foo1<i32> {}
+            fn foo22() -> foo1<f32> {}
+            fn foo23() -> foo2<i32> {}
+
+            macro_rules! foo24 {}
+
+            let x: foo1<i32> = foo/*caret*/;
+        }
+    """, listOf(
+        RsPatBinding::class to "foo11",
+        RsStructItem::class to "foo1",
+        RsPatBinding::class to "foo14",
+        RsConstant::class to "foo18",
+        RsFunction::class to "foo21",
+        RsStructItem::class to "foo2",
+        RsConstant::class to "foo3",
+        RsFunction::class to "foo6",
+        RsPatBinding::class to "foo12",
+        RsPatBinding::class to "foo13",
+        RsPatBinding::class to "foo15",
+        RsPatBinding::class to "foo16",
+        RsStructItem::class to "foo17",
+        RsConstant::class to "foo19",
+        RsConstant::class to "foo20",
+        RsFunction::class to "foo22",
+        RsFunction::class to "foo23",
+        RsMacro::class to "foo24",
+        RsEnumVariant::class to "foo10",
+        RsConstant::class to "foo4",
+        RsConstant::class to "foo5",
+        RsFunction::class to "foo7",
+        RsFunction::class to "foo8",
+        RsMacro::class to "foo9"
+    ))
+
+    fun `test expected types priority (fn arg)`() = doTest("""
+        struct foo1<T>(T);
+        struct foo2<T>(T);
+
+        const foo3: foo1<i32> = foo1(1);
+        const foo4: foo1<f32> = foo1(1.0);
+        const foo5: foo2<i32> = foo2(2);
+
+        fn foo6(x: foo1<i32>) -> foo1<i32> {}
+        fn foo7(x: foo1<f32>) -> foo1<f32> {}
+        fn foo8(x: foo2<i32>) -> foo2<i32> {}
+
+        macro_rules! foo9 {}
+
+        enum E { foo10 }
+        use E::foo10;
+
+        fn bar(foo11: foo1<i32>, foo12: foo1<f32>, foo13: foo2<i32>) -> foo1<i32> {
+            let foo14 = foo1(1);
+            let foo15 = foo1(1.0);
+            let foo16 = foo2(2);
+
+            struct foo17;
+
+            const foo18: foo1<i32> = foo1(1);
+            const foo19: foo1<f32> = foo1(1.0);
+            const foo20: foo2<i32> = foo2(2);
+
+            fn foo21() -> foo1<i32> {}
+            fn foo22() -> foo1<f32> {}
+            fn foo23() -> foo2<i32> {}
+
+            macro_rules! foo24 {}
+
+            foo6(foo/*caret*/);
+        }
+    """, listOf(
+        RsPatBinding::class to "foo11",
+        RsStructItem::class to "foo1",
+        RsPatBinding::class to "foo14",
+        RsConstant::class to "foo18",
+        RsFunction::class to "foo21",
+        RsStructItem::class to "foo2",
+        RsConstant::class to "foo3",
+        RsFunction::class to "foo6",
+        RsPatBinding::class to "foo12",
+        RsPatBinding::class to "foo13",
+        RsPatBinding::class to "foo15",
+        RsPatBinding::class to "foo16",
+        RsStructItem::class to "foo17",
+        RsConstant::class to "foo19",
+        RsConstant::class to "foo20",
+        RsFunction::class to "foo22",
+        RsFunction::class to "foo23",
+        RsMacro::class to "foo24",
+        RsEnumVariant::class to "foo10",
+        RsConstant::class to "foo4",
+        RsConstant::class to "foo5",
+        RsFunction::class to "foo7",
+        RsFunction::class to "foo8",
+        RsMacro::class to "foo9"
+    ))
+
+    fun `test expected types priority (return type)`() = doTest("""
+        struct foo1<T>(T);
+        struct foo2<T>(T);
+
+        const foo3: foo1<i32> = foo1(1);
+        const foo4: foo1<f32> = foo1(1.0);
+        const foo5: foo2<i32> = foo2(2);
+
+        fn foo6(x: foo1<i32>) -> foo1<i32> {}
+        fn foo7(x: foo1<f32>) -> foo1<f32> {}
+        fn foo8(x: foo2<i32>) -> foo2<i32> {}
+
+        macro_rules! foo9 {}
+
+        enum E { foo10 }
+        use E::foo10;
+
+        fn bar(foo11: foo1<i32>, foo12: foo1<f32>, foo13: foo2<i32>) -> foo1<i32> {
+            let foo14 = foo1(1);
+            let foo15 = foo1(1.0);
+            let foo16 = foo2(2);
+
+            struct foo17;
+
+            const foo18: foo1<i32> = foo1(1);
+            const foo19: foo1<f32> = foo1(1.0);
+            const foo20: foo2<i32> = foo2(2);
+
+            fn foo21() -> foo1<i32> {}
+            fn foo22() -> foo1<f32> {}
+            fn foo23() -> foo2<i32> {}
+
+            macro_rules! foo24 {}
+
+            foo/*caret*/
+        }
+    """, listOf(
+        RsPatBinding::class to "foo11",
+        RsStructItem::class to "foo1",
+        RsPatBinding::class to "foo14",
+        RsConstant::class to "foo18",
+        RsFunction::class to "foo21",
+        RsStructItem::class to "foo2",
+        RsConstant::class to "foo3",
+        RsFunction::class to "foo6",
+        RsPatBinding::class to "foo12",
+        RsPatBinding::class to "foo13",
+        RsPatBinding::class to "foo15",
+        RsPatBinding::class to "foo16",
+        RsStructItem::class to "foo17",
+        RsConstant::class to "foo19",
+        RsConstant::class to "foo20",
+        RsFunction::class to "foo22",
+        RsFunction::class to "foo23",
+        RsMacro::class to "foo24",
+        RsEnumVariant::class to "foo10",
+        RsConstant::class to "foo4",
+        RsConstant::class to "foo5",
+        RsFunction::class to "foo7",
+        RsFunction::class to "foo8",
+        RsMacro::class to "foo9"
+    ))
+
+    fun `test expected types priority (dot expr)`() = doTest("""
+        struct foo1<T>(T);
+        struct foo2<T>(T);
+
+        struct S {
+            foo3: foo1<i32>,
+            foo4: foo1<f32>,
+            foo5: foo2<i32>
+        }
+
+        impl S {
+            fn foo6(self, x: foo1<i32>) -> foo1<i32> {}
+            fn foo7(self, x: foo1<f32>) -> foo1<f32> {}
+            fn foo8(self, x: foo2<i32>) -> foo2<i32> {}
+        }
+
+        fn bar() {
+            let s = S {
+                foo3: foo1(0),
+                foo4: foo1(0.0),
+                foo5: foo2(0)
+            };
+            let x: foo1<i32> = s./*caret*/;
+        }
+    """, listOf(
+        RsFieldDecl::class to "foo3",
+        RsFunction::class to "foo6",
+        RsFieldDecl::class to "foo4",
+        RsFieldDecl::class to "foo5",
+        RsFunction::class to "foo7",
+        RsFunction::class to "foo8"
     ))
 
     private fun doTest(@Language("Rust") code: String, expected: List<Pair<KClass<out NavigatablePsiElement>, String>>) {

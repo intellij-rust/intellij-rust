@@ -135,7 +135,7 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test mod`() {
         myFixture.configureByText("foo.rs", "")
-        val lookup = createLookupElement((myFixture.file as RsFile), "foo", false)
+        val lookup = createLookupElement((myFixture.file as RsFile), "foo")
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
@@ -158,7 +158,7 @@ class RsLookupElementTest : RsTestBase() {
     ) where T : NavigatablePsiElement, T : RsElement {
         InlineFile(code)
         val element = findElementInEditor<T>()
-        val lookup = createLookupElement(element as RsElement, element.name!!, false)
+        val lookup = createLookupElement(element as RsElement, element.name!!)
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
