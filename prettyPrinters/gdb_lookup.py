@@ -45,6 +45,10 @@ def lookup(valobj):
         return StdBTreeSetProvider(valobj)
     if rust_type == RustType.STD_BTREE_MAP:
         return StdBTreeMapProvider(valobj)
+    if rust_type == RustType.STD_HASH_MAP:
+        return StdHashMapProvider(valobj)
+    if rust_type == RustType.STD_HASH_SET:
+        return StdHashMapProvider(valobj["map"], show_values=False)
 
     if rust_type == RustType.STD_RC:
         return StdRcProvider(valobj)
