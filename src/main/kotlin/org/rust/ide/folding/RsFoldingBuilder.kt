@@ -63,6 +63,15 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         val rightMargin: Int
     ) : RsVisitor() {
 
+        override fun visitMacroBody(o: RsMacroBody) = fold(o)
+
+        override fun visitMacroExpansion(o: RsMacroExpansion) = fold(o)
+
+        override fun visitMacro2(o: RsMacro2) {
+            foldBetween(o, o.lparen, o.rparen)
+            foldBetween(o, o.lbrace, o.rbrace)
+        }
+
         override fun visitStructLiteralBody(o: RsStructLiteralBody) = fold(o)
 
         override fun visitEnumBody(o: RsEnumBody) = fold(o)

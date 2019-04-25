@@ -23,6 +23,8 @@ class RsFoldingBuilderTest : RsTestBase() {
     fun `test enum variant`() = doTest()
     fun `test mod`() = doTest()
     fun `test match expr`() = doTest()
+    fun `test macro`() = doTest()
+    fun `test macro2`() = doTest()
     fun `test macro brace arg`() = doTest()
     fun `test use glob list`() = doTest()
     fun `test comments`() = doTest()
