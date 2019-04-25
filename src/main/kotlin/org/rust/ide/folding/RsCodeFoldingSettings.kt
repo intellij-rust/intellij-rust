@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ServiceManager
 abstract class RsCodeFoldingSettings {
 
     abstract var collapsibleOneLineMethods: Boolean
+    abstract var hideRawKeywordsPrefix: Boolean
 
     companion object {
         val instance: RsCodeFoldingSettings get() = ServiceManager.getService(RsCodeFoldingSettings::class.java)
