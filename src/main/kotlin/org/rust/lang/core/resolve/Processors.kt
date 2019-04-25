@@ -13,6 +13,7 @@ import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.ty.Ty
 
 /**
  * ScopeEntry is some PsiElement visible in some code scope.
@@ -100,11 +101,21 @@ fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Un
     return result
 }
 
-fun collectCompletionVariants(result: CompletionResultSet, forSimplePath: Boolean, f: (RsResolveProcessor) -> Unit) {
+fun collectCompletionVariants(
+    result: CompletionResultSet,
+    forSimplePath: Boolean = false,
+    expectedTy: Ty? = null,
+    f: (RsResolveProcessor) -> Unit
+) {
     f { e ->
         val element = e.element ?: return@f false
         if (element is RsFunction && element.isTest) return@f false
-        result.addElement(createLookupElement(element, e.name, forSimplePath))
+        result.addElement(createLookupElement(
+            element = element,
+            scopeName = e.name,
+            forSimplePath = forSimplePath,
+            expectedTy = expectedTy
+        ))
         false
     }
 }

@@ -62,6 +62,8 @@ interface RsInferenceData {
     fun getExprAdjustments(expr: RsExpr): List<Adjustment>
     fun getExprType(expr: RsExpr): Ty
     fun getBindingType(binding: RsPatBinding): Ty
+    fun getExpectedPathExprType(expr: RsPathExpr): Ty
+    fun getExpectedDotExprType(expr: RsDotExpr): Ty
     fun getResolvedPaths(expr: RsPathExpr): List<RsElement>
 }
 
@@ -72,6 +74,8 @@ interface RsInferenceData {
 class RsInferenceResult(
     private val bindings: Map<RsPatBinding, Ty>,
     private val exprTypes: Map<RsExpr, Ty>,
+    private val expectedPathExprTypes: Map<RsPathExpr, Ty>,
+    private val expectedDotExprTypes: Map<RsDotExpr, Ty>,
     private val resolvedPaths: Map<RsPathExpr, List<RsElement>>,
     private val resolvedMethods: Map<RsMethodCall, List<MethodResolveVariant>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
@@ -88,6 +92,12 @@ class RsInferenceResult(
 
     override fun getBindingType(binding: RsPatBinding): Ty =
         bindings[binding] ?: TyUnknown
+
+    override fun getExpectedPathExprType(expr: RsPathExpr): Ty =
+        expectedPathExprTypes[expr] ?: TyUnknown
+
+    override fun getExpectedDotExprType(expr: RsDotExpr): Ty =
+        expectedDotExprTypes[expr] ?: TyUnknown
 
     override fun getResolvedPaths(expr: RsPathExpr): List<RsElement> =
         resolvedPaths[expr] ?: emptyList()
@@ -117,15 +127,17 @@ class RsInferenceContext(
     val items: KnownItems
 ) : RsInferenceData {
     val fulfill: FulfillmentContext = FulfillmentContext(this, lookup)
-    private val bindings: MutableMap<RsPatBinding, Ty> = HashMap()
-    private val exprTypes: MutableMap<RsExpr, Ty> = HashMap()
-    private val resolvedPaths: MutableMap<RsPathExpr, List<RsElement>> = HashMap()
-    private val resolvedMethods: MutableMap<RsMethodCall, List<MethodResolveVariant>> = HashMap()
-    private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = HashMap()
+    private val bindings: MutableMap<RsPatBinding, Ty> = hashMapOf()
+    private val exprTypes: MutableMap<RsExpr, Ty> = hashMapOf()
+    private val expectedPathExprTypes: MutableMap<RsPathExpr, Ty> = hashMapOf()
+    private val expectedDotExprTypes: MutableMap<RsDotExpr, Ty> = hashMapOf()
+    private val resolvedPaths: MutableMap<RsPathExpr, List<RsElement>> = hashMapOf()
+    private val resolvedMethods: MutableMap<RsMethodCall, List<MethodResolveVariant>> = hashMapOf()
+    private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = hashMapOf()
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
-    val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = HashMap()
+    val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = hashMapOf()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> = UnificationTable()
     private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> = UnificationTable()
@@ -185,12 +197,24 @@ class RsInferenceContext(
 
         exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
         bindings.replaceAll { _, ty -> fullyResolve(ty) }
+        expectedPathExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
+        expectedDotExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
         // replace types in diagnostics for better quick fixes
         diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it}
 
         performPathsRefinement(lookup)
 
-        return RsInferenceResult(bindings, exprTypes, resolvedPaths, resolvedMethods, resolvedFields, diagnostics, adjustments)
+        return RsInferenceResult(
+            bindings,
+            exprTypes,
+            expectedPathExprTypes,
+            expectedDotExprTypes,
+            resolvedPaths,
+            resolvedMethods,
+            resolvedFields,
+            diagnostics,
+            adjustments
+        )
     }
 
     private fun fallbackUnresolvedTypeVarsIfPossible() {
@@ -240,6 +264,14 @@ class RsInferenceContext(
         return bindings[binding] ?: TyUnknown
     }
 
+    override fun getExpectedPathExprType(expr: RsPathExpr): Ty {
+        return expectedPathExprTypes[expr] ?: TyUnknown
+    }
+
+    override fun getExpectedDotExprType(expr: RsDotExpr): Ty {
+        return expectedDotExprTypes[expr] ?: TyUnknown
+    }
+
     override fun getResolvedPaths(expr: RsPathExpr): List<RsElement> {
         return resolvedPaths[expr] ?: emptyList()
     }
@@ -254,6 +286,14 @@ class RsInferenceContext(
 
     fun writeBindingTy(psi: RsPatBinding, ty: Ty) {
         bindings[psi] = ty
+    }
+
+    fun writeExpectedPathExprTy(psi: RsPathExpr, ty: Ty) {
+        expectedPathExprTypes[psi] = ty
+    }
+
+    fun writeExpectedDotExprTy(psi: RsDotExpr, ty: Ty) {
+        expectedDotExprTypes[psi] = ty
     }
 
     fun writePath(path: RsPathExpr, resolved: List<BoundElement<RsElement>>) {
@@ -368,8 +408,9 @@ class RsInferenceContext(
         return true
     }
 
-    private fun combineTypesNoVars(ty1: Ty, ty2: Ty): Boolean {
-        return ty1 === ty2 || when {
+    fun combineTypesNoVars(ty1: Ty, ty2: Ty): Boolean =
+        when {
+            ty1 === ty2 -> true
             ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> true
             ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> true
             ty1 is TyReference && ty2 is TyReference && ty1.mutability == ty2.mutability -> {
@@ -395,7 +436,6 @@ class RsInferenceContext(
             ty1 is TyNever || ty2 is TyNever -> true
             else -> false
         }
-    }
 
     fun combinePairs(pairs: List<Pair<Ty, Ty>>): Boolean {
         var canUnify = true
@@ -741,6 +781,13 @@ class RsFnInferenceContext(
     private fun RsExpr.inferType(expected: Ty? = null): Ty {
         ProgressManager.checkCanceled()
         if (ctx.isTypeInferred(this)) error("Trying to infer expression type twice")
+
+        if (expected != null) {
+            when (this) {
+                is RsPathExpr -> ctx.writeExpectedPathExprTy(this, expected)
+                is RsDotExpr -> ctx.writeExpectedDotExprTy(this, expected)
+            }
+        }
 
         val ty = when (this) {
             is RsPathExpr -> inferPathExprType(this)

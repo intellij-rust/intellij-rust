@@ -27,6 +27,7 @@ import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
+import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyPrimitive
@@ -50,7 +51,8 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         val processedPathNames = hashSetOf<String>()
 
         val isSimplePath = simplePathPattern.accepts(parameters.position)
-        collectCompletionVariants(result, isSimplePath) {
+        val expectedTy = getExpectedTypeForEnclosingPathOrDotExpr(element)
+        collectCompletionVariants(result, isSimplePath, expectedTy) {
             when (element) {
                 is RsAssocTypeBinding -> processAssocTypeVariants(element, it)
                 is RsExternCrateItem -> processExternCrateResolveVariants(element, true, it)
@@ -83,18 +85,19 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         }
 
         if (element is RsMethodOrField) {
-            addMethodAndFieldCompletion(element, result, isSimplePath)
+            addMethodAndFieldCompletion(element, result, isSimplePath, expectedTy)
         }
 
         if (isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
-            addCompletionsFromIndex(parameters, result, processedPathNames)
+            addCompletionsFromIndex(parameters, result, processedPathNames, expectedTy)
         }
     }
 
     private fun addMethodAndFieldCompletion(
         element: RsMethodOrField,
         result: CompletionResultSet,
-        forSimplePath: Boolean
+        forSimplePath: Boolean = false,
+        expectedTy: Ty? = null
     ) {
         val receiver = element.receiver.safeGetOriginalOrSelf()
         val lookup = ImplLookup.relativeTo(receiver)
@@ -104,7 +107,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         } else {
             ::processDotExprResolveVariants
         }
-        val processor = methodAndFieldCompletionProcessor(element, result, forSimplePath)
+        val processor = methodAndFieldCompletionProcessor(element, result, forSimplePath, expectedTy)
 
         processResolveVariants(
             lookup,
@@ -119,7 +122,8 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     private fun addCompletionsFromIndex(
         parameters: CompletionParameters,
         result: CompletionResultSet,
-        processedPathNames: Set<String>
+        processedPathNames: Set<String>,
+        expectedTy: Ty?
     ) {
         // We use the position in the original file in order not to process empty paths
         val path = parameters.originalPosition?.parent as? RsPath ?: return
@@ -150,11 +154,12 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                 .map { candidate ->
                     val item = candidate.qualifiedNamedItem.item
                     createLookupElement(
-                        item,
-                        elementName,
-                        true,
-                        candidate.info.usePath,
-                        object : RsDefaultInsertHandler() {
+                        element = item,
+                        scopeName = elementName,
+                        locationString = candidate.info.usePath,
+                        forSimplePath = true,
+                        expectedTy = expectedTy,
+                        insertHandler = object : RsDefaultInsertHandler() {
                             override fun handleInsert(
                                 element: RsElement,
                                 scopeName: String,
@@ -269,18 +274,25 @@ private fun filterMethodCompletionVariantsByTraitBounds(
 private fun methodAndFieldCompletionProcessor(
     element: RsMethodOrField,
     result: CompletionResultSet,
-    forSimplePath: Boolean
+    forSimplePath: Boolean = false,
+    expectedTy: Ty? = null
 ): RsResolveProcessor = fun(e: ScopeEntry): Boolean {
     when (e) {
-        is FieldResolveVariant -> result.addElement(createLookupElement(e.element, e.name, forSimplePath))
+        is FieldResolveVariant -> result.addElement(createLookupElement(
+            element = e.element,
+            scopeName = e.name,
+            forSimplePath = forSimplePath,
+            expectedTy = expectedTy
+        ))
         is MethodResolveVariant -> {
             if (e.element.isTest) return false
             val traitImportCandidate = findTraitImportCandidate(element, e)
 
             result.addElement(createLookupElement(
-                e.element,
-                e.name,
-                forSimplePath,
+                element = e.element,
+                scopeName = e.name,
+                forSimplePath = forSimplePath,
+                expectedTy = expectedTy,
                 insertHandler = object : RsDefaultInsertHandler() {
                     override fun handleInsert(
                         element: RsElement,
@@ -317,4 +329,16 @@ private fun addProcessedPathName(
         processedPathNames.add(it.name)
     }
     return processor(it)
+}
+
+private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement): Ty? {
+    for (ancestor in element.ancestors) {
+        if (element.endOffset < ancestor.endOffset) continue
+        if (element.endOffset > ancestor.endOffset) break
+        when (ancestor) {
+            is RsPathExpr -> return ancestor.expectedType
+            is RsDotExpr -> return ancestor.expectedType
+        }
+    }
+    return null
 }
