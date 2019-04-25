@@ -11,6 +11,7 @@ class RsFoldingBuilderTest : RsTestBase() {
     override val dataPath = "org/rust/ide/folding/fixtures"
 
     fun `test fn`() = doTest()
+    fun `test raw identifiers`() = doTest()
     fun `test loops`() = doTest()
     fun `test block expr`() = doTest()
     fun `test impl`() = doTest()
