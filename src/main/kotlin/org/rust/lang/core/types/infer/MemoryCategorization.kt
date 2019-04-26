@@ -264,7 +264,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
         val declaration = inference.getResolvedPaths(pathExpr).singleOrNull() ?: return Cmt(pathExpr, ty = type)
         return when (declaration) {
             is RsConstant -> {
-                if (declaration.static != null) {
+                if (!declaration.isConst) {
                     Cmt(pathExpr, StaticItem, MutabilityCategory.from(declaration.mutability), type)
                 } else {
                     processRvalue(pathExpr)
