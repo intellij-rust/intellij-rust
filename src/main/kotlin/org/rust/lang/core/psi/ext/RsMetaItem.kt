@@ -11,8 +11,10 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsMetaItem
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.resolve.ref.deriveReference
 import org.rust.lang.core.stubs.RsMetaItemStub
 
 val RsMetaItem.name: String? get() {
@@ -26,6 +28,9 @@ val RsMetaItem.value: String? get() {
 }
 
 val RsMetaItem.hasEq: Boolean get() = stub?.hasEq ?: (eq != null)
+
+fun RsMetaItem.resolveToDerivedTrait(): RsTraitItem? =
+    deriveReference?.resolve() as? RsTraitItem
 
 abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>, RsMetaItem {
 
