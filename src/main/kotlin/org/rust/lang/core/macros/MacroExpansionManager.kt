@@ -309,7 +309,7 @@ private class MacroExpansionServiceImplInner(
                 val toRemove = mutableListOf<ExpandedMacroInfo>()
                 runReadAction {
                     storage.processExpandedMacroInfos { info ->
-                        if (info.expansionFileUrl != null && info.expansionFile?.isValid != true) {
+                        if (info.expansionFile != null && !info.expansionFile.isValid) {
                             toRemove.add(info)
                         }
                     }

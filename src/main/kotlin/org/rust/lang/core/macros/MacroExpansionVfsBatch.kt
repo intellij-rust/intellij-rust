@@ -158,7 +158,7 @@ abstract class EventBasedVfsBatch : VfsBatch() {
         manager.fireBeforeRefreshStart(/*asynchronous = */ false)
         try {
             val events = mutableListOf<VFileEvent>()
-            while (!dirEvents.isEmpty()) {
+            while (dirEvents.isNotEmpty()) {
                 val iter = dirEvents.iterator()
                 while (iter.hasNext()) {
                     val event = iter.next().toVFileEvent()
@@ -173,7 +173,7 @@ abstract class EventBasedVfsBatch : VfsBatch() {
             }
 
             if (fileEvents.isNotEmpty()) {
-                PersistentFS.getInstance().processEvents(fileEvents.map { it.toVFileEvent()!! })
+                PersistentFS.getInstance().processEvents(fileEvents.mapNotNull { it.toVFileEvent() })
                 fileEvents.clear()
             }
         } finally {

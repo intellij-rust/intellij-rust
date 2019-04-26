@@ -264,7 +264,10 @@ object InvalidationPipeline {
 
     class Stage2(val info: ExpandedMacroInfo) : Pipeline.Stage2WriteToFs {
         override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
-            info.expansionFile?.let { fs.deleteFile(fs.resolve(it)) }
+            val expansionFile = info.expansionFile
+            if (expansionFile != null && expansionFile.isValid) {
+                fs.deleteFile(fs.resolve(expansionFile))
+            }
             return Stage3(info)
         }
     }
@@ -342,7 +345,9 @@ object ExpansionPipeline {
     ) : Pipeline.Stage2WriteToFs {
         override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
-            oldExpansionFile?.let { fs.deleteFile(fs.resolve(it)) }
+            if (oldExpansionFile != null && oldExpansionFile.isValid) {
+                fs.deleteFile(fs.resolve(oldExpansionFile))
+            }
             return Stage3(call, info, def, null)
         }
     }
