@@ -21,4 +21,19 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
           //^ [i32; 28]
         }
     """)
+
+    fun `test const expr 2`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        const COUNT: usize = 2;
+        pub fn foo(a: i32, b: [i32; (2 * COUNT + 3) << (4 / 2)]) { unimplemented!() }
+
+    //- main.rs
+        mod foo;
+
+        fn main() {
+            let x = foo::foo();
+            x;
+          //^ ()
+        }
+    """)
 }
