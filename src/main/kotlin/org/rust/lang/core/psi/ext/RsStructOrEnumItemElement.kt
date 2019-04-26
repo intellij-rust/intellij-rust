@@ -17,12 +17,12 @@ interface RsStructOrEnumItemElement : RsQualifiedNamedElement, RsItemElement, Rs
 
 val RsStructOrEnumItemElement.derivedTraits: Collection<RsTraitItem>
     get() = deriveMetaItems
-        .mapNotNull { it.reference?.resolve() as? RsTraitItem }
+        .mapNotNull { it.resolveToDerivedTrait() }
         .toList()
 
 val RsStructOrEnumItemElement.derivedTraitsToMetaItems: Map<RsTraitItem, RsMetaItem>
     get() = deriveMetaItems
-        .mapNotNull { meta -> (meta.reference?.resolve() as? RsTraitItem)?.let { it to meta } }
+        .mapNotNull { meta -> (meta.resolveToDerivedTrait())?.let { it to meta } }
         .toMap()
 
 private val RsStructOrEnumItemElement.deriveMetaItems: Sequence<RsMetaItem>

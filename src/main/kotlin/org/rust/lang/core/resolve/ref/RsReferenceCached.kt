@@ -12,8 +12,7 @@ import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 
 abstract class RsReferenceCached<T : RsWeakReferenceElement>(
     element: T
-) : RsReferenceBase<T>(element),
-    RsReference {
+) : RsReferenceBase<T>(element) {
 
     protected abstract fun resolveInner(): List<RsElement>
 

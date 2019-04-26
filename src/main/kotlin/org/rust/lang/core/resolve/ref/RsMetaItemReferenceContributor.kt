@@ -27,14 +27,39 @@ private class RsDeriveTraitReferenceProvider : PsiReferenceProvider() {
     }
 }
 
+/**
+ * Equivalent to [RsMetaItem.getReference] in the case of `#[derive(Foo)]` meta item, but with better
+ * performance because it doesn't call contributors from other plugins.
+ * (e.g. `MavenFilteredPropertyPsiReferenceProvider` performs switches to AST)
+ */
+val RsMetaItem.deriveReference: RsReference?
+    get() = if (RsPsiPattern.derivedTraitMetaItem.accepts(this)) RsDeriveTraitReferenceImpl(this) else null
+
 private class RsDeriveTraitReferenceImpl(
     element: RsMetaItem
-) : RsReferenceCached<RsMetaItem>(element) {
+) : RsReferenceBase<RsMetaItem>(element) {
 
     override val RsMetaItem.referenceAnchor: PsiElement? get() = element.identifier
 
-    override fun resolveInner(): List<RsElement> {
+    fun resolveInner(): List<RsElement> {
         val traitName = element.name ?: return emptyList()
         return collectResolveVariants(traitName) { processDeriveTraitResolveVariants(element, traitName, it) }
+    }
+
+    override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
+        cachedMultiResolve().toTypedArray()
+
+    override fun multiResolve(): List<RsElement> =
+        cachedMultiResolve().mapNotNull { it.element as? RsElement }
+
+    private fun cachedMultiResolve(): List<PsiElementResolveResult> {
+        return RsResolveCache.getInstance(element.project)
+            .resolveWithCaching(element, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE, Resolver).orEmpty()
+    }
+
+    private object Resolver : (RsMetaItem) -> List<PsiElementResolveResult> {
+        override fun invoke(ref: RsMetaItem): List<PsiElementResolveResult> {
+            return (ref.deriveReference as RsDeriveTraitReferenceImpl).resolveInner().map { PsiElementResolveResult(it) }
+        }
     }
 }
