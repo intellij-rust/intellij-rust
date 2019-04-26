@@ -32,8 +32,9 @@ private class EventBasedVfsBatch191 : EventBasedVfsBatch() {
             VFileContentChangeEvent(null, vFile, vFile.modificationStamp, -1, true)
         }
         is Event.Delete -> {
-            val vFile = LocalFileSystem.getInstance().findFileByPath(file.toString())!!
-            VFileDeleteEvent(null, vFile, true)
+            val vFile = LocalFileSystem.getInstance().findFileByPath(file.toString())
+            // skip if file is already deleted (not sure how this can happen)
+            if (vFile == null) null else VFileDeleteEvent(null, vFile, true)
         }
     }
 }

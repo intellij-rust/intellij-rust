@@ -498,7 +498,7 @@ class ExpandedMacroInfo(
     val callHash: HashCode?,
     var stubIndex: Int = -1
 ) {
-    val expansionFileUrl: String? get() = expansionFile?.url
+    private val expansionFileUrl: String? get() = expansionFile?.url
     val fileId: Int get() = expansionFile?.fileId ?: -1
 
     @Volatile
