@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -105,34 +104,38 @@ class ExpandedMacroStorage(val project: Project) {
         }
     }
 
-    fun addExpandedMacro(call: RsMacroCall, oldInfo: ExpandedMacroInfo?, def: RsMacro?, expansion: VirtualFile?): ExpandedMacroInfo {
+    fun addExpandedMacro(
+        call: RsMacroCall,
+        oldInfo: ExpandedMacroInfo,
+        callHash: HashCode?,
+        defHash: HashCode?,
+        expansionFile: VirtualFile?
+    ): ExpandedMacroInfo {
         checkWriteAccessAllowed()
 
-        if (oldInfo != null) {
-            removeInvalidInfo(oldInfo, false)
-        }
-
-        val callFile = call.containingFile.virtualFile
-        check(callFile.fileSystem is LocalFileSystem)
-        val sourceFile = getOrCreateSourceFile(callFile) ?: error("too deep expansion (unreachable)")
-        if (oldInfo != null && oldInfo.sourceFile != sourceFile) {
-            error("unreachable")
-        }
-        val info = ExpandedMacroInfo(
+        val sourceFile = oldInfo.sourceFile
+        val newInfo = ExpandedMacroInfo(
             sourceFile,
-            expansion,
-            def?.bodyHash,
-            call.bodyHash,
-            oldInfo?.stubIndex ?: -1
+            expansionFile,
+            defHash,
+            callHash,
+            oldInfo.stubIndex
         )
 
-        info.bindTo(call)
+        newInfo.bindTo(call)
 
-        sourceFile.addInfo(info)
-        if (info.fileId > 0) expandedFileToInfo.put(info.fileId, info)
-        info.expansionFile?.let { getOrCreateSourceFile(it) }
+        sourceFile.replaceInfo(oldInfo, newInfo)
 
-        return info
+        if (oldInfo.expansionFile != newInfo.expansionFile && oldInfo.fileId > 0) {
+            expandedFileToInfo.remove(oldInfo.fileId)
+        }
+        if (newInfo.fileId > 0) {
+            expandedFileToInfo.put(newInfo.fileId, newInfo)
+        }
+
+        newInfo.expansionFile?.let { getOrCreateSourceFile(it) }
+
+        return newInfo
     }
 
     fun removeInvalidInfo(oldInfo: ExpandedMacroInfo, clean: Boolean) {
@@ -257,9 +260,14 @@ class SourceFile(
     }
 
     @Synchronized
-    fun addInfo(info: ExpandedMacroInfo) {
+    fun replaceInfo(oldInfo: ExpandedMacroInfo, newInfo: ExpandedMacroInfo) {
         check(!fresh)
-        infos.add(info)
+        val oldInfoIndex = infos.indexOf(oldInfo)
+        if (oldInfoIndex != -1) {
+            infos[oldInfoIndex] = newInfo
+        } else {
+            infos.add(newInfo)
+        }
         detectDuplicates()
     }
 
