@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections.borrowck
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -17,6 +19,53 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
     """, """
         fn main() {
             let x: i32 = 0;
+            x;
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test E0381 error no init default impl`() = checkFixByText("Initialize with a default value", """
+        #[derive(Default)]
+        struct A {
+            a: u64
+        }
+
+        fn main() {
+            let x: A;
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        #[derive(Default)]
+        struct A {
+            a: u64
+        }
+
+        fn main() {
+            let x: A = Default::default();
+            x;
+        }
+    """, checkWarn = false)
+
+    fun `test E0381 error no init default initialization`() = checkFixByText("Initialize with a default value", """
+        struct A {
+            a: u64,
+            b: u64
+        }
+
+        fn main() {
+            let a: u64 = 1;
+            let x: A;
+            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+        }
+    """, """
+        struct A {
+            a: u64,
+            b: u64
+        }
+
+        fn main() {
+            let a: u64 = 1;
+            let x: A = A { a, b: 0 };
             x;
         }
     """, checkWarn = false)

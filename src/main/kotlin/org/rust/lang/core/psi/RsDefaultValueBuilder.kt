@@ -5,8 +5,10 @@
 
 package org.rust.lang.core.psi
 
+import org.rust.ide.inspections.RsFieldInitShorthandInspection
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.resolve.processLocalVariables
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -19,7 +21,14 @@ class RsDefaultValueBuilder(
     private val defaultValue: RsExpr
         get() = psiFactory.createExpression("()")
 
-    fun buildFor(ty: Ty): RsExpr {
+    private fun buildForSmartPtr(ty: TyAdt, bindings: Map<String, RsPatBinding>): RsExpr {
+        val item = ty.item
+        val name = ty.item.name!!
+        val parameter = ty.typeParameterValues[item.typeParameters[0]]!!
+        return psiFactory.createAssocFunctionCall(name, "new", listOf(buildFor(parameter, bindings)))
+    }
+
+    fun buildFor(ty: Ty, bindings: Map<String, RsPatBinding>): RsExpr {
         return when (ty) {
             is TyBool -> psiFactory.createExpression("false")
             is TyInteger -> psiFactory.createExpression("0")
@@ -27,16 +36,39 @@ class RsDefaultValueBuilder(
             is TyChar -> psiFactory.createExpression("''")
             is TyReference -> when (ty.referenced) {
                 is TyStr -> psiFactory.createExpression("\"\"")
-                else -> psiFactory.createRefExpr(buildFor(ty.referenced), listOf(ty.mutability))
+                else -> psiFactory.createRefExpr(buildFor(ty.referenced, bindings), listOf(ty.mutability))
             }
             is TyAdt -> {
+                val smartPointers = listOf(
+                    items.Box,
+                    items.Rc,
+                    items.Arc,
+                    items.Cell,
+                    items.RefCell,
+                    items.UnsafeCell,
+                    items.Mutex
+                )
+
                 val item = ty.item
+                if (item in smartPointers) {
+                    return buildForSmartPtr(ty, bindings)
+                }
+
+                var default = this.defaultValue
+                if (item.implLookup.isDefault(ty)) {
+                    default = psiFactory.createAssocFunctionCall("Default", "default", listOf())
+                }
+
                 val name = item.name!! // `!!` is because it isn't possible to acquire TyAdt with anonymous item
                 when (item) {
                     items.Option -> psiFactory.createExpression("None")
                     items.String -> psiFactory.createExpression("\"\".to_string()")
                     items.Vec -> psiFactory.createExpression("vec![]")
                     is RsStructItem -> if (item.kind == RsStructKind.STRUCT && item.canBeInstantiatedIn(mod)) {
+                        if (item.implLookup.isDefault(ty)) {
+                            return default
+                        }
+
                         when {
                             item.blockFields != null -> {
                                 val structLiteral = psiFactory.createStructLiteral(name)
@@ -44,7 +76,8 @@ class RsDefaultValueBuilder(
                                     fillStruct(
                                         structLiteral.structLiteralBody,
                                         item.namedFields,
-                                        item.namedFields
+                                        item.namedFields,
+                                        bindings
                                     )
                                 }
                                 structLiteral
@@ -53,7 +86,7 @@ class RsDefaultValueBuilder(
                                 val argExprs = if (recursive) {
                                     item.positionalFields
                                         .map { it.typeReference.type }
-                                        .map { buildFor(it) }
+                                        .map { buildFor(it, bindings) }
                                 } else {
                                     emptyList()
                                 }
@@ -62,23 +95,27 @@ class RsDefaultValueBuilder(
                             else -> psiFactory.createExpression(name)
                         }
                     } else {
-                        defaultValue
+                        default
                     }
                     is RsEnumItem -> {
+                        if (item.implLookup.isDefault(ty)) {
+                            return default
+                        }
+
                         val variantWithoutFields = item.enumBody
                             ?.enumVariantList
                             ?.find { it.isFieldless }
                             ?.name
                         variantWithoutFields?.let { psiFactory.createExpression("$name::$it") }
-                            ?: defaultValue
+                            ?: default
                     }
-                    else -> defaultValue
+                    else -> default
                 }
             }
             is TySlice, is TyArray -> psiFactory.createExpression("[]")
             is TyTuple -> {
                 val text = ty.types.joinToString(prefix = "(", separator = ", ", postfix = ")") { tupleElement ->
-                    buildFor(tupleElement).text
+                    buildFor(tupleElement, bindings).text
                 }
                 psiFactory.createExpression(text)
             }
@@ -89,13 +126,16 @@ class RsDefaultValueBuilder(
     fun fillStruct(
         structLiteral: RsStructLiteralBody,
         declaredFields: List<RsFieldDecl>,
-        fieldsToAdd: List<RsFieldDecl>
+        fieldsToAdd: List<RsFieldDecl>,
+        bindings: Map<String, RsPatBinding>
     ): List<RsStructLiteralField> {
         val forceMultiLine = structLiteral.structLiteralFieldList.isEmpty() && fieldsToAdd.size > 2
 
         val addedFields = mutableListOf<RsStructLiteralField>()
         for (fieldDecl in fieldsToAdd) {
-            val field = specializedCreateStructLiteralField(fieldDecl) ?: continue
+            val field = findLocalBinding(fieldDecl, bindings)
+                ?: specializedCreateStructLiteralField(fieldDecl, bindings)
+                ?: continue
             val addBefore = findPlaceToAdd(field, structLiteral.structLiteralFieldList, declaredFields)
             val added = if (addBefore == null) {
                 ensureTrailingComma(structLiteral.structLiteralFieldList)
@@ -112,6 +152,43 @@ class RsDefaultValueBuilder(
         }
 
         return addedFields
+    }
+
+    private fun findLocalBinding(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
+        val name = fieldDecl.name ?: return null
+        val type = fieldDecl.typeReference?.type ?: return null
+
+        val binding = bindings[name] ?: return null
+        return when {
+            type == binding.type -> {
+                val field = psiFactory.createStructLiteralField(name, psiFactory.createExpression(name))
+                RsFieldInitShorthandInspection.applyShorthandInit(field)
+                field
+            }
+            isRefContainer(type, binding.type) -> {
+                val expr = buildReference(type, psiFactory.createExpression(name))
+                psiFactory.createStructLiteralField(name, expr)
+            }
+            else -> null
+        }
+    }
+
+    private fun isRefContainer(container: Ty, type: Ty): Boolean {
+        return when (container) {
+            type -> true
+            is TyReference -> isRefContainer(container.referenced, type)
+            else -> false
+        }
+    }
+
+    private fun buildReference(type: Ty, expr: RsExpr): RsExpr {
+        return when (type) {
+            is TyReference -> {
+                val inner = type.referenced
+                psiFactory.createRefExpr(buildReference(inner, expr), listOf(type.mutability))
+            }
+            else -> expr
+        }
     }
 
     private fun findPlaceToAdd(
@@ -154,10 +231,22 @@ class RsDefaultValueBuilder(
         return null
     }
 
-    private fun specializedCreateStructLiteralField(fieldDecl: RsFieldDecl): RsStructLiteralField? {
+    private fun specializedCreateStructLiteralField(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
         val fieldName = fieldDecl.name ?: return null
         val fieldType = fieldDecl.typeReference?.type ?: return null
-        val fieldLiteral = buildFor(fieldType)
+        val fieldLiteral = buildFor(fieldType, bindings)
         return psiFactory.createStructLiteralField(fieldName, fieldLiteral)
+    }
+
+    companion object {
+        fun getVisibleBindings(place: RsElement): Map<String, RsPatBinding> {
+            val bindings = HashMap<String, RsPatBinding>()
+            processLocalVariables(place) { variable ->
+                variable.name?.let {
+                    bindings[it] = variable
+                }
+            }
+            return bindings
+        }
     }
 }

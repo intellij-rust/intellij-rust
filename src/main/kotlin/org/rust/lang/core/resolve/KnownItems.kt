@@ -107,7 +107,13 @@ class KnownItems(
     // Some old versions of stdlib contain `Ord` trait without lang attribute
     val Ord: RsTraitItem? get() = findItem("core::cmp::Ord")
     val Debug: RsTraitItem? get() = findLangItem("debug_trait")
-    val Box: RsStructItem? get() = findLangItem("owned_box", "alloc")
+    val Box: RsStructOrEnumItemElement? get() = findLangItem("owned_box", "alloc")
+    val Rc: RsStructOrEnumItemElement? get() = findItem("alloc::rc::Rc")
+    val Arc: RsStructOrEnumItemElement? get() = findItem("alloc::sync::Arc") ?: findItem("alloc::arc::Arc")
+    val Cell: RsStructOrEnumItemElement? get() = findItem("core::cell::Cell")
+    val RefCell: RsStructOrEnumItemElement? get() = findItem("core::cell::RefCell")
+    val UnsafeCell: RsStructOrEnumItemElement? get() = findItem("core::cell::UnsafeCell")
+    val Mutex: RsStructOrEnumItemElement? get() = findItem("std::sync::mutex::Mutex")
 }
 
 interface KnownItemsLookup {

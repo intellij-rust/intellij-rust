@@ -12,11 +12,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.annotator.calculateMissingFields
 import org.rust.lang.core.psi.RsDefaultValueBuilder
+import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructLiteral
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.fields
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.processLocalVariables
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
@@ -50,7 +53,13 @@ class AddStructFieldsFix(
         val body = structLiteral.structLiteralBody
         val fieldsToAdd = calculateMissingFields(body, decl)
         val defaultValueBuilder = RsDefaultValueBuilder(decl.knownItems, body.containingMod, RsPsiFactory(project), recursive)
-        val addedFields = defaultValueBuilder.fillStruct(body, decl.fields, fieldsToAdd)
+
+        val addedFields = defaultValueBuilder.fillStruct(
+            body,
+            decl.fields,
+            fieldsToAdd,
+            RsDefaultValueBuilder.getVisibleBindings(startElement)
+        )
         editor?.buildAndRunTemplate(body, addedFields.mapNotNull { it.expr?.createSmartPointer() })
     }
 }

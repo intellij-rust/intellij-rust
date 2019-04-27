@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.processLocalVariables
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.type
 import org.rust.openapiext.buildAndRunTemplate
@@ -29,7 +30,8 @@ class InitializeWithDefaultValueFix(element: RsElement) : LocalQuickFixAndIntent
         val declaration = patBinding.ancestorOrSelf<RsLetDecl>() ?: return
         val semicolon = declaration.semicolon ?: return
         val psiFactory = RsPsiFactory(project)
-        val initExpr = RsDefaultValueBuilder(declaration.knownItems, declaration.containingMod, psiFactory).buildFor(patBinding.type)
+        val initExpr = RsDefaultValueBuilder(declaration.knownItems, declaration.containingMod, psiFactory, true)
+            .buildFor(patBinding.type, RsDefaultValueBuilder.getVisibleBindings(startElement as RsElement))
 
         if (declaration.eq == null) {
             declaration.addBefore(psiFactory.createEq(), semicolon)
