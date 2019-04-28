@@ -624,4 +624,12 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             std::format_args!(true);
         }        //^ ...libstd/macros.rs
     """)
+
+    fun `test f64 INFINITY`() = stubOnlyResolve("""
+    //- main.rs
+        use std::f64;
+        fn main() {
+            let a = f64::INFINITY;
+        }              //^ ...num/f64.rs
+    """)
 }
