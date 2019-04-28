@@ -374,13 +374,14 @@ private fun processQualifiedPathResolveVariants(
     parent: PsiElement?,
     processor: RsResolveProcessor
 ): Boolean {
-    val primitiveType = TyPrimitive.fromPath(qualifier)
-    if (primitiveType != null) {
-        val selfSubst = mapOf(TyTypeParameter.self() to primitiveType).toTypeSubst()
-        if (processAssociatedItemsWithSelfSubst(lookup, primitiveType, ns, selfSubst, processor)) return true
+    val (base, subst) = qualifier.reference.advancedResolve() ?: run {
+        val primitiveType = TyPrimitive.fromPath(qualifier)
+        if (primitiveType != null) {
+            val selfSubst = mapOf(TyTypeParameter.self() to primitiveType).toTypeSubst()
+            if (processAssociatedItemsWithSelfSubst(lookup, primitiveType, ns, selfSubst, processor)) return true
+        }
+        return false
     }
-
-    val (base, subst) = qualifier.reference.advancedResolve() ?: return false
     val isSuperChain = isSuperChain(qualifier)
     if (base is RsMod) {
         val s = base.`super`

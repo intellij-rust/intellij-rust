@@ -823,4 +823,15 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
             <S>::foo;
         }      //^
     """)
+
+    fun `test module wins over primitive type`() = checkByCode("""
+        mod f64 {
+            pub const INFINITY: f64 = 0.0;
+        }            //X
+        trait T { const INFINITY: Self; }
+        impl T for f64 { const INFINITY: Self = 17.0; }
+        fn main() {
+            let a = f64::INFINITY;
+        }              //^
+    """)
 }
