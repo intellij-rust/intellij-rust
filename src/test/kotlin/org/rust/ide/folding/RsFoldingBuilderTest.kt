@@ -10,10 +10,6 @@ import org.rust.RsTestBase
 class RsFoldingBuilderTest : RsTestBase() {
     override val dataPath = "org/rust/ide/folding/fixtures"
 
-    init {
-        RsCodeFoldingSettings.instance.hideRawKeywordsPrefix = true
-    }
-
     fun `test fn`() = doTest()
     fun `test raw identifiers`() = doTest()
     fun `test loops`() = doTest()
