@@ -15,6 +15,8 @@ import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.ty.TyPointer
+import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
 
 abstract class AssertPostfixTemplateBase(
@@ -67,6 +69,21 @@ class RefmPostfixTemplate(provider: RsPostfixTemplateProvider) :
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
+class DerefPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate(
+        "deref",
+        "*expr",
+        RsTopMostInScopeSelector {
+            it.type is TyReference || it.type is TyPointer || it.implementsDeref
+        },
+        provider
+    ) {
+
+    override fun getTemplateString(element: PsiElement): String = "*${element.text}"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
 class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
     StringBasedPostfixTemplate("match", "match expr {...}", RsTopMostInScopeSelector(), provider) {
 
@@ -108,3 +125,6 @@ class DbgPostfixTemplate(provider: RsPostfixTemplateProvider) :
 
 private val RsExpr.isIntoIterator: Boolean
     get() = ImplLookup(project, knownItems).isIntoIterator(type)
+
+private val RsExpr.implementsDeref: Boolean
+    get() = ImplLookup(project, knownItems).isDeref(this.type)

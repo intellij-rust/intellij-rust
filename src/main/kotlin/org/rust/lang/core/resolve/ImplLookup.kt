@@ -721,6 +721,7 @@ class ImplLookup(
         return ref.asFunctionType
     }
 
+    fun isDeref(ty: Ty): Boolean = ty.isTraitImplemented(items.Deref)
     fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.Copy)
     fun isClone(ty: Ty): Boolean = ty.isTraitImplemented(items.Clone)
     fun isSized(ty: Ty): Boolean = ty.isTraitImplemented(items.Sized)
