@@ -73,9 +73,15 @@ allprojects {
         instrumentCode = false
         ideaDependencyCachePath = dependencyCachePath
 
-        tasks.withType<PatchPluginXmlTask> {
-            sinceBuild(prop("sinceBuild"))
-            untilBuild(prop("untilBuild"))
+        tasks {
+            withType<PatchPluginXmlTask> {
+                sinceBuild(prop("sinceBuild"))
+                untilBuild(prop("untilBuild"))
+            }
+
+            "buildSearchableOptions" {
+                enabled = prop("enableBuildSearchableOptions").toBoolean()
+            }
         }
     }
 
