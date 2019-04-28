@@ -56,7 +56,7 @@ enum class RsVisStubKind {
 }
 
 val RsVis.stubKind: RsVisStubKind
-    get() = stub?.kind ?: when {
+    get() = greenStub?.kind ?: when {
         crate != null -> RsVisStubKind.CRATE
         visRestriction != null -> RsVisStubKind.RESTRICTED
         else -> RsVisStubKind.PUB

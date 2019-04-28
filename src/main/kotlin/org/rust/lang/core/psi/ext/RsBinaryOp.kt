@@ -17,7 +17,7 @@ import org.rust.lang.core.stubs.RsBinaryOpStub
 val RsBinaryOp.operator: PsiElement
     get() = requireNotNull(node.findChildByType(RS_BINARY_OPS)) { "guaranteed to be not-null by parser" }.psi
 
-val RsBinaryOp.op: String get() = stub?.op ?: operator.text
+val RsBinaryOp.op: String get() = greenStub?.op ?: operator.text
 
 val RsBinaryOp.isLazy: Boolean get() = andand != null || this.oror != null
 

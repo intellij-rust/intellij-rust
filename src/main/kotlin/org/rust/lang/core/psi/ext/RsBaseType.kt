@@ -30,7 +30,7 @@ sealed class RsBaseTypeKind {
 private val RS_BASE_TYPE_KINDS = tokenSetOf(LPAREN, EXCL, UNDERSCORE, PATH)
 
 val RsBaseType.stubKind: RsBaseTypeStubKind get() {
-    val stub = stub
+    val stub = greenStub
     if (stub != null) return stub.kind
 
     val child = node.findChildByType(RS_BASE_TYPE_KINDS)

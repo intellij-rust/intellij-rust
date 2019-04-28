@@ -87,7 +87,7 @@ class RsFile(
 
     val attributes: Attributes
         get() {
-            val stub = stub
+            val stub = greenStub as RsFileStub?
             if (stub != null) return stub.attributes
             if (queryAttributes.hasAtomAttribute("no_core")) return Attributes.NO_CORE
             if (queryAttributes.hasAtomAttribute("no_std")) return Attributes.NO_STD

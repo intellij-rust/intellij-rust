@@ -9,6 +9,6 @@ import org.rust.lang.core.psi.RsValueParameter
 
 
 val RsValueParameter.patText: String? get() {
-    val stub = stub
+    val stub = greenStub
     return if (stub != null) stub.patText else pat?.text
 }

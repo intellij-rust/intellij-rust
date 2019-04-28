@@ -30,7 +30,7 @@ val RsTypeParameter.bounds: List<RsPolybound> get() {
 }
 
 val RsTypeParameter.isSized: Boolean get() {
-    val stub = stub
+    val stub = greenStub
     if (stub != null) return stub.isSized
 
     // We can't use `resolve` here to find `?Sized` bound because it causes `IndexNotReadyException` while indexing.

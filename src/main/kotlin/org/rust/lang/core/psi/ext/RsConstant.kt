@@ -22,9 +22,9 @@ enum class RsConstantKind {
     CONST
 }
 
-val RsConstant.isMut: Boolean get() = stub?.isMut ?: (mut != null)
+val RsConstant.isMut: Boolean get() = greenStub?.isMut ?: (mut != null)
 
-val RsConstant.isConst: Boolean get() = stub?.isConst ?: (const != null)
+val RsConstant.isConst: Boolean get() = greenStub?.isConst ?: (const != null)
 
 val RsConstant.kind: RsConstantKind get() = when {
     isMut -> RsConstantKind.MUT_STATIC

@@ -751,7 +751,7 @@ private class MacroResolver private constructor() {
         startElement: PsiElement,
         processor: (PsiElement) -> Boolean
     ): Boolean {
-        val stub = (startElement as? StubBasedPsiElement<*>)?.stub
+        val stub = (startElement as? StubBasedPsiElement<*>)?.greenStub
         return if (stub != null) {
             stubBasedProcessScopesInLexicalOrderUpward(stub, processor)
         } else {

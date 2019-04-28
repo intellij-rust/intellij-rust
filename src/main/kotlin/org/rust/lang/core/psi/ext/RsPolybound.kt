@@ -15,4 +15,4 @@ import org.rust.lang.core.psi.RsPolybound
  * ```
  */
 val RsPolybound.hasQ: Boolean
-    get() = stub?.hasQ ?: (q != null)
+    get() = greenStub?.hasQ ?: (q != null)

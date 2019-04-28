@@ -45,7 +45,7 @@ val RsMacroCall.macroName: String
 
 val RsMacroCall.macroBody: String?
     get() {
-        val stub = stub
+        val stub = greenStub
         if (stub != null) return stub.macroBody
         return macroArgument?.compactTT?.text
             ?: formatMacroArgument?.braceListBodyText()?.toString()
