@@ -14,9 +14,12 @@ class RsCodeFoldingOptionsProvider :
 
     init {
         val settings = instance
-        val getter: () -> Boolean = { settings.collapsibleOneLineMethods }
-        val setter: (Boolean) -> Unit = { v -> settings.collapsibleOneLineMethods = v }
 
-        checkBox("Rust one-line methods", getter, setter)
+        checkBox("Rust one-line methods",
+            { settings.collapsibleOneLineMethods },
+            { v -> settings.collapsibleOneLineMethods = v })
+        checkBox("Rust raw-identifiers",
+            { settings.hideRawKeywordsPrefix },
+            { v -> settings.hideRawKeywordsPrefix = v })
     }
 }
