@@ -10,7 +10,7 @@ import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.utils.evaluation.ExprValue
 import org.rust.lang.utils.evaluation.RsConstExprEvaluator
 
-val RsArrayType.isSlice: Boolean get() = stub?.isSlice ?: (expr == null)
+val RsArrayType.isSlice: Boolean get() = greenStub?.isSlice ?: (expr == null)
 
 val RsArrayType.arraySize: Long?
     get() {

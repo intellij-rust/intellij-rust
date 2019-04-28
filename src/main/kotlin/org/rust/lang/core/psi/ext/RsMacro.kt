@@ -64,7 +64,7 @@ val RsMacro.macroBodyStubbed: RsMacroBody?
 
 val RsMacro.bodyHash: HashCode?
     get() = CachedValuesManager.getCachedValue(this) {
-        val body = stub?.macroBody ?: macroBody?.text
+        val body = greenStub?.macroBody ?: macroBody?.text
         val hash = body?.let { HashCode.compute(it) }
         CachedValueProvider.Result.create(hash, modificationTracker)
     }

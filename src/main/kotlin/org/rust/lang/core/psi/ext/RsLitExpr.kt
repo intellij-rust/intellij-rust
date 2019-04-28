@@ -6,7 +6,10 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.*
+import com.intellij.psi.LiteralTextEscaper
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.stubs.IStubElementType
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider
@@ -27,7 +30,7 @@ import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 
 val RsLitExpr.stubType: RsStubLiteralType? get() {
-    val stub = (stub as? RsLitExprStub)
+    val stub = (greenStub as? RsLitExprStub)
     if (stub != null) return stub.type
     val kind = kind
     return when (kind) {
@@ -41,7 +44,7 @@ val RsLitExpr.stubType: RsStubLiteralType? get() {
 }
 
 val RsLitExpr.integerLiteralValue: String? get() =
-    (stub as? RsLitExprStub)?.integerLiteralValue ?: integerLiteral?.text
+    (greenStub as? RsLitExprStub)?.integerLiteralValue ?: integerLiteral?.text
 
 abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, RegExpLanguageHost {
 

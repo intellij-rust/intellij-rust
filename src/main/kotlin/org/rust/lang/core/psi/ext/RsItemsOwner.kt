@@ -6,12 +6,16 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.util.Key
+import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
 
 interface RsItemsOwner : RsElement
 
@@ -20,16 +24,12 @@ val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
         val stubChildren: List<StubElement<*>>? = run {
             when (this) {
                 is RsFile -> {
-                    val stub = stub
+                    val stub = greenStub
                     if (stub != null) return@run stub.childrenStubs
                 }
-                is RsModItem -> {
-                    val stub = stub
+                is StubBasedPsiElement<*> -> {
+                    val stub = this.greenStub
                     if (stub != null) return@run stub.childrenStubs
-                }
-                is RsBlock -> {
-                    val stub = stub
-                    if(stub != null) return@run stub.childrenStubs
                 }
             }
             null

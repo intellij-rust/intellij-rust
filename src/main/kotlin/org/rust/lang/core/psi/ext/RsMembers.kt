@@ -24,7 +24,7 @@ val RsMembers.expandedMembers: List<RsAbstractable>
     }
 
 private val StubBasedPsiElement<*>.childrenSequence
-    get() = (stub?.childrenStubs?.asSequence()?.map { it.psi } ?: generateSequence(firstChild) { it.nextSibling })
+    get() = (greenStub?.childrenStubs?.asSequence()?.map { it.psi } ?: generateSequence(firstChild) { it.nextSibling })
         .filterIsInstance<RsElement>()
 
 private fun RsMacroCall.collectAbstractableMembersRecursively(members: MutableList<RsAbstractable>) {

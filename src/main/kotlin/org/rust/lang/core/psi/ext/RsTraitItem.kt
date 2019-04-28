@@ -35,7 +35,7 @@ val RsTraitItem.langAttribute: String? get() = queryAttributes.langAttribute
 val RsTraitItem.isSizedTrait: Boolean get() = langAttribute == "sized"
 
 val RsTraitItem.isAuto: Boolean
-    get() = stub?.isAuto ?: (node.findChildByType(RsElementTypes.AUTO) != null)
+    get() = greenStub?.isAuto ?: (node.findChildByType(RsElementTypes.AUTO) != null)
 
 val RsTraitItem.isKnownDerivable: Boolean get() {
     val derivableTrait = KNOWN_DERIVABLE_TRAITS[name] ?: return false
@@ -139,7 +139,7 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
         get() = BoundElement(this).associatedTypesTransitively
 
     override val isUnsafe: Boolean get() {
-        val stub = stub
+        val stub = greenStub
         return stub?.isUnsafe ?: (unsafe != null)
     }
 
