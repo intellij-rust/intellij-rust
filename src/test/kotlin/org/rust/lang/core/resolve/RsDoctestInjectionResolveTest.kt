@@ -31,16 +31,21 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         pub fn foo() {}
     """)
 
+    // TODO handle existing main https://github.com/rust-lang/rust/blob/5182cc1ca/src/librustdoc/test.rs#L438
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test outer crate dependency`() = stubOnlyResolve("""
+    fun `test outer crate dependency`() = expect<IllegalStateException> {
+    stubOnlyResolve("""
     //- lib.rs
         /// ```
         /// extern crate dep_lib_target;
-        /// use dep_lib_target::bar;
-        ///                   //^ dep-lib/lib.rs
+        /// fn main() {
+        ///     use dep_lib_target::bar;
+        ///                       //^ dep-lib/lib.rs
+        /// }
         /// ```
         pub fn foo() {}
     //- dep-lib/lib.rs
         pub fn bar() {}
     """)
+    }
 }
