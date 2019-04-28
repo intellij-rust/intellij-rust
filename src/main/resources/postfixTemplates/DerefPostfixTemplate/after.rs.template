@@ -1,0 +1,4 @@
+fn main() {
+    let v = &123;
+    assert_eq!(123, *v);
+}
