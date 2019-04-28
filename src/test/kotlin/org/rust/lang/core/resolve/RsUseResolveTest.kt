@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.MockEdition
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+
 class RsUseResolveTest : RsResolveTestBase() {
 
     fun `test view path`() = checkByCode("""
@@ -645,5 +648,19 @@ class RsUseResolveTest : RsResolveTestBase() {
         use foo::Foo as _;
         fn bar(a: &Foo) {}
                   //^ unresolved
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test unified paths 2018 edition`() = checkByCode("""
+        mod foo {
+            pub fn bar() {}
+        }
+
+        mod baz {
+            mod foo {
+                pub fn bar() {}
+            }         //X
+            use foo::bar;
+        }          //^
     """)
 }

@@ -464,8 +464,9 @@ private fun processUnqualifiedPathResolveVariants(
 
     val containingMod = path.containingMod
     val crateRoot = path.crateRoot
-    val isAbsolute = path.hasColonColon
-    if (!isAbsolute) {
+    /** Path starts with `::` */
+    val hasColonColon = path.hasColonColon
+    if (!hasColonColon) {
         run {
             // hacks around $crate macro metavar. See `expandDollarCrateVar` function docs
             val referenceName = path.referenceName
@@ -489,32 +490,33 @@ private fun processUnqualifiedPathResolveVariants(
         }
     }
 
-    // Paths in use items are implicitly global.
-    if (isAbsolute || path.contextStrict<RsUseItem>() != null || path.contextStrict<RsVisRestriction>() != null) {
-        if (crateRoot != null) {
-            if (processItemOrEnumVariantDeclarations(crateRoot, ns, processor, withPrivateImports = true)) return true
+    // In 2015 edition a path is crate-relative (global) if it's inside use item,
+    // inside "visibility restriction" or if it starts with `::`
+    // ```rust, edition2015
+    // use foo::bar; // `foo` is crate-relative
+    // let a = foo::bar; // `foo` is also crate-relative
+    // pub(in foo::bar) fn baz() {}
+    //       //^ crate-relative path too
+    // ```
+    // In 2018 edition a path is crate-relative if it starts with `crate::` (handled above)
+    // or if it's inside "visibility restriction". `::`-qualified path on 2018 edition means that
+    // such path is a name of some dependency crate (that should be resolved without `extern crate`)
+    val isEdition2018 = path.isEdition2018
+    val isCrateRelative = !isEdition2018 && (hasColonColon || path.contextStrict<RsUseItem>() != null)
+        || path.contextStrict<RsVisRestriction>() != null
+    // see https://doc.rust-lang.org/edition-guide/rust-2018/module-system/path-clarity.html#the-crate-keyword-refers-to-the-current-crate
+    val isExternCrate = isEdition2018 && hasColonColon
+    return when {
+        isCrateRelative -> if (crateRoot != null) {
+            processItemOrEnumVariantDeclarations(crateRoot, ns, processor, withPrivateImports = true)
+        } else {
+            false
         }
-    } else {
-        if (processNestedScopesUpwards(path, ns, processor)) return true
+
+        isExternCrate -> processExternCrateResolveVariants(path, isCompletion, processor)
+
+        else -> processNestedScopesUpwards(path, ns, isCompletion, processor)
     }
-
-    if (!isAbsolute && Namespace.Types in ns && path.kind == PathKind.IDENTIFIER) {
-        if (processor(ScopeEvent.IMPLICIT_CRATES)) return true
-
-        val attributes = (crateRoot as? RsFile)?.attributes
-        val implicitExternCrate = when (attributes) {
-            NONE -> "std"
-            NO_STD -> "core"
-            else -> null
-        }
-        // We shouldn't process implicit extern crate here
-        // because we add it in `ItemResolutionKt.processItemDeclarations`
-        if (path.referenceName != implicitExternCrate) {
-            if (processExternCrateResolveVariants(path, isCompletion, processor)) return true
-        }
-    }
-
-    return false
 }
 
 private fun processTypeQualifiedPathResolveVariants(
@@ -1220,29 +1222,36 @@ private fun processLexicalDeclarations(
     return false
 }
 
+fun processNestedScopesUpwards(scopeStart: RsElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean =
+    processNestedScopesUpwards(scopeStart, ns, isCompletion = false, processor = processor)
+
 fun processNestedScopesUpwards(
     scopeStart: RsElement,
     ns: Set<Namespace>,
+    isCompletion: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
     val prevScope = mutableSetOf<String>()
     if (walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
-        val currScope = mutableListOf<String>()
-        val shadowingProcessor = { e: ScopeEntry ->
-            e.name !in prevScope && run {
-                currScope += e.name
-                processor(e)
-            }
+        processWithShadowing(prevScope, processor) { shadowingProcessor ->
+            processLexicalDeclarations(scope, cameFrom, ns, shadowingProcessor)
         }
-        if (processLexicalDeclarations(scope, cameFrom, ns, shadowingProcessor)) return@walkUp true
-        prevScope.addAll(currScope)
-        false
     }) {
         return true
     }
 
     // Prelude is injected via implicit star import `use std::prelude::v1::*;`
     if (processor(ScopeEvent.STAR_IMPORTS)) return false
+
+    if (Namespace.Types in ns) {
+        // "extern_prelude" feature. Extern crate names can be resolved as if they were in the prelude.
+        // See https://blog.rust-lang.org/2018/10/25/Rust-1.30.0.html#module-system-improvements
+        // See https://github.com/rust-lang/rust/pull/54404/
+        val result = processWithShadowing(prevScope, processor) { shadowingProcessor ->
+            processExternCrateResolveVariants(scopeStart, isCompletion, shadowingProcessor)
+        }
+        if (result) return true
+    }
 
     val prelude = findPrelude(scopeStart)
     if (prelude != null) {
@@ -1251,6 +1260,25 @@ fun processNestedScopesUpwards(
     }
 
     return false
+}
+
+private inline fun processWithShadowing(
+    prevScope: MutableSet<String>,
+    crossinline processor: RsResolveProcessor,
+    f: (RsResolveProcessor) -> Boolean
+): Boolean {
+    val currScope = mutableListOf<String>()
+    val shadowingProcessor = { e: ScopeEntry ->
+        e.name !in prevScope && run {
+            currScope += e.name
+            processor(e)
+        }
+    }
+    return try {
+        f(shadowingProcessor)
+    } finally {
+        prevScope.addAll(currScope)
+    }
 }
 
 private fun findPrelude(element: RsElement): RsFile? {

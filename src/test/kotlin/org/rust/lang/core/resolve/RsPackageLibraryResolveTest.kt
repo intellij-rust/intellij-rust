@@ -424,7 +424,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub struct Foo;
     //- lib.rs
         use dep_lib_target::Foo;
-                //^ dep-lib/lib.rs
+                //^ unresolved
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2015)
@@ -458,6 +458,46 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
         fn foo() -> dep_lib_target::Foo { unimplemented!() }
                                    //^ lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve module instead of crate in nested mod (edition 2018)`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        mod bar {
+            mod dep_lib_target {
+                pub struct Foo;
+            }
+            fn foo() -> dep_lib_target::Foo { unimplemented!() }
+                                       //^ lib.rs
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve module instead of crate in use item in nested mod (edition 2018)`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        mod bar {
+            mod dep_lib_target {
+                pub struct Foo;
+            }
+            use dep_lib_target::Foo;
+                               //^ lib.rs
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve crate instead of module in absolute use item (edition 2018)`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        mod dep_lib_target {
+            pub struct Foo;
+        }
+        use ::dep_lib_target::Foo;
+                            //^ dep-lib/lib.rs
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
