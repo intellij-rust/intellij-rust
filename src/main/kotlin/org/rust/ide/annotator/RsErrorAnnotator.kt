@@ -90,11 +90,11 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     private fun checkDuplicateEnumVariants(holder: AnnotationHolder, o: RsEnumBody) {
         data class VariantInfo(val variant: RsEnumVariant, val alreadyReported: Boolean)
 
-        var discrCounter = 0
-        val indexToVariantMap = hashMapOf<Int, VariantInfo>()
+        var discrCounter = 0L
+        val indexToVariantMap = hashMapOf<Long, VariantInfo>()
         for (variant in o.enumVariantList) {
             val literal = variant.variantDiscriminant?.expr as? RsLitExpr
-            val int = literal?.integerLiteralValue?.toIntOrNull()
+            val int = literal?.integerValue
             val idx = int ?: discrCounter
             discrCounter = idx + 1
 

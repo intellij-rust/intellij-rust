@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
-import org.rust.lang.core.stubs.RsStubLiteralType
+import org.rust.lang.core.stubs.RsStubLiteralKind
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.Adjustment.BorrowReference
 import org.rust.lang.core.types.infer.Adjustment.Deref
@@ -859,20 +859,19 @@ class RsFnInferenceContext(
     }
 
     private fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
-        val stubType = expr.stubType
-        return when (stubType) {
-            is RsStubLiteralType.Boolean -> TyBool
-            is RsStubLiteralType.Char -> if (stubType.isByte) TyInteger.U8 else TyChar
-            is RsStubLiteralType.String -> {
+        return when (val stubKind = expr.stubKind) {
+            is RsStubLiteralKind.Boolean -> TyBool
+            is RsStubLiteralKind.Char -> if (stubKind.isByte) TyInteger.U8 else TyChar
+            is RsStubLiteralKind.String -> {
                 // TODO infer the actual lifetime
-                if (stubType.isByte) {
-                    TyReference(TyArray(TyInteger.U8, stubType.length), IMMUTABLE)
+                if (stubKind.isByte) {
+                    TyReference(TyArray(TyInteger.U8, stubKind.value?.length?.toLong() ?: 0), IMMUTABLE)
                 } else {
                     TyReference(TyStr, IMMUTABLE)
                 }
             }
-            is RsStubLiteralType.Integer -> {
-                val ty = stubType.kind
+            is RsStubLiteralKind.Integer -> {
+                val ty = stubKind.ty
                 ty ?: when (expected) {
                     is TyInteger -> expected
                     TyChar -> TyInteger.U8
@@ -880,8 +879,8 @@ class RsFnInferenceContext(
                     else -> TyInfer.IntVar()
                 }
             }
-            is RsStubLiteralType.Float -> {
-                val ty = stubType.kind
+            is RsStubLiteralKind.Float -> {
+                val ty = stubKind.ty
                 ty ?: (expected?.takeIf { it is TyFloat } ?: TyInfer.FloatVar())
             }
             null -> TyUnknown
