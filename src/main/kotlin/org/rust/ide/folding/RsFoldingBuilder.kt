@@ -30,15 +30,12 @@ import org.rust.lang.core.psi.ext.*
 import java.lang.Integer.max
 import java.util.*
 
-fun ASTNode.isRawIdentifier() = elementType == IDENTIFIER && text.startsWith(RS_RAW_PREFIX)
-
 class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String =
         when {
             node.elementType == LBRACE -> " { "
             node.elementType == RBRACE -> " }"
             node.elementType == USE_ITEM -> "/* uses */"
-            node.isRawIdentifier() -> ""
             node.psi is RsModDeclItem -> "/* mods */"
             node.psi is RsExternCrateItem -> "/* crates */"
             node.psi is PsiComment -> "/* ... */"
@@ -76,14 +73,6 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         }
 
         override fun visitStructLiteralBody(o: RsStructLiteralBody) = fold(o)
-
-        override fun visitElement(o: PsiElement) {
-            if (o.node.isRawIdentifier()) {
-                val startOffset = o.startOffset
-                val range = TextRange(startOffset, startOffset + RS_RAW_PREFIX.length)
-                descriptors += FoldingDescriptor(o.node, range)
-            }
-        }
 
         override fun visitEnumBody(o: RsEnumBody) = fold(o)
 
@@ -202,17 +191,16 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         }
     }
 
-    override fun isCustomFoldingRoot(node: ASTNode) = node.elementType == BLOCK
+    override fun isCustomFoldingRoot(node: ASTNode) = node.elementType == RsElementTypes.BLOCK
 
     override fun isRegionCollapsedByDefault(node: ASTNode): Boolean =
         (RsCodeFoldingSettings.instance.collapsibleOneLineMethods && node.elementType in COLLAPSED_BY_DEFAULT)
             || (CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS && node.elementType in DOC_COMMENTS)
-            || (RsCodeFoldingSettings.instance.hideRawKeywordsPrefix && node.isRawIdentifier())
 
     private companion object {
         val COLLAPSED_BY_DEFAULT = TokenSet.create(LBRACE, RBRACE)
         val DOC_COMMENTS = TokenSet.create(INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT)
-        const val ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH = 4
+        val ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH = 4
     }
 }
 
