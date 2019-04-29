@@ -247,24 +247,28 @@ sealed class RsDiagnostic(
     class AccessError(
         element: PsiElement,
         private val errorCode: RsErrorCode,
-        private val itemType: String
+        private val itemType: String,
+        private val fix: MakePublicFix?
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             errorCode,
-            "$itemType `${escapeString(element.text)}` is private"
+            "$itemType `${escapeString(element.text)}` is private",
+            fixes = listOfNotNull(fix)
         )
     }
 
     class StructFieldAccessError(
         element: PsiElement,
         private val fieldName: String,
-        private val structName: String
+        private val structName: String,
+        private val fix: MakePublicFix?
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0616,
-            "Field `${escapeString(fieldName)}` of struct `${escapeString(structName)}` is private"
+            "Field `${escapeString(fieldName)}` of struct `${escapeString(structName)}` is private",
+            fixes = listOfNotNull(fix)
         )
     }
 
