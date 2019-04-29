@@ -11,6 +11,8 @@ import com.intellij.psi.StubBuilder
 import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
 import com.intellij.util.BitUtil
+import com.intellij.util.io.DataInputOutputUtil.readNullable
+import com.intellij.util.io.DataInputOutputUtil.writeNullable
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -33,7 +35,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 161
+        override fun getStubVersion(): Int = 162
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -1063,12 +1065,11 @@ class RsInnerAttrStub(
 class RsMetaItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val name: String?,
-    val hasEq: Boolean,
-    val value: String?
+    val hasEq: Boolean
 ) : StubBase<RsMetaItem>(parent, elementType) {
     object Type : RsStubElementType<RsMetaItemStub, RsMetaItem>("META_ITEM") {
         override fun createStub(psi: RsMetaItem, parentStub: StubElement<*>?): RsMetaItemStub =
-            RsMetaItemStub(parentStub, this, psi.name, psi.eq != null, psi.litExpr?.stringLiteralValue)
+            RsMetaItemStub(parentStub, this, psi.name, psi.eq != null)
 
         override fun createPsi(stub: RsMetaItemStub): RsMetaItem = RsMetaItemImpl(stub, this)
 
@@ -1076,17 +1077,12 @@ class RsMetaItemStub(
             with(dataStream) {
                 writeName(stub.name)
                 writeBoolean(stub.hasEq)
-                writeUTFFastAsNullable(stub.value)
             }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsMetaItemStub =
             RsMetaItemStub(parentStub, this,
                 dataStream.readNameAsString(),
-                dataStream.readBoolean(),
-                dataStream.readUTFFastAsNullable())
-
-        override fun indexStub(stub: RsMetaItemStub, sink: IndexSink) {
-        }
+                dataStream.readBoolean())
     }
 }
 
@@ -1136,8 +1132,7 @@ class RsExprStub(
 
 class RsLitExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val type: RsStubLiteralType?,
-    val integerLiteralValue: String?
+    val kind: RsStubLiteralKind?
 ) : RsPlaceholderStub(parent, elementType) {
     object Type : RsStubElementType<RsLitExprStub, RsLitExpr>("LIT_EXPR") {
 
@@ -1145,15 +1140,14 @@ class RsLitExprStub(
             createStubIfParentIsStub(node) && node.psi.parent?.parent !is RsFunction
 
         override fun serialize(stub: RsLitExprStub, dataStream: StubOutputStream) {
-            stub.type.serialize(dataStream)
-            dataStream.writeUTFFastAsNullable(stub.integerLiteralValue)
+            stub.kind.serialize(dataStream)
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsLitExprStub =
-            RsLitExprStub(parentStub, this, RsStubLiteralType.deserialize(dataStream), dataStream.readUTFFastAsNullable())
+            RsLitExprStub(parentStub, this, RsStubLiteralKind.deserialize(dataStream))
 
         override fun createStub(psi: RsLitExpr, parentStub: StubElement<*>?): RsLitExprStub =
-            RsLitExprStub(parentStub, this, psi.stubType, psi.integerLiteralValue)
+            RsLitExprStub(parentStub, this, psi.stubKind)
 
         override fun createPsi(stub: RsLitExprStub): RsLitExpr = RsLitExprImpl(stub, this)
     }
@@ -1183,23 +1177,23 @@ class RsUnaryExprStub(
 
 }
 
-sealed class RsStubLiteralType(val typeOrdinal: Int) {
-    object Boolean : RsStubLiteralType(0)
-    class Char(val isByte: kotlin.Boolean) : RsStubLiteralType(1)
-    class String(val length: Long?, val isByte: kotlin.Boolean) : RsStubLiteralType(2)
-    class Integer(val kind: TyInteger?) : RsStubLiteralType(3)
-    class Float(val kind: TyFloat?) : RsStubLiteralType(4)
+sealed class RsStubLiteralKind(val kindOrdinal: Int) {
+    class Boolean(val value: kotlin.Boolean) : RsStubLiteralKind(0)
+    class Char(val value: kotlin.String?, val isByte: kotlin.Boolean) : RsStubLiteralKind(1)
+    class String(val value: kotlin.String?, val isByte: kotlin.Boolean) : RsStubLiteralKind(2)
+    class Integer(val value: Long?, val ty: TyInteger?) : RsStubLiteralKind(3)
+    class Float(val value: Double?, val ty: TyFloat?) : RsStubLiteralKind(4)
 
     companion object {
-        fun deserialize(dataStream: StubInputStream): RsStubLiteralType? {
-            with (dataStream) {
+        fun deserialize(dataStream: StubInputStream): RsStubLiteralKind? {
+            with(dataStream) {
                 val ordinal = readByte().toInt()
                 return when (ordinal) {
-                    0 -> RsStubLiteralType.Boolean
-                    1 -> RsStubLiteralType.Char(readBoolean())
-                    2 -> RsStubLiteralType.String(readLong(), readBoolean())
-                    3 -> RsStubLiteralType.Integer(TyInteger.VALUES.getOrNull(readByte().toInt()))
-                    4 -> RsStubLiteralType.Float(TyFloat.VALUES.getOrNull(readByte().toInt()))
+                    0 -> Boolean(readBoolean())
+                    1 -> Char(readUTFFastAsNullable(), readBoolean())
+                    2 -> String(readUTFFastAsNullable(), readBoolean())
+                    3 -> Integer(readLongAsNullable(), TyInteger.VALUES.getOrNull(readByte().toInt()))
+                    4 -> Float(readDoubleAsNullable(), TyFloat.VALUES.getOrNull(readByte().toInt()))
                     else -> null
                 }
             }
@@ -1207,21 +1201,30 @@ sealed class RsStubLiteralType(val typeOrdinal: Int) {
     }
 }
 
-private fun RsStubLiteralType?.serialize(dataStream: StubOutputStream) {
+private fun RsStubLiteralKind?.serialize(dataStream: StubOutputStream) {
     if (this == null) {
         dataStream.writeByte(-1)
         return
     }
-    dataStream.writeByte(typeOrdinal)
+    dataStream.writeByte(kindOrdinal)
     when (this) {
-        is RsStubLiteralType.Char -> dataStream.writeBoolean(isByte)
-        is RsStubLiteralType.String -> {
-            dataStream.writeLong(length ?: 0)
+        is RsStubLiteralKind.Boolean -> dataStream.writeBoolean(value)
+        is RsStubLiteralKind.Char -> {
+            dataStream.writeUTFFastAsNullable(value)
             dataStream.writeBoolean(isByte)
         }
-        is RsStubLiteralType.Integer -> dataStream.writeByte(kind?.ordinal ?: -1)
-        is RsStubLiteralType.Float -> dataStream.writeByte(kind?.ordinal ?: -1)
-        RsStubLiteralType.Boolean -> Unit
+        is RsStubLiteralKind.String -> {
+            dataStream.writeUTFFastAsNullable(value)
+            dataStream.writeBoolean(isByte)
+        }
+        is RsStubLiteralKind.Integer -> {
+            dataStream.writeLongAsNullable(value)
+            dataStream.writeByte(ty?.ordinal ?: -1)
+        }
+        is RsStubLiteralKind.Float -> {
+            dataStream.writeDoubleAsNullable(value)
+            dataStream.writeByte(ty?.ordinal ?: -1)
+        }
     }
 }
 
@@ -1299,18 +1302,14 @@ class RsVisStub(
 }
 
 private fun StubInputStream.readNameAsString(): String? = readName()?.string
-private fun StubInputStream.readUTFFastAsNullable(): String? {
-    val hasValue = readBoolean()
-    return if (hasValue) readUTFFast() else null
-}
-private fun StubOutputStream.writeUTFFastAsNullable(value: String?) {
-    if (value == null) {
-        writeBoolean(false)
-    } else {
-        writeBoolean(true)
-        writeUTFFast(value)
-    }
-}
+private fun StubInputStream.readUTFFastAsNullable(): String? = readNullable(this, this::readUTFFast)
+private fun StubOutputStream.writeUTFFastAsNullable(value: String?) = writeNullable(this, value, this::writeUTFFast)
 
 private fun <E : Enum<E>> StubOutputStream.writeEnum(e: E) = writeByte(e.ordinal)
 private inline fun <reified E : Enum<E>> StubInputStream.readEnum(): E = enumValues<E>()[readUnsignedByte()]
+
+private fun StubOutputStream.writeLongAsNullable(value: Long?) = writeNullable(this, value, this::writeLong)
+private fun StubInputStream.readLongAsNullable(): Long? = readNullable(this, this::readLong)
+
+private fun StubOutputStream.writeDoubleAsNullable(value: Double?) = writeNullable(this, value, this::writeDouble)
+private fun StubInputStream.readDoubleAsNullable(): Double? = readNullable(this, this::readDouble)

@@ -109,7 +109,7 @@ private fun RsDocAndAttributeOwner.innerDocs(): Sequence<Pair<RsDocKind, String>
 }
 
 private val RsMetaItem.docAttr: String?
-    get() = if (name == "doc") litExpr?.stringLiteralValue else null
+    get() = if (name == "doc") litExpr?.stringValue else null
 
 private class RustDocMarkdownFlavourDescriptor(
     private val context: PsiElement,

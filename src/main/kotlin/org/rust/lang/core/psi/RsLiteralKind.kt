@@ -36,6 +36,22 @@ sealed class RsLiteralKind(val node: ASTNode) {
             get() = listOf("u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "u128", "i128", "isize", "usize")
 
         override val offsets: LiteralOffsets by lazy { offsetsForNumber(node) }
+
+        val value: Long? get() {
+            val textValue = offsets.value?.substring(node.text) ?: return null
+            val (start, radix) = when (textValue.take(2)) {
+                "0x" -> 2 to 16
+                "0o" -> 2 to 8
+                "0b" -> 2 to 2
+                else -> 0 to 10
+            }
+            val cleanTextValue = textValue.substring(start).filter { it != '_' }
+            return try {
+                java.lang.Long.parseLong(cleanTextValue, radix)
+            } catch (e: NumberFormatException) {
+                null
+            }
+        }
     }
 
     class Float(node: ASTNode) : RsLiteralKind(node), RsLiteralWithSuffix {
