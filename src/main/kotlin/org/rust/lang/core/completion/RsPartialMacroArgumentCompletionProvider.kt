@@ -15,33 +15,39 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.FragmentKind
 import org.rust.lang.core.macros.FragmentKind.*
+import org.rust.lang.core.macros.MacroExpansionContext.EXPR
+import org.rust.lang.core.macros.MacroExpansionContext.STMT
 import org.rust.lang.core.macros.MacroGraphWalker
+import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
+import org.rust.openapiext.Testmark
 
+/**
+ * Provides completion inside a macro argument (e.g. `foo!(/*caret*/)`) if the macro is NOT expanded
+ * successfully, i.e. [RsMacroCall.expansion] == null. If macro is expanded successfully,
+ * [RsFullMacroArgumentCompletionProvider] is used.
+ */
 object RsPartialMacroArgumentCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         fun addCompletions(fragment: RsCodeFragment, offset: Int) {
-            val reference = fragment.findReferenceAt(offset) ?: return
-            val referenceElement = reference.element as? RsReferenceElement ?: return
-            val isSimplePath = RsCommonCompletionProvider.simplePathPattern.accepts(referenceElement.firstChild)
-
-            RsCommonCompletionProvider.processElement(referenceElement, isSimplePath, null, hashSetOf(), parameters, result)
-
-            if (RsPrimitiveTypeCompletionProvider.elementPattern.accepts(referenceElement.firstChild)) {
-                RsPrimitiveTypeCompletionProvider.addCompletionVariants(parameters, context, result)
-            }
+            val element = fragment.findElementAt(offset) ?: return
+            rerunCompletion(parameters.withPosition(element, offset), result)
         }
 
         val project = parameters.originalFile.project
         val position = parameters.position
         val macroCall = position.ancestorStrict<RsMacroArgument>()?.ancestorStrict<RsMacroCall>() ?: return
+        // TODO replace with `if (macroCall.expansion != null) return` after hygiene merge
+        if (macroCall.expansion != null && macroCall.expansionContext !in listOf(EXPR, STMT)) return
         val bodyTextRange = macroCall.bodyTextRange ?: return
         val macroCallBody = macroCall.macroBody ?: return
         val macro = macroCall.resolveToMacro() ?: return
         val graph = macro.graph ?: return
         val offsetInArgument = parameters.offset - bodyTextRange.startOffset
+
+        Testmarks.touched.hit()
 
         val walker = MacroGraphWalker(project, graph, macroCallBody, offsetInArgument)
         val fragmentDescriptors = walker.run().takeIf { it.isNotEmpty() } ?: return
@@ -66,4 +72,8 @@ object RsPartialMacroArgumentCompletionProvider : CompletionProvider<CompletionP
         get() = PlatformPatterns.psiElement()
             .withLanguage(RsLanguage)
             .inside(psiElement<RsMacroArgument>())
+
+    object Testmarks {
+        val touched = Testmark("RsPartialMacroArgumentCompletionProvider.touched")
+    }
 }

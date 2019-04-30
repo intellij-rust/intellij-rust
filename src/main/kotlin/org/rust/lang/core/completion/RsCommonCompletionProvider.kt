@@ -19,6 +19,7 @@ import org.rust.ide.inspections.import.ImportCandidate
 import org.rust.ide.inspections.import.ImportContext
 import org.rust.ide.inspections.import.import
 import org.rust.ide.settings.RsCodeInsightSettings
+import org.rust.lang.core.macros.findElementExpandedFrom
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
@@ -52,17 +53,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
 
         val isSimplePath = simplePathPattern.accepts(parameters.position)
         val expectedTy = getExpectedTypeForEnclosingPathOrDotExpr(element)
-        processElement(element, isSimplePath, expectedTy, processedPathNames, parameters, result)
-    }
 
-    fun processElement(
-        element: RsReferenceElement,
-        isSimplePath: Boolean,
-        expectedTy: Ty?,
-        processedPathNames: HashSet<String>,
-        parameters: CompletionParameters,
-        result: CompletionResultSet
-    ) {
         collectCompletionVariants(result, isSimplePath, expectedTy) {
             when (element) {
                 is RsAssocTypeBinding -> processAssocTypeVariants(element, it)
@@ -138,8 +129,19 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         processedPathNames: Set<String>,
         expectedTy: Ty?
     ) {
-        // We use the position in the original file in order not to process empty paths
-        val path = parameters.originalPosition?.parent as? RsPath ?: return
+        val path = run {
+            // Not null if delegated from RsMacroCallBodyCompletionProvider
+            val positionInMacroArgument = parameters.position.findElementExpandedFrom()
+            val originalPosition = if (positionInMacroArgument != null) positionInMacroArgument.safeGetOriginalElement() else parameters.originalPosition
+            // We use the position in the original file in order not to process empty paths
+            if (originalPosition == null || originalPosition.elementType != RsElementTypes.IDENTIFIER) return
+            val actualPosition = if (positionInMacroArgument != null) parameters.position else originalPosition
+            // Checks that macro call and expanded element are located in the same modules
+            if (positionInMacroArgument != null && !isInSameRustMod(positionInMacroArgument, actualPosition)) {
+                return
+            }
+            actualPosition.parent as? RsPath ?: return
+        }
         if (TyPrimitive.fromPath(path) != null) return
         Testmarks.pathCompletionFromIndex.hit()
 
@@ -192,10 +194,14 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         }
     }
 
+    private fun isInSameRustMod(element1: PsiElement, element2: PsiElement): Boolean =
+        element1.contextOrSelf<RsElement>()?.containingMod ==
+            element2.contextOrSelf<RsElement>()?.containingMod
+
     val elementPattern: ElementPattern<PsiElement>
         get() = PlatformPatterns.psiElement().withParent(psiElement<RsReferenceElement>())
 
-    val simplePathPattern: ElementPattern<PsiElement>
+    private val simplePathPattern: ElementPattern<PsiElement>
         get() {
             val simplePath = psiElement<RsPath>()
                 .with(object : PatternCondition<RsPath>("SimplePath") {

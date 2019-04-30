@@ -21,6 +21,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.injected.isDoctestInjection
+import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
@@ -112,7 +113,7 @@ fun RsElement.findDependencyCrateRoot(dependencyName: String): RsFile? {
 
 abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElement {
     override val containingMod: RsMod
-        get() = contextStrict()
+        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?
@@ -126,7 +127,7 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     constructor(stub: StubT, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val containingMod: RsMod
-        get() = contextStrict()
+        get() = contextStrict<RsMod>()?.getOriginalOrSelf()
             ?: error("Element outside of module: $text")
 
     final override val crateRoot: RsMod?

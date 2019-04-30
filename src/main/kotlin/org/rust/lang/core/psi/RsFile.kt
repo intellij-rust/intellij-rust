@@ -20,6 +20,7 @@ import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
@@ -53,7 +54,7 @@ class RsFile(
     fileViewProvider: FileViewProvider
 ) : RsFileBase(fileViewProvider), RsMod {
 
-    override val containingMod: RsMod get() = this
+    override val containingMod: RsMod get() = getOriginalOrSelf()
 
     override val crateRoot: RsMod?
         get() = superMods.lastOrNull()?.takeIf { it.isCrateRoot }

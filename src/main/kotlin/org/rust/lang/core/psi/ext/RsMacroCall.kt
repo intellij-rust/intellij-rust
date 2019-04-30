@@ -95,8 +95,13 @@ fun RsMacroCall.resolveToMacro(): RsMacro? =
 val RsMacroCall.expansion: MacroExpansion?
     get() = CachedValuesManager.getCachedValue(this) {
         val project = project
+        val originalOrSelf = CompletionUtil.getOriginalElement(this)?.takeIf {
+            // Use the original element only if macro bodies are equal. They
+            // will be different if completion invoked inside the macro body.
+            it.macroBody == this.macroBody
+        } ?: this
         CachedValueProvider.Result.create(
-            project.macroExpansionManager.getExpansionFor(CompletionUtil.getOriginalOrSelf(this)),
+            project.macroExpansionManager.getExpansionFor(originalOrSelf),
             rustStructureOrAnyPsiModificationTracker
         )
     }
