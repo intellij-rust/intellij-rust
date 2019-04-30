@@ -138,6 +138,7 @@ private fun partToHighlight(element: RsElement): TextRange? {
         is RsEnumItem -> element.identifier
         is RsEnumVariant -> element.identifier
         is RsExternCrateItem -> element.identifier
+        is RsConstant -> element.identifier
         is RsNamedFieldDecl -> element.identifier
         is RsFunction -> element.identifier
         is RsMethodCall -> element.referenceNameElement

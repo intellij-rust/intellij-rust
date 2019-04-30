@@ -143,4 +143,13 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
             pub struct S;
         """
     )
+
+    fun `test const and static`() = checkHighlighting("""
+        const <CONST>FOO</CONST>: i32 = 0;
+        static <CONST>BAR</CONST>: i32 = 0;
+        fn main() {
+            <CONST>FOO</CONST>;
+            <CONST>BAR</CONST>;
+        }
+    """)
 }
