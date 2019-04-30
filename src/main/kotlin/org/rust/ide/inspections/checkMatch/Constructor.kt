@@ -106,3 +106,14 @@ sealed class Constructor {
             }
     }
 }
+
+private operator fun ExprValue.compareTo(other: ExprValue): Int {
+    return when {
+        this is ExprValue.Bool && other is ExprValue.Bool -> value.compareTo(other.value)
+        this is ExprValue.Integer && other is ExprValue.Integer -> value.compareTo(other.value)
+        this is ExprValue.Float && other is ExprValue.Float -> value.compareTo(other.value)
+        this is ExprValue.Str && other is ExprValue.Str -> value.compareTo(other.value)
+        this is ExprValue.Char && other is ExprValue.Char -> value.compareTo(other.value)
+        else -> throw CheckMatchException("Comparison of incompatible types: $javaClass and ${other.javaClass}")
+    }
+}
