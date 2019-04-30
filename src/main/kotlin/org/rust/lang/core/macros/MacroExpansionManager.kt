@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -149,8 +150,17 @@ class MacroExpansionManagerImpl(
         }
     }
 
-    override fun getExpandedFrom(element: RsExpandedElement): RsMacroCall? =
-        inner?.getExpandedFrom(element)
+    override fun getExpandedFrom(element: RsExpandedElement): RsMacroCall? {
+        // For in-memory expansions
+        element.getUserData(RS_EXPANSION_MACRO_CALL)?.let { return it as RsMacroCall }
+
+        val inner = inner
+        return if (inner != null && inner.isExpansionModeNew) {
+            inner.getExpandedFrom(element)
+        } else {
+            null
+        }
+    }
 
     override fun isExpansionFile(file: VirtualFile): Boolean =
         inner?.isExpansionFile(file) == true
@@ -752,6 +762,12 @@ private fun expandMacroToMemoryFile(call: RsMacroCall): MacroExpansion? {
     }
 
     return result
+}
+
+private val RS_EXPANSION_MACRO_CALL = Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
+
+private fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
+    putUserData(RS_EXPANSION_MACRO_CALL, call)
 }
 
 enum class MacroExpansionScope {

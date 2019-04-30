@@ -34,23 +34,12 @@ fun RsExpandedElement.setContext(context: RsElement) {
     putUserData(RS_EXPANSION_CONTEXT, context)
 }
 
-fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
-    putUserData(RS_EXPANSION_MACRO_CALL, call)
-}
-
 /**
  * The [RsMacroCall] that directly expanded to this element or
  * null if this element is not directly produced by a macro
  */
 val RsExpandedElement.expandedFrom: RsMacroCall?
-    get() {
-        val mgr = project.macroExpansionManager
-        return when (mgr.macroExpansionMode) {
-            MacroExpansionMode.Disabled -> null
-            MacroExpansionMode.Old -> getUserData(RS_EXPANSION_MACRO_CALL) as? RsMacroCall
-            is MacroExpansionMode.New -> mgr.getExpandedFrom(this)
-        }
-    }
+    get() = project.macroExpansionManager.getExpandedFrom(this)
 
 val RsExpandedElement.expandedFromRecursively: RsMacroCall?
     get() {
@@ -72,5 +61,4 @@ fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
 
 
 private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.CODE_FRAGMENT_FILE")
-private val RS_EXPANSION_MACRO_CALL = Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 
