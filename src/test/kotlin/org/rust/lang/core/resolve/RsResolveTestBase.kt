@@ -15,10 +15,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.FileTree
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsWeakReferenceElement
-import org.rust.lang.core.psi.ext.contextualFile
-import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.Testmark
 
@@ -35,7 +32,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     ) {
         InlineFile(code, fileName)
 
-        val (refElement, data, offset) = findElementWithDataAndOffsetInEditor<RsWeakReferenceElement>("^")
+        val (refElement, data, offset) = findElementWithDataAndOffsetInEditor<RsReferenceElementBase>("^")
 
         if (data == "unresolved") {
             val resolved = refElement.reference?.resolve()

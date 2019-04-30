@@ -817,7 +817,7 @@ FILE
             PsiElement(!)('!')
             RsMacroArgumentImpl(MACRO_ARGUMENT)
               PsiElement(()('(')
-              RsCompactTTImpl(COMPACT_TT)
+              RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
                 <empty list>
               PsiElement())(')')
     PsiWhiteSpace(' ')
@@ -840,7 +840,7 @@ FILE
               PsiElement(!)('!')
               RsMacroArgumentImpl(MACRO_ARGUMENT)
                 PsiElement(()('(')
-                RsCompactTTImpl(COMPACT_TT)
+                RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
                   <empty list>
                 PsiElement())(')')
         PsiWhiteSpace(' ')
@@ -860,7 +860,7 @@ FILE
                 PsiElement(!)('!')
                 RsMacroArgumentImpl(MACRO_ARGUMENT)
                   PsiElement(()('(')
-                  RsCompactTTImpl(COMPACT_TT)
+                  RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
                     <empty list>
                   PsiElement())(')')
         PsiElement(;)(';')

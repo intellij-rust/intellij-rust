@@ -8,7 +8,6 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
@@ -81,7 +80,7 @@ abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
             RsLambdaExpr::class.java
         )
 
-        if (owner != null) return LocalSearchScope(owner)
+        if (owner != null) return RsPsiImplUtil.localOrMacroSearchScope(owner)
 
         return super.getUseScope()
     }

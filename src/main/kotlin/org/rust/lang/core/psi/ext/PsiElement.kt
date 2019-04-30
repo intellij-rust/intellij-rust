@@ -26,6 +26,10 @@ val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) {
     if (it is PsiFile) null else it.parent
 }
 
+val PsiElement.contexts: Sequence<PsiElement> get() = generateSequence(this) {
+    if (it is PsiFile) null else it.context
+}
+
 val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>> get() {
     val parent = this.parent ?: return emptySequence()
     return generateSequence(Pair(this, parent)) { (_, parent) ->

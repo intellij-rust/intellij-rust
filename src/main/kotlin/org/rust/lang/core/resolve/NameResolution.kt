@@ -584,7 +584,7 @@ fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): 
 
 fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolveProcessor): Boolean {
     if (lifetime.isPredefined) return false
-    loop@ for (scope in lifetime.ancestors) {
+    loop@ for (scope in lifetime.contexts) {
         val lifetimeParameters = when (scope) {
             is RsGenericDeclaration -> scope.lifetimeParameters
             is RsWhereClause -> scope.wherePredList.mapNotNull { it.forLifetimes }.flatMap { it.lifetimeParameterList }

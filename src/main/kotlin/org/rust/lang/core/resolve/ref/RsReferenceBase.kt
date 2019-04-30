@@ -17,10 +17,10 @@ import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.escapeIdentifierIfNeeded
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsWeakReferenceElement
+import org.rust.lang.core.psi.ext.RsReferenceElementBase
 import org.rust.lang.core.psi.ext.elementType
 
-abstract class RsReferenceBase<T : RsWeakReferenceElement>(
+abstract class RsReferenceBase<T : RsReferenceElementBase>(
     element: T
 ) : PsiPolyVariantReferenceBase<T>(element),
     RsReference {
