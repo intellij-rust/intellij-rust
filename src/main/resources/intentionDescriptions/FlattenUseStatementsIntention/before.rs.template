@@ -1,0 +1,7 @@
+<spot>
+use std::{
+    error::Error,
+    io::Write,
+    path::PathBuf,
+};
+</spot>

@@ -156,8 +156,8 @@ class RsPsiFactory(private val project: Project, private val markGenerated: Bool
         createFromText("mod $modName;")
             ?: error("Failed to create mod decl with name: `$modName`")
 
-    fun createUseItem(text: String): RsUseItem =
-        createFromText("use $text;")
+    fun createUseItem(text: String, visibility: String = ""): RsUseItem =
+        createFromText("$visibility use $text;")
             ?: error("Failed to create use item from text: `$text`")
 
     fun createUseSpeck(text: String): RsUseSpeck =
