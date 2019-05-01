@@ -8,6 +8,9 @@ package org.rust.ide.utils
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.ty.TyBool
+import org.rust.lang.utils.evaluation.ExprValue
+import org.rust.lang.utils.evaluation.RsConstExprEvaluator
 import org.rust.lang.utils.negate
 
 class BooleanExprSimplifier(val project: Project) {
@@ -104,44 +107,9 @@ class BooleanExprSimplifier(val project: Project) {
             return false
         }
 
-        private fun canBeEvaluated(expr: RsExpr): Boolean =
-            eval(expr) != null
+        private fun canBeEvaluated(expr: RsExpr): Boolean = eval(expr) != null
 
-        private fun eval(expr: RsExpr?): Boolean? {
-            return when (expr) {
-                is RsLitExpr ->
-                    (expr.kind as? RsLiteralKind.Boolean)?.value
-
-                is RsBinaryExpr -> when (expr.operatorType) {
-                    LogicOp.AND -> {
-                        val lhs = eval(expr.left) ?: return null
-                        if (!lhs) return false // false && _ --> false
-                        val rhs = eval(expr.right) ?: return null
-                        lhs && rhs
-                    }
-                    LogicOp.OR -> {
-                        val lhs = eval(expr.left) ?: return null
-                        if (lhs) return true // true || _ --> true
-                        val rhs = eval(expr.right) ?: return null
-                        lhs || rhs
-                    }
-                    ArithmeticOp.BIT_XOR -> {
-                        val lhs = eval(expr.left) ?: return null
-                        val rhs = eval(expr.right) ?: return null
-                        lhs xor rhs
-                    }
-                    else -> null
-                }
-
-                is RsUnaryExpr -> when (expr.operatorType) {
-                    UnaryOperator.NOT -> eval(expr.expr)?.let { !it }
-                    else -> null
-                }
-
-                is RsParenExpr -> eval(expr.expr)
-
-                else -> null
-            }
-        }
+        private fun eval(expr: RsExpr): Boolean? =
+            (RsConstExprEvaluator.evaluate(expr, TyBool, null) as? ExprValue.Bool)?.value
     }
 }
