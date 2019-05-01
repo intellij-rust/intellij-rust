@@ -670,6 +670,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.FlattenUseStatementsIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.ChopParameterListIntention</className>
             <category>Rust</category>
         </intentionAction>
