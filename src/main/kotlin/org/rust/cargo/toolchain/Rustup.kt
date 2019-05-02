@@ -54,7 +54,7 @@ class Rustup(
             .execute(null)
 
         return if (downloadProcessOutput?.isSuccess == true) {
-            val sources = getStdlibFromSysroot() ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
+            val sources = toolchain.getStdlibFromSysroot(projectDirectory) ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
             fullyRefreshDirectory(sources)
             DownloadResult.Ok(sources)
         } else {
@@ -76,12 +76,6 @@ class Rustup(
             LOG.warn(message)
             DownloadResult.Err(message)
         }
-
-    fun getStdlibFromSysroot(): VirtualFile? {
-        val sysroot = toolchain.getSysroot(projectDirectory) ?: return null
-        val fs = LocalFileSystem.getInstance()
-        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
-    }
 
     companion object {
 
