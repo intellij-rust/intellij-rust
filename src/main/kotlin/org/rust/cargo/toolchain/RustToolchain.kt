@@ -7,6 +7,8 @@ package org.rust.cargo.toolchain
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.text.SemVer
 import org.rust.openapiext.*
 import java.io.File
@@ -33,6 +35,12 @@ data class RustToolchain(val location: Path) {
             .withParameters("--print", "sysroot")
             .execute(timeoutMs)
         return if (output?.isSuccess == true) output.stdout.trim() else null
+    }
+
+    fun getStdlibFromSysroot(projectDirectory: Path): VirtualFile? {
+        val sysroot = getSysroot(projectDirectory) ?: return null
+        val fs = LocalFileSystem.getInstance()
+        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
     }
 
     fun rawCargo(): Cargo = Cargo(pathToExecutable(CARGO))
