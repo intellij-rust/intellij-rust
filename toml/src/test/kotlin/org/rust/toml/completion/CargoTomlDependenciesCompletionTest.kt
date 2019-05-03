@@ -153,28 +153,14 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         @Language("TOML") after: String,
         vararg crates: Crate
     ) {
-        withMockedCrateResolver(createResolver(crates.toList())) {
+        withMockedCrateResolver(createCrateResolver(crates.toList())) {
             doSingleCompletion(before.trimIndent(), after.trimIndent())
         }
     }
 
     private fun checkNoCompletion(@Language("TOML") code: String, vararg crates: Crate) {
-        withMockedCrateResolver(createResolver(crates.toList())) {
+        withMockedCrateResolver(createCrateResolver(crates.toList())) {
             checkNoCompletion(code.trimIndent())
         }
-    }
-
-    private fun createResolver(crates: List<Crate>): CrateResolver {
-        return object : CrateResolver {
-            override fun searchCrate(name: String): Collection<CrateDescription> =
-                crates.filter { it.name.contains(name) }.map { CrateDescription(it.name, it.maxVersion) }
-
-            override fun getCrate(name: String): Crate? = crates.find { it.name == name }
-        }
-    }
-
-    private fun crate(name: String, maxVersion: String): Crate {
-        val semver = parseSemver(maxVersion)
-        return Crate(name, semver, listOf(CrateVersion(semver, false)))
     }
 }

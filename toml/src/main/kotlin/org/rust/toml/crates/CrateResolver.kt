@@ -14,16 +14,16 @@ import org.toml.lang.psi.TomlKey
 
 data class CrateDescription(
     val name: String,
-    val maxVersion: SemVer?
+    val maxVersion: SemVer
 )
 
 data class Crate(
     val name: String,
-    val maxVersion: SemVer?,
+    val maxVersion: SemVer,
     val versions: List<CrateVersion>
 )
 
-data class CrateVersion(val version: SemVer?, val yanked: Boolean)
+data class CrateVersion(val version: SemVer, val yanked: Boolean)
 
 interface CrateResolver {
     fun searchCrate(name: String): Collection<CrateDescription>

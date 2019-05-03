@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.toml.lang.psi.*
 
+// TODO: create TomlVisitor
 abstract class CargoTomlDependencyVisitor : PsiElementVisitor() {
     private val dependencyContainerNames = listOf("dependencies", "dev-dependencies", "build-dependencies")
 

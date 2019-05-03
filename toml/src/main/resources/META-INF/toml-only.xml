@@ -1,5 +1,6 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
+        <annotator language="TOML" implementationClass="org.rust.toml.annotator.CargoTomlErrorAnnotator"/>
         <psi.referenceContributor language="TOML"
                                   implementation="org.rust.toml.resolve.CargoTomlReferenceContributor"/>
         <completion.contributor language="TOML"

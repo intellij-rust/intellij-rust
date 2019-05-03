@@ -5,13 +5,12 @@
 
 package org.rust.toml.completion
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
-import org.rust.FileTreeBuilder
 import org.rust.lang.core.completion.RsCompletionTestFixture
+import org.rust.toml.CargoTomlTestBase
 
-abstract class CargoTomlCompletionTestBase : BasePlatformTestCase() {
+abstract class CargoTomlCompletionTestBase : CargoTomlTestBase() {
 
     protected lateinit var completionFixture: RsCompletionTestFixture
 

@@ -20,13 +20,17 @@ class CratesIoResolver(private val project: Project) : CrateResolver {
     override fun searchCrate(name: String): Collection<CrateDescription> {
         val response = requestCratesIo<ApiCrateSearchResult>("crates?page=1&per_page=20&q=$name&sort=")
             ?: return emptyList()
-        return response.crates.map { CrateDescription(it.name, parseSemver(it.maxVersion)) }
+        return response.crates.mapNotNull {
+            CrateDescription(it.name, parseSemver(it.maxVersion) ?: return@mapNotNull null)
+        }
     }
 
     override fun getCrate(name: String): Crate? {
         val response = requestCratesIo<ApiCrateFetchResult>("crates/$name") ?: return null
-        return Crate(response.crate.name, parseSemver(response.crate.maxVersion),
-            response.versions.map { CrateVersion(parseSemver(it.num), it.yanked) }.toList())
+        return Crate(response.crate.name, parseSemver(response.crate.maxVersion) ?: return null,
+            response.versions.mapNotNull {
+                CrateVersion(parseSemver(it.num) ?: return@mapNotNull null, it.yanked)
+            }.toList())
     }
 
     private inline fun <reified T> requestCratesIo(path: String): T? = requestCratesIo(path, T::class.java)
