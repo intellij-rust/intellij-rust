@@ -428,6 +428,21 @@ sealed class RsDiagnostic(
         }
     }
 
+    class ExplicitCallToDrop(
+        element: PsiElement
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0040,
+            errorText(),
+            fixes = listOf(ReplaceWithStdMemDropFix(element.parent)) // e.parent: fn's name -> RsMethodCall or RsCallExpr
+        )
+
+        private fun errorText(): String {
+            return "Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead"
+        }
+    }
+
     class TraitParamCountMismatchError(
         element: PsiElement,
         private val fn: RsFunction,
@@ -909,7 +924,7 @@ sealed class RsDiagnostic(
 }
 
 enum class RsErrorCode {
-    E0004, E0046, E0050, E0060, E0061, E0069, E0081,
+    E0004, E0040, E0046, E0050, E0060, E0061, E0069, E0081,
     E0106, E0107, E0121, E0124, E0133, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0261, E0262, E0263, E0277,
     E0308, E0379, E0384,
