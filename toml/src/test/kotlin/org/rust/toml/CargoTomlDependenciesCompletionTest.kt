@@ -8,7 +8,7 @@ package org.rust.toml
 import org.intellij.lang.annotations.Language
 
 class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
-    fun `test empty key`() = doTest("""
+    fun `test empty key`() = doSearchTest("""
         [dependencies]
         <caret>
     """, """
@@ -16,7 +16,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.0"
     """, "dep" to "1.0")
 
-    fun `test empty key with complex dependency head`() = doTest("""
+    fun `test empty key with complex dependency head`() = doSearchTest("""
         [target.'cfg(windows)'.dev-dependencies]
         <caret>
     """, """
@@ -24,7 +24,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.0"
     """, "dep" to "1.0")
 
-    fun `test partial key`() = doTest("""
+    fun `test partial key`() = doSearchTest("""
         [dependencies]
         d<caret>
     """, """
@@ -32,7 +32,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.0"
     """, "app" to "1.0", "dep" to "1.0")
 
-    fun `test empty value complete without '=' and quotes 1_0`() = doTest("""
+    fun `test empty value complete without '=' and quotes 1_0`() = doCompletionTest("""
         [dependencies]
         dep <caret>
     """, """
@@ -40,7 +40,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.0"
     """, "dep" to "1.0")
 
-    fun `test empty value complete without quotes 1_0`() = doTest("""
+    fun `test empty value complete without quotes 1_0`() = doCompletionTest("""
         [dependencies]
         dep = <caret>
     """, """
@@ -48,7 +48,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.0"
     """, "dep" to "1.0")
 
-    fun `test empty value complete without quotes 1_0_0`() = doTest("""
+    fun `test empty value complete without quotes 1_0_0`() = doCompletionTest("""
         [dependencies]
         dep = <caret>
     """, """
@@ -56,7 +56,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.0.0"
     """, "dep" to "1.0.0")
 
-    fun `test empty value complete inside quotes`() = doTest("""
+    fun `test empty value complete inside quotes`() = doCompletionTest("""
         [dependencies]
         dep = "<caret>"
     """, """
@@ -64,7 +64,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.0"
     """, "dep" to "1.0")
 
-    fun `test partial value complete inside quotes`() = doTest("""
+    fun `test partial value complete inside quotes`() = doCompletionTest("""
         [dependencies]
         dep = "1.<caret>"
     """, """
@@ -72,7 +72,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.0"
     """, "dep" to "1.0")
 
-    fun `test empty value complete inside quotes without '='`() = doTest("""
+    fun `test empty value complete inside quotes without '='`() = doCompletionTest("""
         [dependencies]
         dep "<caret>"
     """, """
@@ -81,7 +81,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
     """, "dep" to "1.0")
 
     // TODO we may want to add a closing quotation mark
-    fun `test empty value complete after unclosed quote`() = doTest("""
+    fun `test empty value complete after unclosed quote`() = doCompletionTest("""
         [dependencies]
         dep = "<caret>
     """, """
@@ -109,21 +109,21 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = { version = <caret> }
     """, "dep" to "1.0")
 
-    fun `test complete specific dependency header empty key`() = doTest("""
+    fun `test complete specific dependency header empty key`() = doSearchTest("""
         [dependencies.<caret>]
     """, """
         [dependencies.dep]
         version = "1.0"
     """, "dep" to "1.0")
 
-    fun `test complete specific dependency header partial key`() = doTest("""
+    fun `test complete specific dependency header partial key`() = doSearchTest("""
         [dependencies.d<caret>]
     """, """
         [dependencies.dep]
         version = "1.0"
     """, "dep" to "1.0", "bar" to "2.0")
 
-    fun `test complete specific dependency version empty key`() = doTest("""
+    fun `test complete specific dependency version empty key`() = doCompletionTest("""
         [dependencies.dep]
         <caret>
     """, """
@@ -131,7 +131,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version = "1.0"
     """, "dep" to "1.0")
 
-    fun `test complete specific dependency version partial key`() = doTest("""
+    fun `test complete specific dependency version partial key`() = doCompletionTest("""
         [dependencies.dep]
         ver<caret>
     """, """
@@ -139,7 +139,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version = "1.0"
     """, "dep" to "1.0")
 
-    fun `test complete specific dependency empty version value`() = doTest("""
+    fun `test complete specific dependency empty version value`() = doCompletionTest("""
         [dependencies.dep]
         version <caret>
     """, """
@@ -147,7 +147,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version = "1.0"
     """, "dep" to "1.0")
 
-    fun `test complete specific dependency partial version value`() = doTest("""
+    fun `test complete specific dependency partial version value`() = doCompletionTest("""
         [dependencies.dep]
         version = "1.<caret>"
     """, """
@@ -155,12 +155,29 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version = "1.0"
     """, "dep" to "1.0")
 
-    private fun doTest(
+    /**
+     * Use when underlying code requests information about multiple crates.
+     */
+    private fun doSearchTest(
         @Language("TOML") before: String,
         @Language("TOML") after: String,
         vararg crates: Pair<String, String>
     ) {
         withMockedCrateSearch(crates.map { (name, version) -> CrateDescription(name, version) }) {
+            doSingleCompletion(before.trimIndent(), after.trimIndent())
+        }
+    }
+
+    /**
+     * Use when underlying code requests information about a particular crate.
+     */
+    private fun doCompletionTest(
+        @Language("TOML") before: String,
+        @Language("TOML") after: String,
+        crate: Pair<String, String>
+    ) {
+        val version = CrateVersionDescription(0, crate.second, false)
+        withMockedFullCrateDescription(CrateFullDescription(crate.first, crate.second, listOf(version))) {
             doSingleCompletion(before.trimIndent(), after.trimIndent())
         }
     }

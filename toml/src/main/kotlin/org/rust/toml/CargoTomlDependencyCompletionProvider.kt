@@ -41,7 +41,7 @@ class CargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProviderBase
     }
 
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
-        val version = getCrateLastVersion(keyValue.key) ?: return
+        val version = getCrateFullDescription(keyValue.key)?.maxVersion ?: return
 
         result.addElement(
             LookupElementBuilder.create(version)
@@ -79,13 +79,13 @@ class CargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueComplet
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val dependencyNameKey = getDependencyKeyFromTableHeader(keyValue)
 
-        val version = getCrateLastVersion(dependencyNameKey) ?: return
+        val version = getCrateFullDescription(dependencyNameKey)?.maxVersion ?: return
         result.addElement(LookupElementBuilder.create("version = \"$version\""))
     }
 
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val dependencyNameKey = getDependencyKeyFromTableHeader(keyValue)
-        val version = getCrateLastVersion(dependencyNameKey) ?: return
+        val version = getCrateFullDescription(dependencyNameKey)?.maxVersion ?: return
 
         result.addElement(
             LookupElementBuilder.create(version)
