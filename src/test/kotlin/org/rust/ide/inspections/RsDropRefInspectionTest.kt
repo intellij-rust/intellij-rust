@@ -52,6 +52,16 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
         }
     """)
 
+    fun testDropManuallyDrop() = checkByText("""
+        use std::mem::ManuallyDrop;
+        fn main() {
+            let mut drop = ManuallyDrop::new("nodrop");
+            unsafe {
+                ManuallyDrop::drop(&mut drop); // This must not be highlighted
+            }
+        }
+    """)
+
     fun testDropRefMethodCall() = checkByText("""
         struct Foo;
         impl Foo {

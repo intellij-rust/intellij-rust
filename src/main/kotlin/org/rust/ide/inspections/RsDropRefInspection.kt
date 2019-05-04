@@ -11,6 +11,9 @@ import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.ext.RsAbstractableOwner
+import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.qualifiedName
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
 
@@ -30,7 +33,9 @@ class RsDropRefInspection : RsLocalInspectionTool() {
         val pathExpr = expr.expr as? RsPathExpr ?: return
 
         val resEl = pathExpr.path.reference.resolve()
-        if (resEl !is RsFunction || resEl.crateRelativePath != "::mem::drop") return
+        if (resEl !is RsFunction ||
+            resEl.qualifiedName != "core::mem::drop" ||
+            resEl.owner != RsAbstractableOwner.Free) return
 
         val args = expr.valueArgumentList.exprList
         if (args.size != 1) return
