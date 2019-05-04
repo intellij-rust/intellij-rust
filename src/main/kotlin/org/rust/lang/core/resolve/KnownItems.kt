@@ -12,7 +12,6 @@ import com.intellij.util.containers.ContainerUtil
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates.CORE
-import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -90,6 +89,7 @@ class KnownItems(
     // Lang items
 
     val Deref: RsTraitItem? get() = findLangItem("deref")
+    val Drop: RsTraitItem? get() = findLangItem("drop")
     val Sized: RsTraitItem? get() = findLangItem("sized")
     val Fn: RsTraitItem? get() = findLangItem("fn")
     val FnMut: RsTraitItem? get() = findLangItem("fn_mut")

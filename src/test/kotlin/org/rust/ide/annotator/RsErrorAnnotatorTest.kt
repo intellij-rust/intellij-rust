@@ -1589,4 +1589,52 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             Z
         }
     """)
+
+
+    fun `test E0040`() = checkErrors("""
+        struct X;
+        #[lang = "drop"]
+        pub trait Drop {
+            fn drop(&mut self);
+        }
+        impl Drop for X {
+            fn drop(&mut self) {}
+        }
+        struct XFactory;
+        impl XFactory {
+            fn create_x(&self, foo: u32) -> X {
+                X {}
+            }
+        }
+
+        fn main() {
+            let mut x = X {};
+            <error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">Drop::drop</error>(&mut x);
+            <error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">X::drop</error>(&mut x);
+            x.<error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">drop</error>();
+            XFactory {}.create_x(123).<error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">drop</error>();
+        }
+    """)
+
+    fun `test E0040 fake drop`() = checkErrors("""
+        struct X;
+        impl X {
+            // Note this has nothing to do with the actual core::ops::drop::Drop and is just a regular function
+            fn drop(&mut self) {}
+        }
+        struct XFactory;
+        impl XFactory {
+            fn create_x(&self, foo: u32) -> X {
+                X {}
+            }
+        }
+
+
+        fn main() {
+            let mut x = X {};
+            X::drop(&mut x);
+            x.drop();
+            XFactory {}.create_x(123).drop();
+        }
+    """)
 }
