@@ -7,11 +7,11 @@ package org.rust.ide.navigation.goto
 
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsNamedFieldDecl
-import org.rust.lang.core.psi.RsPatBinding
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.parentFunction
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -23,6 +23,11 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
             is RsNamedFieldDecl -> element.typeReference?.type
             is RsConstant -> element.typeReference?.type
             is RsPatBinding -> element.type
+            is RsSelfParameter -> when (val owner = element.parentFunction.owner) {
+                is RsAbstractableOwner.Trait -> owner.trait.declaredType
+                is RsAbstractableOwner.Impl -> owner.impl.typeReference?.type
+                else -> null
+            }
             else -> null
         } ?: return null
 
