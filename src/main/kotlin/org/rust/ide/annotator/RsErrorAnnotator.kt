@@ -44,7 +44,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
             override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkDuplicates(holder, o)
-            override fun visitEnumItem(o: RsEnumItem) = checkDuplicates(holder, o)
+            override fun visitEnumItem(o: RsEnumItem) = checkEnumItem(holder, o)
             override fun visitEnumVariant(o: RsEnumVariant) = checkDuplicates(holder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(holder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
@@ -80,6 +80,35 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkEnumItem(holder: AnnotationHolder, o: RsEnumItem) {
+        checkDuplicates(holder, o)
+        o.enumBody?.let { checkDuplicateEnumVariants(holder, it) }
+    }
+
+    private fun checkDuplicateEnumVariants(holder: AnnotationHolder, o: RsEnumBody) {
+        data class VariantInfo(val variant: RsEnumVariant, val alreadyReported: Boolean)
+
+        var discrCounter = 0
+        val indexToVariantMap = hashMapOf<Int, VariantInfo>()
+        for (variant in o.enumVariantList) {
+            val literal = variant.variantDiscriminant?.expr as? RsLitExpr
+            val int = literal?.integerLiteralValue?.toIntOrNull()
+            val idx = int ?: discrCounter
+            discrCounter = idx + 1
+
+            val previous = indexToVariantMap[idx]
+            if (previous != null) {
+                RsDiagnostic.DuplicateEnumDiscriminant(variant, idx).addToHolder(holder)
+                if (!previous.alreadyReported) {
+                    RsDiagnostic.DuplicateEnumDiscriminant(previous.variant, idx).addToHolder(holder)
+                    indexToVariantMap[idx] = previous.copy(alreadyReported = true)
+                }
+            } else {
+                indexToVariantMap[idx] = VariantInfo(variant, alreadyReported = false)
+            }
+        }
     }
 
     private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
