@@ -245,6 +245,94 @@ class RsGotoTypeDeclarationTest : RsTestBase() {
         }
     """)
 
+    fun `test self param in impl`() = doTest("""
+        struct Foo;
+        impl Foo {
+            fn bar(se/*caret*/lf) {}
+        }
+    """, """
+        struct /*caret*/Foo;
+        impl Foo {
+            fn bar(self) {}
+        }
+    """)
+
+    fun `test &self param in impl`() = doTest("""
+        struct Foo;
+        impl Foo {
+            fn bar(&s/*caret*/elf) {}
+        }
+    """, """
+        struct /*caret*/Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }
+    """)
+
+    fun `test &mut self param in impl`() = doTest("""
+        struct Foo;
+        impl Foo {
+            fn bar(&mut /*caret*/self) {}
+        }
+    """, """
+        struct /*caret*/Foo;
+        impl Foo {
+            fn bar(&mut self) {}
+        }
+    """)
+
+    fun `test &mut self param in impl with spacing`() = doTest("""
+        struct Foo;
+        impl Foo {
+            fn bar(  &  mut /*caret*/self) {}
+        }
+    """, """
+        struct /*caret*/Foo;
+        impl Foo {
+            fn bar(  &  mut self) {}
+        }
+    """)
+
+    fun `test self param in trait`() = doTest("""
+        trait Foo {
+            fn bar(se/*caret*/lf) {}
+        }
+    """, """
+        trait /*caret*/Foo {
+            fn bar(self) {}
+        }
+    """)
+
+    fun `test &self param in trait`() = doTest("""
+        trait Foo {
+            fn bar(&self/*caret*/) {}
+        }
+    """, """
+        trait /*caret*/Foo {
+            fn bar(&self) {}
+        }
+    """)
+
+    fun `test &mut self param in trait`() = doTest("""
+        trait Foo {
+            fn bar(&mut /*caret*/self) {}
+        }
+    """, """
+        trait /*caret*/Foo {
+            fn bar(&mut self) {}
+        }
+    """)
+
+    fun `test &mut self param in trait with spacing`() = doTest("""
+        trait Foo {
+            fn bar(  &  mut /*caret*/self) {}
+        }
+    """, """
+        trait /*caret*/Foo {
+            fn bar(  &  mut self) {}
+        }
+    """)
+
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) = checkByText(before, after) {
         myFixture.performEditorAction(ACTION_GOTO_TYPE_DECLARATION)
     }
