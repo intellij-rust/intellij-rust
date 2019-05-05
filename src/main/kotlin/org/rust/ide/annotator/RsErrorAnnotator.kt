@@ -26,10 +26,7 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.inference
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyUnit
-import org.rust.lang.core.types.ty.isSelf
-import org.rust.lang.core.types.ty.isSized
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
@@ -330,6 +327,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait ?: return
+        checkImplDropForNonAdtError(holder, impl, traitRef, trait)
         val traitName = trait.name ?: return
 
         fun mayDangleOnTypeOrLifetimeParameters(impl: RsImplItem): Boolean {
@@ -351,6 +349,15 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             !impl.isUnsafe && !trait.isUnsafe && impl.excl == null && attrRequiringUnsafeImpl != null ->
                 RsDiagnostic.TraitMissingUnsafeImplAttributeError(traitRef, attrRequiringUnsafeImpl).addToHolder(holder)
         }
+    }
+
+    // E0120: Drop can be only implemented by structs and enums
+    private fun checkImplDropForNonAdtError(holder: AnnotationHolder, impl: RsImplItem, traitRef: RsTraitRef, trait: RsTraitItem) {
+        if (trait != trait.knownItems.Drop) return
+
+        if (impl.typeReference?.type is TyAdt?) return
+
+        RsDiagnostic.ImplDropForNonAdtError(traitRef).addToHolder(holder)
     }
 
     private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
