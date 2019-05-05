@@ -1532,4 +1532,61 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             }
         }
     """)
+
+    fun `test duplicate enum discriminant #1 E0081`() = checkErrors("""
+        enum Bad {
+            <error descr="Discriminant value `0` already exists [E0081]">X</error>,
+            <error descr="Discriminant value `0` already exists [E0081]">Y = 0</error>,
+        }
+    """)
+
+    fun `test duplicate enum discriminant #2 E0081`() = checkErrors("""
+        enum Bad {
+            <error descr="Discriminant value `3` already exists [E0081]">P = 3</error>,
+            Y = 0,
+            <error descr="Discriminant value `3` already exists [E0081]">X = 3</error>,
+        }
+    """)
+
+    fun `test duplicate enum discriminant #3 E0081`() = checkErrors("""
+        enum Bad {
+            <error descr="Discriminant value `0` already exists [E0081]">X = 0</error>,
+            <error descr="Discriminant value `0` already exists [E0081]">Y = 0</error>,
+            <error descr="Discriminant value `0` already exists [E0081]">Z = 0</error>,
+            <error descr="Discriminant value `0` already exists [E0081]">W = 0</error>,
+        }
+    """)
+
+
+    fun `test duplicate enum discriminant #4 E0081`() = checkErrors("""
+        enum Good {
+            X = 0,
+            Y = 1,
+            Z = 2,
+            W = 3,
+        }
+    """)
+
+    fun `test duplicate enum discriminant #5 E0081`() = checkErrors("""
+        enum Good {
+            X = 1,
+            Y,
+        }
+    """)
+
+    fun `test duplicate enum discriminant #6 E0081`() = checkErrors("""
+        enum Good {
+            X,
+            Y = 1,
+            Z
+        }
+    """)
+
+    fun `test duplicate enum discriminant #7 E0081`() = checkErrors("""
+        enum Good {
+            X,
+            Y = 2,
+            Z
+        }
+    """)
 }
