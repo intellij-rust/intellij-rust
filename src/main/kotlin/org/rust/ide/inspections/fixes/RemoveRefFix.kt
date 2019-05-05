@@ -7,11 +7,12 @@ package org.rust.ide.inspections.fixes
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.RsUnaryExpr
+import org.rust.lang.core.psi.ext.UnaryOperator
+import org.rust.lang.core.psi.ext.operatorType
 
 
 /**
@@ -28,10 +29,11 @@ class RemoveRefFix(
     override fun getFamilyName() = "Change reference to owned value"
 
     override fun invoke(project: Project, file: PsiFile, argEl: PsiElement, endElement: PsiElement) {
-        if (argEl.text != null && argEl.text[0] == '&') {
-            val offset = argEl.startOffset
-            val document = PsiDocumentManager.getInstance(project).getDocument(argEl.containingFile)
-            document?.deleteString(offset, offset + 1)
+        // If the reference is a mut one (&mut X) we want to remove the `mut` part too as `mut X` is either:
+        // - not valid Rust code (e.g.: `std::mem::drop(mut x)`)
+        // - or redundant (e.g.: `fn foo(mut self) {}` is exactly the same as `fn foo(self) {}`)
+        if (argEl is RsUnaryExpr && argEl.operatorType in listOf(UnaryOperator.REF, UnaryOperator.REF_MUT)) {
+            argEl.expr?.let { argEl.replace(it) }
         }
     }
 }

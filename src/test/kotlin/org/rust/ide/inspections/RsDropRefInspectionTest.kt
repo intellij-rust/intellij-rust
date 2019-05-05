@@ -52,6 +52,16 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
         }
     """)
 
+    fun testDropManuallyDrop() = checkByText("""
+        use std::mem::ManuallyDrop;
+        fn main() {
+            let mut drop = ManuallyDrop::new("nodrop");
+            unsafe {
+                ManuallyDrop::drop(&mut drop); // This must not be highlighted
+            }
+        }
+    """)
+
     fun testDropRefMethodCall() = checkByText("""
         struct Foo;
         impl Foo {
@@ -67,6 +77,42 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&va<caret>l1)</warning>;
+        }
+    """, """
+        fn main() {
+            let val1 = Box::new(40);
+            drop(val1);
+        }
+    """)
+
+    fun testDropRefFix2() = checkFixByText("Call with owned value", """
+        fn main() {
+            let val1 = Box::new(40);
+            <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&   va<caret>l1)</warning>;
+        }
+    """, """
+        fn main() {
+            let val1 = Box::new(40);
+            drop(val1);
+        }
+    """)
+
+    fun testRefMutDropFix() = checkFixByText("Call with owned value", """
+        fn main() {
+            let val1 = Box::new(40);
+            <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&mut<caret> val1)</warning>;
+        }
+    """, """
+        fn main() {
+            let val1 = Box::new(40);
+            drop(val1);
+        }
+    """)
+
+    fun testRefMutDropFix2() = checkFixByText("Call with owned value", """
+        fn main() {
+            let val1 = Box::new(40);
+            <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&  mut<caret>  val1)</warning>;
         }
     """, """
         fn main() {
