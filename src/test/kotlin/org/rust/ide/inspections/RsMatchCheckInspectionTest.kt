@@ -732,6 +732,80 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
         }
     """)
 
+    fun `test const bool expr evaluation`() = checkByFileTree("""
+    //- main.rs
+        mod foo;
+        const TRUE: bool = true;
+        const FALSE: bool = !TRUE;
+        const VALUE: bool = FALSE && true || TRUE;
+    //- foo.rs
+        use super::{FALSE, VALUE};
+        fn foo(v: bool) {
+            match v/*caret*/ {
+                true => {}
+                FALSE => {}
+                <warning descr="Unreachable pattern">VALUE</warning> => {}
+                <warning descr="Unreachable pattern">_</warning> => {}
+            }
+        }
+    """)
+
+    fun `test const float expr evaluation`() = checkByFileTree("""
+    //- main.rs
+        mod foo;
+        const PI: f32 = 3.14;
+        const E: f32 = 2.718;
+    //- foo.rs
+        use super::{PI, E};
+        fn foo(v: f32) {
+            match v/*caret*/ {
+                PI => {}
+                E => {}
+                <warning descr="Unreachable pattern">3.14</warning> => {}
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test const char expr evaluation`() = checkByFileTree("""
+    //- main.rs
+        mod foo;
+        const A: char = 'A';
+        const Z: char = 'Z';
+        const F: char = 'f';
+    //- foo.rs
+        use super::{A, F, Z};
+        fn foo(v: char) {
+            match v/*caret*/ {
+                A...'Z' => {}
+                F => {}
+                'a' => {}
+                <warning descr="Unreachable pattern">Z</warning> => {}
+                <warning descr="Unreachable pattern">'f'</warning> => {}
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test const str expr evaluation`() = checkByFileTree("""
+    //- main.rs
+        mod foo;
+        const HELLO: &str = "hello!";
+        const FOO: &'static str = "FOO";
+    //- foo.rs
+        use super::{HELLO, FOO};
+        fn foo(v: &str) {
+            match v/*caret*/ {
+                "hello" => {}
+                "hello!" => {}
+                <warning descr="Unreachable pattern">HELLO</warning> => {}
+                FOO => {}
+                <warning descr="Unreachable pattern">"FOO"</warning> => {}
+                _ => {}
+            }
+        }
+    """)
+
     fun `test unknown value`() = checkByText("""
         fn main() {
             match 42 {
