@@ -1782,6 +1782,34 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for Foo<T> {}
 """)
 
+    fun `test outer inline attr on function E0518`() = checkErrors("""
+        #[inline]
+        fn foo() {}
+        #[inline(always)]
+        fn bar() {}
+    """)
+
+    fun `test inner inline attr on function E0518`() = checkErrors("""
+        fn foo() { #![inline] }
+        fn bar() { #![inline(always)] }
+    """)
+
+    fun `test outer inline attr E0518`() = checkErrors("""
+        #[<error descr="Attribute should be applied to function or closure [E0518]">inline</error>]
+        struct Foo;
+        #[<error descr="Attribute should be applied to function or closure [E0518]">inline</error>(always)]
+        enum Bar {}
+    """)
+
+    fun `test inner inline attr E0518`() = checkErrors("""
+        fn main() {
+            #[<error descr="Attribute should be applied to function or closure [E0518]">inline</error>]
+            let x = "foo";
+            #[<error descr="Attribute should be applied to function or closure [E0518]">inline</error>(always)]
+            let y = "bar";
+        }
+    """)
+
     fun `test empty enum with repr E0084`() = checkErrors("""
         #[<error descr="Enum with no variants can't have `repr` attribute [E0084]">repr</error>(u8)]
         enum Test {}

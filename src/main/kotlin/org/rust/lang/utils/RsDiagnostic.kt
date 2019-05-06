@@ -377,6 +377,18 @@ sealed class RsDiagnostic(
         }
     }
 
+    class IncorrectlyPlacedInlineAttr(
+        element: PsiElement,
+        private val attr: RsAttr
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0518,
+            "Attribute should be applied to function or closure",
+            fixes = listOf(RemoveAttrFix(attr))
+        )
+    }
+
     class TraitMissingUnsafeImplAttributeError(
         element: PsiElement,
         private val attrRequiringUnsafeImpl: String
@@ -964,7 +976,7 @@ enum class RsErrorCode {
     E0200, E0201, E0202, E0261, E0262, E0263, E0277,
     E0308, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0463,
-    E0569, E0583, E0594,
+    E0518, E0569, E0583, E0594,
     E0603, E0614, E0616, E0618, E0624, E0658, E0695,
     E0704;
 
