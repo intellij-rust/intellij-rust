@@ -741,4 +741,17 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
             }
         }
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/3776
+    fun `test issue 3776`() = checkByText("""
+        enum Marisa { Ora, Muda, Dura }
+        fn main() {
+            let _ = match (Marisa::Dura, Some(1_919_810)) {
+                (Marisa::Ora, None) | (Marisa::Dura, Some(_)) => 23,
+                (Marisa::Muda, None) | (Marisa::Muda, Some(_)) => 233,
+                (Marisa::Ora, Some(b)) => b,
+                (Marisa::Dura, None) => 233,
+            };
+        }
+    """)
 }
