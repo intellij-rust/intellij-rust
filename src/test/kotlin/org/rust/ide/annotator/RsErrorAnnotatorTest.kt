@@ -1730,4 +1730,39 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         trait Trait {}
         impl Drop for Trait {}
     """)
+
+    fun `test impl Drop and derive Copy E0184`() = checkErrors("""
+        #[lang = "copy"]
+        trait Copy {}
+        #[lang = "drop"]
+        trait Drop {}
+
+        #[derive(<error descr="Cannot implement both Copy and Drop [E0184]">Copy</error>)]
+        struct Foo;
+
+        impl <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for Foo {}
+    """)
+
+    fun `test impl Drop and impl Copy E0184`() = checkErrors("""
+        #[lang = "copy"]
+        trait Copy {}
+        #[lang = "drop"]
+        trait Drop {}
+
+        struct Foo;
+
+        impl <error descr="Cannot implement both Copy and Drop [E0184]">Copy</error> for Foo {}
+        impl <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for Foo {}
+    """)
+
+    fun `test impl Drop and impl Copy on generic struct E0184`() = checkErrors("""
+        #[lang = "copy"]
+        trait Copy {}
+        #[lang = "drop"]
+        trait Drop {}
+        struct Foo<T>(T);
+
+        impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Copy</error> for Foo<T> {}
+        impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for Foo<T> {}
+""")
 }

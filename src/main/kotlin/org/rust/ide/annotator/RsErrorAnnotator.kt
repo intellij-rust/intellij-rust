@@ -25,6 +25,7 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
+import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -75,6 +76,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitBlockExpr(o: RsBlockExpr) = checkBlockExpr(holder, o)
             override fun visitBreakExpr(o: RsBreakExpr) = checkBreakExpr(holder, o)
             override fun visitContExpr(o: RsContExpr) = checkContExpr(holder, o)
+            override fun visitAttr(o: RsAttr) = checkAttr(holder, o)
         }
 
         element.accept(visitor)
@@ -328,6 +330,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait ?: return
         checkImplDropForNonAdtError(holder, impl, traitRef, trait)
+        checkImplBothCopyAndDrop(holder, impl, trait)
         val traitName = trait.name ?: return
 
         fun mayDangleOnTypeOrLifetimeParameters(impl: RsImplItem): Boolean {
@@ -358,6 +361,29 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         if (impl.typeReference?.type is TyAdt?) return
 
         RsDiagnostic.ImplDropForNonAdtError(traitRef).addToHolder(holder)
+    }
+
+    private fun checkImplBothCopyAndDrop(holder: AnnotationHolder, impl: RsImplItem, trait: RsTraitItem) {
+        checkImplBothCopyAndDrop(holder, impl.typeReference?.type ?: return, impl.traitRef ?: return, trait)
+    }
+
+    private fun checkImplBothCopyAndDrop(holder: AnnotationHolder, attr: RsAttr) {
+        if (attr.metaItem.name != "derive") return
+        val deriveCopy = attr.metaItem.metaItemArgs?.metaItemList?.find { it?.identifier?.text == "Copy" } ?: return
+        val selfType = (attr.parent as? RsStructOrEnumItemElement)?.declaredType ?: return
+        checkImplBothCopyAndDrop(holder, selfType, deriveCopy, attr.knownItems.Copy ?: return)
+    }
+
+    // E0184: Cannot implement both Copy and Drop
+    private fun checkImplBothCopyAndDrop(holder: AnnotationHolder, self: Ty, element: PsiElement, trait: RsTraitItem) {
+        val oppositeTrait = when (trait) {
+            trait.knownItems.Drop -> trait.knownItems.Copy
+            trait.knownItems.Copy -> trait.knownItems.Drop
+            else -> null
+        } ?: return
+        if (!trait.implLookup.canSelect(TraitRef(self, oppositeTrait.withSubst()))) return
+
+        RsDiagnostic.ImplBothCopyAndDropError(element).addToHolder(holder)
     }
 
     private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
@@ -421,6 +447,10 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         for (it in element.inference.diagnostics) {
             if (it.inspectionClass == javaClass) it.addToHolder(holder)
         }
+    }
+
+    private fun checkAttr(holder: AnnotationHolder, attr: RsAttr) {
+        checkImplBothCopyAndDrop(holder, attr)
     }
 
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
