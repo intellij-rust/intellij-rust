@@ -109,6 +109,36 @@ class RsArithmeticOpsTest : RsTypificationTestBase() {
         """
     }
 
+    fun `test with rhs reference coercion`() = testExprWithAllOps { traitName, itemName, fnName, sign ->
+        """
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        #[lang = "$itemName"]
+        pub trait $traitName<RHS=Self> {
+            type Output;
+            fn $fnName(self, rhs: RHS) -> Self::Output;
+        }
+
+        struct Foo;
+        struct Bar;
+
+        struct X; struct Y;
+        impl Deref for X { type Target = Y; }
+
+        impl $traitName<&Y> for Foo {
+            type Output = Bar;
+            fn $fnName(self, rhs: &Y) -> Bar { unimplemented!() }
+        }
+
+        fn foo(lhs: Foo, rhs: X) {
+            let x = lhs $sign &rhs;
+            x;
+          //^ Bar
+        }
+        """
+    }
+
     fun `test generic lhs and output`() = testExprWithAllOps { traitName, itemName, fnName, sign ->
         """
         #[lang = "$itemName"]

@@ -613,7 +613,7 @@ class ImplLookup(
     fun findArithmeticBinaryExprOutputType(lhsType: Ty, rhsType: Ty, op: ArithmeticOp): TyWithObligations<Ty>? {
         val trait = op.findTrait(items) ?: return null
         val assocType = trait.findAssociatedType("Output") ?: return null
-        return selectProjection(TraitRef(lhsType, trait.withSubst(rhsType)), assocType).ok()
+        return ctx.normalizeAssociatedTypesIn(TyProjection.valueOf(lhsType, trait.withSubst(rhsType), assocType))
     }
 
     private fun selectProjection(
