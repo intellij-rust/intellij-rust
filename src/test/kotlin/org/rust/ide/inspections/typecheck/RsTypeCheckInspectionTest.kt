@@ -157,11 +157,28 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
         }
     """)
 
-    // issue 2670
+    // https://github.com/intellij-rust/intellij-rust/issues/2670
+    // https://github.com/intellij-rust/intellij-rust/issues/3791
     fun `test no type mismatch E0308 when matching with string literal`() = checkByText("""
         fn main() {
             match "" {
                 "" => {}
+                _ => {}
+            }
+            match &("", "") {
+                ("", "") => {},
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test no type mismatch E0308 when matching with string constant`() = checkByText("""
+        mod a {
+            pub const A: &str = "";
+        }
+        fn main() {
+            match "" {
+                a::A => {}
                 _ => {}
             }
         }
